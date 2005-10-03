@@ -1,5 +1,6 @@
 package com.intellij.ide.todo.nodes;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
@@ -29,9 +30,9 @@ public final class TodoFileNode extends PsiFileNode implements HighlightedRegion
   static private final Logger LOG = Logger.getInstance("#com.intellij.ide.todo.nodes.TodoFileNode");
 
   public TodoFileNode(Project project,
-                                PsiFile file,
-                                TodoTreeBuilder treeBuilder,
-                                boolean singleFileMode){
+                      PsiFile file,
+                      TodoTreeBuilder treeBuilder,
+                      boolean singleFileMode){
     super(project,file,ViewSettings.DEFAULT);
     myBuilder=treeBuilder;
     myHighlightedRegions=new ArrayList(2);
@@ -91,7 +92,7 @@ public final class TodoFileNode extends PsiFileNode implements HighlightedRegion
         }
       } else {
         children.add(new TodoItemNode(getProject(), pointer, myBuilder));
-        
+
       }
     }
     Collections.sort(children, SmartTodoItemPointerComparator.ourInstance);
@@ -113,25 +114,15 @@ public final class TodoFileNode extends PsiFileNode implements HighlightedRegion
 
     int nameEndOffset=newName.length();
     int todoItemCount=myBuilder.getTodoTreeStructure().getTodoItemCount(getValue());
-    StringBuffer sb=new StringBuffer(newName);
-    sb.append(" ( ");
     if(mySingleFileMode){
       if(todoItemCount==0){
-        sb.append("no items found");
-      }else{
-        sb.append("found ").append(todoItemCount).append(" item");
-        if(todoItemCount>1){
-          sb.append('s');
-        }
+        newName = IdeBundle.message("node.todo.no.items.found", newName);
+      } else {
+        newName = IdeBundle.message("node.todo.found.items", newName, todoItemCount);
       }
     }else{
-      sb.append(todoItemCount).append(" item");
-      if(todoItemCount>1){
-        sb.append('s');
-      }
+      newName = IdeBundle.message("node.todo.items", newName, todoItemCount);
     }
-    sb.append(" )");
-    newName=sb.toString();
 
     myHighlightedRegions.clear();
 

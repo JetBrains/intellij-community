@@ -1,6 +1,7 @@
 
 package com.intellij.codeInsight.template.macro;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
@@ -18,7 +19,7 @@ public class GuessElementTypeMacro implements Macro {
   }
 
   public String getDescription() {
-    return "guessElementType(Container)";
+    return CodeInsightBundle.message("macro.guess.element.type.of.container");
   }
 
   public String getDefaultValue() {

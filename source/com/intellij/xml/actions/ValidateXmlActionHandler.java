@@ -24,6 +24,7 @@ import com.intellij.ui.content.*;
 import com.intellij.util.ui.ErrorTreeView;
 import com.intellij.util.ui.MessageCategory;
 import com.intellij.xml.util.XmlResourceResolver;
+import com.intellij.xml.XmlBundle;
 import org.apache.xerces.impl.Constants;
 import org.apache.xerces.jaxp.JAXPConstants;
 import org.apache.xerces.jaxp.SAXParserFactoryImpl;
@@ -32,6 +33,7 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.xml.parsers.SAXParser;
@@ -51,7 +53,7 @@ import java.util.List;
 public class ValidateXmlActionHandler implements CodeInsightActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.xml.actions.ValidateXmlAction");
   private static final Key<NewErrorTreeViewPanel> KEY = Key.create("ValidateXmlAction.KEY");
-  private static final String SCHEMA_FULL_CHECKING_FEATURE_ID = "http://apache.org/xml/features/validation/schema-full-checking";
+  @NonNls private static final String SCHEMA_FULL_CHECKING_FEATURE_ID = "http://apache.org/xml/features/validation/schema-full-checking";
   private static final String GRAMMAR_FEATURE_ID = Constants.XERCES_PROPERTY_PREFIX + Constants.XMLGRAMMAR_POOL_PROPERTY;
   private static final Key<XMLGrammarPoolImpl> GRAMMAR_POOL_KEY = Key.create("GrammarPoolKey");
   private static final Key<Long> GRAMMAR_POOL_TIME_STAMP_KEY = Key.create("GrammarPoolTimeStampKey");
@@ -63,6 +65,10 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
   private Object myParser;
   private XmlResourceResolver myXmlResourceResolver;
   private boolean forceChecking;
+  @NonNls
+  private static final String ENTITY_RESOLVER_PROPERTY_NAME = "http://apache.org/xml/properties/internal/entity-resolver";
+  @NonNls
+  public static final String XMLNS_PREFIX = "xmlns";
 
   public ValidateXmlActionHandler(boolean _forceChecking) {
     forceChecking = _forceChecking;
@@ -130,8 +136,10 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
 
   class StdErrorReporter extends ErrorReporter {
     private NewErrorTreeViewPanel myErrorsView;
-    private static final String CONTENT_NAME = "Validate";
+    private final String CONTENT_NAME = XmlBundle.message("xml.validate.tab.content.title");
     private boolean myErrorsDetected = false;
+    @NonNls
+    private static final String VALIDATE_XML_THREAD_NAME = "Validate XML";
 
     StdErrorReporter(Project project) {
       myErrorsView = new NewErrorTreeViewPanel(project, null);
@@ -153,7 +161,8 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
                         new Runnable() {
                           public void run() {
                             removeCompileContents(null);
-                            WindowManager.getInstance().getStatusBar(myProject).setInfo("No errors detected");
+                            WindowManager.getInstance().getStatusBar(myProject).setInfo(
+                              XmlBundle.message("xml.validate.no.errors.detected.status.message"));
                           }
                         }
                     );
@@ -162,7 +171,7 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
               }
           );
         }
-      }, "Validate XML");
+      }, VALIDATE_XML_THREAD_NAME);
       myErrorsView.setProcessController(new NewErrorTreeViewPanel.ProcessController() {
         public void stopProcess() {
           if (thread != null) {
@@ -195,7 +204,7 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
               messageView.addContentManagerListener(new MyContentDisposer(content, messageView));
             }
           },
-          "Open message view",
+          XmlBundle.message("validate.xml.open.message.view.command.name"),
           null
       );
     }
@@ -262,8 +271,8 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
         if (event.getContent() == myContent) {
           if (!myErrorsView.isProcessStopped()) {
             int result = Messages.showYesNoDialog(
-                "Validation is running. Terminate it?",
-                "Validation Is Running",
+              XmlBundle.message("xml.validate.validation.is.running.terminate.confirmation.text"),
+              XmlBundle.message("xml.validate.validation.is.running.terminate.confirmation.title"),
                 Messages.getQuestionIcon()
             );
             if (result != 0) {
@@ -338,7 +347,7 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
             public void startDocument() throws SAXException {
               super.startDocument();
               ((SAXParser)myParser).setProperty(
-                "http://apache.org/xml/properties/internal/entity-resolver",
+                ENTITY_RESOLVER_PROPERTY_NAME,
                 myXmlResourceResolver
               );
             }
@@ -392,7 +401,7 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
       
       SAXParser parser = factory.newSAXParser();
 
-      parser.setProperty("http://apache.org/xml/properties/internal/entity-resolver", myXmlResourceResolver);
+      parser.setProperty(ENTITY_RESOLVER_PROPERTY_NAME, myXmlResourceResolver);
       
       final XMLGrammarPoolImpl previousGrammarPool = myFile.getUserData(GRAMMAR_POOL_KEY);
       XMLGrammarPoolImpl grammarPool = null;
@@ -480,7 +489,7 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
 
     XmlAttribute[] attributes = rootTag.getAttributes();
     for (XmlAttribute attribute : attributes) {
-      if (attribute.getName().startsWith("xmlns")) return true;
+      if (attribute.getName().startsWith(XMLNS_PREFIX)) return true;
     }
 
     return false;

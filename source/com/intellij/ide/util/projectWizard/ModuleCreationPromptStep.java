@@ -3,6 +3,7 @@ package com.intellij.ide.util.projectWizard;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.ide.IdeBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -22,18 +23,13 @@ public class ModuleCreationPromptStep extends ModuleWizardStep {
     myPanel = new JPanel(new GridBagLayout());
     myPanel.setBorder(BorderFactory.createEtchedBorder());
     final String promptText =
-      "A functional " + ApplicationNamesInfo.getInstance().getProductName() +
-      " project must have at least one module. In most cases, one module would be quite enough.\n" +
-      "To quickly create a single-module project and start working right away, select the \"Create single-module project\" option.\n" +
-      "For creating a more complex project, with multiple modules, use the \"Create/configure multi-module project\" option.";
+      IdeBundle.message("prompt.single.or.multi.module.project", ApplicationNamesInfo.getInstance().getProductName());
     final JLabel promptLabel = new JLabel(promptText);
     promptLabel.setUI(new MultiLineLabelUI());
     myPanel.add(promptLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(8, 10, 8, 10), 0, 0));
 
-    myRbCreateSingle = new JRadioButton("Create single-module project", true);
-    myRbCreateSingle.setMnemonic('s');
-    myRbCreateMultiple = new JRadioButton("Create/configure multi-module project");
-    myRbCreateMultiple.setMnemonic('m');
+    myRbCreateSingle = new JRadioButton(IdeBundle.message("radio.create.&single.module.project"), true);
+    myRbCreateMultiple = new JRadioButton(IdeBundle.message("radio.create.configure.&multi.module.project"));
     myPanel.add(myRbCreateSingle, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(8, 6, 0, 6), 0, 0));
     myPanel.add(myRbCreateMultiple, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(5, 6, 0, 6), 0, 0));
 

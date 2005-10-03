@@ -20,6 +20,7 @@ import com.intellij.psi.xml.XmlElementDecl;
 import com.intellij.psi.xml.XmlMarkupDecl;
 import com.intellij.reference.SoftReference;
 import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,7 +45,7 @@ public class MetaRegistry {
   };
   
   public static final String[] SCHEMA_URIS = { XmlUtil.XML_SCHEMA_URI, XmlUtil.XML_SCHEMA_URI2, XmlUtil.XML_SCHEMA_URI3 };
-  private static final String[] JSP_URIS = {
+  private static final @NonNls String[] JSP_URIS = {
     XmlUtil.JSP_URI,
     "http://java.sun.com/products/jsp/dtd/jsp_1_0.dtd",
     "http://java.sun.com/xml/ns/j2ee/jsp_2_0.xsd",
@@ -62,7 +63,6 @@ public class MetaRegistry {
           com.intellij.xml.impl.schema.XmlNSDescriptorImpl.class
       );
     }
-
     {
       addMetadataBinding(
           new OrFilter(
@@ -81,7 +81,7 @@ public class MetaRegistry {
           new NamespaceFilter(SCHEMA_URIS),
           new TextFilter("element")
       ),
-          com.intellij.xml.impl.schema.XmlElementDescriptorImpl.class);
+                         com.intellij.xml.impl.schema.XmlElementDescriptorImpl.class);
     }
 
     {
@@ -105,6 +105,29 @@ public class MetaRegistry {
       addMetadataBinding(
           new ClassFilter(XmlAttributeDecl.class),
           com.intellij.xml.impl.dtd.XmlAttributeDescriptorImpl.class
+      );
+    }
+    
+    {
+      addMetadataBinding(
+          new AndFilter(
+              new ClassFilter(XmlDocument.class),
+              new TargetNamespaceFilter(JSP_URIS)
+          ),
+          JspNsDescriptor.class
+      );
+    }
+
+    {
+      addMetadataBinding(
+          new AndFilter(
+              new ElementFilter[] {
+                new ClassFilter(XmlDocument.class),
+                new TargetNamespaceFilter(XmlUtil.XHTML_URI),
+                new NamespaceFilter(SCHEMA_URIS),
+              }
+          ),
+          RelaxedNsXmlNSDescriptor.class
       );
     }
     
@@ -167,12 +190,12 @@ public class MetaRegistry {
               new ClassFilter(JspDirective.class),
               new TextFilter("attribute")
             )
-          ) 
+          )
          ),
         TldAttributeDescriptor.class
       );
     }
-    
+
     {
       addMetadataBinding(
         new OrFilter(
@@ -193,34 +216,11 @@ public class MetaRegistry {
     }
 
     {
-      addMetadataBinding(
-          new AndFilter(
-              new ClassFilter(XmlDocument.class),
-              new TargetNamespaceFilter(JSP_URIS)
-          ),
-          JspNsDescriptor.class
-      );
-    }
-
-    {
-      addMetadataBinding(
-          new AndFilter(
-              new ElementFilter[] {
-                new ClassFilter(XmlDocument.class),
-                new TargetNamespaceFilter(XmlUtil.XHTML_URI),
-                new NamespaceFilter(SCHEMA_URIS),
-              }
-          ),
-          RelaxedNsXmlNSDescriptor.class
-      );
-    }
-
-    {
       addMetadataBinding(new AndFilter(
           new NamespaceFilter(SCHEMA_URIS),
           new TextFilter(new String[] {"complexType","simpleType", "group","attributeGroup" })
       ),
-          com.intellij.xml.impl.schema.NamedObjectDescriptor.class);
+                         com.intellij.xml.impl.schema.NamedObjectDescriptor.class);
     }
     
     RegisterInPsi.metaData();

@@ -3,10 +3,10 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
-
-import java.text.MessageFormat;
+import com.intellij.psi.PsiKeyword;
 
 /**
  * changes 'class a extends b' to 'class a implements b' or vice versa
@@ -17,12 +17,10 @@ public class ChangeExtendsToImplementsFix extends ExtendsListFix {
   }
 
   public String getText() {
-    String text = MessageFormat.format("Change ''{0} {2}'' to ''{1} {2}''",
-        new Object[]{
-          (myClass.isInterface() == myClassToExtendFrom.isInterface() ? "implements" : "extends"),
-          (myClass.isInterface() == myClassToExtendFrom.isInterface() ? "extends" : "implements"),
-          myClassToExtendFrom.getQualifiedName(),
-        });
+    String text = QuickFixBundle.message("exchange.extends.implements.keyword",
+          (myClass.isInterface() == myClassToExtendFrom.isInterface() ? PsiKeyword.IMPLEMENTS : PsiKeyword.EXTENDS),
+          (myClass.isInterface() == myClassToExtendFrom.isInterface() ? PsiKeyword.EXTENDS : PsiKeyword.IMPLEMENTS),
+          myClassToExtendFrom.getQualifiedName());
     return text;
   }
 }

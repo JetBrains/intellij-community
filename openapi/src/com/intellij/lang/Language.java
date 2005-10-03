@@ -31,7 +31,10 @@ import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.refactoring.RefactoringActionHandler;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,7 +67,7 @@ public abstract class Language {
     this(id, "");
   }
 
-  protected Language(final String ID, final String... mimeTypes) {
+  protected Language(final @NonNls String ID, final @NonNls String... mimeTypes) {
     myID = ID;
     myMimeTypes = mimeTypes;
     Class<? extends Language> langClass = getClass();
@@ -250,15 +253,13 @@ public abstract class Language {
 
   /**
    * Override this method to provide common refactorings implementation for the elements of your language.
-   * For the time being only safe delete refactoring is implemented.
    * Note that rename refactoring will be automatically enabled with <code>FindUsagesProvider</code> and <code>ParserDefinition</code>.
    *
-   * @return <code>RefactoringSupportProvider</code> interface implementation for this particular language or <code>null</code>
-   *         if no safe delete refactoring implementation is necessary.
+   * @return <code>RefactoringSupportProvider</code> interface implementation for this particular language
    */
-  @Nullable
+  @NotNull
   public RefactoringSupportProvider getRefactoringSupportProvider() {
-    return null;
+    return new DefaultRefactoringSupportProvider();
   }
 
   /**
@@ -312,5 +313,18 @@ public abstract class Language {
   @NotNull
   public String getID() {
     return myID;
+  }
+
+  /**
+   * Default implementation of <code>RefactoringSupportProvider</code> to inherit from
+   */
+  protected static class DefaultRefactoringSupportProvider implements RefactoringSupportProvider {
+    public boolean isSafeDeleteAvailable(PsiElement element) {
+      return false;
+    }
+
+    public RefactoringActionHandler getIntroduceVariableHandler() {
+      return null;
+    }
   }
 }

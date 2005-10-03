@@ -1,6 +1,7 @@
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.CommonBundle;
 
 /**
  * author: lesya
@@ -19,7 +20,11 @@ class Undo extends UndoOrRedo{
   }
 
   protected String getActionName() {
-    return "Undo";
+    return CommonBundle.message("undo.dialog.title");
+  }
+
+  protected String getActionName(String commandName) {
+    return CommonBundle.message("undo.command.confirmation.text", commandName);
   }
 
   protected void performAction() {

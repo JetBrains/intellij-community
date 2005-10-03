@@ -36,6 +36,9 @@ class TraceFilter {
     return startFrom;
   }
 
+  /**
+   * @noinspection HardCodedStringLiteral
+   */
   private boolean isIdeaJUnit(String line) {
     return line.indexOf("com.intellij.rt.execution.junit") >= 0;
   }

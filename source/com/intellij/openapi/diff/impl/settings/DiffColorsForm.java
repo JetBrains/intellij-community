@@ -7,6 +7,7 @@ import com.intellij.application.options.colors.EditorSchemeAttributeDescriptor;
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.DiffRequest;
 import com.intellij.openapi.diff.SimpleContent;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.incrementalMerge.Change;
 import com.intellij.openapi.diff.impl.incrementalMerge.MergeList;
 import com.intellij.openapi.diff.impl.incrementalMerge.MergeSearchHelper;
@@ -36,6 +37,8 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
+
+import org.jetbrains.annotations.NonNls;
 
 public class DiffColorsForm {
   private MergePanel2.AsComponent myMergePanelComponent;
@@ -282,35 +285,35 @@ public class DiffColorsForm {
     }
 
     public String[] getContentTitles() { return new String[]{"", "", ""}; }
-    public String getWindowTitle() { return "Merge Color Options"; }
+    public String getWindowTitle() { return DiffBundle.message("merge.color.options.dialog.title"); }
   }
 
-  private static final String LEFT_TEXT = "class MyClass {\n" +
-                                         "  int value;\n" +
-                                         "\n" +
-                                         "  void leftOnly() {}\n" +
-                                         "\n" +
-                                         "  void foo() {\n" +
-                                         "   // Left changes\n" +
-                                         "  }\n" +
-                                         "}";
-  private static final String CENTER_TEXT = "class MyClass {\n" +
-                                           "  int value;\n" +
+  @NonNls private static final String LEFT_TEXT = "class MyClass {\n" +
+                                                                            "  int value;\n" +
+                                                                            "\n" +
+                                                                            "  void leftOnly() {}\n" +
+                                                                            "\n" +
+                                                                            "  void foo() {\n" +
+                                                                            "   // Left changes\n" +
+                                                                            "  }\n" +
+                                                                            "}";
+  @NonNls private static final String CENTER_TEXT = "class MyClass {\n" +
+                                            "  int value;\n" +
+                                            "\n" +
+                                            "  void foo() {\n" +
+                                            "  }\n" +
+                                            "\n" +
+                                            "  void removedFromLeft() {}\n" +
+                                            "}";
+  @NonNls private static final String RIGHT_TEXT = "class MyClass {\n" +
+                                           "  long value;\n" +
                                            "\n" +
                                            "  void foo() {\n" +
+                                           "   // Left changes\n" +
                                            "  }\n" +
                                            "\n" +
                                            "  void removedFromLeft() {}\n" +
                                            "}";
-  private static final String RIGHT_TEXT = "class MyClass {\n" +
-                                          "  long value;\n" +
-                                          "\n" +
-                                          "  void foo() {\n" +
-                                          "   // Left changes\n" +
-                                          "  }\n" +
-                                          "\n" +
-                                          "  void removedFromLeft() {}\n" +
-                                          "}";
 
   private static class MyColorAndFontDescription implements EditorSchemeAttributeDescriptor {
     private Color myBackgroundColor;

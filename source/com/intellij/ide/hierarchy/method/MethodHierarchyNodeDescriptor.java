@@ -1,6 +1,7 @@
 package com.intellij.ide.hierarchy.method;
 
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.util.CompositeAppearance;
@@ -77,7 +78,7 @@ public final class MethodHierarchyNodeDescriptor extends HierarchyNodeDescriptor
     final PsiClass psiClass = getPsiClass();
 
     if (psiClass == null){
-      final String invalidPrefix = "[Invalid] ";
+      final String invalidPrefix = IdeBundle.message("node.hierarchy.invalid");
       if (!myHighlightedText.getText().startsWith(invalidPrefix)) {
         myHighlightedText.getBeginning().addText(invalidPrefix, HierarchyNodeDescriptor.getInvalidPrefixAttributes());
       }

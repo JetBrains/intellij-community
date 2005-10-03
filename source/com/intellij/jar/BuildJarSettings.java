@@ -9,6 +9,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.JDOMExternalizer;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author cdr
@@ -18,6 +19,7 @@ public class BuildJarSettings implements ModuleComponent, JDOMExternalizable {
   private String myJarPath = "";
   private boolean myBuildJar;
   private String myMainClass = "";
+  @NonNls private static final String ELEMENT_CONTAINERINFO = "containerInfo";
 
   public static BuildJarSettings getInstance(Module module) {
     return module.getComponent(BuildJarSettings.class);
@@ -35,7 +37,7 @@ public class BuildJarSettings implements ModuleComponent, JDOMExternalizable {
   }
 
   public void readExternal(Element element) throws InvalidDataException {
-    Element settings = element.getChild("containerInfo");
+    Element settings = element.getChild(ELEMENT_CONTAINERINFO);
     if (settings != null) {
       myModuleContainer.readExternal(settings);
     }
@@ -46,7 +48,7 @@ public class BuildJarSettings implements ModuleComponent, JDOMExternalizable {
 
   public void writeExternal(Element element) throws WriteExternalException {
     if (!myBuildJar) throw new WriteExternalException();
-    Element settings = new Element("containerInfo");
+    Element settings = new Element(ELEMENT_CONTAINERINFO);
     element.addContent(settings);
     myModuleContainer.writeExternal(settings);
     JDOMExternalizer.write(element, "jarPath", myJarPath);

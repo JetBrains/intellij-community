@@ -1,26 +1,27 @@
 
 package com.intellij.openapi.application.impl;
 
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.ide.license.LicenseManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.ide.license.LicenseManager;
 import org.jdom.Document;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Calendar;
 import java.util.GregorianCalendar;
-import java.awt.*;
 
-/**
- *
- */
 public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExternalizable, ApplicationComponent {
-  private final static String BUILD_STUB = "__BUILD_NUMBER__";
+
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.impl.ApplicationInfoImpl");
+
+  @NonNls private final static String BUILD_STUB = "__BUILD_NUMBER__";
   private String myVersionName = null;
   private String myMajorVersion = null;
   private String myMinorVersion = null;
@@ -34,6 +35,28 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   private String myWelcomeScreenDeveloperSloganUrl;
   private UpdateUrls myUpdateUrls;
   private UpdateUrls myEapUpdateUrls;
+
+  @NonNls private static final String IDEA_PATH = "/idea/";
+  @NonNls private static final String ELEMENT_VERSION = "version";
+  @NonNls private static final String ATTRIBUTE_MAJOR = "major";
+  @NonNls private static final String ATTRIBUTE_MINOR = "minor";
+  @NonNls private static final String ATTRIBUTE_NAME = "name";
+  @NonNls private static final String ELEMENT_BUILD = "build";
+  @NonNls private static final String ATTRIBUTE_NUMBER = "number";
+  @NonNls private static final String ATTRIBUTE_DATE = "date";
+  @NonNls private static final String ELEMENT_LOGO = "logo";
+  @NonNls private static final String ATTRIBUTE_URL = "url";
+  @NonNls private static final String ELEMENT_ABOUT = "about";
+  @NonNls private static final String ELEMENT_PACKAGE = "package";
+  @NonNls private static final String ATTRIBUTE_CODE = "code";
+  @NonNls private static final String ELEMENT_LICENSEE = "licensee";
+  @NonNls private static final String ATTRIBUTE_SHOW = "show";
+  @NonNls private static final String WELCOME_SCREEN_ELEMENT_NAME = "welcome-screen";
+  @NonNls private static final String CAPTION_URL_ATTR = "caption-url";
+  @NonNls private static final String SLOGAN_URL_ATTR = "slogan-url";
+  @NonNls private static final String UPDATE_URLS_ELEMENT_NAME = "update-urls";
+  @NonNls private static final String EAP_UPDATE_URLS_ELEMENT_NAME = "eap-update-urls";
+  @NonNls private static final String XML_EXTENSION = ".xml";
 
   public void initComponent() { }
 
@@ -89,7 +112,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   }
 
   public String getFullApplicationName() {
-    StringBuffer buffer = new StringBuffer();
+    @NonNls StringBuffer buffer = new StringBuffer();
     buffer.append(getVersionName());
     buffer.append(" ");
     if (getMajorVersion() != null){
@@ -119,27 +142,27 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   public static ApplicationInfoEx getShadowInstance() {
     ApplicationInfoImpl instance = new ApplicationInfoImpl();
     try {
-      Document doc = JDOMUtil.loadDocument(ApplicationInfoImpl.class.getResourceAsStream("/idea/" + ApplicationNamesInfo.COMPONENT_NAME + ".xml"));
+      Document doc = JDOMUtil.loadDocument(ApplicationInfoImpl.class.getResourceAsStream(IDEA_PATH + ApplicationNamesInfo.COMPONENT_NAME + XML_EXTENSION));
       instance.readExternal(doc.getRootElement());
     }
     catch (Exception e) {
-      e.printStackTrace();
+      LOG.error(e);
     }
     return instance;
   }
 
   public void readExternal(Element parentNode) throws InvalidDataException {
-    Element versionElement = parentNode.getChild("version");
+    Element versionElement = parentNode.getChild(ELEMENT_VERSION);
     if (versionElement != null) {
-      myMajorVersion = versionElement.getAttributeValue("major");
-      myMinorVersion = versionElement.getAttributeValue("minor");
-      myVersionName = versionElement.getAttributeValue("name");
+      myMajorVersion = versionElement.getAttributeValue(ATTRIBUTE_MAJOR);
+      myMinorVersion = versionElement.getAttributeValue(ATTRIBUTE_MINOR);
+      myVersionName = versionElement.getAttributeValue(ATTRIBUTE_NAME);
     }
 
-    Element buildElement = parentNode.getChild("build");
+    Element buildElement = parentNode.getChild(ELEMENT_BUILD);
     if (buildElement != null) {
-      myBuildNumber = buildElement.getAttributeValue("number");
-      String dateString = buildElement.getAttributeValue("date");
+      myBuildNumber = buildElement.getAttributeValue(ATTRIBUTE_NUMBER);
+      String dateString = buildElement.getAttributeValue(ATTRIBUTE_DATE);
       int year = 0;
       int month = 0;
       int day = 0;
@@ -149,6 +172,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
         day = new Integer(dateString.substring(6, 8)).intValue();
       }
       catch (Exception ex) {
+        //ignore
       }
       if (month > 0) {
         month--;
@@ -156,36 +180,36 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
       myBuildDate = new GregorianCalendar(year, month, day);
     }
 
-    Element logoElement = parentNode.getChild("logo");
+    Element logoElement = parentNode.getChild(ELEMENT_LOGO);
     if (logoElement != null) {
-      myLogoUrl = logoElement.getAttributeValue("url");
+      myLogoUrl = logoElement.getAttributeValue(ATTRIBUTE_URL);
     }
 
-    Element aboutLogoElement = parentNode.getChild("about");
+    Element aboutLogoElement = parentNode.getChild(ELEMENT_ABOUT);
     if (aboutLogoElement != null) {
-      myAboutLogoUrl = aboutLogoElement.getAttributeValue("url");
+      myAboutLogoUrl = aboutLogoElement.getAttributeValue(ATTRIBUTE_URL);
     }
 
-    Element packageElement = parentNode.getChild("package");
+    Element packageElement = parentNode.getChild(ELEMENT_PACKAGE);
     if (packageElement != null) {
-      myPackageCode = packageElement.getAttributeValue("code");
+      myPackageCode = packageElement.getAttributeValue(ATTRIBUTE_CODE);
     }
 
-    Element showLicensee = parentNode.getChild("licensee");
+    Element showLicensee = parentNode.getChild(ELEMENT_LICENSEE);
     if (showLicensee != null) {
-      myShowLicensee = Boolean.valueOf(showLicensee.getAttributeValue("show")).booleanValue();
+      myShowLicensee = Boolean.valueOf(showLicensee.getAttributeValue(ATTRIBUTE_SHOW)).booleanValue();
     }
 
-    Element welcomeScreen = parentNode.getChild("welcome-screen");
+    Element welcomeScreen = parentNode.getChild(WELCOME_SCREEN_ELEMENT_NAME);
     if (welcomeScreen != null) {
-      myWelcomeScreenCaptionUrl = welcomeScreen.getAttributeValue("caption-url");
-      myWelcomeScreenDeveloperSloganUrl = welcomeScreen.getAttributeValue("slogan-url");
+      myWelcomeScreenCaptionUrl = welcomeScreen.getAttributeValue(CAPTION_URL_ATTR);
+      myWelcomeScreenDeveloperSloganUrl = welcomeScreen.getAttributeValue(SLOGAN_URL_ATTR);
     }
 
-    Element updateUrls = parentNode.getChild("update-urls");
+    Element updateUrls = parentNode.getChild(UPDATE_URLS_ELEMENT_NAME);
     myUpdateUrls = new UpdateUrlsImpl(updateUrls);
 
-    Element eapUpdateUrls = parentNode.getChild("eap-update-urls");
+    Element eapUpdateUrls = parentNode.getChild(EAP_UPDATE_URLS_ELEMENT_NAME);
     myEapUpdateUrls = new UpdateUrlsImpl(eapUpdateUrls);
   }
 
@@ -201,11 +225,13 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   private static class UpdateUrlsImpl implements UpdateUrls {
     private String myCheckingUrl;
     private String myDownloadUrl;
+    @NonNls private static final String CHECK_ATTR = "check";
+    @NonNls private static final String DOWNLOAD_ATTR = "download";
 
     public UpdateUrlsImpl(Element element) {
       if (element != null) {
-        myCheckingUrl = element.getAttributeValue("check");
-        myDownloadUrl = element.getAttributeValue("download");
+        myCheckingUrl = element.getAttributeValue(CHECK_ATTR);
+        myDownloadUrl = element.getAttributeValue(DOWNLOAD_ATTR);
       }
     }
 

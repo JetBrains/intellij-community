@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ide.IdeBundle;
 
 /**
  * @author Eugene Belyaev
@@ -16,7 +17,7 @@ public final class SourcepathEntryMacro extends Macro {
   }
 
   public String getDescription() {
-    return "Entry in the sourcepath the element belongs to";
+    return IdeBundle.message("macro.sourcepath.entry");
   }
 
   public String expand(final DataContext dataContext) {

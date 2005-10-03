@@ -36,7 +36,7 @@ public class DebuggerTreeBase extends Tree {
   public DebuggerTreeBase(TreeModel model, Project project) {
     super(model);
     myProject = project;
-    putClientProperty("JTree.lineStyle", "Angled");
+    com.intellij.util.ui.UIUtil.setLineStyleAngled(this);
     setRootVisible(false);
     setShowsRootHandles(true);
     setCellRenderer(new DebuggerTreeRenderer());
@@ -100,10 +100,12 @@ public class DebuggerTreeBase extends Tree {
         }
       }
 
+      //noinspection HardCodedStringLiteral
       Element html = new Element("html");
 
       String text = tipBuffer.toString();
 
+      //noinspection HardCodedStringLiteral
       Element p = new Element("pre");
       html.addContent(p);
       p.setText(text);

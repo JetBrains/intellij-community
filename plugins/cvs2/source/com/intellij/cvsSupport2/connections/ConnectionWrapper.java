@@ -7,6 +7,7 @@ import org.netbeans.lib.cvsclient.ICvsCommandStopper;
 import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.connection.IConnection;
 import org.netbeans.lib.cvsclient.io.IStreamLogger;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -21,6 +22,7 @@ public class ConnectionWrapper implements IConnection {
   private OutputStreamWrapper myOutputStreamWrapper;
   private final ReadWriteStatistics myStatistics;
   private ICvsCommandStopper myCommandStopper;
+  @NonNls private static final String CVS_DONT_READ_IN_THREAD_PROPERTY = "cvs.dont.read.in.thread";
 
   public ConnectionWrapper(IConnection sourceConnection, ReadWriteStatistics statistics, ICvsCommandStopper commandStopper) {
     mySourceConnection = sourceConnection;
@@ -30,7 +32,7 @@ public class ConnectionWrapper implements IConnection {
 
   public InputStream getInputStream() {
     if (myInputStreamWrapper == null) {
-      if ("true".equals(System.getProperty("cvs.dont.read.in.thread"))) {
+      if (Boolean.TRUE.toString().equals(System.getProperty(CVS_DONT_READ_IN_THREAD_PROPERTY))) {
         myInputStreamWrapper = mySourceConnection.getInputStream();
       }
       else {

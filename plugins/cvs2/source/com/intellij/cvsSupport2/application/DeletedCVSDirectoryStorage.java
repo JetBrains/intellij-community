@@ -20,7 +20,7 @@ import java.util.Iterator;
 
 public class DeletedCVSDirectoryStorage {
   private File myRoot;
-  public static final String CVS_ADMIN_DIR = "CVS";
+  public static final String CVS_ADMIN_DIR = CvsUtil.CVS;
 
   private final Collection<VirtualFile> myFilesToDelete = new HashSet<VirtualFile>();
 
@@ -203,8 +203,8 @@ public class DeletedCVSDirectoryStorage {
             catch (final IOException e) {
               SwingUtilities.invokeLater(new Runnable() {
                 public void run() {
-                  Messages.showErrorDialog("Cannot delete CVS admit directory: " + e.getLocalizedMessage(),
-                                           "Delete CVS admin directories");
+                  Messages.showErrorDialog(com.intellij.CvsBundle.message("message.error.cannot.delete.cvs.admin.directory"),
+                                           com.intellij.CvsBundle.message("message.error.cannot.delete.cvs.admin.directory.title"));
                 }
               });
 

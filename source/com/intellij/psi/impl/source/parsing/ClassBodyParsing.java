@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.source.parsing;
 
+import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lexer.FilterLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
@@ -57,7 +58,7 @@ public class ClassBodyParsing extends Parsing {
         TreeUtil.addChildren(dummyRoot, enumConstant);
       }
       else {
-        TreeUtil.addChildren(dummyRoot, Factory.createErrorElement("Identifier expected"));
+        TreeUtil.addChildren(dummyRoot, Factory.createErrorElement(JavaErrorMessages.message("expected.identifier")));
       }
 
       if (lexer.getTokenType() == COMMA) {
@@ -65,7 +66,7 @@ public class ClassBodyParsing extends Parsing {
         lexer.advance();
       }
       else if (lexer.getTokenType() != null && lexer.getTokenType() != SEMICOLON) {
-        TreeUtil.addChildren(dummyRoot, Factory.createErrorElement("',' or ';' expected"));
+        TreeUtil.addChildren(dummyRoot, Factory.createErrorElement(JavaErrorMessages.message("expected.comma.or.semicolon")));
         return;
       }
     }
@@ -87,7 +88,7 @@ public class ClassBodyParsing extends Parsing {
       }
 
       TreeElement declaration = myContext.getDeclarationParsing().parseDeclaration(filterLexer,
-                                                                    declarationParsingContext);
+                                                                                   declarationParsingContext);
       if (declaration != null){
         TreeUtil.addChildren(dummyRoot, declaration);
         invalidElementsGroup = null;
@@ -95,7 +96,7 @@ public class ClassBodyParsing extends Parsing {
       }
 
       if (invalidElementsGroup == null){
-        invalidElementsGroup = Factory.createErrorElement("Unexpected token");
+        invalidElementsGroup = Factory.createErrorElement(JavaErrorMessages.message("unexpected.token"));
         TreeUtil.addChildren(dummyRoot, invalidElementsGroup);
       }
 

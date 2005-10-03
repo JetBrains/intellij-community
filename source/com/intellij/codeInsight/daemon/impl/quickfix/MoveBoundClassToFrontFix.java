@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -11,8 +12,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReferenceList;
 import com.intellij.util.IncorrectOperationException;
 
-import java.text.MessageFormat;
-
 public class MoveBoundClassToFrontFix extends ExtendsListFix {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.MoveBoundClassToFrontFix");
 
@@ -21,16 +20,13 @@ public class MoveBoundClassToFrontFix extends ExtendsListFix {
   }
 
   public String getText() {
-    String text = MessageFormat.format("Move bound ''{0}'' to the beginning of the bounds list of type parameter ''{1}''",
-        new Object[]{
-          HighlightUtil.formatClass(myClassToExtendFrom),
-          HighlightUtil.formatClass(myClass),
-        });
-    return text;
+    return QuickFixBundle.message("move.bound.class.to.front.fix.text",
+                                  HighlightUtil.formatClass(myClassToExtendFrom),
+                                  HighlightUtil.formatClass(myClass));
   }
 
   public String getFamilyName() {
-    return "Move Class in Extend list";
+    return QuickFixBundle.message("move.class.in.extend.list.family");
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) {

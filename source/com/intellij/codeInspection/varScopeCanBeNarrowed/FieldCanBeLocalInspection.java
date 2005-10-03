@@ -2,10 +2,7 @@ package com.intellij.codeInspection.varScopeCanBeNarrowed;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -27,20 +24,22 @@ import com.intellij.util.containers.HashSet;
 
 import java.util.*;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author ven
  */
 public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspection");
 
-  public static final String SHORT_NAME = "FieldCanBeLocal";
+  @NonNls public static final String SHORT_NAME = "FieldCanBeLocal";
 
   public String getGroupDisplayName() {
     return GroupNames.CLASSLAYOUT_GROUP_NAME;
   }
 
   public String getDisplayName() {
-    return "Field can be local";
+    return InspectionsBundle.message("inspection.field.can.be.local.display.name");
   }
 
   public String getShortName() {
@@ -114,7 +113,7 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
     int i = 0;
     for (Iterator<PsiField> iterator = candidates.iterator(); iterator.hasNext(); i++) {
       PsiField field = iterator.next();
-      final String message = "Field can be converted to one or more local variables.";
+      final String message = InspectionsBundle.message("inspection.field.can.be.local.problem.descriptor");
       result[i] = manager.createProblemDescriptor(field.getNameIdentifier(), message, new MyQuickFix(field), ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
     }
     return result;
@@ -128,7 +127,7 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
     }
 
     public String getName() {
-      return "Convert to local";
+      return InspectionsBundle.message("inspection.field.can.be.local.quickfix");
     }
 
     public void applyFix(Project project, ProblemDescriptor descriptor) {

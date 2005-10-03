@@ -15,6 +15,9 @@
  */
 package com.intellij.util.net;
 
+import com.intellij.openapi.MnemonicHelper;
+import com.intellij.CommonBundle;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -31,6 +34,8 @@ public class AuthenticationDialog extends JDialog {
 
   public AuthenticationDialog(String title, String description) {
     super(JOptionPane.getRootFrame(), title, true);
+
+    new MnemonicHelper().register(getContentPane());
 
     panel = new AuthenticationPanel(description,
                                     HttpConfigurable.getInstance().PROXY_LOGIN,
@@ -60,7 +65,7 @@ public class AuthenticationDialog extends JDialog {
   protected Action[] createActions() {
     Action [] actions =
       new Action [] {
-        new AbstractAction ("OK") {
+        new AbstractAction (CommonBundle.getOkButtonText()) {
           public void actionPerformed(ActionEvent e) {
             HttpConfigurable.getInstance().PROXY_LOGIN = panel.getLogin();
             HttpConfigurable.getInstance().setPlainProxyPassword(panel.getPassword());
@@ -70,14 +75,14 @@ public class AuthenticationDialog extends JDialog {
             dispose();
           }
         },
-        new AbstractAction("Cancel") {
+        new AbstractAction(CommonBundle.getCancelButtonText()) {
           public void actionPerformed(ActionEvent e) {
             HttpConfigurable.getInstance().PROXY_AUTHENTICATION = false;
             dispose();
           }
         }
       };
-    actions [0].putValue(Action.DEFAULT, "true");
+    actions [0].putValue(Action.DEFAULT, Boolean.TRUE.toString());
     return actions;
   }
 }

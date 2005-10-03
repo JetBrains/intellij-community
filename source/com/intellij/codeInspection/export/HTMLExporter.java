@@ -10,6 +10,7 @@ package com.intellij.codeInspection.export;
 
 import com.intellij.codeInspection.ex.HTMLComposer;
 import com.intellij.codeInspection.reference.RefElement;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -22,6 +23,8 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+
+import org.jetbrains.annotations.NonNls;
 
 public class HTMLExporter {
   private final String myRootFolder;
@@ -51,19 +54,19 @@ public class HTMLExporter {
     myGeneratedPages.add(element);
   }
 
-  private void appendNavBar(final StringBuffer buf, RefElement element) {
-    buf.append("<a href=\"../index.html\" target=\"_top\">Inspections</a>  ");
-    myComposer.appendElementReference(buf, element, "Open source", "_blank");
+  private void appendNavBar(@NonNls final StringBuffer buf, RefElement element) {
+    buf.append("<a href=\"../index.html\" target=\"_top\">" + InspectionsBundle.message("inspection.export.inspections.link.text") + "</a>  ");
+    myComposer.appendElementReference(buf, element, InspectionsBundle.message("inspection.export.open.source.link.text"), "_blank");
     buf.append("<hr>");
   }
 
-  public static void writeFile(String folder, String fileName, StringBuffer buf, Project project) {
+  public static void writeFile(String folder, @NonNls String fileName, StringBuffer buf, Project project) {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     String fullPath = folder + File.separator + fileName;
 
     if (indicator != null) {
       ProgressManager.getInstance().checkCanceled();
-      indicator.setText("Generating HTML:" + fullPath);
+      indicator.setText(InspectionsBundle.message("inspection.export.generating.html.for", fullPath));
     }
 
     try {
@@ -75,8 +78,8 @@ public class HTMLExporter {
     } catch (IOException e) {
       Messages.showMessageDialog(
         project,
-        "Error writing to " + fullPath,
-        "Inspection Results Export",
+        InspectionsBundle.message("inspection.export.error.writing.to", fullPath),
+        InspectionsBundle.message("inspection.export.results.error.title"),
         Messages.getErrorIcon()
       );
       throw new ProcessCanceledException();
@@ -89,7 +92,7 @@ public class HTMLExporter {
   }
 
   private String fileNameForElement(RefElement element) {
-    String fileName = (String) myElementToFilenameMap.get(element);
+    @NonNls String fileName = (String) myElementToFilenameMap.get(element);
 
     if (fileName == null) {
       fileName = "e" + Integer.toString(++myFileCounter) + ".html";

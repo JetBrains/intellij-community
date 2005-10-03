@@ -1,5 +1,7 @@
 package com.intellij.openapi.diff.impl.util;
 
+import com.intellij.openapi.diff.DiffBundle;
+
 import javax.swing.*;
 import java.awt.*;
 
@@ -11,7 +13,7 @@ public class LabeledEditor extends JPanel {
   }
 
   private String addReadOnly(String title, boolean readonly) {
-    if (readonly) title += " (Read-only)";
+    if (readonly) title += DiffBundle.message("diff.content.read.only.content.title.suffix");
     return title;
   }
 

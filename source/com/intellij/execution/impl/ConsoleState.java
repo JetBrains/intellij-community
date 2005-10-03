@@ -4,6 +4,7 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.util.Key;
 
 import java.io.IOException;
@@ -69,7 +70,7 @@ public abstract class ConsoleState {
 
     public void sendUserInput(final String input) throws IOException {
       if (myUserInputWriter == null)
-        throw new IOException("No process input");
+        throw new IOException(ExecutionBundle.message("no.user.process.input.error.message"));
       myUserInputWriter.write(input);
       myUserInputWriter.flush();
     }

@@ -10,10 +10,13 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
+import org.jetbrains.annotations.NonNls;
+
 public class RootFileElement extends FileElement {
   private final VirtualFile[] myFiles;
   private final boolean myShowFileSystemRoots;
   private Object[] myChildren;
+  @NonNls public static final String A_PREFIX = "a:";
 
   public RootFileElement(VirtualFile[] files, String name, boolean showFileSystemRoots) {
     super(files.length == 1 ? files[0] : null, name);
@@ -45,7 +48,7 @@ public class RootFileElement extends FileElement {
     LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
     HashSet rootChildren = new HashSet();
     for (int i = 0; i < roots.length; i++) {
-      if (roots[i].getPath().toLowerCase().startsWith("a:")) continue;
+      if (roots[i].getPath().toLowerCase().startsWith(A_PREFIX)) continue;
       String path = roots[i].getAbsolutePath();
       path = path.replace(File.separatorChar, '/');
       VirtualFile file = localFileSystem.findFileByPath(path);

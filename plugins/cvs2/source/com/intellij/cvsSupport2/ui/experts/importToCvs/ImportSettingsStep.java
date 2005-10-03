@@ -41,7 +41,7 @@ public class ImportSettingsStep extends WizardStep {
   public ImportSettingsStep(CvsWizard wizard,
                             SelectImportLocationStep selectImportLocationStep,
                             ImportConfiguration importConfiguration) {
-    super("Import Settings", wizard);
+    super(com.intellij.CvsBundle.message("dialog.title.import.settings"), wizard);
 
     myCheckoutAfterImport.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {

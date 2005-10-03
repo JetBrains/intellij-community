@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.generation;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.generation.ui.GenerateEqualsWizard;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -12,8 +13,8 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 
 /**
  * @author dsl
@@ -42,12 +43,13 @@ public class GenerateEqualsHandler extends GenerateMembersHandlerBase {
     boolean needEquals = equalsMethod == null;
     boolean needHashCode = hashCodeMethod == null;
     if (!needEquals && !needHashCode) {
-      final String classText =
-              aClass instanceof PsiAnonymousClass ? "this anonymous class" :
-              "class " + aClass.getQualifiedName() ;
-      String text = "Methods 'boolean equals(Object)' and 'int hashCode()' are already defined\n" +
-                    "for " + classText + ". Do you want to delete them and proceed?";
-      if (Messages.showYesNoDialog(project, text, "Generate equals() and hashCode()", Messages.getQuestionIcon()) == DialogWrapper.OK_EXIT_CODE) {
+      String text = aClass instanceof PsiAnonymousClass
+                    ? CodeInsightBundle.message("generate.equals.and.hashcode.already.defined.warning.anonymous")
+                    : CodeInsightBundle.message("generate.equals.and.hashcode.already.defined.warning", aClass.getQualifiedName());
+
+      if (Messages.showYesNoDialog(project, text,
+                                   CodeInsightBundle.message("generate.equals.and.hashcode.already.defined.title"),
+                                   Messages.getQuestionIcon()) == DialogWrapper.OK_EXIT_CODE) {
         if (!ApplicationManager.getApplication().runWriteAction(new Computable<Boolean>() {
             public Boolean compute() {
               try {
@@ -88,8 +90,8 @@ public class GenerateEqualsHandler extends GenerateMembersHandlerBase {
     catch (GenerateEqualsHelper.NoObjectClassException e) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
-            Messages.showErrorDialog("Cannot generate equals() and hashCode().\nNo java.lang.Object class found.",
-                                     "No java.lang.Object");
+            Messages.showErrorDialog(CodeInsightBundle.message("generate.equals.and.hashcode.error.no.object.class.message"),
+                                     CodeInsightBundle.message("generate.equals.and.hashcode.error.no.object.class.title"));
           }
         });
       return ArrayUtil.EMPTY_OBJECT_ARRAY;

@@ -24,14 +24,14 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiPackage;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.regex.Pattern;
 
 public class PatternPackageSet implements PackageSet {
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public static final String SCOPE_TEST = "test";
-  public static final String SCOPE_SOURCE = "src";
-  public static final String SCOPE_LIBRARY = "lib";
+  public static final @NonNls String SCOPE_TEST = "test";
+  public static final @NonNls String SCOPE_SOURCE = "src";
+  public static final @NonNls String SCOPE_LIBRARY = "lib";
   public static final String SCOPE_ANY = "";
 
   private Pattern myPattern;

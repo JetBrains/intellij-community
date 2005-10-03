@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.intention.impl;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -14,11 +15,11 @@ public class AddOverrideAnnotationAction implements IntentionAction {
   private static final String ourFQName = "java.lang.Override";
 
   public String getText() {
-    return "Add '@Override' Annotation";
+    return CodeInsightBundle.message("intention.add.override.annotation");
   }
 
   public String getFamilyName() {
-    return getText();
+    return CodeInsightBundle.message("intention.add.override.annotation.family");
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {

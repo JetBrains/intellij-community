@@ -1,6 +1,7 @@
 package com.intellij.openapi.vcs.configurable;
 
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.VcsBundle;
 
 class VcsWrapper {
   private final AbstractVcs myOriginal;
@@ -19,7 +20,7 @@ class VcsWrapper {
 
   protected String getDisplayName(final AbstractVcs vcs) {
     if (vcs == null) {
-      return "< None >";
+      return VcsBundle.message("none.vcs.presentation");
     }
     else {
       return vcs.getDisplayName();

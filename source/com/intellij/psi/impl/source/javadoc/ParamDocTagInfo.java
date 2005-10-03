@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.source.javadoc;
 
+import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lang.ASTNode;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -41,16 +42,16 @@ class ParamDocTagInfo implements JavadocTagInfo {
   }
 
   public String checkTagValue(PsiDocTagValue value) {
-    if (value == null) return "Parameter name expected";
+    if (value == null) return JavaErrorMessages.message("javadoc.param.tag.paramter.name.expected");
     final ASTNode firstChildNode = value.getNode().getFirstChildNode();
     if (firstChildNode != null &&
         firstChildNode.getElementType().equals(JavaDocTokenType.DOC_TAG_VALUE_LT)) {
       if (value.getNode().findChildByType(JavaDocTokenType.DOC_TAG_VALUE_TOKEN) == null) {
-        return "Type parameter name expected";
+        return JavaErrorMessages.message("javadoc.param.tag.type.parameter.name.expected");
       }
 
       if (value.getNode().findChildByType(JavaDocTokenType.DOC_TAG_VALUE_GT) == null) {
-        return "'>' expected";
+        return JavaErrorMessages.message("javadoc.param.tag.type.parameter.gt.expected");
       }
     }
     return null;

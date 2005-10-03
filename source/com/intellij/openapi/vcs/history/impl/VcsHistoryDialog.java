@@ -18,6 +18,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
@@ -25,6 +26,7 @@ import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.SortableColumnModel;
+import com.intellij.execution.ExecutionBundle;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -51,14 +53,14 @@ public class VcsHistoryDialog extends DialogWrapper {
   private final DiffPanel myDiffPanel;
   private final Project myProject;
 
-  private final static ColumnInfo REVISION = new ColumnInfo("Revision") {
+  private final static ColumnInfo REVISION = new ColumnInfo(VcsBundle.message("column.name.revision.list.revision")) {
     public Object valueOf(Object object) {
       return ((VcsFileRevision)object).getRevisionNumber();
     }
 
   };
 
-  private final static ColumnInfo DATE = new ColumnInfo("Date") {
+  private final static ColumnInfo DATE = new ColumnInfo(VcsBundle.message("column.name.revision.list.date")) {
     public Object valueOf(Object object) {
       Date date = ((VcsFileRevision)object).getRevisionDate();
       if (date == null) return "";
@@ -67,14 +69,14 @@ public class VcsHistoryDialog extends DialogWrapper {
 
   };
 
-  private final static ColumnInfo MESSAGE = new ColumnInfo("Message") {
+  private final static ColumnInfo MESSAGE = new ColumnInfo(VcsBundle.message("column.name.revision.list.message")) {
     public Object valueOf(Object object) {
       return ((VcsFileRevision)object).getCommitMessage();
     }
 
   };
 
-  private final static ColumnInfo AUTHOR = new ColumnInfo("Author") {
+  private final static ColumnInfo AUTHOR = new ColumnInfo(VcsBundle.message("column.name.revision.list.author")) {
     public Object valueOf(Object object) {
       return ((VcsFileRevision)object).getAuthor();
     }
@@ -87,7 +89,7 @@ public class VcsHistoryDialog extends DialogWrapper {
   protected final List<VcsFileRevision> myRevisions;
   private Splitter mySplitter;
   private final VirtualFile myFile;
-  private final JCheckBox myChangesOnlyCheckBox = new JCheckBox("Changes only");
+  private final JCheckBox myChangesOnlyCheckBox = new JCheckBox(VcsBundle.message("checkbox.show.changed.revisions.only"));
   private final Map<VcsFileRevision, String> myCachedContents = new com.intellij.util.containers.HashMap<VcsFileRevision, String>();
   private final JTextArea myComments = new JTextArea();
   private static final int CURRENT = 0;
@@ -171,7 +173,7 @@ public class VcsHistoryDialog extends DialogWrapper {
       }
     });
 
-    setTitle("History for File " + file.getName());
+    setTitle(VcsBundle.message("dialog.title.history.for.file", file.getName()));
   }
 
   public void show() {
@@ -214,7 +216,7 @@ public class VcsHistoryDialog extends DialogWrapper {
           try {
             for (int i = 0; i < revisionsToLoad.length; i++) {
               final VcsFileRevision vcsFileRevision = revisionsToLoad[i];
-              progressIndicator.setText2("Loading revision " + vcsFileRevision.getRevisionNumber());
+              progressIndicator.setText2(VcsBundle.message("progress.text2.loading.revision", vcsFileRevision.getRevisionNumber()));
               progressIndicator.setFraction((double)i / (double)revisionsToLoad.length);
               if (!myCachedContents.containsKey(vcsFileRevision)) {
                 try {
@@ -223,8 +225,8 @@ public class VcsHistoryDialog extends DialogWrapper {
                 catch (final VcsException e) {
                   ApplicationManager.getApplication().invokeLater(new Runnable() {
                     public void run() {
-                      Messages.showErrorDialog("Load Version", "Cannot load version " + vcsFileRevision.getRevisionNumber()
-                                                               + ":" + e.getLocalizedMessage());
+                      Messages.showErrorDialog(VcsBundle.message("message.text.cannot.load.version.bocause.of.error",
+                                                                 vcsFileRevision.getRevisionNumber(), e.getLocalizedMessage()), VcsBundle.message("message.title.load.version"));
                     }
                   });
                 } catch (ProcessCanceledException ex){
@@ -249,7 +251,7 @@ public class VcsHistoryDialog extends DialogWrapper {
           }
 
         }
-      }, "Loading Contents", false, myProject);
+      }, VcsBundle.message("progress.title.loading.contents"), false, myProject);
     }
 
   }
@@ -316,8 +318,8 @@ public class VcsHistoryDialog extends DialogWrapper {
     loadContentsFor(new VcsFileRevision[]{firstRev, secondRev});
     myDiffPanel.setContents(new SimpleContent(getContentToShow(firstRev), myContentFileType),
                             new SimpleContent(getContentToShow(secondRev), myContentFileType));
-    myDiffPanel.setTitle1("Revision " + firstRev.getRevisionNumber());
-    myDiffPanel.setTitle2("Revision " + secondRev.getRevisionNumber());
+    myDiffPanel.setTitle1(VcsBundle.message("diff.content.title.revision.number", firstRev.getRevisionNumber()));
+    myDiffPanel.setTitle2(VcsBundle.message("diff.content.title.revision.number", secondRev.getRevisionNumber()));
 
   }
 
@@ -379,7 +381,7 @@ public class VcsHistoryDialog extends DialogWrapper {
 
   protected Action[] createActions() {
     Action okAction = getOKAction();
-    okAction.putValue(Action.NAME, "Close");
+    okAction.putValue(Action.NAME, ExecutionBundle.message("close.tab.action.name"));
     if (myHelpId != null) {
       return new Action[]{okAction, getHelpAction()};
     }

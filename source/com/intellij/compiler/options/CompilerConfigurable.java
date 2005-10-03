@@ -5,6 +5,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.compiler.CompilerBundle;
 
 import javax.swing.*;
 
@@ -32,7 +33,7 @@ public class CompilerConfigurable implements ProjectComponent, Configurable {
   }
 
   public String getDisplayName() {
-    return "Compiler";
+    return CompilerBundle.message("compiler.configurable.display.name");
   }
 
   public boolean isModified() {

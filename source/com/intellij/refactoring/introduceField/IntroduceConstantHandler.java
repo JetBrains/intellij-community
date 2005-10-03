@@ -7,6 +7,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor;
@@ -14,7 +15,7 @@ import com.intellij.refactoring.util.occurences.ExpressionOccurenceManager;
 import com.intellij.refactoring.util.occurences.OccurenceManager;
 
 public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
-  public static final String REFACTORING_NAME = "Introduce Constant";
+  public static final String REFACTORING_NAME = com.intellij.refactoring.RefactoringBundle.message("introduce.constant.title");
 
   protected String getHelpID() {
     return /*HelpID.INTRODUCE_CONSTANT*/ null;
@@ -35,7 +36,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
     }
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     final ElementToWorkOn elementToWorkOn = ElementToWorkOn.getElementToWorkOn(editor, file,
-            REFACTORING_NAME, getHelpID(), project
+                                                                               REFACTORING_NAME, getHelpID(), project
     );
 
     if (elementToWorkOn == null) return;
@@ -53,8 +54,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
 
   protected boolean invokeImpl(Project project, final PsiLocalVariable localVariable, Editor editor) {
     final LocalToFieldHandler localToFieldHandler = new LocalToFieldHandler(project, true);
-    final boolean result = localToFieldHandler.convertLocalToField(localVariable, editor);
-    return result;
+    return localToFieldHandler.convertLocalToField(localVariable, editor);
   }
 
 
@@ -73,25 +73,19 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
 
     if (localVariable == null) {
       if (!isStaticFinalInitializer(expr)) {
-        String message =
-                "Cannot perform the refactoring.\n" +
-                "Selected expression cannot be a constant initializer.";
+        String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("selected.expression.cannot.be.a.constant.initializer"));
         RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, getHelpID(), project);
         return null;
       }
     } else {
       final PsiExpression initializer = localVariable.getInitializer();
       if (initializer == null) {
-        String message =
-                "Cannot perform the refactoring.\n" +
-                "Variable " + localVariable.getName() + " does not have an initializer.";
+        String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("variable.does.not.have.an.initializer", localVariable.getName()));
         RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, getHelpID(), project);
         return null;
       }
       if (!isStaticFinalInitializer(initializer)) {
-        String message =
-                "Cannot perform the refactoring.\n" +
-                "Initializer for variable " + localVariable.getName() + " cannot be a constant initializer.";
+        String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("initializer.for.variable.cannot.be.a.constant.initializer", localVariable.getName()));
         RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, getHelpID(), project);
         return null;
       }
@@ -104,16 +98,16 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
     dialog.show();
     if (!dialog.isOK()) {
       if (occurences.length > 1) {
-        WindowManager.getInstance().getStatusBar(project).setInfo("Press Escape to remove the highlighting");
+        WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
       }
       return null;
     }
     return new Settings(dialog.getEnteredName(), dialog.isReplaceAllOccurrences(),
-            true, true, BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION,
-            dialog.getFieldVisibility(),
-            localVariable,
-            dialog.getSelectedType(), dialog.isDeleteVariable(),
-            dialog.getDestinationClass());
+                        true, true, BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION,
+                        dialog.getFieldVisibility(),
+                        localVariable,
+                        dialog.getSelectedType(), dialog.isDeleteVariable(),
+                        dialog.getDestinationClass(), dialog.isAnnotateAsNonNls());
   }
 
 
@@ -130,8 +124,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
   }
 
   protected OccurenceManager createOccurenceManager(final PsiExpression selectedExpr, final PsiClass parentClass) {
-    OccurenceManager occurenceManager = new ExpressionOccurenceManager(selectedExpr, parentClass, null);
-    return occurenceManager;
+    return new ExpressionOccurenceManager(selectedExpr, parentClass, null);
   }
 
   private static class IsStaticFinalInitializerExpression extends ClassMemberReferencesVisitor {

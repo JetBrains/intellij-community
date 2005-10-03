@@ -1,5 +1,8 @@
 package com.intellij.ide.hierarchy.method;
 
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.OccurenceNavigator;
+import com.intellij.ide.OccurenceNavigatorSupport;
 import com.intellij.ide.actions.CloseTabToolbarAction;
 import com.intellij.ide.actions.ToolbarHelpAction;
 import com.intellij.ide.hierarchy.*;
@@ -8,6 +11,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.util.IconLoader;
@@ -21,7 +25,9 @@ import com.intellij.ui.content.Content;
 import com.intellij.util.Alarm;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.ui.Tree;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -30,12 +36,14 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
+import java.text.MessageFormat;
 import java.util.*;
 import java.util.List;
 
-public final class MethodHierarchyBrowser extends JPanel implements DataProvider {
+public final class MethodHierarchyBrowser extends JPanel implements DataProvider, OccurenceNavigator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.hierarchy.method.MethodHierarchyBrowser");
 
+  @NonNls
   private final static String HELP_ID = "viewingStructure.methodHierarchy";
 
   private Content myContent;
@@ -52,8 +60,9 @@ public final class MethodHierarchyBrowser extends JPanel implements DataProvider
 
   private final AutoScrollToSourceHandler myAutoScrollToSourceHandler;
 
-  static final String METHOD_HIERARCHY_BROWSER_DATA_CONSTANT = "com.intellij.ide.hierarchy.type.MethodHierarchyBrowser";
+  @NonNls static final String METHOD_HIERARCHY_BROWSER_DATA_CONSTANT = "com.intellij.ide.hierarchy.type.MethodHierarchyBrowser";
   private List<Runnable> myRunOnDisposeList = new ArrayList<Runnable>();
+  private final HashMap<Object, OccurenceNavigator> myOccurrenceNavigators = new HashMap<Object, OccurenceNavigator>();
 
   public MethodHierarchyBrowser(final Project project, final PsiMethod method) {
     myProject = project;
@@ -81,6 +90,23 @@ public final class MethodHierarchyBrowser extends JPanel implements DataProvider
     while (keys.hasMoreElements()) {
       final Object key = keys.nextElement();
       final JTree tree = myTrees.get(key);
+      myOccurrenceNavigators.put(key, new OccurenceNavigatorSupport(tree){
+        @Nullable
+        protected Navigatable createDescriptorForNode(DefaultMutableTreeNode node) {
+          MethodHierarchyNodeDescriptor nodeDescriptor = (MethodHierarchyNodeDescriptor)node.getUserObject();
+          final PsiElement psiElement = nodeDescriptor.getTargetElement();
+          if (psiElement == null || !psiElement.isValid()) return null;
+          return new OpenFileDescriptor(psiElement.getProject(), psiElement.getContainingFile().getVirtualFile(), psiElement.getTextOffset());
+        }
+
+        public String getNextOccurenceActionName() {
+          return IdeBundle.message("hierarchy.method.next.occurence.name");
+        }
+
+        public String getPreviousOccurenceActionName() {
+          return IdeBundle.message("hierarchy.method.prev.occurence.name");
+        }
+      });
       myTreePanel.add(new JScrollPane(tree), key);
     }
     add(myTreePanel, BorderLayout.CENTER);
@@ -96,7 +122,7 @@ public final class MethodHierarchyBrowser extends JPanel implements DataProvider
                                                          GridBagConstraints.HORIZONTAL, new Insets(3, 5, 0, 5), 0, 0);
 
     label =
-    new JLabel("method is defined in the class", IconLoader.getIcon("/hierarchy/methodDefined.png"),
+    new JLabel(IdeBundle.message("hierarchy.legend.method.is.defined.in.class"), IconLoader.getIcon("/hierarchy/methodDefined.png"),
                SwingConstants.LEFT);
     label.setUI(new MultiLineLabelUI());
     label.setIconTextGap(10);
@@ -104,7 +130,7 @@ public final class MethodHierarchyBrowser extends JPanel implements DataProvider
 
     gc.gridy++;
     label =
-    new JLabel("method is not defined in the class but defined in superclass",
+    new JLabel(IdeBundle.message("hierarchy.legend.method.defined.in.superclass"),
                IconLoader.getIcon("/hierarchy/methodNotDefined.png"), SwingConstants.LEFT);
     label.setUI(new MultiLineLabelUI());
     label.setIconTextGap(10);
@@ -112,7 +138,7 @@ public final class MethodHierarchyBrowser extends JPanel implements DataProvider
 
     gc.gridy++;
     label =
-    new JLabel("method should be defined since the class is not abstract",
+    new JLabel(IdeBundle.message("hierarchy.legend.method.should.be.defined"),
                IconLoader.getIcon("/hierarchy/shouldDefineMethod.png"), SwingConstants.LEFT);
     label.setUI(new MultiLineLabelUI());
     label.setIconTextGap(10);
@@ -126,7 +152,7 @@ public final class MethodHierarchyBrowser extends JPanel implements DataProvider
     tree.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
     tree.setToggleClickCount(-1);
     tree.setCellRenderer(new HierarchyNodeRenderer());
-    tree.putClientProperty("JTree.lineStyle", "Angled");
+    UIUtil.setLineStyleAngled(tree);
     ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_METHOD_HIERARCHY_POPUP);
     PopupHandler.installPopupHandler(tree, group, ActionPlaces.METHOD_HIERARCHY_VIEW_POPUP, ActionManager.getInstance());
     EditSourceOnDoubleClickHandler.install(tree);
@@ -185,7 +211,7 @@ public final class MethodHierarchyBrowser extends JPanel implements DataProvider
     final PsiMethod method = (PsiMethod)element;
 
     if (myContent != null) {
-      myContent.setDisplayName(typeName + method.getName());
+      myContent.setDisplayName(MessageFormat.format(typeName, method.getName()));
     }
 
     myCardLayout.show(myTreePanel, typeName);
@@ -242,9 +268,34 @@ public final class MethodHierarchyBrowser extends JPanel implements DataProvider
     return toolBar;
   }
 
+  public boolean hasNextOccurence() {
+    return myOccurrenceNavigators.get(myCurrentViewName).hasNextOccurence();
+  }
+
+  public boolean hasPreviousOccurence() {
+    return myOccurrenceNavigators.get(myCurrentViewName).hasPreviousOccurence();
+  }
+
+  public OccurenceInfo goNextOccurence() {
+    return myOccurrenceNavigators.get(myCurrentViewName).goNextOccurence();
+  }
+
+  public OccurenceInfo goPreviousOccurence() {
+    return myOccurrenceNavigators.get(myCurrentViewName).goPreviousOccurence();
+  }
+
+  public String getNextOccurenceActionName() {
+    return myOccurrenceNavigators.get(myCurrentViewName).getNextOccurenceActionName();
+  }
+
+  public String getPreviousOccurenceActionName() {
+    return myOccurrenceNavigators.get(myCurrentViewName).getPreviousOccurenceActionName();
+  }
+
   final class RefreshAction extends com.intellij.ide.actions.RefreshAction {
     public RefreshAction() {
-      super("Refresh", "Refresh", IconLoader.getIcon("/actions/sync.png"));
+      super(IdeBundle.message("action.refresh"),
+            IdeBundle.message("action.refresh"), IconLoader.getIcon("/actions/sync.png"));
     }
 
     public final void actionPerformed(final AnActionEvent e) {
@@ -285,7 +336,7 @@ public final class MethodHierarchyBrowser extends JPanel implements DataProvider
 
   final class ShowImplementationsOnlyAction extends ToggleAction {
     public ShowImplementationsOnlyAction() {
-      super("Hide classes where the method is legally not implemented", null, IconLoader.getIcon("/ant/filter.png")); // TODO[anton] use own icon!!!
+      super(IdeBundle.message("action.hide.non.implementations"), null, IconLoader.getIcon("/ant/filter.png")); // TODO[anton] use own icon!!!
     }
 
     public final boolean isSelected(final AnActionEvent event) {
@@ -348,8 +399,7 @@ public final class MethodHierarchyBrowser extends JPanel implements DataProvider
   private PsiMethod[] getSelectedMethods() {
     MethodHierarchyNodeDescriptor[] descriptors = getSelectedDescriptors();
     ArrayList<PsiMethod> psiElements = new ArrayList<PsiMethod>();
-    for (int i = 0; i < descriptors.length; i++) {
-      MethodHierarchyNodeDescriptor descriptor = descriptors[i];
+    for (MethodHierarchyNodeDescriptor descriptor : descriptors) {
       PsiElement element = descriptor.getTargetElement();
       if (!(element instanceof PsiMethod)) continue;
       psiElements.add((PsiMethod)element);
@@ -360,8 +410,7 @@ public final class MethodHierarchyBrowser extends JPanel implements DataProvider
   private PsiElement[] getSelectedElements() {
     MethodHierarchyNodeDescriptor[] descriptors = getSelectedDescriptors();
     ArrayList<PsiElement> elements = new ArrayList<PsiElement>();
-    for (int i = 0; i < descriptors.length; i++) {
-      MethodHierarchyNodeDescriptor descriptor = descriptors[i];
+    for (MethodHierarchyNodeDescriptor descriptor : descriptors) {
       PsiElement element = descriptor.getTargetElement();
       elements.add(element);
     }
@@ -397,8 +446,7 @@ public final class MethodHierarchyBrowser extends JPanel implements DataProvider
       final PsiElement[] selectedElements = getSelectedElements();
       if (selectedElements == null || selectedElements.length == 0) return null;
       final ArrayList<Navigatable> navigatables = new ArrayList<Navigatable>();
-      for (int i = 0; i < selectedElements.length; i++) {
-        PsiElement selectedElement = selectedElements[i];
+      for (PsiElement selectedElement : selectedElements) {
         if (selectedElement instanceof Navigatable && selectedElement.isValid()) {
           navigatables.add((Navigatable)selectedElement);
         }
@@ -410,12 +458,11 @@ public final class MethodHierarchyBrowser extends JPanel implements DataProvider
 
   public final void dispose() {
     final Collection<HierarchyTreeBuilder> builders = myBuilders.values();
-    for (Iterator<HierarchyTreeBuilder> iterator = builders.iterator(); iterator.hasNext();) {
-      final HierarchyTreeBuilder builder = iterator.next();
+    for (final HierarchyTreeBuilder builder : builders) {
       builder.dispose();
     }
-    for (Iterator<Runnable> it = myRunOnDisposeList.iterator(); it.hasNext();) {
-      it.next().run();
+    for (final Runnable aRunOnDisposeList : myRunOnDisposeList) {
+      aRunOnDisposeList.run();
     }
     myRunOnDisposeList.clear();
     myBuilders.clear();
@@ -423,7 +470,8 @@ public final class MethodHierarchyBrowser extends JPanel implements DataProvider
 
   private final class AlphaSortAction extends ToggleAction {
     public AlphaSortAction() {
-      super("Sort Alphabetically", "Sort Alphabetically", IconLoader.getIcon("/objectBrowser/sorted.png"));
+      super(IdeBundle.message("action.sort.alphabetically"),
+            IdeBundle.message("action.sort.alphabetically"), IconLoader.getIcon("/objectBrowser/sorted.png"));
     }
 
     public final boolean isSelected(final AnActionEvent event) {
@@ -435,8 +483,7 @@ public final class MethodHierarchyBrowser extends JPanel implements DataProvider
       hierarchyBrowserManager.SORT_ALPHABETICALLY = flag;
       final Comparator<NodeDescriptor> comparator = hierarchyBrowserManager.getComparator();
       final Collection<HierarchyTreeBuilder> builders = myBuilders.values();
-      for (Iterator<HierarchyTreeBuilder> iterator = builders.iterator(); iterator.hasNext();) {
-        final HierarchyTreeBuilder builder = iterator.next();
+      for (final HierarchyTreeBuilder builder : builders) {
         builder.setNodeDescriptorComparator(comparator);
       }
     }
@@ -450,7 +497,7 @@ public final class MethodHierarchyBrowser extends JPanel implements DataProvider
 
   public static final class BaseOnThisMethodAction extends AnAction {
     public BaseOnThisMethodAction() {
-      super("Base on This Method");
+      super(IdeBundle.message("action.base.on.this.method"));
     }
 
     public final void actionPerformed(final AnActionEvent event) {
@@ -522,8 +569,7 @@ public final class MethodHierarchyBrowser extends JPanel implements DataProvider
       return new MethodHierarchyNodeDescriptor[0];
     }
     final ArrayList<MethodHierarchyNodeDescriptor> list = new ArrayList<MethodHierarchyNodeDescriptor>(paths.length);
-    for (int i = 0; i < paths.length; i++) {
-      final TreePath path = paths[i];
+    for (final TreePath path : paths) {
       final Object lastPathComponent = path.getLastPathComponent();
       if (lastPathComponent instanceof DefaultMutableTreeNode) {
         final DefaultMutableTreeNode node = (DefaultMutableTreeNode)lastPathComponent;

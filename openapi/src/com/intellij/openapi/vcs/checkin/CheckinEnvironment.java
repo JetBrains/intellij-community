@@ -28,6 +28,8 @@ import com.intellij.util.ui.ColumnInfo;
 
 import java.util.List;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * author: lesya
  */
@@ -56,7 +58,7 @@ public interface CheckinEnvironment {
 
   String prepareCheckinMessage(String text);
 
-  String getHelpId();
+  @NonNls String getHelpId();
 
   List<VcsException> commit(CheckinProjectDialogImplementer dialog, Project project);
 

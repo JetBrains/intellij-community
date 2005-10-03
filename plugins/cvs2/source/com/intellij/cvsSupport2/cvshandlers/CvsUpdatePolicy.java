@@ -33,13 +33,14 @@ package com.intellij.cvsSupport2.cvshandlers;
 
 import com.intellij.openapi.vcs.update.FileGroup;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
+import org.jetbrains.annotations.NonNls;
 
 public class CvsUpdatePolicy {
-  public static final String BYNARY_MERGED_ID = "BINARY_MERGED";
-  public static final String UNKNOWN_TYPE_ID = "UNKNOWN_TYPE";
-  public static final String MODIFIED_REMOVED_FROM_SERVER_ID = "MOD_REMOVED_FROM_SERVER";
-  public static final String LOCALLY_REMOVED_MODIFIED_ON_SERVER_ID = "LOCALLY_REMOVED_MODIFIED_ON_SERVER";
-  public static final String CREATED_BY_SECOND_PARTY_ID = "CREATED_BY_SECOND_PARTY";
+  @NonNls public static final String BYNARY_MERGED_ID = "BINARY_MERGED";
+  @NonNls public static final String UNKNOWN_TYPE_ID = "UNKNOWN_TYPE";
+  @NonNls public static final String MODIFIED_REMOVED_FROM_SERVER_ID = "MOD_REMOVED_FROM_SERVER";
+  @NonNls public static final String LOCALLY_REMOVED_MODIFIED_ON_SERVER_ID = "LOCALLY_REMOVED_MODIFIED_ON_SERVER";
+  @NonNls public static final String CREATED_BY_SECOND_PARTY_ID = "CREATED_BY_SECOND_PARTY";
 
   public static UpdatedFiles createUpdatedFiles() {
     UpdatedFiles result = UpdatedFiles.create();
@@ -50,12 +51,12 @@ public class CvsUpdatePolicy {
   }
 
   public static void fillGroups(UpdatedFiles result) {
-    result.registerGroup(new FileGroup("Unknown", "Unknown", false, CvsUpdatePolicy.UNKNOWN_TYPE_ID, false));
+    result.registerGroup(new FileGroup(com.intellij.CvsBundle.message("update.status.unknown"), com.intellij.CvsBundle.message("update.status.unknown"), false, CvsUpdatePolicy.UNKNOWN_TYPE_ID, false));
     result.registerGroup(
-      new FileGroup("Locally modified removed from server", "Locally modified removed from server",false, CvsUpdatePolicy.MODIFIED_REMOVED_FROM_SERVER_ID, false));
+      new FileGroup(com.intellij.CvsBundle.message("update.status.locally.modified.removed.from.server"), com.intellij.CvsBundle.message("update.status.locally.modified.removed.from.server"),false, CvsUpdatePolicy.MODIFIED_REMOVED_FROM_SERVER_ID, false));
     result.registerGroup(
-      new FileGroup("Locally removed modified on server", "Locally removed modified on server", false, CvsUpdatePolicy.LOCALLY_REMOVED_MODIFIED_ON_SERVER_ID, false));
-    result.registerGroup(new FileGroup("Created by second party", "Created by second party", true, CvsUpdatePolicy.CREATED_BY_SECOND_PARTY_ID, false));
-    result.registerGroup(new FileGroup("Binary file has to be merged", "Binary file has to be merged", false, CvsUpdatePolicy.BYNARY_MERGED_ID, false));
+      new FileGroup(com.intellij.CvsBundle.message("update.status.locally.removed.modified.on.server"), com.intellij.CvsBundle.message("update.status.locally.removed.modified.on.server"), false, CvsUpdatePolicy.LOCALLY_REMOVED_MODIFIED_ON_SERVER_ID, false));
+    result.registerGroup(new FileGroup(com.intellij.CvsBundle.message("update.status.created.by.second.party"), com.intellij.CvsBundle.message("update.status.created.by.second.party"), true, CvsUpdatePolicy.CREATED_BY_SECOND_PARTY_ID, false));
+    result.registerGroup(new FileGroup(com.intellij.CvsBundle.message("update.status.binary.file.has.to.be.merged"), com.intellij.CvsBundle.message("update.status.binary.file.has.to.be.merged"), false, CvsUpdatePolicy.BYNARY_MERGED_ID, false));
   }
 }

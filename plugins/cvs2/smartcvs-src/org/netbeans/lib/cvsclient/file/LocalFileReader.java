@@ -1,7 +1,9 @@
 package org.netbeans.lib.cvsclient.file;
 
 import org.netbeans.lib.cvsclient.IConnectionStreams;
+import org.netbeans.lib.cvsclient.SmartCvsSrcBundle;
 import org.netbeans.lib.cvsclient.util.BugLog;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.*;
 import java.util.Collection;
@@ -22,8 +24,9 @@ public final class LocalFileReader
 	// Fields =================================================================
 
 	private final ISendTextFilePreprocessor sendTextFilePreprocessor;
+  @NonNls private static final String CVS_DIR = "CVS";
 
-	// Setup ==================================================================
+  // Setup ==================================================================
 
 	public LocalFileReader(ISendTextFilePreprocessor sendTextFilePreprocessor) {
 		BugLog.getInstance().assertNotNull(sendTextFilePreprocessor);
@@ -40,7 +43,8 @@ public final class LocalFileReader
 	public void transmitTextFile(FileObject fileObject, IConnectionStreams connectionStreams, ICvsFileSystem cvsFileSystem) throws IOException {
 		final File file = cvsFileSystem.getLocalFileSystem().getFile(fileObject);
 		if (!file.exists()) {
-			throw new FileNotFoundException("File '" + file.getAbsolutePath() + "' does not exist.");
+			throw new FileNotFoundException(
+                          SmartCvsSrcBundle.message("file.does.not.exist.error.message", file.getAbsolutePath()));
 		}
 
 		final File fileToSend = sendTextFilePreprocessor.getPreprocessedTextFile(file, connectionStreams.getWriterFactory());
@@ -136,7 +140,7 @@ public final class LocalFileReader
 		for (int i = 0; i < filesAndDirectories.length; i++) {
 			final File fileOrDirectory = filesAndDirectories[i];
 			final String name = fileOrDirectory.getName();
-			if (name.equals("CVS")) {
+			if (name.equals(CVS_DIR)) {
 				continue;
 			}
 

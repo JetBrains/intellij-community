@@ -8,6 +8,7 @@ import com.intellij.execution.filters.RegexpFilter;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.PopupHandler;
+import com.intellij.CommonBundle;
 
 import javax.swing.*;
 import javax.swing.text.BadLocationException;
@@ -26,7 +27,7 @@ class FilterDialog extends DialogWrapper {
     super(component, true);
     init();
     setOKActionEnabled(true);
-    myRegexpField.setToolTipText("Press the right mouse button to see the list of available macros");
+    myRegexpField.setToolTipText(ToolsBundle.message("tools.filters.add.macro.tooltip"));
   }
 
   public static boolean editFilter(FilterInfo filterInfo, JComponent parentComponent, String title) throws InvalidExpressionException {
@@ -61,7 +62,7 @@ class FilterDialog extends DialogWrapper {
     constr.weighty = 0;
     constr.gridwidth = 1;
     constr.insets = new Insets(5, 0, 0, 0);
-    panel.add(new JLabel("Name:"), constr);
+    panel.add(new JLabel(ToolsBundle.message("tools.filters.add.name.label")), constr);
 
     constr.gridx = 0;
     constr.gridy = 1;
@@ -73,7 +74,7 @@ class FilterDialog extends DialogWrapper {
     constr.gridx = 0;
     constr.gridy = 2;
     constr.weightx = 0;
-    panel.add(new JLabel("Description:"), constr);
+    panel.add(new JLabel(ToolsBundle.message("tools.filters.add.description.label")), constr);
 
     constr.gridx = 0;
     constr.gridy = 3;
@@ -85,7 +86,7 @@ class FilterDialog extends DialogWrapper {
     constr.gridx = 0;
     constr.gridwidth = 2;
     constr.weightx = 0;
-    panel.add(new JLabel("Regular expression to match output:"), constr);
+    panel.add(new JLabel(ToolsBundle.message("tools.filters.add.regex.label")), constr);
 
     constr.gridx = 0;
     constr.gridy = 5;
@@ -115,20 +116,20 @@ class FilterDialog extends DialogWrapper {
   protected void doOKAction() {
     String errorMessage = null;
     if (noText(myNameField.getText())) {
-      errorMessage = "Filter name is not defined";
+      errorMessage = ToolsBundle.message("tools.filters.add.name.required.error");
     } else if (noText(myRegexpField.getText())) {
-      errorMessage = "Regular expression must be defined";
+      errorMessage = ToolsBundle.message("tools.filters.add.regex.required.error");
     }
 
     if (errorMessage != null) {
-      Messages.showMessageDialog(getContentPane(), errorMessage, "Error", Messages.getErrorIcon());
+      Messages.showMessageDialog(getContentPane(), errorMessage, CommonBundle.getErrorTitle(), Messages.getErrorIcon());
       return;
     }
 
     try {
       checkRegexp(myRegexpField.getText());
     } catch (InvalidExpressionException e) {
-      Messages.showMessageDialog(getContentPane(), e.getMessage(), "Invalid Regular Expression", Messages.getErrorIcon());
+      Messages.showMessageDialog(getContentPane(), e.getMessage(), ToolsBundle.message("tools.filters.add.regex.invalid.title"), Messages.getErrorIcon());
       return;
     }
     super.doOKAction();

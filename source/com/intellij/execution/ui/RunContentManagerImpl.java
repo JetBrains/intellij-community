@@ -6,6 +6,7 @@ package com.intellij.execution.ui;
 
 import com.intellij.execution.ExecutionRegistry;
 import com.intellij.execution.TerminateRemoteProcessDialog;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.JavaProgramRunner;
 import com.intellij.execution.runners.RunnerInfo;
@@ -541,7 +542,7 @@ public class RunContentManagerImpl implements RunContentManager {
   }
 
   public void waitForProcess(final RunContentDescriptor descriptor) {
-    String progressTitle = "Terminating "  + "'" + descriptor.getDisplayName() + "'";
+    String progressTitle =  ExecutionBundle.message("terminating.process.progress.title", descriptor.getDisplayName());
 
     ApplicationManager.getApplication().runProcessWithProgressSynchronously(new Runnable() {
       private ProgressIndicator myProgressIndicator;
@@ -574,7 +575,7 @@ public class RunContentManagerImpl implements RunContentManager {
 
       public void run() {
         myProgressIndicator = ProgressManager.getInstance().getProgressIndicator();
-        myProgressIndicator.setText("Waiting for VM detach");
+        myProgressIndicator.setText(ExecutionBundle.message("waiting.for.vm.detach.progress.text"));
 
         myWaitThread.start();
         myCancelListener.start();

@@ -20,6 +20,7 @@ public final class SelectionState{
 
   SelectionState(final GuiEditor editor) {
     if (editor == null) {
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("editor cannot be null");
     }
     mySelectionHistory = new Stack<ComponentPtr[]>();

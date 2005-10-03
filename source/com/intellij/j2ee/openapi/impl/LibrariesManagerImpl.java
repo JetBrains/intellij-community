@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.text.StringTokenizer;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * author: lesya
@@ -42,7 +43,7 @@ public class LibrariesManagerImpl extends LibrariesManager implements Applicatio
 
   private static boolean findInFile(VirtualFile root, final StringTokenizer filePath) {
     if (!filePath.hasMoreTokens()) return true;
-    String name = filePath.nextToken();
+    @NonNls String name = filePath.nextToken();
     if (!filePath.hasMoreTokens()) {
       name += ".class";
     }

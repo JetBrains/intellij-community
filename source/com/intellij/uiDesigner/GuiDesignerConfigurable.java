@@ -26,6 +26,7 @@ import com.intellij.uiDesigner.palette.GroupItem;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.CommonBundle;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -38,6 +39,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.text.MessageFormat;
 
 /**
  * @author Anton Katilin
@@ -68,7 +70,7 @@ public final class GuiDesignerConfigurable implements Configurable, ProjectCompo
   public void disposeComponent() {}
 
   public String getDisplayName() {
-    return "GUI Designer";
+    return UIDesignerBundle.message("title.gui.designer");
   }
 
   public Icon getIcon() {
@@ -87,8 +89,8 @@ public final class GuiDesignerConfigurable implements Configurable, ProjectCompo
     myPaletteUI = new MyPaletteUI();
 
     final TabbedPaneWrapper wrapper = new TabbedPaneWrapper();
-    wrapper.addTab("General", myGeneralUI.myPanel);
-    wrapper.addTab("Palette", myPaletteUI.myPanel);
+    wrapper.addTab(UIDesignerBundle.message("tab.general"), myGeneralUI.myPanel);
+    wrapper.addTab(UIDesignerBundle.message("tab.palette"), myPaletteUI.myPanel);
 
     return wrapper.getComponent();
   }
@@ -152,7 +154,7 @@ public final class GuiDesignerConfigurable implements Configurable, ProjectCompo
 
   public void apply() {
     final DispatchThreadProgressWindow progressWindow = new DispatchThreadProgressWindow(false, myProject);
-    progressWindow.setTitle("Converting project...");
+    progressWindow.setTitle(UIDesignerBundle.message("title.converting.project"));
     progressWindow.start();
 
     GuiDesignerConfiguration.getInstance(myProject).COPY_FORMS_RUNTIME_TO_OUTPUT = myGeneralUI.myChkCopyFormsRuntime.isSelected();
@@ -264,8 +266,8 @@ public final class GuiDesignerConfigurable implements Configurable, ProjectCompo
     // Ask group name
     final String groupName = Messages.showInputDialog(
       myPaletteUI.myPanel,
-      "Enter a new group name:",
-      "Add Group",
+      UIDesignerBundle.message("message.enter.group.name"),
+      UIDesignerBundle.message("title.add.group"),
       Messages.getQuestionIcon()
     );
     if(groupName == null){
@@ -276,7 +278,9 @@ public final class GuiDesignerConfigurable implements Configurable, ProjectCompo
     final ArrayList<GroupItem> groups = getGroupsFromTree();
     for(int i = groups.size() - 1; i >= 0; i--){
       if(groupName.equals(groups.get(i).getName())){
-        Messages.showErrorDialog(myPaletteUI.myPanel, "Group name should be unique", "Error");
+        Messages.showErrorDialog(myPaletteUI.myPanel,
+                                 UIDesignerBundle.message("error.group.name.should.be.unique"),
+                                 CommonBundle.getErrorTitle());
         return;
       }
     }
@@ -300,6 +304,7 @@ public final class GuiDesignerConfigurable implements Configurable, ProjectCompo
         selectedGroupNode = (DefaultMutableTreeNode)lastSelectedNode.getParent();
       }
       else{
+        //noinspection HardCodedStringLiteral
         throw new RuntimeException("unknown userObject: " + lastSelectedNode.getUserObject());
       }
 
@@ -348,8 +353,8 @@ public final class GuiDesignerConfigurable implements Configurable, ProjectCompo
     // Ask group name
     final String groupName = Messages.showInputDialog(
       myPaletteUI.myPanel,
-      "Enter a group name:",
-      "Edit Group",
+      UIDesignerBundle.message("edit.enter.group.name"),
+      UIDesignerBundle.message("title.edit.group"),
       Messages.getQuestionIcon(),
       groupToBeEdited.getName(),
       null
@@ -362,7 +367,8 @@ public final class GuiDesignerConfigurable implements Configurable, ProjectCompo
     final ArrayList<GroupItem> groups = getGroupsFromTree();
     for(int i = groups.size() - 1; i >= 0; i--){
       if(groupName.equals(groups.get(i).getName())){
-        Messages.showErrorDialog(myPaletteUI.myPanel, "Group name should be unique", "Error");
+        Messages.showErrorDialog(myPaletteUI.myPanel, UIDesignerBundle.message("error.group.name.unique"),
+                                 CommonBundle.getErrorTitle());
         return;
       }
     }
@@ -381,8 +387,8 @@ public final class GuiDesignerConfigurable implements Configurable, ProjectCompo
     if(!isRemovable(groupToBeRemoved)){
       Messages.showInfoMessage(
         myPaletteUI.myPanel,
-        "You cannot remove group that contains default palette component(s)",
-        "Error"
+        UIDesignerBundle.message("error.cannot.remove.default.group"),
+        CommonBundle.getErrorTitle()
       );
       return;
     }
@@ -417,6 +423,7 @@ public final class GuiDesignerConfigurable implements Configurable, ProjectCompo
         groupNode = (DefaultMutableTreeNode)lastPathComponent.getParent();
       }
       else{
+        //noinspection HardCodedStringLiteral
         throw new RuntimeException("unknown user object: " + lastPathComponent.getUserObject());
       }
     }
@@ -433,7 +440,7 @@ public final class GuiDesignerConfigurable implements Configurable, ProjectCompo
       true/*all user defined components are removable*/
     );
     final ComponentItemDialog dialog = new ComponentItemDialog(myProject, myPaletteUI.myPanel, itemToBeAdded);
-    dialog.setTitle("Add Component");
+    dialog.setTitle(UIDesignerBundle.message("title.add.component"));
     dialog.show();
     if(!dialog.isOK()){
       return;
@@ -470,7 +477,7 @@ public final class GuiDesignerConfigurable implements Configurable, ProjectCompo
     /*Edit selected item*/
     final ComponentItem itemToBeEdited = selectedItem.clone(); /*"Cancel" should work, so we need edit copy*/
     final ComponentItemDialog dialog = new ComponentItemDialog(myProject, myPaletteUI.myPanel, itemToBeEdited);
-    dialog.setTitle("Edit Component");
+    dialog.setTitle(UIDesignerBundle.message("title.edit.component"));
     dialog.show();
     if(!dialog.isOK()){
       return;
@@ -500,8 +507,8 @@ public final class GuiDesignerConfigurable implements Configurable, ProjectCompo
     if(!selectedItem.isRemovable()){
       Messages.showInfoMessage(
         myPaletteUI.myPanel,
-        "You cannot remove default palette component",
-        "Error"
+        UIDesignerBundle.message("error.cannot.remove.default.palette"),
+        CommonBundle.getErrorTitle()
       );
       return;
     }
@@ -700,7 +707,7 @@ public final class GuiDesignerConfigurable implements Configurable, ProjectCompo
     private void vanishGeneratedSources() {
       final PsiShortNamesCache cache = PsiManager.getInstance(myProject).getShortNamesCache();
       final PsiMethod[] methods = cache.getMethodsByName(FormSourceCodeGenerator.METHOD_NAME,
-                                                   GlobalSearchScope.projectScope(myProject));
+                                                         GlobalSearchScope.projectScope(myProject));
 
       for (int i = 0; i < methods.length; i++) {
         final PsiMethod method = methods[i];
@@ -711,7 +718,7 @@ public final class GuiDesignerConfigurable implements Configurable, ProjectCompo
             LOG.assertTrue(psiFile != null);
             final VirtualFile vFile = psiFile.getVirtualFile();
             LOG.assertTrue(vFile != null);
-            myProgressWindow.setText("Converting: " + vFile.getPresentableUrl());
+            myProgressWindow.setText(UIDesignerBundle.message("progress.converting", vFile.getPresentableUrl()));
             myProgressWindow.setFraction(((double)i) / ((double)methods.length));
             FormSourceCodeGenerator.cleanup(aClass);
           }
@@ -807,6 +814,7 @@ public final class GuiDesignerConfigurable implements Configurable, ProjectCompo
         // do nothing
       }
       else{
+        //noinspection HardCodedStringLiteral
         throw new RuntimeException("unknown object: " + obj);
       }
     }

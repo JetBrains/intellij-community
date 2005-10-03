@@ -21,6 +21,7 @@ public final class UIFormEditorProvider implements FileEditorProvider, Applicati
   
   public boolean accept(final Project project, final VirtualFile file){
     if (file == null){
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("file cannot be null");
     }
     return
@@ -31,6 +32,7 @@ public final class UIFormEditorProvider implements FileEditorProvider, Applicati
   
   public FileEditor createEditor(final Project project, final VirtualFile file){
     if (file == null){
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("file cannot be null");
     }
     LOG.assertTrue(accept(project, file));
@@ -39,6 +41,7 @@ public final class UIFormEditorProvider implements FileEditorProvider, Applicati
 
   public void disposeEditor(final FileEditor editor){
     if (editor == null){
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("editor cannot be null");
     }
     ((UIFormEditor)editor).dispose();

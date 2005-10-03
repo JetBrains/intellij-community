@@ -70,9 +70,11 @@ import org.netbeans.lib.cvsclient.file.ILocalFileReader;
 import org.netbeans.lib.cvsclient.file.ILocalFileWriter;
 import org.netbeans.lib.cvsclient.progress.IProgressViewer;
 import org.netbeans.lib.cvsclient.util.IIgnoreFileFilter;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.util.*;
+import java.text.MessageFormat;
 
 public abstract class CvsCommandOperation extends CvsOperation implements IFileInfoListener,
                                                                           IMessageListener,
@@ -176,7 +178,7 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
     LOG.debug(e);
     String message = getMessageFrom(null, e);
     if (message == null) {
-      return new CvsException("Unknown Error", cvsRoot);
+      return new CvsException(com.intellij.CvsBundle.message("exception.text.unknown.error"), cvsRoot);
     }
     return new CvsException(message, cvsRoot);
   };
@@ -253,7 +255,7 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
       modifyOptions(command.getGlobalOptions());
       String commandString = composeCommandString(root, command);
       cvsMessagesListener.commandStarted(commandString);
-      setProgressText("Command '" + getOperationName() + "' running for " + root.getCvsRootAsString());
+      setProgressText(com.intellij.CvsBundle.message("progress.text.command.running.for.file", getOperationName(), root.getCvsRootAsString()));
       command.execute(requestProcessor, eventManager, eventManager, clientEnvironment, new IProgressViewer() {
         public void setProgress(double value) {
         }
@@ -270,8 +272,9 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
     }
   }
 
-  protected abstract String getOperationName();
+  @NonNls protected abstract String getOperationName();
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private String composeCommandString(CvsRootProvider root, Command command) {
     StringBuffer result = new StringBuffer();
     result.append(root.getLocalRoot());

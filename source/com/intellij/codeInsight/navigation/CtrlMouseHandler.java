@@ -3,6 +3,7 @@ package com.intellij.codeInsight.navigation;
 import com.intellij.ant.PsiAntElement;
 import com.intellij.ant.impl.dom.impl.PsiAntTarget;
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
@@ -33,6 +34,9 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.ui.LightweightHint;
+import com.intellij.util.ui.UIUtil;
+import com.intellij.lang.LangBundle;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -180,7 +184,7 @@ public class CtrlMouseHandler implements ProjectComponent {
       buffer.append("\n ");
     }
 
-    private static void generateType(StringBuffer buffer, PsiType type, PsiElement context) {
+    private static void generateType(@NonNls StringBuffer buffer, PsiType type, PsiElement context) {
       if (type instanceof PsiPrimitiveType) {
         buffer.append(type.getCanonicalText());
 
@@ -294,10 +298,11 @@ public class CtrlMouseHandler implements ProjectComponent {
       return null;
     }
 
+    @SuppressWarnings({"HardCodedStringLiteral"})
     private static String generateClassInfo(PsiClass aClass) {
       StringBuffer buffer = new StringBuffer();
 
-      if (aClass instanceof PsiAnonymousClass) return "anonymous class";
+      if (aClass instanceof PsiAnonymousClass) return LangBundle.message("java.terms.anonymous.class");
 
       PsiFile file = aClass.getContainingFile();
       final Module module = ModuleUtil.findModuleForPsiElement(file);
@@ -315,7 +320,7 @@ public class CtrlMouseHandler implements ProjectComponent {
 
       generateModifiers(buffer, aClass);
 
-      buffer.append(aClass.isInterface() ? "interface " : aClass instanceof PsiTypeParameter ? "class parameter " : "class ");
+      buffer.append(LangBundle.message(aClass.isInterface() ? "java.terms.interface" : aClass instanceof PsiTypeParameter ? "java.terms.type.parameter" : "java.terms.class") + " ");
 
       buffer.append(JavaDocUtil.getShortestClassName(aClass, aClass));
 
@@ -384,6 +389,7 @@ public class CtrlMouseHandler implements ProjectComponent {
       return buffer.toString();
     }
 
+    @SuppressWarnings({"HardCodedStringLiteral"})
     private static String generateMethodInfo(PsiMethod method) {
       StringBuffer buffer = new StringBuffer();
 
@@ -677,7 +683,7 @@ public class CtrlMouseHandler implements ProjectComponent {
 
         JLabel label = HintUtil.createInformationLabel(text);
         label.setUI(new MultiLineLabelUI());
-        Font FONT = UIManager.getFont("Label.font");
+        Font FONT = UIUtil.getLabelFont();
         label.setFont(FONT);
         final LightweightHint hint = new LightweightHint(label);
         final HintManager hintManager = HintManager.getInstance();

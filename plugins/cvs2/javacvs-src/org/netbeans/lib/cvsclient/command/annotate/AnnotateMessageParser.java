@@ -16,6 +16,7 @@ import org.netbeans.lib.cvsclient.command.AbstractMessageParser;
 import org.netbeans.lib.cvsclient.event.IEventSender;
 import org.netbeans.lib.cvsclient.file.ICvsFileSystem;
 import org.netbeans.lib.cvsclient.util.BugLog;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.text.DateFormat;
@@ -34,10 +35,11 @@ final class AnnotateMessageParser extends AbstractMessageParser {
 
 	// Constants ==============================================================
 
-	private static final String ANNOTATING = "Annotations for ";
+	@NonNls private static final String ANNOTATING = "Annotations for ";
 	private static final String SEPARATOR1 = " (";
 	private static final String SEPARATOR2 = "): ";
-	private static final DateFormat DATE_FORMAT = new SimpleDateFormat("dd-MMM-yy", Locale.US);
+        @NonNls private static final String ANNOTATIONS_DATE_FORMAT_STR = "dd-MMM-yy";
+        private static final DateFormat DATE_FORMAT = new SimpleDateFormat(ANNOTATIONS_DATE_FORMAT_STR, Locale.US);
 
 
 	// Fields =================================================================

@@ -7,6 +7,7 @@ package com.intellij.execution.impl;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditorConfigurable;
@@ -36,7 +37,7 @@ class TypeTemplatesConfigurable implements Configurable {
   }
 
   public String getDisplayName() {
-    return "Template Settings";
+    return ExecutionBundle.message("template.settings.configurable.display.name");
   }
 
   public Icon getIcon() {

@@ -7,6 +7,7 @@ import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.ide.plugins.PluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.startup.StartupManagerEx;
+import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.command.CommandProcessor;
@@ -22,6 +23,7 @@ import com.intellij.openapi.module.impl.ModuleImpl;
 import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.ex.MessagesEx;
@@ -41,6 +43,7 @@ import com.intellij.util.ArrayUtil;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.IOException;
@@ -64,18 +67,20 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx, Area
 
   private static boolean ourSaveSettingsInProgress = false;
 
-  private static final String WORKSPACE_EXTENSION = ".iws";
-  private static final String PROJECT_LAYER = "project-components";
+  @NonNls private static final String WORKSPACE_EXTENSION = ".iws";
+  @NonNls private static final String PROJECT_LAYER = "project-components";
   private boolean myDisposed = false;
   private PomModel myModel = null;
 
   private final boolean myOptimiseTestLoadSpeed;
-  private static final String USED_MACROS_ELEMENT_NAME = "UsedPathMacros";
+  @NonNls private static final String USED_MACROS_ELEMENT_NAME = "UsedPathMacros";
   private static final Comparator<String> ourStringComparator = new Comparator<String>() {
     public int compare(String o1, String o2) {
       return o1.compareTo(o2);
     }
   };
+  @NonNls private static final String OPTION_WORKSPACE = "workspace";
+  @NonNls private static final String ELEMENT_MACRO = "macro";
 
   protected ProjectImpl(ProjectManagerImpl manager,
                         String filePath,
@@ -86,7 +91,7 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx, Area
 
     myOptimiseTestLoadSpeed = isOptimiseTestLoadSpeed;
 
-    Extensions.instantiateArea("IDEA_PROJECT", this, null);
+    Extensions.instantiateArea(PluginManager.AREA_IDEA_PROJECT, this, null);
 
     getPicoContainer().registerComponentInstance(Project.class, this);
 
@@ -210,7 +215,7 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx, Area
     final VirtualFile projectFile = getProjectFile();
     if (projectFile != null) return projectFile.getNameWithoutExtension();
     String temp = getProjectFilePath();
-    if (temp.endsWith(".ipr")) {
+    if (temp.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) {
       temp = temp.substring(temp.length() - 4);
     }
     final int i = temp.lastIndexOf(File.separatorChar);
@@ -247,7 +252,7 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx, Area
         throw new InvalidDataException();
       }
       Element root = document.getRootElement();
-      if (root == null || !"component".equals(root.getName())) {
+      if (root == null || !ELEMENT_COMPONENT.equals(root.getName())) {
         throw new InvalidDataException();
       }
 
@@ -276,8 +281,7 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx, Area
   private boolean isWorkspace(Class componentInterface) {
     final Map options = getComponentOptions(componentInterface);
     if (options == null) return false;
-    if ("true".equals(options.get("workspace"))) return true;
-    return false;
+    return Boolean.valueOf((String) options.get(OPTION_WORKSPACE));
   }
 
   private void getExpandProjectHomeReplacements(ExpandMacroToPathMap result) {
@@ -301,7 +305,7 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx, Area
     result.put(s, path);
   }
 
-  private void getProjectHomeReplacements(ReplacePathToMacroMap result, final boolean savePathsRelative) {
+  private void getProjectHomeReplacements(@NonNls ReplacePathToMacroMap result, final boolean savePathsRelative) {
     String projectDir = getProjectDir();
     if (projectDir == null) return;
 
@@ -323,6 +327,7 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx, Area
       result.put("jar://" + path, "jar://" + s);
       result.put("jar:/" + path, "jar:/" + s);
       result.put("jar:" + path, "jar:" + s);
+      //noinspection HardCodedStringLiteral
       if (!path.equalsIgnoreCase("e:/") && !path.equalsIgnoreCase("r:/")) {
         result.put(path, s);
       }
@@ -382,7 +387,7 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx, Area
           final Module[] modules = ModuleManager.getInstance(ProjectImpl.this).getModules();
           final ReadonlyStatusHandler.OperationStatus operationStatus = ensureConfigFilesWritable(modules);
           if (operationStatus.hasReadonlyFiles()) {
-            MessagesEx.error(this, "Could not save project:\n" + operationStatus.getReadonlyFilesMessage()).showLater();
+            MessagesEx.error(this, ProjectBundle.message("project.save.error", operationStatus.getReadonlyFilesMessage())).showLater();
             return;
           }
 
@@ -408,11 +413,11 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx, Area
                 return;
               }
             }
-          }, "Save settings", null);
+          }, ProjectBundle.message("project.save.settings.command"), null);
 
           if (exception[0] != null) {
             LOG.info(exception[0]);
-            MessagesEx.error(this, "Could not save project:\n" + exception[0].getMessage()).showLater();
+            MessagesEx.error(this, ProjectBundle.message("project.save.error", exception[0].getMessage())).showLater();
           }
         }
         finally {
@@ -453,9 +458,9 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx, Area
       root.addContent(allMacrosElement);
       for (int idx = 0; idx < usedMacros.length; idx++) {
         final String usedMacro = usedMacros[idx];
-        final Element macroElem = new Element("macro");
+        final Element macroElem = new Element(ELEMENT_MACRO);
         allMacrosElement.addContent(macroElem);
-        macroElem.setAttribute("name", usedMacro);
+        macroElem.setAttribute(ATTRIBUTE_NAME, usedMacro);
       }
     }
     return root;
@@ -466,11 +471,11 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx, Area
     if (child == null) {
       return ArrayUtil.EMPTY_STRING_ARRAY;
     }
-    final List children = child.getChildren("macro");
+    final List children = child.getChildren(ELEMENT_MACRO);
     final List<String> macroNames = new ArrayList<String>(children.size());
     for (Iterator it = children.iterator(); it.hasNext();) {
       final Element macro = (Element)it.next();
-      String macroName = macro.getAttributeValue("name");
+      String macroName = macro.getAttributeValue(ATTRIBUTE_NAME);
       if (macroName != null) {
         macroNames.add(macroName);
       }
@@ -515,10 +520,6 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx, Area
     }
   }
 
-  protected String getConfigurableType() {
-    return "project";
-  }
-
   private class MyProjectManagerListener implements ProjectManagerListener {
     public void projectOpened(Project project) {
       LOG.assertTrue(project == ProjectImpl.this);
@@ -535,24 +536,6 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx, Area
     }
 
     public void projectClosing(Project project) {
-    }
-  }
-
-  public static class ReadOnlyProjectException extends Exception {
-    private String myConfigurableType;
-    private File myFile;
-
-    public ReadOnlyProjectException(String configurableType, File file) {
-      myFile = file;
-      myConfigurableType = configurableType;
-    }
-
-    public MessagesEx.MessageInfo getMessageInfo(Project project) {
-      return MessagesEx.fileIsReadOnly(project, myFile.getAbsolutePath()).setTitle("Cannot save " + myConfigurableType);
-    }
-
-    public File getFile() {
-      return myFile;
     }
   }
 }

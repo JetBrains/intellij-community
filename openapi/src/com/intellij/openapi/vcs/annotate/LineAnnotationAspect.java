@@ -15,6 +15,9 @@
  */
 package com.intellij.openapi.vcs.annotate;
 
+/**
+ * Can implement EditorGutterListener
+ */
 public interface LineAnnotationAspect {
   String getValue(int lineNumber);
 }

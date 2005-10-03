@@ -2,6 +2,7 @@ package com.intellij.ide.macro;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.psi.PsiPackage;
+import com.intellij.ide.IdeBundle;
 
 public class FileFQPackage extends Macro {
   public String expand(DataContext dataContext) throws Macro.ExecutionCancelledException {
@@ -11,7 +12,7 @@ public class FileFQPackage extends Macro {
   }
 
   public String getDescription() {
-    return "File fully qualified package";
+    return IdeBundle.message("macro.file.fully.qualified.package");
   }
 
   public String getName() {

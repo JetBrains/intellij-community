@@ -5,9 +5,11 @@ import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -17,6 +19,8 @@ import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
+
+import org.jetbrains.annotations.NonNls;
 
 public class KeyboardShortcutDialog extends DialogWrapper {
   private StrokePanel myFirstStrokePanel;
@@ -31,10 +35,10 @@ public class KeyboardShortcutDialog extends DialogWrapper {
 
   public KeyboardShortcutDialog(Component component, String actionId, Group mainGroup) {
     super(component, true);
-    setTitle("Enter Keyboard Shortcut");
+    setTitle(KeyMapBundle.message("keyboard.shortcut.dialog.title"));
     myActionId = actionId;
     myMainGroup = mainGroup;
-    myEnableSecondKeystroke = new JCheckBox("Enable:");
+    myEnableSecondKeystroke = new JCheckBox(KeyMapBundle.message("enable.second.keystroke.check.box"));
     myEnableSecondKeystroke.setFocusable(false);
     myKeystrokePreview = new JLabel(" ");
     myConflictInfoArea = new JTextArea("");
@@ -51,7 +55,7 @@ public class KeyboardShortcutDialog extends DialogWrapper {
 
     // First stroke
 
-    myFirstStrokePanel = new StrokePanel("First Stroke");
+    myFirstStrokePanel = new StrokePanel(KeyMapBundle.message("first.stroke.panel.title"));
     panel.add(
       myFirstStrokePanel,
       new GridBagConstraints(0,0,1,1,1,0,GridBagConstraints.CENTER,GridBagConstraints.HORIZONTAL,new Insets(0,0,5,0),0,0)
@@ -64,7 +68,7 @@ public class KeyboardShortcutDialog extends DialogWrapper {
       new GridBagConstraints(0,1,1,1,0,0,GridBagConstraints.WEST,GridBagConstraints.NONE,new Insets(0,0,5,0),0,0)
     );
 
-    mySecondStrokePanel = new StrokePanel("Second Stroke");
+    mySecondStrokePanel = new StrokePanel(KeyMapBundle.message("second.stroke.panel.title"));
     panel.add(
       mySecondStrokePanel,
       new GridBagConstraints(0,2,1,1,1,0,GridBagConstraints.CENTER,GridBagConstraints.HORIZONTAL,new Insets(0,0,5,0),0,0)
@@ -75,7 +79,7 @@ public class KeyboardShortcutDialog extends DialogWrapper {
     JPanel previewPanel = new JPanel(new BorderLayout());
     previewPanel.setBorder(
       BorderFactory.createCompoundBorder(
-        IdeBorderFactory.createTitledBorder("Shortcut Preview"),
+        IdeBorderFactory.createTitledBorder(KeyMapBundle.message("shortcut.preview.ide.border.factory.title")),
         BorderFactory.createEmptyBorder(5,5,5,5)
       )
     );
@@ -88,7 +92,7 @@ public class KeyboardShortcutDialog extends DialogWrapper {
     // Conflicts
 
     JPanel conflictsPanel = new JPanel(new BorderLayout());
-    conflictsPanel.setBorder(IdeBorderFactory.createTitledBorder("Conflicts"));
+    conflictsPanel.setBorder(IdeBorderFactory.createTitledBorder(KeyMapBundle.message("conflicts.ide.border.factory.title")));
     myConflictInfoArea.setEditable(false);
     myConflictInfoArea.setBackground(panel.getBackground());
     myConflictInfoArea.setLineWrap(true);
@@ -183,12 +187,12 @@ public class KeyboardShortcutDialog extends DialogWrapper {
     }
 
     if (buffer.length() == 0) {
-      myConflictInfoArea.setForeground(UIManager.getColor("TextArea.foreground"));
-      myConflictInfoArea.setText("No conflicts");
+      myConflictInfoArea.setForeground(UIUtil.getTextAreaForeground());
+      myConflictInfoArea.setText(KeyMapBundle.message("no.conflict.info.message"));
     }
     else {
       myConflictInfoArea.setForeground(Color.red);
-      myConflictInfoArea.setText("Assigned to " + buffer.toString());
+      myConflictInfoArea.setText(KeyMapBundle.message("assigned.to.info.message", buffer.toString()));
     }
   }
 

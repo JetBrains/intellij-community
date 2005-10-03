@@ -9,6 +9,7 @@ import com.intellij.psi.search.TodoAttributes;
 import com.intellij.psi.search.TodoPattern;
 import com.intellij.util.EventDispatcher;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -25,8 +26,10 @@ public class TodoConfiguration implements ApplicationComponent, JDOMExternalizab
 
   private EventDispatcher<PropertyChangeListener> myPropertyChangeMulticaster = EventDispatcher.create(PropertyChangeListener.class);
 
-  public static final String PROP_TODO_PATTERNS = "todoPatterns";
-  public static final String PROP_TODO_FILTERS = "todoFilters";
+  @NonNls public static final String PROP_TODO_PATTERNS = "todoPatterns";
+  @NonNls public static final String PROP_TODO_FILTERS = "todoFilters";
+  @NonNls private static final String ELEMENT_PATTERN = "pattern";
+  @NonNls private static final String ELEMENT_FILTER = "filter";
 
   /**
    * Invoked by reflection
@@ -105,12 +108,12 @@ public class TodoConfiguration implements ApplicationComponent, JDOMExternalizab
     ArrayList<TodoFilter> filtersList = new ArrayList<TodoFilter>();
     for (Iterator i = element.getChildren().iterator(); i.hasNext();) {
       Element child = (Element)i.next();
-      if ("pattern".equals(child.getName())) {
+      if (ELEMENT_PATTERN.equals(child.getName())) {
         TodoPattern pattern = new TodoPattern();
         pattern.readExternal(child);
         patternsList.add(pattern);
       }
-      else if ("filter".equals(child.getName())) {
+      else if (ELEMENT_FILTER.equals(child.getName())) {
         TodoPattern[] patterns = patternsList.toArray(new TodoPattern[patternsList.size()]);
         TodoFilter filter = new TodoFilter();
         filter.readExternal(child, patterns);
@@ -124,13 +127,13 @@ public class TodoConfiguration implements ApplicationComponent, JDOMExternalizab
   public void writeExternal(Element element) throws WriteExternalException {
     for (int i = 0; i < myTodoPatterns.length; i++) {
       TodoPattern pattern = myTodoPatterns[i];
-      Element child = new Element("pattern");
+      Element child = new Element(ELEMENT_PATTERN);
       pattern.writeExternal(child);
       element.addContent(child);
     }
     for (int i = 0; i < myTodoFilters.length; i++) {
       TodoFilter filter = myTodoFilters[i];
-      Element child = new Element("filter");
+      Element child = new Element(ELEMENT_FILTER);
       filter.writeExternal(child, myTodoPatterns);
       element.addContent(child);
     }

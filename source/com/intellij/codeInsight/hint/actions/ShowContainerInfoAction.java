@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
 
 public class ShowContainerInfoAction extends BaseCodeInsightAction{
   protected CodeInsightActionHandler getHandler() {
@@ -14,6 +15,7 @@ public class ShowContainerInfoAction extends BaseCodeInsightAction{
   }
 
   protected boolean isValidForFile(Project project, Editor editor, final PsiFile file) {
-    return file.canContainJavaCode() || file instanceof XmlFile;
+    return file.canContainJavaCode() || file instanceof XmlFile ||
+           file.getLanguage().getStructureViewBuilder(file) instanceof TreeBasedStructureViewBuilder;
   }
 }

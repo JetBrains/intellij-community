@@ -56,4 +56,6 @@ public interface ContentManager {
   void addContentManagerListener(ContentManagerListener l);
 
   void removeContentManagerListener(ContentManagerListener l);
+
+  String getCloseAllButThisActionName();
 }

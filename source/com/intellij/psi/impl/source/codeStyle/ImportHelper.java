@@ -21,13 +21,18 @@ import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectIntProcedure;
+import org.jetbrains.annotations.NonNls;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 
 public class ImportHelper{
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.ImportHelper");
 
   private CodeStyleSettings mySettings;
+  private static final @NonNls String JAVA_LANG_PACKAGE = "java.lang";
 
   public ImportHelper(CodeStyleSettings settings){
     mySettings = settings;
@@ -121,8 +126,8 @@ public class ImportHelper{
   }
 
   private static Set<String> findSingleImports(final PsiJavaFile file,
-                                            String[] names,
-                                            final Set<String> onDemandImports, Set<String> namesToImportStaticly) {
+                                               String[] names,
+                                               final Set<String> onDemandImports, Set<String> namesToImportStaticly) {
     final GlobalSearchScope resolveScope = file.getResolveScope();
     Set<String> namesToUseSingle = new THashSet<String>();
     final String thisPackageName = file.getPackageName();
@@ -141,7 +146,7 @@ public class ImportHelper{
         continue;
       }
       if (!isImplicitlyImported) {
-        String langPackageClass = "java.lang." + shortName; //TODO : JSP!
+        String langPackageClass = JAVA_LANG_PACKAGE + "." + shortName; //TODO : JSP!
         if (manager.findClass(langPackageClass, resolveScope) != null) {
           namesToUseSingle.add(name);
           continue;
@@ -184,13 +189,13 @@ public class ImportHelper{
   }
 
   private static String buildImportListText(String[] names,
-                                     final Set<String> packagesOrClassesToImportOnDemand,
-                                     final Set<String> namesToUseSingle, Set<String> namesToImportStaticly) {
+                                            final Set<String> packagesOrClassesToImportOnDemand,
+                                            final Set<String> namesToUseSingle, Set<String> namesToImportStaticly) {
     final Set<String> importedPackagesOrClasses = new THashSet<String>();
-    final StringBuffer buffer = new StringBuffer();
+    final @NonNls StringBuffer buffer = new StringBuffer();
     for (String name : names) {
       String packageOrClassName = getPackageOrClassName(name);
-      final boolean implicitlyImported = "java.lang".equals(packageOrClassName);
+      final boolean implicitlyImported = JAVA_LANG_PACKAGE.equals(packageOrClassName);
       boolean useOnDemand = implicitlyImported || packagesOrClassesToImportOnDemand.contains(packageOrClassName);
       if (useOnDemand && namesToUseSingle.contains(name)) {
         useOnDemand = false;
@@ -258,7 +263,7 @@ public class ImportHelper{
     if (useOnDemand){
       if (mySettings.USE_SINGLE_CLASS_IMPORTS){
         if (importRefs.length + 1 < mySettings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND
-          && !mySettings.PACKAGES_TO_USE_IMPORT_ON_DEMAND.contains(packageName)
+            && !mySettings.PACKAGES_TO_USE_IMPORT_ON_DEMAND.contains(packageName)
         ){
           useOnDemand = false;
         }
@@ -534,9 +539,9 @@ public class ImportHelper{
   }
 
   private void addNamesToImport(Set<String> names,
-                                   PsiElement scope,
-                                   String thisPackageName,
-                                   Set<String> namesToImportStaticly){
+                                PsiElement scope,
+                                String thisPackageName,
+                                Set<String> namesToImportStaticly){
     if (scope instanceof PsiImportList) return;
 
     final PsiElement[] children = scope.getChildren();

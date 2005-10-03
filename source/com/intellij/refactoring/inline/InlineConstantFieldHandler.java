@@ -7,13 +7,14 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 
 /**
  * @author ven
  */
 public class InlineConstantFieldHandler {
-  private static final String REFACTORING_NAME = "Inline field";
+  private static final String REFACTORING_NAME = RefactoringBundle.message("inline.field.title");
 
   public void invoke(Project project, Editor editor, PsiField field) {
     if (!field.isWritable()) {
@@ -21,13 +22,13 @@ public class InlineConstantFieldHandler {
     }
 
     if (!field.hasModifierProperty(PsiModifier.FINAL)) {
-      String message = REFACTORING_NAME + " refactoring is supported only for final fields";
+      String message = RefactoringBundle.message("0.refactoring.is.supported.only.for.final.fields", REFACTORING_NAME);
       RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_FIELD, project);
       return;
     }
 
     if (!field.hasInitializer()) {
-      String message = "No initializer present for the field";
+      String message = RefactoringBundle.message("no.initializer.present.for.the.field");
       RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_FIELD, project);
       return;
     }
@@ -36,7 +37,7 @@ public class InlineConstantFieldHandler {
     final PsiReference[] refs = searchHelper.findReferences(field, GlobalSearchScope.projectScope(project), false);
 
     if (refs.length == 0){
-      String message = "Field " + field.getName() + " is never used";
+      String message = RefactoringBundle.message("field.0.is.never.used", field.getName());
       RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_VARIABLE, project);
       return;
     }

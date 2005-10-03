@@ -1,6 +1,7 @@
 package com.intellij.ide.macro;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.ide.IdeBundle;
 
 public final class ModuleFilePathMacro extends Macro {
   public String getName() {
@@ -8,7 +9,7 @@ public final class ModuleFilePathMacro extends Macro {
   }
 
   public String getDescription() {
-    return "The path of the module file";
+    return IdeBundle.message("macro.module.file.path");
   }
 
   public String expand(DataContext dataContext) {

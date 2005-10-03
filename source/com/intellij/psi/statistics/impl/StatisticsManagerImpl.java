@@ -1,6 +1,7 @@
 
 package com.intellij.psi.statistics.impl;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -14,6 +15,7 @@ import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ScrambledInputStream;
 import com.intellij.util.ScrambledOutputStream;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.*;
 import java.util.*;
@@ -34,7 +36,7 @@ public class StatisticsManagerImpl extends StatisticsManager implements Statisti
 
   private static final int UNIT_COUNT = 997;
 
-  private static final String STORE_PATH = PathManager.getSystemPath() + File.separator + "stat";
+  private static final @NonNls String STORE_PATH = PathManager.getSystemPath() + File.separator + "stat";
 
   private SoftReference[] myUnits = new SoftReference[UNIT_COUNT];
   private HashSet<StatisticsUnit> myModifiedUnits = new HashSet<StatisticsUnit>();
@@ -219,8 +221,8 @@ public class StatisticsManagerImpl extends StatisticsManager implements Statisti
     }
     catch(IOException e){
       Messages.showMessageDialog(
-        "Error saving system information: " + e.getMessage(),
-        "Error",
+        PsiBundle.message("error.saving.statistics", e.getLocalizedMessage()),
+        CommonBundle.getErrorTitle(),
         Messages.getErrorIcon()
       );
     }
@@ -230,14 +232,15 @@ public class StatisticsManagerImpl extends StatisticsManager implements Statisti
     return Math.abs(key1.hashCode()) % UNIT_COUNT;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static String getMemberUseKey1(PsiType qualifierType) {
     return "member#" + (qualifierType == null ? "" : qualifierType.getCanonicalText());
   }
 
-  private static String getMemberUseKey2(PsiMember member) {
+  private static @NonNls String getMemberUseKey2(PsiMember member) {
     if (member instanceof PsiMethod){
       PsiMethod method = (PsiMethod)member;
-      StringBuffer buffer = new StringBuffer();
+      @NonNls StringBuffer buffer = new StringBuffer();
       buffer.append("method#");
       buffer.append(method.getName());
       PsiParameter[] parms = method.getParameterList().getParameters();
@@ -259,7 +262,7 @@ public class StatisticsManagerImpl extends StatisticsManager implements Statisti
   }
 
   private String getNameUseKey(final NameContext context, final String name) {
-    final StringBuffer buffer = new StringBuffer();
+    final @NonNls StringBuffer buffer = new StringBuffer();
     buffer.append("variableName#");
     buffer.append(context.name());
     buffer.append('#');
@@ -268,7 +271,7 @@ public class StatisticsManagerImpl extends StatisticsManager implements Statisti
   }
 
   private String getVariableNameUseKey1(String propertyName, PsiType type) {
-    StringBuffer buffer = new StringBuffer();
+    @NonNls StringBuffer buffer = new StringBuffer();
     buffer.append("variableName#");
     if (propertyName != null){
       buffer.append(propertyName);
@@ -291,7 +294,7 @@ public class StatisticsManagerImpl extends StatisticsManager implements Statisti
   private NameContext getNameUsageContext(String key2){
     final int startIndex = key2.indexOf("#");
     LOG.assertTrue(startIndex >= 0);
-    String s = key2.substring(0, startIndex);
+    @NonNls String s = key2.substring(0, startIndex);
     if(!"variableName".equals(s)) return null;
     final int index = key2.indexOf("#", startIndex + 1);
     s = key2.substring(startIndex + 1, index);
@@ -301,7 +304,7 @@ public class StatisticsManagerImpl extends StatisticsManager implements Statisti
   private String getName(String key2){
     final int startIndex = key2.indexOf("#");
     LOG.assertTrue(startIndex >= 0);
-    String s = key2.substring(0, startIndex);
+    @NonNls String s = key2.substring(0, startIndex);
     if(!"variableName".equals(s)) return null;
     final int index = key2.indexOf("#", startIndex + 1);
     LOG.assertTrue(index >= 0);
@@ -326,8 +329,8 @@ public class StatisticsManagerImpl extends StatisticsManager implements Statisti
     if (!homeFile.exists()){
       if (!homeFile.mkdirs()){
         Messages.showMessageDialog(
-          "Cannot create folder " + STORE_PATH + " to save system information.",
-          "Error",
+          PsiBundle.message("error.saving.statistic.failed.to.create.folder", STORE_PATH),
+          CommonBundle.getErrorTitle(),
           Messages.getErrorIcon()
         );
         return false;
@@ -336,6 +339,7 @@ public class StatisticsManagerImpl extends StatisticsManager implements Statisti
     return true;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private String getPathToUnit(int unitNumber) {
     return STORE_PATH + File.separator + "unit." + unitNumber;
   }

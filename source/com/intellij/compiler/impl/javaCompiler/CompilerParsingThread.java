@@ -5,11 +5,14 @@ import com.intellij.compiler.make.CacheCorruptedException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author Eugene Zhuravlev
@@ -17,7 +20,7 @@ import java.io.Reader;
  */
 public abstract class CompilerParsingThread extends Thread implements OutputParser.Callback {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.javaCompiler.JavaCompilerParsingThread");
-  public static final String TERMINATION_STRING = "__terminate_read__";
+  public static final @NonNls String TERMINATION_STRING = "__terminate_read__";
   private Reader myCompilerOutStreamReader;
   private Process myProcess;
   private OutputParser myOutputParser;
@@ -25,9 +28,11 @@ public abstract class CompilerParsingThread extends Thread implements OutputPars
   private Throwable myError = null;
   private final boolean myIsUnitTestMode;
   private String myClassFileToProcess = null;
+  private String myLastReadLine = null;
 
-  
+
   public CompilerParsingThread(Process process, OutputParser outputParser, final boolean readErrorStream) {
+    //noinspection HardCodedStringLiteral
     super("CompilerParsingThread");
     myProcess = process;
     myOutputParser = outputParser;
@@ -41,11 +46,10 @@ public abstract class CompilerParsingThread extends Thread implements OutputPars
         if (!myIsUnitTestMode && myProcess == null) {
           break;
         }
-        if(!myOutputParser.processMessageLine(this)) {
+        if (isCancelled()) {
           break;
         }
-        if (isCancelled()) {
-          killProcess();
+        if (!myOutputParser.processMessageLine(this)) {
           break;
         }
       }
@@ -56,8 +60,7 @@ public abstract class CompilerParsingThread extends Thread implements OutputPars
     }
     catch (Throwable e) {
       myError = e;
-      e.printStackTrace();
-      killProcess();
+      LOG.info(e);
     }
     killProcess();
   }
@@ -73,6 +76,10 @@ public abstract class CompilerParsingThread extends Thread implements OutputPars
     return myError;
   }
 
+  public String getCurrentLine() {
+    return myLastReadLine;
+  }
+
   public final String getNextLine() {
     try {
       final String line = readLine(myCompilerOutStreamReader);
@@ -80,16 +87,19 @@ public abstract class CompilerParsingThread extends Thread implements OutputPars
         LOG.debug("LIne read: #" + line + "#");
       }
       if (TERMINATION_STRING.equals(line)) {
-        return null;
+        myLastReadLine = null;
       }
-      return (line != null ? line.trim() : null);
+      else {
+        myLastReadLine = line != null ? line.trim() : null;
+      }
     }
     catch(IOException e) {
       if (LOG.isDebugEnabled()) {
         LOG.debug(e);
       }
-      return null;
+      myLastReadLine = null;
     }
+    return myLastReadLine;
   }
 
   public final void fileGenerated(String path) {
@@ -119,7 +129,7 @@ public abstract class CompilerParsingThread extends Thread implements OutputPars
 
   private String readLine(final Reader reader) throws IOException {
     boolean first = true;
-    StringBuffer buffer = new StringBuffer();
+    final StringBuffer buffer = new StringBuffer();
     while(true){
       int c = reader.read();
       if (c == -1) break;
@@ -140,8 +150,9 @@ public abstract class CompilerParsingThread extends Thread implements OutputPars
         buffer.append((char)c);
       }
     }
-    if (first) return null;
-    String s = buffer.toString();
-    return s;
+    if (first) {
+      return null;
+    }
+    return buffer.toString();
   }
 }

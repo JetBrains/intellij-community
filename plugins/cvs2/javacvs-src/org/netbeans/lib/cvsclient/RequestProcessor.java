@@ -28,6 +28,7 @@ import org.netbeans.lib.cvsclient.response.IResponseHandler;
 import org.netbeans.lib.cvsclient.response.ResponseParser;
 import org.netbeans.lib.cvsclient.response.ValidRequestsResponseHandler;
 import org.netbeans.lib.cvsclient.util.BugLog;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -47,8 +48,13 @@ public final class RequestProcessor
 	private final ResponseService responseServices;
 	private final IStreamLogger streamLogger;
 	private final ICvsCommandStopper commandStopper;
+  @NonNls private static final String OS_NAME_PROPERTY = "os.name";
+  @NonNls private static final String WINDOWS_PREFIX = "Windows";
+  @NonNls private static final String CASE_REQUEST = "Case";
+  @NonNls private static final String CVS_PASS_ENV_VARS_PROPERTY = "cvs.pass.env.vars";
+  @NonNls private static final String NO = "no";
 
-	// Setup ==================================================================
+  // Setup ==================================================================
 
 	public RequestProcessor(IClientEnvironment clientEnvironment,
 							IGlobalOptions globalOptions,
@@ -88,7 +94,7 @@ public final class RequestProcessor
 		try {
 			clientEnvironment.getConnection().open(streamLogger);
 		} catch (AuthenticationException ex) {
-			throw new CommandException(ex, "Could not establish connection!");
+			throw new CommandException(ex, JavaCvsSrcBundle.message("could.not.establish.connection.error.message"));
 		}
 
 		ConnectionStreams connectionStreams = new ConnectionStreams(clientEnvironment.getConnection(),
@@ -116,7 +122,7 @@ public final class RequestProcessor
 			sendRequest(new UseUnchangedRequest(), connectionStreams);
 			sendGlobalOptionRequests(globalOptions, connectionStreams);
 
-			if (System.getProperty("os.name").startsWith("Windows") && isValidRequest("Case")) {
+			if (System.getProperty(OS_NAME_PROPERTY).startsWith(WINDOWS_PREFIX) && isValidRequest(CASE_REQUEST)) {
 				sendRequest(new CaseRequest(), connectionStreams);
 			}
 
@@ -135,11 +141,11 @@ public final class RequestProcessor
 	private boolean passEnvVariablesToServer() {
           if (true) return false;
 
-		String doPassProperty = System.getProperty("cvs.pass.env.vars");
+		String doPassProperty = System.getProperty(CVS_PASS_ENV_VARS_PROPERTY);
 		if (doPassProperty == null){
 			return true;
 		}
-		if("no".equals(doPassProperty)){
+		if(NO.equals(doPassProperty)){
 			return false;
 		}
 		return true;

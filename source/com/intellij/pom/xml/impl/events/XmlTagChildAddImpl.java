@@ -35,6 +35,7 @@ public class XmlTagChildAddImpl implements XmlTagChildAdd {
     return event;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return "child added to " + getTag().getName() + " child: " + myChild.toString();
   }

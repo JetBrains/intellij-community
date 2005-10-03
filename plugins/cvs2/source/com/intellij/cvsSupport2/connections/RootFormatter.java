@@ -10,6 +10,8 @@ import com.intellij.cvsSupport2.connections.ssh.SshConnectionSettings;
 import com.intellij.openapi.util.text.StringUtil;
 import org.netbeans.lib.cvsclient.connection.PServerPasswordScrambler;
 
+import java.text.MessageFormat;
+
 /**
  * author: lesya
  */
@@ -35,7 +37,7 @@ public class RootFormatter {
       return createSshConnectionSettings(root, cvsRoot);
     }
     else {
-      throw new RuntimeException("Unsupported method: " + root.METHOD);
+      throw new RuntimeException(com.intellij.CvsBundle.message("exception.text.unsupported.method", root.METHOD));
     }
   }
 

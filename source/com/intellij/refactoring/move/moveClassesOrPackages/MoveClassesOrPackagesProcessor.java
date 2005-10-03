@@ -15,6 +15,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.PackageWrapper;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.util.*;
@@ -26,10 +27,9 @@ import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Jeka,dsl
@@ -195,8 +195,9 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
                 }
                 PsiElement container = ConflictsUtil.getContainer(reference);
                 if (!reportedRefs.contains(container)) {
-                  final String message = ConflictsUtil.getDescription(container, true) + " uses a package-local "
-                                         + ConflictsUtil.getDescription(resolved, true) + ".";
+                  final String message = RefactoringBundle.message("0.uses.a.package.local.1",
+                                                                   ConflictsUtil.getDescription(container, true),
+                                                                   ConflictsUtil.getDescription(resolved, true));
                   myConflicts.add(ConflictsUtil.capitalize(message));
                   reportedRefs.add(container);
                 }
@@ -251,9 +252,10 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
                 PsiPackage usagePackage = directory.getPackage();
                 if (aPackage != null && usagePackage != null && !aPackage.equalToPackage(usagePackage)) {
 
-                  final String message = "A package-local class " + ConflictsUtil.htmlEmphasize(aClass.getName())
-                                         + " will no longer be accessible from " + ConflictsUtil.getDescription(
-                    container, true);
+                  final String message = RefactoringBundle.message("a.package.local.class.0.will.no.longer.be.accessible.from.1",
+                                                                   ConflictsUtil.htmlEmphasize(aClass.getName()),
+                                                                   ConflictsUtil.getDescription(
+                                                                   container, true));
                   conflicts.add(message);
                 }
               }
@@ -396,7 +398,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   protected boolean isPreviewUsages(UsageInfo[] usages) {
     if (UsageViewUtil.hasNonCodeUsages(usages)) {
       WindowManager.getInstance().getStatusBar(myProject).setInfo(
-        "Occurrences found in comments, strings and non-java files");
+        RefactoringBundle.message("occurrences.found.in.comments.strings.and.non.java.files"));
       return true;
     }
     else {
@@ -464,9 +466,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   }
 
   protected String getCommandName() {
-    final StringBuffer buffer = new StringBuffer();
-    buffer.append("Moving ");
-    return RefactoringUtil.calculatePsiElementDescriptionList(myElementsToMove, buffer);
+    return  RefactoringBundle.message("move.classes.command", RefactoringUtil.calculatePsiElementDescriptionList(myElementsToMove));
   }
 
   private class MyClassInstanceReferenceVisitor implements ClassInstanceScanner.ClassInstanceReferenceVisitor {
@@ -538,8 +538,8 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
             if (directory != null) {
               PsiPackage aPackage = directory.getPackage();
               if (!myTargetPackage.equalToPackage(aPackage)) {
-                String message = ConflictsUtil.getDescription(member, true) + " will be inaccessible from "
-                                 + ConflictsUtil.getDescription(container, true);
+                String message = RefactoringBundle.message("0.will.be.inaccessible.from.1", ConflictsUtil.getDescription(member, true),
+                                                      ConflictsUtil.getDescription(container, true));
                 myConflicts.add(ConflictsUtil.capitalize(message));
               }
             }

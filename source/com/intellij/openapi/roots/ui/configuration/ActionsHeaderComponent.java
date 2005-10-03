@@ -1,5 +1,7 @@
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.util.ui.UIUtil;
+
 import javax.swing.*;
 import java.awt.*;
 
@@ -46,8 +48,8 @@ public class ActionsHeaderComponent extends JPanel/*ScalableIconComponent*/ {
   }
 
   public final void setSelected(boolean isSelected) {
-    setBackground(isSelected? UIManager.getColor("Table.selectionBackground") : UIManager.getColor("Table.textBackground"));
-    myHeaderLabel.setForeground(isSelected? UIManager.getColor("Table.selectionForeground") : UIManager.getColor("Table.textForeground"));
+    setBackground(isSelected? UIUtil.getTableSelectionBackground() : UIUtil.getTableBackground());
+    myHeaderLabel.setForeground(isSelected? UIUtil.getTableSelectionForeground() : UIUtil.getTableForeground());
     this.revalidate();
     this.repaint();
   }

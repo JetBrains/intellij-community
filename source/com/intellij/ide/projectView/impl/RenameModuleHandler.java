@@ -18,6 +18,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.rename.RenameHandler;
+import com.intellij.ide.IdeBundle;
 
 /**
  * @author dsl
@@ -48,8 +49,8 @@ public class RenameModuleHandler implements RenameHandler {
     final Module module = (Module)dataContext.getData(DataConstantsEx.MODULE_CONTEXT);
     LOG.assertTrue(module != null);
     Messages.showInputDialog(project,
-                             "Enter new module name",
-                             "Rename Module",
+                             IdeBundle.message("prompt.enter.new.module.name"),
+                             IdeBundle.message("title.rename.module"),
                              Messages.getQuestionIcon(),
                              module.getName(),
                              new MyInputValidator(project, module));
@@ -74,8 +75,8 @@ public class RenameModuleHandler implements RenameHandler {
         modifiableModel.renameModule(myModule, inputString);
       }
       catch (ModuleWithNameAlreadyExists moduleWithNameAlreadyExists) {
-        Messages.showErrorDialog(myProject, "Module named '" + inputString + "' already exists",
-                                 "Rename Module");
+        Messages.showErrorDialog(myProject, IdeBundle.message("error.module.already.exists", inputString),
+                                 IdeBundle.message("title.rename.module"));
         return false;
       }
       final Ref<Boolean> success = Ref.create(Boolean.TRUE);
@@ -89,14 +90,10 @@ public class RenameModuleHandler implements RenameHandler {
               catch (final ModuleCircularDependencyException e) {
                 ApplicationManager.getApplication().invokeLater(new Runnable() {
                               public void run() {
-                                Messages.showErrorDialog(myProject, "Renaming module '" + myModule.getName() + "' to '" +
-                                                                    inputString +
-                                                                    "'\n" +
-                                                                    "will introduce circular dependency between \n" +
-                                                                    "modules '" + e.getModuleName1() + "' and '" +
-                                                                    e.getModuleName2() +
-                                                                    "'",
-                                                         "Rename Module");
+                                Messages.showErrorDialog(myProject, IdeBundle.message(
+                                  "error.renaming.module.will.introduce.circular.dependency", myModule.getName(), inputString,
+                                  e.getModuleName1(), e.getModuleName2()),
+                                                         IdeBundle.message("title.rename.module"));
                               }
                             });
                 modifiableModel.dispose();
@@ -106,7 +103,7 @@ public class RenameModuleHandler implements RenameHandler {
             }
           });
         }
-      }, "Renaming module " + myModule.getName(), null);
+      }, IdeBundle.message("command.renaming.module", myModule.getName()), null);
       return success.get().booleanValue();
     }
   }

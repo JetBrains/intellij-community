@@ -17,11 +17,12 @@ package com.intellij.psi.javadoc;
 
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NonNls;
 
 public interface PsiDocComment extends PsiComment {
   PsiElement[] getDescriptionElements();
   PsiDocTag[] getTags();
 
-  PsiDocTag findTagByName(String name);
-  PsiDocTag[] findTagsByName(String name);
+  PsiDocTag findTagByName(@NonNls String name);
+  PsiDocTag[] findTagsByName(@NonNls String name);
 }

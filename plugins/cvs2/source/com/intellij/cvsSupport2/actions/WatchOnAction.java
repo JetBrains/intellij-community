@@ -8,7 +8,7 @@ import org.netbeans.lib.cvsclient.command.watch.WatchMode;
  */
 public class WatchOnAction extends AbsttractWatchOnOffAction{
   protected String getTitle(VcsContext context) {
-    return "Watching On";
+    return com.intellij.CvsBundle.message("operation.name.watching.on");
   }
 
   protected WatchMode getMode() {

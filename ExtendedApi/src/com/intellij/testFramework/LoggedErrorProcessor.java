@@ -31,7 +31,9 @@
  */
 package com.intellij.testFramework;
 
-public abstract class LoggedErrorProcessor {
+import org.jetbrains.annotations.NonNls;
+
+@NonNls public abstract class LoggedErrorProcessor {
 
   private final static LoggedErrorProcessor DEFAULT = new LoggedErrorProcessor() {
     public void processError(String message, Throwable t, String[] details, org.apache.log4j.Logger logger) {

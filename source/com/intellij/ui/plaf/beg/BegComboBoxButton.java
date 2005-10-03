@@ -1,6 +1,8 @@
 
 package com.intellij.ui.plaf.beg;
 
+import com.intellij.util.ui.UIUtil;
+
 import java.awt.*;
 import javax.swing.*;
 import javax.swing.plaf.metal.MetalComboBoxButton;
@@ -73,7 +75,7 @@ public class BegComboBoxButton extends MetalComboBoxButton {
     }
     else{
       if (getModel().isPressed()){
-        Color selectColor = UIManager.getColor("Button.select");
+        Color selectColor = UIUtil.getButtonSelectColor();
         g.setColor(selectColor);
       }
       else{
@@ -143,16 +145,16 @@ public class BegComboBoxButton extends MetalComboBoxButton {
 
       if (model.isArmed() && model.isPressed()){
         if (isOpaque()){
-          c.setBackground(UIManager.getColor("Button.select"));
+          c.setBackground(UIUtil.getButtonSelectColor());
         }
         c.setForeground(comboBox.getForeground());
       }
       else
         if (!comboBox.isEnabled()){
           if (isOpaque()){
-            c.setBackground(UIManager.getColor("ComboBox.disabledBackground"));
+            c.setBackground(UIUtil.getComboBoxDisabledBackground());
           }
-          c.setForeground(UIManager.getColor("ComboBox.disabledForeground"));
+          c.setForeground(UIUtil.getComboBoxDisabledForeground());
         }
         else{
 //          c.setForeground(comboBox.getForeground());

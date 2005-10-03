@@ -7,9 +7,11 @@ import com.intellij.codeInspection.ex.InspectionProfileManager;
 import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.util.SystemProperties;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -23,13 +25,27 @@ import java.util.HashMap;
  */
 public class InspectionProfileConvertor {
   private HashMap<String, HighlightDisplayLevel> myDisplayLevelMap = new HashMap<String, HighlightDisplayLevel>();
-  public static final String OLD_HIGHTLIGHTING_SETTINGS_PROFILE = "EditorHightlightingSettings";
-  public static final String OLD_DEFAUL_PROFILE = "OldDefaultProfile";
+  public static final @NonNls String OLD_HIGHTLIGHTING_SETTINGS_PROFILE = "EditorHightlightingSettings";
+  public static final @NonNls String OLD_DEFAUL_PROFILE = "OldDefaultProfile";
 
   private String myAdditionalJavadocTags;
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettingsConvertor");
 
   private static InspectionProfileConvertor ourInstance = null;
+
+  @NonNls private static final String INSPECTIONS_TAG = "inspections";
+  @NonNls private static final String NAME_ATT = "name";
+  @NonNls private static final String INSP_TOOL_TAG = "inspection_tool";
+  @NonNls private static final String CLASS_ATT = "class";
+  @NonNls private static final String VERSION_ATT = "version";
+  @NonNls private static final String PROFILE_NAME_ATT = "profile_name";
+  @NonNls private static final String OPTION_TAG = "option";
+  @NonNls private static final String DISPLAY_LEVEL_MAP_OPTION = "DISPLAY_LEVEL_MAP";
+  @NonNls private static final String VALUE_ATT = "value";
+  @NonNls private static final String ADDITONAL_JAVADOC_TAGS_OPTION = "ADDITIONAL_JAVADOC_TAGS";
+  @NonNls private static final String DEFAULT_XML = "Default.xml";
+  @NonNls private static final String XML_EXTENSION = ".xml";
+  @NonNls public static final String LEVEL_ATT = "level";
 
   private InspectionProfileConvertor() {
     renameOldDefaultsProfile();
@@ -44,16 +60,16 @@ public class InspectionProfileConvertor {
 
   private boolean retrieveOldSettings(Element element) {
     boolean hasOldSettings = false;
-    for (final Object obj : element.getChildren("option")) {
+    for (final Object obj : element.getChildren(OPTION_TAG)) {
       Element option = (Element)obj;
-      final String name = option.getAttributeValue("name");
+      final String name = option.getAttributeValue(NAME_ATT);
       if (name != null) {
-        if (name.equals("DISPLAY_LEVEL_MAP")) {
-          final Element levelMap = option.getChild("value");
+        if (name.equals(DISPLAY_LEVEL_MAP_OPTION)) {
+          final Element levelMap = option.getChild(VALUE_ATT);
           for (final Object o : levelMap.getChildren()) {
             Element e = (Element)o;
             String key = e.getName();
-            String levelName = e.getAttributeValue("level");
+            String levelName = e.getAttributeValue(LEVEL_ATT);
             HighlightDisplayLevel level = HighlightDisplayLevel.find(levelName);
             if (level == null) continue;
             myDisplayLevelMap.put(key, level);
@@ -61,8 +77,8 @@ public class InspectionProfileConvertor {
           hasOldSettings = true;
         }
         else {
-          if (name.equals("ADDITIONAL_JAVADOC_TAGS")) {
-            myAdditionalJavadocTags = option.getAttributeValue("value");
+          if (name.equals(ADDITONAL_JAVADOC_TAGS_OPTION)) {
+            myAdditionalJavadocTags = option.getAttributeValue(VALUE_ATT);
             hasOldSettings = true;
           }
         }
@@ -85,18 +101,18 @@ public class InspectionProfileConvertor {
   }
 
   public static Element convertToNewFormat(File profileFile, InspectionProfile profile) throws IOException, JDOMException {
-    Element rootElement = new Element("inspections");
-    rootElement.setAttribute("name", profile.getName());
+    Element rootElement = new Element(INSPECTIONS_TAG);
+    rootElement.setAttribute(NAME_ATT, profile.getName());
     final InspectionTool[] tools = profile.getInspectionTools();
     final Document document = JDOMUtil.loadDocument(profileFile);
-    for (final Object o : document.getRootElement().getChildren("inspection_tool")) {
+    for (final Object o : document.getRootElement().getChildren(INSP_TOOL_TAG)) {
       Element toolElement = (Element)((Element)o).clone();
-      String toolClassName = toolElement.getAttributeValue("class");
+      String toolClassName = toolElement.getAttributeValue(CLASS_ATT);
       final String shortName = convertToShortName(toolClassName, tools);
       if (shortName == null) {
         continue;
       }
-      toolElement.setAttribute("class", shortName);
+      toolElement.setAttribute(CLASS_ATT, shortName);
       rootElement.addContent(toolElement);
     }
     return rootElement;
@@ -106,19 +122,19 @@ public class InspectionProfileConvertor {
     final File profileDirectory = InspectionProfileManager.getProfileDirectory();
     final File[] files = profileDirectory.listFiles(new FileFilter() {
       public boolean accept(File pathname) {
-        return pathname.getPath().endsWith(File.separator + "Default.xml");
+        return pathname.getPath().endsWith(File.separator + DEFAULT_XML);
       }
     });
     if (files == null || files.length != 1) {
       return;
     }
-    final File dest = new File(profileDirectory, OLD_DEFAUL_PROFILE + ".xml");
+    final File dest = new File(profileDirectory, OLD_DEFAUL_PROFILE + XML_EXTENSION);
     try {
       Document doc = JDOMUtil.loadDocument(files[0]);
       Element root = doc.getRootElement();
-      if (root.getAttributeValue("version") == null){
-        root.setAttribute("profile_name", OLD_DEFAUL_PROFILE);
-        JDOMUtil.writeDocument(doc, dest, System.getProperty("line.separator"));
+      if (root.getAttributeValue(VERSION_ATT) == null){
+        root.setAttribute(PROFILE_NAME_ATT, OLD_DEFAUL_PROFILE);
+        JDOMUtil.writeDocument(doc, dest, SystemProperties.getLineSeparator());
         files[0].delete();
       }
     }

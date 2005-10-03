@@ -13,6 +13,7 @@
 package org.netbeans.lib.cvsclient.file;
 
 import org.netbeans.lib.cvsclient.util.BugLog;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 
@@ -26,8 +27,10 @@ public final class FileSystem
 
 	private final File rootDirectory;
 	private final String canonicalRootDirectoryName;
+  @NonNls private static final String OS_NAME_PARAMETER = "os.name";
+  @NonNls private static final String WINDOWS = "Windows";
 
-	// Setup ==================================================================
+  // Setup ==================================================================
 
 	public FileSystem(File rootDirectory) {
 		BugLog.getInstance().assertNotNull(rootDirectory);
@@ -95,7 +98,7 @@ public final class FileSystem
 		if (canonicalFileName.endsWith(File.separator)) {
 			canonicalFileName = canonicalFileName.substring(0, canonicalFileName.length() - 1);
 		}
-		if (System.getProperty("os.name").startsWith("Windows")) {
+		if (System.getProperty(OS_NAME_PARAMETER).startsWith(WINDOWS)) {
 			return canonicalFileName.toLowerCase();
 		}
 		return canonicalFileName;

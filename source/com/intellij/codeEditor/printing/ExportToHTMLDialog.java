@@ -5,9 +5,8 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.ui.LabeledComponent;
-import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.ui.OptionGroup;
+import com.intellij.ide.IdeBundle;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -30,31 +29,28 @@ public class ExportToHTMLDialog extends DialogWrapper {
   public ExportToHTMLDialog(String fileName, String directoryName, boolean isSelectedTextEnabled, Project project) {
     super(project, true);
     myProject = project;
-    setOKButtonText("Save");
+    setOKButtonText(CodeEditorBundle.message("export.to.html.save.button"));
     myFileName = fileName;
     myDirectoryName = directoryName;
     this.myIsSelectedTextEnabled = isSelectedTextEnabled;
-    setTitle("Export to HTML");
+    setTitle(CodeEditorBundle.message("export.to.html.title"));
     init();
   }
 
   protected JComponent createNorthPanel() {
     OptionGroup optionGroup = new OptionGroup();
 
-    myRbCurrentFile = new JRadioButton("File " + (myFileName != null ? myFileName : ""));
-    myRbCurrentFile.setMnemonic('F');
+    myRbCurrentFile = new JRadioButton(CodeEditorBundle.message("export.to.html.file.name.radio", (myFileName != null ? myFileName : "")));
     optionGroup.add(myRbCurrentFile);
 
-    myRbSelectedText = new JRadioButton("Selected text");
-    myRbSelectedText.setMnemonic('S');
+    myRbSelectedText = new JRadioButton(CodeEditorBundle.message("export.to.html.selected.text.radio"));
     optionGroup.add(myRbSelectedText);
 
-    myRbCurrentPackage = new JRadioButton("All files in directory "+ (myDirectoryName != null ? myDirectoryName : ""));
-    myRbCurrentPackage.setMnemonic('d');
+    myRbCurrentPackage = new JRadioButton(
+      CodeEditorBundle.message("export.to.html.all.files.in.directory.radio", (myDirectoryName != null ? myDirectoryName : "")));
     optionGroup.add(myRbCurrentPackage);
 
-    myCbIncludeSubpackages = new JCheckBox("Include subdirectories ");
-    myCbIncludeSubpackages.setMnemonic('I');
+    myCbIncludeSubpackages = new JCheckBox(CodeEditorBundle.message("export.to.html.include.subdirectories.checkbox"));
     optionGroup.add(myCbIncludeSubpackages, true);
 
     myTargetDirectoryField = new TextFieldWithBrowseButton();
@@ -82,9 +78,9 @@ public class ExportToHTMLDialog extends DialogWrapper {
 
   public static LabeledComponent<TextFieldWithBrowseButton> assignLabel(TextFieldWithBrowseButton targetDirectoryField, Project project) {
     LabeledComponent<TextFieldWithBrowseButton> labeledComponent = new LabeledComponent<TextFieldWithBrowseButton>();
-    labeledComponent.setText("&Output directory:");
-    targetDirectoryField.addBrowseFolderListener("Select output directory",
-                                                   "HTML files will be exported to this directory",
+    labeledComponent.setText(CodeEditorBundle.message("export.to.html.output.directory.label"));
+    targetDirectoryField.addBrowseFolderListener(CodeEditorBundle.message("export.to.html.select.output.directory.title"),
+                                                 CodeEditorBundle.message("export.to.html.select.output.directory.description"),
                                                  project, FileChooserDescriptorFactory.createSingleFolderDescriptor());
     labeledComponent.setComponent(targetDirectoryField);
     labeledComponent.setBorder(BorderFactory.createEmptyBorder(5, 4, 0, 0));
@@ -92,19 +88,16 @@ public class ExportToHTMLDialog extends DialogWrapper {
   }
 
   protected JComponent createCenterPanel() {
-    OptionGroup optionGroup = new OptionGroup("Options");
+    OptionGroup optionGroup = new OptionGroup(CodeEditorBundle.message("export.to.html.options.group"));
 
-    myCbLineNumbers = new JCheckBox("Show line numbers");
-    myCbLineNumbers.setMnemonic('l');
+    myCbLineNumbers = new JCheckBox(CodeEditorBundle.message("export.to.html.options.show.line.numbers.checkbox"));
     optionGroup.add(myCbLineNumbers);
 
 
-    myCbGenerateHyperlinksToClasses = new JCheckBox("Generate hyperlinks to classes");
-    myCbGenerateHyperlinksToClasses.setMnemonic('h');
+    myCbGenerateHyperlinksToClasses = new JCheckBox(CodeEditorBundle.message("export.to.html.generate.hyperlinks.checkbox"));
     optionGroup.add(myCbGenerateHyperlinksToClasses);
 
-    myCbOpenInBrowser = new JCheckBox("Open generated HTML in browser");
-    myCbOpenInBrowser.setMnemonic('b');
+    myCbOpenInBrowser = new JCheckBox(CodeEditorBundle.message("export.to.html.open.generated.html.checkbox"));
     optionGroup.add(myCbOpenInBrowser);
 
     return optionGroup.createPanel();

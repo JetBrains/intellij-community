@@ -5,6 +5,7 @@
 package com.intellij.debugger.ui;
 
 import com.intellij.debugger.ClassFilter;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.project.Project;
@@ -12,6 +13,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ui.Table;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -40,9 +42,9 @@ public class ClassFilterEditor extends JPanel {
 
   public ClassFilterEditor(Project project, TreeClassChooser.ClassFilter classFilter) {
     super(new GridBagLayout());
-    myAddClassButton = new JButton("Add Class...");
-    myAddPatternButton = new JButton("Add Pattern...");
-    myRemoveButton = new JButton("Remove");
+    myAddClassButton = new JButton(DebuggerBundle.message("button.add.class"));
+    myAddPatternButton = new JButton(DebuggerBundle.message("button.add.pattern"));
+    myRemoveButton = new JButton(DebuggerBundle.message("button.remove"));
     myTable = new Table();
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable);
 
@@ -67,12 +69,12 @@ public class ClassFilterEditor extends JPanel {
     myTable.setPreferredScrollableViewportSize(new Dimension(200, 100));
 
     TableColumnModel columnModel = myTable.getColumnModel();
-    TableColumn column = columnModel.getColumn(myTableModel.CHECK_MARK);
+    TableColumn column = columnModel.getColumn(FilterTableModel.CHECK_MARK);
     int width = new JCheckBox().getPreferredSize().width;
     column.setPreferredWidth(width);
     column.setMaxWidth(width);
     column.setCellRenderer(new EnabledCellRenderer(myTable.getDefaultRenderer(Boolean.class)));
-    columnModel.getColumn(myTableModel.FILTER).setCellRenderer(new FilterCellRenderer());
+    columnModel.getColumn(FilterTableModel.FILTER).setCellRenderer(new FilterCellRenderer());
 
     myTable.registerKeyboardAction(
       new ActionListener() {
@@ -139,36 +141,33 @@ public class ClassFilterEditor extends JPanel {
   }
 
   protected final class FilterTableModel extends AbstractTableModel {
-    private List myFilters = new LinkedList();
-    public final int CHECK_MARK = 0;
-    public final int FILTER = 1;
-
-    public FilterTableModel() {
-    }
+    private List<ClassFilter> myFilters = new LinkedList<ClassFilter>();
+    public static final int CHECK_MARK = 0;
+    public static final int FILTER = 1;
 
     public final void setFilters(ClassFilter[] filters) {
       myFilters.clear();
       if (filters != null) {
-        for (int idx = 0; idx < filters.length; idx++) {
-          myFilters.add(filters[idx]);
+        for (ClassFilter filter : filters) {
+          myFilters.add(filter);
         }
       }
       fireTableDataChanged();
     }
 
     public ClassFilter[] getFilters() {
-      for (Iterator it = myFilters.iterator(); it.hasNext();) {
-        ClassFilter filter = (ClassFilter)it.next();
+      for (Iterator<ClassFilter> it = myFilters.iterator(); it.hasNext();) {
+        ClassFilter filter = it.next();
         String pattern = filter.getPattern();
         if (pattern == null || "".equals(pattern)) {
           it.remove();
         }
       }
-      return (ClassFilter[])myFilters.toArray(new ClassFilter[myFilters.size()]);
+      return myFilters.toArray(new ClassFilter[myFilters.size()]);
     }
 
     public ClassFilter getFilterAt(int index) {
-      return (ClassFilter)myFilters.get(index);
+      return myFilters.get(index);
     }
 
     public int getFilterIndex(ClassFilter filter) {
@@ -182,9 +181,9 @@ public class ClassFilterEditor extends JPanel {
     }
 
     public void removeRows(int[] rows) {
-      List toRemove = new LinkedList();
-      for (int idx = 0; idx < rows.length; idx++) {
-        toRemove.add(myFilters.get(rows[idx]));
+      List<ClassFilter> toRemove = new LinkedList<ClassFilter>();
+      for (int row : rows) {
+        toRemove.add(myFilters.get(row));
       }
       myFilters.removeAll(toRemove);
       toRemove.clear();
@@ -200,7 +199,7 @@ public class ClassFilterEditor extends JPanel {
     }
 
     public Object getValueAt(int rowIndex, int columnIndex) {
-      ClassFilter filter = (ClassFilter)myFilters.get(rowIndex);
+      ClassFilter filter = myFilters.get(rowIndex);
       if (columnIndex == FILTER) {
         return filter;
       }
@@ -211,12 +210,12 @@ public class ClassFilterEditor extends JPanel {
     }
 
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-      ClassFilter filter = (ClassFilter)myFilters.get(rowIndex);
+      ClassFilter filter = myFilters.get(rowIndex);
       if (columnIndex == FILTER) {
         filter.setPattern(aValue != null? aValue.toString() : "");
       }
       else if (columnIndex == CHECK_MARK) {
-        filter.setEnabled(aValue != null? ((Boolean)aValue).booleanValue() : true);
+        filter.setEnabled(aValue == null || ((Boolean)aValue).booleanValue());
       }
 //      fireTableCellUpdated(rowIndex, columnIndex);
       fireTableRowsUpdated(rowIndex, rowIndex);
@@ -240,14 +239,14 @@ public class ClassFilterEditor extends JPanel {
   private class FilterCellRenderer extends DefaultTableCellRenderer {
     public Component getTableCellRendererComponent(JTable table, Object value,
       boolean isSelected, boolean hasFocus, int row, int column) {
-      Color color = UIManager.getColor("Table.focusCellBackground");
-      UIManager.put("Table.focusCellBackground", table.getSelectionBackground());
+      Color color = UIUtil.getTableFocusCellBackground();
+      UIManager.put(UIUtil.TABLE_FOCUS_CELL_BACKGROUND_PROPERTY, table.getSelectionBackground());
       Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
       if (component instanceof JLabel) {
         ((JLabel)component).setBorder(noFocusBorder);
       }
-      UIManager.put("Table.focusCellBackground", color);
-      ClassFilter filter = (ClassFilter)table.getValueAt(row, myTableModel.FILTER);
+      UIManager.put(UIUtil.TABLE_FOCUS_CELL_BACKGROUND_PROPERTY, color);
+      ClassFilter filter = (ClassFilter)table.getValueAt(row, FilterTableModel.FILTER);
       component.setEnabled(ClassFilterEditor.this.isEnabled() && filter.isEnabled());
       return component;
     }
@@ -292,7 +291,8 @@ public class ClassFilterEditor extends JPanel {
   }
 
   protected void addClassFilter() {
-    TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject).createNoInnerClassesScopeChooser("Choose Class", GlobalSearchScope.allScope(myProject), myChooserFilter, null);
+    TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject).createNoInnerClassesScopeChooser(
+      DebuggerBundle.message("class.filter.editor.choose.class.title"), GlobalSearchScope.allScope(myProject), myChooserFilter, null);
     chooser.showDialog();
     PsiClass selectedClass = chooser.getSelectedClass();
     if (selectedClass != null) {

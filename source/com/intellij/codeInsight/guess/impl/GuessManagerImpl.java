@@ -20,6 +20,11 @@ public class GuessManagerImpl extends GuessManager implements ProjectComponent {
   private MethodPatternMap myMethodPatternMap = new MethodPatternMap();
 
   {
+    initMethodPatterns();
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  private void initMethodPatterns() {
     // Collection
     myMethodPatternMap.addPattern(new MethodPattern("add", 1, 0));
     myMethodPatternMap.addPattern(new MethodPattern("contains", 1, 0));

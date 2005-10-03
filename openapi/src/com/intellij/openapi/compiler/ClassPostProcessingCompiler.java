@@ -17,10 +17,10 @@ package com.intellij.openapi.compiler;
 
 
 /**
- * A tag interface indicating that the file processing compiler will actually take java classes and perform some activities on them.
+ * A tag interface indicating that the compiler will take Java classes and perform some activities on them.
  * This affects the order of compiler calls:
  * The sequence in which compilers are called:
- * SourceGeneratingCompiler -> SourceInstrumentingCompiler -> TranslatingCompiler ->  ClassInstrumentingCompiler -> ClassPostProcessingCompiler-> Validator
+ * SourceGeneratingCompiler -> SourceInstrumentingCompiler -> TranslatingCompiler ->  ClassInstrumentingCompiler -> ClassPostProcessingCompiler -> PackagingCompiler -> Validator
  */
 public interface ClassPostProcessingCompiler extends FileProcessingCompiler {
 }

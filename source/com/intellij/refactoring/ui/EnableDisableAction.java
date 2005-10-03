@@ -1,5 +1,7 @@
 package com.intellij.refactoring.ui;
 
+import org.jetbrains.annotations.NonNls;
+
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
@@ -33,8 +35,9 @@ public abstract class EnableDisableAction extends AbstractAction {
 
   public void register() {// make SPACE check/uncheck selected rows
     JTable table = getTable();
-    InputMap inputMap = table.getInputMap();
+    @NonNls InputMap inputMap = table.getInputMap();
     inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), "enable_disable");
-    table.getActionMap().put("enable_disable", this);
+    @NonNls final ActionMap actionMap = table.getActionMap();
+    actionMap.put("enable_disable", this);
   }
 }

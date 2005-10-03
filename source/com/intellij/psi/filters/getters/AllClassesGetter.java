@@ -7,12 +7,12 @@ import com.intellij.psi.filters.ContextGetter;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.util.ArrayUtil;
+import org.apache.oro.text.regex.Pattern;
+import org.apache.oro.text.regex.PatternMatcher;
+import org.apache.oro.text.regex.Perl5Matcher;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
-
-import org.apache.oro.text.regex.PatternMatcher;
-import org.apache.oro.text.regex.Pattern;
-import org.apache.oro.text.regex.Perl5Matcher;
 
 /**
  * Created by IntelliJ IDEA.
@@ -25,6 +25,8 @@ public class AllClassesGetter implements ContextGetter{
   private String myPrefixStr = null;
   private PatternMatcher myMatcher = null;
   private Pattern myPattern = null;
+  @NonNls private static final String JAVA_PACKAGE_PREFIX = "java.";
+  @NonNls private static final String JAVAX_PACKAGE_PREFIX = "javax.";
 
   public Object[] get(PsiElement context, CompletionContext completionContext) {
     if(context == null || !context.isValid()) return ArrayUtil.EMPTY_OBJECT_ARRAY;
@@ -75,7 +77,8 @@ public class AllClassesGetter implements ContextGetter{
       private int getClassIndex(PsiClass psiClass){
         if(psiClass.getManager().isInProject(psiClass)) return 2;
         final String qualifiedName = psiClass.getQualifiedName();
-        if(qualifiedName.startsWith("java.") || qualifiedName.startsWith("javax.")) return 1;
+        if(qualifiedName.startsWith(JAVA_PACKAGE_PREFIX) ||
+           qualifiedName.startsWith(JAVAX_PACKAGE_PREFIX)) return 1;
         return 0;
       }
 

@@ -1,5 +1,7 @@
 package com.intellij.ui;
 
+import com.intellij.util.ui.UIUtil;
+
 import javax.swing.*;
 import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
@@ -15,7 +17,7 @@ public class HighlightableCellRenderer extends HighlightableComponent implements
     boolean hasFocus
     ) {
     setText(tree.convertValueToText(value, selected, expanded, leaf, row, hasFocus));
-    setFont(UIManager.getFont("Tree.font"));
+    setFont(UIUtil.getTreeFont());
     setIcon(null);
 
     myIsSelected = selected;
@@ -25,11 +27,12 @@ public class HighlightableCellRenderer extends HighlightableComponent implements
 
   public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
     setText((value == null) ? "" : value.toString());
-    setFont(UIManager.getFont("List.font"));
+    setFont(UIUtil.getListFont());
     setIcon(null);
 
     myIsSelected = isSelected;
     myHasFocus = cellHasFocus;
     return this;
   }
+
 }

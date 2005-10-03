@@ -1,9 +1,10 @@
 package com.intellij.psi.impl.source.tree.java;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.filters.ConstructorFilter;
 import com.intellij.psi.filters.NotFilter;
@@ -25,13 +26,12 @@ import com.intellij.psi.scope.MethodProcessorSetupFailedException;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.processor.FilterScopeProcessor;
 import com.intellij.psi.scope.processor.MethodResolverProcessor;
-import com.intellij.psi.scope.processor.VariablesProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.lang.ASTNode;
-import com.intellij.pom.java.LanguageLevel;
+import org.jetbrains.annotations.NonNls;
 
 public class PsiReferenceExpressionImpl extends CompositePsiElement implements PsiReferenceExpression, SourceJavaCodeReference {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl");
@@ -119,7 +119,7 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
           final CandidateInfo resolveResult = (CandidateInfo)result[i];
           newResult[i] = new CandidateInfo(
             resolveResult,
-              ((PsiSubstitutorEx)resolveResult.getSubstitutor()).inplacePutAll((PsiClass)resolveResult.getElement(), parameters)
+            ((PsiSubstitutorEx)resolveResult.getSubstitutor()).inplacePutAll((PsiClass)resolveResult.getElement(), parameters)
           );
         }
         return newResult;
@@ -221,7 +221,7 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
     return element.getText();
   }
 
-  public static final String LENGTH = "length";
+  public static final @NonNls String LENGTH = "length";
 
   public PsiType getType() {
     JavaResolveResult result = advancedResolve(false);
@@ -230,7 +230,7 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
       ASTNode refName = findChildByRole(ChildRole.REFERENCE_NAME);
       if (refName != null && refName.getText().equals(LENGTH)) {
         ASTNode qualifier = findChildByRole(ChildRole.QUALIFIER);
-        if (qualifier != null && ElementType.EXPRESSION_BIT_SET.isInSet(qualifier.getElementType())) {
+        if (qualifier != null && ElementType.EXPRESSION_BIT_SET.contains(qualifier.getElementType())) {
           PsiType type = ((PsiExpression)SourceTreeToPsiMap.treeElementToPsi(qualifier)).getType();
           if (type != null && type instanceof PsiArrayType) {
             return PsiType.INT;
@@ -335,7 +335,7 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
     }
     PsiElement currentFileResolveScope = resolveResult.getCurrentFileResolveScope();
     if (!(currentFileResolveScope instanceof PsiImportStaticStatement) ||
-      ((PsiImportStaticStatement)currentFileResolveScope).isOnDemand()) {
+        ((PsiImportStaticStatement)currentFileResolveScope).isOnDemand()) {
       return renameDirectly(newElementName);
     }
     final PsiImportStaticStatement importStaticStatement = (PsiImportStaticStatement)currentFileResolveScope;
@@ -469,7 +469,7 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
       return ChildRole.REFERENCE_NAME;
     }
     else {
-      if (ElementType.EXPRESSION_BIT_SET.isInSet(child.getElementType())) {
+      if (ElementType.EXPRESSION_BIT_SET.contains(child.getElementType())) {
         return ChildRole.QUALIFIER;
       }
       return ChildRole.NONE;

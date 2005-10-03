@@ -12,6 +12,7 @@ public class PresentationFactory {
     myAction2Presentation = new WeakHashMap();
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public final Presentation getPresentation(AnAction action){
     if (action == null) {
       throw new IllegalArgumentException("action cannot be null");

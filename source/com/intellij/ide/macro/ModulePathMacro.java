@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootsTraversing;
 import com.intellij.openapi.module.Module;
+import com.intellij.ide.IdeBundle;
 
 public final class ModulePathMacro extends Macro {
   public String getName() {
@@ -13,7 +14,7 @@ public final class ModulePathMacro extends Macro {
   }
 
   public String getDescription() {
-    return "Module source path";
+    return IdeBundle.message("macro.module.source.path");
   }
 
   public String expand(DataContext dataContext) {

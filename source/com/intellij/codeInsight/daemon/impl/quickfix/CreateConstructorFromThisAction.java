@@ -3,6 +3,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethodCallExpression;
@@ -28,6 +29,6 @@ public class CreateConstructorFromThisAction extends CreateConstructorFromThisOr
   }
 
   public String getFamilyName() {
-    return "Create Constructor From this() Call";
+    return QuickFixBundle.message("create.constructor.from.this.call.family");
   }
 }

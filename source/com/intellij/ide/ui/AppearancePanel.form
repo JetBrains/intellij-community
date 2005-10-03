@@ -16,7 +16,7 @@
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="1" fill="3"/>
         </constraints>
         <properties/>
-        <border type="etched" title=" UI Options "/>
+        <border type="etched" title-resource-bundle="messages/IdeBundle" title-key="group.ui.options"/>
         <children>
           <component id="c6ad1" class="javax.swing.JCheckBox" binding="myAntialiasingInEditorCheckBox">
             <constraints>
@@ -25,7 +25,7 @@
             </constraints>
             <properties>
               <margin top="2" left="0" bottom="2" right="2"/>
-              <text value="Use antialiased font in editor"/>
+              <text resource-bundle="messages/IdeBundle" key="checkbox.use.antialiased.font.in.editor"/>
             </properties>
           </component>
           <component id="33d7c" class="javax.swing.JCheckBox" binding="myMoveMouseOnDefaultButtonCheckBox">
@@ -35,7 +35,7 @@
             </constraints>
             <properties>
               <margin top="2" left="0" bottom="2" right="2"/>
-              <text value="&lt;html&gt;Automatically position mouse cursor&lt;br&gt; on default button&lt;/html&gt;"/>
+              <text resource-bundle="messages/IdeBundle" key="checkbox.position.cursor.on.default.button"/>
             </properties>
           </component>
           <component id="665b2" class="javax.swing.JCheckBox" binding="myCycleScrollingCheckBox">
@@ -46,7 +46,7 @@
             <properties>
               <margin top="2" left="0" bottom="2" right="2"/>
               <selected value="true"/>
-              <text value="Cyclic scrolling in list"/>
+              <text resource-bundle="messages/IdeBundle" key="checkboox.cyclic.scrolling.in.lists"/>
             </properties>
           </component>
           <grid id="4c401" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
@@ -66,7 +66,7 @@
                 <properties>
                   <horizontalAlignment value="2"/>
                   <horizontalTextPosition value="2"/>
-                  <text value="Look and feel:"/>
+                  <text resource-bundle="messages/IdeBundle" key="combobox.look.and.feel"/>
                   <verifyInputWhenFocusTarget value="false"/>
                 </properties>
               </component>
@@ -122,7 +122,7 @@
                 </constraints>
                 <properties>
                   <horizontalAlignment value="10"/>
-                  <text value="Size:"/>
+                  <text resource-bundle="messages/IdeBundle" key="label.font.size"/>
                 </properties>
               </component>
               <component id="23221" class="javax.swing.JLabel" binding="myFontNameLabel">
@@ -132,7 +132,7 @@
                 </constraints>
                 <properties>
                   <horizontalAlignment value="10"/>
-                  <text value="Name:"/>
+                  <text resource-bundle="messages/IdeBundle" key="label.font.name"/>
                 </properties>
               </component>
               <hspacer id="53ae4">
@@ -160,7 +160,7 @@
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
-                  <text value="Font:"/>
+                  <text resource-bundle="messages/IdeBundle" key="label.override.laf.font"/>
                 </properties>
               </component>
               <component id="9a283" class="javax.swing.JCheckBox" binding="myOverrideLAFFonts">
@@ -169,7 +169,7 @@
                   <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
-                  <text value="Override default fonts by (not recommended):"/>
+                  <text resource-bundle="messages/IdeBundle" key="checkbox.override.default.laf.fonts"/>
                 </properties>
               </component>
             </children>
@@ -181,7 +181,7 @@
             </constraints>
             <properties>
               <margin top="2" left="0" bottom="2" right="2"/>
-              <text value="Show icons in quick navigation"/>
+              <text resource-bundle="messages/IdeBundle" key="checkbox.show.icons.in.quick.navigation"/>
             </properties>
           </component>
         </children>
@@ -193,7 +193,7 @@
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="3"/>
         </constraints>
         <properties/>
-        <border type="etched" title=" Transparency "/>
+        <border type="etched" title-resource-bundle="messages/IdeBundle" title-key="group.transparency"/>
         <children>
           <component id="3d7be" class="javax.swing.JLabel">
             <constraints>
@@ -201,7 +201,7 @@
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
             </constraints>
             <properties>
-              <text value="Delay (ms):"/>
+              <text resource-bundle="messages/IdeBundle" key="label.transparency.delay.ms"/>
             </properties>
           </component>
           <component id="78431" class="javax.swing.JLabel">
@@ -210,7 +210,7 @@
               <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
             </constraints>
             <properties>
-              <text value="Ratio:"/>
+              <text resource-bundle="messages/IdeBundle" key="label.transparency.ratio"/>
             </properties>
           </component>
           <component id="7d37d" class="javax.swing.JCheckBox" binding="myEnableAlphaModeCheckBox">
@@ -220,7 +220,7 @@
             </constraints>
             <properties>
               <margin top="0" left="0" bottom="0" right="0"/>
-              <text value="Use transparent mode for floating windows"/>
+              <text resource-bundle="messages/IdeBundle" key="checkbox.use.transparent.mode.for.floating.windows"/>
             </properties>
           </component>
           <component id="afb40" class="javax.swing.JSlider" binding="myAlphaModeRatioSlider">
@@ -252,7 +252,7 @@
           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="1" fill="3"/>
         </constraints>
         <properties/>
-        <border type="etched" title=" Window Options "/>
+        <border type="etched" title-resource-bundle="messages/IdeBundle" title-key="group.window.options"/>
         <children>
           <component id="9264" class="javax.swing.JCheckBox" binding="myAnimateWindowsCheckBox">
             <constraints>
@@ -262,7 +262,7 @@
             <properties>
               <margin top="2" left="2" bottom="2" right="2"/>
               <selected value="true"/>
-              <text value="Animate windows"/>
+              <text resource-bundle="messages/IdeBundle" key="checkbox.animate.windows"/>
             </properties>
           </component>
           <component id="32072" class="javax.swing.JCheckBox" binding="myWindowShortcutsCheckBox">
@@ -273,7 +273,7 @@
             <properties>
               <margin top="2" left="2" bottom="2" right="2"/>
               <selected value="true"/>
-              <text value="Show window mnemonics"/>
+              <text resource-bundle="messages/IdeBundle" key="checkbox.show.window.mnemonics"/>
             </properties>
           </component>
           <component id="e4f17" class="javax.swing.JCheckBox" binding="myShowToolStripesCheckBox">
@@ -284,7 +284,7 @@
             <properties>
               <margin top="2" left="2" bottom="2" right="2"/>
               <selected value="true"/>
-              <text value="Show tool window bars"/>
+              <text resource-bundle="messages/IdeBundle" key="checkbox.show.tool.window.bars"/>
             </properties>
           </component>
           <component id="42895" class="javax.swing.JCheckBox" binding="myShowMemoryIndicatorCheckBox">
@@ -295,7 +295,7 @@
             <properties>
               <margin top="2" left="2" bottom="2" right="2"/>
               <selected value="true"/>
-              <text value="Show memory indicator"/>
+              <text resource-bundle="messages/IdeBundle" key="checkbox.show.memory.indicator"/>
             </properties>
           </component>
           <component id="44b00" class="javax.swing.JCheckBox" binding="myAlwaysShowWindowButtonsCheckBox">
@@ -306,7 +306,7 @@
             <properties>
               <margin top="2" left="2" bottom="2" right="2"/>
               <selected value="true"/>
-              <text value="Show buttons for disabled tool windows"/>
+              <text resource-bundle="messages/IdeBundle" key="checkox.show.buttons.for.disabled.tool.windows"/>
             </properties>
           </component>
         </children>

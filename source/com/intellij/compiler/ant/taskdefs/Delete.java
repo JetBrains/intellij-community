@@ -2,13 +2,15 @@ package com.intellij.compiler.ant.taskdefs;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.compiler.ant.Tag;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: Mar 19, 2004
  */
 public class Delete extends Tag{
-  public Delete(String dir) {
+  public Delete(@NonNls String dir) {
+    //noinspection HardCodedStringLiteral
     super("delete", new Pair[] {Pair.create("dir", dir)});
   }
 }

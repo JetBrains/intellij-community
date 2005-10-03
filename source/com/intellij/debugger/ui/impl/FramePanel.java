@@ -33,11 +33,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 
+import org.jetbrains.annotations.NonNls;
+
 public class FramePanel extends DebuggerPanel implements DataProvider{
   private JComboBox myThreadsCombo;
   private JComboBox myFramesCombo;
   private ThreadsListener myThreadsListener;
   private FramesListener myFramesListener;
+  @NonNls private static final String HELP_ID = "debugging.debugFrame";
 
   public FramePanel(Project project, DebuggerStateManager stateManager) {
     super(project, stateManager);
@@ -98,7 +101,7 @@ public class FramePanel extends DebuggerPanel implements DataProvider{
 
   public Object getData(String dataId) {
     if (DataConstantsEx.HELP_ID.equals(dataId)) {
-      return "debugging.debugFrame";
+      return HELP_ID;
     }
     return super.getData(dataId);
   }
@@ -182,7 +185,7 @@ public class FramePanel extends DebuggerPanel implements DataProvider{
     private java.util.List<ThreadDescriptorImpl> getThreadList() {
       final java.util.List<ThreadReferenceProxyImpl> threads = new ArrayList<ThreadReferenceProxyImpl>(getSuspendContext().getDebugProcess().getVirtualMachineProxy().allThreads());
       Collections.sort(threads, ThreadReferenceProxyImpl.ourComparator);
-      
+
       final java.util.List<ThreadDescriptorImpl> descriptors = new ArrayList<ThreadDescriptorImpl>(threads.size());
       EvaluationContextImpl evaluationContext = getDebuggerContext().createEvaluationContext();
 

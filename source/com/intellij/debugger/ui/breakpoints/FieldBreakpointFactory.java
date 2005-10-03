@@ -6,6 +6,7 @@ package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.HelpID;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.ui.breakpoints.actions.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
@@ -13,6 +14,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.CommonBundle;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -48,7 +50,7 @@ public class FieldBreakpointFactory extends BreakpointFactory{
       new RemoveAction(project),
       new ToggleGroupByClassesAction(),
       new ToggleFlattenPackagesAction(),
-    }, getBreakpointCategory(), "Field Watchpoints", HelpID.FIELD_WATCHPOINTS);
+    }, getBreakpointCategory(), DebuggerBundle.message("field.watchpoints.tab.title"), HelpID.FIELD_WATCHPOINTS);
     panel.getTree().setGroupByMethods(false);
     return panel;
   }
@@ -73,12 +75,14 @@ public class FieldBreakpointFactory extends BreakpointFactory{
         protected boolean validateData() {
           String className = getClassName();
           if (className.length() == 0) {
-            Messages.showMessageDialog(myProject, "Cannot add watchpoint: a class name is not specified", "Add Field Watchpoint", Messages.getErrorIcon());
+            Messages.showMessageDialog(myProject, DebuggerBundle.message("error.field.breakpoint.class.name.not.specified"),
+                                       DebuggerBundle.message("add.field.breakpoint.dialog.title"), Messages.getErrorIcon());
             return false;
           }
           String fieldName = getFieldName();
           if (fieldName.length() == 0) {
-            Messages.showMessageDialog(myProject, "Cannot add watchpoint: a field name is not specified", "Add Field Watchpoint", Messages.getErrorIcon());
+            Messages.showMessageDialog(myProject, DebuggerBundle.message("error.field.breakpoint.field.name.not.specified"),
+                                       DebuggerBundle.message("add.field.breakpoint.dialog.title"), Messages.getErrorIcon());
             return false;
           }
           PsiClass psiClass = PsiManager.getInstance(myProject).findClass(className, GlobalSearchScope.allScope(myProject));
@@ -98,8 +102,8 @@ public class FieldBreakpointFactory extends BreakpointFactory{
               else {
                 Messages.showMessageDialog(
                   myProject,
-                  "Cannot create a field watchpoint for \"" + className + "." + fieldName + "\".\nField \"" + fieldName + "\" not found",
-                  "Error",
+                  DebuggerBundle.message("error.field.breakpoint.field.not.found", className, fieldName, fieldName),
+                  CommonBundle.getErrorTitle(),
                   Messages.getErrorIcon()
                 );
 
@@ -108,8 +112,8 @@ public class FieldBreakpointFactory extends BreakpointFactory{
           } else {
             Messages.showMessageDialog(
               myProject,
-              "Cannot create a field watchpoint for \"" + className + "." + fieldName + "\".\nNo sources for class \"" + className + "\"",
-              "Error",
+              DebuggerBundle.message("error.field.breakpoint.class.sources.not.found", className, fieldName, className),
+              CommonBundle.getErrorTitle(),
               Messages.getErrorIcon()
             );
           }

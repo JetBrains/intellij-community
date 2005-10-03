@@ -25,6 +25,8 @@ import gnu.trove.THashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * Created by IntelliJ IDEA.
  * User: Maxim.Mossienko
@@ -34,9 +36,9 @@ import java.util.Set;
  */
 public class HtmlUtil {
   private HtmlUtil() {}
-  private static final String EMPTY_TAGS[] = { "base","hr","meta","link","frame","br","basefont","param","img","area","input","isindex","col" };
+  @NonNls private static final String EMPTY_TAGS[] = { "base","hr","meta","link","frame","br","basefont","param","img","area","input","isindex","col" };
   private static final Set<String> EMPTY_TAGS_MAP = new THashSet<String>();
-  private static final String OPTIONAL_END_TAGS[] = {
+  @NonNls private static final String OPTIONAL_END_TAGS[] = {
     //"html",
     "head",
     //"body",
@@ -44,7 +46,7 @@ public class HtmlUtil {
   };
   private static final Set<String> OPTIONAL_END_TAGS_MAP = new THashSet<String>();
 
-  private static final String BLOCK_TAGS[] = { "p", "h1", "h2", "h3", "h4", "h5", "h6", "ul", "ol", "dir", "menu", "pre",
+  @NonNls private static final String BLOCK_TAGS[] = { "p", "h1", "h2", "h3", "h4", "h5", "h6", "ul", "ol", "dir", "menu", "pre",
    "dl", "div", "center", "noscript", "noframes", "blockquote", "form", "isindex", "hr", "table", "fieldset", "address",
    // nonexplicitly specified
    "map",
@@ -53,10 +55,10 @@ public class HtmlUtil {
   };
   private static final Set<String> BLOCK_TAGS_MAP = new THashSet<String>();
 
-  private static final String INLINE_ELEMENTS_CONTAINER[] = { "p", "h1", "h2", "h3", "h4", "h5", "h6", "pre", "dt" };
+  @NonNls private static final String INLINE_ELEMENTS_CONTAINER[] = { "p", "h1", "h2", "h3", "h4", "h5", "h6", "pre", "dt" };
   private static final Set<String> INLINE_ELEMENTS_CONTAINER_MAP = new THashSet<String>();
 
-  private static final String EMPTY_ATTRS[] = { "nowrap", "compact", "disabled", "readonly", "selected", "multiple", "nohref", "ismap", "declare", "noshade", "checked" };
+  @NonNls private static final String EMPTY_ATTRS[] = { "nowrap", "compact", "disabled", "readonly", "selected", "multiple", "nohref", "ismap", "declare", "noshade", "checked" };
   private static final Set<String> EMPTY_ATTRS_MAP = new THashSet<String>();
 
   static {
@@ -103,8 +105,8 @@ public class HtmlUtil {
   }
 
   public static void addHtmlSpecificCompletions(final XmlElementDescriptor descriptor,
-                                                 final XmlTag element,
-                                                 final List<XmlElementDescriptor> variants) {
+                                                final XmlTag element,
+                                                final List<XmlElementDescriptor> variants) {
     // add html block completions for tags with optional ends!
     String name = descriptor.getName(element);
 
@@ -155,6 +157,12 @@ public class HtmlUtil {
   public static class HtmlReferenceProvider implements PsiReferenceProvider {
     private static final Key<PsiReference[]> cachedReferencesKey = Key.create("html.cachedReferences");
     private static final Key<String>         cachedRefsTextKey = Key.create("html.cachedReferences.text");
+    @NonNls
+    public static final String NAME_ATTR_LOCAL_NAME = "name";
+    @NonNls
+    public static final String MAILTO_PREFIX = "mailto:";
+    @NonNls
+    public static final String JAVASCRIPT_PREFIX = "javascript:";
 
     public ElementFilter getFilter() {
       return new ElementFilter() {
@@ -171,32 +179,32 @@ public class HtmlUtil {
 
             if (parent instanceof XmlAttribute) {
               XmlAttribute xmlAttribute = (XmlAttribute) parent;
-              final String attrName = xmlAttribute.getName();
+              @NonNls final String attrName = xmlAttribute.getName();
               XmlTag tag = xmlAttribute.getParent();
-              final String tagName = tag.getName();
-              
+              @NonNls final String tagName = tag.getName();
+
               return
                ( attrName.equalsIgnoreCase("src") &&
-                                                  (tagName.equalsIgnoreCase("img") ||
-                                                   tagName.equalsIgnoreCase("script") ||
-                                                   tagName.equalsIgnoreCase("frame") ||
-                                                   tagName.equalsIgnoreCase("iframe")
-                                                  )
+                 (tagName.equalsIgnoreCase("img") ||
+                  tagName.equalsIgnoreCase("script") ||
+                  tagName.equalsIgnoreCase("frame") ||
+                  tagName.equalsIgnoreCase("iframe")
+                 )
                ) ||
-               ( attrName.equalsIgnoreCase("href") &&
-                 ( tagName.equalsIgnoreCase("a") ||
-                   tagName.equalsIgnoreCase("link") ||
-                   tagName.equalsIgnoreCase("area") 
-                 )  
-               ) ||
-              ( attrName.equalsIgnoreCase("action") &&
-                tagName.equalsIgnoreCase("form")
-              ) ||
-              attrName.equalsIgnoreCase("background") ||
-              ( attrName.equals("name") &&
-                tag.getNamespacePrefix().length() == 0 &&
-                !(tag instanceof JspDirective)
-              );
+                 ( attrName.equalsIgnoreCase("href") &&
+                   ( tagName.equalsIgnoreCase("a") ||
+                     tagName.equalsIgnoreCase("link") ||
+                     tagName.equalsIgnoreCase("area")
+                   )
+                 ) ||
+                   ( attrName.equalsIgnoreCase("action") &&
+                     tagName.equalsIgnoreCase("form")
+                   ) ||
+                     attrName.equalsIgnoreCase("background") ||
+                     ( attrName.equals(NAME_ATTR_LOCAL_NAME) &&
+                       tag.getNamespacePrefix().length() == 0 &&
+                       !(tag instanceof JspDirective)
+                     );
             }
           }
           return false;
@@ -219,9 +227,9 @@ public class HtmlUtil {
 
       final XmlAttribute attribute = (XmlAttribute)element.getParent();
       final String localName = attribute.getLocalName();
-      
+
       if (//"id".equals(localName) || 
-          "name".equals(localName)) {
+          NAME_ATTR_LOCAL_NAME.equals(localName)) {
         refs = new PsiReference[] { new JspReferencesProvider.SelfReference(element)};
       } else {
         String text = originalText;
@@ -231,7 +239,7 @@ public class HtmlUtil {
            ) {
           ++offset;
         }
-  
+
         text = StringUtil.stripQuotesAroundValue(text);
         int ind = text.lastIndexOf('#');
         String anchor = null;
@@ -239,18 +247,18 @@ public class HtmlUtil {
           anchor = text.substring(ind+1);
           text = text.substring(0,ind);
         }
-  
+
         ind = text.lastIndexOf('?');
         if (ind!=-1) text = text.substring(0,ind);
-  
-        if (text.length() > 0 && text.indexOf("://") == -1 && !text.startsWith("mailto:") &&
-            !text.startsWith("javascript:")
+
+        if (text.length() > 0 && text.indexOf("://") == -1 && !text.startsWith(MAILTO_PREFIX) &&
+            !text.startsWith(JAVASCRIPT_PREFIX)
            ) {
           refs = new DynamicFileReferenceSet(text, element, offset, ReferenceType.FILE_TYPE, this, true).getAllReferences();
         } else {
           refs = PsiReference.EMPTY_ARRAY;
         }
-  
+
         if (anchor != null &&
             (refs.length > 0 || originalText.regionMatches(1+offset,anchor,0,anchor.length()))
             ) {
@@ -260,7 +268,7 @@ public class HtmlUtil {
           refs = newrefs;
         }
       }
-      
+
       element.putUserData(cachedReferencesKey,refs);
       element.putUserData(cachedRefsTextKey,originalText);
 

@@ -6,10 +6,7 @@ import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.help.HelpManager;
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurableGroup;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -21,6 +18,7 @@ import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.CommonBundle;
 import gnu.trove.TObjectIntHashMap;
 
 import javax.swing.*;
@@ -128,7 +126,7 @@ public class ExplorerSettingsEditor extends DialogWrapper {
 
   private void updateTitle() {
     if (mySelectedConfigurable == null) {
-      setTitle("Settings");
+      setTitle(OptionsBundle.message("settings.panel.title"));
     }
     else {
       String displayName = mySelectedConfigurable.getDisplayName();
@@ -340,8 +338,8 @@ public class ExplorerSettingsEditor extends DialogWrapper {
     Dimension currentOptionsSize = myOptionsPanel.getSize();
 
     if (mySelectedConfigurable != null && mySelectedConfigurable.isModified()) {
-      int exitCode = Messages.showYesNoDialog("The page has been modified. Save changes made on this page?",
-                                              "Save Changes",
+      int exitCode = Messages.showYesNoDialog(OptionsBundle.message("options.page.modified.save.message.text"),
+                                              OptionsBundle.message("options.save.changes.message.title"),
                                               Messages.getQuestionIcon());
       if (exitCode == 0) {
         try {
@@ -439,7 +437,7 @@ public class ExplorerSettingsEditor extends DialogWrapper {
     private Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
     public ApplyAction() {
-      super("A&pply");
+      super(OptionsBundle.message("options.apply.button"));
       final Runnable updateRequest = new Runnable() {
         public void run() {
           if (!ExplorerSettingsEditor.this.isShowing()) return;
@@ -457,7 +455,7 @@ public class ExplorerSettingsEditor extends DialogWrapper {
 
     public void actionPerformed(ActionEvent e) {
       if (apply()) {
-        setCancelButtonText("Close");
+        setCancelButtonText(CommonBundle.getCloseButtonText());
       }
     }
   }
@@ -493,7 +491,7 @@ public class ExplorerSettingsEditor extends DialogWrapper {
 
   private class SwitchToDefaultViewAction extends AbstractAction {
     public SwitchToDefaultViewAction() {
-      putValue(Action.NAME, "Default &View");
+      putValue(Action.NAME, OptionsBundle.message("explorer.panel.default.view.button"));
     }
 
     public void actionPerformed(ActionEvent e) {

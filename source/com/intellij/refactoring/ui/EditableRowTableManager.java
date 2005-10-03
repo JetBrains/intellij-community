@@ -1,6 +1,7 @@
 package com.intellij.refactoring.ui;
 
 import com.intellij.ui.TableUtil;
+import com.intellij.refactoring.RefactoringBundle;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -41,23 +42,31 @@ public class EditableRowTableManager  {
     gbConstraints.fill = GridBagConstraints.HORIZONTAL;
     gbConstraints.insets = new Insets(2, 4, 2, 4);
 
-    myAddButton = new JButton("Add");
-    if (addMnemonics) myAddButton.setMnemonic('A');
+    myAddButton = new JButton();
+    myAddButton.setText(addMnemonics ?
+                        RefactoringBundle.message("row.add") :
+                        RefactoringBundle.message("row.add.without.mnemonic"));
     myAddButton.setDefaultCapable(false);
     buttonsPanel.add(myAddButton, gbConstraints);
 
-    myRemoveButton = new JButton("Remove");
-    if (addMnemonics) myRemoveButton.setMnemonic('E');
+    myRemoveButton = new JButton();
+    myRemoveButton.setText(addMnemonics ?
+                           RefactoringBundle.message("row.remove") :
+                           RefactoringBundle.message("row.remove.without.mnemonic"));
     myRemoveButton.setDefaultCapable(false);
     buttonsPanel.add(myRemoveButton, gbConstraints);
 
-    myUpButton = new JButton("Move Up");
-    if (addMnemonics) myUpButton.setMnemonic('U');
+    myUpButton = new JButton();
+    myUpButton.setText(addMnemonics ?
+                       RefactoringBundle.message("row.move.up") :
+                       RefactoringBundle.message("row.move.up.without.mnemonic"));
     myUpButton.setDefaultCapable(false);
     buttonsPanel.add(myUpButton, gbConstraints);
 
-    myDownButton = new JButton("Move Down");
-    if (addMnemonics) myDownButton.setMnemonic('D');
+    myDownButton = new JButton();
+    myDownButton.setText(addMnemonics ?
+                         RefactoringBundle.message("row.move.down") :
+                         RefactoringBundle.message("row.move.down.without.mnemonic"));
     myDownButton.setDefaultCapable(false);
     buttonsPanel.add(myDownButton, gbConstraints);
 

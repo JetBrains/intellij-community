@@ -43,8 +43,8 @@ public class ResourceBundleRenameHandler implements RenameHandler {
     ResourceBundle resourceBundle = getResourceBundleFromDataContext(dataContext);
 
     Messages.showInputDialog(project,
-                             "Enter new resource bundle base name",
-                             "Rename Resource Bundle",
+                             PropertiesBundle.message("rename.bundle.enter.new.resource.bundle.base.name.prompt.text"),
+                             PropertiesBundle.message("rename.resource.bundle.dialog.title"),
                              Messages.getQuestionIcon(),
                              resourceBundle.getBaseName(),
                              new MyInputValidator(project, resourceBundle));
@@ -100,9 +100,9 @@ public class ResourceBundleRenameHandler implements RenameHandler {
                     public void run() {
                       String path = FileUtil.toSystemDependentName(virtualFile.getPath());
                       Messages.showErrorDialog(myProject,
-                                               "Error renaming file '" + path + "' to '" + newName + "'\n" +
-                                               e.getLocalizedMessage(),
-                                               "Rename Resource Bundle");
+                                               PropertiesBundle.message("error.renaming.file.to.file.with.error.error.message", path,
+                                                                       newName, e.getLocalizedMessage()),
+                                               PropertiesBundle.message("rename.resource.bundle.dialog.title"));
                     }
                   });
                   success.set(Boolean.FALSE);
@@ -112,7 +112,7 @@ public class ResourceBundleRenameHandler implements RenameHandler {
             }
           });
         }
-      }, "Renaming resource bundle " + myResourceBundle.getBaseName(), null);
+      }, PropertiesBundle.message("renaming.resource.bundle.0", myResourceBundle.getBaseName()), null);
       return success.get().booleanValue();
     }
   }

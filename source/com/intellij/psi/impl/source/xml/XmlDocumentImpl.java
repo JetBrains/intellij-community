@@ -11,23 +11,24 @@ import com.intellij.pom.xml.XmlAspect;
 import com.intellij.pom.xml.impl.events.XmlDocumentChangedImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.PsiRecursiveElementVisitor;
+import com.intellij.psi.impl.CachedValueImpl;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.html.dtd.HtmlNSDescriptorImpl;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.impl.CachedValueImpl;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.util.XmlNSDescriptorSequence;
 import com.intellij.xml.util.XmlUtil;
 import gnu.trove.TObjectIntHashMap;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -181,17 +182,21 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     return true;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public void dumpStatistics(){
     System.out.println("Statistics:");
-    final TObjectIntHashMap map = new TObjectIntHashMap();
+    final TObjectIntHashMap<Object> map = new TObjectIntHashMap<Object>();
 
     final PsiRecursiveElementVisitor psiRecursiveElementVisitor = new PsiRecursiveElementVisitor(){
+      @NonNls private static final String TOKENS_KEY = "Tokens";
+      @NonNls private static final String ELEMENTS_KEY = "Elements";
+
       public void visitXmlToken(XmlToken token) {
-        inc("Tokens");
+        inc(TOKENS_KEY);
       }
 
       public void visitElement(PsiElement element) {
-        inc("Elements");
+        inc(ELEMENTS_KEY);
         super.visitElement(element);
       }
 
@@ -214,7 +219,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     final TreeElement[] holder = new TreeElement[1];
     try{
       model.runTransaction(new PomTransactionBase(this, aspect) {
-        public PomModelEvent runInner() throws IncorrectOperationException {
+        public PomModelEvent runInner() {
           holder[0] = XmlDocumentImpl.super.addInternal(first, last, anchor, before);
           return XmlDocumentChangedImpl.createXmlDocumentChanged(model, XmlDocumentImpl.this);
         }
@@ -229,7 +234,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
     try{
       model.runTransaction(new PomTransactionBase(this, aspect) {
-        public PomModelEvent runInner() throws IncorrectOperationException {
+        public PomModelEvent runInner() {
           XmlDocumentImpl.super.deleteChildInternal(child);
           return XmlDocumentChangedImpl.createXmlDocumentChanged(model, XmlDocumentImpl.this);
         }
@@ -243,8 +248,8 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
     try{
       model.runTransaction(new PomTransactionBase(this, aspect) {
-        public PomModelEvent runInner() throws IncorrectOperationException {
-          XmlDocumentImpl.super.replaceChildInternal(child, newElement); 
+        public PomModelEvent runInner() {
+          XmlDocumentImpl.super.replaceChildInternal(child, newElement);
           return XmlDocumentChangedImpl.createXmlDocumentChanged(model, XmlDocumentImpl.this);
         }
       });

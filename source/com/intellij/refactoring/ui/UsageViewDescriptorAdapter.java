@@ -4,7 +4,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
-import com.intellij.usageView.UsageViewUtil;
+import com.intellij.usageView.UsageViewBundle;
+import com.intellij.refactoring.RefactoringBundle;
 
 /**
  * @author dsl
@@ -64,7 +65,7 @@ public abstract class UsageViewDescriptorAdapter implements UsageViewDescriptor 
   }
 
   public String getCodeReferencesText(int usagesCount, int filesCount) {
-    return "References to be changed " + UsageViewUtil.getUsageCountInfo(usagesCount, filesCount, "reference");
+    return RefactoringBundle.message("references.to.be.changed", UsageViewBundle.getReferencesString(usagesCount, filesCount));
   }
 
   public String getCommentReferencesText(int usagesCount, int filesCount) {

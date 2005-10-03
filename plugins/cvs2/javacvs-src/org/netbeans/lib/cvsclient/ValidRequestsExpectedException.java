@@ -22,6 +22,6 @@ public final class ValidRequestsExpectedException extends CommandException {
 	// Setup ==================================================================
 
 	public ValidRequestsExpectedException() {
-		super("Valid requests expected!");
+		super(JavaCvsSrcBundle.message("valid.requests.expected.error.message"));
 	}
 }

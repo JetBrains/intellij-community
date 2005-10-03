@@ -28,6 +28,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jetbrains.annotations.NotNull;
+
+/**
+ * Compiler which copies the compiled files to a different directory.
+ */
 public abstract class CopyingCompiler implements PackagingCompiler{
   public abstract VirtualFile[] getFilesToCopy(CompileContext context);
   public abstract String getDestinationPath(VirtualFile sourceFile);
@@ -37,6 +42,7 @@ public abstract class CopyingCompiler implements PackagingCompiler{
     new File(destinationPath).delete();
   }
 
+  @NotNull
   public final ProcessingItem[] getProcessingItems(final CompileContext context) {
     return ApplicationManager.getApplication().runReadAction(new Computable<ProcessingItem[]>() {
       public ProcessingItem[] compute() {
@@ -53,18 +59,18 @@ public abstract class CopyingCompiler implements PackagingCompiler{
 
   public ProcessingItem[] process(CompileContext context, ProcessingItem[] items) {
     final List<ProcessingItem> successfullyProcessed = new ArrayList<ProcessingItem>(items.length);
-    for (int idx = 0; idx < items.length; idx++) {
-      final CopyItem item = (CopyItem)items[idx];
-      final String fromPath = item.getSourcePath();
-      final String toPath = item.getDestinationPath();
+    for (ProcessingItem item : items) {
+      final CopyItem copyItem = (CopyItem)item;
+      final String fromPath = copyItem.getSourcePath();
+      final String toPath = copyItem.getDestinationPath();
       try {
         FileUtil.copy(new File(fromPath), new File(toPath));
-        successfullyProcessed.add(item);
+        successfullyProcessed.add(copyItem);
       }
       catch (IOException e) {
         context.addMessage(
           CompilerMessageCategory.ERROR,
-          "Error copying " + fromPath + "\nto " + toPath + ":\n" + e.getMessage(),
+          CompilerBundle.message("error.copying", fromPath, toPath, e.getMessage()),
           null, -1, -1
         );
       }
@@ -72,8 +78,9 @@ public abstract class CopyingCompiler implements PackagingCompiler{
     return successfullyProcessed.toArray(new ProcessingItem[successfullyProcessed.size()]);
   }
 
+  @NotNull
   public String getDescription() {
-    return "File copying compiler";
+    return CompilerBundle.message("file.copying.compiler.description");
   }
 
   public boolean validateConfiguration(CompileScope scope) {

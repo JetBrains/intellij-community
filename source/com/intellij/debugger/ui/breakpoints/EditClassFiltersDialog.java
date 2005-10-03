@@ -8,6 +8,7 @@ import com.intellij.debugger.ClassFilter;
 import com.intellij.debugger.ClassFilter;
 import com.intellij.debugger.ui.ClassFilterEditor;
 import com.intellij.debugger.ClassFilter;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.ide.util.TreeClassChooserDialog;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.openapi.project.Project;
@@ -31,7 +32,7 @@ public class EditClassFiltersDialog extends DialogWrapper {
     super(project, true);
     myChooserFilter = filter;
     myProject = project;
-    setTitle("Class Filters");
+    setTitle(DebuggerBundle.message("class.filters.dialog.title"));
     init();
   }
 
@@ -43,12 +44,12 @@ public class EditClassFiltersDialog extends DialogWrapper {
 
     myClassFilterEditor = new ClassFilterEditor(myProject, myChooserFilter);
     myClassFilterEditor.setPreferredSize(new Dimension(400, 200));
-    myClassFilterEditor.setBorder(IdeBorderFactory.createTitledBorder("Class Filters"));
+    myClassFilterEditor.setBorder(IdeBorderFactory.createTitledBorder(DebuggerBundle.message("class.filters.dialog.inclusion.filters.group")));
     mainPanel.add(myClassFilterEditor);
 
     myClassExclusionFilterEditor = new ClassFilterEditor(myProject, myChooserFilter);
     myClassExclusionFilterEditor.setPreferredSize(new Dimension(400, 200));
-    myClassExclusionFilterEditor.setBorder(IdeBorderFactory.createTitledBorder("Class Exclusion Filters"));
+    myClassExclusionFilterEditor.setBorder(IdeBorderFactory.createTitledBorder(DebuggerBundle.message("class.filters.dialog.exclusion.filters.group")));
     mainPanel.add(myClassExclusionFilterEditor);
 
     contentPanel.add(mainPanel, BorderLayout.CENTER);

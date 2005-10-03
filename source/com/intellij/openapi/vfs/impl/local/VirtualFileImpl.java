@@ -7,10 +7,12 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.vfs.VfsBundle;
 import com.intellij.openapi.vfs.ex.ProvidedContent;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.concurrency.WorkerThread;
@@ -19,6 +21,9 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Set;
+import java.util.Map;
+import java.util.HashMap;
 
 public class VirtualFileImpl extends VirtualFile {
 
@@ -121,8 +126,8 @@ public class VirtualFileImpl extends VirtualFile {
     appendPath(buffer, separatorChar);
     if (buffer.length() != length){
       LOG.error("buffer.length() != length",
-                 "length=" + length,
-                 "buffer=" + buffer.toString()
+                "length=" + length,
+                "buffer=" + buffer.toString()
                 );
     }
     return buffer.toString();
@@ -190,7 +195,7 @@ public class VirtualFileImpl extends VirtualFile {
     }
 
     if (isInvalidName(newName)){
-      throw new IOException("Invalid file name: \"" + newName + "\"");
+      throw new IOException(VfsBundle.message("file.invalid.name.error", newName));
     }
 
     final boolean auxCommand = myFileSystem.auxRename(this, newName);
@@ -204,7 +209,7 @@ public class VirtualFileImpl extends VirtualFile {
       PhysicalFile newFile = getPhysicalFile();
       if (!file.renameTo(newFile)) {
         setName(file.getName());
-        throw new IOException("Cannot rename file " + file.getPath() + " to " + newFile.getPath() + ".");
+        throw new IOException(VfsBundle.message("file.rename.error", file.getPath(), newFile.getPath()));
       }
     }
     else {
@@ -294,11 +299,11 @@ public class VirtualFileImpl extends VirtualFile {
 
   public VirtualFile createChildDirectory(Object requestor, String name) throws IOException {
     if (!isDirectory()) {
-      throw new IOException("Not a directory. Cannot create new directory in.");
+      throw new IOException(VfsBundle.message("directory.create.wrong.parent.error"));
     }
 
     if (isInvalidName(name)){
-      throw new IOException("Invalid file name: \"" + name + "\"");
+      throw new IOException(VfsBundle.message("file.invalid.name.error", name));
     }
 
     VirtualFile existingFile = findChild(name);
@@ -309,11 +314,11 @@ public class VirtualFileImpl extends VirtualFile {
 
     if (!auxCommand) {
       if (existingFile != null || physicalFile.exists()) {
-        throw new IOException("Cannot create file " + physicalFile.getPath() + ". File already exists.");
+        throw new IOException(VfsBundle.message("file.already.exists.error", physicalFile.getPath()));
       }
 
       if (!physicalFile.mkdir()) {
-        throw new IOException("Cannot create file " + physicalFile.getPath() + ".");
+        throw new IOException(VfsBundle.message("file.create.error", physicalFile.getPath()));
       }
     }
     else {
@@ -328,11 +333,11 @@ public class VirtualFileImpl extends VirtualFile {
 
   public VirtualFile createChildData(Object requestor, String name) throws IOException {
     if (!isDirectory()) {
-      throw new IOException("Not a direcotry. Cannot create new file in.");
+      throw new IOException(VfsBundle.message("directory.create.wrong.parent.error"));
     }
 
     if (isInvalidName(name)){
-      throw new IOException("Invalid file name: \"" + name + "\"");
+      throw new IOException(VfsBundle.message("file.invalid.name.error", name));
     }
 
     final boolean auxCommand = myFileSystem.auxCreateFile(this, name);
@@ -341,7 +346,7 @@ public class VirtualFileImpl extends VirtualFile {
     if (!auxCommand) {
       VirtualFile file = findChild(name);
       if (file != null || physicalFile.exists()) {
-        throw new IOException("Cannot create file " + physicalFile.getPath() + ". File already exists.");
+        throw new IOException(VfsBundle.message("file.already.exists.error", physicalFile.getPath()));
       }
       physicalFile.createOutputStream().close();
     }
@@ -358,7 +363,7 @@ public class VirtualFileImpl extends VirtualFile {
     PhysicalFile physicalFile = getPhysicalFile();
     VirtualFileImpl parent = (VirtualFileImpl)getParent();
     if (parent == null) {
-      throw new IOException("Cannot delete root file " + physicalFile.getPath() + ".");
+      throw new IOException(VfsBundle.message("file.delete.root.error", physicalFile.getPath()));
     }
 
     final boolean auxCommand = myFileSystem.auxDelete(this);
@@ -373,7 +378,7 @@ public class VirtualFileImpl extends VirtualFile {
 
     parent.removeChild(this);
     myFileSystem.fireFileDeleted(requestor, this, myName, isDirectory, parent);
-    
+
     if (auxCommand && isDirectory && physicalFile.exists()) {
       // Some auxHandlers refuse to delete directories actually as per version controls like CVS or SVN.
       // So if the direcotry haven't been deleted actually we must recreate VFS structure for this.
@@ -391,13 +396,13 @@ public class VirtualFileImpl extends VirtualFile {
       }
     }
     if (!physicalFile.delete()) {
-      throw new IOException("Cannot delete file " + physicalFile.getPath() + ".");
+      throw new IOException(VfsBundle.message("file.delete.error", physicalFile.getPath()));
     }
   }
 
   public void move(Object requestor, VirtualFile newParent) throws IOException {
     if (!(newParent instanceof VirtualFileImpl)) {
-      throw new IOException("Can not move file to " + newParent.getPresentableUrl());
+      throw new IOException(VfsBundle.message("file.move.error", newParent.getPresentableUrl()));
     }
 
     String name = getName();
@@ -415,7 +420,7 @@ public class VirtualFileImpl extends VirtualFile {
       PhysicalFile newPhysicalParent = ((VirtualFileImpl)newParent).getPhysicalFile();
       PhysicalFile newPhysicalFile = newPhysicalParent.createChild(name);
       if (!physicalFile.renameTo(newPhysicalFile)) {
-        throw new IOException("Cannot move file " + physicalFile.getPath() + " to " + newPhysicalParent.getPath() + ".");
+        throw new IOException(VfsBundle.message("file.move.to.error", physicalFile.getPath(), newPhysicalParent.getPath()));
       }
     }
 
@@ -457,7 +462,7 @@ public class VirtualFileImpl extends VirtualFile {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     if (isDirectory()) {
-      throw new IOException("Cannot read from file " + getPhysicalFile().getPath() + ".");
+      throw new IOException(VfsBundle.message("file.read.error", getPhysicalFile().getPath()));
     }
 
     if (myTimeStamp < 0) return physicalContent();
@@ -491,7 +496,7 @@ public class VirtualFileImpl extends VirtualFile {
 
     PhysicalFile physicalFile = getPhysicalFile();
     if (isDirectory()) {
-      throw new IOException("Cannot write to file " + physicalFile.getPath() + ".");
+      throw new IOException(VfsBundle.message("file.write.error", physicalFile.getPath()));
     }
     myFileSystem.fireBeforeContentsChange(requestor, this);
     final OutputStream out = new BufferedOutputStream(physicalFile.createOutputStream());
@@ -633,7 +638,7 @@ public class VirtualFileImpl extends VirtualFile {
           final ProgressIndicator indicator = myFileSystem.getManager().getRefreshIndicator();
           if (indicator != null) {
             indicator.start();
-            indicator.setText("Synchronizing files...");
+            indicator.setText(VfsBundle.message("file.synchronize.progress"));
           }
 
           worker.start();
@@ -720,26 +725,22 @@ public class VirtualFileImpl extends VirtualFile {
       if (files == null) {
         files = new PhysicalFile[0]; //?
       }
-      boolean[] found = new boolean[myChildren.length];
+
+      final boolean[] found = new boolean[myChildren.length];
+      final Map<String, Pair<VirtualFile, Integer>> childrenMap = new HashMap<String, Pair<VirtualFile, Integer>>((int)((double)myChildren.length * 1.5), (float)0.6);
+      {
+        for (int i = 0; i < myChildren.length; i++) {
+          final VirtualFileImpl child = myChildren[i];
+          childrenMap.put(child.getName(), new Pair<VirtualFile, Integer>(child, i));
+        }
+      }
+
       VirtualFileImpl[] children = myChildren;
       for (int i = 0; i < files.length; i++) {
         final PhysicalFile file = files[i];
         final String name = file.getName();
-        int index = -1;
-        // optimization: first check at expected index
-        if (i < children.length && children[i].myName.equals(name)) {
-          index = i;
-        }
-        else {
-          for (int j = 0; j < children.length; j++) {
-            final VirtualFileImpl child = children[j];
-            if (child.nameEquals(name)) {
-              index = j;
-              break;
-            }
-          }
-        }
-        if (index < 0) {
+        final Pair<VirtualFile, Integer> pair = childrenMap.get(name);
+        if (pair == null) {
           myFileSystem.getManager().addEventToFireByRefresh(
             new Runnable() {
               public void run() {
@@ -761,7 +762,7 @@ public class VirtualFileImpl extends VirtualFile {
           );
         }
         else {
-          found[index] = true;
+          found[pair.getSecond()] = true;
         }
       }
       for (int i = 0; i < children.length; i++) {
@@ -884,6 +885,7 @@ public class VirtualFileImpl extends VirtualFile {
   }
 
   public String toString() {
+    //noinspection HardCodedStringLiteral
     return "VirtualFile: " + getPresentableUrl();
   }
 

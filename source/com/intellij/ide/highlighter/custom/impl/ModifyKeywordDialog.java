@@ -2,6 +2,8 @@ package com.intellij.ide.highlighter.custom.impl;
 
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.ide.IdeBundle;
+import com.intellij.CommonBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -15,9 +17,9 @@ public class ModifyKeywordDialog extends DialogWrapper {
   public ModifyKeywordDialog(Component parent, String initialValue) {
     super(parent, false);
     if (initialValue == null || "".equals(initialValue)) {
-      setTitle("Add New Keyword");
+      setTitle(IdeBundle.message("title.add.new.keyword"));
     } else {
-      setTitle("Edit Keyword");
+      setTitle(IdeBundle.message("title.edit.keyword"));
     }
     init();
     myKeywordName.setText(initialValue);
@@ -30,7 +32,7 @@ public class ModifyKeywordDialog extends DialogWrapper {
     gc.gridy = 0;
     gc.weightx = 0;
     gc.insets = new Insets(5, 0, 5, 5);
-    panel.add(new JLabel("Keyword: "), gc);
+    panel.add(new JLabel(IdeBundle.message("editbox.keyword")), gc);
 
     gc = new GridBagConstraints();
     gc.gridx = 1;
@@ -52,11 +54,13 @@ public class ModifyKeywordDialog extends DialogWrapper {
   protected void doOKAction() {
     final String keywordName = myKeywordName.getText().trim();
     if (keywordName.length() == 0) {
-      Messages.showMessageDialog(getContentPane(), "Keyword cannot be empty", "Error", Messages.getErrorIcon());
+      Messages.showMessageDialog(getContentPane(), IdeBundle.message("error.keyword.cannot.be.empty"),
+                                 CommonBundle.getErrorTitle(), Messages.getErrorIcon());
       return;
     }
     if (keywordName.indexOf(' ') >= 0) {
-      Messages.showMessageDialog(getContentPane(), "Keyword may not contain spaces", "Error", Messages.getErrorIcon());
+      Messages.showMessageDialog(getContentPane(), IdeBundle.message("error.keyword.may.not.contain.spaces"),
+                                 CommonBundle.getErrorTitle(), Messages.getErrorIcon());
       return;
     }
     super.doOKAction();

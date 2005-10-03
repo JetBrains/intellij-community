@@ -12,6 +12,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.ex.FileSystemTreeImpl;
 import com.intellij.openapi.fileChooser.impl.FileTreeBuilder;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
 import com.intellij.openapi.roots.ui.configuration.actions.ToggleExcludedStateAction;
@@ -41,7 +42,7 @@ public class ContentEntryTreeEditor {
   protected Tree myTree;
   private FileSystemTreeImpl myFileSystemTree;
   private JPanel myTreePanel;
-  private final DefaultMutableTreeNode EMPTY_TREE_ROOT = new DefaultMutableTreeNode("<empty>");
+  private final DefaultMutableTreeNode EMPTY_TREE_ROOT = new DefaultMutableTreeNode(ProjectBundle.message("module.paths.empty.node"));
   protected DefaultActionGroup myEditingActionsGroup;
   private ContentEntryEditor myContentEntryEditor;
   private final MyContentEntryEditorListener myContentEntryEditorListener = new MyContentEntryEditorListener();

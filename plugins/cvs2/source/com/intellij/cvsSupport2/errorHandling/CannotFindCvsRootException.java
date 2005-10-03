@@ -1,6 +1,7 @@
 package com.intellij.cvsSupport2.errorHandling;
 
 import java.io.File;
+import java.text.MessageFormat;
 
 /**
  * author: lesya
@@ -8,6 +9,6 @@ import java.io.File;
 
 public class CannotFindCvsRootException extends Exception{
     public CannotFindCvsRootException(File file) {
-      super("Cannot find CVSROOT for file " + file);
+      super(com.intellij.CvsBundle.message("exception.text.cannot.find.cvsroot.for.file", file));
     }
   }

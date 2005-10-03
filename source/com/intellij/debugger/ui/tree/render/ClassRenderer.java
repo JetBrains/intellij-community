@@ -1,6 +1,7 @@
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.DebuggerContext;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -19,6 +20,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.util.IncorrectOperationException;
 import com.sun.jdi.*;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -33,7 +35,7 @@ import java.util.List;
 public class ClassRenderer extends NodeRendererImpl{
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.tree.render.ClassRenderer");
   
-  public static final String UNIQUE_ID = "ClassRenderer";
+  public static final @NonNls String UNIQUE_ID = "ClassRenderer";
 
   public boolean SORT_ASCENDING               = false;
   public boolean SHOW_SYNTHETICS              = true;
@@ -85,10 +87,11 @@ public class ClassRenderer extends NodeRendererImpl{
       return buf.toString();
     }
     else if(value == null) {
+      //noinspection HardCodedStringLiteral
       return "null";
     }
     else {
-      return "undefined";
+      return DebuggerBundle.message("label.undefined");
     }
   }
 
@@ -165,7 +168,7 @@ public class ClassRenderer extends NodeRendererImpl{
       return elementFactory.createExpressionFromText(fieldDescriptor.getField().name(), DebuggerUtils.findClass(fieldDescriptor.getObject().referenceType().name(), context.getProject()));
     }
     catch (IncorrectOperationException e) {
-      throw new EvaluateException("Invalid field name '" + fieldDescriptor.getField().name() + "'", null);
+      throw new EvaluateException(DebuggerBundle.message("error.invalid.field.name", fieldDescriptor.getField().name()), null);
     }
   }
 
@@ -194,7 +197,7 @@ public class ClassRenderer extends NodeRendererImpl{
     return type instanceof ReferenceType && !(type instanceof ArrayType);
   }
 
-  public String getName() {
+  public @NonNls String getName() {
     return "Object";
   }
 

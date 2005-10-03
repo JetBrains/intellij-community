@@ -3,8 +3,7 @@ package com.intellij.debugger.engine.evaluation.expression;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.DebuggerBundle;
 import com.sun.jdi.*;
 
 /**
@@ -26,7 +25,7 @@ public class AssignmentEvaluator implements Evaluator{
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
     Object right = myRightEvaluator.evaluate(context);
     if(right != null && !(right instanceof Value)) {
-      throw EvaluateExceptionUtil.createEvaluateException("Right part of the assignment is not value.");
+      throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.not.rvalue"));
     }
 
     myLeftEvaluator.evaluate(context);
@@ -37,7 +36,7 @@ public class AssignmentEvaluator implements Evaluator{
 
   static void assign(Modifier modifier, Object right, EvaluationContextImpl context) throws EvaluateException {
     if(modifier == null) {
-      throw EvaluateExceptionUtil.createEvaluateException("Left part of the assignment is not lvalue.");
+      throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.not.lvalue"));
     }
     try {
       modifier.setValue(((Value)right));

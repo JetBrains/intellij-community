@@ -11,11 +11,11 @@
     <children>
       <component id="a2d2a" class="javax.swing.JLabel" binding="myTableLabel">
         <constraints>
-          <xy x="0" y="3" width="93" height="14"/>
+          <xy x="0" y="2" width="110" height="16"/>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
         </constraints>
         <properties>
-          <text value="Node de&amp;scendants:"/>
+          <text resource-bundle="messages/DebuggerBundle" key="label.named.children.configurable.node.descendants"/>
         </properties>
       </component>
       <grid id="c8237" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
@@ -29,7 +29,7 @@
         <children>
           <scrollpane id="68272">
             <constraints>
-              <xy x="0" y="0" width="198" height="227"/>
+              <xy x="0" y="0" width="188" height="227"/>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="7" anchor="0" fill="3"/>
             </constraints>
             <properties/>
@@ -46,7 +46,7 @@
           <grid id="c7716" row-count="5" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="208" y="0" width="90" height="227"/>
+              <xy x="198" y="0" width="100" height="227"/>
               <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
             </constraints>
             <properties/>
@@ -54,43 +54,43 @@
             <children>
               <component id="c1f20" class="javax.swing.JButton" binding="myButtonRemove">
                 <constraints>
-                  <xy x="0" y="29" width="90" height="24"/>
+                  <xy x="0" y="31" width="100" height="26"/>
                   <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1"/>
                 </constraints>
                 <properties>
-                  <text value="&amp;Remove"/>
+                  <text resource-bundle="messages/DebuggerBundle" key="button.remove"/>
                 </properties>
               </component>
               <component id="f0acb" class="javax.swing.JButton" binding="myButtonUp">
                 <constraints>
-                  <xy x="0" y="58" width="90" height="24"/>
+                  <xy x="0" y="62" width="100" height="26"/>
                   <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1"/>
                 </constraints>
                 <properties>
-                  <text value="Move &amp;Up"/>
+                  <text resource-bundle="messages/DebuggerBundle" key="button.move.up"/>
                 </properties>
               </component>
               <component id="66bbb" class="javax.swing.JButton" binding="myButtonDown">
                 <constraints>
-                  <xy x="0" y="87" width="90" height="24"/>
+                  <xy x="0" y="93" width="100" height="26"/>
                   <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1"/>
                 </constraints>
                 <properties>
-                  <text value="Move &amp;Down"/>
+                  <text resource-bundle="messages/DebuggerBundle" key="button.move.down"/>
                 </properties>
               </component>
               <component id="5579c" class="javax.swing.JButton" binding="myButtonAdd">
                 <constraints>
-                  <xy x="0" y="0" width="90" height="24"/>
+                  <xy x="0" y="0" width="100" height="26"/>
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1"/>
                 </constraints>
                 <properties>
-                  <text value="&amp;Add"/>
+                  <text resource-bundle="messages/DebuggerBundle" key="button.add"/>
                 </properties>
               </component>
               <vspacer id="d11e5">
                 <constraints>
-                  <xy x="39" y="111" width="11" height="116"/>
+                  <xy x="44" y="119" width="11" height="108"/>
                   <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
                 </constraints>
               </vspacer>

@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.ex.dummy;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VfsBundle;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -31,7 +32,7 @@ class VirtualFileDirectoryImpl extends VirtualFileImpl {
   public VirtualFile createChildDirectory(Object requestor, String name) throws IOException {
     VirtualFile file = findChild(name);
     if (file != null){
-      throw new IOException("Cannot create file " + getUrl() + "/" + name + ". File already exists.");
+      throw new IOException(VfsBundle.message("file.create.already.exists.error", getUrl(), name));
     }
     VirtualFileImpl child = new VirtualFileDirectoryImpl(myFileSystem, this, name);
     addChild(child);
@@ -41,7 +42,7 @@ class VirtualFileDirectoryImpl extends VirtualFileImpl {
   public VirtualFile createChildData(Object requestor, String name) throws IOException {
     VirtualFile file = findChild(name);
     if (file != null){
-      throw new IOException("Cannot create file " + getUrl() + "/" + name + ". File already exists.");
+      throw new IOException(VfsBundle.message("file.create.already.exists.error", getUrl(), name));
     }
     VirtualFileImpl child = new VirtualFileDataImpl(myFileSystem, this, name);
     addChild(child);
@@ -49,19 +50,19 @@ class VirtualFileDirectoryImpl extends VirtualFileImpl {
   }
 
   public InputStream getInputStream() throws IOException {
-    throw new IOException("Cannot read from file " + getUrl() + ".");
+    throw new IOException(VfsBundle.message("file.read.error", getUrl()));
   }
 
   public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {
-    throw new IOException("Cannot write to file " + getUrl() + ".");
+    throw new IOException(VfsBundle.message("file.write.error", getUrl()));
   }
 
   public byte[] contentsToByteArray() throws IOException {
-    throw new IOException("Cannot read from file " + getUrl() + ".");
+    throw new IOException(VfsBundle.message("file.read.error", getUrl()));
   }
 
   public char[] contentsToCharArray() throws IOException {
-    throw new IOException("Cannot read from file " + getUrl() + ".");
+    throw new IOException(VfsBundle.message("file.read.error", getUrl()));
   }
 
   public long getModificationStamp() {

@@ -73,7 +73,7 @@ abstract class DocumentsSynchonizer {
           LOG.assertTrue(endOffset <= document.getTextLength());
           document.replaceString(startOffset, endOffset, newText);
         }
-      }, "Merge", null);
+      }, DiffBundle.message("save.merge.result.command.name"), null);
     } finally {
       myDuringModification = false;
     }

@@ -9,16 +9,16 @@ import java.util.HashSet;
 class MemberDependenciesStorage {
   protected final PsiClass myClass;
   private final PsiClass mySuperClass;
-  private HashMap myDependencyGraph;
+  private HashMap<PsiMember,HashSet<PsiMember>> myDependencyGraph;
 
   MemberDependenciesStorage(PsiClass aClass, PsiClass superClass) {
     myClass = aClass;
     mySuperClass = superClass;
-    myDependencyGraph = new HashMap();
+    myDependencyGraph = new HashMap<PsiMember, HashSet<PsiMember>>();
   }
 
-  protected HashSet getMemberDependencies(PsiElement member) {
-    HashSet result = (HashSet) myDependencyGraph.get(member);
+  protected HashSet<PsiMember> getMemberDependencies(PsiMember member) {
+    HashSet<PsiMember> result = myDependencyGraph.get(member);
     if (result == null) {
       DependentMembersCollector collector = new DependentMembersCollector();
       member.accept(collector);
@@ -29,13 +29,13 @@ class MemberDependenciesStorage {
   }
 
   class DependentMembersCollector extends ClassMemberReferencesVisitor {
-    private HashSet myCollection = new HashSet();
+    private HashSet<PsiMember> myCollection = new HashSet<PsiMember>();
 
     DependentMembersCollector() {
       super(myClass);
     }
 
-    public HashSet getCollection() {
+    public HashSet<PsiMember> getCollection() {
       return myCollection;
     }
 
@@ -46,7 +46,7 @@ class MemberDependenciesStorage {
     }
   }
 
-  private boolean existsInSuperClass(PsiElement classMember) {
+  private boolean existsInSuperClass(PsiMember classMember) {
     if(mySuperClass == null) return false;
     if (!(classMember instanceof PsiMethod)) return false;
     final PsiMethod method = ((PsiMethod) classMember);

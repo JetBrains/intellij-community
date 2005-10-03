@@ -92,6 +92,7 @@ public interface HighlightInfoType {
       return myAttributesKey;
     }
 
+    @SuppressWarnings({"HardCodedStringLiteral"})
     public String toString() {
       return "HighlightInfoTypeImpl[severity=" + mySeverity + ", key=" + myAttributesKey + "]";
     }
@@ -119,8 +120,13 @@ public interface HighlightInfoType {
       return myAttributesKey;
     }
 
+    @SuppressWarnings({"HardCodedStringLiteral"})
     public String toString() {
       return "HighlightInfoTypeSeverityByKey[severity=" + mySeverityKey + ", key=" + myAttributesKey + "]";
+    }
+
+    public HighlightDisplayKey getSeverityKey() {
+      return mySeverityKey;
     }
   }
 
@@ -145,6 +151,7 @@ public interface HighlightInfoType {
       return getSeverity(null) == HighlightSeverity.ERROR ? CodeInsightColors.ERRORS_ATTRIBUTES : CodeInsightColors.WARNINGS_ATTRIBUTES;
     }
 
+    @SuppressWarnings({"HardCodedStringLiteral"})
     public String toString() {
       return "HighlightInfoTypeSeverityByKeyAttrBySeverity[severity=" + mySeverityKey + "]";
 

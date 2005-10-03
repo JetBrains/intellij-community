@@ -1,6 +1,7 @@
 package com.intellij.ide.fileTemplates.actions;
 
 import com.intellij.ide.IdeView;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.EditFileTemplatesAction;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
@@ -84,11 +85,11 @@ public class CreateFromTemplateGroup extends ActionGroup{
 
     if (!result.isEmpty()) {
       if (!showAll) {
-        result.add(new CreateFromTemplatesAction("From File Template ..."));
+        result.add(new CreateFromTemplatesAction(IdeBundle.message("action.from.file.template")));
       }
 
       result.add(Separator.getInstance());
-      result.add(new EditFileTemplatesAction("Edit File Templates..."));
+      result.add(new EditFileTemplatesAction(IdeBundle.message("action.edit.file.templates")));
     }
 
     return result.toArray(new AnAction[result.size()]);
@@ -151,9 +152,8 @@ public class CreateFromTemplateGroup extends ActionGroup{
       dialog = new CreateFromTemplateDialog(project, directory, template);
     }
     catch (ParseException ex){
-      String message = "Unable to parse template \""+template.getName()+"\"";
-      message += "\nError message: "+ ex.getMessage();
-      Messages.showMessageDialog(project, message, "Invalid Template", Messages.getErrorIcon());
+      String message = IdeBundle.message("error.unable.to.parse.template.message", template.getName(), ex.getMessage());
+      Messages.showMessageDialog(project, message, IdeBundle.message("error.invalid.template"), Messages.getErrorIcon());
       LOG.debug(message);
       LOG.debug(ex);
       return null;
@@ -176,7 +176,9 @@ public class CreateFromTemplateGroup extends ActionGroup{
         FileTemplateUtil.createFromTemplate(element, template, fileName, properties, project, directory);
       }
       catch (Exception e){
-        Messages.showMessageDialog(project, e.getMessage(), "Cannot Create " + (template.isJavaClassTemplate() ? "Class" : "File"), Messages.getErrorIcon());
+        Messages.showMessageDialog(project, e.getMessage(), template.isJavaClassTemplate()
+                                                            ? IdeBundle.message("title.cannot.create.class")
+                                                            : IdeBundle.message("title.cannot.create.file"), Messages.getErrorIcon());
       }
       return element[0];
     }
@@ -195,7 +197,7 @@ public class CreateFromTemplateGroup extends ActionGroup{
     try {
       return template.getUnsetAttributes(defaultProperties).length > 0;
     } catch (ParseException e) {
-      throw new RuntimeException("Unable to parse template \""+template.getName()+"\"", e);
+      throw new RuntimeException(IdeBundle.message("error.unable.to.parse.template", template.getName()), e);
     }
   }
 

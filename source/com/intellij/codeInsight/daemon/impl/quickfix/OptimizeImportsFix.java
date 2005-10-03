@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -14,11 +15,11 @@ public class OptimizeImportsFix implements IntentionAction{
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.OptimizeImportsFix");
 
   public String getText() {
-    return "Optimize Imports";
+    return QuickFixBundle.message("optimize.imports.fix");
   }
 
   public String getFamilyName() {
-    return getText();
+    return QuickFixBundle.message("optimize.imports.fix");
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {

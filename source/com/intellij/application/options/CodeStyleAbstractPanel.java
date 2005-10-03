@@ -32,6 +32,7 @@
 package com.intellij.application.options;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -65,6 +66,7 @@ import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 public abstract class CodeStyleAbstractPanel {
   private static Logger LOG = Logger.getInstance("#com.intellij.application.options.CodeStyleXmlPanel");
@@ -203,6 +205,7 @@ public abstract class CodeStyleAbstractPanel {
   @NotNull
   protected abstract FileType getFileType();
 
+  @NonNls
   protected abstract String getPreviewText();
 
   public abstract void apply(CodeStyleSettings settings);
@@ -239,14 +242,15 @@ public abstract class CodeStyleAbstractPanel {
   protected abstract void resetImpl(final CodeStyleSettings settings);
 
   protected void fillWrappingCombo(final JComboBox wrapCombo) {
-    wrapCombo.addItem("Do not wrap");
-    wrapCombo.addItem("Wrap if long");
-    wrapCombo.addItem("Chop down if long");
-    wrapCombo.addItem("Wrap always");
+    wrapCombo.addItem(ApplicationBundle.message("combobox.codestyle.do.not.wrap"));
+    wrapCombo.addItem(ApplicationBundle.message("combobox.codestyle.wrap.if.long"));
+    wrapCombo.addItem(ApplicationBundle.message("combobox.codestyle.chop.down.if.long"));
+    wrapCombo.addItem(ApplicationBundle.message("combobox.codestyle.wrap.always"));
   }
 
-  protected String readFromFile(final String fileName) {
+  protected String readFromFile(@NonNls final String fileName) {
     try {
+      //noinspection HardCodedStringLiteral
       final InputStream stream = getClass().getClassLoader().getResourceAsStream("codeStyle/preview/" + fileName);
       final InputStreamReader reader = new InputStreamReader(stream);
       final LineNumberReader lineNumberReader = new LineNumberReader(reader);

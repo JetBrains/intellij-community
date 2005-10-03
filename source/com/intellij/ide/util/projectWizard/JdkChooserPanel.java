@@ -4,6 +4,7 @@ import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.ui.ProjectJdksEditor;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.ide.IdeBundle;
 import gnu.trove.TIntArrayList;
 
 import javax.swing.*;
@@ -27,6 +28,7 @@ public class JdkChooserPanel extends JPanel {
     myList = new JList(myListModel);
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myList.setCellRenderer(new ProjectJdkListRenderer());
+    //noinspection HardCodedStringLiteral
     myList.setPrototypeCellValue("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
     fillList();
 
@@ -131,7 +133,7 @@ public class JdkChooserPanel extends JPanel {
 
     public MyDialog(Component parent) {
       super(parent, true);
-      setTitle("Select JDK");
+      setTitle(IdeBundle.message("title.select.jdk"));
       init();
       myList.addListSelectionListener(this);
       updateOkButton();
@@ -168,7 +170,7 @@ public class JdkChooserPanel extends JPanel {
 
     private final class ConfigureAction extends AbstractAction {
       public ConfigureAction() {
-        super("Configure...");
+        super(IdeBundle.message("button.configure.e"));
         putValue(Action.MNEMONIC_KEY, new Integer('E'));
       }
 

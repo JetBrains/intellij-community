@@ -5,7 +5,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
 
 /**
  * author: lesya
@@ -14,7 +16,8 @@ public final class CvsRootParser {
 
   //:pserver;username=lesya;password=password111;hostname=hostname111;port=port111;proxy=proxy111;proxyport=proxyport111;tunnel=tumnnel111;proxyuser=proxyuser111;proxypassword=proxypassword111:c:/RepositoryPath
 
-  private static final Pattern ourPattern = Pattern.compile("^((.*?{0,1}(:.*?){0,1})@){0,1}([a-zA-Z0-9\\._-]+)(:(\\d*){0,1}){0,1}(.+)$");
+  @NonNls private static final String PATTERN_STR = "^((.*?{0,1}(:.*?){0,1})@){0,1}([a-zA-Z0-9\\._-]+)(:(\\d*){0,1}){0,1}(.+)$";
+  private static final Pattern ourPattern = Pattern.compile(PATTERN_STR);
 
   private static final int GROUP_USER_NAME_AND_PWD = 2;
   private static final int GROUP_HOST = 4;
@@ -30,6 +33,13 @@ public final class CvsRootParser {
   public String PORT;
   public String PASSWORD;
 
+  @NonNls private static final String USERNAME_FIELD_NAME = "username";
+  @NonNls private static final String PASSWORD_FIELD_NAME = "password";
+  @NonNls private static final String HOSTNAME__FIELD_NAME = "hostname";
+  @NonNls private static final String PROXY_FIELD_NAME = "proxy";
+  @NonNls private static final String PROXYPORT_FIELD_NAME = "proxyport";
+  @NonNls private static final String PORT_FIELD_NAME = "port";
+
 
   @NotNull public static CvsRootParser valueOf(String str, boolean check) {
 
@@ -41,7 +51,7 @@ public final class CvsRootParser {
       return result;
     }
 
-    String local2 = ":local:";
+    @NonNls String local2 = ":local:";
 
     if (str.startsWith(local2)){
       result.METHOD = CvsMethod.LOCAL_METHOD;
@@ -69,7 +79,7 @@ public final class CvsRootParser {
         }
         else {
           if (check) {
-            throw new IllegalArgumentException("wrong remote repository: " + str);
+            throw new IllegalArgumentException(com.intellij.CvsBundle.message("error.message.wrong.remote.repository", str));
           }
           else {
             result.REPOSITORY = suffix;
@@ -159,22 +169,22 @@ public final class CvsRootParser {
   private void setValue(final String paramName, final String paramValue) {
     if (paramName.length() == 0 || paramValue.length() == 0) return;
 
-    if ("username".equals(paramName)){
+    if (USERNAME_FIELD_NAME.equals(paramName)){
       USER_NAME = paramValue;
     }
-    else if("password".equals(paramName)){
+    else if(PASSWORD_FIELD_NAME.equals(paramName)){
       PASSWORD = paramValue;
     }
-    else if ("hostname".equals(paramName)){
+    else if (HOSTNAME__FIELD_NAME.equals(paramName)){
       HOST=paramValue;
     }
-    else if ("proxy".equals(paramName)){
+    else if (PROXY_FIELD_NAME.equals(paramName)){
       PROXY_HOST= paramValue;
     }
-    else if ("proxyport".equals(paramName)){
+    else if (PROXYPORT_FIELD_NAME.equals(paramName)){
       PROXY_PORT= paramValue;
     }
-    else if ("port".equals(paramName)){
+    else if (PORT_FIELD_NAME.equals(paramName)){
       PORT= paramValue;
     }
 
@@ -195,7 +205,7 @@ public final class CvsRootParser {
       }
     }
     if (check) {
-      throw new IllegalArgumentException("wrong method: " + str);
+      throw new IllegalArgumentException(com.intellij.CvsBundle.message("error.mesage.wrong.method", str));
     }
     cvsRoot.METHOD = CvsMethod.AVAILABLE_METHODS[0];
     if (!StringUtil.startsWithChar(str, ':')) return str;

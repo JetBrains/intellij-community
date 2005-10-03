@@ -16,7 +16,21 @@
 package com.intellij.openapi.compiler;
 
 
-
+/**
+ * A tag interface indicating that the compiler will package the compiled Java classes.
+ * This affects the order of compiler calls.
+ * The sequence in which compilers are called:
+ * SourceGeneratingCompiler -> SourceInstrumentingCompiler -> TranslatingCompiler ->  ClassInstrumentingCompiler -> ClassPostProcessingCompiler -> PackagingCompiler -> Validator
+ */
 public interface PackagingCompiler extends FileProcessingCompiler{
+  /**
+   * Called when the compiler detects that an item in the output directory is outdated
+   * and will be recompiled. Note that this method will be called before, and independently from,
+   * subsequent calls to {@link #process}.
+   *
+   * @param context the current compile context.
+   * @param url     the URL of a file in the output directory which will be recompiled.
+   * @param state   the validity state of the file specified by <code>url</code>.
+   */
   void processOutdatedItem(CompileContext context, String url, ValidityState state);
 }

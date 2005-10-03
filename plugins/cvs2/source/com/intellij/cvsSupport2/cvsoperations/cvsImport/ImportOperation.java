@@ -33,7 +33,9 @@ public class ImportOperation extends CvsCommandOperation {
   }
 
   public static ImportOperation createTestInstance(File sourceLocation, CvsEnvironment env) {
-    ImportDetails details = new ImportDetails(sourceLocation, "VENDOR", "RELEASE_TAG", "LOG_MESSAGE",
+    ImportDetails details = new ImportDetails(sourceLocation, com.intellij.CvsBundle.message("import.defaults.vendor"),
+                                              com.intellij.CvsBundle.message("import.defaults.release_tag"),
+                                              com.intellij.CvsBundle.message("import.defaults.log.message"),
                                               sourceLocation.getName(), env, new ArrayList(), new IIgnoreFileFilter(){
                                                 public boolean shouldBeIgnored(AbstractFileObject abstractFileObject, ICvsFileSystem cvsFileSystem) {
                                                   return false;

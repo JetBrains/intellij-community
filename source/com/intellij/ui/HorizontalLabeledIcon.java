@@ -1,6 +1,7 @@
 package com.intellij.ui;
 
 import com.intellij.util.text.StringTokenizer;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -43,7 +44,7 @@ public class HorizontalLabeledIcon implements Icon {
 
   private int getTextHeight() {
     if (myStrings != null) {
-      Font font = UIManager.getFont("Label.font");
+      Font font = UIUtil.getLabelFont();
       FontMetrics fontMetrics = Toolkit.getDefaultToolkit().getFontMetrics(font);
       return fontMetrics.getHeight() * myStrings.length;
     }
@@ -55,7 +56,7 @@ public class HorizontalLabeledIcon implements Icon {
   private int getTextWidth() {
     if (myStrings != null) {
       int width = 0;
-      Font font = UIManager.getFont("Label.font");
+      Font font = UIUtil.getLabelFont();
       FontMetrics fontMetrics = Toolkit.getDefaultToolkit().getFontMetrics(font);
       for (int i = 0; i < myStrings.length; i++) {
         String string = myStrings[i];
@@ -85,10 +86,10 @@ public class HorizontalLabeledIcon implements Icon {
 
     // Draw text
     if (myStrings != null) {
-      Font font = UIManager.getFont("Label.font");
+      Font font = UIUtil.getLabelFont();
       FontMetrics fontMetrics = Toolkit.getDefaultToolkit().getFontMetrics(font);
       g.setFont(fontMetrics.getFont());
-      g.setColor(UIManager.getColor("Label.foreground"));
+      g.setColor(UIUtil.getLabelForeground());
 
       x += myIcon.getIconWidth() + 5;
       y += (height - getTextHeight()) / 2 + fontMetrics.getHeight() - fontMetrics.getDescent();
@@ -98,11 +99,12 @@ public class HorizontalLabeledIcon implements Icon {
         y += fontMetrics.getHeight();
       }
       if (myMnemonic != null) {
-        g.setColor(UIManager.getColor("textInactiveText"));
+        g.setColor(UIUtil.getTextInactiveTextColor());
         int offset = fontMetrics.stringWidth(myStrings[myStrings.length-1]+" ");
         y -= fontMetrics.getHeight();
         g.drawString(myMnemonic, x + offset, y);
       }
     }
   }
+
 }

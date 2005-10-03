@@ -36,6 +36,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.util.ui.OptionsDialog;
 
 import javax.swing.*;
@@ -96,7 +97,7 @@ public abstract class UpdateOrStatusOptionsDialog extends OptionsDialog {
         configurable.apply();
       }
       catch (ConfigurationException e) {
-        Messages.showErrorDialog(myProject, "Cannot save sattings: " + e.getLocalizedMessage(), getRealTitle());
+        Messages.showErrorDialog(myProject, VcsBundle.message("messge.text.cannot.save.sattings", e.getLocalizedMessage()), getRealTitle());
         return;
       }
     }

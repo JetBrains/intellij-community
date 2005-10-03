@@ -11,6 +11,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author dsl
@@ -18,7 +19,7 @@ import org.jdom.Element;
 public class InheritedJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implements InheritedJdkOrderEntry, ClonableOrderEntry,
                                                                                      WritableOrderEntry {
   private final ProjectRootManagerEx myProjectRootManager;
-  static final String ENTRY_TYPE = "inheritedJdk";
+  @NonNls static final String ENTRY_TYPE = "inheritedJdk";
   private final MyJdkTableListener myJdkTableListener = new MyJdkTableListener();
   private final MyProjectJdkListener myListener = new MyProjectJdkListener();
 

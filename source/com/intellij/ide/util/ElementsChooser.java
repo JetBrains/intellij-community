@@ -3,6 +3,7 @@ package com.intellij.ide.util;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableUtil;
 import com.intellij.util.ui.Table;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionListener;
@@ -427,11 +428,11 @@ public class ElementsChooser<T> extends JPanel {
 
   private class MyElementColumnCellRenderer extends DefaultTableCellRenderer {
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-      final Color color = UIManager.getColor("Table.focusCellBackground");
+      final Color color = UIUtil.getTableFocusCellBackground();
       Component component;
       T t = (T)value;
       try {
-        UIManager.put("Table.focusCellBackground", table.getSelectionBackground());
+        UIManager.put(UIUtil.TABLE_FOCUS_CELL_BACKGROUND_PROPERTY, table.getSelectionBackground());
         component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
         setText(getItemText(t));
         if (component instanceof JLabel) {
@@ -439,7 +440,7 @@ public class ElementsChooser<T> extends JPanel {
         }
       }
       finally {
-        UIManager.put("Table.focusCellBackground", color);
+        UIManager.put(UIUtil.TABLE_FOCUS_CELL_BACKGROUND_PROPERTY, color);
       }
       final MyTableModel model = (MyTableModel)table.getModel();
       component.setEnabled(ElementsChooser.this.isEnabled() && (myColorUnmarkedElements? model.isElementMarked(row) : true));

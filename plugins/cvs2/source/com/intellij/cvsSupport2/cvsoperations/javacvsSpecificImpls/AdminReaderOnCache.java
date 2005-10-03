@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
+import java.text.MessageFormat;
 
 /**
  * author: lesya
@@ -33,7 +34,7 @@ public class AdminReaderOnCache implements IAdminReader {
 
   public Entry getEntry(final AbstractFileObject fileObject, final ICvsFileSystem cvsFileSystem) throws IOException {
     ProgressManager.getInstance().checkCanceled();
-    setProgressText("Scanning " + cvsFileSystem.getLocalFileSystem().getFile(fileObject.getParent()).getAbsolutePath());
+    setProgressText(com.intellij.CvsBundle.message("progress.text.scanning.directory", cvsFileSystem.getLocalFileSystem().getFile(fileObject.getParent()).getAbsolutePath()));
     File file = cvsFileSystem.getAdminFileSystem().getFile(fileObject);
     Entry result = myCvsEntriesManager.getEntryFor(CvsVfsUtil.findFileByIoFile(file.getParentFile()), file.getName());
     if (result == null) {
@@ -51,7 +52,7 @@ public class AdminReaderOnCache implements IAdminReader {
   }
 
   public Collection getEntries(final DirectoryObject directoryObject, final ICvsFileSystem cvsFileSystem) throws IOException {
-    setProgressText("Scanning " + cvsFileSystem.getLocalFileSystem().getFile(directoryObject).getAbsolutePath());
+    setProgressText(com.intellij.CvsBundle.message("progress.text.scanning.directory", cvsFileSystem.getLocalFileSystem().getFile(directoryObject).getAbsolutePath()));
     ProgressManager.getInstance().checkCanceled();
     File parent = cvsFileSystem.getAdminFileSystem().getFile(directoryObject);
     Collection entries = myCvsEntriesManager.getEntriesIn(CvsVfsUtil.findFileByIoFile(parent));

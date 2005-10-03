@@ -19,6 +19,7 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.StrikeoutLabel;
 import com.intellij.xml.XmlElementDescriptor;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -93,6 +94,7 @@ class LookupCellRenderer implements ListCellRenderer {
     panel.add(myLabel3, BorderLayout.EAST);
 
     JLabel label = myLabel0;
+    //noinspection HardCodedStringLiteral
     label.setText("A");
     label.setIcon(null);
     label.setFont(NORMAL_FONT);
@@ -224,9 +226,9 @@ class LookupCellRenderer implements ListCellRenderer {
           PsiMethod method = (PsiMethod)element;
           final PsiSubstitutor substitutor = (PsiSubstitutor) item.getAttribute(LookupItem.SUBSTITUTOR);
           text = PsiFormatUtil.formatMethod(method,
-              substitutor != null ? substitutor : PsiSubstitutor.EMPTY,
-              PsiFormatUtil.SHOW_PARAMETERS,
-              PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE);
+                                            substitutor != null ? substitutor : PsiSubstitutor.EMPTY,
+                                            PsiFormatUtil.SHOW_PARAMETERS,
+                                            PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE);
         }
       }
     }
@@ -439,7 +441,7 @@ class LookupCellRenderer implements ListCellRenderer {
       }
     }
 
-    final String TYPE_GAP = "XXX";
+    final @NonNls String TYPE_GAP = "XXX";
     if (o instanceof PsiElement) {
       if (showSignature(item)){
         PsiType typeAttr = (PsiType)item.getAttribute(LookupItem.TYPE_ATTR);

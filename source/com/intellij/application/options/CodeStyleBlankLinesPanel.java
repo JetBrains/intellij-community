@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.ui.IdeBorderFactory;
@@ -49,53 +50,53 @@ public class CodeStyleBlankLinesPanel extends CodeStyleAbstractPanel {
   }
 
   private JPanel createBlankLinesPanel() {
-    OptionGroup optionGroup = new OptionGroup("Blank Lines");
+    OptionGroup optionGroup = new OptionGroup(ApplicationBundle.message("title.blank.lines"));
 
     myBlankLinesBeforePackage = createTextField();
-    optionGroup.add(new JLabel("Before package statement:"), myBlankLinesBeforePackage);
+    optionGroup.add(new JLabel(ApplicationBundle.message("editbox.blanklines.before.package.statement")), myBlankLinesBeforePackage);
 
     myBlankLinesAfterPackage = createTextField();
-    optionGroup.add(new JLabel("After package statement:"), myBlankLinesAfterPackage);
+    optionGroup.add(new JLabel(ApplicationBundle.message("editbox.blanklines.after.package.statement")), myBlankLinesAfterPackage);
 
     myBlankLinesBeforeImports = createTextField();
-    optionGroup.add(new JLabel("Before imports:"), myBlankLinesBeforeImports);
+    optionGroup.add(new JLabel(ApplicationBundle.message("editbox.blanklines.before.imports")), myBlankLinesBeforeImports);
 
     myBlankLinesAfterImports = createTextField();
-    optionGroup.add(new JLabel("After imports:"), myBlankLinesAfterImports);
+    optionGroup.add(new JLabel(ApplicationBundle.message("editbox.blanklines.after.imports")), myBlankLinesAfterImports);
 
     myBlankLinesAroundClass = createTextField();
-    optionGroup.add(new JLabel("Around class:"), myBlankLinesAroundClass);
+    optionGroup.add(new JLabel(ApplicationBundle.message("editbox.blanklines.around.class")), myBlankLinesAroundClass);
 
     myBlankLinesAroundField = createTextField();
-    optionGroup.add(new JLabel("Around field:"), myBlankLinesAroundField);
+    optionGroup.add(new JLabel(ApplicationBundle.message("editbox.blanklines.around.field")), myBlankLinesAroundField);
 
     myBlankLinesAroundMethod = createTextField();
-    optionGroup.add(new JLabel("Around method:"), myBlankLinesAroundMethod);
+    optionGroup.add(new JLabel(ApplicationBundle.message("editbox.blanklines.around.method")), myBlankLinesAroundMethod);
 
     myBlankLinesAfterClassHeader = createTextField();
-    optionGroup.add(new JLabel("After class header:  "), myBlankLinesAfterClassHeader);
+    optionGroup.add(new JLabel(ApplicationBundle.message("editbox.blanklines.after.class.header")), myBlankLinesAfterClassHeader);
 
     return optionGroup.createPanel();
   }
 
   private JPanel createKeepBlankLinesPanel() {
-    OptionGroup optionGroup = new OptionGroup("Keep Blank Lines");
+    OptionGroup optionGroup = new OptionGroup(ApplicationBundle.message("title.keep.blank.lines"));
 
     myKeepBlankLinesInDeclarations = createTextField();
-    optionGroup.add(new JLabel("In declarations:"), myKeepBlankLinesInDeclarations);
+    optionGroup.add(new JLabel(ApplicationBundle.message("editbox.keep.blanklines.in.declarations")), myKeepBlankLinesInDeclarations);
 
     myKeepBlankLinesInCode = createTextField();
-    optionGroup.add(new JLabel("In code:"), myKeepBlankLinesInCode);
+    optionGroup.add(new JLabel(ApplicationBundle.message("editbox.keep.blanklines.in.code")), myKeepBlankLinesInCode);
 
     myKeepBlankLinesBeforeRBrace = createTextField();
-    optionGroup.add(new JLabel("Before '}': "), myKeepBlankLinesBeforeRBrace);
+    optionGroup.add(new JLabel(ApplicationBundle.message("editbox.keep.blanklines.before.rbrace")), myKeepBlankLinesBeforeRBrace);
 
     return optionGroup.createPanel();
   }
 
   private JPanel createPreviewPanel() {
     JPanel panel = new JPanel();
-    panel.setBorder(IdeBorderFactory.createTitledBorder("Preview"));
+    panel.setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.preview")));
     panel.setPreferredSize(new Dimension(200, 0));
     return panel;
   }

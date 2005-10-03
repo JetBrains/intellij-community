@@ -2,6 +2,7 @@ package com.intellij.psi.impl;
 
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Collections;
 import java.util.Map;
@@ -48,6 +49,7 @@ public final class EmptySubstitutorImpl extends EmptySubstitutor implements PsiS
     return other;
   }
 
+  @NonNls
   public String toString() {
     return "EMPTY";
   }

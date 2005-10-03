@@ -9,6 +9,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -18,16 +19,16 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
   public static final int SOCKET_TRANSPORT = 0;
   public static final int SHMEM_TRANSPORT = 1;
 
-  public static final String SUSPEND_ALL = "SuspendAll";
-  public static final String SUSPEND_THREAD = "SuspendThread";
-  public static final String SUSPEND_NONE = "SuspendNone";
+  public static final @NonNls String SUSPEND_ALL = "SuspendAll";
+  public static final @NonNls String SUSPEND_THREAD = "SuspendThread";
+  public static final @NonNls String SUSPEND_NONE = "SuspendNone";
 
-  public static final String EVALUATE_FRAGMENT = "EvaluateFragment";
-  public static final String EVALUATE_EXPRESSION = "EvaluateExpression";
+  public static final @NonNls String EVALUATE_FRAGMENT = "EvaluateFragment";
+  public static final @NonNls String EVALUATE_EXPRESSION = "EvaluateExpression";
 
-  public static final String RUN_HOTSWAP_ALWAYS = "RunHotswapAlways";
-  public static final String RUN_HOTSWAP_NEVER = "RunHotswapNever";
-  public static final String RUN_HOTSWAP_ASK = "RunHotswapAsk";
+  public static final @NonNls String RUN_HOTSWAP_ALWAYS = "RunHotswapAlways";
+  public static final @NonNls String RUN_HOTSWAP_NEVER = "RunHotswapNever";
+  public static final @NonNls String RUN_HOTSWAP_ASK = "RunHotswapAsk";
 
   public boolean TRACING_FILTERS_ENABLED;
   public int VALUE_LOOKUP_DELAY; // ms
@@ -75,6 +76,7 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
     mySteppingFilters = (steppingFilters != null)? steppingFilters : ClassFilter.EMPTY_ARRAY;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public void readExternal(Element parentNode) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, parentNode);
     List filtersList = new ArrayList();
@@ -88,6 +90,7 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
     filtersList.clear();
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public void writeExternal(Element parentNode) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, parentNode);
     Element element;

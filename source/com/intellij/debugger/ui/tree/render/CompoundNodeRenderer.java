@@ -13,6 +13,7 @@ import com.intellij.psi.PsiExpression;
 import com.sun.jdi.Type;
 import com.sun.jdi.Value;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Iterator;
 import java.util.List;
@@ -23,7 +24,7 @@ import java.util.List;
  */
 
 public class CompoundNodeRenderer extends NodeRendererImpl{
-  public static final String UNIQUE_ID = "CompoundNodeRenderer";
+  public static final @NonNls String UNIQUE_ID = "CompoundNodeRenderer";
 
   protected ValueLabelRenderer myLabelRenderer;
   protected ChildrenRenderer myChildrenRenderer;
@@ -83,6 +84,7 @@ public class CompoundNodeRenderer extends NodeRendererImpl{
     myChildrenRenderer = childrenRenderer;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public void readExternal(Element element) throws InvalidDataException {
     super.readExternal(element);
     final List children = element.getChildren(NodeRendererSettings.RENDERER_TAG);
@@ -103,6 +105,7 @@ public class CompoundNodeRenderer extends NodeRendererImpl{
     }
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
     if (myLabelRenderer != null) {

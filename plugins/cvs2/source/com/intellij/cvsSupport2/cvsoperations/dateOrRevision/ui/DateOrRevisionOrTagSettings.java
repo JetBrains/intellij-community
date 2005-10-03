@@ -16,13 +16,16 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * author: lesya
  */
 public class DateOrRevisionOrTagSettings {
 
+  @NonNls private static final String FORMAT = "EEE MMM dd HH:mm:ss yyyy";
   private static final DateFormat CVS_FORMAT =
-    new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyy", Locale.US);
+    new SimpleDateFormat(FORMAT, Locale.US);
   private static final DateFormat PRESENTABLE_FORMAT = SimpleDateFormat.getDateTimeInstance(SimpleDateFormat.SHORT,
                                                                                             SimpleDateFormat.SHORT,
                                                                                             Locale.getDefault());

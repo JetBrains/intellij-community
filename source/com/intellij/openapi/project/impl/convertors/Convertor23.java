@@ -10,6 +10,7 @@ import java.util.Iterator;
 /**
  * @author mike
  */
+@SuppressWarnings({"HardCodedStringLiteral"})
 public class Convertor23 {
   private static final String PROJECT_ROOT_CONTAINER_CLASS = "com.intellij.projectRoots.ProjectRootContainer";
 

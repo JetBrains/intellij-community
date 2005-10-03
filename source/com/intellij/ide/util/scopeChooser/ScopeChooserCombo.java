@@ -7,6 +7,7 @@ package com.intellij.ide.util.scopeChooser;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -129,7 +130,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
     if (fileEditorManager.getSelectedTextEditor() != null) {
       final PsiFile psiFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(fileEditorManager.getSelectedTextEditor().getDocument());
       if (psiFile != null) {
-        model.addElement(new ScopeDescriptor(new LocalSearchScope(psiFile, "Current File")));
+        model.addElement(new ScopeDescriptor(new LocalSearchScope(psiFile, IdeBundle.message("scope.current.file"))));
 
         if (fileEditorManager.getSelectedTextEditor().getSelectionModel().hasSelection()) {
           PsiElement[] elements = CodeInsightUtil.findStatementsInRange(
@@ -139,7 +140,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
           );
 
           if (elements != null) {
-            model.addElement(new ScopeDescriptor(new LocalSearchScope(elements, "Selection")));
+            model.addElement(new ScopeDescriptor(new LocalSearchScope(elements, IdeBundle.message("scope.selection"))));
           }
         }
       }
@@ -169,7 +170,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
           if (files.size() > 0) {
             model.addElement(new ScopeDescriptor(new GlobalSearchScope() {
               public String getDisplayName() {
-                return "Files in Previous Search Result";
+                return IdeBundle.message("scope.files.in.previous.search.result");
               }
 
               public boolean contains(VirtualFile file) {
@@ -202,7 +203,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
 
           if (results.size() > 0) {
             model.addElement(new ScopeDescriptor(new LocalSearchScope(results.toArray(new PsiElement[results.size()]),
-                                                                      "Previous Search Results")));
+                                                                      IdeBundle.message("scope.previous.search.results"))));
           }
         }
       }
@@ -219,12 +220,12 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
     }
 
     public String getDisplay() {
-      return "Class Hierarchy";
+      return IdeBundle.message("scope.class.hierarchy");
     }
 
     public SearchScope getScope() {
       if (myCachedScope == null) {
-        TreeClassChooser chooser = TreeClassChooserFactory.getInstance(getProject()).createAllProjectScopeChooser("Choose Base Class of the Hierarchy to Search In");
+        TreeClassChooser chooser = TreeClassChooserFactory.getInstance(getProject()).createAllProjectScopeChooser(IdeBundle.message("prompt.choose.base.class.of.the.hierarchy"));
 
         chooser.showDialog();
 
@@ -244,7 +245,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
         classesToSearch.addAll(Arrays.asList(descendants));
 
         myCachedScope = new LocalSearchScope(classesToSearch.toArray(new PsiElement[classesToSearch.size()]),
-                                             "Hierarchy of " + aClass.getQualifiedName());
+                                             IdeBundle.message("scope.hierarchy", aClass.getQualifiedName()));
       }
 
       return myCachedScope;

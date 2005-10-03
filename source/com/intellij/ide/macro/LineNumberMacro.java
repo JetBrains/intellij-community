@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.ide.IdeBundle;
 
 public final class LineNumberMacro extends Macro {
   public String getName() {
@@ -12,7 +13,7 @@ public final class LineNumberMacro extends Macro {
   }
 
   public String getDescription() {
-    return "Line number";
+    return IdeBundle.message("macro.line.number");
   }
 
   public String expand(DataContext dataContext) {

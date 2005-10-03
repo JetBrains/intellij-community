@@ -20,7 +20,10 @@ import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
 import com.intellij.util.ui.Tree;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.CommonBundle;
+import com.intellij.analysis.AnalysisScopeBundle;
 
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
@@ -55,6 +58,7 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
     myProject = project;
     myModules = modules;
 
+    //noinspection HardCodedStringLiteral
     myRightTreeModel = new DefaultTreeModel(new DefaultMutableTreeNode("Root"));
     myRightTree = new Tree(myRightTreeModel);
     initTree(myRightTree, true);
@@ -93,13 +97,13 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
   private JComponent createNorthPanel(){
     DefaultActionGroup group = new DefaultActionGroup();
 
-    group.add(new AnAction("Close", "Close Modules Dependencies Viewer", IconLoader.getIcon("/actions/cancel.png")){
+    group.add(new AnAction(CommonBundle.message("action.close"), AnalysisScopeBundle.message("action.close.modules.dependencies.description"), IconLoader.getIcon("/actions/cancel.png")){
       public void actionPerformed(AnActionEvent e) {
         DependenciesAnalyzeManager.getInstance(myProject).closeContent(myContent);
       }
     });
 
-    group.add(new ToggleAction("Dependencies Direction", "", DependenciesAnalyzeManager.getInstance(myProject).isForwardDirection() ? IconLoader.getIcon("/actions/sortAsc.png") : IconLoader.getIcon("/actions/sortDesc.png")){
+    group.add(new ToggleAction(AnalysisScopeBundle.message("action.module.dependencies.direction"), "", DependenciesAnalyzeManager.getInstance(myProject).isForwardDirection() ? IconLoader.getIcon("/actions/sortAsc.png") : IconLoader.getIcon("/actions/sortDesc.png")){
       public boolean isSelected(AnActionEvent e) {
         return DependenciesAnalyzeManager.getInstance(myProject).isForwardDirection();
       }
@@ -124,7 +128,7 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
     int index = 1;
     for (Iterator<List<Module>> cyclesIterator = cycles.iterator(); cyclesIterator.hasNext();) {
       List<Module> modules = cyclesIterator.next();
-      final DefaultMutableTreeNode cycle = new DefaultMutableTreeNode("Cycle" + Integer.toString(index++).toUpperCase());
+      final DefaultMutableTreeNode cycle = new DefaultMutableTreeNode(AnalysisScopeBundle.message("module.dependencies.cycle.node.text", Integer.toString(index++).toUpperCase()));
       root.add(cycle);
       cycle.add(new DefaultMutableTreeNode(new MyUserObject(false, module)));
       for (Iterator<Module> inCycleIterator = modules.iterator(); inCycleIterator.hasNext();) {
@@ -195,6 +199,7 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
   }
 
   private void initLeftTree(){
+    //noinspection HardCodedStringLiteral
     final DefaultMutableTreeNode root = new DefaultMutableTreeNode("Root");
     myLeftTreeModel = new DefaultTreeModel(root);
     initLeftTreeModel();
@@ -281,7 +286,7 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
     tree.setCellRenderer(new MyTreeCellRenderer());
     tree.setRootVisible(false);
     tree.setShowsRootHandles(true);
-    tree.putClientProperty("JTree.lineStyle", "Angled");
+    UIUtil.setLineStyleAngled(tree);
 
     TreeToolTipHandler.install(tree);
     TreeUtil.installActions(tree);

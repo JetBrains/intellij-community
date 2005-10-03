@@ -5,6 +5,7 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.util.ArrayUtil;
 
 import java.util.*;
@@ -19,7 +20,7 @@ public class LibraryTreeStructure extends AbstractTreeStructure{
     myRootElement = new LibraryElement(library, myParentEditor, false);
     myRootElementDescriptor = new NodeDescriptor(null, null) {
       public boolean update() {
-        myName = "Root";
+        myName = ProjectBundle.message("library.root.node");
         return false;
       }
       public Object getElement() {

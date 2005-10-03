@@ -16,7 +16,7 @@ public class ImplementMethodsHandler implements CodeInsightActionHandler{
         return;
       }
     }
-    PsiClass aClass = OverrideImplementUtil.getContextClass(project, editor, file);
+    PsiClass aClass = OverrideImplementUtil.getContextClass(project, editor, file, false);
     if (aClass != null) {
       OverrideImplementUtil.chooseAndImplementMethods(project, editor, aClass);
     }

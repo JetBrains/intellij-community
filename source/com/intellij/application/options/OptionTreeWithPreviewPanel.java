@@ -6,11 +6,13 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.Tree;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 
 import javax.swing.*;
@@ -23,6 +25,8 @@ import java.awt.event.MouseEvent;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
+
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author max
@@ -42,15 +46,15 @@ public abstract class OptionTreeWithPreviewPanel extends CodeStyleAbstractPanel 
     myOptionsTree = createOptionsTree();
     myOptionsTree.setCellRenderer(new MyTreeCellRenderer());
     myPanel.add(new JScrollPane(myOptionsTree),
-        new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.BOTH,
-                               new Insets(7, 7, 3, 4), 0, 0));
+                new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.BOTH,
+                                       new Insets(7, 7, 3, 4), 0, 0));
 
     JPanel previewPanel = new JPanel(new BorderLayout()) {
       public Dimension getPreferredSize() {
         return new Dimension(200, 0);
       }
     };
-    previewPanel.setBorder(IdeBorderFactory.createTitledBorder("Preview"));
+    previewPanel.setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.preview")));
 
     myPanel.add(previewPanel,
                 new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.BOTH,
@@ -98,7 +102,7 @@ public abstract class OptionTreeWithPreviewPanel extends CodeStyleAbstractPanel 
     final Tree optionsTree = new Tree(model);
     TreeUtil.installActions(optionsTree);
     optionsTree.setRootVisible(false);
-    optionsTree.putClientProperty("JTree.lineStyle", "Angled");
+    UIUtil.setLineStyleAngled(optionsTree);
     optionsTree.setShowsRootHandles(true);
 
 
@@ -166,6 +170,7 @@ public abstract class OptionTreeWithPreviewPanel extends CodeStyleAbstractPanel 
     return -1;
   }
 
+  @NonNls
   protected abstract String getPreviewText();
 
   protected void resetImpl(final CodeStyleSettings settings) {
@@ -307,7 +312,7 @@ public abstract class OptionTreeWithPreviewPanel extends CodeStyleAbstractPanel 
     return false;
   }
 
-  protected void initBooleanField(String fieldName, String cbName, String groupName) {
+  protected void initBooleanField(@NonNls String fieldName, String cbName, String groupName) {
     try {
       Class styleSettingsClass = CodeStyleSettings.class;
       Field field = styleSettingsClass.getField(fieldName);
@@ -356,12 +361,12 @@ public abstract class OptionTreeWithPreviewPanel extends CodeStyleAbstractPanel 
         button.setText(treeNode.getText());
         button.setSelected(treeNode.isSelected);
         if (isSelected) {
-          button.setForeground(UIManager.getColor("Tree.selectionForeground"));
-          button.setBackground(UIManager.getColor("Tree.selectionBackground"));
+          button.setForeground(UIUtil.getTreeSelectionForeground());
+          button.setBackground(UIUtil.getTreeSelectionBackground());
         }
         else {
-          button.setForeground(UIManager.getColor("Tree.textForeground"));
-          button.setBackground(UIManager.getColor("Tree.textBackground"));
+          button.setForeground(UIUtil.getTreeTextForeground());
+          button.setBackground(UIUtil.getTreeTextBackground());
         }
 
         button.setEnabled(tree.isEnabled());
@@ -375,13 +380,12 @@ public abstract class OptionTreeWithPreviewPanel extends CodeStyleAbstractPanel 
         myLabel.setText(value.toString());
 
         if (isSelected) {
-          myLabel.setForeground(UIManager.getColor("Tree.selectionForeground"));
-          Color backColor = UIManager.getColor("Tree.selectionBackground");
-          myLabel.setBackground(backColor);
+          myLabel.setForeground(UIUtil.getTreeSelectionForeground());
+          myLabel.setBackground(UIUtil.getTreeSelectionBackground());
         }
         else {
-          myLabel.setForeground(UIManager.getColor("Tree.textForeground"));
-          myLabel.setBackground(UIManager.getColor("Tree.textBackground"));
+          myLabel.setForeground(UIUtil.getTreeTextForeground());
+          myLabel.setBackground(UIUtil.getTreeTextBackground());
         }
 
         myLabel.setEnabled(tree.isEnabled());
@@ -413,7 +417,7 @@ public abstract class OptionTreeWithPreviewPanel extends CodeStyleAbstractPanel 
       g.setColor(getBackground());
       g.fillRect(0, 1, w + 2, h);
       if (hasFocus) {
-        g.setColor(UIManager.getColor("Tree.textBackground"));
+        g.setColor(UIUtil.getTreeTextBackground());
         g.drawRect(0, 1, w + 2, h);
       }
       g.setColor(getForeground());
@@ -421,7 +425,8 @@ public abstract class OptionTreeWithPreviewPanel extends CodeStyleAbstractPanel 
     }
 
     private Font getMyFont() {
-      Font font = UIManager.getFont("Tree.font");
+      //noinspection HardCodedStringLiteral
+      Font font = UIUtil.getTreeFont();
       return new Font(font.getName(), Font.BOLD, font.getSize());
     }
 

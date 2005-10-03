@@ -32,16 +32,17 @@
 package com.intellij.psi.presentation.java;
 
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 
 import javax.swing.*;
 
 public class ClassPresentationUtil {
   public static String getNameForClass(PsiClass aClass, boolean qualified) {
     if (aClass instanceof PsiAnonymousClass) {
-      return "Anonymous in " + getContextName(aClass, qualified);
+      return PsiBundle.message("anonymous.class.context.display", getContextName(aClass, qualified));
     }
     else {
       if (qualified){
@@ -51,7 +52,7 @@ public class ClassPresentationUtil {
 
       String className = aClass.getName();
       String contextName = getContextName(aClass, qualified);
-      return contextName != null ? className + " in " + contextName : className;
+      return contextName != null ? PsiBundle.message("class.context.display", className, contextName) : className;
     }
   }
 
@@ -62,7 +63,7 @@ public class ClassPresentationUtil {
     else if (element instanceof PsiMethod){
       PsiMethod method = (PsiMethod)element;
       String methodName = method.getName();
-      return methodName + "() in " + getContextName(method, qualified);
+      return PsiBundle.message("method.context.display", methodName, getContextName(method, qualified));
     }
     else if (element instanceof PsiJavaFile){
       return null;
@@ -76,7 +77,7 @@ public class ClassPresentationUtil {
   }
 
   private static String getContextName(PsiElement element, boolean qualified) {
-    PsiElement parent = element instanceof PsiClass ? ((PsiClass)element).getScope() : element.getParent();
+    PsiElement parent = PsiTreeUtil.getParentOfType(element, PsiMember.class, PsiFile.class);
     while(true){
       String name = getNameForElement(parent, qualified);
       if (name != null) return name;

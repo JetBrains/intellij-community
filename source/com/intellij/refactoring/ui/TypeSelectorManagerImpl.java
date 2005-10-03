@@ -186,6 +186,22 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
     }
   }
 
+  public boolean isSuggestedType(final String fqName) {
+    for(PsiType type: myTypesForAll) {
+      if (type.getCanonicalText().equals(fqName)) {
+        return true;
+      }
+    }
+
+    for(PsiType type: myTypesForMain) {
+      if (type.getCanonicalText().equals(fqName)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   public TypeSelector getTypeSelector() {
     return myTypeSelector;
   }

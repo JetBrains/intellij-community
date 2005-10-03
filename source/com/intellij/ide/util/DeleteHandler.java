@@ -1,6 +1,7 @@
 package com.intellij.ide.util;
 
 import com.intellij.ide.DeleteProvider;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
@@ -22,6 +23,7 @@ import com.intellij.refactoring.safeDelete.SafeDeleteProcessor;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
+import com.intellij.CommonBundle;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -58,7 +60,7 @@ public class DeleteHandler {
       if (elements == null) return;
       Project project = (Project)dataContext.getData(DataConstants.PROJECT);
       if (project == null) return;
-      LvcsAction action = LvcsIntegration.checkinFilesBeforeRefactoring(project, "Deleting");
+      LvcsAction action = LvcsIntegration.checkinFilesBeforeRefactoring(project, IdeBundle.message("progress.deleting"));
       try {
         DeleteHandler.deletePsiElement(elements, project);
       }
@@ -97,7 +99,7 @@ public class DeleteHandler {
       if (!dialog.isOK()) return;
     }
     else {
-      String warningMessage = DeleteUtil.generateWarningMessage("Delete", elements);
+      String warningMessage = DeleteUtil.generateWarningMessage(IdeBundle.message("prompt.delete.elements"), elements);
 
       int defaultOption;
 
@@ -112,12 +114,10 @@ public class DeleteHandler {
       }
       if (anyDirectories) {
         if (elements.length == 1) {
-          warningMessage += "\nAll files and subdirectories in \"" + directoryName +
-                            "\" will be deleted.\nYou will not be able to undo this operation!";
+          warningMessage += IdeBundle.message("warning.delete.all.files.and.subdirectories", directoryName);
         }
         else {
-          warningMessage +=
-          "\nAll files and subdirectories in the selected directory(s) will be deleted.\nYou will not be able to undo this operation!";
+          warningMessage += IdeBundle.message("warning.delete.all.files.and.subdirectories.in.the.selected.directory");
         }
         defaultOption = -1;
       }
@@ -125,8 +125,9 @@ public class DeleteHandler {
         defaultOption = 0;
       }
 
-      int result = Messages.showDialog(project, warningMessage, "Delete", new String[]{"OK", "Cancel"}, defaultOption,
-                                       Messages.getQuestionIcon());
+      int result = Messages.showDialog(project, warningMessage, IdeBundle.message("title.delete"),
+                                       new String[]{CommonBundle.getOkButtonText(), CommonBundle.getCancelButtonText()},
+                                       defaultOption, Messages.getQuestionIcon());
       if (result != 0) return;
     }
 
@@ -147,8 +148,8 @@ public class DeleteHandler {
                 if (readOnlyFiles.size() > 0) {
                   int _result = Messages.showOkCancelDialog(
                     project,
-                    "Directory " + virtualFile.getPresentableUrl() + " contains read-only file(s). Delete it anyway?",
-                    "Delete",
+                    IdeBundle.message("prompt.directory.contains.read.only.files", virtualFile.getPresentableUrl()),
+                    IdeBundle.message("title.delete"),
                     Messages.getQuestionIcon()
                   );
                   if (_result != 0) continue;
@@ -171,8 +172,8 @@ public class DeleteHandler {
                 final VirtualFile virtualFile = file.getVirtualFile();
                 if (virtualFile.getFileSystem() instanceof LocalFileSystem) {
                   int _result = MessagesEx.fileIsReadOnly(project, virtualFile)
-                    .setTitle("Delete")
-                    .appendMessage(" Delete it anyway?")
+                    .setTitle(IdeBundle.message("title.delete"))
+                    .appendMessage(IdeBundle.message("prompt.delete.it.anyway"))
                     .askOkCancel();
                   if (_result != 0) continue;
 
@@ -186,7 +187,7 @@ public class DeleteHandler {
               elementToDelete.checkDelete();
             }
             catch (IncorrectOperationException ex) {
-              Messages.showMessageDialog(project, ex.getMessage(), "Error", Messages.getErrorIcon());
+              Messages.showMessageDialog(project, ex.getMessage(), CommonBundle.getErrorTitle(), Messages.getErrorIcon());
               continue;
             }
 
@@ -198,7 +199,7 @@ public class DeleteHandler {
                 catch (final IncorrectOperationException ex) {
                   ApplicationManager.getApplication().invokeLater(new Runnable() {
                                   public void run() {
-                                    Messages.showMessageDialog(project, ex.getMessage(), "Error", Messages.getErrorIcon());
+                                    Messages.showMessageDialog(project, ex.getMessage(), CommonBundle.getErrorTitle(), Messages.getErrorIcon());
                                   }
                                 });
                 }
@@ -207,7 +208,7 @@ public class DeleteHandler {
           }
         }
       },
-      "Delete",
+      IdeBundle.message("command.delete"),
       null
     );
   }
@@ -224,7 +225,7 @@ public class DeleteHandler {
                 success[0] = true;
               }
               catch (IOException e1) {
-                Messages.showMessageDialog(project, e1.getMessage(), "Error", Messages.getErrorIcon());
+                Messages.showMessageDialog(project, e1.getMessage(), CommonBundle.getErrorTitle(), Messages.getErrorIcon());
               }
             }
           };

@@ -10,6 +10,7 @@ import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FileStatusManager;
+import com.intellij.ide.IdeBundle;
 
 import java.util.ArrayList;
 
@@ -57,7 +58,7 @@ public class CloseAllUnmodifiedEditorsAction extends AnAction {
             we.getSecond ().closeFile (we.getFirst ().getFile ());
           }
         }
-      }, "Close All Unmodified Editors", null
+      }, IdeBundle.message("command.close.all.unmodified.editors"), null
     );
   }
   
@@ -66,10 +67,10 @@ public class CloseAllUnmodifiedEditorsAction extends AnAction {
     final DataContext dataContext = event.getDataContext();
     final EditorWindow editorWindow = (EditorWindow)dataContext.getData(DataConstantsEx.EDITOR_WINDOW);
     if (editorWindow != null && editorWindow.inSplitter()) {
-      presentation.setText("Close All _Unmodified Editors In Tab Group");
+      presentation.setText(IdeBundle.message("action.close.all.unmodified.editors.in.tab.group"));
     }
     else {
-      presentation.setText("Close All _Unmodified Editors");
+      presentation.setText(IdeBundle.message("action.close.all.unmodified.editors"));
     }
     final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
     if (project == null) {

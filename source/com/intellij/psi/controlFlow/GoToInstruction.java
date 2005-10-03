@@ -20,6 +20,7 @@ public class GoToInstruction extends BranchingInstruction {
     this.isReturn = isReturn;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     final String sRole;
     if (role == ControlFlow.JUMP_ROLE_GOTO_ELSE) sRole = "[ELSE]";

@@ -14,12 +14,13 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.inline.InlineHandler;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
+import org.jetbrains.annotations.NonNls;
 
 public class InlineAction extends BaseRefactoringAction {
   /**
    * @fabrique
    */
-  public static final String INLINE_ACTION_HANDLER = "InlineActionHandler";
+  @NonNls public static final String INLINE_ACTION_HANDLER = "InlineActionHandler";
 
   public boolean isAvailableInEditorOnly() {
     return false;

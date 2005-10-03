@@ -1,70 +1,84 @@
 package com.intellij.compiler;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.rt.compiler.JavacRunner;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class JavacOutputParser extends OutputParser {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.JavacOutputParser");
   private int myTabSize;
+  private @NonNls String WARNING_PREFIX = "warning:"; // default value
 
   public JavacOutputParser(Project project) {
     myTabSize = CodeStyleSettingsManager.getSettings(project).getTabSize(StdFileTypes.JAVA);
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      // emulate patterns setup if 'embedded' javac is used (javac is started not via JavacRunner)
+      //noinspection HardCodedStringLiteral
+      addJavacPattern(JavacRunner.MSG_PARSING_STARTED + JavacRunner.CATEGORY_VALUE_DIVIDER + "[parsing started {0}]");
+      //noinspection HardCodedStringLiteral
+      addJavacPattern(JavacRunner.MSG_PARSING_COMPLETED + JavacRunner.CATEGORY_VALUE_DIVIDER + "[parsing completed {0}ms]");
+      //noinspection HardCodedStringLiteral
+      addJavacPattern(JavacRunner.MSG_LOADING + JavacRunner.CATEGORY_VALUE_DIVIDER + "[loading {0}]");
+      //noinspection HardCodedStringLiteral
+      addJavacPattern(JavacRunner.MSG_CHECKING + JavacRunner.CATEGORY_VALUE_DIVIDER + "[checking {0}]");
+      //noinspection HardCodedStringLiteral
+      addJavacPattern(JavacRunner.MSG_WROTE + JavacRunner.CATEGORY_VALUE_DIVIDER + "[wrote {0}]");
+    }
   }
 
   public boolean processMessageLine(Callback callback) {
-    final String line = callback.getNextLine();
-    if(line == null) {
-      return false;
-    }
-    if (StringUtil.startsWithChar(line, '[') && StringUtil.endsWithChar(line, ']')){
-      processLoading(line, callback);
+    if (super.processMessageLine(callback)) {
       return true;
     }
-    else {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Failed to match: #"+ line + "#");
-      }
+    final String line = callback.getCurrentLine();
+    if (line == null) {
+      return false;
     }
+    if (JavacRunner.MSG_PATTERNS_START.equals(line)) {
+      myParserActions.clear();
+      while (true) {
+        final String patternLine = callback.getNextLine();
+        if (JavacRunner.MSG_PATTERNS_END.equals(patternLine)) {
+          break;
+        }
+        addJavacPattern(patternLine);
+      }
+      return true;
+    }
+
     int colonIndex1 = line.indexOf(':');
     if (colonIndex1 == 1){ // drive letter
       colonIndex1 = line.indexOf(':', colonIndex1 + 1);
     }
-    if(colonIndex1 == -1) {
-      if(line.endsWith("errors") || line.endsWith("error")) {
-        //addMessage(messageHandler,MessageCategory.STATISTICS, line);
-        return true;
-      }
-      if(line.endsWith("warnings") || line.endsWith("warning")) {
-        //addMessage(messageHandler,MessageCategory.STATISTICS, line);
-        return true;
-      }
-    }
 
     if (colonIndex1 >= 0){ // looks like found something like file path
       String part1 = line.substring(0, colonIndex1).trim();
-      if(part1.equalsIgnoreCase("error")) {
+      //noinspection HardCodedStringLiteral
+      if(part1.equalsIgnoreCase("error")) { // jikes
         addMessage(callback, CompilerMessageCategory.ERROR, line.substring(colonIndex1));
         return true;
       }
+      //noinspection HardCodedStringLiteral
       if(part1.equalsIgnoreCase("warning")) {
         addMessage(callback, CompilerMessageCategory.WARNING, line.substring(colonIndex1));
         return true;
       }
+      //noinspection HardCodedStringLiteral
       if(part1.equals("javac")) {
         addMessage(callback, CompilerMessageCategory.ERROR, line);
         return true;
@@ -86,8 +100,8 @@ public class JavacOutputParser extends OutputParser {
           final int lineNum = Integer.parseInt(line.substring(colonIndex1 + 1, colonIndex2).trim());
           String message = line.substring(colonIndex2 + 1).trim();
           CompilerMessageCategory category = CompilerMessageCategory.ERROR;
-          if (message.startsWith("warning:")){
-            message = message.substring("warning:".length()).trim();
+          if (message.startsWith(WARNING_PREFIX)){
+            message = message.substring(WARNING_PREFIX.length()).trim();
             category = CompilerMessageCategory.WARNING;
           }
 
@@ -117,8 +131,7 @@ public class JavacOutputParser extends OutputParser {
           if (colNum > 0){
             messages = convertMessages(messages);
             StringBuffer buf = new StringBuffer();
-            for (Iterator it = messages.iterator(); it.hasNext();) {
-              String m = (String)it.next();
+            for (final String m : messages) {
               if (buf.length() > 0) {
                 buf.append("\n");
               }
@@ -134,7 +147,7 @@ public class JavacOutputParser extends OutputParser {
     }
 
     if(line.endsWith("java.lang.OutOfMemoryError")) {
-      addMessage(callback, CompilerMessageCategory.ERROR, "Out of memory. Increase the maximum heap size in Project Properties|Compiler settings.");
+      addMessage(callback, CompilerMessageCategory.ERROR, CompilerBundle.message("error.javac.out.of.memory"));
       return true;
     }
 
@@ -152,7 +165,9 @@ public class JavacOutputParser extends OutputParser {
     final int colonIndex = line1.indexOf(':');
     if (colonIndex > 0){
       String part1 = line1.substring(0, colonIndex).trim();
-      if (part1.equals("symbol")){
+      // jikes
+      //noinspection HardCodedStringLiteral
+      if ("symbol".equals(part1)){
         String symbol = line1.substring(colonIndex + 1).trim();
         messages.remove(1);
         if(messages.size() >= 2) {
@@ -164,118 +179,50 @@ public class JavacOutputParser extends OutputParser {
     return messages;
   }
 
-  /*
-  private boolean isError(String line) {
-    for (int idx = 0; idx < myErrorPatterns.length; idx++) {
-      Pattern errorPattern = myErrorPatterns[idx];
-      if (errorPattern.matcher(line).matches()) {
-        return true;
-      }
+  private void addJavacPattern(final String line) {
+    final int dividerIndex = line.indexOf(JavacRunner.CATEGORY_VALUE_DIVIDER);
+    final String category = line.substring(0, dividerIndex);
+    final String resourceBundleValue = line.substring(dividerIndex + 1);
+    if (JavacRunner.MSG_PARSING_COMPLETED.equals(category) ||
+        JavacRunner.MSG_PARSING_STARTED.equals(category) ||
+        JavacRunner.MSG_WROTE.equals(category)
+      ) {
+      myParserActions.add(new FilePathActionJavac(createMatcher(resourceBundleValue)));
     }
-    return false;
-  }
-
-  private  boolean isWarning(String line) {
-    for (int idx = 0; idx < myWarningPatterns.length; idx++) {
-      Pattern errorPattern = myWarningPatterns[idx];
-      if (errorPattern.matcher(line).matches()) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-
-  private Pattern[] myErrorPatterns;
-  private Pattern[] myWarningPatterns;
-
-  private static final String COMPILER_RB = "com.sun.tools.javac.v8.resources.compiler";
-
-  private void precompilePatterns(Project project) {
-    final ClassLoader loader = createLoader((ProjectJdkEx)ProjectRootManagerEx.getInstanceEx(project).getJdk());
-    if (loader == null) {
-      return;
-    }
-    final ResourceBundle bundle = ResourceBundle.getBundle(COMPILER_RB, Locale.getDefault(), loader);
-    final Enumeration keys = bundle.getKeys();
-    List errorPatterns = new ArrayList();
-    List warningPatterns = new ArrayList();
-    while (keys.hasMoreElements()) {
-      final Object elem = keys.nextElement();
-      if (!(elem instanceof String)) {
-        continue;
-      }
-      String key = (String)elem;
-      if (key.startsWith("compiler.err.")) {
-        addPattern(errorPatterns, bundle.getString(key));
-      }
-      else if (key.startsWith("compiler.warn.")) {
-        addPattern(warningPatterns, bundle.getString(key));
-      }
-    }
-    myErrorPatterns = (Pattern[])errorPatterns.toArray(new Pattern[errorPatterns.size()]);
-    myWarningPatterns = (Pattern[])warningPatterns.toArray(new Pattern[warningPatterns.size()]);
-  }
-
-  private static ClassLoader createLoader(final ProjectJdkEx jdk){
-    if (jdk == null) {
-      return null;
-    }
-    final String toolsJarPath = jdk.getToolsPath();
-    try {
-      final URL url = new URL("file:"+toolsJarPath.replace(File.separatorChar, '/'));
-      ClassLoader loader = new URLClassLoader(new URL[] {url}, null);
-
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("COMPILER RESOURCE BUNDLE URL = " + url);
-      }
-
-      return loader;
-    }
-    catch (MalformedURLException e) {
-      LOG.error(e);
-      return null;
-    }
-  }
-
-  private static void addPattern(Collection patterns, String patternString) {
-    final int length = patternString.length();
-    StringBuffer buf = new StringBuffer(length);
-    boolean insideParam = false;
-    for (int idx = 0; idx < length; idx++ ) {
-      final char ch = patternString.charAt(idx);
-      if (ch == '{') {
-        insideParam = true;
-        continue;
-      }
-      if (ch == '}') {
-        insideParam = false;
-        buf.append(".*?");
-        continue;
-      }
-      if (!insideParam) {
-        if (ch == '\\') {
-          continue; // quote character
+    else if (JavacRunner.MSG_CHECKING.equals(category)) {
+      myParserActions.add(new JavacParserAction(createMatcher(resourceBundleValue)) {
+        protected void doExecute(String parsedData, final Callback callback) {
+          callback.setProgressText(CompilerBundle.message("progress.compiling.class", parsedData));
         }
-        if (ch == '\'') { // check double quotes
-          if (idx + 1 < length) {
-            if (patternString.charAt(idx+1) == '\'') {
-              idx += 1;
-              buf.append('\'');
-              continue;
-            }
-          }
-        }
-        if (ch == '(' || ch == ')' || ch == '{' || ch == '}' || ch == '[' || ch == ']' || ch == '.' || ch == '*'){
-          buf.append('\\');
-        }
-        buf.append(ch);
-      }
+      });
     }
-    final Pattern pattern = Pattern.compile(buf.toString());
-    patterns.add(pattern);
+    else if (JavacRunner.MSG_LOADING.equals(category)) {
+      myParserActions.add(new JavacParserAction(createMatcher(resourceBundleValue)) {
+        protected void doExecute(@Nullable String parsedData, final Callback callback) {
+          callback.setProgressText(CompilerBundle.message("progress.loading.classes"));
+        }
+      });
+    }
+    else if (JavacRunner.MSG_WARNING.equals(category)) {
+      WARNING_PREFIX = resourceBundleValue;
+    }
+    else if (JavacRunner.MSG_STATISTICS.equals(category)) {
+      myParserActions.add(new JavacParserAction(createMatcher(resourceBundleValue)) {
+        protected void doExecute(@Nullable String parsedData, final Callback callback) {
+          // empty
+        }
+      });
+    }
   }
-  */
 
+
+  /**
+   * made public for Tests, do not use this method directly
+   */
+  public static Matcher createMatcher(final String resourceBundleValue) {
+    //noinspection HardCodedStringLiteral
+    final String regexp = resourceBundleValue.replaceAll("([\\[\\]\\(\\)\\.\\*])", "\\\\$1").replaceAll("\\{\\d+\\}", "(.+)");
+    return Pattern.compile(regexp, Pattern.CASE_INSENSITIVE).matcher("");
+  }
 
 }

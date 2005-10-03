@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ide.IdeBundle;
 
 import java.awt.datatransfer.StringSelection;
 
@@ -34,7 +35,9 @@ public class CopyPathsAction extends AnAction {
     final VirtualFile[] files = getFiles(event);
     final Presentation presentation = event.getPresentation();
     presentation.setEnabled(files != null && files.length > 0);
-    presentation.setText((files != null && files.length == 1)? "C_opy Path" : "C_opy Paths");
+    presentation.setText((files != null && files.length == 1)
+                         ? IdeBundle.message("action.copy.path")
+                         : IdeBundle.message("action.copy.paths"));
   }
 
   private VirtualFile[] getFiles(AnActionEvent e) {

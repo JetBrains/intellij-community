@@ -1,5 +1,7 @@
 package com.intellij.codeInsight.intention.impl;
 
+import com.intellij.CommonBundle;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.util.PackageChooserDialog;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -22,8 +24,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class CreateClassDialog extends DialogWrapper {
-  private final JLabel myInformationLabel = new JLabel("X");
-  private final JLabel myPackageLabel = new JLabel("Destination package:");
+  private final JLabel myInformationLabel = new JLabel("#");
+  private final JLabel myPackageLabel = new JLabel(CodeInsightBundle.message("dialog.create.class.destination.package.label"));
   private final JTextField myTfPackage = new MyTextField();
   private final FixedSizeButton myPackageChooseButton = new FixedSizeButton(myTfPackage);
   private final JTextField myTfClassName = new MyTextField();
@@ -48,18 +50,18 @@ public class CreateClassDialog extends DialogWrapper {
 
     if (createInterface) {
       if (!myClassNameEditable) {
-        myInformationLabel.setText("Create interface " + targetClassName);
+        myInformationLabel.setText(CodeInsightBundle.message("dialog.create.class.interface.name", targetClassName));
       }
       else {
-        myInformationLabel.setText("Create interface:");
+        myInformationLabel.setText(CodeInsightBundle.message("dialog.create.class.create.interface.label"));
       }
     }
     else {
       if (!myClassNameEditable) {
-        myInformationLabel.setText("Create class " + targetClassName);
+        myInformationLabel.setText(CodeInsightBundle.message("dialog.create.class.class.name", targetClassName));
       }
       else {
-        myInformationLabel.setText("Create class:");
+        myInformationLabel.setText(CodeInsightBundle.message("dialog.create.class.create.class.label"));
       }
     }
 
@@ -121,7 +123,7 @@ public class CreateClassDialog extends DialogWrapper {
 
     myPackageChooseButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        PackageChooserDialog chooser = new PackageChooserDialog("Choose Destination Package", myProject);
+        PackageChooserDialog chooser = new PackageChooserDialog(CodeInsightBundle.message("dialog.create.class.package.chooser.title"), myProject);
         chooser.selectPackage(myTfPackage.getText());
         chooser.show();
         PsiPackage aPackage = chooser.getSelectedPackage();
@@ -174,11 +176,11 @@ public class CreateClassDialog extends DialogWrapper {
           errorString[0] = e.getMessage();
         }
       }
-    }, "Create directory", null);
+    }, CodeInsightBundle.message("create.directory.command"), null);
 
     if (errorString[0] != null) {
       if (errorString[0].length() > 0) {
-        Messages.showMessageDialog(myProject, errorString[0], "Error", Messages.getErrorIcon());
+        Messages.showMessageDialog(myProject, errorString[0], CommonBundle.getErrorTitle(), Messages.getErrorIcon());
       }
       return;
     }

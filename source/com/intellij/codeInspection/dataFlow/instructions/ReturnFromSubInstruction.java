@@ -13,6 +13,7 @@ public class ReturnFromSubInstruction extends Instruction{
     return new DfaInstructionState[] {new DfaInstructionState(runner.getInstruction(offset), memState)};
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return "RETURN_FROM_SUB";
   }

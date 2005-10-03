@@ -6,6 +6,7 @@ package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.project.ProjectBundle;
 import org.jdom.Element;
 
 import javax.swing.*;
@@ -85,7 +86,7 @@ public class UnknownSdkType extends SdkType{
   }
 
   public String getPresentableName() {
-    return "Unknown SDK";
+    return ProjectBundle.message("sdk.unknown.name");
   }
 
   public Icon getIcon() {

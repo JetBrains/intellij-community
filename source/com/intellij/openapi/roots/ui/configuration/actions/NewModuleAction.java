@@ -11,6 +11,7 @@ import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
@@ -25,7 +26,7 @@ import com.intellij.openapi.components.LoadCancelledException;
  */
 public class NewModuleAction extends AnAction {
   public NewModuleAction() {
-    super("New Module", "Add new module to the project", null);
+    super(ProjectBundle.message("module.new.action"), ProjectBundle.message("module.new.action.description"), null);
   }
 
   public void actionPerformed(AnActionEvent e) {
@@ -69,11 +70,12 @@ public class NewModuleAction extends AnAction {
       if (ex != null) {
         if (ex instanceof LoadCancelledException) {
           LoadCancelledException cancelled = (LoadCancelledException)ex;
-          Messages.showInfoMessage("Creation of module was cancelled by component: " + cancelled.getIssuer().getComponentName() + "\n" +
-                                   "Reason is: " + cancelled.getMessage(),
-                                   "Module Was Not Created");
+          Messages.showInfoMessage(
+            ProjectBundle.message("module.new.creation.cancelled.message", cancelled.getIssuer().getComponentName(), cancelled.getMessage()),
+            ProjectBundle.message("module.new.creation.cancelled.title"));
         } else {
-          Messages.showErrorDialog("Error adding module to project: " + ex.getMessage(), "New Module");
+          Messages.showErrorDialog(ProjectBundle.message("module.new.error.message", ex.getMessage()),
+                                   ProjectBundle.message("module.new.error.title"));
         }
       }
     }

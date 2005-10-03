@@ -16,6 +16,7 @@ import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.CellEditorComponentWithBrowseButton;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
+import com.intellij.analysis.AnalysisScopeBundle;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -33,17 +34,17 @@ public class DependencyConfigurable extends BaseConfigurable {
   private TableView myDenyTable;
   private TableView myAllowTable;
 
-  private final ColumnInfo<DependencyRule, NamedScope> DENY_USAGES_OF = new LeftColumn("Deny usages of");
-  private final ColumnInfo<DependencyRule, NamedScope> DENY_USAGES_IN = new RightColumn("in");
-  private final ColumnInfo<DependencyRule, NamedScope> ALLOW_USAGES_OF = new LeftColumn("Allow usages of");
-  private final ColumnInfo<DependencyRule, NamedScope> ALLOW_USAGES_ONLY_IN = new RightColumn("only in");
+  private final ColumnInfo<DependencyRule, NamedScope> DENY_USAGES_OF = new LeftColumn(AnalysisScopeBundle.message("dependency.configurable.deny.table.column1"));
+  private final ColumnInfo<DependencyRule, NamedScope> DENY_USAGES_IN = new RightColumn(AnalysisScopeBundle.message("dependency.configurable.deny.table.column2"));
+  private final ColumnInfo<DependencyRule, NamedScope> ALLOW_USAGES_OF = new LeftColumn(AnalysisScopeBundle.message("dependency.configurable.allow.table.column1"));
+  private final ColumnInfo<DependencyRule, NamedScope> ALLOW_USAGES_ONLY_IN = new RightColumn(AnalysisScopeBundle.message("dependency.configurable.allow.table.column2"));
 
   public DependencyConfigurable(Project project) {
     myProject = project;
   }
 
   public String getDisplayName() {
-    return "Dependency Validation";
+    return AnalysisScopeBundle.message("dependency.configurable.display.name");
   }
 
   public Icon getIcon() {

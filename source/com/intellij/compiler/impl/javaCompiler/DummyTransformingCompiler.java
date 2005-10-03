@@ -18,6 +18,7 @@ import java.io.*;
  * @author Eugene Zhuravlev
  *         Date: Jul 10, 2004
  */
+@SuppressWarnings({"HardCodedStringLiteral"})
 public class DummyTransformingCompiler implements JavaSourceTransformingCompiler{
   public boolean isTransformable(VirtualFile file) {
     return "A.java".equals(file.getName());

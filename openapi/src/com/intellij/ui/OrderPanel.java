@@ -26,10 +26,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
-import java.util.Iterator;
 
 public abstract class OrderPanel<T> extends JPanel{
-  private String CHECKBOX_COLUMN_NAME = "Export";
+  private String CHECKBOX_COLUMN_NAME = UIBundle.message("order.entries.panel.export.column.name");
 
   private final Class<T> myEntryClass;
   private final JTable myEntryTable;
@@ -111,20 +110,36 @@ public abstract class OrderPanel<T> extends JPanel{
 
   public void moveSelectedItemsUp() {
     myEntryTable.requestFocus();
-    TableUtil.moveSelectedItemsUp(myEntryTable);
-    for (Iterator<OrderPanelListener> iterator = myListeners.iterator(); iterator.hasNext();) {
-      OrderPanelListener orderPanelListener = iterator.next();
+    try {
+      myInsideMove++;
+      TableUtil.moveSelectedItemsUp(myEntryTable);
+    }
+    finally {
+      myInsideMove--;
+    }
+    for (OrderPanelListener orderPanelListener : myListeners) {
       orderPanelListener.entryMoved();
     }
   }
 
   public void moveSelectedItemsDown() {
     myEntryTable.requestFocus();
-    TableUtil.moveSelectedItemsDown(myEntryTable);
-    for (Iterator<OrderPanelListener> iterator = myListeners.iterator(); iterator.hasNext();) {
-      OrderPanelListener orderPanelListener = iterator.next();
+    try {
+      myInsideMove++;
+      TableUtil.moveSelectedItemsDown(myEntryTable);
+    }
+    finally {
+      myInsideMove--;
+    }
+    for (OrderPanelListener orderPanelListener : myListeners) {
       orderPanelListener.entryMoved();
     }
+  }
+
+  private int myInsideMove = 0;
+
+  private boolean isInsideMove() {
+    return myInsideMove != 0;
   }
 
   public void addListener(OrderPanelListener listener) {
@@ -222,7 +237,7 @@ public abstract class OrderPanel<T> extends JPanel{
 
     public void setValueAt(Object aValue, int row, int column) {
       super.setValueAt(aValue, row, column);
-      if (column == getCheckboxColumn()) {
+      if (!isInsideMove() && column == getCheckboxColumn()) {
         setChecked(OrderPanel.this.getValueAt(row), ((Boolean)aValue).booleanValue());
       }
     }

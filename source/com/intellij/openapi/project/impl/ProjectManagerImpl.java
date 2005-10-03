@@ -19,6 +19,7 @@ import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.project.ProjectReloadState;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
@@ -31,10 +32,12 @@ import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.containers.HashMap;
+import com.intellij.CommonBundle;
 import gnu.trove.TObjectLongHashMap;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.IOException;
@@ -47,9 +50,14 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   static final int CURRENT_FORMAT_VERSION = 4;
 
   private static final Key<ArrayList<ProjectManagerListener>> LISTENERS_IN_PROJECT_KEY = Key.create("LISTENERS_IN_PROJECT_KEY");
+  @NonNls private static final String OLD_PROJECT_SUFFIX = "_old.";
+  @NonNls private static final String ELEMENT_DEFAULT_PROJECT = "defaultProject";
 
-  private ProjectImpl myDefaultProject;
-  private Element myDefaultProjectRootElement;
+  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
+  private ProjectImpl myDefaultProject; // Only used asynchronously in save and dispose, which itself are synchronized.
+
+  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
+  private Element myDefaultProjectRootElement; // Only used asynchronously in save and dispose, which itself are synchronized.
 
   private final ArrayList<Project> myOpenProjects = new ArrayList<Project>();
   private final ArrayList<ProjectManagerListener> myListeners = new ArrayList<ProjectManagerListener>();
@@ -59,7 +67,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
    * This flag is required by SaveAndSynchHandler. We do not save
    * anything while project is being opened.
    */
+  @SuppressWarnings({"UNUSED_SYMBOL"})
   private int myCountOfProjectsBeingOpen;
+
   private boolean myIsInRefresh;
   private Map<VirtualFile, byte[]> mySavedCopies = new HashMap<VirtualFile, byte[]>();
   private TObjectLongHashMap<VirtualFile> mySavedTimestamps = new TObjectLongHashMap<VirtualFile>();
@@ -70,8 +80,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   private static ProjectManagerListener[] getListeners(Project project) {
     ArrayList<ProjectManagerListener> array = project.getUserData(LISTENERS_IN_PROJECT_KEY);
     if (array == null) return ProjectManagerListener.EMPTY_ARRAY;
-    ProjectManagerListener[] listeners = array.toArray(new ProjectManagerListener[array.size()]);
-    return listeners;
+    return array.toArray(new ProjectManagerListener[array.size()]);
   }
 
   /* @fabrique used by fabrique! */
@@ -83,24 +92,21 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
         public void projectOpened(Project project) {
           ProjectManagerListener[] listeners = getListeners(project);
-          for (int i = 0; i < listeners.length; i++) {
-            ProjectManagerListener listener = listeners[i];
+          for (ProjectManagerListener listener : listeners) {
             listener.projectOpened(project);
           }
         }
 
         public void projectClosed(Project project) {
           ProjectManagerListener[] listeners = getListeners(project);
-          for (int i = 0; i < listeners.length; i++) {
-            ProjectManagerListener listener = listeners[i];
+          for (ProjectManagerListener listener : listeners) {
             listener.projectClosed(project);
           }
         }
 
         public boolean canCloseProject(Project project) {
           ProjectManagerListener[] listeners = getListeners(project);
-          for (int i = 0; i < listeners.length; i++) {
-            ProjectManagerListener listener = listeners[i];
+          for (ProjectManagerListener listener : listeners) {
             if (!listener.canCloseProject(project)) {
               return false;
             }
@@ -110,8 +116,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
         public void projectClosing(Project project) {
           ProjectManagerListener[] listeners = getListeners(project);
-          for (int i = 0; i < listeners.length; i++) {
-            ProjectManagerListener listener = listeners[i];
+          for (ProjectManagerListener listener : listeners) {
             listener.projectClosing(project);
           }
         }
@@ -134,16 +139,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   public Project newProject(String filePath, boolean useDefaultProjectSettings, boolean isDummy) {
-    if (filePath != null) {
-      try {
-        String canonicalPath = new File(filePath).getCanonicalPath();
-        if (canonicalPath != null) {
-          filePath = canonicalPath;
-        }
-      }
-      catch (IOException e) {
-      }
-    }
+    filePath = canonicalize(filePath);
+
     ProjectImpl project = createProject(filePath, false, isDummy, ApplicationManager.getApplication().isUnitTestMode());
 
     if (useDefaultProjectSettings) {
@@ -168,35 +165,43 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   public Project loadProject(String filePath) throws IOException, JDOMException, InvalidDataException {
-    try {
-      String canonicalPath = new File(filePath).getCanonicalPath();
-      if (canonicalPath != null) {
-        filePath = canonicalPath;
-      }
-    }
-    catch (IOException e) {
-    }
+    filePath = canonicalize(filePath);
     ProjectImpl project = createProject(filePath, false, false, false);
 
     // http://www.jetbrains.net/jira/browse/IDEA-1556. Enforce refresh. Project files may potentially reside in non-yet valid vfs paths.
     final String[] paths = project.getConfigurationFilePaths();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        for (int i = 0; i < paths.length; i++) {
-          LocalFileSystem.getInstance().refreshAndFindFileByPath(paths[i].replace(File.separatorChar, '/'));
+        for (String path : paths) {
+          LocalFileSystem.getInstance().refreshAndFindFileByPath(path.replace(File.separatorChar, '/'));
         }
       }
     });
 
     final boolean macrosOk = checkMacros(project, getDefinedMacros());
     if (!macrosOk) {
-      throw new IOException("There are undefined path variables in project file");
+      throw new IOException(ProjectBundle.message("project.load.undefined.path.variables.error"));
     }
 
     project.loadSavedConfiguration();
 
     project.init();
     return project;
+  }
+
+  private String canonicalize(final String filePath) {
+    if (filePath == null) return null;
+    try {
+      String canonicalPath = new File(filePath).getCanonicalPath();
+      if (canonicalPath != null) {
+        return canonicalPath;
+      }
+    }
+    catch (IOException e) {
+      // OK. File does not yet exist so it's canonical path will be equal to its original path.
+    }
+
+    return filePath;
   }
 
   private Set<String> getDefinedMacros() {
@@ -220,17 +225,18 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       return true; // all macros in configuration files are defined
     }
     // there are undefined macros, need to define them before loading components
-    final String text = "There are undefined path variables in project configuration files.\n" +
-                  "In order for the project to load all path variables must be defined.";
+    final String text = ProjectBundle.message("project.load.undefined.path.variables.message");
     return showMacrosConfigurationDialog(project, text, usedMacros);
   }
 
   private static boolean showMacrosConfigurationDialog(Project project, final String text, final Set<String> usedMacros) {
-    final UndefinedMacrosConfigurable configurable = new UndefinedMacrosConfigurable(text, usedMacros.toArray(new String[usedMacros.size()]));
+    final UndefinedMacrosConfigurable configurable =
+      new UndefinedMacrosConfigurable(text, usedMacros.toArray(new String[usedMacros.size()]));
     final SingleConfigurableEditor editor = new SingleConfigurableEditor(project, configurable) {
       protected void doOKAction() {
         if (!myConfigurable.isModified()) {
-          Messages.showErrorDialog(getContentPane(), "All path variables should be defined", "Path Variables Not Defined");
+          Messages.showErrorDialog(getContentPane(), ProjectBundle.message("project.load.undefined.path.variables.all.needed"),
+                                   ProjectBundle.message("project.load.undefined.path.variables.title"));
           return;
         }
         super.doOKAction();
@@ -249,7 +255,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
         }
         catch (InvalidDataException e) {
           LOG.info(e);
-          Messages.showErrorDialog(e.getMessage(), "Error Loading Default Project");
+          Messages.showErrorDialog(e.getMessage(), ProjectBundle.message("project.load.default.error"));
         }
         finally {
           myDefaultProjectRootElement = null;
@@ -283,7 +289,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
           ((StartupManagerImpl)StartupManager.getInstance(project)).runStartupActivities();
         }
       },
-      "Loading Project",
+      ProjectBundle.message("project.load.progress"),
       false,
       project
     );
@@ -316,58 +322,51 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       public void afterRefreshFinish(boolean asynchonous) {
         myIsInRefresh = false;
         ApplicationManager.getApplication().invokeLater(new Runnable() {
-              public void run() {
-                if (myChangedProjectFiles.size() > 0) {
-                  Set<Project> projects = myChangedProjectFiles.keySet();
-                  List<Project> projectsToReload = new ArrayList<Project>();
+          public void run() {
+            if (myChangedProjectFiles.size() > 0) {
+              Set<Project> projects = myChangedProjectFiles.keySet();
+              List<Project> projectsToReload = new ArrayList<Project>();
 
-                  for (Iterator<Project> iterator = projects.iterator(); iterator.hasNext();) {
-                    Project project = iterator.next();
-                    List<VirtualFile> causes = myChangedProjectFiles.get(project);
-                    Set<VirtualFile> liveCauses = new HashSet<VirtualFile>(causes);
-                    for (int i = 0; i < causes.size(); i++) {
-                      VirtualFile cause = causes.get(i);
-                      if (!cause.isValid()) liveCauses.remove(cause);
+              for (Project project : projects) {
+                List<VirtualFile> causes = myChangedProjectFiles.get(project);
+                Set<VirtualFile> liveCauses = new HashSet<VirtualFile>(causes);
+                for (VirtualFile cause : causes) {
+                  if (!cause.isValid()) liveCauses.remove(cause);
+                }
+
+                if (!liveCauses.isEmpty()) {
+                  String message;
+                  if (liveCauses.size() == 1) {
+                    message = ProjectBundle.message("project.reload.external.change.single", causes.get(0).getPresentableUrl());
+                  }
+                  else {
+                    StringBuffer filesBuilder = new StringBuffer();
+                    boolean first = true;
+                    for (VirtualFile cause : liveCauses) {
+                      if (!first) filesBuilder.append("\n");
+                      first = false;
+                      filesBuilder.append(cause.getPresentableUrl());
                     }
-
-                    if (!liveCauses.isEmpty()) {
-                      StringBuffer message = new StringBuffer();
-                      message.append("Project file");
-                      if (liveCauses.size() > 1) {
-                        message.append("s:\n");
-                      }
-                      else {
-                        message.append(" ");
-                      }
-
-                      boolean first = true;
-                      for (Iterator<VirtualFile> it = liveCauses.iterator(); it.hasNext();) {
-                        VirtualFile cause = it.next();
-                        if (!first) message.append("\n");
-                        first = false;
-                        message.append(cause.getPresentableUrl());
-                      }
-
-                      message.append(liveCauses.size() > 1 ? "\nhave" : " has");
-                      message.append(" been changed externally.\n\nReload project?");
-
-                      if (Messages.showYesNoDialog(project,
-                                                   message.toString(),
-                                                   "Project Files Changed",
-                                                   Messages.getQuestionIcon()) == 0) {
-                        projectsToReload.add(project);
-                      }
-                    }
-
-                    for (Iterator<Project> reloadIterator = projectsToReload.iterator(); reloadIterator.hasNext();) {
-                      reloadProject(reloadIterator.next());
-                    }
+                    message = ProjectBundle.message("project.reload.external.change.multiple", filesBuilder.toString());
                   }
 
-                  myChangedProjectFiles.clear();
+                  if (Messages.showYesNoDialog(project,
+                                               message,
+                                               ProjectBundle.message("project.reload.external.change.title"),
+                                               Messages.getQuestionIcon()) == 0) {
+                    projectsToReload.add(project);
+                  }
+                }
+
+                for (final Project projectToReload : projectsToReload) {
+                  reloadProject(projectToReload);
                 }
               }
-            }, ModalityState.NON_MMODAL);
+
+              myChangedProjectFiles.clear();
+            }
+          }
+        }, ModalityState.NON_MMODAL);
       }
     });
 
@@ -382,17 +381,15 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
   public void saveChangedProjectFile(final VirtualFile file) {
     final Project[] projects = getOpenProjects();
-    for (int i = 0; i < projects.length; i++) {
-      Project project = projects[i];
+    for (Project project : projects) {
       if (file == project.getProjectFile() || file == project.getWorkspaceFile()) {
         copyToTemp(file);
         registerProjectToReload(project, file);
       }
-
       ModuleManager moduleManager = ModuleManager.getInstance(project);
       final Module[] modules = moduleManager.getModules();
-      for (int j = 0; j < modules.length; j++) {
-        if (modules[j].getModuleFile() == file) {
+      for (Module module : modules) {
+        if (module.getModuleFile() == file) {
           copyToTemp(file);
           registerProjectToReload(project, file);
         }
@@ -436,7 +433,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
           stream.close();
         }
         catch (IOException e) {
-          Messages.showWarningDialog("Error writing to file '" + file.getPresentableUrl() + "'. Project may reload incorrectly.", "Write error");
+          Messages.showWarningDialog(ProjectBundle.message("project.reload.write.failed", file.getPresentableUrl()),
+                                     ProjectBundle.message("project.reload.write.failed.title"));
         }
       }
     }
@@ -454,11 +452,11 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
         final String path = project.getProjectFilePath();
         final List<VirtualFile> original = getAllProjectFiles(project);
 
-        if (project.isDisposed() || ProjectUtil.closeProject(project)){
+        if (project.isDisposed() || ProjectUtil.closeProject(project)) {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
-              for (Iterator<VirtualFile> iterator = original.iterator(); iterator.hasNext();) {
-                restoreCopy(iterator.next());
+              for (final VirtualFile aOriginal : original) {
+                restoreCopy(aOriginal);
               }
             }
           });
@@ -476,8 +474,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
     ModuleManager moduleManager = ModuleManager.getInstance(project);
     final Module[] modules = moduleManager.getModules();
-    for (int j = 0; j < modules.length; j++) {
-      Module module = modules[j];
+    for (Module module : modules) {
       files.add(module.getModuleFile());
     }
     return files;
@@ -490,27 +487,24 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       LOG.assertTrue(projectFile != null);
       String name = projectFile.getNameWithoutExtension();
 
-      String message =
-        "The project " + projectFile.getName() + " you are about to open has an older format.\n"
-        + ApplicationNamesInfo.getInstance().getProductName() + " will automatically convert it to the new format.\n"
-        + "You will not be able to open it by earlier versions.\n"
-        + "The old project file will be saved to " + name + "_old.ipr.\n"
-        + "Proceed with conversion?";
-      if (Messages.showYesNoDialog(message, "Warning", Messages.getWarningIcon()) != 0) return false;
+      String message = ProjectBundle.message("project.convert.old.prompt", projectFile.getName(),
+                                             ApplicationNamesInfo.getInstance().getProductName(),
+                                             name + OLD_PROJECT_SUFFIX + projectFile.getExtension());
+      if (Messages.showYesNoDialog(message, CommonBundle.getWarningTitle(), Messages.getWarningIcon()) != 0) return false;
 
-      final ArrayList<String> conversionProblems = ((ProjectImpl) project).getConversionProblemsStorage();
+      final ArrayList<String> conversionProblems = ((ProjectImpl)project).getConversionProblemsStorage();
       if (conversionProblems.size() > 0) {
         StringBuffer buffer = new StringBuffer();
-        buffer.append("During your project conversion, the following problem(s) were detected:");
-        for (Iterator<String> iterator = conversionProblems.iterator(); iterator.hasNext();) {
-          String s = iterator.next();
+        buffer.append(ProjectBundle.message("project.convert.problems.detected"));
+        for (String s : conversionProblems) {
           buffer.append('\n');
           buffer.append(s);
         }
-        buffer.append("\n\nPress 'Show Help' for more information.");
-        final int result = Messages.showDialog(project, buffer.toString(), "Project Conversion Problems",
-                                               new String[]{"Show Help", "Close"}, 0,
-                                               Messages.getWarningIcon()
+        buffer.append(ProjectBundle.message("project.convert.problems.help"));
+        final int result = Messages.showDialog(project, buffer.toString(), ProjectBundle.message("project.convert.problems.title"),
+                                               new String[]{ProjectBundle.message("project.convert.problems.help.button"),
+                                                 CommonBundle.getCloseButtonText()}, 0,
+                                                                                     Messages.getWarningIcon()
         );
         if (result == 0) {
           HelpManager.getInstance().invokeHelp("project.migrationProblems");
@@ -521,8 +515,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
         public void run() {
           try {
             VirtualFile projectDir = projectFile.getParent();
+            assert projectDir != null;
 
-            final String oldProjectName = projectFile.getNameWithoutExtension() + "_old." + projectFile.getExtension();
+            final String oldProjectName = projectFile.getNameWithoutExtension() + OLD_PROJECT_SUFFIX + projectFile.getExtension();
             VirtualFile oldProject = projectDir.findChild(oldProjectName);
             if (oldProject == null) {
               oldProject = projectDir.createChildData(this, oldProjectName);
@@ -533,7 +528,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
             VirtualFile workspaceFile = project.getWorkspaceFile();
             if (workspaceFile != null) {
-              final String oldWorkspaceName = workspaceFile.getNameWithoutExtension() + "_old." +
+              final String oldWorkspaceName = workspaceFile.getNameWithoutExtension() + OLD_PROJECT_SUFFIX +
                                               project.getWorkspaceFile().getExtension();
               VirtualFile oldWorkspace = projectDir.findChild(oldWorkspaceName);
               if (oldWorkspace == null) {
@@ -553,17 +548,13 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
     if (version > CURRENT_FORMAT_VERSION) {
       String message =
-        "The project " + project.getName() + " you are about to open " +
-        "has been created by a newer version of " + ApplicationNamesInfo.getInstance().getProductName() +
-        ". If you open it, your project" +
-        " is likely to be corrupted. Continue?";
+        ProjectBundle.message("project.load.new.version.warning", project.getName(), ApplicationNamesInfo.getInstance().getProductName());
 
-      if (Messages.showYesNoDialog(message, "Warning", Messages.getWarningIcon()) != 0) return false;
+      if (Messages.showYesNoDialog(message, CommonBundle.getWarningTitle(), Messages.getWarningIcon()) != 0) return false;
     }
 
     return true;
   }
-
 
   /*
   public boolean isOpeningProject() {
@@ -601,8 +592,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     synchronized (myListeners) {
       if (myListeners.size() > 0) {
         ProjectManagerListener[] listeners = myListeners.toArray(new ProjectManagerListener[myListeners.size()]);
-        for (int i = 0; i < listeners.length; i++) {
-          listeners[i].projectClosing(project);
+        for (ProjectManagerListener listener : listeners) {
+          listener.projectClosing(project);
         }
       }
     }
@@ -648,8 +639,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     synchronized (myListeners) {
       if (myListeners.size() > 0) {
         ProjectManagerListener[] listeners = myListeners.toArray(new ProjectManagerListener[myListeners.size()]);
-        for (int i = 0; i < listeners.length; i++) {
-          listeners[i].projectOpened(project);
+        for (ProjectManagerListener listener : listeners) {
+          listener.projectOpened(project);
         }
       }
     }
@@ -662,8 +653,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     synchronized (myListeners) {
       if (myListeners.size() > 0) {
         ProjectManagerListener[] listeners = myListeners.toArray(new ProjectManagerListener[myListeners.size()]);
-        for (int i = 0; i < listeners.length; i++) {
-          listeners[i].projectClosed(project);
+        for (ProjectManagerListener listener : listeners) {
+          listener.projectClosed(project);
         }
       }
     }
@@ -676,8 +667,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     synchronized (myListeners) {
       if (myListeners.size() > 0) {
         ProjectManagerListener[] listeners = myListeners.toArray(new ProjectManagerListener[myListeners.size()]);
-        for (int i = 0; i < listeners.length; i++) {
-          if (!listeners[i].canCloseProject(project)) return false;
+        for (ProjectManagerListener listener : listeners) {
+          if (!listener.canCloseProject(project)) return false;
         }
       }
     }
@@ -687,18 +678,18 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
   public void writeExternal(Element parentNode) throws WriteExternalException {
     if (myDefaultProject != null) {
-      Element element = new Element("defaultProject");
+      Element element = new Element(ELEMENT_DEFAULT_PROJECT);
       parentNode.addContent(element);
       myDefaultProject.saveToXml(element, myDefaultProject.getProjectFile());
     }
-    else if (myDefaultProjectRootElement != null){
+    else if (myDefaultProjectRootElement != null) {
       parentNode.addContent((Element)myDefaultProjectRootElement.clone());
     }
 
   }
 
   public void readExternal(Element parentNode) throws InvalidDataException {
-    Element element = parentNode.getChild("defaultProject");
+    Element element = parentNode.getChild(ELEMENT_DEFAULT_PROJECT);
     if (element != null) {
       myDefaultProjectRootElement = element;
     }
@@ -717,7 +708,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   public String getPresentableName() {
-    return "Default project settings";
+    return ProjectBundle.message("project.default.settings");
   }
-
 }

@@ -16,14 +16,26 @@ import javax.swing.*;
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author kir
  */
 public class DefaultIdeaErrorLogger implements ErrorLogger {
   private static boolean ourOomOccured = false;
+  @NonNls private static final String FATAL_ERROR_NOTIFICATION_PROPERTY = "idea.fatal.error.notification";
+  @NonNls private static final String DISABLED_VALUE = "disabled";
+  @NonNls private static final String ENABLED_VALUE = "enabled";
+  @NonNls private static final String PARAM_PERMGEN = "PermGen";
+  @NonNls private static final String PARAM_MAXPERMSIZE = "-XX:MaxPermSize";
+  @NonNls private static final String PARAM_XMX = "-Xmx";
+  @NonNls private static final String IDEA_LOG_PATH = "/log/idea.log";
+  @NonNls private static final String INFO_PLIST = "/Contents/Info.plist";
+  @NonNls private static final String IDEA_EXE_VMOPTIONS = "\\idea.exe.vmoptions";
+  @NonNls private static final String IDEA_VMOPTIONS = "/idea.vmoptions";
 
   public boolean canHandle(IdeaLoggingEvent event) {
-    boolean notificationEnabled = !"disabled".equals(System.getProperty("idea.fatal.error.notification", "enabled"));
+    boolean notificationEnabled = !DISABLED_VALUE.equals(System.getProperty(FATAL_ERROR_NOTIFICATION_PROPERTY, ENABLED_VALUE));
 
     return  notificationEnabled ||
             ApplicationManagerEx.getApplicationEx().isInternal() ||
@@ -48,18 +60,21 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
   /** @noinspection CallToPrintStackTrace*/
   private void processOOMError(IdeaLoggingEvent event) throws InterruptedException, InvocationTargetException {
     final String message = event.getThrowable().getMessage();
-    final String option = message != null && message.indexOf("PermGen") >= 0 ? "-XX:MaxPermSize" : "-Xmx";
+    final String option = message != null && message.indexOf(PARAM_PERMGEN) >= 0 ? PARAM_MAXPERMSIZE : PARAM_XMX;
     ourOomOccured = true;
     event.getThrowable().printStackTrace();
     SwingUtilities.invokeAndWait(new Runnable() {
       public void run() {
-        String message = "There's not enough memory to perform the requested operation.\n" +
-                         "Please shutdown " + ApplicationNamesInfo.getInstance().getProductName() +
-                         " and increase " + option + " setting in " + getSettingsFilePath();
+        String message = DiagnosticBundle.message("diagnostic.out.of.memory.error",
+                                                  ApplicationNamesInfo.getInstance().getProductName(),
+                                                  option, getSettingsFilePath());
 
-        if (JOptionPane.showOptionDialog(JOptionPane.getRootFrame(), message, "Out of Memory",
+        if (JOptionPane.showOptionDialog(JOptionPane.getRootFrame(), message, DiagnosticBundle.message("diagnostic.out.of.memory.title"),
                                          JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null,
-                                         new Object[]{"Shutdown", "Ignore"}, "Shutdown") == 0) {
+                                         new Object[]{
+                                           DiagnosticBundle.message("diagnostic.out.of.memory.shutdown"),
+                                           DiagnosticBundle.message("diagnostic.out.of.memory.ignore")
+                                         }, DiagnosticBundle.message("diagnostic.out.of.memory.shutdown")) == 0) {
           try {
             ApplicationManager.getApplication().exit();
           }
@@ -72,7 +87,7 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
   }
 
   private String getLogFilePath() {
-    String path = PathManager.getSystemPath() + "/log/idea.log file".replace('/', File.separatorChar);
+    String path = PathManager.getSystemPath() + IDEA_LOG_PATH.replace('/', File.separatorChar);
     try {
       return new File(path).getAbsolutePath();
     }
@@ -83,11 +98,11 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
 
   private String getSettingsFilePath() {
     if (SystemInfo.isMac) {
-      return PathManager.getHomePath() + "/Contents/Info.plist";
+      return PathManager.getHomePath() + INFO_PLIST;
     }
     else if (SystemInfo.isWindows) {
-      return PathManager.getBinPath() + "\\idea.exe.vmoptions";
+      return PathManager.getBinPath() + IDEA_EXE_VMOPTIONS;
     }
-    return PathManager.getBinPath() + "/idea.vmoptions".replace('/', File.separatorChar);
+    return PathManager.getBinPath() + IDEA_VMOPTIONS.replace('/', File.separatorChar);
   }
 }

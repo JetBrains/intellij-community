@@ -1,6 +1,5 @@
 package com.intellij.refactoring.introduceField;
 
-import static com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler.InitializationPlace.*;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemPreferencePolicy;
@@ -16,7 +15,9 @@ import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
+import static com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler.InitializationPlace.*;
 import com.intellij.refactoring.ui.*;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.ui.IdeBorderFactory;
@@ -27,7 +28,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.awt.event.KeyEvent;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -65,6 +65,7 @@ class IntroduceFieldDialog extends DialogWrapper {
   private JRadioButton myRbPublic;
   private TypeSelector myTypeSelector;
   private NameSuggestionsManager myNameSuggestionsManager;
+  private static final String REFACTORING_NAME = RefactoringBundle.message("introduce.field.title");
 
   public IntroduceFieldDialog(Project project,
                               PsiClass parentClass,
@@ -86,7 +87,7 @@ class IntroduceFieldDialog extends DialogWrapper {
     myAllowInitInMethodIfAll = allowInitInMethodIfAll;
     myTypeSelectorManager = typeSelectorManager;
 
-    setTitle("Introduce Field");
+    setTitle(REFACTORING_NAME);
     init();
 
     initializeControls(initializerExpression);
@@ -135,7 +136,7 @@ class IntroduceFieldDialog extends DialogWrapper {
     } else {
       myRbPrivate.setSelected(true);
     }
-    myCbFinal.setSelected(myCbFinal.isEnabled() ? ourLastCbFinalState : false);
+    myCbFinal.setSelected(myCbFinal.isEnabled() && ourLastCbFinalState);
   }
 
   private void selectInCurrentMethod() {
@@ -246,7 +247,7 @@ class IntroduceFieldDialog extends DialogWrapper {
     gbConstraints.weighty = 1;
     gbConstraints.gridx = 0;
     gbConstraints.gridy = 1;
-    JLabel namePrompt = new JLabel("Name: ");
+    JLabel namePrompt = new JLabel(RefactoringBundle.message("name.prompt"));
     panel.add(namePrompt, gbConstraints);
 
     gbConstraints.insets = new Insets(4, 0, 4, 4);
@@ -259,13 +260,15 @@ class IntroduceFieldDialog extends DialogWrapper {
     namePrompt.setLabelFor(myNameField.getFocusableComponent());
 
     myNameSuggestionsManager = new NameSuggestionsManager(myTypeSelector, myNameField, createGenerator(), myProject);
-    myNameSuggestionsManager.setMnemonics(type, namePrompt);
+    myNameSuggestionsManager.setLabelsFor(type, namePrompt);
 
     return panel;
   }
 
   private String getTypeLabel() {
-    return (myWillBeDeclaredStatic ? "Static field " : "Field") + " of type: ";
+    return myWillBeDeclaredStatic ?
+           RefactoringBundle.message("introduce.field.static.field.of.type") :
+           RefactoringBundle.message("introduce.field.field.of.type");
   }
 
   protected JComponent createCenterPanel() {
@@ -308,9 +311,8 @@ class IntroduceFieldDialog extends DialogWrapper {
     myRbInFieldDeclaration.addItemListener(finalUpdater);
     if (myRbInSetUp != null) myRbInSetUp.addItemListener(finalUpdater);
     if (myOccurrencesCount > 1) {
-      myCbReplaceAll = new NonFocusableCheckBox(
-              "Replace all occurrences of expression (" + myOccurrencesCount + " occurrences)");
-      myCbReplaceAll.setMnemonic('A');
+      myCbReplaceAll = new NonFocusableCheckBox();
+      myCbReplaceAll.setText(RefactoringBundle.message("replace.all.occurrences.of.expression.0.occurrences", myOccurrencesCount));
       gbConstraints.gridy++;
       panel.add(myCbReplaceAll, gbConstraints);
       myCbReplaceAll.addItemListener(itemListener);
@@ -325,9 +327,9 @@ class IntroduceFieldDialog extends DialogWrapper {
       if (myCbReplaceAll != null) {
         gbConstraints.insets = new Insets(0, 8, 0, 0);
       }
-      myCbDeleteVariable = new StateRestoringCheckBox("Delete variable declaration");
+      myCbDeleteVariable = new StateRestoringCheckBox();
+      myCbDeleteVariable.setText(RefactoringBundle.message("delete.variable.declaration"));
       panel.add(myCbDeleteVariable, gbConstraints);
-      myCbDeleteVariable.setMnemonic(KeyEvent.VK_D);
       if (myIsInvokedOnDeclaration) {
         myCbDeleteVariable.setEnabled(false);
         myCbDeleteVariable.setSelected(true);
@@ -379,49 +381,48 @@ class IntroduceFieldDialog extends DialogWrapper {
     mainPanel.setLayout(new BorderLayout());
 
     JPanel initializationPanel = new JPanel();
-    initializationPanel.setBorder(IdeBorderFactory.createTitledBorder("Initialize in"));
+    initializationPanel.setBorder(IdeBorderFactory.createTitledBorder(RefactoringBundle.message("initialize.in.border.title")));
     initializationPanel.setLayout(new BoxLayout(initializationPanel, BoxLayout.Y_AXIS));
 
     JPanel visibilityPanel = new JPanel();
-    visibilityPanel.setBorder(IdeBorderFactory.createTitledBorder("Visibility"));
+    visibilityPanel.setBorder(IdeBorderFactory.createTitledBorder(RefactoringBundle.message("visibility.border.title")));
     visibilityPanel.setLayout(new BoxLayout(visibilityPanel, BoxLayout.Y_AXIS));
 
     /*JPanel modifiersPanel = new GroupPanel();
     modifiersPanel.setBorder(BorderFactory.createTitledBorder("Other Modifiers"));
     modifiersPanel.setLayout(new BoxLayout(modifiersPanel, BoxLayout.Y_AXIS));*/
 
-    myRbInCurrentMethod = new JRadioButton("Current method");
-    myRbInCurrentMethod.setMnemonic('m');
+    myRbInCurrentMethod = new JRadioButton();
+    myRbInCurrentMethod.setText(RefactoringBundle.message("current.method.radio"));
     myRbInCurrentMethod.setEnabled(myAllowInitInMethod);
-    myRbInFieldDeclaration = new JRadioButton("Field declaration");
-    myRbInFieldDeclaration.setMnemonic('d');
-    myRbInConstructor = new JRadioButton("Class constructor(s)");
-    myRbInConstructor.setMnemonic('C');
+    myRbInFieldDeclaration = new JRadioButton();
+    myRbInFieldDeclaration.setText(RefactoringBundle.message("field.declaration.radio"));
+    myRbInConstructor = new JRadioButton();
+    myRbInConstructor.setText(RefactoringBundle.message("class.constructors.radio"));
 
-    myRbPrivate = new JRadioButton("Private");
+    myRbPrivate = new JRadioButton();
+    myRbPrivate.setText(RefactoringBundle.message("visibility.private"));
     myRbPrivate.setFocusable(false);
-    myRbPrivate.setMnemonic('v');
-    myRbPackageLocal = new JRadioButton("Package local");
-    myRbPackageLocal.setMnemonic('k');
+    myRbPackageLocal = new JRadioButton();
+    myRbPackageLocal.setText(RefactoringBundle.message("visibility.package.local"));
     myRbPackageLocal.setFocusable(false);
-    myRbProtected = new JRadioButton("Protected");
+    myRbProtected = new JRadioButton();
+    myRbProtected.setText(RefactoringBundle.message("visibility.protected"));
     myRbProtected.setFocusable(false);
-    myRbProtected.setMnemonic('o');
-    myRbPublic = new JRadioButton("Public");
+    myRbPublic = new JRadioButton();
+    myRbPublic.setText(RefactoringBundle.message("visibility.public"));
     myRbPublic.setFocusable(false);
-    myRbPublic.setMnemonic('b');
 
-    myCbFinal = new StateRestoringCheckBox("Declare final");
-    myCbFinal.setMnemonic('f');
-//    myCbStatic.setMnemonic('S');
+    myCbFinal = new StateRestoringCheckBox();
+    myCbFinal.setText(RefactoringBundle.message("declare.final"));
 
     initializationPanel.add(myRbInCurrentMethod);
     initializationPanel.add(myRbInFieldDeclaration);
     initializationPanel.add(myRbInConstructor);
 
     if (isTestClass()) {
-      myRbInSetUp = new JRadioButton("setUp method");
-      myRbInSetUp.setMnemonic('s');
+      myRbInSetUp = new JRadioButton();
+      myRbInSetUp.setText(RefactoringBundle.message("setup.method.radio"));
       initializationPanel.add(myRbInSetUp);
     }
 
@@ -482,7 +483,7 @@ class IntroduceFieldDialog extends DialogWrapper {
         String propertyName = null;
         if (myIsInvokedOnDeclaration) {
           propertyName = myCodeStyleManager.variableNameToPropertyName(myLocalVariable.getName(),
-                  VariableKind.LOCAL_VARIABLE
+                                                                       VariableKind.LOCAL_VARIABLE
           );
         }
         return myCodeStyleManager.suggestVariableName(variableKind, propertyName, myInitializerExpression, type);
@@ -502,7 +503,7 @@ class IntroduceFieldDialog extends DialogWrapper {
     String fieldName = getEnteredName();
     String errorString = null;
     if ("".equals(fieldName)) {
-      errorString = "No field name specified";
+      errorString = RefactoringBundle.message("no.field.name.specified");
     } else if (!PsiManager.getInstance(myProject).getNameHelper().isIdentifier(fieldName)) {
       errorString = RefactoringMessageUtil.getIncorrectIdentifierMessage(fieldName);
     }
@@ -521,8 +522,8 @@ class IntroduceFieldDialog extends DialogWrapper {
     if (oldField != null) {
       int answer = Messages.showYesNoDialog(
               myProject,
-              "The field with the name " + fieldName + "\nalready exists in class '"
-              + oldField.getContainingClass().getQualifiedName() + "'.\nContinue?",
+              RefactoringBundle.message("field.exists", fieldName,
+                                   oldField.getContainingClass().getQualifiedName()),
               IntroduceFieldHandler.REFACTORING_NAME,
               Messages.getWarningIcon()
       );

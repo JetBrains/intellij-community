@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.TreeItem;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.ColumnInfo;
+import com.intellij.CvsBundle;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.command.log.LogInformation;
 import org.netbeans.lib.cvsclient.command.log.Revision;
@@ -43,7 +44,8 @@ import java.util.*;
 import java.util.List;
 
 public class CvsHistoryProvider implements VcsHistoryProvider {
-  public static final ColumnInfo<VcsFileRevision, String> STATE = new ColumnInfo<VcsFileRevision, String>("State") {
+  public static final ColumnInfo<VcsFileRevision, String> STATE = new ColumnInfo<VcsFileRevision, String>(
+    CvsBundle.message("file.history.state.column.name")) {
     public String valueOf(VcsFileRevision vcsFileRevision) {
       if (!(vcsFileRevision instanceof CvsFileRevision)) return "";
       return ((CvsFileRevision)vcsFileRevision).getState();
@@ -112,13 +114,13 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
 
   }
 
-  private final ColumnInfo TAG = new TagOrBranchColumn("Tag") {
+  private final ColumnInfo TAG = new TagOrBranchColumn(CvsBundle.message("file.history.tag.column.name")) {
     protected Collection getValues(CvsFileRevision revision) {
       return revision.getTags();
     }
   };
 
-  public final ColumnInfo BRANCHES = new TagOrBranchColumn("Branches") {
+  public final ColumnInfo BRANCHES = new TagOrBranchColumn(CvsBundle.message("file.history.branches.column.name")) {
     protected Collection getValues(CvsFileRevision revision) {
       return revision.getBranches();
     }
@@ -167,7 +169,7 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
     final LocalPathIndifferentLogOperation logOperation =
       new LocalPathIndifferentLogOperation(filePath.getIOFile());
     CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
-    executor.performActionSync(new CommandCvsHandler("Load File Content", logOperation),
+    executor.performActionSync(new CommandCvsHandler(com.intellij.CvsBundle.message("operation.name.load.file.content"), logOperation),
                                new CvsOperationExecutorCallback() {
                                  public void executionFinished(boolean successfully) {
                                  }
@@ -203,7 +205,7 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
   }
 
   public AnAction[] getAdditionalActions(final FileHistoryPanel panel) {
-    return new AnAction[]{new AnAction("Annotate", "Annotate file", IconLoader.getIcon("/actions/annotate.png")) {
+    return new AnAction[]{new AnAction(CvsBundle.message("annotate.action.name"), CvsBundle.message("annotate.action.description"), IconLoader.getIcon("/actions/annotate.png")) {
       public void update(AnActionEvent e) {
         DataContext dataContext = e.getDataContext();
         FilePath filePath = (FilePath)dataContext.getData(VcsDataConstants.FILE_PATH);
@@ -238,7 +240,7 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
           AbstractVcsHelper.getInstance(myProject).showAnnotation(annotation, revisionVirtualFile);
         }
         catch (VcsException e1) {
-          AbstractVcsHelper.getInstance(myProject).showError(e1, "Cvs Annotate");
+          AbstractVcsHelper.getInstance(myProject).showError(e1, com.intellij.CvsBundle.message("operation.name.annotate"));
         }
 
       }

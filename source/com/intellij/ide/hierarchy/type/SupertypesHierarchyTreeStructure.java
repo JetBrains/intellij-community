@@ -2,12 +2,13 @@ package com.intellij.ide.hierarchy.type;
 
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.HierarchyTreeStructure;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 
 public final class SupertypesHierarchyTreeStructure extends HierarchyTreeStructure {
-  public static final String TYPE = "Supertypes of ";
+  public static final String TYPE = IdeBundle.message("title.hierarchy.supertypes");
 
   public SupertypesHierarchyTreeStructure(final Project project, final PsiClass aClass) {
     super(project, new TypeHierarchyNodeDescriptor(project, null, aClass, true));

@@ -5,8 +5,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringSettings;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.usageView.UsageViewUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -19,17 +21,18 @@ import java.awt.*;
  * To change this template use Options | File Templates.
  */
 public class TypeCookDialog extends RefactoringDialog {
-  public static final String REFACTORING_NAME = "Generify";
+  public static final String REFACTORING_NAME = RefactoringBundle.message("generify.title");
 
   private PsiElement[] myElements;
   private JLabel myClassNameLabel = new JLabel();
-  private JCheckBox myCbDropCasts = new JCheckBox("Drop obsolete casts");
-  private JCheckBox myCbPreserveRawArrays = new JCheckBox("Preserve raw arrays");
-  private JCheckBox myCbLeaveObjectParameterizedTypesRaw = new JCheckBox("Leave Object-parameterized types raw");
-  private JCheckBox myCbExhaustive = new JCheckBox("Perform exhaustive search");
-  private JCheckBox myCbCookObjects = new JCheckBox("Generify Objects");
-  private JCheckBox myCbCookToWildcards = new JCheckBox("Produce wildcard types");
+  private JCheckBox myCbDropCasts = new JCheckBox();
+  private JCheckBox myCbPreserveRawArrays = new JCheckBox();
+  private JCheckBox myCbLeaveObjectParameterizedTypesRaw = new JCheckBox();
+  private JCheckBox myCbExhaustive = new JCheckBox();
+  private JCheckBox myCbCookObjects = new JCheckBox();
+  private JCheckBox myCbCookToWildcards = new JCheckBox();
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public TypeCookDialog(Project project, PsiElement[] elements) {
     super(project, true);
 
@@ -42,20 +45,9 @@ public class TypeCookDialog extends RefactoringDialog {
     myElements = elements;
     for (int i = 0; i < elements.length; i++) {
       PsiElement element = elements[i];
-
-      if (element instanceof PsiClass) {
-        name.append("Class " + ((PsiClass)element).getQualifiedName());
-      }
-      else if (element instanceof PsiFile) {
-        name.append("File " + ((PsiFile)element).getName());
-      }
-      else if (element instanceof PsiDirectory) {
-        name.append("Directory " + ((PsiDirectory)element).getName());
-      }
-      else if (element instanceof PsiPackage) {
-        name.append("Package " + ((PsiPackage)element).getQualifiedName());
-      }
-
+      name.append(UsageViewUtil.capitalize(UsageViewUtil.getType(element)));
+      name.append(" ");
+      name.append(UsageViewUtil.getDescriptiveName(element));
       if (i < elements.length - 1) {
         name.append("<br>");
       }
@@ -108,12 +100,12 @@ public class TypeCookDialog extends RefactoringDialog {
         RefactoringSettings.getInstance().TYPE_COOK_PRODUCE_WILDCARDS);
     }
 
-    myCbDropCasts.setMnemonic('D');
-    myCbPreserveRawArrays.setMnemonic('A');
-    myCbLeaveObjectParameterizedTypesRaw.setMnemonic('L');
-    myCbExhaustive.setMnemonic('E');
-    myCbCookObjects.setMnemonic('O');
-    myCbCookToWildcards.setMnemonic('W');
+    myCbDropCasts.setText(RefactoringBundle.message("type.cook.drop.obsolete.casts"));
+    myCbPreserveRawArrays.setText(RefactoringBundle.message("type.cook.preserve.raw.arrays"));
+    myCbLeaveObjectParameterizedTypesRaw.setText(RefactoringBundle.message("type.cook.leave.object.parameterized.types.raw"));
+    myCbExhaustive.setText(RefactoringBundle.message("type.cook.perform.exhaustive.search"));
+    myCbCookObjects.setText(RefactoringBundle.message("type.cook.generify.objects"));
+    myCbCookToWildcards.setText(RefactoringBundle.message("type.cook.produce.wildcard.types"));
 
     gbConstraints.insets = new Insets(4, 8, 4, 8);
 

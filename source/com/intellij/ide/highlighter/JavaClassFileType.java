@@ -35,6 +35,7 @@ import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
 import com.intellij.ide.structureView.impl.java.JavaFileTreeModel;
+import com.intellij.ide.IdeBundle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
@@ -55,7 +56,7 @@ public class JavaClassFileType implements FileType {
   }
 
   public String getDescription() {
-    return "Java class files";
+    return IdeBundle.message("filetype.description.class");
   }
 
   public String getDefaultExtension() {

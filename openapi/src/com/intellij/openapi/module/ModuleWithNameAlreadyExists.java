@@ -18,8 +18,17 @@ package com.intellij.openapi.module;
 public class ModuleWithNameAlreadyExists extends Exception {
   private String myModuleName;
 
+  /**
+   * @deprecated use constructor which allows passing of localized message
+   */
   public ModuleWithNameAlreadyExists(String moduleName) {
+    //noinspection HardCodedStringLiteral
     super("Module \'" + moduleName + "\' already exists in the project.");
+    myModuleName = moduleName;
+  }
+
+  public ModuleWithNameAlreadyExists(final String message, final String moduleName) {
+    super(message);
     myModuleName = moduleName;
   }
 

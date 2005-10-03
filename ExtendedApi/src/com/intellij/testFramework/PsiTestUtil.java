@@ -20,7 +20,9 @@ import junit.framework.Assert;
 import java.io.File;
 import java.util.Collection;
 
-public class PsiTestUtil {
+import org.jetbrains.annotations.NonNls;
+
+@NonNls public class PsiTestUtil {
   public static VirtualFile createTestProjectStructure(Project project,
                                                        Module module,
                                                        String rootPath,

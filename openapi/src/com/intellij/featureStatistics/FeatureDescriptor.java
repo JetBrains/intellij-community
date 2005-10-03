@@ -18,6 +18,7 @@ package com.intellij.featureStatistics;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.HashSet;
 import java.util.List;
@@ -38,6 +39,17 @@ public class FeatureDescriptor{
   private long myAverageFrequency;
   private int myShownCount;
   private ProductivityFeaturesProvider myProvider;
+  @NonNls private static final String ATTRIBUTE_COUNT = "count";
+  @NonNls private static final String ATTRIBUTE_LAST_SHOWN = "last-shown";
+  @NonNls private static final String ATTRIBUTE_LAST_USED = "last-used";
+  @NonNls private static final String ATTRIBUTE_AVERAGE_FREQUENCY = "average-frequency";
+  @NonNls private static final String ATTRIBUTE_SHOWN_COUNT = "shown-count";
+  @NonNls private static final String ATTRIBUTE_ID = "id";
+  @NonNls private static final String ATTRIBUTE_TIP_FILE = "tip-file";
+  @NonNls private static final String ATTRIBUTE_FIRST_SHOW = "first-show";
+  @NonNls private static final String ATTRIBUTE_SUCCESSIVE_SHOW = "successive-show";
+  @NonNls private static final String ATTRIBUTE_MIN_USAGE_COUNT = "min-usage-count";
+  @NonNls private static final String ELEMENT_DEPENDENCY = "dependency";
 
   FeatureDescriptor(GroupDescriptor group) {
     myGroupId = group.getId();
@@ -47,7 +59,7 @@ public class FeatureDescriptor{
     myId = id;
   }
 
-  FeatureDescriptor(String id, String tipFileName, String displayName) {
+  FeatureDescriptor(String id, @NonNls String tipFileName, String displayName) {
     myId = id;
     myTipFileName = tipFileName;
     myDisplayName = displayName;
@@ -73,21 +85,20 @@ public class FeatureDescriptor{
     myProvider = provider;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   void readExternal(Element element) {
-    myId = element.getAttributeValue("id");
-    myTipFileName = element.getAttributeValue("tip-file");
-    myDisplayName = element.getAttributeValue("name");
-    myDaysBeforeFirstShowUp = Integer.parseInt(element.getAttributeValue("first-show"));
-    myDaysBetweenSuccesiveShowUps = Integer.parseInt(element.getAttributeValue("successive-show"));
-    String minUsageCount = element.getAttributeValue("min-usage-count");
+    myId = element.getAttributeValue(ATTRIBUTE_ID);
+    myTipFileName = element.getAttributeValue(ATTRIBUTE_TIP_FILE);
+    myDisplayName = FeatureStatisticsBundle.message(myId);
+    myDaysBeforeFirstShowUp = Integer.parseInt(element.getAttributeValue(ATTRIBUTE_FIRST_SHOW));
+    myDaysBetweenSuccesiveShowUps = Integer.parseInt(element.getAttributeValue(ATTRIBUTE_SUCCESSIVE_SHOW));
+    String minUsageCount = element.getAttributeValue(ATTRIBUTE_MIN_USAGE_COUNT);
     myMinUsageCount = minUsageCount == null ? 1 : Integer.parseInt(minUsageCount);
-    List depenencies = element.getChildren("dependency");
+    List depenencies = element.getChildren(ELEMENT_DEPENDENCY);
     if (depenencies != null && depenencies.size() > 0) {
       myDependencies = new HashSet<String>();
       for (int i = 0; i < depenencies.size(); i++) {
         Element dependencyElement = (Element)depenencies.get(i);
-        myDependencies.add(dependencyElement.getAttributeValue("id"));
+        myDependencies.add(dependencyElement.getAttributeValue(ATTRIBUTE_ID));
       }
     }
   }
@@ -197,11 +208,11 @@ public class FeatureDescriptor{
   }
 
   void readStatistics(Element element) {
-    String count = element.getAttributeValue("count");
-    String lastShown = element.getAttributeValue("last-shown");
-    String lastUsed = element.getAttributeValue("last-used");
-    String averageFrequency = element.getAttributeValue("average-frequency");
-    String shownCount = element.getAttributeValue("shown-count");
+    String count = element.getAttributeValue(ATTRIBUTE_COUNT);
+    String lastShown = element.getAttributeValue(ATTRIBUTE_LAST_SHOWN);
+    String lastUsed = element.getAttributeValue(ATTRIBUTE_LAST_USED);
+    String averageFrequency = element.getAttributeValue(ATTRIBUTE_AVERAGE_FREQUENCY);
+    String shownCount = element.getAttributeValue(ATTRIBUTE_SHOWN_COUNT);
 
     myUsageCount = count == null ? 0 : Integer.parseInt(count);
     myLastTimeShown = lastShown == null ? 0 : Long.parseLong(lastShown);
@@ -210,12 +221,11 @@ public class FeatureDescriptor{
     myShownCount = shownCount == null ? 0 : Integer.parseInt(shownCount);
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   void writeStatistics(Element element) {
-    element.setAttribute("count", String.valueOf(getUsageCount()));
-    element.setAttribute("last-shown", String.valueOf(getLastTimeShown()));
-    element.setAttribute("last-used", String.valueOf(getLastTimeUsed()));
-    element.setAttribute("average-frequency", String.valueOf(getAverageFrequency()));
-    element.setAttribute("shown-count", String.valueOf(getShownCount()));
+    element.setAttribute(ATTRIBUTE_COUNT, String.valueOf(getUsageCount()));
+    element.setAttribute(ATTRIBUTE_LAST_SHOWN, String.valueOf(getLastTimeShown()));
+    element.setAttribute(ATTRIBUTE_LAST_USED, String.valueOf(getLastTimeUsed()));
+    element.setAttribute(ATTRIBUTE_AVERAGE_FREQUENCY, String.valueOf(getAverageFrequency()));
+    element.setAttribute(ATTRIBUTE_SHOWN_COUNT, String.valueOf(getShownCount()));
   }
 }

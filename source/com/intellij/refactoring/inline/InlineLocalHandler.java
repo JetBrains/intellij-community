@@ -18,6 +18,7 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.RefactoringMessageDialog;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
@@ -28,7 +29,7 @@ import java.util.ArrayList;
 class InlineLocalHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.inline.InlineLocalHandler");
 
-  private static final String REFACTORING_NAME = "Inline Variable";
+  private static final String REFACTORING_NAME = RefactoringBundle.message("inline.variable.title");
 
   /**
    * should be called in AtomicAction
@@ -43,9 +44,7 @@ class InlineLocalHandler {
     final String localName = local.getName();
     final PsiExpression initializer = local.getInitializer();
     if (initializer == null){
-      String message =
-        "Cannot perform the refactoring.\n" +
-        "Variable " + localName + " has no initializer.";
+      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("variable.has.no.initializer", localName));
       RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_VARIABLE, project);
       return;
     }
@@ -54,7 +53,7 @@ class InlineLocalHandler {
     final PsiReference[] refs = searchHelper.findReferences(local, GlobalSearchScope.projectScope(project), false);
 
     if (refs.length == 0){
-      String message = "Variable " + localName + " is never used";
+      String message = RefactoringBundle.message("variable.is.never.used", localName);
       RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_VARIABLE, project);
       return;
     }
@@ -63,7 +62,7 @@ class InlineLocalHandler {
     for (PsiReference ref : refs) {
       final PsiFile otherFile = ref.getElement().getContainingFile();
       if (!otherFile.equals(workingFile)) {
-        String message = "Variable " + localName + " is referenced in multiple files";
+        String message = RefactoringBundle.message("variable.is.referenced.in.multiple.files", localName);
         RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_VARIABLE, project);
         return;
       }
@@ -72,7 +71,7 @@ class InlineLocalHandler {
     final ArrayList<PsiReference> toInlines = new ArrayList<PsiReference>(refs.length);
     final PsiJavaCodeReferenceElement firstWriteUsage = (PsiJavaCodeReferenceElement)filterUsagesToInline(refs, toInlines);
     if (toInlines.size() == 0) {
-      String message = "Variable " + localName + " is never used before modification";
+      String message = RefactoringBundle.message("variable.is.never.used.before.modification", localName);
       RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_VARIABLE, project);
       return;
     }
@@ -105,11 +104,9 @@ class InlineLocalHandler {
             refsForWriting.toArray(new PsiReference[refsForWriting.size()]),
             attributes, true, null
           );
-          String message =
-            "Cannot perform the refactoring.\n" +
-            "Variable " + localName + " is accessed for writing.";
+          String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("variable.is.accessed.for.writing", localName));
           RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_VARIABLE, project);
-          WindowManager.getInstance().getStatusBar(project).setInfo("Press Escape to remove the highlighting");
+          WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
           return;
         }
       }
@@ -125,8 +122,8 @@ class InlineLocalHandler {
         for (final PsiReference toInline : toInlines) {
           PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)toInline;
           if (ControlFlowUtil.isInstructionReachable(controlFlow, controlFlow.getStartOffset(ref), writeInstructionOffset)) {
-            String message = "Cannot perform the refactoring.\n" +
-                             "Variable initializer does not dominate its usages.";
+            String message = RefactoringBundle.getCannotRefactorMessage(
+              RefactoringBundle.message("variable.initializer.does.not.dominate.its.usages"));
             RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_VARIABLE, project);
             return;
           }
@@ -145,16 +142,18 @@ class InlineLocalHandler {
         attributes, true, null
       );
       int occurrencesCount = toInlines.size();
+      String occurencesString = RefactoringBundle.message("occurences.string", occurrencesCount);
+      final String question = RefactoringBundle.message("inline.local.variable.prompt", localName) + occurencesString;
       RefactoringMessageDialog dialog = new RefactoringMessageDialog(
         REFACTORING_NAME,
-        "Inline local variable " + localName + "? (" + occurrencesCount + (occurrencesCount == 1? " occurrence)" : " occurrences)"),
+        question,
         HelpID.INLINE_VARIABLE,
         "OptionPane.questionIcon",
         true,
         project);
       dialog.show();
       if (!dialog.isOK()){
-        WindowManager.getInstance().getStatusBar(project).setInfo("Press Escape to remove the highlighting");
+        WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
         return;
       }
     }
@@ -206,7 +205,7 @@ class InlineLocalHandler {
 
           if (editor != null && !ApplicationManager.getApplication().isUnitTestMode()) {
             highlightManager.addOccurrenceHighlights(editor, exprs, attributes, true, null);
-            WindowManager.getInstance().getStatusBar(project).setInfo("Press Escape to remove the highlighting");
+            WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
           }
         }
         catch(IncorrectOperationException e){
@@ -219,7 +218,7 @@ class InlineLocalHandler {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(runnable);
       }
-    }, "Inline " + localName, null);
+    }, RefactoringBundle.message("inline.local.command", localName), null);
   }
 
   /**

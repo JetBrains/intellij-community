@@ -9,6 +9,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.util.ui.SortableColumnModel;
+import com.intellij.ide.IdeBundle;
 import org.jdom.Element;
 
 import javax.swing.*;
@@ -56,7 +57,7 @@ public class PluginManagerConfigurable extends BaseConfigurable implements JDOME
   }
 
   public String getDisplayName() {
-    return "Plugins";
+    return IdeBundle.message("title.plugins");
   }
 
   public void reset() {
@@ -81,8 +82,8 @@ public class PluginManagerConfigurable extends BaseConfigurable implements JDOME
 
   public void apply() throws ConfigurationException {
     if (myPluginManagerMain.isRequireShutdown()) {
-      if (Messages.showYesNoDialog("You need to shut down " + ApplicationNamesInfo.getInstance().getProductName() +
-                                   " to activate changes in plugins. Would you like do it now?", "Plugins", Messages.getQuestionIcon()) == 0) {
+      if (Messages.showYesNoDialog(IdeBundle.message("message.idea.shutdown.required", ApplicationNamesInfo.getInstance().getProductName()),
+                                   IdeBundle.message("title.plugins"), Messages.getQuestionIcon()) == 0) {
         ApplicationManagerEx.getApplicationEx().exit(true);        
       }
       else {

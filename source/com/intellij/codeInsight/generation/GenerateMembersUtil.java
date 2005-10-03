@@ -14,10 +14,11 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashMap;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.VisibilityUtil;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -65,7 +66,7 @@ public class GenerateMembersUtil {
 
       String savedDocumentText = document.getText(); // debug only!
 
-      String markerText = "/***/a b;";
+      @NonNls String markerText = "/***/a b;";
       document.insertString(offset, markerText);
       RangeMarker marker = document.createRangeMarker(offset, offset + markerText.length());
 
@@ -91,7 +92,7 @@ public class GenerateMembersUtil {
 
       LOG.assertTrue(marker.isValid());
       String newMarkerText = document.getCharsSequence().subSequence(marker.getStartOffset(),
-                                        marker.getEndOffset()).toString();
+                                                                     marker.getEndOffset()).toString();
       LOG.assertTrue(newMarkerText.equals(markerText));
       int membersEnd = ((PsiElement) newMembers[newMembers.length - 1]).getTextRange().getEndOffset(); // do-now: templates!!
 
@@ -308,7 +309,7 @@ public class GenerateMembersUtil {
       for (int i = 0; i < parameters.length; i++) {
         PsiParameter parameter = parameters[i];
         PsiType paramType = substituteType(substitutor, parameter.getType(), isRaw);
-        String paramName = parameter.getName();
+        @NonNls String paramName = parameter.getName();
         if (paramName == null) {
           Pair<String, Integer> pair = m.get(paramType);
           if (pair != null) {

@@ -9,10 +9,13 @@
 package com.intellij.codeInspection.export;
 
 import com.intellij.codeInspection.ex.InspectionTool;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 
 import java.util.ArrayList;
+
+import org.jetbrains.annotations.NonNls;
 
 public class HTMLExportFrameMaker {
   private final String myRootFolder;
@@ -25,12 +28,14 @@ public class HTMLExportFrameMaker {
     myInspectionTools = new ArrayList();
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public void start() {
     StringBuffer buf = new StringBuffer();
     buf.append("<HTML><BODY></BODY></HTML>");
     HTMLExporter.writeFile(myRootFolder, "empty.html", buf, myProject);
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public void done() {
     StringBuffer buf = new StringBuffer();
 
@@ -48,10 +53,11 @@ public class HTMLExportFrameMaker {
 
   public void startInspection(InspectionTool tool) {
     myInspectionTools.add(tool);
-    StringBuffer buf = new StringBuffer();
+    @NonNls StringBuffer buf = new StringBuffer();
     buf.append("<HTML><HEAD><TITLE>");
     buf.append(ApplicationNamesInfo.getInstance().getFullProductName());
-    buf.append(" Code Inspection results</TITLE></HEAD>");
+    buf.append(InspectionsBundle.message("inspection.export.title"));
+    buf.append("</TITLE></HEAD>");
     buf.append("<FRAMESET cols=\"30%,70%\"><FRAMESET rows=\"30%,70%\">");
     buf.append("<FRAME src=\"");
     buf.append(tool.getFolderName());

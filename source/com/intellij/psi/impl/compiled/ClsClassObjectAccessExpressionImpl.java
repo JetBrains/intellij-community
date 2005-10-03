@@ -5,6 +5,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author ven
@@ -13,6 +14,7 @@ public class ClsClassObjectAccessExpressionImpl extends ClsElementImpl implement
   private static final Logger LOG = Logger.getInstance("com.intellij.psi.impl.compiled.ClsClassObjectAccessExpressionImpl");
   private ClsTypeElementImpl myTypeElement;
   private ClsElementImpl myParent;
+  private static final @NonNls String CLASS_FILE_EXCEPTION = ".class";
 
   public ClsClassObjectAccessExpressionImpl(String canonicalClassText, ClsElementImpl parent) {
     myParent = parent;
@@ -20,7 +22,7 @@ public class ClsClassObjectAccessExpressionImpl extends ClsElementImpl implement
   }
 
   public String getMirrorText() {
-    return myTypeElement.getMirrorText() + ".class";
+    return myTypeElement.getMirrorText() + CLASS_FILE_EXCEPTION;
   }
 
   public void setMirror(TreeElement element) {

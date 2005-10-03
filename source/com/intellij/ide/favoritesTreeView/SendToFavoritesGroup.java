@@ -2,6 +2,7 @@ package com.intellij.ide.favoritesTreeView;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.ide.IdeBundle;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -35,7 +36,7 @@ public class SendToFavoritesGroup extends ActionGroup{
 
   private static class SendToNewFavoritesListAction extends AnAction {
     public SendToNewFavoritesListAction() {
-      super("Send To New Favorites List");
+      super(IdeBundle.message("action.send.to.new.favorites.list"));
     }
 
     public void actionPerformed(AnActionEvent e) {

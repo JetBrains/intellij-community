@@ -16,6 +16,7 @@ import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoChange;
 import com.intellij.refactoring.util.classMembers.MemberInfoChangeListener;
 import com.intellij.refactoring.util.classMembers.MemberInfoModel;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.BooleanTableCellRenderer;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.RowIcon;
@@ -36,7 +37,7 @@ public class MemberSelectionTable extends Table {
   private static final Icon IMPLEMENTING_METHOD_ICON = IconLoader.getIcon("/general/implementingMethod.png");
   private static final Icon EMPTY_OVERRIDE_ICON = EmptyIcon.create(16, 16);
   private final String myAbstractColumnHeader;
-  private static final String DISPLAY_NAME_COLUMN_HEADER = "Member";
+  private static final String DISPLAY_NAME_COLUMN_HEADER = RefactoringBundle.message("member.column");
 
   private MemberInfo[] myMemberInfos;
   private final boolean myAbstractEnabled;
@@ -325,8 +326,9 @@ public class MemberSelectionTable extends Table {
           }
       }
       final boolean cellEditable = myMemberInfoModel.isMemberEnabled(memberInfo);
-      this.setEnabled(cellEditable);
+      setEnabled(cellEditable);
 
+      if (value == null) return;
       final int problem = myMemberInfoModel.checkForProblems(memberInfo);
       Color c = null;
       if (problem == MemberInfoModel.ERROR) {

@@ -2,6 +2,7 @@ package com.intellij.debugger.actions;
 
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.ContextUtil;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
@@ -153,7 +154,7 @@ public class SetValueAction extends DebuggerAction {
       if (array != null) {
         if (VirtualMachineProxyImpl.isCollected(array)) {
           // will only be the case if debugger does not use ObjectReference.disableCollection() because of Patches.IBM_JDK_DISABLE_COLLECTION_BUG
-          Messages.showWarningDialog(tree, "The array object has been garbage-collected in the debugge VM.\nThe value will be recalculated", "Object Collected");
+          Messages.showWarningDialog(tree, DebuggerBundle.message("evaluation.error.array.collected") + "\n"+ DebuggerBundle.message("warning.recalculate"), DebuggerBundle.message("title.set.value"));
           node.getParent().calcValue();
           return;
         }
@@ -231,16 +232,12 @@ public class SetValueAction extends DebuggerAction {
       value = evaluator.evaluate(evaluationContext);
 
       setValueRunnable.setValue(evaluationContext, value);
-    } catch (EvaluateException e1) {
-      throw EvaluateExceptionUtil.createEvaluateException("Failed to evaluate expression '"+
-          expressionToShow +  "'. \n" + e1.getMessage());
     }
     catch (IllegalArgumentException ex) {
-      throw EvaluateExceptionUtil.createEvaluateException("Failed to evaluate expression. '" +
-          expressionToShow + "'. \n" + "Invalid arguments :" + ex.getMessage());
+      throw EvaluateExceptionUtil.createEvaluateException(ex.getMessage());
     }
     catch (InvalidTypeException ex) {
-      throw EvaluateExceptionUtil.createEvaluateException("Failed to set value : type mismatch");
+      throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.type.mismatch"));
     }
     catch (IncompatibleThreadStateException e) {
       throw EvaluateExceptionUtil.createEvaluateException(e);
@@ -301,7 +298,7 @@ public class SetValueAction extends DebuggerAction {
       }
     };
 
-    progressWindow.setTitle("Evaluating...");
+    progressWindow.setTitle(DebuggerBundle.message("title.evaluating"));
     debuggerContext.getDebugProcess().getManagerThread().startProgress(askSetAction, progressWindow);
   }
 
@@ -316,6 +313,7 @@ public class SetValueAction extends DebuggerAction {
     DebuggerTreeRenderer.getDescriptorTitle(node.getDescriptor()).appendToComponent(label);
     editorPanel.add(label);
 
+    //noinspection HardCodedStringLiteral
     final DebuggerExpressionComboBox comboBox = new DebuggerExpressionComboBox(
       debuggerContext.getProject(),
       PositionUtil.getContextElement(debuggerContext),
@@ -422,7 +420,7 @@ public class SetValueAction extends DebuggerAction {
 
         });
 
-        progressWindow.setTitle("Setting value...");
+        progressWindow.setTitle(DebuggerBundle.message("progress.set.value"));
         debuggerContext.getDebugProcess().getManagerThread().startProgress(evaluationCommand, progressWindow);
       }
 
@@ -458,6 +456,7 @@ public class SetValueAction extends DebuggerAction {
     editor.show();
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static String getDisplayableString(PrimitiveValue value, boolean showAsHex) {
     if (value instanceof CharValue) {
       long longValue = value.longValue();

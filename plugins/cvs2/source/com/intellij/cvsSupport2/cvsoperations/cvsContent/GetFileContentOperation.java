@@ -11,16 +11,19 @@ import com.intellij.cvsSupport2.errorHandling.CannotFindCvsRootException;
 import com.intellij.cvsSupport2.history.CvsRevisionNumber;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.CvsBundle;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.command.Command;
 import org.netbeans.lib.cvsclient.command.checkout.CheckoutCommand;
 import org.netbeans.lib.cvsclient.file.FileObject;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.ByteArrayOutputStream;
 import java.util.Collection;
 import java.util.Collections;
 
+@SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
 public class GetFileContentOperation extends LocalPathIndifferentOperation {
   public String getRevisionString() {
     if (myCvsRevisionNumber != null) {
@@ -28,13 +31,16 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
     } else if (myRevisionOrDate != null){
       return myRevisionOrDate.toString();
     } else {
-      return "<unknown>";
+      return CvsBundle.message("cvs.unknown.revision.presentation");
     }
   }
+
+  @NonNls private static final String VERS_PREFIX = "VERS:";
 
   public static class FileContentReader {
     private ByteArrayOutputStream myContent = null;
     private byte[] myBinaryContent = null;
+    @NonNls private static final String TEXT_MESSAGE_TAG = "text";
 
     public boolean isEmpty() {
       return myContent == null && myBinaryContent == null;
@@ -53,7 +59,7 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
       if (tagged) {
         String tagType = readTagTypeFrom(byteMessage);
         if (tagType != null) {
-          if ("text".equals(tagType)) {
+          if (TEXT_MESSAGE_TAG.equals(tagType)) {
             final int textStartPosition = tagType.length();
             if (myContent.size() > 0) {
               myContent.write('\n');
@@ -128,6 +134,7 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
     return CvsUtil.getModuleName(file);
   }
 
+  @SuppressWarnings({"RefusedBequest"})
   protected Collection getAllCvsRoots() {
     return Collections.singleton(myRoot);
   }
@@ -183,6 +190,7 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
   }
 
   public void gotEntry(FileObject abstractFileObject, Entry entry) {
+    super.gotEntry(abstractFileObject, entry);
     if (entry == null) {
       myState = DELETED;
       myFileBytes = new byte[0];
@@ -212,9 +220,10 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
   }
 
   public void messageSent(String message, final byte[] byteMessage, boolean error, boolean tagged) {
+    super.messageSent(message, byteMessage, error, tagged);
     if (!error) {
       myReader.messageSent(byteMessage, tagged);
-    } else if (message.startsWith("VERS:")) {
+    } else if (message.startsWith(VERS_PREFIX)) {
       final String version = message.substring(5).trim();
       myRevision = version;
       myCvsRevisionNumber = new CvsRevisionNumber(version);
@@ -222,6 +231,7 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
   }
 
   public void binaryMessageSent(final byte[] bytes) {
+    super.binaryMessageSent(bytes);
     myReader.binaryMessageSent(bytes);
   }
 }

@@ -12,7 +12,7 @@ import com.intellij.openapi.vcs.actions.VcsContext;
  */
 public class UneditAction extends AsbtractActionFromEditGroup {
   protected String getTitle(VcsContext context) {
-    return "Unedit";
+    return com.intellij.CvsBundle.message("operation.name.unedit");
   }
 
   protected CvsHandler getCvsHandler(CvsContext context) {

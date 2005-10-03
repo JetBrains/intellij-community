@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.ui.OptionGroup;
+import com.intellij.codeInspection.InspectionsBundle;
 
 import javax.swing.*;
 
@@ -17,8 +18,8 @@ public class ExportToHTMLDialog extends DialogWrapper{
   public ExportToHTMLDialog(Project project) {
     super(project, true);
     myProject = project;
-    setOKButtonText("Save");
-    setTitle("Export to HTML");
+    setOKButtonText(InspectionsBundle.message("inspection.export.save.button"));
+    setTitle(InspectionsBundle.message("inspection.export.dialog.title"));
     init();
   }
 
@@ -32,10 +33,10 @@ public class ExportToHTMLDialog extends DialogWrapper{
   }
 
   protected JComponent createCenterPanel() {
-    OptionGroup optionGroup = new OptionGroup("Options");
+    OptionGroup optionGroup = new OptionGroup(InspectionsBundle.message("inspection.export.options.panel.title"));
 
-    myCbOpenInBrowser = new JCheckBox("Open generated HTML in browser");
-    myCbOpenInBrowser.setMnemonic('b');
+    myCbOpenInBrowser = new JCheckBox();
+    myCbOpenInBrowser.setText(InspectionsBundle.message("inspection.export.open.option"));
     optionGroup.add(myCbOpenInBrowser);
 
     return optionGroup.createPanel();

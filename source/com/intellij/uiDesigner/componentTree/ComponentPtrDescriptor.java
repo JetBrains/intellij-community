@@ -19,9 +19,11 @@ final class ComponentPtrDescriptor extends NodeDescriptor{
   public ComponentPtrDescriptor(final NodeDescriptor parentDescriptor,final ComponentPtr ptr){
     super(null,parentDescriptor);
     if(parentDescriptor==null){
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("parentDescriptor cannot be null");
     }
     if(ptr==null){
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("ptr cannot be null");
     }
 

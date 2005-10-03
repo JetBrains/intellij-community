@@ -2,6 +2,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.openapi.application.ApplicationManager;
@@ -182,7 +183,7 @@ public class CreateClassFromNewAction extends CreateFromUsageBaseAction {
     }
 
     if (shouldShowTag(offset, nameElement, myNewExpression)) {
-      setText("Create Class '" + nameElement.getText() + "'");
+      setText(QuickFixBundle.message("create.class.from.new.text", nameElement.getText()));
       return true;
     }
 
@@ -200,6 +201,6 @@ public class CreateClassFromNewAction extends CreateFromUsageBaseAction {
   }
 
   public String getFamilyName() {
-    return "Create Class from New";
+    return QuickFixBundle.message("create.class.from.new.family");
   }
 }

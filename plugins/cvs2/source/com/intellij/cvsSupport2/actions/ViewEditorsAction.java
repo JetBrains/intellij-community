@@ -10,6 +10,7 @@ import com.intellij.cvsSupport2.cvsoperations.cvsEdit.ui.EditorsPanel;
 import com.intellij.cvsSupport2.ui.CvsTabbedWindow;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.CvsBundle;
 
 import java.util.List;
 
@@ -20,12 +21,12 @@ public class ViewEditorsAction extends AsbtractActionFromEditGroup {
   private EditorsOperation myEditorsOperation;
 
   protected String getTitle(VcsContext context) {
-    return "View Editors";
+    return CvsBundle.getViewEditorsOperationName();
   }
 
   protected CvsHandler getCvsHandler(CvsContext context) {
     myEditorsOperation = new EditorsOperation(context.getSelectedFiles());
-    return new CommandCvsHandler("Veiw Editors", myEditorsOperation);
+    return new CommandCvsHandler(com.intellij.CvsBundle.getViewEditorsOperationName(), myEditorsOperation);
   }
 
   protected void onActionPerformed(CvsContext context,
@@ -37,9 +38,9 @@ public class ViewEditorsAction extends AsbtractActionFromEditGroup {
       List<EditorInfo> editors = myEditorsOperation.getEditors();
       String filePath = CvsVfsUtil.getFileFor(context.getSelectedFile()).getAbsolutePath();
       if (editors.isEmpty()){
-        Messages.showMessageDialog("There are no editors for " + filePath, "Editors", Messages.getInformationIcon());
+        Messages.showMessageDialog(CvsBundle.message("message.error.no.editors.for.file", filePath) , CvsBundle.message("message.error.no.editors.for.file.title"), Messages.getInformationIcon());
       } else {
-        tabbedWindow.addTab("Editors for " + filePath, new EditorsPanel(editors), true, true, true, true, "cvs.editors");
+        tabbedWindow.addTab(CvsBundle.message("message.editors.for.file", filePath), new EditorsPanel(editors), true, true, true, true, "cvs.editors");
         tabbedWindow.ensureVisible(context.getProject());
       }
     }

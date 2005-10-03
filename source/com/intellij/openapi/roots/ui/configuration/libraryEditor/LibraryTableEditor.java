@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.ArrayUtil;
@@ -131,12 +132,10 @@ public class LibraryTableEditor {
     myTreePanel.setLayout(new BorderLayout());
     myTreePanel.add(ScrollPaneFactory.createScrollPane(myTree), BorderLayout.CENTER);
 
-    myAddLibraryButton.setText(myEditingModuleLibraries? "Add Jar/Directory..." : "Create Library...");
-    myAddLibraryButton.setMnemonic(myEditingModuleLibraries? 'J' : 'L');
+    myAddLibraryButton.setText(myEditingModuleLibraries? ProjectBundle.message("library.add.jar.directory.action") :
+                               ProjectBundle.message("library.create.library.action"));
     myAddLibraryButton.addActionListener(new AddLibraryAction());
     myRemoveButton.addActionListener(new RemoveAction());
-    myRemoveButton.setMnemonic('R');
-    myRenameLibraryButton.setMnemonic('e');
     if (myEditingModuleLibraries) {
       myAttachClassesButton.setVisible(false);
       myRenameLibraryButton.setVisible(false);
@@ -145,15 +144,11 @@ public class LibraryTableEditor {
       myRenameLibraryButton.setVisible(true);
       myRenameLibraryButton.addActionListener(new RenameLibraryAction());
       myAttachClassesButton.setVisible(true);
-      myAttachClassesButton.setMnemonic('C');
       myAttachClassesButton.addActionListener(new AttachClassesAction());
     }
     myAttachSourcesButton.addActionListener(new AttachSourcesAction());
-    myAttachSourcesButton.setMnemonic('S');
     myAttachJavadocsButton.addActionListener(new AttachJavadocAction());
-    myAttachJavadocsButton.setMnemonic('J');
     myAttachUrlJavadocsButton.addActionListener(new AttachUrlJavadocAction());
-    myAttachUrlJavadocsButton.setMnemonic('U');
 
     treeSelectionListener.updateButtons();
   }
@@ -355,8 +350,8 @@ public class LibraryTableEditor {
     private final FileChooserDescriptor myFileChooserDescriptor = new FileChooserDescriptor(false, true, true, false, false, true);
 
     public AddLibraryAction() {
-      myFileChooserDescriptor.setTitle("Choose Library Classes");
-      myFileChooserDescriptor.setDescription("Select jars or directories in which library classes can be found");
+      myFileChooserDescriptor.setTitle(ProjectBundle.message("library.choose.classes.title"));
+      myFileChooserDescriptor.setDescription(ProjectBundle.message("library.choose.classes.description"));
     }
 
     public void actionPerformed(ActionEvent e) {
@@ -483,15 +478,16 @@ public class LibraryTableEditor {
 
     protected String getTitle() {
       final Library selectedLibrary = getSelectedLibrary();
-      String title = "Attach Classes";
       if (selectedLibrary != null) {
-        title += "to Library \"" + getLibraryEditor(selectedLibrary).getName() + "\"";
+        return ProjectBundle.message("library.attach.classes.to.library.action", getLibraryEditor(selectedLibrary).getName());
       }
-      return title;
+      else {
+        return ProjectBundle.message("library.attach.classes.action");
+      }
     }
 
     protected String getDescription() {
-      return "Select jar/zip files or directories in which library classes are located";
+      return ProjectBundle.message("library.attach.classes.description");
     }
 
     protected OrderRootType getRootType() {
@@ -501,11 +497,11 @@ public class LibraryTableEditor {
 
   private class AttachSourcesAction extends AttachItemAction {
     protected String getTitle() {
-      return "Attach Sources";
+      return ProjectBundle.message("library.attach.sources.action");
     }
 
     protected String getDescription() {
-      return "Select jar/zip files or directories in which library sources are located";
+      return ProjectBundle.message("library.attach.sources.description");
     }
 
     protected OrderRootType getRootType() {
@@ -515,11 +511,11 @@ public class LibraryTableEditor {
 
   private class AttachJavadocAction extends AttachItemAction {
     protected String getTitle() {
-      return "Attach Javadoc";
+      return ProjectBundle.message("library.attach.javadoc.action");
     }
 
     protected String getDescription() {
-      return "Select jar/zip files or directories in which library javadoc documentation is located";
+      return ProjectBundle.message("library.attach.javadoc.description");
     }
 
     protected OrderRootType getRootType() {
@@ -601,14 +597,16 @@ public class LibraryTableEditor {
       }
       final LibraryEditor libraryEditor = getLibraryEditor(selectedLibrary);
       final String currentName = selectedLibrary.getName();
-      final String newName = Messages.showInputDialog(myTree, "Enter new library name", "Rename library \"" + libraryEditor.getName() + "\"", Messages.getQuestionIcon(), libraryEditor.getName(), new InputValidator() {
+      final String newName = Messages.showInputDialog(myTree, ProjectBundle.message("library.rename.prompt"),
+                                                      ProjectBundle.message("library.rename.title", libraryEditor.getName()), Messages.getQuestionIcon(), libraryEditor.getName(), new InputValidator() {
         public boolean checkInput(String inputString) {
           return true;
         }
         public boolean canClose(String libraryName) {
           if (!currentName.equals(libraryName)) {
             if (libraryAlreadyExists(libraryName)) {
-              Messages.showErrorDialog("Library \"" + libraryName + "\" already exists", "Library Already Exists");
+              Messages.showErrorDialog(ProjectBundle.message("library.name.already.exists.error", libraryName),
+                                       ProjectBundle.message("library.name.already.exists.title"));
               return false;
             }
           }
@@ -642,12 +640,11 @@ public class LibraryTableEditor {
       String levelName = "";
       final String tableLevel = LibraryTableEditor.this.myLibraryTable.getTableLevel();
       if (tableLevel == LibraryTablesRegistrar.PROJECT_LEVEL) {
-        levelName = "Project ";
+        setTitle(ProjectBundle.message("library.configure.project.title"));
       }
       else if (tableLevel == LibraryTablesRegistrar.APPLICATION_LEVEL) {
-        levelName = "Global ";
+        setTitle(ProjectBundle.message("library.configure.global.title"));
       }
-      setTitle("Configure " + levelName + "Libraries");
       init();
     }
 
@@ -690,12 +687,10 @@ public class LibraryTableEditor {
       );
       myRenameLibraryButton.setEnabled(selectedElements.length == 1 && elementsClass != null && elementsClass.equals(LibraryElement.class));
       if (elementsClass != null && elementsClass.isAssignableFrom(ItemElement.class)) {
-        myRemoveButton.setText("Detach");
-        myRemoveButton.setMnemonic('D');
+        myRemoveButton.setText(ProjectBundle.message("library.detach.action"));
       }
       else {
-        myRemoveButton.setText("Remove");
-        myRemoveButton.setMnemonic('R');
+        myRemoveButton.setText(ProjectBundle.message("library.remove.action"));
       }
       boolean attachActionsEnabled = selectedElements.length == 1 || getSelectedLibrary() != null;
       myAttachClassesButton.setEnabled(attachActionsEnabled);

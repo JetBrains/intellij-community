@@ -16,12 +16,13 @@
 package com.intellij.usageView;
 
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NonNls;
 
 public interface UsageViewDescriptor {
-  String OCCURRENCE_WORD="occurrence";
-  String USAGE_WORD="usage";
-  String REFERENCE_WORD="reference";
-  String INVOCATION_WORD="invocation";
+  String OCCURRENCE_WORD= UsageViewBundle.message("terms.occurrence");
+  String USAGE_WORD= UsageViewBundle.message("terms.usage");
+  String REFERENCE_WORD= UsageViewBundle.message("terms.reference");
+  String INVOCATION_WORD= UsageViewBundle.message("terms.invocation");
 
   /**
    * @return an array of elements whose usages were searched or null if not available
@@ -64,7 +65,7 @@ public interface UsageViewDescriptor {
 
   boolean willUsageBeChanged(UsageInfo usageInfo);
 
-  String getHelpID();
+  @NonNls String getHelpID();
 
   boolean canFilterMethods();
 }

@@ -23,7 +23,11 @@ import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
+import org.jetbrains.annotations.NonNls;
+
 public class ThreadsPanel extends DebuggerPanel implements DataProvider {
+  @NonNls private static final String HELP_ID = "debugging.debugThreads";
+
   public ThreadsPanel(Project project, DebuggerStateManager stateManager) {
     super(project, stateManager);
 
@@ -58,7 +62,7 @@ public class ThreadsPanel extends DebuggerPanel implements DataProvider {
 
   public Object getData(String dataId) {
     if (DataConstantsEx.HELP_ID.equals(dataId)) {
-      return "debugging.debugThreads";
+      return HELP_ID;
     }
     return super.getData(dataId);
   }

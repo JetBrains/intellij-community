@@ -970,6 +970,7 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
     }
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private boolean processSpecialMethods(PsiMethodCallExpression expression) {
     PsiReferenceExpression methodExpression = expression.getMethodExpression();
     PsiExpression qualifierExpression = methodExpression.getQualifierExpression();

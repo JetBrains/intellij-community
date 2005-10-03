@@ -8,16 +8,17 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.LibrariesEditor;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 
@@ -31,11 +32,11 @@ public class SetupJDKFix implements IntentionAction {
   }
 
   public String getText() {
-    return "Setup JDK";
+    return QuickFixBundle.message("setup.jdk.location.text");
   }
 
   public String getFamilyName() {
-    return "Setup JDK Location";
+    return QuickFixBundle.message("setup.jdk.location.family");
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {

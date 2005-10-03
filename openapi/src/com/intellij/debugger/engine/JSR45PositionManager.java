@@ -18,6 +18,7 @@ package com.intellij.debugger.engine;
 import com.intellij.debugger.NoDataException;
 import com.intellij.debugger.PositionManager;
 import com.intellij.debugger.SourcePosition;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.j2ee.deployment.JspDeploymentManager;
@@ -39,6 +40,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * Created by IntelliJ IDEA.
  * User: lex
@@ -50,6 +53,7 @@ public abstract class JSR45PositionManager implements PositionManager {
   private final DebugProcess      myDebugProcess;
   private final JspDeploymentManager myHelper;
   private final String            JSP_PATTERN;
+  protected static final @NonNls String JSP_STRATUM = "JSP";
 
   public JSR45PositionManager(DebugProcess debugProcess) {
     myDebugProcess = debugProcess;
@@ -69,11 +73,10 @@ public abstract class JSR45PositionManager implements PositionManager {
     SourcePosition sourcePosition = null;
 
     try {
-      String sourcePath = getRelativePath(location.sourcePath("JSP"));
+      String sourcePath = getRelativePath(location.sourcePath(JSP_STRATUM));
       PsiFile file = myHelper.getDeployedJspSource(sourcePath, myDebugProcess.getProject());
       if(file == null) throw new NoDataException();
-      //noinspection HardCodedStringLiteral
-      int lineNumber = location.lineNumber("JSP");
+      int lineNumber = location.lineNumber(JSP_STRATUM);
       sourcePosition = SourcePosition.createFromLine(file, lineNumber - 1);
     }
     catch (AbsentInformationException e) {
@@ -129,8 +132,7 @@ public abstract class JSR45PositionManager implements PositionManager {
       public List<Location> compute() {
         try {
           PsiFile file = null;
-          //noinspection HardCodedStringLiteral
-          List<String> paths = (List<String>)type.sourcePaths("JSP");
+          List<String> paths = (List<String>)type.sourcePaths(JSP_STRATUM);
           for (Iterator<String> iterator = paths.iterator(); iterator.hasNext();) {
             String path = iterator.next();
             file = myHelper.getDeployedJspSource(getRelativePath(path), myDebugProcess.getProject());
@@ -138,8 +140,7 @@ public abstract class JSR45PositionManager implements PositionManager {
           }
 
           if(file != null && file.equals(position.getFile())) {
-            //noinspection HardCodedStringLiteral
-            return (List<Location>)type.locationsOfLine("JSP", type.sourceName(), position.getLine() + 1);
+            return (List<Location>)type.locationsOfLine(JSP_STRATUM, type.sourceName(), position.getLine() + 1);
           }
         }
         catch (ObjectCollectedException e) {
@@ -147,7 +148,8 @@ public abstract class JSR45PositionManager implements PositionManager {
         catch (AbsentInformationException e) {
         }
         catch (InternalError e) {
-          myDebugProcess.getExecutionResult().getProcessHandler().notifyTextAvailable("Internal error when loading debug information from '" + type.name() + "'.  Breakpoints will be unavailable in this class.", ProcessOutputTypes.SYSTEM);
+          myDebugProcess.getExecutionResult().getProcessHandler().notifyTextAvailable(
+            DebuggerBundle.message("internal.error.locations.of.line", type.name()), ProcessOutputTypes.SYSTEM);
         }
         return null;
       }
@@ -178,7 +180,7 @@ public abstract class JSR45PositionManager implements PositionManager {
     return jspPath;
   }
 
-  protected abstract String getJSPClassesPackage();
+  @NonNls protected abstract String getJSPClassesPackage();
 
   protected String getJSPClassesNamePattern() {
     return "*";

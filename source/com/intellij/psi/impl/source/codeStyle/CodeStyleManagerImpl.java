@@ -30,6 +30,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,6 +45,12 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
   private StatisticsManagerEx myStatisticsManager;
 
   private final List<PostFormatProcessor> myPostFormatProcessors = new ArrayList<PostFormatProcessor>();
+  private static final @NonNls String DUMMY_IDENTIFIER = "xxx";
+  private static final @NonNls String IMPL_TYPNAME_SUFFIX = "Impl";
+  private static final @NonNls String GET_PREFIX = "get";
+  private static final @NonNls String IS_PREFIX = "is";
+  private static final @NonNls String FIND_PREFIX = "find";
+  private static final @NonNls String CREATE_PREFIX = "create";
 
   public CodeStyleManagerImpl(Project project, StatisticsManagerEx statisticsManagerEx) {
     myProject = project;
@@ -523,7 +530,8 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     }
 
     ASTNode space1 = Helper.splitSpaceElement((TreeElement)element, offset - elementStart, charTable);
-    ASTNode marker = Factory.createSingleLeafElement(TokenTypeEx.NEW_LINE_INDENT, "xxx".toCharArray(), 0, "xxx".length(), charTable, file.getManager());
+    ASTNode marker = Factory.createSingleLeafElement(TokenTypeEx.NEW_LINE_INDENT, DUMMY_IDENTIFIER.toCharArray(), 0,
+                                                     DUMMY_IDENTIFIER.length(), charTable, file.getManager());
     parent.addChild(marker, space1.getTreeNext());
     return SourceTreeToPsiMap.treeElementToPsi(marker);
   }
@@ -785,8 +793,8 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     {
       return null;
     }
-    if (typeName.endsWith("Impl") && typeName.length() > "Impl".length()) {
-      return typeName.substring(0, typeName.length() - "Impl".length());
+    if (typeName.endsWith(IMPL_TYPNAME_SUFFIX) && typeName.length() > IMPL_TYPNAME_SUFFIX.length()) {
+      return typeName.substring(0, typeName.length() - IMPL_TYPNAME_SUFFIX.length());
     }
     return typeName;
   }
@@ -937,10 +945,10 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
       String[] words = NameUtil.nameToWords(methodName);
       if (words.length > 1) {
         String firstWord = words[0];
-        if ("get".equals(firstWord)
-            || "is".equals(firstWord)
-            || "find".equals(firstWord)
-            || "create".equals(firstWord)) {
+        if (GET_PREFIX.equals(firstWord)
+            || IS_PREFIX.equals(firstWord)
+            || FIND_PREFIX.equals(firstWord)
+            || CREATE_PREFIX.equals(firstWord)) {
           final String propertyName = methodName.substring(firstWord.length());
           String[] names = getSuggestionsByName(propertyName, variableKind, false);
           return new NamesByExprInfo(names, propertyName);
@@ -971,36 +979,78 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
               VariableKind refVariableKind = getVariableKind((PsiVariable)refElement);
               arrayName = variableNameToPropertyName(arrayName, refVariableKind);
             }
-            String name = null;
-            if (arrayName.endsWith("ses") || arrayName.endsWith("xes")) { //?
-              name = arrayName.substring(0, arrayName.length() - 2);
-            }
-            else {
-              if (arrayName.endsWith("ies")) {
-                name = arrayName.substring(0, arrayName.length() - 3) + "y";
-              }
-              else {
-                if (StringUtil.endsWithChar(arrayName, 's')) {
-                  name = arrayName.substring(0, arrayName.length() - 1);
-                }
-                else {
-                  if ("children".equals(arrayName)) {
-                    name = "child";
-                  }
-                }
-              }
-            }
+
+            String name = StringUtil.unpluralize(arrayName);
 
             if (name != null) {
               String[] names = getSuggestionsByName(name, variableKind, false);
               return new NamesByExprInfo(names, name);
             }
           }
+        } else {
+          if (expr instanceof PsiLiteralExpression && variableKind == VariableKind.STATIC_FINAL_FIELD) {
+            final PsiLiteralExpression literalExpression = ((PsiLiteralExpression)expr);
+            final Object value = literalExpression.getValue();
+            if (value instanceof String) {
+              final String stringValue = ((String)value);
+              String[] names = getSuggestionsByValue(stringValue);
+              if (names.length > 0) {
+                return new NamesByExprInfo(new String[]{constantValueToConstantName(names)}, null);
+              }
+            }
+          }
         }
       }
+
+
     }
 
     return new NamesByExprInfo(ArrayUtil.EMPTY_STRING_ARRAY, null);
+  }
+
+  private String constantValueToConstantName(final String[] names) {
+    final StringBuffer result = new StringBuffer();
+    for (int i = 0; i < names.length; i++) {
+      if (i > 0) result.append("_");
+      result.append(names[i]);
+    }
+    return result.toString();
+  }
+
+  private String[] getSuggestionsByValue(final String stringValue) {
+    List<String> result = new ArrayList<String>();
+    StringBuffer currentWord = new StringBuffer();
+
+    boolean prevIsUpperCase  = false;
+
+    for (int i = 0; i < stringValue.length(); i++) {
+      final char c = stringValue.charAt(i);
+      if (Character.isUpperCase(c)) {
+        if (currentWord.length() > 0 && !prevIsUpperCase) {
+          result.add(currentWord.toString());
+          currentWord = new StringBuffer();
+        }
+        currentWord.append(c);
+      } else if (Character.isLowerCase(c)) {
+        currentWord.append(Character.toUpperCase(c));
+      } else if (Character.isJavaIdentifierPart(c) && c != '_') {
+        if (Character.isJavaIdentifierStart(c) || currentWord.length() > 0 || !result.isEmpty()) {
+          currentWord.append(c);
+        }
+      } else {
+        if (currentWord.length() > 0) {
+          result.add(currentWord.toString());
+          currentWord = new StringBuffer();
+        }
+      }
+
+      prevIsUpperCase = Character.isUpperCase(c);
+    }
+
+    if (currentWord.length() > 0) {
+      result.add(currentWord.toString());
+    }
+    return result.toArray(new String[result.size()]);
   }
 
   private NamesByExprInfo suggestVariableNameByExpressionPlace(PsiExpression expr, final VariableKind variableKind) {
@@ -1089,8 +1139,8 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
       doDecapitalize = true;
     }
 
-    if (name.startsWith("is") && name.length() > "is".length() && Character.isUpperCase(name.charAt("is".length()))) {
-      name = name.substring("is".length());
+    if (name.startsWith(IS_PREFIX) && name.length() > IS_PREFIX.length() && Character.isUpperCase(name.charAt(IS_PREFIX.length()))) {
+      name = name.substring(IS_PREFIX.length());
       doDecapitalize = true;
     }
 
@@ -1397,7 +1447,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     }
   }
 
-  private String changeIfNotIdentifier(String name) {
+  private @NonNls String changeIfNotIdentifier(String name) {
     PsiManager manager = PsiManager.getInstance(myProject);
 
     if (!manager.getNameHelper().isIdentifier(name)) {

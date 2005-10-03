@@ -1,6 +1,8 @@
 package com.intellij.ide.commander;
 
 import com.intellij.ide.StandardTargetWeights;
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.SelectInManager;
 import com.intellij.ide.impl.SelectInTargetPsiWrapper;
 import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
 import com.intellij.openapi.project.Project;
@@ -18,7 +20,7 @@ final class CommanderSelectInTarget extends SelectInTargetPsiWrapper {
   }
 
   public String toString() {
-    return "Commander";
+    return SelectInManager.COMMANDER;
   }
 
   protected boolean canSelect(final PsiFile file) {

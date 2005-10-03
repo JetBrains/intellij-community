@@ -20,8 +20,11 @@ import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
+import gnu.trove.THashMap;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
+import java.util.HashSet;
 
 /**
  * Created by IntelliJ IDEA.
@@ -32,7 +35,7 @@ import java.util.*;
  */
 public class PsiClassImplUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiClassImplUtil");
-  private static final Key<String> ALL_MAPS_BUILT_FLAG = Key.create("ALL_MAPS_BUILT_FLAG");
+  private static final Key<String> NAME_MAPS_BUILT_FLAG = Key.create("NAME_MAPS_BUILT_FLAG");
 
   private static final Key<CachedValue<Map>> MAP_IN_CLASS_KEY = Key.create("MAP_KEY");
 
@@ -72,7 +75,37 @@ public class PsiClassImplUtil {
                                                     final PsiMethod patternMethod,
                                                     final boolean checkBases,
                                                     final boolean stopOnFirst) {
+/*    final MethodSignature patternSignature = MethodSignatureBackedByPsiMethod.create(patternMethod, PsiSubstitutor.EMPTY);
+    if (!checkBases) {
+      final PsiMethod[] methodsByName = aClass.findMethodsByName(patternMethod.getName(), false);
+      if (methodsByName.length == 0) return PsiMethod.EMPTY_ARRAY;
+      List<PsiMethod> result = new ArrayList<PsiMethod>();
+      for (PsiMethod method : methodsByName) {
+        final MethodSignature otherSignature = method.getSignature(PsiSubstitutor.EMPTY);
+        if (otherSignature.equals(patternSignature)) {
+          result.add(method);
+          if (stopOnFirst) break;
+        }
+      }
+
+      return result.toArray(new PsiMethod[result.size()]);
+    }
+    else {
+      final Set<HierarchicalMethodSignature> signatures = getOverrideEquivalentSignatures(aClass);
+      final HierarchicalMethodSignature signatureWithSupers = signatures.get(patternSignature);
+      if (signatureWithSupers == null) return PsiMethod.EMPTY_ARRAY;
+      final List<PsiMethod> result = new ArrayList<PsiMethod>();
+      MethodSignatureUtil.processMethodHierarchy(signatureWithSupers, new Processor<HierarchicalMethodSignature>() {
+        public boolean process(final HierarchicalMethodSignature sig) {
+          result.add(sig.getSignature().getMethod());
+          return !stopOnFirst;
+        }
+      });
+      return result.toArray(new PsiMethod[result.size()]);
+    }*/
+
     final PsiMethod[] methodsByName = aClass.findMethodsByName(patternMethod.getName(), checkBases);
+    if (methodsByName.length == 0) return PsiMethod.EMPTY_ARRAY;
     final ArrayList<PsiMethod> methods = new ArrayList<PsiMethod>();
     final MethodSignature patternSignature = patternMethod.getSignature(PsiSubstitutor.EMPTY);
     for (final PsiMethod method : methodsByName) {
@@ -132,7 +165,7 @@ public class PsiClassImplUtil {
       for (T member : members) {
         if (name.equals(member.getName())) list.add(member);
       }
-      return list.toArray(members);
+      return list.toArray(emptyArrayByType(type));
     }
     else {
       final Map<String, List<Pair<T, PsiSubstitutor>>> allMethodsMap = getMap(aClass, type);
@@ -168,7 +201,7 @@ public class PsiClassImplUtil {
     return ret.toArray(emptyArrayByType(type));
   }
 
-  private static final String ALL = "Intellij-IDEA-ALL";
+  private static final @NonNls String ALL = "Intellij-IDEA-ALL";
 
   private static Map<Class<? extends PsiMember>, Map<String, List>> buildAllMaps(final PsiClass psiClass) {
     final List<Pair<PsiClass, PsiSubstitutor>> classes = new ArrayList<Pair<PsiClass, PsiSubstitutor>>();
@@ -200,7 +233,7 @@ public class PsiClassImplUtil {
       result.put(PsiClass.class, generateMapByList(classes));
       result.put(PsiMethod.class, generateMapByList(methods));
       result.put(PsiField.class, generateMapByList(fields));
-      psiClass.putUserData(ALL_MAPS_BUILT_FLAG, "");
+      psiClass.putUserData(NAME_MAPS_BUILT_FLAG, "");
       return result;
     }
   }
@@ -225,7 +258,7 @@ public class PsiClassImplUtil {
   private static <T extends PsiMember> Map<String, List<Pair<T, PsiSubstitutor>>> getMap(final PsiClass psiClass, Class<T> memberClazz) {
     CachedValue<Map> cachedValue = psiClass.getUserData(MAP_IN_CLASS_KEY);
     if (cachedValue == null) {
-      final CachedValueProvider<Map> provider = new MyCachedValueProvider(psiClass);
+      final CachedValueProvider<Map> provider = new ByNameCachedValueProvider(psiClass);
       cachedValue = psiClass.getManager().getCachedValuesManager().createCachedValue(provider, false);
       //Do not cache for nonphysical elements
       if (psiClass.isPhysical()) {
@@ -235,10 +268,10 @@ public class PsiClassImplUtil {
     return ((Map<String, List<Pair<T, PsiSubstitutor>>>)cachedValue.getValue().get(memberClazz));
   }
 
-  private static class MyCachedValueProvider implements CachedValueProvider<Map> {
+  private static class ByNameCachedValueProvider implements CachedValueProvider<Map> {
     private PsiClass myClass;
 
-    public MyCachedValueProvider(final PsiClass aClass) {
+    public ByNameCachedValueProvider(final PsiClass aClass) {
       myClass = aClass;
     }
 
@@ -256,7 +289,7 @@ public class PsiClassImplUtil {
     if (last instanceof PsiTypeParameterList) return true; //TypeParameterList doesn't see our declarations
     final Object data;
     synchronized (PsiLock.LOCK) {
-      data = aClass.getUserData(ALL_MAPS_BUILT_FLAG);
+      data = aClass.getUserData(NAME_MAPS_BUILT_FLAG);
     }
     if (last instanceof PsiReferenceList && data == null || aClass instanceof PsiTypeParameter) {
       return processDeclarationsInClassNotCached(aClass, processor, substitutor, visited, last, place, isRaw);
@@ -362,7 +395,7 @@ public class PsiClassImplUtil {
     return processDeclarationsInClassNotCached(aClass, processor, substitutor, visited, last, place, isRaw);
   }
 
-  private static PsiSubstitutor obtainFinalSubstitutor(PsiClass candidateClass, PsiSubstitutor candidateSubstitutor, PsiClass aClass,
+  static PsiSubstitutor obtainFinalSubstitutor(PsiClass candidateClass, PsiSubstitutor candidateSubstitutor, PsiClass aClass,
                                                        PsiSubstitutor substitutor) {
     PsiElementFactory elementFactory = candidateClass.getManager().getElementFactory();
     if (PsiUtil.isRawSubstitutor(aClass, substitutor)) {
@@ -372,8 +405,7 @@ public class PsiClassImplUtil {
     final PsiType containingType = elementFactory.createType(candidateClass, candidateSubstitutor);
     PsiType type = substitutor.substitute(containingType);
     if (!(type instanceof PsiClassType)) return candidateSubstitutor;
-    PsiSubstitutor finalSubstitutor = ((PsiClassType)type).resolveGenerics().getSubstitutor();
-    return finalSubstitutor;
+    return ((PsiClassType)type).resolveGenerics().getSubstitutor();
   }
 
   public static boolean processDeclarationsInClassNotCached(PsiClass aClass,
@@ -567,12 +599,11 @@ public class PsiClassImplUtil {
       return objectClass != null ? new PsiClass[]{objectClass} : PsiClass.EMPTY_ARRAY;
     }
     else if (psiClass instanceof PsiTypeParameter) {
-      PsiClassType[] referencedTypes = extendsListTypes;
-      if (referencedTypes.length == 0) {
+      if (extendsListTypes.length == 0) {
         final PsiClass objectClass = psiClass.getManager().findClass("java.lang.Object", psiClass.getResolveScope());
         return objectClass != null ? new PsiClass[]{objectClass} : PsiClass.EMPTY_ARRAY;
       }
-      return resolveClassReferenceList(referencedTypes, psiClass.getManager(),
+      return resolveClassReferenceList(extendsListTypes, psiClass.getManager(),
                                        psiClass.getResolveScope(), false);
     }
 

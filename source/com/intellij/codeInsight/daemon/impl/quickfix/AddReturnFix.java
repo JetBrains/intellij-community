@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -8,7 +9,6 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.ArrayList;
@@ -24,11 +24,11 @@ public class AddReturnFix implements IntentionAction {
   }
 
   public String getText() {
-    return "Add Return Statement";
+    return QuickFixBundle.message("add.return.statement.family");
   }
 
   public String getFamilyName() {
-    return "Add Return Statement";
+    return QuickFixBundle.message("add.return.statement.text");
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {

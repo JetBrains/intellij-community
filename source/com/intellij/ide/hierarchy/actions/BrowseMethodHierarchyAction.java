@@ -3,6 +3,7 @@ package com.intellij.ide.hierarchy.actions;
 import com.intellij.ide.hierarchy.HierarchyBrowserManager;
 import com.intellij.ide.hierarchy.method.MethodHierarchyBrowser;
 import com.intellij.ide.hierarchy.method.MethodHierarchyTreeStructure;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -72,7 +73,7 @@ public final class BrowseMethodHierarchyAction extends AnAction {
   public final void update(final AnActionEvent event){
     final Presentation presentation = event.getPresentation();
     if (!ActionPlaces.MAIN_MENU.equals(event.getPlace())) {
-      presentation.setText("Browse Method Hierarchy");
+      presentation.setText(IdeBundle.message("action.browse.method.hierarchy"));
     }
     presentation.setEnabled(getMethod(event.getDataContext()) != null);
   }

@@ -15,6 +15,8 @@
  */
 package com.intellij.ui;
 
+import org.jetbrains.annotations.NonNls;
+
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
@@ -22,6 +24,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+
+import com.intellij.util.ui.UIUtil;
 
 public class ColorPanel extends JPanel {
   public static final Color[] fixedColors;
@@ -31,11 +35,9 @@ public class ColorPanel extends JPanel {
   public static final Color BLUE_GREEN = new Color(0, 128, 128);
   public static final Color DARK_YELLOW = new Color(128, 128, 0);
   public static final Color DARK_RED = new Color(128, 0, 0);
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public static final Color DISABLED_COLOR = UIManager.getColor("Panel.background");
+  public static final Color DISABLED_COLOR = UIUtil.getPanelBackgound();
   private static Color[] myCustomColors;
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private String myActionCommand = "colorPanelChanged";
+  @NonNls private String myActionCommand = "colorPanelChanged";
   private boolean isFiringEvent = false;
   private int myBoxSize;
   private GridLayout myCustomGridLayout;
@@ -222,6 +224,7 @@ public class ColorPanel extends JPanel {
     private boolean isSelectable;
     private Runnable mySelectColorAction = null;
     private Color myColor;
+    @NonNls public static final String RGB = "RGB";
 
     public ColorBox(Color color, int size, boolean isSelectable) {
       mySize = new Dimension(size, size);
@@ -267,7 +270,7 @@ public class ColorPanel extends JPanel {
 
     private void selectColor() {
       if (isSelectable){
-        Color color = ColorChooser.chooseColor(ColorPanel.this, "Select a color", myColor);
+        Color color = ColorChooser.chooseColor(ColorPanel.this, UIBundle.message("color.panel.select.color.dialog.description"), myColor);
         if (color != null){
           setColor(color);
           if (mySelectColorAction != null){
@@ -304,7 +307,7 @@ public class ColorPanel extends JPanel {
         return;
       }
       StringBuffer buffer = new StringBuffer(64);
-      buffer.append("RGB: ");
+      buffer.append(RGB + ": ");
       buffer.append(myColor.getRed());
       buffer.append(", ");
       buffer.append(myColor.getGreen());
@@ -312,7 +315,7 @@ public class ColorPanel extends JPanel {
       buffer.append(myColor.getBlue());
 
       if (isSelectable) {
-        buffer.append(" (Right-click to customize)");
+        buffer.append(" (" + UIBundle.message("color.panel.right.click.to.customize.tooltip.suffix") + ")");
       }
       setToolTipText(buffer.toString());
     }

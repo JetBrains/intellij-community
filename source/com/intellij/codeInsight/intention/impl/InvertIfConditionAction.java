@@ -8,19 +8,18 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.psi.JavaTokenType;
+import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.controlFlow.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.codeInsight.CodeInsightUtil;
 
 public class InvertIfConditionAction extends BaseIntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.InvertIfConditionAction");
@@ -62,7 +61,7 @@ public class InvertIfConditionAction extends BaseIntentionAction {
   }
 
   public String getFamilyName() {
-    return "Invert If Condition";
+    return CodeInsightBundle.message("intention.invert.if.condition");
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
@@ -71,6 +70,7 @@ public class InvertIfConditionAction extends BaseIntentionAction {
     PsiIfStatement ifStatement = PsiTreeUtil.getParentOfType(file.findElementAt(
             editor.getCaretModel().getOffset()), PsiIfStatement.class);
 
+    LOG.assertTrue(ifStatement != null);
     PsiElement block = findCodeBlock(ifStatement);
 
     ControlFlow controlFlow = buildControlFlow(block);
@@ -151,8 +151,7 @@ public class InvertIfConditionAction extends BaseIntentionAction {
 
   private ControlFlow buildControlFlow(PsiElement element) {
     try {
-      ControlFlow controlFlow = new ControlFlowAnalyzer(element, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(), false, false).buildControlFlow();
-      return controlFlow;
+      return new ControlFlowAnalyzer(element, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(), false, false).buildControlFlow();
     }
     catch (AnalysisCanceledException e) {
       return ControlFlow.EMPTY;

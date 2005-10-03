@@ -7,20 +7,24 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.ZipUtil;
+import com.intellij.ide.IdeBundle;
 
 import javax.swing.*;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jetbrains.annotations.NonNls;
+
 public class StartupActionScriptManager {
-  private static final String ACTION_SCRIPT_FILE = "action.script";
+  @NonNls private static final String ACTION_SCRIPT_FILE = "action.script";
 
   public static synchronized void executeActionScript() throws IOException {
     List<ActionCommand> commands = loadActionScript();
 
     for (int i = 0; i < commands.size(); i++) {
       ActionCommand actionCommand = commands.get(i);
+      //noinspection HardCodedStringLiteral
       System.out.println("Execute " + actionCommand);
       actionCommand.execute();
     }
@@ -55,10 +59,7 @@ public class StartupActionScriptManager {
         // problem with scrambled code
         // fas fixed, but still appear because corrupted file still exists
         // return empty list.
-        System.err.println("Internal " + ApplicationNamesInfo.getInstance().getProductName() +
-                           " file was corrupted. Problem is fixed.\n" +
-                           "If some plugins has been installed/uninstalled, please " +
-                           "re-install/-uninstall them.");
+        System.err.println(IdeBundle.message("error.action.script.corrupted", ApplicationNamesInfo.getInstance().getProductName()));
         return new ArrayList<ActionCommand>();
       }
     }
@@ -100,7 +101,7 @@ public class StartupActionScriptManager {
   }
 
   public static class CopyCommand implements Serializable, ActionCommand {
-    private static final String action = "copy";
+    @NonNls private static final String action = "copy";
     private File mySource;
     private File myDestination;
 
@@ -120,23 +121,20 @@ public class StartupActionScriptManager {
       if (! parentFile.exists())
         if (! myDestination.getParentFile().mkdirs()) {
           JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
-                                        "<html>Cannot create parent directory [" + parentFile.getAbsolutePath() +
-                                        "] of " + myDestination.getAbsolutePath() + "<br>" +
-                                        "Please, check your access rights on folder <br>" +
-                                        parentFile.getParent(), "Installing Plugin",
-                                        JOptionPane.ERROR_MESSAGE);
+                                        IdeBundle.message("error.cannot.create.plugin.parent.directory", parentFile.getAbsolutePath(),
+                                                          myDestination.getAbsolutePath(), parentFile.getParent()), IdeBundle.message("title.installing.plugin"),
+                                                                JOptionPane.ERROR_MESSAGE);
         }
 
       if (!mySource.exists()) {
+        //noinspection HardCodedStringLiteral
         System.err.println("Source file " + mySource.getAbsolutePath() + " does not exist for action " + this);
       }
       else if (!canCreateFile(myDestination)) {
         JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
-                                      "<html>Cannot copy " + mySource.getAbsolutePath() + "<br>to<br>" +
-                                      myDestination.getAbsolutePath() + "<br>" +
-                                      "Please, check your access rights on folder <br>" +
-                                      myDestination.getParent(), "Installing Plugin",
-                                      JOptionPane.ERROR_MESSAGE);
+                                      IdeBundle.message("error.cannot.copy.plugin.file", mySource.getAbsolutePath(),
+                                                        myDestination.getAbsolutePath(), myDestination.getParent()),
+                                      IdeBundle.message("title.installing.plugin"), JOptionPane.ERROR_MESSAGE);
       }
       else {
         FileUtil.copy(mySource, myDestination);
@@ -146,7 +144,7 @@ public class StartupActionScriptManager {
   }
 
   public static class UnzipCommand implements Serializable, ActionCommand {
-    private static final String action = "unzip";
+    @NonNls private static final String action = "unzip";
     private File mySource;
     private FilenameFilter myFilenameFilter;
     private File myDestination;
@@ -168,15 +166,14 @@ public class StartupActionScriptManager {
 
     public void execute() throws IOException {
       if (!mySource.exists()) {
+        //noinspection HardCodedStringLiteral
         System.err.println("Source file " + mySource.getAbsolutePath() + " does not exist for action " + this);
       }
       else if (!canCreateFile(myDestination)) {
         JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
-                                      "<html>Cannot unzip " + mySource.getAbsolutePath() + "<br>to<br>" +
-                                      myDestination.getAbsolutePath() + "<br>" +
-                                      "Please, check your access rights on folder <br>" +
-                                      myDestination, "Installing Plugin",
-                                      JOptionPane.ERROR_MESSAGE);
+                                      IdeBundle.message("error.cannot.unzip.plugin.file", mySource.getAbsolutePath(),
+                                                        myDestination.getAbsolutePath(), myDestination),
+                                      IdeBundle.message("title.installing.plugin"), JOptionPane.ERROR_MESSAGE);
       }
       else {
         ZipUtil.extract(mySource, myDestination, myFilenameFilter);
@@ -186,7 +183,7 @@ public class StartupActionScriptManager {
   }
 
   public static class DeleteCommand implements Serializable, ActionCommand {
-    private static final String action = "delete";
+    @NonNls private static final String action = "delete";
     private File mySource;
 
     public DeleteCommand(File source) {
@@ -199,12 +196,12 @@ public class StartupActionScriptManager {
 
     public void execute() throws IOException {
       if (mySource != null && mySource.exists() && !FileUtil.delete(mySource)) {
+        //noinspection HardCodedStringLiteral
         System.err.println("Action " + this + " failed.");
         JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
-                                      "<html>Cannot delete " + mySource.getAbsolutePath() + "<br>" +
-                                      "Please, check your access rights on folder <br>" +
-                                      mySource.getAbsolutePath(), "Installing Plugin",
-                                      JOptionPane.ERROR_MESSAGE);
+                                      IdeBundle.message("error.cannot.delete.plugin.file", mySource.getAbsolutePath(),
+                                                        mySource.getAbsolutePath()),
+                                      IdeBundle.message("title.installing.plugin"), JOptionPane.ERROR_MESSAGE);
       }
     }
   }

@@ -12,6 +12,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
@@ -25,7 +26,7 @@ public class IntroduceVariableHandler extends IntroduceVariableBase {
                                                   boolean declareFinalIfAll, PsiType type,
                                                   TypeSelectorManagerImpl typeSelectorManager,
                                                   InputValidator validator) {
-    ArrayList highlighters = new ArrayList();
+    ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
     HighlightManager highlightManager = null;
     if (editor != null) {
       highlightManager = HighlightManager.getInstance(project);
@@ -43,12 +44,11 @@ public class IntroduceVariableHandler extends IntroduceVariableBase {
     dialog.show();
     if (!dialog.isOK()) {
       if (occurrences.length > 1) {
-        WindowManager.getInstance().getStatusBar(project).setInfo("Press Escape to remove the highlighting");
+        WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
       }
     } else {
       if (editor != null) {
-        for (int i = 0; i < highlighters.size(); i++) {
-          RangeHighlighter highlighter = (RangeHighlighter) highlighters.get(i);
+        for (RangeHighlighter highlighter : highlighters) {
           highlightManager.removeSegmentHighlighter(editor, highlighter);
         }
       }
@@ -66,9 +66,8 @@ public class IntroduceVariableHandler extends IntroduceVariableBase {
     HighlightManager highlightManager = HighlightManager.getInstance(project);
     EditorColorsManager colorsManager = EditorColorsManager.getInstance();
     TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-    PsiElement[] exprsToHighlight = replacedOccurences;
-    highlightManager.addOccurrenceHighlights(editor, exprsToHighlight, attributes, true, null);
-    WindowManager.getInstance().getStatusBar(project).setInfo("Press Escape to remove the highlighting");
+    highlightManager.addOccurrenceHighlights(editor, replacedOccurences, attributes, true, null);
+    WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
   }
 
   protected boolean reportConflicts(final ArrayList<String> conflicts, final Project project) {

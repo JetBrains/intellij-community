@@ -1,26 +1,28 @@
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author mike
@@ -80,7 +82,7 @@ public class GenerateDelegateHandler implements CodeInsightActionHandler {
 
     clearModifiers(method);
 
-    StringBuffer call = new StringBuffer();
+    @NonNls StringBuffer call = new StringBuffer();
 
     PsiModifierList modifierList = null;
 
@@ -207,7 +209,7 @@ public class GenerateDelegateHandler implements CodeInsightActionHandler {
     CandidateInfo[] result;
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       MemberChooser chooser = new MemberChooser(methodInstances.toArray(new Object[methodInstances.size()]), false, true, project);
-      chooser.setTitle("Select Methods to Generate Delegates for");
+      chooser.setTitle(CodeInsightBundle.message("generate.delegate.method.chooser.title"));
       chooser.setCopyJavadocVisible(false);
       chooser.show();
 
@@ -235,7 +237,7 @@ public class GenerateDelegateHandler implements CodeInsightActionHandler {
     if (targetElements == null || targetElements.length == 0) return null;
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       MemberChooser chooser = new MemberChooser(targetElements, false, false, project);
-      chooser.setTitle("Select Target to Generate Delegates for");
+      chooser.setTitle(CodeInsightBundle.message("generate.delegate.target.chooser.title"));
       chooser.setCopyJavadocVisible(false);
       chooser.show();
 

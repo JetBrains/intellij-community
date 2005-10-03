@@ -10,6 +10,8 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author ven
  */
@@ -24,10 +26,12 @@ class ProcessProxyImpl implements ProcessProxy {
 
   private PrintWriter myWriter;
   private Socket mySocket;
-  private static final String DONT_USE_LAUNCHER_PROPERTY = "idea.no.launcher";
-  public static final String PROPERTY_BINPATH = "idea.launcher.bin.path";
-  public static final String PROPERTY_PORT_NUMBER = "idea.launcher.port";
-  public static final String LAUNCH_MAIN_CLASS = "com.intellij.rt.execution.application.AppMain";
+  @NonNls private static final String DONT_USE_LAUNCHER_PROPERTY = "idea.no.launcher";
+  @NonNls public static final String PROPERTY_BINPATH = "idea.launcher.bin.path";
+  @NonNls public static final String PROPERTY_PORT_NUMBER = "idea.launcher.port";
+  @NonNls public static final String LAUNCH_MAIN_CLASS = "com.intellij.rt.execution.application.AppMain";
+  @NonNls
+  protected static final String LOCALHOST = "localhost";
 
   public int getPortNumber() {
     return myPortNumber;
@@ -68,10 +72,11 @@ class ProcessProxyImpl implements ProcessProxy {
     processHandler.putUserData(KEY, this);
   }
 
-  private synchronized void writeLine (final String s) {
+  private synchronized void writeLine (@NonNls final String s) {
     if (myWriter == null) {
       try {
-        if (mySocket == null) mySocket = new Socket(InetAddress.getByName("localhost"), myPortNumber);
+        if (mySocket == null)
+          mySocket = new Socket(InetAddress.getByName(LOCALHOST), myPortNumber);
         myWriter = new PrintWriter(new BufferedWriter(new OutputStreamWriter(mySocket.getOutputStream())));
       } catch (IOException e) {
         return;
@@ -90,7 +95,7 @@ class ProcessProxyImpl implements ProcessProxy {
   }
 
   public static boolean useLauncher() {
-    if ("true".equals(System.getProperty(DONT_USE_LAUNCHER_PROPERTY))) {
+    if (Boolean.valueOf(System.getProperty(DONT_USE_LAUNCHER_PROPERTY))) {
       return false;
     }
 
@@ -101,7 +106,7 @@ class ProcessProxyImpl implements ProcessProxy {
   }
 
   public static String getLaunchertLibName() {
-    final String libName = SystemInfo.isWindows ? "breakgen.dll" : "libbreakgen.so";
+    @NonNls final String libName = SystemInfo.isWindows ? "breakgen.dll" : "libbreakgen.so";
     return PathManager.getBinPath() + File.separator + libName;
   }
 }

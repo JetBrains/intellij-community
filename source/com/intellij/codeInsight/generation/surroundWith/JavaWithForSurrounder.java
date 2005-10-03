@@ -1,16 +1,18 @@
 
 package com.intellij.codeInsight.generation.surroundWith;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 
 class JavaWithForSurrounder extends JavaStatementsSurrounder{
   public String getTemplateDescription() {
-    return "for";
+    return CodeInsightBundle.message("surround.with.for.template");
   }
 
   public TextRange surroundStatements(Project project, Editor editor, PsiElement container, PsiElement[] statements) throws IncorrectOperationException{
@@ -23,7 +25,7 @@ class JavaWithForSurrounder extends JavaStatementsSurrounder{
       return null;
     }
 
-    String text = "for(a;b;c){\n}";
+    @NonNls String text = "for(a;b;c){\n}";
     PsiForStatement forStatement = (PsiForStatement)factory.createStatementFromText(text, null);
     forStatement = (PsiForStatement)codeStyleManager.reformat(forStatement);
 

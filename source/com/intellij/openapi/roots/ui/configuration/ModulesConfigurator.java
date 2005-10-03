@@ -18,6 +18,7 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -45,6 +46,8 @@ import java.awt.event.WindowEvent;
 import java.util.*;
 import java.util.List;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author Eugene Zhuravlev
  *         Date: Dec 15, 2003
@@ -57,7 +60,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   private List<ModuleEditor> myModuleEditors = new ArrayList<ModuleEditor>();
   private JList myModuleEditorsList;
   private JPanel myModuleContentsPanel;
-  private static final String EMPTY_PANEL_ID = "EmptyPanel";
+  @NonNls private static final String EMPTY_PANEL_ID = "EmptyPanel";
   private ComboBox myLanguageLevelCombo;
   private JRadioButton myRbRelativePaths;
   private JRadioButton myRbAbsolutePaths;
@@ -100,8 +103,8 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     myLanguageLevelCombo.addItem(LanguageLevel.JDK_1_5);
     myLanguageLevelCombo.setRenderer(new MyDefaultListCellRenderer());
     myLanguageLevelCombo.setSelectedItem(ProjectRootManagerEx.getInstanceEx(myProject).getLanguageLevel());
-    myRbRelativePaths = new JRadioButton("Use relative path");
-    myRbAbsolutePaths = new JRadioButton("Use absolute path");
+    myRbRelativePaths = new JRadioButton(ProjectBundle.message("module.paths.outside.module.dir.relative.radio"));
+    myRbAbsolutePaths = new JRadioButton(ProjectBundle.message("module.paths.outside.module.dir.absolute.radio"));
     ButtonGroup buttonGroup = new ButtonGroup();
     buttonGroup.add(myRbRelativePaths);
     buttonGroup.add(myRbAbsolutePaths);
@@ -135,7 +138,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     removeModuleAction.registerCustomShortcutSet(CommonShortcuts.DELETE, myModuleEditorsList);
     moduleActionsGroup.add(removeModuleAction);
 
-    myModuleListPanel.add(new JLabel("Modules:"), BorderLayout.NORTH);
+    myModuleListPanel.add(new JLabel(ProjectBundle.message("modules.list.caption")), BorderLayout.NORTH);
     myModuleListPanel.add(new ToolbarPanel(modulesListScrollPane, moduleActionsGroup), BorderLayout.CENTER);
 
     final Splitter modulesContentSplitter = new Splitter(false);
@@ -149,12 +152,12 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
       new GridBagConstraints(0, GridBagConstraints.RELATIVE, 4, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(2, 0, 0, 0), 0, 0)
     );
 
-    mainPanel.add(new JLabel("For files outside project file directory:"), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(2, 0, 0, 0), 0, 0));
+    mainPanel.add(new JLabel(ProjectBundle.message("module.paths.outside.project.dir.label")), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(2, 0, 0, 0), 0, 0));
     mainPanel.add(myRbAbsolutePaths, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(2, 0, 0, 0), 0, 0));
     mainPanel.add(myRbRelativePaths, new GridBagConstraints(2, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(2, 0, 0, 0), 0, 0));
 
     final Box horizontalBox = Box.createHorizontalBox();
-    horizontalBox.add(new JLabel("Language level for project (effective on restart): "));
+    horizontalBox.add(new JLabel(ProjectBundle.message("module.project.language.level")));
     horizontalBox.add(Box.createHorizontalStrut(5));
     horizontalBox.add(myLanguageLevelCombo);
     mainPanel.add(horizontalBox, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(2, 0, 0, 0), 0, 0));
@@ -308,7 +311,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
       projectRootManagerEx.checkCircularDependency(modelsToCheck.toArray(new ModifiableRootModel[modelsToCheck.size()]), myModuleModel);
     }
     catch (ModuleCircularDependencyException e) {
-      warningMessage = "There is a circular dependency between modules\n\"" + e.getModuleName1() + "\" and \"" + e.getModuleName2() + "\"";
+      warningMessage = ProjectBundle.message("module.circular.dependency.warning", e.getModuleName1(), e.getModuleName2());
     }
     myWarningLabel.setIcon(warningMessage.length() > 0? Messages.getWarningIcon() : null);
     myWarningLabel.setText(warningMessage);
@@ -468,7 +471,8 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
       }
     });
     if (ex[0] != null) {
-      Messages.showErrorDialog("Error adding module to project: " + ex[0].getMessage(), "Add Module");
+      Messages.showErrorDialog(ProjectBundle.message("module.add.error.message", ex[0].getMessage()),
+                               ProjectBundle.message("module.add.error.title"));
     }
     if (module != null) {
       addModule(module);
@@ -489,7 +493,8 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     private final Component myDialogParent;
 
     public AddModuleAction(Component dialogParent) {
-      super("Add", "Add module to the project", Icons.ADD_ICON);
+      super(ProjectBundle.message("module.add.action"),
+            ProjectBundle.message("module.add.action.description"), Icons.ADD_ICON);
       myDialogParent = dialogParent;
     }
 
@@ -505,7 +510,8 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
   private class RemoveModuleAction extends IconWithTextAction {
     public RemoveModuleAction() {
-      super("Remove", "Remove module from the project", Icons.DELETE_ICON);
+      super(ProjectBundle.message("module.remove.action"),
+            ProjectBundle.message("module.remove.action.description"), Icons.DELETE_ICON);
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -513,12 +519,13 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
         final ModuleEditor selectedEditor = getSelectedEditor();
         String question;
         if (myModuleEditors.size() == 1) {
-          question = "Are you sure you want to remove the only module from this project?\nNo files will be deleted on disk.";
+          question = ProjectBundle.message("module.remove.last.confirmation");
         }
         else {
-          question = "Remove module \"" + selectedEditor.getModule().getName() + "\" from the project?\nNo files will be deleted on disk.";
+          question = ProjectBundle.message("module.remove.confirmation", selectedEditor.getModule().getName());
         }
-        int result = Messages.showYesNoDialog(myModuleEditorsList, question, "Remove Module", Messages.getQuestionIcon());
+        int result = Messages.showYesNoDialog(myModuleEditorsList, question,
+                                              ProjectBundle.message("module.remove.confirmation.title"), Messages.getQuestionIcon());
         if (result != 0) {
           return;
         }
@@ -692,8 +699,8 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     }
 
     public void run() {
-      final String _message = "Language level has been changed.\nReload project \"" + myProject.getName() + "\"?";
-      if (Messages.showYesNoDialog(myModuleListPanel, _message, "Modules", Messages.getQuestionIcon()) == 0) {
+      final String _message = ProjectBundle.message("module.project.language.level.changed.reload.prompt", myProject.getName());
+      if (Messages.showYesNoDialog(myModuleListPanel, _message, ProjectBundle.message("modules.title"), Messages.getQuestionIcon()) == 0) {
         ProjectManagerEx.getInstanceEx().reloadProject(myProject);
       }
     }

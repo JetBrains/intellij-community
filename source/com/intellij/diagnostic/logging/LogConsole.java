@@ -8,9 +8,9 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -25,10 +25,12 @@ public abstract class LogConsole extends JPanel implements Disposable{
   private final ConsoleView myConsole;
   private final LightProcessHandler myProcessHandler = new LightProcessHandler();
   private ReaderThread myReaderThread;
+  private final boolean mySkipContents;
 
   private static final long PROCESS_IDLE_TIMEOUT = 200;
-  public LogConsole(Project project, File file) {
+  public LogConsole(Project project, File file, boolean skipContents) {
     super(new BorderLayout());
+    mySkipContents = skipContents;
     myReaderThread = new ReaderThread(file);
     TextConsoleBuilder builder = TextConsoleBuidlerFactory.getInstance().createBuilder(project);
     myConsole = builder.getConsole();
@@ -93,6 +95,7 @@ public abstract class LogConsole extends JPanel implements Disposable{
     private BufferedReader myFileStream;
     private boolean myRunning = true;
     public ReaderThread(File file){
+      //noinspection HardCodedStringLiteral
       super("Reader Thread");
       try {
         try {
@@ -103,7 +106,7 @@ public abstract class LogConsole extends JPanel implements Disposable{
           if (!file.createNewFile()) return;
           myFileStream = new BufferedReader(new FileReader(file));
         }
-        myFileStream.skip(file.length());
+        if (mySkipContents) myFileStream.skip(file.length());
       }
       catch (Throwable e) {
         myFileStream = null;

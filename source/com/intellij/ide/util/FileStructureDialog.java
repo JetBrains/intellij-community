@@ -3,6 +3,7 @@ package com.intellij.ide.util;
 
 import com.intellij.aspects.psi.PsiAspect;
 import com.intellij.aspects.psi.PsiAspectFile;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.commander.CommanderPanel;
 import com.intellij.ide.commander.ProjectListBuilder;
 import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
@@ -18,13 +19,13 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.SpeedSearchBase;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -43,7 +44,7 @@ public class FileStructureDialog extends DialogWrapper {
   private MyCommanderPanel myCommanderPanel;
   private final StructureViewModel myTreeModel;
 
-  private static final String ourPropertyKey = "FileStructure.narrowDown";
+  @NonNls private static final String ourPropertyKey = "FileStructure.narrowDown";
   private boolean myShouldNarrowDown = false;
 
   public FileStructureDialog(StructureViewModel structureViewModel, Editor editor, Project project, Navigatable navigatable) {
@@ -120,6 +121,12 @@ public class FileStructureDialog extends DialogWrapper {
         return psiClass;
       }
     }
+    
+    Object elementAtCursor = myTreeModel.getCurrentEditorElement();
+    if (elementAtCursor instanceof PsiElement) {
+      return (PsiElement) elementAtCursor;
+    }
+
     return null;
   }
 
@@ -168,12 +175,12 @@ public class FileStructureDialog extends DialogWrapper {
     myCommanderPanel.setPreferredSize(new Dimension(400,500));
 
     JPanel panel = new JPanel(new GridBagLayout());
-    final JCheckBox checkBox = new JCheckBox("Narrow down the list on typing");
-    checkBox.setSelected("true".equals(PropertiesComponent.getInstance().getValue(ourPropertyKey)));
+    final JCheckBox checkBox = new JCheckBox(IdeBundle.message("checkbox.narrow.down.the.list.on.typing"));
+    checkBox.setSelected(PropertiesComponent.getInstance().isTrueValue(ourPropertyKey));
     checkBox.addChangeListener(new ChangeListener() {
       public void stateChanged(ChangeEvent e){
         myShouldNarrowDown = checkBox.isSelected();
-        PropertiesComponent.getInstance().setValue(ourPropertyKey, myShouldNarrowDown ? "true" : "false");
+        PropertiesComponent.getInstance().setValue(ourPropertyKey, Boolean.toString(myShouldNarrowDown));
 
         ProjectListBuilder builder = (ProjectListBuilder)myCommanderPanel.getBuilder();
         if (builder == null) {
@@ -182,13 +189,6 @@ public class FileStructureDialog extends DialogWrapper {
         builder.addUpdateRequest();
       }
     });
-
-    if (SystemInfo.isMac) {
-      checkBox.setMnemonic('D'); // N produces input method event we're not able to prevent from happening.
-    }
-    else {
-      checkBox.setMnemonic('N');
-    }
 
     checkBox.setFocusable(false);
 

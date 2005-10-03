@@ -2,10 +2,7 @@ package com.intellij.openapi.vcs.update;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -18,7 +15,7 @@ public interface ScopeInfo {
 
   ScopeInfo PROJECT = new ScopeInfo() {
     public String getScopeName(VcsContext dataContext, final ActionInfo actionInfo) {
-      return "Project";
+      return VcsBundle.message("update.project.scope.name");
     }
 
     public FilePath[] getRoots(VcsContext context, final ActionInfo actionInfo) {
@@ -42,23 +39,23 @@ public interface ScopeInfo {
     public String getScopeName(VcsContext dataContext, final ActionInfo actionInfo) {
       FilePath[] roots = getRoots(dataContext, actionInfo);
       if (roots == null || roots.length == 0) {
-        return "Files";
+        return VcsBundle.message("update.files.scope.name");
       }
       boolean directory = roots[0].isDirectory();
       if (roots.length == 1) {
         if (directory) {
-          return "Directory";
+          return VcsBundle.message("update.directory.scope.name");
         }
         else {
-          return "File";
+          return VcsBundle.message("update.file.scope.name");
         }
       }
       else {
         if (directory) {
-          return "Directories";
+          return VcsBundle.message("update.directories.scope.name");
         }
         else {
-          return "Files";
+          return VcsBundle.message("update.files.scope.name");
         }
       }
 

@@ -4,9 +4,10 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.PomModel;
-import com.intellij.pom.xml.XmlAspect;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.impl.PomTransactionBase;
+import com.intellij.pom.xml.XmlAspect;
+import com.intellij.pom.xml.impl.events.XmlAttributeSetImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
@@ -14,13 +15,13 @@ import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.meta.PsiMetaOwner;
-import com.intellij.pom.xml.impl.events.XmlAttributeSetImpl;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -108,7 +109,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
   }
 
   public boolean isNamespaceDeclaration() {
-    final String name = getName();
+    final @NonNls String name = getName();
     return name.startsWith("xmlns:") || name.equals("xmlns");
   }
 

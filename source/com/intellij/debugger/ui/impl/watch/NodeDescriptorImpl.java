@@ -5,6 +5,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.HashMap;
@@ -71,11 +72,11 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
 
   private EvaluateException processException(Exception e) {
     if(e instanceof InconsistentDebugInfoException) {
-      return new EvaluateException("Inconsistent debug information. Cannot show value. ", null);
+      return new EvaluateException(DebuggerBundle.message("error.inconsistent.debug.info"), null);
     }
 
     else if(e instanceof InvalidStackFrameException) {
-      return new EvaluateException("Internal exception - invalid stackframe. Cannot show value. ", null);
+      return new EvaluateException(DebuggerBundle.message("error.invalid.stackframe"), null);
     }
     else {
       return EvaluateExceptionUtil.DEBUG_INFO_UNAVAILABLE;

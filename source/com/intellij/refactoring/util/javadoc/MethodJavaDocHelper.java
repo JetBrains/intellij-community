@@ -42,8 +42,7 @@ public class MethodJavaDocHelper {
     if (parameter == null) return null;
     final String name = parameter.getName();
     final PsiDocTag[] paramTags = myDocComment.findTagsByName("param");
-    for (int i = 0; i < paramTags.length; i++) {
-      final PsiDocTag paramTag = paramTags[i];
+    for (final PsiDocTag paramTag : paramTags) {
       final PsiElement[] dataElements = paramTag.getDataElements();
       if (dataElements.length > 0 && dataElements[0].getText().equals(name)) {
         return paramTag;

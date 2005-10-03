@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -12,8 +13,6 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 
-import java.text.MessageFormat;
-
 public class MoveClassToSeparateFileFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.MoveClassToSeparateFileFix");
 
@@ -24,15 +23,12 @@ public class MoveClassToSeparateFileFix implements IntentionAction {
   }
 
   public String getText() {
-    String text = MessageFormat.format("Move class ''{0}'' to ''{0}.java''",
-        new Object[]{
-          myClass.getName(),
-        });
-    return text;
+    return QuickFixBundle.message("move.class.to.separate.file.text",
+                                  myClass.getName());
   }
 
   public String getFamilyName() {
-    return "Move Class to Separate File";
+    return QuickFixBundle.message("move.class.to.separate.file.family");
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {

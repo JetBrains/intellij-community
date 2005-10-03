@@ -1,5 +1,7 @@
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
+import com.intellij.util.ui.UIUtil;
+
 import javax.swing.*;
 import java.awt.*;
 
@@ -12,7 +14,7 @@ import java.awt.*;
  */
 public class WelcomeScrollablePanel extends JPanel implements Scrollable{
 
-  private static final int VERTICAL_SCROLL_INCREMENT = UIManager.getFont("ToolTip.font").getSize() * 2;
+  private static final int VERTICAL_SCROLL_INCREMENT = UIUtil.getToolTipFont().getSize() * 2;
   private static final int HORIZONTAL_SCROLL_INCREMENT = VERTICAL_SCROLL_INCREMENT;
 
   public WelcomeScrollablePanel(LayoutManager layout) {

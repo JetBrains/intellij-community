@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusFactory;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.checkin.DifferenceType;
 import com.intellij.openapi.vcs.checkin.impl.DifferenceTypeImpl;
 
@@ -38,7 +39,7 @@ public class FileStatusFactoryImpl implements FileStatusFactory {
   }
 
   public DifferenceType createDifferenceTypeInserted() {
-    return createDifferenceType("Added",
+    return createDifferenceType(VcsBundle.message("diff.type.name.added"),
                                 FileStatus.ADDED,
                                 DiffColors.DIFF_INSERTED,
                                 DiffColors.DIFF_ABSENT,
@@ -47,14 +48,14 @@ public class FileStatusFactoryImpl implements FileStatusFactory {
   }
 
   public DifferenceType createDifferenceTypeNotChanged() {
-    return createDifferenceType("Not changed",
+    return createDifferenceType(VcsBundle.message("diff.type.name.not.changed"),
                                 FileStatus.NOT_CHANGED,
                                 null,
                                 null, Color.white);
   }
 
   public DifferenceType createDifferenceTypeDeleted() {
-    return createDifferenceType("Deleted",
+    return createDifferenceType(VcsBundle.message("diff.type.name.deleted"),
                                 FileStatus.DELETED,
                                 DiffColors.DIFF_DELETED,
                                 DiffColors.DIFF_DELETED,
@@ -63,7 +64,7 @@ public class FileStatusFactoryImpl implements FileStatusFactory {
   }
 
   public DifferenceType createDifferenceTypeModified() {
-    return createDifferenceType("Modified",
+    return createDifferenceType(VcsBundle.message("diff.type.name.modified"),
                                 FileStatus.MODIFIED,
                                 DiffColors.DIFF_MODIFIED,
                                 null, new Color(129, 164, 244));

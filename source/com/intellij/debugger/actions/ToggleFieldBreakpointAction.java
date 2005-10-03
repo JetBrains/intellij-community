@@ -3,6 +3,7 @@ package com.intellij.debugger.actions;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.InstanceFilter;
 import com.intellij.debugger.SourcePosition;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
@@ -84,7 +85,7 @@ public class ToggleFieldBreakpointAction extends AnAction {
       presentation.setVisible(toEnable);
     }
     else if(DebuggerAction.isContextView(event)) {
-      presentation.setText(presentation.getText().replaceFirst("Toggle", "Add"));
+      presentation.setText(DebuggerBundle.message("action.add.field.watchpoint.text"));
       Project project = (Project)event.getDataContext().getData(DataConstants.PROJECT);
       if(place != null) {
         Document document = PsiDocumentManager.getInstance(project).getDocument(place.getFile());

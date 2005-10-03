@@ -9,6 +9,7 @@ import com.intellij.xml.impl.XmlLangAttributeDescriptor;
 import java.util.*;
 
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Mike
@@ -17,6 +18,10 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
   private XmlNSDescriptorImpl myDocumentDescriptor;
   private XmlTag myTag;
   private XmlElementDescriptor[] myElementDescriptors = null;
+  @NonNls
+  public static final String PROHIBITED_ATTR_VALUE = "prohibited";
+  @NonNls
+  public static final String OTHER_NAMESPACE_ATTR_VALUE = "##other";
 
   public ComplexTypeDescriptor(XmlNSDescriptorImpl documentDescriptor, XmlTag tag) {
     myDocumentDescriptor = documentDescriptor;
@@ -97,16 +102,16 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
           final String local = XmlUtil.findLocalNameByQualifiedName(ref);
           final String namespacePrefix = XmlUtil.findPrefixByQualifiedName(ref);
           final String namespace = "".equals(namespacePrefix) ?
-            myDocumentDescriptor.getDefaultNamespace() :
-            tag.getNamespaceByPrefix(namespacePrefix);
-          
+                                   myDocumentDescriptor.getDefaultNamespace() :
+                                   tag.getNamespaceByPrefix(namespacePrefix);
+
           final XmlElementDescriptor element = myDocumentDescriptor.getElementDescriptor(
-            local, 
-            namespace, 
+            local,
+            namespace,
             new HashSet<XmlNSDescriptorImpl>(),
             true
           );
-          
+
           if (element != null) {
             addElementDescriptor(result, element);
           }
@@ -129,7 +134,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
       }
     }
     else if (XmlNSDescriptorImpl.equalsToSchemaName(tag, "restriction") ||
-      XmlNSDescriptorImpl.equalsToSchemaName(tag, "extension")) {
+             XmlNSDescriptorImpl.equalsToSchemaName(tag, "extension")) {
       String base = tag.getAttributeValue("base");
 
       if (base != null) {
@@ -176,7 +181,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
       String name = tag.getAttributeValue("name");
 
       if (name != null) {
-        if ("prohibited".equals(use)) {
+        if (PROHIBITED_ATTR_VALUE.equals(use)) {
           removeAttributeDescriptor(result, name);
         }
         else {
@@ -186,15 +191,15 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
       else {
         String ref = tag.getAttributeValue("ref");
         if (ref != null) {
-          if ("prohibited".equals(use)) {
+          if (PROHIBITED_ATTR_VALUE.equals(use)) {
             removeAttributeDescriptor(result, ref);
           }
           else {
             final String local = XmlUtil.findLocalNameByQualifiedName(ref);
             final String namespacePrefix = XmlUtil.findPrefixByQualifiedName(ref);
             final String namespace = "".equals(namespacePrefix) ?
-              myDocumentDescriptor.getDefaultNamespace() :
-              tag.getNamespaceByPrefix(namespacePrefix);
+                                     myDocumentDescriptor.getDefaultNamespace() :
+                                     tag.getNamespaceByPrefix(namespacePrefix);
 
             final XmlAttributeDescriptorImpl attributeDescriptor = myDocumentDescriptor.getAttribute(local, namespace);
             if (attributeDescriptor != null) {
@@ -223,7 +228,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
       }
     }
     else if (XmlNSDescriptorImpl.equalsToSchemaName(tag, "restriction") ||
-      XmlNSDescriptorImpl.equalsToSchemaName(tag, "extension")) {
+             XmlNSDescriptorImpl.equalsToSchemaName(tag, "extension")) {
       String base = tag.getAttributeValue("base");
 
       if (base != null) {
@@ -288,7 +293,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
 
   private boolean _canContainTag(String localName, String namespace, XmlTag tag) {
     if (XmlNSDescriptorImpl.equalsToSchemaName(tag, "any")) {
-      if ("##other".equals(tag.getAttributeValue("namespace"))) {
+      if (OTHER_NAMESPACE_ATTR_VALUE.equals(tag.getAttributeValue("namespace"))) {
         return namespace == null || !namespace.equals(myDocumentDescriptor.getDefaultNamespace());
       }
       return true;
@@ -302,7 +307,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
       }
     }
     else if (XmlNSDescriptorImpl.equalsToSchemaName(tag, "restriction") ||
-      XmlNSDescriptorImpl.equalsToSchemaName(tag, "extension")) {
+             XmlNSDescriptorImpl.equalsToSchemaName(tag, "extension")) {
       String base = tag.getAttributeValue("base");
 
       if (base != null) {
@@ -333,7 +338,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
   private boolean _canContainAttribute(String name, String namespace, XmlTag tag, Set<String> visited) {
     if (XmlNSDescriptorImpl.equalsToSchemaName(tag, "anyAttribute")) {
       String ns = tag.getAttributeValue("namespace");
-      if ("##other".equals(ns)) {
+      if (OTHER_NAMESPACE_ATTR_VALUE.equals(ns)) {
         return !namespace.equals(myDocumentDescriptor.getDefaultNamespace());
       }
       return true;
@@ -351,7 +356,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
       }
     }
     else if (XmlNSDescriptorImpl.equalsToSchemaName(tag, "restriction") ||
-      XmlNSDescriptorImpl.equalsToSchemaName(tag, "extension")) {
+             XmlNSDescriptorImpl.equalsToSchemaName(tag, "extension")) {
       String base = tag.getAttributeValue("base");
 
       if (base != null && !visited.contains(base)) {

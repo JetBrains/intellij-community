@@ -16,6 +16,7 @@
 package com.intellij.featureStatistics;
 
 import com.intellij.openapi.application.ApplicationManager;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * User: anna
@@ -29,7 +30,7 @@ public abstract class FeatureUsageTracker {
     return ApplicationManager.getApplication().getComponent(FeatureUsageTracker.class);
   }
 
-  public abstract void triggerFeatureUsed(String featureId);
+  public abstract void triggerFeatureUsed(@NonNls String featureId);
 
-  public abstract void triggerFeatureShown(String featureId);
+  public abstract void triggerFeatureShown(@NonNls String featureId);
 }

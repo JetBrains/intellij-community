@@ -5,7 +5,9 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.ui.FieldPanel;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.event.DocumentListener;
@@ -62,8 +64,8 @@ class LibraryFileChooser extends FileChooserDialogImpl {
     final JPanel panel = new JPanel(new BorderLayout());
     panel.add(centerPanel, BorderLayout.CENTER);
 
-    final FieldPanel fieldPanel = FieldPanel.create("Library name:", null);
-    fieldPanel.getFieldLabel().setFont(UIManager.getFont("Label.font").deriveFont(Font.BOLD));
+    final FieldPanel fieldPanel = FieldPanel.create(ProjectBundle.message("library.name.prompt"), null);
+    fieldPanel.getFieldLabel().setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
     myNameField = fieldPanel.getTextField();
     myNameField.getDocument().addDocumentListener(new DocumentListener() {
       public void changedUpdate(DocumentEvent e) {
@@ -108,19 +110,22 @@ class LibraryFileChooser extends FileChooserDialogImpl {
         if (myInputName) {
           final String name = getName();
           if (name == null) {
-            Messages.showErrorDialog(myNameField, "Please enter library name", "Library Name Not Specified");
+            Messages.showErrorDialog(myNameField, ProjectBundle.message("library.name.not.specified.error"),
+                                     ProjectBundle.message("library.name.not.specified.title"));
             componentToFocus = myNameField;
             return false;
           }
           if (myParentEditor.libraryAlreadyExists(name)) {
-            Messages.showErrorDialog(myNameField, "Library \"" + name + "\" already exists", "Library Already Exists");
+            Messages.showErrorDialog(myNameField, ProjectBundle.message("library.name.already.exists.error", name),
+                                     ProjectBundle.message("library.name.already.exists.title"));
             componentToFocus = myNameField;
             return false;
           }
         }
       }
       else {
-        Messages.showErrorDialog("Please select files or directories to be added to the library", "Library Files Not Selected");
+        Messages.showErrorDialog(ProjectBundle.message("library.files.not.selected.error"),
+                                 ProjectBundle.message("library.files.not.selected.title"));
         componentToFocus = myFileSystemTree.getTree();
         return false;
       }

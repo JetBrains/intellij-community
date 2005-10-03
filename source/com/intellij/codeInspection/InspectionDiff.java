@@ -13,6 +13,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Document;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -21,37 +22,54 @@ import java.util.List;
 
 public class InspectionDiff {
   private static HashMap ourFileToProblem;
+    @NonNls
+    private static final String FILE_ELEMENT = "file";
+    @NonNls
+    private static final String CLASS_ELEMENT = "class";
+    @NonNls
+    private static final String FIELD_ELEMENT = "field";
+    @NonNls
+    private static final String METHOD_ELEMENT = "method";
+    @NonNls
+    private static final String CONSTRUCTOR_ELEMENT = "constructor";
+    @NonNls
+    private static final String INTERFACE_ELEMENT = "interface";
+    @NonNls
+    private static final String PROBLEM_CLASS_ELEMENT = "problem_class";
+    @NonNls
+    private static final String DESCRIPTION_ELEMENT = "description";
 
-  public static void main(String[] args) {
-    if (args.length != 3 && args.length != 2) {
-      System.out.println("Required parameters: <old_file> <new_file> [<delta_file_name>]");
-    }
-
-    String oldPath = args[0];
-    String newPath = args[1];
-    String outPath = args.length == 3 ? args[2] : null;
-
-
-    try {
-      InputStream oldStream = new BufferedInputStream(new FileInputStream(oldPath));
-      InputStream newStream = new BufferedInputStream(new FileInputStream(newPath));
-
-      Document oldDoc = JDOMUtil.loadDocument(oldStream);
-      Document newDoc = JDOMUtil.loadDocument(newStream);
-
-      OutputStream outStream = System.out;
-      if (outPath != null) {
-        outStream = new BufferedOutputStream(new FileOutputStream(outPath));
+    public static void main(String[] args) {
+      if (args.length != 3 && args.length != 2) {
+        System.out.println(InspectionsBundle.message("inspection.diff.format.error"));
       }
 
-      Document delta = createDelta(oldDoc, newDoc);
-      JDOMUtil.writeDocument(delta, outStream, "\n");
-    } catch (Exception e) {
-      System.out.println(e);
-      e.printStackTrace();
-    }
-  }
+      String oldPath = args[0];
+      String newPath = args[1];
+      String outPath = args.length == 3 ? args[2] : null;
 
+
+      try {
+        InputStream oldStream = new BufferedInputStream(new FileInputStream(oldPath));
+        InputStream newStream = new BufferedInputStream(new FileInputStream(newPath));
+
+        Document oldDoc = JDOMUtil.loadDocument(oldStream);
+        Document newDoc = JDOMUtil.loadDocument(newStream);
+
+        OutputStream outStream = System.out;
+        if (outPath != null) {
+          outStream = new BufferedOutputStream(new FileOutputStream(outPath));
+        }
+
+        Document delta = createDelta(oldDoc, newDoc);
+        JDOMUtil.writeDocument(delta, outStream, "\n");
+      } catch (Exception e) {
+        System.out.println(e);
+        e.printStackTrace();
+      }
+    }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static Document createDelta(Document oldDoc, Document newDoc) {
     Element oldRoot = oldDoc.getRootElement();
     Element newRoot = newDoc.getRootElement();
@@ -87,7 +105,7 @@ public class InspectionDiff {
   }
 
   private static void removeIfEquals(Element problem) {
-    String fileName = problem.getChildText("file");
+    String fileName = problem.getChildText(FILE_ELEMENT);
     ArrayList problemList = (ArrayList) ourFileToProblem.get(fileName);
     if (problemList != null) {
       Element[] problems = (Element[]) problemList.toArray(new Element[problemList.size()]);
@@ -99,7 +117,7 @@ public class InspectionDiff {
   }
 
   private static void addProblem(Element problem) {
-    String fileName = problem.getChildText("file");
+    String fileName = problem.getChildText(FILE_ELEMENT);
     ArrayList problemList = (ArrayList) ourFileToProblem.get(fileName);
     if (problemList == null) {
       problemList = new ArrayList();
@@ -109,13 +127,13 @@ public class InspectionDiff {
   }
 
   private static boolean equals(Element oldProblem, Element newProblem) {
-    if (!Comparing.equal(oldProblem.getChildText("class"), newProblem.getChildText("class"))) return false;
-    if (!Comparing.equal(oldProblem.getChildText("field"), newProblem.getChildText("field"))) return false;
-    if (!Comparing.equal(oldProblem.getChildText("method"), newProblem.getChildText("method"))) return false;
-    if (!Comparing.equal(oldProblem.getChildText("constructor"), newProblem.getChildText("constructor"))) return false;
-    if (!Comparing.equal(oldProblem.getChildText("interface"), newProblem.getChildText("interface"))) return false;
-    if (!Comparing.equal(oldProblem.getChildText("problem_class"), newProblem.getChildText("problem_class"))) return false;
-    if (!Comparing.equal(oldProblem.getChildText("description"), newProblem.getChildText("description"))) return false;
+    if (!Comparing.equal(oldProblem.getChildText(CLASS_ELEMENT), newProblem.getChildText(CLASS_ELEMENT))) return false;
+    if (!Comparing.equal(oldProblem.getChildText(FIELD_ELEMENT), newProblem.getChildText(FIELD_ELEMENT))) return false;
+    if (!Comparing.equal(oldProblem.getChildText(METHOD_ELEMENT), newProblem.getChildText(METHOD_ELEMENT))) return false;
+    if (!Comparing.equal(oldProblem.getChildText(CONSTRUCTOR_ELEMENT), newProblem.getChildText(CONSTRUCTOR_ELEMENT))) return false;
+    if (!Comparing.equal(oldProblem.getChildText(INTERFACE_ELEMENT), newProblem.getChildText(INTERFACE_ELEMENT))) return false;
+    if (!Comparing.equal(oldProblem.getChildText(PROBLEM_CLASS_ELEMENT), newProblem.getChildText(PROBLEM_CLASS_ELEMENT))) return false;
+    if (!Comparing.equal(oldProblem.getChildText(DESCRIPTION_ELEMENT), newProblem.getChildText(DESCRIPTION_ELEMENT))) return false;
 
     return true;
   }

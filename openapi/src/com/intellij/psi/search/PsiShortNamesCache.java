@@ -20,6 +20,7 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * Allows to retrieve files and Java classes, methods and fields in a project by
@@ -85,7 +86,7 @@ public interface PsiShortNamesCache {
    * @param scope the scope in which methods are searched.
    * @return the list of found methods.
    */
-  PsiMethod[] getMethodsByName(String name, GlobalSearchScope scope);
+  PsiMethod[] getMethodsByName(@NonNls String name, GlobalSearchScope scope);
 
   /**
    * Returns the list of names of all methods in the project and

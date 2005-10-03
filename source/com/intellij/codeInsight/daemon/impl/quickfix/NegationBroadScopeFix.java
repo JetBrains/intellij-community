@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -20,11 +21,12 @@ public class NegationBroadScopeFix implements IntentionAction {
   }
 
   public String getText() {
-    String text = "Change to '!(";
-    text += myPrefixExpression.getOperand().getText();
+    String text = myPrefixExpression.getOperand().getText();
     text += " ";
     PsiElement parent = myPrefixExpression.getParent();
-    String operation = parent instanceof PsiInstanceOfExpression ? "instanceof" : ((PsiBinaryExpression)parent).getOperationSign().getText();
+    String operation = parent instanceof PsiInstanceOfExpression
+                       ? PsiKeyword.INSTANCEOF
+                       : ((PsiBinaryExpression)parent).getOperationSign().getText();
     text += operation + " ";
 
     String rop;
@@ -38,12 +40,11 @@ public class NegationBroadScopeFix implements IntentionAction {
     }
 
     text += rop;
-    text += ")'";
-    return text;
+    return QuickFixBundle.message("negation.broader.scope.text", text);
   }
 
   public String getFamilyName() {
-    return null;
+    return QuickFixBundle.message("negation.broader.scope.family");
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {

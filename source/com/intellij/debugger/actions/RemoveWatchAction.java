@@ -3,6 +3,7 @@ package com.intellij.debugger.actions;
 import com.intellij.debugger.ui.impl.MainWatchPanel;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 
@@ -34,8 +35,8 @@ public class RemoveWatchAction extends DebuggerAction {
     }
   }
 
-  protected void updatePresentation(Presentation presentation, int [] idxs) {
-    presentation.setText((idxs.length <= 1)? "Remove Watch" : "Remove Watches");
+  protected void updatePresentation(Presentation presentation, int watchesCount) {
+    presentation.setText(DebuggerBundle.message("action.remove.watch.text", watchesCount));
   }
 
   public void update(AnActionEvent event) {
@@ -49,5 +50,6 @@ public class RemoveWatchAction extends DebuggerAction {
       presentation.setEnabled(false);
       presentation.setVisible(false);
     }
+    updatePresentation(presentation, nodes != null? nodes.length : 0);
   }
 }

@@ -15,6 +15,7 @@
 package org.netbeans.lib.cvsclient.request;
 
 import org.netbeans.lib.cvsclient.file.FileDetails;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * The superclass of all requests made to the CVS server
@@ -22,18 +23,18 @@ import org.netbeans.lib.cvsclient.file.FileDetails;
  */
 public interface IRequest {
 
-	/**
-	 * Get the request String that will be passed to the server
-	 * @return the request String
-	 */
-	String getRequestString();
+        /**
+         * Get the request String that will be passed to the server
+         * @return the request String
+         */
+        @NonNls String getRequestString();
 
-	/**
-	 * If a file transmission is required, get the file object representing
-	 * the file to transmit after the request string. The default
-	 * implementation returns null, indicating no file is to be transmitted
-	 * @return the file object, if one should be transmitted, or null if
-	 * no file object is to be transmitted.
-	 */
-	FileDetails getFileForTransmission();
+        /**
+         * If a file transmission is required, get the file object representing
+         * the file to transmit after the request string. The default
+         * implementation returns null, indicating no file is to be transmitted
+         * @return the file object, if one should be transmitted, or null if
+         * no file object is to be transmitted.
+         */
+        FileDetails getFileForTransmission();
 }

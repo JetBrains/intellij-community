@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templateSet group="plain">
-  <template description="String" name="St" toReformat="false" toShortenFQNames="true" value="String ">
+  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.st"
+    name="St" toReformat="false" toShortenFQNames="true" value="String ">
     <context>
       <option name="JAVA_CODE" value="true" />
       <option name="JAVA_COMMENT" value="false" />
@@ -12,7 +13,8 @@
       <option name="OTHER" value="false" />
     </context>
   </template>
-  <template description="public static final" name="psf" toReformat="false" toShortenFQNames="true" value="public static final ">
+  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.psf"
+     name="psf" toReformat="false" toShortenFQNames="true" value="public static final ">
     <context>
       <option name="JAVA_CODE" value="true" />
       <option name="JAVA_COMMENT" value="false" />
@@ -24,7 +26,8 @@
       <option name="OTHER" value="false" />
     </context>
   </template>
-  <template description="public static final int" name="psfi" toReformat="false" toShortenFQNames="true" value="public static final int ">
+  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.psfi"
+     name="psfi" toReformat="false" toShortenFQNames="true" value="public static final int ">
     <context>
       <option name="JAVA_CODE" value="true" />
       <option name="JAVA_COMMENT" value="false" />
@@ -36,7 +39,8 @@
       <option name="OTHER" value="false" />
     </context>
   </template>
-  <template description="public static final String" name="psfs" toReformat="false" toShortenFQNames="true" value="public static final String ">
+  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.psfs"
+    name="psfs" toReformat="false" toShortenFQNames="true" value="public static final String ">
     <context>
       <option name="JAVA_CODE" value="true" />
       <option name="JAVA_COMMENT" value="false" />
@@ -48,7 +52,8 @@
       <option name="OTHER" value="false" />
     </context>
   </template>
-  <template description="throw new" name="thr" toReformat="false" toShortenFQNames="true" value="throw new ">
+  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.thr"
+    name="thr" toReformat="false" toShortenFQNames="true" value="throw new ">
     <context>
       <option name="JAVA_CODE" value="true" />
       <option name="JAVA_COMMENT" value="false" />

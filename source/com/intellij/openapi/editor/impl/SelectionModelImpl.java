@@ -380,6 +380,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
     return text.subSequence(selectionStart, selectionEnd).toString();
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private void appendCharSequence(StringBuffer buf, CharSequence s, int srcOffset, int len) {
     if (s == null){
       s = "null";

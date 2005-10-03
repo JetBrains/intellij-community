@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ide.IdeBundle;
 
 public class FileDirRelativeToProjectRootMacro extends Macro {
   public String getName() {
@@ -14,7 +15,7 @@ public class FileDirRelativeToProjectRootMacro extends Macro {
   }
 
   public String getDescription() {
-    return "File dir relative to the module content root the file belongs to";
+    return IdeBundle.message("macro.file.dir.relative.to.root");
   }
 
   public String expand(final DataContext dataContext) {

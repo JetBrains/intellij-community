@@ -1,6 +1,7 @@
 package com.intellij.psi.impl.source.codeStyle.javadoc;
 
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.StringTokenizer;
@@ -22,19 +23,19 @@ public class JDParser {
   public JDComment parse(String text, JDComment c) {
     if (text == null) return c;
 
-    ArrayList markers = new ArrayList();
-    ArrayList l = toArray(text, "\n", markers);
+    ArrayList<Boolean> markers = new ArrayList<Boolean>();
+    ArrayList<String> l = toArray(text, "\n", markers);
     if (l == null) return c;
     int size = l.size();
     if (size == 0) return c;
 
     // preprocess strings - removes first '*'
     for (int i = 0; i < size; i++) {
-      String line = (String)l.get(i);
+      String line = l.get(i);
       line = line.trim();
       if (line.length() > 0) {
         if (line.charAt(0) == '*') {
-          if (((Boolean)markers.get(i)).booleanValue()) {
+          if ((markers.get(i)).booleanValue()) {
             if (line.length() > 1 && line.charAt(1) == ' ') {
               line = line.substring(2);
             }
@@ -53,7 +54,7 @@ public class JDParser {
     StringBuffer sb = new StringBuffer();
     String tag = null;
     for (int i = 0; i <= size; i++) {
-      String line = i == size ? null : (String)l.get(i);
+      String line = i == size ? null : l.get(i);
       if (i == size || line.length() > 0) {
         if (i == size || line.charAt(0) == '@') {
           if (tag == null) {
@@ -108,7 +109,7 @@ public class JDParser {
    * @param s the specified string
    * @return array of strings (lines)
    */
-  public ArrayList toArrayByNL(String s) {
+  public ArrayList<String> toArrayByNL(String s) {
     return toArray(s, "\n", null);
   }
 
@@ -118,7 +119,7 @@ public class JDParser {
    * @param s the specified string
    * @return list of strings
    */
-  public ArrayList toArrayByComma(String s) {
+  public ArrayList<String> toArrayByComma(String s) {
     return toArray(s, ",", null);
   }
 
@@ -132,12 +133,13 @@ public class JDParser {
    *                   false if it is outside
    * @return array of strings (lines)
    */
-  private ArrayList toArray(String s, String separators, ArrayList markers) {
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  private ArrayList<String> toArray(String s, String separators, ArrayList<Boolean> markers) {
     if (s == null) return null;
     s = s.trim();
     if (s.length() == 0) return null;
     boolean p2nl = markers != null && mySettings.JD_P_AT_EMPTY_LINES;
-    ArrayList list = new ArrayList();
+    ArrayList<String> list = new ArrayList<String>();
     StringTokenizer st = new StringTokenizer(s, separators, true);
     boolean first = true;
     int preCount = 0;
@@ -174,6 +176,7 @@ public class JDParser {
     return list;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private boolean isParaTag(final String token) {
     String withoutWS = removeWhiteSpacesFrom(token).toLowerCase();
     return withoutWS.equals("<p/>") || withoutWS.equals("<p>");
@@ -200,11 +203,11 @@ public class JDParser {
     return sb.toString();
   }
 
-  public static String toCommaSeparated(ArrayList l) {
+  public static String toCommaSeparated(ArrayList<String> l) {
     if (l == null || l.size() == 0) return null;
     StringBuffer sb = new StringBuffer();
     for (int i = 0; i < l.size(); i++) {
-      String s = (String)l.get(i);
+      String s = l.get(i);
       if (i != 0) {
         sb.append(", ");
       }
@@ -221,19 +224,19 @@ public class JDParser {
    * @param width width of the wrapped text
    * @return array of strings (lines)
    */
-  private ArrayList toArrayWrapping(String s, int width) {
+  private ArrayList<String> toArrayWrapping(String s, int width) {
     if (s == null) return null;
     s = s.trim();
     if (s.length() == 0) return null;
 
-    ArrayList listParagraphs = new ArrayList();
+    ArrayList<String> listParagraphs = new ArrayList<String>();
     StringBuffer sb = new StringBuffer();
-    ArrayList markers = new ArrayList();
-    ArrayList list = toArray(s, "\n", markers);
+    ArrayList<Boolean> markers = new ArrayList<Boolean>();
+    ArrayList<String> list = toArray(s, "\n", markers);
     Boolean[] marks = (Boolean[])markers.toArray(new Boolean[markers.size()]);
     markers.clear();
     for (int i = 0; i < list.size(); i++) {
-      String s1 = (String)list.get(i);
+      String s1 = list.get(i);
       if (marks[i].booleanValue()) {
         if (sb.length() != 0) {
           listParagraphs.add(sb.toString());
@@ -267,9 +270,9 @@ public class JDParser {
     list.clear();
     // each line is a praragraph, which has to be wrapped later
     for (int i = 0; i < listParagraphs.size(); i++) {
-      String seq = (String)listParagraphs.get(i);
+      String seq = listParagraphs.get(i);
 
-      boolean isMarked = ((Boolean)markers.get(i)).booleanValue();
+      boolean isMarked = (markers.get(i)).booleanValue();
 
       if (seq.length() == 0) {
         // keep empty lines
@@ -319,10 +322,20 @@ public class JDParser {
     abstract boolean parse(String tag, String line, JDComment c);
   }
 
+  private static final @NonNls String SEE_TAG = "see";
+  private static final @NonNls String SINCE_TAG = "since";
+  private static final @NonNls String VERSION_TAG = "version";
+  private static final @NonNls String DEPRECATED_TAG = "deprecated";
+  private static final @NonNls String RETURN_TAG = "return";
+  private static final @NonNls String PARAM_TAG = "param";
+  private static final @NonNls String THROWS_TAG = "throws";
+  private static final @NonNls String EXCEPTION_TAG = "exception";
+  private static final @NonNls String AUTHOR_TAG = "author";
+
   private static TagParser[] tagParsers = {
     new TagParser() {
       boolean parse(String tag, String line, JDComment c) {
-        boolean isMyTag = "see".equals(tag);
+        boolean isMyTag = SEE_TAG.equals(tag);
         if (isMyTag) {
           c.addSeeAlso(line);
         }
@@ -331,7 +344,7 @@ public class JDParser {
     },
     new TagParser() {
       boolean parse(String tag, String line, JDComment c) {
-        boolean isMyTag = "since".equals(tag);
+        boolean isMyTag = SINCE_TAG.equals(tag);
         if (isMyTag) {
           c.setSince(line);
         }
@@ -340,7 +353,7 @@ public class JDParser {
     },
     new TagParser() {
       boolean parse(String tag, String line, JDComment c) {
-        boolean isMyTag = c instanceof JDClassComment && "version".equals(tag);
+        boolean isMyTag = c instanceof JDClassComment && VERSION_TAG.equals(tag);
         if (isMyTag) {
           ((JDClassComment)c).setVersion(line);
         }
@@ -349,7 +362,7 @@ public class JDParser {
     },
     new TagParser() {
       boolean parse(String tag, String line, JDComment c) {
-        boolean isMyTag = "deprecated".equals(tag);
+        boolean isMyTag = DEPRECATED_TAG.equals(tag);
         if (isMyTag) {
           c.setDeprecated(line);
         }
@@ -358,7 +371,7 @@ public class JDParser {
     },
     new TagParser() {
       boolean parse(String tag, String line, JDComment c) {
-        boolean isMyTag = c instanceof JDMethodComment && "return".equals(tag);
+        boolean isMyTag = c instanceof JDMethodComment && RETURN_TAG.equals(tag);
         if (isMyTag) {
           JDMethodComment mc = (JDMethodComment)c;
           mc.setReturnTag(line);
@@ -368,7 +381,7 @@ public class JDParser {
     },
     new TagParser() {
       boolean parse(String tag, String line, JDComment c) {
-        boolean isMyTag = c instanceof JDMethodComment && "param".equals(tag);
+        boolean isMyTag = c instanceof JDMethodComment && PARAM_TAG.equals(tag);
         if (isMyTag) {
           JDMethodComment mc = (JDMethodComment)c;
           int idx;
@@ -390,7 +403,7 @@ public class JDParser {
     },
     new TagParser() {
       boolean parse(String tag, String line, JDComment c) {
-        boolean isMyTag = c instanceof JDMethodComment && ("throws".equals(tag) || "exception".equals(tag));
+        boolean isMyTag = c instanceof JDMethodComment && (THROWS_TAG.equals(tag) || EXCEPTION_TAG.equals(tag));
         if (isMyTag) {
           JDMethodComment mc = (JDMethodComment)c;
           int idx;
@@ -412,7 +425,7 @@ public class JDParser {
     },
     new TagParser() {
       boolean parse(String tag, String line, JDComment c) {
-        boolean isMyTag = c instanceof JDClassComment && "author".equals(tag);
+        boolean isMyTag = c instanceof JDClassComment && AUTHOR_TAG.equals(tag);
         if (isMyTag) {
           JDClassComment cl = (JDClassComment)c;
           cl.addAuthor(line.trim());
@@ -440,19 +453,19 @@ public class JDParser {
   }
 
   protected StringBuffer splitIntoCLines(String s, StringBuffer prefix, boolean add_prefix_to_first_line) {
-    StringBuffer sb = new StringBuffer();
+    @NonNls StringBuffer sb = new StringBuffer();
     if (add_prefix_to_first_line) {
       sb.append(prefix);
     }
-    ArrayList list = mySettings.WRAP_COMMENTS
-                     ? toArrayWrapping(s, mySettings.RIGHT_MARGIN - prefix.length())
-                     : toArray(s, "\n", new ArrayList());
+    ArrayList<String> list = mySettings.WRAP_COMMENTS
+                             ? toArrayWrapping(s, mySettings.RIGHT_MARGIN - prefix.length())
+                             : toArray(s, "\n", new ArrayList<Boolean>());
     if (list == null) {
       sb.append('\n');
     }
     else {
       for (int i = 0; i < list.size(); i++) {
-        String line = (String)list.get(i);
+        String line = list.get(i);
         if (line.length() == 0 && !mySettings.JD_KEEP_EMPTY_LINES) continue;
         if (i != 0) sb.append(prefix);
         if (line.length() == 0 && mySettings.JD_P_AT_EMPTY_LINES) {

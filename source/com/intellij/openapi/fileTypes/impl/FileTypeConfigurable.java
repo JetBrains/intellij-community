@@ -4,10 +4,7 @@ import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.ide.highlighter.custom.impl.CustomFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.fileTypes.UserFileType;
+import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
@@ -52,7 +49,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Applicatio
   }
 
   public String getDisplayName() {
-    return "File Types";
+    return FileTypesBundle.message("filetype.settings.title");
   }
 
   public JComponent createComponent() {
@@ -168,7 +165,8 @@ public class FileTypeConfigurable extends BaseConfigurable implements Applicatio
     UserFileType ftToEdit = myOriginalToEditedMap.get(fileType);
     if (ftToEdit == null) ftToEdit = ((UserFileType)fileType).clone();
     if (ftToEdit.getEditor() == null) return;
-    TypeEditor editor = new TypeEditor(myRecognizedFileType.myEditButton, ftToEdit, "Edit File Type");
+    TypeEditor editor = new TypeEditor(myRecognizedFileType.myEditButton, ftToEdit,
+                                       FileTypesBundle.message("filetype.edit.existing.title"));
     editor.show();
     if (editor.isOK()) {
       myOriginalToEditedMap.put((UserFileType)fileType, ftToEdit);
@@ -201,7 +199,8 @@ public class FileTypeConfigurable extends BaseConfigurable implements Applicatio
   private void addFileType() {
     //TODO: support adding binary file types...
     CustomFileType type = new CustomFileType(new SyntaxTable());
-    TypeEditor editor = new TypeEditor(myRecognizedFileType.myAddButton, type, "New File Type");
+    TypeEditor editor = new TypeEditor(myRecognizedFileType.myAddButton, type,
+                                       FileTypesBundle.message("filetype.edit.new.title"));
     editor.show();
     if (editor.isOK()) {
       myTempFileTypes.add(type);
@@ -215,14 +214,15 @@ public class FileTypeConfigurable extends BaseConfigurable implements Applicatio
   private void addExtension() {
     FileType type = myRecognizedFileType.getSelectedFileType();
     if (type == null) return;
-    String text = Messages.showInputDialog(myExtensions.myAddButton, "Enter new extension:", "Add Extension", Messages.getQuestionIcon());
+    String text = Messages.showInputDialog(myExtensions.myAddButton, FileTypesBundle.message("filetype.edit.add.extension.prompt"),
+                                           FileTypesBundle.message("filetype.edit.add.extension.title"), Messages.getQuestionIcon());
     if (text == null || "".equals(text)) return;
 
     FileType registeredFileType = addNewExtension(type, text);
     if (registeredFileType != null) {
       Messages.showMessageDialog(myExtensions.myAddButton,
-                                 "This extension is already registered by \'" + registeredFileType.getDescription() + "\' filetype",
-                                 "Add Extension",
+                                 FileTypesBundle.message("filetype.edit.add.extension.exists.error", registeredFileType.getDescription()),
+                                 FileTypesBundle.message("filetype.edit.add.extension.exists.title"),
                                  Messages.getErrorIcon());
     }
   }

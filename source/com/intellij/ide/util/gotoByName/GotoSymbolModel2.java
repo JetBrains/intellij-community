@@ -34,6 +34,7 @@ package com.intellij.ide.util.gotoByName;
 import com.intellij.navigation.ChooseByNameRegistry;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ide.IdeBundle;
 
 public class GotoSymbolModel2 extends ContributorsBasedGotoByModel {
   public GotoSymbolModel2(Project project) {
@@ -41,19 +42,19 @@ public class GotoSymbolModel2 extends ContributorsBasedGotoByModel {
   }
 
   public String getPromptText() {
-    return "Enter symbol name:";
+    return IdeBundle.message("prompt.gotosymbol.enter.symbol.name");
   }
 
   public String getCheckBoxName() {
-    return "Include non-project symbols";
+    return IdeBundle.message("checkbox.include.non.project.symbols");
   }
 
   public String getNotInMessage() {
-    return "no matches found in project";
+    return IdeBundle.message("label.no.matches.found.in.project");
   }
 
   public String getNotFoundMessage() {
-    return "no matches found";
+    return IdeBundle.message("label.no.matches.found");
   }
 
   public char getCheckBoxMnemonic() {

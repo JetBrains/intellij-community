@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
@@ -16,8 +17,7 @@ import java.util.List;
  * @author dsl
  */
 public class PushDownHandler implements RefactoringActionHandler {
-  public static final String REFACTORING_NAME = "Push Members Down";
-  private PsiClass myClass;
+  public static final String REFACTORING_NAME = RefactoringBundle.message("push.members.down.title");
 
   public void invoke(Project project, Editor editor, PsiFile file, DataContext dataContext) {
     int offset = editor.getCaretModel().getOffset();
@@ -26,9 +26,8 @@ public class PushDownHandler implements RefactoringActionHandler {
 
     while (true) {
       if (element == null || element instanceof PsiFile) {
-        String message =
-                "Cannot perform the refactoring.\n" +
-                "The caret should be positioned inside a class to push members from";
+        String message = RefactoringBundle.getCannotRefactorMessage(
+          RefactoringBundle.message("the.caret.should.be.positioned.inside.a.class.to.push.members.from"));
         RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, null/*HelpID.MEMBERS_PUSH_DOWN*/, project);
         return;
       }
@@ -63,21 +62,18 @@ public class PushDownHandler implements RefactoringActionHandler {
     } else
       return;
 
-    myClass = aClass;
-    if (!myClass.isWritable()) {
+    if (!aClass.isWritable()) {
       if (!RefactoringMessageUtil.checkReadOnlyStatus(project, aClass)) return;
     }
-    MemberInfoStorage memberInfoStorage = new MemberInfoStorage(myClass, new MemberInfo.Filter() {
+    MemberInfoStorage memberInfoStorage = new MemberInfoStorage(aClass, new MemberInfo.Filter() {
       public boolean includeMember(PsiMember element) {
         return true;
       }
     });
-    List<MemberInfo> members = memberInfoStorage.getClassMemberInfos(myClass);
-    PsiManager manager = myClass.getManager();
+    List<MemberInfo> members = memberInfoStorage.getClassMemberInfos(aClass);
+    PsiManager manager = aClass.getManager();
 
-    for (int i = 0; i < members.size(); i++) {
-      MemberInfo member = members.get(i);
-
+    for (MemberInfo member : members) {
       if (manager.areElementsEquivalent(member.getMember(), aMember)) {
         member.setChecked(true);
         break;
@@ -86,7 +82,7 @@ public class PushDownHandler implements RefactoringActionHandler {
     PushDownDialog dialog = new PushDownDialog(
             project,
             members.toArray(new MemberInfo[members.size()]),
-            myClass);
+            aClass);
     dialog.show();
   }
 }

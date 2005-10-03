@@ -16,7 +16,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.CheckedTreeNode;
@@ -24,6 +23,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.Tree;
+import com.intellij.refactoring.RefactoringBundle;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -164,10 +164,10 @@ public abstract class CallerChooser extends DialogWrapper {
     myCallerEditor = createEditor();
     myCalleeEditor = createEditor();
     final JComponent callerComponent = myCallerEditor.getComponent();
-    callerComponent.setBorder(IdeBorderFactory.createTitledBorder("Caller Method"));
+    callerComponent.setBorder(IdeBorderFactory.createTitledBorder(RefactoringBundle.message("caller.chooser.caller.method")));
     splitter.setFirstComponent(callerComponent);
     final JComponent calleeComponent = myCalleeEditor.getComponent();
-    calleeComponent.setBorder(IdeBorderFactory.createTitledBorder("Callee Method"));
+    calleeComponent.setBorder(IdeBorderFactory.createTitledBorder(RefactoringBundle.message("caller.chooser.callee.method")));
     splitter.setSecondComponent(calleeComponent);
     splitter.setBorder(IdeBorderFactory.createBorder());
     return splitter;
@@ -238,7 +238,7 @@ public abstract class CallerChooser extends DialogWrapper {
   private void getSelectedMethodsInner(final MethodNode node, final Set<PsiMethod> allMethods) {
     if (node.isChecked()) {
       PsiMethod method = node.getMethod();
-      final PsiMethod superMethod = PsiSuperMethodUtil.findDeepestSuperMethod(method);
+      final PsiMethod superMethod = method.findDeepestSuperMethod();
       if (superMethod != null) method = superMethod;
       allMethods.add(method);
       final Enumeration children = node.children();

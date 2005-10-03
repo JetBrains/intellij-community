@@ -8,6 +8,7 @@ import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil;
 import com.intellij.openapi.keymap.impl.ui.Group;
 import com.intellij.openapi.util.*;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.ArrayList;
@@ -41,7 +42,7 @@ public class CustomActionsSchema implements JDOMExternalizable {
     myIdToNameList.add(new Pair(IdeActions.GROUP_J2EE_VIEW_POPUP, ActionsTreeUtil.J2EE_POPUP));
   }
 
-  private static final String GROUP = "group";
+  @NonNls private static final String GROUP = "group";
 
   public CustomActionsSchema() {
   }

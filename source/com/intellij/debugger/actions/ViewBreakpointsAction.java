@@ -14,12 +14,13 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.idea.ActionsBundle;
 
 public class ViewBreakpointsAction extends AnAction {
   private Breakpoint myInitialBreakpoint;
 
   public ViewBreakpointsAction(){
-    this("View Breakpoints...");
+    this(ActionsBundle.actionText(DebuggerActions.VIEW_BREAKPOINTS));
   }
 
   public ViewBreakpointsAction(String name) {

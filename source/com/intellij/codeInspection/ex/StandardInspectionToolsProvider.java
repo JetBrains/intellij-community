@@ -1,11 +1,14 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.i18n.I18nInspection;
+import com.intellij.codeInsight.i18n.InvalidPropertyKeyInspection;
 import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.dependencyViolation.DependencyViolationInspection;
+import com.intellij.codeInspection.duplicatePropertyInspection.DuplicatePropertyInspection;
 import com.intellij.codeInspection.duplicateStringLiteral.DuplicateStringLiteralInspection;
 import com.intellij.codeInspection.nullable.NullableStuffInspection;
 import com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspection;
+import com.intellij.lang.properties.UnusedMessageFormatParameterInspection;
 import com.intellij.lang.properties.UnusedPropertyInspection;
 import com.intellij.openapi.components.ApplicationComponent;
 
@@ -40,6 +43,7 @@ public class StandardInspectionToolsProvider implements InspectionToolProvider, 
       com.intellij.codeInspection.defUse.DefUseInspection.class,
       com.intellij.codeInspection.redundantCast.RedundantCastInspection.class,
       com.intellij.codeInspection.miscGenerics.RedundantTypeArgsInspection.class,
+      com.intellij.codeInspection.miscGenerics.RedundantArrayForVarargsCallInspection.class,
       com.intellij.codeInspection.miscGenerics.SuspiciousCollectionsMethodCallsInspection.class,
       com.intellij.codeInspection.localCanBeFinal.LocalCanBeFinal.class,
 
@@ -51,6 +55,7 @@ public class StandardInspectionToolsProvider implements InspectionToolProvider, 
       com.intellij.codeInspection.java15api.Java15APIUsageInspection.class,
 
       I18nInspection.class,
+      InvalidPropertyKeyInspection.class,
       UnusedPropertyInspection.class,
 
       DependencyViolationInspection.class,
@@ -58,6 +63,8 @@ public class StandardInspectionToolsProvider implements InspectionToolProvider, 
       NullableStuffInspection.class,
 
       DuplicateStringLiteralInspection.class,
+      DuplicatePropertyInspection.class,
+      UnusedMessageFormatParameterInspection.class
       };
   }
 }

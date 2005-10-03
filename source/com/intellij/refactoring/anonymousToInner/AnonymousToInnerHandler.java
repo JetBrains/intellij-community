@@ -19,6 +19,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.classMembers.ElementNeedsThis;
 import com.intellij.util.IncorrectOperationException;
@@ -26,10 +27,12 @@ import com.intellij.util.IncorrectOperationException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import org.jetbrains.annotations.NonNls;
+
 public class AnonymousToInnerHandler implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.anonymousToInner.AnonymousToInnerHandler");
 
-  private static final String REFACTORING_NAME = "Convert Anonymous to Inner";
+  static final String REFACTORING_NAME = RefactoringBundle.message("anonymousToInner.refactoring.name");
 
   private Project myProject;
 
@@ -59,7 +62,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
     if (anonymousClass == null) {
       RefactoringMessageUtil.showErrorMessage(
               REFACTORING_NAME,
-              "Cannot perform the refactoring.\nThe caret should be positioned inside the anonymous class.",
+              RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.anonymous")),
               HelpID.ANONYMOUS_TO_INNER,
               project);
       return;
@@ -76,13 +79,13 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
     PsiClassType baseRef = myAnonClass.getBaseClassType();
 
     if (baseRef.resolve() == null) {
-      String message = "Cannot resolve " + baseRef.getCanonicalText();
+      String message = RefactoringBundle.message("error.cannot.resolve", baseRef.getCanonicalText());
       RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.ANONYMOUS_TO_INNER, project);
       return;
     }
     PsiElement targetContainer = findTargetContainer(myAnonClass);
     if (targetContainer instanceof JspFile) {
-      String message = REFACTORING_NAME + " refactoring is not supported for JSP";
+      String message = RefactoringBundle.message("error.not.supported.for.jsp", REFACTORING_NAME);
       RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.ANONYMOUS_TO_INNER, project);
       return;
     }
@@ -122,8 +125,8 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
                 ApplicationManager.getApplication().runWriteAction(action);
               }
             },
-            REFACTORING_NAME,
-            null
+        REFACTORING_NAME,
+        null
     );
 
   }
@@ -133,7 +136,8 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
     myTargetClass.add(aClass);
 
     PsiNewExpression newExpr = (PsiNewExpression) myAnonClass.getParent();
-    StringBuffer buf = new StringBuffer("new ");
+    @NonNls StringBuffer buf = new StringBuffer();
+    buf.append("new ");
     buf.append(aClass.getName());
     buf.append("(");
     boolean isFirstParameter = true;
@@ -340,8 +344,8 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
   }
 
   private static void copyClassBody(PsiClass sourceClass,
-                                  PsiClass targetClass,
-                                  boolean appendInitializersToConstructor) throws IncorrectOperationException {
+                                    PsiClass targetClass,
+                                    boolean appendInitializersToConstructor) throws IncorrectOperationException {
     PsiElement lbrace = sourceClass.getLBrace();
     PsiElement rbrace = sourceClass.getRBrace();
     if (lbrace != null) {
@@ -386,7 +390,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
     PsiElementFactory factory = constructor.getManager().getElementFactory();
     for (VariableInfo info : myVariableInfos) {
       if (info.saveInField) {
-        String text = info.fieldName + "=a;";
+        @NonNls String text = info.fieldName + "=a;";
         boolean useThis = info.passAsParameter && info.parameterName.equals(info.fieldName);
         if (useThis) {
           text = "this." + text;

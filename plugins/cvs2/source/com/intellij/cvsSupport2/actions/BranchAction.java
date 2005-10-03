@@ -9,6 +9,7 @@ import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.ui.CreateTagDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.actions.VcsContext;
+import com.intellij.CvsBundle;
 
 import java.util.Arrays;
 
@@ -26,7 +27,7 @@ public class BranchAction extends ActionOnSelectedElement{
   }
 
   protected String getTitle(VcsContext context) {
-    return "Branch";
+    return CvsBundle.message("operation.name.create.branch");
   }
 
   protected CvsHandler getCvsHandler(CvsContext context) {

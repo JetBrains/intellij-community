@@ -6,6 +6,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * author: lesya
@@ -14,7 +15,9 @@ public class LocalSettings implements JDOMExternalizable, Cloneable {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.config.LocalSettings");
 
+  @NonNls
   public String PATH_TO_CVS_CLIENT = "cvs";
+  @NonNls
   public String SERVER_COMMAND = "server";
 
   public void readExternal(Element element) throws InvalidDataException {

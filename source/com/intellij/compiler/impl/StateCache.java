@@ -6,12 +6,14 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Set;
 
+import org.jetbrains.annotations.NonNls;
+
 public abstract class StateCache<T> extends MapCache<T> {
-  public StateCache(String storePath) {
+  public StateCache(@NonNls String storePath) {
     super(storePath);
   }
 
-  public void update(String url, T state){
+  public void update(@NonNls String url, T state){
     if (!load()) {
       return;
     }
@@ -53,5 +55,5 @@ public abstract class StateCache<T> extends MapCache<T> {
     }
     return myMap.keySet().iterator();
   }
-  
+
 }

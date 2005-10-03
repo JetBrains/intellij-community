@@ -10,6 +10,7 @@ package com.intellij.refactoring.rename;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.usageView.UsageViewUtil;
 
@@ -19,16 +20,17 @@ public class SubmemberHidesMemberUsageInfo extends UnresolvableCollisionUsageInf
   }
 
   public String getDescription() {
-    StringBuffer buffer = new StringBuffer();
-
-    buffer.append(ConflictsUtil.getDescription(getElement(), true));
+    String descr;
     if (!(getElement() instanceof PsiMethod)) {
-      buffer.append(" will hide renamed ");
+      descr = RefactoringBundle.message("0.will.hide.renamed.1",
+                                        ConflictsUtil.getDescription(getElement(), true),
+                                        UsageViewUtil.getType(getElement()));
     }
     else {
-      buffer.append(" will override renamed ");
+      descr = RefactoringBundle.message("0.will.override.renamed.1",
+                                        ConflictsUtil.getDescription(getElement(), true),
+                                        UsageViewUtil.getType(getElement()));
     }
-    buffer.append(UsageViewUtil.getType(getElement()));
-    return ConflictsUtil.capitalize(buffer.toString());
+    return ConflictsUtil.capitalize(descr);
   }
 }

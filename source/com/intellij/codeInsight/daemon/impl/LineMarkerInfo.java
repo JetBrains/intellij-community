@@ -1,6 +1,7 @@
 
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.ide.util.MethodCellRenderer;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -14,14 +15,17 @@ import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.psi.util.PsiSuperMethodUtil;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.lang.ref.WeakReference;
 import java.text.MessageFormat;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 public class LineMarkerInfo {
   public static final LineMarkerInfo[] EMPTY_ARRAY = new LineMarkerInfo[0];
@@ -94,25 +98,22 @@ public class LineMarkerInfo {
 
   private String getMethodTooltip(PsiMethod method) {
     if (type == OVERRIDING_METHOD){
-      PsiMethod[] superMethods = PsiSuperMethodUtil.findSuperMethods(method, false);
+      PsiMethod[] superMethods = method.findSuperMethods(false);
       if (superMethods.length == 0) return null;
 
       PsiMethod superMethod = superMethods[0];
-      StringBuffer format = new StringBuffer();
       boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
       boolean isSuperAbstract = superMethod.hasModifierProperty(PsiModifier.ABSTRACT);
+
+      final boolean sameSignature = superMethod.getSignature(PsiSubstitutor.EMPTY).equals(method.getSignature(PsiSubstitutor.EMPTY));
+      @NonNls final String key;
       if (isSuperAbstract && !isAbstract){
-        format.append("Implements");
+        key = sameSignature ? "method.implements" : "method.implements.2";
       }
       else{
-        format.append("Overrides");
+        key = sameSignature ? "method.overrides" : "method.overrides.2";
       }
-      format.append(" method");
-      if (!superMethod.getSignature(PsiSubstitutor.EMPTY).equals(method.getSignature(PsiSubstitutor.EMPTY))) {
-        format.append(" ''{0}''");
-      }
-      format.append(" in ''{1}''");
-      return composeText(superMethods, "", format.toString());
+      return composeText(superMethods, "", DaemonBundle.message(key));
     }
     else if (type == OVERRIDEN_METHOD){
       PsiManager manager = method.getManager();
@@ -123,17 +124,17 @@ public class LineMarkerInfo {
       boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
 
       if (processor.isOverflow()){
-        return isAbstract ? "Has implementations" : "Is overridden in subclasses";
+        return isAbstract ? DaemonBundle.message("method.is.implemented.too.many") : DaemonBundle.message("method.is.overridden.too.many");
       }
 
       PsiMethod[] overridings = processor.toArray(new PsiMethod[processor.getCollection().size()]);
       if (overridings.length == 0) return null;
 
-      Comparator comparator = new MethodCellRenderer(false).getComparator();
+      Comparator<PsiMethod> comparator = new MethodCellRenderer(false).getComparator();
       Arrays.sort(overridings, comparator);
 
-      String start = isAbstract ? "Is implemented in <br>" : "Is overridden in <br>";
-      String pattern = "&nbsp;&nbsp;&nbsp;&nbsp;{1}";
+      String start = isAbstract ? DaemonBundle.message("method.is.implemented.header") : DaemonBundle.message("method.is.overriden.header");
+      @NonNls String pattern = "&nbsp;&nbsp;&nbsp;&nbsp;{1}";
       return composeText(overridings, start, pattern);
     }
     else{
@@ -147,7 +148,8 @@ public class LineMarkerInfo {
       PsiClass aClass = psiField.getContainingClass();
       if (aClass != null && aClass.getQualifiedName() != null) {
         PsiFile[] formFiles = helper.findFormsBoundToClass(aClass.getQualifiedName());
-        return composeText(formFiles, "UI is bound in<br>", "&nbsp;&nbsp;&nbsp;&nbsp;{0}");
+        @NonNls final String pattern = "&nbsp;&nbsp;&nbsp;&nbsp;{0}";
+        return composeText(formFiles, DaemonBundle.message("ui.is.bound.header"), pattern);
       }
     }
     return null;
@@ -162,25 +164,31 @@ public class LineMarkerInfo {
       helper.processInheritors(processor, aClass, scope, false);
 
       if (processor.isOverflow()) {
-        return aClass.isInterface() ? "Has implementations" : "Has subclasses";
+        return aClass.isInterface()
+               ? DaemonBundle.message("interface.is.implemented.too.many")
+               : DaemonBundle.message("class.is.subclassed.too.many");
       }
 
       PsiClass[] subclasses = processor.toArray(new PsiClass[processor.getCollection().size()]);
       if (subclasses.length == 0) return null;
 
-      Comparator comparator = new PsiClassListCellRenderer().getComparator();
+      Comparator<PsiClass> comparator = new PsiClassListCellRenderer().getComparator();
       Arrays.sort(subclasses, comparator);
 
-      String start = aClass.isInterface() ? "Is implemented by<br>" : "Is subclassed by<br>";
-      String pattern = "&nbsp;&nbsp;&nbsp;&nbsp;{0}";
+      String start = aClass.isInterface()
+                     ? DaemonBundle.message("interface.is.implemented.by.header")
+                     : DaemonBundle.message("class.is.subclassed.by.header");
+      @NonNls String pattern = "&nbsp;&nbsp;&nbsp;&nbsp;{0}";
       return composeText(subclasses, start, pattern);
     }
     else if (type == BOUND_CLASS_OR_FIELD) {
       if (aClass.getQualifiedName() != null) {
         PsiFile[] formFiles = helper.findFormsBoundToClass(aClass.getQualifiedName());
-        return composeText(formFiles, "UI is bound in<br>", "&nbsp;&nbsp;&nbsp;&nbsp;{0}");
+        @NonNls final String pattern = "&nbsp;&nbsp;&nbsp;&nbsp;{0}";
+        return composeText(formFiles, DaemonBundle.message("ui.is.bound.header"), pattern);
       }
     }
+
     return null;
   }
 
@@ -191,6 +199,7 @@ public class LineMarkerInfo {
     }
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static String composeText(PsiElement[] elements, String start, String formatPattern) {
     StringBuffer result = new StringBuffer();
     result.append("<html><body>");
@@ -200,15 +209,15 @@ public class LineMarkerInfo {
       String descr = "";
       if (element instanceof PsiClass) {
         String className = ClassPresentationUtil.getNameForClass((PsiClass)element, true);
-        descr = MessageFormat.format(formatPattern, new Object[]{className});
+        descr = MessageFormat.format(formatPattern, className);
       }
       else if (element instanceof PsiMethod) {
         String methodName = ((PsiMethod)element).getName();
         String className = ClassPresentationUtil.getNameForClass(((PsiMethod)element).getContainingClass(), true);
-        descr = MessageFormat.format(formatPattern, new Object[]{methodName, className});
+        descr = MessageFormat.format(formatPattern, methodName, className);
       }
       else if (element instanceof PsiFile) {
-        descr = MessageFormat.format(formatPattern, new Object[]{((PsiFile)element).getName()});
+        descr = MessageFormat.format(formatPattern, ((PsiFile)element).getName());
       }
       names.add(descr);
     }

@@ -4,6 +4,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.ide.IdeBundle;
 
 public class SelectAllAction extends AnAction {
   public SelectAllAction() {
@@ -21,7 +22,7 @@ public class SelectAllAction extends AnAction {
           editor.getSelectionModel().setSelection(0, editor.getDocument().getTextLength());
         }
       },
-      "Select All",
+      IdeBundle.message("command.select.all"),
       null
     );
   }

@@ -16,6 +16,7 @@ import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.command.IFileInfo;
 import org.netbeans.lib.cvsclient.file.FileObject;
 import org.netbeans.lib.cvsclient.util.BugLog;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 
@@ -49,7 +50,7 @@ public final class UpdateFileInfo
 	}
 
 	public String toString() {
-		final StringBuffer buffer = new StringBuffer();
+		@NonNls final StringBuffer buffer = new StringBuffer();
 		buffer.append(type);
 		buffer.append("  ");
 		if (isDirectory()) {
@@ -77,7 +78,7 @@ public final class UpdateFileInfo
 		this.entry = entry;
 	}
 
-	void setType(String type) {
+	void setType(@NonNls String type) {
 		this.type = type;
 	}
 

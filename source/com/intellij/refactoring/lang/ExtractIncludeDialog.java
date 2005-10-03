@@ -13,6 +13,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.lang.jsp.extractInclude.ExtractJspIncludeFileHandler;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.IncorrectOperationException;
@@ -31,6 +32,7 @@ public class ExtractIncludeDialog extends DialogWrapper {
   private JTextField myNameField;
   private final PsiDirectory myCurrentDirectory;
   private final LanguageFileType myFileType;
+  private static final String REFACTORING_NAME = RefactoringBundle.message("extractIncludeFile.name");
 
   public PsiDirectory getTargetDirectory() {
     return myTargetDirectory;
@@ -46,7 +48,7 @@ public class ExtractIncludeDialog extends DialogWrapper {
     super(false);
     myCurrentDirectory = currentDirectory;
     myFileType = fileType;
-    setTitle("Extract Include File");
+    setTitle(REFACTORING_NAME);
     init();
   }
 
@@ -58,8 +60,7 @@ public class ExtractIncludeDialog extends DialogWrapper {
     JPanel panel = new JPanel(new VerticalFlowLayout());
     panel.setBorder(IdeBorderFactory.createBorder());
 
-    JLabel nameLabel = new JLabel("Name for extracted include file (without extension):");
-    nameLabel.setDisplayedMnemonic('n');
+    JLabel nameLabel = new JLabel();
     panel.add(nameLabel);
 
     myNameField = new JTextField();
@@ -70,16 +71,18 @@ public class ExtractIncludeDialog extends DialogWrapper {
       }
     });
     panel.add(myNameField);
+    nameLabel.setText(RefactoringBundle.message("name.for.extracted.include.file"));
 
-    JLabel targetDirLabel = new JLabel("Extract to directory:");
-    targetDirLabel.setDisplayedMnemonic('d');
+    JLabel targetDirLabel = new JLabel();
     panel.add(targetDirLabel);
 
     myTargetDirectoryField = new TextFieldWithBrowseButton();
     myTargetDirectoryField.setText(myCurrentDirectory.getVirtualFile().getPresentableUrl());
-    myTargetDirectoryField.addBrowseFolderListener("Select target directory", "The file will be created in this directory",
+    myTargetDirectoryField.addBrowseFolderListener(RefactoringBundle.message("select.target.directory"),
+                                                   RefactoringBundle.message("select.target.directory.description"),
                                                    null, FileChooserDescriptorFactory.createSingleFolderDescriptor());
-    targetDirLabel.setLabelFor(myTargetDirectoryField);
+
+    targetDirLabel.setText(RefactoringBundle.message("extract.to.directory"));
     panel.add(myTargetDirectoryField);
 
     myTargetDirectoryField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
@@ -114,13 +117,13 @@ public class ExtractIncludeDialog extends DialogWrapper {
               myTargetDirectory = webPath == null ? null : targetDirectory;
             }
             catch (IncorrectOperationException e) {
-              RefactoringMessageUtil.showErrorMessage("Extract Include File", e.getMessage(), null, project);
+              RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, e.getMessage(), null, project);
             }
           }
         };
         ApplicationManager.getApplication().runWriteAction(action);
       }
-    }, "Create directory", null);
+    }, RefactoringBundle.message("create.directory"), null);
     if (myTargetDirectory == null) return;
     super.doOKAction();
   }

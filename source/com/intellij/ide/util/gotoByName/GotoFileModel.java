@@ -1,5 +1,6 @@
 package com.intellij.ide.util.gotoByName;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.fileTypes.FileType;
@@ -20,11 +21,11 @@ public class GotoFileModel implements ChooseByNameModel {
   }
 
   public String getPromptText() {
-    return "Enter file name:";
+    return IdeBundle.message("prompt.gotofile.enter.file.name");
   }
 
   public String getCheckBoxName() {
-    return "Include java files";
+    return IdeBundle.message("checkbox.include.java.files");
   }
 
   public char getCheckBoxMnemonic() {
@@ -32,21 +33,21 @@ public class GotoFileModel implements ChooseByNameModel {
   }
 
   public String getNotInMessage() {
-    return "no non-.java files found";
+    return IdeBundle.message("label.no.non.java.files.found");
   }
 
   public String getNotFoundMessage() {
-    return "no files found";
+    return IdeBundle.message("label.no.files.found");
   }
 
   public boolean loadInitialCheckBoxState() {
     PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(myProject);
-    return "true".equals(propertiesComponent.getValue("GoToClass.includeJavaFiles"));
+    return propertiesComponent.isTrueValue("GoToClass.includeJavaFiles");
   }
 
   public void saveInitialCheckBoxState(boolean state) {
     PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(myProject);
-    propertiesComponent.setValue("GoToClass.includeJavaFiles", state ? "true" : "false");
+    propertiesComponent.setValue("GoToClass.includeJavaFiles", Boolean.toString(state));
   }
 
   public PsiElementListCellRenderer getListCellRenderer() {

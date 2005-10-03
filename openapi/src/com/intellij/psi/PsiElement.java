@@ -26,6 +26,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -161,6 +162,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    *
    * @return the element text.
    */
+  @NonNls
   String getText();
 
   /**
@@ -462,4 +464,9 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * @return the AST node instance.
    */
   ASTNode getNode();
+
+  /**
+   * toString() should never be presented to the user.
+   */
+  @NonNls String toString();
 }

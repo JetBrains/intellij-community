@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
@@ -16,11 +17,11 @@ public class ImplementMethodsFix implements IntentionAction {
   }
 
   public String getText() {
-    return "Implement Methods";
+    return QuickFixBundle.message("implement.methods.fix");
   }
 
   public String getFamilyName() {
-    return "Implement Methods";
+    return QuickFixBundle.message("implement.methods.fix");
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {

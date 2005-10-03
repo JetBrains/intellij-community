@@ -1,5 +1,7 @@
 package com.intellij.cvsSupport2.javacvsImpl.io;
 
+import java.text.MessageFormat;
+
 /**
  * author: lesya
  */
@@ -32,7 +34,7 @@ public class ReadWriteStatistics {
       myShownReadKBytes = myReadBytes / KB;
     }
 
-    showProgress("Reading data from server");
+    showProgress(com.intellij.CvsBundle.message("progress.text.reading.data.from.server"));
   }
 
   public void send(long bytes){
@@ -42,7 +44,7 @@ public class ReadWriteStatistics {
       mySentFromLastUpdateBytes = 0;
       myShownSentKBytes = mySentBytes / KB;
     }
-    showProgress("Sending data to server");
+    showProgress(com.intellij.CvsBundle.message("progress.text.sending.data.to.server"));
   }
 
   private void showProgress(String mesasge) {
@@ -52,12 +54,12 @@ public class ReadWriteStatistics {
       buffer.append(": ");
     }
     if (myShownReadKBytes > 0){
-      buffer.append(myShownReadKBytes + "Kb read");
+      buffer.append(com.intellij.CvsBundle.message("progress.text.kb.read", myShownReadKBytes));
       if (myShownSentKBytes > 0) buffer.append("; ");
     }
 
     if (myShownSentKBytes > 0)
-      buffer.append(myShownSentKBytes + "Kb sent");
+      buffer.append(com.intellij.CvsBundle.message("progress.text.kb.sent", myShownSentKBytes));
 
     myProgress.setText(buffer.toString());
   }

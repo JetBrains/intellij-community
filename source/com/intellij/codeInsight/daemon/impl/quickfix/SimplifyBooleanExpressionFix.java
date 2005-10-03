@@ -3,6 +3,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -27,11 +28,11 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
   }
 
   public String getText() {
-    return "Simplify '" + mySubExpression.getText() + "' to " + mySubExpressionValue;
+    return QuickFixBundle.message("simplify.boolean.expression.text", mySubExpression.getText(), mySubExpressionValue);
   }
 
   public String getFamilyName() {
-    return "Simplify boolean expression";
+    return QuickFixBundle.message("simplify.boolean.expression.family");
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
@@ -50,7 +51,7 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
     }
     else {
       PsiExpression constExpression = PsiManager.getInstance(project).getElementFactory()
-          .createExpressionFromText(mySubExpressionValue.toString(), mySubExpression);
+          .createExpressionFromText(Boolean.toString(mySubExpressionValue.booleanValue()), mySubExpression);
       LOG.assertTrue(constExpression.isValid());
       expression = (PsiExpression)mySubExpression.replace(constExpression);
     }
@@ -235,7 +236,7 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
   public static Boolean getConstBoolean(PsiExpression operand) {
     if (operand == null) return null;
     String text = operand.getText();
-    return "true".equals(text) ? Boolean.TRUE : "false".equals(text) ? Boolean.FALSE : null;
+    return PsiKeyword.TRUE.equals(text) ? Boolean.TRUE : PsiKeyword.FALSE.equals(text) ? Boolean.FALSE : null;
   }
 
   public boolean startInWriteAction() {

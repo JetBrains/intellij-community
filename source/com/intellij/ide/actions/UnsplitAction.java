@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.ide.IdeBundle;
 
 /**
  * @author Vladimir Kondratyev
@@ -25,7 +26,7 @@ public final class UnsplitAction extends AnAction{
       presentation.setEnabled(false);
       return;
     }
-    presentation.setText("Un_split");
+    presentation.setText(IdeBundle.message("action.unsplit"));
     final FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
     presentation.setEnabled (fileEditorManager.isInSplitter());
   }

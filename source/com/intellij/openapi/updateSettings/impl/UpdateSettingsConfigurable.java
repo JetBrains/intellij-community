@@ -1,18 +1,24 @@
 package com.intellij.openapi.updateSettings.impl;
 
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.actions.CheckForUpdateAction;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.*;
-import com.intellij.ide.actions.CheckForUpdateAction;
+import com.intellij.util.ui.MappingListCellRenderer;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.DateFormat;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Date;
 
 /**
  * Created by IntelliJ IDEA.
@@ -27,10 +33,18 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Appl
   private UpdatesSettingsPanel myUpdatesSettingsPanel;
   private boolean myCheckNowEnabled = true;
 
-  public static final String ON_START_UP = "On every start";
-  public static final String DAILY = "Daily";
-  public static final String WEEKLY = "Weekly";
-  public static final String MONTHLY = "Monthly";
+  @NonNls public static final String ON_START_UP = "On every start";
+  @NonNls public static final String DAILY = "Daily";
+  @NonNls public static final String WEEKLY = "Weekly";
+  @NonNls public static final String MONTHLY = "Monthly";
+
+  private static final Map<Object, String> PERIOD_VALUE_MAP = new HashMap<Object, String>();
+  static {
+    PERIOD_VALUE_MAP.put(ON_START_UP, IdeBundle.message("updates.check.period.on.startup"));
+    PERIOD_VALUE_MAP.put(DAILY, IdeBundle.message("updates.check.period.daily"));
+    PERIOD_VALUE_MAP.put(WEEKLY, IdeBundle.message("updates.check.period.weekly"));
+    PERIOD_VALUE_MAP.put(MONTHLY, IdeBundle.message("updates.check.period.monthly"));
+  }
 
   public boolean CHECK_NEEDED = true;
   public String CHECK_PERIOD = WEEKLY;
@@ -46,7 +60,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Appl
   }
 
   public String getDisplayName() {
-    return "Updates";
+    return IdeBundle.message("updates.settings.title");
   }
 
   public String getHelpTopic() {
@@ -79,7 +93,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Appl
 
   public boolean isModified() {
       return CHECK_NEEDED != myUpdatesSettingsPanel.myCbCheckForUpdates.isSelected() ||
-           !CHECK_PERIOD.equals(myUpdatesSettingsPanel.myPeriodCombo.getSelectedItem());
+             !CHECK_PERIOD.equals(myUpdatesSettingsPanel.myPeriodCombo.getSelectedItem());
   }
 
   public void readExternal(Element element) throws InvalidDataException {
@@ -111,10 +125,13 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Appl
     private JLabel myLastCheckedDate;
 
     public UpdatesSettingsPanel() {
+
       myPeriodCombo.addItem(ON_START_UP);
       myPeriodCombo.addItem(DAILY);
       myPeriodCombo.addItem(WEEKLY);
       myPeriodCombo.addItem(MONTHLY);
+
+      myPeriodCombo.setRenderer(new MappingListCellRenderer(PERIOD_VALUE_MAP));
 
       final String majorVersion = ApplicationInfo.getInstance().getMajorVersion();
       String versionNumber = "";
@@ -128,7 +145,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Appl
         }
       }
       myVersionNumber.setText(ApplicationInfo.getInstance().getVersionName() + " " + versionNumber);
-      String currentBuild = (ApplicationInfo.getInstance().getBuildNumber() == null) ? "N/A" : ApplicationInfo.getInstance().getBuildNumber();
+      String currentBuild = (ApplicationInfo.getInstance().getBuildNumber() == null) ? IdeBundle.message("updates.current.build.unknown") : ApplicationInfo.getInstance().getBuildNumber();
       myBuildNumber.setText(currentBuild);
 
       myCbCheckForUpdates.addActionListener(new ActionListener() {
@@ -150,7 +167,8 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Appl
 
     private void updateLastCheckedLabel() {
       final DateFormat dateFormat = DateFormat.getDateInstance(DateFormat.FULL);
-      myLastCheckedDate.setText(LAST_TIME_CHECKED == 0 ? "Never" : dateFormat.format(LAST_TIME_CHECKED));
+      myLastCheckedDate.setText(LAST_TIME_CHECKED == 0 ? IdeBundle.message("updates.last.check.never") :
+                                dateFormat.format(new Date(LAST_TIME_CHECKED)));
     }
   }
 

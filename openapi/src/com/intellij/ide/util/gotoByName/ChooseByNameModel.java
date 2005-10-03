@@ -26,7 +26,13 @@ public interface ChooseByNameModel {
   String getNotFoundMessage();
   /** return null to hide checkbox panel */
   @Nullable String getCheckBoxName();
+
+  /**
+   * @deprecated Mark mnemonic char with '&' ('&&' for mac if mnemonic char is 'N') in checkbox name instead
+   */
   char getCheckBoxMnemonic();
+
+
   boolean loadInitialCheckBoxState();
   void saveInitialCheckBoxState(boolean state);
 

@@ -1,12 +1,12 @@
 package com.intellij.psi.impl.source.javadoc;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ClassFilter;
-import com.intellij.util.CharTable;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
+import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
@@ -14,8 +14,9 @@ import com.intellij.psi.scope.processor.FilterScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.lang.ASTNode;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -239,7 +240,8 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
       if (hasSignature || !name.equals(newName)) {
         String text = getText();
 
-        StringBuffer newText = new StringBuffer("/** @see ");
+        @NonNls StringBuffer newText = new StringBuffer();
+        newText.append("/** @see ");
         if (name.equals(newName)) { // hasSignature is true here, so we can search for '('
           newText.append(text.substring(0, text.indexOf('(')));
         }

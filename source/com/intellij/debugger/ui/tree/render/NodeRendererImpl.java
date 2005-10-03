@@ -18,6 +18,7 @@ public abstract class NodeRendererImpl implements NodeRenderer{
   protected BasicRendererProperties myProperties = new BasicRendererProperties();
 
   protected NodeRendererImpl() {
+    //noinspection HardCodedStringLiteral
     myProperties.setName("unnamed");
   }
 

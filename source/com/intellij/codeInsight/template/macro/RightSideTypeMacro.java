@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.template.macro;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.project.Project;
@@ -17,7 +18,7 @@ public class RightSideTypeMacro implements Macro {
   }
 
   public String getDescription() {
-    return "rightSideType()";
+    return CodeInsightBundle.message("macro.right.side.type");
   }
 
   public String getDefaultValue() {

@@ -1,6 +1,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeView;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
@@ -15,13 +16,15 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Icons;
+import com.intellij.CommonBundle;
 
 import java.io.File;
 import java.util.StringTokenizer;
 
 public class CreateDirectoryOrPackageAction extends AnAction {
   public CreateDirectoryOrPackageAction() {
-    super("Create new directory or package", "Create new directory or package", null);
+    super(IdeBundle.message("action.create.new.directory.or.package"),
+          IdeBundle.message("action.create.new.directory.or.package"), null);
   }
 
   public void actionPerformed(AnActionEvent e) {
@@ -37,8 +40,8 @@ public class CreateDirectoryOrPackageAction extends AnAction {
 
     MyInputValidator validator = new MyInputValidator(project, directory, isDirectory);
     Messages.showInputDialog(project,
-                             "Enter new " + (isDirectory ? "directory" : "package") + " name:",
-                             "New " + (isDirectory ? "Directory" : "Package"),
+                             isDirectory ? IdeBundle.message("prompt.enter.new.directory.name") : IdeBundle.message("prompt.enter.new.package.name"),
+                             isDirectory ? IdeBundle.message("title.new.directory") : IdeBundle.message("title.new.package"),
                              Messages.getQuestionIcon(),
                              "",
                              validator);
@@ -85,11 +88,11 @@ public class CreateDirectoryOrPackageAction extends AnAction {
     }
 
     if (isPackage) {
-      presentation.setText("Package");
+      presentation.setText(IdeBundle.message("action.package"));
       presentation.setIcon(Icons.PACKAGE_ICON);
     }
     else {
-      presentation.setText("Directory");
+      presentation.setText(IdeBundle.message("action.directory"));
       presentation.setIcon(Icons.DIRECTORY_OPEN_ICON);
     }
   }
@@ -114,7 +117,8 @@ public class CreateDirectoryOrPackageAction extends AnAction {
       final String subDirName = inputString;
 
       if (subDirName.length() == 0) {
-        Messages.showMessageDialog(myProject,"A name should be specified", "Error", Messages.getErrorIcon());
+        Messages.showMessageDialog(myProject,IdeBundle.message("error.name.should.be.specified"),
+                                   CommonBundle.getErrorTitle(), Messages.getErrorIcon());
         return false;
       }
 
@@ -136,7 +140,7 @@ public class CreateDirectoryOrPackageAction extends AnAction {
           Messages.showMessageDialog(
             myProject,
             CreateElementActionBase.filterMessage(ex.getMessage()),
-            "Error",
+            CommonBundle.getErrorTitle(),
             Messages.getErrorIcon());
           return false;
         }
@@ -149,8 +153,9 @@ public class CreateDirectoryOrPackageAction extends AnAction {
               LvcsAction lvcsAction = LvcsAction.EMPTY;
               try {
                 String actionName = myIsDirectory ?
-                    "Creating directory " + myDirectory.getVirtualFile().getPresentableUrl() + File.separator + subDirName
-                    : "Creating package " + myDirectory.getPackage().getQualifiedName() + "." + subDirName;
+                                    IdeBundle.message("progress.creating.directory", myDirectory.getVirtualFile().getPresentableUrl(),
+                                                      File.separator, subDirName)
+                    : IdeBundle.message("progress.creating.package", myDirectory.getPackage().getQualifiedName(), subDirName);
 
                 String directoryPath = myDirectory.getVirtualFile().getPath() + "/" + subDirName;
 
@@ -186,7 +191,7 @@ public class CreateDirectoryOrPackageAction extends AnAction {
                                 Messages.showMessageDialog(
                                   myProject,
                                   CreateElementActionBase.filterMessage(ex.getMessage()),
-                                  "Error",
+                                  CommonBundle.getErrorTitle(),
                                   Messages.getErrorIcon()
                                 );
                               }
@@ -201,7 +206,8 @@ public class CreateDirectoryOrPackageAction extends AnAction {
           ApplicationManager.getApplication().runWriteAction(run);
         }
       };
-      CommandProcessor.getInstance().executeCommand(myProject, command, "Create " + (myIsDirectory ? "directory" : "package"), null);
+      CommandProcessor.getInstance().executeCommand(myProject, command,
+                                                    myIsDirectory ? IdeBundle.message("command.create.directory") : IdeBundle.message("command.create.package"), null);
 
       return myCreatedElement != null;
     }

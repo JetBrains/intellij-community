@@ -2,6 +2,8 @@ package com.intellij.ide.util.projectWizard;
 
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.ide.IdeBundle;
+import com.intellij.CommonBundle;
 
 import java.io.File;
 
@@ -22,15 +24,16 @@ public class ProjectWizardUtil {
     File dir = new File(directoryPath);
     if (!dir.exists()) {
       if (promptUser) {
-        final int answer = Messages.showOkCancelDialog(promptPrefix + "\"" + dir.getPath() + "\"\ndoes not exist. It will be created by " +
-                                                       ApplicationNamesInfo.getInstance().getProductName() + ".", "Directory Does Not Exist", Messages.getQuestionIcon());
+        final int answer = Messages.showOkCancelDialog(IdeBundle.message("promot.projectwizard.directory.does.not.exist", promptPrefix,
+                                                                         dir.getPath(), ApplicationNamesInfo.getInstance().getProductName()),
+                                                       IdeBundle.message("title.directory.does.not.exist"), Messages.getQuestionIcon());
         if (answer != 0) {
           return false;
         }
       }
       final boolean ok = dir.mkdirs();
       if (!ok) {
-        Messages.showErrorDialog("Failed to create directory \"" + dir.getPath() + "\"", "Error");
+        Messages.showErrorDialog(IdeBundle.message("error.failed.to.create.directory", dir.getPath()), CommonBundle.getErrorTitle());
         return false;
       }
     }

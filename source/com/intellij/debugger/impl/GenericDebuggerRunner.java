@@ -2,6 +2,7 @@ package com.intellij.debugger.impl;
 
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.DebuggerPanelsManager;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.configurations.*;
@@ -19,23 +20,26 @@ import com.intellij.openapi.wm.ToolWindowId;
 
 import javax.swing.*;
 
+import org.jetbrains.annotations.NonNls;
+
 public class GenericDebuggerRunner implements JavaProgramRunner<GenericDebuggerRunnerSettings> {
   private static final Icon ICON = IconLoader.getIcon("/actions/startDebugger.png");
   private static final Icon TOOLWINDOW_ICON = IconLoader.getIcon("/general/toolWindowDebugger.png");
 
   public static final Icon RERUN_ICON = ICON;
+  private static final @NonNls String HELP_ID = "debugging";
   private static final RunnerInfo DEBUGGER_INFO = new RunnerInfo(ToolWindowId.DEBUG,
-                                                                 "Debug selected configuration",
+                                                                 DebuggerBundle.message("string.debugger.runner.description"),
                                                                  ICON,
                                                                  TOOLWINDOW_ICON,
                                                                  ToolWindowId.DEBUG,
-                                                                 "debugging") {
+                                                                 HELP_ID) {
     public String getRunContextActionId() {
       return "DebugClass";
     }
 
     public String getStartActionText() {
-      return "&Debug";
+      return DebuggerBundle.message("debugger.runner.start.action.text");
     }
   };
 
@@ -59,7 +63,7 @@ public class GenericDebuggerRunner implements JavaProgramRunner<GenericDebuggerR
       FileDocumentManager.getInstance().saveAllDocuments();
       final JavaCommandLine javaCommandLine = (JavaCommandLine)state;
       if (addLvcsLabel) {
-        localVcs.addLabel("Debugging " + runProfile.getName(), "");
+        localVcs.addLabel(DebuggerBundle.message("debugger.runner.vcs.label.debugging", runProfile.getName()), "");
       }
       RemoteConnection connection = DebuggerManagerImpl.createDebugParameters(javaCommandLine.getJavaParameters(), true, DebuggerSettings.getInstance().DEBUGGER_TRANSPORT, "", false);
       contentDescriptor = manager.attachVirtualMachine(runProfile, this, javaCommandLine, reuseContent, connection, true);
@@ -67,7 +71,7 @@ public class GenericDebuggerRunner implements JavaProgramRunner<GenericDebuggerR
     else if (state instanceof PatchedRunnableState) {
       FileDocumentManager.getInstance().saveAllDocuments();
       if (addLvcsLabel) {
-        localVcs.addLabel("Debugging " + runProfile.getName(), "");
+        localVcs.addLabel(DebuggerBundle.message("debugger.runner.vcs.label.debugging", runProfile.getName()), "");
       }
       final RemoteConnection connection = doPatch(new JavaParameters(), state.getRunnerSettings());
       contentDescriptor = manager.attachVirtualMachine(runProfile, this, state, reuseContent, connection, true);
@@ -75,7 +79,7 @@ public class GenericDebuggerRunner implements JavaProgramRunner<GenericDebuggerR
     else if (state instanceof RemoteState) {
       FileDocumentManager.getInstance().saveAllDocuments();
       if (addLvcsLabel) {
-        localVcs.addLabel("Starting remote debugging " + runProfile.getName(), "");
+        localVcs.addLabel(DebuggerBundle.message("debugger.runner.vcs.label.remote.debug", runProfile.getName()), "");
       }
       RemoteState remoteState = (RemoteState)state;
       final RemoteConnection connection = createRemoteDebugConnection(remoteState, state.getRunnerSettings());

@@ -15,6 +15,7 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.List;
 import java.util.Collections;
@@ -22,6 +23,7 @@ import java.util.Collections;
 public class ResourceBundleImpl implements ResourceBundle {
   private final @NotNull VirtualFile myBaseDirectory;
   private final @NotNull String myBaseName;
+  @NonNls private static final String RESOURCE_BUNDLE_PREFIX = "resourceBundle:";
 
   public ResourceBundleImpl(@NotNull VirtualFile baseDirectory, @NotNull String baseName) {
     myBaseDirectory = baseDirectory;
@@ -86,9 +88,9 @@ public class ResourceBundleImpl implements ResourceBundle {
   }
 
   public static ResourceBundle createByUrl(String url) {
-    if (!url.startsWith("resourceBundle:")) return null;
+    if (!url.startsWith(RESOURCE_BUNDLE_PREFIX)) return null;
 
-    String defaultPropertiesUrl = url.substring("resourceBundle:".length());
+    String defaultPropertiesUrl = url.substring(RESOURCE_BUNDLE_PREFIX.length());
     VirtualFile defaultProperties = VirtualFileManager.getInstance().findFileByUrl(defaultPropertiesUrl);
     if (defaultProperties != null && FileTypeManager.getInstance().getFileTypeByFile(defaultProperties) == StdFileTypes.PROPERTIES) {
       ResourceBundleImpl resourceBundle = new ResourceBundleImpl(defaultProperties.getParent(),
@@ -100,6 +102,6 @@ public class ResourceBundleImpl implements ResourceBundle {
   }
 
   public String getUrl() {
-    return "resourceBundle:"+getBaseName();
+    return RESOURCE_BUNDLE_PREFIX +getBaseName();
   }
 }

@@ -4,6 +4,8 @@
  */
 package com.intellij.debugger.settings;
 
+import org.jetbrains.annotations.NonNls;
+
 import javax.swing.*;
 import java.lang.reflect.Field;
 
@@ -14,7 +16,7 @@ import java.lang.reflect.Field;
 public class ToggleButtonBinding extends FieldDataBinding{
   private final JToggleButton myToggleButton;
 
-  public ToggleButtonBinding(String dataFieldName, JToggleButton checkBox) {
+  public ToggleButtonBinding(@NonNls String dataFieldName, JToggleButton checkBox) {
     super(dataFieldName);
     myToggleButton = checkBox;
   }

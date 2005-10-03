@@ -1,6 +1,7 @@
 package com.intellij.ide.util;
 
 import com.intellij.ide.IconUtilEx;
+import com.intellij.ide.IdeBundle;
 import com.intellij.j2ee.j2eeDom.ejb.CmpField;
 import com.intellij.j2ee.j2eeDom.ejb.CmrField;
 import com.intellij.j2ee.j2eeDom.ejb.EntityBean;
@@ -25,12 +26,17 @@ import com.intellij.util.Icons;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.Tree;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreePath;
+import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.awt.event.*;
 import java.lang.ref.WeakReference;
@@ -57,10 +63,10 @@ public class MemberChooser extends DialogWrapper {
   private ArrayList<ElementNode> myClassNodes = new ArrayList<ElementNode>();
   private WeakReference[] mySelectedElements;
 
-  private final static String PROP_SORTED = "MemberChooser.sorted";
-  private final static String PROP_SHOWCLASSES = "MemberChooser.showClasses";
-  private final static String PROP_COPYJAVADOC = "MemberChooser.copyJavadoc";
-  private final static String PROP_INSERT_OVERRIDE = "MemberChooser.insertOverride";
+  @NonNls private final static String PROP_SORTED = "MemberChooser.sorted";
+  @NonNls private final static String PROP_SHOWCLASSES = "MemberChooser.showClasses";
+  @NonNls private final static String PROP_COPYJAVADOC = "MemberChooser.copyJavadoc";
+  @NonNls private final static String PROP_INSERT_OVERRIDE = "MemberChooser.insertOverride";
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.MemberChooser");
 
@@ -70,7 +76,7 @@ public class MemberChooser extends DialogWrapper {
                        Project project) {
     this(elements, allowEmptySelection, allowMultiSelection, project, false);
   }
-  
+
   public MemberChooser(Object[] elements,
                        boolean allowEmptySelection,
                        boolean allowMultiSelection,
@@ -100,9 +106,9 @@ public class MemberChooser extends DialogWrapper {
     });
     myTree.setModel(myTreeModel);
     expandAll();
-    myCopyJavadocCheckbox = new JCheckBox("Copy JavaDoc");
+    myCopyJavadocCheckbox = new JCheckBox(IdeBundle.message("checkbox.copy.javadoc"));
     if (myIsInsertOverrideVisible) {
-      myInsertOverrideAnnotationCheckbox = new JCheckBox("Insert @Override");
+      myInsertOverrideAnnotationCheckbox = new JCheckBox(IdeBundle.message("checkbox.insert.at.override"));
     }
   }
 
@@ -224,19 +230,17 @@ public class MemberChooser extends DialogWrapper {
           };
 
     if (myIsInsertOverrideVisible) {
-      myInsertOverrideAnnotationCheckbox.setMnemonic('O');
-      myInsertOverrideAnnotationCheckbox.setSelected("true".equals(PropertiesComponent.getInstance().getValue(PROP_INSERT_OVERRIDE)));
+      myInsertOverrideAnnotationCheckbox.setSelected(PropertiesComponent.getInstance().isTrueValue(PROP_INSERT_OVERRIDE));
       myInsertOverrideAnnotationCheckbox.addActionListener(actionListener);
       optionsPanel.add(myInsertOverrideAnnotationCheckbox);
     }
 
-    myCopyJavadocCheckbox.setMnemonic('J');
-    myCopyJavadocCheckbox.setSelected("true".equals(PropertiesComponent.getInstance().getValue(PROP_COPYJAVADOC)));
+    myCopyJavadocCheckbox.setSelected(PropertiesComponent.getInstance().isTrueValue(PROP_COPYJAVADOC));
     myCopyJavadocCheckbox.addActionListener(actionListener);
     optionsPanel.add(myCopyJavadocCheckbox);
-    
-    
-    
+
+
+
     panel.add(
       optionsPanel,
       new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.NONE,
@@ -264,13 +268,13 @@ public class MemberChooser extends DialogWrapper {
     SortEmAction sortAction = new SortEmAction();
     sortAction.registerCustomShortcutSet(
       new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_A, KeyEvent.ALT_MASK)), myTree);
-    setSorted("true".equals(PropertiesComponent.getInstance().getValue(PROP_SORTED)));
+    setSorted(PropertiesComponent.getInstance().isTrueValue(PROP_SORTED));
     group.add(sortAction);
 
     ShowClassesAction showClassesAction = new ShowClassesAction();
     showClassesAction.registerCustomShortcutSet(
       new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_C, KeyEvent.ALT_MASK)), myTree);
-    setShowClasses("true".equals(PropertiesComponent.getInstance().getValue(PROP_SHOWCLASSES)));
+    setShowClasses(PropertiesComponent.getInstance().isTrueValue(PROP_SHOWCLASSES));
     group.add(showClassesAction);
 
     ExpandAllAction expandAllAction = new ExpandAllAction();
@@ -293,7 +297,7 @@ public class MemberChooser extends DialogWrapper {
     // Tree
 
     myTree.setCellRenderer(new CellRenderer());
-    myTree.putClientProperty("JTree.lineStyle", "Angled");
+    UIUtil.setLineStyleAngled(myTree);
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
     myTree.addKeyListener(new TreeKeyListener());
@@ -557,11 +561,11 @@ public class MemberChooser extends DialogWrapper {
 
   protected void dispose() {
     PropertiesComponent instance = PropertiesComponent.getInstance();
-    instance.setValue(PROP_SORTED, isSorted() ? "true" : "false");
-    instance.setValue(PROP_SHOWCLASSES, myShowClasses ? "true" : "false");
-    instance.setValue(PROP_COPYJAVADOC, myCopyJavadocCheckbox.isSelected() ? "true" : "false");
+    instance.setValue(PROP_SORTED, Boolean.toString(isSorted()));
+    instance.setValue(PROP_SHOWCLASSES, Boolean.toString(myShowClasses));
+    instance.setValue(PROP_COPYJAVADOC, Boolean.toString(myCopyJavadocCheckbox.isSelected()));
     if (myIsInsertOverrideVisible) {
-      instance.setValue(PROP_INSERT_OVERRIDE, myInsertOverrideAnnotationCheckbox.isSelected() ? "true" : "false");
+      instance.setValue(PROP_INSERT_OVERRIDE, Boolean.toString(myInsertOverrideAnnotationCheckbox.isSelected()));
     }
 
     getContentPane().removeAll();
@@ -776,7 +780,7 @@ public class MemberChooser extends DialogWrapper {
     }
 
     public String getText() {
-      return "All classes";
+      return IdeBundle.message("node.memberchooser.all.classes");
     }
 
     public PsiElement getElement() {
@@ -820,7 +824,7 @@ public class MemberChooser extends DialogWrapper {
 
   private class SelectNoneAction extends AbstractAction {
     public SelectNoneAction() {
-      super("Select &None");
+      super(IdeBundle.message("action.select.none"));
     }
 
     public void actionPerformed(ActionEvent e) {
@@ -867,7 +871,8 @@ public class MemberChooser extends DialogWrapper {
 
   private class SortEmAction extends ToggleAction {
     public SortEmAction() {
-      super("Sort Alphabetically", "Sort Alphabetically", IconLoader.getIcon("/objectBrowser/sorted.png"));
+      super(IdeBundle.message("action.sort.alphabetically"),
+            IdeBundle.message("action.sort.alphabetically"), IconLoader.getIcon("/objectBrowser/sorted.png"));
     }
 
     public boolean isSelected(AnActionEvent event) {
@@ -881,7 +886,7 @@ public class MemberChooser extends DialogWrapper {
 
   private class ShowClassesAction extends ToggleAction {
     public ShowClassesAction() {
-      super("Show Classes", "Show Classes", Icons.CLASS_ICON);
+      super(IdeBundle.message("action.show.classes"), IdeBundle.message("action.show.classes"), Icons.CLASS_ICON);
     }
 
     public boolean isSelected(AnActionEvent event) {
@@ -901,7 +906,8 @@ public class MemberChooser extends DialogWrapper {
 
   private class ExpandAllAction extends AnAction {
     public ExpandAllAction() {
-      super("Expand All", "Expand All", IconLoader.getIcon("/actions/expandall.png"));
+      super(IdeBundle.message("action.expand.all"), IdeBundle.message("action.expand.all"),
+            IconLoader.getIcon("/actions/expandall.png"));
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -911,7 +917,8 @@ public class MemberChooser extends DialogWrapper {
 
   private class CollapseAllAction extends AnAction {
     public CollapseAllAction() {
-      super("Collapse All", "Collapse All", IconLoader.getIcon("/actions/collapseall.png"));
+      super(IdeBundle.message("action.collapse.all"), IdeBundle.message("action.collapse.all"),
+            IconLoader.getIcon("/actions/collapseall.png"));
     }
 
     public void actionPerformed(AnActionEvent e) {

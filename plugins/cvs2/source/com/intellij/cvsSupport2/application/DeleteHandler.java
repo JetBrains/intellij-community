@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.CvsBundle;
 
 import java.io.File;
 import java.io.IOException;
@@ -89,8 +90,8 @@ class DeleteHandler {
     catch (final IOException e) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
-          Messages.showMessageDialog("Cannot restore CVS admin directory: " + e.getLocalizedMessage(),
-                                     "Restore CVS Admin Directory",
+          Messages.showMessageDialog(CvsBundle.message("message.error.cannot.restore.cvs.admin.directories", e.getLocalizedMessage()),
+                                     CvsBundle.message("message.error.cannot.restore.cvs.admin.directories.title"),
                                      Messages.getErrorIcon());
         }
       });
@@ -163,7 +164,7 @@ class DeleteHandler {
   }
 
   private void addFile(VirtualFile file) {
-    VirtualFile adminDirectoryForFile = file.getParent().findChild("CVS");
+    VirtualFile adminDirectoryForFile = file.getParent().findChild(CvsUtil.CVS);
     if (adminDirectoryForFile != null) {
       if (CvsUtil.fileIsUnderCvs(file)) {
         if (CvsUtil.fileExistsInCvs(file)) {

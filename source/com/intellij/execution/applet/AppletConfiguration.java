@@ -24,6 +24,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -46,6 +47,12 @@ public class AppletConfiguration extends SingleClassConfiguration {
   private AppletParameter[] myAppletParameters;
   public boolean ALTERNATIVE_JRE_PATH_ENABLED;
   public String ALTERNATIVE_JRE_PATH;
+  @NonNls
+  protected static final String NAME_ATTR = "name";
+  @NonNls
+  protected static final String VALUE_ATTR = "value";
+  @NonNls
+  protected static final String PARAMETER_ELEMENT_NAME = "parameter";
 
   public AppletConfiguration(final String name, final Project project, ConfigurationFactory factory) {
     super(name, new RunConfigurationModule(project, false), factory);
@@ -104,7 +111,7 @@ public class AppletConfiguration extends SingleClassConfiguration {
     return new AppletConfigurable(getProject());
   }
 
-  private String getPolicyFileParameter() {
+  @NonNls private String getPolicyFileParameter() {
     if (POLICY_FILE != null && POLICY_FILE.length() > 0) {
       return "-Djava.security.policy=" + getPolicyFile();
     }
@@ -123,7 +130,7 @@ public class AppletConfiguration extends SingleClassConfiguration {
     public String myName;
     public String myValue;
 
-    public AppletParameter(final String name, final String value) {
+    public AppletParameter(@NonNls final String name, final String value) {
       myName = name;
       myValue = value;
     }
@@ -163,10 +170,11 @@ public class AppletConfiguration extends SingleClassConfiguration {
     DefaultJDOMExternalizer.readExternal(this, parentNode);
     readModule(parentNode);
     final ArrayList<AppletParameter> parameters = new ArrayList<AppletParameter>();
-    for (Iterator iterator = parentNode.getChildren("parameter").iterator(); iterator.hasNext();) {
+    for (
+      Iterator iterator = parentNode.getChildren(PARAMETER_ELEMENT_NAME).iterator(); iterator.hasNext();) {
       final Element element = (Element)iterator.next();
-      final String name = element.getAttributeValue("name");
-      final String value = element.getAttributeValue("value");
+      final String name = element.getAttributeValue(NAME_ATTR);
+      final String value = element.getAttributeValue(VALUE_ATTR);
       parameters.add(new AppletParameter(name, value));
     }
     myAppletParameters = parameters.toArray(new AppletParameter[parameters.size()]);
@@ -177,10 +185,10 @@ public class AppletConfiguration extends SingleClassConfiguration {
     DefaultJDOMExternalizer.writeExternal(this, parentNode);
     if (myAppletParameters != null) {
       for (int i = 0; i < myAppletParameters.length; i++) {
-        final Element element = new Element("parameter");
+        final Element element = new Element(PARAMETER_ELEMENT_NAME);
         parentNode.addContent(element);
-        element.setAttribute("name", myAppletParameters[i].getName());
-        element.setAttribute("value", myAppletParameters[i].getValue());
+        element.setAttribute(NAME_ATTR, myAppletParameters[i].getName());
+        element.setAttribute(VALUE_ATTR, myAppletParameters[i].getValue());
       }
     }
   }
@@ -226,17 +234,17 @@ public class AppletConfiguration extends SingleClassConfiguration {
       if (ALTERNATIVE_JRE_PATH == null ||
           ALTERNATIVE_JRE_PATH.length() == 0 ||
           !JavaSdkImpl.checkForJre(ALTERNATIVE_JRE_PATH)){
-        throw new RuntimeConfigurationWarning("\'" + ALTERNATIVE_JRE_PATH + "\' is not valid JRE home");
+        throw new RuntimeConfigurationWarning(ExecutionBundle.message("jre.not.valid.error.message", ALTERNATIVE_JRE_PATH));
       }
     }
     getConfigurationModule().checkForWarning();
     if (HTML_USED) {
       if (HTML_FILE_NAME == null || HTML_FILE_NAME.length() == 0) {
-        throw new RuntimeConfigurationWarning("Html file not specified");
+        throw new RuntimeConfigurationWarning(ExecutionBundle.message("html.file.not.specified.error.message"));
       }
     }
     else {
-      getConfigurationModule().checkClassName(MAIN_CLASS_NAME, "applet class");
+      getConfigurationModule().checkClassName(MAIN_CLASS_NAME, ExecutionBundle.message("no.applet.class.specified.error.message"));
     }
   }
 
@@ -255,50 +263,61 @@ public class AppletConfiguration extends SingleClassConfiguration {
   private AppletHtmlFile getHtmlURL() throws CantRunException {
     if (HTML_USED) {
       if (HTML_FILE_NAME == null || HTML_FILE_NAME.length() == 0) {
-        throw new CantRunException("HTML file not specified.");
+        throw new CantRunException(ExecutionBundle.message("html.file.not.specified.error.message"));
       }
       return new AppletHtmlFile(HTML_FILE_NAME, null);
     }
     else {
       if (MAIN_CLASS_NAME == null || MAIN_CLASS_NAME.length() == 0) {
-        throw new CantRunException("Class not specified.");
+        throw new CantRunException(ExecutionBundle.message("class.not.specified.error.message"));
       }
 
       // generate html
       try {
-        final File tempFile = File.createTempFile("AppletPage", ".html");
-        final FileWriter writer = new FileWriter(tempFile);
-        writer.write("<html>\n" +
-                     "<head>\n" +
-                     "<title>" + MAIN_CLASS_NAME + "</title>\n" +
-                     "</head>\n" +
-                     "<applet codebase=\".\"\n" +
-                     "code=\"" + MAIN_CLASS_NAME + "\"\n" +
-                     "name=\"" + MAIN_CLASS_NAME + "\"\n" +
-                     "width=" + WIDTH + "\n" +
-                     "height=" + HEIGHT + "\n" +
-                     "align=top>\n");
-        final AppletParameter[] appletParameters = getAppletParameters();
-        if (appletParameters != null) {
-          for (int i = 0; i < appletParameters.length; i++) {
-            final AppletParameter parameter = appletParameters[i];
-            writer.write("<param name=\"" + parameter.getName() + "\" value=\"" + parameter.getValue() + "\">\n");
-          }
-        }
-        writer.write("</applet>\n</body>\n</html>\n");
-        writer.close();
-        final String htmlFile = tempFile.getAbsolutePath();
-        return new AppletHtmlFile(htmlFile, tempFile);
+        return generateAppletTempPage();
       }
       catch (IOException e) {
-        throw new CantRunException("Failed to generate temporary html wrapper for applet class");
+        throw new CantRunException(ExecutionBundle.message("failed.to.generate.wrapper.error.message"));
       }
     }
+  }
+
+  private AppletHtmlFile generateAppletTempPage() throws IOException {
+    //noinspection HardCodedStringLiteral
+    final File tempFile = File.createTempFile("AppletPage", ".html");
+    @NonNls final FileWriter writer = new FileWriter(tempFile);
+    writer.write("<html>\n" +
+                 "<head>\n" +
+                 "<title>" + MAIN_CLASS_NAME + "</title>\n" +
+                 "</head>\n" +
+                 "<applet codebase=\".\"\n" +
+                 "code=\"" + MAIN_CLASS_NAME + "\"\n" +
+                 "name=\"" + MAIN_CLASS_NAME + "\"\n" +
+                 "width=" + WIDTH + "\n" +
+                 "height=" + HEIGHT + "\n" +
+                 "align=top>\n");
+    final AppletParameter[] appletParameters = getAppletParameters();
+    if (appletParameters != null) {
+      for (int i = 0; i < appletParameters.length; i++) {
+        final AppletParameter parameter = appletParameters[i];
+        writer.write("<param name=\"" + parameter.getName() + "\" value=\"" + parameter.getValue() + "\">\n");
+      }
+    }
+    writer.write("</applet>\n</body>\n</html>\n");
+    writer.close();
+    final String htmlFile = tempFile.getAbsolutePath();
+    return new AppletHtmlFile(htmlFile, tempFile);
   }
 
   private static class AppletHtmlFile {
     private final String myHtmlFile;
     private final File myFileToDelete;
+    @NonNls
+    protected static final String FILE_PREFIX = "file:/";
+    @NonNls
+    protected static final String HTTP_PREFIX = "http:/";
+    @NonNls
+    protected static final String HTTPS_PREFIX = "https:/";
 
     protected AppletHtmlFile(final String htmlFile, final File fileToDelete) {
       myHtmlFile = htmlFile;
@@ -306,7 +325,7 @@ public class AppletConfiguration extends SingleClassConfiguration {
     }
 
     public String getUrl() {
-      if (!myHtmlFile.toLowerCase().startsWith("file:/") && !isHttp()) {
+      if (!myHtmlFile.toLowerCase().startsWith(FILE_PREFIX) && !isHttp()) {
         try {
           return new File(myHtmlFile).toURL().toString();
         }
@@ -318,7 +337,7 @@ public class AppletConfiguration extends SingleClassConfiguration {
 
     public boolean isHttp() {
       final String lowerCaseUrl = myHtmlFile.toLowerCase();
-      return lowerCaseUrl.startsWith("http:/") || lowerCaseUrl.startsWith("https:/");
+      return lowerCaseUrl.startsWith(HTTP_PREFIX) || lowerCaseUrl.startsWith(HTTPS_PREFIX);
     }
 
     public void deleteFile() {

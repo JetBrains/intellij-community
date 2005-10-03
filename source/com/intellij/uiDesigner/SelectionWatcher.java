@@ -16,6 +16,7 @@ public abstract class SelectionWatcher {
 
   public final void install(final RadComponent component){
     if (component == null) {
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("component cannot be null");
     }
     component.addPropertyChangeListener(myChangeListener);
@@ -29,6 +30,7 @@ public abstract class SelectionWatcher {
 
   public final void deinstall(final RadComponent component){
     if (component == null) {
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("component cannot be null");
     }
     component.removePropertyChangeListener(myChangeListener);

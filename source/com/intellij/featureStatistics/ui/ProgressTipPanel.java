@@ -1,6 +1,10 @@
 package com.intellij.featureStatistics.ui;
 
-import com.intellij.featureStatistics.*;
+import com.intellij.CommonBundle;
+import com.intellij.featureStatistics.FeatureDescriptor;
+import com.intellij.featureStatistics.FeatureStatisticsBundle;
+import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.featureStatistics.ProductivityFeaturesRegistry;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.TipUIUtil;
 import com.intellij.openapi.application.ModalityState;
@@ -8,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.Alarm;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.AncestorEvent;
@@ -32,14 +37,18 @@ public class ProgressTipPanel {
   private Runnable myLastRequest;
   private JButton myCloseButton;
   private JCheckBox myKeepOpen;
-  private static final String KEEP_OPTION_NAME = "KEEP_PRODUCTIVITY_HINTS";
+
+  private static final @NonNls String KEEP_OPTION_NAME = "KEEP_PRODUCTIVITY_HINTS";
   private boolean myIsShownIsOwnDialog = false;
 
   public ProgressTipPanel(String[] features, final Project project) {
     myFeatures = features;
     myProject = project;
     myCurrentFeature = 0;
+
+    //noinspection HardCodedStringLiteral
     myBrowser.setContentType("text/html");
+
     myBrowser.setPreferredSize(new Dimension(500, 200));
     myBrowser.setEditable(false);
     myPanel.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
@@ -104,8 +113,8 @@ public class ProgressTipPanel {
   private class OwnDialog extends DialogWrapper {
     public OwnDialog(Project project) {
       super(project, false);
-      setTitle("Productivity Hints");
-      setCancelButtonText("Close");
+      setTitle(FeatureStatisticsBundle.message("feature.statistics.dialog.title"));
+      setCancelButtonText(CommonBundle.getCloseButtonText());
       init();
     }
 

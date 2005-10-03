@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.localVcs.LocalVcs;
 import com.intellij.openapi.localVcs.LvcsObject;
+import com.intellij.openapi.localVcs.LocalVcsBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
@@ -109,22 +110,22 @@ public class VcsUtil {
       return null;
     }
 
-    final String selectedAreaName;
+    final String actionName;
 
     if (psiElement instanceof PsiClass) {
-      selectedAreaName = "Class";
+      actionName = LocalVcsBundle.message("action.name.show.history.for.class");
     } else if (psiElement instanceof PsiField) {
-      selectedAreaName = "Field";
+      actionName = LocalVcsBundle.message("action.name.show.history.for.field");
     } else if (psiElement instanceof PsiMethod) {
-      selectedAreaName = "Method";
+      actionName = LocalVcsBundle.message("action.name.show.history.for.method");
     } else if (psiElement instanceof XmlTag) {
-      selectedAreaName = "Tag";
+      actionName = LocalVcsBundle.message("action.name.show.history.for.tag");
     } else if (psiElement instanceof XmlText) {
-      selectedAreaName = "Text";
+      actionName = LocalVcsBundle.message("action.name.show.history.for.text");
     } else if (psiElement instanceof PsiCodeBlock) {
-      selectedAreaName = "Code Block";
+      actionName = LocalVcsBundle.message("action.name.show.history.for.code.block");
     } else if (psiElement instanceof PsiStatement) {
-      selectedAreaName = "Statement";
+      actionName = LocalVcsBundle.message("action.name.show.history.for.statement");
     } else {
       return null;
     }
@@ -143,7 +144,7 @@ public class VcsUtil {
     }
 
     Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
-    return new VcsSelection(document, textRange, selectedAreaName);
+    return new VcsSelection(document, textRange, actionName);
   }
 
   private static VcsSelection getSelectionFromEditor(VcsContext context) {

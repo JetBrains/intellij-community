@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -9,8 +10,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.IncorrectOperationException;
-
-import java.text.MessageFormat;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author ven
@@ -30,19 +30,25 @@ public class CreateGetterOrSetterAction implements IntentionAction{
   }
 
   public String getText() {
-    String what = "";
-    if (myCreateGetter) {
-      what += "getter";
+    @NonNls final String what;
+    if (myCreateGetter && myCreateSetter) {
+      what = "create.getter.and.setter.for.field";
     }
-    if (myCreateSetter) {
-      if (myCreateGetter) what += " and ";
-      what += "setter";
+    else if (myCreateGetter) {
+      what = "create.getter.for.field";
     }
-    return MessageFormat.format("Create {0} for ''{1}''", new Object[]{what, myField.getName()});
+    else if (myCreateSetter) {
+      what = "create.setter.for.field";
+    }
+    else {
+      what = "";
+      assert false;
+    }
+    return QuickFixBundle.message(what, myField.getName());
   }
 
   public String getFamilyName() {
-    return "Create Accessor for Unused Field";
+    return QuickFixBundle.message("create.accessor.for.unused.field.family");
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {

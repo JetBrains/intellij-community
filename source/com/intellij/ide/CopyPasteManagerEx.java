@@ -115,6 +115,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
     };
 
     if (Patches.SUN_BUG_ID_4818143) {
+      //noinspection HardCodedStringLiteral
       final Thread worker = new Thread(accessor, "Clipboard accessor");
       worker.start();
       try {
@@ -137,9 +138,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
   private void showWorkaroundMessage() {
     if (myIsWarningShown) return;
     final String productName = ApplicationNamesInfo.getInstance().getProductName();
-    Messages.showErrorDialog("You're seeing this message because of the workaround to JRE issue: http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4818143\n" +
-                             productName + " would hang otherwise. The system clipboard might be not working correctly. It is recommended to restart " +
-                             productName + ".", "System Error");
+    Messages.showErrorDialog(IdeBundle.message("error.paste.bug.workaround", productName, productName), IdeBundle.message("title.system.error"));
     myIsWarningShown = true;
   }
 
@@ -337,6 +336,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
   private static final DataFlavor ourDataFlavor;
   static {
     try {
+      //noinspection HardCodedStringLiteral
       ourDataFlavor = new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType + ";class=" + MyData.class.getName());
     }
     catch (ClassNotFoundException e) {
@@ -468,6 +468,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
     };
 
     if (Patches.SUN_BUG_ID_4818143) {
+      //noinspection HardCodedStringLiteral
       Thread worker = new Thread(accessor, "Clipboard accessor");
       worker.start();
 

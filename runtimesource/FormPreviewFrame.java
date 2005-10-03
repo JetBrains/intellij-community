@@ -2,33 +2,35 @@
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.text.MessageFormat;
+import java.util.ResourceBundle;
 
 public class FormPreviewFrame {
   private JComponent myComponent;
+  private static ResourceBundle ourBundle = ResourceBundle.getBundle("RuntimeBundle");
 
   // Note: this class should not be obfuscated
 
   public static void main(String[] args) {
     FormPreviewFrame f = new FormPreviewFrame();
 
-    JFrame frame = new JFrame("Form Preview");
+    JFrame frame = new JFrame(ourBundle.getString("form.preview.title"));
     frame.setContentPane(f.myComponent);
 
     // Add menu bar
     final JMenuBar menuBar = new JMenuBar();
     frame.setJMenuBar(menuBar);
 
-    final JMenu menuFile = new JMenu("File");
-    menuFile.setMnemonic(KeyEvent.VK_F);
+    final JMenu menuFile = new JMenu(ourBundle.getString("form.menu.file"));
+    menuFile.setMnemonic(ourBundle.getString("form.menu.file.mnemonic").charAt(0));
     final JMenuItem menuItemExit = new JMenuItem(new MyExitAction());
     menuFile.add(menuItemExit);
     menuBar.add(menuFile);
 
-    final JMenu viewMenu = new JMenu("View");
-    viewMenu.setMnemonic(KeyEvent.VK_V);
+    final JMenu viewMenu = new JMenu(ourBundle.getString("form.menu.view"));
+    viewMenu.setMnemonic(ourBundle.getString("form.menu.view.mnemonic").charAt(0));
     viewMenu.add(new JMenuItem(new MyPackAction(frame)));
     viewMenu.addSeparator();
     menuBar.add(viewMenu);
@@ -53,7 +55,7 @@ public class FormPreviewFrame {
 
   private static final class MyExitAction extends AbstractAction{
     public MyExitAction() {
-      super("Exit");
+      super(ourBundle.getString("form.menu.file.exit"));
     }
 
     public void actionPerformed(final ActionEvent e) {
@@ -65,7 +67,7 @@ public class FormPreviewFrame {
     private final JFrame myFrame;
 
     public MyPackAction(final JFrame frame) {
-      super("Pack");
+      super(ourBundle.getString("form.menu.view.pack"));
       myFrame = frame;
     }
 
@@ -96,8 +98,8 @@ public class FormPreviewFrame {
       catch(Exception exc){
         JOptionPane.showMessageDialog(
           myFrame,
-          "Cannot change LookAndFeel.\nReason: " + exc.getMessage(),
-          "Error",
+          MessageFormat.format(ourBundle.getString("error.cannot.change.look.feel"), new Object[] {exc.getMessage()}),
+          ourBundle.getString("error.title"),
           JOptionPane.ERROR_MESSAGE
         );
       }

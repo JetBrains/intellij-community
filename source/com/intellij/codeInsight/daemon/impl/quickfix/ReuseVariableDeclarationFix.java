@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -27,11 +28,11 @@ public class ReuseVariableDeclarationFix implements IntentionAction {
   }
 
   public String getFamilyName() {
-    return "Reuse variable declaration";
+    return QuickFixBundle.message("reuse.variable.declaration.family");
   }
 
   public String getText() {
-    return "Reuse previous variable '" + variable.getName() + "' declaration";
+    return QuickFixBundle.message("reuse.variable.declaration.text", variable.getName());
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {

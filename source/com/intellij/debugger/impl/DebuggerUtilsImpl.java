@@ -20,6 +20,7 @@ import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.execution.ExecutionException;
 import com.sun.jdi.Value;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.net.ServerSocket;
 import java.io.IOException;
@@ -58,6 +59,7 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
     return DebuggerAction.getDebuggerContext(context);
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public Element writeTextWithImports(TextWithImports text) {
     Element element = new Element("TextWithImports");
 
@@ -66,6 +68,7 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
     return element;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public TextWithImports readTextWithImports(Element element) {
     LOG.assertTrue("TextWithImports".equals(element.getName()));
 

@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.template.macro;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.project.Project;
@@ -12,7 +13,7 @@ public class SuggestIndexNameMacro implements Macro{
   }
 
   public String getDescription() {
-    return "suggestIndexName()";
+    return CodeInsightBundle.message("macro.suggest.index.name");
   }
 
   public String getDefaultValue() {

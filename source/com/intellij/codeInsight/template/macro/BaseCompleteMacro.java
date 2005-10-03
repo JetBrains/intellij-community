@@ -13,11 +13,12 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import org.jetbrains.annotations.NonNls;
 
 public abstract class BaseCompleteMacro implements Macro {
   private final String myName;
 
-  public BaseCompleteMacro(String name) {
+  public BaseCompleteMacro(@NonNls String name) {
     myName = name;
   }
 
@@ -56,8 +57,8 @@ public abstract class BaseCompleteMacro implements Macro {
           getCompletionHandler().invoke(project, editor, PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()));
         }
       },
-      "",
-      null
+        "",
+        null
     );
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -82,8 +83,8 @@ public abstract class BaseCompleteMacro implements Macro {
               }
             }
           },
-          "",
-          null
+            "",
+            null
         );
       }
     });

@@ -8,6 +8,8 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MultiLineLabelUI;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.refactoring.RefactoringBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -25,8 +27,8 @@ public class YesNoPreviewUsagesDialog extends DialogWrapper {
     setTitle(title);
     myMessage = message;
     myToPreviewUsages = previewUsages;
-    setOKButtonText("&Yes");
-    setCancelButtonText("&No");
+    setOKButtonText(RefactoringBundle.message("yes.button"));
+    setCancelButtonText(RefactoringBundle.message("no.button"));
     setButtonsAlignment(SwingUtilities.CENTER);
     init();
   }
@@ -36,7 +38,7 @@ public class YesNoPreviewUsagesDialog extends DialogWrapper {
     label.setUI(new MultiLineLabelUI());
     JPanel panel = new JPanel(new BorderLayout());
     panel.add(label, BorderLayout.CENTER);
-    Icon icon = UIManager.getIcon("OptionPane.questionIcon");
+    Icon icon = Messages.getQuestionIcon();
     if (icon != null) {
       label.setIcon(icon);
       label.setIconTextGap(7);
@@ -53,11 +55,11 @@ public class YesNoPreviewUsagesDialog extends DialogWrapper {
   }
 
   protected JComponent createSouthPanel() {
-    myCbPreviewResults = new JCheckBox("Preview usages to be changed");
+    myCbPreviewResults = new JCheckBox();
     myCbPreviewResults.setSelected(myToPreviewUsages);
+    myCbPreviewResults.setText(RefactoringBundle.message("preview.usages.to.be.changed"));
     JPanel panel = new JPanel(new BorderLayout());
     panel.add(super.createSouthPanel(), BorderLayout.CENTER);
-    myCbPreviewResults.setMnemonic('P');
     panel.add(myCbPreviewResults, BorderLayout.WEST);
     return panel;
   }

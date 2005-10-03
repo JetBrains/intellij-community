@@ -66,7 +66,7 @@ public class CvsRollbacker {
             });
           }
         };
-        CommandProcessor.getInstance().executeCommand(myProject, writeAction, "Rollback file creation", null);
+        CommandProcessor.getInstance().executeCommand(myProject, writeAction, com.intellij.CvsBundle.message("command.name.rollback.file.creation"), null);
       }
     };
     if (ApplicationManager.getApplication().isDispatchThread()) {

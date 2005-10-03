@@ -12,6 +12,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import org.jdom.Attribute;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author dsl
@@ -21,8 +22,8 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
                                                                                   ModuleJdkOrderEntry,
                                                                                   ProjectJdkTable.Listener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.JdkLibraryEntryImpl");
-  static final String ENTRY_TYPE = "jdk";
-  private static final String JDK_NAME_ATTR = "jdkName";
+  @NonNls static final String ENTRY_TYPE = "jdk";
+  @NonNls private static final String JDK_NAME_ATTR = "jdkName";
 
   private ProjectJdk myJdk;
   private String myJdkName;

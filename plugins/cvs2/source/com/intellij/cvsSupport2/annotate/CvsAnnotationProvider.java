@@ -55,7 +55,7 @@ public class CvsAnnotationProvider implements AnnotationProvider{
   public FileAnnotation annotate(VirtualFile file) throws VcsException {
     final AnnotateOperation operation = AnnotateOperation.createForFile(new File(file.getPath()));
     final CvsOperationExecutor executor = new CvsOperationExecutor(true, myProject, ModalityState.defaultModalityState());
-    executor.performActionSync(new CommandCvsHandler("Annotate", operation),
+    executor.performActionSync(new CommandCvsHandler(com.intellij.CvsBundle.getAnnotateOperationName(), operation),
                                CvsOperationExecutorCallback.EMPTY);
     if (executor.getResult().hasNoErrors()) {
       return new CvsFileAnnotation(operation.getContent(), operation.getLineAnnotations(), file);

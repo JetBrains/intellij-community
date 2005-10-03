@@ -20,13 +20,14 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 public class EnvironmentVariable implements JDOMExternalizable {
   public String NAME;
   public String VALUE;
   public boolean IS_PREDEFINED;
 
-  public EnvironmentVariable(String name, String value, boolean isPredefined) {
+  public EnvironmentVariable(@NonNls String name, @NonNls String value, boolean isPredefined) {
     NAME = name;
     VALUE = value;
     IS_PREDEFINED = isPredefined;

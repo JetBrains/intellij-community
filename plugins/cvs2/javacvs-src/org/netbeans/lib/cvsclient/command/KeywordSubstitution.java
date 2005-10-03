@@ -12,75 +12,77 @@
  */
 package org.netbeans.lib.cvsclient.command;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author  Thomas Singer
  */
 public final class KeywordSubstitution {
 
-	// Constants ==============================================================
+        // Constants ==============================================================
 
-	public static final KeywordSubstitution BINARY = new KeywordSubstitution("b");
-	public static final KeywordSubstitution KEYWORD_COMPRESSION = new KeywordSubstitution("k");
-	public static final KeywordSubstitution KEYWORD_EXPANSION = new KeywordSubstitution("kv");
-	public static final KeywordSubstitution KEYWORD_EXPANSION_LOCKER = new KeywordSubstitution("kvl");
-	public static final KeywordSubstitution NO_SUBSTITUTION = new KeywordSubstitution("o");
-	public static final KeywordSubstitution KEYWORD_REPLACEMENT = new KeywordSubstitution("v");
+        public static final KeywordSubstitution BINARY = new KeywordSubstitution("b");
+        public static final KeywordSubstitution KEYWORD_COMPRESSION = new KeywordSubstitution("k");
+        public static final KeywordSubstitution KEYWORD_EXPANSION = new KeywordSubstitution("kv");
+        public static final KeywordSubstitution KEYWORD_EXPANSION_LOCKER = new KeywordSubstitution("kvl");
+        public static final KeywordSubstitution NO_SUBSTITUTION = new KeywordSubstitution("o");
+        public static final KeywordSubstitution KEYWORD_REPLACEMENT = new KeywordSubstitution("v");
 
-	// Static =================================================================
+        // Static =================================================================
 
-	public static KeywordSubstitution getValue(String string) {
-		if (string == null) {
-			return null;
-		}
+        public static KeywordSubstitution getValue(String string) {
+                if (string == null) {
+                        return null;
+                }
 
-		if (string.equals(BINARY.value)) {
-			return BINARY;
-		}
+                if (string.equals(BINARY.value)) {
+                        return BINARY;
+                }
 
-		if (string.equals(KEYWORD_COMPRESSION.value)) {
-			return KEYWORD_COMPRESSION;
-		}
+                if (string.equals(KEYWORD_COMPRESSION.value)) {
+                        return KEYWORD_COMPRESSION;
+                }
 
-		if (string.equals(KEYWORD_EXPANSION.value)) {
-			return KEYWORD_EXPANSION;
-		}
+                if (string.equals(KEYWORD_EXPANSION.value)) {
+                        return KEYWORD_EXPANSION;
+                }
 
-		if (string.equals(KEYWORD_EXPANSION_LOCKER.value)) {
-			return KEYWORD_EXPANSION_LOCKER;
-		}
+                if (string.equals(KEYWORD_EXPANSION_LOCKER.value)) {
+                        return KEYWORD_EXPANSION_LOCKER;
+                }
 
-		if (string.equals(NO_SUBSTITUTION.value)) {
-			return NO_SUBSTITUTION;
-		}
+                if (string.equals(NO_SUBSTITUTION.value)) {
+                        return NO_SUBSTITUTION;
+                }
 
-		if (string.equals(KEYWORD_REPLACEMENT.value)) {
-			return KEYWORD_REPLACEMENT;
-		}
+                if (string.equals(KEYWORD_REPLACEMENT.value)) {
+                        return KEYWORD_REPLACEMENT;
+                }
 
-		return null;
-	}
+                return null;
+        }
 
-	public static String toString(KeywordSubstitution keywordSubstitution) {
-		if (keywordSubstitution == null) {
-			return null;
-		}
+        public static String toString(KeywordSubstitution keywordSubstitution) {
+                if (keywordSubstitution == null) {
+                        return null;
+                }
 
-		return keywordSubstitution.toString();
-	}
+                return keywordSubstitution.toString();
+        }
 
-	// Fields =================================================================
+        // Fields =================================================================
 
-	private final String value;
+        private final String value;
 
-	// Setup ==================================================================
+        // Setup ==================================================================
 
-	private KeywordSubstitution(String value) {
-		this.value = value;
-	}
+        private KeywordSubstitution(@NonNls String value) {
+                this.value = value;
+        }
 
-	// Implemented ============================================================
+        // Implemented ============================================================
 
-	public String toString() {
-		return value;
-	}
+        public String toString() {
+                return value;
+        }
 }

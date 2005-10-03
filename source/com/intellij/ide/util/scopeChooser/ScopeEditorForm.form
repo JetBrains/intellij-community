@@ -12,7 +12,7 @@
       <xy id="339b4" binding="myTreePanel" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="0" y="80" width="388" height="175"/>
+          <xy x="0" y="78" width="388" height="177"/>
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="7" anchor="0" fill="3"/>
         </constraints>
         <properties/>
@@ -22,7 +22,7 @@
       <xy id="a3f42" binding="myButtonsPanel" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="398" y="80" width="52" height="175"/>
+          <xy x="398" y="78" width="52" height="177"/>
           <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="0" anchor="0" fill="3"/>
         </constraints>
         <properties/>
@@ -32,7 +32,7 @@
       <grid id="cb003" row-count="3" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="0" y="0" width="450" height="75"/>
+          <xy x="0" y="0" width="450" height="73"/>
           <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="1" anchor="0" fill="3"/>
         </constraints>
         <properties/>
@@ -41,7 +41,7 @@
           <grid id="51e56" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="0" y="55" width="450" height="20"/>
+              <xy x="0" y="53" width="450" height="20"/>
               <grid row="2" column="0" row-span="1" col-span="3" vsize-policy="3" hsize-policy="1" anchor="0" fill="3"/>
             </constraints>
             <properties/>
@@ -59,7 +59,7 @@
               </xy>
               <component id="3ceea" class="javax.swing.JLabel" binding="myMatchingCountLabel">
                 <constraints>
-                  <xy x="203" y="2" width="10" height="16"/>
+                  <xy x="203" y="3" width="247" height="14"/>
                   <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
                     <minimum-size width="10" height="-1"/>
                     <preferred-size width="10" height="-1"/>
@@ -68,32 +68,32 @@
                 <properties>
                   <horizontalAlignment value="4"/>
                   <horizontalTextPosition value="4"/>
-                  <text value="matching count"/>
+                  <text value=""/>
                 </properties>
               </component>
             </children>
           </grid>
           <component id="be9da" class="javax.swing.JLabel">
             <constraints>
-              <xy x="0" y="3" width="40" height="16"/>
+              <xy x="0" y="4" width="35" height="14"/>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
             </constraints>
             <properties>
-              <text value="Name:"/>
+              <text resource-bundle="messages/IdeBundle" key="label.scope.name"/>
             </properties>
           </component>
           <component id="c6596" class="javax.swing.JLabel">
             <constraints>
-              <xy x="0" y="31" width="48" height="16"/>
+              <xy x="0" y="31" width="44" height="14"/>
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
             </constraints>
             <properties>
-              <text value="Pattern:"/>
+              <text resource-bundle="messages/IdeBundle" key="label.scope.pattern"/>
             </properties>
           </component>
           <component id="449b8" class="javax.swing.JTextField" binding="myNameField">
             <constraints>
-              <xy x="58" y="0" width="347" height="22"/>
+              <xy x="54" y="1" width="351" height="20"/>
               <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
                 <preferred-size width="150" height="-1"/>
               </grid>
@@ -102,7 +102,7 @@
           </component>
           <component id="58461" class="javax.swing.JTextField" binding="myPatternField">
             <constraints>
-              <xy x="58" y="28" width="347" height="22"/>
+              <xy x="54" y="28" width="351" height="20"/>
               <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
                 <preferred-size width="150" height="-1"/>
               </grid>
@@ -111,7 +111,7 @@
           </component>
           <component id="95337" class="javax.swing.JLabel" binding="myCaretPositionLabel">
             <constraints>
-              <xy x="415" y="31" width="32" height="16"/>
+              <xy x="415" y="31" width="28" height="14"/>
               <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
             </constraints>
             <properties>

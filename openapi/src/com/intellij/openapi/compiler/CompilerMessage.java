@@ -17,41 +17,59 @@ package com.intellij.openapi.compiler;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * Describes a single compiler message that is shown in compiler message view
+ * Describes a single compiler message that is shown in compiler message view.
+ *
+ * @see CompileContext#addMessage(CompilerMessageCategory, String, String, int, int)
  */
 public interface CompilerMessage {
+  /**
+   * An empty array of compiler messages which can be reused to avoid unnecessary allocations.
+   */
   CompilerMessage[] EMPTY_ARRAY = new CompilerMessage[0];
 
   /**
-   * @return a category this message belongs to (error, warning, information)
+   * Returns the category of the message.
+   *
+   * @return a category this message belongs to (error, warning, information).
    */
   CompilerMessageCategory getCategory();
 
   /**
+   * Returs the message text.
+   *
    * @return message text
    */
   String getMessage();
 
   /**
+   * Returns the navigatable object allowing to navigate to the message source.
    *
-   * @return Navigatable object allowing to navigate to the message source
+   * @return the instance.
    */
+  @Nullable
   Navigatable getNavigatable();
 
   /**
-   * @return the file to which the message applies
+   * Returns the file to which the message applies.
+   *
+   * @return the file to which the message applies.
    */
   VirtualFile getVirtualFile();
 
   /**
-   * @return location prefix prepended to message while exporting compilation results to text
+   * Returns the location prefix prepended to message while exporting compilation results to text.
+   *
+   * @return location prefix prepended to message while exporting compilation results to text.
    */
   String getExportTextPrefix();
 
   /**
-   * @return location prefix prepended to message while rendering compilation results in UI
+   * Returns the location prefix prepended to message while exporting compilation results to text.
+   *
+   * @return location prefix prepended to message while rendering compilation results in UI.
    */
   String getRenderTextPrefix();
 }

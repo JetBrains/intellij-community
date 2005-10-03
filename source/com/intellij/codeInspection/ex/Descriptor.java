@@ -2,6 +2,7 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.diagnostic.Logger;
@@ -13,6 +14,7 @@ import com.intellij.packageDependencies.ui.DependencyConfigurable;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -31,7 +33,7 @@ import java.util.Map;
  * Date: Dec 8, 2004
  */
 public class Descriptor {
-  private static Map<HighlightDisplayKey, String> ourHighlightDisplayKeyToDescriptionsMap = new HashMap<HighlightDisplayKey, String>();
+  @NonNls private static Map<HighlightDisplayKey, String> ourHighlightDisplayKeyToDescriptionsMap = new HashMap<HighlightDisplayKey, String>();
   static {
     ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.DEPRECATED_SYMBOL, "Local_DeprecatedSymbol.html");
     ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.UNUSED_IMPORT, "Local_UnusedImport.html");
@@ -43,11 +45,9 @@ public class Descriptor {
     ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.ILLEGAL_DEPENDENCY, "Local_IllegalDependencies.html");
     ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.JAVADOC_ERROR, "Local_JavaDoc.html");
     ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.UNKNOWN_JAVADOC_TAG, "Local_UnknownJavaDocTags.html");
-    
     ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.CUSTOM_HTML_TAG, "Local_CustomHtmlTags.html");
     ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.CUSTOM_HTML_ATTRIBUTE, "Local_CustomHtmlAttributes.html");
     ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.REQUIRED_HTML_ATTRIBUTE, "Local_NotRequiredHtmlAttributes.html");
-    
     ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.EJB_ERROR,  "Local_EJBErrors.html");
     ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.EJB_WARNING, "Local_EJBWarnings.html");
     ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.UNCHECKED_WARNING, "Local_UncheckedWarning.html");
@@ -69,7 +69,7 @@ public class Descriptor {
   public Descriptor(HighlightDisplayKey key,
                     InspectionProfile.ModifiableModel inspectionProfile) {
     myText = HighlightDisplayKey.getDisplayNameByKey(key);
-    myGroup = "General";
+    myGroup = InspectionsBundle.message("inspection.general.tools.group.name");
     myKey = key;
     myConfig = null;
     myEnabled = inspectionProfile.isToolEnabled(key);
@@ -77,7 +77,7 @@ public class Descriptor {
   }
 
   public Descriptor(InspectionTool tool, InspectionProfile.ModifiableModel inspectionProfile) {
-    Element config = new Element("options");
+    @NonNls Element config = new Element("options");
     try {
       tool.writeExternal(config);
     }
@@ -86,11 +86,15 @@ public class Descriptor {
     }
     myConfig = config;
     myText = tool.getDisplayName();
-    myGroup = tool.getGroupDisplayName() != null && tool.getGroupDisplayName().length() == 0 ? "General" : tool.getGroupDisplayName();
+    myGroup = tool.getGroupDisplayName() != null && tool.getGroupDisplayName().length() == 0 ? InspectionsBundle.message("inspection.general.tools.group.name") : tool.getGroupDisplayName();
     myDescriptorFileName = tool.getDescriptionFileName();
     myKey = HighlightDisplayKey.find(tool.getShortName());
     if (myKey == null) {
-      myKey = HighlightDisplayKey.register(tool.getShortName());
+      if (tool instanceof LocalInspectionToolWrapper) {
+        myKey = HighlightDisplayKey.register(tool.getShortName(), tool.getDisplayName(), ((LocalInspectionToolWrapper)tool).getTool().getID());
+      } else {
+        myKey = HighlightDisplayKey.register(tool.getShortName());
+      }
     }
     myLevel = inspectionProfile.getErrorLevel(myKey);
     myEnabled = inspectionProfile.isToolEnabled(myKey);
@@ -186,7 +190,7 @@ public class Descriptor {
 
 
   public static JPanel createDependencyConigurationPanel() {
-    final JButton editDependencies = new JButton("Configure dependency rules");
+    final JButton editDependencies = new JButton(InspectionsBundle.message("inspection.dependency.configure.button.text"));
     editDependencies.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         Project project = (Project)DataManager.getInstance().getDataContext(editDependencies).getData(DataConstants.PROJECT);
@@ -201,7 +205,7 @@ public class Descriptor {
   }
 
   public static FieldPanel createAdditionalJavadocTagsPanel(final InspectionProfile.ModifiableModel inspectionProfile){
-    FieldPanel additionalTagsPanel = new FieldPanel("Additional JavaDoc Tags", "Edit Additional JavaDoc Tags", null, null);
+    FieldPanel additionalTagsPanel = new FieldPanel(InspectionsBundle.message("inspection.javadoc.label.text"), InspectionsBundle.message("inspection.javadoc.dialog.title"), null, null);
     additionalTagsPanel.setPreferredSize(new Dimension(150, additionalTagsPanel.getPreferredSize().height));
     additionalTagsPanel.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(DocumentEvent e) {
@@ -227,7 +231,7 @@ public class Descriptor {
   }
 
   public static FieldPanel createAdditionalHtmlTagsPanel(final InspectionProfile.ModifiableModel inspectionProfile){
-    FieldPanel additionalTagsPanel = new FieldPanel("Custom Html Tags", "Edit Custom Html Tags", null, null);
+    FieldPanel additionalTagsPanel = new FieldPanel(InspectionsBundle.message("inspection.javadoc.html.label.text"), InspectionsBundle.message("inspection.javadoc.html.dialog.title"), null, null);
     additionalTagsPanel.setPreferredSize(new Dimension(150, additionalTagsPanel.getPreferredSize().height));
     additionalTagsPanel.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(DocumentEvent e) {
@@ -252,7 +256,7 @@ public class Descriptor {
   }
   
   public static FieldPanel createAdditionalHtmlAttributesPanel(final InspectionProfile.ModifiableModel inspectionProfile){
-    FieldPanel additionalAttributesPanel = new FieldPanel("Custom Html Attributes", "Edit Custom Html Attributes", null, null);
+    FieldPanel additionalAttributesPanel = new FieldPanel(InspectionsBundle.message("inspection.javadoc.html.attributes.label.text"), InspectionsBundle.message("inspection.javadoc.html.attributes.dialog.title"), null, null);
     
     additionalAttributesPanel.setPreferredSize(new Dimension(150, additionalAttributesPanel.getPreferredSize().height));
     additionalAttributesPanel.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
@@ -278,7 +282,7 @@ public class Descriptor {
   }
   
   public static FieldPanel createAdditionalNotRequiredHtmlAttributesPanel(final InspectionProfile.ModifiableModel inspectionProfile){
-    FieldPanel additionalAttributesPanel = new FieldPanel("Additional Not Required Html Attributes", "Edit Additional Not Required Html Attributes", null, null);
+    FieldPanel additionalAttributesPanel = new FieldPanel(InspectionsBundle.message("inspection.javadoc.html.not.required.label.text"), InspectionsBundle.message("inspection.javadoc.html.not.required.dialog.title"), null, null);
     
     additionalAttributesPanel.setPreferredSize(new Dimension(150, additionalAttributesPanel.getPreferredSize().height));
     additionalAttributesPanel.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
@@ -305,11 +309,11 @@ public class Descriptor {
   
   public static JPanel createUnusedSymbolSettingsPanel(final InspectionProfile.ModifiableModel inspectionProfile){
     JPanel panel = new JPanel(new GridLayout(5, 1, 2, 2));
-    final JCheckBox local = new JCheckBox("Check Local Variables");
-    final JCheckBox field = new JCheckBox("Check Fields");
-    final JCheckBox method = new JCheckBox("Check Methods");
-    final JCheckBox classes = new JCheckBox("Check Classes");
-    final JCheckBox parameters = new JCheckBox("Check Parameters");
+    final JCheckBox local = new JCheckBox(InspectionsBundle.message("inspection.unused.symbol.option"));
+    final JCheckBox field = new JCheckBox(InspectionsBundle.message("inspection.unused.symbol.option1"));
+    final JCheckBox method = new JCheckBox(InspectionsBundle.message("inspection.unused.symbol.option2"));
+    final JCheckBox classes = new JCheckBox(InspectionsBundle.message("inspection.unused.symbol.option3"));
+    final JCheckBox parameters = new JCheckBox(InspectionsBundle.message("inspection.unused.symbol.option4"));
     ChangeListener listener = new ChangeListener() {
       public void stateChanged(ChangeEvent e) {
         InspectionProfile.UnusedSymbolSettings settings = new InspectionProfile.UnusedSymbolSettings();

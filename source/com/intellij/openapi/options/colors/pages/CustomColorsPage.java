@@ -39,25 +39,28 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
+import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.util.Icons;
 
 import javax.swing.*;
 import java.util.Map;
 
+import org.jetbrains.annotations.NonNls;
+
 public class CustomColorsPage implements ColorSettingsPage {
   private static final ColorDescriptor[] COLORS = new ColorDescriptor[0];
   private static final AttributesDescriptor[] ATTRS = new AttributesDescriptor[] {
-    new AttributesDescriptor("Keyword1", CustomHighlighterColors.CUSTOM_KEYWORD1_ATTRIBUTES),
-    new AttributesDescriptor("Keyword2", CustomHighlighterColors.CUSTOM_KEYWORD2_ATTRIBUTES),
-    new AttributesDescriptor("Keyword3", CustomHighlighterColors.CUSTOM_KEYWORD3_ATTRIBUTES),
-    new AttributesDescriptor("Keyword4", CustomHighlighterColors.CUSTOM_KEYWORD4_ATTRIBUTES),
-    new AttributesDescriptor("Number", CustomHighlighterColors.CUSTOM_NUMBER_ATTRIBUTES),
-    new AttributesDescriptor("String", CustomHighlighterColors.CUSTOM_STRING_ATTRIBUTES),
-    new AttributesDescriptor("Line comment", CustomHighlighterColors.CUSTOM_LINE_COMMENT_ATTRIBUTES),
-    new AttributesDescriptor("Block comment", CustomHighlighterColors.CUSTOM_MULTI_LINE_COMMENT_ATTRIBUTES),
+    new AttributesDescriptor(OptionsBundle.message("options.custom.attribute.descriptor.keyword1"), CustomHighlighterColors.CUSTOM_KEYWORD1_ATTRIBUTES),
+    new AttributesDescriptor(OptionsBundle.message("options.custom.attribute.descriptor.keyword2"), CustomHighlighterColors.CUSTOM_KEYWORD2_ATTRIBUTES),
+    new AttributesDescriptor(OptionsBundle.message("options.custom.attribute.descriptor.keyword3"), CustomHighlighterColors.CUSTOM_KEYWORD3_ATTRIBUTES),
+    new AttributesDescriptor(OptionsBundle.message("options.custom.attribute.descriptor.keyword4"), CustomHighlighterColors.CUSTOM_KEYWORD4_ATTRIBUTES),
+    new AttributesDescriptor(OptionsBundle.message("options.custom.attribute.descriptor.number"), CustomHighlighterColors.CUSTOM_NUMBER_ATTRIBUTES),
+    new AttributesDescriptor(OptionsBundle.message("options.custom.attribute.descriptor.string"), CustomHighlighterColors.CUSTOM_STRING_ATTRIBUTES),
+    new AttributesDescriptor(OptionsBundle.message("options.custom.attribute.descriptor.line.comment"), CustomHighlighterColors.CUSTOM_LINE_COMMENT_ATTRIBUTES),
+    new AttributesDescriptor(OptionsBundle.message("options.custom.attribute.descriptor.block.comment"), CustomHighlighterColors.CUSTOM_MULTI_LINE_COMMENT_ATTRIBUTES),
   };
 
-  private final static SyntaxTable SYNTAX_TABLE = new SyntaxTable();
+  @NonNls private final static SyntaxTable SYNTAX_TABLE = new SyntaxTable();
   static {
     SYNTAX_TABLE.setLineComment("#");
     SYNTAX_TABLE.setStartComment("/*");
@@ -76,7 +79,7 @@ public class CustomColorsPage implements ColorSettingsPage {
   }
 
   public String getDisplayName() {
-    return "Custom";
+    return OptionsBundle.message("options.custom.display.name");
   }
 
   public Icon getIcon() {

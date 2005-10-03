@@ -9,10 +9,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NonNls;
 
 public class StackTraceLine {
   private Project myProject;
   private String myLine;
+  @NonNls
+  protected static final String AT_STR = "at";
+  protected static final String AT__STR = AT_STR + " ";
+  @NonNls protected static final String INIT_MESSAGE = "<init>";
 
   public StackTraceLine(Project project, final String line) {
     myProject = project;
@@ -20,9 +25,9 @@ public class StackTraceLine {
   }
 
   public String getClassName() {
-    int index = myLine.indexOf("at");
+    int index = myLine.indexOf(AT_STR);
     if (index < 0) return null;
-    index += "at ".length();
+    index += AT__STR.length();
     final int lastDot = getLastDot();
     if (lastDot < 0) return null;
     if (lastDot <= index) return null;
@@ -107,7 +112,7 @@ public class StackTraceLine {
 
   private static PsiMethod getMethodAtLine(final PsiClass psiClass, final String methodName, final int lineNumber) {
     final PsiMethod[] methods;
-    if ("<init>".equals(methodName)) methods = psiClass.getConstructors();
+    if (INIT_MESSAGE.equals(methodName)) methods = psiClass.getConstructors();
     else methods = psiClass.findMethodsByName(methodName, true);
     if (methods.length == 0) return null;
     final PsiFile psiFile = methods[0].getContainingFile();

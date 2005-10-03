@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SpeedSearchBase;
 import com.intellij.uiDesigner.lw.StringDescriptor;
+import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.util.ui.Table;
 import gnu.trove.TObjectIntHashMap;
 
@@ -14,10 +15,14 @@ import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Anton Katilin
@@ -30,6 +35,7 @@ public final class KeyChooserDialog extends DialogWrapper{
   private final JComponent myCenterPanel;
   /** Table with key/value pairs */
   private final Table myTable;
+  @NonNls private static final String NULL = "null";
 
   /**
    * @param bundle resource bundle to be shown.
@@ -55,7 +61,7 @@ public final class KeyChooserDialog extends DialogWrapper{
 
     myBundleName = bundleName;
 
-    setTitle("Chooser Value");
+    setTitle(UIDesignerBundle.message("title.chooser.value"));
 
     // Read key/value pairs from resource bundle
     myPairs = new ArrayList<Pair<String, String>>();
@@ -65,7 +71,7 @@ public final class KeyChooserDialog extends DialogWrapper{
       final String key = property.getKey();
       final String value = property.getValue();
       if (key != null) {
-        myPairs.add(new Pair<String, String>(key, value != null? value : "null"));
+        myPairs.add(new Pair<String, String>(key, value != null? value : NULL));
       }
     }
     Collections.sort(myPairs, new MyPairComparator());
@@ -104,6 +110,14 @@ public final class KeyChooserDialog extends DialogWrapper{
     }
 
     init();
+
+    myTable.addMouseListener(new MouseAdapter() {
+      public void mouseClicked(MouseEvent e) {
+        if (!e.isPopupTrigger() && e.getClickCount() == 2) {
+          doOKAction();
+        }
+      }
+    });
   }
 
   private void selectElementAt(final int index) {
@@ -153,12 +167,13 @@ public final class KeyChooserDialog extends DialogWrapper{
 
     public String getColumnName(final int column) {
       if(column == 0){
-        return "Key";
+        return UIDesignerBundle.message("column.key");
       }
       else if(column == 1){
-        return "Value";
+        return UIDesignerBundle.message("column.value");
       }
       else{
+        //noinspection HardCodedStringLiteral
         throw new IllegalArgumentException("unknown column: " + column);
       }
     }
@@ -171,6 +186,7 @@ public final class KeyChooserDialog extends DialogWrapper{
         return String.class;
       }
       else{
+        //noinspection HardCodedStringLiteral
         throw new IllegalArgumentException("unknown column: " + column);
       }
     }
@@ -183,6 +199,7 @@ public final class KeyChooserDialog extends DialogWrapper{
         return myPairs.get(row).getSecond();
       }
       else{
+        //noinspection HardCodedStringLiteral
         throw new IllegalArgumentException("unknown column: " + column);
       }
     }

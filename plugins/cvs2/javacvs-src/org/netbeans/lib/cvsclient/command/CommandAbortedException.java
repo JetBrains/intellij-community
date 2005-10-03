@@ -14,14 +14,16 @@
  *****************************************************************************/
 package org.netbeans.lib.cvsclient.command;
 
+import org.netbeans.lib.cvsclient.JavaCvsSrcBundle;
+
 /**
  * This exception is thrown when a command is aborted during execution
  * @author  Robert Greig
  */
 public final class CommandAbortedException extends CommandException {
 
-	public CommandAbortedException() {
-		super("Command aborted by user.");
-	}
+        public CommandAbortedException() {
+                super(JavaCvsSrcBundle.message("command.aborted.by.user.error.message"));
+        }
 
 }

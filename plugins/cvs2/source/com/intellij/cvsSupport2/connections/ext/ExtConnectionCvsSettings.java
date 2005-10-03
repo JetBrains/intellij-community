@@ -10,14 +10,16 @@ import com.intellij.cvsSupport2.errorHandling.ErrorRegistry;
 import org.netbeans.lib.cvsclient.command.CommandException;
 import org.netbeans.lib.cvsclient.command.IOCommandException;
 import org.netbeans.lib.cvsclient.connection.IConnection;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
+import java.text.MessageFormat;
 
 /**
  * author: lesya
  */
 public class ExtConnectionCvsSettings extends CvsConnectionSettings {
-  public static final String UNCHANDLED_RESPONSE_PREFIX = "Unhandled response: ";
+  @NonNls public static final String UNCHANDLED_RESPONSE_PREFIX = "Unhandled response: ";
   private final SshSettings mySshSettings;
 
   public ExtConnectionCvsSettings(CvsRootConfiguration cvsRootConfiguration) {
@@ -57,10 +59,10 @@ public class ExtConnectionCvsSettings extends CvsConnectionSettings {
     String response = localizedMessage.substring(UNCHANDLED_RESPONSE_PREFIX.length(),
                                                  localizedMessage.length() - 1);
     if (response.startsWith(USER + "@" + HOST)) {
-      return new IOCommandException(new IOException("Server rejected access"));
+      return new IOCommandException(new IOException(com.intellij.CvsBundle.message("exception.text.ext.server.rejected.access")));
     }
     else {
-      return new IOCommandException(new IOException("Cannot establish external connection. Response from server was: " + response));
+      return new IOCommandException(new IOException(com.intellij.CvsBundle.message("exception.text.cannot.establish.external.connection", response)));
     }
   }
 }

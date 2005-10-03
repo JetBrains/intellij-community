@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.ide.IdeBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -17,7 +18,7 @@ public class GotoLineNumberDialog extends DialogWrapper {
   public GotoLineNumberDialog(Project project, Editor editor){
     super(project, true);
     myEditor = editor;
-    setTitle("Go to Line");
+    setTitle(IdeBundle.message("title.go.to.line"));
     init();
   }
 
@@ -84,14 +85,14 @@ public class GotoLineNumberDialog extends DialogWrapper {
     gbConstraints.weightx = 0;
     gbConstraints.weighty = 1;
     gbConstraints.anchor = GridBagConstraints.EAST;
-    myLabel = new JLabel("Line number: ");
+    myLabel = new JLabel(IdeBundle.message("editbox.line.number"));
     panel.add(myLabel, gbConstraints);
 
     gbConstraints.fill = GridBagConstraints.BOTH;
     gbConstraints.weightx = 1;
     myField = new MyTextField();
     panel.add(myField, gbConstraints);
-    myField.setToolTipText("Syntax: <lineNumber>[:<columnNumber>]");
+    myField.setToolTipText(IdeBundle.message("tooltip.syntax.linenumber.columnnumber"));
 
     return panel;
   }

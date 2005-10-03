@@ -15,6 +15,7 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -24,6 +25,12 @@ public class RecentProjectsManager implements ApplicationComponent, JDOMExternal
   private ArrayList<String> myRecentProjects = new ArrayList<String>();
   private String myLastProjectPath;
   private static final int MAX_RECENT_PROJECTS = 15;
+  @NonNls
+  private static final String ELEMENT_LAST_PROJECT = "last_project";
+  @NonNls
+  private static final String ATTRIBUTE_PATH = "path";
+  @NonNls
+  private static final String ELEMENT_PROJECT = "project";
 
   public RecentProjectsManager(ProjectManager projectManager) {
     projectManager.addProjectManagerListener(new MyProjectManagerListener());
@@ -41,12 +48,12 @@ public class RecentProjectsManager implements ApplicationComponent, JDOMExternal
   public void readExternal(Element element) throws InvalidDataException {
     for (Iterator i=element.getChildren().iterator();i.hasNext();) {
       Element e=(Element)i.next();
-      if ("last_project".equals(e.getName())) {
-        myLastProjectPath = e.getAttributeValue("path");
+      if (ELEMENT_LAST_PROJECT.equals(e.getName())) {
+        myLastProjectPath = e.getAttributeValue(ATTRIBUTE_PATH);
       }
 
-      if ("project".equals(e.getName())) {
-        String path = e.getAttributeValue("path");
+      if (ELEMENT_PROJECT.equals(e.getName())) {
+        String path = e.getAttributeValue(ATTRIBUTE_PATH);
         File file = new File(path);
         if (file.exists()) {
           myRecentProjects.add(path);
@@ -64,14 +71,14 @@ public class RecentProjectsManager implements ApplicationComponent, JDOMExternal
   public void writeExternal(Element element) throws WriteExternalException {
     validateRecentProjects();
     if (myLastProjectPath != null) {
-      Element e = new Element("last_project");
-      e.setAttribute("path", myLastProjectPath);
+      Element e = new Element(ELEMENT_LAST_PROJECT);
+      e.setAttribute(ATTRIBUTE_PATH, myLastProjectPath);
       element.addContent(e);
     }
     for (int i = 0; i < myRecentProjects.size(); i++) {
       String path = myRecentProjects.get(i);
-      Element e = new Element("project");
-      e.setAttribute("path", path);
+      Element e = new Element(ELEMENT_PROJECT);
+      e.setAttribute(ATTRIBUTE_PATH, path);
       element.addContent(e);
     }
   }
@@ -156,7 +163,7 @@ public class RecentProjectsManager implements ApplicationComponent, JDOMExternal
       list.add(action);
     }
     if (addClearListItem) {
-      AnAction clearListAction = new AnAction("Clear List") {
+      AnAction clearListAction = new AnAction(IdeBundle.message("action.clear.list")) {
         public void actionPerformed(AnActionEvent e) {
           myRecentProjects.clear();
         }

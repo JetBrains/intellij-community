@@ -7,6 +7,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.StringTokenizer;
 
@@ -30,7 +31,8 @@ public class JikesSettings implements JDOMExternalizable, ProjectComponent {
   public void projectOpened() {
   }
 
-  public String getOptionsString() {
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  public @NonNls String getOptionsString() {
     StringBuffer options = new StringBuffer();
     if(DEBUGGING_INFO) {
       options.append("-g ");

@@ -18,6 +18,8 @@ import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
+import org.jetbrains.annotations.NonNls;
+
 public class ActionMenuItem extends JMenuItem{
   private static final Icon ourCheckedIcon = IconLoader.getIcon("/actions/check.png");
   private static final Icon ourUncheckedIcon = EmptyIcon.create(18, 18);
@@ -173,6 +175,8 @@ public class ActionMenuItem extends JMenuItem{
   }
 
   private final class MenuItemSynchronizer implements PropertyChangeListener{
+    @NonNls protected static final String SELECTED = "selected";
+
     public void propertyChange(PropertyChangeEvent e){
       String name=e.getPropertyName();
       if(Presentation.PROP_VISIBLE.equals(name)){
@@ -186,7 +190,7 @@ public class ActionMenuItem extends JMenuItem{
         ActionMenuItem.this.setText(myPresentation.getText());
       }else if(Presentation.PROP_ICON.equals(name)||Presentation.PROP_DISABLED_ICON.equals(name)){
         updateIcon();
-      }else if("selected".equals(name)){
+      }else if(SELECTED.equals(name)){
         updateIcon();
       }
     }

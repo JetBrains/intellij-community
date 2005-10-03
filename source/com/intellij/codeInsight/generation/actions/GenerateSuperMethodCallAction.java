@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
+import org.jetbrains.annotations.NonNls;
 
 /**
  *
@@ -23,7 +24,8 @@ public class GenerateSuperMethodCallAction extends BaseCodeInsightAction {
     if (method == null) {
       return false;
     }
-    getTemplatePresentation().setText("super."+method.getName()+"()");
+    final @NonNls String text = "super." + method.getName() + "()";
+    getTemplatePresentation().setText(text);
     return true;
   }
 }

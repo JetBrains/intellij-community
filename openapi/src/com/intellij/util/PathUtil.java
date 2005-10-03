@@ -32,6 +32,8 @@ import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import org.jetbrains.annotations.NonNls;
+
 public class PathUtil {
 
   public static String getLocalPath(VirtualFile file) {
@@ -109,7 +111,7 @@ public class PathUtil {
     return path.replace('/', File.separatorChar);
   }
 
-  public static final String getCanonicalPath(String path) {
+  public static final String getCanonicalPath(@NonNls String path) {
     if (path == null || path.length() == 0) {
       return path;
     }

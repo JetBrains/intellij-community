@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.PopupHandler;
+import com.intellij.execution.ExecutionBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -53,7 +54,7 @@ public class ConfigurationArgumentsHelpArea extends JPanel {
 
   private class MyCopyAction extends AnAction {
     public MyCopyAction() {
-      super("Copy");
+      super(ExecutionBundle.message("run.configuration.arguments.help.panel.copy.action.name"));
     }
 
     public void actionPerformed(final AnActionEvent e) {

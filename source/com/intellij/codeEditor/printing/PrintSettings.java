@@ -8,6 +8,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 
@@ -15,7 +16,7 @@ import java.io.File;
  *
  */
 public class PrintSettings implements NamedJDOMExternalizable, ExportableApplicationComponent {
-  public String PAPER_SIZE = "A4";
+  @NonNls public String PAPER_SIZE = "A4";
 
   public boolean COLOR_PRINTING = false;
   public boolean SYNTAX_PRINTING = true;
@@ -23,7 +24,7 @@ public class PrintSettings implements NamedJDOMExternalizable, ExportableApplica
 
   public boolean PORTRAIT_LAYOUT = true;
 
-  public String FONT_NAME = "monospaced";
+  @NonNls public String FONT_NAME = "monospaced";
   public int FONT_SIZE = 10;
 
   public boolean PRINT_LINE_NUMBERS = true;
@@ -37,14 +38,14 @@ public class PrintSettings implements NamedJDOMExternalizable, ExportableApplica
 
   public boolean DRAW_BORDER = true;
 
-  public String FOOTER_HEADER_TEXT1 = "File - $FILE$                                             ";
-  public String FOOTER_HEADER_PLACEMENT1 = "Header";
-  public String FOOTER_HEADER_ALIGNMENT1 = "Left";
-  public String FOOTER_HEADER_TEXT2 = "Page $PAGE$";
-  public String FOOTER_HEADER_PLACEMENT2 = "Footer";
-  public String FOOTER_HEADER_ALIGNMENT2 = "Center";
+  public String FOOTER_HEADER_TEXT1 = CodeEditorBundle.message("print.header.default.line.1");
+  public String FOOTER_HEADER_PLACEMENT1 = HEADER;
+  public String FOOTER_HEADER_ALIGNMENT1 = LEFT;
+  public String FOOTER_HEADER_TEXT2 = CodeEditorBundle.message("print.header.default.line.2");
+  public String FOOTER_HEADER_PLACEMENT2 = FOOTER;
+  public String FOOTER_HEADER_ALIGNMENT2 = CENTER;
   public int FOOTER_HEADER_FONT_SIZE = 8;
-  public String FOOTER_HEADER_FONT_NAME = "Arial";
+  @NonNls public String FOOTER_HEADER_FONT_NAME = "Arial";
 
   public static final int PRINT_FILE = 1;
   public static final int PRINT_SELECTED_TEXT = 2;
@@ -52,12 +53,12 @@ public class PrintSettings implements NamedJDOMExternalizable, ExportableApplica
   private int myPrintScope;
   private boolean myIncludeSubdirectories;
 
-  public static final String HEADER = "Header";
-  public static final String FOOTER = "Footer";
+  @NonNls public static final String HEADER = "Header";
+  @NonNls public static final String FOOTER = "Footer";
 
-  public static final String LEFT = "Left";
-  public static final String CENTER = "Center";
-  public static final String RIGHT = "Right";
+  @NonNls public static final String LEFT = "Left";
+  @NonNls public static final String CENTER = "Center";
+  @NonNls public static final String RIGHT = "Right";
 
   public static PrintSettings getInstance() {
     return ApplicationManager.getApplication().getComponent(PrintSettings.class);
@@ -80,7 +81,7 @@ public class PrintSettings implements NamedJDOMExternalizable, ExportableApplica
   }
 
   public String getPresentableName() {
-    return "Print settings";
+    return CodeEditorBundle.message("title.print.settings");
   }
 
   public void readExternal(Element element) throws InvalidDataException {

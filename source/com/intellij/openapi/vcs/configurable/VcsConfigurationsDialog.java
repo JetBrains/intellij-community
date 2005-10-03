@@ -38,6 +38,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.Nullable;
@@ -54,7 +55,7 @@ public class VcsConfigurationsDialog extends DialogWrapper{
   private JPanel myVcsConfigurationPanel;
   private final Project myProject;
   private JPanel myVersionControlConfigurationsPanel;
-  private static final String NONE = "< None >";
+  private static final String NONE = VcsBundle.message("none.vcs.presentation");
 
   private final Map<String, Configurable> myVcsNameToConfigurableMap = new HashMap<String, Configurable>();
   private static final ColoredListCellRenderer VCS_LIST_RENDERER = new ColoredListCellRenderer() {
@@ -88,7 +89,7 @@ public class VcsConfigurationsDialog extends DialogWrapper{
       myVcses.setSelectedValue(selectedVcs, true);
     }
     init();
-    setTitle("Version Control Configurations");
+    setTitle(VcsBundle.message("dialog.title.version.control.configurations"));
   }
 
   private void updateConfiguration() {
@@ -164,7 +165,8 @@ public class VcsConfigurationsDialog extends DialogWrapper{
           configurable.apply();
         }
         catch (ConfigurationException e) {
-          Messages.showErrorDialog("Unable to save settings. " + e.getMessage(), "Unable To Save Settings");
+          Messages.showErrorDialog(VcsBundle.message("message.text.unable.to.save.settings", e.getMessage()),
+                                   VcsBundle.message("message.title.unable.to.save.settings"));
         }
       }
     }

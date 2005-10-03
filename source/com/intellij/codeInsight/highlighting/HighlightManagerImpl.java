@@ -70,8 +70,7 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
           Map<RangeHighlighter, HighlightInfo> map = getHighlightInfoMap(editor, false);
           if (map == null) return;
 
-          for (Iterator<RangeHighlighter> iterator = map.keySet().iterator(); iterator.hasNext();) {
-            RangeHighlighter highlighter = iterator.next();
+          for (RangeHighlighter highlighter : map.keySet()) {
             HighlightInfo info = map.get(highlighter);
             if (!info.editor.getDocument().equals(document)) continue;
             if ((info.flags & HIDE_BY_TEXT_CHANGE) != 0) {
@@ -79,8 +78,7 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
             }
           }
 
-          for (int j = 0; j < highlightersToRemove.size(); j++) {
-            RangeHighlighter highlighter = highlightersToRemove.get(j);
+          for (RangeHighlighter highlighter : highlightersToRemove) {
             removeSegmentHighlighter(editor, highlighter);
           }
         }

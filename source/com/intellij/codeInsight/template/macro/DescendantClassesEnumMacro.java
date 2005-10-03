@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.template.macro;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.codeInsight.template.*;
@@ -9,7 +10,10 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 public class DescendantClassesEnumMacro implements Macro{
   public String getName() {
@@ -17,7 +21,7 @@ public class DescendantClassesEnumMacro implements Macro{
   }
 
   public String getDescription() {
-    return "descendantClassesEnum(String)";
+    return CodeInsightBundle.message("macro.descendant.classes.enum");
   }
 
   public String getDefaultValue() {
@@ -83,7 +87,7 @@ public class DescendantClassesEnumMacro implements Macro{
     if (classes == null || classes.size() == 0) return null;
 
     Set<LookupItem> set = new LinkedHashSet<LookupItem>();
-    boolean isFQN = params.length > 1 && params[1].calculateResult(context).toString().equals("true");
+    boolean isFQN = params.length > 1 && Boolean.valueOf(params[1].calculateResult(context).toString());
 
     for (PsiClass object : classes) {
       LookupItemUtil.addLookupItem(set, isFQN ? object.getQualifiedName() : object.getName(), "");

@@ -19,6 +19,8 @@ import java.io.StringWriter;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
@@ -75,8 +77,8 @@ public class TabbedPaneWrapper {
   }
 
   /**
-   * @see javax.swing.JTabbedPane#addTab(java.lang.String, javax.swing.Icon, java.awt.Component, java.lang.String) 
-   */ 
+   * @see javax.swing.JTabbedPane#addTab(java.lang.String, javax.swing.Icon, java.awt.Component, java.lang.String)
+   */
   public final synchronized void addTab(final String title, final Icon icon, final JComponent component, final String tip) {
     insertTab(title, icon, component, tip, myTabbedPane.getTabCount());
   }
@@ -479,6 +481,9 @@ public class TabbedPaneWrapper {
      */
     private final class ScrollableTabSupport{
       private final BasicTabbedPaneUI myUI;
+      @NonNls public static final String TAB_SCROLLER_NAME = "tabScroller";
+      @NonNls public static final String LEADING_TAB_INDEX_NAME = "leadingTabIndex";
+      @NonNls public static final String SET_LEADING_TAB_INDEX_METHOD = "setLeadingTabIndex";
 
       public ScrollableTabSupport(final BasicTabbedPaneUI ui){
         myUI=ui;
@@ -489,11 +494,11 @@ public class TabbedPaneWrapper {
        */
       public int getLeadingTabIndex(){
         try{
-          final Field tabScrollerField=BasicTabbedPaneUI.class.getDeclaredField("tabScroller");
+          final Field tabScrollerField=BasicTabbedPaneUI.class.getDeclaredField(TAB_SCROLLER_NAME);
           tabScrollerField.setAccessible(true);
           final Object tabScrollerValue=tabScrollerField.get(myUI);
 
-          final Field leadingTabIndexField=tabScrollerValue.getClass().getDeclaredField("leadingTabIndex");
+          final Field leadingTabIndexField=tabScrollerValue.getClass().getDeclaredField(LEADING_TAB_INDEX_NAME);
           leadingTabIndexField.setAccessible(true);
           return leadingTabIndexField.getInt(tabScrollerValue);
         }catch(Exception exc){
@@ -505,7 +510,7 @@ public class TabbedPaneWrapper {
 
       public void setLeadingTabIndex(final int leadingIndex){
         try{
-          final Field tabScrollerField=BasicTabbedPaneUI.class.getDeclaredField("tabScroller");
+          final Field tabScrollerField=BasicTabbedPaneUI.class.getDeclaredField(TAB_SCROLLER_NAME);
           tabScrollerField.setAccessible(true);
           final Object tabScrollerValue=tabScrollerField.get(myUI);
 
@@ -513,7 +518,7 @@ public class TabbedPaneWrapper {
           final Method[] methods=tabScrollerValue.getClass().getDeclaredMethods();
           for(int i=0;i<methods.length;i++){
             final Method method=methods[i];
-            if("setLeadingTabIndex".equals(method.getName())){
+            if(SET_LEADING_TAB_INDEX_METHOD.equals(method.getName())){
               setLeadingIndexMethod=method;
               break;
             }

@@ -19,6 +19,8 @@ import java.util.ArrayList;
 import java.util.Observable;
 import java.util.Observer;
 
+import org.jetbrains.annotations.NonNls;
+
 public class CvsTree extends JPanel {
   private CvsElement[] myCurrentSelection = new CvsElement[0];
   private Tree myTree;
@@ -30,8 +32,8 @@ public class CvsTree extends JPanel {
   private final Project myProject;
   private final int mySelectionModel;
 
-  public static final String SELECTION_CHANGED = "Selection Changed";
-  public static final String LOGIN_ABORTED = "Login Aborted";
+  @NonNls public static final String SELECTION_CHANGED = "Selection Changed";
+  @NonNls public static final String LOGIN_ABORTED = "Login Aborted";
 
   public CvsTree(CvsRootConfiguration env,
                  Project project,
@@ -111,7 +113,7 @@ public class CvsTree extends JPanel {
     model.setTree(myTree);
     model.setCvsTree(this);
 
-    add(new JScrollPane(myTree), BorderLayout.CENTER);    
+    add(new JScrollPane(myTree), BorderLayout.CENTER);
 
     myTree.setModel(model);
 

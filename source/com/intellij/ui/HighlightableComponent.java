@@ -192,13 +192,13 @@ public class HighlightableComponent extends JComponent {
     boolean paintHighlightsBackground;
     boolean paintHighlightsForeground;
     if (myIsSelected && myHasFocus) {
-      bgColor = UIManager.getColor("Tree.selectionBackground");
-      fgColor = UIManager.getColor("Tree.selectionForeground");
+      bgColor = UIUtil.getTreeSelectionBackground();
+      fgColor = UIUtil.getTreeSelectionForeground();
       paintHighlightsBackground = false;
       paintHighlightsForeground = false;
     }
     else {
-      bgColor = myEnforcedBackground == null ? UIManager.getColor("Tree.textBackground") : myEnforcedBackground;
+      bgColor = myEnforcedBackground == null ? UIUtil.getTreeTextBackground() : myEnforcedBackground;
       fgColor = getForeground();
       paintHighlightsBackground = isOpaque();
       paintHighlightsForeground = true;
@@ -309,7 +309,7 @@ public class HighlightableComponent extends JComponent {
     // paint border
 
     if (myIsSelected){
-      g.setColor(UIManager.getColor("Tree.selectionBorderColor"));
+      g.setColor(UIUtil.getTreeSelectionBorderColor());
       BegTreeHandleUtil.drawDottedRectangle(g, textOffset - 2, 0, getWidth() - 1, getHeight() - 1);
     }
 

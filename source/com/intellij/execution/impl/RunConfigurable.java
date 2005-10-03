@@ -2,6 +2,7 @@ package com.intellij.execution.impl;
 
 import com.intellij.execution.RunManagerConfig;
 import com.intellij.execution.RunManagerEx;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.options.BaseConfigurable;
@@ -40,7 +41,7 @@ class RunConfigurable extends BaseConfigurable {
   }
 
   public String getDisplayName() {
-    return "Run";
+    return ExecutionBundle.message("run.configurable.display.name");
   }
 
   public JComponent createComponent() {
@@ -64,12 +65,10 @@ class RunConfigurable extends BaseConfigurable {
     myPanel.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
 
     final JPanel bottomPanel = new JPanel(new GridLayout(1, 2, 5, 0));
-    myCbShowSettingsBeforeRunning = new JCheckBox("Display settings before running/debugging");
-    myCbShowSettingsBeforeRunning.setMnemonic('D');
+    myCbShowSettingsBeforeRunning = new JCheckBox(ExecutionBundle.message("run.configuration.display.settings.checkbox"));
     bottomPanel.add(myCbShowSettingsBeforeRunning);
 
-    myCbCompileBeforeRunning = new JCheckBox("Make module before running/debugging/reloading");
-    myCbCompileBeforeRunning.setMnemonic('M');
+    myCbCompileBeforeRunning = new JCheckBox(ExecutionBundle.message("run.configuration.make.module.before.running.checkbox"));
     bottomPanel.add(myCbCompileBeforeRunning);
 
     myPanel.add(bottomPanel, BorderLayout.SOUTH);

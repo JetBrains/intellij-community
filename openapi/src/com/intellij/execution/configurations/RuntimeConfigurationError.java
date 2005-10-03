@@ -15,8 +15,10 @@
  */
 package com.intellij.execution.configurations;
 
+import com.intellij.execution.ExecutionBundle;
+
 public class RuntimeConfigurationError extends RuntimeConfigurationException{
   public RuntimeConfigurationError(final String message) {
-    super(message, "Error");
+    super(message, ExecutionBundle.message("error.common.title"));
   }
 }

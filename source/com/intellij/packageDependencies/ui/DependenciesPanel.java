@@ -1,6 +1,7 @@
 package com.intellij.packageDependencies.ui;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
@@ -21,7 +22,9 @@ import com.intellij.ui.content.Content;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.Icons;
 import com.intellij.util.ui.Tree;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.CommonBundle;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -102,15 +105,14 @@ public class DependenciesPanel extends JPanel {
         traverseToLeaves(selectedNode, denyRules, allowRules);
         final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
         if (denyRules.length() + allowRules.length() > 0) {
-          statusBar.setInfo("The following rule" +
-                            ((denyRules.length() == 0 || allowRules.length() == 0) ? " is " : "s are ") +
-                            "violated: " +
-                            (denyRules.length() > 0 ? denyRules.toString() + (allowRules.length() > 0 ? "; " : "") : " ") +
-                            (allowRules.length() > 0 ? allowRules.toString() : " "));
+          statusBar.setInfo(AnalysisScopeBundle.message("status.bar.rule.violation.message",
+                                                        ((denyRules.length() == 0 || allowRules.length() == 0) ? 1 : 2),
+                                                        (denyRules.length() > 0 ? denyRules.toString() + (allowRules.length() > 0 ? "; " : "") : " ") +
+                                                        (allowRules.length() > 0 ? allowRules.toString() : " ")));
 
         }
         else {
-          statusBar.setInfo("No rules are violated");
+          statusBar.setInfo(AnalysisScopeBundle.message("status.bar.no.rule.violation.message"));
         }
       }
     });
@@ -200,7 +202,7 @@ public class DependenciesPanel extends JPanel {
     tree.setCellRenderer(new MyTreeCellRenderer());
     tree.setRootVisible(false);
     tree.setShowsRootHandles(true);
-    tree.putClientProperty("JTree.lineStyle", "Angled");
+    UIUtil.setLineStyleAngled(tree);
 
     TreeToolTipHandler.install(tree);
     TreeUtil.installActions(tree);
@@ -327,7 +329,7 @@ public class DependenciesPanel extends JPanel {
 
   private final class CloseAction extends AnAction {
     public CloseAction() {
-      super("Close", "Close Dependency Viewer", IconLoader.getIcon("/actions/cancel.png"));
+      super(CommonBundle.message("action.close"), AnalysisScopeBundle.message("action.close.dependency.description"), IconLoader.getIcon("/actions/cancel.png"));
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -339,7 +341,7 @@ public class DependenciesPanel extends JPanel {
 
   private final class FlattenPackagesAction extends ToggleAction {
     FlattenPackagesAction() {
-      super("Flatten Packages", "Flatten Packages", Icons.FLATTEN_PACKAGES_ICON);
+      super(AnalysisScopeBundle.message("action.flatten.packages"), AnalysisScopeBundle.message("action.flatten.packages"), Icons.FLATTEN_PACKAGES_ICON);
     }
 
     public boolean isSelected(AnActionEvent event) {
@@ -355,7 +357,7 @@ public class DependenciesPanel extends JPanel {
 
   private final class ShowFilesAction extends ToggleAction {
     ShowFilesAction() {
-      super("Show Files", "Show/Hide Files", IconLoader.getIcon("/fileTypes/java.png"));
+      super(AnalysisScopeBundle.message("action.show.files"), AnalysisScopeBundle.message("action.show.files.description"), IconLoader.getIcon("/fileTypes/java.png"));
     }
 
     public boolean isSelected(AnActionEvent event) {
@@ -374,7 +376,7 @@ public class DependenciesPanel extends JPanel {
 
   private final class ShowModulesAction extends ToggleAction {
     ShowModulesAction() {
-      super("Show Modules", "Show/Hide Modules", IconLoader.getIcon("/objectBrowser/showModules.png"));
+      super(AnalysisScopeBundle.message("action.show.modules"), AnalysisScopeBundle.message("action.show.modules.description"), IconLoader.getIcon("/objectBrowser/showModules.png"));
     }
 
     public boolean isSelected(AnActionEvent event) {
@@ -390,7 +392,7 @@ public class DependenciesPanel extends JPanel {
 
   private final class GroupByScopeTypeAction extends ToggleAction {
     GroupByScopeTypeAction() {
-      super("Group by Scope Type", "Group by Scope Type (production, test, libraries)", IconLoader.getIcon("/nodes/testSourceFolder.png"));
+      super(AnalysisScopeBundle.message("action.group.by.scope.type"), AnalysisScopeBundle.message("action.group.by.scope.type.description"), IconLoader.getIcon("/nodes/testSourceFolder.png"));
     }
 
     public boolean isSelected(AnActionEvent event) {
@@ -407,7 +409,7 @@ public class DependenciesPanel extends JPanel {
 
   private final class FilterLegalsAction extends ToggleAction {
     FilterLegalsAction() {
-      super("Show Illegals Only", "Show only files that have illegal dependencies", IconLoader.getIcon("/ant/filter.png"));
+      super(AnalysisScopeBundle.message("action.show.illegals.only"), AnalysisScopeBundle.message("action.show.illegals.only.description"), IconLoader.getIcon("/ant/filter.png"));
     }
 
     public boolean isSelected(AnActionEvent event) {
@@ -423,7 +425,7 @@ public class DependenciesPanel extends JPanel {
 
   private final class EditDependencyRulesAction extends AnAction {
     public EditDependencyRulesAction() {
-      super("Edit Rules", "Edit Dependency Rules", IconLoader.getIcon("/general/ideOptions.png"));
+      super(AnalysisScopeBundle.message("action.edit.rules"), AnalysisScopeBundle.message("action.edit.rules.description"), IconLoader.getIcon("/general/ideOptions.png"));
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -436,7 +438,7 @@ public class DependenciesPanel extends JPanel {
 
   private class RerunAction extends AnAction {
     public RerunAction(JComponent comp) {
-      super("Rerun", "Rerun Dependency Analysis", IconLoader.getIcon("/actions/refreshUsages.png"));
+      super(CommonBundle.message("action.rerun"), AnalysisScopeBundle.message("action.rerun.dependency"), IconLoader.getIcon("/actions/refreshUsages.png"));
       registerCustomShortcutSet(CommonShortcuts.getRerun(), comp);
     }
 
@@ -464,7 +466,7 @@ public class DependenciesPanel extends JPanel {
 
   private static class HelpAction extends AnAction {
     private HelpAction() {
-      super("Help", null, IconLoader.getIcon("/actions/help.png"));
+      super(CommonBundle.message("action.help"), null, IconLoader.getIcon("/actions/help.png"));
     }
 
     public void actionPerformed(AnActionEvent event) {
@@ -474,7 +476,7 @@ public class DependenciesPanel extends JPanel {
 
   private class ExportZkmAction extends AnAction {
     private ExportZkmAction() {
-      super("Export ZKM", null, Icons.CUSTOM_FILE_ICON);
+      super(AnalysisScopeBundle.message("action.export.zkm"), null, Icons.CUSTOM_FILE_ICON);
     }
 
     public void actionPerformed(AnActionEvent event) {
@@ -502,6 +504,7 @@ public class DependenciesPanel extends JPanel {
       System.out.println("// -----------------------------------------------------------------------------");
     }
 
+    @SuppressWarnings({"HardCodedStringLiteral"})
     private void excludeClass(final PsiClass aClass, boolean base, Set<String> excludeStrings) {
       String qName = aClass.getQualifiedName();
       if (!qName.startsWith("com.intellij")) return;
@@ -543,7 +546,7 @@ public class DependenciesPanel extends JPanel {
 
   private class SelectInLeftTreeAction extends AnAction {
     public SelectInLeftTreeAction() {
-      super("Select in Left Tree", "Select in left tree (to browse dependencies from)", null);
+      super(AnalysisScopeBundle.message("action.select.in.left.tree"), AnalysisScopeBundle.message("action.select.in.left.tree.description"), null);
     }
 
     public void update(AnActionEvent e) {

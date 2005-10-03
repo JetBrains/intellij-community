@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.debugger.ui.breakpoints.AddFieldBreakpointDialog">
-  <grid id="dbe86" binding="myPanel" row-count="6" column-count="1" hgap="-1" vgap="6">
+  <grid id="dbe86" binding="myPanel" row-count="6" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="6">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
       <xy x="74" y="134" width="245" height="152"/>
@@ -13,7 +13,7 @@
     <children>
       <component id="9636d" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myClassChooser">
         <constraints>
-          <xy x="0" y="26" width="245" height="21"/>
+          <xy x="0" y="26" width="245" height="22"/>
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
             <preferred-size width="150" height="-1"/>
           </grid>
@@ -22,7 +22,7 @@
       </component>
       <component id="c2ef3" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myFieldChooser">
         <constraints>
-          <xy x="0" y="79" width="245" height="21"/>
+          <xy x="0" y="80" width="245" height="22"/>
           <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
             <preferred-size width="150" height="-1"/>
           </grid>
@@ -44,26 +44,26 @@
       </xy>
       <vspacer id="339be">
         <constraints>
-          <xy x="117" y="106" width="11" height="26"/>
+          <xy x="117" y="108" width="11" height="24"/>
           <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
         </constraints>
       </vspacer>
       <component id="e8c64" class="javax.swing.JLabel">
         <constraints>
-          <xy x="0" y="56" width="55" height="14"/>
+          <xy x="0" y="56" width="69" height="16"/>
           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
         </constraints>
         <properties>
-          <text value="Field name:"/>
+          <text resource-bundle="messages/DebuggerBundle" key="label.add.field.breakpoint.dialog.field.name"/>
         </properties>
       </component>
       <component id="c159b" class="javax.swing.JLabel">
         <constraints>
-          <xy x="0" y="3" width="146" height="14"/>
+          <xy x="0" y="2" width="181" height="16"/>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
         </constraints>
         <properties>
-          <text value="Fully qualified name of a class:"/>
+          <text resource-bundle="messages/DebuggerBundle" key="label.add.field.breakpoint.dialog.fq.name"/>
         </properties>
       </component>
     </children>

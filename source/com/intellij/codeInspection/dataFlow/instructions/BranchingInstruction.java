@@ -47,6 +47,7 @@ public abstract class BranchingInstruction extends Instruction {
     return !isConstTrue && myIsTrueReachable != myIsFalseReachable;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static boolean isBoolConst(PsiElement condition) {
     if (!(condition instanceof PsiLiteralExpression)) return false;
     String text = condition.getText();

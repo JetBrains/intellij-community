@@ -46,10 +46,12 @@ import java.lang.reflect.Modifier;
 import java.util.Collection;
 import java.util.HashSet;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author mike
  */
-public abstract class IdeaTestCase extends TestCase implements DataProvider {
+@NonNls public abstract class IdeaTestCase extends TestCase implements DataProvider {
 
   static {
     Logger.setFactory(TestLoggerFactory.getInstance());
@@ -483,9 +485,10 @@ public abstract class IdeaTestCase extends TestCase implements DataProvider {
 
   private static class MyThreadGroup extends ThreadGroup {
     private Throwable myThrowable;
+    @NonNls private static final String IDEATEST_THREAD_GROUP = "IDEATest";
 
     public MyThreadGroup() {
-      super("IDEATest");
+      super(IDEATEST_THREAD_GROUP);
     }
 
     public void uncaughtException(Thread t, Throwable e) {

@@ -9,6 +9,8 @@ import javax.swing.*;
 import java.io.File;
 import java.util.*;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * author: lesya
  */
@@ -32,7 +34,7 @@ public class GroupTreeNode extends AbstractTreeNode {
   }
 
   public Icon getIcon(boolean expanded) {
-    String iconName = expanded ? "folderOpen" : "folder";
+    @NonNls String iconName = expanded ? "folderOpen" : "folder";
     return IconLoader.getIcon("/nodes/" + iconName + ".png");
   }
 
@@ -138,8 +140,8 @@ public class GroupTreeNode extends AbstractTreeNode {
     for (Iterator iterator = roots.iterator(); iterator.hasNext();) {
       File file = (File)iterator.next();
       FileOrDirectoryTreeNode child = files.contains(file) ?
-                               new FileTreeNode(file.getAbsolutePath(), myInvalidAttributes, myProject, parentPath)
-                               : (FileOrDirectoryTreeNode)new DirectoryTreeNode(file.getAbsolutePath(), myProject, parentPath);
+                                      new FileTreeNode(file.getAbsolutePath(), myInvalidAttributes, myProject, parentPath)
+                                      : (FileOrDirectoryTreeNode)new DirectoryTreeNode(file.getAbsolutePath(), myProject, parentPath);
       parentNode.add(child);
       addFiles(child, groupByPackages.getChildren(file), files, groupByPackages, child.getFilePath());
     }

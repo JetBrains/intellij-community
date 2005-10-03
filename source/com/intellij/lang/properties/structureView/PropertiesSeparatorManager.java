@@ -21,6 +21,7 @@ import gnu.trove.THashMap;
 import gnu.trove.TIntIntHashMap;
 import gnu.trove.TIntProcedure;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -28,6 +29,10 @@ import java.util.List;
 import java.util.Map;
 
 public class PropertiesSeparatorManager implements JDOMExternalizable, ApplicationComponent {
+  @NonNls private static final String FILE_ELEMENT = "file";
+  @NonNls private static final String URL_ELEMENT = "url";
+  @NonNls private static final String SEPARATOR_ATTR = "separator";
+
   public static PropertiesSeparatorManager getInstance() {
     return ApplicationManager.getApplication().getComponent(PropertiesSeparatorManager.class);
   }
@@ -101,10 +106,10 @@ public class PropertiesSeparatorManager implements JDOMExternalizable, Applicati
   }
 
   public void readExternal(Element element) throws InvalidDataException {
-    List<Element> files = element.getChildren("file");
+    List<Element> files = element.getChildren(FILE_ELEMENT);
     for (Element fileElement : files) {
-      String url = fileElement.getAttributeValue("url", "");
-      String separator = fileElement.getAttributeValue("separator");
+      String url = fileElement.getAttributeValue(URL_ELEMENT, "");
+      String separator = fileElement.getAttributeValue(SEPARATOR_ATTR);
       VirtualFile file;
       ResourceBundle resourceBundle = ResourceBundleImpl.createByUrl(url);
       if (resourceBundle != null) {
@@ -130,9 +135,9 @@ public class PropertiesSeparatorManager implements JDOMExternalizable, Applicati
         url = file.getUrl();
       }
       String separator = mySeparators.get(file);
-      Element fileElement = new Element("file");
-      fileElement.setAttribute("url", url);
-      fileElement.setAttribute("separator", separator);
+      Element fileElement = new Element(FILE_ELEMENT);
+      fileElement.setAttribute(URL_ELEMENT, url);
+      fileElement.setAttribute(SEPARATOR_ATTR, separator);
       element.addContent(fileElement);
     }
   }

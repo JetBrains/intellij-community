@@ -46,6 +46,7 @@ public class DirectoryInfo {
     return (packageName != null ? packageName.hashCode() : 0);
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return "DirectoryInfo{" +
            "module=" + module +

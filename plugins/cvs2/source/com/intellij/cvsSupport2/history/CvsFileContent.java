@@ -4,6 +4,7 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.history.VcsFileContent;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.CvsBundle;
 
 public abstract class CvsFileContent implements VcsFileContent{
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.history.CvsFileContent");
@@ -31,14 +32,14 @@ public abstract class CvsFileContent implements VcsFileContent{
   public void loadContent() throws VcsException {
     myComparableCvsRevisionOnOperation.loadContent();
     if (!isLoaded()) {
-      throw new VcsException("Cannot load revision " + getRevisionNumber());
+      throw new VcsException(CvsBundle.message("exception.text.cannot.load.revision", getRevisionNumber()));
     }
     if (fileNotFound()) {
-      throw new VcsException("Cannot find revision " + getRevisionNumber());
+      throw new VcsException(CvsBundle.message("exception.text.cannot.find.revision", getRevisionNumber()));
     }
 
     if (isDeleted()) {
-      throw new VcsException("Rrevision " + getRevisionNumber() + " does not exist in repository");
+      throw new VcsException(CvsBundle.message("message.text.revision.was.deleted.from.repository", getRevisionNumber()));
     }
   }
 

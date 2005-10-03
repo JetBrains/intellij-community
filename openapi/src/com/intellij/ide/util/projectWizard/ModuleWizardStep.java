@@ -19,9 +19,12 @@ import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.ide.wizard.StepAdapter;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.FieldPanel;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
+
+import org.jetbrains.annotations.NonNls;
 
 public abstract class ModuleWizardStep extends StepAdapter{
   protected static final Icon ICON = IconLoader.getIcon("/addmodulewizard.png");
@@ -30,7 +33,7 @@ public abstract class ModuleWizardStep extends StepAdapter{
   public abstract JComponent getComponent();
   public abstract void updateDataModel();
 
-  public String getHelpId() {
+  @NonNls public String getHelpId() {
     return null;
   }
 
@@ -60,8 +63,7 @@ public abstract class ModuleWizardStep extends StepAdapter{
 
   protected static FieldPanel createFieldPanel(final JTextField field, final String labelText, final BrowseFilesListener browseButtonActionListener) {
     final FieldPanel fieldPanel = new FieldPanel(field, labelText, null, browseButtonActionListener, null);
-    //noinspection HardCodedStringLiteral
-    fieldPanel.getFieldLabel().setFont(UIManager.getFont("Label.font").deriveFont(Font.BOLD));
+    fieldPanel.getFieldLabel().setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
     return fieldPanel;
   }
 }

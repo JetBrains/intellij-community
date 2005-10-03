@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.config.*;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -26,7 +27,7 @@ import java.util.ArrayList;
 public class DiffManagerImpl extends DiffManager implements JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.external.DiffManagerImpl");
   private static final Externalizer<String> TOOL_PATH_UPDATE = new Externalizer<String>() {
-    private static final String NEW_VALUE = "newValue";
+    @NonNls private static final String NEW_VALUE = "newValue";
     public String readValue(Element dataElement) {
       String path = dataElement.getAttributeValue(NEW_VALUE);
       if (path != null) return path;
@@ -57,7 +58,7 @@ public class DiffManagerImpl extends DiffManager implements JDOMExternalizable {
     }
   };
   private ComparisonPolicy myComparisonPolicy;
-  public static final String COMPARISON_POLICY_ATTR_NAME = "COMPARISON_POLICY";
+  @NonNls public static final String COMPARISON_POLICY_ATTR_NAME = "COMPARISON_POLICY";
 
   public DiffManagerImpl() {
     myProperties = new ExternalizablePropertyContainer();

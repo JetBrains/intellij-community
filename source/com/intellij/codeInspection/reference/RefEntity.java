@@ -8,6 +8,8 @@
  */
 package com.intellij.codeInspection.reference;
 
+import com.intellij.codeInspection.InspectionsBundle;
+
 import java.util.ArrayList;
 
 public abstract class RefEntity {
@@ -16,7 +18,7 @@ public abstract class RefEntity {
   private final String myName;
 
   protected RefEntity(String name) {
-    myName = name != null ? name : "noname";
+    myName = name != null ? name : InspectionsBundle.message("inspection.reference.noname");
     myOwner = null;
     myChildren = null;
   }

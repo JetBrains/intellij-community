@@ -22,6 +22,8 @@ import com.intellij.ui.IdeBorderFactory;
 import javax.swing.*;
 import java.awt.*;
 
+import org.jetbrains.annotations.NonNls;
+
 public class LabeledComponent<Comp extends JComponent> extends JPanel {
   private final JLabel myLabel = new JLabel();
   private Comp myCompoenent;
@@ -64,8 +66,8 @@ public class LabeledComponent<Comp extends JComponent> extends JPanel {
     return text;
   }
 
-  public void setComponentClass(String className) throws ClassNotFoundException, InstantiationException,
-                                                         IllegalAccessException {
+  public void setComponentClass(@NonNls String className) throws ClassNotFoundException, InstantiationException,
+                                                                                           IllegalAccessException {
     Class<Comp> aClass = (Class<Comp>)getClass().getClassLoader().loadClass(className);
     Comp component = aClass.newInstance();
     setComponent(component);
@@ -95,7 +97,7 @@ public class LabeledComponent<Comp extends JComponent> extends JPanel {
     myLabel.setEnabled(enabled);
   }
 
-  public void setLabelLocation(String borderConstrains) {
+  public void setLabelLocation(@NonNls String borderConstrains) {
     String constrains = findBorderConstrains(borderConstrains);
     if (constrains == null || constrains == myLabelConstrains) return;
     myLabelConstrains = borderConstrains;

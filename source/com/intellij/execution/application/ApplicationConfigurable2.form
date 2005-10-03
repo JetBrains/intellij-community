@@ -11,17 +11,17 @@
     <children>
       <vspacer id="eeb03">
         <constraints>
-          <xy x="229" y="174" width="11" height="217"/>
+          <xy x="229" y="316" width="11" height="75"/>
           <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
         </constraints>
       </vspacer>
       <component id="50b09" class="com.intellij.execution.junit2.configuration.CommonJavaParameters" binding="myCommonJavaParameters">
         <constraints>
-          <xy x="0" y="46" width="470" height="20"/>
+          <xy x="0" y="46" width="470" height="128"/>
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1"/>
         </constraints>
         <properties>
-          <programParametersText value="Program pa&amp;rameters:"/>
+          <programParametersText resource-bundle="messages/ExecutionBundle" key="run.configuration.program.parameters"/>
         </properties>
       </component>
       <component id="50d08" class="com.intellij.openapi.ui.LabeledComponent" binding="myMainClass">
@@ -31,23 +31,23 @@
         </constraints>
         <properties>
           <componentClass value="com.intellij.openapi.ui.TextFieldWithBrowseButton"/>
-          <text value="Main &amp;class:"/>
+          <text resource-bundle="messages/ExecutionBundle" key="application.configuration.main.class.label"/>
         </properties>
       </component>
       <component id="c45d2" class="com.intellij.openapi.ui.LabeledComponent" binding="myModule">
         <constraints>
-          <xy x="0" y="106" width="470" height="38"/>
+          <xy x="0" y="214" width="470" height="38"/>
           <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1"/>
         </constraints>
         <properties>
           <componentClass value="javax.swing.JComboBox"/>
-          <text value="Use classpath and JDK of m&amp;odule:"/>
+          <text resource-bundle="messages/ExecutionBundle" key="application.configuration.use.classpath.and.jdk.of.module.label"/>
         </properties>
       </component>
       <xy id="7f1aa" binding="myLogsPanel" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="0" y="76" width="470" height="20"/>
+          <xy x="0" y="184" width="470" height="20"/>
           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
         </constraints>
         <properties/>
@@ -56,9 +56,10 @@
       </xy>
       <component id="e88bd" class="com.intellij.execution.ui.AlternativeJREPanel" binding="myAlternativeJREPanel">
         <constraints>
-          <xy x="225" y="154" width="20" height="20"/>
+          <xy x="0" y="262" width="470" height="54"/>
           <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1"/>
         </constraints>
+        <properties/>
       </component>
     </children>
   </grid>

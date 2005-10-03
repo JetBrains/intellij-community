@@ -8,10 +8,12 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.psi.PsiBundle;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.util.Collection;
@@ -25,8 +27,12 @@ public class CodeStyleSchemesImpl extends CodeStyleSchemes implements Exportable
   private HashMap<String, CodeStyleScheme> mySchemes = new HashMap<String, CodeStyleScheme>();   // name -> scheme
   private CodeStyleScheme myCurrentScheme;
 
-  public String CURRENT_SCHEME_NAME = "Default";
+  @NonNls private static final String DEFAULT_SCHEME_NAME = "Default";
+
+  public String CURRENT_SCHEME_NAME = DEFAULT_SCHEME_NAME;
   private boolean myIsInitialized = false;
+  @NonNls private static final String XML_EXTENSION = ".xml";
+  @NonNls private static final String CODESTYLES_DIRECTORY = "codestyles";
 
   private CodeStyleSchemesImpl() {
   }
@@ -37,7 +43,7 @@ public class CodeStyleSchemesImpl extends CodeStyleSchemes implements Exportable
 
   public void initComponent() {
     init();
-    addScheme(new CodeStyleSchemeImpl("Default", true, null));
+    addScheme(new CodeStyleSchemeImpl(DEFAULT_SCHEME_NAME, true, null));
     CodeStyleScheme current = findSchemeByName(CURRENT_SCHEME_NAME);
     if (current == null) current = getDefaultScheme();
     setCurrentScheme(current);
@@ -100,7 +106,7 @@ public class CodeStyleSchemesImpl extends CodeStyleSchemes implements Exportable
   }
 
   public CodeStyleScheme getDefaultScheme() {
-    return findSchemeByName("Default");
+    return findSchemeByName(DEFAULT_SCHEME_NAME);
   }
 
   public CodeStyleScheme findSchemeByName(String name) {
@@ -129,12 +135,13 @@ public class CodeStyleSchemesImpl extends CodeStyleSchemes implements Exportable
 
     File[] files = getSchemeFiles();
     for (File file : files) {
-      if (file.getName().toLowerCase().endsWith(".xml")) {
+      if (file.getName().toLowerCase().endsWith(XML_EXTENSION)) {
         try {
           addScheme(CodeStyleSchemeImpl.readScheme(file));
         }
         catch (Exception e) {
-          Messages.showErrorDialog("Error reading code style scheme from " + file.getName(), "Corrupted File");
+          Messages.showErrorDialog(PsiBundle.message("codestyle.cannot.read.scheme.file.message", file.getName()),
+                                   PsiBundle.message("codestyle.cannot.read.scheme.file.title"));
         }
       }
     }
@@ -149,7 +156,7 @@ public class CodeStyleSchemesImpl extends CodeStyleSchemes implements Exportable
     File[] files = getSchemeFiles();
     for (File file : files) {
       String fileName = file.getName().toLowerCase();
-      String xmlExtension = ".xml";
+      String xmlExtension = XML_EXTENSION;
       if (fileName.endsWith(xmlExtension)) {
         try {
           String fileNameWithoutExtension = fileName.substring(0, fileName.length() - xmlExtension.length());
@@ -180,7 +187,7 @@ public class CodeStyleSchemesImpl extends CodeStyleSchemes implements Exportable
   }
 
   public String getPresentableName() {
-    return "Code style schemes";
+    return PsiBundle.message("codestyle.export.display.name");
   }
 
   private File[] getSchemeFiles() {
@@ -198,13 +205,13 @@ public class CodeStyleSchemesImpl extends CodeStyleSchemes implements Exportable
   }
 
   private static File getDir(boolean create) {
-    String directoryPath = PathManager.getConfigPath() + File.separator + "codestyles";
+    String directoryPath = PathManager.getConfigPath() + File.separator + CODESTYLES_DIRECTORY;
     File directory = new File(directoryPath);
     if (!directory.exists()) {
       if (!create) return null;
       if (!directory.mkdir()) {
-        Messages.showErrorDialog("Cannot save code style schemes. Directory " + directoryPath + " cannot be created.",
-                                 "Cannot Save Settings");
+        Messages.showErrorDialog(PsiBundle.message("codestyle.cannot.save.settings.directory.cant.be.created.message", directoryPath),
+                                 PsiBundle.message("codestyle.cannot.save.settings.directory.cant.be.created.title"));
         return null;
       }
     }

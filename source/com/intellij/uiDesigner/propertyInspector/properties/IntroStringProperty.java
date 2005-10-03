@@ -1,8 +1,6 @@
 package com.intellij.uiDesigner.propertyInspector.properties;
 
-import com.intellij.uiDesigner.RadComponent;
-import com.intellij.uiDesigner.XmlWriter;
-import com.intellij.uiDesigner.ReferenceUtil;
+import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.core.SupportCode;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
@@ -12,6 +10,7 @@ import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.editors.string.StringEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.StringRenderer;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.lang.reflect.Method;
@@ -24,6 +23,7 @@ public final class IntroStringProperty extends IntrospectedProperty{
   /**
    * value: HashMap<String, StringDescriptor>
    */
+  @NonNls
   private static final String CLIENT_PROP_NAME_2_DESCRIPTOR = "name2descriptor";
 
   private final StringRenderer myRenderer;
@@ -111,13 +111,14 @@ public final class IntroStringProperty extends IntrospectedProperty{
     // 2. plain value
     final StringDescriptor result;
     final JComponent delegee = component.getDelegee();
-    if("text".equals(getName()) && (delegee instanceof JLabel)){
+    if(SwingProperties.TEXT.equals(getName()) && (delegee instanceof JLabel)){
       final JLabel label = (JLabel)delegee;
       result = StringDescriptor.create(
         mergeTextAndMnemonic(label.getText(), label.getDisplayedMnemonic(), label.getDisplayedMnemonicIndex())
       );
     }
-    else if("text".equals(getName()) && (delegee instanceof AbstractButton)){
+    else
+    if(SwingProperties.TEXT.equals(getName()) && (delegee instanceof AbstractButton)){
       final AbstractButton button = (AbstractButton)delegee;
       result = StringDescriptor.create(
         mergeTextAndMnemonic(button.getText(), button.getMnemonic(), button.getDisplayedMnemonicIndex())
@@ -136,7 +137,7 @@ public final class IntroStringProperty extends IntrospectedProperty{
   protected void setValueImpl(final RadComponent component, final Object value) throws Exception {
     // 1. Put value into map
     final StringDescriptor descriptor = (StringDescriptor)value;
-    if(descriptor == null || descriptor.getBundleName() == null){
+    if(descriptor == null || (descriptor.getBundleName() == null && !descriptor.isNoI18n())) {
       getName2Descriptor(component).remove(getName());
     }
     else{
@@ -150,7 +151,7 @@ public final class IntroStringProperty extends IntrospectedProperty{
       descriptor.setResolvedValue(resolvedValue);
     }
 
-    if("text".equals(getName()) && (delegee instanceof JLabel)){
+    if(SwingProperties.TEXT.equals(getName()) && (delegee instanceof JLabel)){
       final JLabel label = (JLabel)delegee;
       final SupportCode.TextWithMnemonic textWithMnemonic = SupportCode.parseText(resolvedValue);
       label.setText(textWithMnemonic.myText);
@@ -162,7 +163,7 @@ public final class IntroStringProperty extends IntrospectedProperty{
         label.setDisplayedMnemonic(0);
       }
     }
-    else if("text".equals(getName()) && (delegee instanceof AbstractButton)){
+    else if(SwingProperties.TEXT.equals(getName()) && (delegee instanceof AbstractButton)){
       final AbstractButton button = (AbstractButton)delegee;
       final SupportCode.TextWithMnemonic textWithMnemonic = SupportCode.parseText(resolvedValue);
       button.setText(textWithMnemonic.myText);
@@ -181,15 +182,13 @@ public final class IntroStringProperty extends IntrospectedProperty{
 
   public void write(final Object value, final XmlWriter writer) {
     if (value == null) {
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("value cannot be null");
     }
     final StringDescriptor descriptor = (StringDescriptor)value;
-    if(descriptor.getValue() != null){ // direct value
-      writer.addAttribute("value", descriptor.getValue());
-    }
-    else{ // via resource bundle
-      writer.addAttribute("resource-bundle", descriptor.getBundleName());
-      writer.addAttribute("key", descriptor.getKey());
-    }
+    writer.writeStringDescriptor(descriptor,
+                                 UIFormXmlConstants.ATTRIBUTE_VALUE,
+                                 UIFormXmlConstants.ATTRIBUTE_RESOURCE_BUNDLE,
+                                 UIFormXmlConstants.ATTRIBUTE_KEY);
   }
 }

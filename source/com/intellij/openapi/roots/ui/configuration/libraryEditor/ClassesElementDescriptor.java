@@ -2,6 +2,7 @@ package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.project.ProjectBundle;
 
 import javax.swing.*;
 
@@ -16,7 +17,7 @@ class ClassesElementDescriptor extends NodeDescriptor<ClassesElement> {
     }
 
     public boolean update() {
-      myName = "Classes";
+      myName = ProjectBundle.message("library.classes.node");
       return false;
     }
 

@@ -14,6 +14,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.codeInsight.daemon.XmlErrorMessages;
 
 public abstract class BasicXmlAttributeDescriptor implements XmlAttributeDescriptor {
   public String validateValue(XmlElement context, String value) {
@@ -21,7 +22,7 @@ public abstract class BasicXmlAttributeDescriptor implements XmlAttributeDescrip
       String defaultValue = getDefaultValue();
 
       if (!defaultValue.equals(value)) {
-        return "Attribute " + getName() + " should have fixed value " + defaultValue;
+        return XmlErrorMessages.message("attribute.should.have.fixed.value", getName(), defaultValue);
       }
     }
 
@@ -39,7 +40,7 @@ public abstract class BasicXmlAttributeDescriptor implements XmlAttributeDescrip
       }
 
       if (!valueWasFound) {
-        return "Wrong attribute value";
+        return XmlErrorMessages.message("wrong.attribute.value");
       }
     }
 

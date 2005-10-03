@@ -8,6 +8,8 @@ import com.intellij.usageView.UsageInfo;
 
 import java.util.*;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author dsl
  */
@@ -106,11 +108,11 @@ public abstract class AutomaticRenamer {
     }
   }
 
-  protected String canonicalNameToName(String canonicalName, PsiNamedElement element) {
+  protected @NonNls String canonicalNameToName(@NonNls String canonicalName, PsiNamedElement element) {
     return canonicalName;
   }
 
-  protected String nameToCanonicalName(String name, PsiNamedElement element) {
+  protected String nameToCanonicalName(@NonNls String name, PsiNamedElement element) {
     return name;
   }
 

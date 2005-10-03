@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -26,10 +27,10 @@ public class CreateClassFromUsageAction extends CreateFromUsageBaseAction {
 
   public String getText(String varName) {
     if (myCreateInterface) {
-      return "Create Interface '" + varName + "'";
+      return QuickFixBundle.message("create.class.from.usage.interface.text", varName);
     }
     else {
-      return "Create Class '" + varName + "'";
+      return QuickFixBundle.message("create.class.from.usage.class.text", varName);
     }
   }
 
@@ -57,7 +58,7 @@ public class CreateClassFromUsageAction extends CreateFromUsageBaseAction {
           }
 
           OpenFileDescriptor descriptor = new OpenFileDescriptor(myRefElement.getProject(), aClass.getContainingFile().getVirtualFile(),
-            aClass.getTextOffset());
+                                                                 aClass.getTextOffset());
           FileEditorManager.getInstance(aClass.getProject()).openTextEditor(descriptor, true);
         }
       }
@@ -139,7 +140,7 @@ public class CreateClassFromUsageAction extends CreateFromUsageBaseAction {
   }
 
   public String getFamilyName() {
-    return "Create Class from Usage";
+    return QuickFixBundle.message("create.class.from.usage.family");
   }
 
   public boolean startInWriteAction() {

@@ -21,6 +21,7 @@ public class ConnectionServiceWrapper {
 
   static {
     try {
+      //noinspection HardCodedStringLiteral
       myDelegateClass = SystemInfo.JAVA_VERSION.startsWith("1.4")
                         ? Class.forName("com.sun.tools.jdi.ConnectionService")
                         : Class.forName("com.sun.jdi.connect.spi.Connection");
@@ -36,6 +37,7 @@ public class ConnectionServiceWrapper {
 
   public void close() throws IOException {
     try {
+      //noinspection HardCodedStringLiteral
       final Method method = myDelegateClass.getMethod("close", new Class[0]);
       method.invoke(myConnection, new Object[0]);
     }
@@ -57,6 +59,7 @@ public class ConnectionServiceWrapper {
   public VirtualMachine createVirtualMachine() throws IOException {
     try {
       final VirtualMachineManager virtualMachineManager = Bootstrap.virtualMachineManager();
+      //noinspection HardCodedStringLiteral
       final Method method = virtualMachineManager.getClass().getMethod("createVirtualMachine", new Class[]{myDelegateClass});
       return (VirtualMachine)method.invoke(virtualMachineManager, new Object[]{myConnection});
     }

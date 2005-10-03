@@ -17,6 +17,7 @@ import com.intellij.psi.xml.*;
 import com.intellij.reference.SoftReference;
 import com.intellij.xml.actions.ValidateXmlActionHandler;
 import org.xml.sax.SAXParseException;
+import org.jetbrains.annotations.NonNls;
 
 import java.lang.ref.WeakReference;
 import java.util.LinkedList;
@@ -37,6 +38,20 @@ public class ExternalDocumentValidator {
 
   private long myModificationStamp;
   private PsiFile myFile;
+  @NonNls
+  public static final String CANNOT_FIND_DECLARATION_ERROR_PREFIX = "Cannot find the declaration of element";
+  @NonNls
+  public static final String ELEMENT_ERROR_PREFIX = "Element";
+  @NonNls
+  public static final String ROOT_ELEMENT_ERROR_PREFIX = "Document root element";
+  @NonNls
+  public static final String CONTENT_OF_ELEMENT_TYPE_ERROR_PREFIX = "The content of element type";
+  @NonNls
+  public static final String VALUR_ERROR_PREFIX = "Value ";
+  @NonNls
+  public static final String ATTRIBUTE_ERROR_PREFIX = "Attribute ";
+  @NonNls
+  public static final String STRING_ERROR_PREFIX = "The string";
 
   private static class ValidationInfo {
     PsiElement element;
@@ -121,18 +136,18 @@ public class ExternalDocumentValidator {
               String localizedMessage = e.getLocalizedMessage();
               localizedMessage = localizedMessage.substring(localizedMessage.indexOf(':') + 1).trim();
 
-              if (localizedMessage.startsWith("Cannot find the declaration of element") ||
-                  localizedMessage.startsWith("Element") ||
-                  localizedMessage.startsWith("Document root element") ||
-                  localizedMessage.startsWith("The content of element type")
+              if (localizedMessage.startsWith(CANNOT_FIND_DECLARATION_ERROR_PREFIX) ||
+                  localizedMessage.startsWith(ELEMENT_ERROR_PREFIX) ||
+                  localizedMessage.startsWith(ROOT_ELEMENT_ERROR_PREFIX) ||
+                  localizedMessage.startsWith(CONTENT_OF_ELEMENT_TYPE_ERROR_PREFIX)
                   ) {
                 addProblemToTagName(currentElement, originalElement, localizedMessage, warning);
                 //return;
-              } else if (localizedMessage.startsWith("Value ")) {
+              } else if (localizedMessage.startsWith(VALUR_ERROR_PREFIX)) {
                 addProblemToTagName(currentElement, originalElement, localizedMessage, warning);
-              } else if (localizedMessage.startsWith("Attribute ")) {
+              } else if (localizedMessage.startsWith(ATTRIBUTE_ERROR_PREFIX)) {
                 currentElement = PsiTreeUtil.getParentOfType(currentElement,XmlAttribute.class,false);
-                final int messagePrefixLength = "Attribute ".length();
+                final int messagePrefixLength = ATTRIBUTE_ERROR_PREFIX.length();
 
                 if (currentElement==null && localizedMessage.charAt(messagePrefixLength) == '"') {
                   // extract the attribute name from message and get it from tag!
@@ -157,7 +172,7 @@ public class ExternalDocumentValidator {
                 } else {
                   addProblemToTagName(originalElement, originalElement, localizedMessage, warning);
                 }
-              } else if (localizedMessage.startsWith("The string")) {
+              } else if (localizedMessage.startsWith(STRING_ERROR_PREFIX)) {
                 if (currentElement != null) {
                   myHost.addMessage(currentElement,localizedMessage,Validator.ValidationHost.WARNING);
                 }

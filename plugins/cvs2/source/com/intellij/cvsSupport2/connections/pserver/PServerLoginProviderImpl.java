@@ -31,7 +31,8 @@ public class PServerLoginProviderImpl extends PServerLoginProvider {
   }
 
   private String requestForPassword(String cvsroot) {
-    PasswordPromptDialog passwordDialog = new PasswordPromptDialog("Enter password for " + cvsroot, "CVS Login", null);
+    PasswordPromptDialog passwordDialog = new PasswordPromptDialog(com.intellij.CvsBundle.message("propmt.text.enter.password.for.cvs.root", cvsroot),
+                                                                   com.intellij.CvsBundle.message("propmt.title.enter.password.for.cvs.root"), null);
     passwordDialog.show();
     if (!passwordDialog.isOK()) return null;
     return PServerPasswordScrambler.getInstance().scramble(passwordDialog.getPassword());
@@ -58,14 +59,14 @@ public class PServerLoginProviderImpl extends PServerLoginProvider {
       } catch (AuthenticationException e) {
         Throwable cause = e.getCause();
         if (cause instanceof SocketTimeoutException){
-          showErrorMessage("Timeout error.", "Timeout Error");
+          showErrorMessage(com.intellij.CvsBundle.message("error.message.timeout.error"), com.intellij.CvsBundle.message("error.dialog.title.timeout.error"));
           return false;
         } else if (cause instanceof UnknownHostException){
-          showErrorMessage("Unknown host: " + settings.HOST,
-                                     "Unknown Host");
+          showErrorMessage(com.intellij.CvsBundle.message("error.message.unknown.host", settings.HOST),
+                                     com.intellij.CvsBundle.message("error.title.inknown.host"));
           return false;
         } else {
-        showErrorMessage(getMessageFrom(e), "Authorization Error");
+        showErrorMessage(getMessageFrom(e), com.intellij.CvsBundle.message("error.title.authorization.error"));
         settings.releasePassword();
         return relogin(settings, executor);
         }
@@ -82,8 +83,8 @@ public class PServerLoginProviderImpl extends PServerLoginProvider {
     try {
       storePassword(cvsRoot, password);
     } catch (IOException e) {
-      Messages.showMessageDialog("Cannot Store Password: " + e.getLocalizedMessage(),
-                                 "Storing CVS Password", Messages.getErrorIcon());
+      Messages.showMessageDialog(com.intellij.CvsBundle.message("error.message.cannot.store.password", e.getLocalizedMessage()),
+                                 com.intellij.CvsBundle.message("error.title.storing.cvs.password"), Messages.getErrorIcon());
       return false;
     }
     settings.storePassword(password);
@@ -111,7 +112,7 @@ public class PServerLoginProviderImpl extends PServerLoginProvider {
     try {
       storePassword(cvsRoot, password);
     } catch (IOException e) {
-      Messages.showMessageDialog(e.getLocalizedMessage(), "Cannot Store Password", Messages.getErrorIcon());
+      Messages.showMessageDialog(e.getLocalizedMessage(), com.intellij.CvsBundle.message("error.title.cannot.store.password"), Messages.getErrorIcon());
       return false;
     }
     settings.storePassword(password);

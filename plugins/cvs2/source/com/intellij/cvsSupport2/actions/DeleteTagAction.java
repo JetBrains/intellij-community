@@ -24,7 +24,7 @@ public class DeleteTagAction extends ActionOnSelectedElement{
   }
 
   protected String getTitle(VcsContext context) {
-    return "Delete Tag";
+    return com.intellij.CvsBundle.message("action.name.delete.tag");
   }
 
   protected CvsHandler getCvsHandler(CvsContext context) {

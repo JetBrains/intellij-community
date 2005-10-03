@@ -11,6 +11,7 @@ import com.intellij.debugger.jdi.ThreadGroupReferenceProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.debugger.ui.tree.ThreadDescriptor;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.util.IconLoader;
 import com.sun.jdi.ThreadReference;
 
@@ -45,22 +46,19 @@ public class ThreadDescriptorImpl extends NodeDescriptorImpl implements ThreadDe
     DebuggerManagerThreadImpl.assertIsManagerThread();
     ThreadReferenceProxyImpl thread = getThreadReference();
     if (thread.isCollected()) {
-      return myName != null ? "Thread \"" + myName + "\" is garbage-collected" : "";
+      return myName != null ? DebuggerBundle.message("label.thread.node.thread.collected", myName) : "";
     }
 
     myName = thread.name();
-    String label = "Thread \"" + myName + "\"@" + thread.uniqueID();
-
     ThreadGroupReferenceProxyImpl gr = getThreadReference().threadGroupProxy();
-    String grname = (gr != null)? gr.name() : null;
-
-    if (grname != null && !"SYSTEM".equals(grname.toUpperCase())) {
-      label += " in group \"" + grname + "\"";
+    final String grname = (gr != null)? gr.name() : null;
+    final String threadStatusText = DebuggerUtilsEx.getThreadStatusText(getThreadReference().status());
+    //noinspection HardCodedStringLiteral
+    if (grname != null && !"SYSTEM".equalsIgnoreCase(grname)) {
+      return DebuggerBundle.message("label.thread.node.in.group", myName, thread.uniqueID(), threadStatusText, grname);
     }
 
-    label += " status: " + DebuggerUtilsEx.getThreadStatusText(getThreadReference().status());
-
-    return label;
+    return DebuggerBundle.message("label.thread.node", myName, thread.uniqueID(), threadStatusText);
   }
 
   public ThreadReferenceProxyImpl getThreadReference() {

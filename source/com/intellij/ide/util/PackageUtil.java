@@ -1,6 +1,7 @@
 package com.intellij.ide.util;
 
 import com.intellij.ide.IdeView;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -68,8 +69,8 @@ public class PackageUtil {
       if (foundExistingDirectory == null) {
         if (!askedToCreate && askUserToCreate) {
           int toCreate = Messages.showYesNoDialog(project,
-                                                  "Package " + packageName + " does not exist.\nDo you want to create it?",
-                                                  "Package Not Found",
+                                                  IdeBundle.message("prompt.create.non.existing.package", packageName),
+                                                  IdeBundle.message("title.package.not.found"),
                                                   Messages.getQuestionIcon());
           if (toCreate != 0) {
             return null;
@@ -105,7 +106,7 @@ public class PackageUtil {
           }
         });
       }
-    }, "Create New Subdirectory", null);
+    }, IdeBundle.message("command.create.new.subdirectory"), null);
 
     if (exception[0] != null) throw exception[0];
 
@@ -162,8 +163,8 @@ public class PackageUtil {
           }
           else {
             int toCreate = Messages.showYesNoDialog(project,
-                                                    "Package " + packageName + " does not exist.\nDo you want to create it?",
-                                                    "Package not found",
+                                                    IdeBundle.message("prompt.create.non.existing.package", packageName),
+                                                    IdeBundle.message("title.package.not.found"),
                                                     Messages.getQuestionIcon());
             if (toCreate != 0) {
               return null;
@@ -302,7 +303,7 @@ public class PackageUtil {
     if (ApplicationManager.getApplication().isUnitTestMode()) return possibleDirs.get(0);
 
     DirectoryChooser chooser = new DirectoryChooser(project);
-    chooser.setTitle("Choose Destination Directory");
+    chooser.setTitle(IdeBundle.message("title.choose.destination.directory"));
     chooser.fillList(possibleDirs.toArray(new PsiDirectory[possibleDirs.size()]), defaultDirectory, project, postfixToShow);
     chooser.show();
     return chooser.isOK() ? chooser.getSelectedDirectory() : null;

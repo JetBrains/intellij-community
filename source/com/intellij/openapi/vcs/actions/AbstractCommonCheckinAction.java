@@ -211,7 +211,7 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
       dialog.analyzeChanges(true, actionAfterDialogWasShown);
     }
     catch (VcsException e) {
-      Messages.showErrorDialog("Cannot analyze changes: " + e.getLocalizedMessage(), "Analizing Changes");
+      Messages.showErrorDialog(VcsBundle.message("message.text.cannot.analyze.changes", e.getLocalizedMessage()), VcsBundle.message("message.title.analizing.changes"));
     }
 
     processErrors(vcsExceptions, VcsConfiguration.getInstance(project));
@@ -226,13 +226,13 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
     config.ERROR_OCCURED = errorsSize > 0;
 
     if (errorsSize > 0 && warningsSize > 0) {
-      Messages.showErrorDialog("Commit failed with errors and warnings", "Commit");
+      Messages.showErrorDialog(VcsBundle.message("message.text.commit.failed.with.errors.and.warnings"), VcsBundle.message("message.title.commit"));
     }
     else if (errorsSize > 0) {
-      Messages.showErrorDialog("Commit failed with errors", "Commit");
+      Messages.showErrorDialog(VcsBundle.message("message.text.commit.failed.with.errors"), VcsBundle.message("message.title.commit"));
     }
     else if (warningsSize > 0) {
-      Messages.showErrorDialog("Commit finished with warnings", "Commit");
+      Messages.showErrorDialog(VcsBundle.message("message.text.commit.finished.with.warnings"), VcsBundle.message("message.title.commit"));
     }
 
   }
@@ -289,7 +289,7 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
 
   private boolean shouldCheckin(CheckinProjectDialogImplementer d, Project project) {
     if (!d.hasDiffs()) {
-      Messages.showMessageDialog(project, "Nothing was found to commit", "Nothing Found",
+      Messages.showMessageDialog(project, VcsBundle.message("message.text.nothing.was.found.to.commit"), VcsBundle.message("message.title.nothing.was.found.to.commit"),
                                  Messages.getInformationIcon());
       return false;
     }

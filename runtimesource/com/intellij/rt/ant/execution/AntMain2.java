@@ -13,6 +13,7 @@ public final class AntMain2 {
     // first try to use the new way of launching ant
     try {
       final Class antLauncher = Class.forName("org.apache.tools.ant.launch.Launcher");
+      //noinspection HardCodedStringLiteral
       antLauncher.getMethod("main", new Class[]{args.getClass()}).invoke(null, new Object[]{args});
       return;
     }
@@ -21,6 +22,7 @@ public final class AntMain2 {
     }
 
     final Class antMain = Class.forName("org.apache.tools.ant.Main");
+    //noinspection HardCodedStringLiteral
     antMain.getMethod("main", new Class[]{args.getClass()}).invoke(null, new Object[]{args});
   }
 }

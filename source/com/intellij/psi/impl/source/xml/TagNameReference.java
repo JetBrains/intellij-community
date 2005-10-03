@@ -4,27 +4,32 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.jsp.JspFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.html.HtmlTag;
-import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.jsp.jspXml.JspXmlRootTag;
+import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlChildRole;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlText;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 
 class TagNameReference implements PsiReference {
   private final boolean myStartTagFlag;
   private final ASTNode myNameElement;
+  @NonNls protected static final String TAG_EXTENSION = ".tag";
+  @NonNls protected static final String TAGX_EXTENSION = ".tagx";
 
   public TagNameReference(ASTNode nameElement, boolean startTagFlag) {
     myStartTagFlag = startTagFlag;
@@ -61,21 +66,21 @@ class TagNameReference implements PsiReference {
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
     final XmlTag element = getElement();
-    
+
     if (element != null &&
-        (newElementName.endsWith(".tag") || newElementName.endsWith(".tagx")) &&
+        (newElementName.endsWith(TAG_EXTENSION) || newElementName.endsWith(TAGX_EXTENSION)) &&
         element.getContainingFile() instanceof JspFile
        ) {
       final String namespacePrefix = element.getNamespacePrefix();
       newElementName = newElementName.substring(0,newElementName.lastIndexOf('.'));
-      
+
       if (namespacePrefix != null && namespacePrefix.length() > 0) {
         newElementName = namespacePrefix + ":" + newElementName;
       }
     }
-    
+
     if(element!=null) element.setName(newElementName);
-    
+
     return element;
   }
 

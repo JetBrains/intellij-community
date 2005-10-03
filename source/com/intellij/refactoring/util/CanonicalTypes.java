@@ -10,6 +10,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Collection;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author dsl
  */
@@ -17,7 +19,10 @@ public class CanonicalTypes {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.util.CanonicalTypes");
   public static abstract class Type {
     public abstract PsiType getType(PsiElement context, final PsiManager manager) throws IncorrectOperationException;
+
+    @NonNls
     public abstract String getTypeText();
+
     public abstract void addImportsTo(final PsiCodeFragment codeFragment);
   }
 

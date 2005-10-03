@@ -15,6 +15,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NonNls;
 
 import java.text.CharacterIterator;
 import java.util.ArrayList;
@@ -31,8 +32,8 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
   private ClsReferenceParametersListImpl myTypeParameterList = null;
   private final ClsTypeElementImpl[] myTypeParameters;  // in right-to-left order
   private PsiType[] myTypeParametersCachedTypes = null; // in left-to-right-order
-  private static final String EXTENDS_PREFIX = "?extends";
-  private static final String SUPER_PREFIX = "?super";
+  private static final @NonNls String EXTENDS_PREFIX = "?extends";
+  private static final @NonNls String SUPER_PREFIX = "?super";
 
   public ClsJavaCodeReferenceElementImpl(PsiElement parent, String canonicalText) {
     myParent = parent;

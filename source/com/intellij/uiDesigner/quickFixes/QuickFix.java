@@ -14,9 +14,11 @@ public abstract class QuickFix {
 
   public QuickFix(final GuiEditor editor, final String name){
     if (editor == null) {
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("editor cannot be null");
     }
     if (name == null) {
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("name cannot be null");
     }
     myEditor = editor;

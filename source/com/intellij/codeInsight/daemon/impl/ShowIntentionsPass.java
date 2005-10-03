@@ -6,6 +6,7 @@ import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.PostIntentionsQuickFixAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
@@ -22,7 +23,6 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -31,10 +31,13 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.packageDependencies.DependencyRule;
+import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.*;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
+import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -47,9 +50,6 @@ import java.util.regex.PatternSyntaxException;
  * @fabrique
  */
 public class ShowIntentionsPass extends TextEditorHighlightingPass {
-
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.ShowIntentionsPass");
-
   private final Project myProject;
   private final Editor myEditor;
   private final IntentionAction[] myIntentionActions;
@@ -160,7 +160,9 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
         }
       }
       else if (action.isAvailable(myProject, myEditor, myFile)) {
-        intentionsToShow.add(new Pair<IntentionAction, List<IntentionAction>>(action, null));
+        List<IntentionAction> enableDisableIntentionAction = new ArrayList<IntentionAction>();
+        enableDisableIntentionAction.add(new IntentionHintComponent.EnableDisableIntentionAction(action));
+        intentionsToShow.add(new Pair<IntentionAction, List<IntentionAction>>(action, enableDisableIntentionAction));
       }
     }
 
@@ -297,14 +299,16 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
         availableClasses = typeArgMatched;
       }
     }
+    if (availableClasses.size() > 1) {
+      reduceSuggestedClassesBasedOnDependencyRuleViolation(ref.getContainingFile(), availableClasses);
+    }
     classes = availableClasses.toArray(new PsiClass[availableClasses.size()]);
     CodeInsightUtil.sortIdenticalShortNameClasses(classes);
-    String hintText = classes[0].getQualifiedName() + "? ";
-    if (classes.length > 1) {
-      hintText += "(multiple choices...) ";
-    }
+    @NonNls String messageKey = classes.length > 1 ? "import.popup.multiple" : "import.popup.text";
 
-    hintText += KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));
+    String hintText = QuickFixBundle.message(messageKey, classes[0].getQualifiedName());
+
+    hintText += " " + KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));
 
     int offset1 = ref.getTextOffset();
     int offset2 = ref.getTextRange().getEndOffset();
@@ -322,6 +326,20 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     return true;
   }
 
+  private static void reduceSuggestedClassesBasedOnDependencyRuleViolation(PsiFile file, List<PsiClass> availableClasses) {
+    final Project project = file.getProject();
+    final DependencyValidationManager validationManager = DependencyValidationManager.getInstance(project);
+    for (int i = availableClasses.size()-1; i>=0;i--) {
+      PsiClass psiClass = availableClasses.get(i);
+      PsiFile targetFile = psiClass.getContainingFile();
+      if (targetFile == null) continue;
+      final DependencyRule[] violated = validationManager.getViolatorDependencyRules(file, targetFile);
+      if (violated.length != 0) {
+        availableClasses.remove(i);
+        if (availableClasses.size() == 1) break;
+      }
+    }
+  }
   private static boolean isCaretNearRef(Editor editor, PsiJavaCodeReferenceElement ref) {
     TextRange range = ref.getTextRange();
     int offset = editor.getCaretModel().getOffset();

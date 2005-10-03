@@ -23,6 +23,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * A TestCase for single PsiFile being opened in Editor conversion. See configureXXX and checkResultXXX method docs.
  */
@@ -66,7 +68,7 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
    * @param filePath - relative path from %IDEA_INSTALLATION_HOME%/testData/
    * @throws Exception
    */
-  protected void configureByFile(String filePath) throws Exception {
+  protected void configureByFile(@NonNls String filePath) throws Exception {
     String fullPath = getTestDataPath() + filePath;
 
     final File ioFile = new File(fullPath);
@@ -182,7 +184,7 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
    * @param filePath - relative path from %IDEA_INSTALLATION_HOME%/testData/
    * @throws Exception
    */
-  protected void checkResultByFile(String filePath) throws Exception {
+  protected void checkResultByFile(@NonNls String filePath) throws Exception {
     checkResultByFile(null, filePath, false);
   }
 
@@ -303,7 +305,7 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
           selStartCol + 1,
           myEditor.getSelectionModel().getSelectionStart() -
           StringUtil.lineColToOffset(newFileText, selStartLine, 0) +
-          1);
+                                                                   1);
 
       assertEquals(
           getMessage("selectionEndLine", message),
@@ -324,9 +326,9 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
     if (caretMarker != null) {
       int caretLine = StringUtil.offsetToLineNumber(newFileText, caretMarker.getStartOffset());
       //int caretCol = caretMarker.getStartOffset() - StringUtil.lineColToOffset(newFileText, caretLine, 0);
-      int caretCol = EditorUtil.calcColumnNumber(null, newFileText, 
-                                                 StringUtil.lineColToOffset(newFileText, caretLine, 0), 
-                                                 caretMarker.getStartOffset(), 
+      int caretCol = EditorUtil.calcColumnNumber(null, newFileText,
+                                                 StringUtil.lineColToOffset(newFileText, caretLine, 0),
+                                                 caretMarker.getStartOffset(),
                                                  CodeStyleSettingsManager.getSettings(getProject()).JAVA_INDENT_OPTIONS.TAB_SIZE);
 
       assertEquals(getMessage("caretLine", message), caretLine + 1, myEditor.getCaretModel().getLogicalPosition().line + 1);

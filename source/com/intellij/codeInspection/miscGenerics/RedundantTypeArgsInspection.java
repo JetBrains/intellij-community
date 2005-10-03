@@ -1,13 +1,11 @@
 package com.intellij.codeInspection.miscGenerics;
 
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.codeInsight.daemon.GroupNames;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,11 +23,11 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
   private LocalQuickFix myQuickFixAction;
 
   public String getGroupDisplayName() {
-    return "Verbose or redundant code constructs";
+    return GroupNames.VERBOSE_GROUP_NAME;
   }
 
   public String getDisplayName() {
-    return "Redundant type arguments";
+    return InspectionsBundle.message("inspection.redundant.type.display.name");
   }
 
   public String getShortName() {
@@ -71,6 +69,8 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
                                        PsiCallExpression expression,
                                        final InspectionManager inspectionManager, final List<ProblemDescriptor> problems) {
 
+        PsiExpressionList argumentList = expression.getArgumentList();
+        if (argumentList == null) return;
         final JavaResolveResult resolveResult = reference.advancedResolve(false);
 
         if (resolveResult.getElement() instanceof PsiMethod && resolveResult.isValidResult()) {
@@ -82,13 +82,13 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
             for (int i = 0; i < typeParameters.length; i++) {
               PsiTypeParameter typeParameter = typeParameters[i];
               final PsiType inferedType = resolveHelper.inferTypeForMethodTypeParameter(typeParameter, parameters,
-                                                                                        expression.getArgumentList().getExpressions(),
+                                                                                        argumentList.getExpressions(),
                                                                                         resolveResult.getSubstitutor(), expression, false);
               if (!typeArguments[i].equals(inferedType)) return;
             }
 
             final ProblemDescriptor descriptor = inspectionManager.createProblemDescriptor(expression.getTypeArgumentList(),
-                                                                                           "Explicit type arguments can be inferred",
+                                                                                           InspectionsBundle.message("inspection.redundant.type.problem.descriptor"),
                                                                                            myQuickFixAction,
                                                                                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
             problems.add(descriptor);
@@ -104,7 +104,7 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
 
   private class MyQuickFixAction implements LocalQuickFix {
     public String getName() {
-      return "Remove explicit type arguments";
+      return InspectionsBundle.message("inspection.redundant.type.remove.quickfix");
     }
 
     public void applyFix(Project project, ProblemDescriptor descriptor) {

@@ -8,6 +8,8 @@ import com.intellij.psi.impl.source.html.HtmlDocumentImpl;
 import com.intellij.psi.impl.source.html.HtmlTagImpl;
 import com.intellij.psi.impl.source.javadoc.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspText;
+import com.intellij.psi.impl.source.jsp.jspJava.JspTemplateStatement;
+import com.intellij.psi.impl.source.jsp.jspJava.JspTemplateDeclaration;
 import com.intellij.psi.impl.source.jsp.jspXml.JspCommentImpl;
 import com.intellij.psi.impl.source.tree.java.*;
 import com.intellij.psi.impl.source.xml.*;
@@ -23,6 +25,8 @@ import com.intellij.util.CharTable;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import org.jetbrains.annotations.NotNull;
 
 /**
  *
@@ -104,6 +108,7 @@ public class Factory implements Constants {
     return element;
   }
 
+  @NotNull
   public static CompositeElement createCompositeElement(IElementType type) {
 
     //TODO: Replace whole method with type.createPsiElement();
@@ -368,6 +373,12 @@ public class Factory implements Constants {
     }
     else if (type == CATCH_SECTION) {
       element = new PsiCatchSectionImpl();
+    }
+    else if (type == JspElementType.JSP_TEMPLATE_STATEMENT) {
+      element = new JspTemplateStatement();
+    }
+    else if (type == JspElementType.JSP_TEMPLATE_DECLARATION) {
+      element =  new JspTemplateDeclaration();
     }
     else if (type == XML_DOCUMENT) {
       element = new XmlDocumentImpl();

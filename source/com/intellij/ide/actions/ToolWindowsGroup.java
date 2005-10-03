@@ -12,6 +12,7 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.util.containers.HashMap;
+import com.intellij.ide.IdeBundle;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -28,20 +29,20 @@ public final class ToolWindowsGroup extends ActionGroup{
   private static final HashMap<String, MyDescriptor> ourId2Text;
   static{
     ourId2Text = new HashMap<String, MyDescriptor>();
-    ourId2Text.put(ToolWindowId.COMMANDER, new MyDescriptor("&Commander", IconLoader.getIcon("/general/toolWindowCommander.png")));
-    ourId2Text.put(ToolWindowId.MESSAGES_WINDOW, new MyDescriptor("&Messages", IconLoader.getIcon("/general/toolWindowMessages.png")));
-    ourId2Text.put(ToolWindowId.PROJECT_VIEW, new MyDescriptor("&Project", IconLoader.getIcon("/general/toolWindowProject.png")));
-    ourId2Text.put(ToolWindowId.STRUCTURE_VIEW, new MyDescriptor("&Structure", IconLoader.getIcon("/general/toolWindowStructure.png")));
-    ourId2Text.put(ToolWindowId.ANT_BUILD, new MyDescriptor("Ant &Build", IconLoader.getIcon("/general/toolWindowAnt.png")));
-    ourId2Text.put(ToolWindowId.DEBUG, new MyDescriptor("Debug", IconLoader.getIcon("/general/toolWindowDebugger.png")));
-    ourId2Text.put(ToolWindowId.RUN, new MyDescriptor("&Run", IconLoader.getIcon("/general/toolWindowRun.png")));
-    ourId2Text.put(ToolWindowId.FIND, new MyDescriptor("F&ind", IconLoader.getIcon("/general/toolWindowFind.png")));
-    ourId2Text.put(ToolWindowId.CVS, new MyDescriptor("C&VS", IconLoader.getIcon("/general/toolWindowCvs.png")));
-    ourId2Text.put(ToolWindowId.HIERARCHY, new MyDescriptor("Hierarch&y", IconLoader.getIcon("/general/toolWindowHierarchy.png")));
-    ourId2Text.put(ToolWindowId.TODO_VIEW, new MyDescriptor("TODO", IconLoader.getIcon("/general/toolWindowTodo.png")));
-    ourId2Text.put(ToolWindowId.INSPECTION, new MyDescriptor("I&nspection", IconLoader.getIcon("/general/toolWindowInspection.png")));
-    ourId2Text.put(ToolWindowId.ASPECTS_VIEW, new MyDescriptor("Aspects", IconLoader.getIcon("/general/toolWindowInspection.png")));
-    ourId2Text.put(ToolWindowId.FAVORITES_VIEW, new MyDescriptor("&Favorites", IconLoader.getIcon("/general/toolWindowFavorites.png")));
+    ourId2Text.put(ToolWindowId.COMMANDER, new MyDescriptor(IdeBundle.message("action.toolwindow.commander"), IconLoader.getIcon("/general/toolWindowCommander.png")));
+    ourId2Text.put(ToolWindowId.MESSAGES_WINDOW, new MyDescriptor(IdeBundle.message("action.toolwindow.messages"), IconLoader.getIcon("/general/toolWindowMessages.png")));
+    ourId2Text.put(ToolWindowId.PROJECT_VIEW, new MyDescriptor(IdeBundle.message("action.toolwindow.project"), IconLoader.getIcon("/general/toolWindowProject.png")));
+    ourId2Text.put(ToolWindowId.STRUCTURE_VIEW, new MyDescriptor(IdeBundle.message("action.toolwindow.structure"), IconLoader.getIcon("/general/toolWindowStructure.png")));
+    ourId2Text.put(ToolWindowId.ANT_BUILD, new MyDescriptor(IdeBundle.message("action.toolwindow.ant.build"), IconLoader.getIcon("/general/toolWindowAnt.png")));
+    ourId2Text.put(ToolWindowId.DEBUG, new MyDescriptor(IdeBundle.message("action.toolwindow.debug"), IconLoader.getIcon("/general/toolWindowDebugger.png")));
+    ourId2Text.put(ToolWindowId.RUN, new MyDescriptor(IdeBundle.message("action.toolwindow.run"), IconLoader.getIcon("/general/toolWindowRun.png")));
+    ourId2Text.put(ToolWindowId.FIND, new MyDescriptor(IdeBundle.message("action.toolwindow.find"), IconLoader.getIcon("/general/toolWindowFind.png")));
+    ourId2Text.put(ToolWindowId.CVS, new MyDescriptor(IdeBundle.message("action.toolwindow.cvs"), IconLoader.getIcon("/general/toolWindowCvs.png")));
+    ourId2Text.put(ToolWindowId.HIERARCHY, new MyDescriptor(IdeBundle.message("action.toolwindow.hierarchy"), IconLoader.getIcon("/general/toolWindowHierarchy.png")));
+    ourId2Text.put(ToolWindowId.TODO_VIEW, new MyDescriptor(IdeBundle.message("action.toolwindow.todo"), IconLoader.getIcon("/general/toolWindowTodo.png")));
+    ourId2Text.put(ToolWindowId.INSPECTION, new MyDescriptor(IdeBundle.message("action.toolwindow.inspection"), IconLoader.getIcon("/general/toolWindowInspection.png")));
+    ourId2Text.put(ToolWindowId.ASPECTS_VIEW, new MyDescriptor(IdeBundle.message("action.toolwindow.aspects"), IconLoader.getIcon("/general/toolWindowInspection.png")));
+    ourId2Text.put(ToolWindowId.FAVORITES_VIEW, new MyDescriptor(IdeBundle.message("action.toolwindow.favorites"), IconLoader.getIcon("/general/toolWindowFavorites.png")));
   }
 
   private final ArrayList<AnAction> myChildren;

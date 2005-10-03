@@ -98,9 +98,11 @@ final class CutCopyPasteSupport implements CopyProvider, CutProvider, PasteProvi
     final TIntArrayList ys = new TIntArrayList();
       
     try {
+      //noinspection HardCodedStringLiteral
       final org.jdom.Document document = SAX_BUILDER.build(new StringReader(serializedComponents), "UTF-8");
 
       final Element rootElement = document.getRootElement();
+      //noinspection HardCodedStringLiteral
       if (!rootElement.getName().equals("serialized")) {
         return;
       }
@@ -112,7 +114,9 @@ final class CutCopyPasteSupport implements CopyProvider, CutProvider, PasteProvi
       for (Iterator iterator = children.iterator(); iterator.hasNext();) {
         final Element e = (Element)iterator.next();
 
+        //noinspection HardCodedStringLiteral
         final int x = Integer.parseInt(e.getAttributeValue("x"));
+        //noinspection HardCodedStringLiteral
         final int y = Integer.parseInt(e.getAttributeValue("y"));
           
         xs.add(x);
@@ -202,6 +206,7 @@ final class CutCopyPasteSupport implements CopyProvider, CutProvider, PasteProvi
   private static final DataFlavor ourDataFlavor;
   static {
     try {
+      //noinspection HardCodedStringLiteral
       ourDataFlavor = new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType + ";class=" + MyData.class.getName());
     }
     catch (ClassNotFoundException e) {
@@ -214,6 +219,7 @@ final class CutCopyPasteSupport implements CopyProvider, CutProvider, PasteProvi
     }
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private String serializeForCopy(final ArrayList<RadComponent> components) {
     final XmlWriter writer = new XmlWriter();
     

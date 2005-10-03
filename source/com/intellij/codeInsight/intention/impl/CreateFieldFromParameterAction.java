@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.intention.impl;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.ApplicationManager;
@@ -16,8 +17,8 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -35,7 +36,7 @@ public class CreateFieldFromParameterAction implements IntentionAction {
   }
 
   public String getText() {
-    return MessageFormat.format("Create Field For Parameter ''{0}''", new Object[]{myParameter.getName(), });
+    return CodeInsightBundle.message("intention.create.field.from.parameter.text", myParameter.getName());
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
@@ -46,6 +47,7 @@ public class CreateFieldFromParameterAction implements IntentionAction {
       myParameter != null
       && myParameter.isValid()
       && myParameter.getDeclarationScope() instanceof PsiMethod
+      && ((PsiMethod)myParameter.getDeclarationScope()).getBody() != null
       && myParameter.getManager().isInProject(myParameter)
       && type != null
       && type.isValid()
@@ -86,7 +88,7 @@ public class CreateFieldFromParameterAction implements IntentionAction {
   }
 
   public String getFamilyName() {
-    return "Create Field for Parameter";
+    return CodeInsightBundle.message("intention.create.field.from.parameter.family");
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) {
@@ -177,7 +179,7 @@ public class CreateFieldFromParameterAction implements IntentionAction {
 
               if (expression instanceof PsiMethodCallExpression) {
                 PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
-                String text = methodCallExpression.getMethodExpression().getText();
+                @NonNls String text = methodCallExpression.getMethodExpression().getText();
 
                 if (text.equals("super") || text.equals("this")) {
                   continue;
@@ -222,7 +224,7 @@ public class CreateFieldFromParameterAction implements IntentionAction {
 
           String stmtText = fieldName + " = " + parameterName + ";";
           if (fieldName.equals(parameterName)) {
-            String prefix = isMethodStatic ? targetClass.getName() == null ? "" : targetClass.getName() + "." : "this.";
+            @NonNls String prefix = isMethodStatic ? targetClass.getName() == null ? "" : targetClass.getName() + "." : "this.";
             stmtText = prefix + stmtText;
           }
 
@@ -232,8 +234,7 @@ public class CreateFieldFromParameterAction implements IntentionAction {
           boolean found = false;
 
           final PsiField[] fields = targetClass.getFields();
-          for (int j = 0; j < fields.length; j++) {
-            PsiField f = fields[j];
+          for (PsiField f : fields) {
             if (f.getName().equals(field.getName())) {
               found = true;
               break;

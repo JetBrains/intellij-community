@@ -30,6 +30,7 @@ import org.netbeans.lib.cvsclient.progress.sending.FileStateRequestsProgressHand
 import org.netbeans.lib.cvsclient.request.CommandRequest;
 import org.netbeans.lib.cvsclient.request.Requests;
 import org.netbeans.lib.cvsclient.util.BugLog;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
 
@@ -91,7 +92,7 @@ public final class RemoveCommand extends AbstractCommand {
 	}
 
 	public String getCvsCommandLine() {
-		final StringBuffer cvsCommandLine = new StringBuffer("remove ");
+		@NonNls final StringBuffer cvsCommandLine = new StringBuffer("remove ");
 		cvsCommandLine.append(getCvsArguments());
 		appendFileArguments(cvsCommandLine);
 		return cvsCommandLine.toString();
@@ -141,7 +142,7 @@ public final class RemoveCommand extends AbstractCommand {
 	// Utils ==================================================================
 
 	private String getCvsArguments() {
-		final StringBuffer toReturn = new StringBuffer("");
+		@NonNls final StringBuffer toReturn = new StringBuffer("");
 		if (!isRecursive()) {
 			toReturn.append("-l ");
 		}

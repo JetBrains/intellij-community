@@ -1,28 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.cvsSupport2.cvsoperations.dateOrRevision.ui.DateOrRevisionOrTagSettings">
-  <grid id="1bd41" binding="myPanel" row-count="5" column-count="1" hgap="10" vgap="0">
+  <grid id="1bd41" binding="myPanel" row-count="5" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="10" vgap="0">
     <margin top="5" left="0" bottom="5" right="5"/>
     <constraints>
-      <xy x="70" y="46" width="239" height="160"/>
+      <xy x="70" y="46" width="311" height="160"/>
       <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="1"/>
     </constraints>
     <properties/>
-    <border type="etched" title="Use Version"/>
+    <border type="etched" title-resource-bundle="com/intellij/cvsSupport2/CvsBundle" title-key="border.title.configure.branch.or.date.use.version"/>
     <children>
       <component id="ca0af" class="javax.swing.JRadioButton" binding="myUseBranch">
         <constraints>
-          <xy x="6" y="49" width="75" height="23"/>
+          <xy x="6" y="47" width="77" height="22"/>
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
         </constraints>
         <properties>
           <selected value="true"/>
-          <text value="By tag (-&amp;r)"/>
+          <text resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="radio.select.tag.by.tag"/>
         </properties>
       </component>
-      <grid id="2e598" row-count="1" column-count="2" hgap="0" vgap="-1">
+      <grid id="2e598" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="0" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="6" y="72" width="222" height="24"/>
+          <xy x="6" y="69" width="294" height="26"/>
           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
         </constraints>
         <properties/>
@@ -31,7 +31,7 @@
           <xy id="97113" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="0" y="0" width="20" height="24"/>
+              <xy x="0" y="0" width="20" height="26"/>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3">
                 <minimum-size width="20" height="-1"/>
                 <maximum-size width="20" height="-1"/>
@@ -43,7 +43,7 @@
           </xy>
           <component id="d8431" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myBranch">
             <constraints>
-              <xy x="20" y="1" width="202" height="22"/>
+              <xy x="20" y="3" width="274" height="20"/>
               <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
                 <preferred-size width="150" height="-1"/>
               </grid>
@@ -54,18 +54,18 @@
       </grid>
       <component id="d5f9d" class="javax.swing.JRadioButton" binding="myUseDate">
         <constraints>
-          <xy x="6" y="96" width="84" height="29"/>
+          <xy x="6" y="95" width="84" height="28"/>
           <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
         </constraints>
         <properties>
           <margin top="8" left="2" bottom="2" right="2"/>
-          <text value="By &amp;date (-D)"/>
+          <text resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="radio.select.tag.by.date"/>
         </properties>
       </component>
-      <grid id="c8d29" row-count="1" column-count="2" hgap="0" vgap="-1">
+      <grid id="c8d29" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="0" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="6" y="125" width="222" height="24"/>
+          <xy x="6" y="123" width="294" height="26"/>
           <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
         </constraints>
         <properties/>
@@ -74,7 +74,7 @@
           <xy id="7452d" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="0" y="0" width="20" height="24"/>
+              <xy x="0" y="0" width="20" height="26"/>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3">
                 <minimum-size width="20" height="-1"/>
                 <maximum-size width="20" height="-1"/>
@@ -86,7 +86,7 @@
           </xy>
           <component id="d35b2" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myDate">
             <constraints>
-              <xy x="20" y="1" width="202" height="22"/>
+              <xy x="20" y="3" width="274" height="20"/>
               <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
                 <preferred-size width="150" height="-1"/>
               </grid>
@@ -97,11 +97,11 @@
       </grid>
       <component id="1d476" class="javax.swing.JRadioButton" binding="myUseHead">
         <constraints>
-          <xy x="6" y="26" width="94" height="23"/>
+          <xy x="6" y="25" width="94" height="22"/>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
         </constraints>
         <properties>
-          <text value="&amp;HEAD revision"/>
+          <text resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="radio.select.tag.head.revision"/>
         </properties>
       </component>
     </children>

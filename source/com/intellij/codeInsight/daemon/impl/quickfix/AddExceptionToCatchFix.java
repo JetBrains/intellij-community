@@ -2,6 +2,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.surroundWith.SurroundWithUtil;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -90,7 +91,9 @@ public class AddExceptionToCatchFix extends BaseIntentionAction {
     }
     else {
       PsiElement finallyElement = finallyBlock;
-      while (!(finallyElement instanceof PsiKeyword) && !finallyElement.getText().equals("finally")) finallyElement = finallyElement.getPrevSibling();
+      while (!(finallyElement instanceof PsiKeyword) && !finallyElement.getText().equals(PsiKeyword.FINALLY)) {
+        finallyElement = finallyElement.getPrevSibling();
+      }
       tryStatement.addBefore(catchSection, finallyElement);
     }
 
@@ -110,7 +113,7 @@ public class AddExceptionToCatchFix extends BaseIntentionAction {
 
     if (element == null) return false;
 
-    setText("Add Catch Clause(s)");
+    setText(QuickFixBundle.message("add.catch.clause.text"));
     return true;
   }
 
@@ -131,6 +134,6 @@ public class AddExceptionToCatchFix extends BaseIntentionAction {
   }
 
   public String getFamilyName() {
-    return "Add Exception to Catch Clause";
+    return QuickFixBundle.message("add.catch.clause.family");
   }
 }

@@ -13,7 +13,11 @@ import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.uiDesigner.GuiEditor;
+import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.CommonBundle;
+
+import java.text.MessageFormat;
 
 /**
  * @author Anton Katilin
@@ -25,8 +29,9 @@ public final class CreateClassToBindFix extends QuickFix{
   private final String myClassName;
 
   public CreateClassToBindFix(final GuiEditor editor, final String className) {
-    super(editor, "Create Class '" + className + "'");
+    super(editor, UIDesignerBundle.message("action.create.class", className));
     if (className == null) {
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("className cannot be null");
     }
     myClassName = className;
@@ -39,8 +44,8 @@ public final class CreateClassToBindFix extends QuickFix{
     if(sourceRoot == null){
       Messages.showErrorDialog(
         myEditor,
-        "Cannot create class because form file does not belong\nto any source root",
-        "Error"
+        UIDesignerBundle.message("error.cannot.create.class.not.in.source.root"),
+        CommonBundle.getErrorTitle()
       );
       return;
     }
@@ -67,8 +72,8 @@ public final class CreateClassToBindFix extends QuickFix{
                                         public void run() {
                                           Messages.showErrorDialog(
                                             myEditor,
-                                            "Cannot create package '" + packageName + "'.\nReason: " + e.getMessage(),
-                                            "Error"
+                                            UIDesignerBundle.message("error.cannot.create.package", packageName, e.getMessage()),
+                                            CommonBundle.getErrorTitle()
                                           );
                                         }
                                       });
@@ -93,8 +98,8 @@ public final class CreateClassToBindFix extends QuickFix{
                                     public void run() {
                                       Messages.showErrorDialog(
                                         myEditor,
-                                        "Cannot create package '" + packageName + "'.\nReason: " + e.getMessage(),
-                                        "Error"
+                                        UIDesignerBundle.message("error.cannot.create.package", packageName, e.getMessage()),
+                                        CommonBundle.getErrorTitle()
                                       );
                                     }
                                   });

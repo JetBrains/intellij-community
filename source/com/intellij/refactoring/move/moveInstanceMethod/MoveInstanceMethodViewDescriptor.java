@@ -3,6 +3,7 @@ package com.intellij.refactoring.move.moveInstanceMethod;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
 
@@ -31,7 +32,7 @@ public class MoveInstanceMethodViewDescriptor extends UsageViewDescriptorAdapter
   }
 
   public String getProcessedElementsHeader() {
-    return "Move instance method";
+    return RefactoringBundle.message("move.instance.method.elements.header");
   }
 
   public boolean canRefresh() {

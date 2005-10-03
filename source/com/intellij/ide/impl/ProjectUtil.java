@@ -1,17 +1,18 @@
 package com.intellij.ide.impl;
 
+import com.intellij.ide.GeneralSettings;
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.util.projectWizard.AddModuleWizard;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
-import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.projectRoots.ProjectJdk;
@@ -24,12 +25,11 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.CommonBundle;
 import org.jdom.JDOMException;
 
 import javax.swing.*;
@@ -74,9 +74,9 @@ public class ProjectUtil {
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     if (openProjects.length > 0) {
       int exitCode = Messages.showDialog(
-        "Would you like to open the project in a new frame?",
-        "New Project",
-        new String[]{"_Yes", "_No"},
+        IdeBundle.message("prompt.open.project.in.new.frame"),
+        IdeBundle.message("title.new.project"),
+        new String[]{IdeBundle.message("button.yes"), IdeBundle.message("button.no")},
         1,
         Messages.getQuestionIcon()
       );
@@ -103,7 +103,8 @@ public class ProjectUtil {
         }
       });
       if (ex != null) {
-        Messages.showErrorDialog("Error adding module to project: " + ex.getMessage(), "Add Module");
+        Messages.showErrorDialog(IdeBundle.message("error.adding.module.to.project", ex.getMessage()),
+                                 IdeBundle.message("title.add.module"));
       }
     }
 
@@ -180,7 +181,8 @@ public class ProjectUtil {
   public static Project openProject(final String path, Project projectToClose, boolean forceOpenInNewFrame) {
     File file = new File(path);
     if (!file.exists()) {
-      Messages.showMessageDialog("Cannot load " + path + ". The file does not exist.", "Error", Messages.getErrorIcon());
+      Messages.showMessageDialog(IdeBundle.message("error.project.file.does.not.exist", path),
+                                 CommonBundle.getErrorTitle(), Messages.getErrorIcon());
       return null;
     }
 
@@ -194,9 +196,9 @@ public class ProjectUtil {
 
     if (!forceOpenInNewFrame && openProjects.length > 0) {
       int exitCode = Messages.showDialog(
-        "Would you like to open the project in a new frame?",
-        "Open Project",
-        new String[]{"_Yes", "_No", "Cancel"},
+        IdeBundle.message("prompt.open.project.in.new.frame"),
+        IdeBundle.message("title.open.project"),
+        new String[]{IdeBundle.message("button.yes"), IdeBundle.message("button.no"), CommonBundle.getCancelButtonText()},
         1,
         Messages.getQuestionIcon()
       );
@@ -214,21 +216,21 @@ public class ProjectUtil {
       project = projectManager.loadAndOpenProject(path);
     }
     catch (IOException e) {
-      Messages.showMessageDialog("Cannot load project: " + e.getMessage(), "Cannot Load Project",
+      Messages.showMessageDialog(IdeBundle.message("error.cannot.load.project", e.getMessage()), IdeBundle.message("title.cannot.load.project"),
                                  Messages.getErrorIcon());
     }
     catch (JDOMException e) {
-      Messages.showMessageDialog("Project file is corrupted", "Cannot Load Project", Messages.getErrorIcon());
+      Messages.showMessageDialog(IdeBundle.message("error.project.file.is.corrupted"), IdeBundle.message("title.cannot.load.project"), Messages.getErrorIcon());
     }
     catch (InvalidDataException e) {
-      Messages.showMessageDialog("Project file is corrupted", "Cannot Load Project", Messages.getErrorIcon());
+      Messages.showMessageDialog(IdeBundle.message("error.project.file.is.corrupted"), IdeBundle.message("title.cannot.load.project"), Messages.getErrorIcon());
     }
     return project;
   }
 
   public static String mainModulePathByProjectPath(String path) {
     int dotIdx = path.lastIndexOf('.');
-    final String filePath = dotIdx >= 0 ? path.substring(0, dotIdx) + ".iml" : "";
+    final String filePath = dotIdx >= 0 ? path.substring(0, dotIdx) + ModuleFileType.DOT_DEFAULT_EXTENSION : "";
     return filePath;
   }
 
@@ -238,7 +240,7 @@ public class ProjectUtil {
 
   public static String getInitialModuleLocation(final String projectFilePath) {
     int dotIdx = projectFilePath.lastIndexOf('.');
-    final String filePath = dotIdx >= 0 ? projectFilePath.substring(0, dotIdx) + ".iml" : "";
+    final String filePath = dotIdx >= 0 ? projectFilePath.substring(0, dotIdx) + ModuleFileType.DOT_DEFAULT_EXTENSION : "";
     return filePath;
   }
 

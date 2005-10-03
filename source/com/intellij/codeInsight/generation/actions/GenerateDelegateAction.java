@@ -20,7 +20,7 @@ public class GenerateDelegateAction extends BaseCodeInsightAction {
 
   protected boolean isValidForFile(Project project, Editor editor, PsiFile file) {
     if (!file.canContainJavaCode()) return false;
-    return OverrideImplementUtil.getContextClass(project, editor, file) != null &&
+    return OverrideImplementUtil.getContextClass(project, editor, file, false) != null &&
            myHandler.isApplicable(file, editor);
   }
 }

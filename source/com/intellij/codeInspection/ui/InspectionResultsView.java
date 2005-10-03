@@ -1,13 +1,18 @@
 package com.intellij.codeInspection.ui;
 
+import com.intellij.CommonBundle;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeEditor.printing.ExportToHTMLSettings;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.daemon.impl.SwitchOffToolAction;
+import com.intellij.codeInsight.daemon.impl.AddNoInspectionDocTagAction;
+import com.intellij.codeInsight.daemon.impl.AddSuppressWarningsAnnotationAction;
+import com.intellij.codeInsight.daemon.impl.EditInspectionToolsSettingsAction;
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.deadCode.DeadCodeInspection;
@@ -26,12 +31,14 @@ import com.intellij.ide.OccurenceNavigator;
 import com.intellij.ide.OccurenceNavigatorSupport;
 import com.intellij.ide.actions.NextOccurenceToolbarAction;
 import com.intellij.ide.actions.PreviousOccurenceToolbarAction;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionListPopup;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -39,8 +46,12 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
@@ -48,13 +59,16 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.PsiElement;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.ListPopup;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SmartExpander;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.OpenSourceUtil;
-import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -87,8 +101,10 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
   private OccurenceNavigator myOccurenceNavigator;
   private InspectionProfile myInspectionProfile;
   private AnalysisScope myScope;
+  @NonNls
   public static final String HELP_ID = "codeInspection";
   public final Map<HighlightDisplayLevel, InspectionSeverityGroupNode> mySeverityGroupNodes = new HashMap<HighlightDisplayLevel, InspectionSeverityGroupNode>();
+  private static final Logger LOG = Logger.getInstance("com.intellij.codeInspection.ui.InspectionResultsView");
 
   private Splitter mySplitter;
 
@@ -126,11 +142,11 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
       }
 
       public String getNextOccurenceActionName() {
-        return "Go Next Problem";
+        return InspectionsBundle.message("inspection.action.go.next");
       }
 
       public String getPreviousOccurenceActionName() {
-        return "Go Prev Problem";
+        return InspectionsBundle.message("inspection.actiongo.prev");
       }
     };
 
@@ -211,10 +227,18 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     group.add(new EditSettingsAction());
     group.add(new HelpAction());
     group.add(new InvokeQuickFixAction());
+    group.add(new SuppressInspectionToolbarAction());
 
     ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.CODE_INSPECTION,
                                                                                   group, false);
     add(actionToolbar.getComponent(), BorderLayout.WEST);
+  }
+
+  public void dispose(){
+    mySplitter.dispose();
+    myBrowser.dispose();
+    myTree = null;
+    myOccurenceNavigator = null;
   }
 
   private static OpenFileDescriptor getOpenFileDescriptor(PsiElement psiElement) {
@@ -242,17 +266,9 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     }
   }
 
-  public void dispose() {
-    mySplitter.dispose();
-    myBrowser.dispose();
-    myTree = null;
-    myOccurenceNavigator = null;
-  }
-
-
   private class CloseAction extends AnAction {
     private CloseAction() {
-      super("Close", null, IconLoader.getIcon("/actions/cancel.png"));
+      super(CommonBundle.message("action.close"), null, IconLoader.getIcon("/actions/cancel.png"));
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -265,26 +281,13 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
 
   private class EditSettingsAction extends AnAction {
     private EditSettingsAction() {
-      super("Edit Settings", "Edit Settings", IconLoader.getIcon("/general/ideOptions.png"));
+      super(InspectionsBundle.message("inspection.action.edit.settings"), InspectionsBundle.message("inspection.action.edit.settings"), IconLoader.getIcon("/general/ideOptions.png"));
     }
 
     public void actionPerformed(AnActionEvent e) {
-      final InspectionManagerEx manager = ((InspectionManagerEx)InspectionManagerEx.getInstance(myProject));
-      manager.setExternalProfile(myInspectionProfile);
-      final InspectionCodeSettingsPanel dlg = new InspectionCodeSettingsPanel(manager, myScope);
-      final InspectionTool selectedTool = getSelectedTool();
-      if (selectedTool != null){        
-        dlg.selectInspectionTool(selectedTool.getShortName());
+      if (EditInspectionToolsSettingsAction.editToolSettings(myProject, (InspectionProfileImpl) myInspectionProfile, false, null)){
+        InspectionResultsView.this.update();
       }
-      dlg.show();
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          if (dlg.isOK()) {
-            InspectionResultsView.this.update();
-            DaemonCodeAnalyzer.getInstance(myProject).restart();
-          }
-        }
-      });
     }
   }
 
@@ -320,7 +323,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
         };
 
         if (!ApplicationManager.getApplication()
-          .runProcessWithProgressSynchronously(exportRunnable, "Generating HTML...", true, myProject)) {
+          .runProcessWithProgressSynchronously(exportRunnable, InspectionsBundle.message("inspection.generating.html.progress.title"), true, myProject)) {
           return;
         }
 
@@ -333,7 +336,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
 
   private static class HelpAction extends AnAction {
     private HelpAction() {
-      super("Help", null, IconLoader.getIcon("/actions/help.png"));
+      super(CommonBundle.message("action.help"), null, IconLoader.getIcon("/actions/help.png"));
     }
 
     public void actionPerformed(AnActionEvent event) {
@@ -343,7 +346,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
 
   private class ExportHTMLAction extends AnAction {
     public ExportHTMLAction() {
-      super("Export HTML", null, IconLoader.getIcon("/actions/export.png"));
+      super(InspectionsBundle.message("inspection.action.export.html"), null, IconLoader.getIcon("/actions/export.png"));
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -434,7 +437,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     if (tool.hasReportedProblems()) {
       final InspectionNode toolNode = new InspectionNode(tool);
       initToolNode(tool, toolNode,
-                   getToolParentNode(tool.getGroupDisplayName().length() > 0 ? tool.getGroupDisplayName() : "General", errorLevel,
+                   getToolParentNode(tool.getGroupDisplayName().length() > 0 ? tool.getGroupDisplayName() : InspectionsBundle.message("inspection.general.tools.group.name"), errorLevel,
                                      groupedBySeverity));
       if (tool instanceof DeadCodeInspection) {
         final DummyEntryPointsTool entryPoints = new DummyEntryPointsTool((DeadCodeInspection)tool);
@@ -500,7 +503,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
       myGroups.put(errorLevel, map);
     }
     Map<String, InspectionGroupNode> searchMap = new HashMap<String, InspectionGroupNode>(map);
-    if (!groupedBySeverity){
+    if (!groupedBySeverity) {
       for (HighlightDisplayLevel level : myGroups.keySet()) {
         searchMap.putAll(myGroups.get(level));
       }
@@ -558,6 +561,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     exporter.generateReferencedPages();
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public void exportHTML(InspectionTool tool, HTMLExporter exporter) {
     StringBuffer packageIndex = new StringBuffer();
     packageIndex.append("<html><body>");
@@ -574,6 +578,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
       contentIndex.append("<html><body>");
       for (RefElement refElement : packageContent) {
         if (refElement instanceof RefImplicitConstructor) {
+          //noinspection AssignmentToForLoopParameter
           refElement = ((RefImplicitConstructor)refElement).getOwnerClass();
         }
 
@@ -595,6 +600,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     HTMLExporter.writeFile(exporter.getRootFolder(), "index.html", packageIndex, myProject);
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static void appendPackageReference(StringBuffer packageIndex, String packageName) {
     packageIndex.append("<a HREF=\"");
     packageIndex.append(packageName);
@@ -672,7 +678,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
               }
             };
             CommandProcessor.getInstance().executeCommand(myProject, command, fixes[idx].getName(), null);
-            final DescriptorProviderInspection tool = ((DescriptorProviderInspection)getSelectedTool());
+            final DescriptorProviderInspection tool = ((DescriptorProviderInspection)myTree.getSelectedTool());
             if (tool != null) {
               tool.ignoreProblem(element, descriptor, idx);
             }
@@ -683,9 +689,36 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     }
   }
 
+  private class SuppressInspectionToolbarAction extends AnAction{
+      public SuppressInspectionToolbarAction() {
+        super(InspectionsBundle.message("suppress.inspection.family"), InspectionsBundle.message("suppress.inspection.family"), IconLoader.getIcon("/general/inspectionsOff.png"));
+      }
+
+      public void actionPerformed(AnActionEvent e) {
+        final InspectionTool selectedTool = myTree.getSelectedTool();
+        assert selectedTool != null;
+        getSuppressAction(selectedTool, myTree.getSelectionPaths(), HighlightDisplayKey.find(selectedTool.getShortName()).getID()).actionPerformed(e);
+      }
+
+    public void update(AnActionEvent e) {
+      if (!isSingleToolInSelection()){
+        e.getPresentation().setEnabled(false);
+        return;
+      }
+      final InspectionTool selectedTool = myTree.getSelectedTool();
+      assert selectedTool != null;
+      final HighlightDisplayKey key = HighlightDisplayKey.find(selectedTool.getShortName());
+      if (key == null){
+        e.getPresentation().setEnabled(false);
+        return;
+      }
+      getSuppressAction(selectedTool, myTree.getSelectionPaths(), HighlightDisplayKey.find(selectedTool.getShortName()).getID()).update(e);
+    }
+  }
+
   protected class InvokeQuickFixAction extends AnAction {
     public InvokeQuickFixAction() {
-      super("Apply a quickfix", "Apply an inspection quickfix", IconLoader.getIcon("/actions/createFromUsage.png"));
+      super(InspectionsBundle.message("inspection.action.apply.quickfix"), InspectionsBundle.message("inspection.action.apply.quickfix.description"), IconLoader.getIcon("/actions/createFromUsage.png"));
 
       registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS).getShortcutSet(),
                                 myTree);
@@ -698,8 +731,8 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
       }
 
       //noinspection ConstantConditions
-      final @NotNull InspectionTool tool = getSelectedTool();
-      final QuickFixAction[] quickFixes = tool.getQuickFixes(getSelectedElements());
+      final @NotNull InspectionTool tool = myTree.getSelectedTool();
+      final QuickFixAction[] quickFixes = tool.getQuickFixes(myTree.getSelectedElements());
       if (quickFixes == null || quickFixes.length == 0) {
         e.getPresentation().setEnabled(false);
         return;
@@ -709,7 +742,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
         public AnAction[] getChildren(@Nullable AnActionEvent e) {
           List<QuickFixAction> children = new ArrayList<QuickFixAction>();
           for (QuickFixAction fix : quickFixes) {
-            if (fix != null){
+            if (fix != null) {
               children.add(fix);
             }
           }
@@ -721,14 +754,14 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     }
 
     public void actionPerformed(AnActionEvent e) {
-      final InspectionTool tool = getSelectedTool();
+      final InspectionTool tool = myTree.getSelectedTool();
       if (tool == null) return;
-      final QuickFixAction[] quickFixes = tool.getQuickFixes(getSelectedElements());
+      final QuickFixAction[] quickFixes = tool.getQuickFixes(myTree.getSelectedElements());
       ActionGroup fixes = new ActionGroup() {
         public AnAction[] getChildren(@Nullable AnActionEvent e) {
           List<QuickFixAction> children = new ArrayList<QuickFixAction>();
           for (QuickFixAction fix : quickFixes) {
-            if (fix != null){
+            if (fix != null) {
               children.add(fix);
             }
           }
@@ -737,7 +770,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
       };
 
       DataContext dataContext = e.getDataContext();
-      ListPopup popup = ActionListPopup.createListPopup(" Accept Resolution ", fixes, dataContext, false, false);
+      ListPopup popup = ActionListPopup.createListPopup(InspectionsBundle.message("inspection.tree.popup.title"), fixes, dataContext, false, false);
 
       Point location = getSelectedTreeNodeBounds();
       if (location == null) return;
@@ -820,7 +853,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
   }
 
   private PsiElement[] collectPsiElements() {
-    RefElement[] refElements = getSelectedElements();
+    RefElement[] refElements = myTree.getSelectedElements();
     List<PsiElement> psiElements = new ArrayList<PsiElement>();
     for (RefElement refElement : refElements) {
       PsiElement psiElement = refElement.getElement();
@@ -849,10 +882,11 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     actions.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE));
     actions.add(ActionManager.getInstance().getAction(IdeActions.ACTION_FIND_USAGES));
 
-    final InspectionTool tool = getSelectedTool();
+    final InspectionTool tool = myTree.getSelectedTool();
     if (tool == null) return;
 
-    final QuickFixAction[] quickFixes = tool.getQuickFixes(getSelectedElements());
+    final RefElement[] selectedElements = myTree.getSelectedElements();
+    final QuickFixAction[] quickFixes = tool.getQuickFixes(selectedElements);
     if (quickFixes != null) {
       for (QuickFixAction quickFixe : quickFixes) {
         actions.add(quickFixe);
@@ -860,105 +894,153 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     }
     final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
     if (key == null) return; //e.g. DummyEntryPointsTool
-    actions.add(new AnAction("Edit Tool Settings") {
+    actions.add(new AnAction(InspectionsBundle.message("inspection.edit.tool.settings")) {
       public void actionPerformed(AnActionEvent e) {
-        new SwitchOffToolAction(key).editToolSettings(myProject, myInspectionProfile);
-        InspectionResultsView.this.update();
+        if (new EditInspectionToolsSettingsAction(key).editToolSettings(myProject, (InspectionProfileImpl) myInspectionProfile, false)){
+          InspectionResultsView.this.update();
+        }
       }
     });
+
+    final TreePath[] selectionPaths = myTree.getSelectionPaths();
+    actions.add(getSuppressAction(tool, selectionPaths, key.getID()));
     actions.add(ActionManager.getInstance().getAction(IdeActions.GROUP_VERSION_CONTROLS));
 
     ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.CODE_INSPECTION, actions);
     menu.getComponent().show(component, x, y);
   }
 
-  public ProblemDescriptor[] getSelectedDescriptors() {
-    final InspectionTool tool = getSelectedTool();
-    if (myTree.getSelectionCount() == 0 || !(tool instanceof DescriptorProviderInspection)) return EMPTY_DESCRIPTORS;
-    final TreePath[] paths = myTree.getSelectionPaths();
-    Collection<RefElement> out = new ArrayList<RefElement>();
-    Set<ProblemDescriptor> descriptors = new HashSet<ProblemDescriptor>();
-    for (TreePath path : paths) {
-      Object node = path.getLastPathComponent();
-      if (node instanceof ProblemDescriptionNode) {
-        final ProblemDescriptionNode problemNode = (ProblemDescriptionNode)node;
-        descriptors.add(problemNode.getDescriptor());
-      } else if (node instanceof InspectionTreeNode){
-        addElementsInNode((InspectionTreeNode)node, out);
-      }
-      for (RefElement element : out) {
-        final ProblemDescriptor[] descriptions = ((DescriptorProviderInspection)tool).getDescriptions(element);
-        if (descriptions != null) descriptors.addAll(Arrays.asList(descriptions));
-      }
-    }
-
-    return descriptors.toArray(new ProblemDescriptor[descriptors.size()]);
-  }
-
-  public RefElement[] getSelectedElements() {
-    TreePath[] selectionPaths = myTree.getSelectionPaths();
-    if (selectionPaths != null) {
-      final InspectionTool selectedTool = getSelectedTool();
-      if (selectedTool == null) return EMPTY_ELEMENTS_ARRAY;
-
-      Set<RefElement> result = new HashSet<RefElement>();
-      for (TreePath selectionPath : selectionPaths) {
-        final InspectionTreeNode node = (InspectionTreeNode)selectionPath.getLastPathComponent();
-        addElementsInNode(node, result);
-      }
-      return result.toArray(new RefElement[result.size()]);
-    }
-    return EMPTY_ELEMENTS_ARRAY;
-  }
-
-  public void addElementsInNode(InspectionTreeNode node, Collection<RefElement> out) {
-    if (!node.isValid()) return;
-    if (node instanceof RefElementNode) {
-      out.add(((RefElementNode)node).getElement());
-    }
-    else if (node instanceof ProblemDescriptionNode){
-      out.add(((ProblemDescriptionNode)node).getElement());
-    }
-    else if (node instanceof InspectionPackageNode || node instanceof InspectionNode) {
-      final Enumeration children = node.children();
-      while (children.hasMoreElements()) {
-        InspectionTreeNode child = (InspectionTreeNode)children.nextElement();
-        addElementsInNode(child, out);
-      }
-    }
-  }
-
-  @Nullable
-  public InspectionTool getSelectedTool() {
-    final TreePath[] paths = myTree.getSelectionPaths();
-    if (paths == null) return null;
-    InspectionTool tool = null;
-    for (TreePath path : paths) {
-      Object[] nodes = path.getPath();
-      for (int j = nodes.length - 1; j >= 0; j--) {
-        Object node = nodes[j];
-        if (node instanceof InspectionNode) {
-          if (tool == null) {
-            tool = ((InspectionNode)node).getTool();
+    private AnAction getSuppressAction(final InspectionTool tool, final TreePath[] selectionPaths, final String id) {
+        final AnAction suppressAction = new AnAction(InspectionsBundle.message("inspection.quickfix.suppress", tool.getDisplayName())) {
+          public void actionPerformed(AnActionEvent e) {
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              public void run() {
+                PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+                CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+                  public void run() {
+                    for (TreePath treePath : selectionPaths) {
+                      final InspectionTreeNode node = (InspectionTreeNode)treePath.getLastPathComponent();
+                      final List<RefElement> elementsToSuppress = myTree.getElementsToSuppressInSubTree(node);
+                      for (final RefElement refElement : elementsToSuppress) {
+                        final PsiElement element = refElement.getElement();
+                        final IntentionAction action = getCorrectIntentionAction(tool.getDisplayName(), id, element);
+                        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                          public void run() {
+                            try {
+                              action.invoke(myProject, null, refElement.getElement().getContainingFile());
+                            }
+                            catch (IncorrectOperationException e1) {
+                              LOG.error(e1);
+                            }
+                          }
+                        });
+                      }
+                      final List<RefElement> elementsToIgnore = new ArrayList<RefElement>();
+                      traverseRefElements(node, elementsToIgnore);
+                      for (RefElement element : elementsToIgnore) {
+                        tool.ignoreElement(element);
+                      }
+                    }
+                    InspectionResultsView.this.update();
+                  }
+                }, InspectionsBundle.message("inspection.quickfix.suppress"), null);
+              }
+            });
           }
-          else if (tool != ((InspectionNode)node).getTool()) {
-            return null;
+
+          public void update(AnActionEvent e) {
+            e.getPresentation().setEnabled(true);
+            for (TreePath treePath : selectionPaths) {
+              final InspectionTreeNode node = (InspectionTreeNode)treePath.getLastPathComponent();
+              final List<RefElement> elementsToSuppress = myTree.getElementsToSuppressInSubTree(node);
+              for (RefElement refElement : elementsToSuppress) {
+                final PsiElement element = refElement.getElement();
+                final PsiFile file = element.getContainingFile();
+                final IntentionAction action = getCorrectIntentionAction(tool.getDisplayName(), id, element);
+                if (action.isAvailable(myProject, null, file)) {
+                  e.getPresentation().setVisible(true);
+                  return;
+                }
+              }
+            }
+            e.getPresentation().setVisible(false);
           }
-          break;
+        };
+        return suppressAction;
+    }
+
+    public AnAction getSuppressAction( final RefElement refElement,
+                                       final InspectionTool tool){
+      final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
+      if (key != null) {
+        final IntentionAction action = getCorrectIntentionAction(tool.getDisplayName(), key.getID(), refElement.getElement());
+        final PsiFile file = refElement.getElement().getContainingFile();
+        if (action.isAvailable(myProject, null, file)) {
+          return new AnAction(action.getText()) {
+            public void actionPerformed(AnActionEvent e) {
+              final List<RefElement> elementsToSuppress = new ArrayList<RefElement>();
+              traverseRefElements((InspectionTreeNode)myTree.getSelectionPath().getLastPathComponent(), elementsToSuppress);
+              invokeSuppressAction(action, refElement, tool, elementsToSuppress);
+            }
+          };
         }
       }
+      return null;
     }
 
-    return tool;
+  private void traverseRefElements(@NotNull InspectionTreeNode node, List<RefElement> elementsToSuppress){
+    if (node instanceof RefElementNode){
+      elementsToSuppress.add(((RefElementNode)node).getElement());
+    } else if (node instanceof ProblemDescriptionNode){
+      elementsToSuppress.add(((ProblemDescriptionNode)node).getElement());
+    }
+    for (int i = 0; i < node.getChildCount(); i++) {
+      final InspectionTreeNode child = (InspectionTreeNode)node.getChildAt(i);
+      traverseRefElements(child, elementsToSuppress);
+    }
+  }
+
+  private void invokeSuppressAction(final IntentionAction action, final RefElement element, final InspectionTool tool, final List<RefElement> elementsToSuppress) {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+            CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+              public void run() {
+                ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                  public void run() {
+                    try {
+                      action.invoke(myProject, null, element.getElement().getContainingFile());
+                      for (RefElement refElement : elementsToSuppress) {
+                        tool.ignoreElement(refElement);
+                      }
+                      InspectionResultsView.this.update();
+                    }
+                    catch (IncorrectOperationException e1) {
+                      LOG.error(e1);
+                    }
+                  }
+                });
+              }
+            }, action.getText(), null);
+          }
+        });
+      }
+    });
+  }
+
+  @NotNull public InspectionTree getTree(){
+    return myTree;
   }
 
   public boolean isSingleToolInSelection() {
-    return getSelectedTool() != null;
+    return myTree.getSelectedTool() != null;
   }
 
   private class RerunAction extends AnAction {
     public RerunAction(JComponent comp) {
-      super("Rerun Inspection", "Rerun Inspection", IconLoader.getIcon("/actions/refreshUsages.png"));
+      super(InspectionsBundle.message("inspection.action.rerun"), InspectionsBundle.message("inspection.action.rerun"), IconLoader.getIcon("/actions/refreshUsages.png"));
       registerCustomShortcutSet(CommonShortcuts.getRerun(), comp);
     }
 
@@ -984,15 +1066,57 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     }
   }
 
-
-  private static class InspectionCodeSettingsPanel extends InspectCodePanel {
-    public InspectionCodeSettingsPanel(final InspectionManagerEx manager, final AnalysisScope scope) {
-      super(manager, scope);
-      setOKButtonText("OK");
+  private static class SuppressWarningAction extends AddSuppressWarningsAnnotationAction {
+    public SuppressWarningAction(final String displayName, final String ID, final PsiElement context) {
+      super(displayName, ID, context);
     }
 
-    protected void setOKActionEnabled(boolean isEnabled) {
-      super.setOKActionEnabled(true);
+    protected PsiModifierListOwner getContainer() {
+      if (!(myContext.getContainingFile().getLanguage() instanceof JavaLanguage)) {
+        return null;
+      }
+      PsiElement container = myContext;
+      while (container instanceof PsiClassInitializer || container instanceof PsiAnonymousClass ||
+             container instanceof PsiTypeParameter){
+        container = PsiTreeUtil.getParentOfType(container, PsiMember.class);
+      }
+      return (PsiModifierListOwner)container;
     }
+  }
+
+  private static class SuppressDocCommentAction extends AddNoInspectionDocTagAction{
+
+    public SuppressDocCommentAction(final String displayName, final String ID, final PsiElement context) {
+      super(displayName, ID, context);
+    }
+
+    @Nullable
+    protected PsiDocCommentOwner getContainer() {
+      if (!(myContext.getContainingFile().getLanguage() instanceof JavaLanguage)){
+        return null;
+      }
+      PsiElement container = myContext;
+      while (container instanceof PsiTypeParameter) {
+        container = PsiTreeUtil.getParentOfType(container, PsiDocCommentOwner.class);
+      }
+      return (PsiDocCommentOwner)container;
+    }
+  }
+
+  private static IntentionAction getCorrectIntentionAction(String displayName, String id, PsiElement context){
+    boolean isSuppressWarnings = false;
+    final Module module = ModuleUtil.findModuleForPsiElement(context);
+    if (module != null){
+       final ProjectJdk jdk = ModuleRootManager.getInstance(module).getJdk();
+       if (jdk != null){
+         isSuppressWarnings = DaemonCodeAnalyzerSettings.getInstance().SUPPRESS_WARNINGS &&
+                              jdk.getVersionString().indexOf("1.5") > 0 &&
+                              LanguageLevel.JDK_1_5.compareTo(context.getManager().getEffectiveLanguageLevel()) <= 0;
+       }
+    }
+    if (isSuppressWarnings){
+      return new SuppressWarningAction(displayName, id, context);
+    }
+    return new SuppressDocCommentAction(displayName, id, context);
   }
 }

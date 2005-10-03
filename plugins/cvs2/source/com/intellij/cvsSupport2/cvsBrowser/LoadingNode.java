@@ -16,6 +16,7 @@
 package com.intellij.cvsSupport2.cvsBrowser;
 
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.CommonBundle;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.*;
@@ -28,7 +29,7 @@ import javax.swing.*;
  * To change this template use File | Settings | File Templates.
  */
 class LoadingNode extends DefaultMutableTreeNode {
-  private String myText = "Loading...";
+  private String myText = CommonBundle.getLoadingTreeNodeText();
   private int myPeriod = 0;
 
   private final Icon[] myIcons = new Icon[] {
@@ -56,7 +57,7 @@ class LoadingNode extends DefaultMutableTreeNode {
 
   public void updatePeriod() {
     myPeriod++;
-    myPeriod  = myPeriod - 8 * (myPeriod / 8);
+    myPeriod  -= 8 * (myPeriod / 8);
   }
 
   public Icon getIcon() {

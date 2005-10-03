@@ -23,6 +23,7 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.picocontainer.*;
 import org.picocontainer.defaults.*;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -54,6 +55,14 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   private static Map<String, Element> ourDescriptorToRootMap = new HashMap<String, Element>();
   private MutablePicoContainer myPicoContainer;
+  @NonNls private static final String COMPONENT_ELEMENT = "component";
+  @NonNls private static final String NAME_ATTR = "name";
+  @NonNls private static final String INCLUDE_ELEMENT = "include";
+  @NonNls private static final String INTERFACE_CLASS_ELEMENT = "interface-class";
+  @NonNls private static final String IMPLEMENTATION_CLASS_ELEMENT = "implementation-class";
+  @NonNls private static final String HEADLESS_IMPLEMENTATION_CLASS_ELEMENT = "headless-implementation-class";
+  @NonNls private static final String OPTION_ELEMENT = "option";
+  @NonNls private static final String VALUE_ATTR = "value";
 
   protected void initComponents() {
     createComponents();
@@ -326,9 +335,9 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       Element node = null;
 
       if (component instanceof JDOMExternalizable) {
-        Element element = new Element("component");
+        Element element = new Element(COMPONENT_ELEMENT);
 
-        element.setAttribute("name", component.getComponentName());
+        element.setAttribute(NAME_ATTR, component.getComponentName());
 
         try {
           ((JDOMExternalizable)component).writeExternal(element);
@@ -472,11 +481,11 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
         ourDescriptorToRootMap.put(descriptor, root);
       }
 
-      List includes = root.getChildren("include");
+      List includes = root.getChildren(INCLUDE_ELEMENT);
       if (includes != null) {
         for (Iterator iterator = includes.iterator(); iterator.hasNext();) {
           Element includeElement = (Element)iterator.next();
-          String includeName = includeElement.getAttributeValue("name");
+          String includeName = includeElement.getAttributeValue(NAME_ATTR);
 
           if (includeName != null && !loadedIncludes.contains(includeName)) {
             loadedIncludes.add(includeName);
@@ -502,11 +511,11 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     for (Iterator i = element.getChildren().iterator(); i.hasNext();) {
       try {
         Element child = (Element)i.next();
-        if ("component".equals(child.getName())) {
-          String interfaceClass = child.getChildText("interface-class");
-          String implClass = child.getChildText("implementation-class");
+        if (COMPONENT_ELEMENT.equals(child.getName())) {
+          String interfaceClass = child.getChildText(INTERFACE_CLASS_ELEMENT);
+          String implClass = child.getChildText(IMPLEMENTATION_CLASS_ELEMENT);
           if (headless) {
-            String headlessImplClass = child.getChildText("headless-implementation-class");
+            String headlessImplClass = child.getChildText(HEADLESS_IMPLEMENTATION_CLASS_ELEMENT);
             if (headlessImplClass != null) {
               if (headlessImplClass.trim().length() == 0) continue;
               implClass = headlessImplClass;
@@ -517,13 +526,13 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
           Map<String, String> options = null;
 
-          final List optionElements = child.getChildren("option");
+          final List optionElements = child.getChildren(OPTION_ELEMENT);
           if (optionElements.size() != 0) {
             options = new HashMap<String, String>();
             for (Iterator j = optionElements.iterator(); j.hasNext();) {
               Element e = (Element)j.next();
-              String name = e.getAttributeValue("name");
-              String value = e.getAttributeValue("value");
+              String name = e.getAttributeValue(NAME_ATTR);
+              String value = e.getAttributeValue(VALUE_ATTR);
               options.put(name, value);
             }
           }
@@ -568,8 +577,8 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return !isTrue(options, "internal") || ApplicationManagerEx.getApplicationEx().isInternal();
   }
 
-  private boolean isTrue(Map options, final String option) {
-    return options != null && options.containsKey(option) && "true".equals(options.get(option));
+  private boolean isTrue(Map options, @NonNls final String option) {
+    return options != null && options.containsKey(option) && Boolean.valueOf(options.get(option).toString());
   }
 
   protected void saveSettingsSavingComponents() {

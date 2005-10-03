@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.*;
+import com.intellij.CommonBundle;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -389,7 +390,8 @@ class FileOperationsUndoProvider implements VirtualFileListener, LocalVcsItemsLo
         if (!application.isUnitTestMode()) {
           Runnable showDialogAction = new Runnable() {
             public void run() {
-              Messages.showErrorDialog("Cannot undo: " + e.getLocalizedMessage(), "Cannot Undo");
+              Messages.showErrorDialog(CommonBundle.message("cannot.undo.command.error.message", e.getLocalizedMessage()),
+                                       CommonBundle.message("cannot.undo.dialog.title"));
             }
           };
 
@@ -412,7 +414,8 @@ class FileOperationsUndoProvider implements VirtualFileListener, LocalVcsItemsLo
       }
       catch (IOException e) {
         if (!ApplicationManager.getApplication().isUnitTestMode()) {
-          Messages.showErrorDialog("Cannot redo: " + e.getLocalizedMessage(), "Cannot Redo");
+          Messages.showErrorDialog(CommonBundle.message("cannot.redo.error.message", e.getLocalizedMessage()),
+                                   CommonBundle.message("cannot.redo.dialog.title"));
         }
         else {
           throw new RuntimeException(e);

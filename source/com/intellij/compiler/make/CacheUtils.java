@@ -50,6 +50,7 @@ public class CacheUtils {
     return (String[])list.toArray(new String[list.size()]);
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static String parseParameterSignature(String signature) {
     if (StringUtil.startsWithChar(signature, 'B')) {
       return "B";

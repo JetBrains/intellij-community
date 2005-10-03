@@ -26,11 +26,13 @@ public final class SameSizeHorizontallyProperty extends Property{
 
   public Object getValue(final RadComponent component){
     if(!(component instanceof RadContainer)){
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("component must be an instance of RadContainer: "+component);
     }
     final RadContainer container=(RadContainer)component;
     final AbstractLayout layoutManager=(AbstractLayout)container.getLayout();
     if (!(layoutManager instanceof GridLayoutManager)) {
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("grid layout expected: "+layoutManager);
     }
     final GridLayoutManager gridLayoutManager = (GridLayoutManager)layoutManager;
@@ -39,11 +41,13 @@ public final class SameSizeHorizontallyProperty extends Property{
 
   protected void setValueImpl(final RadComponent component,final Object value) throws Exception{
     if(!(component instanceof RadContainer)){
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("component must be an instance of RadContainer: "+component);
     }
     final RadContainer container=(RadContainer)component;
     final AbstractLayout layoutManager=(AbstractLayout)container.getLayout();
     if (!(layoutManager instanceof GridLayoutManager)) {
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("grid layout expected: "+layoutManager);
     }
     final GridLayoutManager gridLayoutManager = (GridLayoutManager)layoutManager;

@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.source.parsing;
 
+import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lexer.FilterLexer;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
@@ -28,11 +29,11 @@ public class Parsing implements Constants{
   //Since we are to parse greedily (up to the end) in case eatAll=true,
   //  we are not guaranteed to return reference actually
   public static TreeElement parseJavaCodeReferenceText(PsiManager manager,
-                                                            char[] buffer,
-                                                            int startOffset,
-                                                            int endOffset,
-                                                            CharTable table,
-                                                            boolean eatAll) {
+                                                       char[] buffer,
+                                                       int startOffset,
+                                                       int endOffset,
+                                                       CharTable table,
+                                                       boolean eatAll) {
     Lexer originalLexer = new JavaLexer(manager.getEffectiveLanguageLevel());
     FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
     lexer.start(buffer, startOffset, endOffset);
@@ -48,7 +49,7 @@ public class Parsing implements Constants{
 
     if (lexer.getTokenType() != null) {
       if (!eatAll) return null;
-      final CompositeElement errorElement = Factory.createErrorElement("Unexpected tokens");
+      final CompositeElement errorElement = Factory.createErrorElement(JavaErrorMessages.message("unexpected.tokens"));
       while (lexer.getTokenType() != null) {
         final TreeElement token = ParseUtil.createTokenElement(lexer, context.getCharTable());
         TreeUtil.addChildren(errorElement, token);
@@ -98,7 +99,7 @@ public class Parsing implements Constants{
       TreeUtil.addChildren(refElement1, refElement);
       TreeUtil.addChildren(refElement1, dot);
       if (identifier == null){
-        TreeUtil.addChildren(refElement1, Factory.createErrorElement("Identifier expected"));
+        TreeUtil.addChildren(refElement1, Factory.createErrorElement(JavaErrorMessages.message("expected.identifier")));
         TreeUtil.addChildren(refElement1, Factory.createCompositeElement(REFERENCE_PARAMETER_LIST));
         return refElement1;
       }
@@ -122,7 +123,7 @@ public class Parsing implements Constants{
       if (typeElement != null) {
         TreeUtil.addChildren(list, typeElement);
       } else {
-        final CompositeElement errorElement = Factory.createErrorElement("Identifier expected");
+        final CompositeElement errorElement = Factory.createErrorElement(JavaErrorMessages.message("expected.identifier"));
         TreeUtil.addChildren(list, errorElement);
       }
 
@@ -136,7 +137,7 @@ public class Parsing implements Constants{
         TreeUtil.addChildren(list, comma);
         lexer.advance();
       } else {
-        final CompositeElement errorElement = Factory.createErrorElement("'>' or ',' expected.");
+        final CompositeElement errorElement = Factory.createErrorElement(JavaErrorMessages.message("expected.gt.or.comma"));
         TreeUtil.addChildren(list, errorElement);
         return list;
       }
@@ -184,7 +185,7 @@ public class Parsing implements Constants{
     if (tokenType == null){
       return null;
     }
-    else if (PRIMITIVE_TYPE_BIT_SET.isInSet(tokenType)){
+    else if (PRIMITIVE_TYPE_BIT_SET.contains(tokenType)){
       refElement = ParseUtil.createTokenElement(lexer, myContext.getCharTable());
       lexer.advance();
     }
@@ -230,7 +231,7 @@ public class Parsing implements Constants{
         TreeUtil.addChildren(type, boundType);
       }
       else {
-        TreeUtil.addChildren(type, Factory.createErrorElement("Type expected"));
+        TreeUtil.addChildren(type, Factory.createErrorElement(JavaErrorMessages.message("expected.type")));
       }
     }
     return type;
@@ -262,7 +263,7 @@ public class Parsing implements Constants{
     }
 
     if (filterLexer.getTokenType() != null) {
-      final CompositeElement errorElement = Factory.createErrorElement("Unexpected tokens");
+      final CompositeElement errorElement = Factory.createErrorElement(JavaErrorMessages.message("unexpected.tokens"));
       while (filterLexer.getTokenType() != null) {
         final TreeElement token = ParseUtil.createTokenElement(lexer, context.getCharTable());
         TreeUtil.addChildren(errorElement, token);

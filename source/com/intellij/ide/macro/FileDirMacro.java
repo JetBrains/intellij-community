@@ -3,6 +3,7 @@ package com.intellij.ide.macro;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ide.IdeBundle;
 
 public final class FileDirMacro extends Macro {
   public String getName() {
@@ -10,7 +11,7 @@ public final class FileDirMacro extends Macro {
   }
 
   public String getDescription() {
-    return "File directory";
+    return IdeBundle.message("macro.file.directory");
   }
 
   public String expand(DataContext dataContext) {

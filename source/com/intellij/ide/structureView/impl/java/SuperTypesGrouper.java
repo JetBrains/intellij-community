@@ -2,6 +2,7 @@ package com.intellij.ide.structureView.impl.java;
 
 import com.intellij.ide.util.treeView.smartTree.*;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiClass;
@@ -14,9 +15,11 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Collections;
 
+import org.jetbrains.annotations.NonNls;
+
 public class SuperTypesGrouper implements Grouper{
   public static final Key<WeakReference<PsiMethod>> SUPER_METHOD_KEY = Key.create("StructureTreeBuilder.SUPER_METHOD_KEY");
-  public static final String ID = "SHOW_INTERFACES";
+  @NonNls public static final String ID = "SHOW_INTERFACES";
 
   public Collection<Group> group(final AbstractTreeNode parent, Collection<TreeElement> children) {
     if (isParentGrouped(parent)) return Collections.EMPTY_LIST;
@@ -66,7 +69,8 @@ public class SuperTypesGrouper implements Grouper{
   }
 
   public ActionPresentation getPresentation() {
-    return new ActionPresentationData("Group Methods by Defining Type", null, IconLoader.getIcon("/general/implementingMethod.png"));
+    return new ActionPresentationData(IdeBundle.message("action.structureview.group.methods.by.defining.type"), null,
+                                      IconLoader.getIcon("/general/implementingMethod.png"));
   }
 
   public String getName() {

@@ -43,6 +43,7 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -75,10 +76,10 @@ public class NavigationItemListCellRenderer extends JPanel implements ListCellRe
       final JPanel spacer = new JPanel();
       final Dimension size = rightCellRendererComponent.getSize();
       spacer.setSize(new Dimension((int)(size.width * 0.015 + leftCellRendererComponent.getSize().width * 0.015), size.height));
-      spacer.setBackground(UIManager.getColor(isSelected ? "List.selectionBackground" : "List.background"));
+      spacer.setBackground(isSelected ? UIUtil.getListSelectionBackground() : UIUtil.getListBackground());
       add(spacer, BorderLayout.CENTER);
     }
-    setBackground(UIManager.getColor(isSelected ? "List.selectionBackground" : "List.background"));
+    setBackground(isSelected ? UIUtil.getListSelectionBackground() : UIUtil.getListBackground());
     return this;
   }
 
@@ -118,7 +119,7 @@ public class NavigationItemListCellRenderer extends JPanel implements ListCellRe
         append(value == null ? "" : value.toString(), new SimpleTextAttributes(Font.PLAIN, list.getForeground()));
       }
       setPaintFocusBorder(false);
-      setBackground(UIManager.getColor(selected ? "List.selectionBackground" : "List.background"));
+      setBackground(selected ? UIUtil.getListSelectionBackground() : UIUtil.getListBackground());
     }
   }
 

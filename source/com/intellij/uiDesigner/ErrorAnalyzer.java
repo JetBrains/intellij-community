@@ -17,6 +17,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
@@ -27,14 +29,17 @@ public final class ErrorAnalyzer {
   /**
    * Value {@link ErrorInfo}
    */
+  @NonNls
   public static final String CLIENT_PROP_CLASS_TO_BIND_ERROR = "classToBindError";
   /**
    * Value {@link ErrorInfo}
    */
+  @NonNls
   public static final String CLIENT_PROP_BINDING_ERROR = "bindingError";
   /**
    * Value {@link ErrorInfo}
    */
+  @NonNls
   public static final String CLIENT_PROP_GENERAL_ERROR = "generalError";
 
   public static void analyzeErrors(final GuiEditor editor, final IRootContainer rootContainer){
@@ -61,7 +66,8 @@ public final class ErrorAnalyzer {
       psiClass = FormEditingUtil.findClassToBind(module, classToBind);
       if(psiClass == null){
         final QuickFix[] fixes = editor != null ? new QuickFix[]{new CreateClassToBindFix(editor, classToBind)} : QuickFix.EMPTY_ARRAY;
-        final ErrorInfo errorInfo = new ErrorInfo("Class \"" + classToBind + "\" does not exist", fixes);
+        final ErrorInfo errorInfo = new ErrorInfo(UIDesignerBundle.message("error.class.does.not.exist", classToBind),
+                                                  fixes);
         rootContainer.putClientProperty(CLIENT_PROP_CLASS_TO_BIND_ERROR, errorInfo);
       }
       else{
@@ -105,7 +111,7 @@ public final class ErrorAnalyzer {
               component.putClientProperty(
                CLIENT_PROP_BINDING_ERROR,
                new ErrorInfo(
-                 "Field \"" + binding + "\" does not exist in class \"" + classToBind +"\"",
+                 UIDesignerBundle.message("error.no.field.in.class", binding, classToBind),
                  fixes
                )
               );
@@ -115,7 +121,7 @@ public final class ErrorAnalyzer {
               component.putClientProperty(
                 CLIENT_PROP_BINDING_ERROR,
                 new ErrorInfo(
-                  "Cannot bind to static field \"" + binding + "\"",
+                  UIDesignerBundle.message("error.cant.bind.to.static", binding),
                   QuickFix.EMPTY_ARRAY
                 )
               );
@@ -143,7 +149,7 @@ public final class ErrorAnalyzer {
                 component.putClientProperty(
                   CLIENT_PROP_BINDING_ERROR,
                   new ErrorInfo(
-                    "Incompatible types. Found \"" + fieldType.getPresentableText() + "\", required \"" + className + "\"",
+                    UIDesignerBundle.message("error.bind.incompatible.types", fieldType.getPresentableText(), className),
                     fixes
                   )
                 );
@@ -159,7 +165,7 @@ public final class ErrorAnalyzer {
             component.putClientProperty(
               CLIENT_PROP_BINDING_ERROR,
               new ErrorInfo(
-                "Binding to field \"" + binding + "\" already exists",
+                UIDesignerBundle.message("error.binding.already.exists", binding),
                 QuickFix.EMPTY_ARRAY
               )
             );
@@ -193,7 +199,7 @@ public final class ErrorAnalyzer {
               component.putClientProperty(
                 CLIENT_PROP_GENERAL_ERROR,
                 new ErrorInfo(
-                  "Form cannot be compiled because it contains more than one component at the top level",
+                  UIDesignerBundle.message("error.multiple.toplevel.components"),
                   QuickFix.EMPTY_ARRAY
                 )
               );
@@ -204,7 +210,7 @@ public final class ErrorAnalyzer {
             component.putClientProperty(
               CLIENT_PROP_GENERAL_ERROR,
               new ErrorInfo(
-                "Form cannot be compiled until this panel is layed out in a grid",
+                UIDesignerBundle.message("error.panel.not.laid.out"),
                 QuickFix.EMPTY_ARRAY
               )
             );

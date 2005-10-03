@@ -1,10 +1,8 @@
 package com.intellij.debugger.engine;
 
 import com.intellij.Patches;
-import com.intellij.debugger.ClassFilter;
-import com.intellij.debugger.DebuggerInvocationUtil;
-import com.intellij.debugger.DebuggerManagerEx;
-import com.intellij.debugger.PositionManager;
+import com.intellij.debugger.*;
+import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.apiAdapters.ConnectionServiceWrapper;
 import com.intellij.debugger.apiAdapters.TransportServiceWrapper;
 import com.intellij.debugger.engine.evaluation.*;
@@ -18,29 +16,26 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
-import com.intellij.debugger.jdi.ObjectReferenceCachingProxy;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.DebuggerSmoothManager;
 import com.intellij.debugger.ui.DescriptorHistoryManagerImpl;
-import com.intellij.debugger.ui.breakpoints.LineBreakpoint;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
+import com.intellij.debugger.ui.breakpoints.LineBreakpoint;
 import com.intellij.debugger.ui.impl.watch.DescriptorHistoryManager;
-import com.intellij.debugger.ui.tree.render.ArrayRenderer;
-import com.intellij.debugger.ui.tree.render.ClassRenderer;
-import com.intellij.debugger.ui.tree.render.PrimitiveRenderer;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
-import com.intellij.execution.runners.RunStrategy;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.runners.RunStrategy;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -61,6 +56,7 @@ import com.sun.jdi.connect.*;
 import com.sun.jdi.request.EventRequest;
 import com.sun.jdi.request.EventRequestManager;
 import com.sun.jdi.request.StepRequest;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -70,16 +66,12 @@ import java.util.*;
 public abstract class DebugProcessImpl implements DebugProcess {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.DebugProcessImpl");
 
-  static final String SOCKET_ATTACHING_CONNECTOR_NAME = "com.sun.jdi.SocketAttach";
-  static final String SHMEM_ATTACHING_CONNECTOR_NAME = "com.sun.jdi.SharedMemoryAttach";
-  static final String SOCKET_LISTENING_CONNECTOR_NAME = "com.sun.jdi.SocketListen";
-  static final String SHMEM_LISTENING_CONNECTOR_NAME = "com.sun.jdi.SharedMemoryListen";
+  static final @NonNls String  SOCKET_ATTACHING_CONNECTOR_NAME = "com.sun.jdi.SocketAttach";
+  static final @NonNls String SHMEM_ATTACHING_CONNECTOR_NAME = "com.sun.jdi.SharedMemoryAttach";
+  static final @NonNls String SOCKET_LISTENING_CONNECTOR_NAME = "com.sun.jdi.SocketListen";
+  static final @NonNls String SHMEM_LISTENING_CONNECTOR_NAME = "com.sun.jdi.SharedMemoryListen";
 
-  public static final String ALWAYS_FORCE_CLASSIC_VM = "always";
-  public static final String NEVER_FORCE_CLASSIC_VM = "never";
-  public static final String IF_SELECTED_FORCE_CLASSIC_VM = "if_selected";
-
-  public static final String JAVA_STRATUM = "Java";
+  public static final @NonNls String JAVA_STRATUM = "Java";
 
   private final Project myProject;
   private final RequestManagerImpl myRequestManager;
@@ -126,7 +118,6 @@ public abstract class DebugProcessImpl implements DebugProcess {
   private final SuspendManagerImpl mySuspendManager = new SuspendManagerImpl(this);
   protected CompoundPositionManager myPositionManager = null;
   DebuggerManagerThreadImpl myDebuggerManagerThread;
-  public static final String MSG_FAILD_TO_CONNECT = "Failed to establish connection to the target VM";
   private HashMap myUserData = new HashMap();
   private static int LOCAL_START_TIMEOUT = 15000;
 
@@ -148,9 +139,8 @@ public abstract class DebugProcessImpl implements DebugProcess {
     getManagerThread().invoke(new DebuggerCommandImpl() {
       protected void action() throws Exception {
         final NodeRendererSettings rendererSettings = NodeRendererSettings.getInstance();
-        for (Iterator<NodeRenderer> it = rendererSettings.getAllRenderers().iterator(); it.hasNext();) {
-          final NodeRenderer renderer = it.next();
-          if(renderer.isEnabled() && renderer instanceof ValueLabelRenderer) {
+        for (final NodeRenderer renderer : rendererSettings.getAllRenderers()) {
+          if (renderer.isEnabled()) {
             myRenderers.add(renderer);
           }
         }
@@ -165,9 +155,8 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
     NodeRenderer renderer = myNodeRederersMap.get(type);
     if(renderer == null) {
-      for (Iterator<NodeRenderer> iterator = myRenderers.iterator(); iterator.hasNext();) {
-        final NodeRenderer nodeRenderer = iterator.next();
-        if(nodeRenderer.isApplicable(type)) {
+      for (final NodeRenderer nodeRenderer : myRenderers) {
+        if (nodeRenderer.isApplicable(type)) {
           renderer = nodeRenderer;
           break;
         }
@@ -204,6 +193,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
   }
 
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   protected void commitVM(VirtualMachine vm) {
     LOG.assertTrue(isInInitialState(), "State is invalid " + myState);
     DebuggerManagerThreadImpl.assertIsManagerThread();
@@ -323,9 +313,9 @@ public abstract class DebugProcessImpl implements DebugProcess {
         if (currentClassName == null || !settings.isNameFiltered(currentClassName)) {
           // add class filters
           ClassFilter[] filters = settings.getSteppingFilters();
-          for (int idx = 0; idx < filters.length; idx++) {
-            if (filters[idx].isEnabled()) {
-              stepRequest.addClassExclusionFilter(filters[idx].getPattern());
+          for (ClassFilter filter : filters) {
+            if (filter.isEnabled()) {
+              stepRequest.addClassExclusionFilter(filter.getPattern());
             }
           }
         }
@@ -335,6 +325,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
     stepRequest.setSuspendPolicy(getSuspendPolicy());
 
     if (hint != null) {
+      //noinspection HardCodedStringLiteral
       stepRequest.putProperty("hint", hint);
     }
     stepRequest.enable();
@@ -346,7 +337,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
     if (stepRequests.size() > 0) {
       List toDelete = new ArrayList();
       for (Iterator iterator = stepRequests.iterator(); iterator.hasNext();) {
-        StepRequest request = (StepRequest)iterator.next();
+        final StepRequest request = (StepRequest)iterator.next();
         ThreadReference threadReference = request.thread();
 
         if (threadReference.status() == ThreadReference.THREAD_STATUS_UNKNOWN) {
@@ -386,33 +377,33 @@ public abstract class DebugProcessImpl implements DebugProcess {
   private VirtualMachine createVirtualMachineInt() throws ExecutionException {
     try {
       if (myArguments != null) {
-        throw new IOException("DebugProcessImpl is already listening");
+        throw new IOException(DebuggerBundle.message("error.debugger.already.listening"));
       }
 
-      String address = myConnection.getAddress();
+      final String address = myConnection.getAddress();
       if (myConnection.isServerMode()) {
         ListeningConnector connector = (ListeningConnector)findConnector(
           myConnection.isUseSockets() ? SOCKET_LISTENING_CONNECTOR_NAME : SHMEM_LISTENING_CONNECTOR_NAME);
         if (connector == null) {
-          throw new CantRunException("Cannot listen using " +
-                                     (!myConnection.isUseSockets() ? "shared memory" : "socket") +
-                                     " transport: required connector not found. Check your JDK installation.");
+          throw new CantRunException(DebuggerBundle.message("error.debug.connector.not.found", DebuggerBundle.getTransportName(myConnection)));
         }
         myArguments = connector.defaultArguments();
         if (myArguments == null) {
-          throw new CantRunException("The port to listen at unspecified");
+          throw new CantRunException(DebuggerBundle.message("error.no.debug.listen.port"));
         }
 
         if (address == null) {
-          throw new CantRunException("The port to listen at unspecified");
+          throw new CantRunException(DebuggerBundle.message("error.no.debug.listen.port"));
         }
         // negative port number means the caller leaves to debugger to decide at which hport to listen
+        //noinspection HardCodedStringLiteral
         Connector.Argument portArg = myConnection.isUseSockets()
                                      ? (Connector.Argument)myArguments.get("port")
                                      : (Connector.Argument)myArguments.get("name");
         if (portArg != null) {
           portArg.setValue(address);
         }
+        //noinspection HardCodedStringLiteral
         final Connector.Argument timeoutArg = (Connector.Argument)myArguments.get("timeout");
         if (timeoutArg != null) {
           timeoutArg.setValue("0"); // wait forever
@@ -439,20 +430,19 @@ public abstract class DebugProcessImpl implements DebugProcess {
         );
 
         if (connector == null) {
-          throw new CantRunException(
-            "Cannot connect using " + (myConnection.isUseSockets() ? "socket" : "shared memory") +
-            " transport: required connector not found. Check your JDK installation."
-          );
+          throw new CantRunException( DebuggerBundle.message("error.debug.connector.not.found", DebuggerBundle.getTransportName(myConnection)));
         }
         myArguments = connector.defaultArguments();
         if (myConnection.isUseSockets()) {
+          //noinspection HardCodedStringLiteral
           final Connector.Argument hostnameArg = (Connector.Argument)myArguments.get("hostname");
           if (hostnameArg != null && myConnection.getHostName() != null) {
             hostnameArg.setValue(myConnection.getHostName());
           }
           if (address == null) {
-            throw new CantRunException("The port to attach to unspecified");
+            throw new CantRunException(DebuggerBundle.message("error.no.debug.attach.port"));
           }
+          //noinspection HardCodedStringLiteral
           final Connector.Argument portArg = (Connector.Argument)myArguments.get("port");
           if (portArg != null) {
             portArg.setValue(address);
@@ -460,13 +450,15 @@ public abstract class DebugProcessImpl implements DebugProcess {
         }
         else {
           if (address == null) {
-            throw new CantRunException("Shared memory address unspecified");
+            throw new CantRunException(DebuggerBundle.message("error.no.shmem.address"));
           }
+          //noinspection HardCodedStringLiteral
           final Connector.Argument nameArg = (Connector.Argument)myArguments.get("name");
           if (nameArg != null) {
             nameArg.setValue(address);
           }
         }
+        //noinspection HardCodedStringLiteral
         final Connector.Argument timeoutArg = (Connector.Argument)myArguments.get("timeout");
         if (timeoutArg != null) {
           timeoutArg.setValue("0"); // wait forever
@@ -479,7 +471,8 @@ public abstract class DebugProcessImpl implements DebugProcess {
             String hostString = myConnection.getHostName();
 
             if (hostString == null || hostString.length() == 0) {
-                hostString = "localhost";
+              //noinspection HardCodedStringLiteral
+              hostString = "localhost";
             }
             hostString = hostString + ":";
 
@@ -492,15 +485,15 @@ public abstract class DebugProcessImpl implements DebugProcess {
           }
         }
         catch (IllegalArgumentException e) {
-          throw new CantRunException("Connector myArguments invalid : " + e.getMessage());
+          throw new CantRunException(e.getLocalizedMessage());
         }
       }
     }
     catch (IOException e) {
-      throw new ExecutionException(createConnectionStatusMessage(processError(e), myConnection), e);
+      throw new ExecutionException(processError(e), e);
     }
     catch (IllegalConnectorArgumentsException e) {
-      throw new ExecutionException(createConnectionStatusMessage(processError(e), myConnection), e);
+      throw new ExecutionException(processError(e), e);
     }
     finally {
       myArguments = null;
@@ -541,7 +534,8 @@ public abstract class DebugProcessImpl implements DebugProcess {
       virtualMachineManager = Bootstrap.virtualMachineManager();
     }
     catch (Error e) {
-      throw new ExecutionException(e.getClass().getName() + " : " + e.getMessage() + ". Check your JDK installation.");
+      final String error = e.getClass().getName() + " : " + e.getLocalizedMessage();
+      throw new ExecutionException(DebuggerBundle.message("debugger.jdi.bootstrap.error", error));
     }
     List connectors;
     if (SOCKET_ATTACHING_CONNECTOR_NAME.equals(connectorName) || SHMEM_ATTACHING_CONNECTOR_NAME.equals(connectorName)) {
@@ -567,11 +561,10 @@ public abstract class DebugProcessImpl implements DebugProcess {
     if ("1.4.0".equals(version)) {
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
-          Messages.showMessageDialog(getProject(),
-                                     "The debuggee VM version is \"" + version +
-                                     "\".\nJ2SDK 1.4.0 documented bugs may cause unstable debugger behavior.\nWe recommend you using J2SDK 1.4.0_01 or higher.",
-                                     "VM Version Warning",
-                                     Messages.getWarningIcon());
+          Messages.showMessageDialog(
+            getProject(),
+            DebuggerBundle.message("warning.jdk140.unstable"), DebuggerBundle.message("title.jdk140.unstable"), Messages.getWarningIcon()
+          );
         }
       });
     }
@@ -738,32 +731,34 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
     if (e instanceof VMStartException) {
       VMStartException e1 = (VMStartException)e;
-      message = e1.getMessage();
+      message = e1.getLocalizedMessage();
     }
     else if (e instanceof IllegalConnectorArgumentsException) {
       IllegalConnectorArgumentsException e1 = (IllegalConnectorArgumentsException)e;
-      message = formatMessage("Bad Argument : " + e1.getMessage()) + e1.argumentNames();
+      final List<String> invalidArgumentNames = e1.argumentNames();
+      message = formatMessage(DebuggerBundle.message("error.invalid.argument", invalidArgumentNames.size()) + ": "+ e1.getLocalizedMessage()) + invalidArgumentNames;
       if (LOG.isDebugEnabled()) {
         LOG.debug(e1);
       }
     }
     else if (e instanceof CantRunException) {
-      message = "Error Launching Debuggee.\n" + e.getMessage();
+      message = e.getLocalizedMessage();
     }
     else if (e instanceof VMDisconnectedException) {
-      message = "VM Disconnected.\n" + "Target virtual machine closed connection.";
+      message = DebuggerBundle.message("error.vm.disconnected");
     }
     else if (e instanceof UnknownHostException) {
-      message = "Cannot Connect to Remote Process.\n" +
-                "Host unknown: " + e.getMessage();
+      message = DebuggerBundle.message("error.unknown.host") + ":\n" + e.getLocalizedMessage();
     }
     else if (e instanceof IOException) {
       IOException e1 = (IOException)e;
-      StringBuffer buf = new StringBuffer("Unable to open debugger port : ");
+      StringBuffer buf = new StringBuffer();
+      buf.append(DebuggerBundle.message("error.cannot.open.debugger.port")).append(" : ");
       buf.append(e1.getClass().getName() + " ");
-      if (e1.getMessage() != null && e1.getMessage().length() > 0) {
+      final String localizedMessage = e1.getLocalizedMessage();
+      if (localizedMessage != null && localizedMessage.length() > 0) {
         buf.append('"');
-        buf.append(e1.getMessage());
+        buf.append(localizedMessage);
         buf.append('"');
       }
       if (LOG.isDebugEnabled()) {
@@ -772,12 +767,10 @@ public abstract class DebugProcessImpl implements DebugProcess {
       message = buf.toString();
     }
     else if (e instanceof ExecutionException) {
-      message = e.getMessage();
+      message = e.getLocalizedMessage();
     }
     else  {
-      message = "Error Connecting to Remote Process.\n" +
-                "Exception occured: " + e.getClass().getName() + "\n" +
-                "Exception message: " + e.getMessage();
+      message = DebuggerBundle.message("error.exception.while.connecting", e.getClass().getName(), e.getLocalizedMessage());
       if (LOG.isDebugEnabled()) {
         LOG.debug(e);
       }
@@ -787,26 +780,6 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
   public DescriptorHistoryManager getDescriptorHistoryManager() {
     return myDescriptorHistoryManager;
-  }
-
-  public static String createConnectionStatusMessage(String connectStatus, RemoteConnection connection) {
-    StringBuffer message = new StringBuffer(128);
-    message.append(connectStatus);
-    if (connection.isUseSockets()) {
-      message.append(" at '");
-      message.append(connection.getHostName());
-      message.append(':');
-      message.append(connection.getAddress());
-      message.append("' using socket transport");
-    }
-    else {
-      message.append(" at address '");
-      message.append(connection.getAddress());
-      message.append("' using shared memory transport");
-    }
-    message.append(". ");
-    String _msg = message.toString();
-    return _msg;
   }
 
   public void dispose() {
@@ -845,7 +818,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
       for (Iterator it = args.iterator(); it.hasNext();) {
         final Object arg = (Object)it.next();
         if (arg instanceof ObjectReference) {
-          myArgs.add(ObjectReferenceCachingProxy.unwrap((ObjectReference)arg));
+          myArgs.add((ObjectReference)arg);
         }
         else {
           myArgs.add(arg);
@@ -854,9 +827,9 @@ public abstract class DebugProcessImpl implements DebugProcess {
     }
 
     protected abstract E invokeMethod(int invokePolicy, final List args) throws InvocationException,
-                                                               ClassNotLoadedException,
-                                                               IncompatibleThreadStateException,
-                                                               InvalidTypeException;
+                                                                                ClassNotLoadedException,
+                                                                                IncompatibleThreadStateException,
+                                                                                InvalidTypeException;
 
     public E start(EvaluationContextImpl evaluationContext, Method method) throws EvaluateException {
       DebuggerManagerThreadImpl.assertIsManagerThread();
@@ -941,9 +914,9 @@ public abstract class DebugProcessImpl implements DebugProcess {
     }
 
     private E invokeMethodAndFork(final SuspendContextImpl context) throws InvocationException,
-                                                                 ClassNotLoadedException,
-                                                                 IncompatibleThreadStateException,
-                                                                 InvalidTypeException {
+                                                                           ClassNotLoadedException,
+                                                                           IncompatibleThreadStateException,
+                                                                           InvalidTypeException {
       final int invokePolicy = getInvokePolicy(context);
       final Exception[] exception = new Exception[1];
       final Value[] result = new Value[1];
@@ -1004,9 +977,9 @@ public abstract class DebugProcessImpl implements DebugProcess {
     final ThreadReference thread = getEvaluationThread(evaluationContext);
     InvokeCommand<Value> invokeCommand = new InvokeCommand<Value>(args) {
       protected Value invokeMethod(int invokePolicy, final List args) throws InvocationException,
-                                                            ClassNotLoadedException,
-                                                            IncompatibleThreadStateException,
-                                                            InvalidTypeException {
+                                                                             ClassNotLoadedException,
+                                                                             IncompatibleThreadStateException,
+                                                                             InvalidTypeException {
         if (LOG.isDebugEnabled()) {
           LOG.debug("Invoke " + method.name());
         }
@@ -1029,9 +1002,9 @@ public abstract class DebugProcessImpl implements DebugProcess {
     final ThreadReference thread = getEvaluationThread(evaluationContext);
     InvokeCommand<Value> invokeCommand = new InvokeCommand<Value>(args) {
       protected Value invokeMethod(int invokePolicy, final List args) throws InvocationException,
-                                                            ClassNotLoadedException,
-                                                            IncompatibleThreadStateException,
-                                                            InvalidTypeException {
+                                                                             ClassNotLoadedException,
+                                                                             IncompatibleThreadStateException,
+                                                                             InvalidTypeException {
         if (LOG.isDebugEnabled()) {
           LOG.debug("Invoke " + method.name());
         }
@@ -1053,9 +1026,9 @@ public abstract class DebugProcessImpl implements DebugProcess {
     final ThreadReference thread = getEvaluationThread(evaluationContext);
     InvokeCommand<ObjectReference> invokeCommand = new InvokeCommand<ObjectReference>(args) {
       protected ObjectReference invokeMethod(int invokePolicy, final List args) throws InvocationException,
-                                                                      ClassNotLoadedException,
-                                                                      IncompatibleThreadStateException,
-                                                                      InvalidTypeException {
+                                                                                       ClassNotLoadedException,
+                                                                                       IncompatibleThreadStateException,
+                                                                                       InvalidTypeException {
         if (LOG.isDebugEnabled()) {
           LOG.debug("New instance " + method.name());
         }
@@ -1089,10 +1062,10 @@ public abstract class DebugProcessImpl implements DebugProcess {
     }
 
     if (method != null) {
-      pushStatisText("Evaluating " + DebuggerUtilsEx.methodName(method));
+      pushStatisText(DebuggerBundle.message("progress.evaluating", DebuggerUtilsEx.methodName(method)));
     }
     else {
-      pushStatisText("Evaluating ...");
+      pushStatisText(DebuggerBundle.message("title.evaluating"));
     }
   }
 
@@ -1152,6 +1125,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
     return false;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private ClassLoaderReference getParentLoader(final ClassLoaderReference fromLoader) {
     final ReferenceType refType = fromLoader.referenceType();
     Field field = refType.fieldByName("parent");
@@ -1200,6 +1174,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
     return buffer.toString();
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public ReferenceType loadClass(EvaluationContextImpl evaluationContext, String qName, ClassLoaderReference classLoader)
     throws InvocationException, ClassNotLoadedException, IncompatibleThreadStateException, InvalidTypeException, EvaluateException {
 
@@ -1315,7 +1290,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
     }
 
     public void contextAction() {
-      showStatusText("Stepping out");
+      showStatusText(DebuggerBundle.message("status.step.out"));
       final SuspendContextImpl suspendContext = getSuspendContext();
       final ThreadReferenceProxyImpl thread = suspendContext.getThread();
       RequestHint hint = new RequestHint(thread, suspendContext, StepRequest.STEP_OUT);
@@ -1333,7 +1308,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
     }
 
     public void contextAction() {
-      showStatusText("Stepping into");
+      showStatusText(DebuggerBundle.message("status.step.into"));
       final SuspendContextImpl suspendContext = getSuspendContext();
       final ThreadReferenceProxyImpl stepThread = suspendContext.getThread();
       RequestHint hint = new RequestHint(stepThread, suspendContext, StepRequest.STEP_INTO);
@@ -1352,7 +1327,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
     }
 
     public void contextAction() {
-      showStatusText("Stepping over");
+      showStatusText(DebuggerBundle.message("status.step.over"));
       final SuspendContextImpl suspendContext = getSuspendContext();
       final ThreadReferenceProxyImpl steppingThread = suspendContext.getThread();
       // need this hint whil stepping over for JSR45 support:
@@ -1379,7 +1354,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
     }
 
     public void contextAction() {
-      showStatusText("Run to cursor");
+      showStatusText(DebuggerBundle.message("status.run.to.cursor"));
       cancelRunToCursorBreakpoint();
       if (myRunToCursorBreakpoint == null) {
         return;
@@ -1399,7 +1374,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
     }
 
     public void contextAction() {
-      showStatusText("Process resumed");
+      showStatusText(DebuggerBundle.message("status.process.resumed"));
       getSuspendManager().resume(getSuspendContext());
       myDebugProcessDispatcher.getMulticaster().resumed(getSuspendContext());
     }
@@ -1477,7 +1452,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
       if (myStackFrame.isBottom()) {
         DebuggerInvocationUtil.invokeLater(myProject, new Runnable() {
           public void run() {
-            Messages.showMessageDialog(myProject, "Cannot pop bottom frame", "Action not Perfomed", Messages.getErrorIcon());
+            Messages.showMessageDialog(myProject, DebuggerBundle.message("error.pop.bottom.stackframe"), ActionsBundle.actionText(DebuggerActions.POP_FRAME), Messages.getErrorIcon());
           }
         });
         return;
@@ -1523,7 +1498,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return myExecutionResult;
     }
-    
+
     final Alarm debugPortTimeout = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 
     myExecutionResult.getProcessHandler().addProcessListener(new ProcessAdapter() {
@@ -1537,11 +1512,8 @@ public abstract class DebugProcessImpl implements DebugProcess {
             if(isInInitialState()) {
               ApplicationManager.getApplication().invokeLater(new Runnable() {
                 public void run() {
-                  String message = createConnectionStatusMessage(
-                    "Check your run/debug configuration. Failed to establish connection to the target VM",
-                    remoteConnection
-                  );
-                  Messages.showErrorDialog(myProject, message, "Cannot Debug Application");
+                  String message = DebuggerBundle.message("status.connect.failed", DebuggerBundle.getAddressDisplayName(remoteConnection), DebuggerBundle.getTransportName(remoteConnection));
+                  Messages.showErrorDialog(myProject, message, DebuggerBundle.message("title.generic.debug.dialog"));
                 }
               });
             }
@@ -1694,7 +1666,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
     RunToCursorCommand runToCursorCommand = new RunToCursorCommand(suspendContext, document, lineIndex);
     if(runToCursorCommand.myRunToCursorBreakpoint == null) {
       PsiFile psiFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(document);
-      throw new EvaluateException("There is no executable code at " + psiFile.getName() + ":" + lineIndex, null);
+      throw new EvaluateException(DebuggerBundle.message("error.running.to.cursor.no.executable.code", psiFile.getName(), lineIndex), null);
     }
     return runToCursorCommand;
   }

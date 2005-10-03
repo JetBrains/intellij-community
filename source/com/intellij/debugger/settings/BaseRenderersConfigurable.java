@@ -4,6 +4,7 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.ClassFilterEditor;
 import com.intellij.debugger.ui.tree.render.ClassRenderer;
 import com.intellij.debugger.ui.tree.render.ToStringRenderer;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.StateRestoringCheckBox;
@@ -44,26 +45,19 @@ public class BaseRenderersConfigurable implements Configurable {
   }
 
   public String getDisplayName() {
-    return "Data views";
+    return DebuggerBundle.message("base.renderer.configurable.display.name");
   }
 
   public JComponent createComponent() {
     final JPanel panel = new JPanel(new GridBagLayout());
 
-    myCbAutoscroll = new JCheckBox("Autoscroll to new local variables");
-    myCbAutoscroll.setMnemonic('l');
-    myCbShowSyntheticFields = new JCheckBox("Show synthetic fields");
-    myCbShowSyntheticFields.setMnemonic('y');
-    myCbSort = new JCheckBox("Sort alphabetically");
-    myCbSort.setMnemonic('l');
-    myCbHideNullArrayElements = new JCheckBox("Hide null array elements");
-    myCbHideNullArrayElements.setMnemonic('n');
-    myCbShowStatic = new JCheckBox("Show static fields");
-    myCbShowStatic.setMnemonic('s');
-    myCbShowStaticFinalFields = new StateRestoringCheckBox("Show static final fields");
-    myCbShowStaticFinalFields.setMnemonic('f');
-    myCbEnableAlternateViews = new JCheckBox("Alternate view for Collections classes");
-    myCbEnableAlternateViews.setMnemonic('C');
+    myCbAutoscroll = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.autoscroll"));
+    myCbShowSyntheticFields = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.show.synthetic.fields"));
+    myCbSort = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.sort.alphabetically"));
+    myCbHideNullArrayElements = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.hide.null.array.elements"));
+    myCbShowStatic = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.show.static.fields"));
+    myCbShowStaticFinalFields = new StateRestoringCheckBox(DebuggerBundle.message("label.base.renderer.configurable.show.static.final.fields"));
+    myCbEnableAlternateViews = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.alternate.view"));
     myCbShowStatic.addChangeListener(new ChangeListener(){
       public void stateChanged(ChangeEvent e) {
         if(myCbShowStatic.isSelected()) {
@@ -74,10 +68,9 @@ public class BaseRenderersConfigurable implements Configurable {
         }
       }
     });
-    myCbEnableToString = new JCheckBox("Enable 'toString()' object view:");
-    myCbEnableToString.setMnemonic('o');
-    myRbAllThatOverride = new JRadioButton("For all classes that override 'toString()' method");
-    myRbFromList = new JRadioButton("For classes from the list:");
+    myCbEnableToString = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.enable.tostring"));
+    myRbAllThatOverride = new JRadioButton(DebuggerBundle.message("label.base.renderer.configurable.all.overridding"));
+    myRbFromList = new JRadioButton(DebuggerBundle.message("label.base.renderer.configurable.classes.from.list"));
     ButtonGroup group = new ButtonGroup();
     group.add(myRbAllThatOverride);
     group.add(myRbFromList);

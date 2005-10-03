@@ -23,9 +23,10 @@ import com.intellij.psi.PsiFile;
 
 import java.util.Iterator;
 
+import org.jetbrains.annotations.NonNls;
+
 public abstract class Location<E extends PsiElement> {
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public static final String LOCATION = "Location";
+  @NonNls public static final String LOCATION = "Location";
 
   public abstract E getPsiElement();
   public abstract Project getProject();

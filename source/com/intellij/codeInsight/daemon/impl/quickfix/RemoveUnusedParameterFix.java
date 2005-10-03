@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -12,7 +13,6 @@ import com.intellij.psi.PsiParameter;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfo;
 
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,12 +24,11 @@ public class RemoveUnusedParameterFix implements IntentionAction {
   }
 
   public String getText() {
-    String text = MessageFormat.format("Remove Parameter ''{0}''", new Object[]{myParameter.getName(), });
-    return text;
+    return QuickFixBundle.message("remove.unused.parameter.text", myParameter.getName());
   }
 
   public String getFamilyName() {
-    return "Remove unused parameter";
+    return QuickFixBundle.message("remove.unused.parameter.family");
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {

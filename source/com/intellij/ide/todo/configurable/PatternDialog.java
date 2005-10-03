@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.search.TodoAttributes;
 import com.intellij.psi.search.TodoPattern;
+import com.intellij.ide.IdeBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -33,7 +34,7 @@ class PatternDialog extends DialogWrapper{
     );
     myIconComboBox.setSelectedItem(pattern.getAttributes().getIcon());
     myIconComboBox.setRenderer(new TodoTypeListCellRenderer());
-    myCaseSensitiveCheckBox=new JCheckBox("Case Sensitive",pattern.isCaseSensitive());
+    myCaseSensitiveCheckBox=new JCheckBox(IdeBundle.message("checkbox.case.sensitive"),pattern.isCaseSensitive());
     myPatternStringField=new JTextField(pattern.getPatternString());
 
     myColorAndFontDescriptionPanel = new ColorAndFontDescriptionPanel();
@@ -73,7 +74,7 @@ class PatternDialog extends DialogWrapper{
 
     GridBagConstraints gb = new GridBagConstraints(0,0,1,1,0,0,GridBagConstraints.NORTHWEST,GridBagConstraints.HORIZONTAL,new Insets(0,0,5,10),0,0);
 
-    JLabel patternLabel=new JLabel("Pattern:");
+    JLabel patternLabel=new JLabel(IdeBundle.message("label.todo.pattern"));
     panel.add(patternLabel, gb);
     Dimension oldPreferredSize=myPatternStringField.getPreferredSize();
     myPatternStringField.setPreferredSize(new Dimension(300,oldPreferredSize.height));
@@ -82,7 +83,7 @@ class PatternDialog extends DialogWrapper{
     gb.weightx = 1;
     panel.add(myPatternStringField,gb);
 
-    JLabel iconLabel=new JLabel("Icon:");
+    JLabel iconLabel=new JLabel(IdeBundle.message("label.todo.icon"));
     gb.gridy++;
     gb.gridx = 0;
     gb.gridwidth = 1;

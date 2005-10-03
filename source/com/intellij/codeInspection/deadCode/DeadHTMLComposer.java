@@ -11,8 +11,14 @@ package com.intellij.codeInspection.deadCode;
 import com.intellij.codeInspection.ex.HTMLComposer;
 import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.codeInspection.reference.*;
+import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.ui.RefElementNode;
 
 import java.util.Iterator;
+import java.util.Set;
+import java.util.HashSet;
+
+import org.jetbrains.annotations.NonNls;
 
 public class DeadHTMLComposer extends HTMLComposer {
   private final InspectionTool myTool;
@@ -27,11 +33,13 @@ public class DeadHTMLComposer extends HTMLComposer {
     if (refEntity instanceof RefElement) {
       RefElement refElement = (RefElement) refEntity;
       if (refElement.isSuspicious() && !refElement.isEntry()) {
-        appendHeading(buf, "Problem synopsis");
+        appendHeading(buf, InspectionsBundle.message("inspection.problem.synopsis"));
+        //noinspection HardCodedStringLiteral
         buf.append("<br>");
         appendAfterHeaderIndention(buf);
         appendProblemSynopsis(refElement, buf);
 
+        //noinspection HardCodedStringLiteral
         buf.append("<br><br>");
         appendResolution(buf, myTool, refElement);
 
@@ -58,7 +66,9 @@ public class DeadHTMLComposer extends HTMLComposer {
         });
       } else {
         appendNoProblems(buf);
+        throw new RuntimeException();
       }
+      appendCallesList(refElement, buf, new HashSet<RefElement>(), true);
     }
   }
 
@@ -66,105 +76,100 @@ public class DeadHTMLComposer extends HTMLComposer {
     refElement.accept(new RefVisitor() {
       public void visitField(RefField field) {
         if (field.isUsedForReading() && !field.isUsedForWriting()) {
-          buf.append("Field is never assigned.");
+          buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis"));
           return;
         }
 
         if (!field.isUsedForReading() && field.isUsedForWriting()) {
           if (field.isOnlyAssignedInInitializer()) {
-            buf.append("Field has no usages.");
+            buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis1"));
             return;
           }
 
-          buf.append("Field is assigned but never accessed.");
+          buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis2"));
           return;
         }
 
         int nUsages = field.getInReferences().size();
         if (nUsages == 0) {
-          buf.append("Field has no usages.");
+          buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis1"));
         } else if (nUsages == 1) {
-          buf.append("Field has one usage but it is not reachable from entry points.");
+          buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis3"));
         } else {
-          buf.append("Field has ");
-          appendNumereable(buf, nUsages, "usage", "", "s");
-          buf.append(" but they are not reachable from entry points.");
+          buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis4", nUsages));
         }
       }
 
       public void visitClass(RefClass refClass) {
         if (refClass.isAnonymous()) {
-          buf.append("Anonymous class declaration context is not reachable from entry points. Class is never instantiated.");
+          buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis10"));
         } else if (refClass.isInterface() || refClass.isAbstract()) {
-          appendClassOrInterface(buf, refClass, true);
+          String classOrInterface = getClassOrInterface(refClass, true);
+          //noinspection HardCodedStringLiteral
           buf.append("&nbsp;");
 
           int nDerived = getImplementationsCount(refClass);
 
           if (nDerived == 0) {
-            buf.append("is not implemented.");
+            buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis23", classOrInterface));
           } else if (nDerived == 1) {
-            buf.append("has an implementation but <ul><li>it is never instantiated OR</li><li>no instantiations are reachable from entry points.</li></ul>");
+            buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis24", classOrInterface));
           } else {
-            buf.append("has ");
-            appendNumereable(buf, nDerived, "direct or indirect implementation", "", "s");
-            buf.append(" but <ul><li>they are never instantiated OR</li><li>no instantiations are reachable from entry points.</li></ul>");
+            buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis25", classOrInterface, nDerived));
           }
         } else if (refClass.isUtilityClass()) {
-          buf.append("No class references has been found. Class static initializer is not reachable.");
+          buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis11"));
         } else {
           int nInstantiationsCount = getInstantiationsCount(refClass);
 
           if (nInstantiationsCount == 0) {
             int nImplementations = getImplementationsCount(refClass);
             if (nImplementations != 0) {
-              buf.append("Neither the class nor ");
-              appendNumereable(buf, nImplementations, " its implementation", "", "s");
-              buf.append(" are ever instantiated.");
+              buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis19", nImplementations));
             } else {
-              buf.append("Class is not instantiated.");
+              buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis13"));
             }
           } else if (nInstantiationsCount == 1) {
-            buf.append("Class has one instantiation but it is not reachable from entry points.");
+            buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis12"));
           } else {
-            buf.append("Class has ");
-            appendNumereable(buf, nInstantiationsCount, "instantiation", "", "s");
-            buf.append(" but they are not reachable from entry points.");
+            buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis20", nInstantiationsCount));
           }
         }
       }
 
       public void visitMethod(RefMethod method) {
         RefClass refClass = method.getOwnerClass();
-
         if (method.isLibraryOverride()) {
-          buf.append("Method overrides a library method but<ul><li>its ");
-          appendClassOrInterface(buf, refClass, false);
-          buf.append(" is never instantiated OR</li><li>its");
-          appendClassOrInterface(buf, refClass, false);
-          buf.append(" instantiation is not reachable from entry points.</li></ul>");
+          String classOrInterface = getClassOrInterface(refClass, false);
+          buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis22", classOrInterface));
         } else if (method.isStatic() || method.isConstructor()) {
-          buf.append(method.isConstructor() ? "Constructor " : "Method ");
           int nRefs = method.getInReferences().size();
-          if (nRefs == 0) {
-            buf.append("is never used.");
-          } else if (method.isConstructor() && method.isSuspiciousRecursive()) {
-            buf.append("has usage(s) but they all belong to recursive calls chain that has no members reachable from entry points.");
-          } else if (nRefs == 1) {
-            buf.append("has one usage but it is not reachable from entry points.");
+          if (method.isConstructor()) {
+            if (nRefs == 0) {
+              buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis26.constructor"));
+            } else if (method.isConstructor() && method.isSuspiciousRecursive()) {
+              buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis27.constructor"));
+            } else if (nRefs == 1) {
+              buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis28.constructor"));
+            } else {
+              buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis29.constructor", nRefs) );
+            }
           } else {
-            buf.append("has ");
-            appendNumereable(buf, nRefs, "usage", "", "s");
-            buf.append(" usages but they are not reachable from entry points.");
+            if (nRefs == 0) {
+              buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis26.method"));
+            } else if (method.isConstructor() && method.isSuspiciousRecursive()) {
+              buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis27.method"));
+            } else if (nRefs == 1) {
+              buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis28.method"));
+            } else {
+              buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis29.method", nRefs) );
+            }
           }
         } else if (refClass.isSuspicious()) {
           if (method.isAbstract()) {
-            buf.append("<ul><li>Abstract method is not implemented OR</li>");
-            buf.append("<li>Implementation class is never instantiated OR</li>");
-            buf.append("<li>An instantiation is not reachable from entry points.</li></ul>");
+            buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis14"));
           } else {
-            buf.append("<ul><li>Method owner class is never instantiated OR</li>");
-            buf.append("<li>An instantiation is not reachable from entry points.</li></ul>");
+            buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis15"));
           }
         } else {
           int nOwnRefs = method.getInReferences().size();
@@ -172,18 +177,14 @@ public class DeadHTMLComposer extends HTMLComposer {
           int nDerivedRefs = getDerivedRefsCount(method);
 
           if (nOwnRefs == 0 && nSuperRefs == 0 && nDerivedRefs == 0) {
-            buf.append("Method is never used.");
+            buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis16"));
           } else if (nDerivedRefs > 0 && nSuperRefs == 0 && nOwnRefs == 0) {
-            buf.append("Method is never used as a member of this ");
-            appendClassOrInterface(buf, refClass, false);
-            buf.append(", but only as a member of the implementation class(es).");
-            buf.append("The project will stay compilable if the method is removed from the ");
-            appendClassOrInterface(buf, refClass, false);
-            buf.append(".");
+            String classOrInterface = getClassOrInterface(refClass, false);
+            buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis21", classOrInterface));
           } else if (method.isSuspiciousRecursive()) {
-            buf.append("Method has usage(s) but they all belong to recursive calls chain that has no members reachable from entry points.");
+            buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis17"));
           } else {
-            buf.append("Method is not reachable from entry points.");
+            buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis18"));
           }
         }
       }
@@ -195,31 +196,44 @@ public class DeadHTMLComposer extends HTMLComposer {
       refElement = ((RefImplicitConstructor)refElement).getOwnerClass();
     }
 
+    //noinspection HardCodedStringLiteral
     buf.append("<br><font style=\"font-family:verdana;color:#808080\">");
     if (refElement instanceof RefClass) {
       RefClass refClass = (RefClass) refElement;
-      if (refClass.isUtilityClass()) {
-        // Append nothing.
-      } else if (refClass.isAnonymous()) {
-        buf.append(refClass.isSuspicious() ? "Anonymous class context is not reachable. Class is not instantiated." : "Instantiated");
-      } else if (refClass.isInterface() || refClass.isAbstract()) {
-        buf.append(refClass.isSuspicious() ? "Has no reachable implementation instantiations. " : "Has reachable implementation instantiations.");
+      if (refClass.isSuspicious()) {
+        if (refClass.isUtilityClass()) {
+          // Append nothing.
+        } else if (refClass.isAnonymous()) {
+          buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis9.suspicious", getInstantiationsCount(refClass)));
+        } else if (refClass.isInterface() || refClass.isAbstract()) {
+          buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis8.suspicious", getInstantiationsCount(refClass)));
+        } else {
+          buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis7.suspicious", getInstantiationsCount(refClass)));
+        }
       } else {
-        buf.append(refClass.isSuspicious() ? "Has no reachable instantiations. " : "Has reachable instantiations. ");
+        if (refClass.isUtilityClass()) {
+          // Append nothing.
+        } else if (refClass.isAnonymous()) {
+          buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis9", getInstantiationsCount(refClass)));
+        } else if (refClass.isInterface() || refClass.isAbstract()) {
+          buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis8", getInstantiationsCount(refClass)));
+        } else {
+          buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis7", getInstantiationsCount(refClass)));
+        }
       }
-
-      appendNumereable(buf, getInstantiationsCount(refClass), "instantiation", "", "s");
-      buf.append(" found in the project code.");
     } else {
-      buf.append(refElement.isSuspicious() ? "Not Reachable. " : "Reachable. ");
       int nUsageCount = refElement.getInReferences().size();
       if (refElement instanceof RefMethod) {
         nUsageCount += getDerivedRefsCount((RefMethod) refElement);
       }
-      buf.append(nUsageCount);
-      buf.append(" usages found in the project code.");
+      if (refElement.isSuspicious()) {
+        buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis6.suspicious", nUsageCount));
+      } else {
+        buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis6", nUsageCount));
+      }
     }
 
+    //noinspection HardCodedStringLiteral
     buf.append("</font>");
   }
 
@@ -283,7 +297,7 @@ public class DeadHTMLComposer extends HTMLComposer {
     if (!refClass.isInterface() && !refClass.isAbstract() && !refClass.isUtilityClass()) {
       boolean found = false;
 
-      appendHeading(buf, "Instantiated from");
+      appendHeading(buf, InspectionsBundle.message("inspection.dead.code.export.results.instantiated.from.heading"));
 
       startList();
       for (Iterator<RefMethod> iterator = refClass.getConstructors().iterator(); iterator.hasNext();) {
@@ -297,11 +311,41 @@ public class DeadHTMLComposer extends HTMLComposer {
 
       if (!found) {
         startListItem(buf);
-        buf.append("No instantiations found.");
+        buf.append(InspectionsBundle.message("inspection.dead.code.export.results.no.instantiations.found"));
         doneListItem(buf);
       }
 
       doneList(buf);
+    }
+  }
+
+  private void appendCallesList(RefElement element, StringBuffer buf, Set<RefElement> mentionedElements, boolean appendCallees){
+    final Set<RefElement> possibleChildren = new RefElementNode(element).getPossibleChildren(element);
+    if (possibleChildren.size() > 0) {
+      if (appendCallees){
+        appendHeading(buf, InspectionsBundle.message("inspection.export.results.callees"));
+        @NonNls String font = "<font style=\"font-family:verdana;\" size = \"3\">";
+        buf.append(font);
+      }
+      @NonNls final String ul = "<ul>";
+      buf.append(ul);
+      for (RefElement refElement : possibleChildren) {
+        if (!mentionedElements.contains(refElement)) {
+          mentionedElements.add(refElement);
+          @NonNls final String li = "<li>";
+          buf.append(li);
+          appendElementReference(buf, refElement, true);
+          @NonNls final String closeLi = "</li>";
+          buf.append(closeLi);
+          appendCallesList(refElement, buf, mentionedElements, false);
+        }
+      }
+      @NonNls final String closeUl = "</ul>";
+      buf.append(closeUl);
+      if (appendCallees){
+        @NonNls String closeFont = "</font>";
+        buf.append(closeFont);
+      }
     }
   }
 }

@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
  * Time: 4:05:51 PM
  * To change this template use Options | File Templates.
  */
+@SuppressWarnings({"HardCodedStringLiteral"})
 public class DropAnErrorAction extends AnAction {
   public DropAnErrorAction() {
     super ("Drop an error");

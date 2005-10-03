@@ -27,6 +27,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.actions.ShowNextChangeMarkerAction;
 import com.intellij.openapi.vcs.actions.ShowPrevChangeMarkerAction;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
@@ -128,7 +129,13 @@ public class LineStatusTracker implements EditorColorsListener {
     highlighter.setEditorFilter(MarkupEditorFilterFactory.createIsNotDiffFilter());
     final int line1 = myDocument.getLineNumber(first);
     final int line2 = myDocument.getLineNumber(second);
-    final String tooltip = "Line" + (line1 == line2 ? " "+line1 : "s "+line1+"-"+line2) + " changed";
+    final String tooltip;
+    if (line1 == line2) {
+       tooltip = VcsBundle.message("tooltip.text.line.changed", line1);
+    } else {
+       tooltip = VcsBundle.message("tooltip.text.lines.changed", line1, line2);
+    }
+
     highlighter.setErrorStripeTooltip(tooltip);
     return highlighter;
   }
@@ -532,7 +539,7 @@ public class LineStatusTracker implements EditorColorsListener {
 
   public static class RollbackAction extends LineStatusTracker.MyAction {
     public RollbackAction(LineStatusTracker lineStatusTracker, Range range, Editor editor) {
-      super("Rollback", IconLoader.getIcon("/actions/reset.png"), lineStatusTracker, range, editor);
+      super(VcsBundle.message("action.name.rollback"), IconLoader.getIcon("/actions/reset.png"), lineStatusTracker, range, editor);
     }
 
     public boolean isEnabled() {
@@ -552,7 +559,7 @@ public class LineStatusTracker implements EditorColorsListener {
             }
           });
         }
-      }, "Rollback Change",
+      }, VcsBundle.message("command.name.rollback.change"),
          null);
 
     }
@@ -592,7 +599,7 @@ public class LineStatusTracker implements EditorColorsListener {
 
   public class ShowDiffAction extends LineStatusTracker.MyAction {
     public ShowDiffAction(LineStatusTracker lineStatusTracker, Range range, Editor editor) {
-      super("Show Difference", IconLoader.getIcon("/actions/diff.png")
+      super(VcsBundle.message("action.name.show.difference"), IconLoader.getIcon("/actions/diff.png")
             , lineStatusTracker, range, editor);
     }
 
@@ -624,11 +631,12 @@ public class LineStatusTracker implements EditorColorsListener {
         }
 
         public String[] getContentTitles() {
-          return new String[]{"Up To Date", "Current"};
+          return new String[]{VcsBundle.message("diff.content.title.up.to.date"),
+            VcsBundle.message("diff.content.title.current.range")};
         }
 
         public String getWindowTitle() {
-          return "Diff for Range";
+          return VcsBundle.message("dialog.title.diff.for.range");
         }
       };
     }

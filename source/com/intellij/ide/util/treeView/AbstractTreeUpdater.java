@@ -58,6 +58,7 @@ public class AbstractTreeUpdater {
     }
     myNodesToUpdate.add(rootNode);
 
+    //noinspection HardCodedStringLiteral
     myUpdateQueue.queue(new Update("ViewUpdate") {
       public boolean isExpired() {
         return myTreeBuilder.isDisposed();

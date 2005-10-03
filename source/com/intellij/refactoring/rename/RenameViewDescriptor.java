@@ -5,10 +5,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
+import com.intellij.usageView.UsageViewBundle;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.THashSet;
 
@@ -56,13 +58,13 @@ class RenameViewDescriptor implements UsageViewDescriptor{
       }
 
       processedElementsHeaders.add(UsageViewUtil.capitalize(
-        UsageViewUtil.getType(element) + " to be renamed to " + prefix + newName));
+        RefactoringBundle.message("0.to.be.renamed.to.1.2", UsageViewUtil.getType(element), prefix, newName)));
       codeReferences.add(UsageViewUtil.getType(element) + " " + UsageViewUtil.getLongName(element));
     }
 
 
     myProcessedElementsHeader = StringUtil.join(processedElementsHeaders.toArray(ArrayUtil.EMPTY_STRING_ARRAY),", ");
-    myCodeReferencesText =  "References in code to " + StringUtil.join(codeReferences.toArray(ArrayUtil.EMPTY_STRING_ARRAY),", ") + " ";
+    myCodeReferencesText =  RefactoringBundle.message("references.in.code.to.0", StringUtil.join(codeReferences.toArray(ArrayUtil.EMPTY_STRING_ARRAY), ", "));
     myHelpID = HelpID.getRenameHelpID(primaryElement);
   }
 
@@ -107,11 +109,12 @@ class RenameViewDescriptor implements UsageViewDescriptor{
   }
 
   public String getCodeReferencesText(int usagesCount, int filesCount) {
-    return myCodeReferencesText + UsageViewUtil.getUsageCountInfo(usagesCount, filesCount, "reference");
+    return myCodeReferencesText + UsageViewBundle.getReferencesString(usagesCount, filesCount);
   }
 
   public String getCommentReferencesText(int usagesCount, int filesCount) {
-    return "Occurrences found in comments, strings and non-java files " + UsageViewUtil.getUsageCountInfo(usagesCount, filesCount, "occurrence");
+    return RefactoringBundle.message("comments.elements.header",
+                                     UsageViewBundle.getOccurencesString(usagesCount, filesCount));
   }
 
   public boolean isCancelInCommonGroup() {

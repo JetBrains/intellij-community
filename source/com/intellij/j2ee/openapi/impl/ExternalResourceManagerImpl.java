@@ -11,6 +11,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.util.*;
@@ -20,10 +21,10 @@ import java.util.*;
  */
 public class ExternalResourceManagerImpl extends ExternalResourceManagerEx implements JDOMExternalizable, ApplicationComponent, ModificationTracker {
 
-  private static final String J2EE_1_3 = "http://java.sun.com/dtd/";
-  private static final String J2EE_1_2 = "http://java.sun.com/j2ee/dtds/";
-  private static final String J2EE_NS = "http://java.sun.com/xml/ns/j2ee/";
-  private static final String IBM_NS = "http://www.ibm.com/webservices/xsd/";
+  @NonNls private static final String J2EE_1_3 = "http://java.sun.com/dtd/";
+  @NonNls private static final String J2EE_1_2 = "http://java.sun.com/j2ee/dtds/";
+  @NonNls private static final String J2EE_NS = "http://java.sun.com/xml/ns/j2ee/";
+  @NonNls private static final String IBM_NS = "http://www.ibm.com/webservices/xsd/";
 
   private Map<String, String> myResources = new com.intellij.util.containers.HashMap<String, String>();
   private Set<String> myIgnoredResources = new HashSet<String>();
@@ -31,6 +32,10 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   private List<ExternalResourceListener> myListeners = new ArrayList<ExternalResourceListener>();
   private long myModificationCount = 0;
   private PathMacrosImpl myPathMacros;
+  @NonNls protected static final String RESOURCE_ELEMENT = "resource";
+  @NonNls protected static final String URL_ATTR = "url";
+  @NonNls protected static final String LOCATION_ATTR = "location";
+  @NonNls protected static final String IGNORED_RESOURCE_ELEMENT = "ignored-resource";
 
   public ExternalResourceManagerImpl(PathMacrosImpl pathMacros) {
     addInternalResource(J2EE_1_3 + "connector_1_0.dtd", "connector_1_0.dtd");
@@ -77,9 +82,9 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
 
     // Plugins DTDs // stathik
     addInternalResource("http://plugins.intellij.net/plugin.dtd",
-                       "plugin.dtd");
+                        "plugin.dtd");
     addInternalResource("http://plugins.intellij.net/plugin-repository.dtd",
-                       "plugin-repository.dtd");
+                        "plugin-repository.dtd");
     myPathMacros = pathMacros;
   }
 
@@ -95,11 +100,11 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
 
   public void initComponent() { }
 
-  private void addInternalResource(String resource, String fileName) {
+  private void addInternalResource(@NonNls String resource, @NonNls String fileName) {
     addStdResource(resource, "/standardSchemas/" + fileName);
   }
 
-  public void addStdResource(String resource, String fileName){
+  public void addStdResource(@NonNls String resource, @NonNls String fileName){
     addStdResource(resource, fileName, getClass());
   }
 
@@ -208,14 +213,14 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     macroExpands.substitute(element, SystemInfo.isFileSystemCaseSensitive);
 
     myModificationCount++;
-    for (final Object o1 : element.getChildren("resource")) {
+    for (final Object o1 : element.getChildren(RESOURCE_ELEMENT)) {
       Element e = (Element)o1;
-      addResource(e.getAttributeValue("url"), e.getAttributeValue("location").replace('/', File.separatorChar));
+      addResource(e.getAttributeValue(URL_ATTR), e.getAttributeValue(LOCATION_ATTR).replace('/', File.separatorChar));
     }
 
-    for (final Object o : element.getChildren("ignored-resource")) {
+    for (final Object o : element.getChildren(IGNORED_RESOURCE_ELEMENT)) {
       Element e = (Element)o;
-      addIgnoredResource(e.getAttributeValue("url"));
+      addIgnoredResource(e.getAttributeValue(URL_ATTR));
     }
   }
 
@@ -224,18 +229,18 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     for (String url : urls) {
       String location = getResourceLocation(url);
 
-      final Element e = new Element("resource");
+      final Element e = new Element(RESOURCE_ELEMENT);
 
-      e.setAttribute("url", url);
-      e.setAttribute("location", location.replace(File.separatorChar, '/'));
+      e.setAttribute(URL_ATTR, url);
+      e.setAttribute(LOCATION_ATTR, location.replace(File.separatorChar, '/'));
       element.addContent(e);
     }
 
     final String[] ignoredResources = getIgnoredResources();
     for (String ignoredResource : ignoredResources) {
-      final Element e = new Element("ignored-resource");
+      final Element e = new Element(IGNORED_RESOURCE_ELEMENT);
 
-      e.setAttribute("url", ignoredResource);
+      e.setAttribute(URL_ATTR, ignoredResource);
       element.addContent(e);
     }
 

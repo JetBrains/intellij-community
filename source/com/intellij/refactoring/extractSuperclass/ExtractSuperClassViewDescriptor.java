@@ -5,6 +5,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
 
@@ -41,6 +42,6 @@ public class ExtractSuperClassViewDescriptor extends UsageViewDescriptorAdapter 
   }
 
   public String getProcessedElementsHeader() {
-    return "Extract superclass with members to directory";
+    return RefactoringBundle.message("extract.superclass.elements.header");
   }
 }

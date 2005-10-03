@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.DiffRequest;
 import com.intellij.openapi.diff.DiffTool;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -25,10 +26,12 @@ class BinaryDiffTool implements DiffTool {
 
   private static void compareBinaryFiles(byte[] currentContent, byte[] upToDateContent) {
     if (Arrays.equals(currentContent, upToDateContent)) {
-      Messages.showMessageDialog("Binary files are identical", "Files Are Identical", Messages.getInformationIcon());
+      Messages.showMessageDialog(DiffBundle.message("binary.files.are.identical.message"),
+                                 DiffBundle.message("files.are.identical.dialog.title"), Messages.getInformationIcon());
     }
     else {
-      Messages.showMessageDialog("Binary files are different", "Files Are Different", Messages.getInformationIcon());
+      Messages.showMessageDialog(DiffBundle.message("binary.files.are.different.message"),
+                                 DiffBundle.message("files.are.different.dialog.title"), Messages.getInformationIcon());
     }
   }
 

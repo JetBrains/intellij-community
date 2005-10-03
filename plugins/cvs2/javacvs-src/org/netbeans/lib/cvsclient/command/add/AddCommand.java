@@ -33,6 +33,7 @@ import org.netbeans.lib.cvsclient.progress.sending.DummyRequestsProgressHandler;
 import org.netbeans.lib.cvsclient.request.CommandRequest;
 import org.netbeans.lib.cvsclient.request.Requests;
 import org.netbeans.lib.cvsclient.util.BugLog;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -141,7 +142,7 @@ public final class AddCommand extends AbstractCommand {
 	}
 
 	public String getCvsCommandLine() {
-		final StringBuffer cvsCommandLine = new StringBuffer("add ");
+		@NonNls final StringBuffer cvsCommandLine = new StringBuffer("add ");
 		cvsCommandLine.append(getCvsArguments());
 		appendFileArguments(cvsCommandLine);
 		return cvsCommandLine.toString();
@@ -176,7 +177,7 @@ public final class AddCommand extends AbstractCommand {
 	}
 
 	private String getCvsArguments() {
-		final StringBuffer toReturn = new StringBuffer();
+		@NonNls final StringBuffer toReturn = new StringBuffer();
 		if (getKeywordSubst() != null) {
 			toReturn.append("-k");
 			toReturn.append(getKeywordSubst().toString());

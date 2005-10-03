@@ -14,9 +14,11 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.Icons;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.containers.HashSet;
 
 import javax.swing.*;
@@ -117,13 +119,9 @@ public abstract class PathEditor {
     });
     myList.setCellRenderer(new MyCellRenderer());
 
-    myRemoveButton = new JButton("Remove");
-    myAddButton = new JButton("Add...");
-    mySpecifyUrlButton = new JButton("Specify URL...");
-
-    myAddButton.setMnemonic('A');
-    myRemoveButton.setMnemonic('R');
-    mySpecifyUrlButton.setMnemonic('S');
+    myRemoveButton = new JButton(ProjectBundle.message("sdk.paths.remove.button"));
+    myAddButton = new JButton(ProjectBundle.message("sdk.paths.add.button"));
+    mySpecifyUrlButton = new JButton(ProjectBundle.message("sdk.paths.specify.url.button"));
 
     mySpecifyUrlButton.setVisible(isShowUrlButton());
 
@@ -356,6 +354,7 @@ public abstract class PathEditor {
     private String getPresentableString(final Object value){
       return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
         public String compute() {
+          //noinspection HardCodedStringLiteral
           return (value instanceof VirtualFile)? ((VirtualFile)value).getPresentableUrl() : "UNKNOWN OBJECT";
         }
       });
@@ -364,7 +363,7 @@ public abstract class PathEditor {
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus){
       super.getListCellRendererComponent(list, getPresentableString(value), index, isSelected, cellHasFocus);
       if (isSelected){
-        setForeground(UIManager.getColor("List.selectionForeground"));
+        setForeground(UIUtil.getListSelectionForeground());
       }
       else{
         if (value instanceof VirtualFile){

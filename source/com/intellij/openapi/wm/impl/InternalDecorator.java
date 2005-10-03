@@ -21,6 +21,7 @@ import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.ui.ActivatableLineBorder;
 import com.intellij.ui.PopupHandler;
+import com.intellij.ui.UIBundle;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -31,6 +32,8 @@ import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Eugene Belyaev
@@ -90,6 +93,10 @@ public final class InternalDecorator extends JPanel {
   private final ToolWindowHandler myToolWindowHandler;
   private final MyKeymapManagerListener myKeymapManagerListener;
   private final WeakKeymapManagerListener myWeakKeymapManagerListener;
+  @NonNls protected static final String TOGGLE_PINNED_MODE_ACTION_ID = "TogglePinnedMode";
+  @NonNls protected static final String TOGGLE_DOCK_MODE_ACTION_ID = "ToggleDockMode";
+  @NonNls protected static final String TOGGLE_FLOATING_MODE_ACTION_ID = "ToggleFloatingMode";
+  @NonNls protected static final String HIDE_ACTIVE_WINDOW_ACTION_ID = "HideActiveWindow";
 
   InternalDecorator(final Project project, final WindowInfo info, final ToolWindowImpl toolWindow) {
     super(new BorderLayout());
@@ -237,7 +244,7 @@ public final class InternalDecorator extends JPanel {
     myProject = null;
   }
 
-  private static String getToolTipTextByAction(final String actionId, final String description) {
+  private static String getToolTipTextByAction(@NonNls final String actionId, final String description) {
     String text = description;
     final String shortcutForAction = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(actionId));
     if (shortcutForAction.length() > 0) {
@@ -378,22 +385,22 @@ public final class InternalDecorator extends JPanel {
       group.add(myToggleFloatingModeAction);
     }
 
-    final DefaultActionGroup moveGroup = new DefaultActionGroup("Move to", true);
+    final DefaultActionGroup moveGroup = new DefaultActionGroup(UIBundle.message("tool.window.move.to.action.group.name"), true);
     final ToolWindowAnchor anchor = myInfo.getAnchor();
     if (anchor != ToolWindowAnchor.TOP) {
-      final AnAction topAction = new ChangeAnchorAction("Top", ToolWindowAnchor.TOP);
+      final AnAction topAction = new ChangeAnchorAction(UIBundle.message("tool.window.move.to.top.action.name"), ToolWindowAnchor.TOP);
       moveGroup.add(topAction);
     }
     if (anchor != ToolWindowAnchor.LEFT) {
-      final AnAction leftAction = new ChangeAnchorAction("Left", ToolWindowAnchor.LEFT);
+      final AnAction leftAction = new ChangeAnchorAction(UIBundle.message("tool.window.move.to.left.action.name"), ToolWindowAnchor.LEFT);
       moveGroup.add(leftAction);
     }
     if (anchor != ToolWindowAnchor.BOTTOM) {
-      final AnAction bottomAction = new ChangeAnchorAction("Bottom", ToolWindowAnchor.BOTTOM);
+      final AnAction bottomAction = new ChangeAnchorAction(UIBundle.message("tool.window.move.to.bottom.action.name"), ToolWindowAnchor.BOTTOM);
       moveGroup.add(bottomAction);
     }
     if (anchor != ToolWindowAnchor.RIGHT) {
-      final AnAction rightAction = new ChangeAnchorAction("Right", ToolWindowAnchor.RIGHT);
+      final AnAction rightAction = new ChangeAnchorAction(UIBundle.message("tool.window.move.to.right.action.name"), ToolWindowAnchor.RIGHT);
       moveGroup.add(rightAction);
     }
     group.add(moveGroup);
@@ -450,14 +457,18 @@ public final class InternalDecorator extends JPanel {
 
   private void updateTooltips() {
     if (myInfo.isDocked()) {
-      myToggleDockModeButton.setToolTipText(getToolTipTextByAction("ToggleDockMode", "Undock"));
+      myToggleDockModeButton.setToolTipText(getToolTipTextByAction(TOGGLE_DOCK_MODE_ACTION_ID,
+                                                                   UIBundle.message("tool.wondow.undock.action.name")));
     }
     else if (myInfo.isSliding()) {
-      myToggleDockModeButton.setToolTipText(getToolTipTextByAction("ToggleDockMode", "Dock"));
+      myToggleDockModeButton.setToolTipText(getToolTipTextByAction(TOGGLE_DOCK_MODE_ACTION_ID,
+                                                                   UIBundle.message("tool.wondow.dock.action.name")));
     }
-    myToggleFloatingModeButton.setToolTipText(getToolTipTextByAction("ToggleFloatingMode", myInfo.isFloating() ? "Fix" : "Float"));
-    myToggleAutoHideModeButton.setToolTipText(getToolTipTextByAction("TogglePinnedMode", myInfo.isAutoHide() ? "Pin" : "Unpin"));
-    myHideButton.setToolTipText(getToolTipTextByAction("HideActiveWindow", "Hide"));
+    myToggleFloatingModeButton.setToolTipText(getToolTipTextByAction(TOGGLE_FLOATING_MODE_ACTION_ID, myInfo.isFloating() ? UIBundle
+      .message("tool.wondow.fix.action.name") : UIBundle.message("tool.wondow.float.action.name")));
+    myToggleAutoHideModeButton.setToolTipText(getToolTipTextByAction(TOGGLE_PINNED_MODE_ACTION_ID, myInfo.isAutoHide() ? UIBundle
+      .message("tool.wondow.pin.action.name") : UIBundle.message("tool.wondow.unpin.action.name")));
+    myHideButton.setToolTipText(getToolTipTextByAction(HIDE_ACTIVE_WINDOW_ACTION_ID, UIBundle.message("tool.window.hide.action.name")));
   }
 
   private final class ChangeAnchorAction extends AnAction {
@@ -474,9 +485,11 @@ public final class InternalDecorator extends JPanel {
   }
 
   private final class HideAction extends AnAction {
+    @NonNls public static final String HIDE_ACTIVE_WINDOW_ACTION_ID = InternalDecorator.HIDE_ACTIVE_WINDOW_ACTION_ID;
+
     public HideAction() {
-      copyFrom(ActionManager.getInstance().getAction("HideActiveWindow"));
-      getTemplatePresentation().setText("Hide");
+      copyFrom(ActionManager.getInstance().getAction(HIDE_ACTIVE_WINDOW_ACTION_ID));
+      getTemplatePresentation().setText(UIBundle.message("tool.window.hide.action.name"));
     }
 
     public final void actionPerformed(final AnActionEvent e) {
@@ -491,7 +504,7 @@ public final class InternalDecorator extends JPanel {
 
   private final class TogglePinnedModeAction extends ToggleAction {
     public TogglePinnedModeAction() {
-      copyFrom(ActionManager.getInstance().getAction("TogglePinnedMode"));
+      copyFrom(ActionManager.getInstance().getAction(TOGGLE_PINNED_MODE_ACTION_ID));
     }
 
     public final boolean isSelected(final AnActionEvent event) {
@@ -505,7 +518,7 @@ public final class InternalDecorator extends JPanel {
 
   private final class ToggleDockModeAction extends ToggleAction {
     public ToggleDockModeAction() {
-      copyFrom(ActionManager.getInstance().getAction("ToggleDockMode"));
+      copyFrom(ActionManager.getInstance().getAction(TOGGLE_DOCK_MODE_ACTION_ID));
     }
 
     public final boolean isSelected(final AnActionEvent event) {
@@ -524,7 +537,7 @@ public final class InternalDecorator extends JPanel {
 
   private final class ToggleFloatingModeAction extends ToggleAction {
     public ToggleFloatingModeAction() {
-      copyFrom(ActionManager.getInstance().getAction("ToggleFloatingMode"));
+      copyFrom(ActionManager.getInstance().getAction(TOGGLE_FLOATING_MODE_ACTION_ID));
     }
 
     public final boolean isSelected(final AnActionEvent event) {
@@ -683,7 +696,7 @@ public final class InternalDecorator extends JPanel {
 
     public void updateUI() {
       super.updateUI();
-      setFont(UIManager.getFont("Label.font").deriveFont(Font.BOLD));
+      setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
     }
 
     protected final void processMouseEvent(final MouseEvent e) {

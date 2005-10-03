@@ -7,6 +7,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.CommonBundle;
 
 import javax.swing.*;
 
@@ -21,7 +23,7 @@ public final class DataBindingWizard extends AbstractWizard{
   private final BeanStep myBeanStep;
 
   public DataBindingWizard(final Project project, final VirtualFile formFile, final WizardData data) {
-    super("Data Binding Wizard", project);
+    super(UIDesignerBundle.message("title.data.binding.wizard"), project);
     myProject = project;
 
     LOG.assertTrue(project != null);
@@ -67,7 +69,7 @@ public final class DataBindingWizard extends AbstractWizard{
                   Messages.showErrorDialog(
                     getContentPane(),
                     exc.getMessage(),
-                    "Error"
+                    CommonBundle.getErrorTitle()
                   );
                 }
               }

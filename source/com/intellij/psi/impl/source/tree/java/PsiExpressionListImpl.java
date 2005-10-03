@@ -1,14 +1,13 @@
 package com.intellij.psi.impl.source.tree.java;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
-import com.intellij.psi.impl.source.tree.*;
-import com.intellij.util.CharTable;
-import com.intellij.lang.ASTNode;
 
 public class PsiExpressionListImpl extends CompositePsiElement implements PsiExpressionList {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiExpressionListImpl");
@@ -53,7 +52,7 @@ public class PsiExpressionListImpl extends CompositePsiElement implements PsiExp
       return ChildRole.RPARENTH;
     }
     else {
-      if (EXPRESSION_BIT_SET.isInSet(child.getElementType())) {
+      if (EXPRESSION_BIT_SET.contains(child.getElementType())) {
         return ChildRole.EXPRESSION_IN_LIST;
       }
       return ChildRole.NONE;
@@ -91,11 +90,11 @@ public class PsiExpressionListImpl extends CompositePsiElement implements PsiExp
     }
     if(firstAdded != null) firstAdded = super.addInternal(first, last, anchor, before);
     else firstAdded = super.addInternal(first, last, anchor, before);
-    if (first == last && ElementType.EXPRESSION_BIT_SET.isInSet(first.getElementType())) {
+    if (ElementType.EXPRESSION_BIT_SET.contains(first.getElementType())) {
       ASTNode element = first;
       for (ASTNode child = element.getTreeNext(); child != null; child = child.getTreeNext()) {
         if (child.getElementType() == COMMA) break;
-        if (ElementType.EXPRESSION_BIT_SET.isInSet(child.getElementType())) {
+        if (ElementType.EXPRESSION_BIT_SET.contains(child.getElementType())) {
           TreeElement comma = Factory.createSingleLeafElement(COMMA, new char[]{','}, 0, 1, treeCharTab, getManager());
           super.addInternal(comma, comma, element, Boolean.FALSE);
           break;
@@ -103,7 +102,7 @@ public class PsiExpressionListImpl extends CompositePsiElement implements PsiExp
       }
       for (ASTNode child = element.getTreePrev(); child != null; child = child.getTreePrev()) {
         if (child.getElementType() == COMMA) break;
-        if (ElementType.EXPRESSION_BIT_SET.isInSet(child.getElementType())) {
+        if (ElementType.EXPRESSION_BIT_SET.contains(child.getElementType())) {
           TreeElement comma = Factory.createSingleLeafElement(COMMA, new char[]{','}, 0, 1, treeCharTab, getManager());
           super.addInternal(comma, comma, child, Boolean.FALSE);
           break;
@@ -114,7 +113,7 @@ public class PsiExpressionListImpl extends CompositePsiElement implements PsiExp
   }
 
   public void deleteChildInternal(ASTNode child) {
-    if (ElementType.EXPRESSION_BIT_SET.isInSet(child.getElementType())) {
+    if (ElementType.EXPRESSION_BIT_SET.contains(child.getElementType())) {
       ASTNode next = TreeUtil.skipElements(child.getTreeNext(), WHITE_SPACE_OR_COMMENT_BIT_SET);
       if (next != null && next.getElementType() == COMMA) {
         deleteChildInternal(next);

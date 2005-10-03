@@ -2,6 +2,7 @@ package com.intellij.openapi.localVcs.impl;
 
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.localVcs.LvcsConfiguration;
+import com.intellij.openapi.localVcs.LocalVcsBundle;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.IconLoader;
@@ -39,7 +40,7 @@ public class LvcsConfigurable extends BaseConfigurable implements ApplicationCom
   }
 
   public String getDisplayName() {
-    return "Local History";
+    return LocalVcsBundle.message("lvcs.configurable.display.name");
   }
 
   public Icon getIcon() {
@@ -55,8 +56,7 @@ public class LvcsConfigurable extends BaseConfigurable implements ApplicationCom
     GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0), 0,0);
 
     myCbEnabled = createCheckBox();
-    myCbEnabled.setText("Enable Local History");
-    myCbEnabled.setMnemonic('L');
+    myCbEnabled.setText(LocalVcsBundle.message("checkbox.lvcs.properties.enable.local.history"));
     myCbEnabled.setAlignmentX(0);
     myCbEnabled.addChangeListener(new ChangeListener() {
       public void stateChanged(ChangeEvent e) {
@@ -83,12 +83,11 @@ public class LvcsConfigurable extends BaseConfigurable implements ApplicationCom
   }
 
   private void createHistoryPanel(final GridBagConstraints wholePanelGC) {
-    JPanel historyPanel = createPanel("History");
+    JPanel historyPanel = createPanel(LocalVcsBundle.message("border.lvcs.properties.history"));
 
     myFieldHistoryLength = new JTextField();
 
-    myHistoryLengthLabel = new JLabel("Keep local history for (active working days) ");
-    myHistoryLengthLabel.setDisplayedMnemonic('H');
+    myHistoryLengthLabel = new JLabel(LocalVcsBundle.message("label.lvcs.properties.keep.local.history.count"));
     myHistoryLengthLabel.setLabelFor(myFieldHistoryLength);
     GridBagConstraints gc = new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0,0,0,5), 0, 0);
     historyPanel.add(myHistoryLengthLabel, gc);
@@ -105,36 +104,36 @@ public class LvcsConfigurable extends BaseConfigurable implements ApplicationCom
   }
 
   private void createLabelsPanel(GridBagConstraints wholePanelGC) {
-    JPanel labelsPanel = createPanel("Automatic Labeling on");
+    JPanel labelsPanel = createPanel(LocalVcsBundle.message("border.lvcs.properties.automatic.labeling.group"));
 
     GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1,1,1.0,0.0,GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0,0,0,0),0,0);
 
     myCbProjectOpen = createCheckBox();
-    myCbProjectOpen.setText("Project opening");
+    myCbProjectOpen.setText(LocalVcsBundle.message("checkbox.lvcs.properties.project.opening"));
     labelsPanel.add(myCbProjectOpen, gc);
 
     myCbProjectCompile = createCheckBox();
-    myCbProjectCompile.setText("Project compilation");
+    myCbProjectCompile.setText(LocalVcsBundle.message("checkbox.lvcs.properties.project.compilation"));
     labelsPanel.add(myCbProjectCompile, gc);
 
     myCbFileCompile = createCheckBox();
-    myCbFileCompile.setText("File/package compilation");
+    myCbFileCompile.setText(LocalVcsBundle.message("checkbox.lvcs.properties.file.package.compilation"));
     labelsPanel.add(myCbFileCompile, gc);
 
     myCbProjectMake = createCheckBox();
-    myCbProjectMake.setText("Project make");
+    myCbProjectMake.setText(LocalVcsBundle.message("checkbox.lvcs.properties.project.make"));
     labelsPanel.add(myCbProjectMake, gc);
 
     myCbRunning = createCheckBox();
-    myCbRunning.setText("Running/Debugging");
+    myCbRunning.setText(LocalVcsBundle.message("checkbox.lvcs.properties.running.debugging"));
     labelsPanel.add(myCbRunning, gc);
 
     myCbUnitTestsPassed = createCheckBox();
-    myCbUnitTestsPassed.setText("Unit tests passed");
+    myCbUnitTestsPassed.setText(LocalVcsBundle.message("checkbox.lvcs.properties.unit.tests.passed"));
     labelsPanel.add(myCbUnitTestsPassed, gc);
 
     myCbUnitTestsFailed = createCheckBox();
-    myCbUnitTestsFailed.setText("Unit tests failed");
+    myCbUnitTestsFailed.setText(LocalVcsBundle.message("checkbox.lvcs.properties.unit.tests.failed"));
     labelsPanel.add(myCbUnitTestsFailed, gc);
 
     labelsPanel.add(Box.createVerticalGlue(), gc);

@@ -4,8 +4,12 @@ import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NonNls;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  *
@@ -58,10 +62,11 @@ public class TemplateImpl implements Template {
   private boolean toParseSegments = true;
   private TemplateContext myTemplateContext = new TemplateContext();
 
-  public static final String END = "END";
-  public static final String SELECTION = "SELECTION";
-  public static final String SELECTION_START = "SELECTION_START";
-  public static final String SELECTION_END = "SELECTION_END";
+  public static final @NonNls String END = "END";
+  public static final @NonNls String SELECTION = "SELECTION";
+  public static final @NonNls String SELECTION_START = "SELECTION_START";
+  public static final @NonNls String SELECTION_END = "SELECTION_END";
+
   public static final Set<String> INTERNAL_VARS_SET = new HashSet<String>(Arrays.asList(
       new String[] {END, SELECTION, SELECTION_START, SELECTION_END}
   ));

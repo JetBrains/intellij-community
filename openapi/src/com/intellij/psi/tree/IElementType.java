@@ -17,9 +17,8 @@ package com.intellij.psi.tree;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
-import gnu.trove.TIntObjectHashMap;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,8 +35,9 @@ import java.util.List;
 public class IElementType {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.tree.IElementType");
 
-  private static int ourCounter = 0;
-  private static final TIntObjectHashMap<IElementType> ourRegistry = new TIntObjectHashMap<IElementType>();
+  private static short ourCounter = 0;
+  private static final short MAX_VALUE = 10000;
+  private static final IElementType[] ourRegistry = new IElementType[MAX_VALUE];
   private final short myIndex;
 
   /**
@@ -64,9 +64,7 @@ public class IElementType {
 
   public static IElementType[] enumerate(Predicate p) {
     List<IElementType> matches = new ArrayList<IElementType>();
-    Object[] values = ourRegistry.getValues();
-    for (Object value1 : values) {
-      IElementType value = (IElementType)value1;
+    for (IElementType value : ourRegistry) {
       if (p.matches(value)) {
         matches.add(value);
       }
@@ -89,9 +87,9 @@ public class IElementType {
     myDebugName = debugName;
     myLanguage = language == null ? Language.ANY : language;
     if (register) {
-      myIndex = (short) ourCounter++;
-      LOG.assertTrue(ourCounter < Short.MAX_VALUE, "Too many element types registered. Out of (short) range.");
-      ourRegistry.put(myIndex, this);
+      myIndex = ourCounter++;
+      LOG.assertTrue(ourCounter < MAX_VALUE, "Too many element types registered. Out of (short) range.");
+      ourRegistry[myIndex] = this;
     }
     else {
       myIndex = -1;
@@ -131,7 +129,7 @@ public class IElementType {
    */
 
   public static IElementType find(short idx) {
-    return ourRegistry.get(idx);
+    return ourRegistry[idx];
   }
 
   /**

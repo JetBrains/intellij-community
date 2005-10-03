@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.template.macro;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.project.Project;
@@ -21,7 +22,7 @@ class CurrentPackageMacro implements Macro {
   }
 
   public String getDescription() {
-    return "currentPackage()";
+    return CodeInsightBundle.message("macro.current.package");
   }
 
   public String getDefaultValue() {

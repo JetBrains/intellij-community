@@ -2,13 +2,13 @@ package com.intellij.ide.hierarchy.call;
 
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.HierarchyTreeStructure;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ArrayUtil;
@@ -16,7 +16,7 @@ import com.intellij.util.ArrayUtil;
 import java.util.Collection;
 
 public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
-  public static final String TYPE = "Callers Of ";
+  public static final String TYPE = IdeBundle.message("title.hierarchy.callers.of");
   private final String myScopeType;
 
   /**
@@ -47,7 +47,7 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
     }
 
     PsiMethod methodToFind = method;
-    final PsiMethod deepestSuperMethod = PsiSuperMethodUtil.findDeepestSuperMethod(method);
+    final PsiMethod deepestSuperMethod = method.findDeepestSuperMethod();
     if (deepestSuperMethod != null) {
       methodToFind = deepestSuperMethod;
     }

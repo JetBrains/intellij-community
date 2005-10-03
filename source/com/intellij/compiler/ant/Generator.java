@@ -1,5 +1,7 @@
 package com.intellij.compiler.ant;
 
+import com.intellij.util.SystemProperties;
+
 import java.io.DataOutput;
 import java.io.IOException;
 
@@ -14,7 +16,7 @@ public abstract class Generator {
   public abstract void generate(DataOutput out) throws IOException;
 
   protected static void crlf(DataOutput out) throws IOException {
-    out.writeBytes(System.getProperty("line.separator"));
+    out.writeBytes(SystemProperties.getLineSeparator());
     indent(out);
   }
 

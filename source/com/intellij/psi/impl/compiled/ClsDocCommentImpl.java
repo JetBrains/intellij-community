@@ -4,15 +4,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.PsiJavaToken;
-import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NonNls;
 
 class ClsDocCommentImpl extends ClsElementImpl implements PsiDocComment, JavaTokenType, PsiJavaToken {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsDocCommentImpl");
@@ -64,12 +62,12 @@ class ClsDocCommentImpl extends ClsElementImpl implements PsiDocComment, JavaTok
     return myTags;
   }
 
-  public PsiDocTag findTagByName(String name) {
+  public PsiDocTag findTagByName(@NonNls String name) {
     if (!name.equals("deprecated")) return null;
     return getTags()[0];
   }
 
-  public PsiDocTag[] findTagsByName(String name) {
+  public PsiDocTag[] findTagsByName(@NonNls String name) {
     if (!name.equals("deprecated")) return PsiDocTag.EMPTY_ARRAY;
     return getTags();
   }

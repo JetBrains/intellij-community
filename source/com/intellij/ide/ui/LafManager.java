@@ -13,8 +13,11 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.IdeaBlueMetalTheme;
 import com.intellij.ui.SideBorder2;
 import com.intellij.ui.plaf.beg.*;
+import com.intellij.ide.IdeBundle;
+import com.intellij.CommonBundle;
 import com.sun.java.swing.plaf.windows.WindowsLookAndFeel;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -38,7 +41,7 @@ import java.util.Iterator;
 public final class LafManager implements ApplicationComponent,JDOMExternalizable{
   private static final Logger LOG=Logger.getInstance("#com.intellij.ide.ui.LafManager");
 
-  private static final String IDEA_LAF_CLASSNAME = "idea.laf.classname";
+  @NonNls private static final String IDEA_LAF_CLASSNAME = "idea.laf.classname";
 
   /**
    * One of the possible values of -Didea.popup.weight property. Heavy weight means
@@ -46,20 +49,20 @@ public final class LafManager implements ApplicationComponent,JDOMExternalizable
    * window manager "Focus follows mouse with Auto Raise". In this case popup window will
    * be immediately closed after showing.
    */
-  private static final String HEAVY_WEIGHT_POPUP="heavy";
+  @NonNls private static final String HEAVY_WEIGHT_POPUP="heavy";
   /**
    * One of the possible values of -Didea.popup.weight property. Medium weight means
    * that popup will be shouw inside the paren't JLayeredPane if it can be fit to it.
    * Otherwise popup will be shown in the window. This mode is defaut for the Swing but
    * it's very slow (much slower then heavy weight popups).
    */
-  private static final String MEDIUM_WEIGHT_POPUP="medium";
+  @NonNls private static final String MEDIUM_WEIGHT_POPUP="medium";
 
   private final EventListenerList myListenerList;
   private UIManager.LookAndFeelInfo[] myLafs;
   private UIManager.LookAndFeelInfo myCurrentLaf;
 
-  private static String[] ourPatcheableFontResources = new String[]{
+  @NonNls private static String[] ourPatcheableFontResources = new String[]{
     "Button.font", "ToggleButton.font", "RadioButton.font", "CheckBox.font", "ColorChooser.font", "ComboBox.font",
     "Label.font", "List.font", "MenuBar.font", "MenuItem.font", "MenuItem.acceleratorFont", "RadioButtonMenuItem.font",
     "CheckBoxMenuItem.font", "Menu.font", "PopupMenu.font", "OptionPane.font", "Panel.font", "ProgressBar.font",
@@ -69,6 +72,9 @@ public final class LafManager implements ApplicationComponent,JDOMExternalizable
   };
   private HashMap<UIManager.LookAndFeelInfo, HashMap<String, Object>> myStoredDefaults = new HashMap<UIManager.LookAndFeelInfo, HashMap<String, Object>>();
   private UISettings myUiSettings;
+
+  @NonNls private static final String ELEMENT_LAF = "laf";
+  @NonNls private static final String ATTRIBUTE_CLASS_NAME = "class-name";
 
   public static LafManager getInstance(){
     return ApplicationManager.getApplication().getComponent(LafManager.class);
@@ -135,8 +141,8 @@ public final class LafManager implements ApplicationComponent,JDOMExternalizable
     String className=null;
     for(Iterator i=element.getChildren().iterator();i.hasNext();){
       Element child=(Element)i.next();
-      if("laf".equals(child.getName())){
-        className=child.getAttributeValue("class-name");
+      if(ELEMENT_LAF.equals(child.getName())){
+        className=child.getAttributeValue(ATTRIBUTE_CLASS_NAME);
         break;
       }
     }
@@ -152,8 +158,8 @@ public final class LafManager implements ApplicationComponent,JDOMExternalizable
 
   public void writeExternal(Element element) {
     if(myCurrentLaf.getClassName()!=null){
-      Element child=new Element("laf");
-      child.setAttribute("class-name",myCurrentLaf.getClassName());
+      Element child=new Element(ELEMENT_LAF);
+      child.setAttribute(ATTRIBUTE_CLASS_NAME,myCurrentLaf.getClassName());
       element.addContent(child);
     }
   }
@@ -167,6 +173,7 @@ public final class LafManager implements ApplicationComponent,JDOMExternalizable
   }
 
   public boolean isUnderAquaLookAndFeel() {
+    //noinspection HardCodedStringLiteral
     return "Mac OS X".equals(getCurrentLookAndFeel().getName());
   }
 
@@ -218,8 +225,8 @@ public final class LafManager implements ApplicationComponent,JDOMExternalizable
         UIManager.setLookAndFeel(laf);
       } catch (Exception exc) {
         Messages.showMessageDialog(
-          "Cannot set "+lookAndFeelInfo.getName()+" look and feel",
-          "Error",
+          IdeBundle.message("error.cannot.set.look.and.feel", lookAndFeelInfo.getName()),
+          CommonBundle.getErrorTitle(),
           Messages.getErrorIcon()
         );
         return;
@@ -233,8 +240,8 @@ public final class LafManager implements ApplicationComponent,JDOMExternalizable
         UIManager.setLookAndFeel(laf);
       } catch(Exception exc) {
         Messages.showMessageDialog(
-          "Cannot set "+lookAndFeelInfo.getName()+" look and feel",
-          "Error",
+          IdeBundle.message("error.cannot.set.look.and.feel", lookAndFeelInfo.getName()),
+          CommonBundle.getErrorTitle(),
           Messages.getErrorIcon()
         );
         return;
@@ -246,6 +253,7 @@ public final class LafManager implements ApplicationComponent,JDOMExternalizable
     // popups to show JPopupMenu. The code below force the creation of real heavyweight menus.
     // It dramatically increases speed of popups.
 
+    //noinspection HardCodedStringLiteral
     String popupWeight=System.getProperty("idea.popup.weight");
     if(popupWeight==null){ // use defaults if popup weight isn't specified
       if(SystemInfo.isWindows){
@@ -323,6 +331,7 @@ public final class LafManager implements ApplicationComponent,JDOMExternalizable
   }
 
   private boolean shouldPatchLAFFonts() {
+    //noinspection HardCodedStringLiteral
     return getCurrentLookAndFeel().getName().startsWith("IDEA") || UISettings.getInstance().OVERRIDE_NONIDEA_LAF_FONTS;
   }
 
@@ -369,6 +378,7 @@ public final class LafManager implements ApplicationComponent,JDOMExternalizable
     inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_X,KeyEvent.CTRL_MASK|KeyEvent.CTRL_DOWN_MASK),DefaultEditorKit.cutAction);
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static void initInputMapDefaults(UIDefaults defaults){
     // Make ENTER work in JTrees
     InputMap treeInputMap = (InputMap)defaults.get("Tree.focusInputMap");
@@ -392,6 +402,7 @@ public final class LafManager implements ApplicationComponent,JDOMExternalizable
     }
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private void initFontDefaults(UIDefaults defaults) {
     defaults.put("Tree.ancestorInputMap", null);
     int uiFontSize = myUiSettings.FONT_SIZE;
@@ -414,7 +425,7 @@ public final class LafManager implements ApplicationComponent,JDOMExternalizable
 
   private static final class IdeaLookAndFeelInfo extends UIManager.LookAndFeelInfo{
     public IdeaLookAndFeelInfo(){
-      super("IDEA (4.5 default)", IDEA_LAF_CLASSNAME);
+      super(IdeBundle.message("idea.default.look.and.feel"), IDEA_LAF_CLASSNAME);
     }
 
     public boolean equals(Object obj){
@@ -450,6 +461,7 @@ public final class LafManager implements ApplicationComponent,JDOMExternalizable
       */
     }
 
+    @SuppressWarnings({"HardCodedStringLiteral"})
     private void initIdeaDefaults(UIDefaults defaults) {
       defaults.put("Menu.maxGutterIconWidth",new Integer(18));
       defaults.put("MenuItem.maxGutterIconWidth",new Integer(18));

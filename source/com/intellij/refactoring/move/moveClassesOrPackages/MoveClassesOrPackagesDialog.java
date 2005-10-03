@@ -9,11 +9,9 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.MoveDestination;
-import com.intellij.refactoring.PackageWrapper;
-import com.intellij.refactoring.RefactoringSettings;
+import com.intellij.refactoring.*;
 import com.intellij.refactoring.move.MoveCallback;
+import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.ui.IdeBorderFactory;
@@ -22,6 +20,7 @@ import com.intellij.ui.RecentsManager;
 import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -29,7 +28,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class MoveClassesOrPackagesDialog extends RefactoringDialog {
-  private static final String RECENTS_KEY = "MoveClassesOrPackagesDialog.RECENTS_KEY";
+  @NonNls private static final String RECENTS_KEY = "MoveClassesOrPackagesDialog.RECENTS_KEY";
   private final PsiElement[] myElementsToMove;
   private final MoveCallback myMoveCallback;
 
@@ -56,12 +55,12 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     super(project, true);
     myElementsToMove = elementsToMove;
     myMoveCallback = moveCallback;
-    setTitle("Move");
+    setTitle(MoveHandler.REFACTORING_NAME);
     myProject = project;
     mySearchTextOccurencesEnabled = searchTextOccurences;
 
     myNameLabel = new JLabel();
-    myPromptTo = new JLabel("To package: ");
+    myPromptTo = new JLabel(RefactoringBundle.message("move.classes.to.package.label"));
     myManager = PsiManager.getInstance(myProject);
     myWithBrowseButtonReference = new ReferenceEditorComboWithBrowseButton(null, "", myManager, false, RECENTS_KEY);
 
@@ -97,7 +96,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     myWithBrowseButtonReference.addActionListener(
       new ActionListener() {
         public void actionPerformed(ActionEvent e) {
-          PackageChooserDialog chooser = new PackageChooserDialog("Choose Destination Package", myProject);
+          PackageChooserDialog chooser = new PackageChooserDialog(RefactoringBundle.message("choose.destination.package"), myProject);
           chooser.selectPackage(myWithBrowseButtonReference.getText());
           chooser.show();
           PsiPackage aPackage = chooser.getSelectedPackage();
@@ -117,18 +116,16 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     gbConstraints.weightx = 1;
     gbConstraints.gridwidth = 1;
     gbConstraints.fill = GridBagConstraints.BOTH;
-    myCbSearchInComments =
-    new NonFocusableCheckBox("Search in comments and strings");
-    myCbSearchInComments.setMnemonic('S');
+    myCbSearchInComments = new NonFocusableCheckBox();
+    myCbSearchInComments.setText(RefactoringBundle.getSearchInCommentsAndStringsText());
     panel.add(myCbSearchInComments, gbConstraints);
 
     gbConstraints.gridx = 1;
     gbConstraints.weightx = 1;
     gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
     gbConstraints.fill = GridBagConstraints.BOTH;
-    myCbSearchTextOccurences =
-    new NonFocusableCheckBox("Search for text occurences");
-    myCbSearchTextOccurences.setMnemonic('t');
+    myCbSearchTextOccurences = new NonFocusableCheckBox();
+    myCbSearchTextOccurences.setText(RefactoringBundle.getSearchForTextOccurencesText());
     panel.add(myCbSearchTextOccurences, gbConstraints);
 
 
@@ -141,9 +138,8 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     gbConstraints.gridx = 0;
     //gbConstraints.gridy = 1;
     gbConstraints.gridwidth = 2;
-    myCbPreserveSourceFolders =
-    new NonFocusableCheckBox("Preserve source folders");
-    myCbPreserveSourceFolders.setMnemonic('f');
+    myCbPreserveSourceFolders = new NonFocusableCheckBox();
+    myCbPreserveSourceFolders.setText(RefactoringBundle.message("move.classes.preserve.source.folders"));
     panel.add(myCbPreserveSourceFolders, gbConstraints);
 
 
@@ -176,18 +172,13 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
       PsiElement firstElement = psiElements[0];
       PsiElement parent = firstElement.getParent();
       LOG.assertTrue(parent != null);
-      String parentLongName = UsageViewUtil.getLongName(parent);
-      String text = "Move " + UsageViewUtil.getType(firstElement) + " ";
-      if (!"".equals(parentLongName)) {
-        text += UsageViewUtil.getShortName(firstElement) + " from " + parentLongName;
-      }
-      else {
-        text += UsageViewUtil.getLongName(firstElement);
-      }
-      myNameLabel.setText(text);
+      myNameLabel.setText(RefactoringBundle.message("move.single.class.or.package.name.label",
+                                                    UsageViewUtil.getType(firstElement), UsageViewUtil.getLongName(firstElement)));
     }
     else if (psiElements.length > 1) {
-      myNameLabel.setText((psiElements[0] instanceof PsiClass) ? "Move specified classes" : "Move specified packages");
+      myNameLabel.setText((psiElements[0] instanceof PsiClass) ?
+                          RefactoringBundle.message("move.specified.classes") :
+                          RefactoringBundle.message("move.specified.packages"));
     }
 
     myCbSearchInComments.setSelected(searchInComments);
@@ -255,7 +246,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
       String message = verifyDestinationForElement(element, destination);
       if (message != null) {
         String helpId = HelpID.getMoveHelpID(myElementsToMove[0]);
-        RefactoringMessageUtil.showErrorMessage("Error", message, helpId, getProject());
+        RefactoringMessageUtil.showErrorMessage(RefactoringBundle.message("error.title"), message, helpId, getProject());
         return;
       }
     }
@@ -287,7 +278,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     }
     catch (IncorrectOperationException e) {
       String helpId = HelpID.getMoveHelpID(myElementsToMove[0]);
-      RefactoringMessageUtil.showErrorMessage("Error", e.getMessage(), helpId, getProject());
+      RefactoringMessageUtil.showErrorMessage(RefactoringBundle.message("error.title"), e.getMessage(), helpId, getProject());
       return;
     }
   }
@@ -299,14 +290,18 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
   private MoveDestination selectDestination() {
     final String packageName = myWithBrowseButtonReference.getText().trim();
     if (packageName.length() > 0 && !myManager.getNameHelper().isQualifiedName(packageName)) {
-      Messages.showErrorDialog(myProject, "Please enter a valid target package name", "Move");
+      Messages.showErrorDialog(myProject,
+                               RefactoringBundle.message("please.enter.a.valid.target.package.name"),
+                               RefactoringBundle.message("move.tltle"));
       return null;
     }
     RecentsManager.getInstance(myProject).registerRecentEntry(RECENTS_KEY, packageName);
     PackageWrapper targetPackage = new PackageWrapper(myManager, packageName);
     if (!targetPackage.exists()) {
-      final int ret = Messages.showYesNoDialog(myProject, "Package " + packageName + " does not exist.\n" +
-                                                          "Do you want to create it?", "Move", Messages.getQuestionIcon());
+      final int ret = Messages.showYesNoDialog(myProject,
+                                               RefactoringBundle.message("package.does.not.exist", packageName),
+                                               RefactoringBundle.message("move.tltle"),
+                                               Messages.getQuestionIcon());
       if (ret != 0) return null;
     }
 

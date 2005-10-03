@@ -14,12 +14,13 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.actions.VcsContext;
+import com.intellij.CvsBundle;
 
 /**
  * author: lesya
  */
 public class BrowseCvsRepositoryAction extends AbstractAction{
-  private static final String TITLE = "Browse CVS Repository";
+  private static final String TITLE = CvsBundle.message("operation.name.browse.repository");
   private CvsRootConfiguration mySelectedConfiguration;
 
   public BrowseCvsRepositoryAction() {
@@ -59,7 +60,7 @@ public class BrowseCvsRepositoryAction extends AbstractAction{
       LOG.assertTrue(project != null);
       LOG.assertTrue(mySelectedConfiguration != null);
       tabbedWindow.addTab(TITLE, new BrowserPanel(mySelectedConfiguration, project),
-          true, true, true, true, "cvs.browse");
+                          true, true, true, true, "cvs.browse");
       tabbedWindow.ensureVisible(project);
 
     }

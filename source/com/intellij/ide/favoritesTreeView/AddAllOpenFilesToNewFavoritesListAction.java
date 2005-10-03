@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.ide.IdeBundle;
 
 /**
  * User: anna
@@ -13,7 +14,8 @@ import com.intellij.openapi.util.IconLoader;
  */
 class AddAllOpenFilesToNewFavoritesListAction extends AnAction {
  public AddAllOpenFilesToNewFavoritesListAction() {
-   super("Add All Open Tabs To New Favorites List", "Add To New Favorites List", IconLoader.getIcon("/general/addFavoritesList.png"));
+   super(IdeBundle.message("action.add.all.open.tabs.to.new.favorites.list"),
+         IdeBundle.message("action.add.to.new.favorites.list"), IconLoader.getIcon("/general/addFavoritesList.png"));
  }
 
  public void actionPerformed(AnActionEvent e) {

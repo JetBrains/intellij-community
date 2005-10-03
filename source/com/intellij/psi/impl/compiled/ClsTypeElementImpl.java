@@ -3,10 +3,9 @@ package com.intellij.psi.impl.compiled;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
-import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.lang.ASTNode;
+import org.jetbrains.annotations.NonNls;
 
 public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsTypeImpl");
@@ -23,6 +22,8 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
   private boolean myChildSet = false;
   private PsiType myCachedType;
   private char myVariance;
+  private static final @NonNls String VARIANCE_EXTENDS_PREFIX = "? extends ";
+  private static final @NonNls String VARIANCE_SUPER_PREFIX = "? super ";
 
   public ClsTypeElementImpl(PsiElement parent, String typeText, char variance) {
     myParent = parent;
@@ -54,9 +55,9 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
       case VARIANCE_NONE:
         return shortClassName;
       case VARIANCE_EXTENDS:
-        return "? extends " + shortClassName;
+        return VARIANCE_EXTENDS_PREFIX + shortClassName;
       case VARIANCE_SUPER:
-        return "? super " + shortClassName;
+        return VARIANCE_SUPER_PREFIX + shortClassName;
       case VARIANCE_INVARIANT:
         return "?";
       default:

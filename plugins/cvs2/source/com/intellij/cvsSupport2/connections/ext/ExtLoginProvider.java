@@ -45,7 +45,7 @@ public class ExtLoginProvider {
   }
 
   private boolean relogin(String message, CvsConnectionSettings env,ModalityContext executor) {
-    Messages.showMessageDialog(message, "Cannot Connect to CVS", Messages.getErrorIcon());
+    Messages.showMessageDialog(message, com.intellij.CvsBundle.message("message.error.cannot.connect.to.cvs.title"), Messages.getErrorIcon());
     if (!executor.isForTemporaryConfiguration()){
     CvsRootConfiguration cvsRootConfiguration = CvsConfigurationsListEditor.reconfigureCvsRoot(env.getCvsRootAsString(), null);
     if (cvsRootConfiguration == null) return false;

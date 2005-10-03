@@ -2,6 +2,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -18,7 +19,7 @@ public class AddRuntimeExceptionToThrowsAction implements IntentionAction {
   }
 
   public String getText() {
-    return "Add Runtime Exception(s) to Method Signature";
+    return QuickFixBundle.message("add.runtime.exception.to.throws.text");
   }
 
   public void invoke(final Project project, Editor editor, PsiFile file) {
@@ -75,6 +76,6 @@ public class AddRuntimeExceptionToThrowsAction implements IntentionAction {
 
 
   public String getFamilyName() {
-    return "Add Runtime Exception to Method Signature";
+    return QuickFixBundle.message("add.runtime.exception.to.throws.family");
   }
 }

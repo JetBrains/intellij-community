@@ -20,6 +20,7 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiPackage;
+import com.intellij.CommonBundle;
 import org.jdom.Element;
 
 import java.awt.*;
@@ -94,7 +95,7 @@ public final class JavadocGenerationManager implements JDOMExternalizable, Proje
       RunStrategy.getInstance().executeDefault(myConfiguration, dataContext);
     }
     catch (ExecutionException e) {
-      ExecutionUtil.showExecutionErrorMessage(e, "Error", myProject);
+      ExecutionUtil.showExecutionErrorMessage(e, CommonBundle.getErrorTitle(), myProject);
     }
   }
 

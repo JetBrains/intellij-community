@@ -120,6 +120,7 @@ public abstract class DebuggerAction extends AnAction {
   }
 
   public static boolean isFirstStart(final AnActionEvent event) {
+    //noinspection HardCodedStringLiteral
     String key = "initalized";
     if(event.getPresentation().getClientProperty(key) != null) return false;
 

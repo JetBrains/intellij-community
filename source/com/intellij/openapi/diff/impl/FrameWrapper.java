@@ -14,6 +14,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.jetbrains.annotations.NonNls;
+
 public class FrameWrapper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.FrameWrapper");
   private String myDimensionKey = null;
@@ -26,7 +28,7 @@ public class FrameWrapper {
   private final Map myDatas = new HashMap();
   private final ArrayList<Disposable> myDisposables = new ArrayList<Disposable>();
 
-  public FrameWrapper(String dimensionServiceKey) {
+  public FrameWrapper(@NonNls String dimensionServiceKey) {
     myDimensionKey = dimensionServiceKey;
   }
 

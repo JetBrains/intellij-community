@@ -16,6 +16,7 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.moveInstanceMethod.MoveInstanceMethodViewDescriptor;
 import com.intellij.refactoring.move.moveMembers.MoveMembersProcessor;
 import com.intellij.refactoring.ui.ConflictsDialog;
@@ -28,10 +29,9 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author dsl
@@ -146,9 +146,9 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
           instanceValue = RefactoringUtil.unparenthesizeExpression(instanceValue);
           if (instanceValue instanceof PsiLiteralExpression && ((PsiLiteralExpression)instanceValue).getValue() == null) {
             String message =
-              ConflictsUtil.getDescription(ConflictsUtil.getContainer(methodCall), true) +
-              " contains call with null argument for parameter " +
-              ConflictsUtil.htmlEmphasize(myTargetParameter.getName());
+              RefactoringBundle.message("0.contains.call.with.null.argument.for.parameter.1",
+                                        ConflictsUtil.getDescription(ConflictsUtil.getContainer(methodCall), true),
+                                        ConflictsUtil.htmlEmphasize(myTargetParameter.getName()));
             conflicts.add(message);
           }
         }
@@ -191,8 +191,10 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
         if (!ResolveUtil.isAccessible(myMethod, myTargetClass, copy, call, accessObjectClass, null)) {
           final String newVisibility = myNewVisibility == null ? VisibilityUtil.getVisiblityStringToDisplay(myMethod) : myNewVisibility;
           String message =
-            ConflictsUtil.getDescription(myMethod, true) + " with " + newVisibility + " visibility is not accesible from " +
-            ConflictsUtil.getDescription(ConflictsUtil.getContainer(call), true);
+            RefactoringBundle.message("0.with.1.visibility.is.not.accesible.from.2",
+                                      ConflictsUtil.getDescription(myMethod, true),
+                                      newVisibility,
+                                      ConflictsUtil.getDescription(ConflictsUtil.getContainer(call), true));
           conflicts.add(message);
         }
       }
@@ -344,7 +346,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
   }
 
   protected String getCommandName() {
-    return "Convert To Instance Method";
+    return ConvertToInstanceMethodHandler.REFACTORING_NAME;
   }
 
   public Map<PsiTypeParameter, PsiTypeParameter> buildTypeParameterReplacements() {

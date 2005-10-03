@@ -6,6 +6,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 
@@ -43,14 +44,14 @@ public class ExternalizablePropertyContainer
     registerProperty(property, Externalizer.STORAGE);
   }
 
-  public <T> void  registerProperty(ListProperty<T> property, String itemTagName, Externalizer<T> itemExternalizer) {
+  public <T> void  registerProperty(ListProperty<T> property,@NonNls String itemTagName, Externalizer<T> itemExternalizer) {
     registerProperty(property, createListExternalizer(itemExternalizer, itemTagName));
   }
 
   /**
    * @deprecated
    */
-  public <T extends JDOMExternalizable> void  registerProperty(ListProperty<T> property, String itemTagName, Factory<T> factory) {
+  public <T extends JDOMExternalizable> void  registerProperty(ListProperty<T> property, @NonNls String itemTagName, Factory<T> factory) {
     registerProperty(property, itemTagName, Externalizer.FactoryBased.create(factory));
   }
 
@@ -102,7 +103,7 @@ public class ExternalizablePropertyContainer
   }
 
   private class ListExternalizer<T> implements Externalizer<List<T>> {
-    private static final String NULL_ELEMENT = "NULL_VALUE_ELEMENT";
+    @NonNls private static final String NULL_ELEMENT = "NULL_VALUE_ELEMENT";
     private final Externalizer<T> myItemExternalizer;
     private final String myItemTagName;
 

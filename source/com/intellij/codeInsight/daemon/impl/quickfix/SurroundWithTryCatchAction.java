@@ -9,6 +9,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.surroundWith.JavaWithTryCatchSurrounder;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -30,18 +31,18 @@ public class SurroundWithTryCatchAction implements IntentionAction {
   }
 
   public String getText() {
-    return "Surround with try/catch";
+    return QuickFixBundle.message("surround.with.try.catch.fix");
   }
 
   public String getFamilyName() {
-    return "Surround with try/catch";
+    return QuickFixBundle.message("surround.with.try.catch.fix");
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
     if(myStatement instanceof PsiExpressionStatement && ((PsiExpressionStatement) myStatement).getExpression() instanceof PsiMethodCallExpression) {
       PsiMethodCallExpression callExpr = (PsiMethodCallExpression) ((PsiExpressionStatement) myStatement).getExpression();
       PsiElement referenceName = callExpr.getMethodExpression().getReferenceNameElement();
-      if (referenceName != null && referenceName.getText().equals("super")) return false;
+      if (referenceName != null && referenceName.getText().equals(PsiKeyword.SUPER)) return false;
     }
     return myStatement != null && myStatement.isValid();
   }

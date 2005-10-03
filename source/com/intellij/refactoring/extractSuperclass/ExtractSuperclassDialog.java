@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringSettings;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.memberPullUp.JavaDocPanel;
 import com.intellij.refactoring.memberPullUp.PullUpHelper;
 import com.intellij.refactoring.ui.MemberSelectionPanel;
@@ -69,8 +70,7 @@ class ExtractSuperclassDialog extends ExtractSuperBaseDialog {
 
   public MemberInfo[] getSelectedMemberInfos() {
     ArrayList<MemberInfo> list = new ArrayList<MemberInfo>(myMemberInfos.length);
-    for (int idx = 0; idx < myMemberInfos.length; idx++) {
-      MemberInfo info = myMemberInfos[idx];
+    for (MemberInfo info : myMemberInfos) {
       if (info.isChecked()) {
         list.add(info);
       }
@@ -100,7 +100,7 @@ class ExtractSuperclassDialog extends ExtractSuperBaseDialog {
     mySourceClassField = new JTextField();
     mySourceClassField.setEditable(false);
     JPanel _panel = new JPanel(new BorderLayout());
-    _panel.add(new JLabel("Extract superclass from:"), BorderLayout.NORTH);
+    _panel.add(new JLabel(RefactoringBundle.message("extract.superclass.from")), BorderLayout.NORTH);
     _panel.add(mySourceClassField, BorderLayout.CENTER);
     box.add(_panel);
 
@@ -121,7 +121,7 @@ class ExtractSuperclassDialog extends ExtractSuperBaseDialog {
 
     myTfPackageName.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        PackageChooserDialog chooser = new PackageChooserDialog("Choose Destination Package", myProject);
+        PackageChooserDialog chooser = new PackageChooserDialog(RefactoringBundle.message("choose.destination.package"), myProject);
         chooser.selectPackage(myTfPackageName.getText());
         chooser.show();
         PsiPackage aPackage = chooser.getSelectedPackage();
@@ -131,9 +131,8 @@ class ExtractSuperclassDialog extends ExtractSuperBaseDialog {
       }
     });
     _panel = new JPanel(new BorderLayout());
-    myPackageLabel = new JLabel("Package for new superclass:");
-    myPackageLabel.setLabelFor(myTfPackageName);
-    myPackageLabel.setDisplayedMnemonic('P');
+    myPackageLabel = new JLabel();
+    myPackageLabel.setText(RefactoringBundle.message("package.for.new.superclass"));
     _panel.add(myPackageLabel, BorderLayout.NORTH);
     _panel.add(myTfPackageName, BorderLayout.CENTER);
     //_panel.add(myBtnPackageChooser, BorderLayout.EAST);
@@ -145,6 +144,10 @@ class ExtractSuperclassDialog extends ExtractSuperBaseDialog {
     return panel;
   }
 
+  protected String getClassNameLabelText() {
+    return RefactoringBundle.message("superclass.name");
+  }
+
   protected JLabel getClassNameLabel() {
     return myClassNameLabel;
   }
@@ -154,13 +157,19 @@ class ExtractSuperclassDialog extends ExtractSuperBaseDialog {
   }
 
   protected String getEntityName() {
-    return "Superclass";
+    return RefactoringBundle.message("ExtractSuperClass.superclass");
+  }
+
+  protected JTextField getSuperEntityNameField() {
+    return myClassNameField;
   }
 
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new BorderLayout());
     final MemberSelectionPanel memberSelectionPanel =
-      new MemberSelectionPanel("Members to Form Superclass", myMemberInfos, "Make abstract");
+      new MemberSelectionPanel(RefactoringBundle.message("members.to.form.superclass"),
+                               myMemberInfos,
+                               RefactoringBundle.message("make.abstract"));
     panel.add(memberSelectionPanel, BorderLayout.CENTER);
     final MemberInfoModel memberInfoModel = new UsesAndInterfacesDependencyMemberInfoModel(mySourceClass, null, false,
                                                                                            myContainmentVerifier) {
@@ -172,7 +181,7 @@ class ExtractSuperclassDialog extends ExtractSuperBaseDialog {
     memberSelectionPanel.getTable().setMemberInfoModel(memberInfoModel);
     memberSelectionPanel.getTable().addMemberInfoChangeListener(memberInfoModel);
 
-    myJavaDocPanel = new JavaDocPanel("JavaDoc for abstracts");
+    myJavaDocPanel = new JavaDocPanel(RefactoringBundle.message("javadoc.for.abstracts"));
     myJavaDocPanel.setPolicy(RefactoringSettings.getInstance().EXTRACT_SUPERCLASS_JAVADOC);
     panel.add(myJavaDocPanel, BorderLayout.EAST);
 
@@ -189,7 +198,7 @@ class ExtractSuperclassDialog extends ExtractSuperBaseDialog {
     final String packageName = myTfPackageName.getText().trim();
     final PsiManager manager = PsiManager.getInstance(myProject);
     if ("".equals(superclassName)) {
-      errorString[0] = "No superclass name specified";
+      errorString[0] = RefactoringBundle.message("no.superclass.name.specified");
       mySourceClassField.requestFocusInWindow();
     }
     else if (!manager.getNameHelper().isIdentifier(superclassName)) {
@@ -212,7 +221,7 @@ class ExtractSuperclassDialog extends ExtractSuperBaseDialog {
             myTfPackageName.requestFocusInWindow();
           }
         }
-      }, "Create directory", null);
+      }, RefactoringBundle.message("create.directory"), null);
     }
     if (errorString[0] != null) {
       if (errorString[0].length() > 0) {

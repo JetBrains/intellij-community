@@ -8,6 +8,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.StringTokenizer;
 
@@ -26,22 +27,22 @@ public class TextFilter
   public TextFilter(){
     myValue = ArrayUtil.EMPTY_STRING_ARRAY;
   }
-  public TextFilter(String value, boolean incensetiveFlag){
+  public TextFilter(@NonNls String value, boolean incensetiveFlag){
     myCaseInsensitiveFlag = incensetiveFlag;
     myValue = new String[1];
     myValue[0] = value;
   }
 
-  public TextFilter(String value){
+  public TextFilter(@NonNls String value){
     myValue = new String[1];
     myValue[0] = value;
   }
 
-  public TextFilter(String[] values){
+  public TextFilter(@NonNls String[] values){
     myValue = values;
   }
 
-  public TextFilter(String value1, String value2){
+  public TextFilter(@NonNls String value1, @NonNls String value2){
     myValue = new String[2];
     myValue[0] = value1;
     myValue[1] = value2;

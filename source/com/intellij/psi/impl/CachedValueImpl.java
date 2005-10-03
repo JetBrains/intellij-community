@@ -12,11 +12,11 @@ import com.intellij.j2ee.j2eeDom.J2EEModuleProperties;
 import com.intellij.j2ee.j2eeDom.VerificationException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ModificationTracker;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.Ref;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -133,6 +133,12 @@ public class CachedValueImpl<T> implements CachedValue<T> {
   private long getTimeStamp(Object dependency) {
     if (dependency instanceof Reference){
       final Object original = ((Reference)dependency).get();
+      if(original == null) return -1;
+      return getTimeStamp(original);
+    }
+    
+    if (dependency instanceof Ref) {
+      final Object original = ((Ref)dependency).get();
       if(original == null) return -1;
       return getTimeStamp(original);
     }

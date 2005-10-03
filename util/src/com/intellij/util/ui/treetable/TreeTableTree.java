@@ -16,6 +16,7 @@
 package com.intellij.util.ui.treetable;
 
 import com.intellij.util.ui.Tree;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -41,14 +42,13 @@ public class TreeTableTree extends Tree{
     setCellRenderer(getCellRenderer());
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public void updateUI() {
     super.updateUI();
     TreeCellRenderer tcr = super.getCellRenderer();
     if (tcr instanceof DefaultTreeCellRenderer) {
       DefaultTreeCellRenderer dtcr = ((DefaultTreeCellRenderer)tcr);
-      dtcr.setTextSelectionColor(UIManager.getColor("Table.selectionForeground"));
-      dtcr.setBackgroundSelectionColor(UIManager.getColor("Table.selectionBackground"));
+      dtcr.setTextSelectionColor(UIUtil.getTableSelectionForeground());
+      dtcr.setBackgroundSelectionColor(UIUtil.getTableSelectionBackground());
     }
   }
 

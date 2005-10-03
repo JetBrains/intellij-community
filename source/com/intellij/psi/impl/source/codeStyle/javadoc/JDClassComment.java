@@ -1,5 +1,7 @@
 package com.intellij.psi.impl.source.codeStyle.javadoc;
 
+import org.jetbrains.annotations.NonNls;
+
 import java.util.ArrayList;
 
 /**
@@ -15,7 +17,7 @@ public class JDClassComment extends JDComment {
   private ArrayList authorsList;
   private String version;
 
-  protected void generateSpecial(String prefix, StringBuffer sb) {
+  protected void generateSpecial(String prefix, @NonNls StringBuffer sb) {
     if (!isNull(authorsList)) {
       for (Object aAuthorsList : authorsList) {
         String s = (String)aAuthorsList;

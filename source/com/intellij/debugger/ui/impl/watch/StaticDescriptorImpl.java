@@ -40,6 +40,7 @@ public class StaticDescriptorImpl extends NodeDescriptorImpl implements StaticDe
   }
 
   public String getName() {
+    //noinspection HardCodedStringLiteral
     return "static";
   }
 

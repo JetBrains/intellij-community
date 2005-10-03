@@ -19,6 +19,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.duplicates.DuplicatesImpl;
@@ -27,7 +28,7 @@ import com.intellij.util.IncorrectOperationException;
 public class ExtractMethodHandler implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.extractMethod.ExtractMethodHandler");
 
-  public static final String REFACTORING_NAME = "Extract Method";
+  public static final String REFACTORING_NAME = RefactoringBundle.message("extract.method.title");
 
   public void invoke(final Project project, Editor editor, PsiFile file, DataContext dataContext) {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
@@ -52,8 +53,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler {
 
   private void invokeOnElements(final PsiElement[] elements, final Project project, final PsiFile file, final Editor editor) {
     if (elements == null || elements.length == 0) {
-      String message = "Cannot perform the refactoring.\n" +
-              "Selected block should represent a set of statements or an expression.";
+      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("selected.block.should.represent.a.set.of.statements.or.an.expression"));
       RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.EXTRACT_METHOD, project);
       return;
     }
@@ -63,13 +63,10 @@ public class ExtractMethodHandler implements RefactoringActionHandler {
     }
 
 
-    for (int i = 0; i < elements.length; i++) {
-      PsiElement element = elements[i];
-      if(element instanceof PsiStatement && RefactoringUtil.isSuperOrThisCall((PsiStatement) element, true, true)) {
-        String message =
-                "Cannot perform the refactoring.\n" +
-                "Selected block contains invocation of another class constructor.";
-                RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.EXTRACT_METHOD, project);
+    for (PsiElement element : elements) {
+      if (element instanceof PsiStatement && RefactoringUtil.isSuperOrThisCall((PsiStatement)element, true, true)) {
+        String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("selected.block.contains.invocation.of.another.class.constructor"));
+        RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.EXTRACT_METHOD, project);
         return;
       }
     }
@@ -122,7 +119,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler {
                                          attributes, true, null);
       final LogicalPosition logicalPosition = editor.offsetToLogicalPosition(textRange.getStartOffset());
       editor.getScrollingModel().scrollTo(logicalPosition, ScrollType.MAKE_VISIBLE);
-      WindowManager.getInstance().getStatusBar(project).setInfo("Press Escape to remove the highlighting");
+      WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
     }
   }
 

@@ -9,6 +9,7 @@ import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.project.ProjectBundle;
 import org.jdom.Element;
 
 import java.io.File;
@@ -41,7 +42,7 @@ public class ApplicationLibraryTable extends LibraryTableBase implements NamedJD
   }
 
   public String getPresentableName() {
-    return "Global libraries";
+    return ProjectBundle.message("library.global.settings");
   }
 
   public static LibraryTable getInstance() {

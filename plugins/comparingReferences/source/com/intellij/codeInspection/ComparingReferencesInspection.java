@@ -15,6 +15,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.StringTokenizer;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author max
  */
@@ -23,10 +25,10 @@ public class ComparingReferencesInspection extends LocalInspectionTool {
 
   private LocalQuickFix myQuickFix = new MyQuickFix();
 
-  public String CHECKED_CLASSES = "java.lang.String;java.util.Date";
+  @NonNls public String CHECKED_CLASSES = "java.lang.String;java.util.Date";
 
   public String getDisplayName() {
-    return "== used instead of equals()";
+    return InspectionsBundle.message("inspection.comparing.references.display.name");
   }
 
   public String getGroupDisplayName() {
@@ -92,8 +94,9 @@ public class ComparingReferencesInspection extends LocalInspectionTool {
 
           if (isCheckedType(lType) || isCheckedType(rType)) {
             if (problemList[0] == null) problemList[0] = new ArrayList();
+            //noinspection HardCodedStringLiteral
             problemList[0].add(manager.createProblemDescriptor(expression,
-                                                               "Suspicious comparison #ref #loc",
+                                                               InspectionsBundle.message("inspection.comparing.references.problem.descriptor", "#ref #loc"),
                                                                myQuickFix,
                                                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
           }
@@ -107,12 +110,13 @@ public class ComparingReferencesInspection extends LocalInspectionTool {
   }
 
   private boolean isNullLiteral(PsiExpression expr) {
+    //noinspection HardCodedStringLiteral
     return expr instanceof PsiLiteralExpression && "null".equals(expr.getText());
   }
 
   private static class MyQuickFix implements LocalQuickFix {
     public String getName() {
-      return "Use equals()";
+      return InspectionsBundle.message("inspection.comparing.references.use.quickfix");
     }
 
     public void applyFix(Project project, ProblemDescriptor descriptor) {
@@ -125,6 +129,7 @@ public class ComparingReferencesInspection extends LocalInspectionTool {
           return;
 
         PsiElementFactory factory = PsiManager.getInstance(project).getElementFactory();
+        //noinspection HardCodedStringLiteral
         PsiMethodCallExpression equalsCall = (PsiMethodCallExpression)factory.createExpressionFromText("a.equals(b)", null);
 
         equalsCall.getMethodExpression().getQualifierExpression().replace(lExpr);
@@ -133,6 +138,7 @@ public class ComparingReferencesInspection extends LocalInspectionTool {
         PsiExpression result = (PsiExpression)binaryExpression.replace(equalsCall);
 
         if (opSign == JavaTokenType.NE) {
+          //noinspection HardCodedStringLiteral
           PsiPrefixExpression negation = (PsiPrefixExpression)factory.createExpressionFromText("!a", null);
           negation.getOperand().replace(result);
           result.replace(negation);

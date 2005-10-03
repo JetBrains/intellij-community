@@ -18,6 +18,7 @@ package com.intellij.psi;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * Represents the list of modifiers and annotations on a Java element (class, method,
@@ -79,5 +80,5 @@ public interface PsiModifierList extends PsiElement {
    * @param qualifiedName the fully qualified name of the annotation to find.
    * @return the annotation instance, or null if no such annotation is found.
    */
-  @Nullable PsiAnnotation findAnnotation(@NotNull String qualifiedName);
+  @Nullable PsiAnnotation findAnnotation(@NotNull @NonNls String qualifiedName);
 }

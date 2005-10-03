@@ -5,6 +5,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
+import com.intellij.CvsBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -17,7 +18,7 @@ public class WatchersPanel extends JPanel{
   private final ListTableModel myModel = new ListTableModel(COLUMNS);
   private final TableView myTable = new TableView(myModel);
 
-  private final static ColumnInfo USER = new ColumnInfo("User"){
+  private final static ColumnInfo USER = new ColumnInfo(CvsBundle.message("view.watchers.user.column.name")){
     public Object valueOf(Object object) {
       return ((WatcherInfo)object).getUser();
     }
@@ -32,7 +33,7 @@ public class WatchersPanel extends JPanel{
     }
   };
 
-  private final static ColumnInfo ACTIONS = new ColumnInfo("Actions"){
+  private final static ColumnInfo ACTIONS = new ColumnInfo(CvsBundle.message("view.watchers.actions.column.name")){
     public Object valueOf(Object object) {
       return ((WatcherInfo)object).getActions();
     }
@@ -47,7 +48,7 @@ public class WatchersPanel extends JPanel{
     }
   };
 
-  private final static ColumnInfo FILE = new ColumnInfo("File"){
+  private final static ColumnInfo FILE = new ColumnInfo(CvsBundle.message("view.watchers.file.column.name")){
     public Object valueOf(Object object) {
       return ((WatcherInfo)object).getFile();
     }

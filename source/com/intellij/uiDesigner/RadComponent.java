@@ -19,6 +19,8 @@ import java.beans.PropertyChangeSupport;
 import java.lang.reflect.Constructor;
 import java.util.HashSet;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
@@ -34,10 +36,12 @@ public abstract class RadComponent implements IComponent {
    * Using this constant as client property of the Swing component
    * you can find corresponding <code>RadComponent</code>
    */
+  @NonNls
   public static final String CLIENT_PROP_RAD_COMPONENT = "radComponent";
   /**
    * Whether the component selected or not. Value is java.lang.Boolean
    */
+  @NonNls
   public static final String PROP_SELECTED="selected";
 
   /**
@@ -70,13 +74,13 @@ public abstract class RadComponent implements IComponent {
    * never <code>null</code>
    */
   private final GridConstraints myConstraints;
-  
+
   private Object myCustomLayoutConstraints;
-  
+
   private final PropertyChangeSupport myChangeSupport;
 
   private final HashSet myModifiedPropertyNames;
-  
+
   private boolean myHasDragger;
 
   /**
@@ -342,7 +346,7 @@ public abstract class RadComponent implements IComponent {
   /**
    * todo[anton] get rid of
    * @return
-   */ 
+   */
   public final RevalidateInfo revalidate() {
     final RevalidateInfo info = new RevalidateInfo();
 
@@ -388,7 +392,7 @@ public abstract class RadComponent implements IComponent {
   public abstract boolean canDrop(int x, int y, int componentCount);
 
   public void processMouseEvent(final MouseEvent event) {}
- 
+
   /**
    * Serializes component into the passed <code>writer</code>
    */

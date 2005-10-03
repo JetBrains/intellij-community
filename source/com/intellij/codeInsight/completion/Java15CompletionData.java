@@ -3,7 +3,6 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.TailType;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.*;
-import com.intellij.psi.filters.getters.EnumConstantsGetter;
 import com.intellij.psi.filters.getters.AnnotationMethodsGetter;
 import com.intellij.psi.filters.position.*;
 
@@ -15,7 +14,7 @@ public class Java15CompletionData extends JavaCompletionData {
     super.initVariantsInFileScope();
     //static keyword in static import
     {
-      final CompletionVariant variant = new CompletionVariant(PsiImportList.class, new LeftNeighbour(new TextFilter ("import")));
+      final CompletionVariant variant = new CompletionVariant(PsiImportList.class, new LeftNeighbour(new TextFilter (PsiKeyword.IMPORT)));
       variant.addCompletion(PsiKeyword.STATIC, TailType.SPACE);
 
       this.registerVariant(variant);

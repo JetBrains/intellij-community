@@ -3,12 +3,14 @@ package com.intellij.uiDesigner.quickFixes;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.uiDesigner.UIDesignerBundle;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
+import java.text.MessageFormat;
 
 /**
  * [vova] This class should be inner but due to bugs in "beta" generics compiler
@@ -26,6 +28,7 @@ final class LightBulbComponentImpl extends JComponent{
       throw new IllegalArgumentException();
     }
     if (backgroundImage == null) {
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("backgroundImage cannot be null");
     }
     myManager = manager;
@@ -35,7 +38,7 @@ final class LightBulbComponentImpl extends JComponent{
     final String acceleratorsText = KeymapUtil.getFirstKeyboardShortcutText(
       ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));
     if (acceleratorsText.length() > 0) {
-      setToolTipText("Click or press " + acceleratorsText);
+      setToolTipText(UIDesignerBundle.message("tooltip.press.accelerator", acceleratorsText));
     }
 
     addMouseListener(

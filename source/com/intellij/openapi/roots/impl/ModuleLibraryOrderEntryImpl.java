@@ -9,18 +9,19 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * Library entry for moduler ("in-place") libraries
  *  @author dsl
  */
 class ModuleLibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements
-        LibraryOrderEntry, ClonableOrderEntry, WritableOrderEntry {
+                                                                    LibraryOrderEntry, ClonableOrderEntry, WritableOrderEntry {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.LibraryOrderEntryImpl");
   private final Library myLibrary;
-  static final String ENTRY_TYPE = "module-library";
+  @NonNls static final String ENTRY_TYPE = "module-library";
   private boolean myExported;
-  private static final String EXPORTED_ATTR = "exported";
+  @NonNls private static final String EXPORTED_ATTR = "exported";
 
   private ModuleLibraryOrderEntryImpl (Library library,
                                        RootModelImpl rootModel,

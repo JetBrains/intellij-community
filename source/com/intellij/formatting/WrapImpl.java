@@ -1,5 +1,7 @@
 package com.intellij.formatting;
 
+import org.jetbrains.annotations.NonNls;
+
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -52,7 +54,7 @@ class WrapImpl extends Wrap {
   static class Type{
     private final String myName;
 
-    private Type(final String name) {
+    private Type(@NonNls final String name) {
       myName = name;
     }
 

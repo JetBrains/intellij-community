@@ -3,6 +3,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 
@@ -30,6 +31,6 @@ public class CreateConstructorFromSuperAction extends CreateConstructorFromThisO
   }
 
   public String getFamilyName() {
-    return "Create Constructor From super() Call";
+    return QuickFixBundle.message("create.constructor.from.super.call.family");
   }
 }

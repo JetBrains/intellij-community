@@ -2,16 +2,12 @@ package com.intellij.codeInspection.nullable;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.AnnotateMethodFix;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
-import com.intellij.psi.util.PsiSuperMethodUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -25,13 +21,13 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
   public boolean REPORT_NOTNULL_PARAMETER_OVERRIDES_NULLABLE = true;
 
   public ProblemDescriptor[] checkMethod(PsiMethod method, InspectionManager manager, boolean isOnTheFly) {
-    List<MethodSignatureBackedByPsiMethod> superMethodSignatures = PsiSuperMethodUtil.findSuperMethodSignaturesIncludingStatic(method, true);
+    List<MethodSignatureBackedByPsiMethod> superMethodSignatures = method.findSuperMethodSignaturesIncludingStatic(true);
     ProblemDescriptor problemDescriptor = checkNullableStuff(method, superMethodSignatures, manager);
     return problemDescriptor == null ? null : new ProblemDescriptor[]{problemDescriptor};
   }
 
   public String getDisplayName() {
-    return "@Nullable problems";
+    return InspectionsBundle.message("inspection.nullable.problems.display.name");
   }
 
   public String getGroupDisplayName() {
@@ -49,7 +45,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
     boolean isDeclaredNullable = AnnotationUtil.isAnnotated(method, AnnotationUtil.NULLABLE, false);
     if (isDeclaredNullable && isDeclaredNotNull) {
       return manager.createProblemDescriptor(method.getNameIdentifier(),
-                                             "Cannot annotate with both @Nullable and @NotNull",
+                                             InspectionsBundle.message("inspection.nullable.problems.problem.descriptor"),
                                              (LocalQuickFix)null,
                                              ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
     }
@@ -60,13 +56,13 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
       PsiMethod superMethod = superMethodSignature.getMethod();
       if (REPORT_NULLABLE_METHOD_OVERRIDES_NOTNULL && isDeclaredNullable && AnnotationUtil.isNotNull(superMethod)) {
         return manager.createProblemDescriptor(method.getNameIdentifier(),
-                                               "Method annotated with @Nullable must not override @NotNull method",
+                                               InspectionsBundle.message("inspection.nullable.problems.problem.descriptor1"),
                                                (LocalQuickFix)null,
                                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
       }
       if (REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL && !isDeclaredNullable && !isDeclaredNotNull && AnnotationUtil.isNotNull(superMethod)) {
         return manager.createProblemDescriptor(method.getNameIdentifier(),
-                                               "Not annotated method overrides method annotated with @NotNull",
+                                               InspectionsBundle.message("inspection.nullable.problems.problem.descriptor2"),
                                                new AnnotateMethodFix(AnnotationUtil.NOT_NULL),
                                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
       }
@@ -81,7 +77,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
           if (AnnotationUtil.isAnnotated(parameter, AnnotationUtil.NOT_NULL, false)
               && AnnotationUtil.isAnnotated(superParameter, AnnotationUtil.NULLABLE, false)) {
             return manager.createProblemDescriptor(parameter.getNameIdentifier(),
-                                                   "Parameter annotated @NonNull must not override @Nullable parameter",
+                                                   InspectionsBundle.message("inspection.nullable.problems.problem.descriptor3"),
                                                    (LocalQuickFix)null,
                                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
           }

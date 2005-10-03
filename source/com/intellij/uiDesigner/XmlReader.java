@@ -9,6 +9,8 @@ import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.shared.XYLayoutManager;
 import com.intellij.uiDesigner.compiler.Utils;
 
+import java.text.MessageFormat;
+
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
@@ -59,7 +61,7 @@ final class XmlReader {
           component1 = new RadAtomicComponent(module, componentClass, id);
         }
         catch (final Exception exc) {
-          String errorDescription = "Class \"" + lwComponent.getComponentClassName() + "\" cannot be instantiated";
+          String errorDescription = MessageFormat.format(UIDesignerBundle.message("error.class.cannot.be.instantiated"), lwComponent.getComponentClassName());
           final String message = FormEditingUtil.getExceptionMessage(exc);
           if (message != null) {
             errorDescription += ": " + message;
@@ -105,6 +107,7 @@ final class XmlReader {
       ((RadContainer)component).setLayout(layout);
     }
     else {
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("unexpected component: " + lwComponent);
     }
 
@@ -139,7 +142,7 @@ final class XmlReader {
     component.getConstraints().restore(lwComponent.getConstraints());
 
     component.setCustomLayoutConstraints(lwComponent.getCustomLayoutConstraints());
-    
+
     if (component instanceof RadContainer) {
       final RadContainer container = (RadContainer)component;
       final LwContainer lwContainer = (LwContainer)lwComponent;
@@ -160,7 +163,7 @@ final class XmlReader {
       radRootContainer.setClassToBind(lwRootContainer.getClassToBind());
       radRootContainer.setMainComponentBinding(lwRootContainer.getMainComponentBinding());
     }
-    
+
     return component;
   }
 
@@ -172,7 +175,7 @@ final class XmlReader {
       id,
       lwComponent.getComponentClassName(),
       lwComponent.getErrorComponentProperties(),
-      errorDescription != null? errorDescription : "Cannot load class " + componentClassName
+      errorDescription != null? errorDescription : UIDesignerBundle.message("error.cannot.load.class", componentClassName)
     );
   }
 

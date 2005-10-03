@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -28,15 +29,12 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PsiWildcardType extends PsiType {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.PsiWildcardType");
-  @SuppressWarnings({"HardCodedStringLiteral"})
   private static final Key<PsiWildcardType> UNBOUNDED_WILDCARD = new Key<PsiWildcardType>("UNBOUNDED_WILDCARD");
   private final PsiManager myManager;
   private final PsiType myBound;
   private final boolean myIsExtending;
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private static final String EXTENDS_PREFIX = "? extends ";
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private static final String SUPER_PREFIX = "? super ";
+  @NonNls private static final String EXTENDS_PREFIX = "? extends ";
+  @NonNls private static final String SUPER_PREFIX = "? super ";
 
   private PsiWildcardType(PsiManager manager, boolean isExtending, PsiType bound) {
     LOG.assertTrue(manager != null);

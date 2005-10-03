@@ -1,5 +1,7 @@
 package com.intellij.codeInsight.intention.impl;
 
+import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -8,7 +10,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.codeInsight.CodeInsightUtil;
 
 /**
  * @author mike
@@ -44,7 +45,7 @@ public class SplitIfAction extends BaseIntentionAction {
       if (!PsiTreeUtil.isAncestor(ifStatement.getCondition(), expression, false)) return false;
       if (ifStatement.getThenBranch() == null) return false;
 
-      setText("Split into 2 if's");
+      setText(CodeInsightBundle.message("intention.split.if.text"));
 
       return true;
     }
@@ -53,7 +54,7 @@ public class SplitIfAction extends BaseIntentionAction {
   }
 
   public String getFamilyName() {
-    return "Split If";
+    return CodeInsightBundle.message("intention.split.if.family");
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) {

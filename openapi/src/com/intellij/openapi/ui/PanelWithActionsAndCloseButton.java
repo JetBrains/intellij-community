@@ -21,6 +21,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
+import com.intellij.CommonBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -81,7 +82,7 @@ public abstract class PanelWithActionsAndCloseButton extends JPanel implements D
 
   private class MyCloseAction extends AnAction {
     public MyCloseAction() {
-      super("Close", null, IconLoader.getIcon("/actions/cancel.png"));
+      super(CommonBundle.message("close.action.name"), null, IconLoader.getIcon("/actions/cancel.png"));
     }
 
     public void actionPerformed(AnActionEvent e) {

@@ -78,6 +78,7 @@ public class ConditionalGotoInstruction extends BranchingInstruction {
     }
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return "cond_goto " + myOffset;
   }

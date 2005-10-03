@@ -2,11 +2,13 @@ package com.intellij.refactoring.safeDelete;
 
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.ide.util.DeleteUtil;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringSettings;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.RefactoringUtil;
 
 import javax.swing.*;
@@ -58,7 +60,7 @@ public class SafeDeleteDialog extends DialogWrapper {
     final JPanel panel = new JPanel(new GridBagLayout());
     final GridBagConstraints gbc = new GridBagConstraints();
 
-    final String warningMessage = DeleteUtil.generateWarningMessage("Search for usages and delete", myElements);
+    final String warningMessage = DeleteUtil.generateWarningMessage(IdeBundle.message("search.for.usages.and.delete.elements"), myElements);
 
     gbc.insets = new Insets(4, 8, 4, 8);
     gbc.weighty = 1;
@@ -74,14 +76,14 @@ public class SafeDeleteDialog extends DialogWrapper {
     gbc.gridx = 0;
     gbc.weightx = 0.0;
     gbc.gridwidth = 1;
-    myCbSearchInComments = new JCheckBox("Search in comments and strings");
-    myCbSearchInComments.setMnemonic('S');
+    myCbSearchInComments = new JCheckBox();
+    myCbSearchInComments.setText(RefactoringBundle.getSearchInCommentsAndStringsText());
     panel.add(myCbSearchInComments, gbc);
 
     if (needSearchForTextOccurences()) {
       gbc.gridx++;
-      myCbSearchTextOccurences = new JCheckBox("Search for text occurences");
-      myCbSearchTextOccurences.setMnemonic('t');
+      myCbSearchTextOccurences = new JCheckBox();
+      myCbSearchTextOccurences.setText(RefactoringBundle.getSearchForTextOccurencesText());
       panel.add(myCbSearchTextOccurences, gbc);
     }
 

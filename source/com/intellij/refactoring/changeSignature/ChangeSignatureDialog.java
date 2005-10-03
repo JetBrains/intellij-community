@@ -19,17 +19,16 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.inCallers.CallerChooser;
 import com.intellij.refactoring.ui.*;
-import com.intellij.refactoring.util.CanonicalTypes;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.refactoring.util.VisibilityUtil;
+import com.intellij.refactoring.util.*;
 import com.intellij.ui.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.Table;
 import com.intellij.util.ui.Tree;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
@@ -79,7 +78,7 @@ public class ChangeSignatureDialog extends RefactoringDialog {
     setParameterInfos(getParameterInfos(method));
     myExceptionsTableModel.setTypeInfos(method);
 
-    setTitle("Change Method Signature");
+    setTitle(ChangeSignatureHandler.REFACTORING_NAME);
     init();
     doUpdateSignature();
   }
@@ -123,9 +122,8 @@ public class ChangeSignatureDialog extends RefactoringDialog {
         return null;
       }
     }
-    else {
-      return null;
-    }
+
+    return null;
   }
 
   public String getVisibility() {
@@ -165,10 +163,10 @@ public class ChangeSignatureDialog extends RefactoringDialog {
     }
 
     JPanel propagatePanel = new JPanel();
-    myPropagateParamChangesButton = new JButton("Propagate Parameters");
+    myPropagateParamChangesButton = new JButton(RefactoringBundle.message("changeSignature.propagate.parameters.title"));
     myPropagateParamChangesButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        new CallerChooser(myMethod, "Select Methods To Propagate New Parameters", myParameterPropagationTree) {
+        new CallerChooser(myMethod, RefactoringBundle.message("changeSignature.parameter.caller.chooser"), myParameterPropagationTree) {
           protected void callersChosen(Set<PsiMethod> callers) {
             myMethodsToPropagateParameters = callers;
             myParameterPropagationTree = getTree();
@@ -178,10 +176,10 @@ public class ChangeSignatureDialog extends RefactoringDialog {
     });
     propagatePanel.add(myPropagateParamChangesButton);
 
-    myPropagateExnChangesButton = new JButton("Propagate Exceptions");
+    myPropagateExnChangesButton = new JButton(RefactoringBundle.message("changeSignature.propagate.exceptions.title"));
     myPropagateExnChangesButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        new CallerChooser(myMethod, "Select Methods To Propagate New Exceptions", myExceptionPropagationTree) {
+        new CallerChooser(myMethod, RefactoringBundle.message("changeSignature.exception.caller.chooser"), myExceptionPropagationTree) {
           protected void callersChosen(Set<PsiMethod> callers) {
             myMethodsToPropagateExceptions = callers;
             myExceptionPropagationTree = getTree();
@@ -194,21 +192,19 @@ public class ChangeSignatureDialog extends RefactoringDialog {
 
     panel.add(top);
     if (!myMethod.isConstructor()) {
-      JLabel namePrompt = new JLabel("Name:");
-      panel.add(namePrompt);
+      JLabel namePrompt = new JLabel();
       myNameField = new EditorTextField(myMethod.getName());
-      namePrompt.setLabelFor(myNameField);
-      namePrompt.setDisplayedMnemonic('N');
+      namePrompt.setText(RefactoringBundle.message("name.prompt"));
+      panel.add(namePrompt);
       panel.add(myNameField);
 
-      JLabel typePrompt = new JLabel("Return type:");
+      JLabel typePrompt = new JLabel();
       panel.add(typePrompt);
       final PsiElementFactory factory = myMethod.getManager().getElementFactory();
       myReturnTypeCodeFragment = factory.createTypeCodeFragment(myMethod.getReturnTypeElement().getText(), myMethod.getParameterList(), true, true);
       final Document document = PsiDocumentManager.getInstance(myProject).getDocument(myReturnTypeCodeFragment);
       myReturnTypeField = new EditorTextField(document, myProject, StdFileTypes.JAVA);
-      typePrompt.setLabelFor(myReturnTypeField);
-      typePrompt.setDisplayedMnemonic('t');
+      typePrompt.setText(RefactoringBundle.message("changeSignature.return.type.prompt"));
       panel.add(myReturnTypeField);
 
       final DocumentListener documentListener = new DocumentListener() {
@@ -275,13 +271,13 @@ public class ChangeSignatureDialog extends RefactoringDialog {
     final int headerWidth = myParametersTable.getFontMetrics(myParametersTable.getFont()).stringWidth(ParameterTableModel.ANY_VAR_COLUMN_NAME) + 8;
     anyVarColumn.setMaxWidth(Math.max(minWidth, headerWidth));
     configureParameterTableEditors();
-    return createTablePanelImpl(myParametersTable, myParametersTableModel, "Parameters", true);
+    return createTablePanelImpl(myParametersTable, myParametersTableModel, RefactoringBundle.message("parameters.border.title"), true);
   }
 
   private JPanel createExceptionsPanel() {
     myExceptionsTable = new Table(myExceptionsTableModel);
     configureExceptionTableEditors();
-    return createTablePanelImpl(myExceptionsTable, myExceptionsTableModel, "Exceptions", false);
+    return createTablePanelImpl(myExceptionsTable, myExceptionsTableModel, RefactoringBundle.message("changeSignature.exceptions.panel.border.title"), false);
   }
 
   private JPanel createTablePanelImpl (JTable table, RowEditableTableModel tableModel, String borderTitle, boolean addMnemonics) {
@@ -381,7 +377,7 @@ public class ChangeSignatureDialog extends RefactoringDialog {
 
   private JComponent createSignaturePanel() {
     JPanel panel = new JPanel(new BorderLayout());
-    panel.setBorder(BorderFactory.createCompoundBorder(IdeBorderFactory.createTitledBorder("Signature Preview"), IdeBorderFactory.createEmptyBorder(new Insets(4, 4, 4, 4))));
+    panel.setBorder(BorderFactory.createCompoundBorder(IdeBorderFactory.createTitledBorder(RefactoringBundle.message("signature.preview.border.title")), IdeBorderFactory.createEmptyBorder(new Insets(4, 4, 4, 4))));
 
     String s = calculateSignature();
     s = StringUtil.convertLineSeparators(s, "\n");
@@ -443,7 +439,7 @@ public class ChangeSignatureDialog extends RefactoringDialog {
   }
 
   private String calculateSignature() {
-    StringBuffer buffer = new StringBuffer();
+    @NonNls StringBuffer buffer = new StringBuffer();
 
     PsiModifierList modifierList = myMethod.getModifierList();
     String modifiers = modifierList.getText();
@@ -518,7 +514,7 @@ public class ChangeSignatureDialog extends RefactoringDialog {
     stopEditing();
     String message = validateAndCommitData();
     if (message != null) {
-      RefactoringMessageUtil.showErrorMessage("Incorrect Data", message, HelpID.CHANGE_SIGNATURE, myProject);
+      RefactoringMessageUtil.showErrorMessage(RefactoringBundle.message("error.incorrect.data"), message, HelpID.CHANGE_SIGNATURE, myProject);
       return;
     }
     if (!checkMethodConflicts()) {
@@ -526,11 +522,11 @@ public class ChangeSignatureDialog extends RefactoringDialog {
     }
 
     if (myMethodsToPropagateParameters != null && !mayPropagateParameters()) {
-      Messages.showWarningDialog(myProject, "Recursive propagation of parameter changes won't be performed", ChangeSignatureHandler.REFACTORING_NAME);
+      Messages.showWarningDialog(myProject, RefactoringBundle.message("changeSignature.parameters.wont.propagate"), ChangeSignatureHandler.REFACTORING_NAME);
       myMethodsToPropagateParameters = null;
     }
     if (myMethodsToPropagateExceptions != null && !mayPropagateExceptions()) {
-      Messages.showWarningDialog(myProject, "Recursive propagation of thrown exceptions changes won't be performed", ChangeSignatureHandler.REFACTORING_NAME);
+      Messages.showWarningDialog(myProject, RefactoringBundle.message("changeSignature.exceptions.wont.propagate"), ChangeSignatureHandler.REFACTORING_NAME);
       myMethodsToPropagateExceptions = null;
     }
 
@@ -556,11 +552,11 @@ public class ChangeSignatureDialog extends RefactoringDialog {
       }
       catch (PsiTypeCodeFragment.TypeSyntaxException e) {
         myReturnTypeField.requestFocus();
-        return "Wrong return type: '" + myReturnTypeCodeFragment.getText() +"'";
+        return RefactoringBundle.message("changeSignature.wrong.return.type", myReturnTypeCodeFragment.getText());
       }
       catch (PsiTypeCodeFragment.NoTypeException e) {
         myReturnTypeField.requestFocus();
-        return "Specify return type";
+        return RefactoringBundle.message("changeSignature.no.return.type");
       }
     }
 
@@ -584,16 +580,16 @@ public class ChangeSignatureDialog extends RefactoringDialog {
         type = psiCodeFragment.getType();
       }
       catch (PsiTypeCodeFragment.TypeSyntaxException e) {
-        return "Wrong type: '" + psiCodeFragment.getText() + "' for parameter " + info.getName();
+        return RefactoringBundle.message("changeSignature.wrong.type.for.parameter", psiCodeFragment.getText(), info.getName());
       }
       catch (PsiTypeCodeFragment.NoTypeException e) {
-        return "Specify a type for parameter " + info.getName();
+        return RefactoringBundle.message("changeSignature.no.type.for.parameter", info.getName());
       }
 
       info.setType(type);
 
       if (type instanceof PsiEllipsisType && i != newParametersNumber - 1) {
-        return "Vararg parameter should be the last in method signature";
+        return RefactoringBundle.message("changeSignature.vararg.not.last");
       }
 
       if (info.oldParameterIndex < 0) {
@@ -602,8 +598,7 @@ public class ChangeSignatureDialog extends RefactoringDialog {
         def = def.trim();
         if (!(type instanceof PsiEllipsisType)) {
           if (def.length() == 0) {
-            return "New parameter " + info.getName() + " has been added.\n"
-                   + "Specify a default value to be used in all existing calls of this method.";
+            return RefactoringBundle.message("changeSignature.no.default.value", info.getName());
           }
 
           try {
@@ -624,20 +619,20 @@ public class ChangeSignatureDialog extends RefactoringDialog {
       try {
         PsiType type = typeCodeFragment.getType();
         if (!(type instanceof PsiClassType)) {
-          return "Wrong type: '" + typeCodeFragment.getText() + "' for exception";
+          return RefactoringBundle.message("changeSignature.wrong.type.for.exception", typeCodeFragment.getText());
         }
 
         PsiClassType throwable = myMethod.getManager().getElementFactory().createTypeByFQClassName("java.lang.Throwable", type.getResolveScope());
         if (!throwable.isAssignableFrom(type)) {
-          return "Wrong type: '" + typeCodeFragment.getText() + "' for exception, should extend java.lang.Throwable";
+          return RefactoringBundle.message("changeSignature.not.throwable.type", typeCodeFragment.getText());
         }
         exceptionInfo.setType((PsiClassType)type);
       }
       catch (PsiTypeCodeFragment.TypeSyntaxException e) {
-        return "Wrong type: '" + typeCodeFragment.getText() + "' for exception";
+        return RefactoringBundle.message("changeSignature.wrong.type.for.exception", typeCodeFragment.getText());
       }
       catch (PsiTypeCodeFragment.NoTypeException e) {
-        return "Specify a type for exception";
+        return RefactoringBundle.message("changeSignature.no.type.for.exception");
       }
     }
 
@@ -645,19 +640,8 @@ public class ChangeSignatureDialog extends RefactoringDialog {
   }
 
   private boolean checkMethodConflicts() {
-    String newMethodName = getMethodName();
-
-    PsiMethod prototype;
     try {
       PsiManager manager = PsiManager.getInstance(myProject);
-      PsiElementFactory factory = manager.getElementFactory();
-      final CanonicalTypes.Type returnType = getReturnType();
-      if (returnType != null) {
-        prototype = factory.createMethod(newMethodName, returnType.getType(myMethod, manager));
-      }
-      else {
-        prototype = null;
-      }
       ParameterInfo[] parameters = getParameters();
 
       for (ParameterInfo info : parameters) {
@@ -665,27 +649,16 @@ public class ChangeSignatureDialog extends RefactoringDialog {
 
         if (!RefactoringUtil.isResolvableType(parameterType)) {
           final int ret = Messages.showOkCancelDialog(myProject,
-                                                      "Type " + info.getTypeText() + " cannot be resolved.\nContinue?",
-                                                      "Change Method Signature", Messages.getErrorIcon()
+                                                      RefactoringBundle.message("changeSignature.cannot.resolve.type", info.getTypeText()),
+                                                      ChangeSignatureHandler.REFACTORING_NAME, Messages.getErrorIcon()
           );
           if (ret != 0) return false;
         }
-        if (prototype != null) {
-          PsiParameter param = factory.createParameter(info.getName(), parameterType);
-          prototype.getParameterList().add(param);
-        }
+
       }
     }
-    catch (IncorrectOperationException e) {
-      prototype = null;
-    }
-    if (prototype == null) return true;
-    PsiClass aClass = myMethod.getContainingClass();
-    return RefactoringMessageUtil.checkMethodConflicts(
-      aClass != null ? (PsiElement)aClass : (PsiElement)myMethod.getContainingFile(),
-      myMethod,
-      prototype
-    );
+    catch (IncorrectOperationException e) {}
+    return true;
   }
 
   private void stopEditing() {

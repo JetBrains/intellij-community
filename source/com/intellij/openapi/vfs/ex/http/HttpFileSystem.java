@@ -6,10 +6,11 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileSystem;
+import org.jetbrains.annotations.NonNls;
 
 public class HttpFileSystem extends VirtualFileSystem implements ApplicationComponent {
 
-  public static final String PROTOCOL = "http";
+  @NonNls public static final String PROTOCOL = "http";
 
   public static HttpFileSystem getInstance() {
     return ApplicationManager.getApplication().getComponent(HttpFileSystem.class);

@@ -18,6 +18,8 @@ import java.lang.ref.WeakReference;
 import java.util.HashSet;
 import java.util.Iterator;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
@@ -35,6 +37,7 @@ final class WindowWatcher implements PropertyChangeListener{
    * Contains last focused window for each project.
    */
   private final HashSet myFocusedWindows;
+  @NonNls protected static final String FOCUSED_WINDOW_PROPERTY = "focusedWindow";
 
   WindowWatcher(){
     myLock=new Object();
@@ -51,7 +54,7 @@ final class WindowWatcher implements PropertyChangeListener{
     if(LOG.isDebugEnabled()){
       LOG.debug("enter: propertyChange("+e+")");
     }
-    if(!"focusedWindow".equals(e.getPropertyName())){
+    if(!FOCUSED_WINDOW_PROPERTY.equals(e.getPropertyName())){
       throw new IllegalArgumentException("unknown property name: "+e.getPropertyName());
     }
     synchronized(myLock){

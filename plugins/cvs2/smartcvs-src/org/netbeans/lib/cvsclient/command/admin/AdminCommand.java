@@ -26,6 +26,7 @@ import org.netbeans.lib.cvsclient.progress.sending.IRequestsProgressHandler;
 import org.netbeans.lib.cvsclient.request.CommandRequest;
 import org.netbeans.lib.cvsclient.request.Requests;
 import org.netbeans.lib.cvsclient.util.BugLog;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
 
@@ -75,7 +76,7 @@ public class AdminCommand extends AbstractCommand {
 	}
 
 	public String getCvsCommandLine() {
-		final StringBuffer cvsCommandLine = new StringBuffer("admin ");
+		@NonNls final StringBuffer cvsCommandLine = new StringBuffer("admin ");
 		cvsCommandLine.append(getCvsArguments());
 		appendFileArguments(cvsCommandLine);
 		return cvsCommandLine.toString();
@@ -102,7 +103,7 @@ public class AdminCommand extends AbstractCommand {
 	// Utils ==================================================================
 
 	private String getCvsArguments() {
-		final StringBuffer arguments = new StringBuffer();
+		@NonNls final StringBuffer arguments = new StringBuffer();
 		if (isSetLock()) {
 			arguments.append("-l ");
 		}

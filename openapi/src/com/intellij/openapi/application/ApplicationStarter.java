@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.application;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * Implementors of this interface declared via {@link com.intellij.ExtensionPoints.APPLICATION_STARTER} contribute a
  * command line application based on IDEA platform.
@@ -26,6 +28,7 @@ public interface ApplicationStarter {
    * <code>idea.exe inspect</code> cmdline.
    * @return command line selector.
    */
+  @NonNls
   String getCommandName();
 
   /**

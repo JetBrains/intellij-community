@@ -1,8 +1,10 @@
 package com.intellij.compiler;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  *
  */
 public interface HelpID {
-  String COMPILER = "compiling";
+  @NonNls  String  COMPILER = "compiling";
 }

@@ -4,6 +4,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.project.ProjectBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -17,7 +18,7 @@ public class ProjectJdksEditor extends DialogWrapper{
   public ProjectJdksEditor(ProjectJdk jdk, Component parent){
     super(parent, true);
     myJdkTableConfigurable = new JdkTableConfigurable(jdk);
-    setTitle("Configure JDK");
+    setTitle(ProjectBundle.message("sdk.configure.title"));
     init();
   }
 
@@ -33,7 +34,8 @@ public class ProjectJdksEditor extends DialogWrapper{
       super.doOKAction();
     }
     catch (ConfigurationException e){
-      Messages.showMessageDialog(getContentPane(), e.getMessage(), "Cannot Save Settings", Messages.getErrorIcon());
+      Messages.showMessageDialog(getContentPane(), e.getMessage(),
+                                 ProjectBundle.message("sdk.configure.save.settings.error"), Messages.getErrorIcon());
     }
   }
 

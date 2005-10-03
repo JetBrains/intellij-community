@@ -6,11 +6,12 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.xml.DOMConfigurator;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.StringReader;
 
-public class TestLoggerFactory implements Logger.Factory {
+@NonNls public class TestLoggerFactory implements Logger.Factory {
   private static final String SYSTEM_MACRO = "$SYSTEM_DIR$";
   private static final String APPLICATION_MACRO = "$APPLICATION_DIR$";
   private static final String LOGDIR_MACRO = "$LOG_DIR$";

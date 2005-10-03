@@ -8,6 +8,9 @@ import junit.framework.Test;
 
 import java.lang.reflect.Field;
 
+/**
+ * @noinspection HardCodedStringLiteral
+ */
 class ComparisonDetailsExtractor extends ExceptionPacketFactory {
   private static Field EXPECTED_FIELD = null;
   private static Field ACTUAL_FIELD = null;

@@ -28,7 +28,7 @@ public class ImportAction extends ActionOnSelectedElement {
   }
 
   protected String getTitle(VcsContext context) {
-    return "Import";
+    return com.intellij.CvsBundle.message("operation.name.import");
   }
 
   protected CvsHandler getCvsHandler(CvsContext context) {
@@ -55,7 +55,7 @@ public class ImportAction extends ActionOnSelectedElement {
   private AbstractAction createCheckoutAction(final boolean makeNewFilesReadOnly) {
     return new AbstractAction(false) {
       protected String getTitle(VcsContext context) {
-        return "Checkout Project";
+        return com.intellij.CvsBundle.message("operation.name.checkout.project");
       }
 
       protected CvsHandler getCvsHandler(CvsContext context) {

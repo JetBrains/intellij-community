@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,7 +23,7 @@ public class CreateFieldFromUsageAction extends CreateVarFromUsageAction {
   }
 
   protected String getText(String varName) {
-    return "Create Field '" + varName + "'";
+    return QuickFixBundle.message("create.field.from.usage.text", varName);
   }
 
   protected boolean createConstantField() {
@@ -106,6 +107,6 @@ public class CreateFieldFromUsageAction extends CreateVarFromUsageAction {
   }
 
   public String getFamilyName() {
-    return "Create Field from Usage";
+    return QuickFixBundle.message("create.field.from.usage.family");
   }
 }

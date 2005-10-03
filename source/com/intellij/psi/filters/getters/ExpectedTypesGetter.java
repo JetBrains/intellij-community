@@ -20,12 +20,18 @@ import java.util.List;
  */
 public class ExpectedTypesGetter implements ContextGetter{
   public Object[] get(PsiElement context, CompletionContext completionContext){
-    final List result = new ArrayList();
+    final List<PsiType> result = new ArrayList<PsiType>();
     ExpectedTypesProvider typesProvider = ExpectedTypesProvider.getInstance(context.getProject());
     PsiExpression expression = PsiTreeUtil.getContextOfType(context, PsiExpression.class, true);
     
     if(expression == null) {
-      final PsiElement parent = context.getParent();
+      PsiElement parent = context.getParent();
+      
+      if (parent instanceof PsiJavaCodeReferenceElement &&
+          parent.getParent() instanceof PsiAnnotation
+         ) {
+        parent = parent.getParent().getParent();
+      }
       
       if (!(parent instanceof PsiNameValuePair))
         return ArrayUtil.EMPTY_OBJECT_ARRAY;
@@ -47,26 +53,19 @@ public class ExpectedTypesGetter implements ContextGetter{
     ExpectedTypeInfo[] infos = typesProvider.getExpectedTypes(expression, true);
 
     infos = extractUnique(infos, typesProvider);
-    if (expression instanceof PsiNewExpression) {
-      for (ExpectedTypeInfo info : infos) {
-        result.add(CompletionUtil.eliminateWildcards(info.getType()));
-      }
-
-    } else {
-      for (ExpectedTypeInfo info : infos) {
-        result.add(info.getType());
-      }
+    for (ExpectedTypeInfo info : infos) {
+      result.add(info.getType());
     }
-    return (PsiType[]) result.toArray(new PsiType[result.size()]);
+    return result.toArray(new PsiType[result.size()]);
   }
 
   private ExpectedTypeInfo[] extractUnique(ExpectedTypeInfo[] infos, ExpectedTypesProvider typesProvider){
-    ArrayList infoV = new ArrayList();
+    ArrayList<ExpectedTypeInfo> infoV = new ArrayList<ExpectedTypeInfo>();
     AddInfosLoop:
     for (ExpectedTypeInfo info : infos) {
       PsiType type = info.getType();
       for (int j = 0; j < infoV.size(); j++) {
-        ExpectedTypeInfo info1 = (ExpectedTypeInfo)infoV.get(j);
+        ExpectedTypeInfo info1 = infoV.get(j);
         PsiType type1 = info1.getType();
         if (type.equals(type1)) { //?
           if (info.getTailType() != info1.getTailType()) {
@@ -77,7 +76,7 @@ public class ExpectedTypesGetter implements ContextGetter{
       }
       infoV.add(info);
     }
-    infos = (ExpectedTypeInfo[])infoV.toArray(new ExpectedTypeInfo[infoV.size()]);
+    infos = infoV.toArray(new ExpectedTypeInfo[infoV.size()]);
     return infos;
   }
 }

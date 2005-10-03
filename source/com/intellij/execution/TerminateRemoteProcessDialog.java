@@ -6,10 +6,10 @@ package com.intellij.execution;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyEvent;
 
 public class TerminateRemoteProcessDialog extends DialogWrapper {
   private JCheckBox myTerminateCheckBox;
@@ -20,8 +20,8 @@ public class TerminateRemoteProcessDialog extends DialogWrapper {
     super(project, true);
     mySessionName = configurationName;
     myDetachIsDefault = detachIsDefault;
-    setTitle("Process \"" + mySessionName + "\" is running");
-    setOKButtonText("Disconnect");
+    setTitle(ExecutionBundle.message("process.is.running.dialog.title", mySessionName));
+    setOKButtonText(ExecutionBundle.message("button.disconnect"));
     setButtonsAlignment(SwingUtilities.CENTER);
     this.init();
   }
@@ -32,11 +32,11 @@ public class TerminateRemoteProcessDialog extends DialogWrapper {
 
   protected JComponent createNorthPanel() {
     final String message;
-    message = "Disconnect from the process \"" + mySessionName + "\"?";
+    message = ExecutionBundle.message("disconnect.process.confirmation.text", mySessionName);
     final JLabel label = new JLabel(message);
     final JPanel panel = new JPanel(new BorderLayout());
     panel.add(label, BorderLayout.CENTER);
-    final Icon icon = UIManager.getIcon("OptionPane.warningIcon");
+    final Icon icon = UIUtil.getOptionPanelWarningIcon();
     if (icon != null) {
       label.setIcon(icon);
       label.setIconTextGap(7);
@@ -46,8 +46,7 @@ public class TerminateRemoteProcessDialog extends DialogWrapper {
 
   protected JComponent createCenterPanel() {
     final JPanel panel = new JPanel(new BorderLayout());
-    myTerminateCheckBox = new JCheckBox("Terminate the process after disconnect");
-    myTerminateCheckBox.setMnemonic(KeyEvent.VK_T);
+    myTerminateCheckBox = new JCheckBox(ExecutionBundle.message("terminate.after.disconnect.checkbox"));
     myTerminateCheckBox.setSelected(!myDetachIsDefault);
     panel.add(myTerminateCheckBox, BorderLayout.EAST);
     return panel;

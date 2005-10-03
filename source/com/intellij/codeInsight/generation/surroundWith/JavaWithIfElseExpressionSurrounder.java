@@ -1,6 +1,7 @@
 
 package com.intellij.codeInsight.generation.surroundWith;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -8,6 +9,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 
 class JavaWithIfElseExpressionSurrounder extends JavaExpressionSurrounder{
   public boolean isApplicable(PsiExpression expr) {
@@ -24,7 +26,7 @@ class JavaWithIfElseExpressionSurrounder extends JavaExpressionSurrounder{
     PsiElementFactory factory = manager.getElementFactory();
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
 
-    String text = "if(a){\nst;\n}else{\n}";
+    @NonNls String text = "if(a){\nst;\n}else{\n}";
     PsiIfStatement ifStatement = (PsiIfStatement)factory.createStatementFromText(text, null);
     ifStatement = (PsiIfStatement)codeStyleManager.reformat(ifStatement);
 
@@ -40,6 +42,6 @@ class JavaWithIfElseExpressionSurrounder extends JavaExpressionSurrounder{
   }
 
   public String getTemplateDescription() {
-    return "if (expr) {...} else {...}";
+    return CodeInsightBundle.message("surround.with.ifelse.expression.template");
   }
 }

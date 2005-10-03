@@ -14,6 +14,7 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
+import org.jetbrains.annotations.NonNls;
 
 public class JavadocParsing extends Parsing {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.parsing.JavadocParsing");
@@ -35,6 +36,13 @@ public class JavadocParsing extends Parsing {
   });
 
   private int myBraceScope = 0;
+  @NonNls private static final String SEE_TAG = "@see";
+  @NonNls private static final String LINK_TAG = "@link";
+  @NonNls private static final String LINKPLAIN_TAG = "@linkplain";
+  @NonNls private static final String THROWS_TAG = "@throws";
+  @NonNls private static final String EXCEPTION_TAG = "@exception";
+  @NonNls private static final String PARAM_TAG = "@param";
+  @NonNls private static final String VALUE_TAG = "@value";
 
   public JavadocParsing(JavaParsingContext context) {
     super(context);
@@ -156,18 +164,18 @@ public class JavadocParsing extends Parsing {
       }
       return tag;
     }
-    else if (TAG_VALUE.isInSet(lexer.getTokenType())) {
-      if ("@see".equals(tagName) && !isInlineItem) {
+    else if (TAG_VALUE.contains(lexer.getTokenType())) {
+      if (SEE_TAG.equals(tagName) && !isInlineItem) {
         return parseSeeTagValue(lexer);
       }
-      else if ("@link".equals(tagName) && isInlineItem) {
+      else if (LINK_TAG.equals(tagName) && isInlineItem) {
         return parseSeeTagValue(lexer);
       }
       else if (manager.getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_4) >= 0 &&
-               "@linkplain".equals(tagName) && isInlineItem) {
+               LINKPLAIN_TAG.equals(tagName) && isInlineItem) {
         return parseSeeTagValue(lexer);
       }
-      else if (!isInlineItem && ("@throws".equals(tagName) || "@exception".equals(tagName))) {
+      else if (!isInlineItem && (THROWS_TAG.equals(tagName) || EXCEPTION_TAG.equals(tagName))) {
         final LeafElement element = parseReferenceOrType(lexer.getBuffer(), lexer.getTokenStart(), lexer.getTokenEnd(), false,
                                                          lexer.getState());
         element.setState(lexer.getState());
@@ -176,11 +184,11 @@ public class JavadocParsing extends Parsing {
         TreeUtil.addChildren(tagValue, element);
         return tagValue;
       }
-      else if (!isInlineItem && tagName != null && tagName.equals("@param")) {
+      else if (!isInlineItem && tagName != null && tagName.equals(PARAM_TAG)) {
         return parseParamTagValue(lexer);
       }
       else if (manager.getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) >= 0 &&
-               "@value".equals(tagName) && isInlineItem) {
+               VALUE_TAG.equals(tagName) && isInlineItem) {
         return parseSeeTagValue(lexer);
       }
       else {
@@ -197,7 +205,7 @@ public class JavadocParsing extends Parsing {
   private TreeElement parseParamTagValue(Lexer lexer) {
     CompositeElement tagValue = Factory.createCompositeElement(DOC_PARAMETER_REF);
 
-    while (TAG_VALUE.isInSet(lexer.getTokenType())) {
+    while (TAG_VALUE.contains(lexer.getTokenType())) {
       TreeElement value = createTokenElement(lexer);
       lexer.advance();
       TreeUtil.addChildren(tagValue, value);
@@ -209,7 +217,7 @@ public class JavadocParsing extends Parsing {
   private TreeElement parseSimpleTagValue(Lexer lexer) {
     CompositeElement tagValue = Factory.createCompositeElement(DOC_TAG_VALUE_TOKEN);
 
-    while (TAG_VALUE.isInSet(lexer.getTokenType())) {
+    while (TAG_VALUE.contains(lexer.getTokenType())) {
       TreeElement value = createTokenElement(lexer);
       lexer.advance();
       TreeUtil.addChildren(tagValue, value);
@@ -238,7 +246,7 @@ public class JavadocParsing extends Parsing {
       CompositeElement subValue = Factory.createCompositeElement(DOC_TAG_VALUE_TOKEN);
       TreeUtil.addChildren(ref, subValue);
 
-      while (TAG_VALUE.isInSet(lexer.getTokenType())) {
+      while (TAG_VALUE.contains(lexer.getTokenType())) {
         if (lexer.getTokenType() == JavaDocTokenType.DOC_TAG_VALUE_TOKEN) {
           final LeafElement reference = parseReferenceOrType(lexer.getBuffer(), lexer.getTokenStart(), lexer.getTokenEnd(), true,
                                                              lexer.getState());
@@ -246,7 +254,7 @@ public class JavadocParsing extends Parsing {
           lexer.advance();
           TreeUtil.addChildren(subValue, reference);
 
-          while (TAG_VALUE.isInSet(lexer.getTokenType()) && lexer.getTokenType() != JavaDocTokenType.DOC_TAG_VALUE_COMMA &&
+          while (TAG_VALUE.contains(lexer.getTokenType()) && lexer.getTokenType() != JavaDocTokenType.DOC_TAG_VALUE_COMMA &&
                  lexer.getTokenType() != JavaDocTokenType.DOC_TAG_VALUE_RPAREN) {
             final TreeElement tokenElement = createTokenElement(lexer);
             lexer.advance();
@@ -271,7 +279,7 @@ public class JavadocParsing extends Parsing {
   }
 
   private TreeElement parseSeeTagValue(Lexer lexer) {
-    if (!TAG_VALUE.isInSet(lexer.getTokenType())) return null;
+    if (!TAG_VALUE.contains(lexer.getTokenType())) return null;
 
     if (lexer.getTokenType() == JavaDocTokenType.DOC_TAG_VALUE_SHARP_TOKEN) {
       return (TreeElement)parseMethodRef(lexer);
@@ -333,7 +341,7 @@ public class JavadocParsing extends Parsing {
       while (isTokenValid(lexer.getTokenType())) {
         LeafElement tokenElement = myParsing.createTokenElement(lexer);
         IElementType type = lexer.getTokenType();
-        if (!TOKEN_FILTER.isInSet(type)) {
+        if (!TOKEN_FILTER.contains(type)) {
           LOG.assertTrue(false, "Missed token should be space or asterisks:" + tokenElement);
           throw new RuntimeException();
         }
@@ -351,7 +359,7 @@ public class JavadocParsing extends Parsing {
     }
 
     public boolean isTokenValid(IElementType tokenType) {
-      return tokenType != null && TOKEN_FILTER.isInSet(tokenType);
+      return tokenType != null && TOKEN_FILTER.contains(tokenType);
     }
   }
 }

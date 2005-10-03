@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,8 +10,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
-
-import java.text.MessageFormat;
 
 public class MoveCatchUpFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.DeleteCatchFix");
@@ -24,16 +23,13 @@ public class MoveCatchUpFix implements IntentionAction {
     }
 
   public String getText() {
-    String text = MessageFormat.format("Move catch for ''{0}'' before ''{1}''",
-        new Object[]{
-          HighlightUtil.formatType(myCatchSection.getCatchType()),
-          HighlightUtil.formatType(myMoveBeforeSection.getCatchType()),
-        });
-    return text;
+    return QuickFixBundle.message("move.catch.up.text",
+                                  HighlightUtil.formatType(myCatchSection.getCatchType()),
+                                  HighlightUtil.formatType(myMoveBeforeSection.getCatchType()));
   }
 
   public String getFamilyName() {
-    return "Move Catch Up";
+    return QuickFixBundle.message("move.catch.up.family");
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {

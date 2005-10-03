@@ -3,15 +3,16 @@ package com.intellij.refactoring.migration;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.ui.Table;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.event.DocumentEvent;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
 import java.awt.*;
@@ -35,7 +36,7 @@ public class EditMigrationDialog extends DialogWrapper{
     myProject = project;
     myMigrationMap = migrationMap;
     setHorizontalStretch(1.2f);
-    setTitle("Edit Migration Map");
+    setTitle(RefactoringBundle.message("edit.migration.map.title"));
     init();
     validateOKButton();
   }
@@ -71,7 +72,7 @@ public class EditMigrationDialog extends DialogWrapper{
     gbConstraints.weightx = 0;
     gbConstraints.weighty = 1;
     gbConstraints.anchor = GridBagConstraints.EAST;
-    JLabel promptLabel = new JLabel("Map name:");
+    JLabel promptLabel = new JLabel(RefactoringBundle.message("migration.map.name.prompt"));
     panel.add(promptLabel, gbConstraints);
 
     gbConstraints.fill = GridBagConstraints.BOTH;
@@ -90,7 +91,7 @@ public class EditMigrationDialog extends DialogWrapper{
     gbConstraints.weighty = 1;
     gbConstraints.gridwidth = GridBagConstraints.RELATIVE;
     gbConstraints.anchor = GridBagConstraints.EAST;
-    JLabel descriptionPromptLabel = new JLabel("Map description:");
+    JLabel descriptionPromptLabel = new JLabel(RefactoringBundle.message("migration.map.description.label"));
     panel.add(descriptionPromptLabel, gbConstraints);
 
     gbConstraints.fill = GridBagConstraints.BOTH;
@@ -126,7 +127,7 @@ public class EditMigrationDialog extends DialogWrapper{
     gbConstraints.fill = GridBagConstraints.HORIZONTAL;
     gbConstraints.insets = new Insets(5,0,5,0);
 
-    myAddButton = new JButton("Add...");
+    myAddButton = new JButton(RefactoringBundle.message("migration.add.button"));
     myAddButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         validateOKButton();
@@ -134,9 +135,9 @@ public class EditMigrationDialog extends DialogWrapper{
     });
     tableButtonsPanel.add(myAddButton, gbConstraints);
 
-    myEditButton = new JButton("Edit...");
+    myEditButton = new JButton(RefactoringBundle.message("migration.edit.button"));
     tableButtonsPanel.add(myEditButton, gbConstraints);
-    myRemoveButton = new JButton("Remove");
+    myRemoveButton = new JButton(RefactoringBundle.message("migration.remove.button"));
     myRemoveButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         validateOKButton();
@@ -144,9 +145,9 @@ public class EditMigrationDialog extends DialogWrapper{
     });
     tableButtonsPanel.add(myRemoveButton, gbConstraints);
 
-    myMoveUpButton = new JButton("Move Up");
+    myMoveUpButton = new JButton(RefactoringBundle.message("migration.move.up.button"));
     tableButtonsPanel.add(myMoveUpButton, gbConstraints);
-    myMoveDownButton = new JButton("Move Down");
+    myMoveDownButton = new JButton(RefactoringBundle.message("migration.move.down.button"));
     tableButtonsPanel.add(myMoveDownButton, gbConstraints);
 
     gbConstraints.weighty = 1;
@@ -279,7 +280,10 @@ public class EditMigrationDialog extends DialogWrapper{
   }
 
   private JScrollPane createTable() {
-    final String[] names = {"Type", "Old name", "New name"};
+    final String[] names = {
+      RefactoringBundle.message("migration.type.column.header"),
+      RefactoringBundle.message("migration.old.name.column.header"),
+      RefactoringBundle.message("migration.new.name.column.header")};
 
     // Create a model of the data.
     TableModel dataModel = new AbstractTableModel() {
@@ -295,13 +299,13 @@ public class EditMigrationDialog extends DialogWrapper{
         MigrationMapEntry entry = myMigrationMap.getEntryAt(row);
         if (col == 0){
           if (entry.getType() == MigrationMapEntry.PACKAGE && entry.isRecursive()){
-            return "Package with subpackages";
+            return RefactoringBundle.message("migration.package.with.subpackages");
           }
           else if (entry.getType() == MigrationMapEntry.PACKAGE && !entry.isRecursive()){
-            return "Package";
+            return RefactoringBundle.message("migration.package");
           }
           else{
-            return "Class";
+            return RefactoringBundle.message("migration.class");
           }
         }
 
@@ -336,8 +340,7 @@ public class EditMigrationDialog extends DialogWrapper{
 
     myTable.setPreferredScrollableViewportSize(new Dimension(300, myTable.getRowHeight() * 10));
 
-    JScrollPane scrollpane = ScrollPaneFactory.createScrollPane(myTable);
-    return scrollpane;
+    return ScrollPaneFactory.createScrollPane(myTable);
   }
 
   private void enableButtons() {

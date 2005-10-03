@@ -18,6 +18,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.UIDesignerBundle;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -68,7 +69,7 @@ final class BeanStep extends StepAdapter{
       new ActionListener() {
         public void actionPerformed(final ActionEvent e) {
           final TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myData.myProject).createWithInnerClassesScopeChooser(
-            "Choose Bean Class",
+            UIDesignerBundle.message("title.choose.bean.class"),
             GlobalSearchScope.projectScope(myData.myProject),
             new TreeClassChooser.ClassFilter() {
               public boolean isAccepted(final PsiClass aClass) {
@@ -89,7 +90,7 @@ final class BeanStep extends StepAdapter{
 
     myTfWithBtnChoosePackage.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        final PackageChooserDialog dialog = new PackageChooserDialog("Choose Package", myData.myProject);
+        final PackageChooserDialog dialog = new PackageChooserDialog(UIDesignerBundle.message("title.choose.package"), myData.myProject);
         dialog.selectPackage(myTfWithBtnChoosePackage.getText());
         dialog.show();
         final PsiPackage aPackage = dialog.getSelectedPackage();
@@ -139,16 +140,16 @@ final class BeanStep extends StepAdapter{
 
       final String shortClassName = myTfShortClassName.getText().trim();
       if(shortClassName.length() == 0){
-        throw new CommitStepException("Please specify class name of the bean to be created");
+        throw new CommitStepException(UIDesignerBundle.message("error.please.specify.class.name.of.the.bean.to.be.created"));
       }
       final PsiManager psiManager = PsiManager.getInstance(myData.myProject);
       if(!psiManager.getNameHelper().isIdentifier(shortClassName)){
-        throw new CommitStepException("\"" + shortClassName + "\" is not a valid class name");
+        throw new CommitStepException(UIDesignerBundle.message("error.X.is.not.a.valid.class.name", shortClassName));
       }
 
       final String packageName = myTfWithBtnChoosePackage.getText().trim();
       if(packageName.length() != 0 && psiManager.findPackage(packageName) == null){
-        throw new CommitStepException("Package with name \"" + packageName + "\" does not exist");
+        throw new CommitStepException(UIDesignerBundle.message("error.package.with.name.X.does.not.exist", packageName));
       }
 
       myData.myShortClassName = shortClassName;
@@ -159,7 +160,7 @@ final class BeanStep extends StepAdapter{
         final String fullClassName = packageName.length() != 0 ? packageName + "." + shortClassName : shortClassName;
         final Module module = ModuleUtil.getModuleForFile(myData.myProject, myData.myFormFile);
         if (psiManager.findClass(fullClassName, GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module)) != null) {
-          throw new CommitStepException("Cannot create class \"" + fullClassName + "\" because it already exists");
+          throw new CommitStepException(UIDesignerBundle.message("error.cannot.create.class.X.because.it.already.exists", fullClassName));
         }
       }
 
@@ -175,14 +176,14 @@ final class BeanStep extends StepAdapter{
       final String oldFqClassName = myData.myBeanClass != null ? myData.myBeanClass.getQualifiedName() : null;
       final String newFqClassName = myTfWitgBtnChooseClass.getText().trim();
       if(newFqClassName.length() == 0){
-        throw new CommitStepException("Please specify fully qualified name of bean class");
+        throw new CommitStepException(UIDesignerBundle.message("error.please.specify.fully.qualified.name.of.bean.class"));
       }
       final PsiClass aClass = PsiManager.getInstance(myData.myProject).findClass(
         newFqClassName,
         GlobalSearchScope.allScope(myData.myProject)
       );
       if(aClass == null){
-        throw new CommitStepException("Class with name \"" + newFqClassName + "\" does not exist");
+        throw new CommitStepException(UIDesignerBundle.message("error.class.with.name.X.does.not.exist", newFqClassName));
       }
       myData.myBeanClass = aClass;
 

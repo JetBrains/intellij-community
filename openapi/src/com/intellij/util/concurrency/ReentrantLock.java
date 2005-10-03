@@ -105,9 +105,10 @@ public class ReentrantLock implements Sync  {
    * Release the lock.
    * @exception Error thrown if not current owner of lock
    **/
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public synchronized void release()  {
     if (Thread.currentThread() != owner_)
-      throw new Error("Illegal Lock usage"); 
+      throw new Error("Illegal Lock usage");
 
     if (--holds_ == 0) {
       owner_ = null;
@@ -131,6 +132,7 @@ public class ReentrantLock implements Sync  {
    * @exception Error thrown if not current owner of lock
    * or has fewer than N holds on the lock
    **/
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public synchronized void release(long n) {
     if (Thread.currentThread() != owner_ || n > holds_)
       throw new Error("Illegal Lock usage"); 

@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.*;
 import com.intellij.util.text.StringTokenizer;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -15,6 +16,8 @@ import java.util.List;
 public class SplitterProportionsData implements JDOMExternalizable{
   private List<Float> proportions = new ArrayList<Float>();
   private static final String DATA_VERSION = "1";
+  @NonNls private static final String ATTRIBUTE_PROPORTIONS = "proportions";
+  @NonNls private static final String ATTRIBUTE_VERSION = "version";
 
   public void saveSplitterProportions(Component root) {
     proportions.clear();
@@ -73,8 +76,8 @@ public class SplitterProportionsData implements JDOMExternalizable{
 
   public void readExternal(Element element) throws InvalidDataException {
     proportions.clear();
-    String prop = element.getAttributeValue("proportions");
-    String version = element.getAttributeValue("version");
+    String prop = element.getAttributeValue(ATTRIBUTE_PROPORTIONS);
+    String version = element.getAttributeValue(ATTRIBUTE_VERSION);
     if (prop != null && Comparing.equal(version, DATA_VERSION)) {
       StringTokenizer tokenizer = new StringTokenizer(prop, ",");
       while (tokenizer.hasMoreTokens()) {
@@ -92,7 +95,7 @@ public class SplitterProportionsData implements JDOMExternalizable{
       result.append(proportion);
       sep = ",";
     }
-    element.setAttribute("proportions", result.toString());
-    element.setAttribute("version", DATA_VERSION);
+    element.setAttribute(ATTRIBUTE_PROPORTIONS, result.toString());
+    element.setAttribute(ATTRIBUTE_VERSION, DATA_VERSION);
   }
 }

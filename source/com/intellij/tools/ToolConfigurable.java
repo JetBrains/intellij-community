@@ -24,7 +24,7 @@ public class ToolConfigurable implements Configurable, ApplicationComponent {
   }
 
   public String getDisplayName() {
-    return "External Tools";
+    return ToolsBundle.message("tools.settings.title");
   }
 
   public JComponent createComponent() {

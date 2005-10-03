@@ -8,6 +8,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.ide.IdeBundle;
 
 import javax.swing.*;
 
@@ -21,7 +22,7 @@ public class NextSplitAction extends AnAction {
           final FileEditorManagerEx manager = FileEditorManagerEx.getInstanceEx(project);
           manager.setCurrentWindow(manager.getNextWindow(manager.getCurrentWindow()));
         }
-      }, "Go to next split", null
+      }, IdeBundle.message("command.go.to.next.split"), null
     );
   }
 

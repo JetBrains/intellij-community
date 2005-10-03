@@ -7,12 +7,10 @@ package com.intellij.debugger.engine.evaluation.expression;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
-import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
-import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.ArrayElementDescriptorImpl;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.project.Project;
 import com.sun.jdi.*;
 
@@ -33,11 +31,11 @@ class ArrayAccessEvaluator implements Evaluator {
     Value indexValue = (Value)myIndexEvaluator.evaluate(context);
     Value arrayValue = (Value)myArrayReferenceEvaluator.evaluate(context);
     if (!(arrayValue instanceof ArrayReference)) {
-      throw EvaluateExceptionUtil.createEvaluateException("Array reference expected");
+      throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.array.reference.expected"));
     }
     myEvaluatedArrayReference = (ArrayReference)arrayValue;
     if (!DebuggerUtilsEx.isInteger(indexValue)) {
-      throw EvaluateExceptionUtil.createEvaluateException("Invalid index expression");
+      throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.invalid.index.expression"));
     }
     myEvaluatedIndex = ((PrimitiveValue)indexValue).intValue();
     try {

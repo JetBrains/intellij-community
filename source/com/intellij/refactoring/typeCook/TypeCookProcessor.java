@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.typeCook.deductive.builder.Result;
 import com.intellij.refactoring.typeCook.deductive.builder.System;
 import com.intellij.refactoring.typeCook.deductive.builder.SystemBuilder;
@@ -21,10 +22,11 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
+import org.jetbrains.annotations.NotNull;
+
 public class TypeCookProcessor extends BaseRefactoringProcessor {
   private PsiElement[] myElements;
   private final Settings mySettings;
-  private SystemBuilder mySystemBuilder;
   private Result myResult;
 
   public TypeCookProcessor(Project project, PsiElement[] elements, Settings settings) {
@@ -38,10 +40,11 @@ public class TypeCookProcessor extends BaseRefactoringProcessor {
     return new TypeCookViewDescriptor(myElements, usages, refreshCommand);
   }
 
+  @NotNull
   protected UsageInfo[] findUsages() {
-    mySystemBuilder = new SystemBuilder(myProject, mySettings);
+    final SystemBuilder systemBuilder = new SystemBuilder(myProject, mySettings);
 
-    final System commonSystem = mySystemBuilder.build(myElements);
+    final System commonSystem = systemBuilder.build(myElements);
     myResult = new Result(commonSystem);
 
     final System[] systems = commonSystem.isolate();
@@ -100,7 +103,7 @@ public class TypeCookProcessor extends BaseRefactoringProcessor {
   }
 
   protected String getCommandName() {
-    return "Generify";
+    return RefactoringBundle.message("type.cook.command");
   }
 
   public List<PsiElement> getElements() {

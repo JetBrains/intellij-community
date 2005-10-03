@@ -26,6 +26,11 @@ public class Java15APIUsageInspection extends LocalInspectionTool {
   private static THashSet<String> ourForbiddenAPI = new THashSet<String>(1500);
 
   static {
+    initForbiddenApi();
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  private static void initForbiddenApi() {
     try {
       final InputStream stream = Java15APIUsageInspection.class.getResourceAsStream("apiList.txt");
       BufferedReader reader = new BufferedReader(new InputStreamReader(stream, "UTF-8"));
@@ -50,7 +55,7 @@ public class Java15APIUsageInspection extends LocalInspectionTool {
   }
 
   public String getDisplayName() {
-    return "Usages of API documented as @since 1.5";
+    return InspectionsBundle.message("inspection.1.5.display.name", "@since 1.5");
   }
 
   public String getShortName() {
@@ -108,7 +113,7 @@ public class Java15APIUsageInspection extends LocalInspectionTool {
     if (results == null) return null;
     ProblemDescriptor[] descriptors = new ProblemDescriptor[results.size()];
     for (int i = 0; i < descriptors.length; i++) {
-      descriptors[i] = manager .createProblemDescriptor(results.get(i), "Usage of the API documented as @since 1.5", (LocalQuickFix)null,
+      descriptors[i] = manager .createProblemDescriptor(results.get(i), InspectionsBundle.message("inspection.1.5.problem.descriptor", "@since 1.5"), (LocalQuickFix)null,
                                                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
 
     }
@@ -172,7 +177,6 @@ public class Java15APIUsageInspection extends LocalInspectionTool {
 
   private static String getSignature(PsiMember member) {
     if (member instanceof PsiClass) {
-      //noinspection ConstantConditions
       return ((PsiClass)member).getQualifiedName();
     }
     if (member instanceof PsiField) {

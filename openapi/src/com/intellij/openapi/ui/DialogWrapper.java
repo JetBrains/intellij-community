@@ -16,13 +16,18 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.MnemonicHelper;
 import com.intellij.peer.PeerFactory;
+import com.intellij.ui.UIBundle;
+import com.intellij.CommonBundle;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
+
+import org.jetbrains.annotations.NonNls;
 
 public abstract class DialogWrapper {
   /**
@@ -45,7 +50,7 @@ public abstract class DialogWrapper {
    * default button for the dialog. It's true if you don't change this behaviour
    * of <code>createJButtonForAction(Action)</code> method.
    */
-  public static final String DEFAULT_ACTION = "DefaultAction";
+  @NonNls public static final String DEFAULT_ACTION = "DefaultAction";
 
   private final DialogWrapperPeer myPeer;
   private int myExitCode = CANCEL_EXIT_CODE;
@@ -454,7 +459,7 @@ public abstract class DialogWrapper {
    * If this method returns <code>null</code> then the component does not require installation
    * into dimension service. This default implementation returns <code>null</code>.
    */
-  protected String getDimensionServiceKey() {
+  @NonNls protected String getDimensionServiceKey() {
     return null;
   }
 
@@ -561,6 +566,8 @@ public abstract class DialogWrapper {
     if (southPanel != null) {
       contentPane.add(southPanel, BorderLayout.SOUTH);
     }
+
+    new MnemonicHelper().register(contentPane);
   }
 
   protected JComponent createContentPane() {
@@ -636,7 +643,8 @@ public abstract class DialogWrapper {
    */
   protected void doHelpAction() {
     if (myHelpAction.isEnabled()) {
-      Messages.showMessageDialog(getContentPane(), "There is no help for this dialog", "No Help Available",
+      Messages.showMessageDialog(getContentPane(), UIBundle.message("there.is.no.help.for.this.dialog.error.message"),
+                                 UIBundle.message("no.help.available.dialog.title"),
                                  Messages.getInformationIcon());
     }
   }
@@ -817,7 +825,7 @@ public abstract class DialogWrapper {
 
   private class OkAction extends AbstractAction {
     public OkAction() {
-      putValue(Action.NAME, "OK");
+      putValue(Action.NAME, CommonBundle.getOkButtonText());
       putValue(DEFAULT_ACTION, Boolean.TRUE);
     }
 
@@ -828,7 +836,7 @@ public abstract class DialogWrapper {
 
   private class CancelAction extends AbstractAction {
     public CancelAction() {
-      putValue(Action.NAME, "Cancel");
+      putValue(Action.NAME, CommonBundle.getCancelButtonText());
     }
 
     public void actionPerformed(ActionEvent e) {
@@ -838,7 +846,7 @@ public abstract class DialogWrapper {
 
   private class HelpAction extends AbstractAction {
     public HelpAction() {
-      putValue(Action.NAME, "Help");
+      putValue(Action.NAME, CommonBundle.getHelpButtonText());
     }
 
     public void actionPerformed(ActionEvent e) {

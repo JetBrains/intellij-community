@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.ui.TabbedPaneWrapper;
 
 import javax.swing.*;
@@ -34,20 +35,20 @@ public class EditorOptionsPanel {
   private JCheckBox myCbHighlightBraces;
   private JCheckBox myCbShowLineNumbers;
 
-  private static final String STRIP_CHANGED = "Modified Lines";
-  private static final String STRIP_ALL = "All";
-  private static final String STRIP_NONE = "None";
+  private static final String STRIP_CHANGED = ApplicationBundle.message("combobox.strip.modified.lines");
+  private static final String STRIP_ALL = ApplicationBundle.message("combobox.strip.all");
+  private static final String STRIP_NONE = ApplicationBundle.message("combobox.strip.none");
   private JComboBox myStripTrailingSpacesCombo;
 
-  private static final String INSERT_IMPORTS_ALWAYS = "All";
-  private static final String INSERT_IMPORTS_ASK = "Ask";
-  private static final String INSERT_IMPORTS_NONE = "None";
+  private static final String INSERT_IMPORTS_ALWAYS = ApplicationBundle.message("combobox.insert.imports.all");
+  private static final String INSERT_IMPORTS_ASK = ApplicationBundle.message("combobox.insert.imports.ask");
+  private static final String INSERT_IMPORTS_NONE = ApplicationBundle.message("combobox.insert.imports.none");
   private JComboBox mySmartPasteCombo;
 
-  private static final String NO_REFORMAT = "None";
-  private static final String INDENT_BLOCK = "Indent Block";
-  private static final String INDENT_EACH_LINE = "Indent Each Line";
-  private static final String REFORMAT_BLOCK = "Reformat Block";
+  private static final String NO_REFORMAT = ApplicationBundle.message("combobox.paste.reformat.none");
+  private static final String INDENT_BLOCK = ApplicationBundle.message("combobox.paste.reformat.indent.block");
+  private static final String INDENT_EACH_LINE = ApplicationBundle.message("combobox.paste.reformat.indent.each.line");
+  private static final String REFORMAT_BLOCK = ApplicationBundle.message("combobox.paste.reformat.reformat.block");
   private JComboBox myReformatOnPasteCombo;
 
   private JCheckBox myCbSmartHome;
@@ -149,8 +150,8 @@ public class EditorOptionsPanel {
     }));
     myEditorTabPlacement.setRenderer(new MyTabsPlacementComboBoxRenderer());
     myTabbedPaneWrapper = new TabbedPaneWrapper();
-    myTabbedPaneWrapper.addTab("Behavior", myBehaviourPanel);
-    myTabbedPaneWrapper.addTab("Appearance", myAppearancePanel);
+    myTabbedPaneWrapper.addTab(ApplicationBundle.message("tab.editor.settings.behavior"), myBehaviourPanel);
+    myTabbedPaneWrapper.addTab(ApplicationBundle.message("tab.editor.settings.appearance"), myAppearancePanel);
   }
 
 
@@ -631,21 +632,22 @@ public class EditorOptionsPanel {
       int tabPlacement = ((Integer)value).intValue();
       String text;
       if (UISettings.TABS_NONE == tabPlacement) {
-        text = "None";
+        text = ApplicationBundle.message("combobox.tab.placement.none");
       }
       else if (SwingConstants.TOP == tabPlacement) {
-        text = "Top";
+        text = ApplicationBundle.message("combobox.tab.placement.top");
       }
       else if (SwingConstants.LEFT == tabPlacement) {
-        text = "Left";
+        text = ApplicationBundle.message("combobox.tab.placement.left");
       }
       else if (SwingConstants.BOTTOM == tabPlacement) {
-        text = "Bottom";
+        text = ApplicationBundle.message("combobox.tab.placement.bottom");
       }
       else if (SwingConstants.RIGHT == tabPlacement) {
-        text = "Right";
+        text = ApplicationBundle.message("combobox.tab.placement.right");
       }
       else {
+        //noinspection HardCodedStringLiteral
         throw new IllegalArgumentException("unknown tabPlacement: " + tabPlacement);
       }
       return super.getListCellRendererComponent(list, text, index, isSelected, cellHasFocus);

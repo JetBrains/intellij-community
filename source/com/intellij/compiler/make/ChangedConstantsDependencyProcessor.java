@@ -8,6 +8,7 @@ import com.intellij.compiler.classParsing.FieldInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.UsageSearchContext;
@@ -21,8 +22,6 @@ import java.util.Iterator;
 import java.util.Set;
 
 public class ChangedConstantsDependencyProcessor {
-  public static boolean ENABLE_TRACING = false; // used by tests
-
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.make.ChangedConstantsDependencyProcessor");
   private final Project myProject;
   private final CachingSearcher mySearcher;
@@ -51,9 +50,6 @@ public class ChangedConstantsDependencyProcessor {
           PsiClass[] classes = psiManager.findClasses(qName.replace('$', '.'), GlobalSearchScope.allScope(myProject));
           for (int i = 0; i < classes.length; i++) {
             PsiClass aClass = classes[i];
-            if (ENABLE_TRACING) {
-              System.out.println("Processing PsiClass " + aClass);
-            }
             PsiField[] psiFields = aClass.getFields();
             for (int idx = 0; idx < psiFields.length; idx++) {
               PsiField psiField = psiFields[idx];
@@ -69,6 +65,9 @@ public class ChangedConstantsDependencyProcessor {
         }
         catch (CacheCorruptedException e) {
          _ex[0] = e;
+        }
+        catch (ProcessCanceledException e) {
+          // supressed deliberately
         }
       }
     });
@@ -122,9 +121,6 @@ public class ChangedConstantsDependencyProcessor {
     if (!isAccessibilityChange && field.hasModifierProperty(PsiModifier.PRIVATE)) {
       return; // optimization: don't need to search, cause may be used only in this class
     }
-    if (ENABLE_TRACING) {
-      System.out.println("Processing changed field = " + field);
-    }
     Set usages = new HashSet();
     addUsages(field, usages, isAccessibilityChange);
     if (LOG.isDebugEnabled()) {
@@ -163,16 +159,9 @@ public class ChangedConstantsDependencyProcessor {
 
   private void addUsages(PsiField psiField, Collection usages, final boolean ignoreAccessScope) {
     PsiReference[] references = mySearcher.findReferences(psiField, ignoreAccessScope)/*doFindReferences(searchHelper, psiField)*/;
-    if (ENABLE_TRACING) {
-      System.out.println("Found " + references.length + " references to field " + psiField);
-    }
-    for (int idx = 0; idx < references.length; idx++) {
-      final PsiReference ref = references[idx];
+    for (final PsiReference ref : references) {
       if (!(ref instanceof PsiReferenceExpression)) {
         continue;
-      }
-      if (ENABLE_TRACING) {
-        System.out.println("Checking reference " + ref);
       }
       PsiElement e = ref.getElement();
       usages.add(e);

@@ -7,12 +7,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.lang.Language;
+import org.jetbrains.annotations.NonNls;
 
 public class MoveAction extends BaseRefactoringAction {
   /**
    * @fabrique
    */
-  public static final String MOVE_PROVIDER = "MoveProvider";
+  @NonNls public static final String MOVE_PROVIDER = "MoveProvider";
 
   private MoveHandler.TargetContainerFinder myFinder = new MoveHandler.TargetContainerFinder() {
     public PsiElement getTargetContainer(DataContext dataContext) {

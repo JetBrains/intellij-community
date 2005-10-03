@@ -101,6 +101,7 @@ public class LineTooltipRenderer implements TooltipRenderer {
     return hint;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static boolean richHtml(final String text) {
     if (!text.startsWith("<html>") || !text.endsWith("</html>")) return false;
     int idx = "<html>".length();
@@ -133,12 +134,14 @@ public class LineTooltipRenderer implements TooltipRenderer {
     return result.toString();
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public void addBelow(String text) {
     String html1 = getHtmlBody(myText);
     String html2 = getHtmlBody(text);
     myText = "<html><body>" + html1 + "<hr size=1 noshade>" + html2 + "</body></html>";
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static String getHtmlBody(String text) {
     if (!text.startsWith("<html>")) {
       return text.replaceAll("\n","<br>");

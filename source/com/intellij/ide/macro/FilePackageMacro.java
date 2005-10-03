@@ -3,6 +3,7 @@ package com.intellij.ide.macro;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.psi.PsiPackage;
+import com.intellij.ide.IdeBundle;
 
 public final class FilePackageMacro extends Macro {
   public String getName() {
@@ -10,7 +11,7 @@ public final class FilePackageMacro extends Macro {
   }
 
   public String getDescription() {
-    return "File package";
+    return IdeBundle.message("macro.file.package");
   }
 
   public String expand(DataContext dataContext) {

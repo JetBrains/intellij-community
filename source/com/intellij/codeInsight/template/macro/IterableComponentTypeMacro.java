@@ -1,7 +1,8 @@
 package com.intellij.codeInsight.template.macro;
 
-import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -15,7 +16,7 @@ public class IterableComponentTypeMacro implements Macro {
   }
 
   public String getDescription() {
-    return "iterableComponentType(ArrayOrIterable)";
+    return CodeInsightBundle.message("macro.iterable.component.type");
   }
 
   public String getDefaultValue() {

@@ -14,6 +14,8 @@ package org.netbeans.lib.cvsclient.admin;
 
 import org.netbeans.lib.cvsclient.file.*;
 import org.netbeans.lib.cvsclient.util.BugLog;
+import org.netbeans.lib.cvsclient.SmartCvsSrcBundle;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -38,10 +40,14 @@ public final class AdminReader
 	// Setup ==================================================================
 
     private final String myCharset;
+  @NonNls private static final String CVS_REPOSITORY_FILE_PATH = "CVS/Repository";
+  @NonNls private static final String CVS_DIR_NAME = "CVS";
+  @NonNls private static final String CVS_ENTRIES_STATIC_FILE_PATH = "CVS/Entries.Static";
+  @NonNls private static final String CVS_ROOT_FILE_PATH = "CVS/Root";
 
-    public AdminReader(String charset) {
-      myCharset = charset;
-    }
+  public AdminReader(String charset) {
+    myCharset = charset;
+  }
 
 	// Implemented ============================================================
 
@@ -94,10 +100,11 @@ public final class AdminReader
 			if (dirFile == null
 			        || dirFile.getName().length() == 0
 			        || !dirFile.exists()) {
-				throw new FileNotFoundException("Repository file not found for directory " + directory);
+				throw new FileNotFoundException(
+                                  SmartCvsSrcBundle.message("repository.file.not.found.for.directory.error.message", directory));
 			}
 
-			repositoryFile = new File(dirFile, "CVS/Repository");
+			repositoryFile = new File(dirFile, CVS_REPOSITORY_FILE_PATH);
 			if (repositoryFile.exists()) {
 				break;
 			}
@@ -135,7 +142,7 @@ public final class AdminReader
 		BugLog.getInstance().assertNotNull(cvsFileSystem);
 
 		final File directory = cvsFileSystem.getAdminFileSystem().getFile(directoryObject);
-		return new File(directory, "CVS").isDirectory();
+		return new File(directory, CVS_DIR_NAME).isDirectory();
 	}
 
 	public boolean isModified(FileObject fileObject, Date entryLastModified, ICvsFileSystem cvsFileSystem) {
@@ -148,7 +155,7 @@ public final class AdminReader
         BugLog.getInstance().assertNotNull(cvsFileSystem);
 
         final File directory = cvsFileSystem.getAdminFileSystem().getFile(directoryObject);
-        return new File(directory, "CVS/Entries.Static").isFile();
+        return new File(directory, CVS_ENTRIES_STATIC_FILE_PATH).isFile();
     }
 
     public String getCvsRootForDirectory(DirectoryObject directoryObject, ICvsFileSystem cvsFileSystem) throws IOException {
@@ -162,10 +169,10 @@ public final class AdminReader
       if (dirFile == null
               || dirFile.getName().length() == 0
               || !dirFile.exists()) {
-        throw new FileNotFoundException("Root file not found for directory " + directory);
+        throw new FileNotFoundException(SmartCvsSrcBundle.message("root.file.not.found.for.directory.err.rmessage", directory));
       }
 
-      rootFile = new File(dirFile, "CVS/Root");
+      rootFile = new File(dirFile, CVS_ROOT_FILE_PATH);
       if (rootFile.exists()) {
         break;
       }

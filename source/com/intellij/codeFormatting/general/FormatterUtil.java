@@ -43,11 +43,13 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 
 public class FormatterUtil {
   public static String getWhiteSpaceBefore(ASTNode element) {
@@ -119,8 +121,19 @@ public class FormatterUtil {
   public static String replaceWhiteSpace(final String whiteSpace,
                                          final ASTNode leafElement,
                                          final IElementType whiteSpaceToken,
-                                         final TextRange textRange) {
+                                         final @Nullable TextRange textRange) {
     final CharTable charTable = SharedImplUtil.findCharTableByTree(leafElement);
+
+    if (textRange != null && textRange.getStartOffset() > leafElement.getTextRange().getStartOffset() &&
+        textRange.getEndOffset() < leafElement.getTextRange().getEndOffset()) {
+      char[] newText = createNewLeafChars(leafElement, textRange, whiteSpace);
+      LeafElement newElement = Factory.createSingleLeafElement(leafElement.getElementType(),
+                                                               newText,
+                                                               0, newText.length, charTable, leafElement.getPsi().getManager());
+
+      leafElement.getTreeParent().replaceChild(leafElement, newElement);
+      return whiteSpace;
+    }
 
     ASTNode treePrev = findPreviousWhiteSpace(leafElement);
     if (treePrev == null) {
@@ -170,6 +183,25 @@ public class FormatterUtil {
 
     }
     return getWhiteSpaceBefore(leafElement);
+  }
+
+  private static char[] createNewLeafChars(final ASTNode leafElement, final TextRange textRange, final String whiteSpace) {
+    final TextRange elementRange = leafElement.getTextRange();
+    final String elementText = leafElement.getText();
+
+    final StringBuffer result = new StringBuffer();
+
+    if (elementRange.getStartOffset() < textRange.getStartOffset()) {
+      result.append(elementText.substring(0, textRange.getStartOffset() - elementRange.getStartOffset()));
+    }
+
+    result.append(whiteSpace);
+
+    if (elementRange.getEndOffset() > textRange.getEndOffset()) {
+      result.append(elementText.substring(textRange.getEndOffset() - elementRange.getStartOffset()));
+    }
+
+    return result.toString().toCharArray();
   }
 
   private static void addWhiteSpace(final ASTNode treePrev, final LeafElement whiteSpaceElement,

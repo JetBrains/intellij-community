@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.extractInterface.ExtractClassUtil;
 import com.intellij.refactoring.memberPullUp.PullUpConflictsUtil;
 import com.intellij.refactoring.ui.ConflictsDialog;
@@ -28,7 +29,7 @@ import com.intellij.util.IncorrectOperationException;
 public class ExtractSuperclassHandler implements RefactoringActionHandler, ExtractSuperclassDialog.Callback {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.extractSuperclass.ExtractSuperclassHandler");
 
-  public static final String REFACTORING_NAME = "Extract Superclass";
+  public static final String REFACTORING_NAME = RefactoringBundle.message("extract.superclass.title");
 
   private PsiClass mySubclass;
   private Project myProject;
@@ -40,9 +41,7 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
     PsiElement element = file.findElementAt(offset);
     while (true) {
       if (element == null || element instanceof PsiFile) {
-        String message =
-                "Cannot perform the refactoring.\n" +
-                "The caret should be positioned inside the class to be refactored.";
+        String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.class"));
         RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.EXTRACT_SUPERCLASS, project);
         return;
       }
@@ -65,17 +64,13 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
     }
 
     if (mySubclass.isInterface()) {
-      String message =
-              "Cannot perform the refactoring.\n" +
-              "Superclass cannot be extracted from an interface.";
+      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("superclass.cannot.be.extracted.from.an.interface"));
       RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.EXTRACT_SUPERCLASS, project);
       return;
     }
 
     if (mySubclass.isEnum()) {
-      String message =
-              "Cannot perform the refactoring.\n" +
-              "Superclass cannot be extracted from an enum.";
+      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("superclass.cannot.be.extracted.from.an.enum"));
       RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.EXTRACT_SUPERCLASS, project);
       return;
     }
@@ -104,7 +99,7 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
         };
         ApplicationManager.getApplication().runWriteAction(action);
       }
-    }, "Extract Superclass", null);
+    }, REFACTORING_NAME, null);
 
   }
 
@@ -133,7 +128,7 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
     final MemberInfo[] selectedMemberInfos = dialog.getSelectedMemberInfos();
     final JavaDocPolicy javaDocPolicy = new JavaDocPolicy(dialog.getJavaDocPolicy());
     LvcsAction action = LvcsIntegration.checkinFilesBeforeRefactoring(myProject,
-              getCommandName(subclass, superclassName));
+                                                                      getCommandName(subclass, superclassName));
     try {
       PsiClass superclass = null;
 
@@ -154,7 +149,7 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
   }
 
   private String getCommandName(final PsiClass subclass, String newName) {
-    return "Extracting superclass " + newName + " from " + UsageViewUtil.getDescriptiveName(subclass);
+    return RefactoringBundle.message("extract.superclass.command.name", newName, UsageViewUtil.getDescriptiveName(subclass));
   }
 
 }

@@ -24,10 +24,9 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Map;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * Service for creating instances of Java, JavaDoc, AspectJ and XML PSI elements which don't have
@@ -41,7 +40,7 @@ public interface PsiElementFactory {
    * @return the created class instance.
    * @throws IncorrectOperationException if <code>name</code> is not a valid Java identifier.
    */
-  PsiClass createClass(String name) throws IncorrectOperationException;
+  PsiClass createClass(@NonNls String name) throws IncorrectOperationException;
 
   /**
    * Creates an empty interface with the specified name.
@@ -50,7 +49,7 @@ public interface PsiElementFactory {
    * @return the created interface instance.
    * @throws IncorrectOperationException if <code>name</code> is not a valid Java identifier.
    */
-  PsiClass createInterface(String name) throws IncorrectOperationException;
+  PsiClass createInterface(@NonNls String name) throws IncorrectOperationException;
 
   /**
    * Creates a field with the specified name and type.
@@ -61,7 +60,7 @@ public interface PsiElementFactory {
    * @throws IncorrectOperationException <code>name</code> is not a valid Java identifier
    *                                     or <code>type</code> represents an invalid type.
    */
-  PsiField createField(String name, PsiType type) throws IncorrectOperationException;
+  PsiField createField(@NonNls String name, PsiType type) throws IncorrectOperationException;
 
   /**
    * Creates an empty method with the specified name and return type.
@@ -72,7 +71,7 @@ public interface PsiElementFactory {
    * @throws IncorrectOperationException <code>name</code> is not a valid Java identifier
    *                                     or <code>type</code> represents an invalid type.
    */
-  PsiMethod createMethod(String name, PsiType returnType) throws IncorrectOperationException;
+  PsiMethod createMethod(@NonNls String name, PsiType returnType) throws IncorrectOperationException;
 
   /**
    * Creates an empty constructor.
@@ -98,7 +97,7 @@ public interface PsiElementFactory {
    * @throws IncorrectOperationException <code>name</code> is not a valid Java identifier
    *                                     or <code>type</code> represents an invalid type.
    */
-  PsiParameter createParameter(String name, PsiType type) throws IncorrectOperationException;
+  PsiParameter createParameter(@NonNls String name, PsiType type) throws IncorrectOperationException;
 
   /**
    * Creates an empty Java code block.
@@ -146,10 +145,10 @@ public interface PsiElementFactory {
    * Creates a substitutor for the specified class which replaces all type parameters
    * with their corresponding raw types.
    *
-   * @param aClass the class for which the substitutor is created.
+   * @param owner the class or method for which the substitutor is created.
    * @return the substitutor instance.
    */
-  PsiSubstitutor createRawSubstitutor(PsiClass aClass);
+  PsiSubstitutor createRawSubstitutor(PsiTypeParameterListOwner owner);
 
   /**
    * Creates a substitutor which uses the specified mapping between type parameters and types.
@@ -171,7 +170,7 @@ public interface PsiElementFactory {
   /**
    * @deprecated use {@link #createTypeByFQClassName(String, GlobalSearchScope)}
    */
-  PsiClassType createTypeByFQClassName(String qName);
+  PsiClassType createTypeByFQClassName(@NonNls String qName);
 
   /**
    * Creates a class type referencing a class with the specified class name in the specified
@@ -181,7 +180,7 @@ public interface PsiElementFactory {
    * @param resolveScope the scope in which the class is searched.
    * @return the class type instance.
    */
-  PsiClassType createTypeByFQClassName(String qName, GlobalSearchScope resolveScope);
+  PsiClassType createTypeByFQClassName(@NonNls String qName, GlobalSearchScope resolveScope);
 
   /**
    * Creates a type element referencing the specified type.
@@ -270,7 +269,7 @@ public interface PsiElementFactory {
    * @return the idenitifier instance.
    * @throws IncorrectOperationException if <code>text</code> is not a valid Java identifier.
    */
-  PsiIdentifier createIdentifier(String text) throws IncorrectOperationException;
+  PsiIdentifier createIdentifier(@NonNls String text) throws IncorrectOperationException;
 
   /**
    * Creates a Java keyword with the specified text.
@@ -279,7 +278,7 @@ public interface PsiElementFactory {
    * @return the keyword instance.
    * @throws IncorrectOperationException if <code>text</code> is not a valid Java keyword.
    */
-  PsiKeyword createKeyword(String keyword) throws IncorrectOperationException;
+  PsiKeyword createKeyword(@NonNls String keyword) throws IncorrectOperationException;
 
   /**
    * Creates an import statement for importing the specified class.
@@ -309,7 +308,7 @@ public interface PsiElementFactory {
    * @throws IncorrectOperationException if <code>name</code> is not a valid identifier or
    *                                     <code>type</code> is not a valid type.
    */
-  PsiDeclarationStatement createVariableDeclarationStatement(String name, PsiType type, PsiExpression initializer)
+  PsiDeclarationStatement createVariableDeclarationStatement(@NonNls String name, PsiType type, PsiExpression initializer)
     throws IncorrectOperationException;
 
   /**
@@ -376,7 +375,7 @@ public interface PsiElementFactory {
    * @return the created class instance.
    * @throws IncorrectOperationException if the text is not a valid class body.
    */
-  PsiClass createClassFromText(String text, PsiElement context) throws IncorrectOperationException;
+  PsiClass createClassFromText(@NonNls String text, PsiElement context) throws IncorrectOperationException;
 
   /**
    * Creates a Java field from the specified text.
@@ -386,7 +385,7 @@ public interface PsiElementFactory {
    * @return the created field instance.
    * @throws IncorrectOperationException if the text is not a valid field body.
    */
-  PsiField createFieldFromText(String text, PsiElement context) throws IncorrectOperationException;
+  PsiField createFieldFromText(@NonNls String text, PsiElement context) throws IncorrectOperationException;
 
   /**
    * Creates a Java method from the specified text with the specified language level.
@@ -397,7 +396,7 @@ public interface PsiElementFactory {
    * @return the created method instance.
    * @throws IncorrectOperationException if the text is not a valid method body.
    */
-  PsiMethod createMethodFromText(String text, PsiElement context, LanguageLevel languageLevel) throws IncorrectOperationException;
+  PsiMethod createMethodFromText(@NonNls String text, PsiElement context, LanguageLevel languageLevel) throws IncorrectOperationException;
 
   /**
    * Creates a Java method from the specified text.
@@ -407,7 +406,7 @@ public interface PsiElementFactory {
    * @return the created method instance.
    * @throws IncorrectOperationException if the text is not a valid method body.
    */
-  PsiMethod createMethodFromText(String text, PsiElement context) throws IncorrectOperationException;
+  PsiMethod createMethodFromText(@NonNls String text, PsiElement context) throws IncorrectOperationException;
 
   /**
    * Creates a Java parameter from the specified text.
@@ -417,7 +416,7 @@ public interface PsiElementFactory {
    * @return the created parameter instance.
    * @throws IncorrectOperationException if the text is not a valid parameter body.
    */
-  PsiParameter createParameterFromText(String text, PsiElement context) throws IncorrectOperationException;
+  PsiParameter createParameterFromText(@NonNls String text, PsiElement context) throws IncorrectOperationException;
 
   /**
    * Creates a Java type from the specified text.
@@ -428,7 +427,7 @@ public interface PsiElementFactory {
    * @return the created type instance.
    * @throws IncorrectOperationException if the text does not specify a valid type.
    */
-  PsiType createTypeFromText(String text, PsiElement context) throws IncorrectOperationException;
+  PsiType createTypeFromText(@NonNls String text, PsiElement context) throws IncorrectOperationException;
 
   /**
    * Creates a Java code block from the specified text.
@@ -448,7 +447,7 @@ public interface PsiElementFactory {
    * @return the created statement instance.
    * @throws IncorrectOperationException if the text does not specify a valid statement.
    */
-  PsiStatement createStatementFromText(String text, PsiElement context) throws IncorrectOperationException;
+  PsiStatement createStatementFromText(@NonNls String text, PsiElement context) throws IncorrectOperationException;
 
   /**
    * Creates a Java expression from the specified text.
@@ -458,7 +457,7 @@ public interface PsiElementFactory {
    * @return the created expression instance.
    * @throws IncorrectOperationException if the text does not specify a valid expression.
    */
-  PsiExpression createExpressionFromText(String text, PsiElement context) throws IncorrectOperationException;
+  PsiExpression createExpressionFromText(@NonNls String text, PsiElement context) throws IncorrectOperationException;
 
   /**
    * Creates a Java comment from the specified text.
@@ -477,7 +476,7 @@ public interface PsiElementFactory {
    * @return the created tag instance.
    * @throws IncorrectOperationException if the text does not specify a valid XML fragment.
    */
-  XmlTag createTagFromText(String text) throws IncorrectOperationException;
+  XmlTag createTagFromText(@NonNls String text) throws IncorrectOperationException;
 
   /**
    * Creates an XML attribute with the specified name and value.
@@ -487,7 +486,7 @@ public interface PsiElementFactory {
    * @return the created attribute instance.
    * @throws IncorrectOperationException if either <code>name</code> or <code>value</code> are not valid.
    */
-  XmlAttribute createXmlAttribute(String name, String value) throws IncorrectOperationException;
+  XmlAttribute createXmlAttribute(@NonNls String name, String value) throws IncorrectOperationException;
 
   /**
    * Creates an AspectJ type pattern from the specified text.
@@ -591,7 +590,7 @@ public interface PsiElementFactory {
    * @return the created type parameter instance.
    * @throws IncorrectOperationException if the text does not specify a valid type parameter.
    */
-  PsiTypeParameter createTypeParameterFromText(String text, PsiElement context) throws IncorrectOperationException;
+  PsiTypeParameter createTypeParameterFromText(@NonNls String text, PsiElement context) throws IncorrectOperationException;
 
   /**
    * Creates a package statement for the specified package name.
@@ -629,7 +628,7 @@ public interface PsiElementFactory {
    * @return the created annotation instance.
    * @throws IncorrectOperationException if the text does not specify a valid annotation.
    */
-  PsiAnnotation createAnnotationFromText(String annotationText, PsiElement context) throws IncorrectOperationException;
+  PsiAnnotation createAnnotationFromText(@NonNls String annotationText, PsiElement context) throws IncorrectOperationException;
 
   /**
    * Creates an <code>import static</code> statement for importing the specified member
@@ -651,7 +650,7 @@ public interface PsiElementFactory {
    * @return the created parameter list.
    * @throws IncorrectOperationException if some of the parameter names or types are invalid.
    */
-  PsiParameterList createParameterList(String[] names, PsiType[] types) throws IncorrectOperationException;
+  PsiParameterList createParameterList(@NonNls String[] names, PsiType[] types) throws IncorrectOperationException;
 
   /**
    * Creates a reference list element from the specified array of references.
@@ -683,7 +682,7 @@ public interface PsiElementFactory {
    * @return the created element.
    * @throws IncorrectOperationException if the creation failed for some reason.
    */
-  XmlText createDisplayText(String s) throws IncorrectOperationException;
+  XmlText createDisplayText(@NonNls String s) throws IncorrectOperationException;
 
   /**
    * Creates an XHTML tag with the specified text.
@@ -692,5 +691,5 @@ public interface PsiElementFactory {
    * @return the created tag instance.
    * @throws IncorrectOperationException if the text does not specify a valid XML fragment.
    */
-  XmlTag createXHTMLTagFromText(String s) throws IncorrectOperationException;
+  XmlTag createXHTMLTagFromText(@NonNls String s) throws IncorrectOperationException;
 }

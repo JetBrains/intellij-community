@@ -2,6 +2,7 @@ package com.intellij.ide.projectView.impl;
 
 import com.intellij.openapi.project.Project;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author cdr
@@ -11,12 +12,13 @@ public abstract class AbstractUrl {
   protected final String moduleName;
   private final String myType;
 
-  protected AbstractUrl(String url, String moduleName, String type) {
+  protected AbstractUrl(String url, String moduleName, @NonNls String type) {
     myType = type;
     this.url = url == null ? "" : url;
     this.moduleName = moduleName;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public void write(Element element) {
     element.setAttribute("url", url);
     if (moduleName != null) {

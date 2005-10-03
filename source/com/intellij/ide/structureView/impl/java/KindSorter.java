@@ -37,10 +37,12 @@ import com.intellij.psi.PsiMethod;
 
 import java.util.Comparator;
 
+import org.jetbrains.annotations.NonNls;
+
 public class KindSorter implements Sorter {
   public static final Sorter INSTANCE = new KindSorter();
 
-  public static final String ID = "KIND";
+  @NonNls public static final String ID = "KIND";
   private static final Comparator COMPARATOR = new Comparator() {
     public int compare(final Object o1, final Object o2) {
 

@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.compiler.CompileStatusNotification;
 import com.intellij.openapi.compiler.CompilerManager;
+import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.localVcs.LocalVcs;
 import com.intellij.openapi.localVcs.LvcsConfiguration;
 import com.intellij.openapi.project.Project;
@@ -17,10 +18,12 @@ public class CompileProjectAction extends CompileActionBase {
 
     CompilerManager.getInstance(project).rebuild(new CompileStatusNotification() {
       public void finished(boolean aborted, int errors, int warnings) {
-        //TODO move this option to the other configuration object
         if (!aborted && LvcsConfiguration.getInstance().ADD_LABEL_ON_PROJECT_COMPILATION) {
           String text = getTemplatePresentation().getText();
-          LocalVcs.getInstance(project).addLabel(errors == 0 ? "'" + text + "' with no errors" : "'" + text + "' with errors", "");
+          LocalVcs.getInstance(project).addLabel(
+            errors == 0 ? CompilerBundle.message("rebuild.lvcs.label.no.errors", text) : CompilerBundle .message("rebuild.lvcs.label.with.errors", text),
+            ""
+          );
         }
       }
     });

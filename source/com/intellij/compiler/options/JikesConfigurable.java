@@ -7,6 +7,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.ui.RawCommandLineEditor;
 
 import javax.swing.*;
@@ -39,7 +40,7 @@ public class JikesConfigurable implements Configurable{
         }
       }
     });
-    myAdditionalOptionsField.setDialodCaption("Additional command line parameters:");
+    myAdditionalOptionsField.setDialodCaption(CompilerBundle.message("java.compiler.option.additional.command.line.parameters"));
   }
 
   public String getDisplayName() {

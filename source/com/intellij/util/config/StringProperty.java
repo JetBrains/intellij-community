@@ -1,9 +1,10 @@
 package com.intellij.util.config;
 
 import com.intellij.openapi.util.Comparing;
+import org.jetbrains.annotations.NonNls;
 
 public class StringProperty extends ValueProperty<String> {
-  public StringProperty(String name, String defaultValue) {
+  public StringProperty(@NonNls String name, String defaultValue) {
     super(name, defaultValue);
   }
 

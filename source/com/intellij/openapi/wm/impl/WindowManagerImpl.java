@@ -23,6 +23,7 @@ import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.Alarm;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -45,8 +46,20 @@ import java.util.Set;
 public class WindowManagerImpl extends WindowManagerEx implements ApplicationComponent, NamedJDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.WindowManagerImpl");
   private static boolean ourAlphaModeLibraryLoaded;
+  @NonNls protected static final String FOCUSED_WINDOW_PROPERTY_NAME = "focusedWindow";
+  @NonNls protected static final String X_ATTR = "x";
+  @NonNls protected static final String FRAME_ELEMENT = "frame";
+  @NonNls protected static final String Y_ATTR = "y";
+  @NonNls protected static final String WIDTH_ATTR = "width";
+  @NonNls protected static final String HEIGHT_ATTR = "height";
+  @NonNls protected static final String EXTENDED_STATE_ATTR = "extended-state";
 
   static {
+    initialize();
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  private static void initialize() {
     try {
       System.loadLibrary("jawt");
       System.loadLibrary("transparency");
@@ -112,9 +125,9 @@ public class WindowManagerImpl extends WindowManagerEx implements ApplicationCom
     myCommandProcessor = new CommandProcessor();
     myWindowWatcher = new WindowWatcher();
     final KeyboardFocusManager keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-    keyboardFocusManager.addPropertyChangeListener("focusedWindow", myWindowWatcher);
+    keyboardFocusManager.addPropertyChangeListener(FOCUSED_WINDOW_PROPERTY_NAME, myWindowWatcher);
     if (Patches.SUN_BUG_ID_4218084) {
-      keyboardFocusManager.addPropertyChangeListener("focusedWindow", new SUN_BUG_ID_4218084_Patch());
+      keyboardFocusManager.addPropertyChangeListener(FOCUSED_WINDOW_PROPERTY_NAME, new SUN_BUG_ID_4218084_Patch());
     }
     myLayout = new DesktopLayout();
     myProject2Frame = new HashMap<Project, IdeFrame>();
@@ -361,32 +374,32 @@ public class WindowManagerImpl extends WindowManagerEx implements ApplicationCom
 
 // Non final for Fabrique
   public void readExternal(final Element element) throws InvalidDataException {
-    final Element frameElement = element.getChild("frame");
+    final Element frameElement = element.getChild(FRAME_ELEMENT);
     if (frameElement != null) {
 // load frame bounds
       myFrameBounds = new Rectangle();
       try {
-        myFrameBounds.x = Integer.parseInt(frameElement.getAttributeValue("x"));
+        myFrameBounds.x = Integer.parseInt(frameElement.getAttributeValue(X_ATTR));
       }
       catch (NumberFormatException ignored) {
       }
       try {
-        myFrameBounds.y = Integer.parseInt(frameElement.getAttributeValue("y"));
+        myFrameBounds.y = Integer.parseInt(frameElement.getAttributeValue(Y_ATTR));
       }
       catch (NumberFormatException ignored) {
       }
       try {
-        myFrameBounds.width = Integer.parseInt(frameElement.getAttributeValue("width"));
+        myFrameBounds.width = Integer.parseInt(frameElement.getAttributeValue(WIDTH_ATTR));
       }
       catch (NumberFormatException ignored) {
       }
       try {
-        myFrameBounds.height = Integer.parseInt(frameElement.getAttributeValue("height"));
+        myFrameBounds.height = Integer.parseInt(frameElement.getAttributeValue(HEIGHT_ATTR));
       }
       catch (NumberFormatException ignored) {
       }
       try {
-        myFrameExtendedState = Integer.parseInt(frameElement.getAttributeValue("extended-state"));
+        myFrameExtendedState = Integer.parseInt(frameElement.getAttributeValue(EXTENDED_STATE_ATTR));
         if ((myFrameExtendedState & Frame.ICONIFIED) > 0) {
           myFrameExtendedState = Frame.NORMAL;
         }
@@ -404,7 +417,7 @@ public class WindowManagerImpl extends WindowManagerEx implements ApplicationCom
 // Non final for Fabrique
   public void writeExternal(final org.jdom.Element element) throws WriteExternalException {
     // Save frame bounds
-    final Element frameElement = new Element("frame");
+    final Element frameElement = new Element(FRAME_ELEMENT);
     element.addContent(frameElement);
     final Project[] projects = ProjectManager.getInstance().getOpenProjects();
     final Project project;
@@ -418,11 +431,11 @@ public class WindowManagerImpl extends WindowManagerEx implements ApplicationCom
     final IdeFrame frame = getFrame(project);
     if (frame != null) {
       final Rectangle rectangle = frame.getBounds();
-      frameElement.setAttribute("x", Integer.toString(rectangle.x));
-      frameElement.setAttribute("y", Integer.toString(rectangle.y));
-      frameElement.setAttribute("width", Integer.toString(rectangle.width));
-      frameElement.setAttribute("height", Integer.toString(rectangle.height));
-      frameElement.setAttribute("extended-state", Integer.toString(frame.getExtendedState()));
+      frameElement.setAttribute(X_ATTR, Integer.toString(rectangle.x));
+      frameElement.setAttribute(Y_ATTR, Integer.toString(rectangle.y));
+      frameElement.setAttribute(WIDTH_ATTR, Integer.toString(rectangle.width));
+      frameElement.setAttribute(HEIGHT_ATTR, Integer.toString(rectangle.height));
+      frameElement.setAttribute(EXTENDED_STATE_ATTR, Integer.toString(frame.getExtendedState()));
 
       // Save default layout
       final Element layoutElement = new Element(DesktopLayout.TAG);

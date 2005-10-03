@@ -1,12 +1,13 @@
 package com.intellij.codeInsight.completion;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.filters.ElementFilter;
-import com.intellij.util.ArrayUtil;
 import com.intellij.lang.Language;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.filters.ElementFilter;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Set;
 
@@ -21,6 +22,9 @@ public class HtmlCompletionData extends XmlCompletionData {
   private static CompletionData ourStyleCompletionData;
   private boolean myCaseInsensitive;
   private static CompletionData ourScriptCompletionData;
+  private static final @NonNls String JAVASCRIPT_LANGUAGE_ID = "JavaScript";
+  private static final @NonNls String STYLE_TAG = "style";
+  private static final @NonNls String SCRIPT_TAG = "script";
 
   public HtmlCompletionData() {
     this(true);
@@ -48,9 +52,9 @@ public class HtmlCompletionData extends XmlCompletionData {
       public boolean isAcceptable(Object element, PsiElement context) {
         String name = ((XmlTag)context).getName();
         if (name == null) return true;
-        
-        if (equalNames(name, "style") ||
-            equalNames(name,"script")) {
+
+        if (equalNames(name, STYLE_TAG) ||
+            equalNames(name,SCRIPT_TAG)) {
           return false;
         }
 
@@ -93,8 +97,8 @@ public class HtmlCompletionData extends XmlCompletionData {
 
   private boolean isScriptContext(PsiElement element) {
     final Language language = element.getLanguage();
-    
-    return language != null && language.getID().equals("JavaScript");
+
+    return language != null && language.getID().equals(JAVASCRIPT_LANGUAGE_ID);
   }
 
   private boolean isScriptTag(XmlTag tag) {
@@ -103,7 +107,7 @@ public class HtmlCompletionData extends XmlCompletionData {
       if (tagName == null) return false;
       if (myCaseInsensitive) tagName = tagName.toLowerCase();
 
-      return tagName.equals("script");
+      return tagName.equals(SCRIPT_TAG);
     }
 
     return false;
@@ -115,7 +119,7 @@ public class HtmlCompletionData extends XmlCompletionData {
       if (tagName == null) return false;
       if (myCaseInsensitive) tagName = tagName.toLowerCase();
 
-      return tagName.equals("style");
+      return tagName.equals(STYLE_TAG);
     }
 
     return false;
@@ -145,9 +149,9 @@ public class HtmlCompletionData extends XmlCompletionData {
     if (parentOfType != null) {
       String name = parentOfType.getName();
       if (myCaseInsensitive) name = name.toLowerCase();
-      return "style".equals(name); //name.endsWith("style");
+      return STYLE_TAG.equals(name); //name.endsWith("style");
     }
-    
+
     return false;
   }
   private boolean isStyleContext(PsiElement position) {

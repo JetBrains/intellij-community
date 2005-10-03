@@ -19,6 +19,8 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author ven
  */
@@ -144,11 +146,11 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
     }
   }
 
-  public DebuggerExpressionComboBox(Project project, String recentsId) {
+  public DebuggerExpressionComboBox(Project project, @NonNls String recentsId) {
     this(project, null, recentsId);
   }
 
-  public DebuggerExpressionComboBox(Project project, PsiElement context, String recentsId) {
+  public DebuggerExpressionComboBox(Project project, PsiElement context, @NonNls String recentsId) {
     super(project, context, recentsId);
     myComboBox = new ComboBox(-1);
     // Have to turn this off because when used in InplaceEditor, the combobox pupup is hidden on every change of selection

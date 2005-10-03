@@ -21,6 +21,7 @@ import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.IntroduceParameterRefactoring;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.FieldConflictsResolver;
@@ -213,8 +214,8 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
           if (!(usageInfo.getElement() instanceof PsiMethod) && !(usageInfo instanceof InternalUsageInfo)) {
             final PsiElement element = usageInfo.getElement();
             if (!PsiTreeUtil.isAncestor(myMethodToReplaceIn.getContainingClass(), element, false)) {
-              conflicts.add("Parameter initializer contains " + ConflictsUtil.htmlEmphasize("super")
-                            + ", but not all calls to method are in its class.");
+              conflicts.add(RefactoringBundle.message("parameter.initializer.contains.0.but.not.all.calls.to.method.are.in.its.class",
+                                                      ConflictsUtil.htmlEmphasize(PsiKeyword.SUPER)));
               break;
             }
           }
@@ -244,9 +245,10 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
               if (element instanceof PsiMember &&
                   !myManager.getResolveHelper().isAccessible((PsiMember)element, place, null)) {
                 String message =
-                  ConflictsUtil.getDescription(element, true) + " is not accesible from " +
-                  ConflictsUtil.getDescription(ConflictsUtil.getContainer(place), true) + ". " +
-                  "Value for introduced parameter in that method call will be incorrect.";
+                  RefactoringBundle.message(
+                    "0.is.not.accesible.from.1.value.for.introduced.parameter.in.that.method.call.will.be.incorrect",
+                    ConflictsUtil.getDescription(element, true),
+                    ConflictsUtil.getDescription(ConflictsUtil.getContainer(place), true));
                 conflicts.add(message);
               }
             }
@@ -282,13 +284,10 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
     public void visitVariable(PsiVariable variable) {
       if (variable == myLocalVariable) return;
       if (variable.getName().equals(myParameterName)) {
-        StringBuffer buffer = new StringBuffer();
+        String descr = RefactoringBundle.message("there.is.already.a.0.it.will.conflict.with.an.introduced.parameter",
+                                                 ConflictsUtil.getDescription(variable, true));
 
-        buffer.append("There is already a ");
-        buffer.append(ConflictsUtil.getDescription(variable, true));
-        buffer.append(". It will conflict with an introduced parameter");
-
-        conflict = ConflictsUtil.capitalize(buffer.toString());
+        conflict = ConflictsUtil.capitalize(descr);
       }
     }
 
@@ -727,7 +726,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
 
 
   protected String getCommandName() {
-    return "Introducing parameter to " + UsageViewUtil.getDescriptiveName(myMethodToReplaceIn);
+    return RefactoringBundle.message("introduce.parameter.command", UsageViewUtil.getDescriptiveName(myMethodToReplaceIn));
   }
 
   private void changeMethodSignatureAndResolveFieldConflicts(PsiMethod overridingMethod, PsiType parameterType) throws IncorrectOperationException {

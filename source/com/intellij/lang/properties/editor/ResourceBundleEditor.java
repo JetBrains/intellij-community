@@ -43,10 +43,12 @@ import com.intellij.ui.GuiUtils;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
@@ -79,6 +81,8 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
   // user pressed backslash in the corresponding editor.
   // we cannot store it back to properties file right now, so just append the backslash to the editor and wait for the subsequent chars
   private Set<PropertiesFile> myBackSlashPressed = new THashSet<PropertiesFile>();
+  @NonNls private static final String VALUES = "values";
+  @NonNls private static final String NO_PROPERTY_SELECTED = "noPropertySelected";
 
   public ResourceBundleEditor(Project project, ResourceBundle resourceBundle) {
     myProject = project;
@@ -127,8 +131,8 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     myValuesPanel.setLayout(new CardLayout());
 
     JPanel valuesPanelComponent = new JPanel(new GridBagLayout());
-    myValuesPanel.add(valuesPanelComponent, "values");
-    myValuesPanel.add(myNoPropertySelectedPanel, "noPropertySelected");
+    myValuesPanel.add(valuesPanelComponent, VALUES);
+    myValuesPanel.add(myNoPropertySelectedPanel, NO_PROPERTY_SELECTED);
 
     List<PropertiesFile> propertiesFiles = myResourceBundle.getPropertiesFiles(myProject);
 
@@ -255,7 +259,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
         uninstallDocumentListeners();
         try {
           String propertyName = getSelectedPropertyName();
-          ((CardLayout)myValuesPanel.getLayout()).show(myValuesPanel, propertyName == null ? "noPropertySelected" : "values");
+          ((CardLayout)myValuesPanel.getLayout()).show(myValuesPanel, propertyName == null ? NO_PROPERTY_SELECTED : VALUES);
           if (propertyName == null) return;
 
           List<PropertiesFile> propertiesFiles = myResourceBundle.getPropertiesFiles(myProject);
@@ -277,7 +281,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
             }, "", this);
 
             JPanel titledPanel = myTitledPanels.get(propertiesFile);
-            ((TitledBorder)titledPanel.getBorder()).setTitleColor(property == null ? Color.red : UIManager.getColor("Label.textForeground"));
+            ((TitledBorder)titledPanel.getBorder()).setTitleColor(property == null ? Color.red : UIUtil.getLabelTextForeground());
             titledPanel.repaint();
           }
         }
@@ -291,7 +295,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
   private void updateDocumentFromPropertyValue(final String value,
                                                final Document document,
                                                final PropertiesFile propertiesFile) {
-    String text = value;
+    @NonNls String text = value;
     if (myBackSlashPressed.contains(propertiesFile)) {
       text += "\\";
     }

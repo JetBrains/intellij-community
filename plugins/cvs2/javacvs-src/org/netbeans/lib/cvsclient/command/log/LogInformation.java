@@ -303,7 +303,8 @@ public final class LogInformation {
 	/**
 	 * Return a string representation of this object. Useful for debugging.
 	 */
-	public String toString() {
+	@SuppressWarnings({"HardCodedStringLiteral"})
+        public String toString() {
 		final StringBuffer buf = new StringBuffer(30);
 		buf.append("\nFile: " + ((file != null) ? file.getAbsolutePath() : "null"));
 		buf.append("\nRepositoryFile: " + rcsFileName);

@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.j2ee.J2EEBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -30,9 +31,9 @@ public class EditLocationDialog extends DialogWrapper {
     super(project, true);
     myProject = project;
     myShowPath = showPath;
-    myTitle = "External Resource";
-    myName = "URI:";
-    myLocation = "Path:";
+    myTitle = J2EEBundle.message("dialog.title.external.resource");
+    myName = J2EEBundle.message("label.edit.external.resource.uri");
+    myLocation = J2EEBundle.message("label.edit.external.resource.path");
     init();
   }
 

@@ -32,6 +32,7 @@
 package com.intellij.ide.highlighter;
 
 import com.intellij.ide.structureView.StructureViewBuilder;
+import com.intellij.ide.IdeBundle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
@@ -41,7 +42,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 import javax.swing.*;
 
+import org.jetbrains.annotations.NonNls;
+
 public class ModuleFileType implements FileType {
+  @NonNls public static final String DEFAULT_EXTENSION = "iml";
+  @NonNls public static final String DOT_DEFAULT_EXTENSION = ".iml";
+
   private static final Icon ICON = IconLoader.getIcon("/nodes/ideaModule.png");
 
   public String getName() {
@@ -49,7 +55,7 @@ public class ModuleFileType implements FileType {
   }
 
   public String getDescription() {
-    return "Idea Module";
+    return IdeBundle.message("filetype.description.idea.module");
   }
 
   public String getDefaultExtension() {

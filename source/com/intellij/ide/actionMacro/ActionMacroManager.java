@@ -2,6 +2,7 @@ package com.intellij.ide.actionMacro;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
@@ -15,6 +16,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
 import java.io.File;
@@ -36,6 +38,8 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
   private ArrayList<ActionMacro> myMacros = new ArrayList<ActionMacro>();
   private String myLastMacroName = null;
   private boolean myIsPlaying = false;
+  @NonNls
+  private static final String ELEMENT_MACRO = "macro";
 
   public ActionMacroManager(ActionManagerEx actionManagerEx) {
     myActionManager = actionManagerEx;
@@ -43,6 +47,7 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
       public void beforeActionPerformed(AnAction action, DataContext dataContext) {
         if (myIsRecording) {
           String id = myActionManager.getId(action);
+          //noinspection HardCodedStringLiteral
           if (id != null && !"StartStopMacroRecording".equals(id)) {
             myRecordingMacro.appendAction(id);
           }
@@ -59,7 +64,7 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
 
   public void readExternal(Element element) throws InvalidDataException {
     myMacros = new ArrayList<ActionMacro>();
-    final List macros = element.getChildren("macro");
+    final List macros = element.getChildren(ELEMENT_MACRO);
     for (Iterator iterator = macros.iterator(); iterator.hasNext();) {
       Element macroElement = (Element)iterator.next();
       ActionMacro macro = new ActionMacro();
@@ -79,13 +84,13 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
   }
 
   public String getPresentableName() {
-    return "Macros";
+    return IdeBundle.message("title.macros");
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
     for (int i = 0; i < myMacros.size(); i++) {
       ActionMacro macro = myMacros.get(i);
-      Element macroElement = new Element("macro");
+      Element macroElement = new Element(ELEMENT_MACRO);
       macro.writeExternal(macroElement);
       element.addContent(macroElement);
     }
@@ -113,8 +118,8 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
     String macroName;
     do {
       macroName = Messages.showInputDialog(project,
-                                           "Enter macro name. Leave blank if macro is temporary.",
-                                           "Enter Macro Name",
+                                           IdeBundle.message("prompt.enter.macro.name"),
+                                           IdeBundle.message("title.enter.macro.name"),
                                            Messages.getQuestionIcon());
       if (macroName == null) {
         myRecordingMacro = null;
@@ -139,7 +144,7 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
     else {
       for (int i = 0; i < myMacros.size(); i++) {
         ActionMacro macro = myMacros.get(i);
-        if ("<noname>".equals(macro.getName())) {
+        if (IdeBundle.message("macro.noname").equals(macro.getName())) {
           myMacros.set(i, myRecordingMacro);
           myRecordingMacro = null;
           break;
@@ -255,8 +260,8 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
     final ActionManagerEx actionManager = (ActionManagerEx)ActionManager.getInstance();
     final String actionId = ActionMacro.MACRO_ACTION_PREFIX + name;
     if (actionManager.getAction(actionId) != null) {
-      if (Messages.showYesNoDialog("There is already a macro called '" + name + "'. Overwrite it?",
-                                   "Macro Name Already Used",
+      if (Messages.showYesNoDialog(IdeBundle.message("message.macro.exists", name),
+                                   IdeBundle.message("title.macro.name.already.used"),
                                    Messages.getWarningIcon()) != 0) {
         return false;
       }

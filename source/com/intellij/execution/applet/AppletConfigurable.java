@@ -4,6 +4,7 @@ import com.intellij.execution.impl.CheckableRunConfigurationEditor;
 import com.intellij.execution.junit2.configuration.ClassBrowser;
 import com.intellij.execution.junit2.configuration.ConfigurationModuleSelector;
 import com.intellij.execution.ui.AlternativeJREPanel;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
@@ -24,6 +25,8 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.*;
 import java.util.List;
+
+import org.jetbrains.annotations.NonNls;
 
 public class AppletConfigurable extends SettingsEditor<AppletConfiguration> implements CheckableRunConfigurationEditor<AppletConfiguration>{
   private JPanel myWholePanel;
@@ -52,7 +55,7 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
   private final ConfigurationModuleSelector myModuleSelector;
 
   private static final ColumnInfo[] PARAMETER_COLUMNS = new ColumnInfo[]{
-    new MyColumnInfo("Name"){
+    new MyColumnInfo(ExecutionBundle.message("applet.configuration.parameter.name.column")){
       public String valueOf(final AppletConfiguration.AppletParameter appletParameter) {
         return appletParameter.getName();
       }
@@ -61,7 +64,7 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
         appletParameter.setName(name);
       }
     },
-    new MyColumnInfo("Value") {
+    new MyColumnInfo(ExecutionBundle.message("applet.configuration.parameter.value.column")) {
       public String valueOf(final AppletConfiguration.AppletParameter appletParameter) {
         return appletParameter.getValue();
       }
@@ -73,6 +76,8 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
   };
   private final ListTableModel<AppletConfiguration.AppletParameter> myParameters = new ListTableModel<AppletConfiguration.AppletParameter>(PARAMETER_COLUMNS);
   private final TableView myTable;
+  @NonNls
+  protected static final String HTTP_PREFIX = "http:/";
 
   private void changePanel () {
     if (myMainClass.isSelected()) {
@@ -111,9 +116,9 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
       }
     });
 
-    getPolicyFileComponent().addBrowseFolderListener("Select applet policy file", null, myProject,
+    getPolicyFileComponent().addBrowseFolderListener(ExecutionBundle.message("select.applet.policy.file.dialog.title"), null, myProject,
                                                      FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
-    getHtmlPathComponent().addBrowseFolderListener("Choose HTML File", null, myProject,
+    getHtmlPathComponent().addBrowseFolderListener(ExecutionBundle.message("choose.html.file.dialog.title"), null, myProject,
                                                    FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
     ClassBrowser.createAppletClassBrowser(myProject, myModuleSelector).setField(getClassNameComponent());
 
@@ -200,7 +205,7 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
   public void resetEditorFrom(final AppletConfiguration configuration) {
     getClassNameComponent().setText(configuration.MAIN_CLASS_NAME);
     String presentableHtmlName = configuration.HTML_FILE_NAME;
-    if (presentableHtmlName != null && !presentableHtmlName.toLowerCase().startsWith("http:/")) {
+    if (presentableHtmlName != null && !presentableHtmlName.toLowerCase().startsWith(HTTP_PREFIX)) {
       presentableHtmlName = presentableHtmlName.replace('/', File.separatorChar);
     }
     getHtmlPathComponent().setText(presentableHtmlName);

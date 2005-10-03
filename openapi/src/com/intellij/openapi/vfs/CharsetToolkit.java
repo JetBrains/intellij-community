@@ -18,6 +18,7 @@ package com.intellij.openapi.vfs;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -65,6 +66,8 @@ import java.util.Collection;
  * @author Guillaume LAFORGE
  */
 public class CharsetToolkit {
+  public static final @NonNls String UTF8 = "UTF-8";
+
   private byte[] buffer;
   private Charset defaultCharset;
   private boolean enforce8Bit = false;
@@ -72,6 +75,7 @@ public class CharsetToolkit {
   static final byte[] UTF8_BOM = new byte[]{-17, -69, -65, };
   private static final byte[] UTF16LE_BOM = new byte[]{-1, -2, };
   private static final byte[] UTF16BE_BOM = new byte[]{-2, -1, };
+  @NonNls public static final String FILE_ENCODING_PROPERTY = "file.encoding";
 
   /**
    * Constructor of the <code>CharsetToolkit</code> utility class.
@@ -280,7 +284,7 @@ public class CharsetToolkit {
     if (settings == null) return null;
 
     String charsetName = settings.getCharsetName();
-    if ("System Default".equals(charsetName)) return getDefaultSystemCharset();
+    if (CharsetSettings.SYSTEM_DEFAULT_CHARSET_NAME.equals(charsetName)) return getDefaultSystemCharset();
     if (!Charset.isSupported(charsetName)) return getDefaultSystemCharset();
     Charset charset = Charset.forName(charsetName);
     return charset != null ? charset :  getDefaultSystemCharset();
@@ -364,7 +368,7 @@ public class CharsetToolkit {
   public static Charset getDefaultSystemCharset() {
     Charset charset = null;
     try {
-      charset = Charset.forName(System.getProperty("file.encoding"));
+      charset = Charset.forName(System.getProperty(FILE_ENCODING_PROPERTY));
     } catch (Exception e) {
       // Null is OK here.
     }

@@ -7,6 +7,7 @@ import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.ui.IdeBorderFactory;
@@ -16,7 +17,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
 public class InlineMethodDialog extends RefactoringDialog implements InlineOptions {
-  public static final String REFACTORING_NAME = "Inline Method";
+  public static final String REFACTORING_NAME = RefactoringBundle.message("inline.method.title");
   private PsiJavaCodeReferenceElement myReferenceElement;
   private final Editor myEditor;
 
@@ -44,8 +45,8 @@ public class InlineMethodDialog extends RefactoringDialog implements InlineOptio
     init();
 
     String methodText = PsiFormatUtil.formatMethod(myMethod,
-        PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS, PsiFormatUtil.SHOW_TYPE);
-    myMethodNameLabel.setText("Method " + methodText);
+                                                   PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS, PsiFormatUtil.SHOW_TYPE);
+    myMethodNameLabel.setText(RefactoringBundle.message("inline.method.method.label", methodText));
   }
 
   public boolean isInlineThisOnly() {
@@ -58,14 +59,16 @@ public class InlineMethodDialog extends RefactoringDialog implements InlineOptio
 
   protected JComponent createCenterPanel() {
     JPanel optionsPanel = new JPanel();
-    optionsPanel.setBorder(IdeBorderFactory.createTitledBorder("Inline"));
+    optionsPanel.setBorder(IdeBorderFactory.createTitledBorder(RefactoringBundle.message("inline.method.border.title")));
     optionsPanel.setLayout(new BoxLayout(optionsPanel, BoxLayout.Y_AXIS));
 
-    final String inlineAllText = myMethod.isWritable() ? "All invocations and remove the method" : "All invocations in project";
-    myRbInlineAll = new JRadioButton(inlineAllText, true);
-    myRbInlineAll.setMnemonic('A');
-    myRbInlineThisOnly = new JRadioButton("This invocation only and keep the method");
-    myRbInlineThisOnly.setMnemonic('t');
+    final String inlineAllText = myMethod.isWritable() ? RefactoringBundle.message("all.invocations.and.remove.the.method") :
+                                 RefactoringBundle.message("all.invocations.in.project");
+    myRbInlineAll = new JRadioButton();
+    myRbInlineAll.setText(inlineAllText);
+    myRbInlineAll.setSelected(true);
+    myRbInlineThisOnly = new JRadioButton();
+    myRbInlineThisOnly.setText(RefactoringBundle.message("this.invocation.only.and.keep.the.method"));
 
     optionsPanel.add(myRbInlineAll);
     optionsPanel.add(myRbInlineThisOnly);

@@ -20,6 +20,7 @@ import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.text.MessageFormat;
 
 /**
  * @author Anton Katilin
@@ -80,6 +81,7 @@ public final class InsertComponentProcessor extends EventProcessor{
 
     // Here is euristic. Chop first 'J' letter for standard Swing classes.
     // Without 'J' bindings look better.
+    //noinspection HardCodedStringLiteral
     if(
       shortClassName.length() > 1 && Character.isUpperCase(shortClassName.charAt(1)) &&
       componentClassName.startsWith("javax.swing.") &&
@@ -237,7 +239,7 @@ public final class InsertComponentProcessor extends EventProcessor{
         catch (final Exception exc) {
           String errorDescription = Utils.validateJComponentClass(loader, item.getClassName());
           if (errorDescription == null) {
-            errorDescription = "Class \"" + item.getClassName() + "\" cannot be instantiated";
+            errorDescription = UIDesignerBundle.message("error.class.cannot.be.instantiated", item.getClassName());
             final String message = FormEditingUtil.getExceptionMessage(exc);
             if (message != null) {
               errorDescription += ": " + message;

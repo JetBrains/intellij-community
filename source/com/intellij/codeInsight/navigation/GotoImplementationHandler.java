@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.util.EditSourceUtil;
@@ -57,7 +58,7 @@ public class GotoImplementationHandler implements CodeInsightActionHandler {
         result[0] = getSearchResults(element);
       }
     },
-      "Searching For Implementations...",
+      CodeInsightBundle.message("searching.for.implementations"),
       true,
       element.getProject())) {
       return null;
@@ -225,7 +226,7 @@ public class GotoImplementationHandler implements CodeInsightActionHandler {
         }
       };
 
-      String title = " Choose Implementation of " + ((PsiNamedElement) sourceElement).getName();
+      String title = CodeInsightBundle.message("goto.implementation.chooser.title", ((PsiNamedElement)sourceElement).getName());
       ListPopup listPopup = new ListPopup(title, list, runnable, project);
       LogicalPosition caretPosition = editor.getCaretModel().getLogicalPosition();
       Point caretLocation = editor.logicalPositionToXY(caretPosition);

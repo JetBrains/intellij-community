@@ -6,6 +6,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.DiffRequest;
 import com.intellij.openapi.diff.DiffTool;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.config.AbstractProperty;
@@ -51,7 +52,8 @@ abstract class BaseExternalTool implements DiffTool {
       commandLine.addParameter(convertToPath(request, 1));
       Runtime.getRuntime().exec(commandLine.getCommands());
     } catch (IOException e) {
-      ExecutionUtil.showExecutionErrorMessage(new ExecutionException(e.getMessage()), "Can't Launch Diff Tool", request.getProject());
+      ExecutionUtil.showExecutionErrorMessage(new ExecutionException(e.getMessage()),
+                                              DiffBundle.message("cant.launch.diff.tool.error.message"), request.getProject());
     }
   }
 

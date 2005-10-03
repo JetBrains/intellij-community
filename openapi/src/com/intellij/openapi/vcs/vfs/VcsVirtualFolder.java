@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.vfs;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.vcs.VcsBundle;
 
 import java.io.IOException;
 
@@ -36,6 +37,6 @@ public class VcsVirtualFolder extends AbstractVcsVirtualFile {
   }
 
   public byte[] contentsToByteArray() throws IOException {
-    throw new RuntimeException("Should not be called");
+    throw new RuntimeException(VcsBundle.message("exception.text.internal.error.method.should.not.be.called"));
   }
 }

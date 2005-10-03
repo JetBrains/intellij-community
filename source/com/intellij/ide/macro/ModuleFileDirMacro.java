@@ -4,6 +4,7 @@ import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ide.IdeBundle;
 
 import java.io.File;
 
@@ -13,7 +14,7 @@ public final class ModuleFileDirMacro extends Macro {
   }
 
   public String getDescription() {
-    return "The directory of the module file";
+    return IdeBundle.message("macro.module.file.directory");
   }
 
   public String expand(DataContext dataContext) {

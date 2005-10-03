@@ -124,8 +124,7 @@ public class Tree extends JTree {
     }
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public final void setLineStyleAngled(){
-    super.putClientProperty("JTree.lineStyle", "Angled");
+    UIUtil.setLineStyleAngled(this);
   }
 }

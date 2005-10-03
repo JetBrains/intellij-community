@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.ui.ClassCellRenderer;
 import com.intellij.refactoring.ui.MemberSelectionPanel;
@@ -73,8 +74,7 @@ public class PullUpDialog extends DialogWrapper {
 
   public MemberInfo[] getSelectedMemberInfos() {
     ArrayList<MemberInfo> list = new ArrayList<MemberInfo>(myMemberInfos.length);
-    for (int idx = 0; idx < myMemberInfos.length; idx++) {
-      MemberInfo info = myMemberInfos[idx];
+    for (MemberInfo info : myMemberInfos) {
       if (info.isChecked() && myMemberInfoModel.isMemberEnabled(info)) {
         list.add(info);
       }
@@ -105,14 +105,12 @@ public class PullUpDialog extends DialogWrapper {
     gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
     gbConstraints.fill = GridBagConstraints.BOTH;
     gbConstraints.anchor = GridBagConstraints.WEST;
-    final JLabel classComboLabel = new JLabel("Pull up members of " + myClass.getQualifiedName()
-                             + " to:");
+    final JLabel classComboLabel = new JLabel();
     panel.add(classComboLabel, gbConstraints);
 
     myClassCombo = new JComboBox(mySuperClasses.toArray());
     myClassCombo.setRenderer(new ClassCellRenderer());
-    classComboLabel.setLabelFor(myClassCombo);
-    classComboLabel.setDisplayedMnemonic('P');
+    classComboLabel.setText(RefactoringBundle.message("pull.up.members.to", myClass.getQualifiedName()));
 //    myClassCombo.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
     PsiClass nearestBase = RefactoringHierarchyUtil.getNearestBaseClass(myClass, false);
@@ -160,14 +158,14 @@ public class PullUpDialog extends DialogWrapper {
 
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new BorderLayout());
-    myMemberSelectionPanel = new MemberSelectionPanel("Members to be pulled up", myMemberInfos, "Make abstract");
+    myMemberSelectionPanel = new MemberSelectionPanel(RefactoringBundle.message("members.to.be.pulled.up"), myMemberInfos, RefactoringBundle.message("make.abstract"));
     myMemberInfoModel = new MyMemberInfoModel();
     myMemberInfoModel.memberInfoChanged(new MemberInfoChange(myMemberInfos));
     myMemberSelectionPanel.getTable().setMemberInfoModel(myMemberInfoModel);
     myMemberSelectionPanel.getTable().addMemberInfoChangeListener(myMemberInfoModel);
     panel.add(myMemberSelectionPanel, BorderLayout.CENTER);
 
-    myJavaDocPanel = new JavaDocPanel("JavaDoc for abstracts");
+    myJavaDocPanel = new JavaDocPanel(RefactoringBundle.message("javadoc.for.abstracts"));
     myJavaDocPanel.setPolicy(RefactoringSettings.getInstance().PULL_UP_MEMBERS_JAVADOC);
     panel.add(myJavaDocPanel, BorderLayout.EAST);
     return panel;

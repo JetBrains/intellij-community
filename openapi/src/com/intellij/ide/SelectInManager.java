@@ -20,9 +20,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.j2ee.J2EEBundle;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,6 +34,16 @@ import java.util.Iterator;
 public class SelectInManager implements JDOMExternalizable, ProjectComponent {
   private ArrayList<SelectInTarget> myTargets = new ArrayList<SelectInTarget>();
   private ArrayList myOrder = new ArrayList();
+  @NonNls
+  private static final String ELEMENT_TARGET = "target";
+  @NonNls
+  private static final String ATTRIBUTE_NAME = "name";
+  @NonNls public static final String PROJECT = IdeBundle.message("select.in.project");
+  @NonNls public static final String PACKAGES = IdeBundle.message("select.in.packages");
+  @NonNls public static final String ASPECTS = IdeBundle.message("select.in.aspects");
+  @NonNls public static final String COMMANDER = IdeBundle.message("select.in.commander");
+  @NonNls public static final String FAVORITES = IdeBundle.message("select.in.favorites");
+  @NonNls public static final String J2EE = J2EEBundle.message("select.in.j2ee");
 
   private SelectInManager() {
   }
@@ -107,17 +119,17 @@ public class SelectInManager implements JDOMExternalizable, ProjectComponent {
 
   public void readExternal(Element parentNode) throws InvalidDataException {
     myOrder.clear();
-    for (Iterator iterator = parentNode.getChildren("target").iterator(); iterator.hasNext();) {
+    for (Iterator iterator = parentNode.getChildren(ELEMENT_TARGET).iterator(); iterator.hasNext();) {
       Element element = (Element)iterator.next();
-      myOrder.add(element.getAttributeValue("name"));
+      myOrder.add(element.getAttributeValue(ATTRIBUTE_NAME));
     }
   }
 
   public void writeExternal(Element parentNode) throws WriteExternalException {
     for (Iterator iterator = myOrder.iterator(); iterator.hasNext();) {
       String targetName = (String)iterator.next();
-      Element e = new Element("target");
-      e.setAttribute("name", targetName);
+      Element e = new Element(ELEMENT_TARGET);
+      e.setAttribute(ATTRIBUTE_NAME, targetName);
       parentNode.addContent(e);
     }
   }

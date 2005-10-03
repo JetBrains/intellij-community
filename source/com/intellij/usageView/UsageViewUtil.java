@@ -6,6 +6,7 @@ import com.intellij.aspects.psi.PsiPointcutDef;
 import com.intellij.aspects.psi.gen.PsiErrorIntroduction;
 import com.intellij.aspects.psi.gen.PsiVerificationIntroduction;
 import com.intellij.lang.Language;
+import com.intellij.lang.LangBundle;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -17,6 +18,7 @@ import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.usageView.UsageViewBundle;
 import gnu.trove.THashSet;
 
 import java.util.Arrays;
@@ -27,7 +29,7 @@ import java.util.Set;
  */
 public class UsageViewUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.usageView.UsageViewUtil");
-  public static final String DEFAULT_PACKAGE_NAME = "<default>";
+  public static final String DEFAULT_PACKAGE_NAME = UsageViewBundle.message("default.package.presentable.name");
 
   private UsageViewUtil() { }
 
@@ -44,7 +46,7 @@ public class UsageViewUtil {
         name = xmlTag.getName();
       }
 
-      return ((metaData == null)?"<" + name + ">":name) + " of file " + xmlTag.getContainingFile().getName();
+      return UsageViewBundle.message("usage.target.xml.tag.of.file", ((metaData == null) ? "<" + name + ">" : name), xmlTag.getContainingFile().getName());
     }
     else if (element instanceof XmlAttributeValue) {
       return ((XmlAttributeValue)element).getValue();
@@ -67,7 +69,7 @@ public class UsageViewUtil {
       if (includeRootDir) {
         String rootDir = getRootDirectoryForPackage(directory);
         if (rootDir != null) {
-          return packageName + " (in " + rootDir + ")";
+          return UsageViewBundle.message("usage.target.package.in.directory", packageName, rootDir);
         }
       }
       return packageName;
@@ -128,14 +130,14 @@ public class UsageViewUtil {
       ret = ((PsiNamedElement)psiElement).getName();
     }
     else if (psiElement instanceof PsiThrowStatement) {
-      ret = "Exception";
+      ret = UsageViewBundle.message("usage.target.exception");
     }
     else if (psiElement instanceof XmlAttributeValue) {
       ret = ((XmlAttributeValue)psiElement).getValue();
     }
     else if (psiElement instanceof PsiVerificationIntroduction) {
       PsiLiteralExpression message = ((PsiVerificationIntroduction)psiElement).getMessage();
-      ret = message == null ? "<no message>" : (String)message.getValue();
+      ret = message == null ? UsageViewBundle.message("usage.target.verification.no.message") : (String)message.getValue();
     }
     else if (psiElement instanceof PsiAdvice) {
       ret = ((PsiAdvice)psiElement).getPointcut().getText();
@@ -160,7 +162,7 @@ public class UsageViewUtil {
     }
     else if (psiElement instanceof PsiClass) {
       if (psiElement instanceof PsiAnonymousClass) {
-        ret = "anonymous class";
+        ret = LangBundle.message("java.terms.anonymous.class");
       }
       else {
         ret = ((PsiClass)psiElement).getQualifiedName(); // It happens for local classes
@@ -193,7 +195,7 @@ public class UsageViewUtil {
     else if (psiElement instanceof PsiVerificationIntroduction) {
       PsiErrorIntroduction introduction = (PsiErrorIntroduction)psiElement;
       PsiLiteralExpression message = introduction.getMessage();
-      ret = message == null ? "<no message>" : (String)message.getValue();
+      ret = message == null ? UsageViewBundle.message("usage.target.verification.no.message") : (String)message.getValue();
     }
     else if (psiElement instanceof PsiAdvice) {
       ret = ((PsiAdvice)psiElement).getPointcut().getText();
@@ -210,17 +212,17 @@ public class UsageViewUtil {
       if (metaData!=null && metaData.getDeclaration() instanceof XmlTag) {
         return ((XmlTag)metaData.getDeclaration()).getName();
       }
-      return "XML tag";
+      return LangBundle.message("xml.terms.xml.tag");
     }
 
     if (psiElement instanceof PsiAntElement) {
       return ((PsiAntElement)psiElement).getRole().getName();
     } else if (psiElement instanceof PsiFile) {
-      return "file";
+      return LangBundle.message("terms.file");
     } else if (psiElement instanceof PsiDirectory) {
-      return "directory";
+      return LangBundle.message("terms.directory");
     } else if (psiElement instanceof WebDirectoryElement) {
-      return "web directory";
+      return LangBundle.message("terms.web.directory");
     }
 
     final Language lang = psiElement.getLanguage();
@@ -247,21 +249,6 @@ public class UsageViewUtil {
     }
 
     return ret;
-  }
-
-  public static String getUsageCountInfo(int usagesCount, int filesCount, String referenceWord) {
-    String info;
-    if (filesCount > 0) {
-      String files = filesCount != 1 ? " files " : " file ";
-      if (usagesCount > 1) {
-        referenceWord += "s";
-      }
-      info = "( " + usagesCount + " " + referenceWord + " in " + filesCount + files + ")";
-    }
-    else {
-      info = "( Not found )";
-    }
-    return info;
   }
 
   public static boolean hasNonCodeUsages(UsageInfo[] usages) {

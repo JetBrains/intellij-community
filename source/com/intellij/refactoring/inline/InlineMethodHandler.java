@@ -4,37 +4,38 @@ package com.intellij.refactoring.inline;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 
 class InlineMethodHandler {
-  private static final String REFACTORING_NAME = "Inline Method";
+  private static final String REFACTORING_NAME = RefactoringBundle.message("inline.method.title");
 
   public void invoke(final Project project, Editor editor, final PsiMethod method) {
     if (method.getBody() == null){
       String message;
       if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        message = REFACTORING_NAME + " refactoring cannot be applied to abstract methods";
+        message = RefactoringBundle.message("refactoring.cannot.be.applied.to.abstract.methods", REFACTORING_NAME);
       }
       else {
-        message = REFACTORING_NAME + " refactoring cannot be applied: no sources attached";
+        message = RefactoringBundle.message("refactoring.cannot.be.applied.no.sources.attached", REFACTORING_NAME);
       }
       RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_METHOD, project);
       return;
     }
 
     if (InlineMethodProcessor.checkBadReturns(method)) {
-      String message = REFACTORING_NAME + " refactoring is not supported when return statement interrupts the execution flow";
+      String message = RefactoringBundle.message("refactoring.is.not.supported.when.return.statement.interrupts.the.execution.flow", REFACTORING_NAME);
       RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_METHOD, project);
       return;
     }
 
     if (checkRecursive(method)) {
-      String message = REFACTORING_NAME + " refactoring is not supported for recursive methods";
+      String message = RefactoringBundle.message("refactoring.is.not.supported.for.recursive.methods", REFACTORING_NAME);
       RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_METHOD, project);
       return;
     }
@@ -42,12 +43,12 @@ class InlineMethodHandler {
     PsiReference reference = editor != null ? TargetElementUtil.findReference(editor, editor.getCaretModel().getOffset()) : null;
     if (method.isConstructor()) {
       if (method.isVarArgs()) {
-        String message = REFACTORING_NAME + " refactoring cannot be applied to vararg constructors";
+        String message = RefactoringBundle.message("refactoring.cannot.be.applied.to.vararg.constructors", REFACTORING_NAME);
         RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_METHOD, project);
         return;
       }
       if (!checkChainingConstructor(method)) {
-        String message = REFACTORING_NAME + " refactoring cannot be applied to inline non-chaining constructors";
+        String message = RefactoringBundle.message("refactoring.cannot.be.applied.to.inline.non.chaining.constructors", REFACTORING_NAME);
         RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_METHOD, project);
         return;
       }

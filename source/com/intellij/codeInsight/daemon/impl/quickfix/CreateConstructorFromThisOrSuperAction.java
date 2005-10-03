@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateStateListener;
@@ -12,6 +13,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * Created by IntelliJ IDEA.
@@ -29,7 +31,7 @@ public abstract class CreateConstructorFromThisOrSuperAction extends CreateFromU
     myMethodCall = methodCall;
   }
 
-  abstract protected String getSyntheticMethodName ();
+  abstract protected @NonNls String getSyntheticMethodName ();
 
   protected boolean isAvailableImpl(int offset) {
     PsiReferenceExpression ref = myMethodCall.getMethodExpression();
@@ -42,7 +44,7 @@ public abstract class CreateConstructorFromThisOrSuperAction extends CreateFromU
     LOG.assertTrue(targetClasses.length == 1);
 
     if (shouldShowTag(offset, ref.getReferenceNameElement(), myMethodCall)) {
-      setText("Create Constructor In '" + targetClasses[0].getName() + "'");
+      setText(QuickFixBundle.message("create.constructor.text", targetClasses[0].getName()));
       return true;
     }
 

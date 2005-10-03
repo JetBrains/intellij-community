@@ -11,25 +11,22 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerEx;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.refactoring.ui.RefactoringDialog;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.lang.StdLanguages;
 
 import javax.swing.*;
 import java.awt.*;
@@ -59,6 +56,7 @@ public class RenameDialog extends RefactoringDialog {
   private Project myProject;
   private PsiElement myPsiElement;
   private final PsiElement myNameSuggestionContext;
+  private static final String REFACTORING_NAME = RefactoringBundle.message("rename.title");
 
   public RenameDialog(Project project,
                       PsiElement psiElement,
@@ -68,12 +66,12 @@ public class RenameDialog extends RefactoringDialog {
     myProject = project;
     myPsiElement = psiElement;
     myNameSuggestionContext = nameSuggestionContext;
-    setTitle("Rename");
+    setTitle(REFACTORING_NAME);
 
     createNewNameComponent();
     init();
 
-    myNameLabel.setText("Rename " + getFullName() + " and its usages to:");
+    myNameLabel.setText(RefactoringBundle.message("rename.0.and.its.usages.to", getFullName()));
     boolean toSearchInComments =
       RefactoringSettings.getInstance().isToSearchInCommentsForRename(myPsiElement);
     boolean toSearchForTextOccurences =
@@ -275,15 +273,15 @@ public class RenameDialog extends RefactoringDialog {
   }
 
   public boolean shouldRenameVariables() {
-    return myCbRenameVariables != null ? myCbRenameVariables.isSelected() : false;
+    return myCbRenameVariables != null && myCbRenameVariables.isSelected();
   }
 
   public boolean shouldRenameInheritors() {
-    return myCbRenameInheritors != null ? myCbRenameInheritors.isSelected() : false;
+    return myCbRenameInheritors != null && myCbRenameInheritors.isSelected();
   }
 
   public boolean shouldRenameForms() {
-    return myCbRenameBoundForms != null ? myCbRenameBoundForms.isSelected() : false;
+    return myCbRenameBoundForms != null && myCbRenameBoundForms.isSelected();
   }
 
 
@@ -321,8 +319,8 @@ public class RenameDialog extends RefactoringDialog {
     gbConstraints.gridx = 0;
     gbConstraints.weightx = 1;
     gbConstraints.fill = GridBagConstraints.BOTH;
-    myCbSearchInComments = new NonFocusableCheckBox("Search in comments and strings");
-    myCbSearchInComments.setMnemonic('S');
+    myCbSearchInComments = new NonFocusableCheckBox();
+    myCbSearchInComments.setText(RefactoringBundle.getSearchInCommentsAndStringsText());
     myCbSearchInComments.setSelected(true);
     panel.add(myCbSearchInComments, gbConstraints);
 
@@ -331,8 +329,8 @@ public class RenameDialog extends RefactoringDialog {
     gbConstraints.gridx = 1;
     gbConstraints.weightx = 1;
     gbConstraints.fill = GridBagConstraints.BOTH;
-    myCbSearchTextOccurences = new NonFocusableCheckBox("Search for text occurences");
-    myCbSearchTextOccurences.setMnemonic('t');
+    myCbSearchTextOccurences = new NonFocusableCheckBox();
+    myCbSearchTextOccurences.setText(RefactoringBundle.getSearchForTextOccurencesText());
     myCbSearchTextOccurences.setSelected(true);
     panel.add(myCbSearchTextOccurences, gbConstraints);
     if (!RefactoringUtil.isSearchTextOccurencesEnabled(myPsiElement)) {
@@ -347,8 +345,8 @@ public class RenameDialog extends RefactoringDialog {
       gbConstraints.gridx = 0;
       gbConstraints.weightx = 1;
       gbConstraints.fill = GridBagConstraints.BOTH;
-      myCbRenameVariables = new NonFocusableCheckBox("Rename variables");
-      myCbRenameVariables.setMnemonic('v');
+      myCbRenameVariables = new NonFocusableCheckBox();
+      myCbRenameVariables.setText(RefactoringBundle.message("rename.variables"));
       myCbRenameVariables.setSelected(true);
       panel.add(myCbRenameVariables, gbConstraints);
 
@@ -357,8 +355,8 @@ public class RenameDialog extends RefactoringDialog {
       gbConstraints.gridx = 1;
       gbConstraints.weightx = 1;
       gbConstraints.fill = GridBagConstraints.BOTH;
-      myCbRenameInheritors = new NonFocusableCheckBox("Rename inheritors");
-      myCbRenameInheritors.setMnemonic('i');
+      myCbRenameInheritors = new NonFocusableCheckBox();
+      myCbRenameInheritors.setText(RefactoringBundle.message("rename.inheritors"));
       myCbRenameInheritors.setSelected(true);
       panel.add(myCbRenameInheritors, gbConstraints);
 
@@ -371,8 +369,8 @@ public class RenameDialog extends RefactoringDialog {
           gbConstraints.gridx = 0;
           gbConstraints.weightx = 1;
           gbConstraints.fill = GridBagConstraints.BOTH;
-          myCbRenameBoundForms = new NonFocusableCheckBox("Rename bound forms");
-          myCbRenameBoundForms.setMnemonic('f');
+          myCbRenameBoundForms = new NonFocusableCheckBox();
+          myCbRenameBoundForms.setText(RefactoringBundle.message("rename.bound.forms"));
           myCbRenameBoundForms.setSelected(true);
           panel.add(myCbRenameBoundForms, gbConstraints);
         }
@@ -390,10 +388,6 @@ public class RenameDialog extends RefactoringDialog {
     LOG.assertTrue(myPsiElement.isValid());
 
     final RefactoringSettings settings = RefactoringSettings.getInstance();
-    if (!checkNameConflicts()) {
-      myNameSuggestionsField.requestFocusInWindow();
-      return;
-    }
 
     settings.setToSearchInCommentsForRename(myPsiElement, isSearchInComments());
     if (myCbSearchTextOccurences.isEnabled()) {
@@ -409,77 +403,6 @@ public class RenameDialog extends RefactoringDialog {
     processor.setShouldRenameForms(shouldRenameForms());
 
     invokeRefactoring(processor);
-  }
-
-  private boolean checkNameConflicts() {
-    final PsiManager manager = PsiManager.getInstance(myProject);
-    String newName = getNewName();
-    try {
-      PsiElementFactory factory = manager.getElementFactory();
-      if (myPsiElement instanceof PsiMethod) {
-        PsiMethod refactoredMethod = (PsiMethod)myPsiElement;
-        if (newName.equals(refactoredMethod.getName())) {
-          return true;
-        }
-        PsiMethod prototype = (PsiMethod)refactoredMethod.copy();
-        prototype.getNameIdentifier().replace(factory.createIdentifier(newName));
-        PsiClass aClass = refactoredMethod.getContainingClass();
-        return RefactoringMessageUtil.checkMethodConflicts(
-          aClass != null ? (PsiElement)aClass : (PsiElement)refactoredMethod.getContainingFile(),
-          refactoredMethod,
-          prototype
-        );
-      }
-      else if (myPsiElement instanceof PsiField) {
-        PsiField refactoredField = (PsiField)myPsiElement;
-        if (newName.equals(refactoredField.getName())) {
-          return true;
-        }
-        PsiClass aClass = refactoredField.getContainingClass();
-        return RefactoringMessageUtil.checkFieldConflicts(
-          aClass != null ? (PsiElement)aClass : (PsiElement)refactoredField.getContainingFile(),
-          newName
-        );
-      }
-      else if (myPsiElement instanceof PsiClass) {
-        final PsiClass aClass = ((PsiClass)myPsiElement);
-        if (newName.equals(aClass.getName())) {
-          return true;
-        }
-        if (myPsiElement.getParent() instanceof PsiClass) { // innerClass
-          PsiClass containingClass = (PsiClass)myPsiElement.getParent();
-          PsiClass[] innerClasses = containingClass.getInnerClasses();
-          for (PsiClass innerClass : innerClasses) {
-            if (newName.equals(innerClass.getName())) {
-              int ret = Messages.showYesNoDialog(
-                myProject,
-                "Inner class " + newName + " is already defined in class " + containingClass.getQualifiedName() +
-                ".\nContinue anyway?",
-                "Warning",
-                Messages.getWarningIcon()
-              );
-              if (ret != 0) {
-                return false;
-              }
-              break;
-            }
-          }
-        }
-        else {
-          final String qualifiedNameAfterRename = RenameUtil.getQualifiedNameAfterRename(aClass, newName);
-          final PsiClass conflictingClass = PsiManager.getInstance(myProject).findClass(qualifiedNameAfterRename);
-          if (conflictingClass != null) {
-            RefactoringMessageUtil.showErrorMessage("Error", "Class " + qualifiedNameAfterRename + " already exists",
-                                                    null, myProject);
-            return false;
-          }
-        }
-      }
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
-    return true;
   }
 
   protected boolean areButtonsValid() {

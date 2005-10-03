@@ -9,6 +9,7 @@
 package com.intellij.refactoring.rename;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.usageView.UsageViewUtil;
 
@@ -21,13 +22,10 @@ public class LocalHidesRenamedLocalUsageInfo extends UnresolvableCollisionUsageI
   }
 
   public String getDescription() {
-    StringBuffer buffer = new StringBuffer();
 
-    buffer.append("There is already a ");
-    buffer.append(ConflictsUtil.getDescription(myConflictingElement, true));
-    buffer.append(". It will conflict with the renamed ");
-    buffer.append(UsageViewUtil.getType(getElement()));
-
-    return ConflictsUtil.capitalize(buffer.toString());
+    final String descr = RefactoringBundle.message("there.is.already.a.0.it.will.conflict.with.the.renamed.1",
+                                                   ConflictsUtil.getDescription(myConflictingElement, true),
+                                                   UsageViewUtil.getType(getElement()));
+    return ConflictsUtil.capitalize(descr);
   }
 }

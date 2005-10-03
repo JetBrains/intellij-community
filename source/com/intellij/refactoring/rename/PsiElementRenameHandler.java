@@ -19,6 +19,7 @@ import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.usageView.UsageViewUtil;
@@ -65,11 +66,9 @@ public class PsiElementRenameHandler implements RenameHandler {
           StringBuffer message = new StringBuffer();
           RenameUtil.buildPackagePrefixChangedMessage(virtualFiles, message, qualifiedName);
           RenameUtil.buildMultipleDirectoriesInPackageMessage(message, aPackage, directories);
-          message.append("\n\nAll these directories and all references to package \n");
-          message.append(qualifiedName);
-          message.append("\nwill be renamed.");
-          message.append("\nDo you wish to continue?");
-          int ret = Messages.showYesNoDialog(project, message.toString(), "Warning", Messages.getWarningIcon());
+          message.append(RefactoringBundle.message("directories.and.all.references.to.package.will.be.renamed",
+                                                        qualifiedName));
+          int ret = Messages.showYesNoDialog(project, message.toString(), RefactoringBundle.message("warning.title"), Messages.getWarningIcon());
           if (ret != 0) {
             return;
           }
@@ -94,14 +93,18 @@ public class PsiElementRenameHandler implements RenameHandler {
       }
     }
 
-    final String REFACTORING_NAME = "Rename";
+    final String REFACTORING_NAME = RefactoringBundle.message("rename.title");
     if (element == null ||
         !(element instanceof PsiFile || element instanceof PsiPointcutDef || element instanceof PsiPackage ||
           element instanceof PsiDirectory || element instanceof PsiClass || element instanceof PsiVariable ||
           element instanceof PsiMethod || element instanceof PsiNamedElement || element instanceof XmlAttributeValue)) {
-      String message =
-        "Cannot perform the refactoring.\n" +
-        "The caret should be positioned at the symbol to be renamed.";
+      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.symbol"));
+      RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, null, project);
+      return false;
+    }
+
+    if (!PsiManager.getInstance(project).isInProject(element)) {
+      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.out.of.project.element", UsageViewUtil.getType(element)));
       RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, null, project);
       return false;
     }
@@ -131,8 +134,8 @@ public class PsiElementRenameHandler implements RenameHandler {
         String className = UsageViewUtil.getShortName(containingClass);
         int ret = Messages.showYesNoDialog(
           project,
-          "Constructor cannot be renamed.\nWould you like to rename " + classType + " " + className + "?",
-          "Warning",
+          RefactoringBundle.message("constructor.cannot.be.renamed.would.you.like.to.rename.class", classType, className),
+          RefactoringBundle.message("warning.title"),
           Messages.getQuestionIcon());
         if (ret != 0) {
           return;
@@ -146,10 +149,10 @@ public class PsiElementRenameHandler implements RenameHandler {
 
       PsiElement elementToRename = element;
       if (elementToRename instanceof PsiMethod) {
-        elementToRename = SuperMethodWarningUtil.checkSuperMethod((PsiMethod)elementToRename, "rename");
+        elementToRename = SuperMethodWarningUtil.checkSuperMethod((PsiMethod)elementToRename, RefactoringBundle.message("to.rename"));
         if (elementToRename == null) return;
 
-        elementToRename = EjbUtil.checkDeclMethod((PsiMethod)elementToRename, "rename");
+        elementToRename = EjbUtil.checkDeclMethod((PsiMethod)elementToRename, RefactoringBundle.message("to.rename"));
         if (elementToRename == null) return;
 
         if (!elementToRename.isWritable()) {

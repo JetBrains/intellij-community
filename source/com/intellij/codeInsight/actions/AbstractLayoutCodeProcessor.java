@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.actions;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
@@ -127,8 +128,8 @@ public abstract class AbstractLayoutCodeProcessor {
                                                                      myProject)) {
       Messages.showMessageDialog(
         myProject,
-        "Cannot modify a read-only file.",
-        "File Is Read-Only",
+        CodeInsightBundle.message("error.dialog.readonly.file.message"),
+        CodeInsightBundle.message("error.dialog.readonly.file.title"),
         Messages.getErrorIcon()
       );
       return;
@@ -160,7 +161,7 @@ public abstract class AbstractLayoutCodeProcessor {
   private boolean checkFileWritable(final PsiFile file){
     if (!file.isWritable()){
       MessagesEx.fileIsReadOnly(myProject, file.getVirtualFile())
-          .setTitle("Cannot Process File")
+          .setTitle(CodeInsightBundle.message("error.dialog.readonly.file.title"))
           .showLater();
       return false;
     }
@@ -237,21 +238,21 @@ public abstract class AbstractLayoutCodeProcessor {
   private void runProcessDirectory(final PsiDirectory directory, final boolean recursive) {
     final ArrayList<PsiFile> array = new ArrayList<PsiFile>();
     collectFilesToProcess(array, directory, recursive);
-    final String where = "Directory '" + directory.getVirtualFile().getPresentableUrl() + "'";
+    final String where = CodeInsightBundle.message("process.scope.directory", directory.getVirtualFile().getPresentableUrl());
     runProcessOnFiles(where, array);
   }
 
   private void runProcessOnProject(final Project project) {
     final ArrayList<PsiFile> array = new ArrayList<PsiFile>();
     collectFilesInProject(project, array);
-    String where = "Project '" + project.getProjectFilePath() + "'";
+    String where = CodeInsightBundle.message("process.scope.project", project.getProjectFilePath());
     runProcessOnFiles(where, array);
   }
 
   private void runProcessOnModule(final Module module) {
     final ArrayList<PsiFile> array = new ArrayList<PsiFile>();
     collectFilesInModule(module, array);
-    String where = "Module '" + module.getModuleFilePath() + "'";
+    String where = CodeInsightBundle.message("process.scope.module", module.getModuleFilePath());
     runProcessOnFiles(where, array);
   }
 
@@ -278,8 +279,8 @@ public abstract class AbstractLayoutCodeProcessor {
       if (checkWritable && !file.isWritable()) {
         int res = Messages.showOkCancelDialog(
           myProject,
-          where + " contains read-only file(s).\nProcess all other files?",
-          "Cannot Modify Read-Only Files",
+          CodeInsightBundle.message("error.dialog.readonly.files.message", where),
+          CodeInsightBundle.message("error.dialog.readonly.files.title"),
           Messages.getQuestionIcon()
         );
         if (res != 0) {

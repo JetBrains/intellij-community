@@ -47,7 +47,7 @@ public class RunConfigurationAction extends ComboBoxAction {
     final DataContext dataContext = e.getDataContext();
     final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
     if (ActionPlaces.MAIN_MENU.equals(e.getPlace())) {
-      presentation.setDescription("Open run/debug configurations dropdown");
+      presentation.setDescription(ExecutionBundle.message("choose.run.configuration.action.description"));
       presentation.setEnabled(findFrame(dataContext) != null);
       return;
     }
@@ -152,7 +152,7 @@ public class RunConfigurationAction extends ComboBoxAction {
         disable(presentation);
         return;
       }
-      presentation.setText("&Save " + tempConfiguration.getName() + " Configuration");
+      presentation.setText(ExecutionBundle.message("save.temporary.run.configuration.action.name", tempConfiguration.getName()));
       presentation.setVisible(true);
       presentation.setEnabled(true);
     }

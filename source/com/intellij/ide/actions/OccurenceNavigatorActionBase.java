@@ -1,9 +1,11 @@
 
 package com.intellij.ide.actions;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -25,6 +27,9 @@ abstract class OccurenceNavigatorActionBase extends AnAction {
     if (navigator == null) {
       return;
     }
+    if (!hasOccurenceToGo(navigator)) {
+      return;
+    }
     OccurenceNavigator.OccurenceInfo occurenceInfo = go(navigator);
     if (occurenceInfo == null) {
       return;
@@ -36,7 +41,8 @@ abstract class OccurenceNavigatorActionBase extends AnAction {
     if(occurenceInfo.getOccurenceNumber()==-1||occurenceInfo.getOccurencesCount()==-1){
       return;
     }
-    WindowManager.getInstance().getStatusBar(project).setInfo("Occurrence "+occurenceInfo.getOccurenceNumber()+" of "+occurenceInfo.getOccurencesCount());
+    WindowManager.getInstance().getStatusBar(project).setInfo(
+      IdeBundle.message("message.occurrence.N.of.M", occurenceInfo.getOccurenceNumber(), occurenceInfo.getOccurencesCount()));
   }
 
   public void update(AnActionEvent event) {
@@ -82,24 +88,24 @@ abstract class OccurenceNavigatorActionBase extends AnAction {
   private OccurenceNavigator findNavigator(JComponent parent) {
     LinkedList<JComponent> queue = new LinkedList<JComponent>();
     queue.addLast(parent);
-    for (; !queue.isEmpty(); ) {
+    while (!queue.isEmpty()) {
       JComponent component = queue.removeFirst();
-      if (component instanceof OccurenceNavigator) return (OccurenceNavigator) component;
+      if (component instanceof OccurenceNavigator) return (OccurenceNavigator)component;
       if (component instanceof JTabbedPane) {
-        queue.addLast((JComponent) ((JTabbedPane) component).getSelectedComponent());
+        queue.addLast((JComponent)((JTabbedPane)component).getSelectedComponent());
       }
       else {
         for (int i = 0; i < component.getComponentCount(); i++) {
           Component child = component.getComponent(i);
           if (!(child instanceof JComponent)) continue;
-          queue.addLast((JComponent) child);
+          queue.addLast((JComponent)child);
         }
       }
     }
     return null;
   }
 
-  private static Component getOccurenceNavigatorFromContext(DataContext dataContext) {
+  private Component getOccurenceNavigatorFromContext(DataContext dataContext) {
     Window window = WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow();
 
     if (window != null) {
@@ -117,17 +123,16 @@ abstract class OccurenceNavigatorActionBase extends AnAction {
     }
 
     ToolWindowManagerEx mgr = ToolWindowManagerEx.getInstanceEx(project);
-    if (!mgr.isEditorComponentActive()) {
-      return null;
-    }
 
-    String id = mgr.getLastActiveToolWindowId();
+    String id = mgr.getLastActiveToolWindowId(new Condition<JComponent>() {
+      public boolean value(final JComponent component) {
+        return findNavigator(component) != null;
+      }
+    });
     if (id == null) {
       return null;
     }
-
-    Component component = mgr.getToolWindow(id).getComponent();
-    return component instanceof OccurenceNavigator ? component : null;
+    return (Component)findNavigator(mgr.getToolWindow(id).getComponent());
   }
 
 }

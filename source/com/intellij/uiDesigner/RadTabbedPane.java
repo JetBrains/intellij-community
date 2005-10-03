@@ -10,6 +10,8 @@ import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.editors.string.StringEditor;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.TabbedPaneUI;
@@ -25,6 +27,7 @@ public final class RadTabbedPane extends RadContainer{
   /**
    * value: HashMap<Integer, StringDescriptor>
    */
+  @NonNls
   private static final String CLIENT_PROP_INDEX_2_DESCRIPTOR = "index2descriptor";
 
   public RadTabbedPane(final Module module, final String id){
@@ -69,7 +72,7 @@ public final class RadTabbedPane extends RadContainer{
 
   private String calcTabName(final StringDescriptor titleDescriptor) {
     if (titleDescriptor == null) {
-      return "Untitled";
+      return UIDesignerBundle.message("tab.untitled");
     }
     final String value = titleDescriptor.getValue();
     if (value == null) { // from res bundle
@@ -84,6 +87,7 @@ public final class RadTabbedPane extends RadContainer{
     final JComponent delegee = component.getDelegee();
     final int i = tabbedPane.indexOfComponent(delegee);
     if (i == -1) {
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("cannot find tab for " + component);
     }
     StringDescriptor titleDescriptor = getIndex2Descriptor(this).get(new Integer(i));
@@ -114,6 +118,23 @@ public final class RadTabbedPane extends RadContainer{
     return ui.getTabBounds(tabbedPane, index);
   }
 
+  @Nullable
+  public StringDescriptor getChildTitle(RadComponent component) {
+    final JComponent delegee = component.getDelegee();
+    final JTabbedPane tabbedPane = getTabbedPane();
+    int index = tabbedPane.indexOfComponent(delegee);
+    return getIndex2Descriptor(this).get(index);
+  }
+
+  public void setChildTitle(RadComponent component, StringDescriptor title) throws Exception {
+    final JComponent delegee = component.getDelegee();
+    final JTabbedPane tabbedPane = getTabbedPane();
+    int index = tabbedPane.indexOfComponent(delegee);
+    if (index >= 0) {
+      new MyTitleProperty(index).setValue(this, title);
+    }
+  }
+
   /**
    * This allows user to select and scroll tabs via the mouse
    */
@@ -134,7 +155,7 @@ public final class RadTabbedPane extends RadContainer{
       writeBorder(writer);
       writeChildren(writer);
     }finally{
-      writer.endElement(); 
+      writer.endElement();
     }
   }
 
@@ -145,23 +166,25 @@ public final class RadTabbedPane extends RadContainer{
       final JTabbedPane tabbedPane = getTabbedPane();
       final int i = tabbedPane.indexOfComponent(delegee);
       if (i == -1) {
+        //noinspection HardCodedStringLiteral
         throw new IllegalArgumentException("cannot find tab for " + child);
       }
 
       final HashMap<Integer, StringDescriptor> index2Descriptor = getIndex2Descriptor(this);
       final StringDescriptor tabTitleDescriptor = index2Descriptor.get(new Integer(i));
-      final String title = tabTitleDescriptor != null? tabTitleDescriptor.getValue() : tabbedPane.getTitleAt(i);
-      if (tabTitleDescriptor != null && title == null) {
-        // is from resource bundle
-        writer.addAttribute("title-resource-bundle", tabTitleDescriptor.getBundleName());
-        writer.addAttribute("title-key", tabTitleDescriptor.getKey());
+      if (tabTitleDescriptor != null) {
+        writer.writeStringDescriptor(tabTitleDescriptor,
+                                     UIFormXmlConstants.ATTRIBUTE_TITLE,
+                                     UIFormXmlConstants.ATTRIBUTE_TITLE_RESOURCE_BUNDLE,
+                                     UIFormXmlConstants.ATTRIBUTE_TITLE_KEY);
       }
       else {
-        writer.addAttribute("title", title != null ? title : "");
+        final String title = tabbedPane.getTitleAt(i);
+        writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_TITLE, title != null ? title : "");
       }
     }
     finally{
-      writer.endElement(); 
+      writer.endElement();
     }
   }
 

@@ -2,6 +2,7 @@ package com.intellij.refactoring.inheritanceToDelegation;
 
 import com.intellij.psi.*;
 import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
 
@@ -28,6 +29,6 @@ public class InheritanceToDelegationViewDescriptor extends UsageViewDescriptorAd
   }
 
   public String getProcessedElementsHeader() {
-    return "Replace inheritance with delegation";
+    return RefactoringBundle.message("replace.inheritance.with.delegation.elements.header");
   }
 }

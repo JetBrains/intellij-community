@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.ui;
 
+import com.intellij.ui.UIBundle;
+
 import javax.swing.*;
 
 /**
@@ -30,7 +32,7 @@ public class InputException extends RuntimeException{
   }
 
   public void show(){
-    Messages.showMessageDialog(myMessage, "Input Error", Messages.getErrorIcon());
+    Messages.showMessageDialog(myMessage, UIBundle.message("invalid.user.input.dialog.title"), Messages.getErrorIcon());
     myComponent.requestFocus();
   }
 }

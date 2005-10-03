@@ -22,9 +22,10 @@ import com.intellij.openapi.util.UserDataHolder;
 
 import java.beans.PropertyChangeListener;
 
+import org.jetbrains.annotations.NonNls;
+
 public interface Document extends UserDataHolder {
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  String PROP_WRITABLE = "writable";
+  @NonNls String PROP_WRITABLE = "writable";
   /**
    * Retreives a copy of the document content. For obvious performance reasons use {@link #getCharsSequence()} whenever it's possible.
    * @return document content.

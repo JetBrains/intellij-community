@@ -30,18 +30,20 @@ public class RefClass extends RefElement {
   private static final int IS_TESTCASE_MASK  = 0x800000;
   private static final int IS_LOCAL_MASK     = 0x1000000;
 
-  private final HashSet<RefClass> myBases;
-  private final HashSet<RefClass> mySubClasses;
-  private final ArrayList<RefMethod> myConstructors;
+  private HashSet<RefClass> myBases;
+  private HashSet<RefClass> mySubClasses;
+  private ArrayList<RefMethod> myConstructors;
   private RefMethod myDefaultConstructor;
-  private final ArrayList<RefMethod> myOverridingMethods;
-  private final HashSet<RefElement> myInTypeReferences;
-  private final HashSet<RefElement> myInstanceReferences;
+  private ArrayList<RefMethod> myOverridingMethods;
+  private HashSet<RefElement> myInTypeReferences;
+  private HashSet<RefElement> myInstanceReferences;
   private ArrayList<RefElement> myClassExporters;
 
-  public RefClass(PsiClass psiClass, RefManager manager) {
+  RefClass(PsiClass psiClass, RefManager manager) {
     super(psiClass, manager);
+  }
 
+  protected void initialize() {
     myConstructors = new ArrayList<RefMethod>(1);
     mySubClasses = new HashSet<RefClass>(0);
     myBases = new HashSet<RefClass>(0);
@@ -50,14 +52,16 @@ public class RefClass extends RefElement {
     myInstanceReferences = new HashSet<RefElement>(0);
     myDefaultConstructor = null;
 
+    final PsiClass psiClass = (PsiClass)getElement();
+
     PsiElement psiParent = psiClass.getParent();
     if (psiParent instanceof PsiFile) {
       PsiJavaFile psiFile = (PsiJavaFile) psiParent;
       String packageName = psiFile.getPackageName();
       if (!"".equals(packageName)) {
-        manager.getPackage(packageName).add(this);
+        getRefManager().getPackage(packageName).add(this);
       } else {
-        manager.getRefProject().getDefaultPackage().add(this);
+        getRefManager().getRefProject().getDefaultPackage().add(this);
       }
 
       setCanBeStatic(false);
@@ -65,7 +69,7 @@ public class RefClass extends RefElement {
       while (!(psiParent instanceof PsiClass || psiParent instanceof PsiMethod || psiParent instanceof PsiField)) {
         psiParent = psiParent.getParent();
       }
-        RefElement refParent = manager.getReference(psiParent);
+        RefElement refParent = getRefManager().getReference(psiParent);
       refParent.add(this);
 
       if (!(getOwner().getOwner() instanceof RefPackage)) {
@@ -96,6 +100,15 @@ public class RefClass extends RefElement {
       PsiField psiField = psiFields[i];
         getRefManager().getFieldReference(this, psiField);
       allFields.add(psiField);
+    }
+
+    if (!isApplet()) setServlet(getRefManager().getServlet() != null && psiClass.isInheritor(getRefManager().getServlet(), true));
+    if (!isApplet() && !isServlet()) {
+      setTestCase(JUnitUtil.isTestCaseClass(psiClass));
+      for (Iterator<RefClass> iterator = getBaseClasses().iterator(); iterator.hasNext();) {
+        RefClass refBase = iterator.next();
+        refBase.setTestCase(true);
+      }
     }
 
     for (int i = 0; i < psiMethods.length; i++) {
@@ -142,15 +155,8 @@ public class RefClass extends RefElement {
       setCanBeStatic(false);
     }
 
-    setApplet(manager.getApplet() != null && psiClass.isInheritor(manager.getApplet(), true));
-    if (!isApplet()) setServlet(manager.getServlet() != null && psiClass.isInheritor(manager.getServlet(), true));
-    if (!isApplet() && !isServlet()) {
-      setTestCase(JUnitUtil.isTestCaseClass(psiClass));
-      for (Iterator<RefClass> iterator = getBaseClasses().iterator(); iterator.hasNext();) {
-        RefClass refBase = iterator.next();
-        refBase.setTestCase(true);
-      }
-    }
+    setApplet(getRefManager().getApplet() != null && psiClass.isInheritor(getRefManager().getApplet(), true));
+
   }
 
   private void initializeSuperReferences(PsiClass psiClass) {

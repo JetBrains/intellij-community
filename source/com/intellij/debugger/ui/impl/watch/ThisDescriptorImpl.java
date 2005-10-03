@@ -31,7 +31,10 @@ public class ThisDescriptorImpl extends ValueDescriptorImpl{
     return myValue;
   }
 
-  public String getName        () { return "this"; }
+  public String getName() {
+    //noinspection HardCodedStringLiteral
+    return "this"; 
+  }
 
   public String calcValueName() {
     return getName();

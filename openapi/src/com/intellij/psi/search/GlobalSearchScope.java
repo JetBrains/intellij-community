@@ -68,11 +68,15 @@ public abstract class GlobalSearchScope extends SearchScope {
   }
 
   public static GlobalSearchScope projectProductionScope(Project project, final boolean includeNonJavaFiles) {
-    return new IntersectionScope(projectScope(project), new ProductionScopeFilter(project, includeNonJavaFiles), "Project Production Files");
+    return new IntersectionScope(projectScope(project),
+                                 new ProductionScopeFilter(project, includeNonJavaFiles),
+                                 PsiBundle.message("psi.search.scope.production.files"));
   }
 
   public static GlobalSearchScope projectTestScope(Project project, final boolean includeNonJavaFiles) {
-    return new IntersectionScope(projectScope(project), new TestScopeFilter(project, includeNonJavaFiles), "Project Test Files");
+    return new IntersectionScope(projectScope(project),
+                                 new TestScopeFilter(project, includeNonJavaFiles),
+                                 PsiBundle.message("psi.search.scope.test.files"));
   }
 
   public static GlobalSearchScope filterScope(Project project, NamedScope set, final boolean includeNonJavaFiles) {
@@ -142,7 +146,7 @@ public abstract class GlobalSearchScope extends SearchScope {
 
     public String getDisplayName() {
       if (myDisplayName == null) {
-        return "Intersection of" + myScope1.getDisplayName() + " and " + myScope2.getDisplayName();
+        return PsiBundle.message("psi.search.scope.intersection", myScope1.getDisplayName(), myScope2.getDisplayName());
       }
       return myDisplayName;
     }
@@ -188,7 +192,7 @@ public abstract class GlobalSearchScope extends SearchScope {
 
     public String getDisplayName() {
       if (myDisplayName == null) {
-        return "Union of" + myScope1.getDisplayName() + " and " + myScope2.getDisplayName();
+        return PsiBundle.message("psi.search.scope.union", myScope1.getDisplayName(), myScope2.getDisplayName());
       }
       return myDisplayName;
     }
@@ -397,8 +401,11 @@ public abstract class GlobalSearchScope extends SearchScope {
 
     public boolean contains(VirtualFile file) {
       PsiFile psiFile = myManager.findFile(file);
+      if (psiFile == null) return false;
       NamedScopesHolder holder = NamedScopeManager.getInstance(myProject);
-      return psiFile instanceof PsiJavaFile ? mySet.getValue().contains(psiFile, holder) : myIncludeNonJavaFiles;
+      final PsiDirectory containingDirectory = psiFile.getContainingDirectory();
+      return psiFile instanceof PsiJavaFile ||
+             (containingDirectory != null && containingDirectory.getPackage() != null) ? mySet.getValue().contains(psiFile, holder) : myIncludeNonJavaFiles;
     }
 
     public String getDisplayName() {

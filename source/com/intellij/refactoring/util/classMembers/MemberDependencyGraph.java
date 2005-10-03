@@ -22,15 +22,15 @@ public interface MemberDependencyGraph {
 
   /**
    * Returns class members that are dependent on checked MemberInfos.
-   * @return set of PsiElements
+   * @return set of PsiMembers
    */
-  Set getDependent();
+  Set<? extends PsiMember> getDependent();
 
   /**
-   * Returns PsiElements of checked MemberInfos that element depends on.
-   * element should belong to getDependent()
-   * @param element
-   * @return set of PsiElements
+   * Returns PsiMembers of checked MemberInfos that member depends on.
+   * member should belong to getDependent()
+   * @param member
+   * @return set of PsiMembers
    */
-  Set getDependenciesOf(PsiElement element);
+  Set<? extends PsiMember> getDependenciesOf(PsiMember member);
 }

@@ -11,6 +11,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.InternalIterator;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,9 +23,9 @@ import java.util.List;
  */
 public class NodeRendererSettings implements ApplicationComponent, NamedJDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.settings.NodeRendererSettings");
-  private static final String REFERENCE_RENDERER = "Reference renderer";
-  public static final String RENDERER_TAG = "Renderer";
-  private static final String RENDERER_ID = "ID";
+  private static final @NonNls String REFERENCE_RENDERER = "Reference renderer";
+  public static final @NonNls String RENDERER_TAG = "Renderer";
+  private static final @NonNls String RENDERER_ID = "ID";
 
   private final EventDispatcher<NodeRendererSettingsListener> myDispatcher = EventDispatcher.create(NodeRendererSettingsListener.class);
   private List<NodeRenderer> myPluginRenderers = new ArrayList<NodeRenderer>();
@@ -54,9 +55,9 @@ public class NodeRendererSettings implements ApplicationComponent, NamedJDOMExte
       createExpressionChildrenRenderer("toArray()", "!isEmpty()")
     )
   };
-  private static final String HEX_VIEW_ENABLED = "HEX_VIEW_ENABLED";
-  private static final String ALTERNATIVE_COLLECTION_VIEW_ENABLED = "ALTERNATIVE_COLLECTION_VIEW_ENABLED";
-  private static final String CUSTOM_RENDERERS_TAG_NAME = "CustomRenderers";
+  private static final @NonNls String HEX_VIEW_ENABLED = "HEX_VIEW_ENABLED";
+  private static final @NonNls String ALTERNATIVE_COLLECTION_VIEW_ENABLED = "ALTERNATIVE_COLLECTION_VIEW_ENABLED";
+  private static final @NonNls String CUSTOM_RENDERERS_TAG_NAME = "CustomRenderers";
   
   public NodeRendererSettings() {
     // default configuration
@@ -114,6 +115,7 @@ public class NodeRendererSettings implements ApplicationComponent, NamedJDOMExte
     myDispatcher.removeListener(listener);
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public void writeExternal(final Element element) throws WriteExternalException {
     JDOMExternalizerUtil.writeField(element, HEX_VIEW_ENABLED, myHexRenderer.isEnabled()? "true" : "false");
     JDOMExternalizerUtil.writeField(element, ALTERNATIVE_COLLECTION_VIEW_ENABLED, areAlternateCollectionViewsEnabled()? "true" : "false");
@@ -127,6 +129,7 @@ public class NodeRendererSettings implements ApplicationComponent, NamedJDOMExte
     }
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public void readExternal(final Element root) throws InvalidDataException {
     final String hexEnabled = JDOMExternalizerUtil.readField(root, HEX_VIEW_ENABLED);
     if (hexEnabled != null) {
@@ -298,14 +301,14 @@ public class NodeRendererSettings implements ApplicationComponent, NamedJDOMExte
   }
 
   private CompoundReferenceRenderer createCompoundReferenceRenderer(
-    final String rendererName, final String className, final LabelRenderer labelRenderer, final ChildrenRenderer childrenRenderer
+    final @NonNls String rendererName, @NonNls final String className, final LabelRenderer labelRenderer, final ChildrenRenderer childrenRenderer
     ) {
     CompoundReferenceRenderer renderer = new CompoundReferenceRenderer(this, rendererName, labelRenderer, childrenRenderer);
     renderer.setClassName(className);
     return renderer;
   }
 
-  private ExpressionChildrenRenderer createExpressionChildrenRenderer(String expressionText, String childrenExpandableText) {
+  private ExpressionChildrenRenderer createExpressionChildrenRenderer(@NonNls String expressionText, @NonNls String childrenExpandableText) {
     final ExpressionChildrenRenderer childrenRenderer = new ExpressionChildrenRenderer();
     childrenRenderer.setChildrenExpression(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, expressionText));
     if (childrenExpandableText != null) {
@@ -314,7 +317,7 @@ public class NodeRendererSettings implements ApplicationComponent, NamedJDOMExte
     return childrenRenderer;
   }
 
-  private EnumerationChildrenRenderer createEnumerationChildrenRenderer(String[][] expressions) {
+  private EnumerationChildrenRenderer createEnumerationChildrenRenderer(@NonNls String[][] expressions) {
     final EnumerationChildrenRenderer childrenRenderer = new EnumerationChildrenRenderer();
     if (expressions != null && expressions.length > 0) {
       final ArrayList<Pair<String, TextWithImports>> childrenList = new ArrayList<Pair<String, TextWithImports>>(expressions.length);
@@ -326,7 +329,7 @@ public class NodeRendererSettings implements ApplicationComponent, NamedJDOMExte
     return childrenRenderer;
   }
 
-  private LabelRenderer createLabelRenderer(final String prefix, final String expressionText, final String postfix) {
+  private LabelRenderer createLabelRenderer(@NonNls final String prefix, @NonNls final String expressionText, final @NonNls String postfix) {
     final LabelRenderer labelRenderer = new LabelRenderer() {
       public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener labelListener) throws EvaluateException {
         final String evaluated = super.calcLabel(descriptor, evaluationContext, labelListener);

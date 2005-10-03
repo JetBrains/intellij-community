@@ -2,10 +2,7 @@ package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -30,7 +27,7 @@ public class CommonCheckinProjectAction extends AbstractCommonCheckinAction {
   }
 
   protected String getActionName(VcsContext dataContext) {
-    return "Commit Project";
+    return VcsBundle.message("action.name.commit.project");
   }
 
   protected boolean shouldShowDialog(VcsContext context) {

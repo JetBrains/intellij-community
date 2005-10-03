@@ -13,22 +13,23 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 /**
  *  @author dsl
  */
 class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements
-        LibraryOrderEntry, ClonableOrderEntry, WritableOrderEntry {
+                                                              LibraryOrderEntry, ClonableOrderEntry, WritableOrderEntry {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.LibraryOrderEntryImpl");
   private Library myLibrary;
   private String myLibraryName; // is non-null if myLibrary == null
   private String myLibraryLevel; // is non-null if myLibraryLevel == null
   private boolean myExported;
-  static final String ENTRY_TYPE = "library";
-  private static final String NAME_ATTR = "name";
-  private static final String LEVEL_ATTR = "level";
+  @NonNls static final String ENTRY_TYPE = "library";
+  @NonNls private static final String NAME_ATTR = "name";
+  @NonNls private static final String LEVEL_ATTR = "level";
   private final MyOrderEntryLibraryTableListener myLibraryListener = new MyOrderEntryLibraryTableListener();
-  private static final String EXPORTED_ATTR = "exported";
+  @NonNls private static final String EXPORTED_ATTR = "exported";
 
   LibraryOrderEntryImpl (Library library,
                          RootModelImpl rootModel,

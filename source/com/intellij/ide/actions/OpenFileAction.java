@@ -1,6 +1,8 @@
 package com.intellij.ide.actions;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.RecentProjectsManager;
+import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -27,6 +29,9 @@ import javax.swing.*;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileView;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 
 public class OpenFileAction extends AnAction {
   private static String getLastFilePath(Project project) {
@@ -54,7 +59,7 @@ public class OpenFileAction extends AnAction {
     fileChooser.setFileView(fileView);
     fileChooser.setMultiSelectionEnabled(true);
     fileChooser.setAcceptAllFileFilterUsed(false);
-    fileChooser.setDialogTitle("Open File");
+    fileChooser.setDialogTitle(IdeBundle.message("title.open.file"));
 
     FileFilter allFilesFilter = new FileFilter() {
       public boolean accept(File f) {
@@ -62,15 +67,26 @@ public class OpenFileAction extends AnAction {
       }
 
       public String getDescription() {
-        return "All file types";
+        return IdeBundle.message("filter.all.file.types");
       }
     };
 
-    fileChooser.addChoosableFileFilter(new FileTypeFilter(StdFileTypes.JAVA));
-    fileChooser.addChoosableFileFilter(new FileTypeFilter(StdFileTypes.JSP));
-    fileChooser.addChoosableFileFilter(new FileTypeFilter(StdFileTypes.XML));
-    fileChooser.addChoosableFileFilter(new FileTypeFilter(StdFileTypes.HTML));
-    fileChooser.addChoosableFileFilter(new FileTypeFilter(StdFileTypes.PLAIN_TEXT));
+    final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
+    ArrayList<FileType> list = new ArrayList<FileType>();
+    for(FileType ft: fileTypeManager.getRegisteredFileTypes()) {
+      if (fileTypeManager.getAssociatedExtensions(ft).length > 0 &&
+          (ft instanceof ProjectFileType || !ft.isReadOnly())) {
+        list.add(ft);
+      }
+    }
+    Collections.sort(list, new Comparator<FileType>() {
+      public int compare(final FileType o1, final FileType o2) {
+        return o1.getName().compareTo(o2.getName());
+      }
+    });
+    for(FileType ft: list) {
+      fileChooser.addChoosableFileFilter(new FileTypeFilter(ft));
+    }
     fileChooser.addChoosableFileFilter(allFilesFilter);
 
     fileChooser.setFileFilter(allFilesFilter);
@@ -86,9 +102,9 @@ public class OpenFileAction extends AnAction {
       setLastFilePath(project, file.getParent());
       if (isProjectFile(file)) {
         int answer = Messages.showYesNoDialog(project,
-                                              file.getName() + " is an " + ApplicationNamesInfo.getInstance().getProductName() +
-                                                                       " project file.\nWould you like to open this project?",
-                                              "Open Project",
+                                              IdeBundle.message("message.open.file.is.project", file.getName(),
+                                                                ApplicationNamesInfo.getInstance().getProductName()),
+                                              IdeBundle.message("title.open.project"),
                                               Messages.getQuestionIcon());
         if (answer == 0) {
           ProjectUtil.openProject(file.getAbsolutePath(), project, false);
@@ -118,8 +134,9 @@ public class OpenFileAction extends AnAction {
     FileEditorProviderManager editorProviderManager = FileEditorProviderManager.getInstance();
     if (editorProviderManager.getProviders(project, virtualFiles[0]).length == 0) {
       Messages.showMessageDialog(project,
-                                 "Files of this type cannot be opened in " + ApplicationNamesInfo.getInstance().getProductName(),
-                                 "Cannot Open File",
+                                 IdeBundle.message("error.files.of.this.type.cannot.be.opened",
+                                                   ApplicationNamesInfo.getInstance().getProductName()),
+                                 IdeBundle.message("title.cannot.open.file"),
                                  Messages.getErrorIcon());
       return;
     }

@@ -6,20 +6,22 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.ui.UIBundle;
+import com.intellij.CommonBundle;
 
 import javax.swing.*;
 
 public class MessagesEx extends Messages {
 
   public static MessageInfo fileIsReadOnly(Project project, String filePath) {
-    return error(project, "File '" + filePath + " is read-only.");
+    return error(project, UIBundle.message("file.is.read.only.message.text", filePath));
   }
 
   public static MessageInfo filesAreReadOnly(Project project, String[] files) {
     if (files.length == 1){
       return fileIsReadOnly(project, files[0]);
     } else {
-      return error(project, "Files " + filePaths(files) + " are read-only");
+      return error(project, UIBundle.message("files.are.read.only.message.text", filePaths(files)));
     }
   }
 
@@ -32,7 +34,7 @@ public class MessagesEx extends Messages {
   }
 
   public static MessageInfo error(Project project, String message) {
-    return error(project, message, "Error");
+    return error(project, message, UIBundle.message("error.dialog.title"));
   }
 
   public static MessageInfo error(Project project, String message, String title) {
@@ -44,7 +46,7 @@ public class MessagesEx extends Messages {
     private String myMessage;
     private String myTitle;
     private Icon myIcon;
-    private String[] myOptions = new String[]{"OK"};
+    private String[] myOptions = new String[]{CommonBundle.getOkButtonText()};
     private int myDefaultOption = 0;
 
     protected BaseDialogInfo(Project project) {
@@ -141,7 +143,7 @@ public class MessagesEx extends Messages {
     public ChoiceInfo(Project project) {
       super(project);
       setIcon(getQuestionIcon());
-      setOptions(new String[]{"OK"}, 0);
+      setOptions(new String[]{CommonBundle.getOkButtonText()}, 0);
     }
 
     public ChoiceInfo getThis() {
@@ -194,7 +196,7 @@ public class MessagesEx extends Messages {
   public static class InputInfo extends BaseInputInfo<InputInfo> {
     public InputInfo(Project project) {
       super(project);
-      setOptions(new String[]{"OK", "Cancel"}, 0);
+      setOptions(new String[]{CommonBundle.getOkButtonText(), CommonBundle.getCancelButtonText()}, 0);
     }
 
     public UserInput askUser() {
@@ -214,7 +216,7 @@ public class MessagesEx extends Messages {
     }
 
     public String forceUserInput() {
-      setOptions(new String[]{"OK"}, 0);
+      setOptions(new String[]{CommonBundle.getOkButtonText()}, 0);
       return askUser().getInput();
     }
 

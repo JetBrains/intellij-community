@@ -24,6 +24,8 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.jetbrains.annotations.NonNls;
+
 public interface Storage {
   void put(String key, String value);
   String get(String key);
@@ -33,13 +35,13 @@ public interface Storage {
     private final PropertiesComponent myPropertiesComponent;
     private final String myPrefix;
 
-    public PropertiesComponentStorage(String prefix, PropertiesComponent propertiesComponent) {
+    public PropertiesComponentStorage(@NonNls String prefix, PropertiesComponent propertiesComponent) {
       LOG.assertTrue(propertiesComponent != null || ApplicationManager.getApplication().isUnitTestMode());
       myPropertiesComponent = propertiesComponent;
       myPrefix = prefix;
     }
 
-    public PropertiesComponentStorage(String prefix) {
+    public PropertiesComponentStorage(@NonNls String prefix) {
       this(prefix, PropertiesComponent.getInstance());
     }
 

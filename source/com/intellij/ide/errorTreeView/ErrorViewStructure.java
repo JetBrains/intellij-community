@@ -7,12 +7,9 @@ package com.intellij.ide.errorTreeView;
 import com.intellij.ide.errorTreeView.impl.ErrorTreeViewConfiguration;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.ArrayUtil;
 
@@ -33,9 +30,11 @@ public class ErrorViewStructure extends AbstractTreeStructure {
     ErrorTreeElementKind.INFO, ErrorTreeElementKind.ERROR, ErrorTreeElementKind.WARNING, ErrorTreeElementKind.GENERIC
   };
   private final Project myProject;
+  private final boolean myCanHideWarnings;
 
-  public ErrorViewStructure(Project project) {
+  public ErrorViewStructure(Project project, final boolean canHideWarnings) {
     myProject = project;
+    myCanHideWarnings = canHideWarnings;
   }
 
   public Object getRootElement() {
@@ -49,7 +48,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
       for (int idx = 0; idx < ourMessagesOrder.length; idx++) {
         final ErrorTreeElementKind kind = ourMessagesOrder[idx];
         if (ErrorTreeElementKind.WARNING.equals(kind)) {
-          if (ErrorTreeViewConfiguration.getInstance(myProject).isHideWarnings()) {
+          if (myCanHideWarnings && ErrorTreeViewConfiguration.getInstance(myProject).isHideWarnings()) {
             continue;
           }
         }
@@ -70,7 +69,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
     else if (element instanceof GroupingElement) {
       final List<NavigatableMessageElement> children = myGroupNameToMessagesMap.get(((GroupingElement)element).getName());
       if (children != null && children.size() > 0) {
-        if (ErrorTreeViewConfiguration.getInstance(myProject).isHideWarnings()) {
+        if (myCanHideWarnings && ErrorTreeViewConfiguration.getInstance(myProject).isHideWarnings()) {
           final List<NavigatableMessageElement> filtered = new ArrayList<NavigatableMessageElement>(children.size());
           for (Iterator<NavigatableMessageElement> it = children.iterator(); it.hasNext();) {
             final NavigatableMessageElement navigatableMessageElement = it.next();
@@ -88,7 +87,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
   }
 
   private boolean shouldShowFileElement(GroupingElement groupingElement) {
-    if (!ErrorTreeViewConfiguration.getInstance(myProject).isHideWarnings()) {
+    if (!myCanHideWarnings || !ErrorTreeViewConfiguration.getInstance(myProject).isHideWarnings()) {
       return getChildCount(groupingElement) > 0;
     }
     final List<NavigatableMessageElement> children = myGroupNameToMessagesMap.get(groupingElement.getName());
@@ -182,7 +181,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
   }
 
   public ErrorTreeElement getFirstMessage(ErrorTreeElementKind kind) {
-    if (ErrorTreeElementKind.WARNING.equals(kind) && ErrorTreeViewConfiguration.getInstance(myProject).isHideWarnings()) {
+    if (myCanHideWarnings && ErrorTreeElementKind.WARNING.equals(kind) && ErrorTreeViewConfiguration.getInstance(myProject).isHideWarnings()) {
       return null; // no warnings are available
     }
     final List<SimpleMessageElement> simpleMessages = mySimpleMessages.get(kind);

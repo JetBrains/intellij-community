@@ -14,6 +14,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.ui.MemberSelectionTable;
@@ -28,6 +29,7 @@ import com.intellij.ui.RecentsManager;
 import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -38,7 +40,7 @@ import java.util.ArrayList;
 import java.util.Set;
 
 public class MoveMembersDialog extends RefactoringDialog implements MoveMembersOptions {
-  private static final String RECENTS_KEY = "MoveMembersDialog.RECENTS_KEY";
+  @NonNls private static final String RECENTS_KEY = "MoveMembersDialog.RECENTS_KEY";
   private MyMemberInfoModel myMemberInfoModel;
 
   private Project myProject;
@@ -129,14 +131,14 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
     JTextField sourceClassField = new JTextField();
     sourceClassField.setText(mySourceClassName);
     sourceClassField.setEditable(false);
-    _panel.add(new JLabel("Move members from:"), BorderLayout.NORTH);
+    _panel.add(new JLabel(RefactoringBundle.message("move.members.move.members.from.label")), BorderLayout.NORTH);
     _panel.add(sourceClassField, BorderLayout.CENTER);
     box.add(_panel);
 
     box.add(Box.createVerticalStrut(10));
 
     _panel = new JPanel(new BorderLayout());
-    JLabel label = new JLabel("To (fully qualified name):");
+    JLabel label = new JLabel(RefactoringBundle.message("move.members.to.fully.qualified.name.label"));
     label.setLabelFor(myTfTargetClassName);
     _panel.add(label, BorderLayout.NORTH);
     _panel.add(myTfTargetClassName, BorderLayout.CENTER);
@@ -163,7 +165,7 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
       table.getSelectionModel().addSelectionInterval(0, 0);
     }
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(table);
-    Border titledBorder = IdeBorderFactory.createTitledBorder("Members to be moved (static only)");
+    Border titledBorder = IdeBorderFactory.createTitledBorder(RefactoringBundle.message("move.members.members.to.be.moved.border.title"));
     Border emptyBorder = BorderFactory.createEmptyBorder(0, 5, 5, 5);
     Border border = BorderFactory.createCompoundBorder(titledBorder, emptyBorder);
     scrollPane.setBorder(border);
@@ -232,10 +234,10 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
     final PsiManager manager = PsiManager.getInstance(myProject);
     final String fqName = getTargetClassName();
     if ("".equals(fqName)) {
-      return "No destination class specified";
+      return RefactoringBundle.message("no.destination.class.specified");
     }
     else if (!manager.getNameHelper().isQualifiedName(fqName)) {
-      return "'" + fqName + "' is not a legal FQ-name";
+      return RefactoringBundle.message("0.is.not.a.legal.fq.name", fqName);
     }
     else {
       RecentsManager.getInstance(myProject).registerRecentEntry(RECENTS_KEY, fqName);
@@ -254,20 +256,20 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
           }
         }
 
-      }, "Create class " + fqName, null);
+      }, RefactoringBundle.message("create.class.command", fqName), null);
 
       if (targetClass[0] == null) {
         return "";
       }
 
       if (mySourceClass.equals(targetClass[0])) {
-        return "Source and destination classes should be different";
+        return RefactoringBundle.message("source.and.destination.classes.should.be.different");
       }
       else {
         for (MemberInfo info : myMemberInfos) {
           if (!info.isChecked()) continue;
           if (PsiTreeUtil.isAncestor(info.getMember(), targetClass[0], false)) {
-            return "Cannot move inner class " + info.getDisplayName() + " into itself.";
+            return RefactoringBundle.message("cannot.move.inner.class.0.into.itself", info.getDisplayName());
           }
         }
 
@@ -311,7 +313,7 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
 
     int answer = Messages.showYesNoDialog(
             myProject,
-            "Class " + fqName + " does not exist.\nDo you want to create it?",
+            RefactoringBundle.message("class.0.does.not.exist", fqName),
             MoveMembersImpl.REFACTORING_NAME,
             Messages.getQuestionIcon()
     );
@@ -338,7 +340,8 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
 
   private class ChooseClassAction implements ActionListener {
     public void actionPerformed(ActionEvent e) {
-      TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject).createWithInnerClassesScopeChooser("Choose Destination Class", GlobalSearchScope.projectScope(myProject), new TreeClassChooser.ClassFilter() {
+      TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject).createWithInnerClassesScopeChooser(
+        RefactoringBundle.message("choose.destination.class"), GlobalSearchScope.projectScope(myProject), new TreeClassChooser.ClassFilter() {
         public boolean isAccepted(PsiClass aClass) {
           return aClass.getParent() instanceof PsiJavaFile || aClass.hasModifierProperty(PsiModifier.STATIC);
         }

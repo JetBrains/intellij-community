@@ -21,6 +21,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.CommandButtonGroup;
+import com.intellij.ide.IdeBundle;
+import com.intellij.CommonBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -30,6 +32,8 @@ import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+
+import org.jetbrains.annotations.NonNls;
 
 public abstract class AbstractWizard extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.wizard.AbstractWizard");
@@ -60,14 +64,11 @@ public abstract class AbstractWizard extends DialogWrapper {
   private void initWizard(final String title) {
     setTitle(title);
     myCurrentStep = 0;
-    myPreviousButton = new JButton("< Previous");
-    myPreviousButton.setMnemonic('P');
-    myNextButton = new JButton("Next >");
-    myNextButton.setMnemonic('N');
-    myFinishButton = new JButton("Finish");
-    myFinishButton.setMnemonic('F');
-    myCancelButton = new JButton("Cancel");
-    myHelpButton = new JButton("Help");
+    myPreviousButton = new JButton(IdeBundle.message("button.wizard.previous"));
+    myNextButton = new JButton(IdeBundle.message("button.wizard.next"));
+    myFinishButton = new JButton(IdeBundle.message("button.finish"));
+    myCancelButton = new JButton(CommonBundle.getCancelButtonText());
+    myHelpButton = new JButton(CommonBundle.getHelpButtonText());
     myContentPanel = new JPanel(new CardLayout());
 
     myIconLabel = new JLabel();
@@ -130,8 +131,7 @@ public abstract class AbstractWizard extends DialogWrapper {
             exc.printStackTrace();
             Messages.showErrorDialog(
               myContentPanel,
-              exc.getMessage(),
-              "Error"
+              exc.getMessage()
             );
           }
         }
@@ -179,12 +179,10 @@ public abstract class AbstractWizard extends DialogWrapper {
     }
 
     if (mySteps.size() > 1) {
-      myFinishButton.setText("Finish");
-      myFinishButton.setMnemonic('F');
+      myFinishButton.setText(IdeBundle.message("button.finish"));
     }
     else {
-      myFinishButton.setText("OK");
-      myFinishButton.setMnemonic('O');
+      myFinishButton.setText(IdeBundle.message("button.ok"));
     }
   }
 
@@ -225,8 +223,7 @@ public abstract class AbstractWizard extends DialogWrapper {
     catch (final CommitStepException exc) {
       Messages.showErrorDialog(
         myContentPanel,
-        exc.getMessage(),
-        "Error"
+        exc.getMessage()
       );
       return;
     }
@@ -245,8 +242,7 @@ public abstract class AbstractWizard extends DialogWrapper {
     catch (final CommitStepException exc) {
       Messages.showErrorDialog(
         myContentPanel,
-        exc.getMessage(),
-        "Error"
+        exc.getMessage()
       );
       return;
     }
@@ -325,7 +321,7 @@ public abstract class AbstractWizard extends DialogWrapper {
     return mySteps.size();
   }
 
-  protected abstract String getHelpID();
+  @NonNls protected abstract String getHelpID();
 
   protected boolean isCurrentStep(final Step step) {
     if (step == null) {

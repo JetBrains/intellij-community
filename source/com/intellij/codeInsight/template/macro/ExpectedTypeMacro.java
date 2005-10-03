@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.template.macro;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.lookup.LookupItem;
@@ -22,7 +23,7 @@ public class ExpectedTypeMacro implements Macro{
   }
 
   public String getDescription() {
-    return "expectedType()";
+    return CodeInsightBundle.message("macro.expected.type");
   }
 
   public String getDefaultValue() {

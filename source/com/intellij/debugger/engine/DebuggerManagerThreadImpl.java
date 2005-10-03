@@ -32,6 +32,7 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
   public static final int COMMAND_TIMEOUT = 3000;
 
   DebuggerManagerThreadImpl() {
+    //noinspection HardCodedStringLiteral
     super("DebuggerManagerThreadImpl", 2);
   }
 

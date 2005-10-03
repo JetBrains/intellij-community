@@ -15,6 +15,8 @@
  */
 package com.intellij.util;
 
+import org.jetbrains.annotations.NonNls;
+
 public class IncorrectOperationException extends Exception {
   protected String myMessage;
 
@@ -22,7 +24,7 @@ public class IncorrectOperationException extends Exception {
     this(null);
   }
 
-  public IncorrectOperationException(String message) {
+  public IncorrectOperationException(@NonNls String message) {
     super(message);
     myMessage = message;
   }

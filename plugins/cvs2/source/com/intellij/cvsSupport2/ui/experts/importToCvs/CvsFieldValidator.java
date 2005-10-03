@@ -8,6 +8,8 @@ import javax.swing.event.DocumentEvent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * author: lesya
  */
@@ -15,7 +17,8 @@ public class CvsFieldValidator {
   public static final char[] INVALID_CHARACTERS = new char[]{'`', '$', '.', ',', ':', ';', '@', '\'', ' '};
 
   private static void reportError(JLabel errorLabel, String message, TagNameFieldOwner tagNameFieldOwner) {
-    errorLabel.setText("<html><font color='red'><b>" + message + "</b></font></html>");
+    @NonNls final String text = "<html><font color='red'><b>" + message + "</b></font></html>";
+    errorLabel.setText(text);
     if (tagNameFieldOwner != null) {
       tagNameFieldOwner.disableOkAction(message);
     }
@@ -73,14 +76,14 @@ public class CvsFieldValidator {
                                    JLabel errorMessage, TagNameFieldOwner tagNameFieldOwner) {
     String text = field.getText().trim();
     if (text.length() == 0) {
-      reportError(errorMessage, "cannot be empty", tagNameFieldOwner);
+      reportError(errorMessage, com.intellij.CvsBundle.message("error.message.field.cannot.be.empty"), tagNameFieldOwner);
       return false;
     }
 
     for (int i = 0; i < INVALID_CHARACTERS.length; i++) {
       char invalidCharacter = INVALID_CHARACTERS[i];
       if (text.indexOf(invalidCharacter) != -1) {
-        reportError(errorMessage, "must not contain the characters ` $.:;@'", tagNameFieldOwner);
+        reportError(errorMessage, com.intellij.CvsBundle.message("error.message.field.contains.invalid.characters"), tagNameFieldOwner);
         return false;
       }
     }
@@ -89,14 +92,14 @@ public class CvsFieldValidator {
       JTextField jTextField = shouldDifferFrom[i];
       if (jTextField == field) continue;
       if (jTextField.getText().trim().equals(text)) {
-        reportError(errorMessage, "was specifies more than once", tagNameFieldOwner);
+        reportError(errorMessage, com.intellij.CvsBundle.message("error.message.duplicate.field.value"), tagNameFieldOwner);
         return false;
       }
     }
 
 
     if (shouldStartFromLetter && !Character.isLetter(text.charAt(0))) {
-      reportError(errorMessage, "must start with a letter", tagNameFieldOwner);
+      reportError(errorMessage, com.intellij.CvsBundle.message("error.message.field.value.must.start.with.a.letter"), tagNameFieldOwner);
       return false;
     }
 

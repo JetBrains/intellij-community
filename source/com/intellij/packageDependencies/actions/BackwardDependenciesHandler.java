@@ -1,6 +1,7 @@
 package com.intellij.packageDependencies.actions;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.packageDependencies.BackwardDependenciesBuilder;
@@ -31,10 +32,12 @@ public class BackwardDependenciesHandler {
       public void run() {
         builder.analyze();
       }
-    }, "Analyzing Backward Dependencies", true, myProject)) {
+    }, AnalysisScopeBundle.message("backward.dependencies.progress.text"), true, myProject)) {
       DependenciesPanel panel = new DependenciesPanel(myProject, builder);
       Content content = PeerFactory.getInstance().getContentFactory().createContent(panel,
-                                                                                  "Backward Dependencies of " + builder.getScope().getDisplayName(),
+                                                                                    AnalysisScopeBundle.message(
+                                                                                      "backward.dependencies.toolwindow.title",
+                                                                                      builder.getScope().getDisplayName()),
                                                                                   false);
       panel.setContent(content);
       ((DependencyValidationManagerImpl)DependencyValidationManager.getInstance(myProject)).addContent(content);

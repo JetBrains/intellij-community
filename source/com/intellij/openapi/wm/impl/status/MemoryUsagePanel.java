@@ -8,9 +8,13 @@ import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.Alarm;
+import com.intellij.util.ui.UIUtil;
+import com.intellij.ui.UIBundle;
 
 import javax.swing.*;
 import java.awt.*;
+
+import org.jetbrains.annotations.NonNls;
 
 //Made public for Fabrique
 public class MemoryUsagePanel extends JPanel {
@@ -73,7 +77,7 @@ public class MemoryUsagePanel extends JPanel {
     repaint();
     final long total = runtime.totalMemory();
     final long used = total - runtime.freeMemory();
-    myIndicatorPanel.setToolTipText("Total heap size: " + total / MEGABYTE + "M   Used: " + used / MEGABYTE + "M");
+    myIndicatorPanel.setToolTipText(UIBundle.message("memory.usage.panel.statistics.message", total / MEGABYTE, used / MEGABYTE));
   }
 
   /**
@@ -84,13 +88,10 @@ public class MemoryUsagePanel extends JPanel {
     super.removeNotify();
   }
 
-  private static Font getStatusFont() {
-    return UIManager.getFont("Label.font");
-  }
-
   private final class RunCGAction extends AnAction {
     public RunCGAction() {
-      super("Run Garbage Collector", "Run Garbage Collector", ourRunGCButtonIcon);
+      super(UIBundle.message("memory.usage.panel.run.garbage.collector.action.name"),
+            UIBundle.message("memory.usage.panel.run.garbage.collector.action.description"), ourRunGCButtonIcon);
     }
 
     public JComponent createButton(final Presentation presentation) {
@@ -111,6 +112,8 @@ public class MemoryUsagePanel extends JPanel {
   }
 
   private final class IndicatorPanel extends JPanel {
+    @NonNls protected static final String SAMPLE_STRING = "0000M of 0000M";
+
     public IndicatorPanel() {
       updateUI();
     }
@@ -143,11 +146,11 @@ public class MemoryUsagePanel extends JPanel {
       g.setColor(ourColorFree);
       g.fillRect(x + usedBarLength, y, totalBarLength - usedBarLength, barHeight);
 
-      g.setFont(getStatusFont());
+      g.setFont(UIUtil.getLabelFont());
       g.setColor(Color.black);
-      final String info = Long.toString((totalMemory - freeMemory) / MEGABYTE) + "M of " +
-                    Long.toString(totalMemory / MEGABYTE) +
-                    'M';
+      final long used = (totalMemory - freeMemory) / MEGABYTE;
+      final long total = totalMemory / MEGABYTE;
+      final String info = UIBundle.message("memory.usage.panel.message.text", Long.toString(used), Long.toString(total));
       final FontMetrics fontMetrics = g.getFontMetrics();
       final int infoWidth = fontMetrics.charsWidth(info.toCharArray(), 0, info.length());
       final int infoHeight = fontMetrics.getHeight() - fontMetrics.getDescent();
@@ -155,12 +158,12 @@ public class MemoryUsagePanel extends JPanel {
     }
 
     public final int getLineHeight() {
-      final FontMetrics fontMetrics = getFontMetrics(getStatusFont());
+      final FontMetrics fontMetrics = getFontMetrics(UIUtil.getLabelFont());
       return fontMetrics.getHeight() - fontMetrics.getDescent();
     }
 
     public final int getPreferedWidth() {
-      return getFontMetrics(getStatusFont()).stringWidth("0000M of 0000M");
+      return getFontMetrics(UIUtil.getLabelFont()).stringWidth(SAMPLE_STRING);
     }
   }
 }

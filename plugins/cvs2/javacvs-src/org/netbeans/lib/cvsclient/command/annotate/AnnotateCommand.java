@@ -26,6 +26,7 @@ import org.netbeans.lib.cvsclient.progress.IProgressViewer;
 import org.netbeans.lib.cvsclient.progress.sending.FileStateRequestsProgressHandler;
 import org.netbeans.lib.cvsclient.request.CommandRequest;
 import org.netbeans.lib.cvsclient.request.Requests;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
 
@@ -84,7 +85,7 @@ public final class AnnotateCommand extends AbstractCommand {
 	}
 
 	public String getCvsCommandLine() {
-		final StringBuffer cvsCommandLine = new StringBuffer("annotate ");
+		@NonNls final StringBuffer cvsCommandLine = new StringBuffer("annotate ");
 		cvsCommandLine.append(getCvsArguments());
 		appendFileArguments(cvsCommandLine);
 		return cvsCommandLine.toString();
@@ -119,7 +120,7 @@ public final class AnnotateCommand extends AbstractCommand {
 	// Utils ==================================================================
 
 	private String getCvsArguments() {
-		final StringBuffer cvsArguments = new StringBuffer("");
+		@NonNls final StringBuffer cvsArguments = new StringBuffer("");
 		if (!isRecursive()) {
 			cvsArguments.append("-l ");
 		}

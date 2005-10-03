@@ -38,24 +38,25 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
+import com.intellij.openapi.options.OptionsBundle;
 
 import javax.swing.*;
 import java.util.Map;
 
 public class PropertiesColorsPage implements ColorSettingsPage {
   private static final AttributesDescriptor[] ATTRS = new AttributesDescriptor[] {
-    new AttributesDescriptor("Property key", PropertiesHighlighter.PROPERTY_KEY),
-    new AttributesDescriptor("Property value", PropertiesHighlighter.PROPERTY_VALUE),
-    new AttributesDescriptor("Key/value separator", PropertiesHighlighter.PROPERTY_KEY_VALUE_SEPARATOR),
-    new AttributesDescriptor("Comment", PropertiesHighlighter.PROPERTY_COMMENT),
-    new AttributesDescriptor("Valid string escape", PropertiesHighlighter.PROPERTIES_VALID_STRING_ESCAPE),
-    new AttributesDescriptor("Invalid string escape", PropertiesHighlighter.PROPERTIES_INVALID_STRING_ESCAPE),
+    new AttributesDescriptor(OptionsBundle.message("options.properties.attribute.descriptor.property.key"), PropertiesHighlighter.PROPERTY_KEY),
+    new AttributesDescriptor(OptionsBundle.message("options.properties.attribute.descriptor.property.value"), PropertiesHighlighter.PROPERTY_VALUE),
+    new AttributesDescriptor(OptionsBundle.message("options.properties.attribute.descriptor.key.value.separator"), PropertiesHighlighter.PROPERTY_KEY_VALUE_SEPARATOR),
+    new AttributesDescriptor(OptionsBundle.message("options.properties.attribute.descriptor.comment"), PropertiesHighlighter.PROPERTY_COMMENT),
+    new AttributesDescriptor(OptionsBundle.message("options.properties.attribute.descriptor.valid.string.escape"), PropertiesHighlighter.PROPERTIES_VALID_STRING_ESCAPE),
+    new AttributesDescriptor(OptionsBundle.message("options.properties.attribute.descriptor.invalid.string.escape"), PropertiesHighlighter.PROPERTIES_INVALID_STRING_ESCAPE),
   };
 
   private static final ColorDescriptor[] COLORS = new ColorDescriptor[0];
 
   public String getDisplayName() {
-    return "Properties";
+    return OptionsBundle.message("properties.options.display.name");
   }
 
   public Icon getIcon() {

@@ -70,4 +70,8 @@ public interface PsiKeyword extends PsiJavaToken {
   String STATIC = "static";
   String WHILE = "while";
   String VOLATILE = "volatile";
+
+  String TRUE = "true";
+  String FALSE = "false";
+  String NULL = "null";
 }

@@ -5,6 +5,7 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -12,14 +13,14 @@ import java.util.List;
 import java.util.Map;
 
 public class QuickList {
-  public static final String QUICK_LIST_PREFIX = "QuickList.";
-  public static final String SEPARATOR_ID = QUICK_LIST_PREFIX + "$Separator$";
+  @NonNls public static final String QUICK_LIST_PREFIX = "QuickList.";
+  @NonNls public static final String SEPARATOR_ID = QUICK_LIST_PREFIX + "$Separator$";
 
-  private static final String ID_TAG = "id";
-  private static final String READONLY_TAG = "readonly";
-  private static final String ACTION_TAG = "action";
-  private static final String DISPLAY_NAME_TAG = "display";
-  private static final String DESCRIPTION_TAG = "description";
+  @NonNls private static final String ID_TAG = "id";
+  @NonNls private static final String READONLY_TAG = "readonly";
+  @NonNls private static final String ACTION_TAG = "action";
+  @NonNls private static final String DISPLAY_NAME_TAG = "display";
+  @NonNls private static final String DESCRIPTION_TAG = "description";
 
 
   private String myDisplayName;

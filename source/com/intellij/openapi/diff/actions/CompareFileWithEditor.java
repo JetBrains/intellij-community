@@ -4,10 +4,7 @@ import com.intellij.ide.macro.DataAccessor;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.diff.DiffContent;
-import com.intellij.openapi.diff.DiffContentUtil;
-import com.intellij.openapi.diff.DiffRequest;
-import com.intellij.openapi.diff.DocumentContent;
+import com.intellij.openapi.diff.*;
 import com.intellij.openapi.diff.ex.DiffContentFactory;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -34,26 +31,28 @@ public class CompareFileWithEditor extends BaseDiffAction {
       diffData = getDiffData(e.getDataContext());
     }
     catch (DataAccessor.NoDataException e1) {
-      presentation.setText("Compare with Editor");
+      presentation.setText(DiffBundle.message("compare.with.editor.action.name"));
       presentation.setEnabled(false);
       return;
     }
-    String singular = diffData.getElementPresentation().getKind().getSingular(true);
-    presentation.setText("Compare " + singular + " with Editor");
+    presentation.setText(
+      DiffBundle.message("diff.compare.element.type.with.editor.action.name", diffData.getElementPresentation().getKind().getTypeNum()));
     presentation.setEnabled(true);
   }
 
   protected FileEditorContents getDiffData(DataContext dataContext) throws DataAccessor.NoDataException {
-    if (!checkSelection(dataContext)) throw new DataAccessor.NoDataException("Wrong selection");
+    if (!checkSelection(dataContext)) throw new DataAccessor.NoDataException(
+      DiffBundle.message("diff.file.whith.editor.action.wrong.selection.error.message"));
     Project project = DataAccessor.PROJECT.getNotNull(dataContext);
     PsiElement element = PRIMARY_SOURCE.getNotNull(dataContext);
     PsiFile psiFile = element.getContainingFile();
     if (psiFile != null) element = psiFile;
     Document document = EDITING_DOCUMENT.getNotNull(dataContext);
-    if (isSameFile(document, element)) throw new DataAccessor.NoDataException("Same file");
+    if (isSameFile(document, element)) throw new DataAccessor.NoDataException(
+      DiffBundle.message("diff.file.whith.editor.action.same.file.error.message"));
     DiffContent diffContent = DiffContentFactory.fromPsiElement(element);
     if (diffContent == null || diffContent.getDocument() == null)
-      throw new DataAccessor.NoDataException("No content");
+      throw new DataAccessor.NoDataException(DiffBundle.message("diff.file.whith.editor.action.no.content.error.message"));
     return new FileEditorContents(document, element, project);
   }
 
@@ -91,7 +90,8 @@ public class CompareFileWithEditor extends BaseDiffAction {
 
     public String[] getContentTitles() {
       VirtualFile documentFile = getDocumentFile(myDocument);
-      String documentTitle = documentFile != null ? ElementPresentation.forVirtualFile(documentFile).getNameWithFQComment() : "Editor";
+      String documentTitle = documentFile != null ? ElementPresentation.forVirtualFile(documentFile).getNameWithFQComment() : DiffBundle
+        .message("diff.content.editor.content.title");
       return new String[]{getElementPresentation().getNameWithFQComment(), documentTitle};
     }
 
@@ -104,7 +104,13 @@ public class CompareFileWithEditor extends BaseDiffAction {
     }
 
     public String getWindowTitle() {
-      return getElementPresentation().getQualifiedName() + " vs " + getContentTitle(myDocument);
+      if (isEditorContent(myDocument)) {
+        return DiffBundle.message("diff.element.qualified.name.vs.editor.dialog.title", getElementPresentation().getQualifiedName());
+      } else {
+        return DiffBundle.message("diff.element.qualified.name.vs.file.dialog.title", getElementPresentation().getQualifiedName(),
+                                  getDocumentFile(myDocument));
+      }
+
     }
   }
 }

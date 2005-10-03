@@ -26,6 +26,7 @@ import org.netbeans.lib.cvsclient.request.DirectoryRequest;
 import org.netbeans.lib.cvsclient.request.Requests;
 import org.netbeans.lib.cvsclient.util.BugLog;
 import org.netbeans.lib.cvsclient.util.SimpleStringPattern;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.IOException;
@@ -40,7 +41,7 @@ public final class ImportCommand extends Command {
 
 	// Constants ==============================================================
 
-	public static final String EXAM_DIR = "server: Importing ";
+	@NonNls public static final String EXAM_DIR = "server: Importing ";
 
 	// Fields =================================================================
 
@@ -107,7 +108,7 @@ public final class ImportCommand extends Command {
 	}
 
 	public String getCvsCommandLine() {
-		final StringBuffer cvsArguments = new StringBuffer("import ");
+		@NonNls final StringBuffer cvsArguments = new StringBuffer("import ");
 		cvsArguments.append(getCvsArguments());
 
 		cvsArguments.append(' ');
@@ -196,7 +197,7 @@ public final class ImportCommand extends Command {
 	// Utils ==================================================================
 
 	private String getCvsArguments() {
-		final StringBuffer cvsArguments = new StringBuffer();
+		@NonNls final StringBuffer cvsArguments = new StringBuffer();
 		cvsArguments.append("-m \"");
 		cvsArguments.append(CommandUtils.getMessageNotNull(getLogMessage()));
 		cvsArguments.append("\" ");
@@ -237,7 +238,7 @@ public final class ImportCommand extends Command {
 			final SimpleStringPattern pattern = (SimpleStringPattern)it.next();
 			final KeywordSubstitution keywordSubstitutionOptions = (KeywordSubstitution)wrapperMap.get(pattern);
 
-			final StringBuffer buffer = new StringBuffer();
+			@NonNls final StringBuffer buffer = new StringBuffer();
 			buffer.append(pattern.toString());
 			buffer.append(" -k '");
 			buffer.append(keywordSubstitutionOptions.toString());

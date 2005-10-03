@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.intention.impl;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -12,8 +13,7 @@ import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-
-import java.text.MessageFormat;
+import org.jetbrains.annotations.NonNls;
 
 public class AssignFieldFromParameterAction extends BaseIntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.AssignFieldFromParameterAction");
@@ -43,13 +43,13 @@ public class AssignFieldFromParameterAction extends BaseIntentionAction {
     }
     PsiField field = findFieldToAssign();
     if (field == null) return false;
-    setText(MessageFormat.format("Assign Parameter to Field ''{0}''", new Object[]{field.getName(),}));
+    setText(CodeInsightBundle.message("intention.assign.field.from.parameter.text", field.getName()));
 
     return true;
   }
 
   public String getFamilyName() {
-    return "Assign Parameter to Field";
+    return CodeInsightBundle.message("intention.assign.field.from.parameter.family");
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) {
@@ -69,7 +69,7 @@ public class AssignFieldFromParameterAction extends BaseIntentionAction {
 
       String stmtText = fieldName + " = " + parameterName + ";";
       if (fieldName.equals(parameterName)) {
-        String prefix = isMethodStatic ? targetClass.getName() == null ? "" : targetClass.getName() + "." : "this.";
+        @NonNls String prefix = isMethodStatic ? targetClass.getName() == null ? "" : targetClass.getName() + "." : "this.";
         stmtText = prefix + stmtText;
       }
 
@@ -87,7 +87,7 @@ public class AssignFieldFromParameterAction extends BaseIntentionAction {
 
           if (expression instanceof PsiMethodCallExpression) {
             PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
-            String text = methodCallExpression.getMethodExpression().getText();
+            @NonNls String text = methodCallExpression.getMethodExpression().getText();
 
             if (text.equals("super") || text.equals("this")) {
               continue;

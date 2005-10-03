@@ -7,6 +7,8 @@ import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.SystemProperties;
+import com.intellij.ui.UIBundle;
 
 import javax.swing.*;
 import java.awt.event.KeyEvent;
@@ -17,7 +19,7 @@ import java.awt.event.InputEvent;
  */
 public final class GotoHomeAction extends FileChooserDialogImpl.FileChooserAction{
   public GotoHomeAction(FileSystemTree fileSystemTree) {
-    super("Home", "Go to home directory", IconLoader.getIcon("/nodes/homeFolder.png"), fileSystemTree, KeyStroke.getKeyStroke(KeyEvent.VK_1, InputEvent.CTRL_MASK));
+    super(UIBundle.message("file.chooser.goto.home.action.name"), UIBundle.message("file.chooser.goto.home.action.description"), IconLoader.getIcon("/nodes/homeFolder.png"), fileSystemTree, KeyStroke.getKeyStroke(KeyEvent.VK_1, InputEvent.CTRL_MASK));
   }
 
   protected void actionPerformed(FileSystemTree fileSystemTree, AnActionEvent e) {
@@ -27,7 +29,7 @@ public final class GotoHomeAction extends FileChooserDialogImpl.FileChooserActio
   }
 
   private static VirtualFile getHomeDirectory(){
-    return LocalFileSystem.getInstance().findFileByPath(System.getProperty("user.home").replace('\\','/'));
+    return LocalFileSystem.getInstance().findFileByPath(SystemProperties.getUserHome().replace('\\','/'));
   }
 
   protected void update(FileSystemTree fileSystemTree, AnActionEvent e) {

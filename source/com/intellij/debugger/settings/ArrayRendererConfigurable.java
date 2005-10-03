@@ -1,6 +1,7 @@
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.ui.tree.render.ArrayRenderer;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -63,8 +64,14 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable{
       }
 
       if(newEndIndex - newStartIndex > 10000) {
-        if(Messages.showOkCancelDialog(myPanel.getRootPane(), "Range specified is too big. " + ApplicationNamesInfo.getInstance().getProductName() +
-                                                              " needs too much resources to perform requested operation. Are you shure you want to continue?", "Range is Too Big", Messages.getWarningIcon()) != DialogWrapper.OK_EXIT_CODE) return;
+        final int answer = Messages.showOkCancelDialog(
+          myPanel.getRootPane(),
+          DebuggerBundle.message("warning.range.too.big", ApplicationNamesInfo.getInstance().getProductName()),
+          DebuggerBundle.message("title.range.too.big"),
+          Messages.getWarningIcon());
+        if(answer != DialogWrapper.OK_EXIT_CODE) {
+          return;
+        }
       }
     }
 
@@ -82,22 +89,20 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable{
 
     final FontMetrics fontMetrics = myStartIndex.getFontMetrics(myStartIndex.getFont());
     final Dimension minSize = new Dimension(myStartIndex.getPreferredSize());
+    //noinspection HardCodedStringLiteral
     minSize.width = fontMetrics.stringWidth("AAAAA");
     myStartIndex.setMinimumSize(minSize);
     myEndIndex.setMinimumSize(minSize);
     myEntriesLimit.setMinimumSize(minSize);
 
-    myStartIndexLabel = new JLabel("Array start index:");
+    myStartIndexLabel = new JLabel(DebuggerBundle.message("label.array.renderer.configurable.start.index"));
     myStartIndexLabel.setLabelFor(myStartIndex);
-    myStartIndexLabel.setDisplayedMnemonic('r');
 
-    myEndIndexLabel = new JLabel("end index:");
+    myEndIndexLabel = new JLabel(DebuggerBundle.message("label.array.renderer.configurable.end.index"));
     myEndIndexLabel.setLabelFor(myEndIndex);
-    myEndIndexLabel.setDisplayedMnemonic('d');
 
-    myEntriesLimitLabel = new JLabel("Show maximum");
+    myEntriesLimitLabel = new JLabel(DebuggerBundle.message("label.array.renderer.configurable.max.count1"));
     myEntriesLimitLabel.setLabelFor(myEntriesLimit);
-    myEntriesLimitLabel.setDisplayedMnemonic('m');
 
     myPanel.add(myStartIndexLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 4, 0, 4), 0, 0));
     myPanel.add(myStartIndex, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(4, 4, 0, 4), 0, 0));
@@ -106,7 +111,7 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable{
 
     myPanel.add(myEntriesLimitLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 4, 0, 4), 0, 0));
     myPanel.add(myEntriesLimit, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(4, 4, 0, 4), 0, 0));
-    myPanel.add(new JLabel("array elements"), new GridBagConstraints(2, GridBagConstraints.RELATIVE, 2, 1, 1.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 4, 0, 4), 0, 0));
+    myPanel.add(new JLabel(DebuggerBundle.message("label.array.renderer.configurable.max.count2")), new GridBagConstraints(2, GridBagConstraints.RELATIVE, 2, 1, 1.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 4, 0, 4), 0, 0));
 
     final DocumentListener listener = new DocumentListener() {
       private void updateEntriesLimit() {

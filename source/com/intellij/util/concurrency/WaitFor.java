@@ -4,6 +4,7 @@
  */
 package com.intellij.util.concurrency;
 
+import org.jetbrains.annotations.NonNls;
 
 
 /**
@@ -17,6 +18,7 @@ public abstract class WaitFor {
   private long myWaitTime;
   private boolean myInterrupted;
   private boolean myConditionRealized;
+  @NonNls public static final String WAIT_FOR_THREAD_NAME = "WaitFor thread";
 
   /** Blocking call */
   public WaitFor() {
@@ -45,7 +47,7 @@ public abstract class WaitFor {
 
   /** Non-blocking call */
   public WaitFor(final int timeoutMsecs, final Runnable toRunOnTrue) {
-    new Thread("WaitFor thread") {
+    new Thread(WAIT_FOR_THREAD_NAME) {
       public void run() {
         myConditionRealized = new WaitFor(timeoutMsecs) {
           protected boolean condition() {

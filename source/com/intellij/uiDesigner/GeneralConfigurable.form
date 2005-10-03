@@ -11,23 +11,23 @@
     <children>
       <vspacer id="d5f77">
         <constraints>
-          <xy x="165" y="120" width="11" height="85"/>
+          <xy x="182" y="117" width="11" height="88"/>
           <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
         </constraints>
       </vspacer>
       <component id="2eed8" class="javax.swing.JLabel">
         <constraints>
-          <xy x="6" y="8" width="88" height="15"/>
+          <xy x="6" y="9" width="325" height="14"/>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
         </constraints>
         <properties>
-          <text value="Generate GUI into:"/>
+          <text resource-bundle="messages/UIDesignerBundle" key="label.generate.gui.into"/>
         </properties>
       </component>
       <grid id="b77c5" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="10" bottom="10" right="0"/>
         <constraints>
-          <xy x="6" y="31" width="329" height="61"/>
+          <xy x="6" y="31" width="363" height="59"/>
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
         </constraints>
         <properties/>
@@ -35,39 +35,39 @@
         <children>
           <component id="e8471" class="javax.swing.JRadioButton" binding="myRbInstrumentClasses">
             <constraints>
-              <xy x="10" y="0" width="107" height="23"/>
+              <xy x="10" y="0" width="101" height="22"/>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
               <margin top="2" left="0" bottom="2" right="2"/>
-              <text value="Binary &amp;class files"/>
+              <text resource-bundle="messages/UIDesignerBundle" key="radio.generate.into.class"/>
             </properties>
           </component>
           <component id="2add1" class="javax.swing.JRadioButton" binding="myRbInstrumentSources">
             <constraints>
-              <xy x="10" y="28" width="111" height="23"/>
+              <xy x="10" y="27" width="353" height="22"/>
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
               <margin top="2" left="0" bottom="2" right="2"/>
-              <text value="Java &amp;source code"/>
+              <text resource-bundle="messages/UIDesignerBundle" key="radio.generate.into.java"/>
             </properties>
           </component>
         </children>
       </grid>
       <hspacer id="cdabe">
         <constraints>
-          <xy x="335" y="56" width="68" height="11"/>
+          <xy x="369" y="55" width="34" height="11"/>
           <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1"/>
         </constraints>
       </hspacer>
       <component id="e8ed8" class="javax.swing.JCheckBox" binding="myChkCopyFormsRuntime">
         <constraints>
-          <xy x="6" y="97" width="329" height="23"/>
+          <xy x="6" y="95" width="346" height="22"/>
           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
         </constraints>
         <properties>
-          <text value="&amp;Automatically copy form runtime classes to the output directory"/>
+          <text resource-bundle="messages/UIDesignerBundle" key="chk.copy.form.runtime"/>
         </properties>
       </component>
     </children>

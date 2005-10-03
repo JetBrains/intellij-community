@@ -6,11 +6,13 @@ import com.intellij.util.config.Storage;
 
 import java.util.HashMap;
 
+import org.jetbrains.annotations.NonNls;
+
 public class StoringPropertyContainer extends AbstractProperty.AbstractPropertyContainer<AbstractProperty<Boolean>> {
   private final HashMap<AbstractProperty<Boolean>, Boolean> myValues = new HashMap<AbstractProperty<Boolean>, Boolean>();
   private final Storage myStorage;
 
-  public StoringPropertyContainer(final String groupName, final PropertiesComponent propertiesComponent) {
+  public StoringPropertyContainer(@NonNls final String groupName, final PropertiesComponent propertiesComponent) {
     this(new Storage.PropertiesComponentStorage(groupName, propertiesComponent));
   }
 

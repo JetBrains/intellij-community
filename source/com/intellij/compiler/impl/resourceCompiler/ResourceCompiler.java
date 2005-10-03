@@ -38,7 +38,7 @@ public class ResourceCompiler implements TranslatingCompiler {
   }
 
   public String getDescription() {
-    return "Resource Compiler";
+    return CompilerBundle.message("resource.compiler.description");
   }
 
   public boolean validateConfiguration(CompileScope scope) {
@@ -52,7 +52,7 @@ public class ResourceCompiler implements TranslatingCompiler {
 
   public TranslatingCompiler.ExitStatus compile(final CompileContext context, final VirtualFile[] files) {
     context.getProgressIndicator().pushState();
-    context.getProgressIndicator().setText("Copying resources...");
+    context.getProgressIndicator().setText(CompilerBundle.message("progress.copying.resources"));
 
     final List<OutputItem> processed = new ArrayList<OutputItem>(files.length);
     final List<CopyCommand> copyCommands = new ArrayList<CopyCommand>(files.length);
@@ -108,7 +108,7 @@ public class ResourceCompiler implements TranslatingCompiler {
       catch (IOException e) {
         context.addMessage(
           CompilerMessageCategory.ERROR,
-          "Error copying " + command.getFromPath() + " to " + command.getToPath() + ":\n" + e.getMessage(),
+          CompilerBundle.message("error.copying", command.getFromPath(), command.getToPath(), e.getMessage()),
           command.getSourceFileUrl(), -1, -1
         );
       }

@@ -1,6 +1,7 @@
 package com.intellij.execution.junit2.configuration;
 
 import com.intellij.execution.RunJavaConfiguration;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.LabeledComponent;
@@ -31,7 +32,7 @@ public class CommonJavaParameters extends JPanel {
     copyDialogCaption(myProgramParameters);
     copyDialogCaption(myVMParameters);
     myWorkingDirectory.getComponent().
-      addBrowseFolderListener("Select Working Directory", null, null,
+      addBrowseFolderListener(ExecutionBundle.message("select.working.directory.message"), null, null,
                               FileChooserDescriptorFactory.createSingleFolderDescriptor());
 
     myFields[RunJavaConfiguration.PROGRAM_PARAMETERS_PROPERTY] = myProgramParameters;

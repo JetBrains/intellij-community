@@ -4,6 +4,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.CommonBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -25,9 +26,9 @@ final class GenerateJavadocDialog extends DialogWrapper {
 
     myConfigurable = configuration.createConfigurable();
 
-    setOKButtonText("&Start");
-    myPackageName = "".equals(packageName) ? "<default>" : packageName;
-    setTitle("Generate JavaDoc");
+    setOKButtonText(JavadocBundle.message("javadoc.generate.start.button"));
+    myPackageName = "".equals(packageName) ? JavadocBundle.message("javadoc.generate.package.default") : packageName;
+    setTitle(JavadocBundle.message("javadoc.generate.title"));
     init();
     myConfigurable.reset();
   }
@@ -45,17 +46,16 @@ final class GenerateJavadocDialog extends DialogWrapper {
     gbConstraints.fill = GridBagConstraints.BOTH;
     gbConstraints.insets = new Insets(0,0,0,0);
 
-    myForProjectRadio = new JRadioButton("Whole project");
-    myForProjectRadio.setMnemonic('w');
+    myForProjectRadio = new JRadioButton(JavadocBundle.message("javadoc.generate.scope.whole.project"));
     panel.add(myForProjectRadio, gbConstraints);
 
-    myForPackageRadio = new JRadioButton("Package"+ (myPackageName != null ? " \"" + myPackageName + "\"" : ""));
-    myForPackageRadio.setMnemonic('p');
+    myForPackageRadio = new JRadioButton(
+      JavadocBundle.message("javadoc.generate.scope.package", (myPackageName != null ? " \"" + myPackageName + "\"" : "")));
     gbConstraints.gridy++;
     gbConstraints.insets = new Insets(0,0,0,0);
     panel.add(myForPackageRadio, gbConstraints);
 
-    myIncludeSubpackagesCheckBox = new JCheckBox("Include subpackages");
+    myIncludeSubpackagesCheckBox = new JCheckBox(JavadocBundle.message("javadoc.generate.scope.include.subpackages.checkbox"));
     gbConstraints.gridy++;
     gbConstraints.insets = new Insets(0,20,0,0);
     panel.add(myIncludeSubpackagesCheckBox, gbConstraints);
@@ -79,7 +79,7 @@ final class GenerateJavadocDialog extends DialogWrapper {
 
   protected JComponent createCenterPanel() {
     JPanel pane = new JPanel(new BorderLayout());
-    pane.setBorder(IdeBorderFactory.createTitledBorder("Settings"));
+    pane.setBorder(IdeBorderFactory.createTitledBorder(JavadocBundle.message("javadoc.generate.settings.group")));
     pane.add(myConfigurable.createComponent(), BorderLayout.CENTER);
     return pane;
   }
@@ -114,7 +114,8 @@ final class GenerateJavadocDialog extends DialogWrapper {
 
   private boolean checkOutputDirectory(String outputDirectory) {
     if (outputDirectory == null || outputDirectory.trim().length() == 0) {
-      Messages.showMessageDialog(myProject, "Output directory is not specified.", "Error", Messages.getErrorIcon());
+      Messages.showMessageDialog(myProject, JavadocBundle.message("javadoc.generate.output.directory.not.specified"),
+                                 CommonBundle.getErrorTitle(), Messages.getErrorIcon());
       return false;
     }
 
@@ -122,16 +123,16 @@ final class GenerateJavadocDialog extends DialogWrapper {
     if (!outputDir.exists()){
       int choice = Messages.showOkCancelDialog(
         myProject,
-        "Output directory \"" + outputDirectory + "\" does not exist\nDo you want to create it?",
-        "JavaDoc",
+        JavadocBundle.message("javadoc.generate.output.directory.not.exists", outputDirectory),
+        JavadocBundle.message("javadoc.generate.message.title"),
         Messages.getWarningIcon()
       );
       if (choice != 0) return false;
       if (!outputDir.mkdirs()){
         Messages.showMessageDialog(
           myProject,
-          "Creation of \"" + outputDirectory + "\" failed.",
-          "Error",
+          JavadocBundle.message("javadoc.generate.output.directory.creation.failed", outputDirectory),
+          CommonBundle.getErrorTitle(),
           Messages.getErrorIcon()
         );
         return false;
@@ -140,8 +141,8 @@ final class GenerateJavadocDialog extends DialogWrapper {
     else if (!outputDir.isDirectory()){
       Messages.showMessageDialog(
         myProject,
-        "\"" + outputDirectory + "\" is not a directory.",
-        "Error",
+        JavadocBundle.message("javadoc.generate.output.not.a.directory", outputDirectory),
+        CommonBundle.getErrorTitle(),
         Messages.getErrorIcon()
       );
       return false;

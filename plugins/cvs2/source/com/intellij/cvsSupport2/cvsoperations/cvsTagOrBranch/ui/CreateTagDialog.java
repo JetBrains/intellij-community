@@ -28,8 +28,8 @@ public class CreateTagDialog extends CvsTagDialog {
   public CreateTagDialog(final Collection<FilePath> files, final Project project, boolean isTag) {
     myIsTag = isTag;
 
-    myTagOrBranchLabel.setText(myIsTag ? "Tag name:" : "Branch name:");
-    mySwitchToThisTag.setText(myIsTag ? "Switch to this tag" : "Switch to this branch");
+    myTagOrBranchLabel.setText(myIsTag ? com.intellij.CvsBundle.message("label.tag.name") : com.intellij.CvsBundle.message("label.branch.name"));
+    mySwitchToThisTag.setText(myIsTag ? com.intellij.CvsBundle.message("checkbox.switch.to.this.tag") : com.intellij.CvsBundle.message("checkbox.switch.to.this.branch"));
 
     myTagName.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -40,7 +40,7 @@ public class CreateTagDialog extends CvsTagDialog {
       }
     });
 
-    setTitle("Create " + (myIsTag ? "Tag" : "Branch"));
+    setTitle((myIsTag ? com.intellij.CvsBundle.message("operation.name.create.tag") : com.intellij.CvsBundle.message("operation.name.create.branch")));
 
     CvsFieldValidator.installOn(this, myTagName.getTextField(), myErrorLabel);
     init();

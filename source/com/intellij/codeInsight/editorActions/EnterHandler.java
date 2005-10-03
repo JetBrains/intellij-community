@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.ide.DataManager;
@@ -37,6 +38,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.NonNls;
 
 public class EnterHandler extends EditorWriteActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.EnterHandler");
@@ -73,7 +75,7 @@ public class EnterHandler extends EditorWriteActionHandler {
 
     int caretAdvance = 0;
 
-    CommandProcessor.getInstance().setCurrentCommandName("Typing");
+    CommandProcessor.getInstance().setCurrentCommandName(CodeInsightBundle.message("command.name.typing"));
 
     EditorModificationUtil.deleteSelectedText(editor);
 
@@ -361,8 +363,11 @@ public class EnterHandler extends EditorWriteActionHandler {
     private int myCaretAdvance;
 
     private boolean myForceIndent = false;
-    private static final String PLACE_HOLDER = "[PLACE_HOLDER]";
     private static final String LINE_SEPARATOR = "\n";
+
+    @NonNls private static final String PARAM_TAG = "@param";
+    @NonNls private static final String RETURN_TAG = "@return";
+    @NonNls private static final String THROWS_TAG = "@throws";
 
 
     public DoEnterAction(
@@ -535,19 +540,19 @@ public class EnterHandler extends EditorWriteActionHandler {
 
           final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
           for (PsiParameter parameter : parameters) {
-            buffer.append(createDocCommentLine(" @param ", getProject()));
+            buffer.append(createDocCommentLine(PARAM_TAG, getProject()));
             buffer.append(parameter.getName());
             buffer.append(LINE_SEPARATOR);
           }
 
           if (psiMethod.getReturnType() != null && psiMethod.getReturnType() != PsiType.VOID) {
-            buffer.append(createDocCommentLine(" @return", getProject()));
+            buffer.append(createDocCommentLine(RETURN_TAG, getProject()));
             buffer.append(LINE_SEPARATOR);
           }
 
           final PsiJavaCodeReferenceElement[] references = psiMethod.getThrowsList().getReferenceElements();
           for (PsiJavaCodeReferenceElement reference : references) {
-            buffer.append(createDocCommentLine(" @throws ", getProject()));
+            buffer.append(createDocCommentLine(THROWS_TAG, getProject()));
             buffer.append(reference.getText());
             buffer.append(LINE_SEPARATOR);
           }
@@ -607,7 +612,7 @@ public class EnterHandler extends EditorWriteActionHandler {
           }
           else {
             removeTrailingSpaces(myDocument, myOffset);
-            myDocument.insertString(myOffset, createDocCommentLine(" ", getProject()));
+            myDocument.insertString(myOffset, createDocCommentLine("", getProject()));
             PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
           }
         }
@@ -624,9 +629,14 @@ public class EnterHandler extends EditorWriteActionHandler {
 
   private static String createDocCommentLine(String lineData, Project project) {
     if (!CodeStyleSettingsManager.getSettings(project).JD_LEADING_ASTERISKS_ARE_ENABLED) {
-      return lineData;
+      return " " + lineData + " ";
     } else {
-    return DOC_COMMENT_ASTERISK + lineData;
+      if (lineData.length() == 0) {
+        return DOC_COMMENT_ASTERISK + " ";
+      } else {
+        return DOC_COMMENT_ASTERISK + " " + lineData + " ";
+      }
+
     }
   }
 }

@@ -8,6 +8,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -21,6 +22,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPackage;
+import com.intellij.ide.highlighter.ModuleFileType;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,8 +38,8 @@ public class ModuleUtil {
     if (sourceRoots.length == 0) {
       Messages.showErrorDialog(
           module.getProject(),
-          "No Source Roots configured for module "+module.getName()+"\nPlease use Settings | Paths to configure roots.",
-          "No Source Roots Configured"
+          ProjectBundle.message("module.source.roots.not.configured.error", module.getName()),
+          ProjectBundle.message("module.source.roots.not.configured.title")
         );
 
       ModulesConfigurator.showDialog(module.getProject(), module.getName(), ContentEntriesEditor.NAME, false);
@@ -51,8 +53,8 @@ public class ModuleUtil {
   }
 
   static String moduleNameByFileName(String fileName) {
-    if (fileName.endsWith(".iml")) {
-      return fileName.substring(0, fileName.length() - ".iml".length());
+    if (fileName.endsWith(ModuleFileType.DOT_DEFAULT_EXTENSION)) {
+      return fileName.substring(0, fileName.length() - ModuleFileType.DOT_DEFAULT_EXTENSION.length());
     }
     else {
       return fileName;

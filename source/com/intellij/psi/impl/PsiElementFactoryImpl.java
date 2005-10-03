@@ -35,6 +35,7 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.xml.util.XmlTagTextUtil;
 import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -49,6 +50,11 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
   private static final Map<String, PsiPrimitiveType> ourPrimitiveTypesMap = new HashMap<String, PsiPrimitiveType>();
 
   static {
+    initPrimitiveTypes();
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  private static void initPrimitiveTypes() {
     ourPrimitiveTypesMap.put("byte", (PsiPrimitiveType)PsiType.BYTE);
     ourPrimitiveTypesMap.put("char", (PsiPrimitiveType)PsiType.CHAR);
     ourPrimitiveTypesMap.put("double", (PsiPrimitiveType)PsiType.DOUBLE);
@@ -118,7 +124,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
 
   public PsiClass createClass(String name) throws IncorrectOperationException {
     CheckUtil.checkIsIdentifier(myManager, name);
-    String text = "public class " + name + "{ }";
+    @NonNls String text = "public class " + name + "{ }";
     PsiJavaFile aFile = createDummyJavaFile(text);
     PsiClass[] classes = aFile.getClasses();
     if (classes.length != 1) {
@@ -129,7 +135,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
 
   public PsiClass createInterface(String name) throws IncorrectOperationException {
     CheckUtil.checkIsIdentifier(myManager, name);
-    String text = "public interface " + name + "{ }";
+    @NonNls String text = "public interface " + name + "{ }";
     PsiJavaFile aFile = createDummyJavaFile(text);
     PsiClass[] classes = aFile.getClasses();
     if (classes.length != 1) {
@@ -157,7 +163,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
       throw new IncorrectOperationException("Cannot create field with type \"<null_type>\".");
     }
     ASTNode typeCopy = ChangeUtil.copyToElement(createTypeElement(type));
-    String text = "class _Dummy_ {private int " + name + ";}";
+    @NonNls String text = "class _Dummy_ {private int " + name + ";}";
     PsiJavaFile aFile = createDummyJavaFile(text);
     PsiClass aClass = aFile.getClasses()[0];
     PsiField field = aClass.getFields()[0];
@@ -171,7 +177,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     if (returnType == PsiType.NULL) {
       throw new IncorrectOperationException("Cannot create field with type \"<null_type>\".");
     }
-    String text = "class _Dummy_ {\n public void " + name + "(){}\n}";
+    @NonNls String text = "class _Dummy_ {\n public void " + name + "(){}\n}";
     PsiJavaFile aFile = createDummyJavaFile(text);
     PsiClass aClass = aFile.getClasses()[0];
     PsiMethod method = aClass.getMethods()[0];
@@ -180,7 +186,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
   }
 
   public PsiMethod createConstructor() {
-    String text = "class _Dummy_ {\n public _Dummy_(){}\n}";
+    @NonNls String text = "class _Dummy_ {\n public _Dummy_(){}\n}";
     try {
       PsiJavaFile aFile = createDummyJavaFile(text);
       PsiClass aClass = aFile.getClasses()[0];
@@ -194,7 +200,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
   }
 
   public PsiClassInitializer createClassInitializer() throws IncorrectOperationException {
-    String text = "class _Dummy_ { {} }";
+    @NonNls String text = "class _Dummy_ { {} }";
     final PsiJavaFile aFile = createDummyJavaFile(text);
     final PsiClass aClass = aFile.getClasses()[0];
     final PsiClassInitializer psiClassInitializer = aClass.getInitializers()[0];
@@ -208,7 +214,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     }
     final FileElement treeHolder = new DummyHolder(myManager, null).getTreeElement();
     final CompositeElement treeElement =
-    getJavaParsingContext(treeHolder).getDeclarationParsing().parseParameterText(("int " + name).toCharArray());
+    getJavaParsingContext(treeHolder).getDeclarationParsing().parseParameterText((PsiKeyword.INT + " " + name).toCharArray());
     TreeUtil.addChildren(treeHolder, treeElement);
 
     TreeElement typeElement = ChangeUtil.copyToElement(createTypeElement(type));
@@ -289,8 +295,8 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return type.accept(TypeDetacher.INSTANCE);
   }
 
-  public PsiSubstitutor createRawSubstitutor(PsiClass aClass) {
-    final Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(aClass);
+  public PsiSubstitutor createRawSubstitutor(PsiTypeParameterListOwner owner) {
+    final Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(owner);
     if (!iterator.hasNext()) return PsiSubstitutor.EMPTY;
     Map<PsiTypeParameter, PsiType> substMap = new HashMap<PsiTypeParameter, PsiType>();
     while (iterator.hasNext()) {
@@ -382,14 +388,14 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     else if (aClass.getParent() instanceof PsiDeclarationStatement) {
       throw new IncorrectOperationException("Cannot create import statement for local class.");
     }
-    String text = "import static " + aClass.getQualifiedName() + "." + memberName + ";";
+    @NonNls String text = "import static " + aClass.getQualifiedName() + "." + memberName + ";";
     PsiJavaFile aFile = createDummyJavaFile(text);
     PsiImportStaticStatement statement = aFile.getImportList().getImportStaticStatements()[0];
     return (PsiImportStaticStatement)CodeStyleManager.getInstance(myManager.getProject()).reformat(statement);
   }
 
   public PsiParameterList createParameterList(String[] names, PsiType[] types) throws IncorrectOperationException {
-    String text = "void method(";
+    @NonNls String text = "void method(";
     String sep = "";
     for (int i = 0; i < names.length; i++) {
       final String name = names[i];
@@ -403,7 +409,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
   }
 
   public PsiReferenceList createReferenceList(PsiJavaCodeReferenceElement[] references) throws IncorrectOperationException {
-    String text = "void method() ";
+    @NonNls String text = "void method() ";
     if (references.length > 0) text += "throws ";
     String sep = "";
     for (final PsiJavaCodeReferenceElement reference : references) {
@@ -418,7 +424,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
   public PsiCatchSection createCatchSection(PsiClassType exceptionType,
                                             String exceptionName,
                                             PsiElement context) throws IncorrectOperationException {
-    StringBuffer buffer = new StringBuffer();
+    @NonNls StringBuffer buffer = new StringBuffer();
     buffer.append("catch (");
     buffer.append(exceptionType.getCanonicalText());
     buffer.append(" " + exceptionName + "){}");
@@ -510,7 +516,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     else if (aClass.getParent() instanceof PsiDeclarationStatement) {
       throw new IncorrectOperationException("Cannot create import statement for local class.");
     }
-    String text = "import " + aClass.getQualifiedName() + ";";
+    @NonNls String text = "import " + aClass.getQualifiedName() + ";";
     PsiJavaFile aFile = createDummyJavaFile(text);
     PsiImportStatement statement = aFile.getImportList().getImportStatements()[0];
     return (PsiImportStatement)CodeStyleManager.getInstance(myManager.getProject()).reformat(statement);
@@ -524,7 +530,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
       throw new IncorrectOperationException("Incorrect package name: \"" + packageName + "\".");
     }
 
-    String text = "import " + packageName + ".*;";
+    @NonNls String text = "import " + packageName + ".*;";
     PsiJavaFile aFile = createDummyJavaFile(text);
     PsiImportStatement statement = aFile.getImportList().getImportStatements()[0];
     return (PsiImportStatement)CodeStyleManager.getInstance(myManager.getProject()).reformat(statement);
@@ -538,7 +544,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     if (type == PsiType.NULL) {
       throw new IncorrectOperationException("Cannot create field with type \"<null_type>\".");
     }
-    StringBuffer buffer = new StringBuffer();
+    @NonNls StringBuffer buffer = new StringBuffer();
     buffer.append("X ");
     buffer.append(name);
     if (initializer != null) {
@@ -556,9 +562,9 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
 
     if (reformat) {
       statement = (PsiDeclarationStatement)CodeStyleManager.getInstance(myManager.getProject()).reformat(statement);
-    } 
+    }
     return statement;
-    
+
   }
 
   public PsiDeclarationStatement createVariableDeclarationStatement(String name,
@@ -568,8 +574,9 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return createVariableDeclarationStatement(name, type, initializer, true);
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public PsiDocTag createParamTag(String parameterName, String description) throws IncorrectOperationException {
-    StringBuffer buffer = new StringBuffer();
+    @NonNls StringBuffer buffer = new StringBuffer();
     buffer.append(" * @param ");
     buffer.append(parameterName);
     buffer.append(" ");
@@ -592,7 +599,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
   }
 
   public PsiDocComment createDocCommentFromText(String docCommentText, PsiElement context) throws IncorrectOperationException {
-    StringBuffer buffer = new StringBuffer();
+    @NonNls StringBuffer buffer = new StringBuffer();
     buffer.append(docCommentText);
     buffer.append("void m();");
     final PsiMethod method = createMethodFromText(buffer.toString(), null);
@@ -638,7 +645,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
   }
 
   public PsiClass createClassFromText(String text, PsiElement context) throws IncorrectOperationException {
-    String fileText = "class _Dummy_ { " + text + " }";
+    @NonNls String fileText = "class _Dummy_ { " + text + " }";
     PsiJavaFile aFile = createDummyJavaFile(fileText);
     PsiClass[] classes = aFile.getClasses();
     if (classes.length != 1) {
@@ -650,7 +657,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
   public PsiField createFieldFromText(String text, PsiElement context) throws IncorrectOperationException {
     final FileElement holderElement = new DummyHolder(myManager, context).getTreeElement();
     TreeElement decl = getJavaParsingContext(holderElement).getDeclarationParsing().parseDeclarationText(myManager, myManager.getEffectiveLanguageLevel(), text.toCharArray(),
-                                                               DeclarationParsing.Context.CLASS_CONTEXT);
+                                                                                                         DeclarationParsing.Context.CLASS_CONTEXT);
     if (decl == null || decl.getElementType() != ElementType.FIELD) {
       throw new IncorrectOperationException("Incorrect field \"" + text + "\".");
     }
@@ -677,7 +684,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
   private PsiMethod createMethodFromTextInner(String text, PsiElement context, LanguageLevel level) throws IncorrectOperationException {
     final FileElement holderElement = new DummyHolder(myManager, context).getTreeElement();
     TreeElement decl = getJavaParsingContext(holderElement, level).getDeclarationParsing().parseDeclarationText(myManager, level, text.toCharArray(),
-                                                               DeclarationParsing.Context.CLASS_CONTEXT);
+                                                                                                                DeclarationParsing.Context.CLASS_CONTEXT);
     if (decl == null || decl.getElementType() != ElementType.METHOD) {
       throw new IncorrectOperationException("Incorrect method \"" + text + "\".");
     }
@@ -757,10 +764,17 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
 
   private PsiJavaFile createDummyJavaFile(String text) throws IncorrectOperationException {
     String ext = StdFileTypes.JAVA.getDefaultExtension();
-    return (PsiJavaFile)createFileFromText("_Dummy_." + ext, text);
+    @NonNls String fileName = "_Dummy_." + ext;
+    FileType type = StdFileTypes.JAVA;
+
+    char[] chars = text.toCharArray();
+    int startOffset = 0;
+    int endOffset = text.length();
+
+    return (PsiJavaFile) createFileFromText(myManager, type, fileName, chars, startOffset, endOffset);
   }
 
-  private PsiAspectFile createDummyAspectFile(String text) throws IncorrectOperationException {
+  private PsiAspectFile createDummyAspectFile(@NonNls String text) throws IncorrectOperationException {
     String ext = StdFileTypes.ASPECT.getDefaultExtension();
     return (PsiAspectFile)createFileFromText("_Dummy_." + ext, text);
   }

@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.jsp.JspFile;
+import com.intellij.ide.IdeBundle;
 
 public class ExternalJavaDocAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
@@ -23,8 +24,8 @@ public class ExternalJavaDocAction extends AnAction {
     if (element == null) {
       Messages.showMessageDialog(
         project,
-        "Please select the element for which you wish to view the documentation",
-        "No Element Selected",
+        IdeBundle.message("message.please.select.element.for.javadoc"),
+        IdeBundle.message("title.no.element.selected"),
         Messages.getErrorIcon()
       );
       return;

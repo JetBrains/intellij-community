@@ -5,6 +5,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.ui.ListUtil;
 
@@ -68,7 +69,7 @@ public class CodeStyleGeneralConfigurable implements Configurable {
   }
 
   public String getDisplayName() {
-    return "Code Generation";
+    return ApplicationBundle.message("title.code.generation");
   }
 
   public String getHelpTopic() {
@@ -283,10 +284,10 @@ public class CodeStyleGeneralConfigurable implements Configurable {
   }
 
   private static class MembersOrderList extends JList {
-    private static final String FIELDS = "Fields";
-    private static final String METHODS = "Methods";
-    private static final String CONSTRUCTORS = "Constructors";
-    private static final String INNER_CLASSES = "Inner classes";
+    private static final String FIELDS = ApplicationBundle.message("listbox.members.order.fields");
+    private static final String METHODS = ApplicationBundle.message("listbox.members.order.methods");
+    private static final String CONSTRUCTORS = ApplicationBundle.message("listbox.members.order.constructors");
+    private static final String INNER_CLASSES = ApplicationBundle.message("listbox.members.order.inner.classes");
 
     private DefaultListModel myModel;
 
@@ -331,6 +332,7 @@ public class CodeStyleGeneralConfigurable implements Configurable {
             return settings.INNER_CLASSES_ORDER_WEIGHT;
           }
           else {
+            //noinspection HardCodedStringLiteral
             throw new IllegalArgumentException("unexpected " + o);
           }
         }
@@ -356,6 +358,7 @@ public class CodeStyleGeneralConfigurable implements Configurable {
           settings.INNER_CLASSES_ORDER_WEIGHT = weight;
         }
         else {
+          //noinspection HardCodedStringLiteral
           throw new IllegalArgumentException("unexpected " + o);
         }
       }

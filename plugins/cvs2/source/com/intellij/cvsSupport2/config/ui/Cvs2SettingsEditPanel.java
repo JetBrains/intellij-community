@@ -27,6 +27,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+import org.jetbrains.annotations.NonNls;
+
 
 public class Cvs2SettingsEditPanel implements CvsRootEditor {
 
@@ -47,10 +49,10 @@ public class Cvs2SettingsEditPanel implements CvsRootEditor {
 
   private final PServerSettingsPanel myPServerSettingsEditor;
   private JButton myTestButton;
-  public static final String EMPTY = "EMPTY";
+  @NonNls public static final String EMPTY = "EMPTY";
   private JPanel myProxySettingsPanel;
   private final ProxySettingsPanel myProxySettingsNonEmptyPanel;
-  private static final String NON_EMPTY_PROXY_SETTINGS = "NON-EMPTY-PROXY-SETTINGS";
+  @NonNls private static final String NON_EMPTY_PROXY_SETTINGS = "NON-EMPTY-PROXY-SETTINGS";
 
   public Cvs2SettingsEditPanel(Project project) {
     myDateOrRevisionOrTagSettings =
@@ -192,11 +194,11 @@ public class Cvs2SettingsEditPanel implements CvsRootEditor {
   }
 
   private static void showConnectionFailedMessage(Exception ex, Component component) {
-    Messages.showMessageDialog(component, ex.getLocalizedMessage(), "Test Connection", Messages.getErrorIcon());
+    Messages.showMessageDialog(component, ex.getLocalizedMessage(), com.intellij.CvsBundle.message("operation.name.test.connection"), Messages.getErrorIcon());
   }
 
   private static void showSuccessfulConnectionMessage(Component component) {
-    Messages.showMessageDialog(component, "Connection successful", "Test Connection",
+    Messages.showMessageDialog(component, com.intellij.CvsBundle.message("operation.status.connection.successful"), com.intellij.CvsBundle.message("operation.name.test.connection"),
                                Messages.getInformationIcon());
   }
 

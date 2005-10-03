@@ -1,6 +1,8 @@
 package com.intellij.ide.impl;
 
 import com.intellij.ide.StandardTargetWeights;
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.SelectInManager;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.PackageViewPane;
 import com.intellij.openapi.project.Project;
@@ -16,7 +18,7 @@ public class PackageViewSelectInTarget extends ProjectViewSelectInTarget {
   }
 
   public String toString() {
-    return "Packages";
+    return SelectInManager.PACKAGES;
   }
 
   public boolean canSelect(PsiFile file) {

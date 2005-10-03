@@ -3,6 +3,7 @@ package com.intellij.ide.util.projectWizard;
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.JavaUtil;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
 import com.intellij.util.concurrency.SwingWorker;
+import com.intellij.CommonBundle;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -37,6 +39,8 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author Eugene Zhuravlev
  *         Date: Jan 6, 2004
@@ -50,8 +54,8 @@ public class SourcePathsStep extends ModuleWizardStep {
   private final String myHelpId;
   private JPanel myPanel;
   private JPanel myContentPanel;
-  private static final String CREATE_SOURCE_PANEL = "create_source";
-  private static final String CHOOSE_SOURCE_PANEL = "choose_source";
+  @NonNls private static final String CREATE_SOURCE_PANEL = "create_source";
+  @NonNls private static final String CHOOSE_SOURCE_PANEL = "choose_source";
   private String myCurrentMode;
   private ElementsChooser<Pair<String,String>> mySourcePathsChooser;
   private static final List<Pair<String,String>> EMPTY_STRING_STRING_ARRAY = Collections.EMPTY_LIST;
@@ -60,12 +64,12 @@ public class SourcePathsStep extends ModuleWizardStep {
   private JRadioButton myRbNoSource;
   private JTextField myTfSourceDirectoryName;
   private JTextField myTfFullPath;
-  private static final String PROGRESS_PANEL = "progress_panel";
+  @NonNls private static final String PROGRESS_PANEL = "progress_panel";
   private JLabel myProgressLabel;
   private JLabel myProgressLabel2;
   private ProgressIndicator myProgressIndicator = null;
 
-  public SourcePathsStep(NameLocationStep nameLocationStep, JavaModuleBuilder builder, Icon icon, String helpId) {
+  public SourcePathsStep(NameLocationStep nameLocationStep, JavaModuleBuilder builder, Icon icon, @NonNls String helpId) {
     myNameLocationStep = nameLocationStep;
     myBuilder = builder;
     myIcon = icon;
@@ -87,8 +91,7 @@ public class SourcePathsStep extends ModuleWizardStep {
     //myProgressLabel2.setFont(UIManager.getFont("Label.font").deriveFont(Font.BOLD));
     progressPanel.add(myProgressLabel2, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(8, 10, 0, 10), 0, 0));
 
-    JButton stopButton = new JButton("Stop Searching");
-    stopButton.setMnemonic('S');
+    JButton stopButton = new JButton(IdeBundle.message("button.stop.searching"));
     stopButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         cancelSourcesSearch();
@@ -101,32 +104,27 @@ public class SourcePathsStep extends ModuleWizardStep {
 
   private JComponent createComponentForEmptyRootCase() {
     final JPanel panel = new JPanel(new GridBagLayout());
-    final String text =
-      "Please specify a directory where Java source files for your project can be found.\n" +
-      "This path should correspond to default (root, unnamed) package.\n" +
-      "Note: the program will recognize only those Java source files, that are located under this directory.";
+    final String text = IdeBundle.message("prompt.please.specify.java.sources.directory");
 
     final JLabel label = new JLabel(text);
     label.setUI(new MultiLineLabelUI());
     panel.add(label, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(8, 10, 0, 10), 0, 0));
 
-    myRbCreateSource = new JRadioButton("Create source directory", true);
-    myRbCreateSource.setMnemonic('C');
+    myRbCreateSource = new JRadioButton(IdeBundle.message("radio.create.source.directory"), true);
     panel.add(myRbCreateSource, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(8, 10, 0, 10), 0, 0));
 
     myTfSourceDirectoryName = new JTextField(suggestSourceDirectoryName());
-    final JLabel srcPathLabel = new JLabel("Enter relative path to module content root  (example: java" + File.separator + "src):");
+    final JLabel srcPathLabel = new JLabel(IdeBundle.message("prompt.enter.relative.path.to.module.content.root", File.separator));
     panel.add(srcPathLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(8, 30, 0, 0), 0, 0));
     final FileChooserDescriptor chooserDescriptor = new FileChooserDescriptor(false, true, false, false, false, false);
     chooserDescriptor.setIsTreeRootVisible(true);
     final FieldPanel fieldPanel = createFieldPanel(myTfSourceDirectoryName, null, new BrowsePathListener(myTfSourceDirectoryName, chooserDescriptor));
     panel.add(fieldPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(8, 30, 0, 10), 0, 0));
 
-    myRbNoSource = new JRadioButton("Do not create source directory", true);
-    myRbNoSource.setMnemonic('D');
+    myRbNoSource = new JRadioButton(IdeBundle.message("radio.do.not.create.source.directory"), true);
     panel.add(myRbNoSource, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(8, 10, 0, 10), 0, 0));
 
-    final JLabel fullPathLabel = new JLabel("The following directory will be marked as a source directory:");
+    final JLabel fullPathLabel = new JLabel(IdeBundle.message("label.source.directory"));
     panel.add(fullPathLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.SOUTHWEST, GridBagConstraints.NONE, new Insets(8, 10, 0, 10), 0, 0));
 
     myTfFullPath = new JTextField();
@@ -159,7 +157,7 @@ public class SourcePathsStep extends ModuleWizardStep {
     return panel;
   }
 
-  protected String suggestSourceDirectoryName() {
+  @NonNls protected String suggestSourceDirectoryName() {
     return "src";
   }
 
@@ -181,21 +179,16 @@ public class SourcePathsStep extends ModuleWizardStep {
         return pair.first + " (" + pair.second + ")";
       }
     };
-    final String text =
-      "Java source files for your module have been found. Please choose directories that will\n" +
-      "be marked as source paths. These paths correspond to default (root, unnamed) packages.\n" +
-      "Note: the program will recognize only those Java source files, that are located under source directories.";
+    final String text = IdeBundle.message("label.java.source.files.have.been.found");
     final JLabel label = new JLabel(text);
     label.setUI(new MultiLineLabelUI());
     panel.add(label, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(8, 10, 0, 10), 0, 0));
     panel.add(mySourcePathsChooser, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(8, 10, 8, 10), 0, 0));
 
-    final JButton markAllButton = new JButton("Mark All");
-    markAllButton.setMnemonic('M');
+    final JButton markAllButton = new JButton(IdeBundle.message("button.mark.all"));
     panel.add(markAllButton, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 10, 8, 2), 0, 0));
 
-    final JButton unmarkAllButton = new JButton("Unmark All");
-    unmarkAllButton.setMnemonic('U');
+    final JButton unmarkAllButton = new JButton(IdeBundle.message("button.unmark.all"));
     panel.add(unmarkAllButton, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 0, 8, 10), 0, 0));
 
     markAllButton.addActionListener(new ActionListener() {
@@ -257,8 +250,9 @@ public class SourcePathsStep extends ModuleWizardStep {
 
   public boolean validate() {
     if (isSourcesSearchInProgress()) {
-      final int answer = Messages.showDialog(myPanel, ApplicationNamesInfo.getInstance().getProductName() +
-                                                      " is currently searching for sources. Would you like to stop the search?", "Question", new String[] {"Continue Searching", "Stop Searching"}, 0, Messages.getWarningIcon());
+      final int answer = Messages.showDialog(myPanel, IdeBundle.message("prompt.stop.searching.for.sources",
+                                                                        ApplicationNamesInfo.getInstance().getProductName()),
+                                             IdeBundle.message("title.question"), new String[] {IdeBundle.message("action.continue.searching"), IdeBundle.message("action.stop.searching")}, 0, Messages.getWarningIcon());
       if (answer == 1) { // terminate
         cancelSourcesSearch();
       }
@@ -268,11 +262,10 @@ public class SourcePathsStep extends ModuleWizardStep {
       final String sourceDirectoryPath = getSourceDirectoryPath();
       final String relativePath = myTfSourceDirectoryName.getText().trim();
       if (relativePath.length() == 0) {
-        String text = "Relative path to sources is empty.\n" +
-                      "Would you like to mark the module content root\n" +
-                      "\"" + sourceDirectoryPath + "\"\n" +
-                      "as a source directory?";
-        final int answer = Messages.showDialog(myTfSourceDirectoryName, text, "Mark Source Directory", new String[] {"Mark", "Do Not Mark", "Cancel"}, 0, Messages.getQuestionIcon());
+        String text = IdeBundle.message("prompt.relative.path.to.sources.empty", sourceDirectoryPath);
+        final int answer = Messages.showDialog(myTfSourceDirectoryName, text, IdeBundle.message("title.mark.source.directory"),
+                                               new String[] {IdeBundle.message("action.mark"), IdeBundle.message("action.do.not.mark"),
+                                                 CommonBundle.getCancelButtonText()}, 0, Messages.getQuestionIcon());
         if (answer == 2) {
           return false; // cancel
         }
@@ -285,12 +278,13 @@ public class SourcePathsStep extends ModuleWizardStep {
         final File srcDir = new File(sourceDirectoryPath);
         try {
           if (!FileUtil.isAncestor(rootDir, srcDir, false)) {
-            Messages.showErrorDialog(myTfSourceDirectoryName, "Source directory should be under module content root directory", "Error");
+            Messages.showErrorDialog(myTfSourceDirectoryName, IdeBundle.message("error.source.directory.should.be.under.module.content.root.directory"),
+                                     CommonBundle.getErrorTitle());
             return false;
           }
         }
         catch (IOException e) {
-          Messages.showErrorDialog(myTfSourceDirectoryName, e.getMessage(), "Error");
+          Messages.showErrorDialog(myTfSourceDirectoryName, e.getMessage(), CommonBundle.getErrorTitle());
           return false;
         }
         srcDir.mkdirs();
@@ -322,7 +316,7 @@ public class SourcePathsStep extends ModuleWizardStep {
     final String contentEntryPath = myBuilder.getContentEntryPath();
     if (isContentEntryChanged()) {
       final MyProgressIndicator progress = new MyProgressIndicator();
-      progress.setText("Searching for sources in " + myBuilder.getContentEntryPath().replace('/', File.separatorChar) + ". Please wait.");
+      progress.setText(IdeBundle.message("progress.searching.for.sources", myBuilder.getContentEntryPath().replace('/', File.separatorChar)));
       ((CardLayout)myContentPanel.getLayout()).show(myContentPanel, PROGRESS_PANEL);
       myContentPanel.revalidate();
       myProgressIndicator = progress;
@@ -413,7 +407,7 @@ public class SourcePathsStep extends ModuleWizardStep {
     private final JTextField myField;
 
     public BrowsePathListener(JTextField textField, final FileChooserDescriptor chooserDescriptor) {
-      super(textField, "Select source directory", "", chooserDescriptor);
+      super(textField, IdeBundle.message("prompt.select.source.directory"), "", chooserDescriptor);
       myChooserDescriptor = chooserDescriptor;
       myField = textField;
     }

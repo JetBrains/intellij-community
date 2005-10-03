@@ -35,6 +35,8 @@ import com.intellij.util.cls.ClsFormatException;
 import java.io.*;
 import java.util.*;
 
+import org.jetbrains.annotations.NonNls;
+
 
 class BackendCompilerWrapper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.javaCompiler.BackendCompilerWrapper");
@@ -53,7 +55,8 @@ class BackendCompilerWrapper {
   private int myExitCode;
   private Map<Module, VirtualFile> myModuleToTempDirMap = new HashMap<Module, VirtualFile>();
   private final ProjectFileIndex myProjectFileIndex;
-  private static final String PACKAGE_ANNOTATION_FILE_NAME = "package-info.java";
+  private static final @NonNls String PACKAGE_ANNOTATION_FILE_NAME = "package-info.java";
+  @NonNls private static final String PROPERTY_IDEA_USE_EMBEDDED_JAVAC = "idea.use.embedded.javac";
 
   public BackendCompilerWrapper(final Project project, VirtualFile[] filesToCompile, CompileContextEx compileContext, BackendCompiler compiler) {
     myProject = project;
@@ -95,17 +98,17 @@ class BackendCompilerWrapper {
       }
     }
     catch (IOException e) {
-      throw new CompilerException("Process not started:\n" + e.getMessage(), e);
+      throw new CompilerException(CompilerBundle.message("error.compiler.process.not.started", e.getMessage()), e);
     }
     catch (SecurityException e) {
-      throw new CompilerException("Compiler not started :" + e.getMessage(), e);
+      throw new CompilerException(CompilerBundle.message("error.compiler.process.not.started", e.getMessage()), e);
     }
     catch (IllegalArgumentException e) {
       throw new CompilerException(e.getMessage(), e);
     }
     finally {
       myCompileContext.getProgressIndicator().pushState();
-      myCompileContext.getProgressIndicator().setText("Deleting temp files...");
+      myCompileContext.getProgressIndicator().setText(CompilerBundle.message("progress.deleting.temp.files"));
       for (Iterator<Module> it = myModuleToTempDirMap.keySet().iterator(); it.hasNext();) {
         final Module module = it.next();
         final VirtualFile file = myModuleToTempDirMap.get(module);
@@ -119,47 +122,55 @@ class BackendCompilerWrapper {
         }
       }
       myModuleToTempDirMap.clear();
-      myCompileContext.getProgressIndicator().setText("Updating caches...");
-      if (mySuccesfullyCompiledJavaFiles.size() > 0 || (dependentFiles != null && dependentFiles.length > 0)) {
-        myCompileContext.getDependencyCache().update();
+      if (!myCompileContext.getProgressIndicator().isCanceled()) {
+        // do not update caches if cancelled because there is a chance that they will be incomplete
+        myCompileContext.getProgressIndicator().setText(CompilerBundle.message("progress.updating.caches"));
+        if (mySuccesfullyCompiledJavaFiles.size() > 0 || (dependentFiles != null && dependentFiles.length > 0)) {
+          myCompileContext.getDependencyCache().update();
+        }
       }
       myCompileContext.getProgressIndicator().popState();
     }
-    myFilesToRecompile = new HashSet<VirtualFile>(Arrays.asList(myFilesToCompile));
-    if (dependentFiles != null) {
-      myFilesToRecompile.addAll(Arrays.asList(dependentFiles));
-    }
-    myFilesToRecompile.removeAll(mySuccesfullyCompiledJavaFiles);
-    processPackageInfoFiles();
+    if (!myCompileContext.getProgressIndicator().isCanceled()) {
+      myFilesToRecompile = new HashSet<VirtualFile>(Arrays.asList(myFilesToCompile));
+      if (dependentFiles != null) {
+        myFilesToRecompile.addAll(Arrays.asList(dependentFiles));
+      }
+      myFilesToRecompile.removeAll(mySuccesfullyCompiledJavaFiles);
+      processPackageInfoFiles();
 
-    return myOutputItems.toArray(new TranslatingCompiler.OutputItem[myOutputItems.size()]);
+      return myOutputItems.toArray(new TranslatingCompiler.OutputItem[myOutputItems.size()]);
+    }
+    else {
+      // when cancelled pretend that nothing was compiled and next compile will compile everything from the scratch
+      return TranslatingCompiler.EMPTY_OUTPUT_ITEM_ARRAY;
+    }
   }
 
   // package-info.java hack
   private void processPackageInfoFiles() {
-    if (myFilesToRecompile.size() > 0) {
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        public void run() {
-          final List<VirtualFile> packageInfoFiles = new ArrayList<VirtualFile>(myFilesToRecompile.size());
-          for (Iterator<VirtualFile> it = myFilesToRecompile.iterator(); it.hasNext();) {
-            final VirtualFile file = it.next();
-            if (PACKAGE_ANNOTATION_FILE_NAME.equals(file.getName())) {
-              packageInfoFiles.add(file);
-            }
+    if (myFilesToRecompile.size() == 0) {
+      return;
+    }
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        final List<VirtualFile> packageInfoFiles = new ArrayList<VirtualFile>(myFilesToRecompile.size());
+        for (final VirtualFile file : myFilesToRecompile) {
+          if (PACKAGE_ANNOTATION_FILE_NAME.equals(file.getName())) {
+            packageInfoFiles.add(file);
           }
-          if (packageInfoFiles.size() > 0) {
-            final Set<VirtualFile> badFiles = getFilesCompiledWithErrors();
-            for (Iterator it = packageInfoFiles.iterator(); it.hasNext();) {
-              final VirtualFile packageInfoFile = (VirtualFile)it.next();
-              if (!badFiles.contains(packageInfoFile)) {
-                myOutputItems.add(new OutputItemImpl(null, null, packageInfoFile));
-                myFilesToRecompile.remove(packageInfoFile);
-              }
+        }
+        if (packageInfoFiles.size() > 0) {
+          final Set<VirtualFile> badFiles = getFilesCompiledWithErrors();
+          for (final VirtualFile packageInfoFile : packageInfoFiles) {
+            if (!badFiles.contains(packageInfoFile)) {
+              myOutputItems.add(new OutputItemImpl(null, null, packageInfoFile));
+              myFilesToRecompile.remove(packageInfoFile);
             }
           }
         }
-      });
-    }
+      }
+    });
   }
 
   private VirtualFile[] getFilesInScope(final VirtualFile[] dependentFiles) {
@@ -288,7 +299,7 @@ class BackendCompilerWrapper {
   }
 
   private VirtualFile[] findDependentFiles() throws CacheCorruptedException {
-    myCompileContext.getProgressIndicator().setText("Checking dependencies...");
+    myCompileContext.getProgressIndicator().setText(CompilerBundle.message("progress.checking.dependencies"));
     final int[] dependentClassInfos = myCompileContext.getDependencyCache().findDependentClasses(myCompileContext, myProject, mySuccesfullyCompiledJavaFiles);
     final Set<VirtualFile> dependentFiles = new HashSet<VirtualFile>();
     final CacheCorruptedException[] _ex = new CacheCorruptedException[]{null};
@@ -325,10 +336,9 @@ class BackendCompilerWrapper {
     if (_ex[0] != null) {
       throw _ex[0];
     }
-    myCompileContext.getProgressIndicator().setText("Found " + dependentFiles.size() + " dependent files");
+    myCompileContext.getProgressIndicator().setText(CompilerBundle.message("progress.found.dependent.files", dependentFiles.size()));
 
-    VirtualFile[] dependent = dependentFiles.toArray(new VirtualFile[dependentFiles.size()]);
-    return dependent;
+    return dependentFiles.toArray(new VirtualFile[dependentFiles.size()]);
   }
 
   private void doCompile(final ModuleChunk chunk, String outputDir, int sourcesFilter) throws IOException {
@@ -347,7 +357,8 @@ class BackendCompilerWrapper {
       pair = JavacSettings.getInstance(myProject).isTestsUseExternalCompiler()? runExternalCompiler(chunk, outputDir) : runEmbeddedJavac(chunk, outputDir);
     }
     else {
-      if (System.getProperty("idea.use.embedded.javac") != null && System.getProperty("idea.use.embedded.javac").equals("true")) {
+      //noinspection HardCodedStringLiteral
+      if (System.getProperty(PROPERTY_IDEA_USE_EMBEDDED_JAVAC) != null && System.getProperty(PROPERTY_IDEA_USE_EMBEDDED_JAVAC).equals("true")) {
         pair = runEmbeddedJavac(chunk, outputDir);
       }
       else {
@@ -461,6 +472,7 @@ class BackendCompilerWrapper {
     if (tempDir.findChild(fileName) != null) {
       int idx = 0;
       while (true) {
+        //noinspection HardCodedStringLiteral
         final String dirName = "dir" + idx++;
         final VirtualFile dir = tempDir.findChild(dirName);
         if (dir == null) {
@@ -495,7 +507,7 @@ class BackendCompilerWrapper {
     if (exitValue != 0 && !myCompileContext.getProgressIndicator().isCanceled() && myCompileContext.getMessageCount(CompilerMessageCategory.ERROR) == 0) {
       myCompileContext.addMessage(
         CompilerMessageCategory.ERROR,
-        "Compiler internal error. Process terminated with exit code " + exitValue, null, -1,
+        CompilerBundle.message("error.compiler.internal.error", exitValue), null, -1,
         -1
       );
     }
@@ -528,12 +540,12 @@ class BackendCompilerWrapper {
     final String[] commands = myCompiler.createStartupCommand(chunk, myCompileContext, outputDir);
 
     final StringBuffer buf = new StringBuffer(16 * commands.length);
-    for (int idx = 0; idx < commands.length; idx++) {
-      String command = commands[idx];
-      buf.append(command);
-      buf.append(" ");
+    //noinspection HardCodedStringLiteral
+    buf.append("Running compiler: ");
+    for (final String command : commands) {
+      buf.append(" ").append(command);
     }
-    LOG.info("Running compiler: " + buf.toString());
+    LOG.info(buf.toString());
 
     final Process process = Runtime.getRuntime().exec(commands);
     return new Pair<OutputParser, Process>(myCompiler.createOutputParser(), process);
@@ -557,9 +569,10 @@ class BackendCompilerWrapper {
               command = JavacRunner.readClasspath(command.substring(1));
             }
           }
-          else if ("-classpath".equals(command) || "-cp".equals(command)){
-            cpKeywordDetected = true;
-          }
+          else //noinspection HardCodedStringLiteral
+            if ("-classpath".equals(command) || "-cp".equals(command)){
+              cpKeywordDetected = true;
+            }
           modifiedCommands.add(command);
         }
       }
@@ -575,10 +588,12 @@ class BackendCompilerWrapper {
 
     return new Pair<OutputParser, Process>(outputParser, new Process() {
       public OutputStream getOutputStream() {
+        //noinspection HardCodedStringLiteral
         throw new UnsupportedOperationException("Not Implemented in: " + getClass().getName());
       }
 
       public InputStream getInputStream() {
+        //noinspection HardCodedStringLiteral
         throw new UnsupportedOperationException("Not Implemented in: " + getClass().getName());
       }
 
@@ -768,12 +783,14 @@ class BackendCompilerWrapper {
   }
 
   private void updateStatistics() {
-    final StringBuffer buf = new StringBuffer(64);
-    buf.append("Files: ").append(myFilesCount).append(" - Classes: ").append(myClassesCount);
+    final String msg;
     if (myModuleName != null) {
-      buf.append(" - Module: ").append(myModuleName);
+      msg = CompilerBundle.message("statistics.files.classes.module", myFilesCount, myClassesCount, myModuleName);
     }
-    myCompileContext.getProgressIndicator().setText2(buf.toString());
+    else {
+      msg = CompilerBundle.message("statistics.files.classes", myFilesCount, myClassesCount);
+    }
+    myCompileContext.getProgressIndicator().setText2(msg);
   }
 
   private static Map<Module, Set<VirtualFile>> buildModuleToFilesMap(final CompileContext context, final VirtualFile[] files) {
@@ -806,6 +823,7 @@ class BackendCompilerWrapper {
     private boolean myStopped = false;
 
     public ClassParsingThread() {
+      //noinspection HardCodedStringLiteral
       super("Class Parsing Thread");
     }
 
@@ -868,10 +886,10 @@ class BackendCompilerWrapper {
         String message;
         final String m = e.getMessage();
         if (m == null || "".equals(m)) {
-          message = "Bad class file format:\n" + path;
+          message = CompilerBundle.message("error.bad.class.file.format", path);
         }
         else {
-          message = "Bad class file format: " + m + "\n" + path;
+          message = CompilerBundle.message("error.bad.class.file.format", m + "\n" + path);
         }
         myCompileContext.addMessage(CompilerMessageCategory.ERROR, message, null, -1, -1);
       }

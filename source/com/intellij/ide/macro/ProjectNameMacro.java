@@ -3,6 +3,7 @@ package com.intellij.ide.macro;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
+import com.intellij.ide.IdeBundle;
 
 import java.io.File;
 
@@ -12,7 +13,7 @@ public final class ProjectNameMacro extends Macro {
   }
 
   public String getDescription() {
-    return "The name of the project file without extension";
+    return IdeBundle.message("macro.project.file.name");
   }
 
   public String expand(DataContext dataContext) {

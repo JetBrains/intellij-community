@@ -15,8 +15,10 @@ import com.intellij.openapi.util.Comparing;
 
 import java.util.ArrayList;
 
+import org.jetbrains.annotations.NonNls;
+
 public class Tool {
-  public final static String ACTION_ID_PREFIX = "Tool_";
+  @NonNls public final static String ACTION_ID_PREFIX = "Tool_";
 
   private String myName;
   private String myDescription;
@@ -255,7 +257,7 @@ public class Tool {
       }
     }
     catch (ExecutionException ex) {
-      ExecutionUtil.showExecutionErrorMessage(ex, "Could Not Start Process", project);
+      ExecutionUtil.showExecutionErrorMessage(ex, ToolsBundle.message("tools.process.start.error"), project);
     }
   }
 

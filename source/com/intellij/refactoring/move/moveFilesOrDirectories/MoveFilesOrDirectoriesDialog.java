@@ -13,6 +13,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
@@ -39,7 +40,7 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper{
     super(project, true);
     myProject = project;
     myCallback = callback;
-    setTitle("Move");
+    setTitle(RefactoringBundle.message("move.tltle"));
     init();
   }
 
@@ -64,10 +65,13 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper{
     myNameLabel = new JLabel();
     panel.add(myNameLabel, new GridBagConstraints(0,0,2,1,1,0,GridBagConstraints.WEST,GridBagConstraints.HORIZONTAL,new Insets(4,8,4,8),0,0));
 
-    panel.add(new JLabel("To directory: "), new GridBagConstraints(0,1,1,1,0,0,GridBagConstraints.WEST,GridBagConstraints.HORIZONTAL,new Insets(4,8,4,8),0,0));
+    panel.add(new JLabel(RefactoringBundle.message("move.files.to.directory.label")),
+              new GridBagConstraints(0,1,1,1,0,0,GridBagConstraints.WEST,GridBagConstraints.HORIZONTAL,new Insets(4,8,4,8),0,0));
 
     myTargetDirectoryField = new TextFieldWithBrowseButton();
-    myTargetDirectoryField.addBrowseFolderListener("Select target directory", "The file will be moved to this directory", null, FileChooserDescriptorFactory.createSingleFolderDescriptor());
+    myTargetDirectoryField.addBrowseFolderListener(RefactoringBundle.message("select.target.directory"),
+                                                   RefactoringBundle.message("the.file.will.be.moved.to.this.directory"),
+                                                   null, FileChooserDescriptorFactory.createSingleFolderDescriptor());
     myTargetDirectoryField.setTextFieldPreferredWidth(60);
     panel.add(myTargetDirectoryField, new GridBagConstraints(1,1,1,1,1,0,GridBagConstraints.WEST,GridBagConstraints.HORIZONTAL,new Insets(4,0,4,8),0,0));
 
@@ -84,15 +88,19 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper{
     if (psiElements.length == 1) {
       String text;
       if (psiElements[0] instanceof PsiFile) {
-        text = "Move file " + ((PsiFile)psiElements[0]).getVirtualFile().getPresentableUrl();
+        text = RefactoringBundle.message("move.file.0",
+                                         ((PsiFile)psiElements[0]).getVirtualFile().getPresentableUrl());
       }
       else {
-        text = "Move directory " + ((PsiDirectory)psiElements[0]).getVirtualFile().getPresentableUrl();
+        text = RefactoringBundle.message("move.directory.0",
+                                         ((PsiDirectory)psiElements[0]).getVirtualFile().getPresentableUrl());
       }
       myNameLabel.setText(text);
     }
     else {
-      myNameLabel.setText((psiElements[0] instanceof PsiFile)? "Move specified files" : "Move specified directories");
+      myNameLabel.setText((psiElements[0] instanceof PsiFile)?
+                          RefactoringBundle.message("move.specified.files") :
+                          RefactoringBundle.message("move.specified.directories"));
     }
     myTargetDirectoryField.setText(initialTargetDirectory == null ? "" : initialTargetDirectory.getVirtualFile().getPresentableUrl());
 
@@ -123,9 +131,10 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper{
         };
         ApplicationManager.getApplication().runWriteAction(action);
       }
-    }, "Create directory", null);
+    }, RefactoringBundle.message("create.directory"), null);
     if (myTargetDirectory == null){
-      RefactoringMessageUtil.showErrorMessage(MoveFilesOrDirectoriesDialog.this.getTitle(), "Cannot create directory", myHelpID, myProject);
+      RefactoringMessageUtil.showErrorMessage(MoveFilesOrDirectoriesDialog.this.getTitle(),
+                                              RefactoringBundle.message("cannot.create.directory"), myHelpID, myProject);
       return;
     }
     myCallback.run(this);

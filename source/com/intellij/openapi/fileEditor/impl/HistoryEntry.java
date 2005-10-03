@@ -9,13 +9,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 final class HistoryEntry{
-  public static final String TAG = "entry";
+  @NonNls public static final String TAG = "entry";
 
   public final VirtualFile myFile;
   /**
@@ -23,6 +24,11 @@ final class HistoryEntry{
    */ 
   public FileEditorProvider mySelectedProvider;
   private final HashMap myProvider2State;
+  @NonNls public static final String FILE_ATTR = "file";
+  @NonNls public static final String PROVIDER_ATTR = "provider";
+  @NonNls public static final String EDITOR_TYPE_ID_ATTR = "editor-type-id";
+  @NonNls public static final String SELECTED_ATTR_VALUE = "selected";
+  @NonNls public static final String STATE_ELEMENT = "state";
 
   public HistoryEntry(VirtualFile file, FileEditorProvider[] providers, FileEditorState[] states, FileEditorProvider selectedProvider){
     if (file == null){
@@ -50,7 +56,7 @@ final class HistoryEntry{
       throw new IllegalArgumentException("unexpected tag: " + e);
     }
 
-    String url = e.getAttributeValue("file");
+    String url = e.getAttributeValue(FILE_ATTR);
     VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
     if (file == null){
       throw new InvalidDataException();
@@ -59,20 +65,20 @@ final class HistoryEntry{
     myFile = file;
     myProvider2State = new HashMap();
 
-    List providers = e.getChildren("provider");
+    List providers = e.getChildren(PROVIDER_ATTR);
     for (Iterator iterator = providers.iterator(); iterator.hasNext();) {
       Element _e = (Element)iterator.next();
 
-      String typeId = _e.getAttributeValue("editor-type-id");
+      String typeId = _e.getAttributeValue(EDITOR_TYPE_ID_ATTR);
       FileEditorProvider provider = FileEditorProviderManager.getInstance().getProvider(typeId);
       if (provider == null){
         continue;
       }
-      if ("true".equals(_e.getAttributeValue("selected"))) {
+      if (Boolean.valueOf(_e.getAttributeValue(SELECTED_ATTR_VALUE))) {
         mySelectedProvider = provider;
       }
 
-      Element stateElement = _e.getChild("state");
+      Element stateElement = _e.getChild(STATE_ELEMENT);
       if (stateElement == null){
         throw new InvalidDataException();
       }
@@ -106,19 +112,19 @@ final class HistoryEntry{
   public Element writeExternal(Element element, Project project) {
     Element e = new Element(TAG);
     element.addContent(e);
-    e.setAttribute("file", myFile.getUrl());
+    e.setAttribute(FILE_ATTR, myFile.getUrl());
 
     Iterator i = myProvider2State.entrySet().iterator();
     while (i.hasNext()) {
       Map.Entry entry = (Map.Entry)i.next();
       FileEditorProvider provider = (FileEditorProvider)entry.getKey();
 
-      Element providerElement = new Element("provider");
+      Element providerElement = new Element(PROVIDER_ATTR);
       if (provider.equals(mySelectedProvider)) {
-        providerElement.setAttribute("selected", Boolean.TRUE.toString());
+        providerElement.setAttribute(SELECTED_ATTR_VALUE, Boolean.TRUE.toString());
       }
-      providerElement.setAttribute("editor-type-id", provider.getEditorTypeId());
-      Element stateElement = new Element("state");
+      providerElement.setAttribute(EDITOR_TYPE_ID_ATTR, provider.getEditorTypeId());
+      Element stateElement = new Element(STATE_ELEMENT);
       providerElement.addContent(stateElement);
       provider.writeState((FileEditorState)entry.getValue(), project, stateElement);
 

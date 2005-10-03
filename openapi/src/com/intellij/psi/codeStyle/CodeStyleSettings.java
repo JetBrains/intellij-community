@@ -19,6 +19,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.SystemProperties;
 import org.jdom.Element;
 
 import java.lang.reflect.Field;
@@ -156,7 +157,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   public IndentOptions XML_INDENT_OPTIONS = new IndentOptions();
   public IndentOptions OTHER_INDENT_OPTIONS = new IndentOptions();
 
-  private static final String ourSystemLineSeparator = System.getProperty("line.separator");
+  private static final String ourSystemLineSeparator = SystemProperties.getLineSeparator();
 
   /** Line separator. It can be null if choosen line separator is "System-dependent"! */
   public String LINE_SEPARATOR;

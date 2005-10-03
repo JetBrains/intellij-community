@@ -98,8 +98,8 @@ public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent
     catch (final IOException e) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
-          Messages.showMessageDialog("Cannot restore CVS admin directories: " + e.getLocalizedMessage(),
-                                     "Restoring CVS Admin Directories ", Messages.getErrorIcon());
+          Messages.showMessageDialog(com.intellij.CvsBundle.message("message.error.cannot.restore.cvs.admin.directories", e.getLocalizedMessage()),
+                                     com.intellij.CvsBundle.message("message.error.cannot.restore.cvs.admin.directories.title"), Messages.getErrorIcon());
         }
       });
     }
@@ -231,6 +231,7 @@ public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent
   }
 
   private File getStorageRoot() {
+    //noinspection HardCodedStringLiteral
     return new File(PathManager.getSystemPath(), "CVS-TO-DELETE");
   }
 

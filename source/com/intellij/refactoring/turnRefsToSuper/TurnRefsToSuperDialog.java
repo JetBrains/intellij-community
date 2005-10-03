@@ -12,6 +12,7 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.ui.ClassCellRenderer;
 import com.intellij.refactoring.ui.RefactoringDialog;
@@ -27,7 +28,7 @@ public class TurnRefsToSuperDialog extends RefactoringDialog {
   private final List mySuperClasses;
 
   private JList mySuperClassesList = null;
-  private final JCheckBox myCbReplaceInstanceOf = new JCheckBox("Use interface/superclass in instanceof");
+  private final JCheckBox myCbReplaceInstanceOf = new JCheckBox();
 
   TurnRefsToSuperDialog(Project project, PsiClass subClass, List superClasses) {
     super(project, true);
@@ -75,14 +76,13 @@ public class TurnRefsToSuperDialog extends RefactoringDialog {
     gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
     gbConstraints.fill = GridBagConstraints.BOTH;
     gbConstraints.anchor = GridBagConstraints.WEST;
-    final JLabel classListLabel = new JLabel("Change usages of " + mySubClass.getQualifiedName() + " to:");
+    final JLabel classListLabel = new JLabel();
     panel.add(classListLabel, gbConstraints);
 
     mySuperClassesList = new JList(mySuperClasses.toArray());
     mySuperClassesList.setCellRenderer(new ClassCellRenderer());
     mySuperClassesList.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    classListLabel.setLabelFor(mySuperClassesList);
-    classListLabel.setDisplayedMnemonic('C');
+    classListLabel.setText(RefactoringBundle.message("turnRefsToSuper.change.usages.to", mySubClass.getQualifiedName()));
 
     PsiClass nearestBase = RefactoringHierarchyUtil.getNearestBaseClass(mySubClass, true);
     int indexToSelect = 0;
@@ -94,7 +94,7 @@ public class TurnRefsToSuperDialog extends RefactoringDialog {
     panel.add(new JScrollPane(mySuperClassesList), gbConstraints);
 
     gbConstraints.gridy++;
-    myCbReplaceInstanceOf.setMnemonic('U');
+    myCbReplaceInstanceOf.setText(RefactoringBundle.message("turnRefsToSuper.use.superclass.in.instanceof"));
     myCbReplaceInstanceOf.setSelected(false);
     myCbReplaceInstanceOf.setFocusable(false);
     panel.add(myCbReplaceInstanceOf, gbConstraints);

@@ -1,7 +1,9 @@
 package com.intellij.debugger.impl;
 
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.SourcePosition;
+import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationListener;
@@ -26,8 +28,9 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiDocumentManager;
-import com.sun.jdi.request.EventRequest;
+import com.intellij.idea.ActionsBundle;
 import com.sun.jdi.ThreadReference;
+import com.sun.jdi.request.EventRequest;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -60,15 +63,6 @@ public class DebuggerSession {
   private boolean myIsEvaluating;
 
   private DebuggerSessionState myState = null;
-
-  private static final String MSG_WAITING_ATTACH = "Debugger is waiting for application to start";
-  private static final String MSG_LISTENING = "Listening to the connection";
-  private static final String MSG_CONNECTING = "Connecting to the target VM";
-  private static final String MSG_RUNNING = "The application is running";
-  private static final String MSG_CONNECTED = "Connected to the target VM";
-  private static final String MSG_STOPPED = "Debugger disconnected";
-  private static final String MSG_DISCONNECTED = "Disconnected from the target VM";
-  private static final String MSG_WAIT_EVALUATION = "Waiting until last debugger command completes";
 
   private final String mySessionName;
   private final DebugProcessImpl myDebugProcess;
@@ -145,9 +139,9 @@ public class DebuggerSession {
         DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
           public void run() {
             RemoteConnection connection = myDebugProcess.getConnection();
-            final String connectionStatusMessage = DebugProcessImpl.createConnectionStatusMessage(
-              connection.isServerMode() ? DebuggerSession.MSG_LISTENING : DebuggerSession.MSG_CONNECTING, connection
-            );
+            final String addressDisplayName = DebuggerBundle.getAddressDisplayName(connection);
+            final String transportName = DebuggerBundle.getTransportName(connection);
+            final String connectionStatusMessage = connection.isServerMode() ? DebuggerBundle.message("status.listening", addressDisplayName, transportName) : DebuggerBundle.message("status.connecting", addressDisplayName, transportName);
             getContextManager().setState(SESSION_EMPTY_CONTEXT, DebuggerSession.STATE_WAITING_ATTACH, DebuggerSession.EVENT_START_WAIT_ATTACH, connectionStatusMessage);
           }
         });
@@ -231,7 +225,7 @@ public class DebuggerSession {
           for (Iterator<LineBreakpoint> iterator = toDelete.iterator(); iterator.hasNext();) {
             BreakpointWithHighlighter breakpointWithHighlighter = iterator.next();
             requestsManager.deleteRequest(breakpointWithHighlighter);
-            requestsManager.setInvalid(breakpointWithHighlighter, "Source code changed");
+            requestsManager.setInvalid(breakpointWithHighlighter, DebuggerBundle.message("error.invalid.breakpoint.source.changed"));
             breakpointWithHighlighter.updateUI();
           }
 
@@ -266,7 +260,10 @@ public class DebuggerSession {
       }
 
       public void processAttached(final DebugProcessImpl process) {
-        final String message = DebugProcessImpl.createConnectionStatusMessage(MSG_CONNECTED, getProcess().getConnection());
+        final RemoteConnection connection = getProcess().getConnection();
+        final String addressDisplayName = DebuggerBundle.getAddressDisplayName(connection);
+        final String transportName = DebuggerBundle.getTransportName(connection);
+        final String message = DebuggerBundle.message("status.connected", addressDisplayName, transportName);
 
         process.getExecutionResult().getProcessHandler().notifyTextAvailable(message + "\n", ProcessOutputTypes.SYSTEM);
         DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
@@ -281,7 +278,7 @@ public class DebuggerSession {
           public void run() {
             String message = "";
             if (state instanceof RemoteState) {
-              message = DebugProcessImpl.createConnectionStatusMessage(DebugProcessImpl.MSG_FAILD_TO_CONNECT, remoteConnection);
+              message = DebuggerBundle.message("status.connect.failed", DebuggerBundle.getAddressDisplayName(remoteConnection), DebuggerBundle.getTransportName(remoteConnection));
             }
             message += exception.getMessage();
             getContextManager().setState(SESSION_EMPTY_CONTEXT, STATE_STOPPED, EVENT_DETACHED, message);
@@ -293,12 +290,18 @@ public class DebuggerSession {
         if (!closedByUser) {
           ExecutionResult executionResult = debugProcess.getExecutionResult();
           if(executionResult != null) {
-            executionResult.getProcessHandler().notifyTextAvailable(DebugProcessImpl.createConnectionStatusMessage(MSG_DISCONNECTED, getProcess().getConnection()) + "\n", ProcessOutputTypes.SYSTEM);
+            final RemoteConnection connection = getProcess().getConnection();
+            final String addressDisplayName = DebuggerBundle.getAddressDisplayName(connection);
+            final String transportName = DebuggerBundle.getTransportName(connection);
+            executionResult.getProcessHandler().notifyTextAvailable(DebuggerBundle.message("status.disconnected", addressDisplayName, transportName) + "\n", ProcessOutputTypes.SYSTEM);
           }
         }
         DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
           public void run() {
-            getContextManager().setState(SESSION_EMPTY_CONTEXT, STATE_STOPPED, EVENT_DETACHED, MSG_DISCONNECTED);
+            final RemoteConnection connection = getProcess().getConnection();
+            final String addressDisplayName = DebuggerBundle.getAddressDisplayName(connection);
+            final String transportName = DebuggerBundle.getTransportName(connection);
+            getContextManager().setState(SESSION_EMPTY_CONTEXT, STATE_STOPPED, EVENT_DETACHED, DebuggerBundle.message("status.disconnected", addressDisplayName, transportName));
           }
         });
         mySteppingThroughThreads.clear();
@@ -369,18 +372,20 @@ public class DebuggerSession {
 
     switch (state.myState) {
       case STATE_STOPPED:
-        return MSG_STOPPED;
+        return DebuggerBundle.message("status.debug.stopped");
       case STATE_RUNNING:
-        return MSG_RUNNING;
+        return DebuggerBundle.message("status.app.running");
       case STATE_WAITING_ATTACH:
         RemoteConnection connection = getProcess().getConnection();
-        return DebugProcessImpl.createConnectionStatusMessage(connection.isServerMode() ? MSG_LISTENING : MSG_CONNECTING, connection);
+        final String addressDisplayName = DebuggerBundle.getAddressDisplayName(connection);
+        final String transportName = DebuggerBundle.getTransportName(connection);
+        return connection.isServerMode() ? DebuggerBundle.message("status.listening", addressDisplayName, transportName) : DebuggerBundle.message("status.connecting", addressDisplayName, transportName);
       case STATE_PAUSED:
-        return "Paused";
+        return DebuggerBundle.message("status.paused");
       case STATE_WAIT_EVALUATION:
-        return MSG_WAIT_EVALUATION;
+        return DebuggerBundle.message("status.waiting.evaluation.result");
       case STATE_DISPOSED:
-        return MSG_STOPPED;
+        return DebuggerBundle.message("status.debug.stopped");
     }
     return state.myDescription;
   }
@@ -416,7 +421,7 @@ public class DebuggerSession {
       resumeAction(runToCursorCommand, EVENT_STEP);
     }
     catch (EvaluateException e) {
-      Messages.showErrorDialog(e.getMessage(), "Cannot Run to Cursor");
+      Messages.showErrorDialog(e.getMessage(), ActionsBundle.actionText(DebuggerActions.RUN_TO_CURSOR));
     }
   }
 
@@ -484,7 +489,9 @@ public class DebuggerSession {
 
   protected ExecutionResult attach(final RunProfileState state, final RemoteConnection remoteConnection, final boolean pollConnection) throws ExecutionException {
     final ExecutionResult executionResult = myDebugProcess.attachVirtualMachine(state, remoteConnection, pollConnection);
-    getContextManager().setState(SESSION_EMPTY_CONTEXT, STATE_WAITING_ATTACH, EVENT_START_WAIT_ATTACH, DebugProcessImpl.createConnectionStatusMessage(MSG_WAITING_ATTACH, remoteConnection));
+    final String addressDisplayName = DebuggerBundle.getAddressDisplayName(remoteConnection);
+    final String transportName = DebuggerBundle.getTransportName(remoteConnection);
+    getContextManager().setState(SESSION_EMPTY_CONTEXT, STATE_WAITING_ATTACH, EVENT_START_WAIT_ATTACH, DebuggerBundle.message("status.waiting.attach", addressDisplayName, transportName));
     return executionResult;
   }
 }

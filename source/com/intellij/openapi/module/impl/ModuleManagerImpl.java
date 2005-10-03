@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.ui.Messages;
@@ -25,10 +26,13 @@ import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
+import com.intellij.CommonBundle;
+import com.intellij.ide.highlighter.ModuleFileType;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.IOException;
@@ -54,10 +58,15 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
       cleanCachedStuff();
     }
   };
-  public static final String COMPONENT_NAME = "ProjectModuleManager";
+  @NonNls public static final String COMPONENT_NAME = "ProjectModuleManager";
   private static final String MODULE_GROUP_SEPARATOR = "/";
   private ModulePath[] myModulePaths;
   private List<ModulePath> myFailedModulePaths = new ArrayList<ModulePath>();
+  @NonNls private static final String ELEMENT_MODULES = "modules";
+  @NonNls private static final String ELEMENT_MODULE = "module";
+  @NonNls private static final String ATTRIBUTE_FILEURL = "fileurl";
+  @NonNls private static final String ATTRIBUTE_FILEPATH = "filepath";
+  @NonNls private static final String ATTRIBUTE_GROUP = "group";
 
   public static ModuleManagerImpl getInstanceImpl(Project project) {
     return (ModuleManagerImpl)getInstance(project);
@@ -107,20 +116,20 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
 
   public static ModulePath[] getPathsToModuleFiles(Element element) {
     final List<ModulePath> paths = new ArrayList<ModulePath>();
-    final Element modules = element.getChild("modules");
+    final Element modules = element.getChild(ELEMENT_MODULES);
     if (modules != null) {
-      for (final Object value : modules.getChildren("module")) {
+      for (final Object value : modules.getChildren(ELEMENT_MODULE)) {
         Element moduleElement = (Element)value;
-        final String fileUrlValue = moduleElement.getAttributeValue("fileurl");
+        final String fileUrlValue = moduleElement.getAttributeValue(ATTRIBUTE_FILEURL);
         final String filepath;
         if (fileUrlValue != null) {
           filepath = VirtualFileManager.extractPath(fileUrlValue).replace('/', File.separatorChar);
         }
         else {
           // [dsl] support for older formats
-          filepath = moduleElement.getAttributeValue("filepath").replace('/', File.separatorChar);
+          filepath = moduleElement.getAttributeValue(ATTRIBUTE_FILEPATH).replace('/', File.separatorChar);
         }
-        final String group = moduleElement.getAttributeValue("group");
+        final String group = moduleElement.getAttributeValue(ATTRIBUTE_GROUP);
         paths.add(new ModulePath(filepath, group));
       }
     }
@@ -153,13 +162,13 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
               myFailedModulePaths.remove(modulePath);
             }
             catch (final IOException e) {
-              fireError("Cannot load module: " + e.getMessage(), modulePath);
+              fireError(ProjectBundle.message("module.cannot.load.error", e.getMessage()), modulePath);
             }
             catch (JDOMException e) {
-              fireError("Corrupted module file: " + modulePath.getPath(), modulePath);
+              fireError(ProjectBundle.message("module.corrupted.file.error", modulePath.getPath()), modulePath);
             }
             catch (InvalidDataException e) {
-              fireError("Corrupted module data at: " + modulePath.getPath(), modulePath);
+              fireError(ProjectBundle.message("module.corrupted.data.error", modulePath.getPath()), modulePath);
             }
             catch (final ModuleWithNameAlreadyExists moduleWithNameAlreadyExists) {
               fireError(moduleWithNameAlreadyExists.getMessage(), modulePath);
@@ -167,10 +176,13 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
             catch (final LoadCancelledException e) {
               ApplicationManager.getApplication().invokeLater(new Runnable() {
                 public void run() {
-                  int response = Messages.showDialog("Cancelled loading of module from:" + modulePath.getPath() + "\n" +
-                                                     "Cancelled by component: " + e.getIssuer().getComponentName() + "\n" +
-                                                     "Reason is: " + e.getMessage(),
-                                                     "Module Loading Cancelled", new String[]{"Try to load &later", "&Remove from project"}, 0,
+                  int response = Messages.showDialog(ProjectBundle.message("module.loading.cancelled.error", modulePath.getPath(),
+                                                                           e.getIssuer().getComponentName(), e.getMessage()),
+                                                     ProjectBundle.message("module.loading.cancelled.title"),
+                                                     new String[]{
+                                                       ProjectBundle.message("module.loading.cancelled.load.later.action"),
+                                                       ProjectBundle.message("module.loading.cancelled.remove.action")
+                                                     }, 0,
                                                      Messages.getErrorIcon());
                   if (response == 1) {
                     myModuleModel.myPath2CancelledModelMap.remove(modulePath.getPath());
@@ -180,29 +192,21 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
             }
           }
           if (!ApplicationManager.getApplication().isHeadlessEnvironment() && modulesWithUnknownTypes.size() > 0) {
-            final StringBuffer message = new StringBuffer("Cannot determine module type for the following ");
+            String message;
             if (modulesWithUnknownTypes.size() == 1) {
-              message.append("module:");
+              message = ProjectBundle.message("module.unknown.type.single.error", modulesWithUnknownTypes.get(0).getName());
             }
             else {
-              message.append("modules:");
+              StringBuilder modulesBuilder = new StringBuilder();
+              for (Iterator it = modulesWithUnknownTypes.iterator(); it.hasNext();) {
+                final Module module = (Module)it.next();
+                modulesBuilder.append("\n\"");
+                modulesBuilder.append(module.getName());
+                modulesBuilder.append("\"");
+              }
+              message = ProjectBundle.message("module.unknown.type.multiple.error", modulesBuilder.toString());
             }
-            for (Iterator it = modulesWithUnknownTypes.iterator(); it.hasNext();) {
-              final Module module = (Module)it.next();
-              message.append("\n\"");
-              message.append(module.getName());
-              message.append("\"");
-              //message.append(", Module Type: \"");
-              //message.append(module.getModuleType().getId());
-              //message.append("\"");
-            }
-            if (modulesWithUnknownTypes.size() > 1) {
-              message.append(".\nAll mentioned modules will be treated as JAVA modules.");
-            }
-            else {
-              message.append(".\nThe module will be treated as a JAVA module.");
-            }
-            Messages.showWarningDialog(myProject, message.toString(), "Unknown Module Type");
+            Messages.showWarningDialog(myProject, message.toString(), ProjectBundle.message("module.unknown.type.title"));
           }
         }
       });
@@ -213,9 +217,9 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         final int answer = Messages.showDialog(
-          message + "\nWould you like to remove the module from the project?",
-          "Cannot Load Module",
-          new String[]{"&Yes", "&No"},
+          ProjectBundle.message("module.remove.from.project.confirmation", message),
+          ProjectBundle.message("module.remove.from.project.title"),
+          new String[]{CommonBundle.getYesButtonText(), CommonBundle.getNoButtonText()},
           1,
           Messages.getErrorIcon()
         );
@@ -243,16 +247,16 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     }
 
     public final void writeExternal(Element parentElement) {
-      Element moduleElement = new Element("module");
+      Element moduleElement = new Element(ELEMENT_MODULE);
       final String moduleFilePath = getModuleFilePath();
       final String url = VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, moduleFilePath);
-      moduleElement.setAttribute("fileurl", url);
+      moduleElement.setAttribute(ATTRIBUTE_FILEURL, url);
       // [dsl] support for older builds
-      moduleElement.setAttribute("filepath", moduleFilePath);
+      moduleElement.setAttribute(ATTRIBUTE_FILEPATH, moduleFilePath);
 
       final String groupPath = getGroupPathString();
       if (groupPath != null) {
-        moduleElement.setAttribute("group", groupPath);
+        moduleElement.setAttribute(ATTRIBUTE_GROUP, groupPath);
       }
       parentElement.addContent(moduleElement);
     }
@@ -294,7 +298,9 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
 
       final int slashIndex = myFilePath.lastIndexOf('/');
       final int startIndex = slashIndex >= 0 && slashIndex + 1 < myFilePath.length() ? slashIndex + 1 : 0;
-      final int endIndex = myFilePath.endsWith(".iml")? myFilePath.length() - ".iml".length() : myFilePath.length();
+      final int endIndex = myFilePath.endsWith(ModuleFileType.DOT_DEFAULT_EXTENSION)
+                           ? myFilePath.length() - ModuleFileType.DOT_DEFAULT_EXTENSION.length()
+                           : myFilePath.length();
       myName = myFilePath.substring(startIndex, endIndex);
     }
 
@@ -312,7 +318,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    final Element modules = new Element("modules");
+    final Element modules = new Element(ELEMENT_MODULES);
     final Collection<Module> collection = getModulesToWrite();
 
     ArrayList<SaveItem> sorted = new ArrayList<SaveItem>(collection.size() + myFailedModulePaths.size());
@@ -527,7 +533,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     public void renameModule(Module module, String newName) throws ModuleWithNameAlreadyExists {
       final Module oldModule = getModuleByNewName(newName);
       if (oldModule != null) {
-        throw new ModuleWithNameAlreadyExists(newName);
+        throw new ModuleWithNameAlreadyExists(ProjectBundle.message("module.already.exists.error", newName), newName);
       }
       final String oldName = myModulesToNewNamesMap.get(module);
       myModulesToNewNamesMap.put(module, newName);
@@ -613,17 +619,17 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
       }
 
       final String name = moduleFile.getName();
-      if (name.endsWith(".iml")) {
+      if (name.endsWith(ModuleFileType.DOT_DEFAULT_EXTENSION)) {
         final String moduleName = name.substring(0, name.length() - 4);
         final Module[] modules = getModules();
         for (Module module : modules) {
           if (module.getName().equals(moduleName)) {
-            throw new ModuleWithNameAlreadyExists(moduleName);
+            throw new ModuleWithNameAlreadyExists(ProjectBundle.message("module.already.exists.error", moduleName), moduleName);
           }
         }
       }
       if (!moduleFile.exists()) {
-        throw new IOException("File " + moduleFile.getPath() + " does not exist");
+        throw new IOException(ProjectBundle.message("module.file.does.not.exist.error", moduleFile.getPath()));
       }
       ModuleImpl module = getModuleByFilePath(filePath);
       if (module == null) {

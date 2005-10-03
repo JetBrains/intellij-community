@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.ide.IdeBundle;
 
 import java.io.File;
 
@@ -14,7 +15,7 @@ public class FileRelativeDirMacro extends Macro {
   }
 
   public String getDescription() {
-    return "File directory relative to the project file";
+    return IdeBundle.message("macro.file.directory.relative");
   }
 
   public String expand(DataContext dataContext) {

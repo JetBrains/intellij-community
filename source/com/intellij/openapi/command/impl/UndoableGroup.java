@@ -11,6 +11,7 @@ import com.intellij.openapi.localVcs.LocalVcs;
 import com.intellij.openapi.localVcs.LvcsAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.CommonBundle;
 
 import java.util.*;
 
@@ -74,7 +75,13 @@ class UndoableGroup {
     if (myProject != null) {
       LocalVcs lvcs = LocalVcs.getInstance(myProject);
       if (isComplex() && lvcs != null) {
-        actionStarted = lvcs.startAction(actionName(isUndo) + " " + myCommandName, "", false);
+        final String lvcsActionName;
+        if (isUndo) {
+          lvcsActionName = CommonBundle.message("local.vcs.action.name.undo.command", myCommandName);
+        } else {
+          lvcsActionName = CommonBundle.message("local.vcs.action.name.redo.command", myCommandName);
+        }
+        actionStarted = lvcs.startAction(lvcsActionName, "", false);
       }
     }
     try {
@@ -90,7 +97,15 @@ class UndoableGroup {
     ApplicationManager.getApplication().runWriteAction(
         new Runnable() {
           public void run() {
-            String message = "Cannot " + actionName(isUndo);
+            String title;
+            String message;
+            if (isUndo) {
+              title = CommonBundle.message("cannot.undo.dialog.title");
+              message = CommonBundle.message("cannot.undo.message");
+            } else {
+              title = CommonBundle.message("cannot.redo.dialog.title");
+              message = CommonBundle.message("cannot.redo.message");
+            }
 
             while (each.hasNext()) {
               UndoableAction undoableAction = each.next();
@@ -104,7 +119,7 @@ class UndoableGroup {
                   if (e.getMessage() != null) {
                     message += ".\n" + e.getMessage();
                   }
-                  Messages.showMessageDialog(myProject, message, message, Messages.getErrorIcon());
+                  Messages.showMessageDialog(myProject, message, title, Messages.getErrorIcon());
                 } else {
                   LOG.error(e);
                 }
@@ -113,10 +128,6 @@ class UndoableGroup {
           }
         }
     );
-  }
-
-  private String actionName(final boolean isUndo) {
-    return isUndo ? "Undo" : "Redo";
   }
 
   public void undo() {

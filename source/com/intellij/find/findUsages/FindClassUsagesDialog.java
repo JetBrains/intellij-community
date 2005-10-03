@@ -8,6 +8,7 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.SearchScopeCache;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.StateRestoringCheckBox;
+import com.intellij.find.FindBundle;
 
 import javax.swing.*;
 
@@ -69,22 +70,22 @@ public class FindClassUsagesDialog extends FindUsagesDialog {
   protected JPanel createFindWhatPanel() {
     JPanel findWhatPanel = new JPanel();
 
-    findWhatPanel.setBorder(IdeBorderFactory.createTitledBorder("Find"));
+    findWhatPanel.setBorder(IdeBorderFactory.createTitledBorder(FindBundle.message("find.what.group")));
     findWhatPanel.setLayout(new BoxLayout(findWhatPanel, BoxLayout.Y_AXIS));
 
-    myCbUsages = addCheckboxToPanel("Usages", myFindUsagesOptions.isUsages, findWhatPanel, true, 'U');
+    myCbUsages = addCheckboxToPanel(FindBundle.message("find.what.usages.checkbox"), myFindUsagesOptions.isUsages, findWhatPanel, true);
 
     PsiClass psiClass = (PsiClass)getPsiElement();
-    myCbMethodsUsages = addCheckboxToPanel("Usages of methods", myFindUsagesOptions.isMethodsUsages, findWhatPanel, true, 'm');
+    myCbMethodsUsages = addCheckboxToPanel(FindBundle.message("find.what.methods.usages.checkbox"), myFindUsagesOptions.isMethodsUsages, findWhatPanel, true);
 
     if (!psiClass.isAnnotationType()) {
-      myCbFieldsUsages = addCheckboxToPanel("Usages of fields", myFindUsagesOptions.isFieldsUsages, findWhatPanel, true, 'f');
+      myCbFieldsUsages = addCheckboxToPanel(FindBundle.message("find.what.fields.usages.checkbox"), myFindUsagesOptions.isFieldsUsages, findWhatPanel, true);
       if (psiClass.isInterface()){
-        myCbImplementingClasses = addCheckboxToPanel("Implementing classes", myFindUsagesOptions.isImplementingClasses, findWhatPanel, true, 'I');
-        myCbDerivedInterfaces = addCheckboxToPanel("Derived interfaces", myFindUsagesOptions.isDerivedInterfaces, findWhatPanel, true, 'D');
+        myCbImplementingClasses = addCheckboxToPanel(FindBundle.message("find.what.implementing.classes.checkbox"), myFindUsagesOptions.isImplementingClasses, findWhatPanel, true);
+        myCbDerivedInterfaces = addCheckboxToPanel(FindBundle.message("find.what.derived.interfaces.checkbox"), myFindUsagesOptions.isDerivedInterfaces, findWhatPanel, true);
       }
       else if (!psiClass.hasModifierProperty(PsiModifier.FINAL)){
-        myCbDerivedClasses = addCheckboxToPanel("Derived classes", myFindUsagesOptions.isDerivedClasses, findWhatPanel, true, 'D');
+        myCbDerivedClasses = addCheckboxToPanel(FindBundle.message("find.what.derived.classes.checkbox"), myFindUsagesOptions.isDerivedClasses, findWhatPanel, true);
       }
     }
     return findWhatPanel;

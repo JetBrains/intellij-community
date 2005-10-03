@@ -1,5 +1,6 @@
 package com.intellij.debugger.ui;
 
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
@@ -35,7 +36,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ActionToolbarEx;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
@@ -49,8 +49,6 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.Map;
 
 /*
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
@@ -169,17 +167,20 @@ public class DebuggerSessionTab {
     myViewsContentManager = PeerFactory.getInstance().getContentFactory().createContentManager(ui, false, getProject());
 
     Content content;
-    content = PeerFactory.getInstance().getContentFactory().createContent(myThreadsPanel, "Threads", false);
+    content = PeerFactory.getInstance().getContentFactory().createContent(myThreadsPanel,
+                                                                          DebuggerBundle.message("debugger.session.tab.threads.title"), false);
     content.setIcon(THREADS_ICON);
     content.putUserData(CONTENT_KIND, THREADS_CONTENT);
     myViewsContentManager.addContent(content);
 
-    content = PeerFactory.getInstance().getContentFactory().createContent(myFramePanel, "Frame", false);
+    content = PeerFactory.getInstance().getContentFactory().createContent(myFramePanel,
+                                                                          DebuggerBundle.message("debugger.session.tab.frames.title"), false);
     content.setIcon(FRAME_ICON);
     content.putUserData(CONTENT_KIND, FRAME_CONTENT);
     myViewsContentManager.addContent(content);
 
-    content = PeerFactory.getInstance().getContentFactory().createContent(myWatchPanel, "Watches", false);
+    content = PeerFactory.getInstance().getContentFactory().createContent(myWatchPanel,
+                                                                          DebuggerBundle.message("debugger.session.tab.watches.title"), false);
     content.setIcon(WATCHES_ICON);
     content.putUserData(CONTENT_KIND, WATCHES_CONTENT);
     myViewsContentManager.addContent(content);
@@ -238,12 +239,11 @@ public class DebuggerSessionTab {
     if (myConfiguration instanceof RunConfigurationBase && !(myConfiguration instanceof JUnitConfiguration)){
       clearLogContents();
       RunConfigurationBase base = (RunConfigurationBase)myConfiguration;
-      final Map<Pair<String,String>,Boolean> logFiles = base.getLogFiles();
+      final ArrayList<RunConfigurationBase.LogFileOptions> logFiles = base.getLogFiles();
       final ProcessHandler processHandler = myRunContentDescriptor.getProcessHandler();
-      for (Iterator<Pair<String,String>> iterator = logFiles.keySet().iterator(); iterator.hasNext();) {
-        Pair<String,String>  pair = iterator.next();
-        if (logFiles.get(pair).booleanValue()){
-          final LogConsole log = new LogConsole(myProject, new File(pair.first)){
+      for (RunConfigurationBase.LogFileOptions logFile : logFiles) {
+        if (logFile.isEnabled()){
+          final LogConsole log = new LogConsole(myProject, new File(logFile.getPath()), logFile.isSkipContent()){
             public boolean isActive() {
               final Content selectedContent = myViewsContentManager.getSelectedContent();
               if (selectedContent == null){
@@ -255,14 +255,16 @@ public class DebuggerSessionTab {
           };
           myLogTabs.add(log);
           log.attachStopLogConsoleTrackingListener(processHandler);
-          Content logContent = PeerFactory.getInstance().getContentFactory().createContent(log.getComponent(), "Log: " + pair.second, false);
+          Content logContent = PeerFactory.getInstance().getContentFactory().createContent(log.getComponent(), DebuggerBundle.message(
+            "debugger.session.tab.log.content.name", logFile.getName()), false);
           //todo icons
           logContent.putUserData(CONTENT_KIND, LOG_CONTENTS);
           logContents.add(logContent);
         }
       }
     }
-    content = PeerFactory.getInstance().getContentFactory().createContent(myConsole.getComponent(), "Console", false);
+    content = PeerFactory.getInstance().getContentFactory().createContent(myConsole.getComponent(), DebuggerBundle.message(
+      "debugger.session.tab.console.content.name"), false);
     content.setIcon(CONSOLE_ICON);
     content.putUserData(CONTENT_KIND, CONSOLE_CONTENT);
 
@@ -270,12 +272,12 @@ public class DebuggerSessionTab {
     myViewsContentManager.removeAllContents();
 
     myViewsContentManager.addContent(content);
-    for (int i = 0; i < contents.length; i++) {
-      myViewsContentManager.addContent(contents[i]);
+    for (Content content1 : contents) {
+      myViewsContentManager.addContent(content1);
     }
 
-    for (Iterator<Content> iterator = logContents.iterator(); iterator.hasNext();) {
-      myViewsContentManager.addContent(iterator.next());
+    for (final Content logContent1 : logContents) {
+      myViewsContentManager.addContent(logContent1);
     }
 
     if(myToolBarPanel != null) {
@@ -308,7 +310,8 @@ public class DebuggerSessionTab {
         Content content = findContent(WATCHES_CONTENT);
         if (content != null) {
           int count = myWatchPanel.getWatchTree().getWatchCount();
-          String displayName = (count > 0) ? ("Watches (" + count + ")") : "Watches";
+          String displayName = (count > 0) ? (DebuggerBundle.message("debugger.session.tab.watches.title.with.size", count)) : DebuggerBundle
+            .message("debugger.session.tab.watches.title");
           content.setDisplayName(displayName);
         }
       }
@@ -375,8 +378,7 @@ public class DebuggerSessionTab {
   private Content findContent(Key key) {
     if (myViewsContentManager != null) {
       Content[] contents = myViewsContentManager.getContents();
-      for (int idx = 0; idx < contents.length; idx++) {
-        Content content = contents[idx];
+      for (Content content : contents) {
         Key kind = (Key)content.getUserData(CONTENT_KIND);
         if (key.equals(kind)) {
           return content;
@@ -393,8 +395,8 @@ public class DebuggerSessionTab {
     myWatchPanel.dispose();
     myViewsContentManager.removeAllContents();
 
-    for (Iterator<LogConsole> iterator = myLogTabs.iterator(); iterator.hasNext();) {
-      iterator.next().dispose();
+    for (final LogConsole myLogTab : myLogTabs) {
+      myLogTab.dispose();
     }
 
     myConsole = null;

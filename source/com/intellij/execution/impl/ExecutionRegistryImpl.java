@@ -20,14 +20,16 @@ import com.intellij.util.EventDispatcher;
 
 import java.util.*;
 
+import org.jetbrains.annotations.NonNls;
+
 
 public class ExecutionRegistryImpl extends ExecutionRegistry {
   private final EventDispatcher<Listener> myListeners = EventDispatcher.create(Listener.class);
   private final List<JavaProgramRunner> myRunnersOrder = new ArrayList<JavaProgramRunner>();
   private JavaProgramRunner myDefaultRunner;
   private JavaProgramRunner myDebuggerRunner;
-  public static final String RUN_CONTEXT_GROUP = "RunContextGroup";
-  public static final String RUNNERS_GROUP = "RunnerActions";
+  @NonNls public static final String RUN_CONTEXT_GROUP = "RunContextGroup";
+  @NonNls public static final String RUNNERS_GROUP = "RunnerActions";
   private ActionManager myActionManager;
 
   public ExecutionRegistryImpl(ActionManager actionManager) {

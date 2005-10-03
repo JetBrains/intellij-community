@@ -3,6 +3,7 @@ package com.intellij.ide.macro;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ide.IdeBundle;
 
 
 public final class FileNameWithoutExtension extends FileNameMacro {
@@ -11,7 +12,7 @@ public final class FileNameWithoutExtension extends FileNameMacro {
   }
 
   public String getDescription() {
-    return "File name without extension";
+    return IdeBundle.message("macro.file.name.without.extension");
   }
 
   public String expand(DataContext dataContext) {

@@ -25,6 +25,6 @@ public class MockIntroduceFieldHandler extends IntroduceFieldHandler {
             PsiModifier.PUBLIC,
             null,
             type, true,
-            null);
+            null, false);
   }
 }

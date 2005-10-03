@@ -109,32 +109,6 @@ public class ModuleSources extends CompositeGenerator{
     return contentRoot;
   }
 
-  private void addExcludePatterns(Module module, final VirtualFile root, VirtualFile dir, CompositeGenerator generator, final boolean parentIncluded) {
-    final boolean isIncluded = ModuleRootManager.getInstance(module).getFileIndex().isInContent(dir);
-    if (isIncluded != parentIncluded) {
-      final String relativePath = VfsUtil.getRelativePath(dir, root, '/');
-      if (isIncluded) {
-        generator.add(new Include(relativePath + "/**"));
-      }
-      else {
-        if (!isExcludedByDefault(dir.getName())) {
-          generator.add(new Exclude(relativePath + "/**"));
-        }
-      }
-    }
-    final VirtualFile[] children = dir.getChildren();
-    for (int idx = 0; idx < children.length; idx++) {
-      VirtualFile child = children[idx];
-      if (child.isDirectory()) {
-        addExcludePatterns(module, root, child, generator, isIncluded);
-      }
-    }
-  }
-
-  private boolean isExcludedByDefault(String name) {
-    return "CVS".equals(name) || "SCCS".equals(name) || ".DS_Store".equals(name);
-  }
-
   public VirtualFile[] getSourceRoots() {
     return mySourceRoots;
   }

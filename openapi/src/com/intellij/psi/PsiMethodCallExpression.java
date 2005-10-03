@@ -15,14 +15,20 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Represents a call of a Java method.
  */
 public interface PsiMethodCallExpression extends PsiCallExpression {
+  @NotNull
+  PsiExpressionList getArgumentList();
+
   /**
    * Returns the reference expression specifying the called method.
    *
    * @return the reference expression for the method.
    */
+  @NotNull
   PsiReferenceExpression getMethodExpression();
 }

@@ -9,13 +9,14 @@
 package com.intellij.codeInspection.reference;
 
 import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.codeInspection.InspectionsBundle;
+
+import java.text.MessageFormat;
 
 public class RefImplicitConstructor extends RefMethod {
-  private RefClass myOwnerClass;
 
-  public RefImplicitConstructor(RefClass ownerClass) {
-    super("implicit constructor of " + ownerClass.getName(), ownerClass);
-    myOwnerClass = ownerClass;
+  RefImplicitConstructor(RefClass ownerClass) {
+    super(InspectionsBundle.message("inspection.reference.implicit.constructor.name", ownerClass.getName()), ownerClass);
   }
 
   public void buildReferences() {
@@ -26,7 +27,7 @@ public class RefImplicitConstructor extends RefMethod {
   }
 
   public String getName() {
-    return "implicit constructor of " + getOwnerClass().getName();
+    return InspectionsBundle.message("inspection.reference.implicit.constructor.name", getOwnerClass().getName());
   }
 
   public String getExternalName() {

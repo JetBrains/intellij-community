@@ -16,6 +16,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.CommonBundle;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -162,7 +163,8 @@ abstract class UndoOrRedo {
   }
 
   private boolean canceledByUser() {
-    String actionText = getActionName() + " " + myUndoableGroup.getCommandName();
+    String actionText = getActionName(myUndoableGroup.getCommandName());
+
     if (actionText.length() > 80) {
       actionText = actionText.substring(0, 80) + "... ";
     }
@@ -171,16 +173,18 @@ abstract class UndoOrRedo {
                                        Messages.getQuestionIcon()) != DialogWrapper.OK_EXIT_CODE;
   }
 
-  private void addLastToReverseStacks() {
-    Collection stacks = getStacks(getReverseStackHolder());
-    for (Iterator i = stacks.iterator(); i.hasNext();) {
-      LinkedList linkedList = (LinkedList)i.next();
-      linkedList.addLast(myUndoableGroup);
+    protected abstract String getActionName(String commandName);
+
+    private void addLastToReverseStacks() {
+      Collection stacks = getStacks(getReverseStackHolder());
+      for (Iterator i = stacks.iterator(); i.hasNext();) {
+        LinkedList linkedList = (LinkedList)i.next();
+        linkedList.addLast(myUndoableGroup);
+      }
+      if (myUndoableGroup.isComplex()) {
+        getReverseStackHolder().getGlobalStack().addLast(myUndoableGroup);
+      }
     }
-    if (myUndoableGroup.isComplex()) {
-      getReverseStackHolder().getGlobalStack().addLast(myUndoableGroup);
-    }
-  }
 
   private Collection<DocumentReference> getDocumentsReferences() {
     return myUndoableGroup.getAffectedDocuments();
@@ -201,7 +205,7 @@ abstract class UndoOrRedo {
       throw new RuntimeException("Files changed");
     }
 
-    Messages.showMessageDialog(myManager.getProject(), "Cannot undo. Some files were changed", "Undo",
+    Messages.showMessageDialog(myManager.getProject(), CommonBundle.message("cannot.undo.error.message"), CommonBundle.message("undo.dialog.title"),
                                Messages.getErrorIcon());
   }
 

@@ -10,6 +10,7 @@ import com.intellij.cvsSupport2.cvsoperations.cvsWatch.ui.WatchersPanel;
 import com.intellij.cvsSupport2.ui.CvsTabbedWindow;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.CvsBundle;
 
 import java.util.List;
 
@@ -20,12 +21,12 @@ public class ViewWatchersAction extends AsbtractActionFromEditGroup {
   private WatchersOperation myWatchersOperation;
 
   protected String getTitle(VcsContext context) {
-    return "View Editors";
+    return CvsBundle.getViewEditorsOperationName();
   }
 
   protected CvsHandler getCvsHandler(CvsContext context) {
     myWatchersOperation = new WatchersOperation(context.getSelectedFiles());
-    return new CommandCvsHandler("Veiw Watchers", myWatchersOperation);
+    return new CommandCvsHandler(com.intellij.CvsBundle.message("operation.name.veiw.watchers"), myWatchersOperation);
   }
 
   protected void onActionPerformed(CvsContext context,
@@ -37,11 +38,11 @@ public class ViewWatchersAction extends AsbtractActionFromEditGroup {
       List<WatcherInfo> watchers = myWatchersOperation.getWatchers();
       String filePath = CvsVfsUtil.getFileFor(context.getSelectedFile()).getAbsolutePath();
       if (watchers.isEmpty()) {
-        Messages.showMessageDialog("There are no watchers for " + filePath, "Watchers", Messages.getInformationIcon());
+        Messages.showMessageDialog(CvsBundle.message("message.error.no.watchers.for.file", filePath), CvsBundle.message("message.error.no.watchers.for.file.title"), Messages.getInformationIcon());
       }
       else {
-        tabbedWindow.addTab("Watchers for " + filePath, new WatchersPanel(watchers), true, true, true, true,
-                            "cvs.watcherse");
+        tabbedWindow.addTab(CvsBundle.message("message.watchers.for.file", filePath), new WatchersPanel(watchers), true, true, true, true,
+                            "cvs.watchers");
         tabbedWindow.ensureVisible(context.getProject());
       }
     }

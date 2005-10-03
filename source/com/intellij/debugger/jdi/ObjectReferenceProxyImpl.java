@@ -11,6 +11,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.jetbrains.annotations.NonNls;
+
 public class ObjectReferenceProxyImpl extends JdiProxy {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.jdi.ObjectReferenceProxyImpl");
   private final ObjectReference myObjectReference;
@@ -51,7 +53,7 @@ public class ObjectReferenceProxyImpl extends JdiProxy {
     return myType;
   }
 
-  public String toString() {
+  public @NonNls String toString() {
     return "ObjectReferenceProxyImpl: " + getObjectReference().toString() + " " + super.toString();
   }
 

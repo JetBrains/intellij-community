@@ -6,6 +6,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * author: lesya
@@ -14,7 +15,7 @@ import org.jdom.Element;
 public class AbstractConfiguration implements JDOMExternalizable, ProjectComponent {
   private final String myName;
 
-  public AbstractConfiguration(String name) {
+  public AbstractConfiguration(@NonNls String name) {
     myName = name;
   }
 

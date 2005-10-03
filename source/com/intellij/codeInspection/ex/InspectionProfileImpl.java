@@ -3,6 +3,7 @@ package com.intellij.codeInspection.ex;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.InspectionProfileConvertor;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -15,26 +16,31 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 
 /**
  * @author max
  */
 public class InspectionProfileImpl implements InspectionProfile.ModifiableModel, InspectionProfile {
-  public static final InspectionProfileImpl EMPTY_PROFILE = new InspectionProfileImpl("Default");
-  public static final InspectionProfileImpl DEFAULT_PROFILE = new InspectionProfileImpl("Default");
+  @NonNls public static final InspectionProfileImpl EMPTY_PROFILE = new InspectionProfileImpl("Default");
+  @NonNls public static final InspectionProfileImpl DEFAULT_PROFILE = new InspectionProfileImpl("Default");
   static {
     final InspectionTool[] inspectionTools = DEFAULT_PROFILE.getInspectionTools();
     for (InspectionTool tool : inspectionTools) {
-      HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
+      final String shortName = tool.getShortName();
+      HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
       if (key == null){
-        key = HighlightDisplayKey.register(tool.getShortName());
+        if (tool instanceof LocalInspectionToolWrapper) {
+          key = HighlightDisplayKey.register(shortName, tool.getDisplayName(), ((LocalInspectionToolWrapper)tool).getTool().getID());
+        } else {
+          key = HighlightDisplayKey.register(shortName);
+        }
       }
       DEFAULT_PROFILE.myDisplayLevelMap.put(key, new ToolState(tool.getDefaultLevel(), tool.isEnabledByDefault()));
     }
@@ -54,7 +60,9 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
   private InspectionProfileImpl mySource;
   private InspectionProfileImpl myBaseProfile = null;
   private UnusedSymbolSettings myUnusedSymbolSettings = new UnusedSymbolSettings();
-  //private String myBaseProfileName;
+    @NonNls
+    private static final String BASE_PROFILE_ATTR = "base_profile";
+    //private String myBaseProfileName;
 
   public void setModified(final boolean modified) {
     myModified = modified;
@@ -88,6 +96,7 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
     mySource = null;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public InspectionProfileImpl(String name, InspectionProfileManager manager) {
     myName = name;
     myFile = new File(InspectionProfileManager.getProfileDirectory(), myName + ".xml");
@@ -101,14 +110,14 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
     myFile = inspectionProfile.getFile();
     myManager = inspectionProfile.getManager();
     myDisplayLevelMap = new LinkedHashMap<HighlightDisplayKey, ToolState>(inspectionProfile.myDisplayLevelMap);
-    myTools = new HashMap<String, InspectionTool>(inspectionProfile.myTools);
+    myTools = new HashMap<String, InspectionTool>();//new HashMap<String, InspectionTool>(inspectionProfile.myTools);
     myVisibleTreeState = new VisibleTreeState(inspectionProfile.myVisibleTreeState);
 
     myAdditionalJavadocTags = inspectionProfile.myAdditionalJavadocTags;
     myAdditionalHtmlTags = inspectionProfile.myAdditionalHtmlTags;
     myAdditionalHtmlAttributes = inspectionProfile.myAdditionalHtmlAttributes;
     myAdditionalRequiredHtmlAttributes = inspectionProfile.myAdditionalRequiredHtmlAttributes;
-    
+
     myUnusedSymbolSettings = inspectionProfile.myUnusedSymbolSettings.copySettings();
     myBaseProfile = inspectionProfile.myBaseProfile;
     mySource = inspectionProfile;
@@ -142,6 +151,7 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
     return myVisibleTreeState;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private boolean toolSettingsAreEqual(HighlightDisplayKey key,
                                        InspectionProfileImpl profile1,
                                        InspectionProfileImpl profile2) {
@@ -181,27 +191,27 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
       }
       return true;
     }
-    
+
     if (key == HighlightDisplayKey.UNKNOWN_JAVADOC_TAG &&
         !myBaseProfile.getAdditionalJavadocTags().equals(getAdditionalJavadocTags())) {
       return true;
     }
-    
+
     if (key == HighlightDisplayKey.CUSTOM_HTML_TAG &&
         !myBaseProfile.getAdditionalHtmlTags().equals(getAdditionalHtmlTags())) {
       return true;
     }
-    
+
     if (key == HighlightDisplayKey.CUSTOM_HTML_ATTRIBUTE &&
         !myBaseProfile.getAdditionalHtmlAttributes().equals(getAdditionalHtmlAttributes())) {
       return true;
     }
-    
+
     if (key == HighlightDisplayKey.REQUIRED_HTML_ATTRIBUTE &&
         !myBaseProfile.getAdditionalNotRequiredHtmlAttributes().equals(getAdditionalNotRequiredHtmlAttributes())) {
       return true;
     }
-    
+
     if (!toolsSettings) {
       myDisplayLevelMap.put(key, myBaseProfile.getToolState(key));
       return true;
@@ -222,41 +232,41 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
       myAdditionalJavadocTags = tags;
     }
   }
-  
+
   public void setAdditionalHtmlTags(String tags){
     if (myBaseProfile != null &&
         myBaseProfile.getAdditionalHtmlTags().length() > 0) {
       myAdditionalHtmlTags = tags.length() > myBaseProfile.getAdditionalHtmlTags().length()
-                                ? tags.substring(myBaseProfile.getAdditionalHtmlTags().length() + 1).trim()
-                                : "";
+                             ? tags.substring(myBaseProfile.getAdditionalHtmlTags().length() + 1).trim()
+                             : "";
     }
     else {
       myAdditionalHtmlTags = tags;
     }
   }
-  
+
   public void setAdditionalHtmlAttributes(String attributes){
     if (myBaseProfile != null && myBaseProfile.getAdditionalHtmlAttributes().length() > 0) {
       myAdditionalHtmlAttributes = attributes.length() > myBaseProfile.getAdditionalHtmlAttributes().length()
-                                ? attributes.substring(myBaseProfile.getAdditionalHtmlAttributes().length() + 1).trim()
-                                : "";
+                                   ? attributes.substring(myBaseProfile.getAdditionalHtmlAttributes().length() + 1).trim()
+                                   : "";
     }
     else {
       myAdditionalHtmlAttributes = attributes;
     }
   }
-  
+
   public void setAdditionalNotRequiredHtmlAttributes(String attributes){
     if (myBaseProfile != null && myBaseProfile.getAdditionalNotRequiredHtmlAttributes().length() > 0) {
       myAdditionalRequiredHtmlAttributes = attributes.length() > myBaseProfile.getAdditionalNotRequiredHtmlAttributes().length()
-                                ? attributes.substring(myBaseProfile.getAdditionalNotRequiredHtmlAttributes().length() + 1).trim()
-                                : "";
+                                           ? attributes.substring(myBaseProfile.getAdditionalNotRequiredHtmlAttributes().length() + 1).trim()
+                                           : "";
     }
     else {
       myAdditionalRequiredHtmlAttributes = attributes;
     }
   }
-  
+
   public void resetToBase() {
     myDisplayLevelMap.clear();
     myAdditionalHtmlAttributes = "";
@@ -277,11 +287,11 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
     myDisplayLevelMap.put(HighlightDisplayKey.WRONG_PACKAGE_STATEMENT, new ToolState(HighlightDisplayLevel.WARNING));
     myDisplayLevelMap.put(HighlightDisplayKey.JAVADOC_ERROR, new ToolState(HighlightDisplayLevel.ERROR));
     myDisplayLevelMap.put(HighlightDisplayKey.UNKNOWN_JAVADOC_TAG, new ToolState(HighlightDisplayLevel.ERROR));
-    
+
     myDisplayLevelMap.put(HighlightDisplayKey.CUSTOM_HTML_TAG, new ToolState(HighlightDisplayLevel.WARNING));
     myDisplayLevelMap.put(HighlightDisplayKey.CUSTOM_HTML_ATTRIBUTE, new ToolState(HighlightDisplayLevel.WARNING));
     myDisplayLevelMap.put(HighlightDisplayKey.REQUIRED_HTML_ATTRIBUTE, new ToolState(HighlightDisplayLevel.WARNING));
-    
+
     myDisplayLevelMap.put(HighlightDisplayKey.EJB_ERROR, new ToolState(HighlightDisplayLevel.ERROR));
     myDisplayLevelMap.put(HighlightDisplayKey.EJB_WARNING, new ToolState(HighlightDisplayLevel.WARNING));
     myDisplayLevelMap.put(HighlightDisplayKey.ILLEGAL_DEPENDENCY, new ToolState(HighlightDisplayLevel.WARNING));
@@ -314,6 +324,7 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
     return state;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private void readExternal(Element element) throws InvalidDataException {
     myDisplayLevelMap.clear();
     final String version = element.getAttributeValue("version");
@@ -328,15 +339,10 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
         LOG.error(e);
       }
     }
-    for (Iterator i = element.getChildren("inspection_tool").iterator(); i.hasNext();) {
-      Element toolElement = (Element)i.next();
+    for (final Object o : element.getChildren("inspection_tool")) {
+      Element toolElement = (Element)o;
 
       String toolClassName = toolElement.getAttributeValue("class");
-
-      HighlightDisplayKey key = HighlightDisplayKey.find(toolClassName);
-      if (key == null) {
-        key = HighlightDisplayKey.register(toolClassName);
-      }
 
       final String levelName = toolElement.getAttributeValue("level");
       HighlightDisplayLevel level = HighlightDisplayLevel.find(levelName);
@@ -344,36 +350,45 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
         level = HighlightDisplayLevel.WARNING;
       }
 
-      final String enabled = toolElement.getAttributeValue("enabled");
-      myDisplayLevelMap.put(key, new ToolState(level, enabled != null && "true".equals(enabled)));
-
-      InspectionTool tool = getInspectionTool(toolClassName);
+      InspectionTool tool = myTools.get(toolClassName);
       if (tool != null) {
         tool.readExternal(toolElement);
       }
+
+      HighlightDisplayKey key = HighlightDisplayKey.find(toolClassName);
+      if (key == null) {
+        if (tool instanceof LocalInspectionToolWrapper) {
+          key = HighlightDisplayKey.register(toolClassName, tool.getDisplayName(), ((LocalInspectionToolWrapper)tool).getTool().getID());
+        } else {
+          key = HighlightDisplayKey.register(toolClassName);
+        }
+      }
+
+      final String enabled = toolElement.getAttributeValue("enabled");
+      myDisplayLevelMap.put(key, new ToolState(level, enabled != null && "true".equals(enabled)));
     }
     myVisibleTreeState.readExternal(element);
-    
+
     final Element additionalJavadocs = element.getChild("ADDITIONAL_JAVADOC_TAGS");
     if (additionalJavadocs != null) {
       myAdditionalJavadocTags = additionalJavadocs.getAttributeValue("value");
     }
-    
+
     final Element additionalHtmlTags = element.getChild("ADDITIONAL_HTML_TAGS");
     if (additionalHtmlTags != null) {
       myAdditionalHtmlTags = additionalHtmlTags.getAttributeValue("value");
     }
-    
+
     final Element additionalHtmlAttributes = element.getChild("ADDITIONAL_HTML_ATTRIBUTES");
     if (additionalHtmlAttributes != null) {
       myAdditionalHtmlAttributes = additionalHtmlAttributes.getAttributeValue("value");
     }
-    
+
     final Element additionalRequiredHtmlAttributes = element.getChild("ADDITIONAL_REQUIRED_HTML_ATTRIBUTES");
     if (additionalRequiredHtmlAttributes != null) {
       myAdditionalRequiredHtmlAttributes = additionalRequiredHtmlAttributes.getAttributeValue("value");
     }
-    
+
     final Element unusedSymbolSettings = element.getChild("UNUSED_SYMBOL_SETTINGS");
     myUnusedSymbolSettings.readExternal(unusedSymbolSettings);
 
@@ -381,42 +396,42 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
   }
 
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public void writeExternal(Element element) throws WriteExternalException {
     element.setAttribute("version", VALID_VERSION);
-    for (Iterator<HighlightDisplayKey> iterator = myDisplayLevelMap.keySet().iterator(); iterator.hasNext();) {
-      final HighlightDisplayKey key = iterator.next();
+    for (final HighlightDisplayKey key : myDisplayLevelMap.keySet()) {
       Element inspectionElement = new Element("inspection_tool");
       final String toolName = key.toString();
       inspectionElement.setAttribute("class", toolName);
       inspectionElement.setAttribute("level", getErrorLevel(key).toString());
       inspectionElement.setAttribute("enabled", isToolEnabled(key) ? "true" : "false");
 
-      final InspectionTool tool = getInspectionTool(toolName);
+      final InspectionTool tool = myTools.get(toolName);
       if (tool != null) {
         tool.writeExternal(inspectionElement);
       }
       element.addContent(inspectionElement);
     }
     myVisibleTreeState.writeExternal(element);
-    
+
     if (myAdditionalJavadocTags != null && myAdditionalJavadocTags.length() != 0) {
       final Element additionalTags = new Element("ADDITIONAL_JAVADOC_TAGS");
       additionalTags.setAttribute("value", myAdditionalJavadocTags);
       element.addContent(additionalTags);
     }
-    
+
     if (myAdditionalHtmlTags != null && myAdditionalHtmlTags.length() != 0) {
       final Element additionalTags = new Element("ADDITIONAL_HTML_TAGS");
       additionalTags.setAttribute("value", myAdditionalHtmlTags);
       element.addContent(additionalTags);
     }
-    
+
     if (myAdditionalHtmlAttributes != null && myAdditionalHtmlAttributes.length() != 0) {
       final Element additionalAttributes = new Element("ADDITIONAL_HTML_ATTRIBUTES");
       additionalAttributes.setAttribute("value", myAdditionalHtmlAttributes);
       element.addContent(additionalAttributes);
     }
-    
+
     if (myAdditionalRequiredHtmlAttributes != null && myAdditionalRequiredHtmlAttributes.length() != 0) {
       final Element additionalAttributes = new Element("ADDITIONAL_REQUIRED_HTML_ATTRIBUTES");
       additionalAttributes.setAttribute("value", myAdditionalRequiredHtmlAttributes);
@@ -429,6 +444,9 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
   }
 
   public InspectionTool getInspectionTool(String shortName) {
+    if (myTools.isEmpty()) {
+      initInspectionTools();
+    }
     return myTools.get(shortName);
   }
 
@@ -436,6 +454,7 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
     return myManager;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static String getProfileName(File file) throws JDOMException, IOException {
     if (file.exists()) {
       Document doc = JDOMUtil.loadDocument(file);
@@ -452,18 +471,19 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
     if (file.exists()) {
       Document doc = JDOMUtil.loadDocument(file);
       Element root = doc.getRootElement();
-      String profileName = root.getAttributeValue("base_profile");
+      String profileName = root.getAttributeValue(BASE_PROFILE_ATTR);
       if (profileName != null) return profileName;
     }
     return null;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   void save(File file, String name) {
     try {
       Element root = new Element("inspections");
       root.setAttribute("profile_name", name);
       writeExternal(root);
-      if (file != null && file.exists()) {
+      if (file != null) {
         JDOMUtil.writeDocument(new Document(root), file, CodeStyleSettingsManager.getSettings(null).getLineSeparator());
       }
     }
@@ -486,7 +506,7 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
     catch (Exception e) {
       ApplicationManager.getApplication().invokeLater(new Runnable(){
         public void run() {
-          Messages.showErrorDialog("Error reading inspection profile " + (myFile != null ? " from " + myFile.getName() : ""), "Errors Occured");
+          Messages.showErrorDialog(InspectionsBundle.message("inspection.error.loading.message", myFile != null ? 0 : 1,  myFile != null ? myFile.getName() : ""), InspectionsBundle.message("inspection.errors.occured.dialog.title"));
         }
       }, ModalityState.NON_MMODAL);
     }
@@ -509,30 +529,33 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
   }
 
   public InspectionTool[] getInspectionTools() {
-    if (myBaseProfile != null && myBaseProfile.myTools.isEmpty()) {
-      myBaseProfile.getInspectionTools();
-    }
     if (myTools.isEmpty() && !ApplicationManager.getApplication().isUnitTestMode()) {
-      final InspectionTool[] tools = InspectionToolRegistrar.getInstance().createTools();
-      for (InspectionTool tool : tools) {
-        myTools.put(tool.getShortName(), tool);
-      }
-      load();
+     initInspectionTools();
     }
     ArrayList<InspectionTool> result = new ArrayList<InspectionTool>();
     result.addAll(myTools.values());
     return result.toArray(new InspectionTool[result.size()]);
   }
 
+  public void initInspectionTools() {
+    if (myBaseProfile != null){
+      myBaseProfile.initInspectionTools();
+    }
+    final InspectionTool[] tools = InspectionToolRegistrar.getInstance().createTools();
+    for (InspectionTool tool : tools) {
+      myTools.put(tool.getShortName(), tool);
+    }
+    if (mySource != null){
+      copyToolsConfigurations(mySource);
+    }
+    load();
+  }
+
   public LocalInspectionTool[] getHighlightingLocalInspectionTools() {
     ArrayList<LocalInspectionTool> enabled = new ArrayList<LocalInspectionTool>();
-    final InspectionTool[] tools = myTools.isEmpty()
-                                               ? getInspectionTools()
-                                               : myTools.values().toArray(
-                                                   new InspectionTool[myTools.values().size()]);
-    for (int i = 0; i < tools.length; i++) {
-      InspectionTool tool = tools[i];
-      if (tool instanceof LocalInspectionToolWrapper){
+    final InspectionTool[] tools = getInspectionTools();
+    for (InspectionTool tool : tools) {
+      if (tool instanceof LocalInspectionToolWrapper) {
         final ToolState state = getToolState(HighlightDisplayKey.find(tool.getShortName()));
         if (state.isEnabled()) {
           enabled.add(((LocalInspectionToolWrapper)tool).getTool());
@@ -552,40 +575,40 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
                                                                      (myAdditionalJavadocTags.length() > 0
                                                                       ? "," + myAdditionalJavadocTags
                                                                       : "") :
-             myAdditionalJavadocTags;
+                                                                            myAdditionalJavadocTags;
     }
     return myAdditionalJavadocTags;
   }
-  
+
   public String getAdditionalHtmlTags() {
     if (myBaseProfile != null) {
-      return myBaseProfile.getAdditionalHtmlTags().length() > 0 ? 
-               myBaseProfile.getAdditionalHtmlTags() + 
-                 (myAdditionalHtmlTags.length() > 0 ? "," + myAdditionalHtmlTags
-                  : "") :
-             myAdditionalHtmlTags;
+      return myBaseProfile.getAdditionalHtmlTags().length() > 0 ?
+             myBaseProfile.getAdditionalHtmlTags() +
+             (myAdditionalHtmlTags.length() > 0 ? "," + myAdditionalHtmlTags
+              : "") :
+                    myAdditionalHtmlTags;
     }
     return myAdditionalHtmlTags;
   }
-  
+
   public String getAdditionalHtmlAttributes() {
     if (myBaseProfile != null) {
-      return myBaseProfile.getAdditionalHtmlAttributes().length() > 0 ? 
-               myBaseProfile.getAdditionalHtmlAttributes() + 
-                 (myAdditionalHtmlAttributes.length() > 0 ? "," + myAdditionalHtmlAttributes
-                  : "") :
-             myAdditionalHtmlAttributes;
+      return myBaseProfile.getAdditionalHtmlAttributes().length() > 0 ?
+             myBaseProfile.getAdditionalHtmlAttributes() +
+             (myAdditionalHtmlAttributes.length() > 0 ? "," + myAdditionalHtmlAttributes
+              : "") :
+                    myAdditionalHtmlAttributes;
     }
     return myAdditionalHtmlAttributes;
   }
-  
+
   public String getAdditionalNotRequiredHtmlAttributes() {
     if (myBaseProfile != null) {
-      return myBaseProfile.getAdditionalNotRequiredHtmlAttributes().length() > 0 ? 
-               myBaseProfile.getAdditionalNotRequiredHtmlAttributes() +
-                 (myAdditionalRequiredHtmlAttributes.length() > 0 ? "," + myAdditionalRequiredHtmlAttributes
-                                                                      : "") :
-             myAdditionalRequiredHtmlAttributes;
+      return myBaseProfile.getAdditionalNotRequiredHtmlAttributes().length() > 0 ?
+             myBaseProfile.getAdditionalNotRequiredHtmlAttributes() +
+             (myAdditionalRequiredHtmlAttributes.length() > 0 ? "," + myAdditionalRequiredHtmlAttributes
+              : "") :
+                    myAdditionalRequiredHtmlAttributes;
     }
     return myAdditionalRequiredHtmlAttributes;
   }
@@ -611,10 +634,9 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
     try {
       if (!profile.myTools.isEmpty()) {
         final InspectionTool[] inspectionTools = getInspectionTools();
-        for (int i = 0; i < inspectionTools.length; i++) {
-          readAndWriteToolsConfigs(inspectionTools[i], profile);
+        for (InspectionTool inspectionTool : inspectionTools) {
+          readAndWriteToolsConfigs(inspectionTool, profile);
         }
-        return;
       }
     }
     catch (WriteExternalException e) {
@@ -628,7 +650,7 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
   private void readAndWriteToolsConfigs(final InspectionTool inspectionTool, final InspectionProfileImpl profile)
     throws WriteExternalException, InvalidDataException {
     final String name = inspectionTool.getShortName();
-    Element config = new Element("config");
+    @NonNls Element config = new Element("config");
     final InspectionTool tool = profile.getInspectionTool(name);
     if (tool != null){
       tool.writeExternal(config);
@@ -645,15 +667,13 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
   public void cleanup() {
     if (myTools.isEmpty()) return;
     if (!myTools.isEmpty()) {
-      for (Iterator<String> iterator = myTools.keySet().iterator(); iterator.hasNext();) {
-        final String key = iterator.next();
+      for (final String key : myTools.keySet()) {
         final InspectionTool tool = myTools.get(key);
-        if (tool.getManager() != null){
+        if (tool.getManager() != null) {
           tool.cleanup();
         }
       }
     }
-    myTools.clear();
   }
 
   public boolean wasInitialized() {
@@ -698,7 +718,7 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
   public boolean isExecutable() {
     if (myTools.isEmpty()){
       //initialize
-      getInspectionTools();
+      initInspectionTools();
     }
     for (String name : myTools.keySet()) {
       if (isToolEnabled(HighlightDisplayKey.find(name))){
@@ -716,24 +736,25 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
     myManager.initProfile(this);
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private void commit(InspectionProfileImpl inspectionProfile) {
     myName = inspectionProfile.myName;
     myDisplayLevelMap = inspectionProfile.myDisplayLevelMap;
     myVisibleTreeState = inspectionProfile.myVisibleTreeState;
     myBaseProfile = inspectionProfile.myBaseProfile;
     myTools = inspectionProfile.myTools;
-    
+
     myAdditionalJavadocTags = inspectionProfile.myAdditionalJavadocTags;
     myAdditionalRequiredHtmlAttributes = inspectionProfile.myAdditionalRequiredHtmlAttributes;
     myAdditionalHtmlAttributes = inspectionProfile.myAdditionalHtmlAttributes;
     myAdditionalHtmlTags = inspectionProfile.myAdditionalHtmlTags;
-    
+
     myUnusedSymbolSettings = inspectionProfile.myUnusedSymbolSettings.copySettings();
     myFile = inspectionProfile.myFile;
     save(myFile != null ? myFile : new File(InspectionProfileManager.getProfileDirectory(), myName + ".xml"), myName);
   }
 
-  private static class ToolState {     
+  private static class ToolState {
     private HighlightDisplayLevel myLevel;
     private boolean myEnabled;
 

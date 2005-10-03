@@ -22,6 +22,7 @@ public class ModuleChunkAntProject extends Generator{
   }
 
   public void generate(DataOutput out) throws IOException {
+    //noinspection HardCodedStringLiteral
     out.writeBytes("<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>");
     crlf(out);
     myAntProject.generate(out);

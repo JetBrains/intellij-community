@@ -24,7 +24,7 @@ public class RestoreFileAction extends ActionOnSelectedElement {
   }
 
   protected String getTitle(VcsContext context) {
-    return "Restore File";
+    return com.intellij.CvsBundle.message("operation.name.restore.file");
   }
 
   protected CvsHandler getCvsHandler(CvsContext context) {

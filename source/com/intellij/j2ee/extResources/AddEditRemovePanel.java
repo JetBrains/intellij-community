@@ -87,7 +87,6 @@ public abstract class AddEditRemovePanel extends PanelWithButtons {
 
   protected JButton[] createButtons(){
 //    myAddPatternButton = new JButton("Add...");
-    myAddButton.setMnemonic(getAddMnemonic());
     myAddButton.addActionListener(
       new ActionListener() {
         public void actionPerformed(ActionEvent e){
@@ -97,7 +96,6 @@ public abstract class AddEditRemovePanel extends PanelWithButtons {
     );
 
 //    myEditButton = new JButton("Edit");
-    myEditButton.setMnemonic(getEditMnemonic());
     myEditButton.addActionListener(
       new ActionListener() {
         public void actionPerformed(ActionEvent e){
@@ -107,7 +105,6 @@ public abstract class AddEditRemovePanel extends PanelWithButtons {
     );
 
 //    myRemoveButton = new JButton("Remove");
-    myRemoveButton.setMnemonic(getRemoveMnemonic());
     myRemoveButton.addActionListener(
       new ActionListener() {
         public void actionPerformed(ActionEvent e){

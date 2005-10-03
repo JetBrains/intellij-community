@@ -3,6 +3,7 @@ package com.intellij.ide.hierarchy.method;
 import com.intellij.ide.hierarchy.HierarchyBrowserManager;
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.HierarchyTreeStructure;
+import com.intellij.ide.IdeBundle;
 import com.intellij.j2ee.J2EERolesUtil;
 import com.intellij.j2ee.ejb.role.EjbClassRole;
 import com.intellij.openapi.project.Project;
@@ -15,7 +16,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 public final class MethodHierarchyTreeStructure extends HierarchyTreeStructure {
-  public static final String TYPE = "Method hierarchy for ";
+  public static final String TYPE = IdeBundle.message("title.hierarchy.method");
   private final SmartPsiElementPointer myMethod;
 
   /**

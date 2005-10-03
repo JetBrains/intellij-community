@@ -140,7 +140,7 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
         return new PostHighlightingPass(myProject, myFile, myEditor, startOffset, endOffset, myCompiled);
 
       case Pass.UPDATE_OVERRIDEN_MARKERS:
-        return new OverridenMarkersPass(myProject, myFile, myDocument, startOffset, endOffset);
+        return new OverriddenMarkersPass(myProject, myFile, myDocument, startOffset, endOffset);
 
       case Pass.LOCAL_INSPECTIONS:
         return myCompiled || !myFile.isPhysical()

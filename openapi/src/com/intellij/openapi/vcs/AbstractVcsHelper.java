@@ -25,11 +25,15 @@ import com.intellij.openapi.vcs.versions.AbstractRevisions;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.codeInsight.CodeSmellInfo;
 
 import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 public abstract class AbstractVcsHelper {
   public static AbstractVcsHelper getInstance(Project project) {
@@ -74,7 +78,7 @@ public abstract class AbstractVcsHelper {
                                                                              Collection<String> roots);
 
   public void showError(final VcsException e, final String s) {
-    showErrors(Arrays.asList(new VcsException[]{e}), s);
+    showErrors(Arrays.asList(e), s);
   }
 
   public abstract void showAnnotation(FileAnnotation annotation, VirtualFile file);
@@ -87,5 +91,14 @@ public abstract class AbstractVcsHelper {
 
   public abstract void showRevisions(List<AbstractRevisions> revisions, final String title);
 
+  public abstract void showRevisions(List<AbstractRevisions> revisions,
+                                     final String title,
+                                     String commitMessage,
+                                     final String commitMessageTitle);
+
   public abstract void showMergeDialog(List<VirtualFile> files, MergeProvider provider, final AnActionEvent e);
+
+  public abstract List<CodeSmellInfo> findCodeSmells(List<VirtualFile> files) throws ProcessCanceledException;
+
+  public abstract void showCodeSmellErrors(final List<CodeSmellInfo> smells);
 }

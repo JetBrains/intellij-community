@@ -8,6 +8,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.ui.MultiLineLabelUI;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.application.options.pathMacros.PathMacroConfigurable;
 import com.intellij.application.options.pathMacros.PathMacroListEditor;
 import com.intellij.ui.IdeBorderFactory;
@@ -38,7 +39,7 @@ public class UndefinedMacrosConfigurable implements Configurable{
   }
 
   public String getDisplayName() {
-    return "Configure Path Variables";
+    return ProjectBundle.message("project.configure.path.variables.title");
   }
 
   public JComponent createComponent() {

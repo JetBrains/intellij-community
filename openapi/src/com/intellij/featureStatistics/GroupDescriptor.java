@@ -16,10 +16,13 @@
 package com.intellij.featureStatistics;
 
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 public class GroupDescriptor {
   private String myId;
   private String myDisplayName;
+  @NonNls protected static final String ID_ATTR = "id";
+  @NonNls private static final String GROUP_PREFIX = "group.";
 
   GroupDescriptor() {
   }
@@ -30,8 +33,8 @@ public class GroupDescriptor {
   }
 
   public void readExternal(Element element) {
-    myId = element.getAttributeValue("id");
-    myDisplayName = element.getAttributeValue("name");
+    myId = element.getAttributeValue(ID_ATTR);
+    myDisplayName = FeatureStatisticsBundle.message(GROUP_PREFIX + myId);
   }
 
   public String getId() {

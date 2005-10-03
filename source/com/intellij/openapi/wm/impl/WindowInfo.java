@@ -5,6 +5,7 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowType;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
 
@@ -16,7 +17,7 @@ public final class WindowInfo implements Cloneable,JDOMExternalizable{
   /**
    * XML tag.
    */
-  static final String TAG="window_info";
+  @NonNls static final String TAG="window_info";
   /**
    * Default window weight.
    */
@@ -40,6 +41,19 @@ public final class WindowInfo implements Cloneable,JDOMExternalizable{
    * The default value is <code>-1</code>.
    */
   private int myOrder;
+  @NonNls protected static final String ID_ATTR = "id";
+  @NonNls protected static final String ACTIVE_ATTR = "active";
+  @NonNls protected static final String ANCHOR_ATTR = "anchor";
+  @NonNls protected static final String AUTOHIDE_ATTR = "auto_hide";
+  @NonNls protected static final String INTERNAL_TYPE_ATTR = "internal_type";
+  @NonNls protected static final String TYPE_ATTR = "type";
+  @NonNls protected static final String VISIBLE_ATTR = "visible";
+  @NonNls protected static final String WEIGHT_ATTR = "weight";
+  @NonNls protected static final String ORDER_ATTR = "order";
+  @NonNls protected static final String X_ATTR = "x";
+  @NonNls protected static final String Y_ATTR = "y";
+  @NonNls protected static final String WIDTH_ATTR = "width";
+  @NonNls protected static final String HEIGHT_ATTR = "height";
 
   /**
    * Creates <code>WindowInfo</code> for tool window with wpecified <code>ID</code>.
@@ -198,33 +212,33 @@ public final class WindowInfo implements Cloneable,JDOMExternalizable{
   }
 
   public void readExternal(final Element element){
-    myId=element.getAttributeValue("id");
+    myId=element.getAttributeValue(ID_ATTR);
     try{
-      myActive=Boolean.valueOf(element.getAttributeValue("active")).booleanValue();
+      myActive=Boolean.valueOf(element.getAttributeValue(ACTIVE_ATTR)).booleanValue();
     }catch(NumberFormatException ignored){}
     try{
-      myAnchor=WindowInfo.parseToolWindowAnchor(element.getAttributeValue("anchor"));
+      myAnchor=WindowInfo.parseToolWindowAnchor(element.getAttributeValue(ANCHOR_ATTR));
     }catch(IllegalArgumentException ignored){}
-      myAutoHide=Boolean.valueOf(element.getAttributeValue("auto_hide")).booleanValue();
+      myAutoHide=Boolean.valueOf(element.getAttributeValue(AUTOHIDE_ATTR)).booleanValue();
     try{
-      myInternalType=WindowInfo.parseToolWindowType(element.getAttributeValue("internal_type"));
+      myInternalType=WindowInfo.parseToolWindowType(element.getAttributeValue(INTERNAL_TYPE_ATTR));
     }catch(IllegalArgumentException ignored){}
     try{
-      myType=parseToolWindowType(element.getAttributeValue("type"));
+      myType=parseToolWindowType(element.getAttributeValue(TYPE_ATTR));
     }catch(IllegalArgumentException ignored){}
-      myVisible=Boolean.valueOf(element.getAttributeValue("visible")).booleanValue();
+      myVisible=Boolean.valueOf(element.getAttributeValue(VISIBLE_ATTR)).booleanValue();
     try{
-      myWeight=Float.parseFloat(element.getAttributeValue("weight"));
+      myWeight=Float.parseFloat(element.getAttributeValue(WEIGHT_ATTR));
     }catch(NumberFormatException ignored){}
     try{
-      myOrder=Integer.valueOf(element.getAttributeValue("order")).intValue();
+      myOrder=Integer.valueOf(element.getAttributeValue(ORDER_ATTR)).intValue();
     }catch(NumberFormatException ignored){}
     try{
       myFloatingBounds=new Rectangle(
-        Integer.parseInt(element.getAttributeValue("x")),
-        Integer.parseInt(element.getAttributeValue("y")),
-        Integer.parseInt(element.getAttributeValue("width")),
-        Integer.parseInt(element.getAttributeValue("height"))
+        Integer.parseInt(element.getAttributeValue(X_ATTR)),
+        Integer.parseInt(element.getAttributeValue(Y_ATTR)),
+        Integer.parseInt(element.getAttributeValue(WIDTH_ATTR)),
+        Integer.parseInt(element.getAttributeValue(HEIGHT_ATTR))
       );
     }catch(NumberFormatException ignored){}
   }
@@ -278,20 +292,20 @@ public final class WindowInfo implements Cloneable,JDOMExternalizable{
   }
 
   public void writeExternal(final Element element){
-    element.setAttribute("id",myId);
-    element.setAttribute("active",myActive?Boolean.TRUE.toString():Boolean.FALSE.toString());
-    element.setAttribute("anchor",myAnchor.toString());
-    element.setAttribute("auto_hide",myAutoHide?Boolean.TRUE.toString():Boolean.FALSE.toString());
-    element.setAttribute("internal_type",myInternalType.toString());
-    element.setAttribute("type",myType.toString());
-    element.setAttribute("visible",myVisible?Boolean.TRUE.toString():Boolean.FALSE.toString());
-    element.setAttribute("weight",Float.toString(myWeight));
-    element.setAttribute("order",Integer.toString(myOrder));
+    element.setAttribute(ID_ATTR,myId);
+    element.setAttribute(ACTIVE_ATTR,myActive?Boolean.TRUE.toString():Boolean.FALSE.toString());
+    element.setAttribute(ANCHOR_ATTR,myAnchor.toString());
+    element.setAttribute(AUTOHIDE_ATTR,myAutoHide?Boolean.TRUE.toString():Boolean.FALSE.toString());
+    element.setAttribute(INTERNAL_TYPE_ATTR,myInternalType.toString());
+    element.setAttribute(TYPE_ATTR,myType.toString());
+    element.setAttribute(VISIBLE_ATTR,myVisible?Boolean.TRUE.toString():Boolean.FALSE.toString());
+    element.setAttribute(WEIGHT_ATTR,Float.toString(myWeight));
+    element.setAttribute(ORDER_ATTR,Integer.toString(myOrder));
     if(myFloatingBounds!=null){
-      element.setAttribute("x",Integer.toString(myFloatingBounds.x));
-      element.setAttribute("y",Integer.toString(myFloatingBounds.y));
-      element.setAttribute("width",Integer.toString(myFloatingBounds.width));
-      element.setAttribute("height",Integer.toString(myFloatingBounds.height));
+      element.setAttribute(X_ATTR,Integer.toString(myFloatingBounds.x));
+      element.setAttribute(Y_ATTR,Integer.toString(myFloatingBounds.y));
+      element.setAttribute(WIDTH_ATTR,Integer.toString(myFloatingBounds.width));
+      element.setAttribute(HEIGHT_ATTR,Integer.toString(myFloatingBounds.height));
     }
   }
 
@@ -322,6 +336,7 @@ public final class WindowInfo implements Cloneable,JDOMExternalizable{
     return myAnchor.hashCode()+myId.hashCode()+myType.hashCode()+myOrder;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString(){
     final StringBuffer buffer=new StringBuffer();
     buffer.append(getClass().getName()).append('[');

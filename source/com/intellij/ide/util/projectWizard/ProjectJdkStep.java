@@ -7,6 +7,8 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.ide.IdeBundle;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -30,17 +32,16 @@ public class ProjectJdkStep extends ModuleWizardStep {
     myPanel = new JPanel(new GridBagLayout());
     myPanel.setBorder(BorderFactory.createEtchedBorder());
 
-    final JLabel label = new JLabel("Please select project JDK.\nThis JDK will be used by default by all project modules.");
+    final JLabel label = new JLabel(IdeBundle.message("prompt.please.select.project.jdk"));
     label.setUI(new MultiLineLabelUI());
     myPanel.add(label, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(8, 10, 8, 10), 0, 0));
 
-    final JLabel jdklabel = new JLabel("Project JDK: ");
-    jdklabel.setFont(UIManager.getFont("Label.font").deriveFont(Font.BOLD));
+    final JLabel jdklabel = new JLabel(IdeBundle.message("label.project.jdk"));
+    jdklabel.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
     myPanel.add(jdklabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(8, 10, 0, 10), 0, 0));
 
     myPanel.add(myJdkChooser, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(2, 10, 10, 5), 0, 0));
-    JButton configureButton = new JButton("Configure...");
-    configureButton.setMnemonic('C');
+    JButton configureButton = new JButton(IdeBundle.message("button.configure"));
     myPanel.add(configureButton, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(2, 0, 10, 5), 0, 0));
 
     ProjectJdk defaultJdk = getDefaultJdk();
@@ -89,10 +90,8 @@ public class ProjectJdkStep extends ModuleWizardStep {
     final ProjectJdk jdk = myJdkChooser.getChosenJdk();
     if (jdk == null) {
       int result = Messages.showOkCancelDialog(
-        "Do you want to create a project with no JDK assigned?\n"+
-        "JDK is required for compiling, debugging and running applications\n"+
-        "as well as for standard JDK classes resolution.",
-        "No JDK Specified",
+        IdeBundle.message("prompt.confirm.project.no.jdk"),
+        IdeBundle.message("title.no.jdk.specified"),
         Messages.getWarningIcon()
       );
       if(result != 0) {

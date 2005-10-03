@@ -15,6 +15,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.progress.util.SmoothProgressAdapter;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootModel;
@@ -36,6 +37,7 @@ import com.intellij.ui.InsertPathAction;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.concurrency.SwingWorker;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -56,9 +58,9 @@ import java.util.Map;
  */
 public class ContentEntriesEditor extends ModuleElementsEditor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.ContentEntriesEditor");
-  public static final String NAME = "Paths";
+  public static final String NAME = ProjectBundle.message("module.paths.title");
   public static final Icon ICON = IconLoader.getIcon("/modules/paths.png");
-  private static final Color BACKGROUND_COLOR = UIManager.getColor("List.background");
+  private static final Color BACKGROUND_COLOR = UIUtil.getListBackground();
   private static final Icon ADD_CONTENT_ENTRY_ICON = IconLoader.getIcon("/modules/addContentEntry.png");
 
   private ContentEntryTreeEditor myRootTreeEditor;
@@ -161,12 +163,12 @@ public class ContentEntriesEditor extends ModuleElementsEditor {
 
     final JPanel rbPanel = new JPanel(new GridBagLayout());
     rbPanel.setBorder(BorderFactory.createEmptyBorder(6, 0, 0, 6));
-    myRbRelativePaths = new JRadioButton("Use relative path");
-    final JRadioButton rbAbsolutePaths = new JRadioButton("Use absolute path");
+    myRbRelativePaths = new JRadioButton(ProjectBundle.message("module.paths.outside.module.dir.relative.radio"));
+    final JRadioButton rbAbsolutePaths = new JRadioButton(ProjectBundle.message("module.paths.outside.module.dir.absolute.radio"));
     ButtonGroup buttonGroup = new ButtonGroup();
     buttonGroup.add(myRbRelativePaths);
     buttonGroup.add(rbAbsolutePaths);
-    rbPanel.add(new JLabel("For files outside module file directory:"),
+    rbPanel.add(new JLabel(ProjectBundle.message("module.paths.outside.module.dir.label")),
                 new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0),
                                        0, 0));
     rbPanel.add(rbAbsolutePaths,
@@ -199,18 +201,18 @@ public class ContentEntriesEditor extends ModuleElementsEditor {
   }
 
   private JComponent createOutputPathsBlock() {
-    myOutputPathPanel = createOutputPathPanel("Select Output Path", new CommitPathRunnable() {
+    myOutputPathPanel = createOutputPathPanel(ProjectBundle.message("module.paths.output.title"), new CommitPathRunnable() {
       public void saveUrl(String url) {
         myModel.setCompilerOutputPath(url);
       }
     });
-    myTestsOutputPathPanel = createOutputPathPanel("Select Test Output Path", new CommitPathRunnable() {
+    myTestsOutputPathPanel = createOutputPathPanel(ProjectBundle.message("module.paths.test.output.title"), new CommitPathRunnable() {
       public void saveUrl(String url) {
         myModel.setCompilerOutputPathForTests(url);
       }
     });
 
-    myCbExcludeOutput = new JCheckBox("Exclude output paths", myModel.isExcludeOutput());
+    myCbExcludeOutput = new JCheckBox(ProjectBundle.message("module.paths.exclude.output.checkbox"), myModel.isExcludeOutput());
     myCbExcludeOutput.addItemListener(new ItemListener() {
       public void itemStateChanged(ItemEvent e) {
         myModel.setExcludeOutput(e.getStateChange() == ItemEvent.SELECTED);
@@ -222,14 +224,14 @@ public class ContentEntriesEditor extends ModuleElementsEditor {
 
     final JPanel outputPathsPanel = new JPanel(new GridBagLayout());
 
-    outputPathsPanel.add(new JLabel("Output path:"),
+    outputPathsPanel.add(new JLabel(ProjectBundle.message("module.paths.output.label")),
                          new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE,
                                                 new Insets(6, 0, 0, 4), 0, 0));
     outputPathsPanel.add(myOutputPathPanel,
                          new GridBagConstraints(1, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
                                                 new Insets(6, 4, 0, 0), 0, 0));
 
-    outputPathsPanel.add(new JLabel("Test output path:"),
+    outputPathsPanel.add(new JLabel(ProjectBundle.message("module.paths.test.output.label")),
                          new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE,
                                                 new Insets(6, 0, 0, 4), 0, 0));
     outputPathsPanel.add(myTestsOutputPathPanel,
@@ -448,13 +450,13 @@ public class ContentEntriesEditor extends ModuleElementsEditor {
           public void run() {
             for (Iterator it = fileToEntryMap.keySet().iterator(); it.hasNext();) {
               final File entryFile = (File)it.next();
-              progressIndicator.setText("Searching for source roots in " + entryFile.getPath());
+              progressIndicator.setText(ProjectBundle.message("module.paths.searching.source.roots.progress", entryFile.getPath()));
               final java.util.List<Pair<File, String>> roots = JavaUtil.suggestRoots(entryFile);
               entryToRootMap.put(fileToEntryMap.get(entryFile), roots);
             }
           }
         };
-        progressWindow.setTitle("Adding Source Roots");
+        progressWindow.setTitle(ProjectBundle.message("module.paths.searching.source.roots.title"));
         ProgressManager.getInstance().runProcess(process, progressIndicator);
       }
     };
@@ -547,14 +549,15 @@ public class ContentEntriesEditor extends ModuleElementsEditor {
     private final FileChooserDescriptor myDescriptor;
 
     public AddContentEntryAction() {
-      super("Add Content Root", "Add content root to the module", ADD_CONTENT_ENTRY_ICON);
+      super(ProjectBundle.message("module.paths.add.content.action"),
+            ProjectBundle.message("module.paths.add.content.action.description"), ADD_CONTENT_ENTRY_ICON);
       myDescriptor = new FileChooserDescriptor(false, true, true, false, true, true) {
         public void validateSelectedFiles(VirtualFile[] files) throws Exception {
           validateContentEntriesCandidates(files);
         }
       };
-      myDescriptor.setTitle("Select content root directory");
-      myDescriptor.setDescription("Content root is a directory containing all files related to this module");
+      myDescriptor.setTitle(ProjectBundle.message("module.paths.add.content.title"));
+      myDescriptor.setDescription(ProjectBundle.message("module.paths.add.content.prompt"));
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -574,21 +577,19 @@ public class ContentEntriesEditor extends ModuleElementsEditor {
             continue;  // skip invalid entry
           }
           if (contentEntryFile.equals(file)) {
-            throw new Exception("Content root \"" + file.getPresentableUrl() + "\" already exists");
+            throw new Exception(ProjectBundle.message("module.paths.add.content.already.exists.error", file.getPresentableUrl()));
           }
           if (VfsUtil.isAncestor(contentEntryFile, file, true)) {
             // intersection not allowed
             throw new Exception(
-              "Content root being added \"" + file.getPresentableUrl() + "\"\nis located below existing content root \"" +
-              contentEntryFile.getPresentableUrl() +
-              "\".\nContent entries should not intersect.");
+              ProjectBundle.message("module.paths.add.content.intersect.error", file.getPresentableUrl(),
+                                    contentEntryFile.getPresentableUrl()));
           }
           if (VfsUtil.isAncestor(file, contentEntryFile, true)) {
             // intersection not allowed
             throw new Exception(
-              "Content root being added \"" + file.getPresentableUrl() + "\"\ndominates existing content root \"" +
-              contentEntryFile.getPresentableUrl() +
-              "\".\nContent entries should not intersect.");
+              ProjectBundle.message("module.paths.add.content.dominate.error", file.getPresentableUrl(),
+                                    contentEntryFile.getPresentableUrl()));
           }
         }
         // check if the same root is configured for another module
@@ -603,8 +604,7 @@ public class ContentEntriesEditor extends ModuleElementsEditor {
           for (VirtualFile moduleContentRoot : moduleContentRoots) {
             if (file.equals(moduleContentRoot)) {
               throw new Exception(
-                "Content root \"" + file.getPresentableUrl() + "\" already defined for module \"" + module.getName() +
-                "\".\nTwo modules in a project cannot share the same content root.");
+                ProjectBundle.message("module.paths.add.content.duplicate.error", file.getPresentableUrl(), module.getName()));
             }
           }
         }

@@ -29,6 +29,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.xml.util.XmlUtil;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 
@@ -155,7 +156,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       highlights.add(highlightInfo);
       LocalInspectionTool tool = myTools.get(i);
       List<IntentionAction> options = new ArrayList<IntentionAction>();
-      options.add(new SwitchOffToolAction(tool));
+      options.add(new EditInspectionToolsSettingsAction(tool));
       options.add(new AddNoInspectionCommentAction(tool, psiElement));
       options.add(new AddNoInspectionDocTagAction(tool, psiElement));
       options.add(new AddNoInspectionForClassAction(tool, psiElement));
@@ -234,10 +235,11 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
         }
       };
       String plainMessage = XmlUtil.unescape(message.replaceAll("<[^>]*>", ""));
-      HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(type, psiElement, plainMessage, message);
+      @NonNls String tooltip = "<html><body>" + XmlUtil.escapeString(message) + "</body></html>";
+      HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(type, psiElement, plainMessage, tooltip);
       infos.add(highlightInfo);
       List<IntentionAction> options = new ArrayList<IntentionAction>();
-      options.add(new SwitchOffToolAction(tool));
+      options.add(new EditInspectionToolsSettingsAction(tool));
       options.add(new AddNoInspectionCommentAction(tool, psiElement));
       options.add(new AddNoInspectionDocTagAction(tool, psiElement));
       options.add(new AddNoInspectionForClassAction(tool, psiElement));
@@ -278,13 +280,15 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
   private static String renderDescriptionMessage(ProblemDescriptor descriptor) {
     PsiElement psiElement = descriptor.getPsiElement();
     String message = descriptor.getDescriptionTemplate();
-    if (message == null) return "Error message unavaliable";
+    if (message == null) return ""; // no message. Should not be the case if inspection correctly implemented.
     message = StringUtil.replace(message, "<code>", "'");
     message = StringUtil.replace(message, "</code>", "'");
     //message = message.replaceAll("<[^>]*>", "");
     String text = psiElement == null ? "" : psiElement.getText();
     message = StringUtil.replace(message, "#ref", text);
     message = StringUtil.replace(message, "#loc", "");
+
+    message = XmlUtil.unescape(message);
     return message;
   }
 

@@ -3,8 +3,12 @@ package com.intellij.psi.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NonNls;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author ik, dsl
@@ -286,7 +290,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
   }
 
   public String toString() {
-    StringBuffer buffer = new StringBuffer();
+    @NonNls StringBuffer buffer = new StringBuffer();
     final Set<Map.Entry<PsiTypeParameter,PsiType>> set = mySubstitutionMap.entrySet();
     for (Map.Entry<PsiTypeParameter, PsiType> entry : set) {
       final PsiTypeParameter typeParameter = entry.getKey();

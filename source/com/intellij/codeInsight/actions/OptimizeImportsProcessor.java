@@ -1,10 +1,11 @@
 package com.intellij.codeInsight.actions;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.editor.Document;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
@@ -12,8 +13,8 @@ import com.intellij.util.IncorrectOperationException;
 public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.actions.OptimizeImportsProcessor");
 
-  private static final String PROGRESS_TEXT = "Optimizing imports...";
-  private static final String COMMAND_NAME = "Optimize Imports";
+  private static final String PROGRESS_TEXT = CodeInsightBundle.message("progress.text.optimizing.imports");
+  private static final String COMMAND_NAME = CodeInsightBundle.message("process.optimize.imports");
 
   public OptimizeImportsProcessor(Project project) {
     super(project, COMMAND_NAME, PROGRESS_TEXT);

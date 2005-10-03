@@ -20,8 +20,10 @@ import com.intellij.openapi.vcs.checkin.DifferenceType;
 
 import java.awt.*;
 
+import org.jetbrains.annotations.NonNls;
+
 public interface FileStatusFactory {
-  FileStatus createFileStatus(String id, String description, Color color);
+  FileStatus createFileStatus(@NonNls String id, String description, Color color);
 
   DifferenceType createDifferenceTypeInserted();
   DifferenceType createDifferenceTypeDeleted();

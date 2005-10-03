@@ -9,6 +9,7 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
+import com.intellij.debugger.DebuggerBundle;
 
 class LiteralEvaluator implements Evaluator {
   private Object myValue;
@@ -40,6 +41,7 @@ class LiteralEvaluator implements Evaluator {
     if (myValue instanceof String) {
       return vm.mirrorOf((String)myValue);
     }
-    throw EvaluateExceptionUtil.UNKNOWN_TYPE(myExpectedType);
+    throw EvaluateExceptionUtil
+      .createEvaluateException(DebuggerBundle.message("evaluation.error.unknown.expression.type", myExpectedType));
   }
 }

@@ -7,8 +7,11 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.vfs.CharsetSettings;
+import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.lang.properties.PropertiesFilesManager;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 
@@ -18,7 +21,7 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
     public String LINE_SEPARATOR;
     public boolean IS_VIRTUAL_SPACE = true;
     public boolean IS_CARET_INSIDE_TABS;
-    public String STRIP_TRAILING_SPACES = "Changed";
+    @NonNls public String STRIP_TRAILING_SPACES = "Changed";
     public boolean IS_CARET_BLINKING = true;
     public int CARET_BLINKING_PERIOD = 500;
     public boolean IS_RIGHT_MARGIN_SHOWN = true;
@@ -37,7 +40,7 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
     public boolean IS_WHEEL_FONTCHANGE_ENABLED = true;
     public boolean IS_MOUSE_CLICK_SELECTION_HONORS_CAMEL_WORDS = true;
     public boolean IS_NATIVE2ASCII_FOR_PROPERTIES_FILES;
-    public String DEFAULT_PROPERTIES_FILES_CHARSET_NAME = "System Default";
+    public String DEFAULT_PROPERTIES_FILES_CHARSET_NAME = CharsetSettings.SYSTEM_DEFAULT_CHARSET_NAME;
 
     public Object clone() {
       try {
@@ -58,12 +61,12 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
   private int myAdditinalColumnsCount = 20;
   private boolean myLineMarkerAreaShown = true;
 
-  public static final String STRIP_TRAILING_SPACES_NONE = "None";
-  public static final String STRIP_TRAILING_SPACES_CHANGED = "Changed";
-  public static final String STRIP_TRAILING_SPACES_WHOLE = "Whole";
+  @NonNls public static final String STRIP_TRAILING_SPACES_NONE = "None";
+  @NonNls public static final String STRIP_TRAILING_SPACES_CHANGED = "Changed";
+  @NonNls public static final String STRIP_TRAILING_SPACES_WHOLE = "Whole";
 
 
-  public static String DEFAULT_FONT_NAME = "Courier";
+  @NonNls public static String DEFAULT_FONT_NAME = "Courier";
 
   public static EditorSettingsExternalizable getInstance() {
     return ApplicationManager.getApplication().getComponent(EditorSettingsExternalizable.class);
@@ -223,7 +226,7 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
   }
 
   public String getPresentableName() {
-    return "Editor settings";
+    return OptionsBundle.message("options.editor.settings.presentable.name");
   }
 
   public boolean isWhitespacesShown() {

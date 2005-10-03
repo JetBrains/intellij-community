@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.ex;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.util.diff.Diff;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * author: lesya
@@ -79,7 +80,7 @@ public class Range {
     return result.toString();
   }
 
-  private String getTypeName() {
+  @NonNls private String getTypeName() {
     switch (myType) {
       case MODIFIED:
         return "MODIFIED";

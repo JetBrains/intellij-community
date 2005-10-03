@@ -8,6 +8,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -16,6 +17,11 @@ import java.util.Iterator;
  * @author Eugene Belyaev
  */
 public class DefaultKeymap implements JDOMExternalizable, ApplicationComponent {
+
+  @NonNls
+  private static final String KEY_MAP = "keymap";
+  @NonNls
+  private static final String NAME_ATTRIBUTE = "name";
 
   private ArrayList<Keymap> myKeymaps = new ArrayList<Keymap>();
 
@@ -32,8 +38,8 @@ public class DefaultKeymap implements JDOMExternalizable, ApplicationComponent {
     myKeymaps = new ArrayList<Keymap>();
     for (Iterator i = element.getChildren().iterator(); i.hasNext();) {
       Element child=(Element)i.next();
-      if ("keymap".equals(child.getName())) {
-        String keymapName = child.getAttributeValue("name");
+      if (KEY_MAP.equals(child.getName())) {
+        String keymapName = child.getAttributeValue(NAME_ATTRIBUTE);
         DefaultKeymapImpl keymap = KeymapManager.MAC_OS_X_KEYMAP.equals(keymapName)
                                    ? new MacOSDefaultKeymap()
                                    : new DefaultKeymapImpl();

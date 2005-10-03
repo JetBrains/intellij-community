@@ -9,9 +9,8 @@ import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
-import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
-import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.FieldDescriptorImpl;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.project.Project;
 import com.sun.jdi.*;
 
@@ -80,7 +79,7 @@ public class FieldEvaluator implements Evaluator {
         field = refType.fieldByName(myFieldName);
       }
       if (field == null || !field.isStatic()) {
-        throw EvaluateExceptionUtil.createEvaluateException("No such static field: " + myFieldName);
+        throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.no.static.field", myFieldName));
       }
       myEvaluatedField = field;
       myEvaluatedQualifier = refType;
@@ -91,11 +90,13 @@ public class FieldEvaluator implements Evaluator {
       ObjectReference objRef = (ObjectReference)object;
       ReferenceType refType = objRef.referenceType();
       if (!(refType instanceof ClassType || refType instanceof ArrayType)) {
-        throw EvaluateExceptionUtil.createEvaluateException("Class or array type expected while evaluating field : " + myFieldName);
+        throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.class.or.array.expected", myFieldName));
       }
 
       // expressions like 'array.length' must be treated separately
+      //noinspection HardCodedStringLiteral
       if (objRef instanceof ArrayReference && "length".equals(myFieldName)) {
+        //noinspection HardCodedStringLiteral
         return DebuggerUtilsEx.createValue(
           context.getDebugProcess().getVirtualMachineProxy(),
           "int",
@@ -109,7 +110,7 @@ public class FieldEvaluator implements Evaluator {
       }
 
       if (field == null) {
-        throw EvaluateExceptionUtil.createEvaluateException("No such non-static field: " + myFieldName);
+        throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.no.instance.field", myFieldName));
       }
       myEvaluatedQualifier = field.isStatic()? (Object)refType : (Object)objRef;
       myEvaluatedField = field;
@@ -120,7 +121,7 @@ public class FieldEvaluator implements Evaluator {
       throw EvaluateExceptionUtil.createEvaluateException(new NullPointerException());
     }
 
-    throw EvaluateExceptionUtil.createEvaluateException("Error evaluating field : " + myFieldName);
+    throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.evaluating.field", myFieldName));
   }
 
   public Modifier getModifier() {

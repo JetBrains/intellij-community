@@ -12,6 +12,7 @@ import com.intellij.debugger.ui.tree.render.NodeRendererImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiExpression;
 import com.sun.jdi.*;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * User: lex
@@ -19,7 +20,7 @@ import com.sun.jdi.*;
  * Time: 3:13:11 PM
  */
 public class HexRenderer extends NodeRendererImpl{
-  public static final String UNIQUE_ID = "HexRenderer";
+  public static final @NonNls String UNIQUE_ID = "HexRenderer";
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.tree.render.HexRenderer");
 
   public HexRenderer() {
@@ -30,7 +31,7 @@ public class HexRenderer extends NodeRendererImpl{
     return UNIQUE_ID;
   }
 
-  public String getName() {
+  public @NonNls String getName() {
     return "Hex";
   }
 
@@ -42,6 +43,7 @@ public class HexRenderer extends NodeRendererImpl{
     return (HexRenderer) super.clone();
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public String calcLabel(ValueDescriptor valueDescriptor, EvaluationContext evaluationContext, DescriptorLabelListener labelListener) {
     Value value = valueDescriptor.getValue();
     StringBuffer buf = new StringBuffer(16);
@@ -54,7 +56,7 @@ public class HexRenderer extends NodeRendererImpl{
       buf.append(value.toString());
       buf.append("' ");
       long longValue = ((PrimitiveValue)value).longValue();
-      buf.append("0x" + Long.toHexString(longValue).toUpperCase());
+      buf.append("0x").append(Long.toHexString(longValue).toUpperCase());
     }
     else if (value instanceof ByteValue) {
       byte val = ((PrimitiveValue)value).byteValue();
@@ -62,7 +64,7 @@ public class HexRenderer extends NodeRendererImpl{
       if (strValue.length() > 2) {
         strValue = strValue.substring(strValue.length() - 2);
       }
-      buf.append("0x" + strValue);
+      buf.append("0x").append(strValue);
     }
     else if (value instanceof ShortValue) {
       short val = ((PrimitiveValue)value).shortValue();
@@ -70,15 +72,15 @@ public class HexRenderer extends NodeRendererImpl{
       if (strValue.length() > 4) {
         strValue = strValue.substring(strValue.length() - 4);
       }
-      buf.append("0x" + strValue);
+      buf.append("0x").append(strValue);
     }
     else if (value instanceof IntegerValue) {
       int val = ((PrimitiveValue)value).intValue();
-      buf.append("0x" + Integer.toHexString(val).toUpperCase());
+      buf.append("0x").append(Integer.toHexString(val).toUpperCase());
     }
     else if (value instanceof LongValue) {
       long val = ((PrimitiveValue)value).longValue();
-      buf.append("0x" + Long.toHexString(val).toUpperCase());
+      buf.append("0x").append(Long.toHexString(val).toUpperCase());
     }
     else {
       LOG.assertTrue(false);

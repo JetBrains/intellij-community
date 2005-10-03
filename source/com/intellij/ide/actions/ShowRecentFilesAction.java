@@ -3,6 +3,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.IconUtilEx;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -140,7 +141,7 @@ public class ShowRecentFilesAction extends AnAction {
 
   private static class MyListPopup extends ListPopup {
     public MyListPopup(JList list, Runnable runnable, Project project) {
-      super(" Recent Files ", list, runnable, project);
+      super(" " + IdeBundle.message("title.popup.recent.files") + " ", list, runnable, project);
       list.setCellRenderer(new RecentFilesRenderer(project));
     }
 

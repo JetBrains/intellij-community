@@ -1,6 +1,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.ide.IdeBundle;
 
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
@@ -26,14 +27,14 @@ public class PluginNode implements TreeNode {
   public static final int STATUS_CART = 7;
 
   public static final String [] STATUS_NAMES = {
-    "Unknown",
-    "Out of date",
-    "Not installed",
-    "Installed",
-    "Newest",
-    "Downloaded",     // downloaded, but not activated
-    "Uninstalled",    // uninstalled, but not activated
-    "Shopping Cart"   // added to the Shopping Cart
+    IdeBundle.message("plugin.status.unknown"),
+    IdeBundle.message("plugin.status.out.of.date"),
+    IdeBundle.message("plugin.status.not.installed"),
+    IdeBundle.message("plugin.status.installed"),
+    IdeBundle.message("plugin.status.newest"),
+    IdeBundle.message("plugin.status.downloaded"),     // downloaded, but not activated
+    IdeBundle.message("plugin.status.uninstalled"),    // uninstalled, but not activated
+    IdeBundle.message("plugin.status.shopping.cart")   // added to the Shopping Cart
   };
 
   private CategoryNode parent;

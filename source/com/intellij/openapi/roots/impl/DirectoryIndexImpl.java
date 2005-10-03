@@ -11,6 +11,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.*;
@@ -187,7 +188,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
     if (progress != null) {
       progress.pushState();
-      progress.setText("Scanning files...");
+      progress.setText(ProjectBundle.message("project.index.scanning.files.progress"));
     }
 
     if (forDir == null) {
@@ -215,7 +216,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     // exclude root should exclude from its content root and all outer content roots
 
     if (progress != null) {
-      progress.setText2("Building exclude roots...");
+      progress.setText2(ProjectBundle.message("project.index.building.exclude.roots.progress"));
     }
     Map<VirtualFile, Set<VirtualFile>> excludeRootsMap = new HashMap<VirtualFile, Set<VirtualFile>>();
     for (Module module1 : modules) {
@@ -237,7 +238,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
       ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
 
       if (progress != null) {
-        progress.setText2("Processing module \"" + module.getName() + "\" content...");
+        progress.setText2(ProjectBundle.message("project.index.processing.module.content.progress", module.getName()));
       }
       VirtualFile[] contentRoots = rootManager.getContentRoots();
       if (reverseAllSets) {
@@ -255,7 +256,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
       ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
 
       if (progress != null) {
-        progress.setText2("Processing module \"" + module.getName() + "\" sources...");
+        progress.setText2(ProjectBundle.message("project.index.processing.module.sources.progress", module.getName()));
       }
 
       ContentEntry[] contentEntries = rootManager.getContentEntries();
@@ -281,7 +282,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
       ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
 
       if (progress != null) {
-        progress.setText2("Processing module \"" + module.getName() + "\" library sources...");
+        progress.setText2(ProjectBundle.message("project.index.processing.library.sources.progress", module.getName()));
       }
       OrderEntry[] orderEntries = rootManager.getOrderEntries();
       for (OrderEntry orderEntry : orderEntries) {
@@ -300,7 +301,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
       ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
 
       if (progress != null) {
-        progress.setText2("Processing module \"" + module.getName() + "\" library classes...");
+        progress.setText2(ProjectBundle.message("project.index.processing.library.classes.progress", module.getName()));
       }
       OrderEntry[] orderEntries = rootManager.getOrderEntries();
       for (OrderEntry orderEntry : orderEntries) {

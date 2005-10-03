@@ -6,6 +6,11 @@
  */
 package com.intellij.codeInspection.ui;
 
+import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ex.DescriptorProviderInspection;
+import com.intellij.codeInspection.ex.InspectionTool;
+import com.intellij.codeInspection.ex.InspectionToolsPanel;
 import com.intellij.codeInspection.reference.RefClass;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.openapi.application.ApplicationManager;
@@ -14,33 +19,34 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.TreeToolTipHandler;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.Tree;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.event.TreeWillExpandListener;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.ExpandVetoException;
-import javax.swing.tree.TreeNode;
-import javax.swing.tree.TreePath;
+import javax.swing.tree.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.HashSet;
+import java.util.*;
+import java.util.List;
 
 public class InspectionTree extends Tree {
   private final HashSet<Object> myExpandedUserObjects;
   private SelectionPath mySelectionPath;
+  private static final RefElement[] EMPTY_ELEMENTS_ARRAY = new RefElement[0];
+  private static final ProblemDescriptor[] EMPTY_DESCRIPTORS = new ProblemDescriptor[0];
 
   public InspectionTree(final Project project) {
     super(new InspectionRootNode(project));
 
     setCellRenderer(new CellRenderer());//project));
     setShowsRootHandles(true);
-    putClientProperty("JTree.lineStyle", "Angled");
+    UIUtil.setLineStyleAngled(this);
     addTreeWillExpandListener(new ExpandListener());
 
     myExpandedUserObjects = new HashSet<Object>();
@@ -48,7 +54,11 @@ public class InspectionTree extends Tree {
 
     TreeToolTipHandler.install(this);
     TreeUtil.installActions(this);
-    new TreeSpeedSearch(this);
+    new TreeSpeedSearch(this, new Convertor<TreePath, String>() {
+      public String convert(TreePath o) {
+        return InspectionToolsPanel.getDisplayTextToSort(((DefaultMutableTreeNode)o.getLastPathComponent()).toString());
+      }
+    });
 
     addTreeSelectionListener(new TreeSelectionListener() {
       public void valueChanged(TreeSelectionEvent e) {
@@ -69,6 +79,101 @@ public class InspectionTree extends Tree {
     return (InspectionTreeNode)getModel().getRoot();
   }
 
+  @Nullable
+  public InspectionTool getSelectedTool() {
+    final TreePath[] paths = getSelectionPaths();
+    if (paths == null) return null;
+    InspectionTool tool = null;
+    for (TreePath path : paths) {
+      Object[] nodes = path.getPath();
+      for (int j = nodes.length - 1; j >= 0; j--) {
+        Object node = nodes[j];
+        if (node instanceof InspectionNode) {
+          if (tool == null) {
+            tool = ((InspectionNode)node).getTool();
+          }
+          else if (tool != ((InspectionNode)node).getTool()) {
+            return null;
+          }
+          break;
+        }
+      }
+    }
+
+    return tool;
+  }
+
+  public RefElement[] getSelectedElements() {
+    TreePath[] selectionPaths = getSelectionPaths();
+    if (selectionPaths != null) {
+      final InspectionTool selectedTool = getSelectedTool();
+      if (selectedTool == null) return EMPTY_ELEMENTS_ARRAY;
+
+      Set<RefElement> result = new HashSet<RefElement>();
+      for (TreePath selectionPath : selectionPaths) {
+        final InspectionTreeNode node = (InspectionTreeNode)selectionPath.getLastPathComponent();
+        addElementsInNode(node, result);
+      }
+      return result.toArray(new RefElement[result.size()]);
+    }
+    return EMPTY_ELEMENTS_ARRAY;
+  }
+
+  private void addElementsInNode(InspectionTreeNode node, Collection<RefElement> out) {
+    if (!node.isValid()) return;
+    if (node instanceof RefElementNode) {
+      out.add(((RefElementNode)node).getElement());
+    }
+    if (node instanceof ProblemDescriptionNode) {
+      out.add(((ProblemDescriptionNode)node).getElement());
+    }
+    else if (node instanceof InspectionTreeNode) {
+      final Enumeration children = node.children();
+      while (children.hasMoreElements()) {
+        InspectionTreeNode child = (InspectionTreeNode)children.nextElement();
+        addElementsInNode(child, out);
+      }
+    }
+  }
+
+  public ProblemDescriptor[] getSelectedDescriptors() {
+    final InspectionTool tool = getSelectedTool();
+    if (getSelectionCount() == 0 || !(tool instanceof DescriptorProviderInspection)) return EMPTY_DESCRIPTORS;
+    final TreePath[] paths = getSelectionPaths();
+    Collection<RefElement> out = new ArrayList<RefElement>();
+    Set<ProblemDescriptor> descriptors = new com.intellij.util.containers.HashSet<ProblemDescriptor>();
+    for (TreePath path : paths) {
+      Object node = path.getLastPathComponent();
+      if (node instanceof ProblemDescriptionNode) {
+        final ProblemDescriptionNode problemNode = (ProblemDescriptionNode)node;
+        descriptors.add(problemNode.getDescriptor());
+      } else if (node instanceof InspectionTreeNode){
+        addElementsInNode((InspectionTreeNode)node, out);
+      }
+    }
+    for (RefElement refElement : out) {
+      final ProblemDescriptor[] descriptions = ((DescriptorProviderInspection)tool).getDescriptions(refElement);
+      if (descriptions != null) {
+        descriptors.addAll(Arrays.asList(descriptions));
+      }
+    }
+    return descriptors.toArray(new ProblemDescriptor[descriptors.size()]);
+  }
+
+  public List<RefElement> getElementsToSuppressInSubTree(InspectionTreeNode node){
+    List<RefElement> result = new ArrayList<RefElement>();
+    if (node instanceof RefElementNode){
+      result.add(((RefElementNode)node).getElement());
+    } else if (node instanceof ProblemDescriptionNode){
+      result.add(((ProblemDescriptionNode)node).getElement());
+    } else {
+      for(int i = 0; i < node.getChildCount(); i++){
+        result.addAll(getElementsToSuppressInSubTree((InspectionTreeNode)node.getChildAt(i)));
+      }
+    }
+    return result;
+  }
+
   public void nodeStructureChanged(InspectionTreeNode node) {
     ((DefaultTreeModel)getModel()).nodeStructureChanged(node);
   }
@@ -77,8 +182,7 @@ public class InspectionTree extends Tree {
     public void treeWillExpand(TreeExpansionEvent event) throws ExpandVetoException {
       final InspectionTreeNode node = (InspectionTreeNode)event.getPath().getLastPathComponent();
       myExpandedUserObjects.add(node.getUserObject());
-      if (node instanceof RefElementNode && !node.children().hasMoreElements()) {
-        ((RefElementNode)node).loadChildren();
+      if (node instanceof RefElementNode && !node.children().hasMoreElements()) {       
         sortChildren(node);
       }
 
@@ -140,7 +244,7 @@ public class InspectionTree extends Tree {
       InspectionTreeNode node = (InspectionTreeNode)value;
 
       if (!node.isWritable()) {
-        append("(Read-only) ", SimpleTextAttributes.ERROR_ATTRIBUTES);
+        append(InspectionsBundle.message("inspection.read.only.node.prefix"), SimpleTextAttributes.ERROR_ATTRIBUTES);
       }
 
       append(node.toString(), appearsBold(node)
@@ -148,17 +252,12 @@ public class InspectionTree extends Tree {
                               : getMainForegroundAttributes(node));
 
       if (!node.isValid()) {
-        append(" (INVALID)", SimpleTextAttributes.ERROR_ATTRIBUTES);
+        append(" " + InspectionsBundle.message("inspection.invalid.node.text"), SimpleTextAttributes.ERROR_ATTRIBUTES);
       }
 
       int problemCount = node.getProblemCount();
       if (problemCount > 0) {
-        if (problemCount == 1) {
-          append(" (" + problemCount + " item)", SimpleTextAttributes.GRAYED_ATTRIBUTES);
-        }
-        else {
-          append(" (" + problemCount + " items)", SimpleTextAttributes.GRAYED_ATTRIBUTES);
-        }
+        append(" " + InspectionsBundle.message("inspection.problem.descriptor.count", problemCount), SimpleTextAttributes.GRAYED_ATTRIBUTES);
       }
 
       setIcon(node.getIcon(expanded));
@@ -199,7 +298,7 @@ public class InspectionTree extends Tree {
   }
 
   protected void sortChildren(InspectionTreeNode node) {
-    TreeUtil.sort(node, RefAlphabeticalComparator.getInstance());
+    TreeUtil.sort(node, InspectionResultsViewComparator.getInstance());
   }
 
   private class SelectionPath {
@@ -245,11 +344,9 @@ public class InspectionTree extends Tree {
       InspectionTreeNode oldNode = (InspectionTreeNode)myPath[idx];
 
       InspectionTreeNode newRoot = (InspectionTreeNode)newPath.get(idx - 1);
-      if (newRoot instanceof RefElementNode) {
-        ((RefElementNode)newRoot).loadChildren();
-      }
 
-      RefAlphabeticalComparator comparator = RefAlphabeticalComparator.getInstance();
+
+      InspectionResultsViewComparator comparator = InspectionResultsViewComparator.getInstance();
       Enumeration children = newRoot.children();
       while (children.hasMoreElements()) {
         InspectionTreeNode child = (InspectionTreeNode)children.nextElement();

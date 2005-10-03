@@ -16,6 +16,7 @@
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerContext;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
@@ -75,12 +76,13 @@ public abstract class DebuggerUtils  implements ApplicationComponent {
             refType = (ReferenceType)objRef.virtualMachine().classesByName("java.lang.Object").get(0);
           }
           catch (Exception e) {
-            throw EvaluateExceptionUtil.createEvaluateException("Cannot evaluate " + objRef.referenceType().name() + ".toString()");
+            throw EvaluateExceptionUtil.createEvaluateException(
+              DebuggerBundle.message("evaluation.error.cannot.evaluate.tostring", objRef.referenceType().name()));
           }
         }
         final Method toStringMethod = findMethod(refType, "toString", "()Ljava/lang/String;");
         if (toStringMethod == null) {
-          throw EvaluateExceptionUtil.createEvaluateException("Cannot evaluate " + objRef.referenceType().name() + ".toString()");
+          throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.cannot.evaluate.tostring", objRef.referenceType().name()));
         }
 
         StringReference stringReference = null;
@@ -91,7 +93,7 @@ public abstract class DebuggerUtils  implements ApplicationComponent {
 
         return  stringReference == null ? "null" : stringReference.value();
       }
-      throw EvaluateExceptionUtil.createEvaluateException("internal error : unsupported expression type");
+      throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.unsupported.expression.type"));
     }
     catch (ObjectCollectedException e) {
       throw EvaluateExceptionUtil.OBJECT_WAS_COLLECTED;
@@ -323,11 +325,11 @@ public abstract class DebuggerUtils  implements ApplicationComponent {
   public static void checkSyntax(PsiCodeFragment codeFragment) throws EvaluateException {
     PsiElement[] children = codeFragment.getChildren();
 
-    if(children.length == 0) throw EvaluateExceptionUtil.createEvaluateException("Code fragment expected");
+    if(children.length == 0) throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.empty.code.fragment"));
     for (int i = 0; i < children.length; i++) {
       PsiElement child = children[i];
       if(child instanceof PsiErrorElement) {
-        throw EvaluateExceptionUtil.INVALID_EXPRESSION(child.getText());
+        throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.invalid.expression", child.getText()));
       }
     }
   }
@@ -350,17 +352,17 @@ public abstract class DebuggerUtils  implements ApplicationComponent {
 
   public abstract PsiExpression substituteThis(PsiExpression expressionWithThis, PsiExpression howToEvaluateThis, Value howToEvaluateThisValue, StackFrameContext context) throws EvaluateException;
 
-  public abstract DebuggerContext   getDebuggerContext (DataContext context);
+  public abstract DebuggerContext getDebuggerContext (DataContext context);
 
-  public abstract Element         writeTextWithImports(TextWithImports text);
+  public abstract Element writeTextWithImports(TextWithImports text);
   public abstract TextWithImports readTextWithImports (Element element);
 
-  public abstract void            writeTextWithImports(Element root, String name, TextWithImports value);
-  public abstract TextWithImports readTextWithImports (Element root, String name);
+  public abstract void writeTextWithImports(Element root, @NonNls String name, TextWithImports value);
+  public abstract TextWithImports readTextWithImports (Element root, @NonNls String name);
 
-  public abstract TextWithImports    createExpressionWithImports   (String          expression);
+  public abstract TextWithImports createExpressionWithImports(@NonNls String expression);
 
   public abstract PsiElement getContextElement(final StackFrameContext context);
 
-  public abstract PsiClass   chooseClassDialog(String title, Project project);
+  public abstract PsiClass chooseClassDialog(String title, Project project);
 }

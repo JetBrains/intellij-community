@@ -8,6 +8,7 @@ import org.jdom.Element;
 import java.util.List;
 import java.util.Iterator;
 
+@SuppressWarnings({"HardCodedStringLiteral"})
 public class Convertor01 {
   private static final String VIRTUAL_FILE_MANAGER_CLASS = "com.intellij.vfs.VirtualFileManager";
   private static final String JAR_FILE_SYSTEM_CLASS = "com.intellij.vfs.jar.JarFileSystem";

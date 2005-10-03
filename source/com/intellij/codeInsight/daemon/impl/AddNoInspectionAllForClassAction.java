@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -13,6 +14,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -20,8 +22,10 @@ import org.jetbrains.annotations.Nullable;
  * Date: May 13, 2005
  */
 public class AddNoInspectionAllForClassAction extends AddNoInspectionDocTagAction{
+  @NonNls private static final String ID = "ALL";
+
   public AddNoInspectionAllForClassAction(final PsiElement context) {
-    super("ALL", "ALL", context);
+    super(null, ID, context);
   }
 
   @Nullable protected PsiDocCommentOwner getContainer() {
@@ -40,7 +44,7 @@ public class AddNoInspectionAllForClassAction extends AddNoInspectionDocTagActio
   }
 
   public String getText() {
-    return "Suppress all inspections for class";
+    return InspectionsBundle.message("suppress.all.for.class");
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
@@ -52,7 +56,7 @@ public class AddNoInspectionAllForClassAction extends AddNoInspectionDocTagActio
     if (docComment != null){
       PsiDocTag noInspectionTag = docComment.findTagByName(InspectionManagerEx.SUPPRESS_INSPECTIONS_TAG_NAME);
       if (noInspectionTag != null) {
-        String tagText = "@" + InspectionManagerEx.SUPPRESS_INSPECTIONS_TAG_NAME + " ALL";
+        String tagText = "@" + InspectionManagerEx.SUPPRESS_INSPECTIONS_TAG_NAME + " " + ID;
         noInspectionTag.replace(myContext.getManager().getElementFactory().createDocTagFromText(tagText, null));
         return;
       }

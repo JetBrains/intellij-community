@@ -41,72 +41,75 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
+import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.pom.java.LanguageLevel;
 
 import javax.swing.*;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.jetbrains.annotations.NonNls;
+
 public class JavaColorSettingsPage implements ColorSettingsPage {
   private final static AttributesDescriptor[] ourDescriptors = new AttributesDescriptor[] {
-    new AttributesDescriptor("Keyword", HighlighterColors.JAVA_KEYWORD),
-    new AttributesDescriptor("Number", HighlighterColors.JAVA_NUMBER),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.keyword"), HighlighterColors.JAVA_KEYWORD),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.number"), HighlighterColors.JAVA_NUMBER),
 
-    new AttributesDescriptor("String", HighlighterColors.JAVA_STRING),
-    new AttributesDescriptor("Valid escape in string", HighlighterColors.JAVA_VALID_STRING_ESCAPE),
-    new AttributesDescriptor("Invalid escape in string", HighlighterColors.JAVA_INVALID_STRING_ESCAPE),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.string"), HighlighterColors.JAVA_STRING),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.valid.escape.in.string"), HighlighterColors.JAVA_VALID_STRING_ESCAPE),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.invalid.escape.in.string"), HighlighterColors.JAVA_INVALID_STRING_ESCAPE),
 
-    new AttributesDescriptor("Operator sign", HighlighterColors.JAVA_OPERATION_SIGN),
-    new AttributesDescriptor("Parentheses", HighlighterColors.JAVA_PARENTHS),
-    new AttributesDescriptor("Braces", HighlighterColors.JAVA_BRACES),
-    new AttributesDescriptor("Brackets", HighlighterColors.JAVA_BRACKETS),
-    new AttributesDescriptor("Comma", HighlighterColors.JAVA_COMMA),
-    new AttributesDescriptor("Semicolon", HighlighterColors.JAVA_SEMICOLON),
-    new AttributesDescriptor("Dot", HighlighterColors.JAVA_DOT),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.operator.sign"), HighlighterColors.JAVA_OPERATION_SIGN),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.parentheses"), HighlighterColors.JAVA_PARENTHS),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.braces"), HighlighterColors.JAVA_BRACES),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.brackets"), HighlighterColors.JAVA_BRACKETS),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.comma"), HighlighterColors.JAVA_COMMA),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.semicolon"), HighlighterColors.JAVA_SEMICOLON),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.dot"), HighlighterColors.JAVA_DOT),
 
-    new AttributesDescriptor("Line comment", HighlighterColors.JAVA_LINE_COMMENT),
-    new AttributesDescriptor("Block comment", HighlighterColors.JAVA_BLOCK_COMMENT),
-    new AttributesDescriptor("JavaDoc comment", HighlighterColors.JAVA_DOC_COMMENT),
-    new AttributesDescriptor("JavaDoc tag", HighlighterColors.JAVA_DOC_TAG),
-    new AttributesDescriptor("JavaDoc markup", HighlighterColors.JAVA_DOC_MARKUP),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.line.comment"), HighlighterColors.JAVA_LINE_COMMENT),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.block.comment"), HighlighterColors.JAVA_BLOCK_COMMENT),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.javadoc.comment"), HighlighterColors.JAVA_DOC_COMMENT),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.javadoc.tag"), HighlighterColors.JAVA_DOC_TAG),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.javadoc.markup"), HighlighterColors.JAVA_DOC_MARKUP),
 
-    new AttributesDescriptor("Unknown symbol", CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES),
-    new AttributesDescriptor("Error", CodeInsightColors.ERRORS_ATTRIBUTES),
-    new AttributesDescriptor("Warning", CodeInsightColors.WARNINGS_ATTRIBUTES),
-    new AttributesDescriptor("Deprecated symbol", CodeInsightColors.DEPRECATED_ATTRIBUTES),
-    new AttributesDescriptor("Unused symbol", CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.unknown.symbol"), CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.error"), CodeInsightColors.ERRORS_ATTRIBUTES),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.warning"), CodeInsightColors.WARNINGS_ATTRIBUTES),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.deprecated.symbol"), CodeInsightColors.DEPRECATED_ATTRIBUTES),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.unused.symbol"), CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES),
 
-    new AttributesDescriptor("Class", CodeInsightColors.CLASS_NAME_ATTRIBUTES),
-    new AttributesDescriptor("Abstract class", CodeInsightColors.ABSTRACT_CLASS_NAME_ATTRIBUTES),
-    new AttributesDescriptor("Interface", CodeInsightColors.INTERFACE_NAME_ATTRIBUTES),
-    new AttributesDescriptor("Local variable", CodeInsightColors.LOCAL_VARIABLE_ATTRIBUTES),
-    new AttributesDescriptor("Reassigned local variable", CodeInsightColors.REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES),
-    new AttributesDescriptor("Reassigned parameter", CodeInsightColors.REASSIGNED_PARAMETER_ATTRIBUTES),
-    new AttributesDescriptor("Instance field", CodeInsightColors.INSTANCE_FIELD_ATTRIBUTES),
-    new AttributesDescriptor("Static field", CodeInsightColors.STATIC_FIELD_ATTRIBUTES),
-    new AttributesDescriptor("Parameter", CodeInsightColors.PARAMETER_ATTRIBUTES),
-    new AttributesDescriptor("Method call", CodeInsightColors.METHOD_CALL_ATTRIBUTES),
-    new AttributesDescriptor("Method declaration", CodeInsightColors.METHOD_DECLARATION_ATTRIBUTES),
-    new AttributesDescriptor("Constructor call", CodeInsightColors.CONSTRUCTOR_CALL_ATTRIBUTES),
-    new AttributesDescriptor("Constructor declaration", CodeInsightColors.CONSTRUCTOR_DECLARATION_ATTRIBUTES),
-    new AttributesDescriptor("Static method", CodeInsightColors.STATIC_METHOD_ATTRIBUTES),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.class"), CodeInsightColors.CLASS_NAME_ATTRIBUTES),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.abstract.class"), CodeInsightColors.ABSTRACT_CLASS_NAME_ATTRIBUTES),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.interface"), CodeInsightColors.INTERFACE_NAME_ATTRIBUTES),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.local.variable"), CodeInsightColors.LOCAL_VARIABLE_ATTRIBUTES),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.reassigned.local.variable"), CodeInsightColors.REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.reassigned.parameter"), CodeInsightColors.REASSIGNED_PARAMETER_ATTRIBUTES),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.instance.field"), CodeInsightColors.INSTANCE_FIELD_ATTRIBUTES),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.static.field"), CodeInsightColors.STATIC_FIELD_ATTRIBUTES),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.parameter"), CodeInsightColors.PARAMETER_ATTRIBUTES),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.method.call"), CodeInsightColors.METHOD_CALL_ATTRIBUTES),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.method.declaration"), CodeInsightColors.METHOD_DECLARATION_ATTRIBUTES),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.constructor.call"), CodeInsightColors.CONSTRUCTOR_CALL_ATTRIBUTES),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.constructor.declaration"), CodeInsightColors.CONSTRUCTOR_DECLARATION_ATTRIBUTES),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.static.method"), CodeInsightColors.STATIC_METHOD_ATTRIBUTES),
 
-    new AttributesDescriptor("Matched brace", CodeInsightColors.MATCHED_BRACE_ATTRIBUTES),
-    new AttributesDescriptor("Unmatched brace", CodeInsightColors.UNMATCHED_BRACE_ATTRIBUTES),
-    new AttributesDescriptor("Bad character", HighlighterColors.BAD_CHARACTER),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.matched.brace"), CodeInsightColors.MATCHED_BRACE_ATTRIBUTES),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.unmatched.brace"), CodeInsightColors.UNMATCHED_BRACE_ATTRIBUTES),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.bad.character"), HighlighterColors.BAD_CHARACTER),
 
-    new AttributesDescriptor("Breakpoint line", DebuggerColors.BREAKPOINT_ATTRIBUTES),
-    new AttributesDescriptor("Execution point", DebuggerColors.EXECUTIONPOINT_ATTRIBUTES),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.breakpoint.line"), DebuggerColors.BREAKPOINT_ATTRIBUTES),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.execution.point"), DebuggerColors.EXECUTIONPOINT_ATTRIBUTES),
 
-    new AttributesDescriptor("Annotation name", CodeInsightColors.ANNOTATION_NAME_ATTRIBUTES),
-    new AttributesDescriptor("Annotation attribute name", CodeInsightColors.ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES)
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.annotation.name"), CodeInsightColors.ANNOTATION_NAME_ATTRIBUTES),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.annotation.attribute.name"), CodeInsightColors.ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES)
   };
 
   private final static ColorDescriptor[] ourColorDescriptors = new ColorDescriptor[]{
-    new ColorDescriptor("Method separator color", CodeInsightColors.METHOD_SEPARATORS_COLOR, ColorDescriptor.Kind.FOREGROUND)
+    new ColorDescriptor(OptionsBundle.message("options.java.color.descriptor.method.separator.color"), CodeInsightColors.METHOD_SEPARATORS_COLOR, ColorDescriptor.Kind.FOREGROUND)
   };
 
-  private final static Map<String, TextAttributesKey> ourTags = new HashMap<String, TextAttributesKey>();
+  @NonNls private final static Map<String, TextAttributesKey> ourTags = new HashMap<String, TextAttributesKey>();
   static {
     ourTags.put("field", CodeInsightColors.INSTANCE_FIELD_ATTRIBUTES);
     ourTags.put("unusedField", CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES);
@@ -132,7 +135,7 @@ public class JavaColorSettingsPage implements ColorSettingsPage {
   }
 
   public String getDisplayName() {
-    return "Java";
+    return OptionsBundle.message("options.java.display.name");
   }
 
   public Icon getIcon() {
@@ -152,7 +155,7 @@ public class JavaColorSettingsPage implements ColorSettingsPage {
   }
 
   public String getDemoText() {
-    String text =
+    return
       "/* Block comment */\n" +
       "import <class>java.util.Date</class>;\n" +
       "                               Bad characters: \\n #\n" +
@@ -186,8 +189,6 @@ public class JavaColorSettingsPage implements ColorSettingsPage {
       "\n" +
       "abstract class <abstractClass>SomeAbstractClass</abstractClass> {\n" +
       "}";
-
-    return text;
   }
 
   public Map<String,TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {

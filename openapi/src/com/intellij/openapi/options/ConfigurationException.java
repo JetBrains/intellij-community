@@ -16,7 +16,7 @@
 package com.intellij.openapi.options;
 
 public class ConfigurationException extends Exception {
-  public static final String DEFAULT_TITLE = "Cannot Save Settings";
+  public static final String DEFAULT_TITLE = OptionsBundle.message("cannot.save.settings.default.dialog.title");
   private String myTitle = DEFAULT_TITLE;
   private Runnable myQuickFix;
 

@@ -9,6 +9,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.ApplicationManager;
@@ -29,11 +30,11 @@ public class ImportClassAction implements IntentionAction {
   }
 
   public String getText() {
-    return "Import Class";
+    return QuickFixBundle.message("import.class.fix");
   }
 
   public String getFamilyName() {
-    return "Import Class";
+    return QuickFixBundle.message("import.class.fix");
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {

@@ -12,6 +12,9 @@
  */
 package org.netbeans.lib.cvsclient.file;
 
+import org.netbeans.lib.cvsclient.JavaCvsSrcBundle;
+import org.jetbrains.annotations.NonNls;
+
 import java.io.*;
 import java.util.StringTokenizer;
 
@@ -21,53 +24,54 @@ import java.util.StringTokenizer;
  * @author  Thomas Singer
  */
 public final class FileUtils {
+  @NonNls private static final String U_PREFIX = "u=";
 
-	/**
-	 * Copies the specified sourceFile to the specified targetFile.
-	 */
-	public static void copyFile(File sourceFile, File targetFile) throws IOException {
-		if (sourceFile == null || targetFile == null) {
-			throw new NullPointerException("sourceFile and targetFile must not be null"); // NOI18N
-		}
+  /**
+   * Copies the specified sourceFile to the specified targetFile.
+   */
+  public static void copyFile(File sourceFile, File targetFile) throws IOException {
+          if (sourceFile == null || targetFile == null) {
+                  throw new NullPointerException("sourceFile and targetFile must not be null"); // NOI18N
+          }
 
-		// ensure existing parent directories
-		final File directory = targetFile.getParentFile();
-		if (!directory.exists() && !directory.mkdirs()) {
-			throw new IOException("Could not create directory '" + directory + "'"); // NOI18N
-		}
+          // ensure existing parent directories
+          final File directory = targetFile.getParentFile();
+          if (!directory.exists() && !directory.mkdirs()) {
+                  throw new IOException(JavaCvsSrcBundle.message("could.not.create.directory.error.message", directory)); // NOI18N
+          }
 
-		InputStream inputStream = null;
-		OutputStream outputStream = null;
-		try {
-			inputStream = new BufferedInputStream(new FileInputStream(sourceFile));
-			outputStream = new BufferedOutputStream(new FileOutputStream(targetFile));
+          InputStream inputStream = null;
+          OutputStream outputStream = null;
+          try {
+                  inputStream = new BufferedInputStream(new FileInputStream(sourceFile));
+                  outputStream = new BufferedOutputStream(new FileOutputStream(targetFile));
 
-			final byte[] buffer = new byte[32768];
-			for (int readBytes = inputStream.read(buffer);
-			     readBytes > 0;
-			     readBytes = inputStream.read(buffer)) {
-				outputStream.write(buffer, 0, readBytes);
-			}
-		}
-		finally {
-			if (inputStream != null) {
-				try {
-					inputStream.close();
-				}
-				catch (IOException ex) {
-					// ignore
-				}
-			}
-			if (outputStream != null) {
-				try {
-					outputStream.close();
-				}
-				catch (IOException ex) {
-					// ignore
-				}
-			}
-		}
-	}
+                  final byte[] buffer = new byte[32768];
+                  for (int readBytes = inputStream.read(buffer);
+                       readBytes > 0;
+                       readBytes = inputStream.read(buffer)) {
+                          outputStream.write(buffer, 0, readBytes);
+                  }
+          }
+          finally {
+                  if (inputStream != null) {
+                          try {
+                                  inputStream.close();
+                          }
+                          catch (IOException ex) {
+                                  // ignore
+                          }
+                  }
+                  if (outputStream != null) {
+                          try {
+                                  outputStream.close();
+                          }
+                          catch (IOException ex) {
+                                  // ignore
+                          }
+                  }
+          }
+  }
 
 	public static String ensureLeadingSlash(String filePath) {
 		if (filePath.startsWith("/")) {
@@ -100,7 +104,7 @@ public final class FileUtils {
 	public static boolean isReadOnlyMode(String mode) {
 		for (StringTokenizer tokenizer = new StringTokenizer(mode, ","); tokenizer.hasMoreTokens();) {
 			final String token = tokenizer.nextToken();
-			if (token.startsWith("u=")) {
+			if (token.startsWith(U_PREFIX)) {
 				return token.indexOf('w') < 0;
 			}
 		}

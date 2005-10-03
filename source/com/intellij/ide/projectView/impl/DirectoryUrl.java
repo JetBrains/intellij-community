@@ -8,12 +8,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author cdr
  */
 public class DirectoryUrl extends AbstractUrl {
-  private static final String ELEMENT_TYPE = "directory";
+  @NonNls private static final String ELEMENT_TYPE = "directory";
 
   public DirectoryUrl(String url, String moduleName) {
     super(url, moduleName,ELEMENT_TYPE);

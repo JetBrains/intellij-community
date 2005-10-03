@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.UIBundle;
 
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -15,7 +16,7 @@ import java.awt.event.MouseEvent;
 //Made public for Fabrique
 public class PositionPanel extends TextPanel {
   public PositionPanel() {
-    super(new String[]{"XXXXXXXXX"},false);
+    super(new String[]{"#########"},false);
 
     addMouseListener(new MouseAdapter() {
       public void mouseClicked(final MouseEvent e) {
@@ -33,7 +34,7 @@ public class PositionPanel extends TextPanel {
                 IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation();
               }
             },
-            "Go to Line",
+              UIBundle.message("go.to.line.command.name"),
             null
           );
         }

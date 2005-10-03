@@ -37,10 +37,13 @@ import com.intellij.openapi.module.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jetbrains.annotations.NonNls;
+
 public class ModuleTypeManagerImpl extends ModuleTypeManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.module.impl.ModuleTypeManagerImpl");
 
   private List<ModuleType> myModuleTypes = new ArrayList<ModuleType>();
+  @NonNls private static final String JAVA_MODULE_ID_OLD = "JAVA";
 
   public ModuleTypeManagerImpl() {
     registerDefaultTypes();
@@ -62,7 +65,7 @@ public class ModuleTypeManagerImpl extends ModuleTypeManager {
   }
 
   public ModuleType findByID(String moduleTypeID) {
-    if ("JAVA".equals(moduleTypeID)) {
+    if (JAVA_MODULE_ID_OLD.equals(moduleTypeID)) {
       return ModuleType.JAVA; // for compatibility with the previous ID that Java modules had
     }
     for (int i = 0; i < myModuleTypes.size(); i++) {

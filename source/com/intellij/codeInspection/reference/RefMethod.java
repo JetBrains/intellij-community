@@ -20,13 +20,15 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.HashSet;
+
+import org.jetbrains.annotations.NonNls;
 
 public class RefMethod extends RefElement {
   private static final int IS_APPMAIN_MASK = 0x10000;
@@ -39,26 +41,35 @@ public class RefMethod extends RefElement {
   private static final int IS_EJB_DECLARATION_MASK = 0x800000;
   private static final int IS_EJB_IMPLEMENTATION_MASK = 0x1000000;
   private static final int IS_OVERRIDES_DEPRECATED_MASK = 0x2000000;
+  private static final int IS_TEST_METHOD_MASK = 0x4000000;
 
   private static final String RETURN_VALUE_UNDEFINED = "#";
 
-  private final ArrayList<RefMethod> mySuperMethods;
-  private final ArrayList<RefMethod> myDerivedMethods;
+  private ArrayList<RefMethod> mySuperMethods;
+  private ArrayList<RefMethod> myDerivedMethods;
   private ArrayList<PsiClassType> myUnThrownExceptions;
 
-  private final RefParameter[] myParameters;
+  private RefParameter[] myParameters;
   private String myReturnValueTemplate;
+  protected final RefClass myOwnerClass;
 
-  public RefMethod(PsiMethod method, RefManager manager) {
+  RefMethod(PsiMethod method, RefManager manager) {
       this((RefClass) manager.getReference(method.getContainingClass()), method,  manager);
   }
 
-  public RefMethod(RefClass ownerClass, PsiMethod method, RefManager manager) {
+  RefMethod(RefClass ownerClass, PsiMethod method, RefManager manager) {
     super(method, manager);
 
     ownerClass.add(this);
 
+    myOwnerClass = ownerClass;
+  }
+
+  protected void initialize() {
     myDerivedMethods = new ArrayList<RefMethod>(0);
+
+    final PsiMethod method = (PsiMethod)getElement();
+
     setConstructor(method.isConstructor());
     setFlag(method.getReturnType() == null || PsiType.VOID == method.getReturnType(), IS_RETURN_VALUE_USED_MASK);
 
@@ -97,8 +108,10 @@ public class RefMethod extends RefElement {
       setCanBeStatic(false);
     }
 
-    if (getOwnerClass().isTestCase() && method.getName().startsWith("test")) {
+    @NonNls final String name = method.getName();
+    if (getOwnerClass().isTestCase() && name.startsWith("test")) {
       setCanBeStatic(false);
+      setTestMethod(true);
     }
 
     PsiParameter[] paramList = method.getParameterList().getParameters();
@@ -108,7 +121,8 @@ public class RefMethod extends RefElement {
         myParameters[i] = getRefManager().getParameterReference(parameter, i);
     }
 
-    if (isConstructor() || isAbstract() || isStatic() || getAccessModifier() == PsiModifier.PRIVATE || ownerClass.isAnonymous() || ownerClass.isInterface()) {
+    if (isConstructor() || isAbstract() || isStatic() || getAccessModifier() == PsiModifier.PRIVATE
+        || myOwnerClass.isAnonymous() || myOwnerClass.isInterface()) {
       setCanBeFinal(false);
     }
 
@@ -137,7 +151,7 @@ public class RefMethod extends RefElement {
           if (firstExpression instanceof PsiMethodCallExpression) {
             PsiExpression qualifierExpression = ((PsiMethodCallExpression)firstExpression).getMethodExpression().getQualifierExpression();
             if (qualifierExpression instanceof PsiReferenceExpression) {
-              String text = qualifierExpression.getText();
+              @NonNls String text = qualifierExpression.getText();
               if ("super".equals(text) || text.equals(this)) {
                 isBaseExplicitlyCalled = true;
               }
@@ -163,7 +177,7 @@ public class RefMethod extends RefElement {
   // To be used only from RefImplicitConstructor.
   protected RefMethod(String name, RefClass ownerClass) {
     super(name, ownerClass);
-
+    myOwnerClass = ownerClass;
     ownerClass.add(this);
 
     myDerivedMethods = new ArrayList<RefMethod>(0);
@@ -198,12 +212,12 @@ public class RefMethod extends RefElement {
   }
 
   private void initializeSuperMethods(PsiMethod method) {
-    PsiMethod[] superMethods = PsiSuperMethodUtil.findSuperMethods(method);
+    PsiMethod[] superMethods = method.findSuperMethods();
     for (int i = 0; i < superMethods.length; i++) {
       PsiMethod psiSuperMethod = superMethods[i];
       if (RefUtil.isDeprecated(psiSuperMethod) && !psiSuperMethod.hasModifierProperty(PsiModifier.ABSTRACT)) setOverridesDeprecated(true);
       if (RefUtil.belongsToScope(psiSuperMethod, getRefManager())) {
-          RefMethod refSuperMethod = (RefMethod) getRefManager().getReference(psiSuperMethod);
+        RefMethod refSuperMethod = (RefMethod) getRefManager().getReference(psiSuperMethod);
         if (refSuperMethod != null) {
           addSuperMethod(refSuperMethod);
           refSuperMethod.markExtended(this);
@@ -365,7 +379,8 @@ public class RefMethod extends RefElement {
 
   private void collectUncaughtExceptions(PsiMethod method) {
     if (isLibraryOverride()) return;
-    if (getOwnerClass().isTestCase() && method.getName().startsWith("test")) return;
+    @NonNls final String name = method.getName();
+    if (getOwnerClass().isTestCase() && name.startsWith("test")) return;
 
     if (getSuperMethods().size() == 0) {
       PsiClassType[] throwsList = method.getThrowsList().getReferencedTypes();
@@ -398,10 +413,16 @@ public class RefMethod extends RefElement {
   }
 
   public boolean isLibraryOverride() {
+    return isLibraryOverride(new HashSet<RefMethod>());
+  }
+
+  private boolean isLibraryOverride(Collection<RefMethod> processed) {
+    if (processed.contains(this)) return false;
+    processed.add(this);
+
     if (checkFlag(IS_LIBRARY_OVERRIDE_MASK)) return true;
-    for (Iterator<RefMethod> iterator = getSuperMethods().iterator(); iterator.hasNext();) {
-      RefMethod superMethod = iterator.next();
-      if (superMethod.isLibraryOverride()) {
+    for (RefMethod superMethod : getSuperMethods()) {
+      if (superMethod.isLibraryOverride(processed)) {
         setFlag(true, IS_LIBRARY_OVERRIDE_MASK);
         return true;
       }
@@ -502,12 +523,12 @@ public class RefMethod extends RefElement {
       public void run() {
         PsiMethod psiMethod = (PsiMethod) getElement();
         result[0] = PsiFormatUtil.formatMethod(psiMethod, PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME |
-          PsiFormatUtil.SHOW_FQ_NAME |
-          PsiFormatUtil.SHOW_TYPE |
-          PsiFormatUtil.SHOW_CONTAINING_CLASS |
-          PsiFormatUtil.SHOW_PARAMETERS,
-          PsiFormatUtil.SHOW_NAME |
-          PsiFormatUtil.SHOW_TYPE
+                                                                                PsiFormatUtil.SHOW_FQ_NAME |
+                                                                                PsiFormatUtil.SHOW_TYPE |
+                                                                                PsiFormatUtil.SHOW_CONTAINING_CLASS |
+                                                                                PsiFormatUtil.SHOW_PARAMETERS,
+                                               PsiFormatUtil.SHOW_NAME |
+                                               PsiFormatUtil.SHOW_TYPE
         );
       }
     };
@@ -534,7 +555,7 @@ public class RefMethod extends RefElement {
 
     String className = externalName.substring(notype ? 0 : spaceIdx + 1, lastDotIdx);
     String methodSignature = notype ? externalName.substring(lastDotIdx + 1)
-                                    : externalName.substring(0, spaceIdx) + ' ' + externalName.substring(lastDotIdx + 1);
+                             : externalName.substring(0, spaceIdx) + ' ' + externalName.substring(lastDotIdx + 1);
 
     if (RefClass.classFromExternalName(manager, className) == null) return null;
     try {
@@ -728,5 +749,13 @@ public class RefMethod extends RefElement {
 
   private void setConstructor(boolean constructor) {
     setFlag(constructor, IS_CONSTRUCTOR_MASK);
+  }
+
+  public boolean isTestMethod() {
+    return checkFlag(IS_TEST_METHOD_MASK);
+  }
+
+  private void setTestMethod(boolean testMethod){
+    setFlag(testMethod, IS_TEST_METHOD_MASK);
   }
 }

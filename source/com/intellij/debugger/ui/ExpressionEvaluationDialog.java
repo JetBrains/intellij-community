@@ -1,6 +1,7 @@
 package com.intellij.debugger.ui;
 
 import com.intellij.debugger.DebuggerInvocationUtil;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.actions.EvaluateAction;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.impl.PositionUtil;
@@ -21,7 +22,7 @@ public class ExpressionEvaluationDialog extends EvaluationDialog {
 
   public ExpressionEvaluationDialog(Project project, TextWithImports defaultExpression) {
     super(project, makeOnLine(defaultExpression));
-    setTitle("Expression Evaluation");
+    setTitle(DebuggerBundle.message("evaluate.expression.dialog.title"));
 
     final KeyStroke expressionStroke = KeyStroke.getKeyStroke(KeyEvent.VK_E, KeyEvent.ALT_MASK);
     final KeyStroke resultStroke = KeyStroke.getKeyStroke(KeyEvent.VK_R, KeyEvent.ALT_MASK);
@@ -62,18 +63,16 @@ public class ExpressionEvaluationDialog extends EvaluationDialog {
   protected JComponent createCenterPanel() {
     final JPanel panel = new JPanel(new GridBagLayout());
 
-    myLanguageLabel = new JLabel("Language:");
+    myLanguageLabel = new JLabel(DebuggerBundle.message("label.evaluate.dialog.language"));
     myLanguageLabel.setVisible(getCodeFragmentFactoryChooserComponent().isVisible());
     panel.add(myLanguageLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(5, 0, 0, 0), 0, 0));
     panel.add(getCodeFragmentFactoryChooserComponent(), new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(5, 0, 0, 0), 0, 0));
 
-    final JLabel expressionLabel = new JLabel("Expression:");
-    expressionLabel.setDisplayedMnemonic('E');
+    final JLabel expressionLabel = new JLabel(DebuggerBundle.message("label.evaluate.dialog.expression"));
     panel.add(expressionLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(5, 0, 0, 0), 0, 0));
     panel.add(getExpressionCombo(), new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(5, 0, 0, 0), 0, 0));
 
-    final JLabel resultLabel = new JLabel("Result:");
-    resultLabel.setDisplayedMnemonic('R');
+    final JLabel resultLabel = new JLabel(DebuggerBundle.message("label.evaluate.dialog.result"));
     panel.add(resultLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(5, 0, 0, 0), 0, 0));
     panel.add(getEvaluationPanel(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(5, 0, 0, 0), 0, 0));
 
@@ -118,7 +117,7 @@ public class ExpressionEvaluationDialog extends EvaluationDialog {
 
   private class SwitchAction extends AbstractAction {
     public SwitchAction() {
-      putValue(Action.NAME, "Code Fragment Mode");
+      putValue(Action.NAME, DebuggerBundle.message("action.evaluate.expression.dialog.switch.mode.description"));
     }
 
     public void actionPerformed(ActionEvent e) {

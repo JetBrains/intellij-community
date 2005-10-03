@@ -4,6 +4,7 @@
 package com.intellij.lang.properties.parsing;
 
 import com.intellij.lang.PsiBuilder;
+import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.openapi.diagnostic.Logger;
 
 public class Parsing {
@@ -22,7 +23,7 @@ public class Parsing {
     }
     else {
       builder.advanceLexer();
-      builder.error("property key expected");
+      builder.error(PropertiesBundle.message("property.key.expected.parsing.error.message"));
     }
   }
 

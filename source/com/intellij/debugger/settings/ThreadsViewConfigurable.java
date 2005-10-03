@@ -1,6 +1,7 @@
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.openapi.options.BaseConfigurable;
@@ -36,7 +37,7 @@ public class ThreadsViewConfigurable extends BaseConfigurable {
   }
 
   public String getDisplayName() {
-    return "Customize Threads View";
+    return DebuggerBundle.message("threads.view.configurable.display.name");
   }
 
   public JComponent createComponent() {

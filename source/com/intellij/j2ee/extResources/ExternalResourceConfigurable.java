@@ -1,6 +1,7 @@
 package com.intellij.j2ee.extResources;
 
 import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
+import com.intellij.j2ee.J2EEBundle;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.util.IconLoader;
@@ -28,7 +29,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Ap
   public void initComponent() { }
 
   public String getDisplayName() {
-    return "Resources";
+    return J2EEBundle.message("display.name.edit.external.resource");
   }
 
   public JComponent createComponent() {
@@ -38,7 +39,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Ap
       }
     };
 
-    myExtPanel = new AddEditRemovePanel("Configure External Resources:", new ExtUrlsTableModel(), myPairs) {
+    myExtPanel = new AddEditRemovePanel(J2EEBundle.message("label.edit.external.resource.configure.external.resources"), new ExtUrlsTableModel(), myPairs) {
       protected Object addItem() {
         return addExtLocation();
       }
@@ -67,7 +68,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Ap
 
     myExtPanel.setRenderer(1, new PathRenderer());
 
-    myIgnorePanel = new AddEditRemovePanel("Configure Ignored Resources:", new IgnoredUrlsModel(), myIgnoredUrls) {
+    myIgnorePanel = new AddEditRemovePanel(J2EEBundle.message("label.edit.external.resource.configure.ignored.resources"), new IgnoredUrlsModel(), myIgnoredUrls) {
       protected Object addItem() {
         return addIgnoreLocation();
       }
@@ -203,7 +204,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Ap
   }
 
   private class IgnoredUrlsModel implements AddEditRemovePanel.TableModel {
-    private final String[] myNames = {"URI"};
+    private final String[] myNames = {J2EEBundle.message("column.name.edit.external.resource.uri")};
 
     public int getColumnCount() {
       return myNames.length;
@@ -219,7 +220,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Ap
   }
 
   private class ExtUrlsTableModel implements AddEditRemovePanel.TableModel {
-    final String[] myNames = {"URI", "Location"};
+    final String[] myNames = {J2EEBundle.message("column.name.edit.external.resource.uri"), J2EEBundle.message("column.name.edit.external.resource.location")};
 
     public int getColumnCount() {
       return myNames.length;

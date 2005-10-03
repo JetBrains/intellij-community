@@ -8,6 +8,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.FocusWatcher;
@@ -21,6 +22,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.commands.*;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
@@ -60,6 +62,14 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private ToolWindowsPane myToolWindowsPane;
   private IdeFrame myFrame;
   private DesktopLayout myLayoutToRestoreLater = null;
+  @NonNls protected static final String EDITOR_ELEMENT = "editor";
+  @NonNls protected static final String ACTIVE_ATTR_VALUE = "active";
+  @NonNls protected static final String FRAME_ELEMENT = "frame";
+  @NonNls protected static final String X_ATTR = "x";
+  @NonNls protected static final String Y_ATTR = "y";
+  @NonNls protected static final String WIDTH_ATTR = "width";
+  @NonNls protected static final String HEIGHT_ATTR = "height";
+  @NonNls protected static final String EXTENDED_STATE_ATTR = "extended-state";
 
   /**
    * invoked by reflection
@@ -303,6 +313,10 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   public String getLastActiveToolWindowId() {
+    return getLastActiveToolWindowId(null);
+  }
+
+  public String getLastActiveToolWindowId(Condition<JComponent> condition) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     String lastActiveToolWindowId = null;
     for (int i = 0; i < myActiveStack.getPersistentSize(); i++) {
@@ -310,8 +324,10 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       final ToolWindow toolWindow = getToolWindow(id);
       LOG.assertTrue(toolWindow != null);
       if (toolWindow.isAvailable()) {
-        lastActiveToolWindowId = id;
-        break;
+        if (condition == null || condition.value(toolWindow.getComponent())) {
+          lastActiveToolWindowId = id;
+          break;
+        }
       }
     }
     return lastActiveToolWindowId;
@@ -970,8 +986,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   public void readExternal(final Element element) {
     for (Iterator i = element.getChildren().iterator(); i.hasNext();) {
       final Element e = (Element)i.next();
-      if ("editor".equals(e.getName())) {
-        myEditorComponentActive = Boolean.valueOf(e.getAttributeValue("active")).booleanValue();
+      if (EDITOR_ELEMENT.equals(e.getName())) {
+        myEditorComponentActive = Boolean.valueOf(e.getAttributeValue(ACTIVE_ATTR_VALUE)).booleanValue();
       }
       else if (DesktopLayout.TAG.equals(e.getName())) { // read layout of tool windows
         myLayout.readExternal(e);
@@ -999,16 +1015,16 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
     // Save frame's bounds
     final Rectangle frameBounds = myFrame.getBounds();
-    final Element frameElement = new Element("frame");
+    final Element frameElement = new Element(FRAME_ELEMENT);
     element.addContent(frameElement);
-    frameElement.setAttribute("x", Integer.toString(frameBounds.x));
-    frameElement.setAttribute("y", Integer.toString(frameBounds.y));
-    frameElement.setAttribute("width", Integer.toString(frameBounds.width));
-    frameElement.setAttribute("height", Integer.toString(frameBounds.height));
-    frameElement.setAttribute("extended-state", Integer.toString(myFrame.getExtendedState()));
+    frameElement.setAttribute(X_ATTR, Integer.toString(frameBounds.x));
+    frameElement.setAttribute(Y_ATTR, Integer.toString(frameBounds.y));
+    frameElement.setAttribute(WIDTH_ATTR, Integer.toString(frameBounds.width));
+    frameElement.setAttribute(HEIGHT_ATTR, Integer.toString(frameBounds.height));
+    frameElement.setAttribute(EXTENDED_STATE_ATTR, Integer.toString(myFrame.getExtendedState()));
     // Save whether editor is active or not
-    final Element editorElement = new Element("editor");
-    editorElement.setAttribute("active", myEditorComponentActive ? Boolean.TRUE.toString() : Boolean.FALSE.toString());
+    final Element editorElement = new Element(EDITOR_ELEMENT);
+    editorElement.setAttribute(ACTIVE_ATTR_VALUE, myEditorComponentActive ? Boolean.TRUE.toString() : Boolean.FALSE.toString());
     element.addContent(editorElement);
     // Save layout of tool windows
     final Element layoutElement = new Element(DesktopLayout.TAG);

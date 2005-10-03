@@ -14,6 +14,7 @@ import com.intellij.codeInsight.CodeInsightColors;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -47,37 +48,23 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import java.text.MessageFormat;
 import java.util.*;
 
 public class HighlightUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil");
-  private static final String SYMBOL_IS_PRIVATE = "''{0}'' has private access in ''{1}''";
-  private static final String SYMBOL_IS_PROTECTED = "''{0}'' has protected access in ''{1}''";
-  private static final String SYMBOL_IS_PACKAGE_LOCAL = "''{0}'' is not public in ''{1}''. Cannot be accessed from outside package";
-  private static final String PROBLEM_WITH_STATIC = "Non-static {0} ''{1}'' cannot be referenced from a static context";
-  private static final String INCOMPATIBLE_TYPES = "Incompatible types. Found: ''{1}'', required: ''{0}''";
-  private static final String VARIABLE_ALREADY_DEFINED = "Variable ''{0}'' is already defined in the scope";
-  private static final String RETURN_OUTSIDE_METHOD = "Return outside method";
-  private static final String MISSING_RETURN_VALUE = "Missing return value";
-  private static final String CANNOT_RETURN_WHEN_VOID = "Cannot return a value from a method with void result type";
-  private static final String UNHANDLED_EXCEPTIONS = "Unhandled exceptions: ";
-  private static final String UNHANDLED_EXCEPTION = "Unhandled exception: ";
-  private static final String EXCEPTION_NEVER_THROWN_IN_TRY = "Exception ''{0}'' is never thrown in the corresponding try block";
   private static final Map<String, Set<String>> ourInterfaceIncompatibleModifiers;
   public static final Map<String, Set<String>> ourMethodIncompatibleModifiers;
   private static final Map<String, Set<String>> ourFieldIncompatibleModifiers;
   private static final Map<String, Set<String>> ourClassIncompatibleModifiers;
   private static final Map<String, Set<String>> ourClassInitializerIncompatibleModifiers;
-  public static final String NO_DEFAULT_CONSTRUCTOR = "There is no default constructor available in ''{0}''";
-  private static final String EXPRESSION_EXPECTED = "Expression expected";
   private static final Set<String> ourConstructorNotAllowedModifiers;
-  private static final String INCONVERTIBLE_TYPE_CAST = "Inconvertible types; cannot cast ''{0}'' to ''{1}''";
-  private static final String BINARY_OPERATOR_NOT_APPLICABLE = "Operator ''{0}'' cannot be applied to ''{1}'',''{2}''";
 
   private static final Key<String> HAS_OVERFLOW_IN_CHILD = Key.create("HAS_OVERFLOW_IN_CHILD");
+  private static final @NonNls String SERIAL_VERSION_UID_FIELD_NAME = "serialVersionUID";
+  private static final @NonNls String SERIAL_PERSISTENT_FIELDS_FIELD_NAME = "serialPersistentFields";
 
   private HighlightUtil() {}
 
@@ -324,8 +311,9 @@ public class HighlightUtil {
     if (TypeConversionUtil.isPrimitiveAndNotNull(operandType)
         || TypeConversionUtil.isPrimitiveAndNotNull(checkType)
         || !TypeConversionUtil.areTypesConvertible(operandType, checkType)) {
-      String message = MessageFormat.format(INCONVERTIBLE_TYPE_CAST,
-                                            new Object[]{formatType(operandType), formatType(checkType)});
+      String message = JavaErrorMessages.message("inconvertible.type.cast",
+                                                 formatType(operandType),
+                                                 formatType(checkType));
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                expression,
                                                message);
@@ -340,8 +328,9 @@ public class HighlightUtil {
     PsiType castType = expression.getCastType().getType();
     PsiType operandType = operand == null ? null : operand.getType();
     if (operandType != null && !TypeConversionUtil.areTypesConvertible(operandType, castType)) {
-      String message = MessageFormat.format(INCONVERTIBLE_TYPE_CAST,
-                                            new Object[]{formatType(operandType), formatType(castType)});
+      String message = JavaErrorMessages.message("inconvertible.type.cast",
+                                                 formatType(operandType),
+                                                 formatType(castType));
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                expression,
                                                message);
@@ -368,7 +357,7 @@ public class HighlightUtil {
     if (lValue != null && !TypeConversionUtil.isLValue(lValue)) {
       errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                       lValue,
-                                                      "Variable expected");
+                                                      JavaErrorMessages.message("variable.expected"));
     }
 
     return errorResult;
@@ -384,12 +373,11 @@ public class HighlightUtil {
     HighlightInfo errorResult = null;
     if (!TypeConversionUtil.isBinaryOperatorApplicable(opSign, assignment.getLExpression(), assignment.getRExpression(), true)) {
       String operatorText = operationSign.getText().substring(0, operationSign.getText().length() - 1);
-      String message = MessageFormat.format(BINARY_OPERATOR_NOT_APPLICABLE,
-                                            new Object[]{
-                                              operatorText,
-                                              formatType(assignment.getLExpression().getType()),
-                                              formatType(assignment.getRExpression().getType())
-                                            });
+      String message = JavaErrorMessages.message("binary.operator.not.applicable",
+                                                 operatorText,
+                                                 formatType(assignment.getLExpression().getType()),
+                                                 formatType(assignment.getRExpression().getType()));
+
       errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                       assignment,
                                                       message);
@@ -543,7 +531,7 @@ public class HighlightUtil {
     int navigationShift = 0;
     HighlightInfo errorResult = null;
     if (method == null && !(parent instanceof JspFile)) {
-      description = RETURN_OUTSIDE_METHOD;
+      description = JavaErrorMessages.message("return.outside.method");
       errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.RETURN_OUTSIDE_METHOD, statement, description);
     }
     else {
@@ -552,7 +540,7 @@ public class HighlightUtil {
       PsiExpression returnValue = statement.getReturnValue();
       if (returnValue != null) {
         if (isMethodVoid) {
-          description = CANNOT_RETURN_WHEN_VOID;
+          description = JavaErrorMessages.message("return.from.void.method");
           errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, statement, description);
           QuickFixAction.registerQuickFixAction(errorResult, new MethodReturnFix(method, returnValue.getType(), false), null);
         }
@@ -567,7 +555,7 @@ public class HighlightUtil {
       }
       else {
         if (!isMethodVoid) {
-          description = MISSING_RETURN_VALUE;
+          description = JavaErrorMessages.message("missing.return.value");
           errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, statement, description);
           QuickFixAction.registerQuickFixAction(errorResult, new MethodReturnFix(method, PsiType.VOID, false), null);
           navigationShift = PsiKeyword.RETURN.length();
@@ -581,20 +569,14 @@ public class HighlightUtil {
   }
 
   public static String getUnhandledExceptionsDescriptor(PsiClassType[] unhandledExceptions) {
-    StringBuffer description = new StringBuffer();
-    if (unhandledExceptions.length > 1) {
-      description.append(UNHANDLED_EXCEPTIONS);
-    }
-    else {
-      description.append(UNHANDLED_EXCEPTION);
-    }
-
+    StringBuffer exceptionsText = new StringBuffer();
     for (int i = 0; i < unhandledExceptions.length; i++) {
       PsiClassType unhandledException = unhandledExceptions[i];
-      if (i > 0) description.append(", ");
-      description.append(formatType(unhandledException));
+      if (i > 0) exceptionsText.append(", ");
+      exceptionsText.append(formatType(unhandledException));
     }
-    return description.toString();
+
+    return JavaErrorMessages.message("unhandled.exceptions", exceptionsText.toString(), unhandledExceptions.length);
   }
 
 
@@ -628,7 +610,7 @@ public class HighlightUtil {
     }
 
     if (isIncorrect) {
-      String description = MessageFormat.format(VARIABLE_ALREADY_DEFINED, new Object[]{name});
+      String description = JavaErrorMessages.message("variable.already.defined", name);
       HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, identifier, description);
       QuickFixAction.registerQuickFixAction(highlightInfo, new ReuseVariableDeclarationFix(variable, identifier), null);
       return highlightInfo;
@@ -652,7 +634,7 @@ public class HighlightUtil {
   }
 
   public static String formatType(PsiType type) {
-    if (type == null) return "null";
+    if (type == null) return PsiKeyword.NULL;
     return type.getInternalCanonicalText();
   }
 
@@ -704,7 +686,7 @@ public class HighlightUtil {
       if (new PsiMatcherImpl(statement).ancestor(PsiMatcherExpression.ENCLOSING_LOOP_OR_SWITCH).getElement() == null) {
         return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                  statement,
-                                                 "Break outside switch or loop");
+                                                 JavaErrorMessages.message("break.outside.switch.or.loop"));
       }
     }
     else {
@@ -720,7 +702,7 @@ public class HighlightUtil {
       if (new PsiMatcherImpl(statement).ancestor(PsiMatcherExpression.ENCLOSING_LOOP).getElement() == null) {
         return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                  statement,
-                                                 "Continue outside of loop");
+                                                 JavaErrorMessages.message("continue.outside.loop"));
       }
     }
     else {
@@ -730,8 +712,8 @@ public class HighlightUtil {
           && !(exitedStatement instanceof PsiWhileStatement)
           && !(exitedStatement instanceof PsiDoWhileStatement)
           && !(exitedStatement instanceof PsiForeachStatement)) {
-        String description = MessageFormat.format("Not a loop label: ''{0}''",
-                                                  new Object[]{statement.getLabelIdentifier().getText()});
+        String description = JavaErrorMessages.message("not.loop.label",
+                                                       statement.getLabelIdentifier().getText());
         return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                  statement,
                                                  description);
@@ -747,7 +729,8 @@ public class HighlightUtil {
 
     HighlightInfo highlightInfo = null;
     if (incompatible != null) {
-      String message = MessageFormat.format("Illegal combination of modifiers: ''{0}'' and ''{1}''", new Object[]{modifier, incompatible});
+      String message = JavaErrorMessages.message("incompatible.modifiers", modifier, incompatible);
+
       highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, keyword, message);
       QuickFixAction.registerQuickFixAction(highlightInfo, new ModifierFix(modifierList, modifier, false), null);
     }
@@ -860,7 +843,8 @@ public class HighlightUtil {
 
     isAllowed &= incompatibles != null;
     if (!isAllowed) {
-      String message = MessageFormat.format("Modifier ''{0}'' not allowed here", new Object[]{modifier});
+      String message = JavaErrorMessages.message("modifier.not.allowed", modifier);
+
       HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                                       keyword,
                                                                       message);
@@ -919,7 +903,7 @@ public class HighlightUtil {
       if (exceptionType.isAssignableFrom(caughtType) || caughtType.isAssignableFrom(exceptionType)) return null;
     }
 
-    String description = MessageFormat.format(EXCEPTION_NEVER_THROWN_IN_TRY, new Object[]{formatType(caughtType)});
+    String description = JavaErrorMessages.message("exception.never.thrown.try", formatType(caughtType));
     HighlightInfo errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                                   parameter,
                                                                   description);
@@ -934,7 +918,7 @@ public class HighlightUtil {
     if (!PsiUtil.isStatement(statement)) {
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                statement,
-                                               "Not a statement");
+                                               JavaErrorMessages.message("not.a.statement"));
     }
     return null;
   }
@@ -946,11 +930,10 @@ public class HighlightUtil {
     if (expression != null && expression.getType() != null) {
       PsiType type = expression.getType();
       if (!isValidTypeForSwitchSelector(type)) {
-        String message = MessageFormat.format(INCOMPATIBLE_TYPES,
-                                              new Object[]{
-                                                "byte, char, short or int"
-                                                , formatType(type)
-                                              });
+        String message = JavaErrorMessages.message("incompatible.types",
+                                                   JavaErrorMessages.message("valid.switch.selector.types"),
+                                                   formatType(type)
+        );
         errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                         expression,
                                                         message);
@@ -983,12 +966,11 @@ public class HighlightUtil {
     PsiExpression rOperand = expression.getROperand();
     PsiJavaToken operationSign = expression.getOperationSign();
     if (!TypeConversionUtil.isBinaryOperatorApplicable(operationSign.getTokenType(), lOperand, rOperand, false)) {
-      String message = MessageFormat.format(BINARY_OPERATOR_NOT_APPLICABLE,
-                                            new Object[]{
-                                              operationSign.getText(),
-                                              formatType(lOperand.getType()),
-                                              formatType(rOperand.getType())
-                                            });
+      String message = JavaErrorMessages.message("binary.operator.not.applicable",
+                                                 operationSign.getText(),
+                                                 formatType(lOperand.getType()),
+                                                 formatType(rOperand.getType())
+      );
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expression, message);
     }
     return null;
@@ -1002,11 +984,10 @@ public class HighlightUtil {
         && !TypeConversionUtil.isUnaryOperatorApplicable(token, expression)) {
       PsiType type = expression.getType();
       if (type == null) return null;
-      String message = MessageFormat.format("Operator ''{0}'' cannot be applied to ''{1}''",
-                                            new Object[]{
-                                              token.getText(),
-                                              formatType(type)
-                                            });
+      String message = JavaErrorMessages.message("unary.operator.not.applicable",
+                                                 token.getText(),
+                                                 formatType(type));
+
       PsiElement parentExpr = token.getParent();
       HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, parentExpr, message);
       if (parentExpr instanceof PsiPrefixExpression && token.getTokenType() == JavaTokenType.EXCL) {
@@ -1025,7 +1006,7 @@ public class HighlightUtil {
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                expr.getTextRange().getEndOffset(),
                                                expr.getTextRange().getEndOffset() + 1,
-                                               "'.' expected");
+                                               JavaErrorMessages.message("dot.expected.after.super.or.this"));
     }
     PsiClass aClass = qualifier == null ? PsiTreeUtil.getParentOfType(expr, PsiClass.class) : (PsiClass)qualifier.resolve();
     if (aClass == null) return null;
@@ -1038,21 +1019,21 @@ public class HighlightUtil {
   }
 
   static String buildProblemWithStaticDescription(PsiElement refElement) {
-    String prefix = "";
+    @NonNls String key = "";
     if (refElement instanceof PsiVariable) {
-      prefix = "variable";
+      key = "non.static.variable.referenced.from.static.context";
     }
     else if (refElement instanceof PsiMethod) {
-      prefix = "method";
+      key = "non.static.method.referenced.from.static.context";
     }
     else if (refElement instanceof PsiClass) {
-      prefix = "class";
+      key = "non.static.class.referenced.from.static.context";
     }
     else {
-      LOG.assertTrue(false, "???" + refElement);
+      LOG.error("???" + refElement);
     }
-    return MessageFormat.format(PROBLEM_WITH_STATIC,
-                                new Object[]{prefix, HighlightMessageUtil.getSymbolName(refElement, PsiSubstitutor.EMPTY)});
+
+    return JavaErrorMessages.message(key, HighlightMessageUtil.getSymbolName(refElement, PsiSubstitutor.EMPTY));
   }
 
   static void registerStaticProblemQuickFixAction(PsiElement refElement, HighlightInfo errorResult, PsiJavaCodeReferenceElement place) {
@@ -1077,12 +1058,12 @@ public class HighlightUtil {
 
     if (refElement.hasModifierProperty(PsiModifier.PRIVATE)) {
       String containerName = HighlightMessageUtil.getSymbolName(refElement.getParent(), result.getSubstitutor());
-      return MessageFormat.format(SYMBOL_IS_PRIVATE, new Object[]{symbolName, containerName});
+      return JavaErrorMessages.message("private.symbol", symbolName, containerName);
     }
     else {
       if (refElement.hasModifierProperty(PsiModifier.PROTECTED)) {
         String containerName = HighlightMessageUtil.getSymbolName(refElement.getParent(), result.getSubstitutor());
-        return MessageFormat.format(SYMBOL_IS_PROTECTED, new Object[]{symbolName, containerName});
+        return JavaErrorMessages.message("protected.symbol", symbolName, containerName);
       }
       else {
         PsiClass packageLocalClass = getPackageLocalClassInTheMiddle(reference);
@@ -1092,12 +1073,12 @@ public class HighlightUtil {
         }
         if (refElement.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) || packageLocalClass != null) {
           String containerName = HighlightMessageUtil.getSymbolName(refElement.getParent(), result.getSubstitutor());
-          return MessageFormat.format(SYMBOL_IS_PACKAGE_LOCAL, new Object[]{symbolName, containerName});
+          return JavaErrorMessages.message("package.local.symbol", symbolName, containerName);
         }
         else {
           String containerName = HighlightMessageUtil.getSymbolName(
             refElement instanceof PsiTypeParameter ? refElement.getParent().getParent() : refElement.getParent(), result.getSubstitutor());
-          return MessageFormat.format("Cannot access ''{0}'' in ''{1}''", new Object[]{symbolName, containerName});
+          return JavaErrorMessages.message("visibility.access.problem", symbolName, containerName);
         }
       }
     }
@@ -1123,8 +1104,7 @@ public class HighlightUtil {
   static HighlightInfo checkValidArrayAccessExpression(PsiExpression arrayExpression, PsiExpression indexExpression) {
     PsiType arrayExpressionType = arrayExpression == null ? null : arrayExpression.getType();
     if (arrayExpressionType != null && !(arrayExpressionType instanceof PsiArrayType)) {
-      String description = MessageFormat.format("Array type expected; found: ''{0}''",
-                                                new Object[]{formatType(arrayExpressionType)});
+      String description = JavaErrorMessages.message("array.type.expected", formatType(arrayExpressionType));
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, arrayExpression, description);
     }
     return checkAssignability(PsiType.INT, indexExpression.getType(), indexExpression, indexExpression);
@@ -1217,7 +1197,7 @@ public class HighlightUtil {
     if (resolved instanceof PsiVariable) return null;
     return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                              expression,
-                                             EXPRESSION_EXPECTED);
+                                             JavaErrorMessages.message("expression.expected"));
   }
 
 
@@ -1240,7 +1220,7 @@ public class HighlightUtil {
     }
     HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                            expression,
-                                                           EXPRESSION_EXPECTED);
+                                                           JavaErrorMessages.message("expression.expected"));
     QuickFixAction.registerQuickFixAction(info, new AddNewArrayExpressionFix(expression), null);
 
     return info;
@@ -1253,7 +1233,7 @@ public class HighlightUtil {
     if (switchStatement == null) {
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                statement,
-                                               "Case statement outside switch");
+                                               JavaErrorMessages.message("case.statement.outside.switch"));
     }
     if (switchStatement.getBody() == null) return null;
     PsiExpression switchExpression = switchStatement.getExpression();
@@ -1276,7 +1256,7 @@ public class HighlightUtil {
           isEnumSwitch = true;
           value = ((PsiEnumConstant)element).getName();
           if (!(((PsiReferenceExpression)caseValue).getQualifier() == null)) {
-            String message = "An enum switch case label must be the unqualified name of an enumeration constant";
+            String message = JavaErrorMessages.message("qualified.enum.constant.in.switch");
             return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                      caseValue,
                                                      message);
@@ -1289,7 +1269,7 @@ public class HighlightUtil {
       if (value == null) {
         return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                  caseValue,
-                                                 "Constant expression required");
+                                                 JavaErrorMessages.message("constant.expression.required"));
       }
     }
 
@@ -1311,8 +1291,8 @@ public class HighlightUtil {
         if (!Comparing.equal(ConstantExpressionUtil.computeCastTo(caseExpr, switchType), value)) continue;
       }
       String description = statement.isDefaultCase() ?
-                           "Duplicate default label" :
-                           MessageFormat.format("Duplicate label ''{0}''", new Object[]{value});
+                           JavaErrorMessages.message("duplicate.default.switch.label") :
+                           JavaErrorMessages.message("duplicate.switch.label", value);
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                value == null ? (PsiElement)statement : caseValue,
                                                description);
@@ -1324,13 +1304,11 @@ public class HighlightUtil {
       lastChild = lastChild.getPrevSibling();
     }
     if (!(lastChild instanceof PsiJavaToken && ((PsiJavaToken)lastChild).getTokenType() == JavaTokenType.COLON)) {
-      String description = MessageFormat.format("''{0}'' expected", new Object[]{":"});
-
       int start = statement.getTextRange().getEndOffset();
       int end = statement.getTextRange().getEndOffset() + 1;
       HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                                       start, end,
-                                                                      description);
+                                                                      JavaErrorMessages.message("switch.colon.expected.after.case.label"));
       char[] chars = statement.getContainingFile().textToCharArray();
       highlightInfo.isAfterEndOfLine = end >= chars.length || chars[start] == '\n' || chars[start] == '\r';
       return highlightInfo;
@@ -1362,7 +1340,7 @@ public class HighlightUtil {
     if (!containingClass.getManager().areElementsEquivalent(containingClass, PsiTreeUtil.getParentOfType(expression, PsiClass.class))) return null;
     return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                              expression,
-                                             "Illegal forward reference");
+                                             JavaErrorMessages.message("illegal.forward.reference"));
   }
 
   /**
@@ -1404,7 +1382,7 @@ public class HighlightUtil {
       PsiClass aClass = PsiUtil.resolveClassInType(componentType);
       if (aClass == null) {
         String canonicalText = type.getCanonicalText();
-        String description = MessageFormat.format("Unknown class: ''{0}''", new Object[]{canonicalText});
+        String description = JavaErrorMessages.message("unknown.class", canonicalText);
         return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                  typeElement,
                                                  description);
@@ -1444,7 +1422,7 @@ public class HighlightUtil {
       }
     }
 
-    String description = MessageFormat.format("Illegal type: ''{0}''", new Object[]{PsiKeyword.VOID});
+    String description = JavaErrorMessages.message("illegal.type.void");
     return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                              type,
                                              description);
@@ -1520,8 +1498,7 @@ public class HighlightUtil {
             && !thisOrSuperReference(((PsiReferenceExpression)expression).getQualifierExpression(), aClass)) {
           return null;
         }
-        String description = MessageFormat.format("Cannot reference ''{0}'' before supertype constructor has been called",
-                                                  new Object[]{resolvedName});
+        String description = JavaErrorMessages.message("member.referenced.before.constructor.called", resolvedName);
         return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                  expression,
                                                  description);
@@ -1563,7 +1540,7 @@ public class HighlightUtil {
     if (statement.getStatement() == null) {
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                statement,
-                                               "Label without statement");
+                                               JavaErrorMessages.message("label.without.statement"));
     }
     return null;
   }
@@ -1581,8 +1558,7 @@ public class HighlightUtil {
           && element != statement
           && ((PsiLabeledStatement)element).getLabelIdentifier() != null
           && Comparing.equal(((PsiLabeledStatement)element).getLabelIdentifier().getText(), text)) {
-        String description = MessageFormat.format("Label ''{0}'' already in use",
-                                                  new Object[]{text});
+        String description = JavaErrorMessages.message("duplicate.label", text);
         return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                  identifier,
                                                  description);
@@ -1601,7 +1577,7 @@ public class HighlightUtil {
       int end = start + 1;
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                start, end,
-                                               "Unclosed comment");
+                                               JavaErrorMessages.message("nonterminated.comment"));
     }
     return null;
   }
@@ -1627,9 +1603,9 @@ public class HighlightUtil {
     if (!sameInstanceReferences(lRef, rRef, manager)) return null;
     HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.SILLY_ASSIGNMENT,
                                                                     assignment,
-                                                                    "Silly assignment");
+                                                                    JavaErrorMessages.message("assignment.to.itself"));
     List<IntentionAction> options = new ArrayList<IntentionAction>();
-    options.add(new SwitchOffToolAction(HighlightDisplayKey.SILLY_ASSIGNMENT));
+    options.add(new EditInspectionToolsSettingsAction(HighlightDisplayKey.SILLY_ASSIGNMENT));
     options.add(new AddNoInspectionCommentAction(HighlightDisplayKey.SILLY_ASSIGNMENT, assignment));
     options.add(new AddNoInspectionDocTagAction(HighlightDisplayKey.SILLY_ASSIGNMENT, assignment));
     options.add(new AddNoInspectionForClassAction(HighlightDisplayKey.SILLY_ASSIGNMENT, assignment));
@@ -1681,10 +1657,9 @@ public class HighlightUtil {
       PsiClass upCatchClass = PsiUtil.resolveClassInType(type);
       if (upCatchClass == null) continue;
       if (InheritanceUtil.isInheritorOrSelf(catchClass, upCatchClass, true)) {
-        String description = MessageFormat.format("Exception ''{0}'' has already been caught",
-                                                  new Object[]{
-                                                    PsiFormatUtil.formatClass(catchClass,
-                                                                              PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_FQ_NAME)});
+        String description = JavaErrorMessages.message("exception.already.caught",
+                                                       PsiFormatUtil.formatClass(catchClass,
+                                                                                 PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_FQ_NAME));
         HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                                         element,
                                                                         description);
@@ -1717,7 +1692,7 @@ public class HighlightUtil {
         && statement.getParent().getParent() instanceof PsiSwitchStatement
         && ((PsiCodeBlock)statement.getParent()).getStatements().length != 0
         && statement == ((PsiCodeBlock)statement.getParent()).getStatements()[0]) {
-      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, statement, "Statement must be prepended with case label");
+      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, statement, JavaErrorMessages.message("statement.must.be.prepended.with.case.label"));
     }
     return null;
   }
@@ -1736,7 +1711,7 @@ public class HighlightUtil {
       return createIncompatibleTypeHighlightInfo(PsiType.BOOLEAN, type, expression.getTextRange());
     }
     else if (expression == assertStatement.getAssertDescription() && TypeConversionUtil.isVoidType(type)) {
-      String description = "'void' type is not allowed here";
+      String description = JavaErrorMessages.message("void.type.is.not.allowed");
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                expression,
                                                description);
@@ -1782,13 +1757,12 @@ public class HighlightUtil {
     return null;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static HighlightInfo createIncompatibleTypeHighlightInfo(final PsiType lType,
                                                                    final PsiType rType,
                                                                    final TextRange textRange) {
     PsiType lType1 = lType;
     PsiType rType1 = rType;
-    String toolTip = "<html><body>Incompatible types.";
-    toolTip += "<table><tr>";
     PsiTypeParameter[] lTypeParams = PsiTypeParameter.EMPTY_ARRAY;
     PsiSubstitutor lTypeSubstitutor = PsiSubstitutor.EMPTY;
     if (lType1 instanceof PsiClassType) {
@@ -1818,7 +1792,6 @@ public class HighlightUtil {
       rTypeParams = psiClass == null ? PsiTypeParameter.EMPTY_ARRAY : psiClass.getTypeParameters();
     }
 
-    String description = MessageFormat.format(INCOMPATIBLE_TYPES, new Object[]{formatType(lType1), formatType(rType1)});
 
     int typeParamColumns = Math.max(lTypeParams.length, rTypeParams.length);
     String requredRow = "";
@@ -1841,15 +1814,15 @@ public class HighlightUtil {
     PsiType lRawType = lType1 instanceof PsiClassType ? ((PsiClassType)lType1).rawType() : lType1;
     PsiType rRawType = rType1 instanceof PsiClassType ? ((PsiClassType)rType1).rawType() : rType1;
     boolean assignable = lRawType == null || rRawType == null || TypeConversionUtil.isAssignable(lRawType, rRawType);
-    toolTip += "<td>Required:</td>" +
-               "<td>" + redIfNotMatch(lRawType, assignable) + "</td>" +
-               requredRow;
-    toolTip += "</tr><tr>";
-    toolTip += "<td>Found:</td>" +
-               "<td>" + redIfNotMatch(rRawType, assignable) + "</td>"
-               + foundRow;
 
-    toolTip += "</tr></table></body></html>";
+    String toolTip = JavaErrorMessages.message("incompatible.types.html.tooltip",
+                                               redIfNotMatch(lRawType, assignable),
+                                               requredRow,
+                                               redIfNotMatch(rRawType, assignable),
+                                               foundRow);
+
+    String description = JavaErrorMessages.message("incompatible.types", formatType(lType1), formatType(rType1));
+
     return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, description, toolTip);
   }
 
@@ -1861,8 +1834,8 @@ public class HighlightUtil {
       String name = ((PsiClass)element).getName();
       PsiClass importedClass = singleImportedClasses.get(name);
       if (importedClass != null && !element.getManager().areElementsEquivalent(importedClass, element)) {
-        String description = MessageFormat.format("''{0}'' is already defined in a single-type import",
-                                                  new Object[]{formatClass(importedClass)});
+        String description = JavaErrorMessages.message("single.import.class.conflict",
+                                                       formatClass(importedClass));
         return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                  statement,
                                                  description);
@@ -1887,7 +1860,7 @@ public class HighlightUtil {
       overflow = true;
       return HighlightInfo.createHighlightInfo(HighlightInfoType.OVERFLOW_WARNING,
                                                expr,
-                                               "Numeric overflow in expression");
+                                               JavaErrorMessages.message("numeric.overflow.in.expression"));
     }
     finally {
       PsiElement parent = expr.getParent();
@@ -1916,15 +1889,13 @@ public class HighlightUtil {
     }
     if (!((PsiMember)resolved).hasModifierProperty(PsiModifier.STATIC)) return null;
 
-    String description = MessageFormat.format("Static member ''{0}.{1}'' accessed via instance reference",
-                                              new Object[]{
-                                                formatType(qualifierExpression.getType()),
-                                                HighlightMessageUtil.getSymbolName(resolved, result.getSubstitutor())
-                                              });
+    String description = JavaErrorMessages.message("static.member.accessed.via.instance.reference",
+                                                   formatType(qualifierExpression.getType()),
+                                                   HighlightMessageUtil.getSymbolName(resolved, result.getSubstitutor()));
 
     HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ACCESS_STATIC_VIA_INSTANCE, expr, description);
     List<IntentionAction> options = new ArrayList<IntentionAction>();
-    options.add(new SwitchOffToolAction(HighlightDisplayKey.ACCESS_STATIC_VIA_INSTANCE));
+    options.add(new EditInspectionToolsSettingsAction(HighlightDisplayKey.ACCESS_STATIC_VIA_INSTANCE));
     options.add(new AddNoInspectionCommentAction(HighlightDisplayKey.ACCESS_STATIC_VIA_INSTANCE, expr));
     options.add(new AddNoInspectionDocTagAction(HighlightDisplayKey.ACCESS_STATIC_VIA_INSTANCE, expr));
     options.add(new AddNoInspectionForClassAction(HighlightDisplayKey.ACCESS_STATIC_VIA_INSTANCE, expr));
@@ -1936,6 +1907,7 @@ public class HighlightUtil {
     return highlightInfo;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static String redIfNotMatch(PsiType type, boolean matches) {
     if (matches) return getFQName(type, false);
     return "<font color=red><b>" + getFQName(type, true) + "</b></font>";
@@ -1978,8 +1950,7 @@ public class HighlightUtil {
     String label = labelIdentifier.getText();
     if (label == null) return null;
     if (exitedStatement == null) {
-      String message = MessageFormat.format("Undefined label: ''{0}''",
-                                            new Object[]{label});
+      String message = JavaErrorMessages.message("unresolved.label", label);
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                labelIdentifier,
                                                message);
@@ -2008,7 +1979,7 @@ public class HighlightUtil {
         // do not highlight unknown packages - javac does not care about illegal package names
         if (isInsidePackageStatement(refName)) return null;
         if (result.isPackagePrefixPackageReference()) return null;
-        String description = MessageFormat.format(HighlightVisitorImpl.UNKNOWN_SYMBOL, new Object[]{refName.getText()});
+        String description = JavaErrorMessages.message("cannot.resolve.symbol", refName.getText());
 
         HighlightInfoType type = HighlightInfoType.WRONG_REF;
         List<IntentionAction> options = new ArrayList<IntentionAction>();
@@ -2017,7 +1988,7 @@ public class HighlightUtil {
             return null;
           }
           type = HighlightInfoType.JAVADOC_WRONG_REF;
-          options.add(new SwitchOffToolAction(HighlightDisplayKey.JAVADOC_ERROR));
+          options.add(new EditInspectionToolsSettingsAction(HighlightDisplayKey.JAVADOC_ERROR));
         }
 
         PsiElement parent = PsiTreeUtil.getParentOfType(ref, PsiNewExpression.class, PsiMethod.class);
@@ -2124,13 +2095,13 @@ public class HighlightUtil {
 
     if (InspectionManagerEx.inspectionResultSuppressed(elementToHighlight, HighlightDisplayKey.DEPRECATED_SYMBOL.getID())) return null;
 
-    String description = MessageFormat.format("''{0}'' is deprecated", new Object[]{
-      HighlightMessageUtil.getSymbolName(refElement, PsiSubstitutor.EMPTY)});
+    String description = JavaErrorMessages.message("deprecated.symbol",
+                                                   HighlightMessageUtil.getSymbolName(refElement, PsiSubstitutor.EMPTY));
 
     TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.DEPRECATED_ATTRIBUTES);
     HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.DEPRECATED, elementToHighlight.getTextRange(), description,attributes);
     List<IntentionAction> options = new ArrayList<IntentionAction>();
-    options.add(new SwitchOffToolAction(HighlightDisplayKey.DEPRECATED_SYMBOL));
+    options.add(new EditInspectionToolsSettingsAction(HighlightDisplayKey.DEPRECATED_SYMBOL));
     options.add(new AddNoInspectionCommentAction(HighlightDisplayKey.DEPRECATED_SYMBOL, elementToHighlight));
     options.add(new AddNoInspectionDocTagAction(HighlightDisplayKey.DEPRECATED_SYMBOL, elementToHighlight));
     options.add(new AddNoInspectionForClassAction(HighlightDisplayKey.DEPRECATED_SYMBOL, elementToHighlight));
@@ -2234,7 +2205,7 @@ public class HighlightUtil {
 
   public static boolean isSerializationImplicitlyUsedField(PsiField field) {
     final String name = field.getName();
-    if (!"serialVersionUID".equals(name) && !"serialPersistentFields".equals(name)) return false;
+    if (!name.equals(SERIAL_VERSION_UID_FIELD_NAME) && !name.equals(SERIAL_PERSISTENT_FIELDS_FIELD_NAME)) return false;
     if (!field.hasModifierProperty(PsiModifier.STATIC)) return false;
     PsiClass aClass = field.getContainingClass();
     return aClass == null || isSerializable(aClass);

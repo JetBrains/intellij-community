@@ -22,6 +22,7 @@ public class DiffRange implements DiffFragmentBuilder.Range {
     return myEnd;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return "DiffRange: " + myStart + "," + myEnd;
   }

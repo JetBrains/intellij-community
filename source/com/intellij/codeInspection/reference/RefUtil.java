@@ -8,6 +8,7 @@
  */
 package com.intellij.codeInspection.reference;
 
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.EntryPointsManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -125,8 +126,7 @@ public class RefUtil {
 
             if (argumentList != null) {
               PsiExpression[] psiParams = argumentList.getExpressions();
-              for (int i = 0; i < psiParams.length; i++) {
-                PsiExpression param = psiParams[i];
+              for (PsiExpression param : psiParams) {
                 param.accept(this);
               }
 
@@ -154,7 +154,6 @@ public class RefUtil {
           public void visitClassObjectAccessExpression(PsiClassObjectAccessExpression expression) {
             super.visitClassObjectAccessExpression(expression);
             final PsiTypeElement operand = expression.getOperand();
-            if (operand == null) return;
             final PsiType type = operand.getType();
             if (type instanceof PsiClassType) {
               PsiClassType classType = (PsiClassType)type;
@@ -203,7 +202,7 @@ public class RefUtil {
       }
 
       PsiExpressionList argumentList = call.getArgumentList();
-      if (argumentList != null && argumentList.getExpressions().length > 0) {
+      if (argumentList.getExpressions().length > 0) {
         refMethod.updateParameterValues(argumentList.getExpressions());
       }
     }
@@ -213,7 +212,7 @@ public class RefUtil {
     if (element instanceof PsiAnonymousClass) {
       PsiAnonymousClass psiAnonymousClass = (PsiAnonymousClass)element;
       PsiClass psiBaseClass = psiAnonymousClass.getBaseClassType().resolve();
-      return "anonymous (" + (psiBaseClass != null ? psiBaseClass.getQualifiedName() : "") + ")";
+      return InspectionsBundle.message("inspection.reference.anonymous.name", (psiBaseClass != null ? psiBaseClass.getQualifiedName() : ""));
     }
 
     if (element instanceof JspClass) {
@@ -223,7 +222,7 @@ public class RefUtil {
     }
 
     if (element instanceof JspHolderMethod) {
-      return "<% page content %>";
+      return InspectionsBundle.message("inspection.reference.jsp.holder.method.anonymous.name");
     }
 
     String name = null;
@@ -231,7 +230,7 @@ public class RefUtil {
       name = ((PsiNamedElement)element).getName();
     }
 
-    return name == null ? "anonymous" : name;
+    return name == null ? InspectionsBundle.message("inspection.reference.anonymous") : name;
   }
 
   public static boolean isDeprecated(PsiElement psiResolved) {
@@ -247,7 +246,7 @@ public class RefUtil {
     if (psiElement instanceof PsiTypeParameter) return false;
     if (!psiElement.getManager().isInProject(psiElement)) return false;
 
-    return refManager.getScope() != null ? refManager.getScope().contains(psiElement) : true;
+    return refManager.getScope() == null || refManager.getScope().contains(psiElement);
   }
 
   public static boolean isAppMain(PsiMethod psiMethod, RefMethod refMethod) {
@@ -269,7 +268,7 @@ public class RefUtil {
 
   public static String getProjectFileName(Project project) {
     VirtualFile projectFile = project.getProjectFile();
-    if (projectFile == null) return "<unnamed>";
+    if (projectFile == null) return InspectionsBundle.message("inspection.reference.unnamed");
     return projectFile.getName();
   }
 
@@ -304,40 +303,19 @@ public class RefUtil {
   public static String getPackageName(RefEntity refEntity) {
     RefPackage refPackage = getPackage(refEntity);
 
-    return refPackage == null ? "default package" : refPackage.getQualifiedName();
+    return refPackage == null ? InspectionsBundle.message("inspection.reference.default.package") : refPackage.getQualifiedName();
   }
 
   public static String getQualifiedName(RefEntity refEntity) {
 
-    if (refEntity == null || refEntity instanceof RefElement && !((RefElement)refEntity).isValid()) return "invalid";
+    if (refEntity == null || refEntity instanceof RefElement && !((RefElement)refEntity).isValid()) return InspectionsBundle.message("inspection.reference.invalid");
 
     if (refEntity instanceof RefPackage) {
       return ((RefPackage)refEntity).getQualifiedName();
     }
-    else if (refEntity.getOwner() == null) {
-      return refEntity.getName();
-    }
-    else if (refEntity instanceof RefFile){
-      return refEntity.getName();
-    }
-    else if (refEntity instanceof RefClass && ((RefClass)refEntity).isAnonymous()) {
-      return refEntity.getName() + " in " + getQualifiedName(refEntity.getOwner());
-    }
-    else if (refEntity instanceof RefMethod && ((RefMethod)refEntity).getOwnerClass().isAnonymous()) {
-      return "anonymous." + refEntity.getName();
-    }
     else {
-      StringBuffer result = new StringBuffer(refEntity.getName());
-
-      RefEntity refParent = refEntity.getOwner();
-      while (refParent != null && !(refParent instanceof RefProject) && !(refParent instanceof RefPackage)) {
-        result.insert(0, '.');
-        result.insert(0, refParent.getName());
-        refParent = refParent.getOwner();
-      }
-
-      return result.toString();
-    }
+      return refEntity.getName();
+    }    
   }
 
   public static String getAccessModifier(PsiModifierListOwner psiElement) {

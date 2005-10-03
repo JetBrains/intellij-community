@@ -11,6 +11,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 
 class ClsDocTagImpl extends ClsElementImpl implements PsiDocTag {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsDocTagImpl");
@@ -18,7 +19,7 @@ class ClsDocTagImpl extends ClsElementImpl implements PsiDocTag {
   private final ClsDocCommentImpl myDocComment;
   private final PsiElement myNameElement;
 
-  public ClsDocTagImpl(ClsDocCommentImpl docComment, String name) {
+  public ClsDocTagImpl(ClsDocCommentImpl docComment, @NonNls String name) {
     myDocComment = docComment;
     myNameElement = new NameElement(name);
   }

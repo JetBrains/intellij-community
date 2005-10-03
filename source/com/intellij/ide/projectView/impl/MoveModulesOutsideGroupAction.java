@@ -8,15 +8,12 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.module.Module;
+import com.intellij.ide.IdeBundle;
 
 public class MoveModulesOutsideGroupAction extends AnAction {
 
   public MoveModulesOutsideGroupAction() {
-    super("Outside any group");
-  }
-
-  protected static String whatToMove(Module[] modules) {
-    return modules.length == 1 ? "module '" + modules[0].getName() + "'" : "modules";
+    super(IdeBundle.message("action.move.module.outside.any.group"));
   }
 
   public void actionPerformed(AnActionEvent e) {

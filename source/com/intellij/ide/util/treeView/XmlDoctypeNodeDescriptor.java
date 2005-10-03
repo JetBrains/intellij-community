@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement;
 public class XmlDoctypeNodeDescriptor  extends SmartElementDescriptor {
   public XmlDoctypeNodeDescriptor(Project project, NodeDescriptor parentDescriptor, PsiElement element) {
     super(project, parentDescriptor, element);
+    //noinspection HardCodedStringLiteral
     myName = "DOCTYPE";
   }
 }

@@ -20,7 +20,8 @@ class PropertiesAnnotator implements Annotator {
     PropertiesFile propertiesFile = (PropertiesFile)element.getContainingFile();
     Collection<Property> others = propertiesFile.findPropertiesByKey(origProperty.getKey());
     if (others.size() != 1) {
-      Annotation annotation = holder.createErrorAnnotation(((PropertyImpl)origProperty).getKeyNode(), "Duplicate property key");
+      Annotation annotation = holder.createErrorAnnotation(((PropertyImpl)origProperty).getKeyNode(),
+                                                           PropertiesBundle.message("duplicate.property.key.error.message"));
       annotation.registerFix(new RemovePropertyFix(origProperty));
     }
   }

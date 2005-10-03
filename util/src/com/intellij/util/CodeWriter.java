@@ -15,6 +15,8 @@
  */
 package com.intellij.util;
 
+import org.jetbrains.annotations.NonNls;
+
 import java.io.PrintWriter;
 import java.util.StringTokenizer;
 
@@ -33,7 +35,7 @@ public class CodeWriter extends PrintWriter {
     myIndent = 2;
   }
 
-  public void print(String s) {
+  public void print(@NonNls String s) {
     possiblyIndent(s);
     super.print(s);
     for (int i = 0; i < s.length(); i++) {

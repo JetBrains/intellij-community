@@ -9,8 +9,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Util;
-import com.intellij.uiDesigner.lw.IComponent;
-import com.intellij.uiDesigner.lw.IContainer;
+import com.intellij.uiDesigner.lw.*;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.shared.XYLayoutManager;
@@ -50,7 +49,7 @@ public final class FormEditingUtil {
     if (
       container instanceof RadScrollPane ||
       container instanceof RadSplitPane ||
-      container instanceof RadTabbedPane 
+      container instanceof RadTabbedPane
     ){
       return;
     }
@@ -168,6 +167,7 @@ public final class FormEditingUtil {
         gridLayoutManager = createTwoDimensionGrid(componentsToConvert);
       }
       else {
+        //noinspection HardCodedStringLiteral
         throw new IllegalArgumentException("invalid grid type: " + gridType);
       }
     }
@@ -315,7 +315,7 @@ public final class FormEditingUtil {
       new Integer(Util.eliminate(x, colSpans, null))
     );
   }
-  
+
   private static GridLayoutManager createTwoDimensionGrid(final RadComponent[] selection){
     final int[] x = new int[selection.length];
     final int[] y = new int[selection.length];
@@ -352,7 +352,7 @@ public final class FormEditingUtil {
 
   /**
    * <b>This method must be executed in command</b>
-   */ 
+   */
   public static void deleteSelection(final GuiEditor editor){
     final ArrayList<RadComponent> selection = getSelectedComponents(editor);
     for (int i = 0; i < selection.size(); i++) {
@@ -423,6 +423,7 @@ public final class FormEditingUtil {
    * @param x in editor pane coordinates
    * @param y in editor pane coordinates
    */
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Cursor getDropCursor(final GuiEditor editor, final int x, final int y, final int componentCount){
     Cursor cursor = Cursor.getDefaultCursor();
     if (canDrop(editor, x, y, componentCount)) {
@@ -469,6 +470,7 @@ public final class FormEditingUtil {
    */
   public static DropInfo drop(final GuiEditor editor, final int x, final int y, final RadComponent[] components, final int[] dx, final int[] dy){
     if (!canDrop(editor, x, y, components.length)) {
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("cannot drop");
     }
 
@@ -549,10 +551,10 @@ public final class FormEditingUtil {
     }
     String message = ex.getMessage();
     if (ex instanceof ClassNotFoundException) {
-      message = message != null? "Class not found: " + message : "Class not found";
+      message = message != null? UIDesignerBundle.message("error.class.not.found.N", message) : UIDesignerBundle.message("error.class.not.found");
     }
     else if (ex instanceof NoClassDefFoundError) {
-      message = message != null? "Required class not found: " + message : "Required class not found";
+      message = message != null? UIDesignerBundle.message("error.required.class.not.found.N", message) : UIDesignerBundle.message("error.required.class.not.found");
     }
     return message;
   }
@@ -560,8 +562,12 @@ public final class FormEditingUtil {
   public static interface ComponentVisitor <Type extends IComponent>{
     /**
      * @return true if iteration should continue
-     */ 
+     */
     public boolean visit(Type component);
+  }
+
+  public static interface StringDescriptorVisitor<Type extends IComponent> {
+    public boolean visit(IComponent component, StringDescriptor descriptor);
   }
 
   /**
@@ -574,7 +580,7 @@ public final class FormEditingUtil {
     iterateImpl(component, visitor);
   }
 
-  
+
   private static boolean iterateImpl(final IComponent component, final ComponentVisitor visitor) {
     final boolean shouldContinue = visitor.visit(component);
     if (!shouldContinue) {
@@ -584,9 +590,9 @@ public final class FormEditingUtil {
     if (!(component instanceof IContainer)) {
       return true;
     }
-    
+
     final IContainer container = (IContainer)component;
-    
+
     for (int i = 0; i < container.getComponentCount(); i++) {
       final IComponent c = container.getComponent(i);
       if (!iterateImpl(c, visitor)) {
@@ -595,6 +601,37 @@ public final class FormEditingUtil {
     }
 
     return true;
+  }
+
+  public static void iterateStringDescriptors(final LwComponent component,
+                                              final StringDescriptorVisitor<LwComponent> visitor) {
+    iterate(component, new ComponentVisitor<LwComponent>() {
+
+      public boolean visit(final LwComponent component) {
+        LwIntrospectedProperty[] props = component.getAssignedIntrospectedProperties();
+        for(LwIntrospectedProperty prop: props) {
+          if (prop instanceof LwRbIntroStringProperty) {
+            StringDescriptor descriptor = (StringDescriptor) component.getPropertyValue(prop);
+            if (!visitor.visit(component, descriptor)) {
+              return false;
+            }
+          }
+        }
+        if (component.getParent() instanceof LwTabbedPane) {
+          LwTabbedPane.Constraints constraints = (LwTabbedPane.Constraints) component.getCustomLayoutConstraints();
+          if (constraints != null && !visitor.visit(component, constraints.myTitle)) {
+            return false;
+          }
+        }
+        if (component instanceof LwContainer) {
+          final StringDescriptor borderTitle = ((LwContainer) component).getBorderTitle();
+          if (borderTitle != null && !visitor.visit(component, borderTitle)) {
+            return false;
+          }
+        }
+        return true;
+      }
+    });
   }
 
   /**

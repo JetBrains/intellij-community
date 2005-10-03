@@ -9,6 +9,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageView;
+import com.intellij.find.FindBundle;
+import com.intellij.CommonBundle;
 
 public class FindUsagesAction extends AnAction {
 
@@ -27,8 +29,8 @@ public class FindUsagesAction extends AnAction {
     else {
       Messages.showMessageDialog(
         project,
-        "Cannot search for usages.\nPosition to an element which usages you wish to find and try again.",
-        "Error",
+        FindBundle.message("find.no.usages.at.cursor.error"),
+        CommonBundle.getErrorTitle(),
         Messages.getErrorIcon()
       );
     }

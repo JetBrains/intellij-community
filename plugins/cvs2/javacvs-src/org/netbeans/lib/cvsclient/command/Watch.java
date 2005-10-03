@@ -12,71 +12,74 @@
  */
 package org.netbeans.lib.cvsclient.command;
 
+import org.jetbrains.annotations.NonNls;
+import org.netbeans.lib.cvsclient.JavaCvsSrcBundle;
+
 /**
  * @author  Thomas Singer
  * @version Dec 2, 2001
  */
 public final class Watch {
 
-	// Constants ==============================================================
+        // Constants ==============================================================
 
-	public static final Watch EDIT = new Watch("Edit", "E", // NOI18N
-	                                           new String[]{"edit"}); // NOI18N
+        public static final Watch EDIT = new Watch(JavaCvsSrcBundle.message("watch.name.edit"), "E", // NOI18N
+                                                   new String[]{"edit"}); // NOI18N
 
-	public static final Watch UNEDIT = new Watch("Unedit", "U", // NOI18N
-	                                             new String[]{"unedit"}); // NOI18N
+        public static final Watch UNEDIT = new Watch(JavaCvsSrcBundle.message("watch.name.unedit"), "U", // NOI18N
+                                                     new String[]{"unedit"}); // NOI18N
 
-	public static final Watch COMMIT = new Watch("Commit", "C", // NOI18N
-	                                             new String[]{"commit"}); // NOI18N
+        public static final Watch COMMIT = new Watch(JavaCvsSrcBundle.message("watch.name.commit"), "C", // NOI18N
+                                                     new String[]{"commit"}); // NOI18N
 
-	public static final Watch ALL = new Watch("All", "EUC", // NOI18N
-	                                          new String[]{"edit", "unedit", "commit"}); // NOI18N
+        public static final Watch ALL = new Watch(JavaCvsSrcBundle.message("watch.name.all"), "EUC", // NOI18N
+                                                  new String[]{"edit", "unedit", "commit"}); // NOI18N
 
-        public static final Watch TALL = new Watch("All", "EUC", // NOI18N
-                                                  new String[]{"tedit", "tunedit", "tcommit"}); // NOI18N
+        public static final Watch TALL = new Watch(JavaCvsSrcBundle.message("watch.name.all"), "EUC", // NOI18N
+                                                   new String[]{"tedit", "tunedit", "tcommit"}); // NOI18N
 
-        public static final Watch NONE = new Watch("None", "", // NOI18N
-	                                           new String[0]);
+        public static final Watch NONE = new Watch(JavaCvsSrcBundle.message("watch.name.none"), "", // NOI18N
+                                                   new String[0]);
 
-	// Static =================================================================
+        // Static =================================================================
 
-	/**
-	 * Returns the temporary watch value used in the Notify request.
-	 */
-	public static String getWatchString(Watch watch) {
-		if (watch == null) {
-			return NONE.getValue();
-		}
-		return watch.getValue();
-	}
+        /**
+         * Returns the temporary watch value used in the Notify request.
+         */
+        public static String getWatchString(Watch watch) {
+                if (watch == null) {
+                        return NONE.getValue();
+                }
+                return watch.getValue();
+        }
 
-	// Fields =================================================================
+        // Fields =================================================================
 
-	private final String name;
-	private final String value;
-	private final String[] arguments;
+        private final String name;
+        private final String value;
+        private final String[] arguments;
 
-	// Setup ==================================================================
+        // Setup ==================================================================
 
-	private Watch(String name, String value, String[] arguments) {
-		this.name = name;
-		this.value = value;
-		this.arguments = arguments;
-	}
+        private Watch(String name, @NonNls String value, @NonNls String[] arguments) {
+                this.name = name;
+                this.value = value;
+                this.arguments = arguments;
+        }
 
-	// Implemented ============================================================
+        // Implemented ============================================================
 
-	public String toString() {
-		return name;
-	}
+        public String toString() {
+                return name;
+        }
 
-	// Accessing ==============================================================
+        // Accessing ==============================================================
 
-	public String[] getArguments() {
-		return arguments;
-	}
+        public String[] getArguments() {
+                return arguments;
+        }
 
-	private String getValue() {
-		return value;
-	}
+        private String getValue() {
+                return value;
+        }
 }

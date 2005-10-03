@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -15,7 +16,6 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -67,24 +67,23 @@ public class ModifierFix implements IntentionAction {
     else if (parent instanceof PsiClassInitializer) {
       PsiClass containingClass = ((PsiClassInitializer)parent).getContainingClass();
       String className = containingClass instanceof PsiAnonymousClass ?
-                               "Anonymous class derived from " +
-                               ((PsiAnonymousClass)containingClass).getBaseClassType().getPresentableText()
-                               : containingClass.getName();
-      name = className + " class initializer";
+                         QuickFixBundle.message("anonymous.class.presentation",
+                                                ((PsiAnonymousClass)containingClass).getBaseClassType().getPresentableText())
+                         : containingClass.getName();
+      name = QuickFixBundle.message("class.initializer.presentation", className);
     }
-    String text = MessageFormat.format("Make ''{0}'' {1}{2}",
-                                             new Object[]{
-                                               name,
-                                               (myShouldHave ? "" : "not "),
-                                               myModifier.equals(PsiModifier.PACKAGE_LOCAL)
-                                               ? "package local"
-                                               : myModifier,
-                                             });
-    return text;
+
+    final String modifierText = myModifier.equals(PsiModifier.PACKAGE_LOCAL)
+                                ? QuickFixBundle.message("package.local.visibility.presentation")
+                                : myModifier;
+
+    return QuickFixBundle.message(myShouldHave ? "add.modifier.fix" : "remove.modifier.fix",
+                                  name,
+                                  modifierText);
   }
 
   public String getFamilyName() {
-    return "Fix Modifiers";
+    return QuickFixBundle.message("fix.modifiers.family");
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
@@ -129,8 +128,9 @@ public class ModifierFix implements IntentionAction {
 
     if (modifiersList.size() > 0) {
       if (Messages.showYesNoDialog(project,
-                                   "Do you want to change inheritors' visibility to visibility of the base method?",
-                                   "Change Inheritors", Messages.getQuestionIcon()) == DialogWrapper.OK_EXIT_CODE) {
+                                   QuickFixBundle.message("change.inheritors.visibility.warning.text"),
+                                   QuickFixBundle.message("change.inheritors.visibility.warning.title"),
+                                   Messages.getQuestionIcon()) == DialogWrapper.OK_EXIT_CODE) {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
             for (Iterator<PsiModifierList> iterator = modifiersList.iterator(); iterator.hasNext();) {

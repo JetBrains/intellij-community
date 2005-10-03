@@ -7,7 +7,9 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressStream;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.ide.IdeBundle;
 import org.xml.sax.SAXException;
+import org.jetbrains.annotations.NonNls;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -27,13 +29,13 @@ import java.net.URLEncoder;
  */
 public class RepositoryHelper {
   //private static final Logger LOG = com.intellij.openapi.diagnostic.Logger.getInstance("#com.intellij.ide.plugins.RepositoryHelper");
-  public static final String REPOSITORY_HOST = "http://plugins.intellij.net";
+  @NonNls public static final String REPOSITORY_HOST = "http://plugins.intellij.net";
   //public static final String REPOSITORY_HOST = "http://unit-038:8080/plug";
-  public static final String REPOSITORY_LIST_URL = REPOSITORY_HOST + "/plugins/list/";
-  public static final String DOWNLOAD_URL = REPOSITORY_HOST + "/pluginManager?action=download&id=";
-  public static final String REPOSITORY_LIST_SYSTEM_ID = REPOSITORY_HOST + "/plugin-repository.dtd";
+  @NonNls public static final String REPOSITORY_LIST_URL = REPOSITORY_HOST + "/plugins/list/";
+  @NonNls public static final String DOWNLOAD_URL = REPOSITORY_HOST + "/pluginManager?action=download&id=";
+  @NonNls public static final String REPOSITORY_LIST_SYSTEM_ID = REPOSITORY_HOST + "/plugin-repository.dtd";
 
-  private static final String FILENAME = "filename=";
+  @NonNls private static final String FILENAME = "filename=";
 
   private static class InputStreamGetter implements Runnable {
     private InputStream is;
@@ -71,9 +73,10 @@ public class RepositoryHelper {
       if (pi.isCanceled())
         return null;
 
-      pi.setText("Waiting for reply from " + RepositoryHelper.REPOSITORY_HOST);
+      pi.setText(IdeBundle.message("progress.waiting.for.reply.from.plugin.manager", RepositoryHelper.REPOSITORY_HOST));
 
       InputStreamGetter getter = new InputStreamGetter(connection);
+      //noinspection HardCodedStringLiteral
       final Thread thread = new Thread (getter, "InputStreamGetter");
       thread.start();
 
@@ -93,7 +96,8 @@ public class RepositoryHelper {
       if (is == null)
         return null;
 
-      pi.setText("Downloading List of Plugins");
+      pi.setText(IdeBundle.message("progress.downloading.list.of.plugins"));
+      //noinspection HardCodedStringLiteral
       File temp = File.createTempFile("temp", "", new File (PathManagerEx.getPluginTempPath()));
       try {
         FileOutputStream fos = new FileOutputStream(temp, false);
@@ -125,8 +129,9 @@ public class RepositoryHelper {
   private static InputStream getConnectionInputStream (URLConnection connection) {
     final ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
 
-    pi.setText("Connecting...");
+    pi.setText(IdeBundle.message("progress.connecting"));
     InputStreamGetter getter = new InputStreamGetter(connection);
+    //noinspection HardCodedStringLiteral
     final Thread thread = new Thread (getter, "InputStreamGetter");
     thread.start();
 
@@ -154,6 +159,7 @@ public class RepositoryHelper {
       buildNumber = "3000";
     }
 
+    //noinspection HardCodedStringLiteral
     String url = DOWNLOAD_URL +
                  URLEncoder.encode(pluginNode.getName(), "UTF8") +
                  "&build=" + buildNumber;
@@ -167,7 +173,8 @@ public class RepositoryHelper {
       if (is == null)
         return null;
 
-      pi.setText("Downloading plugin '" + pluginNode.getName() + "'");
+      pi.setText(IdeBundle.message("progress.downloading.plugin", pluginNode.getName()));
+      //noinspection HardCodedStringLiteral
       File file = File.createTempFile("plugin", "download",
                                       new File (PathManagerEx.getPluginTempPath()));
       OutputStream fos = new BufferedOutputStream(new FileOutputStream(file, false));
@@ -178,7 +185,7 @@ public class RepositoryHelper {
           break;
         default:
           // some problems
-          throw new IOException("Connection failed with HTTP code " + responseCode);
+          throw new IOException(IdeBundle.message("error.connection.failed.with.http.code.N", responseCode));
       }
 
       if (pluginNode.getSize().equals("-1")) {
@@ -214,6 +221,7 @@ public class RepositoryHelper {
       }
 
       String fileName = null;
+      //noinspection HardCodedStringLiteral
       String contentDisposition = connection.getHeaderField("Content-Disposition");
       if (contentDisposition == null) {
         // try to find filename in URL

@@ -20,8 +20,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.Convertor;
+import com.intellij.execution.ExecutionBundle;
 
 import javax.swing.*;
 import java.util.*;
@@ -63,7 +63,7 @@ public abstract class ReorderableListController <T> {
   }
 
   public void addMoveUpAction() {
-    addAction(new AnAction("Move Up", null, IconLoader.getIcon("/actions/moveUp.png")) {
+    addAction(new AnAction(ExecutionBundle.message("move.up.action.name"), null, IconLoader.getIcon("/actions/moveUp.png")) {
       public void actionPerformed(final AnActionEvent e) {
         ListUtil.moveSelectedItemsUp(myList);
       }
@@ -75,7 +75,7 @@ public abstract class ReorderableListController <T> {
   }
 
   public void addMoveDownAction() {
-    addAction(new AnAction("Move Down", null, IconLoader.getIcon("/actions/moveDown.png")) {
+    addAction(new AnAction(ExecutionBundle.message("move.down.action.name"), null, IconLoader.getIcon("/actions/moveDown.png")) {
       public void actionPerformed(final AnActionEvent e) {
         ListUtil.moveSelectedItemsDown(myList);
       }
@@ -220,22 +220,13 @@ public abstract class ReorderableListController <T> {
       myConfirmation = confirmation;
     }
 
-    public void setDefaultConfirmation(final String noun, final String pluralSuffix) {
-      setConfirmation(new Condition<List<T>>() {
-        public boolean value(final List<T> list) {
-          final String suffix = list.size() > 1 ? pluralSuffix : "";
-          final String capitalized = StringUtil.capitalize(noun);
-          return Messages.showOkCancelDialog(myList, "Are you sure you want to delete the selected " + noun + suffix + "?",
-                                             "Confirm " + capitalized + suffix + " Delete",
-                                             Messages.getQuestionIcon()) == 0;
-        }
-      });
-    }
-
     public void setEnableCondition(final Condition<T> enableCondition) {
       myEnableCondition = enableCondition;
     }
 
+    public JList getList() {
+      return myList;
+    }
   }
 
   public class AddActionDescription extends CustomActionDescription<T> {

@@ -6,6 +6,7 @@ import com.intellij.execution.filters.*;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.macro.DataAccessor;
 import com.intellij.openapi.actionSystem.*;
@@ -540,7 +541,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
 
   private class ClearAllAction extends AnAction{
     public ClearAllAction(){
-      super("Clear All");
+      super(ExecutionBundle.message("clear.all.from.console.action.name"));
     }
 
     public void actionPerformed(final AnActionEvent e){
@@ -550,7 +551,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
 
   private class CopyAction extends AnAction{
     public CopyAction(){
-      super(myEditor.getSelectionModel().hasSelection() ? "Copy Selected Content" : "Copy Content");
+      super(myEditor.getSelectionModel().hasSelection() ? ExecutionBundle.message("copy.selected.content.action.name") : ExecutionBundle.message("copy.content.action.name"));
     }
 
     public void actionPerformed(final AnActionEvent e){

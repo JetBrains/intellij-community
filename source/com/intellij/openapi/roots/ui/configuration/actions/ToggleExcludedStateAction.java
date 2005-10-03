@@ -7,6 +7,7 @@ import com.intellij.openapi.roots.ui.configuration.ContentEntryEditor;
 import com.intellij.openapi.roots.ui.configuration.ContentEntryTreeEditor;
 import com.intellij.openapi.roots.ui.configuration.IconSet;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.project.ProjectBundle;
 
 import javax.swing.*;
 
@@ -21,8 +22,8 @@ public class ToggleExcludedStateAction extends ContentEntryEditingAction {
     super(tree);
     myEntryTreeEditor = entryEditor;
     final Presentation templatePresentation = getTemplatePresentation();
-    templatePresentation.setText("Excluded");
-    templatePresentation.setDescription("Include/Exclude directory from module");
+    templatePresentation.setText(ProjectBundle.message("module.toggle.excluded.action"));
+    templatePresentation.setDescription(ProjectBundle.message("module.toggle.excluded.action.description"));
     templatePresentation.setIcon(IconSet.EXCLUDE_FOLDER);
   }
 
@@ -53,7 +54,7 @@ public class ToggleExcludedStateAction extends ContentEntryEditingAction {
   public void update(AnActionEvent e) {
     super.update(e);
     final Presentation presentation = e.getPresentation();
-    presentation.setText("Excluded");
+    presentation.setText(ProjectBundle.message("module.toggle.excluded.action"));
   }
 
 }

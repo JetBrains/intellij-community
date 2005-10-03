@@ -19,7 +19,7 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageView;
-import com.intellij.usages.UsageViewBundle;
+import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.usages.rules.UsageGroupingRule;
 

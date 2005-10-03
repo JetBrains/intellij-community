@@ -4,7 +4,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.vcs.VcsBundle;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -18,9 +20,9 @@ public class UpdateInfo implements JDOMExternalizable {
   private ActionInfo myActionInfo;
   private static final DateFormat DATE_FORMAT =
     SimpleDateFormat.getDateTimeInstance(SimpleDateFormat.SHORT, SimpleDateFormat.SHORT, Locale.getDefault());
-  private static final String DATE_ATTR = "date";
-  private static final String FILE_INFO_ELEMENTS = "UpdatedFiles";
-  private static final String ACTION_INFO_ATTRIBUTE_NAME = "ActionInfo";
+  @NonNls private static final String DATE_ATTR = "date";
+  @NonNls private static final String FILE_INFO_ELEMENTS = "UpdatedFiles";
+  @NonNls private static final String ACTION_INFO_ATTRIBUTE_NAME = "ActionInfo";
 
   public UpdateInfo(Project project, UpdatedFiles updatedFiles, ActionInfo actionInfo) {
     myProject = project;
@@ -77,7 +79,7 @@ public class UpdateInfo implements JDOMExternalizable {
   }
 
   public String getCaption() {
-    return "Update Project" + " (" + myDate + ")";
+    return VcsBundle.message("toolwindow.title.update.project", myDate);
   }
 
   public boolean isEmpty() {

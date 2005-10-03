@@ -17,6 +17,8 @@ package com.intellij.openapi.projectRoots;
 
 import com.intellij.openapi.util.IconLoader;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 
@@ -30,6 +32,7 @@ public abstract class SdkType {
 
   public abstract boolean isValidSdkHome(String path);
 
+  @Nullable
   public abstract String getVersionString(String sdkHome);
 
   public abstract String suggestSdkName(String currentSdkName, String sdkHome);
@@ -43,19 +46,23 @@ public abstract class SdkType {
    */
   public abstract AdditionalDataConfigurable createAdditionalDataConfigurable(SdkModel sdkModel, SdkModificator sdkModificator);
 
+  @Nullable
   public abstract String getBinPath(Sdk sdk);
 
+  @Nullable
   public abstract String getToolsPath(Sdk sdk);
 
+  @Nullable
   public abstract String getVMExecutablePath(Sdk sdk);
 
+  @Nullable
   public abstract String getRtLibraryPath(Sdk sdk);
 
   public abstract void saveAdditionalData(SdkAdditionalData additionalData, Element additional);
 
   public abstract SdkAdditionalData loadAdditionalData(Element additional);
 
-  public SdkType(String name) {
+  public SdkType(@NonNls String name) {
     myName = name;
   }
 

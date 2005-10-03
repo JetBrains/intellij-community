@@ -25,6 +25,7 @@ public final class MainProcessor extends EventProcessor{
 
   public MainProcessor(final GuiEditor editor){
     if (editor == null){
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("editor cannot be null");
     }
     myEditor = editor;

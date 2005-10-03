@@ -12,6 +12,7 @@ import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.UIBundle;
 
 import java.io.IOException;
 
@@ -20,7 +21,7 @@ public class FileDeleteAction extends DeleteAction {
   private final DeleteProvider myDeleteProvider;
 
   private FileDeleteAction(DeleteProvider fileChooser) {
-    super("Delete...", "Delete", IconLoader.getIcon("/actions/delete.png"));
+    super(UIBundle.message("file.chooser.delete.action.name"), UIBundle.message("file.chooser.delete.action.description"), IconLoader.getIcon("/actions/delete.png"));
     myDeleteProvider = fileChooser;
   }
 
@@ -53,7 +54,7 @@ public class FileDeleteAction extends DeleteAction {
       if (files.length == 0) return;
 
       String message = createConfirmationMessage(files);
-      int returnValue = Messages.showYesNoDialog(message, "Delete", Messages.getQuestionIcon());
+      int returnValue = Messages.showYesNoDialog(message, UIBundle.message("delete.dialog.title"), Messages.getQuestionIcon());
       if (returnValue != 0) return;
 
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -66,7 +67,9 @@ public class FileDeleteAction extends DeleteAction {
             catch (IOException e) {
               ApplicationManager.getApplication().invokeLater(new Runnable() {
                           public void run() {
-                            Messages.showMessageDialog("Could not erase file or folder: " + file.getName(), "Error", Messages.getErrorIcon());
+                            Messages.showMessageDialog(
+                              UIBundle.message("file.chooser.could.not.erase.file.or.folder.error.messabe", file.getName()),
+                              UIBundle.message("error.dialog.title"), Messages.getErrorIcon());
                           }
                         });
             }
@@ -79,7 +82,8 @@ public class FileDeleteAction extends DeleteAction {
     private String createConfirmationMessage(VirtualFile[] filesToDelete) {
       String deleteWhat;
       if (filesToDelete.length == 1){
-        deleteWhat = filesToDelete[0].isDirectory() ? "folder" : "file";
+        if (filesToDelete[0].isDirectory()) return UIBundle.message("are.you.sure.you.want.to.delete.selected.folder.confirmation.message");
+        else return UIBundle.message("are.you.sure.you.want.to.delete.selected.file.confirmation.message");
       }
       else {
         boolean hasFiles = false;
@@ -91,11 +95,11 @@ public class FileDeleteAction extends DeleteAction {
           hasFolders |= isDirectory;
         }
         LOG.assertTrue(hasFiles || hasFolders);
-        if (hasFiles && hasFolders) deleteWhat = "files and directories";
-        else if (hasFolders) deleteWhat = "folders";
-        else deleteWhat = "files";
+        if (hasFiles && hasFolders) return UIBundle
+          .message("are.you.sure.you.want.to.delete.selected.files.and.directories.confirmation.message");
+        else if (hasFolders) return UIBundle.message("are.you.sure.you.want.to.delete.selected.folders.confirmation.message");
+        else return UIBundle.message("are.you.sure.you.want.to.delete.selected.files.and.files.confirmation.message");
       }
-      return "Are you sure you want to delete selected " + deleteWhat + "?";
     }
   }
 }

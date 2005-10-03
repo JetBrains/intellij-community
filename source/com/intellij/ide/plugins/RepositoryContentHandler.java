@@ -4,6 +4,7 @@ import com.intellij.openapi.extensions.PluginId;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * Created by IntelliJ IDEA.
@@ -13,19 +14,22 @@ import org.xml.sax.helpers.DefaultHandler;
  * To change this template use Options | File Templates.
  */
 class RepositoryContentHandler extends DefaultHandler {
-  public static final String CATEGORY = "category";
-  public static final String IDEA_PLUGIN = "idea-plugin";
-  public static final String NAME = "name";
-  public static final String ID = "id";
-  public static final String DESCRIPTION = "description";
-  public static final String VERSION = "version";
-  public static final String VENDOR = "vendor";
-  public static final String EMAIL = "email";
-  public static final String URL = "url";
-  public static final String IDEA_VERSION = "idea-version";
-  public static final String SINCE_BUILD = "since-build";
-  public static final String CHNAGE_NOTES = "change-notes";
-  private static final String DEPENDS = "depends";
+  @NonNls public static final String CATEGORY = "category";
+  @NonNls public static final String IDEA_PLUGIN = "idea-plugin";
+  @NonNls public static final String NAME = "name";
+  @NonNls public static final String ID = "id";
+  @NonNls public static final String DESCRIPTION = "description";
+  @NonNls public static final String VERSION = "version";
+  @NonNls public static final String VENDOR = "vendor";
+  @NonNls public static final String EMAIL = "email";
+  @NonNls public static final String URL = "url";
+  @NonNls public static final String IDEA_VERSION = "idea-version";
+  @NonNls public static final String SINCE_BUILD = "since-build";
+  @NonNls public static final String CHNAGE_NOTES = "change-notes";
+  @NonNls private static final String DEPENDS = "depends";
+  @NonNls private static final String DOWNLOADS = "downloads";
+  @NonNls private static final String SIZE = "size";
+  @NonNls private static final String DATE = "date";
 
   private CategoryNode currentCategory;
   private PluginNode currentPlugin;
@@ -51,10 +55,10 @@ class RepositoryContentHandler extends DefaultHandler {
     } else if (qName.equals(IDEA_PLUGIN)) {
       currentPlugin = new PluginNode();
       currentPlugin.setParent(currentCategory);
-      currentPlugin.setDownloads(atts.getValue("downloads"));
-      currentPlugin.setSize(atts.getValue("size"));
-      currentPlugin.setUrl (atts.getValue("url"));
-      currentPlugin.setDate (atts.getValue("date"));
+      currentPlugin.setDownloads(atts.getValue(DOWNLOADS));
+      currentPlugin.setSize(atts.getValue(SIZE));
+      currentPlugin.setUrl (atts.getValue(URL));
+      currentPlugin.setDate (atts.getValue(DATE));
       currentCategory.addPlugin(currentPlugin);
     } else if (qName.equals(IDEA_VERSION)) {
       currentPlugin.setSinceBuild(atts.getValue(SINCE_BUILD));

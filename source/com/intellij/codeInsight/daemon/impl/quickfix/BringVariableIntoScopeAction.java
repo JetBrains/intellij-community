@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -9,8 +10,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-
-import java.text.MessageFormat;
 
 /**
  * @author ven
@@ -27,11 +26,11 @@ public class BringVariableIntoScopeAction implements IntentionAction {
   public String getText() {
     LOG.assertTrue(myOutOfScopeVariable != null);
     String varText = PsiFormatUtil.formatVariable(myOutOfScopeVariable, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE, PsiSubstitutor.EMPTY);
-    return MessageFormat.format("Bring ''{0}'' into Scope", new Object[] {varText});
+    return QuickFixBundle.message("bring.variable.to.scope.text", varText);
   }
 
   public String getFamilyName() {
-    return "Bring Variable to Scope";
+    return QuickFixBundle.message("bring.variable.to.scope.family");
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {

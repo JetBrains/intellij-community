@@ -22,10 +22,12 @@ public final class ResizeProcessor extends EventProcessor{
   public ResizeProcessor(final GuiEditor editor, final RadComponent component, final int resizeMask){
     myEditor = editor;
     if (component.getParent() == null) {
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("parent is null for " + component);
     }
 
     if (!component.getParent().isXY()) {
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("parent must be XY; component=" + component);
     }
 

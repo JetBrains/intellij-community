@@ -21,6 +21,9 @@ import javax.swing.*;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
+import org.jetbrains.annotations.NonNls;
+import com.intellij.util.ui.UIUtil;
+
 /**
  * The presentation of an action in a specific place in the user interface.
  *
@@ -28,38 +31,37 @@ import java.beans.PropertyChangeSupport;
  * @see ActionPlaces
  */
 
-@SuppressWarnings({"HardCodedStringLiteral"})
 public final class Presentation implements Cloneable {
   private THashMap myUserMap;
   /**
    * Defines tool tip for button at tool bar or text for element at menu
    * value: String
    */
-  public static final String PROP_TEXT = "text";
+  @NonNls public static final String PROP_TEXT = "text";
   /**
    * value: Integer
    */
-  public static final String PROP_MNEMONIC_KEY = "mnemonicKey";
+  @NonNls public static final String PROP_MNEMONIC_KEY = "mnemonicKey";
   /**
    * value: String
    */
-  public static final String PROP_DESCRIPTION = "description";
+  @NonNls public static final String PROP_DESCRIPTION = "description";
   /**
    * value: Icon
    */
-  public static final String PROP_ICON = "icon";
+  @NonNls public static final String PROP_ICON = "icon";
   /**
    * value: Icon
    */
-  public static final String PROP_DISABLED_ICON = "disabledIcon";
+  @NonNls public static final String PROP_DISABLED_ICON = "disabledIcon";
   /**
    * value: Boolean
    */
-  public static final String PROP_VISIBLE = "visible";
+  @NonNls public static final String PROP_VISIBLE = "visible";
   /**
    * The actual value is a Boolean.
    */
-  public static final String PROP_ENABLED = "enabled";
+  @NonNls public static final String PROP_ENABLED = "enabled";
 
 
   private PropertyChangeSupport myChangeSupport;
@@ -95,6 +97,11 @@ public final class Presentation implements Cloneable {
     myMnemonic = 0;
 
     if (text != null){
+
+      if (text.indexOf(UIUtil.MNEMONIC) >= 0) {
+        text = text.replace(UIUtil.MNEMONIC, '&');
+      }
+
       if (mayContainMnemonic){
         StringBuffer plainText = new StringBuffer();
         for(int i = 0; i < text.length(); i++){
@@ -228,7 +235,7 @@ public final class Presentation implements Cloneable {
     }
   }
 
-  public Object getClientProperty(String key){
+  public Object getClientProperty(@NonNls String key){
     if(myUserMap==null){
       return null;
     }else{
@@ -236,7 +243,7 @@ public final class Presentation implements Cloneable {
     }
   }
 
-  public void putClientProperty(String key,Object value){
+  public void putClientProperty(@NonNls String key, Object value){
     if(myUserMap==null){
       myUserMap=new THashMap(1);
     }

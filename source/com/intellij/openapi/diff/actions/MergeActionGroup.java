@@ -3,6 +3,7 @@ package com.intellij.openapi.diff.actions;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diff.impl.DiffPanelImpl;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.project.Project;
 
 import java.util.ArrayList;
@@ -30,7 +31,8 @@ public class MergeActionGroup extends ActionGroup {
     private final MergeOperations myOperations;
 
     public SelectSuggestionAction(MergeOperations operations) {
-      super("Select Change", "Select changed text in this version and corresponding in other", null);
+      super(DiffBundle.message("diff.dialog.select.change.action.name"),
+            DiffBundle.message("diff.dialog.select.change.action.description"), null);
       myOperations = operations;
     }
 

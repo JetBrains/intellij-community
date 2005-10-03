@@ -37,6 +37,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.*;
@@ -113,7 +114,7 @@ public class VcsGroupsWrapper extends DefaultActionGroup {
       updateFromAction(vcsToActionMap.get(currentVcses.iterator().next()), presentation);
     }
     else {
-      DefaultActionGroup composite = new DefaultActionGroup("&Version Control", true);
+      DefaultActionGroup composite = new DefaultActionGroup(VcsBundle.message("group.name.version.control"), true);
       for (int i = 0; i < myChildren.length; i++) {
         StandardVcsGroup child = (StandardVcsGroup)myChildren[i];
         AbstractVcs vcs = child.getVcs(project);

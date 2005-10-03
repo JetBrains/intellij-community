@@ -25,6 +25,7 @@ import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.refactoring.RefactoringBundle;
 
 import javax.swing.*;
 import java.util.HashSet;
@@ -139,12 +140,12 @@ public class CopyHandler {
         }
       }
       CopyClassDialog dialog = new CopyClassDialog(aClass, defaultTargetDirectory, defaultPackage, project, false);
-      dialog.setTitle("Copy Class");
+      dialog.setTitle(RefactoringBundle.message("copy.handler.copy.class"));
       dialog.show();
       if (dialog.isOK()) {
         PsiDirectory targetDirectory = dialog.getTargetDirectory();
         String className = dialog.getClassName();
-        copyClassImpl(className, project, aClass, targetDirectory, "Copy class", false);
+        copyClassImpl(className, project, aClass, targetDirectory, RefactoringBundle.message("copy.handler.copy.class"), false);
       }
     }
     else if (type == FILES || type == DIRECTORIES) {
@@ -222,11 +223,11 @@ public class CopyHandler {
       PsiClass aClass = (PsiClass)element;
 
       CopyClassDialog dialog = new CopyClassDialog(aClass, null, null,project, true);
-      dialog.setTitle("Clone Class");
+      dialog.setTitle(RefactoringBundle.message("copy.handler.clone.class"));
       dialog.show();
       if (dialog.isOK()) {
         String className = dialog.getClassName();
-        copyClassImpl(className, project, aClass, targetDirectory, "Clone class", true);
+        copyClassImpl(className, project, aClass, targetDirectory, RefactoringBundle.message("copy.handler.clone.class"), true);
       }
     }
     else if (type == FILES || type == DIRECTORIES) {
@@ -272,7 +273,8 @@ public class CopyHandler {
             } catch (final IncorrectOperationException ex) {
               SwingUtilities.invokeLater(new Runnable() {
                 public void run() {
-                  Messages.showMessageDialog(project, ex.getMessage(), "Error", Messages.getErrorIcon());
+                  Messages.showMessageDialog(project, ex.getMessage(),
+                                             RefactoringBundle.message("error.title"), Messages.getErrorIcon());
                 }
               });
             }
@@ -320,8 +322,7 @@ public class CopyHandler {
         file = (PsiFile)file.copy();
         file = (PsiFile) file.setName(newName);
       }
-      PsiFile newFile = (PsiFile)targetDirectory.add(file);
-      return newFile;
+      return (PsiFile)targetDirectory.add(file);
     }
     else if (elementToCopy instanceof PsiDirectory) {
       PsiDirectory directory = (PsiDirectory)elementToCopy;
@@ -390,7 +391,7 @@ public class CopyHandler {
             } catch (final IncorrectOperationException ex) {
               ApplicationManager.getApplication().invokeLater(new Runnable() {
                           public void run() {
-                            Messages.showMessageDialog(project, ex.getMessage(), "Error", Messages.getErrorIcon());
+                            Messages.showMessageDialog(project, ex.getMessage(), RefactoringBundle.message("error.title"), Messages.getErrorIcon());
                           }
                         });
             }
@@ -399,7 +400,9 @@ public class CopyHandler {
         ApplicationManager.getApplication().runWriteAction(action);
       }
     };
-    CommandProcessor.getInstance().executeCommand(project, command, doClone ? "Clone files/directories" : "Copy files/directories", null);
+    CommandProcessor.getInstance().executeCommand(project, command, doClone ?
+                                                                    RefactoringBundle.message("copy,handler.clone.files.directories") :
+                                                                    RefactoringBundle.message("copy.handler.copy.files.directories"), null);
   }
 
 }

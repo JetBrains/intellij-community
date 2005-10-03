@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.ui.OptionGroup;
@@ -13,13 +14,16 @@ import com.intellij.ui.IdeBorderFactory;
 import javax.swing.*;
 import java.awt.*;
 
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+
 public class CodeStyleIndentAndBracesPanel extends CodeStyleAbstractPanel {
   private static final String[] BRACE_PLACEMENT_OPTIONS = new String[]{
-    "End of line",
-    "Next line if wrapped",
-    "Next line",
-    "Next line shifted",
-    "Next line shifted2"
+    ApplicationBundle.message("combobox.brace.placement.end.of.line"),
+    ApplicationBundle.message("combobox.brace.placement.next.line.if.wrapped"),
+    ApplicationBundle.message("combobox.brace.placement.next.line"),
+    ApplicationBundle.message("combobox.brace.placement.next.line.shifted"),
+    ApplicationBundle.message("combobox.brace.placement.next.line.shifted2")
   };
 
   private static final int[] BRACE_PLACEMENT_VALUES = new int[] {
@@ -31,9 +35,9 @@ public class CodeStyleIndentAndBracesPanel extends CodeStyleAbstractPanel {
   };
 
   private static final String[] BRACE_FORCE_OPTIONS = new String[]{
-    "Do not force",
-    "When multiline",
-    "Always"
+    ApplicationBundle.message("combobox.force.braces.do.not.force"),
+    ApplicationBundle.message("combobox.force.braces.when.multiline"),
+    ApplicationBundle.message("combobox.force.braces.always")
   };
 
   private static final int[] BRACE_FORCE_VALUES = new int[]{
@@ -82,23 +86,23 @@ public class CodeStyleIndentAndBracesPanel extends CodeStyleAbstractPanel {
     super(settings);
 
     myPanel.add(createKeepWhenReformatingPanel(),
-        new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
-                               new Insets(0, 4, 0, 4), 0, 0));
+                new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
+                                       new Insets(0, 4, 0, 4), 0, 0));
 
     myPanel.add(createBracesPanel(),
-        new GridBagConstraints(0, 1, 1, 1, 0, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
-                               new Insets(0, 4, 0, 4), 0, 0));
+                new GridBagConstraints(0, 1, 1, 1, 0, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
+                                       new Insets(0, 4, 0, 4), 0, 0));
 
     myPanel.add(createAlignmentsPanel(),
-        new GridBagConstraints(1, 0, 1, 2, 0, 0, GridBagConstraints.NORTH, GridBagConstraints.BOTH,
-                               new Insets(0, 4, 0, 4), 0, 0));
+                new GridBagConstraints(1, 0, 1, 2, 0, 0, GridBagConstraints.NORTH, GridBagConstraints.BOTH,
+                                       new Insets(0, 4, 0, 4), 0, 0));
 
     myPanel.add(createPlaceOnNewLinePanel(),
-        new GridBagConstraints(1, 2, 1, 1, 0, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
-                               new Insets(0, 4, 0, 4), 0, 0));
+                new GridBagConstraints(1, 2, 1, 1, 0, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
+                                       new Insets(0, 4, 0, 4), 0, 0));
     myPanel.add(createForceBracesPanel(),
-        new GridBagConstraints(0, 2, 1, 1, 0, 0, GridBagConstraints.NORTH, GridBagConstraints.BOTH,
-                               new Insets(0, 4, 0, 4), 0, 0));
+                new GridBagConstraints(0, 2, 1, 1, 0, 0, GridBagConstraints.NORTH, GridBagConstraints.BOTH,
+                                       new Insets(0, 4, 0, 4), 0, 0));
 
     myPanel.add(new JPanel() {
       public Dimension getPreferredSize() {
@@ -116,21 +120,21 @@ public class CodeStyleIndentAndBracesPanel extends CodeStyleAbstractPanel {
   }
 
   private Component createKeepWhenReformatingPanel() {
-    OptionGroup optionGroup = new OptionGroup("Keep When Reformatting");
+    OptionGroup optionGroup = new OptionGroup(ApplicationBundle.message("title.keep.when.reformatting"));
 
-    myKeepLineBreaks = createCheckBox("Line breaks");
+    myKeepLineBreaks = createCheckBox(ApplicationBundle.message("checkbox.keep.when.reformatting.line.breaks"));
     optionGroup.add(myKeepLineBreaks);
 
-    myKeepCommentAtFirstColumn = createCheckBox("Comment at first column");
+    myKeepCommentAtFirstColumn = createCheckBox(ApplicationBundle.message("checkbox.keep.when.reformatting.comment.at.first.column"));
     optionGroup.add(myKeepCommentAtFirstColumn);
 
-    myKeepMethodsInOneLine = createCheckBox("Simple methods in one line");
+    myKeepMethodsInOneLine = createCheckBox(ApplicationBundle.message("checkbox.keep.when.reformatting.simple.methods.in.one.line"));
     optionGroup.add(myKeepMethodsInOneLine);
 
-    myKeepSimpleBlocksInOneLine = createCheckBox("Simple blocks in one line");
+    myKeepSimpleBlocksInOneLine = createCheckBox(ApplicationBundle.message("checkbox.keep.when.reformatting.simple.blocks.in.one.line"));
     optionGroup.add(myKeepSimpleBlocksInOneLine);
 
-    myKeepControlStatementInOneLine = createCheckBox("Control statement in one line");
+    myKeepControlStatementInOneLine = createCheckBox(ApplicationBundle.message("checkbox.keep.when.reformatting.control.statement.in.one.line"));
     optionGroup.add(myKeepControlStatementInOneLine);
 
 
@@ -139,93 +143,93 @@ public class CodeStyleIndentAndBracesPanel extends CodeStyleAbstractPanel {
   }
 
   private JPanel createBracesPanel() {
-    OptionGroup optionGroup = new OptionGroup("Braces Placement");
+    OptionGroup optionGroup = new OptionGroup(ApplicationBundle.message("title.braces.placement"));
 
     myClassDeclarationCombo = createBraceStyleCombo();
-    optionGroup.add(new JLabel("Class declaration:"), myClassDeclarationCombo);
+    optionGroup.add(new JLabel(ApplicationBundle.message("combobox.brace.placement.class.declaration")), myClassDeclarationCombo);
 
     myMethodDeclarationCombo = createBraceStyleCombo();
-    optionGroup.add(new JLabel("Method declaration:"), myMethodDeclarationCombo);
+    optionGroup.add(new JLabel(ApplicationBundle.message("combobox.brace.placement.method.declaration")), myMethodDeclarationCombo);
 
     myOtherCombo = createBraceStyleCombo();
-    optionGroup.add(new JLabel("Other:"), myOtherCombo);
+    optionGroup.add(new JLabel(ApplicationBundle.message("combobox.brace.placement.other")), myOtherCombo);
 
-    myCbSpecialElseIfTreatment = createCheckBox("Special \"else if\" treatment");
+    myCbSpecialElseIfTreatment = createCheckBox(ApplicationBundle.message("checkbox.brace.special.else.if.treatment"));
     optionGroup.add(myCbSpecialElseIfTreatment);
 
-    myCbIndentCaseFromSwitch = createCheckBox("Indent \"case\" from \"switch\"");
+    myCbIndentCaseFromSwitch = createCheckBox(ApplicationBundle.message("checkbox.brace.indent.case.from.switch"));
     optionGroup.add(myCbIndentCaseFromSwitch);
 
     return optionGroup.createPanel();
   }
 
   private JPanel createForceBracesPanel() {
-    OptionGroup optionGroup = new OptionGroup("Force Braces");
+    OptionGroup optionGroup = new OptionGroup(ApplicationBundle.message("title.force.braces"));
 
     myIfForceCombo = createForceBracesCombo();
-    optionGroup.add(new JLabel("if ():"), myIfForceCombo);
+    optionGroup.add(new JLabel(ApplicationBundle.message("combobox.force.braces.if")), myIfForceCombo);
 
     myForForceCombo = createForceBracesCombo();
-    optionGroup.add(new JLabel("for ():"), myForForceCombo);
+    optionGroup.add(new JLabel(ApplicationBundle.message("combobox.force.braces.for")), myForForceCombo);
 
     myWhileForceCombo = createForceBracesCombo();
-    optionGroup.add(new JLabel("while ():"), myWhileForceCombo);
+    optionGroup.add(new JLabel(ApplicationBundle.message("combobox.force.braces.while")), myWhileForceCombo);
 
     myDoWhileForceCombo = createForceBracesCombo();
-    optionGroup.add(new JLabel("do ... while():"), myDoWhileForceCombo);
+    optionGroup.add(new JLabel(ApplicationBundle.message("combobox.force.braces.do.while")), myDoWhileForceCombo);
 
     return optionGroup.createPanel();
   }
 
   private JPanel createAlignmentsPanel() {
-    OptionGroup optionGroup = new OptionGroup("Align when multiline");
+    OptionGroup optionGroup = new OptionGroup(ApplicationBundle.message("title.align.when.multiline"));
 
-    myAlignDeclarationParameters = createCheckBox("Method parameters");
+    myAlignDeclarationParameters = createCheckBox(ApplicationBundle.message("checkbox.align.multiline.method.parameters"));
     optionGroup.add(myAlignDeclarationParameters);
 
-    myAlignCallParameters = createCheckBox("Call arguments");
+    myAlignCallParameters = createCheckBox(ApplicationBundle.message("checkbox.align.multiline.call.arguments"));
     optionGroup.add(myAlignCallParameters);
 
-    myAlignExtendsList = createCheckBox("Extends list");
+    myAlignExtendsList = createCheckBox(ApplicationBundle.message("checkbox.align.multiline.extends.list"));
     optionGroup.add(myAlignExtendsList);
 
-    myAlignThrowsList = createCheckBox("Throws list");
+    myAlignThrowsList = createCheckBox(ApplicationBundle.message("checkbox.align.multiline.throws.list"));
     optionGroup.add(myAlignThrowsList);
 
-    myAlignParenthesizedExpression = createCheckBox("Parenthesized expression");
+    myAlignParenthesizedExpression = createCheckBox(ApplicationBundle.message("checkbox.align.multiline.parenthesized.expression"));
     optionGroup.add(myAlignParenthesizedExpression);
 
-    myAlignBinaryExpression = createCheckBox("Binary operation");
+    myAlignBinaryExpression = createCheckBox(ApplicationBundle.message("checkbox.align.multiline.binary.operation"));
     optionGroup.add(myAlignBinaryExpression);
 
-    myAlignTernaryExpression = createCheckBox("Ternary operation");
+    myAlignTernaryExpression = createCheckBox(ApplicationBundle.message("checkbox.align.multiline.ternary.operation"));
     optionGroup.add(myAlignTernaryExpression);
 
-    myAlignAssignment = createCheckBox("Assignments");
+    myAlignAssignment = createCheckBox(ApplicationBundle.message("checkbox.align.multiline.assignments"));
     optionGroup.add(myAlignAssignment);
 
-    myAlignForStatement = createCheckBox("For statement");
+    myAlignForStatement = createCheckBox(ApplicationBundle.message("checkbox.align.multiline.for.statement"));
     optionGroup.add(myAlignForStatement);
 
-    myAlignArrayInitializerExpression = createCheckBox("Array initializer");
+    myAlignArrayInitializerExpression = createCheckBox(ApplicationBundle.message("checkbox.align.multiline.array.initializer"));
     optionGroup.add(myAlignArrayInitializerExpression);
 
     return optionGroup.createPanel();
   }
 
   private JPanel createPlaceOnNewLinePanel() {
-    OptionGroup optionGroup = new OptionGroup("Place on New Line");
+    OptionGroup optionGroup = new OptionGroup(ApplicationBundle.message("title.place.on.new.line"));
 
-    myCbElseOnNewline = createCheckBox("\"else\" on new line");
+    myCbElseOnNewline = createCheckBox(ApplicationBundle.message("checkbox.place.else.on.new.line"));
     optionGroup.add(myCbElseOnNewline);
 
-    myCbWhileOnNewline = createCheckBox("\"while\" on new line");
+    myCbWhileOnNewline = createCheckBox(ApplicationBundle.message("checkbox.place.while.on.new.line"));
     optionGroup.add(myCbWhileOnNewline);
 
-    myCbCatchOnNewline = createCheckBox("\"catch\" on new line");
+    myCbCatchOnNewline = createCheckBox(ApplicationBundle.message("checkbox.place.catch.on.new.line"));
     optionGroup.add(myCbCatchOnNewline);
 
-    myCbFinallyOnNewline = createCheckBox("\"finally\" on new line");
+    myCbFinallyOnNewline = createCheckBox(ApplicationBundle.message("checkbox.place.finally.on.new.line"));
     optionGroup.add(myCbFinallyOnNewline);
 
     return optionGroup.createPanel();
@@ -284,10 +288,11 @@ public class CodeStyleIndentAndBracesPanel extends CodeStyleAbstractPanel {
 
   private JPanel createPreviewPanel() {
     JPanel p = new JPanel(new BorderLayout());
-    p.setBorder(IdeBorderFactory.createTitledBorder("Preview"));
+    p.setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.preview")));
     return p;
   }
 
+  @NonNls
   protected String getPreviewText() {
     return
       "public class Foo {\n" +
@@ -472,6 +477,7 @@ public class CodeStyleIndentAndBracesPanel extends CodeStyleAbstractPanel {
 
   }
 
+  @NotNull
   protected FileType getFileType() {
     return StdFileTypes.JAVA;
   }

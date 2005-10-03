@@ -33,7 +33,7 @@ public class EditAction extends AsbtractActionFromEditGroup {
 
 
   protected String getTitle(VcsContext context) {
-    return "Edit";
+    return com.intellij.CvsBundle.message("action.name.edit");
   }
 
   protected CvsHandler getCvsHandler(CvsContext context) {

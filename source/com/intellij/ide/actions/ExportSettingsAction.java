@@ -11,6 +11,7 @@ import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.ZipUtil;
+import com.intellij.ide.IdeBundle;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -19,16 +20,18 @@ import java.io.IOException;
 import java.util.*;
 import java.util.jar.JarOutputStream;
 
+import org.jetbrains.annotations.NonNls;
+
 public class ExportSettingsAction extends AnAction {
-  static final String SETTINGS_JAR_MARKER = "IntelliJ IDEA Global Settings";
+  @NonNls static final String SETTINGS_JAR_MARKER = "IntelliJ IDEA Global Settings";
 
   public void actionPerformed(AnActionEvent e) {
     List<ExportableApplicationComponent> exportableComponents = new ArrayList<ExportableApplicationComponent>();
     Map<File,Set<ExportableApplicationComponent>> fileToComponents = getRegisteredComponentsAndFiles(exportableComponents);
 
     final ChooseComponentsToExportDialog dialog = new ChooseComponentsToExportDialog(exportableComponents, fileToComponents, true,
-                                                                                     "Select Components to Export",
-                                                                                     "Please check all components to export:");
+                                                                                     IdeBundle.message("title.select.components.to.export"),
+                                                                                     IdeBundle.message("propt.please.check.all.components.to.export"));
     dialog.show();
     if (!dialog.isOK()) return;
     Set<ExportableApplicationComponent> markedComponents = dialog.getExportableComponents();
@@ -45,8 +48,9 @@ public class ExportSettingsAction extends AnAction {
     try {
       final File saveFile = dialog.getExportFile();
       if (saveFile.exists()) {
-        final int ret = Messages.showOkCancelDialog("Overwrite '"+FileUtil.toSystemDependentName(saveFile.getPath())+"'?",
-                                                    "File Already Exists", Messages.getWarningIcon());
+        final int ret = Messages.showOkCancelDialog(
+          IdeBundle.message("prompt.overwrite.settings.file", FileUtil.toSystemDependentName(saveFile.getPath())),
+          IdeBundle.message("title.file.already.exists"), Messages.getWarningIcon());
         if (ret != 0) return;
       }
       final JarOutputStream output = new JarOutputStream(new BufferedOutputStream(new FileOutputStream(saveFile)));
@@ -64,12 +68,11 @@ public class ExportSettingsAction extends AnAction {
       magicFile.deleteOnExit();
       ZipUtil.addFileToZip(output, magicFile, SETTINGS_JAR_MARKER, writtenItemRelativePaths, null);
       output.close();
-      Messages.showMessageDialog("Settings exported successfully.\n" +
-                                 "You can import the settings using 'File|Import Settings' feature.",
-                                 "Export Successful", Messages.getInformationIcon());
+      Messages.showMessageDialog(IdeBundle.message("message.settings.exported.successfully"),
+                                 IdeBundle.message("title.export.successful"), Messages.getInformationIcon());
     }
     catch (IOException e1) {
-      Messages.showErrorDialog("Error writing settings.\n\n"+e1.toString(),"Error Writing File");
+      Messages.showErrorDialog(IdeBundle.message("error.writing.settings", e1.toString()),IdeBundle.message("title.error.writing.file"));
     }
   }
 

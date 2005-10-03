@@ -17,11 +17,11 @@ import java.awt.event.ActionListener;
 class OutputFiltersDialog extends DialogWrapper {
   private final DefaultListModel myFiltersModel = new DefaultListModel();
   private final JList myFiltersList = new JList(myFiltersModel);
-  private final JButton myAddButton = new JButton("Add...");
-  private final JButton myEditButton = new JButton("Edit...");
-  private final JButton myRemoveButton = new JButton("Remove");
-  private final JButton myMoveUpButton = new JButton("Move Up");
-  private final JButton myMoveDownButton = new JButton("Move Down");
+  private final JButton myAddButton = new JButton(ToolsBundle.message("tools.filters.add.button"));
+  private final JButton myEditButton = new JButton(ToolsBundle.message("tools.filters.edit.button"));
+  private final JButton myRemoveButton = new JButton(ToolsBundle.message("tools.filters.remove.button"));
+  private final JButton myMoveUpButton = new JButton(ToolsBundle.message("tools.filters.move.up.button"));
+  private final JButton myMoveDownButton = new JButton(ToolsBundle.message("tools.filters.move.down.button"));
   private final CommandButtonGroup myButtonGroup = new CommandButtonGroup(BoxLayout.Y_AXIS);
   private boolean myModified = false;
   private FilterInfo[] myFilters;
@@ -30,15 +30,9 @@ class OutputFiltersDialog extends DialogWrapper {
     super(parent, true);
     myFilters = filters;
 
-    setTitle("Output Filters");
+    setTitle(ToolsBundle.message("tools.filters.title"));
     init();
     initGui();
-
-    myAddButton.setMnemonic('A');
-    myEditButton.setMnemonic('d');
-    myRemoveButton.setMnemonic('R');
-    myMoveUpButton.setMnemonic('U');
-    myMoveDownButton.setMnemonic('o');
   }
 
   protected Action[] createActions() {
@@ -74,7 +68,7 @@ class OutputFiltersDialog extends DialogWrapper {
       public void actionPerformed(ActionEvent e) {
         FilterInfo filterInfo = new FilterInfo();
         filterInfo.setName(suggestFilterName());
-        boolean wasCreated = FilterDialog.editFilter(filterInfo, myAddButton, "Add Filter");
+        boolean wasCreated = FilterDialog.editFilter(filterInfo, myAddButton, ToolsBundle.message("tools.filters.add.title"));
         if (wasCreated) {
           myFiltersModel.addElement(filterInfo);
           setModified(true);
@@ -88,7 +82,7 @@ class OutputFiltersDialog extends DialogWrapper {
       public void actionPerformed(ActionEvent e) {
         int index = myFiltersList.getSelectedIndex();
         FilterInfo filterInfo = (FilterInfo)myFiltersModel.getElementAt(index);
-        boolean wasEdited = FilterDialog.editFilter(filterInfo, myEditButton, "Edit filter");
+        boolean wasEdited = FilterDialog.editFilter(filterInfo, myEditButton, ToolsBundle.message("tools.filters.edit.title"));
         if (wasEdited) {
           setModified(true);
           enableButtons();
@@ -139,7 +133,7 @@ class OutputFiltersDialog extends DialogWrapper {
   }
 
   private String suggestFilterName(){
-    String prefix = "Filter ";
+    String prefix = ToolsBundle.message("tools.filters.name.template") + " ";
 
     int number = 1;
     for (int i=0; i < myFiltersModel.getSize(); i++) {

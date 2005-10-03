@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.ide.IconUtilEx;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -8,7 +9,9 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -27,6 +30,11 @@ public class RefreshStatusRenderer implements ErrorStripeRenderer {
   private Document myDocument;
   private final PsiFile myFile;
   private DaemonCodeAnalyzerImpl myHighlighter;
+
+  @NonNls private static final String HTML_HEADER = "<html><body>";
+  @NonNls private static final String HTML_FOOTER = "</body></html>";
+  @NonNls private static final String BR = "<br>";
+  @NonNls private static final String NO_PASS_FOR_MESSAGE_KEY_SUFFIX = ".for";
 
   public static class DaemonCodeAnalyzerStatus {
     public boolean errorAnalyzingFinished;
@@ -79,67 +87,60 @@ public class RefreshStatusRenderer implements ErrorStripeRenderer {
     DaemonCodeAnalyzerStatus status = getDaemonCodeAnalyzerStatus();
 
     if (status == null) return null;
-    String text = "<html><body>";
+    String text = HTML_HEADER;
     if (status.noHighlightingRoots != null && status.noHighlightingRoots.length == status.rootsNumber) {
-      text += "No analysis have been performed.";
-      text += "</body></html>";
+      text += DaemonBundle.message("analysis.havent.been.run");
+      text += HTML_FOOTER;
       return text;
     }
     else if (status.errorAnalyzingFinished) {
       boolean inspecting = !status.inspectionFinished;
-      text += inspecting ? "Performing code inspection." : "Analysis completed.";
+      text += inspecting ? DaemonBundle.message("pass.inspection") : DaemonBundle.message("analysis.completed");
       if (status.warningErrorCount == 0) {
-        text += "<br>No errors or warnings found";
+        text += BR;
         if (inspecting) {
-          text += " so far";
+          text += DaemonBundle.message("no.errors.or.warnings.found.so.far");
         }
-        text += ".";
+        else {
+          text += DaemonBundle.message("no.errors.or.warnings.found");
+        }
       }
       else {
         if (status.errorCount != 0) {
-          text += "<br><font color=red><b>" + status.errorCount + "</b></font> error" + (status.errorCount == 1 ? "":"s") +" found";
-          if (inspecting) {
-            text += " so far";
-          }
-          text += ".";
+          text += BR;
+          text += DaemonBundle.message(inspecting ? "errors.count.so.far" : "errors.count", status.errorCount);
         }
+
         int warnings = status.warningErrorCount - status.errorCount;
         if (warnings != 0) {
-          text += "<br><b>" + warnings + "</b> warning" + (warnings == 1 ? "":"s") +" found";
-          if (inspecting) {
-            text += " so far";
-          }
-          text += ".";
+          text += BR;
+          text += DaemonBundle.message(inspecting ? "warnings.count.so.far" : "warnings.count", warnings);
         }
       }
 
-      text += getMessageByRoots(status.noHighlightingRoots, status.rootsNumber, "No syntax highlighting performed");
-      text += getMessageByRoots(status.noInspectionRoots, status.rootsNumber, "No inspections performed");
-      text += "</body></html>";
+      text += getMessageByRoots(status.noHighlightingRoots, status.rootsNumber, "no.syntax.highlighting.performed");
+      text += getMessageByRoots(status.noInspectionRoots, status.rootsNumber, "no.inspections.performed");
+      text += HTML_FOOTER;
       return text;
     }
     else {
-      return "Analyzing for syntactic correctness.";
+      return DaemonBundle.message("pass.syntax");
     }
   }
 
-  private String getMessageByRoots(String [] roots, int rootsNumber, String prefix){
-    String text = "";
+  private String getMessageByRoots(String [] roots, int rootsNumber, @NonNls String prefix){
     if (roots != null) {
       final int length = roots.length;
       if (length > 0){
-        text += "<br>" + prefix;
         if (rootsNumber > 1){
-          text += " for ";
-          for (int i = 0; i < length - 1; i++) {
-            text += roots[i] + ", ";
-          }
-          text += roots[length - 1];
+          return BR + DaemonBundle.message(prefix + NO_PASS_FOR_MESSAGE_KEY_SUFFIX, StringUtil.join(roots, ", "));
         }
-        text += ".";
+        else {
+          return BR + DaemonBundle.message(prefix);
+        }
       }
     }
-    return text;
+    return "";
   }
 
   public void paint(Component c, Graphics g, Rectangle r) {

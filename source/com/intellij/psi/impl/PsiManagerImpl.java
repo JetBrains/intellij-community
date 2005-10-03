@@ -81,6 +81,7 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
   private ResolveCache myResolveCache;
   private CachedValuesManager myCachedValuesManager;
   private PsiConstantEvaluationHelper myConstantEvaluationHelper;
+  private Map<String, PsiPackage> myPackageCache = new HashMap<String, PsiPackage>();
 
   private final ArrayList<PsiTreeChangeListener> myTreeChangeListeners = new ArrayList<PsiTreeChangeListener>();
   private PsiTreeChangeListener[] myCachedTreeChangeListeners = null;
@@ -511,13 +512,18 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
   }
 
   public PsiPackage findPackage(String qualifiedName) {
-    for (PsiElementFinder finder : myElementFinders) {
-      PsiPackage aPackage = finder.findPackage(qualifiedName);
-
-      if (aPackage != null) return aPackage;
+    PsiPackage aPackage = myPackageCache.get(qualifiedName);
+    if (aPackage == null) {
+      for (PsiElementFinder finder : myElementFinders) {
+        aPackage = finder.findPackage(qualifiedName);
+        if (aPackage != null) {
+          myPackageCache.put(qualifiedName, aPackage);
+          break;
+        }
+      }
     }
 
-    return null;
+    return aPackage;
   }
 
   public PsiMigrationImpl getCurrentMigration() {
@@ -799,6 +805,7 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
 
   private void onChange(boolean isPhysical) {
     if (isPhysical) {
+      myPackageCache.clear();
       runRunnables(myRunnablesOnChange);
 
       WeakReference[] refs = myWeakRunnablesOnChange.toArray(

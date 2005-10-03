@@ -3,7 +3,7 @@
   <grid id="a2574" binding="myPanel" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="126" y="76" width="265" height="203"/>
+      <xy x="126" y="76" width="271" height="203"/>
       <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
     </constraints>
     <properties/>
@@ -12,38 +12,38 @@
       <grid id="4cb6d" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="0">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="0" y="0" width="265" height="95"/>
+          <xy x="0" y="0" width="271" height="79"/>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="1"/>
         </constraints>
         <properties/>
-        <border type="etched" title="Display threads"/>
+        <border type="etched"/>
         <children>
           <component id="b8249" class="javax.swing.JCheckBox" binding="myShowGroupsCheckBox">
             <constraints>
-              <xy x="6" y="20" width="122" height="25"/>
+              <xy x="2" y="2" width="140" height="27"/>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
               <margin top="5" left="2" bottom="2" right="2"/>
-              <text value="Show thread &amp;groups"/>
+              <text resource-bundle="messages/DebuggerBundle" key="label.threads.view.configurable.show.thread.groups"/>
             </properties>
           </component>
           <component id="5bfe" class="javax.swing.JCheckBox" binding="myShowSyntheticsCheckBox">
             <constraints>
-              <xy x="6" y="45" width="223" height="22"/>
+              <xy x="2" y="29" width="267" height="24"/>
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
-              <text value="Show stack &amp;frames for synthetic methods"/>
+              <text resource-bundle="messages/DebuggerBundle" key="label.threads.view.configurable.show.stack.frames.for.synthetic.methods"/>
             </properties>
           </component>
           <component id="a7f8b" class="javax.swing.JCheckBox" binding="myShowCurrentThreadChechBox">
             <constraints>
-              <xy x="6" y="67" width="175" height="22"/>
+              <xy x="2" y="53" width="206" height="24"/>
               <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
-              <text value="Move current thread to the top"/>
+              <text resource-bundle="messages/DebuggerBundle" key="label.threads.view.configurable.current.thread.on.top"/>
             </properties>
           </component>
         </children>
@@ -51,38 +51,38 @@
       <grid id="f4cba" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="0">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="0" y="100" width="265" height="95"/>
+          <xy x="0" y="84" width="271" height="79"/>
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="1" fill="1"/>
         </constraints>
         <properties/>
-        <border type="etched" title="Display methods"/>
+        <border type="etched"/>
         <children>
           <component id="4f5e9" class="javax.swing.JCheckBox" binding="myLineNumberCheckBox">
             <constraints>
-              <xy x="6" y="20" width="109" height="25"/>
+              <xy x="2" y="2" width="128" height="27"/>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
               <margin top="5" left="2" bottom="2" right="2"/>
-              <text value="Show &amp;line number"/>
+              <text resource-bundle="messages/DebuggerBundle" key="label.threads.view.configurable.show.line.number"/>
             </properties>
           </component>
           <component id="2fbc6" class="javax.swing.JCheckBox" binding="myClassNameCheckBox">
             <constraints>
-              <xy x="6" y="45" width="106" height="22"/>
+              <xy x="2" y="29" width="123" height="24"/>
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
-              <text value="Show class name"/>
+              <text resource-bundle="messages/DebuggerBundle" key="label.threads.view.configurable.show.class.name"/>
             </properties>
           </component>
           <component id="b56d7" class="javax.swing.JCheckBox" binding="mySourceCheckBox">
             <constraints>
-              <xy x="6" y="67" width="132" height="22"/>
+              <xy x="2" y="53" width="156" height="24"/>
               <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
-              <text value="Show source file name"/>
+              <text resource-bundle="messages/DebuggerBundle" key="label.threads.view.configurable.show.source.file.name"/>
             </properties>
           </component>
         </children>

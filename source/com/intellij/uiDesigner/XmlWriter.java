@@ -2,8 +2,10 @@ package com.intellij.uiDesigner;
 
 import com.intellij.xml.util.XmlUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.uiDesigner.lw.StringDescriptor;
 import org.jdom.Attribute;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
 import java.util.Iterator;
@@ -26,6 +28,7 @@ public final class XmlWriter{
     myElementNames = new Stack();
     myElementHasBody = new Stack();
     myBuffer = new StringBuffer();
+    //noinspection HardCodedStringLiteral
     myBuffer.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
   }
 
@@ -33,7 +36,7 @@ public final class XmlWriter{
     return myBuffer.toString();
   }
 
-  public void writeDimension(final Dimension dimension, final String elementName) {
+  public void writeDimension(final Dimension dimension, @NonNls final String elementName) {
     if (dimension.width == -1 && dimension.height == -1) {
       return;
     }
@@ -47,11 +50,11 @@ public final class XmlWriter{
     }
   }
 
-  public void startElement(final String elementName){
+  public void startElement(@NonNls final String elementName){
     startElement(elementName, null);
   }
 
-  public void startElement(final String elementName, final String namespace){
+  public void startElement(@NonNls final String elementName, final String namespace){
     if (myElementNames.size() > 0) {
       if(!((Boolean)myElementHasBody.peek()).booleanValue()){
         myBuffer.append(">\n");
@@ -63,6 +66,7 @@ public final class XmlWriter{
     myBuffer.append("<").append(elementName);
 
     if (namespace != null) {
+      //noinspection HardCodedStringLiteral
       myBuffer.append(" xmlns=\"").append(namespace).append('"');
     }
 
@@ -95,21 +99,21 @@ public final class XmlWriter{
   /**
    * Helper method
    */
-  public void addAttribute(final String name, final String value){
+  public void addAttribute(@NonNls final String name, final String value){
     addAttributeImpl(name, StringUtil.convertLineSeparators(XmlUtil.escapeString(value)));
   }
 
   /**
    * Helper method
    */
-  public void addAttribute(final String name, final int value){
+  public void addAttribute(@NonNls final String name, final int value){
     addAttributeImpl(name, Integer.toString(value));
   }
 
   /**
    * Helper method
    */
-  public void addAttribute(final String name, final boolean value){
+  public void addAttribute(@NonNls final String name, final boolean value){
     addAttributeImpl(name, Boolean.toString(value));
   }
 
@@ -140,4 +144,19 @@ public final class XmlWriter{
     }
   }
 
+  public void writeStringDescriptor(final StringDescriptor descriptor,
+                                    final String valueAttr,
+                                    final String bundleAttr,
+                                    final String keyAttr) {
+    if(descriptor.getValue() != null){ // direct value
+      addAttribute(valueAttr, descriptor.getValue());
+      if (descriptor.isNoI18n()) {
+        addAttribute(UIFormXmlConstants.ATTRIBUTE_NOI18N, Boolean.TRUE.toString());
+      }
+    }
+    else{ // via resource bundle
+      addAttribute(bundleAttr, descriptor.getBundleName());
+      addAttribute(keyAttr, descriptor.getKey());
+    }
+  }
 }

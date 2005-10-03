@@ -3,6 +3,7 @@ package com.intellij.refactoring.rename;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.ConflictsUtil;
 
 /**
@@ -20,7 +21,7 @@ public class ClassHidesUnqualifiableClassUsageInfo extends UnresolvableCollision
 
   public String getDescription() {
     final PsiElement container = ConflictsUtil.getContainer(myHiddenClass);
-    return "Renamed class will hide " + ConflictsUtil.getDescription(myHiddenClass, false) + " in " +
-           ConflictsUtil.getDescription(container, false);
+    return RefactoringBundle.message("renamed.class.will.hide.0.in.1", ConflictsUtil.getDescription(myHiddenClass, false),
+                                     ConflictsUtil.getDescription(container, false));
   }
 }

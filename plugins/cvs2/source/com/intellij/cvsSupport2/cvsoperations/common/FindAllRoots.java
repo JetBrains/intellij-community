@@ -3,6 +3,7 @@ package com.intellij.cvsSupport2.cvsoperations.common;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
+import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -36,7 +37,7 @@ public class FindAllRoots {
 
   public Collection<VirtualFile> executeOn(final FilePath[] roots) {
     final Collection<FilePath> rootsWithoutIntersections = getRootsWithoutIntersections(roots);
-    setText("Searching for CVS Root");
+    setText(com.intellij.CvsBundle.message("progress.text.searching.for.cvs.root"));
     myManager.lockSynchronizationActions();
     mySuitableFiles = calcVirtualFilesUnderCvsIn(rootsWithoutIntersections) * 2;
     myProcessedFiels = 0;
@@ -81,13 +82,13 @@ public class FindAllRoots {
     if (!myProjectRootManager.getFileIndex().isInContent(file)) return 0;
     int result = 0;
     if (file == null || !file.isDirectory()) return result;
-    if (file.findChild("CVS") == null) return result;
+    if (file.findChild(CvsUtil.CVS) == null) return result;
     result += 1;
     VirtualFile[] children = file.getChildren();
     if (children == null) return result;
     for (int i = 0; i < children.length; i++) {
       VirtualFile child = children[i];
-      if (child.getName() == "CVS") continue;
+      if (child.getName() == CvsUtil.CVS) continue;
       result += calcVirtualFilesUnderCvsIn(child);
     }
     return result;

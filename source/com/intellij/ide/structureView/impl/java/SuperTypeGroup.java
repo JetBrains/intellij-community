@@ -2,6 +2,7 @@ package com.intellij.ide.structureView.impl.java;
 
 import com.intellij.ide.util.treeView.smartTree.Group;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
+import com.intellij.ide.IdeBundle;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.IconLoader;
@@ -58,7 +59,7 @@ public class SuperTypeGroup implements Group, ItemPresentation, AccessLevelProvi
 
   public String toString() {
     final PsiClass superClass = getSuperClass();
-    return superClass != null ? superClass.getName() : "<invalid>";
+    return superClass != null ? superClass.getName() : IdeBundle.message("node.structureview.invalid");
   }
 
   public boolean equals(Object o) {

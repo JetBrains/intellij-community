@@ -20,7 +20,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.refactoring.RefactoringActionHandler;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.
@@ -46,12 +48,12 @@ public class PropertiesLanguage extends Language {
   }
 
   private TokenSet myReadableTextContainerElements;
-  
+
   @NotNull
   public TokenSet getReadableTextContainerElements() {
     if (myReadableTextContainerElements == null) {
       myReadableTextContainerElements = TokenSet.orSet(
-        super.getReadableTextContainerElements(), 
+        super.getReadableTextContainerElements(),
         TokenSet.create(new IElementType[] { PropertiesElementTypes.PROPERTY })
       );
     }
@@ -79,10 +81,16 @@ public class PropertiesLanguage extends Language {
     return new PropertiesCommenter();
   }
 
+  @NotNull
   public RefactoringSupportProvider getRefactoringSupportProvider() {
     return new RefactoringSupportProvider() {
       public boolean isSafeDeleteAvailable(PsiElement element) {
         return true;
+      }
+
+      @Nullable
+      public RefactoringActionHandler getIntroduceVariableHandler() {
+        return null;
       }
     };
   }

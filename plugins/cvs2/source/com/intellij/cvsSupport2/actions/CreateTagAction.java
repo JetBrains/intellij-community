@@ -26,7 +26,7 @@ public class CreateTagAction extends ActionOnSelectedElement{
   }
 
   protected String getTitle(VcsContext context) {
-    return "Create Tag";
+    return com.intellij.CvsBundle.message("operation.name.create.tag");
   }
 
   protected CvsHandler getCvsHandler(CvsContext context) {

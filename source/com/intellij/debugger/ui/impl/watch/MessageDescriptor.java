@@ -4,8 +4,7 @@ import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
-import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.debugger.DebuggerBundle;
 
 public class MessageDescriptor extends NodeDescriptorImpl {
   public static final int ERROR = 0;
@@ -15,16 +14,20 @@ public class MessageDescriptor extends NodeDescriptorImpl {
   private int myKind;
   private String myMessage;
 
-  public static MessageDescriptor DEBUG_INFO_UNAVAILABLE = new MessageDescriptor("Debug info not available");
-  public static MessageDescriptor LOCAL_VARIABLES_INFO_UNAVAILABLE = new MessageDescriptor("Local variables debug info not available");
-  public static MessageDescriptor ALL_ELEMENTS_IN_VISIBLE_RANGE_ARE_NULL = new MessageDescriptor("All elements in visible range are null");
-  public static MessageDescriptor ALL_ELEMENTS_IN_RANGE_ARE_NULL = new MessageDescriptor("All elements are null");
-  public static MessageDescriptor ARRAY_IS_EMPTY = new MessageDescriptor("Empty");
-  public static MessageDescriptor CLASS_HAS_NO_FIELDS = new MessageDescriptor("Class has no fields");
-  public static MessageDescriptor OBJECT_COLLECTED = new MessageDescriptor("Object has been garbage collected during method invocation");
+  public static MessageDescriptor DEBUG_INFO_UNAVAILABLE = new MessageDescriptor(DebuggerBundle.message("message.node.debug.info.not.available"));
+  public static MessageDescriptor LOCAL_VARIABLES_INFO_UNAVAILABLE = new MessageDescriptor(
+    DebuggerBundle.message("message.node.local.variables.debug.info.not.available")
+  );
+  public static MessageDescriptor ALL_ELEMENTS_IN_VISIBLE_RANGE_ARE_NULL = new MessageDescriptor(
+    DebuggerBundle.message("message.node.all.array.elements.null"));
+  public static MessageDescriptor ALL_ELEMENTS_IN_RANGE_ARE_NULL = new MessageDescriptor(
+    DebuggerBundle.message("message.node.all.elements.null"));
+  public static MessageDescriptor ARRAY_IS_EMPTY = new MessageDescriptor(DebuggerBundle.message("message.node.empty.array"));
+  public static MessageDescriptor CLASS_HAS_NO_FIELDS = new MessageDescriptor(DebuggerBundle.message("message.node.class.has.no.fields"));
+  public static MessageDescriptor OBJECT_COLLECTED = new MessageDescriptor(DebuggerBundle.message("message.node.object.collected"));
   public static MessageDescriptor EVALUATING = new MessageDescriptor(NodeDescriptorImpl.EVALUATING_MESSAGE);
-  public static MessageDescriptor THREAD_IS_RUNNING = new MessageDescriptor("Thread is running");
-  public static MessageDescriptor THREAD_IS_EMPTY = new MessageDescriptor("Thread has no frames");
+  public static MessageDescriptor THREAD_IS_RUNNING = new MessageDescriptor(DebuggerBundle.message("message.node.thread.running"));
+  public static MessageDescriptor THREAD_IS_EMPTY = new MessageDescriptor(DebuggerBundle.message("message.node.thread.has.no.frames"));
 
   public MessageDescriptor(String message) {
     this(message, INFORMATION);

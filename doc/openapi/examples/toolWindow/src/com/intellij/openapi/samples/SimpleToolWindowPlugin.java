@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -61,7 +62,7 @@ public class SimpleToolWindowPlugin implements ProjectComponent {
 
     myContentPanel = new JPanel(new BorderLayout());
 
-    myContentPanel.setBackground(UIManager.getColor("Tree.textBackground"));
+    myContentPanel.setBackground(UIUtil.getTreeTextBackground());
     myContentPanel.add(new JLabel("Hello World!", JLabel.CENTER), BorderLayout.CENTER);
 
     myToolWindow = toolWindowManager.registerToolWindow(TOOL_WINDOW_ID, myContentPanel, ToolWindowAnchor.LEFT);

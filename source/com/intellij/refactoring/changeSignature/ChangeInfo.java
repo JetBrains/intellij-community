@@ -121,8 +121,7 @@ class ChangeInfo {
 
     this.toRemoveParm = new boolean[parameters.length];
     Arrays.fill(this.toRemoveParm, true);
-    for(int i = 0; i < newParms.length; i++){
-      ParameterInfo info = newParms[i];
+    for (ParameterInfo info : newParms) {
       if (info.oldParameterIndex < 0) continue;
       this.toRemoveParm[info.oldParameterIndex] = false;
     }
@@ -214,8 +213,7 @@ class ChangeInfo {
 
   public ParameterInfo[] getCreatedParmsInfoWithoutVarargs() {
     List<ParameterInfo> result = new ArrayList<ParameterInfo>();
-    for (int i = 0; i < newParms.length; i++) {
-      ParameterInfo newParm = newParms[i];
+    for (ParameterInfo newParm : newParms) {
       if (newParm.oldParameterIndex < 0 && !newParm.isVarargType()) {
         result.add(newParm);
       }

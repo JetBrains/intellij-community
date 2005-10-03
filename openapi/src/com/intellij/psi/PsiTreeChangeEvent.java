@@ -15,6 +15,8 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.NonNls;
+
 import java.util.EventObject;
 
 /**
@@ -22,15 +24,14 @@ import java.util.EventObject;
  *
  * @see PsiTreeChangeListener
  */
-@SuppressWarnings({"HardCodedStringLiteral"})
 public abstract class PsiTreeChangeEvent extends EventObject {
-  public static final String PROP_FILE_NAME = "fileName";
-  public static final String PROP_DIRECTORY_NAME  = "directoryName";
-  public static final String PROP_WRITABLE = "writable";
+  @NonNls public static final String PROP_FILE_NAME = "fileName";
+  @NonNls public static final String PROP_DIRECTORY_NAME  = "directoryName";
+  @NonNls public static final String PROP_WRITABLE = "writable";
 
-  public static final String PROP_ROOTS = "roots";
+  @NonNls public static final String PROP_ROOTS = "roots";
 
-  public static final String PROP_FILE_TYPES = "propFileTypes";
+  @NonNls public static final String PROP_FILE_TYPES = "propFileTypes";
 
   protected PsiManager myManager;
 

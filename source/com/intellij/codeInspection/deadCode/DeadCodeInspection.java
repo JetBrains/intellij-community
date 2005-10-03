@@ -14,6 +14,7 @@ import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.util.RefFilter;
 import com.intellij.codeInspection.util.XMLExportUtl;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressManager;
@@ -29,6 +30,7 @@ import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.text.CharArrayUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -36,6 +38,7 @@ import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.text.SimpleDateFormat;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
@@ -52,10 +55,10 @@ public class DeadCodeInspection extends FilteringInspectionTool {
   private HashSet<RefElement> myProcessedSuspicious = null;
   private int myPhase;
   private QuickFixAction[] myQuickFixActions;
-  public static final String DISPLAY_NAME = "Unused declaration";
+  public static final String DISPLAY_NAME = InspectionsBundle.message("inspection.dead.code.display.name");
   private RefUnreferencedFilter myFilter;
   private DeadHTMLComposer myComposer;
-  public static final String SHORT_NAME = "UnusedDeclaration";
+  @NonNls public static final String SHORT_NAME = "UnusedDeclaration";
 
   public DeadCodeInspection() {
     myQuickFixActions = new QuickFixAction[]{new PermanentDeleteAction(), new CommentOutBin(), new MoveToEntries()};
@@ -77,7 +80,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
       gc.fill = GridBagConstraints.HORIZONTAL;
       gc.anchor = GridBagConstraints.NORTHWEST;
 
-      myMainsCheckbox = new JCheckBox("Automatically add all void main(String args[]) methods to entry points");
+      myMainsCheckbox = new JCheckBox(InspectionsBundle.message("inspection.dead.code.option"));
       myMainsCheckbox.setSelected(ADD_MAINS_TO_ENTRIES);
       myMainsCheckbox.getModel().addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent e) {
@@ -89,7 +92,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
       gc.gridy = 0;
       add(myMainsCheckbox, gc);
 
-      myEJBMethodsCheckbox = new JCheckBox("Automatically add all EJB interface methods to entry points");
+      myEJBMethodsCheckbox = new JCheckBox(InspectionsBundle.message("inspection.dead.code.option1"));
       myEJBMethodsCheckbox.setSelected(ADD_EJB_TO_ENTRIES);
       myEJBMethodsCheckbox.getModel().addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent e) {
@@ -100,7 +103,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
       gc.gridy++;
       add(myEJBMethodsCheckbox, gc);
 
-      myJUnitCheckbox = new JCheckBox("Automatically add all JUnit testcases to entry points");
+      myJUnitCheckbox = new JCheckBox(InspectionsBundle.message("inspection.dead.code.option2"));
       myJUnitCheckbox.setSelected(ADD_JUNIT_TO_ENTRIES);
       myJUnitCheckbox.getModel().addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent e) {
@@ -112,7 +115,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
       gc.gridy++;
       add(myJUnitCheckbox, gc);
 
-      myAppletToEntries = new JCheckBox("Automatically add all applets to entry points");
+      myAppletToEntries = new JCheckBox(InspectionsBundle.message("inspection.dead.code.option3"));
       myAppletToEntries.setSelected(ADD_APPLET_TO_ENTRIES);
       myAppletToEntries.getModel().addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent e) {
@@ -123,7 +126,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
       gc.gridy++;
       add(myAppletToEntries, gc);
 
-      myServletToEntries = new JCheckBox("Automatically add all servlets to entry points");
+      myServletToEntries = new JCheckBox(InspectionsBundle.message("inspection.dead.code.option4"));
       myServletToEntries.setSelected(ADD_SERVLET_TO_ENTRIES);
       myServletToEntries.getModel().addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent e) {
@@ -135,7 +138,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
       add(myServletToEntries, gc);
 
       myNonJavaCheckbox =
-      new JCheckBox("Automatically add classes that have usages in non-java files to entry points");
+      new JCheckBox(InspectionsBundle.message("inspection.dead.code.option5"));
       myNonJavaCheckbox.setSelected(ADD_NONJAVA_TO_ENTRIES);
       myNonJavaCheckbox.getModel().addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent e) {
@@ -191,7 +194,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
   }
 
   private static boolean isSerializationImplicitlyUsedField(PsiField field) {
-    final String name = field.getName();
+    @NonNls final String name = field.getName();
     if (!"serialVersionUID".equals(name) && !"serialPersistentFields".equals(name)) return false;
     if (!field.hasModifierProperty(PsiModifier.STATIC)) return false;
     PsiClass aClass = field.getContainingClass();
@@ -199,7 +202,8 @@ public class DeadCodeInspection extends FilteringInspectionTool {
   }
 
   private static boolean isWriteObjectMethod(PsiMethod method) {
-    if (!"writeObject".equals(method.getName())) return false;
+    @NonNls final String name = method.getName();
+    if (!"writeObject".equals(name)) return false;
     PsiParameter[] parameters = method.getParameterList().getParameters();
     if (parameters.length != 1) return false;
     if (!parameters[0].getType().equalsToText("java.io.ObjectOutputStream")) return false;
@@ -209,7 +213,8 @@ public class DeadCodeInspection extends FilteringInspectionTool {
   }
 
   private static boolean isReadObjectMethod(PsiMethod method) {
-    if (!"readObject".equals(method.getName())) return false;
+    @NonNls final String name = method.getName();
+    if (!"readObject".equals(name)) return false;
     PsiParameter[] parameters = method.getParameterList().getParameters();
     if (parameters.length != 1) return false;
     if (!parameters[0].getType().equalsToText("java.io.ObjectInputStream")) return false;
@@ -219,7 +224,8 @@ public class DeadCodeInspection extends FilteringInspectionTool {
   }
 
   private static boolean isWriteReplaceMethod(PsiMethod method) {
-    if (!"writeReplace".equals(method.getName())) return false;
+    @NonNls final String name = method.getName();
+    if (!"writeReplace".equals(name)) return false;
     PsiParameter[] parameters = method.getParameterList().getParameters();
     if (parameters.length != 0) return false;
     if (!method.getReturnType().equalsToText("java.lang.Object")) return false;
@@ -229,7 +235,8 @@ public class DeadCodeInspection extends FilteringInspectionTool {
   }
 
   private static boolean isReadResolveMethod(PsiMethod method) {
-    if (!"readResolve".equals(method.getName())) return false;
+    @NonNls final String name = method.getName();
+    if (!"readResolve".equals(name)) return false;
     PsiParameter[] parameters = method.getParameterList().getParameters();
     if (parameters.length != 0) return false;
     if (!method.getReturnType().equalsToText("java.lang.Object")) return false;
@@ -320,9 +327,11 @@ public class DeadCodeInspection extends FilteringInspectionTool {
     getEntryPointsManager().addEntryPoint(refClass, false);
     PsiMethod[] testMethods = testClass.getMethods();
     for (PsiMethod psiMethod : testMethods) {
+      @NonNls final String name = psiMethod.getName();
+      //noinspection ConstantConditions
       if (psiMethod.hasModifierProperty(PsiModifier.PUBLIC) &&
           !psiMethod.hasModifierProperty(PsiModifier.ABSTRACT) &&
-          psiMethod.getName().startsWith("test") || "suite".equals(psiMethod.getName())) {
+          name.startsWith("test") || "suite".equals(name)) {
         RefMethod refMethod = (RefMethod)getRefManager().getReference(psiMethod);
         getEntryPointsManager().addEntryPoint(refMethod, false);
       }
@@ -333,6 +342,9 @@ public class DeadCodeInspection extends FilteringInspectionTool {
     public int getElementProblemCount(RefElement refElement) {
       if (refElement instanceof RefParameter) return 0;
       if (refElement.isEntry() || !refElement.isSuspicious() || refElement.isSyntheticJSP()) return 0;
+
+      final PsiElement element = refElement.getElement();
+      if (element instanceof PsiDocCommentOwner && !InspectionManagerEx.isToCheckMember((PsiDocCommentOwner)element, "UnusedDeclaration")) return 0;
 
       if (refElement instanceof RefField) {
         RefField refField = (RefField)refElement;
@@ -492,13 +504,13 @@ public class DeadCodeInspection extends FilteringInspectionTool {
     getRefManager().iterate(new RefManager.RefIterator() {
       public void accept(RefElement refElement) {
         if (filter.accepts(refElement)) {
-          if (refElement instanceof RefImplicitConstructor) return;
+          if (refElement instanceof RefImplicitConstructor) refElement = ((RefImplicitConstructor)refElement).getOwnerClass();
           Element element = XMLExportUtl.createElement(refElement, parentNode, -1);
-          Element problemClassElement = new Element("problem_class");
-          problemClassElement.addContent("unused declaration");
+          Element problemClassElement = new Element(InspectionsBundle.message("inspection.export.results.problem.element.tag"));
+          problemClassElement.addContent(InspectionsBundle.message("inspection.export.results.dead.code"));
           element.addContent(problemClassElement);
 
-          Element descriptionElement = new Element("description");
+          Element descriptionElement = new Element(InspectionsBundle.message("inspection.export.results.description.tag"));
           StringBuffer buf = new StringBuffer();
           composer.appendProblemSynopsis(refElement, buf);
           descriptionElement.addContent(buf.toString());
@@ -527,7 +539,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
 
       int startOffset = textRange.getStartOffset();
       CharSequence chars = doc.getCharsSequence();
-      while (CharArrayUtil.regionMatches(chars, startOffset, "// --Commented out by Inspection")) {
+      while (CharArrayUtil.regionMatches(chars, startOffset, InspectionsBundle.message("inspection.dead.code.comment"))) {
         int line = doc.getLineNumber(startOffset) + 1;
         if (line < doc.getLineCount()) {
           startOffset = doc.getLineStartOffset(line);
@@ -541,7 +553,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
       int line2 = doc.getLineNumber(endOffset - 1);
 
       if (line1 == line2) {
-        doc.insertString(startOffset, "// --Commented out by Inspection (" + date + "): ");
+        doc.insertString(startOffset, InspectionsBundle.message("inspection.dead.code.date.comment", date));
       }
       else {
         for (int i = line1; i <= line2; i++) {
@@ -549,8 +561,8 @@ public class DeadCodeInspection extends FilteringInspectionTool {
         }
 
         doc.insertString(doc.getLineStartOffset(Math.min(line2 + 1, doc.getLineCount() - 1)),
-                         "// --Commented out by Inspection STOP (" + date + ")" + "\n");
-        doc.insertString(doc.getLineStartOffset(line1), "// --Commented out by Inspection START (" + date + "):" + "\n");
+                         InspectionsBundle.message("inspection.dead.code.stop.comment", date));
+        doc.insertString(doc.getLineStartOffset(line1), InspectionsBundle.message("inspection.dead.code.start.comment", date));
       }
     }
   }
@@ -561,7 +573,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
 
   private class PermanentDeleteAction extends QuickFixAction {
     public PermanentDeleteAction() {
-      super("Safe Delete", IconLoader.getIcon("/actions/cancel.png"), KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0),
+      super(InspectionsBundle.message("inspection.dead.code.safe.delete.quickfix"), IconLoader.getIcon("/actions/cancel.png"), KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0),
             DeadCodeInspection.this);
     }
 
@@ -587,7 +599,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
 
   private class CommentOutBin extends QuickFixAction {
     public CommentOutBin() {
-      super("Comment Out", null, KeyStroke.getKeyStroke(KeyEvent.VK_SLASH,
+      super(InspectionsBundle.message("inspection.dead.code.comment.quickfix"), null, KeyStroke.getKeyStroke(KeyEvent.VK_SLASH,
                                                         SystemInfo.isMac ? KeyEvent.META_MASK : KeyEvent.CTRL_MASK),
             DeadCodeInspection.this);
     }
@@ -613,7 +625,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
 
   private class MoveToEntries extends QuickFixAction {
     private MoveToEntries() {
-      super("Add as Entry Point", null, KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, 0), DeadCodeInspection.this);
+      super(InspectionsBundle.message("inspection.dead.code.entry.point.quickfix"), null, KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, 0), DeadCodeInspection.this);
     }
 
     protected boolean applyFix(RefElement[] refElements) {
@@ -632,6 +644,28 @@ public class DeadCodeInspection extends FilteringInspectionTool {
     getRefManager().iterate(new RefManager.RefIterator() {
       public void accept(RefElement refElement) {
         refElement.setReachable(false);
+        refElement.accept(new RefVisitor() {
+          public void visitMethod(RefMethod method) {
+            if (isAddMainsEnabled() && method.isAppMain()) {
+              getEntryPointsManager().addEntryPoint(method, false);
+            }
+            if (isAddJUnitEnabled() && method.isTestMethod()){
+              getEntryPointsManager().addEntryPoint(method, false);
+            }
+          }
+
+          public void visitClass(RefClass aClass) {
+            if (isAddJUnitEnabled() && aClass.isTestCase()) {
+              getEntryPointsManager().addEntryPoint(aClass, false);
+            }
+            else if (
+              isAddAppletEnabled() && aClass.isApplet() ||
+              isAddServletEnabled() && aClass.isServlet() ||
+              aClass.isEjb()) {
+              getEntryPointsManager().addEntryPoint(aClass, false);
+            }
+          }
+        });
       }
     });
 
@@ -793,7 +827,8 @@ public class DeadCodeInspection extends FilteringInspectionTool {
     super.updateContent();
   }
 
-  protected boolean shouldLoadElementCallees() {
-    return true;
+  protected void resetFilter() {
+    myFilter = null;
   }
+
 }

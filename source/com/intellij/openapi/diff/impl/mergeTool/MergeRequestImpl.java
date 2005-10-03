@@ -19,6 +19,8 @@ import com.intellij.ide.DataManager;
 import javax.swing.*;
 import java.io.IOException;
 
+import org.jetbrains.annotations.NonNls;
+
 public class MergeRequestImpl extends MergeRequest {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.mergeTool.MergeRequestImpl");
   private final DiffContent[] myDiffContents = new DiffContent[3];
@@ -70,7 +72,7 @@ public class MergeRequestImpl extends MergeRequest {
     if (builder.getCancelAction() == null) {
       builder.addCancelAction();
     }
-    
+
     (builder.getOkAction()).setText(myActionButtonPresenation.getName());
 
     builder.setOkActionEnabled(myActionButtonPresenation.isEnabled());
@@ -99,8 +101,8 @@ public class MergeRequestImpl extends MergeRequest {
     builder.setCancelOperation(new Runnable() {
       public void run() {
         if (Messages.showYesNoDialog(getProject(),
-                                     "Are you sure you want to exit without applying changes?",
-                                     "Cancel Visual Merge",
+                                     DiffBundle.message("merge.dialog.exit.without.applying.changes.confirmation.message"),
+                                     DiffBundle.message("cancel.visual.merge.dialog.title"),
                                      Messages.getQuestionIcon()) == 0) {
           builder.getDialogWrapper().close(DialogWrapper.CANCEL_EXIT_CODE);
         }
@@ -113,7 +115,7 @@ public class MergeRequestImpl extends MergeRequest {
     return myHelpId;
   }
 
-  public void setHelpId(String helpId) {
+  public void setHelpId(@NonNls String helpId) {
     myHelpId = helpId;
   }
 
@@ -176,10 +178,11 @@ public class MergeRequestImpl extends MergeRequest {
       myWasInvoked = true;
       ChangeCounter.getOrCreate(myMergePanel.getMergeList()).removeListener(this);
       int doApply = Messages.showDialog(getProject(),
-                          "All changes have been processed.\nWould you like to save changes and finish merging?",
-                          "All Changes Processed",
-                          new String[]{"Save and &Finish", "&Continue"}, 0,
-                          Messages.getQuestionIcon());
+                                        DiffBundle.message("merge.all.changes.have.processed.save.and.finish.confirmation.text"),
+                                        DiffBundle.message("all.changes.processed.dialog.title"),
+                                        new String[]{DiffBundle.message("merge.save.and.finish.button"),
+                                          DiffBundle.message("merge.continue.button")}, 0,
+                                        Messages.getQuestionIcon());
       if (doApply != 0) return;
       myDialogWrapper.close(DialogWrapper.OK_EXIT_CODE);
     }

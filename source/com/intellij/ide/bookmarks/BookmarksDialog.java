@@ -6,6 +6,8 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableUtil;
 import com.intellij.util.ui.ItemRemovable;
 import com.intellij.util.ui.Table;
+import com.intellij.ide.IdeBundle;
+import com.intellij.CommonBundle;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -20,17 +22,20 @@ import java.awt.event.*;
 abstract class BookmarksDialog extends DialogWrapper{
   private MyModel myModel;
   protected Table myTable;
-  private JButton myGotoButton = new JButton("Go to");
-  private JButton myRemoveButton = new JButton("Remove");
-  private JButton myRemoveAllButton = new JButton("Remove All");
-  private JButton myMoveUpButton = new JButton("Move Up");
-  private JButton myMoveDownButton = new JButton("Move Down");
-  private JButton myCloseButton = new JButton("Close");
+  private JButton myGotoButton = new JButton(IdeBundle.message("button.go.to"));
+  private JButton myRemoveButton = new JButton(IdeBundle.message("button.remove"));
+  private JButton myRemoveAllButton = new JButton(IdeBundle.message("button.remove.all"));
+  private JButton myMoveUpButton = new JButton(IdeBundle.message("button.move.up"));
+  private JButton myMoveDownButton = new JButton(IdeBundle.message("button.move.down"));
+  private JButton myCloseButton = new JButton(CommonBundle.getCloseButtonText());
   protected BookmarkManager myBookmarkManager;
 
   protected class MyModel extends DefaultTableModel implements ItemRemovable {
     public MyModel() {
-      super(new Object[0][], new Object[] {"Bookmark","Description"});
+      super(new Object[0][], new Object[] {
+        IdeBundle.message("column.bookmark"),
+        IdeBundle.message("column.description")
+      });
     }
 
     public boolean isCellEditable(int row, int column) {
@@ -162,13 +167,6 @@ abstract class BookmarksDialog extends DialogWrapper{
     pane.add(myRemoveAllButton, constr);
     constr.gridy = 6;
     pane.add(myCloseButton, constr);
-
-    myGotoButton.setMnemonic('G');
-    myMoveUpButton.setMnemonic('u');
-    myMoveDownButton.setMnemonic('d');
-    myRemoveButton.setMnemonic('R');
-    myRemoveAllButton.setMnemonic('A');
-    myCloseButton.setMnemonic('C');
 
     return pane;
   }

@@ -1,9 +1,6 @@
 package com.intellij.execution.application;
 
-import com.intellij.execution.ExecutionUtil;
-import com.intellij.execution.LocatableConfigurationType;
-import com.intellij.execution.Location;
-import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationUtil;
 import com.intellij.execution.configurations.RunConfiguration;
@@ -15,9 +12,13 @@ import com.intellij.psi.*;
 
 import javax.swing.*;
 
+import org.jetbrains.annotations.NonNls;
+
 public class ApplicationConfigurationType implements LocatableConfigurationType {
   private final ConfigurationFactory myFactory;
   private static final Icon ICON = IconLoader.getIcon("/runConfigurations/application.png");
+  @NonNls
+  protected static final String STRING_CLASS = "java.lang.String";
 
   /**reflection*/
   public ApplicationConfigurationType() {
@@ -35,11 +36,11 @@ public class ApplicationConfigurationType implements LocatableConfigurationType 
   }
 
   public String getDisplayName() {
-    return "Application";
+    return ExecutionBundle.message("application.configuration.name");
   }
 
   public String getConfigurationTypeDescription() {
-    return "Application configuration";
+    return ExecutionBundle.message("application.configuration.description");
   }
 
   public Icon getIcon() {
@@ -104,7 +105,7 @@ public class ApplicationConfigurationType implements LocatableConfigurationType 
     final PsiType type = parameters[0].getType();
     if (!(type instanceof PsiArrayType)) return false;
     final PsiType componentType = ((PsiArrayType)type).getComponentType();
-    return componentType.equalsToText("java.lang.String");
+    return componentType.equalsToText(STRING_CLASS);
   }
 
 

@@ -6,6 +6,7 @@ import com.intellij.ide.hierarchy.HierarchyBrowserManager;
 import com.intellij.ide.hierarchy.type.SubtypesHierarchyTreeStructure;
 import com.intellij.ide.hierarchy.type.TypeHierarchyBrowser;
 import com.intellij.ide.hierarchy.type.TypeHierarchyTreeStructure;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -79,7 +80,7 @@ public final class BrowseTypeHierarchyAction extends AnAction {
   public final void update(final AnActionEvent event){
     final Presentation presentation = event.getPresentation();
     if (!ActionPlaces.MAIN_MENU.equals(event.getPlace())) {
-      presentation.setText("Browse Type Hierarchy");
+      presentation.setText(IdeBundle.message("action.browse.type.hierarchy"));
     }
 
     final DataContext dataContext = event.getDataContext();

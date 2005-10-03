@@ -5,6 +5,7 @@ import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.compiler.CompilerManager;
+import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -19,6 +20,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPackage;
+import com.intellij.idea.ActionsBundle;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,7 +46,7 @@ public class CompileAction extends CompileActionBase {
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
 
-    presentation.setText("Compile");
+    presentation.setText(ActionsBundle.actionText(IdeActions.ACTION_COMPILE));
     presentation.setVisible(true);
 
     Project project = (Project)dataContext.getData(DataConstants.PROJECT);
@@ -64,7 +66,7 @@ public class CompileAction extends CompileActionBase {
 
     String elementDescription = null;
     if (module != null) {
-      elementDescription = "Module '" + module.getName() + "'";
+      elementDescription = CompilerBundle.message("action.compile.description.module", module.getName());
     }
     else {
       PsiPackage aPackage = null;
@@ -84,6 +86,7 @@ public class CompileAction extends CompileActionBase {
       if (aPackage != null) {
         String name = aPackage.getQualifiedName();
         if(name == null || name.length() == 0) {
+          //noinspection HardCodedStringLiteral
           name = "<default>";
         }
         elementDescription = "'" + name + "'";
@@ -104,7 +107,7 @@ public class CompileAction extends CompileActionBase {
         }
       }
       else {
-        elementDescription = "Selected Files";
+        elementDescription = CompilerBundle.message("action.compile.description.selected.files");
       }
     }
 
@@ -119,7 +122,7 @@ public class CompileAction extends CompileActionBase {
 
   private static String createPresentationText(String elementDescription) {
     StringBuffer buffer = new StringBuffer(40);
-    buffer.append("Compile ");
+    buffer.append(ActionsBundle.actionText(IdeActions.ACTION_COMPILE)).append(" ");
     int length = elementDescription.length();
     if (length > 23) {
       if (StringUtil.startsWithChar(elementDescription, '\'')) {

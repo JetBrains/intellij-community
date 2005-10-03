@@ -18,6 +18,7 @@ package com.intellij.openapi.vfs;
 import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * Manages virtual file systems
@@ -81,7 +82,7 @@ public abstract class VirtualFileManager {
    * @see #refreshAndFindFileByUrl
    */
   @Nullable
-  public abstract VirtualFile findFileByUrl(@NotNull String url);
+  public abstract VirtualFile findFileByUrl(@NonNls @NotNull String url);
 
   /**
    * Refreshes only the part of the file system needed for searching the file by the given URL and finds file

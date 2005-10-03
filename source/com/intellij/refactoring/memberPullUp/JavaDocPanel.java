@@ -9,6 +9,7 @@
 package com.intellij.refactoring.memberPullUp;
 
 import com.intellij.refactoring.util.JavaDocPolicy;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.IdeBorderFactory;
 
 import javax.swing.*;
@@ -26,20 +27,20 @@ public class JavaDocPanel extends JPanel {
     myBorder = IdeBorderFactory.createTitledBorder(title);
     this.setBorder(myBorder);
 
-    myRbJavaDocAsIs = new JRadioButton("As is");
-    this.add(myRbJavaDocAsIs);
-    myRbJavaDocAsIs.setMnemonic('A');
+    myRbJavaDocAsIs = new JRadioButton();
+    myRbJavaDocAsIs.setText(RefactoringBundle.message("javadoc.as.is"));
+    add(myRbJavaDocAsIs);
     myRbJavaDocAsIs.setFocusable(false);
 
-    myRbJavaDocCopy = new JRadioButton("Copy");
-    myRbJavaDocCopy.setMnemonic('C');
+    myRbJavaDocCopy = new JRadioButton();
+    myRbJavaDocCopy.setText(RefactoringBundle.message("javadoc.copy"));
     myRbJavaDocCopy.setFocusable(false);
-    this.add(myRbJavaDocCopy);
+    add(myRbJavaDocCopy);
 
-    myRbJavaDocMove = new JRadioButton("Move");
-    myRbJavaDocMove.setMnemonic('M');
+    myRbJavaDocMove = new JRadioButton();
+    myRbJavaDocMove.setText(RefactoringBundle.message("javadoc.move"));
     myRbJavaDocMove.setFocusable(false);
-    this.add(myRbJavaDocMove);
+    add(myRbJavaDocMove);
 
     ButtonGroup bg = new ButtonGroup();
     bg.add(myRbJavaDocAsIs);

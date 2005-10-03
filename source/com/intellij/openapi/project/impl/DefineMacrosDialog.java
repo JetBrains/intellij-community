@@ -6,6 +6,7 @@ package com.intellij.openapi.project.impl;
 
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.util.ui.Table;
 import com.intellij.ui.IdeBorderFactory;
 
@@ -35,7 +36,7 @@ public class DefineMacrosDialog extends DialogWrapper{
       myMacroTable[idx] = new String[]{macroName, ""};
       myIndex.put(macroName, idx);
     }
-    setCancelButtonText("Cancel Project Load");
+    setCancelButtonText(ProjectBundle.message("project.macros.cancel.button"));
     init();
   }
 
@@ -45,11 +46,14 @@ public class DefineMacrosDialog extends DialogWrapper{
       String path = row[MACRO_VALUE];
 
       if (path == null || path.length() == 0) {
-        Messages.showErrorDialog(getContentPane(), "Value for the path variable \"" + row[MACRO_NAME] + "\" is not defined", "Undefined Path Variable");
+        Messages.showErrorDialog(getContentPane(), ProjectBundle.message("project.macros.variable.missing.error", row[MACRO_NAME]),
+                                 ProjectBundle.message("project.macros.variable.missing.title"));
         return;
       }
       if (!new File(path).exists()) {
-        Messages.showErrorDialog(getContentPane(), "Value for the path variable \"" + row[MACRO_NAME] + "\" is not defined", "Undefined Path Variable");
+        Messages.showErrorDialog(getContentPane(),
+                                 ProjectBundle.message("project.macros.variable.missing.error", row[MACRO_NAME]),
+                                 ProjectBundle.message("project.macros.variable.missing.title"));
         return;
       }
     }
@@ -63,7 +67,7 @@ public class DefineMacrosDialog extends DialogWrapper{
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new BorderLayout());
     Table table = new Table(new MyTableModel());
-    JLabel label = new JLabel("TODO: message");
+    JLabel label = new JLabel(ProjectBundle.message("project.macros.prompt"));
     label.setBorder(IdeBorderFactory.createEmptyBorder(6, 6, 6, 6));
     panel.add(label, BorderLayout.NORTH);
     panel.add(new JScrollPane(table), BorderLayout.CENTER);
@@ -78,8 +82,8 @@ public class DefineMacrosDialog extends DialogWrapper{
   private class MyTableModel extends AbstractTableModel {
     public String getColumnName(int column) {
       switch(column) {
-        case MACRO_NAME : return "Macro Name";
-        case MACRO_VALUE : return "Path";
+        case MACRO_NAME : return ProjectBundle.message("project.macros.name.column");
+        case MACRO_VALUE : return ProjectBundle.message("project.macros.path.column");
       }
       return "";
     }

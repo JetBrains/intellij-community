@@ -15,10 +15,10 @@ public class SshPasswordDialog extends DialogWrapper{
   private JLabel myLabel;
 
 
-  public SshPasswordDialog(String cvsRoot, final String request) {
+  public SshPasswordDialog(String propmtText) {
     super(true);
-    myLabel.setText(request + cvsRoot);
-    setTitle("SSH Password");
+    myLabel.setText(propmtText);
+    setTitle(com.intellij.CvsBundle.message("dialog.title.ssh.password"));
     init();
   }
 

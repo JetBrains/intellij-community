@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.intention.impl.config;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.util.IconLoader;
@@ -33,7 +34,7 @@ public class IntentionSettingsConfigurable extends BaseConfigurable implements A
   }
 
   public String getDisplayName() {
-    return "Intention Settings";
+    return CodeInsightBundle.message("intention.settings");
   }
 
   public Icon getIcon() {

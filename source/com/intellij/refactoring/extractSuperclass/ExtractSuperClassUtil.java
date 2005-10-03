@@ -13,16 +13,18 @@ import com.intellij.util.IncorrectOperationException;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author dsl
  */
 public class ExtractSuperClassUtil {
   public static PsiClass extractSuperClass(final Project project,
-                                            final PsiDirectory targetDirectory,
-                                            final String superclassName,
-                                            final PsiClass subclass,
-                                            final MemberInfo[] selectedMemberInfos,
-                                            final JavaDocPolicy javaDocPolicy)
+                                           final PsiDirectory targetDirectory,
+                                           final String superclassName,
+                                           final PsiClass subclass,
+                                           final MemberInfo[] selectedMemberInfos,
+                                           final JavaDocPolicy javaDocPolicy)
     throws IncorrectOperationException {
     PsiClass superclass;
     PsiElementFactory factory = PsiManager.getInstance(project).getElementFactory();
@@ -60,16 +62,16 @@ public class ExtractSuperClassUtil {
   private static void createConstructorsByPattern(Project project, final PsiClass superclass, PsiMethod[] patternConstructors) throws IncorrectOperationException {
     PsiElementFactory factory = PsiManager.getInstance(project).getElementFactory();
     CodeStyleManager styleManager = CodeStyleManager.getInstance(project);
-    for (int idx = 0; idx < patternConstructors.length; idx++) {
-      PsiMethod baseConstructor = patternConstructors[idx];
+    for (PsiMethod baseConstructor : patternConstructors) {
       /*if (baseConstructor instanceof PsiCompiledElement) { // to get some parameter names
         PsiClass dummyClass = factory.createClass("Dummy");
         baseConstructor = (PsiMethod) dummyClass.add(baseConstructor);
       }*/
-      PsiMethod constructor = (PsiMethod) superclass.add(factory.createConstructor());
+      PsiMethod constructor = (PsiMethod)superclass.add(factory.createConstructor());
       PsiParameterList paramList = constructor.getParameterList();
       PsiParameter[] baseParams = baseConstructor.getParameterList().getParameters();
-      StringBuffer superCallText = new StringBuffer("super(");
+      @NonNls StringBuffer superCallText = new StringBuffer();
+      superCallText.append("super(");
       for (int i = 0; i < baseParams.length; i++) {
         PsiParameter baseParam = baseParams[i];
         paramList.add(baseParam);
@@ -80,36 +82,34 @@ public class ExtractSuperClassUtil {
       }
       superCallText.append(");");
       PsiStatement statement = factory.createStatementFromText(superCallText.toString(), null);
-      statement = (PsiStatement) styleManager.reformat(statement);
+      statement = (PsiStatement)styleManager.reformat(statement);
       constructor.getBody().add(statement);
       PsiReferenceList baseThrowsList = baseConstructor.getThrowsList();
       if (baseThrowsList != null) {
         final PsiJavaCodeReferenceElement[] thrown = baseThrowsList.getReferenceElements();
-        for (int i = 0; i < thrown.length; i++) {
-          PsiJavaCodeReferenceElement psiReferenceElement = thrown[i];
-          constructor.getThrowsList().add(psiReferenceElement);
+        for (PsiJavaCodeReferenceElement ref : thrown) {
+          constructor.getThrowsList().add(ref);
         }
       }
     }
   }
 
   private static PsiMethod[] getCalledBaseConstructors(final PsiClass subclass) {
-    Set baseConstructors = new HashSet();
+    Set<PsiMethod> baseConstructors = new HashSet<PsiMethod>();
     PsiMethod[] constructors = subclass.getConstructors();
-    for (int idx = 0; idx < constructors.length; idx++) {
-      PsiMethod constructor = constructors[idx];
+    for (PsiMethod constructor : constructors) {
       PsiCodeBlock body = constructor.getBody();
       if (body == null) continue;
       PsiStatement[] statements = body.getStatements();
       if (statements.length > 0) {
         PsiStatement first = statements[0];
         if (first instanceof PsiExpressionStatement) {
-          PsiExpression expression = ((PsiExpressionStatement) first).getExpression();
+          PsiExpression expression = ((PsiExpressionStatement)first).getExpression();
           if (expression instanceof PsiMethodCallExpression) {
-            PsiReferenceExpression calledMethod = ((PsiMethodCallExpression) expression).getMethodExpression();
-            String text = calledMethod.getText();
+            PsiReferenceExpression calledMethod = ((PsiMethodCallExpression)expression).getMethodExpression();
+            @NonNls String text = calledMethod.getText();
             if ("super".equals(text)) {
-              PsiMethod baseConstructor = (PsiMethod) calledMethod.resolve();
+              PsiMethod baseConstructor = (PsiMethod)calledMethod.resolve();
               if (baseConstructor != null) {
                 baseConstructors.add(baseConstructor);
               }
@@ -118,14 +118,14 @@ public class ExtractSuperClassUtil {
         }
       }
     }
-    return (PsiMethod[]) baseConstructors.toArray(new PsiMethod[baseConstructors.size()]);
+    return baseConstructors.toArray(new PsiMethod[baseConstructors.size()]);
   }
 
   private static void clearPsiReferenceList(PsiReferenceList refList) throws IncorrectOperationException {
     PsiJavaCodeReferenceElement[] refs = refList.getReferenceElements();
     if (refs != null) {
-      for (int idx = 0; idx < refs.length; idx++) {
-        refs[idx].delete();
+      for (PsiJavaCodeReferenceElement ref : refs) {
+        ref.delete();
       }
     }
   }
@@ -134,8 +134,8 @@ public class ExtractSuperClassUtil {
     clearPsiReferenceList(destinationList);
     PsiJavaCodeReferenceElement[] refs = sourceList.getReferenceElements();
     if (refs != null) {
-      for (int idx = 0; idx < refs.length; idx++) {
-        destinationList.add(refs[idx]);
+      for (PsiJavaCodeReferenceElement ref : refs) {
+        destinationList.add(ref);
       }
     }
   }

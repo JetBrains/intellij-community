@@ -67,7 +67,7 @@ public interface PsiMethod extends PsiMember, PsiNamedElement, PsiModifierListOw
    *
    * @return the method body, or null if the method belongs to a compiled class.
    */
-  PsiCodeBlock getBody();
+  @Nullable PsiCodeBlock getBody();
 
   /**
    * Checks if the method is a constructor.
@@ -90,7 +90,7 @@ public interface PsiMethod extends PsiMember, PsiNamedElement, PsiModifierListOw
    * @param substitutor the substitutor.
    * @return the method signature instance.
    */
-  MethodSignature getSignature(PsiSubstitutor substitutor);
+  @NotNull MethodSignature getSignature(PsiSubstitutor substitutor);
 
   /**
    * Returns the name identifier for the method.
@@ -133,7 +133,7 @@ public interface PsiMethod extends PsiMember, PsiNamedElement, PsiModifierListOw
    * @param parentClass the class to search for super methods.
    * @return the array of super methods, or an empty array if no methods are found.
    */
-  PsiMethod[] findSuperMethods(PsiClass parentClass);
+  @NotNull PsiMethod[] findSuperMethods(PsiClass parentClass);
 
   /**
    * Searches the superclasses and base interfaces of the containing class to find
@@ -146,7 +146,7 @@ public interface PsiMethod extends PsiMember, PsiNamedElement, PsiModifierListOw
    * is private. If true, an empty result list is returned for private methods.
    * @return the array of matching method signatures, or an empty array if no methods are found.
    */
-  List<MethodSignatureBackedByPsiMethod> findSuperMethodSignaturesIncludingStatic(boolean checkAccess);
+  @NotNull List<MethodSignatureBackedByPsiMethod> findSuperMethodSignaturesIncludingStatic(boolean checkAccess);
 
   /**
    * Returns the method in the deepest base superclass or interface of the containing class which
@@ -165,4 +165,7 @@ public interface PsiMethod extends PsiMember, PsiNamedElement, PsiModifierListOw
   PomMethod getPom();
 
   @NotNull PsiModifierList getModifierList();
+
+  @NotNull
+  String getName();
 }

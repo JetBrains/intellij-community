@@ -9,7 +9,10 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.HierarchicalMethodSignature;
+
+import java.util.Set;
+import java.util.Collection;
 
 /**
  *
@@ -25,11 +28,11 @@ public class ImplementMethodsAction extends BaseCodeInsightAction {
       return false;
     }
 
-    PsiClass aClass = OverrideImplementUtil.getContextClass(project, editor, file);
+    PsiClass aClass = OverrideImplementUtil.getContextClass(project, editor, file, false);
     if (aClass == null) {
       return false;
     }
-    final MethodSignatureUtil.MethodSignatureToMethods allMethods = MethodSignatureUtil.getOverrideEquivalentMethods(aClass);
+    final Collection<HierarchicalMethodSignature> allMethods = aClass.getVisibleSignatures();
     return ClassUtil.getAnyMethodToImplement(aClass, allMethods) != null;
   }
 }

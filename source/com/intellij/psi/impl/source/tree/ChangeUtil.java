@@ -28,6 +28,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTagValue;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class ChangeUtil implements Constants {
@@ -156,7 +157,7 @@ public class ChangeUtil implements Constants {
     final FileElement treeElement = new DummyHolder(oldParent.getManager(), newCharTable, false).getTreeElement();
     TreeUtil.addChildren(treeElement, oldChild);
   }
-  
+
   private static void add(final TreeChangeEvent destinationTreeChange,
                           final CompositeElement parent,
                           final TreeElement first) {
@@ -289,9 +290,9 @@ public class ChangeUtil implements Constants {
       }
       else if (original.getElementType() == ElementType.MODIFIER_LIST) {
         if ((original.getTreeParent().getElementType() == ElementType.FIELD ||
-              original.getTreeParent().getElementType() == ElementType.METHOD)
-          && original.getTreeParent().getTreeParent().getElementType() == ElementType.CLASS &&
-          ((PsiClass)SourceTreeToPsiMap.treeElementToPsi(original.getTreeParent().getTreeParent())).isInterface()) {
+             original.getTreeParent().getElementType() == ElementType.METHOD)
+            && original.getTreeParent().getTreeParent().getElementType() == ElementType.CLASS &&
+            ((PsiClass)SourceTreeToPsiMap.treeElementToPsi(original.getTreeParent().getTreeParent())).isInterface()) {
           element.putUserData(INTERFACE_MODIFIERS_FLAG_KEY, Boolean.TRUE);
         }
       }
@@ -409,7 +410,8 @@ public class ChangeUtil implements Constants {
     final PsiManager manager = original.getManager();
     final CharTable charTableByTree = SharedImplUtil.findCharTableByTree(original);
     registerLeafsInCharTab(table, element, charTableByTree);
-    new DummyHolder(manager, element, null, table).getTreeElement();
+    CompositeElement treeParent = original.getTreeParent();
+    new DummyHolder(manager, element, treeParent == null ? null : treeParent.getPsi(), table).getTreeElement();
     encodeInformation(element, original);
     Helper.unindentSubtree(element, original, table);
     TreeUtil.clearCaches(element);
@@ -525,7 +527,7 @@ public class ChangeUtil implements Constants {
         return element;
       }
       else if (type instanceof PsiPrimitiveType) {
-        String text = typeElement.getText();
+        @NonNls String text = typeElement.getText();
         if (text.equals("null")) return null;
         Lexer lexer = new JavaLexer(LanguageLevel.JDK_1_3);
         lexer.start(text.toCharArray());

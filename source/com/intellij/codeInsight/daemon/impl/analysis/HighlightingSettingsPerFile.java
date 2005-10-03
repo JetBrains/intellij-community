@@ -13,6 +13,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -21,6 +22,13 @@ import java.util.List;
 import java.util.Map;
 
 public class HighlightingSettingsPerFile implements JDOMExternalizable, ProjectComponent {
+  @NonNls private static final String PROFILES_TAG = "profiles";
+  @NonNls private static final String SETTING_TAG = "setting";
+  @NonNls private static final String ROOT_ATT_PREFIX = "root";
+  @NonNls private static final String FILE_ATT = "file";
+  @NonNls private static final String PROFILE_NAME_ATT = "profile_name";
+  @NonNls private static final String IS_ACTIVE_ATT = "is_active";
+
   public static HighlightingSettingsPerFile getInstance(Project progect){
     return progect.getComponent(HighlightingSettingsPerFile.class);
   }
@@ -73,30 +81,30 @@ public class HighlightingSettingsPerFile implements JDOMExternalizable, ProjectC
   public void disposeComponent() {}
 
   public void readExternal(Element element) throws InvalidDataException {
-    List children = element.getChildren("setting");
+    List children = element.getChildren(SETTING_TAG);
     for (final Object aChildren : children) {
       final Element child = (Element)aChildren;
-      final String url = child.getAttributeValue("file");
+      final String url = child.getAttributeValue(FILE_ATT);
       if (url == null) continue;
       final VirtualFile fileByUrl = VirtualFileManager.getInstance().findFileByUrl(url);
       if (fileByUrl != null) {
         final List<FileHighlighingSetting> settings = new ArrayList<FileHighlighingSetting>();
         int index = 0;
-        while (child.getAttributeValue("root" + index) != null) {
-          final String attributeValue = child.getAttributeValue("root" + index++);
+        while (child.getAttributeValue(ROOT_ATT_PREFIX + index) != null) {
+          final String attributeValue = child.getAttributeValue(ROOT_ATT_PREFIX + index++);
           settings.add(Enum.valueOf(FileHighlighingSetting.class, attributeValue));
         }
         myHighlightSettings.put(fileByUrl, settings.toArray(new FileHighlighingSetting[settings.size()]));
       }
     }
-    children = element.getChildren("profiles");
+    children = element.getChildren(PROFILES_TAG);
     for (final Object aChildren : children) {
       final Element child = (Element)aChildren;
-      final VirtualFile fileByUrl = VirtualFileManager.getInstance().findFileByUrl(child.getAttributeValue("file"));
+      final VirtualFile fileByUrl = VirtualFileManager.getInstance().findFileByUrl(child.getAttributeValue(FILE_ATT));
       if (fileByUrl != null) {
-        final String isActive = child.getAttributeValue("is_active");
+        final String isActive = child.getAttributeValue(IS_ACTIVE_ATT);
         final Boolean second = isActive != null ? Boolean.valueOf(isActive) : Boolean.TRUE;
-        myProfileSettings.put(fileByUrl, Pair.create(child.getAttributeValue("profile_name"), second));
+        myProfileSettings.put(fileByUrl, Pair.create(child.getAttributeValue(PROFILE_NAME_ATT), second));
       }
     }
   }
@@ -104,14 +112,14 @@ public class HighlightingSettingsPerFile implements JDOMExternalizable, ProjectC
   public void writeExternal(Element element) throws WriteExternalException {
     if (myHighlightSettings.isEmpty()) throw new WriteExternalException();
     for (Map.Entry<VirtualFile, FileHighlighingSetting[]> entry : myHighlightSettings.entrySet()) {
-      final Element child = new Element("setting");
+      final Element child = new Element(SETTING_TAG);
 
       final VirtualFile vFile = entry.getKey();
       if (!vFile.isValid()) continue;
-      child.setAttribute("file", vFile.getUrl());
+      child.setAttribute(FILE_ATT, vFile.getUrl());
       for (int i = 0; i < entry.getValue().length; i++) {
         final FileHighlighingSetting fileHighlighingSetting = entry.getValue()[i];
-        child.setAttribute("root" + i, fileHighlighingSetting.toString());
+        child.setAttribute(ROOT_ATT_PREFIX + i, fileHighlighingSetting.toString());
       }
       element.addContent(child);
     }
@@ -119,12 +127,12 @@ public class HighlightingSettingsPerFile implements JDOMExternalizable, ProjectC
       final Pair<String, Boolean> value = entry.getValue();
       if (value != null) {
         final String name = value.first;
-        final Element child = new Element("profiles");
+        final Element child = new Element(PROFILES_TAG);
         final VirtualFile vFile = entry.getKey();
         if (vFile == null || !vFile.isValid()) continue;
-        child.setAttribute("file", vFile.getUrl());
-        child.setAttribute("profile_name", name);
-        child.setAttribute("is_active", value.second.toString());
+        child.setAttribute(FILE_ATT, vFile.getUrl());
+        child.setAttribute(PROFILE_NAME_ATT, name);
+        child.setAttribute(IS_ACTIVE_ATT, value.second.toString());
         element.addContent(child);
       }
     }

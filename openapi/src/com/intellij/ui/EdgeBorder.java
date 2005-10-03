@@ -44,10 +44,9 @@ public class EdgeBorder implements Border {
     return myInsets;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public void paintBorder(Component component, Graphics g, int x, int y, int width, int height) {
-    java.awt.Color color = UIManager.getColor("Separator.shadow");
-    java.awt.Color color1 = UIManager.getColor("Separator.highlight");
+    java.awt.Color color = UIUtil.getSeparatorShadow();
+    java.awt.Color color1 = UIUtil.getSeparatorHighlight();
     java.awt.Color color2 = g.getColor();
     if ((b & 0xf) != 0){
       g.setColor(color);

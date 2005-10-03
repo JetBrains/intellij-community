@@ -18,6 +18,7 @@ package com.intellij.ui.table;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.SortableColumnModel;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -37,8 +38,7 @@ public class TableHeaderRenderer extends JPanel implements TableCellRenderer{
   private final Border myBorder;
 
   public TableHeaderRenderer(SortableColumnModel model) {
-    //noinspection HardCodedStringLiteral
-    this(model, UIManager.getBorder("TableHeader.cellBorder"));
+    this(model, UIUtil.getTableHeaderCellBorder());
   }
   public TableHeaderRenderer(SortableColumnModel model, Border border) {
     super(new BorderLayout(0, 0));

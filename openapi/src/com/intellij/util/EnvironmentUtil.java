@@ -24,6 +24,8 @@ import java.io.InputStream;
 import java.io.StringReader;
 import java.util.*;
 
+import org.jetbrains.annotations.NonNls;
+
 public class EnvironmentUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.EnvironmentUtil");
   private static Map<String, String> ourEnviromentProperties;
@@ -32,7 +34,7 @@ public class EnvironmentUtil {
 
   }
 
-  public static Map<String, String> getEnviromentProperties() {
+  public static @NonNls Map<String, String> getEnviromentProperties() {
     if (ourEnviromentProperties == null) {
       List vars = getProcEnvironment();
       ourEnviromentProperties = new HashMap<String, String>();
@@ -88,7 +90,7 @@ public class EnvironmentUtil {
 
       String var = null;
       String line;
-      String lineSep = System.getProperty("line.separator");
+      String lineSep = SystemProperties.getLineSeparator();
       while ((line = in.readLine()) != null) {
         if (line.indexOf('=') == -1) {
           if (var == null) {

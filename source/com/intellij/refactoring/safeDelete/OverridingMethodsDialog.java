@@ -6,6 +6,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteOverridingMethodUsageInfo;
 import com.intellij.ui.BooleanTableCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
@@ -20,6 +21,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author dsl
@@ -44,13 +47,13 @@ class OverridingMethodsDialog extends DialogWrapper {
     for (int i = 0; i < myMethodText.length; i++) {
       myMethodText[i] = PsiFormatUtil.formatMethod(
               ((SafeDeleteOverridingMethodUsageInfo) myOverridingMethods.get(i)).getOverridingMethod(),
-          PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_CONTAINING_CLASS
-              | PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS | PsiFormatUtil.SHOW_TYPE,
+              PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_CONTAINING_CLASS
+                                    | PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS | PsiFormatUtil.SHOW_TYPE,
               PsiFormatUtil.SHOW_TYPE
       );
     }
 
-    setTitle("Unused Overriding Methods");
+    setTitle(RefactoringBundle.message("unused.overriding.methods.title"));
     init();
   }
 
@@ -79,8 +82,8 @@ class OverridingMethodsDialog extends DialogWrapper {
   protected JComponent createNorthPanel() {
     JPanel panel = new JPanel();
     panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-    panel.add(new JLabel("There are unused methods that override methods you delete."));
-    panel.add(new JLabel("Choose the ones you want to be deleted."));
+    panel.add(new JLabel(RefactoringBundle.message("there.are.unused.methods.that.override.methods.you.delete")));
+    panel.add(new JLabel(RefactoringBundle.message("choose.the.ones.you.want.to.be.deleted")));
     return panel;
   }
 
@@ -104,22 +107,23 @@ class OverridingMethodsDialog extends DialogWrapper {
 
 
     // make SPACE check/uncheck selected rows
-    InputMap inputMap = myTable.getInputMap();
+    @NonNls InputMap inputMap = myTable.getInputMap();
     inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), "enable_disable");
-    myTable.getActionMap().put("enable_disable", new AbstractAction() {
+    @NonNls final ActionMap actionMap = myTable.getActionMap();
+    actionMap.put("enable_disable", new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
         if (myTable.isEditing()) return;
         int[] rows = myTable.getSelectedRows();
         if (rows.length > 0) {
           boolean valueToBeSet = false;
-          for (int idx = 0; idx < rows.length; idx++) {
-            if (!myChecked[rows[idx]]) {
+          for (int row : rows) {
+            if (!myChecked[row]) {
               valueToBeSet = true;
               break;
             }
           }
-          for (int idx = 0; idx < rows.length; idx++) {
-            myChecked[rows[idx]] = valueToBeSet;
+          for (int row : rows) {
+            myChecked[row] = valueToBeSet;
           }
 
           tableModel.updateData();
@@ -151,7 +155,7 @@ class OverridingMethodsDialog extends DialogWrapper {
         case CHECK_COLUMN:
           return " ";
         default:
-          return "Method";
+          return RefactoringBundle.message("method.column");
       }
     }
 

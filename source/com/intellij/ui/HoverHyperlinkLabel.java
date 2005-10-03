@@ -1,5 +1,7 @@
 package com.intellij.ui;
 
+import org.jetbrains.annotations.NonNls;
+
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
@@ -33,12 +35,16 @@ public class HoverHyperlinkLabel extends JLabel {
 
   public void setText(String text) {
     if (BasicHTML.isHTMLString(getText())) { // if is currently showing string as html
-      super.setText("<html><u>" + text + "</u></html>");
+      super.setText(underlineTextInHtml(text));
     }
     else {
       super.setText(text);
     }
     myOriginalText = text;
+  }
+
+  @NonNls private String underlineTextInHtml(final String text) {
+    return "<html><u>" + text + "</u></html>";
   }
 
   public String getOriginalText() {
@@ -56,7 +62,7 @@ public class HoverHyperlinkLabel extends JLabel {
     }
 
     public void mouseEntered(MouseEvent e) {
-      HoverHyperlinkLabel.super.setText("<html><u>" + myOriginalText + "</u></html>");
+      HoverHyperlinkLabel.super.setText(underlineTextInHtml(myOriginalText));
       setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     }
 

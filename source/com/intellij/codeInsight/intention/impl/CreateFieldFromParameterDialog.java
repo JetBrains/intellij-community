@@ -1,5 +1,7 @@
 package com.intellij.codeInsight.intention.impl;
 
+import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -8,7 +10,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.ide.util.PropertiesComponent;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -24,7 +26,7 @@ class CreateFieldFromParameterDialog extends DialogWrapper {
 
   private JComponent myNameField;
   private JCheckBox myCbFinal;
-  private static final String PROPERTY_NAME = "CREATE_FIELD_FROM_PARAMETER_DECLARE_FINAL";
+  private static final @NonNls String PROPERTY_NAME = "CREATE_FIELD_FROM_PARAMETER_DECLARE_FINAL";
 
   public CreateFieldFromParameterDialog(Project project, String[] names, String type, PsiClass targetClass, final boolean fieldMayBeFinal) {
     super(project, true);
@@ -34,7 +36,7 @@ class CreateFieldFromParameterDialog extends DialogWrapper {
     myTargetClass = targetClass;
     myFieldMayBeFinal = fieldMayBeFinal;
 
-    setTitle("Create Field");
+    setTitle(CodeInsightBundle.message("dialog.create.field.from.parameter.title"));
 
     init();
   }
@@ -49,8 +51,8 @@ class CreateFieldFromParameterDialog extends DialogWrapper {
       if (field.getName().equals(getEnteredName())) {
         int result = Messages.showOkCancelDialog(
           getContentPane(),
-          "Use existing field " + getEnteredName() + "?",
-          "Field Already Exists",
+          CodeInsightBundle.message("dialog.create.field.from.parameter.already.exists.text", getEnteredName()),
+          CodeInsightBundle.message("dialog.create.field.from.parameter.already.exists.title"),
           Messages.getQuestionIcon());
         if (result == 0) {
           close(OK_EXIT_CODE);
@@ -163,7 +165,7 @@ class CreateFieldFromParameterDialog extends DialogWrapper {
     gbConstraints.weighty = 1;
     gbConstraints.gridx = 0;
     gbConstraints.gridy = 0;
-    JLabel type = new JLabel("Field of type " + myType);
+    JLabel type = new JLabel(CodeInsightBundle.message("dialog.create.field.from.parameter.field.type.label", myType));
     panel.add(type, gbConstraints);
 
     gbConstraints.gridwidth = 1;
@@ -171,7 +173,7 @@ class CreateFieldFromParameterDialog extends DialogWrapper {
     gbConstraints.weighty = 1;
     gbConstraints.gridx = 0;
     gbConstraints.gridy = 1;
-    JLabel namePrompt = new JLabel("Name: ");
+    JLabel namePrompt = new JLabel(CodeInsightBundle.message("dialog.create.field.from.parameter.field.name.label"));
     panel.add(namePrompt, gbConstraints);
 
     gbConstraints.gridwidth = 1;
@@ -194,8 +196,7 @@ class CreateFieldFromParameterDialog extends DialogWrapper {
     gbConstraints.gridy = 0;
     gbConstraints.insets = new Insets(0, 0, 0, 0);
 
-    myCbFinal = new JCheckBox("Declare final");
-    myCbFinal.setMnemonic('f');
+    myCbFinal = new JCheckBox(CodeInsightBundle.message("dialog.create.field.from.parameter.declare.final.checkbox"));
     if (myFieldMayBeFinal) {
       myCbFinal.setSelected(PropertiesComponent.getInstance().isTrueValue(PROPERTY_NAME));
     } else {

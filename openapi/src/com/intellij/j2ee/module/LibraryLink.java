@@ -29,13 +29,15 @@ import com.intellij.openapi.util.Comparing;
 import java.util.HashSet;
 import java.util.List;
 
+import org.jetbrains.annotations.NonNls;
+
 
 /**
  * @author Alexey Kudravtsev
  */
 public abstract class LibraryLink extends ContainerElement {
 
-  public static final String MODULE_LEVEL = "module";
+  @NonNls public static final String MODULE_LEVEL = "module";
 
   public LibraryLink(Module parentModule) {
     super(parentModule);

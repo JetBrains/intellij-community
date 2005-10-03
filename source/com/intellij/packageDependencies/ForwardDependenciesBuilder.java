@@ -1,6 +1,7 @@
 package com.intellij.packageDependencies;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -20,11 +21,11 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
   }
 
   public String getRootNodeNameInUsageView(){
-    return "Usages of the right tree scope selection in the left tree scope selection";
+    return AnalysisScopeBundle.message("forward.dependencies.usage.view.root.node.text");
   }
 
   public String getInitialUsagesPosition(){
-    return "Select where to search in left tree and what to search in right tree.";
+    return AnalysisScopeBundle.message("forward.dependencies.usage.view.initial.text");
   }
 
   public boolean isBackward(){
@@ -42,7 +43,7 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
             if (indicator.isCanceled()) {
               throw new ProcessCanceledException();
             }
-            indicator.setText("Analyzing package dependencies");
+            indicator.setText(AnalysisScopeBundle.message("package.dependencies.progress.text"));
             indicator.setText2(file.getVirtualFile().getPresentableUrl());
             indicator.setFraction(((double)++ myFileCount) / myTotalFileCount);
           }

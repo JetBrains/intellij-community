@@ -1,5 +1,7 @@
 package com.intellij.psi.scope;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * Created by IntelliJ IDEA.
  * User: ik
@@ -8,7 +10,7 @@ package com.intellij.psi.scope;
  * To change this template use Options | File Templates.
  */
 public class MethodProcessorSetupFailedException extends Exception{
-  public MethodProcessorSetupFailedException(String message){
+  public MethodProcessorSetupFailedException(@NonNls String message){
     super(message);
   }
 }

@@ -8,8 +8,11 @@ import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.lang.reflect.Field;
 
+import org.jetbrains.annotations.NonNls;
+
 public class IdeFocusTraversalPolicy extends LayoutFocusTraversalPolicyExt {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy");
+  @NonNls public static final String FOCUS_TRAVERSAL_POLICY_FIELD = "focusTraversalPolicy";
 
   protected Component getDefaultComponentImpl(Container focusCycleRoot) {
     if (!(focusCycleRoot instanceof JComponent)) {
@@ -78,7 +81,7 @@ public class IdeFocusTraversalPolicy extends LayoutFocusTraversalPolicyExt {
 
   private static FocusTraversalPolicy getFocusTraversalPolicyAwtImpl(final JComponent component) {
     try {
-      final Field field = Container.class.getDeclaredField("focusTraversalPolicy");
+      final Field field = Container.class.getDeclaredField(FOCUS_TRAVERSAL_POLICY_FIELD);
       field.setAccessible(true);
       final FocusTraversalPolicy focusTraversalPolicy = (FocusTraversalPolicy)field.get(component);
       return focusTraversalPolicy;

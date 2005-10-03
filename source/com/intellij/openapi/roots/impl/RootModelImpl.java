@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.*;
 import com.intellij.util.containers.CollectionUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 
@@ -43,12 +44,13 @@ class RootModelImpl implements ModifiableRootModel {
   private boolean myExcludeOutput;
   private boolean myExcludeExploded;
 
-  private static final String OUTPUT_TAG = "output";
-  private static final String TEST_OUTPUT_TAG = "output-test";
-  private static final String EXPLODED_TAG = "exploded";
-  private static final String URL_ATTR = "url";
-  private static final String EXCLUDE_OUTPUT_TAG = "exclude-output";
-  private static final String EXCLUDE_EXPLODED_TAG = "exclude-exploded";
+  @NonNls private static final String OUTPUT_TAG = "output";
+  @NonNls private static final String TEST_OUTPUT_TAG = "output-test";
+  @NonNls private static final String EXPLODED_TAG = "exploded";
+  @NonNls private static final String ATTRIBUTE_URL = "url";
+  @NonNls private static final String URL_ATTR = ATTRIBUTE_URL;
+  @NonNls private static final String EXCLUDE_OUTPUT_TAG = "exclude-output";
+  @NonNls private static final String EXCLUDE_EXPLODED_TAG = "exclude-exploded";
   private boolean myDisposed = false;
   private final OrderEntryProperties myOrderEntryProperties;
   private final VirtualFilePointerContainer myJavadocPointerContainer;
@@ -72,9 +74,9 @@ class RootModelImpl implements ModifiableRootModel {
       return pointer;
     }
   };
-  private static final String PROPERTIES_CHILD_NAME = "orderEntryProperties";
-  private static final String JAVADOC_PATHS_NAME = "javadoc-paths";
-  private static final String JAVADOC_ROOT_ELEMENT = "root";
+  @NonNls private static final String PROPERTIES_CHILD_NAME = "orderEntryProperties";
+  @NonNls private static final String JAVADOC_PATHS_NAME = "javadoc-paths";
+  @NonNls private static final String JAVADOC_ROOT_ELEMENT = "root";
   private ProjectRootManagerImpl myProjectRootManager;
 
 
@@ -448,7 +450,7 @@ class RootModelImpl implements ModifiableRootModel {
     final Element outputPathChild = element.getChild(tag);
     VirtualFilePointer vptr = null;
     if (outputPathChild != null) {
-      String outputPath = outputPathChild.getAttributeValue("url");
+      String outputPath = outputPathChild.getAttributeValue(ATTRIBUTE_URL);
       vptr = pointerFactory().create(outputPath);
     }
     return vptr;
@@ -477,7 +479,7 @@ class RootModelImpl implements ModifiableRootModel {
 
     if (myCompilerOutputPathForTests != null) {
       final Element pathElement = new Element(TEST_OUTPUT_TAG);
-      pathElement.setAttribute("url", myCompilerOutputPathForTests.getUrl());
+      pathElement.setAttribute(ATTRIBUTE_URL, myCompilerOutputPathForTests.getUrl());
       element.addContent(pathElement);
     }
 

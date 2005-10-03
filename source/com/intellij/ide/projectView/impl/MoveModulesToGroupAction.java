@@ -4,6 +4,7 @@
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.projectView.ProjectView;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -26,12 +27,12 @@ public class MoveModulesToGroupAction extends AnAction {
     final DataContext dataContext = e.getDataContext();
     final Module[] modules = (Module[])dataContext.getData(DataConstantsEx.MODULE_CONTEXT_ARRAY);
 
-    String description = "Move " + whatToMove(modules) + " to the group " + myModuleGroup.presentableText();
+    String description = IdeBundle.message("message.move.modules.to.group", whatToMove(modules), myModuleGroup.presentableText());
     presentation.setDescription(description);
   }
 
   protected static String whatToMove(Module[] modules) {
-    return modules.length == 1 ? "module '" + modules[0].getName() + "'" : "modules";
+    return modules.length == 1 ? IdeBundle.message("message.module", modules[0].getName()) : IdeBundle.message("message.modules");
   }
 
   public void actionPerformed(AnActionEvent e) {

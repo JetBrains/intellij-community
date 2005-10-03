@@ -9,6 +9,7 @@ import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.text.MessageFormat;
 
 public class AdditionalOptionsPanel implements RefreshableOnComponent, TagNameFieldOwner {
 
@@ -57,7 +58,7 @@ public class AdditionalOptionsPanel implements RefreshableOnComponent, TagNameFi
 
   public void saveState() {
     if (!myIsCorrect) {
-      throw new InputException("Tag name " + myErrorMessage, myTagName);
+      throw new InputException(com.intellij.CvsBundle.message("error.message.incorrect.tag.name", myErrorMessage), myTagName);
     }
     if (myCheckinProject) {
       myConfiguration.TAG_AFTER_PROJECT_COMMIT = myTag.isSelected();

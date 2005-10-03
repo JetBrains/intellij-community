@@ -35,6 +35,8 @@ import com.intellij.util.text.CharArrayUtil;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Collections;
+import java.util.Comparator;
 
 /**
  * @author peter
@@ -54,7 +56,16 @@ public class ChunkExtractor {
                         final List<RangeMarker> rangeMarkers) {
 
     myElement = element;
-    myRangeMarkers = rangeMarkers;
+    myRangeMarkers = new ArrayList<RangeMarker>(rangeMarkers);
+    Collections.sort(myRangeMarkers, new Comparator<RangeMarker>() {
+      public int compare(final RangeMarker o1, final RangeMarker o2) {
+        int result = o1.getStartOffset() - o2.getStartOffset();
+        if (result == 0) {
+          result = o1.getEndOffset() - o2.getEndOffset();
+        }
+        return result;
+      }
+    });
     myColorsScheme = UsageTreeColorsScheme.getInstance().getScheme();
 
     final int absoluteStartOffset =  getStartOffset(myRangeMarkers);
@@ -83,9 +94,9 @@ public class ChunkExtractor {
   }
 
   private TextChunk[] createTextChunks(final CharSequence chars,
-    SyntaxHighlighter highlighter,
-    int start,
-    int end) {
+                                       SyntaxHighlighter highlighter,
+                                       int start,
+                                       int end) {
     LOG.assertTrue(start <= end);
     List<TextChunk> result = new ArrayList<TextChunk>();
 
@@ -120,13 +131,8 @@ public class ChunkExtractor {
         IElementType tokenType = lexer.getTokenType();
         TextAttributesKey[] tokenHighlights = highlighter.getTokenHighlights(tokenType);
 
-        RangeMarker intersectionMarker = getIntersectingMarker(hiStart, hiEnd);
-        if (intersectionMarker != null) {
-          processIntersectingRange(chars, hiStart, hiEnd, tokenHighlights, result, intersectionMarker);
-        }
-        else {
-          result.add(new TextChunk(convertAttributes(tokenHighlights), text));
-        }
+        processIntersectingRange(chars, hiStart, hiEnd, tokenHighlights, result);
+        //result.add(new TextChunk(convertAttributes(tokenHighlights), text));
       }
       finally {
         lexer.advance();
@@ -136,42 +142,43 @@ public class ChunkExtractor {
     return result.toArray(new TextChunk[result.size()]);
   }
 
-  private RangeMarker getIntersectingMarker(int hiStart, int hiEnd) {
-    for (int i = 0; i < myRangeMarkers.size(); i++) {
-      RangeMarker marker = myRangeMarkers.get(i);
-      if (marker.isValid() && rangeIntersect(hiStart, hiEnd, marker.getStartOffset(), marker.getEndOffset())) return marker;
-    }
-    return null;
-  }
-
   private void processIntersectingRange(CharSequence chars,
-    int hiStart,
-    int hiEnd,
-    TextAttributesKey[] tokenHighlights,
-    List<TextChunk> result,
-    RangeMarker rangeMarker) {
-    int usageStart = rangeMarker.getStartOffset();
-    int usageEnd = rangeMarker.getEndOffset();
-
+                                        int hiStart,
+                                        int hiEnd,
+                                        TextAttributesKey[] tokenHighlights,
+                                        List<TextChunk> result) {
     TextAttributes originalAttrs = convertAttributes(tokenHighlights);
-    addChunk(chars, hiStart, Math.max(hiStart, usageStart), originalAttrs, false, result);
-    addChunk(chars, Math.max(hiStart, usageStart), Math.min(hiEnd, usageEnd), originalAttrs, true, result);
-    addChunk(chars, Math.min(hiEnd, usageEnd), hiEnd, originalAttrs, false, result);
+    int lastOffset = hiStart;
+    for(RangeMarker rangeMarker: myRangeMarkers) {
+      int usageStart = rangeMarker.getStartOffset();
+      int usageEnd = rangeMarker.getEndOffset();
+      if (rangeMarker.isValid() && rangeIntersect(lastOffset, hiEnd, usageStart, usageEnd)) {
+        addChunk(chars, lastOffset, Math.max(lastOffset, usageStart), originalAttrs, false, result);
+        addChunk(chars, Math.max(lastOffset, usageStart), Math.min(hiEnd, usageEnd), originalAttrs, true, result);
+        if (usageEnd > hiEnd) {
+          return;
+        }
+        lastOffset = usageEnd;
+      }
+    }
+    if (lastOffset < hiEnd) {
+      addChunk(chars, lastOffset, hiEnd, originalAttrs, false, result);
+    }
   }
 
   private static void addChunk(CharSequence chars, int start, int end, TextAttributes originalAttrs, boolean bold, List<TextChunk> result) {
     if (start >= end) return;
     String rText = chars.subSequence(start, end).toString();
     TextAttributes attrs = bold
-        ? TextAttributes.merge(originalAttrs, new TextAttributes(null, null, null, null, Font.BOLD))
-        : originalAttrs;
+                           ? TextAttributes.merge(originalAttrs, new TextAttributes(null, null, null, null, Font.BOLD))
+                           : originalAttrs;
     result.add(new TextChunk(attrs, rText));
   }
 
   private static boolean rangeIntersect(int s1, int e1, int s2, int e2) {
     return s2 < s1 && s1 < e2 || s2 < e1 && e1 < e2
-                          || s1 < s2 && s2 < e1 || s1 < e2 && e2 < e1
-    || s1 == s2 && e1 == e2;
+           || s1 < s2 && s2 < e1 || s1 < e2 && e2 < e1
+           || s1 == s2 && e1 == e2;
   }
 
   private TextAttributes convertAttributes(TextAttributesKey[] keys) {

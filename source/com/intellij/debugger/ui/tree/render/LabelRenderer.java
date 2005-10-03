@@ -8,6 +8,7 @@ import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
@@ -15,6 +16,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.sun.jdi.PrimitiveValue;
 import com.sun.jdi.Value;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * User: lex
@@ -22,7 +24,7 @@ import org.jdom.Element;
  * Time: 10:27:12 PM
  */
 public class LabelRenderer extends com.intellij.debugger.ui.tree.render.ReferenceRenderer implements ValueLabelRenderer{
-  public static final String UNIQUE_ID = "LabelRenderer";
+  public static final @NonNls String UNIQUE_ID = "LabelRenderer";
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.impl.watch.render.ClassLabelRenderer");
 
   private final CachedEvaluator myLabelExpression = new CachedEvaluator() {
@@ -62,10 +64,11 @@ public class LabelRenderer extends com.intellij.debugger.ui.tree.render.Referenc
         result = DebuggerUtils.getValueAsString(thisEvaluationContext, labelValue);
       }
       catch (final EvaluateException ex) {
-        throw new EvaluateException(ex.getMessage() + " Failed to evaluate expression for this object alternative view", ex);
+        throw new EvaluateException(DebuggerBundle.message("error.unable.to.evaluate.expression") + " " + ex.getMessage(), ex);
       }
     }
     else {
+      //noinspection HardCodedStringLiteral
       result = "null";
     }
     return result;

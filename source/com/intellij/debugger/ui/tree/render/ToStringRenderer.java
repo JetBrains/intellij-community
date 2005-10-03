@@ -2,6 +2,7 @@ package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.ClassFilter;
 import com.intellij.debugger.DebuggerContext;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
@@ -15,6 +16,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiExpression;
 import com.sun.jdi.*;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Iterator;
 
@@ -24,7 +26,7 @@ import java.util.Iterator;
  */
 
 public class ToStringRenderer extends NodeRendererImpl {
-  public static final String UNIQUE_ID = "ToStringRenderer";
+  public static final @NonNls String UNIQUE_ID = "ToStringRenderer";
 
   private boolean USE_CLASS_FILTERS = false;
   private ClassFilter[] myClassFilters = ClassFilter.EMPTY_ARRAY;
@@ -37,7 +39,7 @@ public class ToStringRenderer extends NodeRendererImpl {
     return UNIQUE_ID;
   }
 
-  public String getName() {
+  public @NonNls String getName() {
     return "toString";
   }
 
@@ -57,7 +59,7 @@ public class ToStringRenderer extends NodeRendererImpl {
 
   public String calcLabel(final ValueDescriptor valueDescriptor, EvaluationContext evaluationContext, final DescriptorLabelListener labelListener)
     throws EvaluateException {
-    Value value = valueDescriptor.getValue();
+    final Value value = valueDescriptor.getValue();
     BatchEvaluator.getBatchEvaluator(evaluationContext.getDebugProcess()).invoke(new ToStringCommand(evaluationContext, value) {
       public void evaluationResult(String message) {
         valueDescriptor.setValueLabel(message != null ? "\"" + message + "\"" : "");
@@ -65,7 +67,8 @@ public class ToStringRenderer extends NodeRendererImpl {
       }
 
       public void evaluationError(String message) {
-        valueDescriptor.setValueLabelFailed(new EvaluateException(message + " Failed to evaluate toString() for this object", null));
+        final String msg = value != null? message + " " + DebuggerBundle.message("evaluation.error.cannot.evaluate.tostring", value.type().name()) : message;
+        valueDescriptor.setValueLabelFailed(new EvaluateException(msg, null));
         labelListener.labelChanged();
       }
     });
@@ -102,6 +105,7 @@ public class ToStringRenderer extends NodeRendererImpl {
     return true;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static boolean overridesToString(Type type) {
     if(type instanceof ClassType) {
       final ClassType classType = (ClassType)type;
@@ -134,6 +138,7 @@ public class ToStringRenderer extends NodeRendererImpl {
     return debugProcess.getDefaultRenderer(value).isExpandable(value, evaluationContext, parentDescriptor);
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public void readExternal(Element element) throws InvalidDataException {
     super.readExternal(element);
     final String value = JDOMExternalizerUtil.readField(element, "USE_CLASS_FILTERS");
@@ -141,6 +146,7 @@ public class ToStringRenderer extends NodeRendererImpl {
     myClassFilters = DebuggerUtilsEx.readFilters(element.getChildren("filter"));
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
     JDOMExternalizerUtil.writeField(element, "USE_CLASS_FILTERS", USE_CLASS_FILTERS? "true" : "false");
@@ -157,9 +163,8 @@ public class ToStringRenderer extends NodeRendererImpl {
 
   private boolean isFiltered(Type t) {
     if (t instanceof ReferenceType) {
-      for (int i = 0; i < myClassFilters.length; i++) {
-        ClassFilter classFilter = myClassFilters[i];
-        if(classFilter.isEnabled() && DebuggerUtilsEx.getSuperType(t, classFilter.getPattern()) != null) {
+      for (ClassFilter classFilter : myClassFilters) {
+        if (classFilter.isEnabled() && DebuggerUtilsEx.getSuperType(t, classFilter.getPattern()) != null) {
           return true;
         }
       }

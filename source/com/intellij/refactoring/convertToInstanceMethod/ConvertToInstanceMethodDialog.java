@@ -5,6 +5,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiVariable;
 import com.intellij.refactoring.move.moveInstanceMethod.MoveInstanceMethodDialogBase;
+import com.intellij.refactoring.RefactoringBundle;
 
 import javax.swing.*;
 
@@ -30,14 +31,14 @@ public class ConvertToInstanceMethodDialog  extends MoveInstanceMethodDialogBase
   protected JComponent createCenterPanel() {
     final Box vBox = Box.createVerticalBox();
     final Box labelBox = Box.createHorizontalBox();
-    final JLabel jLabel = new JLabel("Select an instance parameter:");
-    jLabel.setDisplayedMnemonic('i');
-    labelBox.add(jLabel);
+    final JLabel label = new JLabel();
+    labelBox.add(label);
     labelBox.add(Box.createHorizontalGlue());
     vBox.add(labelBox);
     vBox.add(Box.createVerticalStrut(4));
 
     vBox.add(createListAndVisibilityPanels());
+    label.setText(RefactoringBundle.message("moveInstanceMethod.select.an.instance.parameter"));
     return vBox;
   }
 }

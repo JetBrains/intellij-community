@@ -1,6 +1,8 @@
 package com.intellij.codeInspection.sameReturnValue;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
@@ -11,6 +13,7 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.reference.RefMethod;
 import com.intellij.codeInspection.reference.RefVisitor;
+import com.intellij.psi.PsiDocCommentOwner;
 import com.intellij.psi.PsiMethod;
 
 /**
@@ -27,6 +30,7 @@ public class SameReturnValueInspection extends DescriptorProviderInspection {
       public void accept(RefElement refElement) {
         if (refElement instanceof RefMethod) {
           RefMethod refMethod = (RefMethod) refElement;
+            if (!InspectionManagerEx.isToCheckMember((PsiDocCommentOwner) refMethod.getElement(), SameReturnValueInspection.this.getShortName())) return;
           ProblemDescriptor[] descriptors = checkMethod(refMethod);
           if (descriptors != null) {
             addProblemElement(refElement, descriptors);
@@ -44,16 +48,16 @@ public class SameReturnValueInspection extends DescriptorProviderInspection {
 
     String returnValue = refMethod.getReturnValueIfSame();
     if (returnValue != null) {
-      final String messagePrefix;
+      final String message;
       if (refMethod.getDerivedMethods().isEmpty()) {
-        messagePrefix = "Method always returns <code>";
+        message = InspectionsBundle.message("inspection.same.return.value.problem.descriptor", "<code>" + returnValue + "</code>");
       } else if (refMethod.hasBody()) {
-        messagePrefix = "Method and all its deriveables always return <code>";
+        message = InspectionsBundle.message("inspection.same.return.value.problem.descriptor1", "<code>" + returnValue + "</code>");
       } else {
-        messagePrefix = "All implementations of this method always return <code>";
+        message = InspectionsBundle.message("inspection.same.return.value.problem.descriptor2", "<code>" + returnValue + "</code>");
       }
 
-      return new ProblemDescriptor[] {getManager().createProblemDescriptor(refMethod.getElement(), messagePrefix + returnValue + "</code>.", (LocalQuickFix [])null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING)};
+      return new ProblemDescriptor[] {getManager().createProblemDescriptor(refMethod.getElement(), message, (LocalQuickFix [])null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING)};
     }
 
     return null;
@@ -85,11 +89,11 @@ public class SameReturnValueInspection extends DescriptorProviderInspection {
   }
 
   public String getDisplayName() {
-    return "Method returns the same value";
+    return InspectionsBundle.message("inspection.same.return.value.display.name");
   }
 
   public String getGroupDisplayName() {
-    return "Declaration Redundancy";
+    return GroupNames.DECLARATION_REDUNDANCY;
   }
 
   public String getShortName() {

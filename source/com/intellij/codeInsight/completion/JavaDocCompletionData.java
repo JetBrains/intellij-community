@@ -11,17 +11,18 @@ import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.ConstantExpressionEvaluator;
-import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.position.LeftNeighbour;
 import com.intellij.psi.filters.position.TokenTypeFilter;
+import com.intellij.psi.impl.ConstantExpressionEvaluator;
+import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,6 +37,8 @@ import java.util.StringTokenizer;
  */
 public class JavaDocCompletionData extends CompletionData {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.JavaDocCompletionData");
+  private static final @NonNls String VALUE_TAG = "value";
+  private static final @NonNls String LINK_TAG = "link";
 
   public JavaDocCompletionData() {
     declareFinalScope(PsiDocTag.class);
@@ -80,7 +83,7 @@ public class JavaDocCompletionData extends CompletionData {
         public boolean isAcceptable(Object element, PsiElement context) {
           if (element instanceof CandidateInfo) {
             PsiDocTag tag = PsiTreeUtil.getParentOfType(context, PsiDocTag.class);
-            if (tag != null && tag.getName().equals("value")) {
+            if (tag != null && tag.getName().equals(VALUE_TAG)) {
               CandidateInfo cInfo = (CandidateInfo) element;
               if (!(cInfo.getElement() instanceof PsiField)) return false;
               PsiField field = (PsiField) cInfo.getElement();
@@ -126,6 +129,7 @@ public class JavaDocCompletionData extends CompletionData {
       return ret.toArray(new String[ret.size()]);
     }
 
+    @SuppressWarnings({"HardCodedStringLiteral"})
     public String toString() {
       return "javadoc-tag-chooser";
     }
@@ -165,7 +169,7 @@ public class JavaDocCompletionData extends CompletionData {
         else if (chars.charAt(currentOffset + 1) == '}' && chars.charAt(currentOffset) == ' ') {
           caretModel.moveToOffset(offset + 2);
         }
-        else if (name.equals("link")) {
+        else if (name.equals(LINK_TAG)) {
           EditorModificationUtil.insertStringAtCaret(editor, " }");
           caretModel.moveToOffset(offset + 1);
           editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);

@@ -7,13 +7,21 @@ import com.intellij.j2ee.ejb.EjbUtil;
 import com.intellij.j2ee.ejb.role.EjbImplMethodRole;
 import com.intellij.j2ee.ejb.role.EjbMethodRole;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.HierarchicalMethodSignatureImpl;
 import com.intellij.psi.util.*;
+import com.intellij.util.containers.HashMap;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.HashSet;
+
+import gnu.trove.THashMap;
 
 public class PsiSuperMethodImplUtil {
+  private static final Key<CachedValue<Map<MethodSignature, HierarchicalMethodSignatureImpl>>> SIGNATURES_KEY = Key.create("MAP_KEY");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiSuperMethodImplUtil");
 
   public static PsiPointcutDef findSuperPointcut(PsiPointcutDef pointcut) {
     return findSuperPointcut(pointcut, pointcut.getContainingAspect());
@@ -41,84 +49,76 @@ public class PsiSuperMethodImplUtil {
     return prevSuperPointcut;
   }
 
-  public static PsiMethod[] findSuperMethods(PsiMethod method) {
+  public static @NotNull PsiMethod[] findSuperMethods(PsiMethod method) {
     return findSuperMethods(method, method.getContainingClass());
   }
 
-  public static PsiMethod[] findSuperMethods(PsiMethod method, boolean checkAccess) {
+  public static @NotNull PsiMethod[] findSuperMethods(PsiMethod method, boolean checkAccess) {
     if (!canHaveSuperMethod(method, checkAccess, false)) return PsiMethod.EMPTY_ARRAY;
     final PsiClass aClass = method.getContainingClass();
     return findSuperMethodsInternal(method, aClass);
   }
 
-  public static PsiMethod[] findSuperMethods(PsiMethod method, PsiClass parentClass) {
+  public static @NotNull PsiMethod[] findSuperMethods(PsiMethod method, PsiClass parentClass) {
     if (!canHaveSuperMethod(method, true, false)) return PsiMethod.EMPTY_ARRAY;
     return findSuperMethodsInternal(method, parentClass);
   }
 
 
-  private static PsiMethod[] findSuperMethodsInternal(PsiMethod method, PsiClass parentClass) {
+  private static @NotNull PsiMethod[] findSuperMethodsInternal(PsiMethod method, PsiClass parentClass) {
     List<MethodSignatureBackedByPsiMethod> outputMethods = findSuperMethodSignatures(method, parentClass, false);
 
     return MethodSignatureUtil.convertMethodSignaturesToMethods(outputMethods);
   }
 
-  public static List<MethodSignatureBackedByPsiMethod> findSuperMethodSignaturesIncludingStatic(PsiMethod method,
-                                                                                                boolean checkAccess) {
+  public static @NotNull List<MethodSignatureBackedByPsiMethod> findSuperMethodSignaturesIncludingStatic(PsiMethod method,
+                                                                                                         boolean checkAccess) {
     if (!canHaveSuperMethod(method, checkAccess, true)) return Collections.EMPTY_LIST;
     return findSuperMethodSignatures(method, method.getContainingClass(), true);
   }
 
-  private static List<MethodSignatureBackedByPsiMethod> findSuperMethodSignatures(PsiMethod method,
-                                                                                  PsiClass parentClass, boolean allowStaticMethod) {
-    final boolean isStatic = method.hasModifierProperty(PsiModifier.STATIC);
-    final MethodSignatureUtil.MethodSignatureToMethods allMethodsCollection = MethodSignatureUtil.getOverrideEquivalentMethods(parentClass);
-    final MethodSignature originalMethodSignature = method.getSignature(PsiSubstitutor.EMPTY);
-    final List<MethodSignatureBackedByPsiMethod> methods = allMethodsCollection.get(originalMethodSignature);
-    List<MethodSignatureBackedByPsiMethod> sameSignatureMethods = new ArrayList<MethodSignatureBackedByPsiMethod>();
-    if (methods != null) {
-      sameSignatureMethods.addAll(methods);
-    }
+  private static @NotNull List<MethodSignatureBackedByPsiMethod> findSuperMethodSignatures(PsiMethod method,
+                                                                                           PsiClass parentClass, boolean allowStaticMethod) {
+    final boolean myStatic = method.hasModifierProperty(PsiModifier.STATIC);
+    List<MethodSignatureBackedByPsiMethod> result = new ArrayList<MethodSignatureBackedByPsiMethod>();
+
     final EjbMethodRole role = J2EERolesUtil.getEjbRole(method);
     if (role instanceof EjbImplMethodRole) {
       final PsiMethod[] ejbDeclarations = EjbUtil.findEjbDeclarations(method);
       for (PsiMethod ejbDeclaration : ejbDeclarations) {
-        sameSignatureMethods.add(MethodSignatureBackedByPsiMethod.create(ejbDeclaration, PsiSubstitutor.EMPTY));
+        result.add(MethodSignatureBackedByPsiMethod.create(ejbDeclaration, PsiSubstitutor.EMPTY));
       }
     }
-    PsiManager manager = method.getManager();
 
-    List<MethodSignatureBackedByPsiMethod> outputMethods = new ArrayList<MethodSignatureBackedByPsiMethod>();
-    AllMethodsLoop:
-    for (final MethodSignatureBackedByPsiMethod methodSignature : sameSignatureMethods) {
-      PsiMethod superMethod = methodSignature.getMethod();
-      PsiClass superClass = superMethod.getContainingClass();
-      if (superClass == null || manager.areElementsEquivalent(superClass, parentClass)) continue;
-      final boolean isSuperStatic = superMethod.hasModifierProperty(PsiModifier.STATIC);
-      if (isStatic != isSuperStatic) continue;
-      if (!allowStaticMethod && isSuperStatic) continue;
-      if (superMethod.hasModifierProperty(PsiModifier.PRIVATE)) continue;
-      // cannot override package local method from other package
-      if (superMethod.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)
-          && !manager.arePackagesTheSame(parentClass, superClass)) {
-        continue;
-      }
-
-      for (int j = 0; j < outputMethods.size(); j++) {
-        final MethodSignatureBackedByPsiMethod methodSignature1 = outputMethods.get(j);
-        PsiMethod superMethod1 = methodSignature1.getMethod();
-        PsiClass superClass1 = superMethod1.getContainingClass();
-        if (superClass1.isInheritor(superClass, true)) {
-          continue AllMethodsLoop;
-        }
-        if (superClass.isInheritor(superClass1, true)) {
-          outputMethods.set(j, methodSignature);
-          continue AllMethodsLoop;
+    Map<MethodSignature, HierarchicalMethodSignatureImpl> signaturesMap = getSignaturesMap(parentClass);
+    HierarchicalMethodSignature signature = signaturesMap.get(method.getSignature(PsiSubstitutor.EMPTY));
+    PsiResolveHelper helper = method.getManager().getResolveHelper();
+    if (signature != null) {
+      PsiMethod hisMethod = signature.getMethod();
+      if (!parentClass.equals(hisMethod.getContainingClass())) {
+        if (helper.isAccessible(hisMethod, method, null)) {
+          boolean hisStatic = hisMethod.hasModifierProperty(PsiModifier.STATIC);
+          if ((hisStatic == myStatic) && (allowStaticMethod || !hisStatic)) {
+            result.add(signature);
+          }
         }
       }
-      outputMethods.add(methodSignature);
+      else {
+        List<HierarchicalMethodSignature> superSignatures = signature.getSuperSignatures();
+        for (HierarchicalMethodSignature superSignature : superSignatures) {
+          PsiMethod superMethod = superSignature.getMethod();
+          boolean hisStatic = superMethod.hasModifierProperty(PsiModifier.STATIC);
+          if (myStatic != hisStatic) continue;
+          if (allowStaticMethod || !hisStatic) {
+            if (helper.isAccessible(superMethod, method, null)) {
+              result.add(superSignature);
+            }
+          }
+        }
+      }
     }
-    return outputMethods;
+
+    return result;
   }
 
   private static boolean canHaveSuperMethod(PsiMethod method, boolean checkAccess, boolean allowStaticMethod) {
@@ -132,42 +132,108 @@ public class PsiSuperMethodImplUtil {
   }
 
   public static PsiMethod findDeepestSuperMethod(PsiMethod method) {
-    if (method.isConstructor()) return null;
-    if (method.hasModifierProperty(PsiModifier.STATIC)) return null;
-    if (method.hasModifierProperty(PsiModifier.PRIVATE)) return null;
-
+    if (!canHaveSuperMethod(method, true, false)) return null;
     PsiClass aClass = method.getContainingClass();
-    if (aClass == null) {
-      return null;
-    }
-
-    final PsiMethod[] allMethods;
+    if (aClass == null) return null;
+    Map<MethodSignature, HierarchicalMethodSignatureImpl> signaturesMap = getSignaturesMap(aClass);
+    HierarchicalMethodSignatureImpl hierarchical = signaturesMap.get(method.getSignature(PsiSubstitutor.EMPTY));
+    LOG.assertTrue(hierarchical != null);
+    HierarchicalMethodSignature deepest = findDeepestSuperOrSelfSignature(hierarchical);
+    if (deepest == hierarchical) return null;
+    if (deepest != null) return deepest.getMethod();
 
     PsiMethod[] ejbDeclarations = EjbUtil.findEjbDeclarations(method);
-    boolean isEjbInherited = J2EERolesUtil.getEjbRole(method) instanceof EjbImplMethodRole && ejbDeclarations.length != 0;
-    if (isEjbInherited) {
-      allMethods = ejbDeclarations;
-    }
-    else {
-      allMethods = aClass.getAllMethods();
-    }
-    PsiMethod topSuper = null;
-    for (PsiMethod superMethod : allMethods) {
-      PsiClass superClass = superMethod.getContainingClass();
-      if (superClass.equals(aClass)) continue;
-      PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getClassSubstitutor(superClass, aClass, PsiSubstitutor.EMPTY);
-      if (superClassSubstitutor == null) superClassSubstitutor = PsiSubstitutor.EMPTY;
-      boolean looksLikeSuperMethod = method.getName().equals(superMethod.getName()) &&
-                                     !superMethod.hasModifierProperty(PsiModifier.STATIC) &&
-                                     PsiUtil.isAccessible(superMethod, aClass, aClass) &&
-                                     method.getSignature(PsiSubstitutor.EMPTY).equals(superMethod.getSignature(superClassSubstitutor));
-      if (isEjbInherited || looksLikeSuperMethod) {
-        if (topSuper != null && superClass.isInheritor(topSuper.getContainingClass(), true)) {
-          continue;
-        }
-        topSuper = superMethod;
+    if (ejbDeclarations.length == 1) return ejbDeclarations[0];
+
+    return null;
+  }
+
+  private static HierarchicalMethodSignature findDeepestSuperOrSelfSignature(HierarchicalMethodSignature signature) {
+    List<HierarchicalMethodSignature> supers = signature.getSuperSignatures();
+
+    if (supers.size() == 1) return findDeepestSuperOrSelfSignature(supers.get(0));
+
+    for (HierarchicalMethodSignature superSignature : supers) {
+      PsiMethod superMethod = superSignature.getMethod();
+      if (!superMethod.hasModifierProperty(PsiModifier.STATIC)) {
+        return findDeepestSuperOrSelfSignature(superSignature);
       }
     }
-    return topSuper;
+    return signature;
+  }
+
+  private static void buildMethodHierarchy(PsiClass aClass,
+                                           PsiSubstitutor substitutor,
+                                           Set<PsiClass> visited,
+                                           Map<MethodSignature, HierarchicalMethodSignatureImpl> signatures,
+                                           Map<MethodSignature, HierarchicalMethodSignatureImpl> result,
+                                           final Map<MethodSignature, HierarchicalMethodSignatureImpl> toRestore) {
+    if (visited.contains(aClass)) return;
+    visited.add(aClass);
+    final PsiMethod[] methods = aClass.getMethods();
+    Map<MethodSignature, HierarchicalMethodSignatureImpl> ownToRestore = new HashMap<MethodSignature, HierarchicalMethodSignatureImpl>();
+    for (PsiMethod method : methods) {
+      final MethodSignatureBackedByPsiMethod signature = MethodSignatureBackedByPsiMethod.create(method, substitutor);
+      final HierarchicalMethodSignatureImpl signatureHierarchical = new HierarchicalMethodSignatureImpl(signature);
+      final HierarchicalMethodSignatureImpl existing = signatures.get(signature);
+      if (existing != null &&
+          !existing.getMethod().isConstructor() &&
+          !aClass.equals(existing.getMethod().getContainingClass())) {
+        existing.addSuperSignature(signatureHierarchical);
+        ownToRestore.put(signature, existing);
+      } else {
+        result.put(signature, signatureHierarchical);
+        toRestore.put(signature, existing);
+      }
+      signatures.put(signature, signatureHierarchical);
+    }
+
+    final PsiClassType[] superTypes = aClass.getSuperTypes(); //it is essential that extends list types go before implements list types
+    for (final PsiClassType superType : superTypes) {
+      final PsiClassType.ClassResolveResult superTypeResolveResult = superType.resolveGenerics();
+      PsiClass superClass = superTypeResolveResult.getElement();
+      if (superClass == null) continue;
+      PsiSubstitutor finalSubstitutor = PsiClassImplUtil.obtainFinalSubstitutor(superClass, superTypeResolveResult.getSubstitutor(), aClass, substitutor);
+      buildMethodHierarchy(superClass, finalSubstitutor, visited, signatures, result, superClass.isInterface() ? ownToRestore : toRestore);
+    }
+
+    signatures.putAll(ownToRestore);
+  }
+
+  public static Collection<HierarchicalMethodSignature> getVisibleSignatures(PsiClass aClass) {
+    Map<MethodSignature, HierarchicalMethodSignatureImpl> map = getSignaturesMap(aClass);
+    return new LinkedHashSet<HierarchicalMethodSignature>(map.values());
+  }
+
+  private static Map<MethodSignature, HierarchicalMethodSignatureImpl> getSignaturesMap(final PsiClass aClass) {
+    CachedValue<Map<MethodSignature, HierarchicalMethodSignatureImpl>> value = aClass.getUserData(SIGNATURES_KEY);
+    if (value == null) {
+      BySignaturesCachedValueProvider provider = new BySignaturesCachedValueProvider(aClass);
+      value = aClass.getManager().getCachedValuesManager().createCachedValue(provider, false);
+      //Do not cache for nonphysical elements
+      if (aClass.isPhysical()) {
+        aClass.putUserData(SIGNATURES_KEY, value);
+      }
+    }
+
+    return value.getValue();
+  }
+
+  private static class BySignaturesCachedValueProvider implements CachedValueProvider<Map<MethodSignature, HierarchicalMethodSignatureImpl>> {
+    private PsiClass myClass;
+
+    public BySignaturesCachedValueProvider(final PsiClass aClass) {
+      myClass = aClass;
+    }
+
+    public Result<Map<MethodSignature, HierarchicalMethodSignatureImpl>> compute() {
+      final Map<MethodSignature, HierarchicalMethodSignatureImpl> map =
+        new THashMap<MethodSignature, HierarchicalMethodSignatureImpl>(MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY);
+      Map<MethodSignature, HierarchicalMethodSignatureImpl> result = new LinkedHashMap<MethodSignature, HierarchicalMethodSignatureImpl>();
+      buildMethodHierarchy(myClass, PsiSubstitutor.EMPTY, new HashSet<PsiClass>(), map, result,
+                           new HashMap<MethodSignature, HierarchicalMethodSignatureImpl>());
+      return new Result<Map<MethodSignature, HierarchicalMethodSignatureImpl>>
+        (result, new Object[]{PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT});
+    }
   }
 }

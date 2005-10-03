@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.command.update.UpdateFileInfo;
 import org.netbeans.lib.cvsclient.command.update.UpdatedFileInfo;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 
@@ -37,7 +38,13 @@ public class FileMessage {
 
   private int myType;
   private String myFileAbsolutePath = "";
-  public static final String CONFLICT = "C";
+  @NonNls public static final String CONFLICT = "C";
+  @NonNls private static final String U_COMMIT_OPERATION_TYPE = "U";
+  @NonNls private static final String P_COMMIT_OPERATION_TYPE = "P";
+  @NonNls private static final String A_COMMIT_OPERATION_TYPE = "A";
+  @NonNls private static final String R_COMMIT_OPERATION_TYPE = "R";
+  @NonNls private static final String M_COMMIT_OPERATION_TYPE = "M";
+  @NonNls private static final String Y_COMMIT_OPERATION_TYPE = "Y";
 
 
   public FileMessage(UpdateFileInfo info,
@@ -64,29 +71,29 @@ public class FileMessage {
   private String getMyActionName() {
     switch (myType) {
       case SCHEDULING_FOR_ADDING:
-        return "Scheduling for adding";
+        return com.intellij.CvsBundle.message("current.action.name.scheduling.for.adding");
       case SCHEDULING_FOR_REMOVING:
-        return "Scheduling for removing";
+        return com.intellij.CvsBundle.message("current.action.name.scheduling.for.removing");
       case UPDATING:
-        return "Updating";
+        return com.intellij.CvsBundle.message("current.action.name.updating");
       case UPDATING2:
-        return "Updating";
+        return com.intellij.CvsBundle.message("current.action.name.updating");
       case IMPORTING:
-        return "Importing";
+        return com.intellij.CvsBundle.message("current.action.name.importing");
       case ADDING:
-        return "Adding";
+        return com.intellij.CvsBundle.message("current.action.name.adding");
       case REMOVING:
-        return "Removing";
+        return com.intellij.CvsBundle.message("current.action.name.removing");
       case SAVING:
-        return "Saving";
+        return com.intellij.CvsBundle.message("current.action.name.saving");
       case SENDING:
-        return "Sending";
+        return com.intellij.CvsBundle.message("current.action.name.sending");
       case MODIFIED:
-        return "Modified";
+        return com.intellij.CvsBundle.message("current.action.name.modified");
 
     }
 
-    return "Processing ";
+    return com.intellij.CvsBundle.message("current.action.name.processing");
 
   }
 
@@ -129,7 +136,7 @@ public class FileMessage {
                                             Entry entry,
                                             UpdatedFilesManager mergedFiles,
                                             UpdatedFilesManager updatedFilesManager) {
-    if (commitOperationType.equals("U")) {
+    if (commitOperationType.equals(U_COMMIT_OPERATION_TYPE)) {
       VirtualFile virtualParent = CvsVfsUtil.getParentFor(file);
       if (virtualParent == null) return CREATED;
       if (updatedFilesManager.isNewlyCreatedEntryFor(virtualParent, file.getName())) {
@@ -137,16 +144,16 @@ public class FileMessage {
       }
       return UPDATING;
     }
-    else if (commitOperationType.equals("P")) {
+    else if (commitOperationType.equals(P_COMMIT_OPERATION_TYPE)) {
       return PATCHED;
     }
-    else if (commitOperationType.equals("A")) {
+    else if (commitOperationType.equals(A_COMMIT_OPERATION_TYPE)) {
       return LOCALLY_ADDED;
     }
-    else if (commitOperationType.equals("R")) {
+    else if (commitOperationType.equals(R_COMMIT_OPERATION_TYPE)) {
       return LOCALLY_REMOVED;
     }
-    else if (commitOperationType.equals("M")) {
+    else if (commitOperationType.equals(M_COMMIT_OPERATION_TYPE)) {
       if (mergedFiles.isMerged(file)) {
         return MERGED;
       }
@@ -168,7 +175,7 @@ public class FileMessage {
         return REMOVED_FROM_SERVER_CONFLICT;
       }
     }
-    else if (commitOperationType.equals("Y")) {
+    else if (commitOperationType.equals(Y_COMMIT_OPERATION_TYPE)) {
       return REMOVED_FROM_REPOSITORY;
     }
     else if (commitOperationType.equals("?")) {

@@ -368,6 +368,7 @@ public class TreeChangeImpl implements TreeChange {
     return currentOffsetInNewTree;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString(){
     final StringBuffer buffer = new StringBuffer();
     final Iterator<Pair<ASTNode, Integer>> iterator = myOffsets.iterator();

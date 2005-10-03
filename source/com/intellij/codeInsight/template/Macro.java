@@ -1,13 +1,14 @@
 package com.intellij.codeInsight.template;
 
 import com.intellij.codeInsight.lookup.LookupItem;
+import org.jetbrains.annotations.NonNls;
 
 public interface Macro {
-  String getName();
+  @NonNls String getName();
 
   String getDescription ();
 
-  String getDefaultValue();
+  @NonNls String getDefaultValue();
 
   Result calculateResult(Expression[] params, ExpressionContext context);
 

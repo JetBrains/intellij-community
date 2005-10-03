@@ -4,6 +4,7 @@ package com.intellij.ide.macro;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ide.IdeBundle;
 
 public final class FilePathMacro extends Macro {
   public String getName() {
@@ -11,7 +12,7 @@ public final class FilePathMacro extends Macro {
   }
 
   public String getDescription() {
-    return "File path";
+    return IdeBundle.message("macro.file.path");
   }
 
   public String expand(DataContext dataContext) {

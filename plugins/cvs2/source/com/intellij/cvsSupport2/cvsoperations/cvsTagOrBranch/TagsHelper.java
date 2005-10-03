@@ -18,6 +18,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.util.containers.HashSet;
+import com.intellij.CvsBundle;
 import org.netbeans.lib.cvsclient.command.log.LogInformation;
 import org.netbeans.lib.cvsclient.command.log.Revision;
 import org.netbeans.lib.cvsclient.command.log.SymbolicName;
@@ -25,6 +26,7 @@ import org.netbeans.lib.cvsclient.command.log.SymbolicName;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.*;
+import java.text.MessageFormat;
 
 /**
  * author: lesya
@@ -110,9 +112,9 @@ public class TagsHelper {
     CvsOperationExecutor executor = new CvsOperationExecutor(true, project,
                                                              new ModalityContext(ModalityState.defaultModalityState(),
                                                                                  forTemporaryConfiguration));
-    CommandCvsHandler handler = new CommandCvsHandler("Load Tags", operation, true) {
+    CommandCvsHandler handler = new CommandCvsHandler(CvsBundle.message("load.tags.operation.name"), operation, true) {
       public String getCancelButtonText() {
-        return "Stop";
+        return com.intellij.CvsBundle.message("button.text.stop");
       }
     };
     executor.performActionSync(handler,
@@ -134,7 +136,7 @@ public class TagsHelper {
   }
 
   private static void showErrorMessage(VcsException e1) {
-    Messages.showErrorDialog("Cannot load tags: " + e1.getLocalizedMessage(), "Select Tag");
+    Messages.showErrorDialog(com.intellij.CvsBundle.message("error.message.cannot.load.tags", e1.getLocalizedMessage()), com.intellij.CvsBundle.message("operation.name.select.tag"));
   }
 
   private static String chooseFrom(Collection<String> tags, Collection<CvsRevisionNumber> revisions) {
@@ -142,7 +144,7 @@ public class TagsHelper {
     Collection<String> revisionsNames = collectSortedRevisionsNames(revisions);
 
     if (tags.isEmpty() && revisionsNames.isEmpty()) {
-      Messages.showMessageDialog("No tags found", "Select Tag",
+      Messages.showMessageDialog(com.intellij.CvsBundle.message("message.no.tags.found"), com.intellij.CvsBundle.message("operation.name.select.tag"),
                                  Messages.getInformationIcon());
       return null;
     }

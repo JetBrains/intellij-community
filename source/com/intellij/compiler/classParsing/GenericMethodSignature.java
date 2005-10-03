@@ -1,6 +1,7 @@
 package com.intellij.compiler.classParsing;
 
 import com.intellij.util.ArrayUtil;
+import com.intellij.openapi.compiler.CompilerBundle;
 
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
@@ -49,7 +50,7 @@ public class GenericMethodSignature {
     }
 
     if (it.current() != '(') {
-      throw new SignatureParsingException("'(' expected");
+      throw new SignatureParsingException(CompilerBundle.message("error.signature.parsing.expected.other.symbol", "(", formals.toString()));
     }
 
     it.next(); // skip '('

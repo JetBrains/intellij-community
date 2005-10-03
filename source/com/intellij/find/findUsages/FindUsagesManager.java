@@ -5,6 +5,7 @@ import com.intellij.aspects.psi.PsiPointcutDef;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintUtil;
 import static com.intellij.find.findUsages.FindUsagesManager.FileSearchScope.*;
+import com.intellij.find.FindBundle;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.lang.Language;
 import com.intellij.lang.findUsages.FindUsagesProvider;
@@ -44,7 +45,9 @@ import com.intellij.usages.UsageSearcher;
 import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.CommonBundle;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -62,6 +65,7 @@ public class FindUsagesManager implements JDOMExternalizable{
   }
 
   private static Key<String> KEY_START_USAGE_AGAIN = Key.create("KEY_START_USAGE_AGAIN");
+  @NonNls private static final String VALUE_START_USAGE_AGAIN = "START_AGAIN";
   private Project myProject;
   private com.intellij.usages.UsageViewManager myAnotherManager;
   private boolean myToOpenInNewTab = false;
@@ -149,9 +153,8 @@ public class FindUsagesManager implements JDOMExternalizable{
     }
     if (elements.size() == 0) {
       Messages.showMessageDialog(myProject,
-                                   "Searched elements have been changed.\n" +
-                                   "Cannot search for usages.",
-                                 "Cannot Search for Usages",
+                                 FindBundle.message("find.searched.elements.have.been.changed.error"),
+                                 FindBundle.message("cannot.search.for.usages.title"),
                                  Messages.getInformationIcon());
       // SCR #10022
       //clearFindingNextUsageInFile();
@@ -219,11 +222,10 @@ public class FindUsagesManager implements JDOMExternalizable{
 
     if (psiElement instanceof PsiMethod || psiElement instanceof PsiPointcutDef) {
       psiElement = psiElement instanceof PsiMethod
-        ?
-        (PsiElement)SuperMethodWarningUtil.checkSuperMethod((PsiMethod)psiElement, "find usages of")
-        :
-        (PsiElement)SuperMethodWarningUtil.checkSuperPointcut((PsiPointcutDef)psiElement,
-                                                              "find usages of");
+        ? (PsiElement)SuperMethodWarningUtil.checkSuperMethod((PsiMethod)psiElement,
+                                                              FindBundle.message("find.super.method.warning.action.verb"))
+        : (PsiElement)SuperMethodWarningUtil.checkSuperPointcut((PsiPointcutDef)psiElement,
+                                                                FindBundle.message("find.super.method.warning.action.verb"));
     }
 
     if (psiElement == null) {
@@ -266,10 +268,10 @@ public class FindUsagesManager implements JDOMExternalizable{
           }
           else {
             findInInheritors = Messages.showDialog(psiElement.getProject(),
-                                                   "Do you want to search usages of parameter '" + parameter.getName() +
-                                                     "' in overriding methods?",
-                                                   "Search in Overriding Methods",
-                                                     new String[]{"Yes", "No"},
+                                                   FindBundle.message("find.parameter.usages.in.overriding.methods.prompt",
+                                                                      parameter.getName()),
+                                                   FindBundle.message("find.parameter.usages.in.overriding.methods.title"),
+                                                     new String[]{CommonBundle.getYesButtonText(), CommonBundle.getNoButtonText()},
                                                    0,
                                                    Messages.getQuestionIcon()) == 0;
           }
@@ -291,20 +293,20 @@ public class FindUsagesManager implements JDOMExternalizable{
         findPropertySetterWithType(propertyName, field.hasModifierProperty(PsiModifier.STATIC), field.getType(),
                                    ContainerUtil.iterate(field.getContainingClass().getMethods()));
         if (getter != null || setter != null) {
-          if (Messages.showDialog("Do you want to search for accessors of '" + field.getName() + "'?", "Search Accessors",
-                                                                                                         new String[]{"Yes", "No"}, 0,
-                                                                                                       Messages.getQuestionIcon()) ==
-              DialogWrapper.OK_EXIT_CODE) {
+          if (Messages.showDialog(FindBundle.message("find.field.accessors.prompt", field.getName()),
+                                  FindBundle.message("find.field.accessors.title"),
+                                  new String[]{CommonBundle.getYesButtonText(), CommonBundle.getNoButtonText()}, 0,
+                                  Messages.getQuestionIcon()) == DialogWrapper.OK_EXIT_CODE) {
             final List<PsiElement> elements = new ArrayList<PsiElement>();
             if (getter != null) {
-              getter = SuperMethodWarningUtil.checkSuperMethod(getter, "find usages of");
+              getter = SuperMethodWarningUtil.checkSuperMethod(getter, FindBundle.message("find.super.method.warning.action.verb"));
               if (getter == null) {
                 return;
               }
               elements.add(getter);
             }
             if (setter != null) {
-              setter = SuperMethodWarningUtil.checkSuperMethod(setter, "find usages of");
+              setter = SuperMethodWarningUtil.checkSuperMethod(setter, FindBundle.message("find.super.method.warning.action.verb"));
               if (setter == null) {
                 return;
               }
@@ -408,8 +410,10 @@ public class FindUsagesManager implements JDOMExternalizable{
 
     };
 
+    @NonNls String TODO = "(TODO)";
     if (!ApplicationManager.getApplication().runProcessWithProgressSynchronously(findUsagesRunnable,
-                                                                                 "Looking for applications of poincut(TODO)...", true,
+                                                                                 FindBundle.message(
+                                                                                   "find.pointcut.applications.progress", TODO), true,
                                                                                  myProject)) {
       return;
     }
@@ -417,10 +421,11 @@ public class FindUsagesManager implements JDOMExternalizable{
     if ((usages[0] != null) && (usages[0].length > 0)) {
       FindUsagesViewDescriptor descriptor = new FindUsagesViewDescriptor(pointcut.getParent(), usages[0],
                                                                          findUsagesCommand, false); //TODO
-      showUsagesPanel("Applications of pointcut(TODO)", null, descriptor, true, false, false);
+      showUsagesPanel(FindBundle.message("find.pointcut.applications.title", TODO), null, descriptor, true, false, false);
     }
     else {
-      Messages.showMessageDialog(myProject, "No applications(TODO) found", "Information",
+      Messages.showMessageDialog(myProject, FindBundle.message("find.pointcut.applications.not.found.error", TODO),
+                                 FindBundle.message("find.pointcut.applications.not.found.title"),
                                  Messages.getInformationIcon());
     }
   }
@@ -494,10 +499,17 @@ public class FindUsagesManager implements JDOMExternalizable{
     UsageViewPresentation presentation = new UsageViewPresentation();
     String scopeString = findUsagesOptions.searchScope != null ? findUsagesOptions.searchScope.getDisplayName() : null;
     presentation.setScopeText(scopeString);
-    String usagesString = generateUsagesString(findUsagesOptions, false, true);
+    String usagesString = generateUsagesString(findUsagesOptions);
     presentation.setUsagesString(usagesString);
-    String title = usagesString + " of " + UsageViewUtil.getShortName(psiElement);
-    if (scopeString != null) title += " in " + scopeString;
+    String title;
+    if (scopeString != null) {
+      title = FindBundle.message("find.usages.of.element.in.scope.panel.title",
+                                 usagesString, UsageViewUtil.getShortName(psiElement), scopeString);
+    }
+    else {
+      title = FindBundle.message("find.usages.of.element.panel.title",
+                                 usagesString, UsageViewUtil.getShortName(psiElement));
+    }
     presentation.setTabText(title);
     presentation.setTargetsNodeText(UsageViewUtil.capitalize(UsageViewUtil.getType(psiElement)));
     presentation.setOpenInNewTab(toOpenInNewTab);
@@ -529,7 +541,7 @@ public class FindUsagesManager implements JDOMExternalizable{
       showHintOrStatusBarMessage(message, fileEditor);
     }
     else {
-      fileEditor.putUserData(KEY_START_USAGE_AGAIN, "START_AGAIN");
+      fileEditor.putUserData(KEY_START_USAGE_AGAIN, VALUE_START_USAGE_AGAIN);
       showHintOrStatusBarMessage(getSearchAgainMessage(descriptor.getPrimaryElements()[0], direction), fileEditor);
     }
   }
@@ -537,7 +549,7 @@ public class FindUsagesManager implements JDOMExternalizable{
   private String getNoUsagesFoundMessage(PsiElement psiElement) {
     String elementType = UsageViewUtil.getType(psiElement);
     String elementName = UsageViewUtil.getShortName(psiElement);
-    String message = "Usages of " + elementType + " " + elementName + " not found";
+    String message = FindBundle.message("find.usages.of.element_type.element_name.not.found.message", elementType, elementName);
     return message;
   }
 
@@ -552,23 +564,21 @@ public class FindUsagesManager implements JDOMExternalizable{
       AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_FIND_NEXT);
       String shortcutsText = KeymapUtil.getFirstKeyboardShortcutText(action);
       if (shortcutsText.length() > 0) {
-        message += ", press " + shortcutsText;
+        message = FindBundle.message("find.search.again.from.top.hotkey.message", message, shortcutsText);
       }
       else {
-        message += ", perform \"Find Next\" again ";
+        message = FindBundle.message("find.search.again.from.top.action.message", message);
       }
-      message += " to search from the top";
     }
     else {
       String shortcutsText = KeymapUtil.getFirstKeyboardShortcutText(
         ActionManager.getInstance().getAction(IdeActions.ACTION_FIND_PREVIOUS));
       if (shortcutsText.length() > 0) {
-        message += ", press " + shortcutsText;
+        message = FindBundle.message("find.search.again.from.bottom.hotkey.message", message, shortcutsText);
       }
       else {
-        message += ", perform \"Find Previous\" again ";
+        message = FindBundle.message("find.search.again.from.bottom.action.message", message);
       }
-      message += " to search from the bottom";
     }
     return message;
   }
@@ -656,39 +666,37 @@ public class FindUsagesManager implements JDOMExternalizable{
     }
   }
 
-  private static String generateUsagesString(final FindUsagesOptions selectedOptions,
-                                             final boolean useAndWord,
-                                             boolean beginWithCapitals) {
+  private static String generateUsagesString(final FindUsagesOptions selectedOptions) {
     String usagesString = "";
-    String suffix = useAndWord ? " and " : " or ";
+    String suffix = " " + FindBundle.message("find.usages.panel.title.separator") + " ";
     ArrayList<String> strings = new ArrayList<String>();
     FindUsagesOptions localShownFindUsagesOptions = selectedOptions;
     if ((selectedOptions.isUsages && localShownFindUsagesOptions.isUsages)
       || (selectedOptions.isClassesUsages && localShownFindUsagesOptions.isClassesUsages)
       || (selectedOptions.isMethodsUsages && localShownFindUsagesOptions.isMethodsUsages)
       || (selectedOptions.isFieldsUsages && localShownFindUsagesOptions.isFieldsUsages)) {
-      strings.add(beginWithCapitals ? "Usages" : "usages");
+      strings.add(FindBundle.message("find.usages.panel.title.usages"));
     }
     if (selectedOptions.isIncludeOverloadUsages && localShownFindUsagesOptions.isIncludeOverloadUsages) {
-      strings.add(beginWithCapitals ? "Overloaded Methods Usages" : "overloaded methods usages");
+      strings.add(FindBundle.message("find.usages.panel.title.overloaded.methods.usages"));
     }
     if ((selectedOptions.isDerivedClasses && localShownFindUsagesOptions.isDerivedClasses)) {
-      strings.add(beginWithCapitals ? "Derived Classes" : "derived classes");
+      strings.add(FindBundle.message("find.usages.panel.title.derived.classes"));
     }
     if ((selectedOptions.isDerivedInterfaces && localShownFindUsagesOptions.isDerivedInterfaces)) {
-      strings.add(beginWithCapitals ? "Derived Interfaces" : "derived interfaces");
+      strings.add(FindBundle.message("find.usages.panel.title.derived.interfaces"));
     }
     if ((selectedOptions.isImplementingClasses && localShownFindUsagesOptions.isImplementingClasses)) {
-      strings.add(beginWithCapitals ? "Implementing Classes" : "implementing classes");
+      strings.add(FindBundle.message("find.usages.panel.title.implementing.classes"));
     }
     if ((selectedOptions.isImplementingMethods && localShownFindUsagesOptions.isImplementingMethods)) {
-      strings.add(beginWithCapitals ? "Implementing Methods" : "implementing methods");
+      strings.add(FindBundle.message("find.usages.panel.title.implementing.methods"));
     }
     if ((selectedOptions.isOverridingMethods && localShownFindUsagesOptions.isOverridingMethods)) {
-      strings.add(beginWithCapitals ? "Overriding Methods" : "overriding methods");
+      strings.add(FindBundle.message("find.usages.panel.title.overriding.methods"));
     }
     if (strings.size() == 0) {
-      strings.add(beginWithCapitals ? "Usages" : "usages");
+      strings.add(FindBundle.message("find.usages.panel.title.usages"));
     }
     for (int i = 0; i < strings.size(); i++) {
       String s = strings.get(i);
@@ -713,8 +721,15 @@ public class FindUsagesManager implements JDOMExternalizable{
                                boolean toOpenInNewTab,
                                boolean showReadAccessIcon,
                                boolean showWriteAccessIcon) {
-    String title = usagesString + " of " + UsageViewUtil.getShortName(viewDescriptor.getElement());
-    if (scopeString != null) title += " in " + scopeString;
+    String title;
+    if (scopeString != null) {
+      title = FindBundle.message("find.usages.of.element.in.scope.panel.title",
+                                 usagesString, UsageViewUtil.getShortName(viewDescriptor.getElement()), scopeString);
+    }
+    else {
+      title = FindBundle.message("find.usages.of.element.panel.title",
+                                 usagesString, UsageViewUtil.getShortName(viewDescriptor.getElement()));
+    }
     UsageViewManager.getInstance(myProject).addContent(title, viewDescriptor, true,
                                                        showReadAccessIcon, showWriteAccessIcon, toOpenInNewTab, true);
   }

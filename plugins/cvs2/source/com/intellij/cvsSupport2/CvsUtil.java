@@ -16,9 +16,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.CvsBundle;
 import org.netbeans.lib.cvsclient.admin.Entries;
 import org.netbeans.lib.cvsclient.admin.EntriesHandler;
 import org.netbeans.lib.cvsclient.admin.Entry;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.io.File;
@@ -35,21 +37,24 @@ public class CvsUtil {
   private final static SimpleDateFormat DATE_FORMATTER = new SimpleDateFormat(Entry.getLastModifiedDateFormatter().toPattern(), Locale.US);
 
   static {
+    //noinspection HardCodedStringLiteral
     DATE_FORMATTER.setTimeZone(TimeZone.getTimeZone("GMT+0000"));
   }
 
-  public static final String CVS_IGNORE_FILE = ".cvsignore";
-  public static final String CVS_ROOT_FILE = "Root";
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.cvsoperations.AdminHandlerAdapter");
-  private static final String REPOSITORY = "Repository";
-  private static final String TAG = "Tag";
-  public static final String CVS = "CVS";
-  public static final String ENTRIES = "Entries";
-  private static final String CONFLICTS = "Conflicts";
-  private static final String STICKY_DATE_PREFIX = "D";
-  private static final String TEMPLATE = "Template";
-  private static final String STICKY_BRANCH_TAG_PREFIX = "T";
-  private static final String STICKY_NON_BRANCH_TAG_PREFIX = "N";
+  @NonNls public static final String CVS_IGNORE_FILE = ".cvsignore";
+  @NonNls public static final String CVS_ROOT_FILE = "Root";
+  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.CvsUtil");
+  @NonNls private static final String REPOSITORY = "Repository";
+  @NonNls private static final String TAG = "Tag";
+  @NonNls public static final String CVS = "CVS";
+  @NonNls public static final String ENTRIES = "Entries";
+  @NonNls private static final String CONFLICTS = "Conflicts";
+  @NonNls private static final String STICKY_DATE_PREFIX = "D";
+  @NonNls private static final String TEMPLATE = "Template";
+  @NonNls private static final String STICKY_BRANCH_TAG_PREFIX = "T";
+  @NonNls private static final String STICKY_NON_BRANCH_TAG_PREFIX = "N";
+  @NonNls public static final String HEAD = "HEAD";
+  @NonNls public static final String BASE = "Base";
 
   public static void skip(InputStream inputStream, int length) throws IOException {
     int skipped = 0;
@@ -174,9 +179,9 @@ public class CvsUtil {
       if (entries != null) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
-            Messages.showErrorDialog("Invalid CVS" + File.separatorChar + "Entries file for " + dir.getAbsolutePath() + " directory:\n" +
-                                     entries,
-                                     "Invalid Entries");
+            final String entriesFileRelativePath = CVS + File.separatorChar + ENTRIES;
+            Messages.showErrorDialog(CvsBundle.message("message.error.invalid.entries", entriesFileRelativePath, dir.getAbsolutePath(), entries),
+                                     CvsBundle.message("message.error.invalid.entries.title"));
           }
         });
       }
@@ -522,8 +527,8 @@ public class CvsUtil {
     catch (final IOException e) {
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
-          Messages.showErrorDialog("Cannot restore entry for " + file.getPresentableUrl() + ": " + e.getLocalizedMessage(),
-                                   "Restore Entry");
+          Messages.showErrorDialog(CvsBundle.message("message.error.restore.entry", file.getPresentableUrl(), e.getLocalizedMessage()),
+                                   CvsBundle.message("message.error.restore.entry.title"));
         }
       });
     }
@@ -536,7 +541,7 @@ public class CvsUtil {
   }
 
   public static boolean fileExistsInCvs(FilePath file) {
-    if (file.isDirectory() && new File(file.getIOFile(), "CVS").isDirectory()) return true;
+    if (file.isDirectory() && new File(file.getIOFile(), CVS).isDirectory()) return true;
     Entry entry = CvsEntriesManager.getInstance().getEntryFor(file.getVirtualFileParent(), file.getName());
     if (entry == null) return false;
     return !entry.isAddedFile();

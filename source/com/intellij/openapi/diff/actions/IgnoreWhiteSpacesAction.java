@@ -4,6 +4,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.diff.ex.DiffPanelEx;
 import com.intellij.openapi.diff.impl.ComparisonPolicy;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.util.containers.HashMap;
 
 import javax.swing.*;
@@ -18,9 +19,10 @@ public class IgnoreWhiteSpacesAction extends ComboBoxAction {
   private final DiffPanelEx myDiffPanel;
 
   public IgnoreWhiteSpacesAction(DiffPanelEx diffPanel) {
-    myActions.put(ComparisonPolicy.DEFAULT, new IgnoringPolicyAction("Do not ignore", ComparisonPolicy.DEFAULT));
-    myActions.put(ComparisonPolicy.TRIM_SPACE, new IgnoringPolicyAction("Leading and trailing", ComparisonPolicy.TRIM_SPACE));
-    myActions.put(ComparisonPolicy.IGNORE_SPACE, new IgnoringPolicyAction("All", ComparisonPolicy.IGNORE_SPACE));
+    myActions.put(ComparisonPolicy.DEFAULT, new IgnoringPolicyAction(DiffBundle.message("diff.acton.ignore.qhitespace.policy.do.not.ignore"), ComparisonPolicy.DEFAULT));
+    myActions.put(ComparisonPolicy.TRIM_SPACE, new IgnoringPolicyAction(
+      DiffBundle.message("diff.acton.ignore.qhitespace.policy.leading.and.trailing"), ComparisonPolicy.TRIM_SPACE));
+    myActions.put(ComparisonPolicy.IGNORE_SPACE, new IgnoringPolicyAction(DiffBundle.message("diff.acton.ignore.qhitespace.policy.all"), ComparisonPolicy.IGNORE_SPACE));
     myDiffPanel = diffPanel;
   }
 
@@ -44,7 +46,7 @@ public class IgnoreWhiteSpacesAction extends ComboBoxAction {
       presentation.setEnabled(true);
     } else {
       presentation.setIcon(null);
-      presentation.setText("<Not avaliable>");
+      presentation.setText(DiffBundle.message("ignore.whitespace.action.not.avaliable.action.name"));
       presentation.setEnabled(false);
     }
   }

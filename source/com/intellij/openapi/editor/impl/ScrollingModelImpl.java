@@ -26,6 +26,8 @@ import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.util.ArrayList;
 
+import org.jetbrains.annotations.NonNls;
+
 public class ScrollingModelImpl implements ScrollingModel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.ScrollingModelImpl");
 
@@ -36,6 +38,7 @@ public class ScrollingModelImpl implements ScrollingModel {
   private final Object myAnimatedLock = new Object();
   private boolean myAnimationDisabled = false;
   private DocumentAdapter myDocumentListener;
+  @NonNls private static final String ANIMATED_SCROLLING_THREAD_NAME = "AnimatedScrollingThread";
 
   public ScrollingModelImpl(EditorImpl editor) {
     myEditor = editor;
@@ -261,7 +264,7 @@ public class ScrollingModelImpl implements ScrollingModel {
 
       try {
         myCurrentAnimatedRunnable = new AnimatedScrollingRunnable(startHOffset, startVOffset, hOffset, vOffset);
-        new Thread(myCurrentAnimatedRunnable, "AnimatedScrollingThread").start();
+        new Thread(myCurrentAnimatedRunnable, ANIMATED_SCROLLING_THREAD_NAME).start();
       }
       catch (NoAnimationRequiredException e) {
         _scrollHorizontally(hOffset);

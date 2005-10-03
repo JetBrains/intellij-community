@@ -18,14 +18,16 @@ package com.intellij.openapi.compiler;
 import java.util.EventListener;
 
 /**
- * A listener for compiler events
- * @see CompilerManager
+ * A listener for compiler events.
+ *
+ * @see CompilerManager#addCompilationStatusListener(CompilationStatusListener)
  */
-public interface CompilationStatusListener extends EventListener{
+public interface CompilationStatusListener extends EventListener {
   /**
-   * Invoked in a Swing dispatch thread after the compilation is finished
-   * @param aborted true if compilatioin has been cancelled
-   * @param errors error count
+   * Invoked in a Swing dispatch thread after the compilation is finished.
+   *
+   * @param aborted  true if compilatioin has been cancelled
+   * @param errors   error count
    * @param warnings warning count
    */
   void compilationFinished(boolean aborted, int errors, int warnings);

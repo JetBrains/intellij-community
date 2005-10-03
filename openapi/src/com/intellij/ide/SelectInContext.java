@@ -19,14 +19,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author kir
  */
 public interface SelectInContext {
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  String DATA_CONTEXT_ID = "SelectInContext";
+  @NonNls String DATA_CONTEXT_ID = "SelectInContext";
 
   @NotNull
   Project getProject();

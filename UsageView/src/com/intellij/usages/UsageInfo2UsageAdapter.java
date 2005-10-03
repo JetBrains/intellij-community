@@ -25,6 +25,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDocumentManager;
@@ -44,7 +45,7 @@ import java.util.List;
  * Time: 2:42:29 PM
  * To change this template use File | Settings | File Templates.
  */
-public class UsageInfo2UsageAdapter implements Usage, UsageInModule, UsageInLibrary, UsageInFile, PsiElementUsage, MergeableUsage {
+public class UsageInfo2UsageAdapter implements Usage, UsageInModule, UsageInLibrary, UsageInFile, PsiElementUsage, MergeableUsage, Comparable<UsageInfo2UsageAdapter> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.usages.UsageInfo2UsageAdapter");
 
   private final UsageInfo myUsageInfo;
@@ -95,8 +96,7 @@ public class UsageInfo2UsageAdapter implements Usage, UsageInModule, UsageInLibr
 
   public boolean isValid() {
     if (getElement() == null) return false;
-    for (int i = 0; i < myRangeMarkers.size(); i++) {
-      RangeMarker rangeMarker = myRangeMarkers.get(i);
+    for (RangeMarker rangeMarker : myRangeMarkers) {
       if (!rangeMarker.isValid()) return false;
     }
     return true;
@@ -241,6 +241,13 @@ public class UsageInfo2UsageAdapter implements Usage, UsageInModule, UsageInLibr
 
   public UsageInfo getUsageInfo() {
     return myUsageInfo;
+  }
+
+  public int compareTo(final UsageInfo2UsageAdapter o) {
+    if (!Comparing.equal(getElement().getContainingFile(), o.getElement().getContainingFile())) {
+      return 0;
+    }
+    return getRangeMarker().getStartOffset() - o.getRangeMarker().getStartOffset();
   }
 
   private class MyUsagePresentation implements UsagePresentation {

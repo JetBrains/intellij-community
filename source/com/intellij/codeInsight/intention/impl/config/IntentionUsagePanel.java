@@ -11,12 +11,16 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.markup.*;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.editor.markup.HighlighterLayer;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.MarkupModel;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.Alarm;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -25,7 +29,7 @@ import java.util.List;
 
 class IntentionUsagePanel extends JPanel{
   private EditorEx myEditor;
-  private static final String SPOT_MARKER = "spot";
+  private static final @NonNls String SPOT_MARKER = "spot";
   private final Alarm myBlinkingAlarm = new Alarm();
 
   public IntentionUsagePanel() {

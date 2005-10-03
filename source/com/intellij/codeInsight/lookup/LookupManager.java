@@ -3,6 +3,7 @@ package com.intellij.codeInsight.lookup;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NonNls;
 
 import java.beans.PropertyChangeListener;
 
@@ -20,7 +21,7 @@ public abstract class LookupManager {
   public abstract void hideActiveLookup();
   public abstract Lookup getActiveLookup();
 
-  public static final String PROP_ACTIVE_LOOKUP = "activeLookup";
+  public static final @NonNls String PROP_ACTIVE_LOOKUP = "activeLookup";
 
   public abstract void addPropertyChangeListener(PropertyChangeListener listener);
   public abstract void removePropertyChangeListener(PropertyChangeListener listener);

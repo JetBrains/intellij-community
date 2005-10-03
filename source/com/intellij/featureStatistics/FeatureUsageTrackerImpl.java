@@ -1,8 +1,10 @@
+/*
+ * Copyright (c) 2005 JetBrains s.r.o. All Rights Reserved.
+ */
 package com.intellij.featureStatistics;
 
 import com.intellij.featureStatistics.ui.ProgressTipPanel;
 import com.intellij.ide.TipOfTheDayManager;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressFunComponentProvider;
@@ -12,6 +14,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -28,6 +31,13 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Appl
 
 
   private ProductivityFeaturesRegistry myRegistry;
+
+  private static final @NonNls String FEATURE_TAG = "feature";
+  private static final @NonNls String ATT_SHOW_IN_OTHER = "show-in-other";
+  private static final @NonNls String ATT_SHOW_IN_COMPILATION = "show-in-compilation";
+  private static final @NonNls String ATT_ID = "id";
+  private static final @NonNls String ATT_FIRST_RUN = "first-run";
+  private static final @NonNls String ATT_HAVE_BEEN_SHOWN = "have-been-shown";
 
   public FeatureUsageTrackerImpl(ProgressManager progressManager, ProductivityFeaturesRegistry productivityFeaturesRegistry) {
     myRegistry = productivityFeaturesRegistry;
@@ -97,29 +107,29 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Appl
   }
 
   public void readExternal(Element element) throws InvalidDataException {
-    List featuresList = element.getChildren("feature");
+    List featuresList = element.getChildren(FEATURE_TAG);
     for (int i = 0; i < featuresList.size(); i++) {
       Element featureElement = (Element)featuresList.get(i);
-      FeatureDescriptor descriptor = ((ProductivityFeaturesRegistryImpl)myRegistry).getFeatureDescriptorEx(featureElement.getAttributeValue("id"));
+      FeatureDescriptor descriptor = ((ProductivityFeaturesRegistryImpl)myRegistry).getFeatureDescriptorEx(featureElement.getAttributeValue(ATT_ID));
       if (descriptor != null) {
         descriptor.readStatistics(featureElement);
       } else {
-        descriptor = new FeatureDescriptor(featureElement.getAttributeValue("id"));
+        descriptor = new FeatureDescriptor(featureElement.getAttributeValue(ATT_ID));
         descriptor.readStatistics(featureElement);
         ((ProductivityFeaturesRegistryImpl)myRegistry).addFeatureStatistics(descriptor);
       }
     }
 
     try {
-      FIRST_RUN_TIME = Long.parseLong(element.getAttributeValue("first-run"));
+      FIRST_RUN_TIME = Long.parseLong(element.getAttributeValue(ATT_FIRST_RUN));
     }
     catch (NumberFormatException e) {
       FIRST_RUN_TIME = 0;
     }
 
-    HAVE_BEEN_SHOWN = Boolean.valueOf(element.getAttributeValue("have-been-shown")).booleanValue();
-    SHOW_IN_OTHER_PROGRESS = Boolean.valueOf(element.getAttributeValue("show-in-other", "true")).booleanValue();
-    SHOW_IN_COMPILATION_PROGRESS = Boolean.valueOf(element.getAttributeValue("show-in-compilation", "true")).booleanValue();
+    HAVE_BEEN_SHOWN = Boolean.valueOf(element.getAttributeValue(ATT_HAVE_BEEN_SHOWN)).booleanValue();
+    SHOW_IN_OTHER_PROGRESS = Boolean.valueOf(element.getAttributeValue(ATT_SHOW_IN_OTHER, Boolean.toString(true))).booleanValue();
+    SHOW_IN_COMPILATION_PROGRESS = Boolean.valueOf(element.getAttributeValue(ATT_SHOW_IN_COMPILATION, Boolean.toString(true))).booleanValue();
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
@@ -127,17 +137,17 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Appl
     Set<String> ids = registry.getFeatureIds();
     for (Iterator<String> iterator = ids.iterator(); iterator.hasNext();) {
       String id = iterator.next();
-      Element featureElement = new Element("feature");
-      featureElement.setAttribute("id", id);
+      Element featureElement = new Element(FEATURE_TAG);
+      featureElement.setAttribute(ATT_ID, id);
       FeatureDescriptor descriptor = (FeatureDescriptor)registry.getFeatureDescriptor(id);
       descriptor.writeStatistics(featureElement);
       element.addContent(featureElement);
     }
 
-    element.setAttribute("first-run", String.valueOf(getFirstRunTime()));
-    element.setAttribute("have-been-shown", String.valueOf(HAVE_BEEN_SHOWN));
-    element.setAttribute("show-in-other", String.valueOf(SHOW_IN_OTHER_PROGRESS));
-    element.setAttribute("show-in-compilation", String.valueOf(SHOW_IN_COMPILATION_PROGRESS));
+    element.setAttribute(ATT_FIRST_RUN, String.valueOf(getFirstRunTime()));
+    element.setAttribute(ATT_HAVE_BEEN_SHOWN, String.valueOf(HAVE_BEEN_SHOWN));
+    element.setAttribute(ATT_SHOW_IN_OTHER, String.valueOf(SHOW_IN_OTHER_PROGRESS));
+    element.setAttribute(ATT_SHOW_IN_COMPILATION, String.valueOf(SHOW_IN_COMPILATION_PROGRESS));
   }
 
   public void triggerFeatureUsed(String featureId) {
@@ -160,7 +170,7 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Appl
 
   private final class ProgressFunProvider implements ProgressFunComponentProvider {
     public JComponent getProgressFunComponent(Project project, String processId) {
-      if ("compilation".equals(processId)) {
+      if (ProgressFunProvider.COMPILATION_ID.equals(processId)) {
         if (!SHOW_IN_COMPILATION_PROGRESS) return null;
       }
       else {

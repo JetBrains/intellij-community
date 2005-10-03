@@ -1,5 +1,7 @@
 package com.intellij.psi.impl.source.codeStyle.javadoc;
 
+import org.jetbrains.annotations.NonNls;
+
 import java.util.ArrayList;
 
 /**
@@ -40,7 +42,7 @@ public class JDComment {
       prefix = indent;
     }
 
-    StringBuffer sb = new StringBuffer();
+    @NonNls StringBuffer sb = new StringBuffer();
 //  sb.append("/**\n");
 
     int start = sb.length();

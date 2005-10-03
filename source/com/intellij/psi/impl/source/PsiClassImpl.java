@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.PomMemberOwner;
 import com.intellij.psi.*;
+import com.intellij.psi.HierarchicalMethodSignature;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.cache.ClassView;
 import com.intellij.psi.impl.cache.RepositoryElementType;
@@ -29,6 +30,7 @@ import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,6 +62,8 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
   private PsiMethod myValuesMethod = null;
   private PsiMethod myValueOfMethod = null;
   private String myCachedForLongName = null;
+  private static final @NonNls String VALUES_METHOD = "values";
+  private static final @NonNls String VALUE_OF_METHOD = "valueOf";
 
   public PsiClassImpl(PsiManagerImpl manager, long repositoryId) {
     super(manager, repositoryId);
@@ -322,6 +326,10 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
   public PsiClass getContainingClass() {
     PsiElement parent = getDefaultParentByRepository();
     return parent instanceof PsiClass ? ((PsiClass)parent) : null;
+  }
+
+  public Collection<HierarchicalMethodSignature> getVisibleSignatures() {
+    return PsiSuperMethodImplUtil.getVisibleSignatures(this);
   }
 
   public PsiField[] getFields() {
@@ -642,10 +650,10 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
             myValueOfMethod = new LightMethod(getManager(), valueOfMethod, this);
           }
           final NameHint hint = processor.getHint(NameHint.class);
-          if (hint == null || "values".equals(hint.getName())) {
+          if (hint == null || VALUES_METHOD.equals(hint.getName())) {
             if (!processor.execute(myValuesMethod, PsiSubstitutor.EMPTY)) return false;
           }
-          if (hint == null || "valueOf".equals(hint.getName())) {
+          if (hint == null || VALUE_OF_METHOD.equals(hint.getName())) {
             if (!processor.execute(myValueOfMethod, PsiSubstitutor.EMPTY)) return false;
           }
         }

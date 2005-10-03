@@ -68,6 +68,7 @@ public class JavaLexer extends LexerBase {
       return myKeywords[hashCode % NUM_ENTRIES];
     }
 
+    @SuppressWarnings({"HardCodedStringLiteral"})
     public HashTable(boolean isAssertKeywordEnabled, boolean isJDK15) {
       if (isAssertKeywordEnabled) {
         add("assert", JavaTokenType.ASSERT_KEYWORD);

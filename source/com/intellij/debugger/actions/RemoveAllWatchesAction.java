@@ -26,6 +26,6 @@ public class RemoveAllWatchesAction extends RemoveWatchAction {
     return result;
   }
 
-  protected void updatePresentation(Presentation presentation, int[] idxs) {
+  protected void updatePresentation(Presentation presentation, int watchesCount) {
   }
 }

@@ -1,8 +1,11 @@
 package com.intellij.ide.todo;
 
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Iterator;
+
+import com.intellij.ide.IdeBundle;
 
 /**
  * @author Vladimir Kondratyev
@@ -14,43 +17,55 @@ class TodoPanelSettings{
   private boolean myIsAutoScrollToSource;
   private String myTodoFilterName;
 
+  @NonNls private static final String ATTRIBUTE_VALUE = "value";
+  @NonNls private static final String ELEMENT_ARE_PACKAGES_SHOWN = "are-packages-shown";
+  @NonNls private static final String ELEMENT_ARE_MODULES_SHOWN = "are-modules-shown";
+  @NonNls private static final String ELEMENT_FLATTEN_PACKAGES = "flatten-packages";
+  @NonNls private static final String ELEMENT_AUTOSCROLL_TO_SOURCE = "is-autoscroll-to-source";
+  @NonNls private static final String ELEMENT_TODO_FILTER = "todo-filter";
+  @NonNls private static final String ATTRIBUTE_NAME = "name";
+
   public void readExternal(Element e){
     for(Iterator i=e.getChildren().iterator();i.hasNext();){
       Element child=(Element)i.next();
-      if("are-packages-shown".equals(child.getName())){
-        myArePackagesShown=Boolean.valueOf(child.getAttributeValue("value")).booleanValue();
-      }if("are-modules-shown".equals(child.getName())){
-        myAreModulesShown=Boolean.valueOf(child.getAttributeValue("value")).booleanValue();
-      }if("flatten-packages".equals(child.getName())){
-        myAreFlattenPackages=Boolean.valueOf(child.getAttributeValue("value")).booleanValue();
-      }else if("is-autoscroll-to-source".equals(child.getName())){
-        myIsAutoScrollToSource=Boolean.valueOf(child.getAttributeValue("value")).booleanValue();
-      }else if("todo-filter".equals(child.getName())){
-        myTodoFilterName=child.getAttributeValue("name");
+      if(ELEMENT_ARE_PACKAGES_SHOWN.equals(child.getName())){
+        myArePackagesShown=Boolean.valueOf(child.getAttributeValue(ATTRIBUTE_VALUE)).booleanValue();
+      }
+      else if(ELEMENT_ARE_MODULES_SHOWN.equals(child.getName())){
+        myAreModulesShown=Boolean.valueOf(child.getAttributeValue(ATTRIBUTE_VALUE)).booleanValue();
+      }
+      else if(ELEMENT_FLATTEN_PACKAGES.equals(child.getName())){
+        myAreFlattenPackages=Boolean.valueOf(child.getAttributeValue(ATTRIBUTE_VALUE)).booleanValue();
+      }
+      else if(ELEMENT_AUTOSCROLL_TO_SOURCE.equals(child.getName())){
+        myIsAutoScrollToSource=Boolean.valueOf(child.getAttributeValue(ATTRIBUTE_VALUE)).booleanValue();
+      }
+      else if(ELEMENT_TODO_FILTER.equals(child.getName())){
+        myTodoFilterName=child.getAttributeValue(ATTRIBUTE_NAME);
       }
     }
   }
 
   public void writeExternal(Element e){
-    Element areArePackagesShownElement=new Element("are-packages-shown");
-    areArePackagesShownElement.setAttribute("value",myArePackagesShown?Boolean.TRUE.toString():Boolean.FALSE.toString());
+    Element areArePackagesShownElement=new Element(ELEMENT_ARE_PACKAGES_SHOWN);
+    areArePackagesShownElement.setAttribute(ATTRIBUTE_VALUE,myArePackagesShown?Boolean.TRUE.toString():Boolean.FALSE.toString());
     e.addContent(areArePackagesShownElement);
 
-    Element areModulesShownElement=new Element("are-modules-shown");
-    areModulesShownElement.setAttribute("value",myAreModulesShown?Boolean.TRUE.toString():Boolean.FALSE.toString());
+    Element areModulesShownElement=new Element(ELEMENT_ARE_MODULES_SHOWN);
+    areModulesShownElement.setAttribute(ATTRIBUTE_VALUE,myAreModulesShown?Boolean.TRUE.toString():Boolean.FALSE.toString());
     e.addContent(areModulesShownElement);
 
-    Element areAreFlattenPackagesElement=new Element("flatten-packages");
-    areAreFlattenPackagesElement.setAttribute("value",myAreFlattenPackages?Boolean.TRUE.toString():Boolean.FALSE.toString());
+    Element areAreFlattenPackagesElement=new Element(ELEMENT_FLATTEN_PACKAGES);
+    areAreFlattenPackagesElement.setAttribute(ATTRIBUTE_VALUE,myAreFlattenPackages?Boolean.TRUE.toString():Boolean.FALSE.toString());
     e.addContent(areAreFlattenPackagesElement);
 
-    Element isAutoScrollModeElement=new Element("is-autoscroll-to-source");
-    isAutoScrollModeElement.setAttribute("value",myIsAutoScrollToSource?Boolean.TRUE.toString():Boolean.FALSE.toString());
+    Element isAutoScrollModeElement=new Element(ELEMENT_AUTOSCROLL_TO_SOURCE);
+    isAutoScrollModeElement.setAttribute(ATTRIBUTE_VALUE,myIsAutoScrollToSource?Boolean.TRUE.toString():Boolean.FALSE.toString());
     e.addContent(isAutoScrollModeElement);
 
     if(myTodoFilterName!=null){
-      Element todoFilterElement=new Element("todo-filter");
-      todoFilterElement.setAttribute("name",myTodoFilterName);
+      Element todoFilterElement=new Element(ELEMENT_TODO_FILTER);
+      todoFilterElement.setAttribute(ATTRIBUTE_NAME,myTodoFilterName);
       e.addContent(todoFilterElement);
     }
   }

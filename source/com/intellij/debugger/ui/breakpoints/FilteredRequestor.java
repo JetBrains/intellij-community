@@ -15,12 +15,14 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.debugger.DebuggerInvocationUtil;
+import com.intellij.debugger.DebuggerBundle;
 import com.sun.jdi.BooleanValue;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.VMDisconnectedException;
 import com.sun.jdi.Value;
 import com.sun.jdi.event.LocatableEvent;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,10 +41,10 @@ public abstract class FilteredRequestor implements LocatableEventRequestor, JDOM
   public boolean INSTANCE_FILTERS_ENABLED = false;
   protected InstanceFilter[] myInstanceFilters  = InstanceFilter.EMPTY_ARRAY;
 
-  private static final String FILTER_OPTION_NAME = "filter";
-  private static final String EXCLUSION_FILTER_OPTION_NAME = "exclusion_filter";
-  private static final String INSTANCE_ID_OPTION_NAME = "instance_id";
-  private static final String CONDITION_OPTION_NAME = "CONDITION";
+  private static final @NonNls String FILTER_OPTION_NAME = "filter";
+  private static final @NonNls String EXCLUSION_FILTER_OPTION_NAME = "exclusion_filter";
+  private static final @NonNls String INSTANCE_ID_OPTION_NAME = "instance_id";
+  private static final @NonNls String CONDITION_OPTION_NAME = "CONDITION";
   protected final Project myProject;
 
   public FilteredRequestor(Project project) {
@@ -149,17 +151,19 @@ public abstract class FilteredRequestor implements LocatableEventRequestor, JDOM
         });
         Value value = evaluator.evaluate(context);
         if (!(value instanceof BooleanValue)) {
-          throw EvaluateExceptionUtil.createEvaluateException("Type mismatch. Required boolean value");
+          throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.boolean.expected"));
         }
-        if(!((BooleanValue)value).booleanValue()) return false;
-      } catch (EvaluateException ex) {
-        if(ex.getCause() instanceof VMDisconnectedException) return false;
-        StringBuffer text = new StringBuffer();
-        text.append("Failed to evaluate breakpoint condition\n'");
-        text.append(getCondition());
-        text.append("'\nReason: ");
-        text.append(ex.getMessage());
-        throw EvaluateExceptionUtil.createEvaluateException(text.toString());
+        if(!((BooleanValue)value).booleanValue()) {
+          return false;
+        }
+      }
+      catch (EvaluateException ex) {
+        if(ex.getCause() instanceof VMDisconnectedException) {
+          return false;
+        }
+        throw EvaluateExceptionUtil.createEvaluateException(
+          DebuggerBundle.message("error.failed.evaluating.breakpoint.condition", getCondition(), ex.getMessage())
+        );
       }
       return true;
     }

@@ -1,6 +1,7 @@
 package com.intellij.ide.util.treeView;
 
 import com.intellij.ide.LoadingNode;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.openapi.application.ApplicationManager;
@@ -444,7 +445,7 @@ public abstract class AbstractTreeBuilder {
       }
     };
 
-    String text = " searching...";
+    String text = IdeBundle.message("progress.searching");
     for (int i = 0; i < node.getChildCount(); i++) {
       TreeNode child = node.getChildAt(i);
       if (child instanceof LoadingNode && text.equals(((LoadingNode)child).getUserObject())) {

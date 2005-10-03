@@ -5,6 +5,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.psi.TokenTypeEx;
 import com.intellij.psi.tree.IElementType;
 import com.sun.jdi.Value;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * Created by IntelliJ IDEA.
@@ -15,7 +16,7 @@ import com.sun.jdi.Value;
  */
 public class PostfixOperationEvaluator implements Evaluator{
   private final Evaluator myOperandEvaluator;
-  private static final Evaluator myRightEvaluator = new LiteralEvaluator(new Integer(1), "byte");
+  private static final @NonNls Evaluator myRightEvaluator = new LiteralEvaluator(new Integer(1), "byte");
 
   private IElementType myOpType;
   private String myExpectedType; // a result of PsiType.getCanonicalText()

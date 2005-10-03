@@ -23,9 +23,9 @@ public class CheckoutWizard extends CvsWizard {
   private ChooseCheckoutMode myChooseModeStep;
 
   public CheckoutWizard(final Project project) {
-    super("Check Out from CVS Repository", project);
+    super(com.intellij.CvsBundle.message("dialog.tittle.check.out.from.cvs.repository"), project);
     mySelectCVSConfigurationStep = new SelectCVSConfigurationStep(project, this);
-    mySelectCvsElementStep = new SelectCvsElementStep("Select CVS Element to Check Out",
+    mySelectCvsElementStep = new SelectCvsElementStep(com.intellij.CvsBundle.message("dialog.title.select.cvs.element.to.check.out"),
                                                       this, project, mySelectCVSConfigurationStep,
                                                       true, TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION, false, true);
 
@@ -74,7 +74,7 @@ public class CheckoutWizard extends CvsWizard {
 
   private class MySelectLocationStep extends SelectLocationStep {
     public MySelectLocationStep(Project project) {
-      super("Select Check Out Location", CheckoutWizard.this, project);
+      super(com.intellij.CvsBundle.message("dialog.title.select.check.out.location"), CheckoutWizard.this, project);
       init();
     }
   }

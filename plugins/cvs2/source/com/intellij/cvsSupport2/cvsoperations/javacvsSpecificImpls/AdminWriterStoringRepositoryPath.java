@@ -8,6 +8,7 @@ import org.netbeans.lib.cvsclient.file.*;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.MessageFormat;
 
 import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.cvsoperations.common.RepositoryPathProvider;
@@ -65,7 +66,7 @@ public class AdminWriterStoringRepositoryPath implements IAdminWriter, Repositor
   }
 
   public String getRepositoryPath(String repository) {
-    if (myRepositoryPath == null) throw new InvalidModuleDescriptionException("Cannot expand '" + myModuleName + "'", myCvsRoot);
+    if (myRepositoryPath == null) throw new InvalidModuleDescriptionException(com.intellij.CvsBundle.message("error.mesage.cannot.expand.module", myModuleName), myCvsRoot);
     return myRepositoryPath;
   }
 

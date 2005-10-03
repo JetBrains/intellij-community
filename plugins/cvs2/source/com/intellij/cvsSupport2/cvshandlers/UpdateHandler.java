@@ -40,7 +40,7 @@ public class UpdateHandler extends CommandCvsHandler implements PostCvsActivity 
   private final UpdateSettings myUpdateSettings;
 
   public UpdateHandler(FilePath[] files, UpdateSettings updateSettings, Project project, UpdatedFiles updatedFiles) {
-    super("Update", new UpdateOperation(new FilePath[0], updateSettings, project),
+    super(com.intellij.CvsBundle.message("operation.name.update"), new UpdateOperation(new FilePath[0], updateSettings, project),
           FileSetToBeUpdated.selectedFiles(files));
     myFiles = files;
     myProject = project;

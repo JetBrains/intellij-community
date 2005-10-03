@@ -4,6 +4,7 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.JdkOrderEntry;
@@ -85,6 +86,6 @@ public class NamedLibraryElementNode extends ProjectViewNode<NamedLibraryElement
 
   protected String getToolTip() {
     OrderEntry orderEntry = getValue().getOrderEntry();
-    return orderEntry instanceof JdkOrderEntry ? "JDK" : StringUtil.capitalize(((LibraryOrderEntry)orderEntry).getLibraryLevel() + " library");
+    return orderEntry instanceof JdkOrderEntry ? IdeBundle.message("node.projectview.jdk") : StringUtil.capitalize(IdeBundle.message("node.projectview.library", ((LibraryOrderEntry)orderEntry).getLibraryLevel()));
   }
 }

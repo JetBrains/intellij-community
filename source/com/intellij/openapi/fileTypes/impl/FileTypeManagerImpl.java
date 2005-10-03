@@ -28,6 +28,7 @@ import gnu.trove.THashSet;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -57,6 +58,42 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   private final THashMap<FileType, SyntaxTable> myDefaultTables = new THashMap<FileType, SyntaxTable>();
   private final Map<String, FileType> myInitialAssociations = new HashMap<String, FileType>();
   private Map<String, String> myUnresolvedMappings = new HashMap<String, String>();
+  @NonNls private static final String ELEMENT_FILETYPE = "filetype";
+  @NonNls private static final String ELEMENT_FILETYPES = "filetypes";
+  @NonNls private static final String ELEMENT_IGNOREFILES = "ignoreFiles";
+  @NonNls private static final String ATTRIBUTE_LIST = "list";
+  @NonNls private static final String ELEMENT_EXTENSIONMAP = "extensionMap";
+  @NonNls private static final String ELEMENT_MAPPING = "mapping";
+  @NonNls private static final String ATTRIBUTE_EXT = "ext";
+  @NonNls private static final String ATTRIBUTE_TYPE = "type";
+  @NonNls private static final String ELEMENT_REMOVED_MAPPING = "removed_mapping";
+  @NonNls private static final String IGNORE_DOT_SVN = ".svn";
+  @NonNls private static final String ATTRIBUTE_VERSION = "version";
+  @NonNls private static final String ATTRIBUTE_NAME = "name";
+  @NonNls private static final String ATTRIBUTE_DESCRIPTION = "description";
+  @NonNls private static final String ATTRIBUTE_ICON = "icon";
+  @NonNls private static final String ATTRIBUTE_EXTENSIONS = "extensions";
+  @NonNls private static final String ELEMENT_HIGHLIGHTING = "highlighting";
+  @NonNls private static final String ELEMENT_OPTIONS = "options";
+  @NonNls private static final String ELEMENT_OPTION = "option";
+  @NonNls private static final String ATTRIBUTE_VALUE = "value";
+  @NonNls private static final String VALUE_LINE_COMMENT = "LINE_COMMENT";
+  @NonNls private static final String VALUE_COMMENT_START = "COMMENT_START";
+  @NonNls private static final String VALUE_COMMENT_END = "COMMENT_END";
+  @NonNls private static final String VALUE_HEX_PREFIX = "HEX_PREFIX";
+  @NonNls private static final String VALUE_NUM_POSTFIXES = "NUM_POSTFIXES";
+  @NonNls private static final String VALUE_HAS_BRACES = "HAS_BRACES";
+  @NonNls private static final String VALUE_HAS_BRACKETS = "HAS_BRACKETS";
+  @NonNls private static final String VALUE_HAS_PARENS = "HAS_PARENS";
+  @NonNls private static final String ELEMENT_KEYWORDS = "keywords";
+  @NonNls private static final String ATTRIBUTE_IGNORE_CASE = "ignore_case";
+  @NonNls private static final String ELEMENT_KEYWORD = "keyword";
+  @NonNls private static final String ELEMENT_KEYWORDS2 = "keywords2";
+  @NonNls private static final String ELEMENT_KEYWORDS3 = "keywords3";
+  @NonNls private static final String ELEMENT_KEYWORDS4 = "keywords4";
+  @NonNls private static final String ATTRIBUTE_BINARY = "binary";
+  @NonNls private static final String ATTRIBUTE_DEFAULT_EXTENSION = "default_extension";
+  @NonNls private static final String XML_EXTENSION = ".xml";
 
   // -------------------------------------------------------------------------
   // Constructor
@@ -75,7 +112,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   }
 
   public String getPresentableName() {
-    return "File types";
+    return FileTypesBundle.message("filetype.settings.component");
   }
   // -------------------------------------------------------------------------
   // ApplicationComponent interface implementation
@@ -92,7 +129,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       saveAllFileTypes();
     }
     catch (IOException e) {
-      Messages.showErrorDialog("Can't save file types: " + e.getLocalizedMessage(), "Error Saving Settings");
+      Messages.showErrorDialog(FileTypesBundle.message("filetype.settings.cannot.save.error", e.getLocalizedMessage()),
+                               FileTypesBundle.message("filetype.settings.cannot.save.title"));
     }
   }
 
@@ -190,6 +228,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     //To make async delete work. See FileUtil.asyncDelete.
     //Quite a hack, but still we need to have some name, which
     //won't be catched by VF for sure.
+    //noinspection HardCodedStringLiteral
     Pattern p = Pattern.compile(".*\\.__del__");
     myIgnorePatterns.add(p);
   }
@@ -286,14 +325,14 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       if (!(fileType instanceof CustomFileType) || !shouldSave(fileType)) continue;
       if (myDefaultTypes.contains(fileType) && !isDefaultModified(fileType)) continue;
 
-      Element root = new Element("filetype");
+      Element root = new Element(ELEMENT_FILETYPE);
 
       writeHeader(root, fileType);
 
       writeSyntaxTableData(root, fileType);
 
       String name = namesProvider.suggestName(fileType.getName());
-      String filePath = dir.getAbsolutePath() + File.separator + name + ".xml";
+      String filePath = dir.getAbsolutePath() + File.separator + name + XML_EXTENSION;
       filePaths.add(filePath);
       documents.add(new Document(root));
     }
@@ -323,23 +362,23 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     int savedVersion = getVersion(parentNode);
     for (final Object o : parentNode.getChildren()) {
       final Element e = (Element)o;
-      if ("filetypes".equals(e.getName())) {
-        List children = e.getChildren("filetype");
+      if (ELEMENT_FILETYPES.equals(e.getName())) {
+        List children = e.getChildren(ELEMENT_FILETYPE);
         for (final Object aChildren : children) {
           Element element = (Element)aChildren;
           loadFileType(element, true);
         }
       }
-      else if ("ignoreFiles".equals(e.getName())) {
-        setIgnoredFilesListWithoutNotification(e.getAttributeValue("list"));
+      else if (ELEMENT_IGNOREFILES.equals(e.getName())) {
+        setIgnoredFilesListWithoutNotification(e.getAttributeValue(ATTRIBUTE_LIST));
       }
-      else if ("extensionMap".equals(e.getName())) {
-        List mappings = e.getChildren("mapping");
+      else if (ELEMENT_EXTENSIONMAP.equals(e.getName())) {
+        List mappings = e.getChildren(ELEMENT_MAPPING);
 
         for (Object mapping1 : mappings) {
           Element mapping = (Element)mapping1;
-          String ext = mapping.getAttributeValue("ext");
-          String name = mapping.getAttributeValue("type");
+          String ext = mapping.getAttributeValue(ATTRIBUTE_EXT);
+          String name = mapping.getAttributeValue(ATTRIBUTE_TYPE);
           FileType type = getFileTypeByName(name);
 
           if (type != null) {
@@ -351,11 +390,11 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
           }
         }
 
-        List removedMappings = e.getChildren("removed_mapping");
+        List removedMappings = e.getChildren(ELEMENT_REMOVED_MAPPING);
         for (Object removedMapping : removedMappings) {
           Element mapping = (Element)removedMapping;
-          String ext = mapping.getAttributeValue("ext");
-          String name = mapping.getAttributeValue("type");
+          String ext = mapping.getAttributeValue(ATTRIBUTE_EXT);
+          String name = mapping.getAttributeValue(ATTRIBUTE_TYPE);
           FileType type = getFileTypeByName(name);
 
           if (type != null) {
@@ -366,9 +405,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     }
 
     if (savedVersion == 0) {
-      if (!myIgnoredFileMasksSet.contains(".svn")) {
-        myIgnorePatterns.add(PatternUtil.fromMask(".svn"));
-        myIgnoredFileMasksSet.add(".svn");
+      if (!myIgnoredFileMasksSet.contains(IGNORE_DOT_SVN)) {
+        myIgnorePatterns.add(PatternUtil.fromMask(IGNORE_DOT_SVN));
+        myIgnoredFileMasksSet.add(IGNORE_DOT_SVN);
       }
     }
     if (savedVersion < VERSION) {
@@ -404,7 +443,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   }
 
   private static int getVersion(final Element node) {
-    final String verString = node.getAttributeValue("version");
+    final String verString = node.getAttributeValue(ATTRIBUTE_VERSION);
     if (verString == null) return 0;
     try {
       return Integer.parseInt(verString);
@@ -415,12 +454,12 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   }
 
   public void writeExternal(Element parentNode) throws WriteExternalException {
-    parentNode.setAttribute("version", String.valueOf(VERSION));
+    parentNode.setAttribute(ATTRIBUTE_VERSION, String.valueOf(VERSION));
 
-    Element element = new Element("ignoreFiles");
+    Element element = new Element(ELEMENT_IGNOREFILES);
     parentNode.addContent(element);
-    element.setAttribute("list", getIgnoredFilesList());
-    Element map = new Element("extensionMap");
+    element.setAttribute(ATTRIBUTE_LIST, getIgnoredFilesList());
+    Element map = new Element(ELEMENT_EXTENSIONMAP);
     parentNode.addContent(map);
 
     Map<String, FileType> defaultMappings = new HashMap<String, FileType>(myInitialAssociations);
@@ -432,9 +471,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
           defaultMappings.remove(ext);
         }
         else if (shouldSave(type)) {
-          Element mapping = new Element("mapping");
-          mapping.setAttribute("ext", ext);
-          mapping.setAttribute("type", type.getName());
+          Element mapping = new Element(ELEMENT_MAPPING);
+          mapping.setAttribute(ATTRIBUTE_EXT, ext);
+          mapping.setAttribute(ATTRIBUTE_TYPE, type.getName());
           map.addContent(mapping);
         }
       }
@@ -442,9 +481,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
     for (String ext : defaultMappings.keySet()) {
       FileType type = defaultMappings.get(ext);
-      Element mapping = new Element("removed_mapping");
-      mapping.setAttribute("ext", ext);
-      mapping.setAttribute("type", type.getName());
+      Element mapping = new Element(ELEMENT_REMOVED_MAPPING);
+      mapping.setAttribute(ATTRIBUTE_EXT, ext);
+      mapping.setAttribute(ATTRIBUTE_TYPE, type.getName());
       map.addContent(mapping);
     }
   }
@@ -492,7 +531,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     registerFileTypeWithoutNotification(StdFileTypes.PROPERTIES = PropertiesFileType.FILE_TYPE, new String[] {"properties"});
   }
 
-  private static String[] parse(String semicolonDelimited) {
+  private static String[] parse(@NonNls String semicolonDelimited) {
     if (semicolonDelimited == null) return ArrayUtil.EMPTY_STRING_ARRAY;
     StringTokenizer tokenizer = new StringTokenizer(semicolonDelimited, ";", false);
     ArrayList<String> list = new ArrayList<String>();
@@ -505,7 +544,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   /**
    * Registers a standard file type. Doesn't notifyListeners any change events.
    */
-  private void registerFileTypeWithoutNotification(FileType fileType, String[] extensions) {
+  private void registerFileTypeWithoutNotification(FileType fileType, @NonNls String[] extensions) {
     myFileTypes.add(fileType);
     if (extensions != null) {
       for (String extension : extensions) {
@@ -533,7 +572,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
     File[] files = fileTypesDir.listFiles(new FileFilter() {
       public boolean accept(File file) {
-        return !file.isDirectory() && file.getName().toLowerCase().endsWith(".xml");
+        return !file.isDirectory() && file.getName().toLowerCase().endsWith(XML_EXTENSION);
       }
     });
     if (files == null) {
@@ -575,20 +614,20 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       throw new InvalidDataException();
     }
     Element root = document.getRootElement();
-    if (root == null || !"filetype".equals(root.getName())) {
+    if (root == null || !ELEMENT_FILETYPE.equals(root.getName())) {
       throw new InvalidDataException();
     }
     return loadFileType(root, false);
   }
 
   private FileType loadFileType(Element typeElement, boolean isDefaults) {
-    String fileTypeName = typeElement.getAttributeValue("name");
-    String fileTypeDescr = typeElement.getAttributeValue("description");
-    String iconPath = typeElement.getAttributeValue("icon");
-    String extensionsStr = typeElement.getAttributeValue("extensions");
+    String fileTypeName = typeElement.getAttributeValue(ATTRIBUTE_NAME);
+    String fileTypeDescr = typeElement.getAttributeValue(ATTRIBUTE_DESCRIPTION);
+    String iconPath = typeElement.getAttributeValue(ATTRIBUTE_ICON);
+    String extensionsStr = typeElement.getAttributeValue(ATTRIBUTE_EXTENSIONS);
 
     SyntaxTable table = null;
-    Element element = typeElement.getChild("highlighting");
+    Element element = typeElement.getChild(ELEMENT_HIGHLIGHTING);
     if (element != null) {
       table = readSyntaxTable(element);
     }
@@ -646,61 +685,61 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     for (final Object o : root.getChildren()) {
       Element element = (Element)o;
 
-      if ("options".equals(element.getName())) {
-        for (final Object o1 : element.getChildren("option")) {
+      if (ELEMENT_OPTIONS.equals(element.getName())) {
+        for (final Object o1 : element.getChildren(ELEMENT_OPTION)) {
           Element e = (Element)o1;
-          String name = e.getAttributeValue("name");
-          String value = e.getAttributeValue("value");
-          if ("LINE_COMMENT".equals(name)) {
+          String name = e.getAttributeValue(ATTRIBUTE_NAME);
+          String value = e.getAttributeValue(ATTRIBUTE_VALUE);
+          if (VALUE_LINE_COMMENT.equals(name)) {
             table.setLineComment(value);
           }
-          else if ("COMMENT_START".equals(name)) {
+          else if (VALUE_COMMENT_START.equals(name)) {
             table.setStartComment(value);
           }
-          else if ("COMMENT_END".equals(name)) {
+          else if (VALUE_COMMENT_END.equals(name)) {
             table.setEndComment(value);
           }
-          else if ("HEX_PREFIX".equals(name)) {
+          else if (VALUE_HEX_PREFIX.equals(name)) {
             table.setHexPrefix(value);
           }
-          else if ("NUM_POSTFIXES".equals(name)) {
+          else if (VALUE_NUM_POSTFIXES.equals(name)) {
             table.setNumPostfixChars(value);
           }
-          else if ("HAS_BRACES".equals(name)) {
+          else if (VALUE_HAS_BRACES.equals(name)) {
             table.setHasBraces(Boolean.valueOf(value).booleanValue());
           }
-          else if ("HAS_BRACKETS".equals(name)) {
+          else if (VALUE_HAS_BRACKETS.equals(name)) {
             table.setHasBrackets(Boolean.valueOf(value).booleanValue());
           }
-          else if ("HAS_PARENS".equals(name)) {
+          else if (VALUE_HAS_PARENS.equals(name)) {
             table.setHasParens(Boolean.valueOf(value).booleanValue());
           }
         }
       }
-      else if ("keywords".equals(element.getName())) {
-        boolean ignoreCase = Boolean.valueOf(element.getAttributeValue("ignore_case")).booleanValue();
+      else if (ELEMENT_KEYWORDS.equals(element.getName())) {
+        boolean ignoreCase = Boolean.valueOf(element.getAttributeValue(ATTRIBUTE_IGNORE_CASE)).booleanValue();
         table.setIgnoreCase(ignoreCase);
-        for (final Object o1 : element.getChildren("keyword")) {
+        for (final Object o1 : element.getChildren(ELEMENT_KEYWORD)) {
           Element e = (Element)o1;
-          table.addKeyword1(e.getAttributeValue("name"));
+          table.addKeyword1(e.getAttributeValue(ATTRIBUTE_NAME));
         }
       }
-      else if ("keywords2".equals(element.getName())) {
-        for (final Object o1 : element.getChildren("keyword")) {
+      else if (ELEMENT_KEYWORDS2.equals(element.getName())) {
+        for (final Object o1 : element.getChildren(ELEMENT_KEYWORD)) {
           Element e = (Element)o1;
-          table.addKeyword2(e.getAttributeValue("name"));
+          table.addKeyword2(e.getAttributeValue(ATTRIBUTE_NAME));
         }
       }
-      else if ("keywords3".equals(element.getName())) {
-        for (final Object o1 : element.getChildren("keyword")) {
+      else if (ELEMENT_KEYWORDS3.equals(element.getName())) {
+        for (final Object o1 : element.getChildren(ELEMENT_KEYWORD)) {
           Element e = (Element)o1;
-          table.addKeyword3(e.getAttributeValue("name"));
+          table.addKeyword3(e.getAttributeValue(ATTRIBUTE_NAME));
         }
       }
-      else if ("keywords4".equals(element.getName())) {
-        for (final Object o1 : element.getChildren("keyword")) {
+      else if (ELEMENT_KEYWORDS4.equals(element.getName())) {
+        for (final Object o1 : element.getChildren(ELEMENT_KEYWORD)) {
           Element e = (Element)o1;
-          table.addKeyword4(e.getAttributeValue("name"));
+          table.addKeyword4(e.getAttributeValue(ATTRIBUTE_NAME));
         }
       }
     }
@@ -709,7 +748,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   }
 
   private static File getFileTypesDir(boolean create) {
-    String directoryPath = PathManager.getConfigPath() + File.separator + "filetypes";
+    String directoryPath = PathManager.getConfigPath() + File.separator + ELEMENT_FILETYPES;
     File directory = new File(directoryPath);
     if (!directory.exists()) {
       if (!create) return null;
@@ -726,80 +765,80 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   }
 
   private static void writeHeader(Element root, FileType fileType) {
-    root.setAttribute("binary", String.valueOf(fileType.isBinary()));
+    root.setAttribute(ATTRIBUTE_BINARY, String.valueOf(fileType.isBinary()));
     final String defaultExtension = fileType.getDefaultExtension();
     if (defaultExtension != null) {
-      root.setAttribute("default_extension", defaultExtension);
+      root.setAttribute(ATTRIBUTE_DEFAULT_EXTENSION, defaultExtension);
     }
 
-    root.setAttribute("description", fileType.getDescription());
-    root.setAttribute("name", fileType.getName());
+    root.setAttribute(ATTRIBUTE_DESCRIPTION, fileType.getDescription());
+    root.setAttribute(ATTRIBUTE_NAME, fileType.getName());
   }
 
   private static void writeSyntaxTableData(Element root, FileType fileType) {
     if (!(fileType instanceof CustomFileType)) return;
 
     SyntaxTable table = ((CustomFileType)fileType).getSyntaxTable();
-    Element highlightingElement = new Element("highlighting");
+    Element highlightingElement = new Element(ELEMENT_HIGHLIGHTING);
 
-    Element optionsElement = new Element("options");
+    Element optionsElement = new Element(ELEMENT_OPTIONS);
 
-    Element lineComment = new Element("option");
-    lineComment.setAttribute("name", "LINE_COMMENT");
-    lineComment.setAttribute("value", table.getLineComment());
+    Element lineComment = new Element(ELEMENT_OPTION);
+    lineComment.setAttribute(ATTRIBUTE_NAME, VALUE_LINE_COMMENT);
+    lineComment.setAttribute(ATTRIBUTE_VALUE, table.getLineComment());
     optionsElement.addContent(lineComment);
 
-    Element commentStart = new Element("option");
-    commentStart.setAttribute("name", "COMMENT_START");
-    commentStart.setAttribute("value", table.getStartComment());
+    Element commentStart = new Element(ELEMENT_OPTION);
+    commentStart.setAttribute(ATTRIBUTE_NAME, VALUE_COMMENT_START);
+    commentStart.setAttribute(ATTRIBUTE_VALUE, table.getStartComment());
     optionsElement.addContent(commentStart);
 
-    Element commentEnd = new Element("option");
-    commentEnd.setAttribute("name", "COMMENT_END");
-    commentEnd.setAttribute("value", table.getEndComment());
+    Element commentEnd = new Element(ELEMENT_OPTION);
+    commentEnd.setAttribute(ATTRIBUTE_NAME, VALUE_COMMENT_END);
+    commentEnd.setAttribute(ATTRIBUTE_VALUE, table.getEndComment());
     optionsElement.addContent(commentEnd);
 
-    Element hexPrefix = new Element("option");
-    hexPrefix.setAttribute("name", "HEX_PREFIX");
-    hexPrefix.setAttribute("value", table.getHexPrefix());
+    Element hexPrefix = new Element(ELEMENT_OPTION);
+    hexPrefix.setAttribute(ATTRIBUTE_NAME, VALUE_HEX_PREFIX);
+    hexPrefix.setAttribute(ATTRIBUTE_VALUE, table.getHexPrefix());
     optionsElement.addContent(hexPrefix);
 
-    Element numPostfixes = new Element("option");
-    numPostfixes.setAttribute("name", "NUM_POSTFIXES");
-    numPostfixes.setAttribute("value", table.getNumPostfixChars());
+    Element numPostfixes = new Element(ELEMENT_OPTION);
+    numPostfixes.setAttribute(ATTRIBUTE_NAME, VALUE_NUM_POSTFIXES);
+    numPostfixes.setAttribute(ATTRIBUTE_VALUE, table.getNumPostfixChars());
     optionsElement.addContent(numPostfixes);
 
-    Element supportBraces = new Element("option");
-    supportBraces.setAttribute("name", "HAS_BRACES");
-    supportBraces.setAttribute("value", String.valueOf(table.isHasBraces()));
+    Element supportBraces = new Element(ELEMENT_OPTION);
+    supportBraces.setAttribute(ATTRIBUTE_NAME, VALUE_HAS_BRACES);
+    supportBraces.setAttribute(ATTRIBUTE_VALUE, String.valueOf(table.isHasBraces()));
     optionsElement.addContent(supportBraces);
 
-    Element supportBrackets = new Element("option");
-    supportBrackets.setAttribute("name", "HAS_BRACKETS");
-    supportBrackets.setAttribute("value", String.valueOf(table.isHasBrackets()));
+    Element supportBrackets = new Element(ELEMENT_OPTION);
+    supportBrackets.setAttribute(ATTRIBUTE_NAME, VALUE_HAS_BRACKETS);
+    supportBrackets.setAttribute(ATTRIBUTE_VALUE, String.valueOf(table.isHasBrackets()));
     optionsElement.addContent(supportBrackets);
 
-    Element supportParens = new Element("option");
-    supportParens.setAttribute("name", "HAS_PARENS");
-    supportParens.setAttribute("value", String.valueOf(table.isHasParens()));
+    Element supportParens = new Element(ELEMENT_OPTION);
+    supportParens.setAttribute(ATTRIBUTE_NAME, VALUE_HAS_PARENS);
+    supportParens.setAttribute(ATTRIBUTE_VALUE, String.valueOf(table.isHasParens()));
     optionsElement.addContent(supportParens);
 
     highlightingElement.addContent(optionsElement);
 
-    Element keywordsElement = new Element("keywords");
-    keywordsElement.setAttribute("ignore_case", String.valueOf(table.isIgnoreCase()));
+    Element keywordsElement = new Element(ELEMENT_KEYWORDS);
+    keywordsElement.setAttribute(ATTRIBUTE_IGNORE_CASE, String.valueOf(table.isIgnoreCase()));
     writeKeywords(table.getKeywords1(), keywordsElement);
     highlightingElement.addContent(keywordsElement);
 
-    Element keywordsElement2 = new Element("keywords2");
+    Element keywordsElement2 = new Element(ELEMENT_KEYWORDS2);
     writeKeywords(table.getKeywords2(), keywordsElement2);
     highlightingElement.addContent(keywordsElement2);
 
-    Element keywordsElement3 = new Element("keywords3");
+    Element keywordsElement3 = new Element(ELEMENT_KEYWORDS3);
     writeKeywords(table.getKeywords3(), keywordsElement3);
     highlightingElement.addContent(keywordsElement3);
 
-    Element keywordsElement4 = new Element("keywords4");
+    Element keywordsElement4 = new Element(ELEMENT_KEYWORDS4);
     writeKeywords(table.getKeywords4(), keywordsElement4);
     highlightingElement.addContent(keywordsElement4);
 
@@ -808,8 +847,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
   private static void writeKeywords(Set keywords, Element keywordsElement) {
     for (final Object keyword : keywords) {
-      Element e = new Element("keyword");
-      e.setAttribute("name", (String)keyword);
+      Element e = new Element(ELEMENT_KEYWORD);
+      e.setAttribute(ATTRIBUTE_NAME, (String)keyword);
       keywordsElement.addContent(e);
     }
   }

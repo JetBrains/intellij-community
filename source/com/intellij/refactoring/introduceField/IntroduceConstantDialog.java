@@ -1,8 +1,10 @@
 package com.intellij.refactoring.introduceField;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemPreferencePolicy;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,23 +22,29 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.ui.*;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.ui.*;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
 class IntroduceConstantDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceField.IntroduceConstantDialog");
-  private static final String RECENTS_KEY = "IntroduceConstantDialog.RECENTS_KEY";
+  @NonNls private static final String RECENTS_KEY = "IntroduceConstantDialog.RECENTS_KEY";
+  @NonNls private static final String NONNLS_SELECTED_PROPERTY = "INTRODUCE_CONSTANT_NONNLS";
 
   private Project myProject;
   private final PsiClass myParentClass;
@@ -68,6 +76,7 @@ class IntroduceConstantDialog extends DialogWrapper {
   private JPanel myNameSuggestionPanel;
   private JLabel myNameSuggestionLabel;
   private JLabel myTargetClassNameLabel;
+  private JCheckBox myCbNonNls;
 
   public IntroduceConstantDialog(Project project,
                                  PsiClass parentClass,
@@ -157,7 +166,6 @@ class IntroduceConstantDialog extends DialogWrapper {
     myTypePanel.setLayout(new BorderLayout());
     myTypePanel.add(myTypeSelector.getComponent(), BorderLayout.CENTER);
     if (myTypeSelector.getFocusableComponent() != null) {
-      myTypeLabel.setDisplayedMnemonic(KeyEvent.VK_T);
       myTypeLabel.setLabelFor(myTypeSelector.getFocusableComponent());
     }
 
@@ -225,7 +233,7 @@ class IntroduceConstantDialog extends DialogWrapper {
     },
                                                         myProject);
 
-    nameSuggestionsManager.setMnemonics(myTypeLabel, myNameSuggestionLabel);
+    nameSuggestionsManager.setLabelsFor(myTypeLabel, myNameSuggestionLabel);
     //////////
     if (myOccurrencesCount > 1) {
       ItemListener itemListener = new ItemListener() {
@@ -236,7 +244,7 @@ class IntroduceConstantDialog extends DialogWrapper {
         }
       };
       myCbReplaceAll.addItemListener(itemListener);
-      myCbReplaceAll.setText("Replace all occurrences of expression (" + myOccurrencesCount + " occurrences)");
+      myCbReplaceAll.setText(RefactoringBundle.message("replace.all.occurences", myOccurrencesCount));
     }
     else {
       myCbReplaceAll.setVisible(false);
@@ -260,6 +268,22 @@ class IntroduceConstantDialog extends DialogWrapper {
     else {
       myCbDeleteVariable.setVisible(false);
     }
+
+    final PsiManager psiManager = PsiManager.getInstance(myProject);
+    if (myTypeSelectorManager.isSuggestedType("java.lang.String") &&
+        psiManager.getEffectiveLanguageLevel().hasEnumKeywordAndAutoboxing() &&
+        psiManager.findClass(AnnotationUtil.NON_NLS, myParentClass.getResolveScope()) != null) {
+      final PropertiesComponent component = PropertiesComponent.getInstance(myProject);
+      myCbNonNls.setSelected(component.isTrueValue(NONNLS_SELECTED_PROPERTY));
+      myCbNonNls.addItemListener(new ItemListener() {
+        public void itemStateChanged(ItemEvent e) {
+          component.setValue(NONNLS_SELECTED_PROPERTY, Boolean.toString(myCbNonNls.isSelected()));
+        }
+      });
+    } else {
+      myCbNonNls.setVisible(false);
+    }
+
     updateTypeSelector();
 
     ButtonGroup bg = new ButtonGroup();
@@ -287,6 +311,11 @@ class IntroduceConstantDialog extends DialogWrapper {
     if (myInvokedOnDeclaration) return true;
     if (myCbDeleteVariable == null) return false;
     return myCbDeleteVariable.isSelected();
+  }
+
+  public boolean isAnnotateAsNonNls() {
+    if (myCbNonNls == null) return false;
+    return myCbNonNls.isSelected();
   }
 
   private void updateCbDeleteVariable() {
@@ -357,7 +386,7 @@ class IntroduceConstantDialog extends DialogWrapper {
       if (newClass == null) {
         RefactoringMessageUtil.showErrorMessage(
                 IntroduceConstantHandler.REFACTORING_NAME,
-                "Class does not exist in the project",
+                RefactoringBundle.message("class.does.not.exist.in.the.project"),
                 HelpID.INTRODUCE_FIELD,
                 myProject);
         return;
@@ -368,7 +397,7 @@ class IntroduceConstantDialog extends DialogWrapper {
     String fieldName = getEnteredName();
     String errorString = null;
     if ("".equals(fieldName)) {
-      errorString = "No field name specified";
+      errorString = RefactoringBundle.message("no.field.name.specified");
     } else if (!PsiManager.getInstance(myProject).getNameHelper().isIdentifier(fieldName)) {
       errorString = RefactoringMessageUtil.getIncorrectIdentifierMessage(fieldName);
     }
@@ -385,8 +414,7 @@ class IntroduceConstantDialog extends DialogWrapper {
     if (oldField != null) {
       int answer = Messages.showYesNoDialog(
               myProject,
-              "The field with the name " + fieldName + "\nalready exists in class '"
-              + oldField.getContainingClass().getQualifiedName() + "'.\nContinue?",
+              RefactoringBundle.message("field.exists", fieldName, oldField.getContainingClass().getQualifiedName()),
               IntroduceFieldHandler.REFACTORING_NAME,
               Messages.getWarningIcon()
       );
@@ -407,7 +435,7 @@ class IntroduceConstantDialog extends DialogWrapper {
 
   private class ChooseClassAction implements ActionListener {
     public void actionPerformed(ActionEvent e) {
-      TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject).createWithInnerClassesScopeChooser("Choose Destination Class", GlobalSearchScope.projectScope(myProject), new TreeClassChooser.ClassFilter() {
+      TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject).createWithInnerClassesScopeChooser(RefactoringBundle.message("choose.destination.class"), GlobalSearchScope.projectScope(myProject), new TreeClassChooser.ClassFilter() {
         public boolean isAccepted(PsiClass aClass) {
           return aClass.getParent() instanceof PsiJavaFile || aClass.hasModifierProperty(PsiModifier.STATIC);
         }

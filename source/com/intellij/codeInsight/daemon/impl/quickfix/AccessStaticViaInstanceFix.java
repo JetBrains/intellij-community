@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -10,8 +11,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
-
-import java.text.MessageFormat;
 
 public class AccessStaticViaInstanceFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.AccessStaticViaInstanceFix");
@@ -28,17 +27,14 @@ public class AccessStaticViaInstanceFix implements IntentionAction {
 
   public String getText() {
     PsiClass aClass = myMember.getContainingClass();
-    String text = MessageFormat.format("Access static ''{1}.{0}'' via class ''{2}'' reference",
-                                             new Object[]{
-                                               HighlightMessageUtil.getSymbolName(myMember, myResult.getSubstitutor()),
-                                               HighlightUtil.formatClass(aClass),
-                                               HighlightUtil.formatClass(aClass,false),
-                                             });
-    return text;
+    return QuickFixBundle.message("access.static.via.class.reference.text",
+                                  HighlightMessageUtil.getSymbolName(myMember, myResult.getSubstitutor()),
+                                  HighlightUtil.formatClass(aClass),
+                                  HighlightUtil.formatClass(aClass,false));
   }
 
   public String getFamilyName() {
-    return "Access static via class reference";
+    return QuickFixBundle.message("access.static.via.class.reference.family");
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {

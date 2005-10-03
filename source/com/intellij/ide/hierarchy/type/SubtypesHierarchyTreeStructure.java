@@ -2,6 +2,7 @@ package com.intellij.ide.hierarchy.type;
 
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.HierarchyTreeStructure;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
@@ -12,7 +13,7 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.util.ArrayUtil;
 
 public class SubtypesHierarchyTreeStructure extends HierarchyTreeStructure {
-  public static final String TYPE = "Subtypes of ";
+  public static final String TYPE = IdeBundle.message("title.hierarchy.subtypes");
 
   protected SubtypesHierarchyTreeStructure(final Project project, final HierarchyNodeDescriptor descriptor) {
     super(project, descriptor);
@@ -25,7 +26,7 @@ public class SubtypesHierarchyTreeStructure extends HierarchyTreeStructure {
   protected final Object[] buildChildren(final HierarchyNodeDescriptor descriptor) {
     final PsiClass psiClass = ((TypeHierarchyNodeDescriptor)descriptor).getPsiClass();
     if ("java.lang.Object".equals(psiClass.getQualifiedName())) {
-      return new Object[]{"All classes are derived from java.lang.Object"};
+      return new Object[]{IdeBundle.message("node.hierarchy.java.lang.object")};
     }
     if (psiClass instanceof PsiAnonymousClass) return ArrayUtil.EMPTY_OBJECT_ARRAY;
     if (psiClass.hasModifierProperty(PsiModifier.FINAL)) return ArrayUtil.EMPTY_OBJECT_ARRAY;

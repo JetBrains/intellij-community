@@ -4,6 +4,7 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -62,7 +63,7 @@ public class FormNode extends ProjectViewNode<Form>{
   }
 
   public String getToolTip() {
-    return "UI Designer Form";
+    return IdeBundle.message("tooltip.ui.designer.form");
   }
 
   public static AbstractTreeNode constructFormNode(final PsiManager psiManager,

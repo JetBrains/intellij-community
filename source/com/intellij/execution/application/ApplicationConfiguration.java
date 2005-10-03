@@ -101,13 +101,13 @@ public class ApplicationConfiguration extends SingleClassConfiguration implement
       if (ALTERNATIVE_JRE_PATH == null ||
           ALTERNATIVE_JRE_PATH.length() == 0 ||
           !JavaSdkImpl.checkForJre(ALTERNATIVE_JRE_PATH)){
-        throw new RuntimeConfigurationWarning("\'" + ALTERNATIVE_JRE_PATH + "\' is not valid JRE home");
+        throw new RuntimeConfigurationWarning(ExecutionBundle.message("jre.path.is.not.valid.jre.home.error.mesage", ALTERNATIVE_JRE_PATH));
       }
     }
     final RunConfigurationModule configurationModule = getConfigurationModule();
-    final PsiClass psiClass = configurationModule.checkModuleAndClassName(MAIN_CLASS_NAME, "main class");
+    final PsiClass psiClass = configurationModule.checkModuleAndClassName(MAIN_CLASS_NAME, ExecutionBundle.message("no.main.class.specified.error.text"));
     if (ApplicationConfigurationType.findMainMethod(psiClass.findMethodsByName("main", true)) == null) {
-      throw new RuntimeConfigurationWarning("Main method not found in class " + MAIN_CLASS_NAME);
+      throw new RuntimeConfigurationWarning(ExecutionBundle.message("main.method.not.found.in.class.error.message", MAIN_CLASS_NAME));
     }
   }
 

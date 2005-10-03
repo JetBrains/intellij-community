@@ -35,6 +35,7 @@ public class XmlTagNameChangedImpl implements XmlTagNameChanged {
     return event;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return "tag name changed to " + getTag().getName() + " was: " + getOldName();
   }

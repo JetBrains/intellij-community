@@ -20,6 +20,7 @@ import java.awt.event.ActionEvent;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.text.MessageFormat;
 
 public class CorruptedProjectFilesDialog extends DialogWrapper {
 
@@ -50,7 +51,7 @@ public class CorruptedProjectFilesDialog extends DialogWrapper {
 
     myShowDialogOption.setSelected(true);
 
-    setTitle("Update");
+    setTitle(com.intellij.CvsBundle.message("operation.name.update"));
     init();
     showNextFileInfo();
   }
@@ -68,16 +69,11 @@ public class CorruptedProjectFilesDialog extends DialogWrapper {
   private void showNextFileInfo() {
     VirtualFile currentVirtualFile = getCurrentVirtualFile();
     FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(currentVirtualFile);
-    myMessageLabel.setText("<html>" +
-                           fileType.getDescription() +
-                           "<br>" + currentVirtualFile.getPresentableUrl() +
-                           "<br> cannot be merged without conflicts." +
-                           "<br>Click 'Skip' to skip changes from repository." +
-                           "<br>Click 'Get' to skip local changes and get repository version." +
-                           "<br>Click 'Skip All' to skip changes from repository for this file and all remaining files." +
-                           "<br>Click 'Get All' to skip local changes and get repository version for this file and all remaining files." +
-                           "</html>");
-    setTitle(fileType.getDescription() + " " + currentVirtualFile.getName() + " Cannot Be Merged Without Conflicts");
+    myMessageLabel.setText(
+      com.intellij.CvsBundle.message("label.project.files.cannot.be.merged.without.conflict",
+
+      fileType.getDescription(), currentVirtualFile.getPresentableUrl()));
+    setTitle(com.intellij.CvsBundle.message("dialog.title.file.cannot.be.merged.without.conflicts", fileType.getDescription(), currentVirtualFile.getName()));
   }
 
   private void onCurrentFileProcessed(boolean isOk) {
@@ -106,7 +102,7 @@ public class CorruptedProjectFilesDialog extends DialogWrapper {
 
   private class SkipFile extends AbstractAction {
     public SkipFile() {
-      putValue(NAME, "Skip");
+      putValue(NAME, com.intellij.CvsBundle.message("button.text.skip"));
     }
 
     public void actionPerformed(ActionEvent e) {
@@ -116,7 +112,7 @@ public class CorruptedProjectFilesDialog extends DialogWrapper {
 
   private class GetFile extends AbstractAction {
     public GetFile() {
-      putValue(NAME, "Get");
+      putValue(NAME, com.intellij.CvsBundle.message("button.text.get"));
     }
 
     public void actionPerformed(ActionEvent e) {
@@ -127,7 +123,7 @@ public class CorruptedProjectFilesDialog extends DialogWrapper {
 
   private class SkipAll extends AbstractAction {
     public SkipAll() {
-      putValue(NAME, "Skip All");
+      putValue(NAME, com.intellij.CvsBundle.message("button.text.skip.all"));
     }
 
     public void actionPerformed(ActionEvent e) {
@@ -138,7 +134,7 @@ public class CorruptedProjectFilesDialog extends DialogWrapper {
 
   private class GetAll extends AbstractAction {
     public GetAll() {
-      putValue(NAME, "Get All");
+      putValue(NAME, com.intellij.CvsBundle.message("button.text.get.all"));
     }
 
     public void actionPerformed(ActionEvent e) {

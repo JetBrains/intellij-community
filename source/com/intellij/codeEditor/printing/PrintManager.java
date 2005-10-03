@@ -136,7 +136,8 @@ class PrintManager {
       }
     };
     
-    ((ApplicationEx)ApplicationManager.getApplication()).runProcessWithProgressSynchronously(runnable, "Printing...", true, project, false);
+    ((ApplicationEx)ApplicationManager.getApplication()).runProcessWithProgressSynchronously(runnable,
+                                                                                             CodeEditorBundle.message("print.progress"), true, project, false);
   }
 
   private static void addToPsiFileList(PsiDirectory psiDirectory, ArrayList filesList, boolean isRecursive) {

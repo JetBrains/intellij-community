@@ -31,13 +31,17 @@
  */
 package com.intellij.ide.highlighter;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.IconLoader;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 
 public class XmlFileType extends LanguageFileType {
+  @NonNls public static final String DEFAULT_EXTENSION = "xml";
+  @NonNls public static final String DOT_DEFAULT_EXTENSION = ".xml";
   private static final Icon ICON = IconLoader.getIcon("/fileTypes/xml.png");
 
   public XmlFileType() {
@@ -49,11 +53,11 @@ public class XmlFileType extends LanguageFileType {
   }
 
   public String getDescription() {
-    return "XML files";
+    return IdeBundle.message("filetype.description.xml");
   }
 
   public String getDefaultExtension() {
-    return "xml";
+    return DEFAULT_EXTENSION;
   }
 
   public Icon getIcon() {

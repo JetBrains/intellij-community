@@ -1,6 +1,7 @@
 package com.intellij.codeInspection.deprecation;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
@@ -10,6 +11,7 @@ import com.intellij.codeInspection.ex.JobDescriptor;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.reference.RefMethod;
+import com.intellij.psi.PsiDocCommentOwner;
 
 /**
  * @author max
@@ -24,10 +26,12 @@ public class DeprecationInspection extends DescriptorProviderInspection {
     getRefManager().iterate(new RefManager.RefIterator() {
       public void accept(RefElement refElement) {
         if (refElement instanceof RefMethod && ((RefMethod) refElement).isOverridesDeprecated()) {
-          addProblemElement(refElement, new ProblemDescriptor[]{getManager().createProblemDescriptor(refElement.getElement(), "Overrides deprecated method.", (LocalQuickFix [])null, ProblemHighlightType.LIKE_DEPRECATED)});
+          if (!InspectionManagerEx.isToCheckMember((PsiDocCommentOwner) ((RefMethod)refElement).getElement(), DeprecationInspection.this.getShortName())) return;
+          addProblemElement(refElement, new ProblemDescriptor[]{getManager().createProblemDescriptor(refElement.getElement(), InspectionsBundle.message("inspection.deprecated.problem.descriptor"), (LocalQuickFix [])null, ProblemHighlightType.LIKE_DEPRECATED)});
         } else if (refElement.isUsesDeprecatedApi()) {
           if (getDescriptions(refElement) != null) return;
-          addProblemElement(refElement, new ProblemDescriptor[] {getManager().createProblemDescriptor(refElement.getElement(), "Uses deprecated API.", (LocalQuickFix [])null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING)});
+          if (refElement.getElement() instanceof PsiDocCommentOwner && !InspectionManagerEx.isToCheckMember((PsiDocCommentOwner) refElement.getElement(), DeprecationInspection.this.getShortName())) return;
+          addProblemElement(refElement, new ProblemDescriptor[] {getManager().createProblemDescriptor(refElement.getElement(), InspectionsBundle.message("inspection.deprecated.problem.descriptor1"), (LocalQuickFix [])null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING)});
         }
       }
     });
@@ -38,7 +42,7 @@ public class DeprecationInspection extends DescriptorProviderInspection {
   }
 
   public String getDisplayName() {
-    return "Deprecated API usage";
+    return InspectionsBundle.message("inspection.deprecated.display.name");
   }
 
   public String getGroupDisplayName() {

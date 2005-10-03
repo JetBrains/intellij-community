@@ -3,6 +3,7 @@ package com.intellij.psi.impl.migration;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.PomMemberOwner;
 import com.intellij.psi.*;
+import com.intellij.psi.HierarchicalMethodSignature;
 import com.intellij.psi.impl.InheritanceImplUtil;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -10,8 +11,7 @@ import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author dsl
@@ -99,6 +99,10 @@ public class MigrationClassImpl extends LightElement implements PsiClass{
 
   public PsiClass getContainingClass() {
     return null;
+  }
+
+  public Collection<HierarchicalMethodSignature> getVisibleSignatures() {
+    return Collections.EMPTY_SET;
   }
 
   public PsiField[] getFields() {

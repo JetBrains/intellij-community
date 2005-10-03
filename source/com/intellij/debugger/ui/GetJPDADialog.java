@@ -7,18 +7,21 @@ package com.intellij.debugger.ui;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.debugger.DebuggerBundle;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
+import org.jetbrains.annotations.NonNls;
+
 public class GetJPDADialog extends DialogWrapper {
-  private static final String JPDA_URL = "http://java.sun.com/products/jpda";
+  private static final @NonNls String JPDA_URL = "http://java.sun.com/products/jpda";
 
   public GetJPDADialog() {
     super(false);
-    setTitle("JPDA Libraries Missing");
+    setTitle(DebuggerBundle.message("get.jpda.dialog.title"));
     setResizable(false);
     init();
   }
@@ -33,7 +36,7 @@ public class GetJPDADialog extends DialogWrapper {
     JPanel _panel2 = new JPanel(new BorderLayout());
     _panel2.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
     //"Debug libraries are missig from JDK home.\nIn order for debugger to start, the libraries should be installed.\nPlease visit http://java.sun.com/products/jpda"
-    JLabel label1 = new JLabel("To get JPDA libraries please visit ");
+    JLabel label1 = new JLabel(DebuggerBundle.message("label.get.jpda.dialog.prompt"));
     //label1.setForeground(Color.black);
     JLabel label2 = new JLabel(JPDA_URL);
     label2.addMouseListener(
@@ -46,7 +49,7 @@ public class GetJPDADialog extends DialogWrapper {
     );
     label2.setForeground(Color.blue.darker());
     label2.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-    _panel2.add(new JLabel("Cannot start debugger: debug libraries are missig from JDK home"), BorderLayout.NORTH);
+    _panel2.add(new JLabel(DebuggerBundle.message("label.get.jpda.dialog.error.description")), BorderLayout.NORTH);
     _panel2.add(label1, BorderLayout.WEST);
     _panel2.add(label2, BorderLayout.EAST);
     _panel1.add(_panel2, BorderLayout.NORTH);

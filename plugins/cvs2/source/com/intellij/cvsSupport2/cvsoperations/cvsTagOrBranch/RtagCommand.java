@@ -11,6 +11,7 @@ import org.netbeans.lib.cvsclient.progress.IProgressViewer;
 import org.netbeans.lib.cvsclient.progress.sending.DummyRequestsProgressHandler;
 import org.netbeans.lib.cvsclient.request.CommandRequest;
 import org.netbeans.lib.cvsclient.request.Requests;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Iterator;
 
@@ -43,14 +44,14 @@ public class RtagCommand extends AbstractCommand{
 
 
   public final String getCvsCommandLine() {
-    final StringBuffer cvsCommandLine = new StringBuffer("rtag ");
+    @NonNls final StringBuffer cvsCommandLine = new StringBuffer("rtag ");
     cvsCommandLine.append(getCVSArguments());
     appendFileArguments(cvsCommandLine);
     return cvsCommandLine.toString();
   }
 
   private String getCVSArguments() {
-    final StringBuffer cvsArguments = new StringBuffer();
+    @NonNls final StringBuffer cvsArguments = new StringBuffer();
     cvsArguments.append("-F " + myTagName);
     return cvsArguments.toString();
   }

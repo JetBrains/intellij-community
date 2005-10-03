@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -9,8 +10,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.util.IncorrectOperationException;
-
-import java.text.MessageFormat;
 
 /**
  * @author ven
@@ -24,15 +23,13 @@ public class RenamePublicClassFix implements IntentionAction {
   }
 
   public String getText() {
-    return MessageFormat.format("Rename class ''{0}'' to ''{1}''",
-        new Object[]{
-          myClass.getName(),
-          myClass.getContainingFile().getVirtualFile().getNameWithoutExtension()
-        });
+    return QuickFixBundle.message("rename.public.class.text",
+                                  myClass.getName(),
+                                  myClass.getContainingFile().getVirtualFile().getNameWithoutExtension());
   }
 
   public String getFamilyName() {
-    return "Rename Public Class";
+    return QuickFixBundle.message("rename.public.class.family");
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {

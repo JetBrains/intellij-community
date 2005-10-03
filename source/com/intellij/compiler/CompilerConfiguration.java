@@ -14,8 +14,11 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.util.Options;
+import com.intellij.CommonBundle;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -25,15 +28,14 @@ import java.util.regex.PatternSyntaxException;
 public class CompilerConfiguration implements JDOMExternalizable, ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.CompilerConfiguration");
 
-  public static final String TESTS_EXTERNAL_COMPILER_HOME_PROPERTY_NAME = "tests.external.compiler.home";
+  public static final @NonNls String TESTS_EXTERNAL_COMPILER_HOME_PROPERTY_NAME = "tests.external.compiler.home";
   public static final int DEPENDENCY_FORMAT_VERSION = 41;
-  public static final String JAVAC = "Javac";
-  public static final String JIKES = "Jikes";
+  public static final @NonNls String JAVAC = "Javac";
+  public static final @NonNls String JIKES = "Jikes";
 
   public String DEFAULT_COMPILER = JAVAC;
   public boolean CLEAR_OUTPUT_DIRECTORY = false;
 
-  public static final String SINGLE = "single";
   // exclude from compile
   private List myExcludeEntryDescriptions = new ArrayList();
   // extensions of the files considered as resource files
@@ -71,13 +73,10 @@ public class CompilerConfiguration implements JDOMExternalizable, ProjectCompone
   }
 
   private List getDefaultRegexpPatterns() {
-    return Arrays.asList(new Pattern[] {
-      compilePattern(".+\\.(properties|xml|html|dtd|tld)"),
-      compilePattern(".+\\.(gif|png|jpeg|jpg)")
-    });
+    return Arrays.asList(compilePattern(".+\\.(properties|xml|html|dtd|tld)"), compilePattern(".+\\.(gif|png|jpeg|jpg)"));
   }
 
-  private Pattern compilePattern(String s) throws PatternSyntaxException {
+  private Pattern compilePattern(@NonNls String s) throws PatternSyntaxException {
     final Pattern pattern;
     if (SystemInfo.isFileSystemCaseSensitive) {
       pattern = Pattern.compile(s);
@@ -128,7 +127,7 @@ public class CompilerConfiguration implements JDOMExternalizable, ProjectCompone
     }
   }
 
-  private void addWildcardResourcePattern(final String wildcardPattern) {
+  private void addWildcardResourcePattern(@NonNls final String wildcardPattern) {
     final Pattern pattern = compilePattern(convertToRegexp(wildcardPattern));
     if (pattern != null) {
       myWildcardPatterns.add(wildcardPattern);
@@ -194,16 +193,17 @@ public class CompilerConfiguration implements JDOMExternalizable, ProjectCompone
   }
 
   // property names
-  private static final String EXCLUDE_FROM_COMPILE = "excludeFromCompile";
-  private static final String RESOURCE_EXTENSIONS = "resourceExtensions";
-  private static final String WILDCARD_RESOURCE_PATTERNS = "wildcardResourcePatterns";
-  private static final String ENTRY = "entry";
-  private static final String NAME = "name";
-  private static final String FILE = "file";
-  private static final String DIRECTORY = "directory";
-  private static final String URL = "url";
-  private static final String INCLUDE_SUBDIRECTORIES = "includeSubdirectories";
+  private static final @NonNls String EXCLUDE_FROM_COMPILE = "excludeFromCompile";
+  private static final @NonNls String RESOURCE_EXTENSIONS = "resourceExtensions";
+  private static final @NonNls String WILDCARD_RESOURCE_PATTERNS = "wildcardResourcePatterns";
+  private static final @NonNls String ENTRY = "entry";
+  private static final @NonNls String NAME = "name";
+  private static final @NonNls String FILE = "file";
+  private static final @NonNls String DIRECTORY = "directory";
+  private static final @NonNls String URL = "url";
+  private static final @NonNls String INCLUDE_SUBDIRECTORIES = "includeSubdirectories";
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public void readExternal(Element parentNode) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, parentNode);
 
@@ -255,6 +255,7 @@ public class CompilerConfiguration implements JDOMExternalizable, ProjectCompone
 
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public void writeExternal(Element parentNode) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, parentNode);
 
@@ -363,25 +364,21 @@ public class CompilerConfiguration implements JDOMExternalizable, ProjectCompone
       boolean ok = doConvertPatterns();
       if (!ok) {
         final String initialPatternString = patternsToString(getRegexpPatterns());
-        final String message = "The format of resource patterns has changed.\n" +
-                               ApplicationNamesInfo.getInstance().getProductName() + " failed to convert existing regular expression patterns:\n" +
-                               initialPatternString +"\n" +
-                               "Please enter pattern string in a new format.\n" +
-                               "Each resource pattern may contain the following wildcards:\n" +
-                               "? - one character\n" +
-                               "* - zero or more characters\n" +
-                               "! - negate the pattern (allowed only at the start of a pattern)\n" +
-                               "Use ; (semicolon) to separate resource patterns;\n" +
-                               "Escape the \"!\" character with a backslash (\"\\\").\n" +
-                               "You might also need to modify template project settings.\n" +
-                               "Press \"OK\" to accept entered patterns, \"Cancel\" to load default patterns in new format.";
-        final String wildcardPatterns = Messages.showInputDialog(myProject, message, "Pattern Conversion", Messages.getWarningIcon(), initialPatternString, new InputValidator() {
+        final String message = CompilerBundle.message(
+          "message.resource.patterns.format.changed",
+          ApplicationNamesInfo.getInstance().getProductName(),
+          initialPatternString,
+          CommonBundle.getOkButtonText(),
+          CommonBundle.getCancelButtonText()
+        );
+        final String wildcardPatterns = Messages.showInputDialog(
+          myProject, message, CompilerBundle.message("pattern.conversion.dialog.title"), Messages.getWarningIcon(), initialPatternString, new InputValidator() {
           public boolean checkInput(String inputString) {
             return true;
           }
           public boolean canClose(String inputString) {
             final StringTokenizer tokenizer = new StringTokenizer(inputString, ";", false);
-            StringBuffer errMessage = new StringBuffer();
+            StringBuffer malformedPatterns = new StringBuffer();
 
             while (tokenizer.hasMoreTokens()) {
               String pattern = tokenizer.nextToken();
@@ -389,16 +386,16 @@ public class CompilerConfiguration implements JDOMExternalizable, ProjectCompone
                 addWildcardResourcePattern(pattern);
               }
               catch (PatternSyntaxException e) {
-                errMessage.append("\n\n");
-                errMessage.append(pattern);
-                errMessage.append(": ");
-                errMessage.append(e.getMessage());
+                malformedPatterns.append("\n\n");
+                malformedPatterns.append(pattern);
+                malformedPatterns.append(": ");
+                malformedPatterns.append(e.getMessage());
               }
             }
 
-            if (errMessage.length() > 0) {
-              errMessage.insert(0, "The following resource patterns are malformed:");
-              Messages.showErrorDialog(errMessage.toString(), "Malformed Resource Patterns");
+            if (malformedPatterns.length() > 0) {
+              Messages.showErrorDialog(CompilerBundle.message("error.bad.resource.patterns", malformedPatterns.toString()),
+                                       CompilerBundle.message("bad.resource.patterns.dialog.title"));
               removeWildcardPatterns();
               return false;
             }

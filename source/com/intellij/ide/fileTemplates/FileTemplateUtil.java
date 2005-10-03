@@ -3,6 +3,7 @@ package com.intellij.ide.fileTemplates;
 import com.intellij.aspects.psi.PsiAspect;
 import com.intellij.aspects.psi.PsiAspectFile;
 import com.intellij.ide.fileTemplates.impl.FileTemplateImpl;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
@@ -31,6 +32,7 @@ import org.apache.velocity.runtime.parser.node.ASTReference;
 import org.apache.velocity.runtime.parser.node.Node;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 import org.apache.velocity.runtime.resource.loader.FileResourceLoader;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.*;
 import java.lang.reflect.Field;
@@ -42,11 +44,12 @@ import java.util.*;
 public class FileTemplateUtil{
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.fileTemplates.FileTemplateUtil");
   private static boolean ourVelocityInitialized = false;
-  public static final String PACKAGE_ATTR = "PACKAGE_NAME";
+  @NonNls public static final String PACKAGE_ATTR = "PACKAGE_NAME";
 
   public static String[] calculateAttributes(String templateContent, Properties properties, boolean includeDummies) throws ParseException {
     initVelocity();
     final Set unsetAttributes = new HashSet();
+    //noinspection HardCodedStringLiteral
     addAttributesToVector(unsetAttributes, RuntimeSingleton.parse(new StringReader(templateContent), "MyTemplate"), properties, includeDummies);
     return (String[]) unsetAttributes.toArray(new String[unsetAttributes.size()]);
   }
@@ -144,7 +147,8 @@ public class FileTemplateUtil{
     } catch (VelocityException e) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
-            Messages.showErrorDialog("Error parsing file template", "Velocity Error");
+            Messages.showErrorDialog(IdeBundle.message("error.parsing.file.template"),
+                                     IdeBundle.message("title.velocity.error"));
           }
         });
     }
@@ -163,6 +167,7 @@ public class FileTemplateUtil{
     dest.setAdjust(src.isAdjust());
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static synchronized void initVelocity(){
     try{
       if (!ourVelocityInitialized){
@@ -249,7 +254,9 @@ public class FileTemplateUtil{
         };
         ApplicationManager.getApplication().runWriteAction(run);
       }
-    }, "Create "+ (template.isJavaClassTemplate() ? "Class" : "File") +" From Template", null);
+    }, template.isJavaClassTemplate()
+       ? IdeBundle.message("command.create.class.from.template")
+       : IdeBundle.message("command.create.file.from.template"), null);
     if(commandException[0] != null){
       throw commandException[0];
     }
@@ -324,11 +331,13 @@ public class FileTemplateUtil{
     return methodText.replaceAll("\n", "\n" + buf.toString());
   }
 
+  @NonNls private static final String INCLUDES_PATH = "fileTemplates/includes/";
+
   public static class MyClasspathResourceLoader extends ClasspathResourceLoader{
-    private static final String INCLUDES_PATH = "fileTemplates/includes/";
+    @NonNls private static final String FT_EXTENSION = ".ft";
 
     public synchronized InputStream getResourceStream(String name) throws ResourceNotFoundException{
-      InputStream resourceStream = super.getResourceStream(INCLUDES_PATH + name + ".ft");
+      InputStream resourceStream = super.getResourceStream(INCLUDES_PATH + name + FT_EXTENSION);
       return resourceStream;
     }
   }
@@ -338,10 +347,10 @@ public class FileTemplateUtil{
       super.init(configuration);
 
       File modifiedPatternsPath = new File(PathManager.getConfigPath());
-      modifiedPatternsPath = new File(modifiedPatternsPath, "fileTemplates");
-      modifiedPatternsPath = new File(modifiedPatternsPath, "includes");
+      modifiedPatternsPath = new File(modifiedPatternsPath, INCLUDES_PATH);
 
       try{
+        //noinspection HardCodedStringLiteral
         Field pathsField = FileResourceLoader.class.getDeclaredField("paths");
         pathsField.setAccessible(true);
         Vector paths = (Vector)pathsField.get(this);
@@ -349,6 +358,7 @@ public class FileTemplateUtil{
         paths.addElement(modifiedPatternsPath.getAbsolutePath());
         if(ApplicationManager.getApplication().isUnitTestMode()){
           File file1 = new File(PathManagerEx.getTestDataPath());
+          //noinspection HardCodedStringLiteral
           File testsDir = new File(new File(file1, "ide"), "fileTemplates");
           paths.add(testsDir.getAbsolutePath());
         }

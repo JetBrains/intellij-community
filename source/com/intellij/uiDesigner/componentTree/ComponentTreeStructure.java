@@ -21,6 +21,7 @@ final class ComponentTreeStructure extends AbstractTreeStructure{
 
   public ComponentTreeStructure(final GuiEditor editor){
     if(editor==null){
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("editor cannot be null");
     }
 
@@ -53,6 +54,7 @@ final class ComponentTreeStructure extends AbstractTreeStructure{
       }
     }
     else{
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("unknown element: "+element);
     }
   }
@@ -72,6 +74,7 @@ final class ComponentTreeStructure extends AbstractTreeStructure{
       }
     }
     else{
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("unknown element: "+element);
     }
   }
@@ -84,6 +87,7 @@ final class ComponentTreeStructure extends AbstractTreeStructure{
       return new ComponentPtrDescriptor(parentDescriptor,(ComponentPtr)element);
     }
     else{
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("unknown element: "+element);
     }
   }

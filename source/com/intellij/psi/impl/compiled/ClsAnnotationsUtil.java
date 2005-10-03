@@ -14,6 +14,7 @@ import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.cls.BytePointer;
 import com.intellij.util.io.RecordDataOutput;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
 
@@ -22,6 +23,8 @@ import java.io.IOException;
  */
 public class ClsAnnotationsUtil {
   private static final Logger LOG = Logger.getInstance("com.intellij.psi.impl.compiled.ClsAnnotationsUtil");
+  @NonNls private static final String RUNTIME_VISIBLE_ANNOTATIONS_ATT = "RuntimeVisibleAnnotations";
+  @NonNls private static final String RUNTIME_INVISIBLE_ANNOTATIONS_ATT = "RuntimeInvisibleAnnotations";
 
   private ClsAnnotationsUtil() {}
 
@@ -106,11 +109,11 @@ public class ClsAnnotationsUtil {
       long id = element.getRepositoryId();
       if (id < 0) {
         ClassFileData data = reader.getClassFileData();
-        BytePointer pointer1 = reader.readAttribute("RuntimeVisibleAnnotations");
+        BytePointer pointer1 = reader.readAttribute(RUNTIME_VISIBLE_ANNOTATIONS_ATT);
         if (pointer1 != null) {
           pointer1.offset += 4;
           ClsAnnotationImpl[] ann1 = data.readAnnotations(modifierList, pointer1);
-          BytePointer pointer2 = reader.readAttribute("RuntimeInvisibleAnnotations");
+          BytePointer pointer2 = reader.readAttribute(RUNTIME_INVISIBLE_ANNOTATIONS_ATT);
           if (pointer2 != null) {
             pointer2.offset += 4;
             ClsAnnotationImpl[] ann2 = data.readAnnotations(modifierList, pointer2);
@@ -122,7 +125,7 @@ public class ClsAnnotationsUtil {
           }
         }
         else {
-          BytePointer pointer2 = reader.readAttribute("RuntimeInvisibleAnnotations");
+          BytePointer pointer2 = reader.readAttribute(RUNTIME_INVISIBLE_ANNOTATIONS_ATT);
           if (pointer2 != null) {
             pointer2.offset += 4;
             return data.readAnnotations(modifierList, pointer2);
@@ -138,7 +141,7 @@ public class ClsAnnotationsUtil {
         ClsAnnotationImpl[] result = new ClsAnnotationImpl[annotationTexts.length];
         for (int i = 0; i < annotationTexts.length; i++) {
           result[i] =
-          (ClsAnnotationImpl)ClsAnnotationsUtil.createMemberValueFromText(annotationTexts[i], element.getManager(), modifierList);
+            (ClsAnnotationImpl)ClsAnnotationsUtil.createMemberValueFromText(annotationTexts[i], element.getManager(), modifierList);
         }
 
         return result;

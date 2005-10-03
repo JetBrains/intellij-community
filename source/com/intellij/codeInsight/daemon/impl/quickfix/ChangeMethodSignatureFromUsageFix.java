@@ -8,6 +8,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -30,10 +31,10 @@ import com.intellij.refactoring.changeSignature.ChangeSignatureDialog;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfo;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 
-import java.text.MessageFormat;
 import java.util.*;
 
 public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
@@ -53,12 +54,10 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
   }
 
   public String getText() {
-    return MessageFormat.format("Change signature of ''{0}'' to ''{1}({2})''",
-        new Object[]{
-          HighlightUtil.formatMethod(myTargetMethod),
-          myTargetMethod.getName(),
-          formatTypesList(myNewParametersInfo, myContext),
-        });
+    return QuickFixBundle.message("change.method.signature.from.usage.text",
+                                  HighlightUtil.formatMethod(myTargetMethod),
+                                  myTargetMethod.getName(),
+                                  formatTypesList(myNewParametersInfo, myContext));
   }
 
   private static String formatTypesList(ParameterInfo[] infos, PsiElement context) {
@@ -79,7 +78,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
   }
 
   public String getFamilyName() {
-    return "Change method signature from usage";
+    return QuickFixBundle.message("change.method.signature.from.usage.family");
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
@@ -95,7 +94,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
   public void invoke(Project project, Editor editor, final PsiFile file) {
     if (!CodeInsightUtil.prepareFileForWrite(file)) return;
 
-    final PsiMethod method = SuperMethodWarningUtil.checkSuperMethod(myTargetMethod, "refactor");
+    final PsiMethod method = SuperMethodWarningUtil.checkSuperMethod(myTargetMethod, RefactoringBundle.message("to.refactor"));
     if (method == null) return;
     if (!CodeInsightUtil.prepareFileForWrite(method.getContainingFile())) return;
 
@@ -111,7 +110,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
             usages[0] = FindUsagesUtil.findUsages(method, options);
           }
         };
-    String progressTitle = "Searching For Usages...";
+    String progressTitle = QuickFixBundle.message("searching.for.usages.progress.title");
     if (!ApplicationManager.getApplication().runProcessWithProgressSynchronously(runnable, progressTitle, true, project)) return;
 
     if (usages[0].length <= 1) {

@@ -15,13 +15,15 @@
  */
 package com.intellij.ide.fileTemplates;
 
+import org.jetbrains.annotations.NonNls;
+
 import javax.swing.*;
 
 public class FileTemplateDescriptor {
   private Icon myIcon;
   private String myFileName;
 
-  public FileTemplateDescriptor(String fileName, Icon icon) {
+  public FileTemplateDescriptor(@NonNls String fileName, Icon icon) {
     myIcon = icon;
     myFileName = fileName;
   }

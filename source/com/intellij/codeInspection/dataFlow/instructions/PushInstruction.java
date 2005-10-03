@@ -24,6 +24,7 @@ public class PushInstruction extends Instruction {
     return new DfaInstructionState[]{new DfaInstructionState(runner.getInstruction(getIndex() + 1),memState)};
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return "PUSH " + myValue;
   }

@@ -4,7 +4,7 @@ import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.cvsSupport2.cvsBrowser.CvsElement;
 import com.intellij.cvsSupport2.cvsBrowser.CvsFile;
 import com.intellij.cvsSupport2.ui.ChangeKeywordSubstitutionPanel;
-import com.intellij.util.ui.IdeaUIManager;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.cvsSupport2.ui.experts.WizardStep;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
@@ -21,6 +21,8 @@ import java.awt.*;
 import java.io.File;
 import java.util.*;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * author: lesya
  */
@@ -29,8 +31,8 @@ public class ChooseCheckoutMode extends WizardStep {
   private Collection<File> myCvsPaths = new ArrayList<File>();
   private final DefaultListModel myCheckoutModeModel = new DefaultListModel();
   private final JList myCheckoutModeList = new JList(myCheckoutModeModel);
-  private JCheckBox myMakeNewFielsReadOnly = new JCheckBox("Make new files read-only");
-  private JCheckBox myPruneEmptyDirectories = new JCheckBox("Prune empty directories");
+  private JCheckBox myMakeNewFielsReadOnly = new JCheckBox(com.intellij.CvsBundle.message("checkbox.make.new.files.read.only"));
+  private JCheckBox myPruneEmptyDirectories = new JCheckBox(com.intellij.CvsBundle.message("checkbox.prune.empty.directories"));
   private final ChangeKeywordSubstitutionPanel myChangeKeywordSubstitutionPanel;
   private final CheckoutWizard myOwner;
 
@@ -40,10 +42,10 @@ public class ChooseCheckoutMode extends WizardStep {
 
   private static final Logger LOG = Logger.getInstance(
     "#com.intellij.cvsSupport2.ui.experts.checkout.ChooseCheckoutMode");
-  public static final String LIST = "LIST";
-  public static final String MESSAGE = "MESSSAGE";
-  private JLabel myMessage = new JLabel("XXX");
-
+  @NonNls public static final String LIST = "LIST";
+  @NonNls public static final String MESSAGE = "MESSSAGE";
+  private JLabel myMessage = new JLabel(DUMMY_LABEL_TEXT);
+  @NonNls private static final String DUMMY_LABEL_TEXT = "XXX";
 
 
   public ChooseCheckoutMode(CheckoutWizard wizard) {
@@ -73,8 +75,8 @@ public class ChooseCheckoutMode extends WizardStep {
     myCenterPanel.add(LIST, ScrollPaneFactory.createScrollPane(myCheckoutModeList));
     JPanel messagePanel = new JPanel(new BorderLayout(2,4));
     messagePanel.add(myMessage, BorderLayout.NORTH);
-    messagePanel.setBackground(IdeaUIManager.getTableBackgroung());
-    myMessage.setBackground(IdeaUIManager.getTableBackgroung());
+    messagePanel.setBackground(UIUtil.getTableBackground());
+    myMessage.setBackground(UIUtil.getTableBackground());
     myCenterPanel.add(MESSAGE, ScrollPaneFactory.createScrollPane(messagePanel));
 
     init();
@@ -127,19 +129,8 @@ public class ChooseCheckoutMode extends WizardStep {
         rebuildList();
       }
       else {
-        setStepTitle("Selected modules will be checked out to:");
-        StringBuffer message = new StringBuffer();
-        message.append("<html>");
-        message.append("<p>");
-        message.append(mySelectedLocation.getAbsolutePath());
-        message.append("</p>");
-        for (Iterator each = myCvsPaths.iterator(); each.hasNext();) {
-          File file = (File)each.next();
-          message.append("<p>");
-          message.append("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-");
-          message.append(file.getPath());
-          message.append("</p>");
-        }
+        setStepTitle(com.intellij.CvsBundle.message("info.text.selected.modules.will.be.checked.out.to"));
+        StringBuffer message = composeLocationsMessage();
         myMessage.setText(message.toString());
         show(MESSAGE);
         getWizard().enableNextAndFinish();
@@ -150,6 +141,22 @@ public class ChooseCheckoutMode extends WizardStep {
     }
 
     return true;
+  }
+
+  private StringBuffer composeLocationsMessage() {
+    @NonNls StringBuffer message = new StringBuffer();
+    message.append("<html>");
+    message.append("<p>");
+    message.append(mySelectedLocation.getAbsolutePath());
+    message.append("</p>");
+    for (Iterator each = myCvsPaths.iterator(); each.hasNext();) {
+      File file = (File)each.next();
+      message.append("<p>");
+      message.append("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-");
+      message.append(file.getPath());
+      message.append("</p>");
+    }
+    return message;
   }
 
   private Collection<File> getSelectedFiles() {
@@ -188,7 +195,7 @@ public class ChooseCheckoutMode extends WizardStep {
 
   private void rebuildList() {
     File selected = myCvsPaths.iterator().next();
-    setStepTitle("Check Out " + selected + " to:");
+    setStepTitle(com.intellij.CvsBundle.message("dialog.title.check.out.to", selected));
     myCheckoutModeModel.removeAllElements();
 
     CheckoutStrategy[] strategies = CheckoutStrategy.createAllStrategies(mySelectedLocation,

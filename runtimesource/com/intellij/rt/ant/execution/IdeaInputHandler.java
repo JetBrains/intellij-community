@@ -12,6 +12,7 @@ import java.util.Vector;
 
 /**
  * @author dyoma
+ * @noinspection HardCodedStringLiteral
  */
 public class IdeaInputHandler implements InputHandler {
   public void handleInput(InputRequest request) throws BuildException {

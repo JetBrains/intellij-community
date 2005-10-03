@@ -9,11 +9,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ListWithSelection;
 import com.intellij.util.ui.ComboBoxTableCellEditor;
 import com.intellij.util.ui.Table;
+import com.intellij.idea.ActionsBundle;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
@@ -24,6 +27,8 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Eugene Zhuravlev
@@ -39,17 +44,17 @@ public class GenerateAntBuildDialog extends DialogWrapper{
   private JCheckBox myCbForceTargetJdk;
   private JPanel myChunksPanel;
   private final Project myProject;
-  private static final String SINGLE_FILE_PROPERTY = "GenerateAntBuildDialog.generateSingleFile";
-  private static final String UI_FORM_PROPERTY = "GenerateAntBuildDialog.enableUiFormCompile";
-  private static final String FORCE_TARGET_JDK_PROPERTY = "GenerateAntBuildDialog.forceTargetJdk";
-  private static final String BACKUP_FILES_PROPERTY = "GenerateAntBuildDialog.backupFiles";
+  private static final @NonNls String SINGLE_FILE_PROPERTY = "GenerateAntBuildDialog.generateSingleFile";
+  private static final @NonNls String UI_FORM_PROPERTY = "GenerateAntBuildDialog.enableUiFormCompile";
+  private static final @NonNls String FORCE_TARGET_JDK_PROPERTY = "GenerateAntBuildDialog.forceTargetJdk";
+  private static final @NonNls String BACKUP_FILES_PROPERTY = "GenerateAntBuildDialog.backupFiles";
   private MyTableModel myTableModel;
   private Table myTable;
 
   public GenerateAntBuildDialog(Project project) {
     super(project, false);
     myProject = project;
-    setTitle("Generate Ant Build");
+    setTitle(ActionsBundle.actionText(IdeActions.ACTION_GENERATE_ANT_BUILD));
     init();
     loadSettings();
   }
@@ -123,14 +128,10 @@ public class GenerateAntBuildDialog extends DialogWrapper{
       return;
     }
     myChunksPanel.setLayout(new BorderLayout());
-    myChunksPanel.setBorder(IdeBorderFactory.createTitledBorder("Cyclic Module Dependencies"));
-    final String text =
-      "Some modules have cyclic dependencies.\n" +
-      "In order to generate ant build script, please select the \"main\" (representative) module for each dependency cycle.\n" +
-      "The source code for all modules in the cycle will be compiled into the main module's output folders;\n" +
-      "All modules in the cycle will use the JSDK assigned to the main module;\n" +
-      "Any jar archives created will be named after the name of the main module.";
-    JLabel textLabel = new JLabel(text);
+    myChunksPanel.setBorder(IdeBorderFactory.createTitledBorder(
+      CompilerBundle.message("generate.ant.build.dialog.cyclic.modules.table.title"))
+    );
+    JLabel textLabel = new JLabel(CompilerBundle.message("generate.ant.build.dialog.cyclic.modules.table.description"));
     textLabel.setUI(new MultiLineLabelUI());
     textLabel.setBorder(IdeBorderFactory.createEmptyBorder(4, 4, 6, 4));
     myChunksPanel.add(textLabel, BorderLayout.NORTH);
@@ -257,8 +258,8 @@ public class GenerateAntBuildDialog extends DialogWrapper{
 
     public String getColumnName(int columnIndex) {
       switch (columnIndex) {
-        case NUMBER_COLUMN : return "Cycle";
-        case NAME_COLUMN : return "Main Module";
+        case NUMBER_COLUMN : return CompilerBundle.message("generate.ant.build.dialog.cyclic.modules.table.number.column.header");
+        case NAME_COLUMN : return CompilerBundle.message("generate.ant.build.dialog.cyclic.modules.table.name.column.header");
       }
       return super.getColumnName(columnIndex);
     }

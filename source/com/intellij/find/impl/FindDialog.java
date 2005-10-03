@@ -1,21 +1,23 @@
 
 package com.intellij.find.impl;
 
+import com.intellij.CommonBundle;
+import com.intellij.find.FindBundle;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindSettings;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.PatternUtil;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.Module;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.StateRestoringCheckBox;
+import com.intellij.util.PatternUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -60,22 +62,22 @@ final class FindDialog extends DialogWrapper {
 
     if (myModel.isReplaceState()){
       if (myModel.isMultipleFiles()){
-        setTitle("Replace in Project");
+        setTitle(FindBundle.message("find.replace.in.project.dialog.title"));
       }
       else{
-        setTitle("Replace Text");
+        setTitle(FindBundle.message("find.replace.text.dialog.title"));
       }
     }
     else{
       setButtonsMargin(null);
       if (myModel.isMultipleFiles()){
-        setTitle("Find in Path");
+        setTitle(FindBundle.message("find.in.path.dialog.title"));
       }
       else{
-        setTitle("Find Text");
+        setTitle(FindBundle.message("find.text.dialog.title"));
       }
     }
-    setOKButtonText("&Find");
+    setOKButtonText(FindBundle.message("find.button"));
     setOKButtonIcon(IconLoader.getIcon("/actions/find.png"));
     init();
     initByModel();
@@ -89,6 +91,22 @@ final class FindDialog extends DialogWrapper {
     return myModel.isReplaceState() ? "replaceTextDialog" : "findTextDialog";
   }
 
+  @Override
+  protected Action[] createActions() {
+    if (!myModel.isMultipleFiles() && !myModel.isReplaceState()) {
+      return new Action[] { getFindAllAction(), getOKAction(), getCancelAction() };
+    }
+    return super.createActions();
+  }
+
+  private Action getFindAllAction() {
+    return new AbstractAction(FindBundle.message("find.all.button")) {
+      public void actionPerformed(ActionEvent e) {
+        doOKAction(true);
+      }
+    };
+  }
+
   public JComponent createNorthPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
@@ -98,8 +116,7 @@ final class FindDialog extends DialogWrapper {
     gbConstraints.weightx = 0;
     gbConstraints.weighty = 1;
     gbConstraints.anchor = GridBagConstraints.EAST;
-    JLabel prompt = new JLabel("Text to find:");
-    prompt.setDisplayedMnemonic('T');
+    JLabel prompt = new JLabel(FindBundle.message("find.text.to.find.label"));
     panel.add(prompt, gbConstraints);
 
     myInputComboBox = new ComboBox(300);
@@ -130,8 +147,7 @@ final class FindDialog extends DialogWrapper {
       gbConstraints.gridwidth = GridBagConstraints.RELATIVE;
       gbConstraints.fill = GridBagConstraints.VERTICAL;
       gbConstraints.weightx = 0;
-      myReplacePrompt = new JLabel("Replace with:");
-      myReplacePrompt.setDisplayedMnemonic('R');
+      myReplacePrompt = new JLabel(FindBundle.message("find.replace.with.label"));
       panel.add(myReplacePrompt, gbConstraints);
 
       gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
@@ -236,18 +252,15 @@ final class FindDialog extends DialogWrapper {
 
       if (!myModel.isReplaceState()) {
         myCbToSkipResultsWhenOneUsage = new StateRestoringCheckBox(
-                                          "Skip results tab with one usage",
-                                          FindSettings.getInstance().isSkipResultsWithOneUsage()
-                                        );
-        myCbToSkipResultsWhenOneUsage.setMnemonic('k');
+          FindBundle.message("find.options.skip.results.tab.with.one.usage.checkbox"),
+          FindSettings.getInstance().isSkipResultsWithOneUsage());
         optionsPanel.add(myCbToSkipResultsWhenOneUsage, gbConstraints);
       }
     }
 
     if (myModel.isOpenInNewTabVisible()){
       JPanel openInNewTabWindowPanel = new JPanel(new BorderLayout());
-      myCbToOpenInNewTab = new JCheckBox("Open in new tab");
-      myCbToOpenInNewTab.setMnemonic('b');
+      myCbToOpenInNewTab = new JCheckBox(FindBundle.message("find.open.in.new.tab.checkbox"));
       myCbToOpenInNewTab.setFocusable(false);
       myCbToOpenInNewTab.setSelected(myModel.isOpenInNewTab());
       myCbToOpenInNewTab.setEnabled(myModel.isOpenInNewTabEnabled());
@@ -261,12 +274,11 @@ final class FindDialog extends DialogWrapper {
   private JComponent createFilterPanel() {
     JPanel filterPanel = new JPanel();
     filterPanel.setLayout(new BorderLayout());
-    filterPanel.setBorder(IdeBorderFactory.createTitledBorder("File name filter"));
+    filterPanel.setBorder(IdeBorderFactory.createTitledBorder(FindBundle.message("find.filter.file.name.group")));
 
     myFileFilter = new ComboBox(100);
     initCombobox(myFileFilter);
-    filterPanel.add(useFileFilter = new StateRestoringCheckBox("File mask"),BorderLayout.WEST);
-    useFileFilter.setMnemonic('m');
+    filterPanel.add(useFileFilter = new StateRestoringCheckBox(FindBundle.message("find.filter.file.mask.checkbox")),BorderLayout.WEST);
     filterPanel.add(myFileFilter,BorderLayout.CENTER);
     myFileFilter.setEditable(true);
     String[] fileMasks = FindSettings.getInstance().getRecentFileMasks();
@@ -292,16 +304,21 @@ final class FindDialog extends DialogWrapper {
     return filterPanel;
   }
 
-  public void doOKAction(){
+  public void doOKAction() {
+    doOKAction(false);
+  }
+
+  public void doOKAction(boolean findAll) {
     FindModel validateModel = (FindModel)myModel.clone();
     doApply(validateModel);
+    myModel.setFindAll(findAll);
     if (!validateModel.isProjectScope() && myDirectoryComboBox != null && validateModel.getModuleName()==null) {
       PsiDirectory directory = FindInProjectUtil.getPsiDirectory(validateModel, myProject);
       if (directory == null) {
         Messages.showMessageDialog(
           myProject,
-          "Directory " + validateModel.getDirectoryName() + " is not found",
-          "Error",
+          FindBundle.message("find.directory.not.found.error", validateModel.getDirectoryName()),
+          CommonBundle.getErrorTitle(),
           Messages.getErrorIcon()
         );
         return;
@@ -321,8 +338,8 @@ final class FindDialog extends DialogWrapper {
       catch(PatternSyntaxException e){
         Messages.showMessageDialog(
             myProject,
-            "Bad pattern \"" + toFind + "\"",
-            "Information",
+            FindBundle.message("find.invalid.regular.expression.error", toFind),
+            CommonBundle.getErrorTitle(),
             Messages.getErrorIcon()
         );
         return;
@@ -343,8 +360,8 @@ final class FindDialog extends DialogWrapper {
         } catch(PatternSyntaxException ex) {
           Messages.showMessageDialog(
             myProject,
-            "Bad file mask \"" + myFileFilter.getSelectedItem() + "\"",
-            "Information",
+            FindBundle.message("find.filter.invalid.file.mask.error", myFileFilter.getSelectedItem()),
+            CommonBundle.getErrorTitle(),
             Messages.getErrorIcon()
           );
           return;
@@ -352,8 +369,8 @@ final class FindDialog extends DialogWrapper {
       } else {
         Messages.showMessageDialog(
           myProject,
-          "Empty file mask",
-          "Information",
+          FindBundle.message("find.filter.empty.file.mask.error"),
+          CommonBundle.getErrorTitle(),
           Messages.getErrorIcon()
         );
         return;
@@ -376,24 +393,20 @@ final class FindDialog extends DialogWrapper {
 
   private JPanel createFindOptionsPanel() {
     JPanel findOptionsPanel = new JPanel();
-    findOptionsPanel.setBorder(IdeBorderFactory.createTitledBorder("Options"));
+    findOptionsPanel.setBorder(IdeBorderFactory.createTitledBorder(FindBundle.message("find.options.group")));
     findOptionsPanel.setLayout(new BoxLayout(findOptionsPanel, BoxLayout.Y_AXIS));
 
-    myCbCaseSensitive = new StateRestoringCheckBox("Case sensitive");
-    myCbCaseSensitive.setMnemonic('C');
+    myCbCaseSensitive = new StateRestoringCheckBox(FindBundle.message("find.options.case.sensitive"));
     findOptionsPanel.add(myCbCaseSensitive);
     if (myModel.isReplaceState()) {
-      myCbPreserveCase = new StateRestoringCheckBox("Preserve case");
-      myCbPreserveCase.setMnemonic('P');
+      myCbPreserveCase = new StateRestoringCheckBox(FindBundle.message("find.options.replace.preserve.case"));
       findOptionsPanel.add(myCbPreserveCase);
     }
-    myCbWholeWordsOnly = new StateRestoringCheckBox("Whole words only");
-    myCbWholeWordsOnly.setMnemonic('W');
+    myCbWholeWordsOnly = new StateRestoringCheckBox(FindBundle.message("find.options.whole.words.only"));
 
     findOptionsPanel.add(myCbWholeWordsOnly);
 
-    myCbRegularExpressions = new StateRestoringCheckBox("Regular expressions");
-    myCbRegularExpressions.setMnemonic('e');
+    myCbRegularExpressions = new StateRestoringCheckBox(FindBundle.message("find.options.regular.expressions"));
     findOptionsPanel.add(myCbRegularExpressions);
 
     ActionListener actionListener = new ActionListener() {
@@ -446,14 +459,12 @@ final class FindDialog extends DialogWrapper {
 
   private JPanel createDirectionPanel() {
     JPanel directionPanel = new JPanel();
-    directionPanel.setBorder(IdeBorderFactory.createTitledBorder("Direction"));
+    directionPanel.setBorder(IdeBorderFactory.createTitledBorder(FindBundle.message("find.direction.group")));
     directionPanel.setLayout(new BoxLayout(directionPanel, BoxLayout.Y_AXIS));
 
-    myRbForward = new JRadioButton("Forward", true);
-    myRbForward.setMnemonic('o');
+    myRbForward = new JRadioButton(FindBundle.message("find.direction.forward.radio"), true);
     directionPanel.add(myRbForward);
-    myRbBackward = new JRadioButton("Backward");
-    myRbBackward.setMnemonic('B');
+    myRbBackward = new JRadioButton(FindBundle.message("find.direction.backward.radio"));
     directionPanel.add(myRbBackward);
     ButtonGroup bgDirection = new ButtonGroup();
     bgDirection.add(myRbForward);
@@ -465,23 +476,21 @@ final class FindDialog extends DialogWrapper {
   private JComponent createGlobalScopePanel() {
     JPanel scopePanel = new JPanel();
     scopePanel.setLayout(new GridBagLayout());
-    scopePanel.setBorder(IdeBorderFactory.createTitledBorder("Scope"));
+    scopePanel.setBorder(IdeBorderFactory.createTitledBorder(FindBundle.message("find.scope.group")));
     GridBagConstraints gbConstraints = new GridBagConstraints();
     gbConstraints.fill = GridBagConstraints.HORIZONTAL;
     gbConstraints.gridx = 0;
     gbConstraints.gridy = 0;
     gbConstraints.gridwidth = 2;
     gbConstraints.weightx = 1;
-    myRbProject = new JRadioButton("Whole project", true);
-    myRbProject.setMnemonic('p');
+    myRbProject = new JRadioButton(FindBundle.message("find.scope.whole.project.radio"), true);
     scopePanel.add(myRbProject, gbConstraints);
 
     gbConstraints.gridx = 0;
     gbConstraints.gridy = 1;
     gbConstraints.weightx = 0;
     gbConstraints.gridwidth = 1;
-    myRbModule = new JRadioButton("Module: ", false);
-    myRbModule.setMnemonic('o');
+    myRbModule = new JRadioButton(FindBundle.message("find.scope.module.radio"), false);
     scopePanel.add(myRbModule, gbConstraints);
 
     gbConstraints.gridx = 1;
@@ -501,8 +510,7 @@ final class FindDialog extends DialogWrapper {
     gbConstraints.gridy = 2;
     gbConstraints.weightx = 0;
     gbConstraints.gridwidth = 1;
-    myRbDirectory = new JRadioButton("Directory: ", false);
-    myRbDirectory.setMnemonic('D');
+    myRbDirectory = new JRadioButton(FindBundle.message("find.scope.directory.radio"), false);
     scopePanel.add(myRbDirectory, gbConstraints);
 
     gbConstraints.gridx = 1;
@@ -531,9 +539,8 @@ final class FindDialog extends DialogWrapper {
     gbConstraints.weightx = 1;
     gbConstraints.gridwidth = 2;
     gbConstraints.insets = new Insets(0, 16, 0, 0);
-    myCbWithSubdirectories = new StateRestoringCheckBox("Recursively", true);
+    myCbWithSubdirectories = new StateRestoringCheckBox(FindBundle.message("find.scope.directory.recursive.checkbox"), true);
     myCbWithSubdirectories.setSelected(true);
-    myCbWithSubdirectories.setMnemonic('b');
     scopePanel.add(myCbWithSubdirectories, gbConstraints);
 
     ButtonGroup bgScope = new ButtonGroup();
@@ -592,14 +599,12 @@ final class FindDialog extends DialogWrapper {
 
   private JPanel createScopePanel() {
     JPanel scopePanel = new JPanel();
-    scopePanel.setBorder(IdeBorderFactory.createTitledBorder("Scope"));
+    scopePanel.setBorder(IdeBorderFactory.createTitledBorder(FindBundle.message("find.scope.group")));
     scopePanel.setLayout(new BoxLayout(scopePanel, BoxLayout.Y_AXIS));
 
-    myRbGlobal = new JRadioButton("Global", true);
-    myRbGlobal.setMnemonic('G');
+    myRbGlobal = new JRadioButton(FindBundle.message("find.scope.global.radio"), true);
     scopePanel.add(myRbGlobal);
-    myRbSelectedText = new JRadioButton("Selected text");
-    myRbSelectedText.setMnemonic('S');
+    myRbSelectedText = new JRadioButton(FindBundle.message("find.scope.selected.text.radio"));
     scopePanel.add(myRbSelectedText);
     ButtonGroup bgScope = new ButtonGroup();
     bgScope.add(myRbGlobal);
@@ -618,14 +623,12 @@ final class FindDialog extends DialogWrapper {
 
   private JPanel createOriginPanel() {
     JPanel originPanel = new JPanel();
-    originPanel.setBorder(IdeBorderFactory.createTitledBorder("Origin"));
+    originPanel.setBorder(IdeBorderFactory.createTitledBorder(FindBundle.message("find.origin.group")));
     originPanel.setLayout(new BoxLayout(originPanel, BoxLayout.Y_AXIS));
 
-    myRbFromCursor = new JRadioButton("From cursor", true);
-    myRbFromCursor.setMnemonic('m');
+    myRbFromCursor = new JRadioButton(FindBundle.message("find.origin.from.cursor.radio"), true);
     originPanel.add(myRbFromCursor);
-    myRbEntireScope = new JRadioButton("Entire scope");
-    myRbEntireScope.setMnemonic('n');
+    myRbEntireScope = new JRadioButton(FindBundle.message("find.origin.entire.scope.radio"));
     originPanel.add(myRbEntireScope);
     ButtonGroup bgOrigin = new ButtonGroup();
     bgOrigin.add(myRbFromCursor);

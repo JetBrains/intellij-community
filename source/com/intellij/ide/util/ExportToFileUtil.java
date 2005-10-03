@@ -1,6 +1,7 @@
 package com.intellij.ide.util;
 
 import com.intellij.ide.ExporterToTextFile;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
@@ -11,6 +12,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.CommonBundle;
+import com.intellij.util.SystemProperties;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -34,9 +37,13 @@ public class ExportToFileUtil {
     if (file.exists()) {
       int result = Messages.showDialog(
         project,
-          "File " + fileName + " already exists\nDo you want overwrite it or to append?",
-        "Warning",
-          new String[]{"Overwrite", "Append", "Cancel"},
+        IdeBundle.message("error.text.file.already.exists", fileName),
+        IdeBundle.message("title.warning"),
+          new String[]{
+            IdeBundle.message("action.overwrite"),
+            IdeBundle.message("action.append"),
+            CommonBundle.getCancelButtonText()
+          },
         0,
         Messages.getWarningIcon()
       );
@@ -50,7 +57,7 @@ public class ExportToFileUtil {
           FileReader reader = new FileReader(fileName);
           try {
             reader.read(buf, 0, (int)file.length());
-            prepend = new String(buf) + System.getProperty("line.separator");
+            prepend = new String(buf) + SystemProperties.getLineSeparator();
           }
           finally {
             reader.close();
@@ -73,8 +80,8 @@ public class ExportToFileUtil {
     catch (IOException e) {
       Messages.showMessageDialog(
         project,
-          "Error writing to file: " + fileName,
-        "Error",
+        IdeBundle.message("error.writing.to.file", fileName),
+        CommonBundle.getErrorTitle(),
         Messages.getErrorIcon()
       );
     }
@@ -98,8 +105,8 @@ public class ExportToFileUtil {
       myFileButton = new FixedSizeButton(myTfFile);
 
       setHorizontalStretch(1.5f);
-      setTitle("Export Preview");
-      setOKButtonText("Save");
+      setTitle(IdeBundle.message("title.export.preview"));
+      setOKButtonText(IdeBundle.message("button.save"));
       setButtonsMargin(null);
       init();
       try {
@@ -151,7 +158,7 @@ public class ExportToFileUtil {
       panel.setLayout(new GridBagLayout());
       GridBagConstraints gbConstraints = new GridBagConstraints();
       gbConstraints.fill = GridBagConstraints.HORIZONTAL;
-      JLabel promptLabel = new JLabel("Export to file: ");
+      JLabel promptLabel = new JLabel(IdeBundle.message("editbox.export.to.file"));
       gbConstraints.weightx = 0;
       panel.add(promptLabel, gbConstraints);
       gbConstraints.weightx = 1;
@@ -210,8 +217,8 @@ public class ExportToFileUtil {
 
     protected class CopyToClipboardAction extends AbstractAction {
       public CopyToClipboardAction() {
-        super("&Copy");
-        putValue(AbstractAction.SHORT_DESCRIPTION, "Copy text to clipboard");
+        super(IdeBundle.message("button.copy"));
+        putValue(AbstractAction.SHORT_DESCRIPTION, IdeBundle.message("description.copy.text.to.clipboard"));
       }
 
       public void actionPerformed(ActionEvent e) {

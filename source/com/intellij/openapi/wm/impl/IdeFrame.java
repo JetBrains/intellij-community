@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.impl.status.StatusBarImpl;
+import com.intellij.openapi.MnemonicHelper;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -58,6 +59,7 @@ public class IdeFrame extends JFrame implements DataProvider {
     setFocusTraversalPolicy(myLayoutFocusTraversalPolicy);
 
     setupCloseAction();
+    new MnemonicHelper().register(this);
   }
 
   /**

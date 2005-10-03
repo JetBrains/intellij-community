@@ -5,6 +5,7 @@
 package com.intellij.execution.runners;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunnerSettings;
@@ -58,13 +59,13 @@ public class RestartAction extends AnAction {
       }, myRunner, myRunnerSettings, myConfigurationSettings);
     }
     catch (ExecutionException e1) {
-      Messages.showErrorDialog(project, e1.getMessage(), "Restart Error");
+      Messages.showErrorDialog(project, e1.getMessage(), ExecutionBundle.message("restart.error.message.title"));
     }
   }
 
   public void update(final AnActionEvent event) {
     final Presentation presentation = event.getPresentation();
-    presentation.setText("Rerun " + myProfile.getName());
+    presentation.setText(ExecutionBundle.message("rerun.configuration.action.name", myProfile.getName()));
     final boolean isRunning = myProcessHandler != null && !myProcessHandler.isProcessTerminated();
     if (myProcessHandler != null && !isRunning) {
       myProcessHandler = null; // already terminated

@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 /**
  *  @author dsl
@@ -16,7 +17,7 @@ public abstract class ContentFolderBaseImpl extends RootModelComponentBase imple
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.SimpleContentFolderBaseImpl");
   private VirtualFilePointer myFilePointer;
   protected final ContentEntryImpl myContentEntry;
-  protected static final String URL_ATTR = "url";
+  @NonNls protected static final String URL_ATTR = "url";
 
   ContentFolderBaseImpl(VirtualFile file, ContentEntryImpl contentEntry) {
     super(contentEntry.getRootModel());

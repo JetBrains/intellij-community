@@ -11,6 +11,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -22,6 +23,8 @@ import java.util.Map;
  */
 public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
   private static final Key<Map<String,CachedValue<XmlEntityDecl>>> XML_ENTITY_DECL_MAP = Key.create("XML_ENTITY_DECL_MAP");
+  @NonNls private static final String GT_ENTITY = "&gt;";
+  @NonNls private static final String QUOT_ENTITY = "&quot;";
 
   public XmlEntityRefImpl() {
     super(XML_ENTITY_REF);
@@ -29,7 +32,7 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
 
   public XmlEntityDecl resolve(PsiFile targetFile) {
     String text = getText();
-    if (text.equals("&gt;") || text.equals("&quot;")) return null;
+    if (text.equals(GT_ENTITY) || text.equals(QUOT_ENTITY)) return null;
     final String entityName = text.substring(1, text.length() - 1);
 
     final PsiElement targetElement = targetFile != null ? (PsiElement)targetFile : this;

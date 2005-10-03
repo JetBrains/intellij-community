@@ -10,6 +10,7 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
@@ -121,8 +122,9 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
 
     ArrayList<String> conflicts = new ArrayList<String>();
     if (!myManager.getResolveHelper().isAccessible(getConstructorContainingClass(), myTargetClass, null)) {
-      String message = "Class " + ConflictsUtil.getDescription(getConstructorContainingClass(), true)
-                       + " is not accessible from target " + ConflictsUtil.getDescription(myTargetClass, true) + ".";
+      String message = RefactoringBundle.message("class.0.is.not.accessible.from.target.1",
+                                                 ConflictsUtil.getDescription(getConstructorContainingClass(), true),
+                                                 ConflictsUtil.getDescription(myTargetClass, true));
       conflicts.add(message);
     }
 
@@ -133,8 +135,9 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
       if (!reportedContainers.contains(container)) {
         reportedContainers.add(container);
         if (!myManager.getResolveHelper().isAccessible(myTargetClass, usage.getElement(), null)) {
-          String message = "Target " + targetClassDescription + " is not accessible from "
-                           + ConflictsUtil.getDescription(container, true) + ".";
+          String message = RefactoringBundle.message("target.0.is.not.accessible.from.1",
+                                                     targetClassDescription,
+                                                     ConflictsUtil.getDescription(container, true));
           conflicts.add(message);
         }
       }
@@ -147,11 +150,8 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
           final PsiClass containingClass = field.getContainingClass();
 
           if (PsiTreeUtil.isAncestor(containingClass, myTargetClass, true)) {
-            String message = "Constructor being refactored is used in initializer of " +
-                             ConflictsUtil.getDescription(field, true)
-                             + ". Non-static factory of inner class" +
-                             ConflictsUtil.getDescription(getConstructorContainingClass(), false)
-                             + " cannot be used in this context. Resulting code will not compile.";
+            String message = RefactoringBundle.message("constructor.being.refactored.is.used.in.initializer.of.0",
+              ConflictsUtil.getDescription(field, true), ConflictsUtil.getDescription(getConstructorContainingClass(), false));
             conflicts.add(message);
           }
         }
@@ -217,16 +217,11 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
         boolean replaceMethodQualifier = false;
         PsiExpression newQualifier = newExpression.getQualifier();
 
-        if (newQualifier != null) {
-          newQualifier = (PsiExpression)newQualifier.copy();
-        }
-
         PsiElement resolvedFactoryMethod = factoryCall.getMethodExpression().resolve();
         if (resolvedFactoryMethod != factoryMethod || newQualifier != null) {
           factoryCall.getMethodExpression().replace(qualifiedMethodReference);
           replaceMethodQualifier = true;
         }
-        factoryCall = (PsiMethodCallExpression)newExpression.replace(factoryCall);
 
         if (replaceMethodQualifier) {
           if (newQualifier == null) {
@@ -236,6 +231,8 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
             factoryCall.getMethodExpression().getQualifierExpression().replace(newQualifier);
           }
         }
+
+        newExpression.replace(factoryCall);
       }
     }
     catch (IncorrectOperationException e) {
@@ -300,11 +297,12 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
 
   protected String getCommandName() {
     if (myConstructor != null) {
-      return "Replace constructor " + UsageViewUtil.getDescriptiveName(myConstructor) + " with a factory method";
+      return RefactoringBundle.message("replace.constructor.0.with.a.factory.method",
+                                       UsageViewUtil.getDescriptiveName(myConstructor));
     }
     else {
-      return "Replace default constructor of " + UsageViewUtil.getDescriptiveName(myOriginalClass) +
-             " with a factory method";
+      return RefactoringBundle.message("replace.default.constructor.of.0.with.a.factory.method",
+                                       UsageViewUtil.getDescriptiveName(myOriginalClass));
     }
   }
 

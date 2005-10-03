@@ -17,17 +17,21 @@ package com.intellij.openapi.application;
 
 import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.SystemProperties;
 
 import java.io.*;
 import java.net.URL;
 import java.util.*;
 
+import org.jetbrains.annotations.NonNls;
+
 public class PathManager {
-  private static final String PROPERTIES_FILE = "idea.properties.file";
-  private static final String PROPERTY_SYSTEM_PATH = "idea.system.path";
-  private static final String PROPERTY_CONFIG_PATH = "idea.config.path";
-  private static final String PROPERTY_PLUGINS_PATH = "idea.plugins.path";
-  private static final String PROPERTY_HOME_PATH = "idea.home.path";
+  @NonNls private static final String PROPERTIES_FILE = "idea.properties.file";
+  @NonNls private static final String IDEA_PROPERTIES = "idea.properties";
+  @NonNls private static final String PROPERTY_SYSTEM_PATH = "idea.system.path";
+  @NonNls private static final String PROPERTY_CONFIG_PATH = "idea.config.path";
+  @NonNls private static final String PROPERTY_PLUGINS_PATH = "idea.plugins.path";
+  @NonNls private static final String PROPERTY_HOME_PATH = "idea.home.path";
 
   private static String ourHomePath;
   private static String ourSystemPath;
@@ -35,11 +39,15 @@ public class PathManager {
   private static String ourPluginsPath;
   private static String ourPreinstalledPluginsPath;
 
-  private static final String FILE = "file";
-  private static final String JAR = "jar";
+  @NonNls private static final String FILE = "file";
+  @NonNls private static final String JAR = "jar";
   private static final String JAR_DELIMITER = "!";
   private static final String PROTOCOL_DELIMITER = ":";
-  public static final String DEFAULT_OPTIONS_FILE_NAME = "other";
+  @NonNls public static final String DEFAULT_OPTIONS_FILE_NAME = "other";
+  @NonNls private static final String LIB_FOLDER = "lib";
+  @NonNls public static final String PLUGINS_DIRECTORY = "plugins";
+  @NonNls private static final String BIN_FOLDER = "bin";
+  @NonNls private static final String OPTIONS_FOLDER = "options";
 
   public static String getHomePath() {
     if (ourHomePath != null) return ourHomePath;
@@ -51,6 +59,7 @@ public class PathManager {
 
     final Class aClass = PathManager.class;
 
+    //noinspection HardCodedStringLiteral
     String rootPath = getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");
     if (rootPath != null) {
       File root = new File(rootPath);
@@ -71,7 +80,7 @@ public class PathManager {
   }
 
   public static String getLibPath() {
-    return getHomePath() + File.separator + "lib";
+    return getHomePath() + File.separator + LIB_FOLDER;
   }
 
   private static String trimPathQuotes(String path){
@@ -91,6 +100,7 @@ public class PathManager {
       ourSystemPath = getAbsolutePath(trimPathQuotes(System.getProperty(PROPERTY_SYSTEM_PATH)));
     }
     else {
+      //noinspection HardCodedStringLiteral
       ourSystemPath = getHomePath() + File.separator + "system";
     }
 
@@ -126,6 +136,7 @@ public class PathManager {
     return getConfigPath(true);
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static String  getConfigPathWithoutDialog() {
     if (ourConfigPath != null) return ourConfigPath;
 
@@ -139,10 +150,12 @@ public class PathManager {
   }
 
   public static String getHelpURL() {
+    //noinspection HardCodedStringLiteral
     return "jar:file:///" + getHelpJarPath() + "!/idea";
   }
 
   private static String getHelpJarPath() {
+    //noinspection HardCodedStringLiteral
     return getHomePath() + File.separator + "help" + File.separator + "ideahelp.jar";
   }
 
@@ -151,20 +164,20 @@ public class PathManager {
   }
 
   public static String getBinPath() {
-    return getHomePath() + File.separator + "bin";
+    return getHomePath() + File.separator + BIN_FOLDER;
   }
 
   public static String getOptionsPath() {
-    return getConfigPath() + File.separator + "options";
+    return getConfigPath() + File.separator + OPTIONS_FOLDER;
   }
 
   public static String getOptionsPathWithoutDialog() {
-    return getConfigPathWithoutDialog() + File.separator + "options";
+    return getConfigPathWithoutDialog() + File.separator + OPTIONS_FOLDER;
   }
 
   public static String getPreinstalledPluginsPath() {
     if (ourPreinstalledPluginsPath == null) {
-      ourPreinstalledPluginsPath = getHomePath() + File.separatorChar + "plugins";
+      ourPreinstalledPluginsPath = getHomePath() + File.separatorChar + PLUGINS_DIRECTORY;
     }
 
     return ourPreinstalledPluginsPath;
@@ -175,7 +188,7 @@ public class PathManager {
       if (System.getProperty(PROPERTY_PLUGINS_PATH) != null) {
         ourPluginsPath = getAbsolutePath(trimPathQuotes(System.getProperty(PROPERTY_PLUGINS_PATH)));
       } else {
-        ourPluginsPath = getConfigPath() + File.separatorChar + "plugins";
+        ourPluginsPath = getConfigPath() + File.separatorChar + PLUGINS_DIRECTORY;
       }
     }
 
@@ -184,7 +197,7 @@ public class PathManager {
 
   private static String getAbsolutePath(String path) {
     if (path.startsWith("~/") || path.startsWith("~\\")) {
-      path = System.getProperty("user.home") + path.substring(1);
+      path = SystemProperties.getUserHome() + path.substring(1);
     }
 
     File file = new File(path);
@@ -194,6 +207,7 @@ public class PathManager {
   }
 
   public static File getOptionsFile(NamedJDOMExternalizable externalizable) {
+    //noinspection HardCodedStringLiteral
     return new File(getOptionsPath()+File.separatorChar+externalizable.getExternalFileName()+".xml");
   }
 
@@ -216,6 +230,7 @@ public class PathManager {
    */
   private static String extractRoot(URL resourceURL, String resourcePath) {
     if (!(StringUtil.startsWithChar(resourcePath, '/') || StringUtil.startsWithChar(resourcePath, '\\'))) {
+      //noinspection HardCodedStringLiteral
       System.err.println("precondition failed");
       return null;
     }
@@ -252,15 +267,16 @@ public class PathManager {
   }
 
   public static File getDefaultOptionsFile() {
+    //noinspection HardCodedStringLiteral
     return new File(getOptionsPath(),DEFAULT_OPTIONS_FILE_NAME+".xml");
   }
 
   public static void loadProperties() {
     String propFilePath = System.getProperty(PROPERTIES_FILE);
     if (StringUtil.isEmptyOrSpaces(propFilePath) || !new File(propFilePath).exists()) {
-      propFilePath = System.getProperty("user.home") + File.separator + "idea.properties";
+      propFilePath = SystemProperties.getUserHome() + File.separator + IDEA_PROPERTIES;
       if (StringUtil.isEmptyOrSpaces(propFilePath) || !new File(propFilePath).exists()) {
-        propFilePath = getBinPath() + File.separator + "idea.properties";
+        propFilePath = getBinPath() + File.separator + IDEA_PROPERTIES;
       }
     }
 
@@ -281,6 +297,7 @@ public class PathManager {
         }
       }
       catch (IOException e) {
+        //noinspection HardCodedStringLiteral
         System.out.println("Problem reading from property file: " + propFilePath);
       }
     }
@@ -292,7 +309,7 @@ public class PathManager {
   }
 
   public static String substituteVars(String s, final String ideaHomePath) {
-    if (s.startsWith("..")) s = ideaHomePath + File.separatorChar + "bin" + File.separatorChar + s;
+    if (s.startsWith("..")) s = ideaHomePath + File.separatorChar + BIN_FOLDER + File.separatorChar + s;
     s = StringUtil.replace(s, "${idea.home}", ideaHomePath);
     final Properties props = System.getProperties();
     final Set keys = props.keySet();

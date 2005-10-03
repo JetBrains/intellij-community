@@ -31,11 +31,9 @@
  */
 package com.intellij.cvsSupport2;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.checkinProject.CvsCheckinFile;
 import com.intellij.cvsSupport2.config.CvsConfiguration;
-import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutor;
-import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutorCallback;
-import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
 import com.intellij.cvsSupport2.cvsoperations.common.CvsOperation;
 import com.intellij.cvsSupport2.cvsoperations.common.RepositoryModificationOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsContent.GetFileContentOperation;
@@ -44,7 +42,6 @@ import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.StandardOperationsProvider;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.cvsIntegration.CvsResult;
 import org.netbeans.lib.cvsclient.command.KeywordSubstitution;
 
 import java.io.File;
@@ -98,7 +95,7 @@ public class CvsStandardOperationsProvider implements StandardOperationsProvider
 
   public void commit(Object parameters) throws VcsException {
     getCurrentTransaction().setMessage(parameters);
-    CvsVcs2.executeOperation("Commit Transaction", getCurrentTransaction(), myProject);
+    CvsVcs2.executeOperation(CvsBundle.message("operation.name.commit.changes"), getCurrentTransaction(), myProject);
     myCurrentTransaction = null;
   }
 
@@ -109,7 +106,7 @@ public class CvsStandardOperationsProvider implements StandardOperationsProvider
   public byte[] getFileContent(String path) throws VcsException {
     try {
       GetFileContentOperation command = GetFileContentOperation.createForFile(CvsVfsUtil.findFileByIoFile(new File(path)));
-      CvsVcs2.executeOperation("Get File Content", command, myProject);
+      CvsVcs2.executeOperation(CvsBundle.message("operation.name.get.file.content"), command, myProject);
       return command.getFileBytes();
     }
     catch (CannotFindCvsRootException cannotFindCvsRootException) {

@@ -3,6 +3,7 @@ package com.intellij.debugger.ui.breakpoints;
 import com.intellij.debugger.ClassFilter;
 import com.intellij.debugger.InstanceFilter;
 import com.intellij.debugger.ClassFilter;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.ui.InstanceFilterEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -23,7 +24,7 @@ public class EditInstanceFiltersDialog extends DialogWrapper{
   public EditInstanceFiltersDialog (Project project) {
     super(project, true);
     myProject = project;
-    setTitle("Instance Filters");
+    setTitle(DebuggerBundle.message("instance.filters.dialog.title"));
     init();
   }
 
@@ -34,7 +35,7 @@ public class EditInstanceFiltersDialog extends DialogWrapper{
 
     myInstanceFilterEditor = new InstanceFilterEditor(myProject);
     myInstanceFilterEditor.setPreferredSize(new Dimension(400, 200));
-    myInstanceFilterEditor.setBorder(IdeBorderFactory.createTitledBorder("Instance Filters"));
+    myInstanceFilterEditor.setBorder(IdeBorderFactory.createTitledBorder(DebuggerBundle.message("instance.filters.dialog.instance.filters.group")));
     mainPanel.add(myInstanceFilterEditor);
 
     contentPanel.add(mainPanel, BorderLayout.CENTER);

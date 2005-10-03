@@ -235,7 +235,7 @@ class PsiShortNamesCacheImpl implements PsiShortNamesCache {
 
     if (progress != null) {
       progress.pushState();
-      progress.setText("Scanning files...");
+      progress.setText(PsiBundle.message("psi.scanning.files.progress"));
     }
 
     _cacheFilesInDirectory(dir);

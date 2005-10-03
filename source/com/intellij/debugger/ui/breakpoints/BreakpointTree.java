@@ -4,6 +4,7 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.*;
 import com.intellij.util.Icons;
@@ -21,7 +22,7 @@ import java.util.*;
  *         Date: May 20, 2005
  */
 public class BreakpointTree extends CheckboxTree {
-  private static final String DEFAULT_PACKAGE_NAME = "<Default>";
+  private static final String DEFAULT_PACKAGE_NAME = DebuggerBundle.message("default.package.name");
   private final CheckedTreeNode myRootNode;
   private final List<Breakpoint> myBreakpoints = new ArrayList<Breakpoint>();
   private final Map<TreeDescriptor, CheckedTreeNode> myDescriptorToNodeMap = new HashMap<TreeDescriptor, CheckedTreeNode>();

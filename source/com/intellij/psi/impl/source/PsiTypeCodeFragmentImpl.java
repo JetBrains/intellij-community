@@ -3,6 +3,7 @@ package com.intellij.psi.impl.source;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author dsl
@@ -12,7 +13,8 @@ public class PsiTypeCodeFragmentImpl extends PsiCodeFragmentImpl implements PsiT
 
   public PsiTypeCodeFragmentImpl(Project manager,
                                  boolean isPhysical,
-                                 boolean allowEllipsis, String name,
+                                 boolean allowEllipsis,
+                                 @NonNls String name,
                                  CharSequence text) {
     super(manager, TYPE_TEXT, isPhysical, name, text);
     myAllowEllipsis = allowEllipsis;

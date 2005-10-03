@@ -1,6 +1,7 @@
 package com.intellij.execution.junit2.ui.actions;
 
 import com.intellij.execution.Location;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.junit2.TestProxy;
 import com.intellij.execution.junit2.ui.FailedTestsNavigator;
 import com.intellij.execution.junit2.ui.TestsUIUtil;
@@ -26,44 +27,48 @@ import com.intellij.util.config.ToggleBooleanProperty;
 import javax.swing.*;
 import java.awt.*;
 
+import org.jetbrains.annotations.NonNls;
+
 public class ToolbarPanel extends JPanel implements OccurenceNavigator {
   //private final DefaultActionGroup myActions = new DefaultActionGroup(null, false);
   private final TestTreeExpander myTreeExpander = new TestTreeExpander();
   private final FailedTestsNavigator myOccurenceNavigator = new FailedTestsNavigator();
   private final ScrollToTestSourceAction myScrollToSource;
+  @NonNls protected static final String TEST_SUITE_CLASS_NAME = "junit.framework.TestSuite";
 
   public ToolbarPanel(final JUnitConsoleProperties properties) {
     super (new BorderLayout());
     add(new JLabel(IconLoader.getIcon("/general/inactiveSeparator.png")), BorderLayout.WEST);
     final DefaultActionGroup actionGroup = new DefaultActionGroup(null, false);
     actionGroup.addSeparator();
-    actionGroup.add(new ToggleBooleanProperty("Hide Passed",
-                                              "Hide passed tests",
+    actionGroup.add(new ToggleBooleanProperty(ExecutionBundle.message("junit.run.hide.passed.action.name"),
+                                              ExecutionBundle.message("junit.run.hide.passed.action.description"),
                                               TestsUIUtil.loadIcon("hidePassed"),
                                               properties, JUnitConsoleProperties.HIDE_PASSED_TESTS));
-    actionGroup.add(new ToggleBooleanProperty("Track Running Test",
-                                              "Select currently running test in tree",
+    actionGroup.add(new ToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.track.test.action.name"),
+                                              ExecutionBundle.message("junit.runing.info.track.test.action.description"),
                                               TestsUIUtil.loadIcon("trackTests"),
                                               properties, JUnitConsoleProperties.TRACK_RUNNING_TEST));
     actionGroup.addSeparator();
-    actionGroup.add(new CollapseAllToolbarAction(myTreeExpander, "Collapse all test suites"));
-    actionGroup.add(new ExpandAllToolbarAction(myTreeExpander, "Expand all test suites"));
+    actionGroup.add(new CollapseAllToolbarAction(myTreeExpander, ExecutionBundle.message("junit.runing.info.collapse.test.action.name")));
+    actionGroup.add(new ExpandAllToolbarAction(myTreeExpander, ExecutionBundle.message("junit.runing.info.expand.test.action.name")));
+
     actionGroup.addSeparator();
     actionGroup.add(new PreviousOccurenceToolbarAction(myOccurenceNavigator));
     actionGroup.add(new NextOccurenceToolbarAction(myOccurenceNavigator));
     actionGroup.addSeparator();
-    actionGroup.add(new ToggleBooleanProperty("Select First Failed Test When Finished",
+    actionGroup.add(new ToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.select.first.failed.action.name"),
                                               null,
                                               TestsUIUtil.loadIcon("selectFirstDefect"),
                                               properties, JUnitConsoleProperties.SELECT_FIRST_DEFECT));
-    actionGroup.add(new ToggleBooleanProperty("Scroll to Stacktrace",
-                                              "Scroll console to beginning of assertion or exception stacktrace",
+    actionGroup.add(new ToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.scroll.to.stacktrace.action.name"),
+                                              ExecutionBundle.message("junit.runing.info.scroll.to.stacktrace.action.description"),
                                               IconLoader.getIcon("/runConfigurations/scrollToStackTrace.png"),
                                               properties, JUnitConsoleProperties.SCROLL_TO_STACK_TRACE));
     myScrollToSource = new ScrollToTestSourceAction(properties);
     actionGroup.add(myScrollToSource);
-    actionGroup.add(new ToggleBooleanProperty("Open Source at Exception",
-                                              "Go to line which caused exception when opening test source",
+    actionGroup.add(new ToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.open.source.at.exception.action.name"),
+                                              ExecutionBundle.message("junit.runing.info.open.source.at.exception.action.description"),
                                               IconLoader.getIcon("/runConfigurations/sourceAtException.png"),
                                               properties, JUnitConsoleProperties.OPEN_FAILURE_LINE));
     add(ActionManager.getInstance().
@@ -87,7 +92,7 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator {
         final Location location = test.getInfo().getLocation(project);
         if (location != null) {
           final PsiClass aClass = PsiTreeUtil.getParentOfType(location.getPsiElement(), PsiClass.class, false);
-          if (aClass != null && "junit.framework.TestSuite".equals(aClass.getQualifiedName())) return;
+          if (aClass != null && TEST_SUITE_CLASS_NAME.equals(aClass.getQualifiedName())) return;
         }
         final Navigatable descriptor = TestsUIUtil.getOpenFileDescriptor(test, model);
         if (descriptor != null && descriptor.canNavigate()) {

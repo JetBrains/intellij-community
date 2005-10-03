@@ -14,6 +14,7 @@ package org.netbeans.lib.cvsclient.command.reservedcheckout;
 
 import org.netbeans.lib.cvsclient.IClientEnvironment;
 import org.netbeans.lib.cvsclient.IRequestProcessor;
+import org.netbeans.lib.cvsclient.JavaCvsSrcBundle;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.command.*;
 import org.netbeans.lib.cvsclient.event.ICvsListenerRegistry;
@@ -24,6 +25,7 @@ import org.netbeans.lib.cvsclient.progress.RangeProgressViewer;
 import org.netbeans.lib.cvsclient.progress.sending.FileStateRequestsProgressHandler;
 import org.netbeans.lib.cvsclient.request.CommandRequest;
 import org.netbeans.lib.cvsclient.request.Requests;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
 
@@ -74,7 +76,7 @@ public final class EditCommand extends AbstractCommand {
 			}
 
 			if (parser.isFilesEdited()) {
-                          final String message = "Cannot edit files, because they already are edited!";
+                          final String message = JavaCvsSrcBundle.message("cannot.edit.files.they.are.edited.error.message");
                           eventSender.notifyMessageListeners(message.getBytes(),true, false);
 				return false;
 			}
@@ -117,7 +119,7 @@ public final class EditCommand extends AbstractCommand {
 	 * This method returns how the tag command would looklike when typed on the command line.
 	 */
 	public String getCvsCommandLine() {
-		final StringBuffer cvsCommandLine = new StringBuffer("edit ");
+		@NonNls final StringBuffer cvsCommandLine = new StringBuffer("edit ");
 		cvsCommandLine.append(getCvsArguments());
 		appendFileArguments(cvsCommandLine);
 		return cvsCommandLine.toString();
@@ -143,7 +145,7 @@ public final class EditCommand extends AbstractCommand {
 	 * Similar to getCVSCommand() however without the files and command's name
 	 */
 	private String getCvsArguments() {
-		final StringBuffer cvsArguments = new StringBuffer();
+		@NonNls final StringBuffer cvsArguments = new StringBuffer();
 		if (!isRecursive()) {
 			cvsArguments.append("-l ");
 		}

@@ -21,11 +21,12 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.codeInspection.InspectionsBundle;
 import org.jetbrains.annotations.Nullable;
 
 
 public class RefFile extends RefElement {
-  public RefFile(PsiFile elem, RefManager manager) {
+  RefFile(PsiFile elem, RefManager manager) {
     super(elem, manager);
     if (elem instanceof PsiJavaFile) {
       manager.getPackage(((PsiJavaFile)elem).getPackageName()).add(this);
@@ -59,7 +60,7 @@ public class RefFile extends RefElement {
                     manager.getPackage(qualifiedName.substring(prefixLength + 1)).add(this);
                   } else {
                     if (qualifiedName.length() == 0) {
-                      qualifiedName = "default package";
+                      qualifiedName = InspectionsBundle.message("inspection.reference.default.package");
                     }
                     manager.getPackage(qualifiedName).add(this);
                   }
@@ -80,5 +81,9 @@ public class RefFile extends RefElement {
   @Nullable
   public String getAccessModifier() {
     return null;
+  }
+
+  protected void initialize() {
+
   }
 }

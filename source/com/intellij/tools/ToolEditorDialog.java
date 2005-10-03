@@ -31,12 +31,12 @@ public class ToolEditorDialog extends DialogWrapper {
   private final JTextField myNameField = new JTextField();
   private final JTextField myDescriptionField = new JTextField();
   private final ComboBox myGroupCombo = new ComboBox(-1);
-  private final JCheckBox myShowInMainMenuCheckbox = new JCheckBox("Main menu");
-  private final JCheckBox myShowInEditorCheckbox = new JCheckBox("Editor menu");
-  private final JCheckBox myShowInProjectTreeCheckbox = new JCheckBox("Project views");
-  private final JCheckBox myShowInSearchResultsPopupCheckbox = new JCheckBox("Search results");
-  private final JCheckBox myUseConsoleCheckbox = new JCheckBox("Open console");
-  private final JCheckBox mySynchronizedAfterRunCheckbox = new JCheckBox("Synchronize files after execution");
+  private final JCheckBox myShowInMainMenuCheckbox = new JCheckBox(ToolsBundle.message("tools.menu.main.checkbox"));
+  private final JCheckBox myShowInEditorCheckbox = new JCheckBox(ToolsBundle.message("tools.menu.editor.checkbox"));
+  private final JCheckBox myShowInProjectTreeCheckbox = new JCheckBox(ToolsBundle.message("tools.menu.project.checkbox"));
+  private final JCheckBox myShowInSearchResultsPopupCheckbox = new JCheckBox(ToolsBundle.message("tools.menu.search.checkbox"));
+  private final JCheckBox myUseConsoleCheckbox = new JCheckBox(ToolsBundle.message("tools.open.console.checkbox"));
+  private final JCheckBox mySynchronizedAfterRunCheckbox = new JCheckBox(ToolsBundle.message("tools.synchronize.files.checkbox"));
   private boolean myEnabled;
 
   // command fields
@@ -63,7 +63,7 @@ public class ToolEditorDialog extends DialogWrapper {
     constr.gridy = 0;
     constr.anchor = GridBagConstraints.WEST;
     constr.insets = new Insets(5, 0, 0, 0);
-    panel.add(new JLabel("Name:"), constr);
+    panel.add(new JLabel(ToolsBundle.message("tools.name.label")), constr);
 
     constr = new GridBagConstraints();
     constr.gridx = 1;
@@ -79,7 +79,7 @@ public class ToolEditorDialog extends DialogWrapper {
     constr.gridy = 0;
     constr.anchor = GridBagConstraints.WEST;
     constr.insets = new Insets(5, 10, 0, 0);
-    panel.add(new JLabel("Group:"), constr);
+    panel.add(new JLabel(ToolsBundle.message("tools.group.label")), constr);
 
     constr = new GridBagConstraints();
     constr.gridx = 3;
@@ -102,7 +102,7 @@ public class ToolEditorDialog extends DialogWrapper {
     constr.gridy = 1;
     constr.anchor = GridBagConstraints.WEST;
     constr.insets = new Insets(5, 0, 0, 0);
-    panel.add(new JLabel("Description:"), constr);
+    panel.add(new JLabel(ToolsBundle.message("tools.description.label")), constr);
 
     constr = new GridBagConstraints();
     constr.gridx = 1;
@@ -179,13 +179,12 @@ public class ToolEditorDialog extends DialogWrapper {
   public ToolEditorDialog(JComponent parent) {
     super(parent, true);
 
-    myOutputFiltersButton = new JButton("Output Filters...");
-    myOutputFiltersButton.setMnemonic('F');
+    myOutputFiltersButton = new JButton(ToolsBundle.message("tools.filters.button"));
 
     DataContext dataContext = DataManager.getInstance().getDataContext(parent);
     myProject = (Project)dataContext.getData(DataConstants.PROJECT);
     MacroManager.getInstance().cacheMacrosPreview(dataContext);
-    setTitle("Edit Tool");
+    setTitle(ToolsBundle.message("tools.edit.title"));
     init();
     addListeners();
   }
@@ -207,7 +206,7 @@ public class ToolEditorDialog extends DialogWrapper {
     constr.gridy = 0;
     constr.insets = new Insets(5, 0, 0, 10);
     constr.anchor = GridBagConstraints.WEST;
-    pane.add(new JLabel("Program:"), constr);
+    pane.add(new JLabel(ToolsBundle.message("tools.program.label")), constr);
 
     FixedSizeButton browseCommandButton = new FixedSizeButton(myTfCommand);
     browseCommandButton.addActionListener(
@@ -249,8 +248,7 @@ public class ToolEditorDialog extends DialogWrapper {
     constr.insets = new Insets(5, 10, 0, 0);
     constr.fill = GridBagConstraints.HORIZONTAL;
     constr.anchor = GridBagConstraints.WEST;
-    myInsertCommandMacroButton = new JButton("Insert macro...");
-    myInsertCommandMacroButton.setMnemonic('m');
+    myInsertCommandMacroButton = new JButton(ToolsBundle.message("tools.insert.macro.button"));
     pane.add(myInsertCommandMacroButton, constr);
 
     // parameters
@@ -260,7 +258,7 @@ public class ToolEditorDialog extends DialogWrapper {
     constr.gridy = 1;
     constr.insets = new Insets(5, 0, 0, 0);
     constr.anchor = GridBagConstraints.WEST;
-    pane.add(new JLabel("Parameters:"), constr);
+    pane.add(new JLabel(ToolsBundle.message("tools.parameters.label")), constr);
 
     constr = new GridBagConstraints();
     constr.gridx = 1;
@@ -277,8 +275,7 @@ public class ToolEditorDialog extends DialogWrapper {
     constr.insets = new Insets(5, 10, 0, 0);
     constr.fill = GridBagConstraints.HORIZONTAL;
     constr.anchor = GridBagConstraints.WEST;
-    myInsertParametersMacroButton = new JButton("Insert macro...");
-    myInsertParametersMacroButton.setMnemonic('a');
+    myInsertParametersMacroButton = new JButton(ToolsBundle.message("tools.insert.macro.button.a"));
     pane.add(myInsertParametersMacroButton, constr);
 
     // working directory
@@ -288,7 +285,7 @@ public class ToolEditorDialog extends DialogWrapper {
     constr.gridy = 2;
     constr.insets = new Insets(5, 0, 5, 10);
     constr.anchor = GridBagConstraints.WEST;
-    pane.add(new JLabel("Working directory:"), constr);
+    pane.add(new JLabel(ToolsBundle.message("tools.working.directory.label")), constr);
 
     FixedSizeButton browseDirectoryButton = new FixedSizeButton(myTfCommandWorkingDirectory);
     TextFieldWithBrowseButton.MyDoClickAction.addTo(browseDirectoryButton, myTfCommandWorkingDirectory);
@@ -323,8 +320,7 @@ public class ToolEditorDialog extends DialogWrapper {
     constr.insets = new Insets(5, 10, 0, 0);
     constr.fill = GridBagConstraints.HORIZONTAL;
     constr.anchor = GridBagConstraints.WEST;
-    myInsertWorkingDirectoryMacroButton = new JButton("Insert macro...");
-    myInsertWorkingDirectoryMacroButton.setMnemonic('c');
+    myInsertWorkingDirectoryMacroButton = new JButton(ToolsBundle.message("tools.insert.macro.button.c"));
     pane.add(myInsertWorkingDirectoryMacroButton, constr);
 
     // for normal resizing
@@ -451,7 +447,7 @@ public class ToolEditorDialog extends DialogWrapper {
 
   private JPanel getShowInPanel() {
     JPanel panel = new JPanel(new GridLayout(2, 2, 10, 3));
-    panel.setBorder(IdeBorderFactory.createTitledBorder("Menu"));
+    panel.setBorder(IdeBorderFactory.createTitledBorder(ToolsBundle.message("tools.menu.group")));
     panel.add(myShowInMainMenuCheckbox);
     panel.add(myShowInEditorCheckbox);
     panel.add(myShowInProjectTreeCheckbox);

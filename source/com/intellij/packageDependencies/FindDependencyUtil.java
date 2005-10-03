@@ -6,6 +6,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.analysis.AnalysisScopeBundle;
 
 import java.util.*;
 
@@ -23,7 +24,7 @@ public class FindDependencyUtil {
       if (indicator != null) {
         if (indicator.isCanceled()) throw new ProcessCanceledException();
         indicator.setFraction(((double)++count)/totalCount);
-        indicator.setText("Searching for usages: " + psiFile.getVirtualFile().getPresentableUrl());
+        indicator.setText(AnalysisScopeBundle.message("find.dependencies.progress.text", psiFile.getVirtualFile().getPresentableUrl()));
       }
 
       final Set<PsiFile> depsByFile = builder.getDependencies().get(psiFile);
@@ -64,7 +65,7 @@ public class FindDependencyUtil {
       if (indicator != null) {
         if (indicator.isCanceled()) throw new ProcessCanceledException();
         indicator.setFraction(((double)++count)/totalCount);
-        indicator.setText("Searching for usages in: " + psiFile.getVirtualFile().getPresentableUrl());
+        indicator.setText(AnalysisScopeBundle.message("find.dependencies.progress.text", psiFile.getVirtualFile().getPresentableUrl()));
       }
 
       builder.analyzeFileDependencies(psiFile, new DependenciesBuilder.DependencyProcessor() {

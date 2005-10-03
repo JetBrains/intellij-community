@@ -12,9 +12,11 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -25,6 +27,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.*;
+
+import org.jetbrains.annotations.NonNls;
 
 /*
  * @author: MYakovlev
@@ -53,13 +57,10 @@ public class SdkEditor implements Configurable{
   private final NotifiableSdkModel mySdkModel;
   private JLabel myHomeFieldLabel;
   private String myVersionString;
+  @NonNls private static final String MAC_HOME_PATH = "/Home";
 
   public SdkEditor(NotifiableSdkModel sdkModel) {
     mySdkModel = sdkModel;
-  }
-
-  protected String getElementTypeName() {
-    return "JDK";
   }
 
   public ProjectJdk getEditedSdk(){
@@ -78,7 +79,7 @@ public class SdkEditor implements Configurable{
   }
 
   public String getDisplayName(){
-    return "JDK Editor";
+    return ProjectBundle.message("sdk.configure.editor.title");
   }
 
   public Icon getIcon(){
@@ -99,15 +100,14 @@ public class SdkEditor implements Configurable{
   }
 
   private void createMainPanel(){
-    myClassPathEditor = new MyPathsEditor("Classpath", ProjectRootType.CLASS, new FileChooserDescriptor(true, true, true, false, true, true), false);
-    mySourcePathEditor = new MyPathsEditor("Sourcepath", ProjectRootType.SOURCE, new FileChooserDescriptor(true, true, true, false, true, true), false);
-    myJavadocPathEditor = new MyPathsEditor("JavaDoc API Paths", ProjectRootType.JAVADOC, new FileChooserDescriptor(false, true, true, false, true, true), true);
+    myClassPathEditor = new MyPathsEditor(ProjectBundle.message("sdk.configure.classpath.tab"), ProjectRootType.CLASS, new FileChooserDescriptor(true, true, true, false, true, true), false);
+    mySourcePathEditor = new MyPathsEditor(ProjectBundle.message("sdk.configure.sourcepath.tab"), ProjectRootType.SOURCE, new FileChooserDescriptor(true, true, true, false, true, true), false);
+    myJavadocPathEditor = new MyPathsEditor(ProjectBundle.message("sdk.configure.javadoc.tab"), ProjectRootType.JAVADOC, new FileChooserDescriptor(false, true, true, false, true, true), true);
 
     myMainPanel = new JPanel(new GridBagLayout());
     myNameField = new JTextField();
 
-    JLabel nameLabel = new JLabel("Name:");
-    nameLabel.setDisplayedMnemonic('N');
+    JLabel nameLabel = new JLabel(ProjectBundle.message("sdk.configure.name.label"));
     nameLabel.setLabelFor(myNameField);
     myMainPanel.add(nameLabel,   new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 2, 2), 0, 0));
     myMainPanel.add(myNameField, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 2, 2, 0), 0, 0));
@@ -142,9 +142,9 @@ public class SdkEditor implements Configurable{
 
   private String getHomeFieldLabelValue() {
     if (mySdk != null) {
-      return mySdk.getSdkType().getPresentableName() + " home path:";
+      return ProjectBundle.message("sdk.configure.type.home.path", mySdk.getSdkType().getPresentableName());
     }
-    return "SDK home path:";
+    return ProjectBundle.message("sdk.configure.general.home.path");
   }
 
   public boolean isModified(){
@@ -172,7 +172,7 @@ public class SdkEditor implements Configurable{
             focusToNameField();
           }
         });
-        throw new ConfigurationException("Please specify SDK name");
+        throw new ConfigurationException(ProjectBundle.message("sdk.list.name.required.error"));
       }
     }
     if (mySdk != null){
@@ -273,10 +273,10 @@ public class SdkEditor implements Configurable{
     final Color fg;
     if (absolutePath != null && absolutePath.length() > 0) {
       final File homeDir = new File(absolutePath);
-      fg = homeDir.isDirectory() && homeDir.exists()? UIManager.getColor("field.foreground") : PathEditor.INVALID_COLOR;
+      fg = homeDir.isDirectory() && homeDir.exists()? UIUtil.getFieldForegroundColor() : PathEditor.INVALID_COLOR;
     }
     else {
-      fg = UIManager.getColor("field.foreground");
+      fg = UIUtil.getFieldForegroundColor();
     }
     myHomeComponent.getTextField().setForeground(fg);
   }
@@ -288,21 +288,21 @@ public class SdkEditor implements Configurable{
           boolean valid = sdkType.isValidSdkHome(files[0].getPath());
           if (!valid){
             if (SystemInfo.isMac) {
-              valid = sdkType.isValidSdkHome(files[0].getPath() + "/Home");
+              valid = sdkType.isValidSdkHome(files[0].getPath() + MAC_HOME_PATH);
             }
             if (!valid) {
-              throw new Exception("The directory selected is not a valid home for " + sdkType.getPresentableName());
+              throw new Exception(ProjectBundle.message("sdk.configure.home.invalid.error", sdkType.getPresentableName()));
             }
           }
         }
       }
     };
-    descriptor.setTitle("Select Home Directory for " + sdkType.getPresentableName());
+    descriptor.setTitle(ProjectBundle.message("sdk.configure.home.title", sdkType.getPresentableName()));
     VirtualFile[] files = FileChooser.chooseFiles(parentComponent, descriptor, getSuggestedSdkRoot(sdkType));
     if (files.length != 0){
       final String path = files[0].getPath();
       if (sdkType.isValidSdkHome(path)) return path;
-      return SystemInfo.isMac && sdkType.isValidSdkHome(path + "/Home") ? path + "/Home" : null;
+      return SystemInfo.isMac && sdkType.isValidSdkHome(path + MAC_HOME_PATH) ? path + MAC_HOME_PATH : null;
     }
     return null;
   }

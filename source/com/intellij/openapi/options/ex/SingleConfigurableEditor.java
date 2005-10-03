@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.util.Alarm;
+import com.intellij.CommonBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -112,7 +113,7 @@ public class SingleConfigurableEditor extends DialogWrapper {
     private Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
     public ApplyAction() {
-      super("&Apply");
+      super(CommonBundle.getApplyButtonText());
       final Runnable updateRequest = new Runnable() {
         public void run() {
           if (!SingleConfigurableEditor.this.isShowing()) return;
@@ -137,7 +138,7 @@ public class SingleConfigurableEditor extends DialogWrapper {
       try {
         if (myConfigurable.isModified()) {
           myConfigurable.apply();
-          setCancelButtonText("Close");
+          setCancelButtonText(CommonBundle.getCloseButtonText());
         }
       }
       catch (ConfigurationException e) {

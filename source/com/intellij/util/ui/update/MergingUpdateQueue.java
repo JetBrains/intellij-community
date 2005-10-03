@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
+import org.jetbrains.annotations.NonNls;
+
 public class MergingUpdateQueue implements Runnable, Disposable {
 
   private boolean myActive;
@@ -32,7 +34,7 @@ public class MergingUpdateQueue implements Runnable, Disposable {
   private final JComponent myComponent;
   private boolean myPassThrough;
 
-  public MergingUpdateQueue(String name, int mergingTimeSpan, boolean isActive, JComponent component) {
+  public MergingUpdateQueue(@NonNls String name, int mergingTimeSpan, boolean isActive, JComponent component) {
     myMergingTimeSpan = mergingTimeSpan;
     myComponent = component;
     myName = name;
@@ -239,6 +241,7 @@ public class MergingUpdateQueue implements Runnable, Disposable {
     myWaiterForMerge.cancelAllRequests();
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return "Merger: " + myName + " active=" + myActive + " sheduled=" + mySheduledUpdates;
   }

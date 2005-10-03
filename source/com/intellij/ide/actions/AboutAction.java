@@ -3,6 +3,7 @@ package com.intellij.ide.actions;
 import com.intellij.Patches;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.license.LicenseManager;
 import com.intellij.ide.license.ui.LicenseUrls;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -17,16 +18,15 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.AnimatingSurface;
 import com.intellij.util.ImageLoader;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
+import java.text.DateFormat;
 
 public class AboutAction extends AnAction {
-  private static final String[] months = new String[]{"January", "February", "March", "April", "May", "June", "July",
-                                                      "August", "September", "October", "November", "December"};
-
   public void update(AnActionEvent e) {
     e.getPresentation().setVisible(!SystemInfo.isMacSystemMenu);
   }
@@ -136,19 +136,22 @@ public class AboutAction extends AnAction {
       ApplicationInfoEx ideInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
       Calendar cal = ideInfo.getBuildDate();
       q[0] = ideInfo.getFullApplicationName();
-      q[1] = "Build #" + ideInfo.getBuildNumber();
-      q[2] = "Built on " + months[cal.get(Calendar.MONTH)] + " " + cal.get(Calendar.DATE) + ", " +
-             cal.get(Calendar.YEAR);
+      q[1] = IdeBundle.message("aboutbox.build.number", ideInfo.getBuildNumber());
+      q[2] = IdeBundle.message("aboutbox.build.date", DateFormat.getDateInstance(DateFormat.LONG).format(cal.getTime()));
       q[3] = LicenseManager.getInstance().licensedToMessage();
       q[4] = LicenseManager.getInstance().licensedRestrictionsMessage();
       q[5] = "";
       {
         final Properties properties = System.getProperties();
-        q[6] = "JDK: " + properties.getProperty("java.version", "unknown");
-        q[7] = "VM: " + properties.getProperty("java.vm.name", "unknown");
-        q[8] = "Vendor: " + properties.getProperty("java.vendor", "unknown");
+        //noinspection HardCodedStringLiteral
+        q[6] = IdeBundle.message("aboutbox.jdk", properties.getProperty("java.version", "unknown"));
+        //noinspection HardCodedStringLiteral
+        q[7] = IdeBundle.message("aboutbox.vm", properties.getProperty("java.vm.name", "unknown"));
+        //noinspection HardCodedStringLiteral
+        q[8] = IdeBundle.message("aboutbox.vendor", properties.getProperty("java.vendor", "unknown"));
       }
       q[9] = "";
+      //noinspection HardCodedStringLiteral
       q[10] = "JetBrains s.r.o.";
       q[11] = LicenseUrls.getCompanyUrl();
       addMouseListener(new MouseAdapter() {
@@ -276,7 +279,8 @@ public class AboutAction extends AnAction {
       AlphaComposite ac = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, myAlpha);
       g2.setComposite(ac);
 
-      Font labelFont = UIManager.getFont("Label.font");
+      //noinspection HardCodedStringLiteral
+      Font labelFont = UIUtil.getLabelFont();
       Loop:
       for (int labelSize = 10; labelSize != 6; labelSize -= 1) {
         g2.setPaint(col);

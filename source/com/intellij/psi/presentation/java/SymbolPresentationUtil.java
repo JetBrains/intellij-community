@@ -37,6 +37,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 
 import javax.swing.*;
 
@@ -58,7 +59,8 @@ public class SymbolPresentationUtil {
       result = element.getContainingFile().getName();
     }
     else {
-      PsiElement container = element instanceof PsiClass ? ((PsiClass)element).getScope() : element.getParent();
+      PsiElement container = PsiTreeUtil.getParentOfType(element, PsiMember.class, PsiFile.class);
+
       if (container instanceof PsiClass) {
         String qName = ((PsiClass)container).getQualifiedName();
         if (qName != null) {
@@ -77,7 +79,7 @@ public class SymbolPresentationUtil {
     }
 
     if (result == null || result.trim().length() == 0) return null;
-    return "(in " + result + ")";
+    return PsiBundle.message("aux.context.display", result);
   }
 
   public static ItemPresentation getMethodPresentation(final PsiMethod psiMethod) {

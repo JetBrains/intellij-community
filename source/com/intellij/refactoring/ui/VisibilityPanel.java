@@ -11,6 +11,7 @@ package com.intellij.refactoring.ui;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiModifier;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.refactoring.RefactoringBundle;
 
 import javax.swing.*;
 import java.awt.event.ItemEvent;
@@ -27,7 +28,7 @@ public class VisibilityPanel extends JPanel {
   private JRadioButton myRbPublic;
 
   public VisibilityPanel(boolean hasAsIs) {
-    setBorder(IdeBorderFactory.createTitledBorder("Visibility"));
+    setBorder(IdeBorderFactory.createTitledBorder(RefactoringBundle.message("visibility.border.title")));
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
     ButtonGroup bg = new ButtonGroup();
 
@@ -40,8 +41,8 @@ public class VisibilityPanel extends JPanel {
     };
 
     if(hasAsIs) {
-      myRbAsIs = new JRadioButton("As is");
-      myRbAsIs.setMnemonic('a');
+      myRbAsIs = new JRadioButton();
+      myRbAsIs.setText(RefactoringBundle.getVisibilityAsIs());
       myRbAsIs.addItemListener(listener);
       add(myRbAsIs);
       bg.add(myRbAsIs);
@@ -49,29 +50,29 @@ public class VisibilityPanel extends JPanel {
 
 
 
-    myRbPrivate = new JRadioButton("Private");
-    myRbPrivate.setMnemonic('v');
+    myRbPrivate = new JRadioButton();
+    myRbPrivate.setText(RefactoringBundle.getVisibilityPrivate());
     myRbPrivate.addItemListener(listener);
     myRbPrivate.setFocusable(false);
     add(myRbPrivate);
     bg.add(myRbPrivate);
 
-    myRbPackageLocal = new JRadioButton("Package local");
-    myRbPackageLocal.setMnemonic('k');
+    myRbPackageLocal = new JRadioButton();
+    myRbPackageLocal.setText(RefactoringBundle.getVisibilityPackageLocal());
     myRbPackageLocal.addItemListener(listener);
     myRbPackageLocal.setFocusable(false);
     add(myRbPackageLocal);
     bg.add(myRbPackageLocal);
 
-    myRbProtected = new JRadioButton("Protected");
-    myRbProtected.setMnemonic('o');
+    myRbProtected = new JRadioButton();
+    myRbProtected.setText(RefactoringBundle.getVisibilityProtected());
     myRbProtected.addItemListener(listener);
     myRbProtected.setFocusable(false);
     add(myRbProtected);
     bg.add(myRbProtected);
 
-    myRbPublic = new JRadioButton("Public");
-    myRbPublic.setMnemonic('b');
+    myRbPublic = new JRadioButton();
+    myRbPublic.setText(RefactoringBundle.getVisibilityPublic());
     myRbPublic.addItemListener(listener);
     myRbPublic.setFocusable(false);
     add(myRbPublic);
@@ -133,9 +134,9 @@ public class VisibilityPanel extends JPanel {
     Object[] list = listenerList.getListenerList();
 
     String visibility = getVisibility();
-    for (int i = 0; i < list.length; i++) {
-      if(list[i] instanceof StateChanged) {
-        ((StateChanged) list[i]).visibilityChanged(visibility);
+    for (Object obj : list) {
+      if (obj instanceof StateChanged) {
+        ((StateChanged)obj).visibilityChanged(visibility);
       }
     }
   }

@@ -14,6 +14,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiExpression;
 import com.sun.jdi.Value;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -25,11 +26,11 @@ import java.util.List;
  * Time: 1:25:15 PM
  */
 public final class EnumerationChildrenRenderer extends com.intellij.debugger.ui.tree.render.ReferenceRenderer implements ChildrenRenderer{
-  public static final String UNIQUE_ID = "EnumerationChildrenRenderer";
+  public static final @NonNls String UNIQUE_ID = "EnumerationChildrenRenderer";
 
   private List<Pair<String, TextWithImports>> myChildren;
-  public static final String CHILDREN_EXPRESSION = "ChildrenExpression";
-  public static final String CHILD_NAME = "Name";
+  public static final @NonNls String CHILDREN_EXPRESSION = "ChildrenExpression";
+  public static final @NonNls String CHILD_NAME = "Name";
 
   public EnumerationChildrenRenderer() {
     this(new ArrayList<Pair<String, TextWithImports>>());

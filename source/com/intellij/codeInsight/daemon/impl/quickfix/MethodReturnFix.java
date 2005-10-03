@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -9,11 +10,8 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
-
-import java.text.MessageFormat;
 
 public class MethodReturnFix implements IntentionAction {
   private final PsiMethod myMethod;
@@ -27,16 +25,13 @@ public class MethodReturnFix implements IntentionAction {
   }
 
   public String getText() {
-    String text = MessageFormat.format("Make ''{0}'' return ''{1}''",
-        new Object[]{
-          myMethod.getName(),
-          myReturnType.getCanonicalText(),
-        });
-    return text;
+    return QuickFixBundle.message("fix.return.type.text",
+                                  myMethod.getName(),
+                                  myReturnType.getCanonicalText());
   }
 
   public String getFamilyName() {
-    return "Fix Return Type";
+    return QuickFixBundle.message("fix.return.type.family");
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
@@ -52,7 +47,7 @@ public class MethodReturnFix implements IntentionAction {
 
   public void invoke(Project project, Editor editor, PsiFile file) {
     if (!CodeInsightUtil.prepareFileForWrite(myMethod.getContainingFile())) return;
-    PsiMethod method = myFixWholeHierarchy ? PsiSuperMethodUtil.findDeepestSuperMethod(myMethod) : myMethod;
+    PsiMethod method = myFixWholeHierarchy ? myMethod.findDeepestSuperMethod() : myMethod;
     if (method == null) method = myMethod;
     ChangeSignatureProcessor processor = new ChangeSignatureProcessor(myMethod.getProject(),
                                                                       method,

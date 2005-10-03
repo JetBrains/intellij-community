@@ -24,7 +24,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -44,6 +43,7 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElementDecl;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.refactoring.PackageWrapper;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.ui.InfoDialog;
 import com.intellij.usageView.UsageInfo;
@@ -52,6 +52,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.util.*;
@@ -167,6 +168,7 @@ public class RefactoringUtil {
     }
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static boolean isValidName(final Project project, final PsiElement psiElement, final String newName) {
     if (newName == null) {
       return false;
@@ -180,7 +182,7 @@ public class RefactoringUtil {
     if (psiElement instanceof WebDirectoryElement) {
       return newName.indexOf('/') < 0;
     }
-    if (psiElement instanceof XmlTag || 
+    if (psiElement instanceof XmlTag ||
         psiElement instanceof XmlAttribute ||
         psiElement instanceof XmlElementDecl
        ) {
@@ -646,7 +648,7 @@ public class RefactoringUtil {
     if (type == null) {
       if (expr instanceof PsiArrayInitializerExpression) {
         PsiExpression[] initializers = ((PsiArrayInitializerExpression)expr).getInitializers();
-        if (initializers != null && initializers.length > 0) {
+        if (initializers.length > 0) {
           PsiType initType = getTypeByExpression(initializers[0]);
           if (initType == null) return null;
           return initType.createArrayType();
@@ -1312,40 +1314,15 @@ public class RefactoringUtil {
     return current;
   }
 
-  public static String calculatePsiElementDescriptionList(PsiElement[] elements, StringBuffer buffer) {
-    if (elements.length == 1) {
-      buffer.append(UsageViewUtil.getType(elements[0]));
-      buffer.append(' ');
-      buffer.append(UsageViewUtil.getDescriptiveName(elements[0]));
+  public static String calculatePsiElementDescriptionList(PsiElement[] elements) {
+    StringBuffer buffer = new StringBuffer();
+    for (int i = 0; i < elements.length; i++) {
+      if (i > 0) buffer.append(" ,");
+      buffer.append(buffer.append(UsageViewUtil.getType(elements[i])));
+      buffer.append(" ");
+      buffer.append(UsageViewUtil.getDescriptiveName(elements[i]));
     }
-    else {
-      Map<String, Ref<Integer>> map = new HashMap<String, Ref<Integer>>();
-      for (PsiElement element : elements) {
-        final String type = UsageViewUtil.getType(element);
-        Ref<Integer> ref = map.get(type);
-        if (ref == null) {
-          ref = Ref.create(new Integer(0));
-          map.put(type, ref);
-        }
-        ref.set(new Integer(ref.get().intValue() + 1));
-      }
 
-      final Set<Map.Entry<String, Ref<Integer>>> entries = map.entrySet();
-      int index = 0;
-      for (Map.Entry<String, Ref<Integer>> entry : entries) {
-        final String type = entry.getKey();
-        final int count = entry.getValue().get().intValue();
-        if (index > 0 && index + 1 < entries.size()) {
-          buffer.append(" ,");
-        }
-        else if (index > 0 && index == entries.size()) {
-          buffer.append(" and ");
-        }
-        buffer.append(count);
-        buffer.append(" ");
-        buffer.append(count > 1 ? type : StringUtil.pluralize(type));
-      }
-    }
     return buffer.toString();
   }
 
@@ -1412,12 +1389,13 @@ public class RefactoringUtil {
   }
 
   public static void processIncorrectOperation(final Project project, IncorrectOperationException e) {
-    final String message = e.getMessage();
+    @NonNls final String message = e.getMessage();
     final int index = message != null ? message.indexOf("java.io.IOException") : -1;
     if (index >= 0) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
-            Messages.showMessageDialog(project, message.substring(index + "java.io.IOException".length()), "Error",
+            Messages.showMessageDialog(project, message.substring(index + "java.io.IOException".length()),
+                                       RefactoringBundle.message("error.title"),
                                        Messages.getErrorIcon());
           }
         });
@@ -1470,10 +1448,9 @@ public class RefactoringUtil {
             final String scopeDescription = ConflictsUtil.htmlEmphasize(ConflictsUtil.getDescription(ConflictsUtil.getContainer(reference),
                                                                                                      true));
             final String message =
-              ConflictsUtil.capitalize(ConflictsUtil.htmlEmphasize(ConflictsUtil.getDescription(resolved, true))) +
-              ", referenced in " + scopeDescription +
-              ", will not be accessible in module " +
-              ConflictsUtil.htmlEmphasize(targetModule.getName());
+              RefactoringBundle.message("0.referenced.in.1.will.not.be.accessible.in.module.2",
+                                        ConflictsUtil.capitalize(ConflictsUtil.htmlEmphasize(ConflictsUtil.getDescription(resolved, true))),
+                                        scopeDescription, ConflictsUtil.htmlEmphasize(targetModule.getName()));
             conflicts.add(message);
             reported.add(resolved);
           }
@@ -1501,10 +1478,10 @@ public class RefactoringUtil {
                                                                                                      true));
             Module module = ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(element.getContainingFile().getVirtualFile());
             final String message =
-                ConflictsUtil.capitalize(ConflictsUtil.htmlEmphasize(ConflictsUtil.getDescription(moveRenameUsageInfo.referencedElement, true))) +
-                ", referenced in " + scopeDescription +
-                ", will not be accessible from module " +
-                ConflictsUtil.htmlEmphasize(module.getName());
+              RefactoringBundle.message("0.referenced.in.1.will.not.be.accessible.from.module.2", ConflictsUtil.capitalize(
+                ConflictsUtil.htmlEmphasize(ConflictsUtil.getDescription(moveRenameUsageInfo.referencedElement, true))),
+                                   scopeDescription,
+                                   ConflictsUtil.htmlEmphasize(module.getName()));
             conflicts.add(message);
           }
         }

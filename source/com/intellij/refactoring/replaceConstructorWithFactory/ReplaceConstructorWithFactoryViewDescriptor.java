@@ -2,6 +2,7 @@ package com.intellij.refactoring.replaceConstructorWithFactory;
 
 import com.intellij.psi.*;
 import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
 
@@ -46,9 +47,9 @@ class ReplaceConstructorWithFactoryViewDescriptor extends UsageViewDescriptorAda
 
   public String getProcessedElementsHeader() {
     if (myConstructor != null) {
-      return "Replace constructor with factory method";
+      return RefactoringBundle.message("replace.constructor.with.factory.method");
     } else {
-      return "Replace default constructor with factory method";
+      return RefactoringBundle.message("replace.default.constructor.with.factory.method");
     }
   }
 }

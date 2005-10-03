@@ -19,6 +19,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.psi.PsiElement;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -28,10 +29,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TreeState implements JDOMExternalizable {
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private static final String PATH = "PATH";
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private static final String PATH_ELEMENT = "PATH_ELEMENT";
+  @NonNls private static final String PATH = "PATH";
+  @NonNls private static final String PATH_ELEMENT = "PATH_ELEMENT";
 
   static class PathElement implements JDOMExternalizable {
     public String myItemId;

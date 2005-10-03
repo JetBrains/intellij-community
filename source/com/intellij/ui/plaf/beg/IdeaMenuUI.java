@@ -46,7 +46,7 @@ public class IdeaMenuUI extends BasicMenuUI{
 
   protected void installDefaults() {
     super.installDefaults();
-    Integer integer = (Integer)UIManager.get(getPropertyPrefix() + ".maxGutterIconWidth");
+    Integer integer = (Integer)UIUtil.getPropertyMaxGutterIconWidth(getPropertyPrefix());
     if (integer != null){
       myMaxGutterIconWidth = integer.intValue();
     }
@@ -142,9 +142,10 @@ public class IdeaMenuUI extends BasicMenuUI{
         }
         BasicGraphicsUtils.drawString(g, s1, buttonmodel.getMnemonic(), ourTextRect.x, ourTextRect.y + fontmetrics.getAscent());
       }
-      else
-        if (UIManager.get("MenuItem.disabledForeground") instanceof Color){
-          g.setColor(UIManager.getColor("MenuItem.disabledForeground"));
+      else {
+        final Object disabledForeground = UIUtil.getMenuItemDisabledForeground();
+        if (disabledForeground instanceof Color){
+          g.setColor((Color)disabledForeground);
           BasicGraphicsUtils.drawString(g, s1, buttonmodel.getMnemonic(), ourTextRect.x, ourTextRect.y + fontmetrics.getAscent());
         }
         else{
@@ -153,6 +154,7 @@ public class IdeaMenuUI extends BasicMenuUI{
           g.setColor(jMenu.getBackground().darker());
           BasicGraphicsUtils.drawString(g, s1, buttonmodel.getMnemonic(), ourTextRect.x - 1, (ourTextRect.y + fontmetrics.getAscent()) - 1);
         }
+      }
     }
     if (arrowIcon != null){
       if (buttonmodel.isArmed() || buttonmodel.isSelected()){
@@ -371,7 +373,7 @@ public class IdeaMenuUI extends BasicMenuUI{
    * Handles the mnemonic handling for the JMenu and JMenuItems.
    */
   private final class SUN_BUG_ID_4738042_Patch implements MenuKeyListener {
-    private final boolean crossMenuMnemonic = UIManager.getBoolean("Menu.crossMenuMnemonic");
+    private final boolean crossMenuMnemonic = UIUtil.isMenuCrossMenuMnemonics();
 
     private JPopupMenu getActivePopupMenu(){
       MenuElement[] path = MenuSelectionManager.defaultManager().

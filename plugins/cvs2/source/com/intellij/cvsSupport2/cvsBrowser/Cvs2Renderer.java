@@ -2,7 +2,7 @@ package com.intellij.cvsSupport2.cvsBrowser;
 
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.ui.IdeaUIManager;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 
@@ -15,7 +15,7 @@ public class Cvs2Renderer extends ColoredTreeCellRenderer {
                                     int row,
                                     boolean hasFocus) {
     append(value.toString(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN,
-                                                      IdeaUIManager.getTreeForegroung()));
+                                                      UIUtil.getTreeForeground()));
     if (value instanceof CvsElement) {
       setIcon(((CvsElement)value).getIcon(expanded));
     } else if (value instanceof LoadingNode) {

@@ -5,6 +5,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.event.IMessageListener;
 import org.netbeans.lib.cvsclient.file.ICvsFileSystem;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.util.*;
@@ -15,19 +16,21 @@ import java.util.regex.Pattern;
  * author: lesya
  */
 public class UpdatedFilesManager implements IMessageListener {
-  private final static Pattern MERGE_PATTERN = Pattern.compile("(cvs server: revision )(.*)( from repository is now in )(.*)");
-  private final static Pattern MERGING_DIFFERENCES_PATTERN = Pattern.compile("(Merging differences between )(.*)( and )(.*)( into )(.*)");
+  @NonNls private final static Pattern MERGE_PATTERN = Pattern.compile("(cvs server: revision )(.*)( from repository is now in )(.*)");
+  @NonNls private final static Pattern MERGING_DIFFERENCES_PATTERN = Pattern.compile("(Merging differences between )(.*)( and )(.*)( into )(.*)");
 
-  private final static String MERGED_FILE_MESSAGE_PREFIX = "RCS file: ";
-  private final static String MERGED_FILE_MESSAGE_POSTFIX = ",v";
+  @NonNls private final static String MERGED_FILE_MESSAGE_PREFIX = "RCS file: ";
+  @NonNls private final static String MERGED_FILE_MESSAGE_POSTFIX = ",v";
 
   private final Map<File, CurrentMergedFileInfo> myMergedFiles = new HashMap<File, CurrentMergedFileInfo>();
   private final Set<File> myCreatedBySecondParty = new HashSet<File>();
 
   private ICvsFileSystem myCvsFileSystem;
-  public static final String CREATED_BY_SECOND_PARTY_PREFIX = "cvs server: conflict: ";
-  public static final String CREATED_BY_SECOND_PARTY_POSTFIX1 = " created independently by second party";
-  public static final String CREATED_BY_SECOND_PARTY_POSTFIX2 = " has been added, but already exists";
+  @NonNls public static final String CREATED_BY_SECOND_PARTY_PREFIX = "cvs server: conflict: ";
+  @NonNls public static final String CREATED_BY_SECOND_PARTY_POSTFIX1 = " created independently by second party";
+  @NonNls public static final String CREATED_BY_SECOND_PARTY_POSTFIX2 = " has been added, but already exists";
+
+
   private CurrentMergedFileInfo myCurrentMergedFile;
   private final Collection<Entry> myNewlyCreatedEntries = new HashSet<Entry>();
   private Collection<File> myNonUpdatedFiles = new HashSet<File>();

@@ -12,6 +12,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ide.util.TreeClassChooserDialog;
 import com.intellij.ide.util.TreeClassChooser;
+import com.intellij.debugger.DebuggerBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -36,10 +37,8 @@ public class ExceptionBreakpointPropertiesPanel extends BreakpointPropertiesPane
   protected JComponent createSpecialBox() {
     JPanel _panel, _panel0;
 
-    myNotifyCaughtCheckBox = new JCheckBox("Caught exception");
-    myNotifyCaughtCheckBox.setMnemonic('N');
-    myNotifyUncaughtCheckBox = new JCheckBox("Uncaught exception");
-    myNotifyUncaughtCheckBox.setMnemonic('o');
+    myNotifyCaughtCheckBox = new JCheckBox(DebuggerBundle.message("label.exception.breakpoint.properties.panel.caught.exception"));
+    myNotifyUncaughtCheckBox = new JCheckBox(DebuggerBundle.message("label.exception.breakpoint.properties.panel.uncaught.exception"));
 
     Box notificationsBox = Box.createVerticalBox();
     _panel = new JPanel(new BorderLayout());
@@ -55,7 +54,7 @@ public class ExceptionBreakpointPropertiesPanel extends BreakpointPropertiesPane
     _panel0.add(Box.createHorizontalStrut(3), BorderLayout.WEST);
     _panel0.add(Box.createHorizontalStrut(3), BorderLayout.EAST);
     _panel.add(_panel0, BorderLayout.NORTH);
-    _panel.setBorder(IdeBorderFactory.createTitledBorder("Notifications"));
+    _panel.setBorder(IdeBorderFactory.createTitledBorder(DebuggerBundle.message("label.exception.breakpoint.properties.panel.group.notifications")));
 
     ActionListener listener = new ActionListener() {
       public void actionPerformed(ActionEvent e) {

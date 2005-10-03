@@ -8,6 +8,7 @@ import com.intellij.util.ui.ItemRemovable;
 import com.intellij.ui.TableUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.DebuggerBundle;
 
 import javax.swing.table.AbstractTableModel;
 import java.util.*;
@@ -83,9 +84,9 @@ public class BreakpointTableModel extends AbstractTableModel implements ItemRemo
   public String getColumnName(int column) {
     switch (column) {
     case ENABLED_STATE:
-      return "Enabled";
+      return DebuggerBundle.message("breakpoint.table.header.column.enabled");
     case NAME:
-      return "Name";
+      return DebuggerBundle.message("breakpoint.table.header.column.name");
     default           :
       return "";
     }

@@ -15,6 +15,8 @@
 */
 package com.intellij.util.concurrency;
 
+import org.jetbrains.annotations.NonNls;
+
 import java.util.LinkedList;
 
 public class WorkerThread extends Thread{
@@ -22,7 +24,7 @@ public class WorkerThread extends Thread{
   private boolean myToDispose = false;
   private boolean myDisposed = false;
 
-  public WorkerThread(String name) {
+  public WorkerThread(@NonNls String name) {
     super(name);
   }
 

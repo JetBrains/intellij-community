@@ -1,6 +1,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
@@ -19,6 +20,7 @@ import com.intellij.ui.SpeedSearchBase;
 import com.intellij.ui.TableUtil;
 import com.intellij.util.net.HTTPProxySettingsDialog;
 import com.intellij.util.net.IOExceptionDialog;
+import com.intellij.CommonBundle;
 
 import javax.swing.*;
 import javax.swing.event.*;
@@ -34,6 +36,8 @@ import java.util.*;
 import java.util.List;
 import java.util.zip.ZipException;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * Created by IntelliJ IDEA.
  * User: stathik
@@ -48,15 +52,15 @@ public class PluginManagerMain {
   public static final int AVAILABLE_TAB = 1;
   //public static final int CART_TAB = 2;
 
-  public static final String TEXT_PREFIX = "<html><body style=\"font-family: Arial; font-size: 12pt;\">";
-  public static final String TEXT_SUFIX = "</body></html>";
+  @NonNls public static final String TEXT_PREFIX = "<html><body style=\"font-family: Arial; font-size: 12pt;\">";
+  @NonNls public static final String TEXT_SUFIX = "</body></html>";
 
-  public static final String HTML_PREFIX = "<html><body><a href=\"\">";
-  public static final String HTML_SUFIX = "</a></body></html>";
+  @NonNls public static final String HTML_PREFIX = "<html><body><a href=\"\">";
+  @NonNls public static final String HTML_SUFIX = "</a></body></html>";
 
-  public static final String NOT_SPECIFIED = "(not specified)";
+  public static final String NOT_SPECIFIED = IdeBundle.message("plugin.status.not.specified");
 
-  public static final String INSTALLED_TAB_NAME = "Installed";
+  public static final String INSTALLED_TAB_NAME = IdeBundle.message("tab.plugins.installed");
 
   private JPanel myToolbarPanel;
   private JPanel main;
@@ -217,9 +221,11 @@ public class PluginManagerMain {
 
     myToolbarPanel.add(toolbar.getComponent(), BorderLayout.WEST);
 
+    //noinspection HardCodedStringLiteral
     myDescriptionTextArea.setContentType("text/html");
     myDescriptionTextArea.addHyperlinkListener(new MyHyperlinkListener());
 
+    //noinspection HardCodedStringLiteral
     myChangeNotesTextArea.setContentType("text/html");
     myChangeNotesTextArea.addHyperlinkListener(new MyHyperlinkListener());
 
@@ -284,7 +290,7 @@ public class PluginManagerMain {
     /*
     httpProxySettingsLabel.setCursor(new Cursor (Cursor.HAND_CURSOR));
     httpProxySettingsLabel.addMouseListener(new MouseAdapter () {
-      public void mouseClicked(MouseEvent e) {
+      public void doAction(MouseEvent e) {
         HTTPProxySettingsDialog settingsDialog = new HTTPProxySettingsDialog();
         settingsDialog.pack();
         settingsDialog.show();
@@ -417,7 +423,8 @@ public class PluginManagerMain {
       if (root == null) {
         root = loadPluginList();
         if (root == null) {
-          Messages.showErrorDialog(getMainPanel(), "List of plugins was not loaded.", "Plugins");
+          Messages.showErrorDialog(getMainPanel(), IdeBundle.message("error.list.of.plugins.was.not.loaded"),
+                                   IdeBundle.message("title.plugins"));
           tabs.setSelectedIndex(INSTALLED_TAB);
 
           return;
@@ -437,7 +444,7 @@ public class PluginManagerMain {
         availableScrollPane.getViewport().setBackground(availablePluginTable.getBackground());
         availableScrollPane.getViewport().setView(availablePluginTable);
 
-        tabs.setTitleAt(AVAILABLE_TAB, "Available (" + availablePluginTable.getRowCount() + ")");
+        tabs.setTitleAt(AVAILABLE_TAB, IdeBundle.message("label.plugins.available.count", availablePluginTable.getRowCount()));
 
         availablePluginTable.requestFocus();
 
@@ -467,7 +474,8 @@ public class PluginManagerMain {
       }
     } catch (RuntimeException ex) {
       ex.printStackTrace();
-      Messages.showErrorDialog(getMainPanel(), "Available plugins list is not loaded", "Error");
+      Messages.showErrorDialog(getMainPanel(), IdeBundle.message("error.available.plugins.list.is.not.loaded"),
+                               CommonBundle.getErrorTitle());
     }
   }
 
@@ -578,7 +586,8 @@ public class PluginManagerMain {
       actionGroup.addSeparator();
       */
 
-      syncAction = new AnAction("Synchronize with Plugin Repository", "Synchronize with Plugin Repository",
+      syncAction = new AnAction(IdeBundle.message("action.synchronize.with.plugin.repository"),
+                                IdeBundle.message("action.synchronize.with.plugin.repository"),
                                 IconLoader.getIcon("/actions/sync.png")) {
         public void update(AnActionEvent e) {
           Presentation presentation = e.getPresentation();
@@ -597,11 +606,13 @@ public class PluginManagerMain {
           loadAvailablePlugins();
         }
       };
+      //noinspection HardCodedStringLiteral
       syncAction.registerCustomShortcutSet(
         new CustomShortcutSet (KeymapManager.getInstance().getActiveKeymap().getShortcuts("Synchronize")), main);
       actionGroup.add(syncAction);
 
-      updatePluginsAction = new AnAction("Update Installed Plugins", "Update Installed Plugins",
+      updatePluginsAction = new AnAction(IdeBundle.message("action.update.installed.plugins"),
+                                         IdeBundle.message("action.update.installed.plugins"),
                                          IconLoader.getIcon("/actions/refresh.png")) {
 
         public void actionPerformed(AnActionEvent e) {
@@ -617,7 +628,8 @@ public class PluginManagerMain {
 
                 if (updateList.size() == 0) {
                   Messages.showMessageDialog(main,
-                                             "Nothing to update", "Plugin Manager", Messages.getInformationIcon());
+                                             IdeBundle.message("message.nothing.to.update"),
+                                             IdeBundle.message("title.plugin.manager"), Messages.getInformationIcon());
                   break;
                 }
                 else {
@@ -645,7 +657,8 @@ public class PluginManagerMain {
                 }
               }
               catch (IOException e1) {
-                if (!IOExceptionDialog.showErrorDialog(e1, "Update Installed Plugins", "Plugins updating failed")) {
+                if (!IOExceptionDialog.showErrorDialog(e1, IdeBundle.message("title.update.installed.plugins"),
+                                                       IdeBundle.message("error.plugins.updating.failed"))) {
                   break;
                 }
                 else {
@@ -688,8 +701,8 @@ public class PluginManagerMain {
       //  new CustomShortcutSet (KeymapManager.getInstance().getActiveKeymap().getShortcuts("Find")), main);
       //actionGroup.add(findPluginsAction);
 
-      final String downloadMessage = "Download and Install Plugin";
-      final String updateMessage = "Update Plugin";
+      final String downloadMessage = IdeBundle.message("action.download.and.install.plugin");
+      final String updateMessage = IdeBundle.message("action.update.plugin");
       installPluginAction = new AnAction(downloadMessage,
                                          downloadMessage,
                                          IconLoader.getIcon("/actions/install.png")) {
@@ -750,7 +763,7 @@ public class PluginManagerMain {
                     }
                   }
                   if (!smthFoundToUpdate){
-                    Messages.showMessageDialog(main, "Nothing to update", "Plugin Manager", Messages.getInformationIcon());
+                    Messages.showMessageDialog(main, IdeBundle.message("message.nothing.to.update"), IdeBundle.message("title.plugin.manager"), Messages.getInformationIcon());
                     return;
                   }
                 }
@@ -764,8 +777,10 @@ public class PluginManagerMain {
 
               final String message = isUpdate ? updateMessage : downloadMessage;
               if (Messages.showYesNoDialog(main,
-                                           "Would you like to " + message.toLowerCase() + "\"" + pluginNode.getName() + "\"?",
-                                           message, Messages.getQuestionIcon()) == 0) {
+                                           (isUpdate ? IdeBundle.message("prompt.download.and.install.plugin", pluginNode.getName())
+                                           : IdeBundle.message("prompt.update.plugin", pluginNode.getName())),
+                                           message,
+                                           Messages.getQuestionIcon()) == 0) {
                 if (downloadPlugin(pluginNode)) {
                   requireShutdown = true;
                   if (availablePluginTable != null){
@@ -776,7 +791,7 @@ public class PluginManagerMain {
               break;
             }
             catch (IOException e1) {
-              if (!IOExceptionDialog.showErrorDialog(e1, downloadMessage, "Plugin download failed")) {
+              if (!IOExceptionDialog.showErrorDialog(e1, downloadMessage, IdeBundle.message("error.plugin.download.failed"))) {
                 break;
               }
               else {
@@ -789,8 +804,8 @@ public class PluginManagerMain {
       };
       actionGroup.add(installPluginAction);
 
-      uninstallPluginAction = new AnAction("Uninstall Plugin",
-                                           "Uninstall Plugin",
+      uninstallPluginAction = new AnAction(IdeBundle.message("action.uninstall.plugin"),
+                                           IdeBundle.message("action.uninstall.plugin"),
                                            IconLoader.getIcon("/actions/uninstall.png")) {
         public void update(AnActionEvent e) {
           Presentation presentation = e.getPresentation();
@@ -812,9 +827,8 @@ public class PluginManagerMain {
           if (tabs.getSelectedIndex() == INSTALLED_TAB) {
             PluginDescriptor pluginDescriptor = installedPluginTable.getSelectedObject();
             if (pluginDescriptor != null) {
-              if (Messages.showYesNoDialog(main, "Do you really want to uninstall plugin \"" +
-                                                      pluginDescriptor.getName() + "\"?", "Plugin Uninstall",
-                                                Messages.getQuestionIcon()) == 0) {
+              if (Messages.showYesNoDialog(main, IdeBundle.message("prompt.uninstall.plugin", pluginDescriptor.getName()),
+                                           IdeBundle.message("title.plugin.uninstall"), Messages.getQuestionIcon()) == 0) {
                 pluginId = pluginDescriptor.getPluginId();
                 pluginDescriptor.setDeleted(true);
               }
@@ -875,10 +889,11 @@ public class PluginManagerMain {
     StatusProcess statusProcess = new StatusProcess();
     do {
       boolean canceled = ApplicationManager.getApplication().runProcessWithProgressSynchronously(
-        statusProcess, "Downloading List of Plugins", true, null);
+        statusProcess, IdeBundle.message("progress.downloading.list.of.plugins"), true, null);
       if (canceled && statusProcess.getException() != null) {
         if (statusProcess.getException() instanceof IOException) {
-          if (! IOExceptionDialog.showErrorDialog((IOException)statusProcess.getException(), "Plugin Manager", "Could not download a list of plugins")) {
+          if (! IOExceptionDialog.showErrorDialog((IOException)statusProcess.getException(), IdeBundle.message("title.plugin.manager"),
+                                                  IdeBundle.message("error.could.not.download.list.of.plugins"))) {
             break;
           }
         } else
@@ -933,7 +948,7 @@ public class PluginManagerMain {
           public void run() {
             result[0] = PluginInstaller.prepareToInstall(plugins);
           }
-        }, "Download Plugins", true, null);
+        }, IdeBundle.message("progress.download.plugins"), true, null);
     } catch (RuntimeException e) {
       if (e.getCause() != null && e.getCause() instanceof IOException)
         throw (IOException)e.getCause();
@@ -958,8 +973,8 @@ public class PluginManagerMain {
             } catch (ZipException e) {
               ApplicationManager.getApplication().invokeLater(new Runnable() {
                 public void run() {
-                  Messages.showErrorDialog("Plugin \"" + pluginNode.getName() + "\" has problems in ZIP archive and will be not installed.",
-                                           "Installing Plugin");
+                  Messages.showErrorDialog(IdeBundle.message("error.plugin.zip.problems", pluginNode.getName()),
+                                           IdeBundle.message("title.installing.plugin"));
 
                 }
               });
@@ -967,7 +982,7 @@ public class PluginManagerMain {
               throw new RuntimeException (e);
             }
           }
-        }, "Download Plugin \"" + pluginNode.getName() + "\"", true, null);
+        }, IdeBundle.message("progress.download.plugin", pluginNode.getName()), true, null);
     } catch (RuntimeException e) {
       if (e.getCause() != null && e.getCause() instanceof IOException)
         throw (IOException)e.getCause();
@@ -997,12 +1012,12 @@ public class PluginManagerMain {
         public int compare(final PluginNode o1, final PluginNode o2) {
           if (o1 == null) return 1;
           if (o2 == null) return -1;
-          return o1.getName().compareToIgnoreCase(o2.getName());  
+          return o1.getName().compareToIgnoreCase(o2.getName());
         }
       });
       myModel.addAll(myPluginsToUpdate);
       init();
-      setTitle("Choose Plugins To Update");
+      setTitle(IdeBundle.message("title.choose.plugins.to.update"));
     }
 
     protected JComponent createCenterPanel() {

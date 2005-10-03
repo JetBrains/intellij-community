@@ -11,6 +11,7 @@ import com.intellij.debugger.requests.RequestManager;
 import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
@@ -261,7 +262,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     ClassPrepareRequest prepareRequest = myDebugProcess.getPositionManager().createPrepareRequest(requestor, classPosition);
 
     if(prepareRequest == null) {
-      setInvalid(requestor, "Breakpoint does not belong to any class");
+      setInvalid(requestor, DebuggerBundle.message("status.invalid.breakpoint.out.of.class"));
       return;
     }
 

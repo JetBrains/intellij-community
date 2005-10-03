@@ -31,6 +31,7 @@ public class EntryPointsManager implements JDOMExternalizable, ProjectComponent{
     return project.getComponent(EntryPointsManager.class);
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public void readExternal(Element element) throws InvalidDataException {
     Element entryPointsElement = element.getChild("entry_points");
     List content = entryPointsElement.getChildren();
@@ -43,6 +44,7 @@ public class EntryPointsManager implements JDOMExternalizable, ProjectComponent{
     }
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public void writeExternal(Element element) throws WriteExternalException {
     Element parentNode = element;
     Element entryPointsElement = new Element("entry_points");

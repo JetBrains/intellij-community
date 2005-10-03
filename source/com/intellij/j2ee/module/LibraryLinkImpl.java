@@ -33,6 +33,7 @@ package com.intellij.j2ee.module;
 
 import com.intellij.j2ee.make.MakeUtil;
 import com.intellij.j2ee.serverInstances.ApplicationServersManager;
+import com.intellij.j2ee.J2EEBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -50,6 +51,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.PathUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.util.*;
@@ -57,16 +59,17 @@ import java.util.*;
 public class LibraryLinkImpl extends LibraryLink implements ResolvableElement{
   private static final Map<J2EEPackagingMethod, String> methodToDescriptionForDirs = new HashMap<J2EEPackagingMethod, String>();
   private static final Map<J2EEPackagingMethod, String> methodToDescriptionForFiles = new HashMap<J2EEPackagingMethod, String>();
-  private static final String URL_ELEMENT_NAME = "url";
+  @NonNls private static final String URL_ELEMENT_NAME = "url";
+  @NonNls protected static final String TEMP_ELEMENT_NAME = "temp";
 
   static {
-    methodToDescriptionForDirs.put(J2EEPackagingMethod.DO_NOT_PACKAGE, "Do not package");
-    methodToDescriptionForDirs.put(J2EEPackagingMethod.COPY_FILES, "Copy directories to");
-    methodToDescriptionForDirs.put(J2EEPackagingMethod.JAR_AND_COPY_FILE, "JAR dirs and copy file to");
-    methodToDescriptionForDirs.put(J2EEPackagingMethod.JAR_AND_COPY_FILE_AND_LINK_VIA_MANIFEST, "JAR dirs, link via manifest and copy to");
-    methodToDescriptionForFiles.put(J2EEPackagingMethod.DO_NOT_PACKAGE, "Do not package");
-    methodToDescriptionForFiles.put(J2EEPackagingMethod.COPY_FILES, "Copy files to");
-    methodToDescriptionForFiles.put(J2EEPackagingMethod.COPY_FILES_AND_LINK_VIA_MANIFEST, "Link via manifest and copy files to");
+    methodToDescriptionForDirs.put(J2EEPackagingMethod.DO_NOT_PACKAGE, J2EEBundle.message("packaging.method.description.do.not.package"));
+    methodToDescriptionForDirs.put(J2EEPackagingMethod.COPY_FILES, J2EEBundle.message("packaging.method.description.copy.directories"));
+    methodToDescriptionForDirs.put(J2EEPackagingMethod.JAR_AND_COPY_FILE, J2EEBundle.message("packaging.method.description.jar.and.copy.file"));
+    methodToDescriptionForDirs.put(J2EEPackagingMethod.JAR_AND_COPY_FILE_AND_LINK_VIA_MANIFEST, J2EEBundle.message("packaging.method.description.jar.and.copy.file.and.link.via.manifest"));
+    methodToDescriptionForFiles.put(J2EEPackagingMethod.DO_NOT_PACKAGE, J2EEBundle.message("packaging.method.description.do.not.package"));
+    methodToDescriptionForFiles.put(J2EEPackagingMethod.COPY_FILES, J2EEBundle.message("packaging.method.description.copy.files"));
+    methodToDescriptionForFiles.put(J2EEPackagingMethod.COPY_FILES_AND_LINK_VIA_MANIFEST, J2EEBundle.message("packaging.method.description.copy.files.and.link.via.manifest"));
   }
 
   interface LibraryInfo extends JDOMExternalizable {
@@ -126,6 +129,7 @@ public class LibraryLinkImpl extends LibraryLink implements ResolvableElement{
 
   private static class LibraryInfoBasedOnLibrary implements LibraryInfo {
     private final Library myLibrary;
+    @NonNls protected static final String NAME_ATTR = "name";
 
     private LibraryInfoBasedOnLibrary(Library library) {
       myLibrary = library;
@@ -170,7 +174,7 @@ public class LibraryLinkImpl extends LibraryLink implements ResolvableElement{
         }
       }
       else {
-        element.setAttribute("name", name);
+        element.setAttribute(NAME_ATTR, name);
       }
     }
   }
@@ -194,13 +198,13 @@ public class LibraryLinkImpl extends LibraryLink implements ResolvableElement{
   }
 
   public String toString() {
-    return "Library Link: " + getPresentableName() + " -> " + getURI();
+    return J2EEBundle.message("library.link.string.presentation.presentablename.to.uri", getPresentableName(), getURI());
   }
 
   public String getPresentableName() {
     if (getName() != null) return getName();
     List<String> urls = myLibraryInfo.getUrls();
-    if (urls.size() == 0) return "Empty Library";
+    if (urls.size() == 0) return J2EEBundle.message("linrary.link.empty.library.presentable.name");
     final String url = urls.get(0);
     final String path = PathUtil.toPresentableUrl(url);
 
@@ -210,16 +214,16 @@ public class LibraryLinkImpl extends LibraryLink implements ResolvableElement{
   public String getDescription() {
     String levelName = myLibraryInfo.getLevel();
     if (levelName.equals(MODULE_LEVEL)) {
-      return "Module Library";
+      return J2EEBundle.message("library.link.description.module.library");
     }
     else if (LibraryTablesRegistrar.APPLICATION_LEVEL.equals(levelName)) {
-      return "Global Library";
+      return J2EEBundle.message("library.link.description.global.library");
     }
     else if (LibraryTablesRegistrar.PROJECT_LEVEL.equals(levelName)) {
-      return "Project Library";
+      return J2EEBundle.message("library.link.description.project.library");
     }
     else if (ApplicationServersManager.APPLICATION_SERVER_MODULE_LIBRARIES.equals(levelName)) {
-      return "Application Server Library";
+      return J2EEBundle.message("library.link.description.application.server.library");
     }
     else {
       return "???";
@@ -341,7 +345,7 @@ public class LibraryLinkImpl extends LibraryLink implements ResolvableElement{
 
   public LibraryLink clone() {
     LibraryLink libraryLink = MakeUtil.getInstance().createLibraryLink(getLibrary(), getParentModule());
-    Element temp = new Element("temp");
+    Element temp = new Element(TEMP_ELEMENT_NAME);
     try {
       writeExternal(temp);
       libraryLink.readExternal(temp);

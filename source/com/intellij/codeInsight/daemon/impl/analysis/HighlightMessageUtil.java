@@ -1,15 +1,17 @@
 
 package com.intellij.codeInsight.daemon.impl.analysis;
 
+import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.lang.LangBundle;
 
 public class HighlightMessageUtil {
   public static String getSymbolName(PsiElement symbol, PsiSubstitutor substitutor) {
     String symbolName = null;
     if (symbol instanceof PsiClass) {
       if (symbol instanceof PsiAnonymousClass){
-        symbolName = "anonymous class";
+        symbolName = LangBundle.message("java.terms.anonymous.class");
       }
       else{
         symbolName = ((PsiClass)symbol).getQualifiedName();
@@ -20,8 +22,8 @@ public class HighlightMessageUtil {
     }
     else if (symbol instanceof PsiMethod) {
       symbolName = PsiFormatUtil.formatMethod((PsiMethod)symbol,
-          substitutor, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS,
-          PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.SHOW_FQ_CLASS_NAMES
+                                              substitutor, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS,
+                                              PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.SHOW_FQ_CLASS_NAMES
       );
     }
     else if (symbol instanceof PsiVariable) {

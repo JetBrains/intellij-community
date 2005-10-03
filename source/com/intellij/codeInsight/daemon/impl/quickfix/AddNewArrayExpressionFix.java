@@ -1,12 +1,12 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
-
-import java.text.MessageFormat;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author ven
@@ -21,11 +21,11 @@ public class AddNewArrayExpressionFix implements IntentionAction {
   public String getText() {
     PsiExpression expr = myInitializer.getInitializers()[0];
     PsiType type = expr.getType();
-    return MessageFormat.format("Add ''new {0}[]''", new Object[] {type.getPresentableText()});
+    return QuickFixBundle.message("add.new.array.text", type.getPresentableText());
   }
 
   public String getFamilyName() {
-    return "Add missing new expression";
+    return QuickFixBundle.message("add.new.array.family");
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
@@ -39,7 +39,7 @@ public class AddNewArrayExpressionFix implements IntentionAction {
     PsiExpression expr = myInitializer.getInitializers()[0];
     PsiType type = expr.getType();
     PsiElementFactory factory = manager.getElementFactory();
-    String text = "new " + type.getPresentableText() + "[]{}";
+    @NonNls String text = "new " + type.getPresentableText() + "[]{}";
     PsiNewExpression newExpr = (PsiNewExpression) factory.createExpressionFromText(text, null);
     newExpr.getArrayInitializer().replace(myInitializer);
     newExpr = (PsiNewExpression) manager.getCodeStyleManager().reformat(newExpr);

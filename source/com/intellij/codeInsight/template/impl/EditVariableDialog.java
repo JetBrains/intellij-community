@@ -1,10 +1,11 @@
 package com.intellij.codeInsight.template.impl;
 
+import com.intellij.CommonBundle;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.Macro;
 import com.intellij.codeInsight.template.macro.MacroFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.help.HelpManager;
@@ -30,7 +31,7 @@ import java.util.Comparator;
  *
  */
 class EditVariableDialog extends DialogWrapper {
-  private ArrayList myVariables = new ArrayList();
+  private ArrayList<Variable> myVariables = new ArrayList<Variable>();
 
   private JButton myMoveUpButton;
   private JButton myMoveDownButton;
@@ -40,7 +41,7 @@ class EditVariableDialog extends DialogWrapper {
   private boolean hasMoveVars;
   private java.util.List<Macro> additionalMacros;
 
-  public EditVariableDialog(Editor editor, Component parent, ArrayList variables, boolean _hasMoveVars, java.util.List<Macro> _additionalMacros) {
+  public EditVariableDialog(Editor editor, Component parent, ArrayList<Variable> variables, boolean _hasMoveVars, java.util.List<Macro> _additionalMacros) {
     super(parent, true);
 
     hasMoveVars = _hasMoveVars;
@@ -49,12 +50,12 @@ class EditVariableDialog extends DialogWrapper {
     myVariables = variables;
     myEditor = editor;
     init();
-    setTitle("Edit Template Variables");
-    setOKButtonText("OK");
+    setTitle(CodeInsightBundle.message("templates.dialog.edit.variables.title"));
+    setOKButtonText(CommonBundle.getOkButtonText());
     updateButtons();
   }
 
-  public EditVariableDialog(Editor editor, Component parent, ArrayList variables) {
+  public EditVariableDialog(Editor editor, Component parent, ArrayList<Variable> variables) {
     this(editor,parent,variables,true,null);
   }
 
@@ -76,7 +77,7 @@ class EditVariableDialog extends DialogWrapper {
 
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel();
-    panel.setBorder(IdeBorderFactory.createTitledBorder("Variables"));
+    panel.setBorder(IdeBorderFactory.createTitledBorder(CodeInsightBundle.message("templates.dialog.edit.variables.border.title")));
     JPanel tablePanel = panel;
     tablePanel.setLayout(new BorderLayout());
     tablePanel.add(createVariablesTable(), BorderLayout.CENTER);
@@ -93,13 +94,11 @@ class EditVariableDialog extends DialogWrapper {
     gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
     gbConstraints.fill = GridBagConstraints.HORIZONTAL;
     gbConstraints.insets = new Insets(0, 0, 4, 0);
-    myMoveUpButton = new JButton("Move Up");
+    myMoveUpButton = new JButton(CodeInsightBundle.message("templates.dialog.edit.variables.action.move.up"));
 //    myMoveUpButton.setMargin(new Insets(2,0,0,2));
-    myMoveUpButton.setMnemonic('U');
     tableButtonsPanel.add(myMoveUpButton, gbConstraints);
-    myMoveDownButton = new JButton("Move Down");
+    myMoveDownButton = new JButton(CodeInsightBundle.message("templates.dialog.edit.variables.action.move.down"));
 //    myMoveDownButton.setMargin(new Insets(2,0,0,2));
-    myMoveDownButton.setMnemonic('D');
     tableButtonsPanel.add(myMoveDownButton, gbConstraints);
 
     gbConstraints.weighty = 1;
@@ -125,7 +124,13 @@ class EditVariableDialog extends DialogWrapper {
   }
 
   private JComponent createVariablesTable() {
-    final String[] names = {"Name", "Expression", "Default value", "Skip if defined"};
+    final String[] names = {
+      CodeInsightBundle.message("templates.dialog.edit.variables.table.column.name"),
+      CodeInsightBundle.message("templates.dialog.edit.variables.table.column.expression"),
+      CodeInsightBundle.message("templates.dialog.edit.variables.table.column.default.value"),
+      CodeInsightBundle.message("templates.dialog.edit.variables.table.column.skip.if.defined")
+    };
+
     // Create a model of the data.
     TableModel dataModel = new AbstractTableModel() {
       public int getColumnCount() {
@@ -137,7 +142,7 @@ class EditVariableDialog extends DialogWrapper {
       }
 
       public Object getValueAt(int row, int col) {
-        Variable variable = (Variable)myVariables.get(row);
+        Variable variable = myVariables.get(row);
         if (col == 0) {
           return variable.getName();
         }
@@ -170,7 +175,7 @@ class EditVariableDialog extends DialogWrapper {
       }
 
       public void setValueAt(Object aValue, int row, int col) {
-        Variable variable = (Variable)myVariables.get(row);
+        Variable variable = myVariables.get(row);
         if (col == 0) {
            String varName = (String) aValue;
           Variable newVar = new Variable (varName, variable.getExpressionString(), variable.getDefaultValueString(),
@@ -206,7 +211,7 @@ class EditVariableDialog extends DialogWrapper {
     Macro[] macros = MacroFactory.getMacros();
 
     if (additionalMacros!=null) {
-      ArrayList list = new ArrayList(macros.length + additionalMacros.size());
+      ArrayList<Macro> list = new ArrayList<Macro>(macros.length + additionalMacros.size());
       list.addAll( Arrays.asList(macros) );
       list.addAll( additionalMacros );
       macros = (Macro[])list.toArray(new Macro[0]);
@@ -279,9 +284,9 @@ class EditVariableDialog extends DialogWrapper {
     myTable.setRowSelectionInterval(selected - 1, selected - 1);
   }
 
-  private static void moveElementUp(ArrayList array, int offset) {
-    Object element = array.get(offset);
-    Object previousElement = array.get(offset - 1);
+  private static void moveElementUp(ArrayList<Variable> array, int offset) {
+    Variable element = array.get(offset);
+    Variable previousElement = array.get(offset - 1);
     array.set(offset, previousElement);
     array.set(offset - 1, element);
   }
@@ -304,9 +309,9 @@ class EditVariableDialog extends DialogWrapper {
     myTable.setRowSelectionInterval(selected + 1, selected + 1);
   }
 
-  private static void moveElementDown(ArrayList array, int offset) {
-    Object element = array.get(offset);
-    Object nextElement = array.get(offset + 1);
+  private static void moveElementDown(ArrayList<Variable> array, int offset) {
+    Variable element = array.get(offset);
+    Variable nextElement = array.get(offset + 1);
     array.set(offset, nextElement);
     array.set(offset + 1, element);
   }

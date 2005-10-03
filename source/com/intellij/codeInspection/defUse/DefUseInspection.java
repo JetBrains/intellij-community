@@ -11,10 +11,7 @@ package com.intellij.codeInspection.defUse;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.SideEffectWarningDialog;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,6 +29,8 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
+import org.jetbrains.annotations.NonNls;
+
 public class DefUseInspection extends BaseLocalInspectionTool {
   public boolean REPORT_PREFIX_EXPRESSIONS = false;
   public boolean REPORT_POSTFIX_EXPRESSIONS = true;
@@ -39,8 +38,8 @@ public class DefUseInspection extends BaseLocalInspectionTool {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.defUse.DefUseInspection");
 
-  public static final String DISPLAY_NAME = "Unused assignment";
-  public static final String SHORT_NAME = "UnusedAssignment";
+  public static final String DISPLAY_NAME = InspectionsBundle.message("inspection.unused.assignment.display.name");
+  @NonNls public static final String SHORT_NAME = "UnusedAssignment";
 
   public ProblemDescriptor[] checkClass(PsiClass aClass, InspectionManager manager, boolean isOnTheFly) {
     List<ProblemDescriptor> allProblems = null;
@@ -91,15 +90,15 @@ public class DefUseInspection extends BaseLocalInspectionTool {
           if (!info.isRead()) {
             if (!isOnTheFly) {
               descriptions.add(manager.createProblemDescriptor(psiVariable.getNameIdentifier(),
-                                                               "Variable <code>#ref</code> #loc is never used.", (LocalQuickFix [])null,
+                                                               InspectionsBundle.message("inspection.unused.assignment.problem.descriptor1", "<code>#ref</code> #loc"),
+                                                               (LocalQuickFix [])null,
                                                                ProblemHighlightType.LIKE_UNUSED_SYMBOL));
             }
           }
           else {
             if (REPORT_REDUNDANT_INITIALIZER) {
               descriptions.add(manager.createProblemDescriptor(psiVariable.getInitializer(),
-                                                               "Variable <code>" + psiVariable.getName() +
-                                                               "</code> initializer <code>#ref</code> #loc is redundant.",
+                                                               InspectionsBundle.message("inspection.unused.assignment.problem.descriptor2", "<code>" + psiVariable.getName() + "</code>", "<code>#ref</code> #loc"),
                                                                new RemoveInitializerFix(),
                                                                ProblemHighlightType.LIKE_UNUSED_SYMBOL));
             }
@@ -108,15 +107,13 @@ public class DefUseInspection extends BaseLocalInspectionTool {
         else if (context instanceof PsiAssignmentExpression &&
                  ((PsiAssignmentExpression)context).getOperationSign().getTokenType() == JavaTokenType.EQ) {
           final PsiAssignmentExpression assignment = (PsiAssignmentExpression)context;
-          descriptions.add(manager.createProblemDescriptor(assignment.getRExpression(), "The value <code>#ref</code> assigned to " +
-                                                                                        assignment.getLExpression().getText() +
-                                                                                        " #loc is never used.",
+          descriptions.add(manager.createProblemDescriptor(assignment.getRExpression(), InspectionsBundle.message("inspection.unused.assignment.problem.descriptor3", "<code>#ref</code>", assignment.getLExpression().getText() + " #loc"),
                                                            (LocalQuickFix [])null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
         }
         else {
           if (context instanceof PsiPrefixExpression && REPORT_PREFIX_EXPRESSIONS ||
               context instanceof PsiPostfixExpression && REPORT_POSTFIX_EXPRESSIONS) {
-            descriptions.add(manager.createProblemDescriptor(context, "The value changed at <code>#ref</code> #loc is never used.",
+            descriptions.add(manager.createProblemDescriptor(context, InspectionsBundle.message("inspection.unused.assignment.problem.descriptor4", "<code>#ref</code> #loc"),
                                                              (LocalQuickFix [])null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
           }
         }
@@ -130,7 +127,7 @@ public class DefUseInspection extends BaseLocalInspectionTool {
       public void visitLocalVariable(PsiLocalVariable variable) {
         if (!usedVariables.contains(variable) && variable.getInitializer() == null && !isOnTheFly) {
           descriptions.add(manager.createProblemDescriptor(variable.getNameIdentifier(),
-                                                           "Variable <code>#ref</code> #loc is never used.", (LocalQuickFix [])null,
+                                                           InspectionsBundle.message("inspection.unused.assignment.problem.descriptor5", "<code>#ref</code> #loc"), (LocalQuickFix [])null,
                                                            ProblemHighlightType.LIKE_UNUSED_SYMBOL));
         }
       }
@@ -151,7 +148,7 @@ public class DefUseInspection extends BaseLocalInspectionTool {
                lQualifier instanceof PsiThisExpression && rQualifier instanceof PsiThisExpression ||
                lQualifier instanceof PsiThisExpression && rQualifier == null ||
                lQualifier == null && rQualifier instanceof PsiThisExpression) && !isOnTheFly) {
-            descriptions.add(manager.createProblemDescriptor(expression, "The variable is assigned to itself in <code>#ref</code>.",
+            descriptions.add(manager.createProblemDescriptor(expression, InspectionsBundle.message("inspection.unused.assignment.problem.descriptor6", "<code>#ref</code>"),
                                                              (LocalQuickFix [])null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
           }
         }
@@ -181,7 +178,7 @@ public class DefUseInspection extends BaseLocalInspectionTool {
       gc.fill = GridBagConstraints.HORIZONTAL;
       gc.anchor = GridBagConstraints.NORTHWEST;
 
-      myReportInitializer = new JCheckBox("Report redundant initializers");
+      myReportInitializer = new JCheckBox(InspectionsBundle.message("inspection.unused.assignment.option2"));
       myReportInitializer.setSelected(REPORT_REDUNDANT_INITIALIZER);
       myReportInitializer.getModel().addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent e) {
@@ -192,7 +189,7 @@ public class DefUseInspection extends BaseLocalInspectionTool {
       gc.gridy = 0;
       add(myReportInitializer, gc);
 
-      myReportPrefix = new JCheckBox("Report ++i when may be replaced with (i + 1)");
+      myReportPrefix = new JCheckBox(InspectionsBundle.message("inspection.unused.assignment.option"));
       myReportPrefix.setSelected(REPORT_PREFIX_EXPRESSIONS);
       myReportPrefix.getModel().addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent e) {
@@ -203,7 +200,7 @@ public class DefUseInspection extends BaseLocalInspectionTool {
       gc.gridy++;
       add(myReportPrefix, gc);
 
-      myReportPostfix = new JCheckBox("Report i++ when changed value is not used afterwards");
+      myReportPostfix = new JCheckBox(InspectionsBundle.message("inspection.unused.assignment.option1"));
       myReportPostfix.setSelected(REPORT_POSTFIX_EXPRESSIONS);
       myReportPostfix.getModel().addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent e) {
@@ -221,7 +218,7 @@ public class DefUseInspection extends BaseLocalInspectionTool {
   private static class RemoveInitializerFix implements LocalQuickFix {
 
     public String getName() {
-      return "Remove Redundant Initializer";
+      return InspectionsBundle.message("inspection.unused.assignment.remove.quickfix");
     }
 
     public void applyFix(Project project, ProblemDescriptor descriptor) {

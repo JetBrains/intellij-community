@@ -31,6 +31,7 @@
  */
 package com.intellij.ide.util.gotoByName;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.navigation.ChooseByNameRegistry;
 import com.intellij.openapi.project.Project;
@@ -42,19 +43,19 @@ public class GotoClassModel2 extends ContributorsBasedGotoByModel {
   }
 
   public String getPromptText() {
-    return "Enter class name:";
+    return IdeBundle.message("prompt.gotoclass.enter.class.name");
   }
 
   public String getCheckBoxName() {
-    return "Include non-project classes";
+    return IdeBundle.message("checkbox.include.non.project.classes");
   }
 
   public String getNotInMessage() {
-    return "no matches found in project";
+    return IdeBundle.message("label.no.matches.found.in.project");
   }
 
   public String getNotFoundMessage() {
-    return "no matches found";
+    return IdeBundle.message("label.no.matches.found");
   }
 
   public char getCheckBoxMnemonic() {
@@ -65,8 +66,8 @@ public class GotoClassModel2 extends ContributorsBasedGotoByModel {
 
   public boolean loadInitialCheckBoxState() {
     PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(myProject);
-    if ("true".equals(propertiesComponent.getValue("GoToClass.toSaveIncludeLibraries"))){
-      return "true".equals(propertiesComponent.getValue("GoToClass.includeLibraries"));
+    if (Boolean.TRUE.toString().equals(propertiesComponent.getValue("GoToClass.toSaveIncludeLibraries"))){
+      return Boolean.TRUE.toString().equals(propertiesComponent.getValue("GoToClass.includeLibraries"));
     }
     else{
       return false;
@@ -75,8 +76,8 @@ public class GotoClassModel2 extends ContributorsBasedGotoByModel {
 
   public void saveInitialCheckBoxState(boolean state) {
     PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(myProject);
-    if ("true".equals(propertiesComponent.getValue("GoToClass.toSaveIncludeLibraries"))){
-      propertiesComponent.setValue("GoToClass.includeLibraries", state ? "true" : "false");
+    if (Boolean.TRUE.toString().equals(propertiesComponent.getValue("GoToClass.toSaveIncludeLibraries"))){
+      propertiesComponent.setValue("GoToClass.includeLibraries", Boolean.toString(state));
     }
   }
 }

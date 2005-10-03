@@ -20,6 +20,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduceParameter.Util;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.ui.ConflictsDialog;
@@ -33,6 +34,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 
 import java.util.*;
+import java.text.MessageFormat;
 
 public class InlineMethodProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.inline.InlineMethodProcessor");
@@ -69,7 +71,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   }
 
   protected String getCommandName() {
-    return "Inlining method " + myDescriptiveName;
+    return RefactoringBundle.message("inline.method.command", myDescriptiveName);
   }
 
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages, FindUsagesCommand refreshCommand) {
@@ -100,8 +102,10 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     if (!myInlineThisOnly) {
       final PsiMethod[] superMethods = myMethod.findSuperMethods();
         for (PsiMethod method : superMethods) {
-          final String action = method.hasModifierProperty(PsiModifier.ABSTRACT) ? "implements" : "overrides";
-          final String message = "Inlined method " + action + " method from " + method.getContainingClass().getQualifiedName();
+          final String message = method.hasModifierProperty(PsiModifier.ABSTRACT) ?
+                                 RefactoringBundle.message("inlined.method.implements.method.from.0", method.getContainingClass().getQualifiedName()) :
+                                 RefactoringBundle.message("inlined.method.overrides.method.from.0", method.getContainingClass().getQualifiedName())
+            ;
           conflicts.add(message);
         }
     }
@@ -115,9 +119,8 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     for (PsiMember container : containers) {
       Set<PsiMember> referencedInaccessible = containersToReferenced.get(container);
       for (PsiMember referenced : referencedInaccessible) {
-        String message = ConflictsUtil.getDescription(referenced, true) + " that is used in inlined method, " +
-                         " is not accessible from " +
-                         "call site(s) in " + ConflictsUtil.getDescription(container, true);
+        String message = RefactoringBundle.message("0.that.is.used.in.inlined.method.is.not.accessible.from.call.site.s.in.1",
+                                              ConflictsUtil.getDescription(referenced, true), ConflictsUtil.getDescription(container, true));
         conflicts.add(ConflictsUtil.capitalize(message));
       }
     }
@@ -262,7 +265,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
         public void visitReferenceExpression(PsiReferenceExpression expression) {
           PsiElement resolved = expression.resolve();
           if (resolved instanceof PsiParameter && manager.areElementsEquivalent(((PsiParameter)resolved).getDeclarationScope(),
-                                                                                 oldConstructor)) {
+                                                                                oldConstructor)) {
             PsiElement declarationScope = ((PsiParameter)resolved).getDeclarationScope();
             PsiParameter[] declarationParameters = ((PsiMethod)declarationScope).getParameterList().getParameters();
             for (int j = 0; j < declarationParameters.length; j++) {

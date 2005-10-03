@@ -5,6 +5,7 @@
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.DebuggerInvocationUtil;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.expression.Modifier;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
@@ -17,6 +18,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.idea.ActionsBundle;
 import com.sun.jdi.Field;
 
 public class InspectAction extends DebuggerAction {
@@ -49,7 +51,7 @@ public class InspectAction extends DebuggerAction {
           public void run() {
             InspectDialog dialog = new InspectDialog(project,
                     stateManager,
-                    "Inspect '" + evaluationText + "'",
+                    ActionsBundle.actionText(DebuggerActions.INSPECT) + " '" + evaluationText + "'",
                     inspectDescriptor);
             dialog.show();
           }
@@ -74,8 +76,8 @@ public class InspectAction extends DebuggerAction {
       if (!context.getDebugProcess().canWatchFieldModification()) {
         Messages.showMessageDialog(
           context.getProject(),
-          "Cannot inspect: Target VM does not support modification watchpoints",
-          "Inspect",
+          DebuggerBundle.message("error.modification.watchpoints.not.supported"),
+          ActionsBundle.actionText(DebuggerActions.INSPECT),
           Messages.getInformationIcon()
         );
         return false;

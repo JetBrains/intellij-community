@@ -7,6 +7,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import javax.swing.*;
 import java.awt.*;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
@@ -19,6 +21,12 @@ final class BindCompositeStep extends StepAdapter{
   private final BindToNewBeanStep myBindToNewBeanStep;
   private final BindToExistingBeanStep myBindToExistingBeanStep;
 
+  @NonNls
+  private static final String CARD_NEW_BEAN = "newBean";
+
+  @NonNls
+  private static final String CARD_EXISTING_BEAN = "existingBean";
+
   BindCompositeStep(final WizardData data) {
     LOG.assertTrue(data != null);
     myData = data;
@@ -27,8 +35,8 @@ final class BindCompositeStep extends StepAdapter{
     myBindToExistingBeanStep = new BindToExistingBeanStep(data);
 
     myCardHolder = new JPanel(new CardLayout());
-    myCardHolder.add(myBindToNewBeanStep.getComponent(), "newBean");
-    myCardHolder.add(myBindToExistingBeanStep.getComponent(), "existingBean");
+    myCardHolder.add(myBindToNewBeanStep.getComponent(), CARD_NEW_BEAN);
+    myCardHolder.add(myBindToExistingBeanStep.getComponent(), CARD_EXISTING_BEAN);
   }
 
   public JComponent getComponent() {
@@ -39,12 +47,12 @@ final class BindCompositeStep extends StepAdapter{
     if(myData.myBindToNewBean){
       myBindToNewBeanStep._init();
       final CardLayout layout = (CardLayout)myCardHolder.getLayout();
-      layout.show(myCardHolder, "newBean");
+      layout.show(myCardHolder, CARD_NEW_BEAN);
     }
     else{
       myBindToExistingBeanStep._init();
       final CardLayout layout = (CardLayout)myCardHolder.getLayout();
-      layout.show(myCardHolder, "existingBean");
+      layout.show(myCardHolder, CARD_EXISTING_BEAN);
     }
   }
 

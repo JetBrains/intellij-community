@@ -7,6 +7,7 @@ import com.intellij.compiler.ant.taskdefs.Target;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
@@ -40,7 +41,7 @@ public abstract class ProjectBuild extends Generator {
     final ModuleChunk[] chunks = genOptions.getModuleChunks();
 
     if (chunks.length > 0) {
-      myAntProject.add(new Comment("Modules"), 1);
+      myAntProject.add(new Comment(CompilerBundle.message("generated.ant.build.modules.section.title")), 1);
 
       for (int idx = 0; idx < chunks.length; idx++) {
         final ModuleChunk chunk = chunks[idx];
@@ -59,14 +60,17 @@ public abstract class ProjectBuild extends Generator {
       }
     }
 
-    final Target initTarget = new Target(BuildProperties.TARGET_INIT, null, "Build initialization", null);
-    initTarget.add(new Comment("Perform any build initialization in this target"));
+    final Target initTarget = new Target(BuildProperties.TARGET_INIT, null,
+                                         CompilerBundle.message("generated.ant.build.initialization.section.title"), null);
+    initTarget.add(new Comment(CompilerBundle.message("generated.ant.build.initialization.section.comment")));
     myAntProject.add(initTarget, 1);
     myAntProject.add(new CleanProject(genOptions), 1);
-    myAntProject.add(new Target(BuildProperties.TARGET_ALL, alltargetNames.toString(), "build all", null), 1);
+    myAntProject.add(new Target(BuildProperties.TARGET_ALL, alltargetNames.toString(),
+                                CompilerBundle.message("generated.ant.build.build.all.target.name"), null), 1);
   }
 
   public void generate(DataOutput out) throws IOException {
+    //noinspection HardCodedStringLiteral
     out.writeBytes("<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>");
     crlf(out);
     myAntProject.generate(out);

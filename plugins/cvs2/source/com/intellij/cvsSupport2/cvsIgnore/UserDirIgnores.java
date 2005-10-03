@@ -8,13 +8,15 @@ import com.intellij.openapi.application.ModalityState;
 import java.io.File;
 import java.util.ArrayList;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * author: lesya
  */
 public class UserDirIgnores{
 
   private ArrayList myPatterns;
-  private static final File ourUserHomeCVSIgnoreFile = new File(System.getProperty("user.home") + "/.cvsignore");
+  @NonNls private static final File ourUserHomeCVSIgnoreFile = new File(System.getProperty("user.home") + "/.cvsignore");
 
   public ArrayList getPatterns(){
     if (myPatterns == null){

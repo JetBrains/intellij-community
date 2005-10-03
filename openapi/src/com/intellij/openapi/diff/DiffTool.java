@@ -15,28 +15,29 @@
  */
 package com.intellij.openapi.diff;
 
+import org.jetbrains.annotations.NonNls;
 
-@SuppressWarnings({"HardCodedStringLiteral"})
+
 public interface DiffTool {
   /**
    * @see DiffManager#getIdeaDiffTool()
    */
-  Object HINT_SHOW_MODAL_DIALOG = "showModalDialog";
+  @NonNls Object HINT_SHOW_MODAL_DIALOG = "showModalDialog";
 
   /**
    * @see DiffManager#getIdeaDiffTool()
    */
-  Object HINT_SHOW_FRAME = "showNotModalWindow";
+  @NonNls Object HINT_SHOW_FRAME = "showNotModalWindow";
 
   /**
    * @see DiffManager#getIdeaDiffTool()
    */
-  Object HINT_SHOW_NOT_MODAL_DIALOG = "showNotModalDialog";
+  @NonNls Object HINT_SHOW_NOT_MODAL_DIALOG = "showNotModalDialog";
 
   /**
    * @see DiffManager#getIdeaDiffTool()
    */
-  Object HINT_DO_NOT_IGNORE_WHITESPACES = "doNotIgnoreWhitespaces";
+  @NonNls Object HINT_DO_NOT_IGNORE_WHITESPACES = "doNotIgnoreWhitespaces";
 
   /**
    * Opens window to compare contents. Clients should call {@link #canShow(com.intellij.openapi.diff.DiffRequest)} first.

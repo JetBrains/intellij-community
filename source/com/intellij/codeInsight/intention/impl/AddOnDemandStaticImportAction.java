@@ -1,7 +1,8 @@
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -10,8 +11,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 
-import java.text.MessageFormat;
-
 /**
  * @author ven
  */
@@ -19,7 +18,7 @@ public class AddOnDemandStaticImportAction extends BaseIntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.AddOnDemandStaticImportAction");
 
   public String getFamilyName() {
-    return "Add On Demand Static Import";
+    return CodeInsightBundle.message("intention.add.on.demand.static.import.family");
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
@@ -31,7 +30,7 @@ public class AddOnDemandStaticImportAction extends BaseIntentionAction {
 
       PsiElement resolved = refExpr.resolve();
       if (resolved instanceof PsiClass) {
-        String text = MessageFormat.format("Add on demand static import for ''{0}''", new Object[]{((PsiClass)resolved).getQualifiedName()});
+        String text = CodeInsightBundle.message("intention.add.on.demand.static.import.text", ((PsiClass)resolved).getQualifiedName());
         setText(text);
         return true;
       }

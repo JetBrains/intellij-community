@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FileStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -141,7 +142,7 @@ public abstract class AbstractTreeNode<Value> extends NodeDescriptor implements 
     myValue = value;
   }
 
-  public String getTestPresentation() {
+  @NonNls public String getTestPresentation() {
     if (myName != null) {
       return myName;
     } else if (getValue() != null){

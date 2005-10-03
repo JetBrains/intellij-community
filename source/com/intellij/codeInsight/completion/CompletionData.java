@@ -18,7 +18,9 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.lang.properties.psi.Property;
 import org.jdom.Namespace;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 
@@ -30,7 +32,7 @@ import java.util.*;
  * To change this template use Options | File Templates.
  */
 public class CompletionData {
-  public static final Namespace COMPLETION_NS = Namespace.getNamespace("http://www.intellij.net/data/completion");
+  public static final @NonNls Namespace COMPLETION_NS = Namespace.getNamespace("http://www.intellij.net/data/completion");
   private final Set<Class> myFinalScopes = new HashSet<Class>();
   private final List<CompletionVariant> myCompletionVariants = new ArrayList<CompletionVariant>();
 
@@ -160,8 +162,14 @@ public class CompletionData {
 
       LookupItemUtil.addLookupItems(set, suggestedNameInfo.names, prefix);
     }
-    if(var.getType() == PsiType.VOID || prefix.startsWith("is") || prefix.startsWith("get") || prefix.startsWith("set")) return null;
-    
+
+    if (var.getType() == PsiType.VOID ||
+        prefix.startsWith(CompletionUtil.IS_PREFIX) ||
+        prefix.startsWith(CompletionUtil.GET_PREFIX) ||
+        prefix.startsWith(CompletionUtil.SET_PREFIX)) {
+      return null;
+    }
+
     LookupItemUtil.addLookupItems(set, StatisticsManager.getInstance().getNameSuggestions(var.getType(), StatisticsManager.getContext(var), prefix), prefix);
     LookupItemUtil.addLookupItems(set, CompletionUtil.getUnserolvedReferences(var.getParent(), false), context.prefix);
 
@@ -179,13 +187,13 @@ public class CompletionData {
     }
 
     LookupItemUtil.addLookupItems(set, CompletionUtil.getUnserolvedReferences(element.getParent(), true), context.prefix);
-    if(!((PsiModifierListOwner)element).hasModifierProperty("private")){
+    if(!((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.PRIVATE)){
       LookupItemUtil.addLookupItems(set, CompletionUtil.getOverides((PsiClass)element.getParent(), PsiUtil.getTypeByPsiElement(element)), context.prefix);
       LookupItemUtil.addLookupItems(set, CompletionUtil.getImplements((PsiClass)element.getParent(), PsiUtil.getTypeByPsiElement(element)), context.prefix);
     }
     LookupItemUtil.addLookupItems(set, CompletionUtil.getPropertiesHandlersNames(
       (PsiClass)element.getParent(),
-      ((PsiModifierListOwner)element).hasModifierProperty("static"),
+      ((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.STATIC),
       PsiUtil.getTypeByPsiElement(element), element), context.prefix);
     return null;
   }
@@ -238,7 +246,8 @@ public class CompletionData {
 
     // TODO: need to add more separators here. Such as #, $ etc... Think on centralizing their location.
     final String text = insertedElement.getText();
-    if(ref == null && (StringUtil.endsWithChar(text, '#') || StringUtil.endsWithChar(text, '.'))){
+    if(ref == null && (StringUtil.endsWithChar(text, '#') ||
+                       (StringUtil.endsWithChar(text, '.') && !(insertedElement instanceof Property)))){
       return "";
     }
 
@@ -257,13 +266,17 @@ public class CompletionData {
       if(result.indexOf('(') > 0){
         result = result.substring(0, result.indexOf('('));
       }
+      
+      if (ref.getElement() instanceof PsiNameValuePair && result.startsWith("{")) {
+        result = ""; // PsiNameValuePair refarence without name span all content of the element
+      }
       return result;
     }
 
     if (insertedElement instanceof PsiIdentifier || insertedElement instanceof PsiKeyword
-        || "null".equals(text)
-        || "true".equals(text)
-        || "false".equals(text)
+        || PsiKeyword.NULL.equals(text)
+        || PsiKeyword.TRUE.equals(text)
+        || PsiKeyword.FALSE.equals(text)
         || (insertedElement instanceof XmlToken
             && (((XmlToken)insertedElement).getTokenType() == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN ||
                 ((XmlToken)insertedElement).getTokenType() == XmlTokenType.XML_DATA_CHARACTERS ||

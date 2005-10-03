@@ -5,6 +5,7 @@ import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.CompletionEditor;
 import com.intellij.debugger.ui.tree.render.EnumerationChildrenRenderer;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
@@ -46,8 +47,9 @@ public class NamedChildrenConfigurable implements UnnamedConfigurable{
 
     myTableLabel.setLabelFor(myTable);
 
-    getModel().addColumn("Name", (Object[])null);
-    getModel().addColumn("Expression", (Object[])null);
+    getModel().addColumn(DebuggerBundle.message("label.named.children.configurable.table.header.column.name"), (Object[])null);
+    final String expressionColumnName = DebuggerBundle.message("label.named.children.configurable.table.header.column.expression");
+    getModel().addColumn(expressionColumnName, (Object[])null);
 
     PsiClass psiClass = DebuggerUtils.findClass(myRenderer.getClassName(), myProject);
     myCompletionEditor = ((DebuggerUtilsEx)DebuggerUtils.getInstance()).createEditor(myProject, psiClass, "NamedChildrenConfigurable");
@@ -55,7 +57,7 @@ public class NamedChildrenConfigurable implements UnnamedConfigurable{
     myTable.setDragEnabled(false);
     myTable.setIntercellSpacing(new Dimension(0, 0));
 
-    myTable.getColumn("Expression").setCellEditor(new AbstractTableCellEditor() {
+    myTable.getColumn(expressionColumnName).setCellEditor(new AbstractTableCellEditor() {
       public Object getCellEditorValue() {
         return myCompletionEditor.getText();
       }

@@ -4,13 +4,15 @@
  */
 package com.intellij.ide.util;
 
+import com.intellij.featureStatistics.ProductivityFeaturesProvider;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.featureStatistics.ProductivityFeaturesProvider;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.text.html.HTMLDocument;
@@ -20,15 +22,19 @@ import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.net.URL;
 import java.text.MessageFormat;
+import java.util.Locale;
 
 /**
  * @author dsl
  */
-public class TipUIUtil{
-  private static final String SHORTCUT_ENTITY = "&shortcut:";
+public class TipUIUtil {
+  @NonNls private static final String SHORTCUT_ENTITY = "&shortcut:";
+
+  private TipUIUtil() {
+  }
 
   public static void openTipInBrowser(String tipPath, JEditorPane browser, Class<? extends ProductivityFeaturesProvider> provider) {
-    String fileURL = "/tips/" + tipPath;
+    @NonNls String fileURL = "/tips/" + tipPath;
 
     /* TODO: detect that file is not present
     if (!file.exists()) {
@@ -41,7 +47,7 @@ public class TipUIUtil{
       if (provider != null){
         url = provider.getResource(fileURL);
       } else {
-        url = TipUIUtil.class.getResource(fileURL);
+        url = getLocalizedResource(fileURL);
       }
 
       if (url == null) {
@@ -68,22 +74,44 @@ public class TipUIUtil{
     }
   }
 
+  private static URL getLocalizedResource(final String fileURL) {
+    int pos = fileURL.lastIndexOf('.');
+    final String fileName = fileURL.substring(0, pos);
+    final String ext = fileURL.substring(pos+1);
+
+    final Locale locale= Locale.getDefault();
+    String name = MessageFormat.format("{0}_{1}_{2}.{3}",
+                                       fileName, locale.getLanguage(), locale.getCountry(), ext);
+    URL resource = TipUIUtil.class.getResource(name);
+    if (resource != null) {
+      return resource;
+    }
+
+    name = MessageFormat.format("{0}_{1}.{2}", fileName, locale.getLanguage(), ext);
+    resource = TipUIUtil.class.getResource(name);
+    if (resource != null) {
+      return resource;
+    }
+
+    return TipUIUtil.class.getResource(fileURL);
+  }
+
   private static void setCantReadText(JEditorPane browser) {
     try {
-      browser.read(new StringReader("<html><body>Unable to read Tip Of The Day. Make sure " + ApplicationNamesInfo.getInstance().getFullProductName() +
-                                    " is installed properly.</body></html>"), null);
+      browser.read(new StringReader(
+        IdeBundle.message("error.unable.to.read.tip.of.the.day", ApplicationNamesInfo.getInstance().getFullProductName())), null);
     }
     catch (IOException e1) {
       // Can't be
     }
   }
 
-  public static final String FONT = SystemInfo.isMac ? "Courier" : "Verdana";
+  @NonNls public static final String FONT = SystemInfo.isMac ? "Courier" : "Verdana";
   public static final String COLOR = "#993300";
   public static final String SIZE = SystemInfo.isMac ? "4" : "3";
-  public static final String SHORTCUT_HTML_TEMPLATE = "<font  style=\"font-family: " + FONT +
-                                                      "; font-weight:bold;\" size=\"" + SIZE +
-                                                      "\"  color=\"" + COLOR + "\">{0}</font>";
+  @NonNls public static final String SHORTCUT_HTML_TEMPLATE = "<font  style=\"font-family: " + FONT +
+                                                              "; font-weight:bold;\" size=\"" + SIZE +
+                                                              "\"  color=\"" + COLOR + "\">{0}</font>";
 
   private static void updateShortcuts(StringBuffer text) {
     int lastIndex = 0;
@@ -98,8 +126,7 @@ public class TipUIUtil{
       final String actionId = text.substring(actionIdStart, actionIdEnd);
       final Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts(actionId);
       String shortcutText = "";
-      for (int i = 0; i < shortcuts.length; i++) {
-        final Shortcut shortcut = shortcuts[i];
+      for (final Shortcut shortcut : shortcuts) {
         if (shortcut instanceof KeyboardShortcut) {
           shortcutText = KeymapUtil.getShortcutText(shortcut);
           break;

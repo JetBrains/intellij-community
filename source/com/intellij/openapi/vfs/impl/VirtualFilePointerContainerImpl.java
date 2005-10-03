@@ -6,6 +6,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -21,7 +22,7 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
   private final List<VirtualFilePointer> myReadOnlyList = Collections.unmodifiableList(myList);
   private final VirtualFilePointerFactory myVirtualFilePointerFactory;
   private VirtualFile[] myCachedDirectories;
-  private static final String URL_ATTR = "url";
+  @NonNls private static final String URL_ATTR = "url";
 
   public void readExternal(final Element rootChild, final String childElements) throws InvalidDataException {
     final List urls = rootChild.getChildren(childElements);

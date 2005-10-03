@@ -14,8 +14,11 @@ import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiKeyword;
 
 import java.util.ArrayList;
+
+import org.jetbrains.annotations.NonNls;
 
 public class BinopInstruction extends BranchingInstruction {
   private final String myOperationSign;
@@ -23,7 +26,7 @@ public class BinopInstruction extends BranchingInstruction {
   private boolean myIsReachable = false;
   private boolean myCanBeNullInInstanceof = false;
 
-  public BinopInstruction(String opSign, PsiElement psiAnchor) {
+  public BinopInstruction(@NonNls String opSign, PsiElement psiAnchor) {
     if (opSign != null &&
         ("==".equals(opSign) || "!=".equals(opSign) || "instanceof".equals(opSign))) {
       myOperationSign = opSign;
@@ -85,7 +88,7 @@ public class BinopInstruction extends BranchingInstruction {
         return states.toArray(new DfaInstructionState[states.size()]);
       }
       else {
-        if ("instanceof".equals(myOperationSign) &&
+        if (PsiKeyword.INSTANCEOF.equals(myOperationSign) &&
             (dfaLeft instanceof DfaTypeValue || dfaLeft instanceof DfaNotNullValue) &&
             dfaRight instanceof DfaTypeValue) {
           final PsiType leftType;
@@ -122,6 +125,7 @@ public class BinopInstruction extends BranchingInstruction {
     return myCanBeNullInInstanceof;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return "BINOP " + myOperationSign;
   }

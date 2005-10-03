@@ -9,6 +9,7 @@ import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.util.IncorrectOperationException;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 
 /**
@@ -20,16 +21,17 @@ import org.jdom.Element;
  */
 public class ReturnTypeFilter implements ElementFilter{
   private ElementFilter myFilter;
+  private static final @NonNls String PLACEHOLDER = "xxx";
 
   public ReturnTypeFilter(ElementFilter filter){
     myFilter = filter;
   }
   public boolean isClassAcceptable(Class hintClass){
     return PsiVariable.class.isAssignableFrom(hintClass)
-      || PsiMethod.class.isAssignableFrom(hintClass)
-      || PsiExpression.class.isAssignableFrom(hintClass)
-      || Template.class.isAssignableFrom(hintClass)
-      || CandidateInfo.class.isAssignableFrom(hintClass);
+           || PsiMethod.class.isAssignableFrom(hintClass)
+           || PsiExpression.class.isAssignableFrom(hintClass)
+           || Template.class.isAssignableFrom(hintClass)
+           || CandidateInfo.class.isAssignableFrom(hintClass);
 
   }
 
@@ -43,13 +45,13 @@ public class ReturnTypeFilter implements ElementFilter{
       int segmentsCount = template.getSegmentsCount();
 
       for (int j = segmentsCount - 1; j >= 0; j--) {
-        if (template.getSegmentName(j).equals("END")) {
+        if (template.getSegmentName(j).equals(TemplateImpl.END)) {
           continue;
         }
 
         int segmentOffset = template.getSegmentOffset(j);
 
-        resultingText.insert(segmentOffset, "xxx");
+        resultingText.insert(segmentOffset, PLACEHOLDER);
       }
 
       try {

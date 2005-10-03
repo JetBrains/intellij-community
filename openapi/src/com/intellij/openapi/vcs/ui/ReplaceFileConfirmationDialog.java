@@ -23,8 +23,10 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.FilePathSplittingPolicy;
+import com.intellij.CommonBundle;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -65,7 +67,7 @@ public class ReplaceFileConfirmationDialog {
   }
 
   protected String getCancelButtonText() {
-    return "&Cancel";
+    return CommonBundle.getCancelButtonText();
   }
 
   private String createOwerriteButtonName(Collection modifiedFiles) {
@@ -74,22 +76,21 @@ public class ReplaceFileConfirmationDialog {
   }
 
   protected String getOkButtonTextForOneFile() {
-    return "&Overwrite Modified File";
+    return VcsBundle.message("button.text.overwrite.modified.file");
   }
 
   protected String getOkButtonTextForFiles() {
-    return "&Overwrite Modified Files";
+    return VcsBundle.message("button.text.overwrite.modified.files");
   }
 
   protected String createMessage(Collection modifiedFiles) {
     if (modifiedFiles.size() == 1) {
       VirtualFile virtualFile = ((VirtualFile)modifiedFiles.iterator().next());
-      return "File " +
-             FilePathSplittingPolicy.SPLIT_BY_LETTER.getPresentableName(new File(virtualFile.getPath()), 40) +
-             " has been locally modified.";
+      return VcsBundle.message("message.text.file.locally.modified",
+                               FilePathSplittingPolicy.SPLIT_BY_LETTER.getPresentableName(new File(virtualFile.getPath()), 40));
     }
     else {
-      return "Some files were locally modified.";
+      return VcsBundle.message("message.text.several.files.locally.modified");
     }
   }
 
@@ -102,7 +103,7 @@ public class ReplaceFileConfirmationDialog {
     for (int i = 0; i < files.length; i++) {
       VirtualFile file = files[i];
       if (myProgressIndicator != null) {
-        myProgressIndicator.setText("Searching for modified files");
+        myProgressIndicator.setText(VcsBundle.message("progress.text.searching.for.modified.files"));
         myProgressIndicator.setText2(file.getPresentableUrl());
       }
       FileStatus status = myFileStatusManager.getStatus(file);

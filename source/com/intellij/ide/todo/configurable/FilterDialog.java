@@ -1,6 +1,7 @@
 package com.intellij.ide.todo.configurable;
 
 import com.intellij.ide.todo.TodoFilter;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -8,6 +9,7 @@ import com.intellij.psi.search.TodoPattern;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ui.Table;
+import com.intellij.CommonBundle;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -60,8 +62,8 @@ class FilterDialog extends DialogWrapper {
     myFilter.setName(myNameField.getText().trim());
     if (myFilter.getName().length() == 0) {
       Messages.showMessageDialog(myTable,
-                                 "Filter name should be specified",
-                                 "Error",
+                                 IdeBundle.message("error.filter.name.should.be.specified"),
+                                 CommonBundle.getErrorTitle(),
                                  Messages.getErrorIcon());
       return;
     }
@@ -69,8 +71,8 @@ class FilterDialog extends DialogWrapper {
       TodoFilter filter = myFilters.get(i);
       if (myFilterIndex != i && myFilter.getName().equals(filter.getName())) {
         Messages.showMessageDialog(myTable,
-                                   "Filter with the same name already exists",
-                                   "Error",
+                                   IdeBundle.message("error.filter.with.the.same.name.already.exists"),
+                                   CommonBundle.getErrorTitle(),
                                    Messages.getErrorIcon());
         return;
       }
@@ -80,8 +82,8 @@ class FilterDialog extends DialogWrapper {
 
     if (myFilter.isEmpty()) {
       Messages.showMessageDialog(myTable,
-                                 "Filter should contain at least one pattern",
-                                 "Error",
+                                 IdeBundle.message("error.filter.should.contain.at.least.one.pattern"),
+                                 CommonBundle.getErrorTitle(),
                                  Messages.getErrorIcon());
       return;
     }
@@ -103,14 +105,14 @@ class FilterDialog extends DialogWrapper {
 
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
-    JLabel nameLabel = new JLabel("Name:");
+    JLabel nameLabel = new JLabel(IdeBundle.message("label.todo.filter.name"));
     panel.add(nameLabel,
               new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 5, 10), 0, 0));
     panel.add(myNameField,
               new GridBagConstraints(1, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
 
     JPanel patternsPanel = new JPanel(new GridBagLayout());
-    Border border = IdeBorderFactory.createTitledBorder("Patterns");
+    Border border = IdeBorderFactory.createTitledBorder(IdeBundle.message("group.todo.filter.patterns"));
     patternsPanel.setBorder(border);
     myTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable);
@@ -135,7 +137,7 @@ class FilterDialog extends DialogWrapper {
   }
 
   private final class MyModel extends AbstractTableModel {
-    private final String[] ourColumnNames = new String[]{" ", "Pattern", };
+    private final String[] ourColumnNames = new String[]{" ", IdeBundle.message("column.todo.filter.pattern"), };
     private final Class[] ourColumnClasses = new Class[]{Boolean.class, String.class};
 
     public String getColumnName(int column) {

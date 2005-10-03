@@ -34,6 +34,8 @@ import javax.swing.event.EventListenerList;
 import java.awt.*;
 import java.util.EventListener;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * <code>GuiEditor</code> is a panel with border layout. It has palette at the north,
  * tree of component with property editor at the west and editor area at the center.
@@ -132,7 +134,9 @@ public final class GuiEditor extends JPanel implements DataProvider {
   private final DocumentAdapter myDocumentListener;
   private final CardLayout myCardLayout;
 
+  @NonNls
   private final static String CARD_VALID = "valid";
+  @NonNls
   private final static String CARD_INVALID = "invalid";
   private final JPanel myValidCard;
   private final JPanel myInvalidCard;
@@ -391,7 +395,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
 
   private JPanel createInvalidCard() {
     final JPanel panel = new JPanel(new GridBagLayout());
-    panel.add(new JLabel("Form file is invalid"),
+    panel.add(new JLabel(UIDesignerBundle.message("error.form.file.is.invalid")),
               new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     return panel;
   }

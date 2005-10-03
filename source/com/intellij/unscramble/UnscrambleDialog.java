@@ -9,6 +9,7 @@ import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.runners.JavaProgramRunner;
 import com.intellij.execution.ui.*;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -39,10 +40,12 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jetbrains.annotations.NonNls;
+
 public class UnscrambleDialog extends DialogWrapper{
-  private static final String PROPERTY_LOG_FILE_HISTORY_URLS = "UNSCRAMBLE_LOG_FILE_URL";
-  private static final String PROPERTY_LOG_FILE_LAST_URL = "UNSCRAMBLE_LOG_FILE_LAST_URL";
-  private static final String PROPERTY_UNSCRAMBLER_NAME_USED = "UNSCRAMBLER_NAME_USED";
+  @NonNls private static final String PROPERTY_LOG_FILE_HISTORY_URLS = "UNSCRAMBLE_LOG_FILE_URL";
+  @NonNls private static final String PROPERTY_LOG_FILE_LAST_URL = "UNSCRAMBLE_LOG_FILE_LAST_URL";
+  @NonNls private static final String PROPERTY_UNSCRAMBLER_NAME_USED = "UNSCRAMBLER_NAME_USED";
 
   private final Project myProject;
   private JPanel myEditorPanel;
@@ -74,7 +77,7 @@ public class UnscrambleDialog extends DialogWrapper{
     createEditor();
     reset();
 
-    setTitle("Analyze Stacktrace");
+    setTitle(IdeBundle.message("unscramble.dialog.title"));
     init();
   }
 
@@ -117,7 +120,7 @@ public class UnscrambleDialog extends DialogWrapper{
     else {
       myUseUnscrambler.setEnabled(false);
     }
-    
+
     useUnscramblerChanged();
     pasteTextFromClipboard();
   }
@@ -231,7 +234,7 @@ public class UnscrambleDialog extends DialogWrapper{
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         UnscrambleSupport unscrambleSupport = (UnscrambleSupport)value;
-        setText(unscrambleSupport == null ? "<Do not unscramble>" : unscrambleSupport.getPresentableName());
+        setText(unscrambleSupport == null ? IdeBundle.message("unscramble.no.unscrambler.item") : unscrambleSupport.getPresentableName());
         return this;
       }
     });
@@ -280,7 +283,7 @@ public class UnscrambleDialog extends DialogWrapper{
 
   private final class NormalizeTextAction extends AbstractAction {
     public NormalizeTextAction(){
-      putValue(Action.NAME, "&Normalize");
+      putValue(Action.NAME, IdeBundle.message("unscramble.normalize.button"));
       putValue(DEFAULT_ACTION, Boolean.FALSE);
     }
 
@@ -299,11 +302,12 @@ public class UnscrambleDialog extends DialogWrapper{
             });
           }
         },
-        "",
-        null
+          "",
+          null
       );
     }
 
+    @SuppressWarnings({"HardCodedStringLiteral"})
     private String normalizeText(String text) {
       // move 'at' to the line start
       text = text.replaceAll("\\nat\\n", "\nat ");
@@ -370,7 +374,8 @@ public class UnscrambleDialog extends DialogWrapper{
     final JavaProgramRunner defaultRunner = ExecutionRegistry.getInstance().getDefaultRunner();
     final DefaultActionGroup toolbarActions = new DefaultActionGroup();
     final RunContentDescriptor descriptor =
-      new RunContentDescriptor(consoleView, null, new MyConsolePanel(consoleView, toolbarActions), "<Unscrambled Stacktrace>") {
+      new RunContentDescriptor(consoleView, null, new MyConsolePanel(consoleView, toolbarActions),
+                               IdeBundle.message("unscramble.unscrambled.stacktrace.tab")) {
       public boolean isContentReuseProhibited() {
         return true;
       }

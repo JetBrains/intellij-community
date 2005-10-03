@@ -96,6 +96,13 @@ public interface PsiPackage extends PsiElement, PsiNamedElement, NavigationItem 
   PsiClass[] getClasses(GlobalSearchScope scope);
 
   /**
+   * Returns the list of package-level annotations for the package.
+   *
+   * @return the list of annotations, or null if the package does not have any package-level annotations.
+   */
+  @Nullable PsiModifierList getAnnotationList();
+
+  /**
    * Checks if it is possible to rename the package to the specified name,
    * and throws an exception if the rename is not possible. Does not actually modify anything.
    *

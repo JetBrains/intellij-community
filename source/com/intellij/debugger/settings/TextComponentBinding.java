@@ -4,6 +4,8 @@
  */
 package com.intellij.debugger.settings;
 
+import org.jetbrains.annotations.NonNls;
+
 import javax.swing.text.JTextComponent;
 import java.lang.reflect.Field;
 
@@ -14,7 +16,7 @@ import java.lang.reflect.Field;
 public class TextComponentBinding extends FieldDataBinding{
   private final JTextComponent myTextComponent;
 
-  public TextComponentBinding(String dataFieldName, JTextComponent textComponent) {
+  public TextComponentBinding(@NonNls String dataFieldName, JTextComponent textComponent) {
     super(dataFieldName);
     myTextComponent = textComponent;
   }

@@ -7,6 +7,7 @@ import com.intellij.openapi.roots.ui.configuration.ContentEntryEditor;
 import com.intellij.openapi.roots.ui.configuration.ContentEntryTreeEditor;
 import com.intellij.openapi.roots.ui.configuration.IconSet;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.project.ProjectBundle;
 
 import javax.swing.*;
 
@@ -24,13 +25,13 @@ public class ToggleSourcesStateAction extends ContentEntryEditingAction {
     myEditTestSources = editTestSources;
     final Presentation templatePresentation = getTemplatePresentation();
     if (editTestSources) {
-      templatePresentation.setText("Test Sources");
-      templatePresentation.setDescription("Mark directory as a Test Sources root");
+      templatePresentation.setText(ProjectBundle.message("module.toggle.test.sources.action"));
+      templatePresentation.setDescription(ProjectBundle.message("module.toggle.test.sources.action.description"));
       templatePresentation.setIcon(IconSet.TEST_ROOT_FOLDER);
     }
     else {
-      templatePresentation.setText("Sources");
-      templatePresentation.setDescription("Mark directory as a Sources root");
+      templatePresentation.setText(ProjectBundle.message("module.toggle.sources.action"));
+      templatePresentation.setDescription(ProjectBundle.message("module.toggle.sources.action.description"));
       templatePresentation.setIcon(IconSet.SOURCE_ROOT_FOLDER);
     }
   }
@@ -72,6 +73,8 @@ public class ToggleSourcesStateAction extends ContentEntryEditingAction {
   public void update(AnActionEvent e) {
     super.update(e);
     final Presentation presentation = e.getPresentation();
-    presentation.setText(myEditTestSources? "Test Sources" : "Sources");
+    presentation.setText(myEditTestSources
+                         ? ProjectBundle.message("module.toggle.test.sources.action")
+                         : ProjectBundle.message("module.toggle.sources.action"));
   }
 }

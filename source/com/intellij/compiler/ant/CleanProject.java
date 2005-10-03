@@ -1,6 +1,7 @@
 package com.intellij.compiler.ant;
 
 import com.intellij.compiler.ant.taskdefs.Target;
+import com.intellij.openapi.compiler.CompilerBundle;
 
 import java.io.DataOutput;
 import java.io.IOException;
@@ -21,7 +22,8 @@ public class CleanProject extends Generator {
       }
       dependencies.append(BuildProperties.getModuleCleanTargetName(chunks[idx].getName()));
     }
-    myTarget = new Target(BuildProperties.TARGET_CLEAN, dependencies.toString(), "cleanup all", null);
+    myTarget = new Target(BuildProperties.TARGET_CLEAN, dependencies.toString(),
+                          CompilerBundle.message("generated.ant.build.clean.all.task.comment"), null);
   }
 
   public void generate(DataOutput out) throws IOException {

@@ -13,6 +13,7 @@
 package org.netbeans.lib.cvsclient.request;
 
 import org.netbeans.lib.cvsclient.util.BugLog;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * The global options request.
@@ -22,29 +23,29 @@ import org.netbeans.lib.cvsclient.util.BugLog;
  */
 public final class GlobalOptionRequest extends AbstractRequest {
 
-	// Constants ==============================================================
+        // Constants ==============================================================
 
-	public static final String REQUEST = "Global_option";
+        @NonNls public static final String REQUEST = "Global_option";
 
-	// Fields =================================================================
+        // Fields =================================================================
 
-	private final String option;
+        private final String option;
 
-	// Setup ==================================================================
+        // Setup ==================================================================
 
-	public GlobalOptionRequest(String option) {
-		BugLog.getInstance().assertNotNull(option);
+        public GlobalOptionRequest(@NonNls String option) {
+                BugLog.getInstance().assertNotNull(option);
 
-		this.option = option;
-	}
+                this.option = option;
+        }
 
-	// Implemented ============================================================
+        // Implemented ============================================================
 
-	/**
-	 * Get the request String that will be passed to the server.
-	 * @return the request String
-	 */
-	public String getRequestString() {
-		return REQUEST + ' ' + option + '\n';
-	}
+        /**
+         * Get the request String that will be passed to the server.
+         * @return the request String
+         */
+        public String getRequestString() {
+                return REQUEST + ' ' + option + '\n';
+        }
 }

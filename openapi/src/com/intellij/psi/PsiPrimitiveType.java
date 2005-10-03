@@ -124,8 +124,12 @@ public class PsiPrimitiveType extends PsiType {
     return manager.getElementFactory().createType(aClass);
   }
 
+  @NonNls
   private static final Map<String, PsiPrimitiveType> ourQNameToUnboxed = new HashMap<String, PsiPrimitiveType>();
+
+  @NonNls
   private static final Map<PsiPrimitiveType, String> ourUnboxedToQName = new HashMap<PsiPrimitiveType, String>();
+
   static {
     ourQNameToUnboxed.put("java.lang.Boolean", BOOLEAN);
     ourUnboxedToQName.put(BOOLEAN, "java.lang.Boolean");

@@ -7,6 +7,7 @@ import com.intellij.openapi.diff.impl.fragments.Fragment;
 import com.intellij.openapi.diff.impl.fragments.FragmentList;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.util.GutterActionRenderer;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -66,7 +67,7 @@ public class MergeOperations {
   }
 
   private static Operation replaceOperation(TextRange range, TextRange otherRange, Document document, Document otherDocument) {
-    Operation operation = new Operation("Replace", GutterActionRenderer.REPLACE_ARROW);
+    Operation operation = new Operation(DiffBundle.message("merge.editor.replace.operation.name"), GutterActionRenderer.REPLACE_ARROW);
     operation.addModification(replaceModification(range, document, otherRange, otherDocument));
     return operation;
   }
@@ -94,7 +95,7 @@ public class MergeOperations {
   }
 
   private static Operation insertOperation(TextRange range, int offset, Document document, Document otherDocument) {
-    Operation operation = new Operation("Insert", GutterActionRenderer.REPLACE_ARROW);
+    Operation operation = new Operation(DiffBundle.message("merge.editor.insert.operation.name"), GutterActionRenderer.REPLACE_ARROW);
     operation.addModification(insertModification(range, document, offset, otherDocument));
     return operation;
   }
@@ -118,7 +119,7 @@ public class MergeOperations {
   }
 
   private static Operation removeOperation(TextRange range, Document document) {
-    Operation operation = new Operation("Remove", GutterActionRenderer.REMOVE_CROSS);
+    Operation operation = new Operation(DiffBundle.message("merge.editor.remove.operation.name"), GutterActionRenderer.REMOVE_CROSS);
     operation.addModification(removeModification(range, document));
     return operation;
   }

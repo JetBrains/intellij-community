@@ -3,6 +3,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.psi.PsiReferenceExpression;
 
 public class CreateConstantFieldFromUsageAction extends CreateFieldFromUsageAction {
@@ -21,10 +22,10 @@ public class CreateConstantFieldFromUsageAction extends CreateFieldFromUsageActi
   }
 
   protected String getText(String varName) {
-    return "Create Constant Field " + varName;
+    return QuickFixBundle.message("create.constant.from.usage.text", varName);
   }
 
   public String getFamilyName() {
-    return "Create Constant From Usage";
+    return QuickFixBundle.message("create.constant.from.usage.family");
   }
 }

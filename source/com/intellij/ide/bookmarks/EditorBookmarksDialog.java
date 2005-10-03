@@ -3,6 +3,7 @@ package com.intellij.ide.bookmarks;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.ide.IdeBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -14,7 +15,7 @@ public class EditorBookmarksDialog extends BookmarksDialog {
 
   private EditorBookmarksDialog(BookmarkManager bookmarkManager) {
     super(bookmarkManager);
-    myViewSourceButton = new JButton("View Source");
+    myViewSourceButton = new JButton(IdeBundle.message("button.view.source"));
     init();
   }
 
@@ -56,14 +57,13 @@ public class EditorBookmarksDialog extends BookmarksDialog {
     constr.weightx = 1.0;
     constr.gridy = 1;
     panel.add(myViewSourceButton, constr);
-    myViewSourceButton.setMnemonic('V');
 
     return panel;
   }
 
   public static void execute(BookmarkManager manager, Bookmark currentBookmark) {
     BookmarksDialog dialog = new EditorBookmarksDialog(manager);
-    dialog.setTitle("Editor Bookmarks");
+    dialog.setTitle(IdeBundle.message("title.editor.bookmarks"));
     dialog.fillList(manager.getValidEditorBookmarks(), currentBookmark);
     dialog.show();
   }

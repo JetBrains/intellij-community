@@ -1,13 +1,14 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateStateListener;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -121,7 +122,7 @@ public class CreateConstructorFromCallAction extends CreateFromUsageBaseAction {
     }
 
     if (shouldShowTag(offset, element, myConstructorCall)) {
-      setText("Create Constructor");
+      setText(QuickFixBundle.message("create.constructor.from.new.text"));
       return true;
     }
 
@@ -149,6 +150,6 @@ public class CreateConstructorFromCallAction extends CreateFromUsageBaseAction {
   }
 
   public String getFamilyName() {
-    return "Create Constructor from New";
+    return QuickFixBundle.message("create.constructor.from.new.family");
   }
 }

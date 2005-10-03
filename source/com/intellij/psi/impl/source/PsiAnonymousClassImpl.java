@@ -1,10 +1,15 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.psi.*;
+import com.intellij.psi.HierarchicalMethodSignature;
 import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.PsiClassImplUtil;
+import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.impl.source.parsing.Parsing;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
+
+import java.util.Collection;
 
 public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousClass {
   private PsiClassType myCachedBaseType = null;
@@ -100,11 +105,15 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
   }
 
   public PsiClassType[] getSuperTypes() {
-    return new PsiClassType[]{getBaseClassType()};
+    return PsiClassImplUtil.getSuperTypes(this);
   }
 
   public PsiClass getContainingClass() {
     return null;
+  }
+
+  public Collection<HierarchicalMethodSignature> getVisibleSignatures() {
+    return PsiSuperMethodImplUtil.getVisibleSignatures(this);
   }
 
   public boolean isInterface() {

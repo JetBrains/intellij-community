@@ -33,7 +33,7 @@ public class ToolManager implements ExportableApplicationComponent {
   }
 
   public String getPresentableName() {
-    return "Tools";
+    return ToolsBundle.message("tools.settings");
   }
 
   public void disposeComponent() {

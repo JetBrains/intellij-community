@@ -18,7 +18,8 @@ package com.intellij.usages.impl;
 import com.intellij.usages.TextChunk;
 import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageViewSettings;
-import com.intellij.usages.UsageViewBundle;
+import com.intellij.usageView.UsageViewBundle;
+import com.intellij.util.SystemProperties;
 
 import javax.swing.*;
 import javax.swing.event.ChangeListener;
@@ -52,7 +53,8 @@ class ExporterToTextFile implements com.intellij.ide.ExporterToTextFile {
 
   public String getReportText() {
     StringBuffer buf = new StringBuffer();
-    appendNode(buf, myUsageView.getModelRoot(), System.getProperty("line.separator"), "");
+    //noinspection HardCodedStringLiteral
+    appendNode(buf, myUsageView.getModelRoot(), SystemProperties.getLineSeparator(), "");
     return buf.toString();
   }
 

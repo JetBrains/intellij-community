@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 
@@ -23,10 +24,10 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.SimpleContentEntryImpl");
   private final VirtualFilePointer myRoot;
   private RootModelImpl myRootModel;
-  final static String ELEMENT_NAME = "content";
+  @NonNls final static String ELEMENT_NAME = "content";
   private final TreeSet mySourceFolders = new TreeSet(ContentFolderComparator.INSTANCE);
   private final TreeSet myExcludeFolders = new TreeSet(ContentFolderComparator.INSTANCE);
-  private static final String URL_ATTR = "url";
+  @NonNls private static final String URL_ATTR = "url";
 
 
   private ContentEntryImpl(VirtualFilePointer root, RootModelImpl rootModel) {

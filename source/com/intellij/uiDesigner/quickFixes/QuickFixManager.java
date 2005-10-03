@@ -39,9 +39,11 @@ public abstract class QuickFixManager <T extends JComponent>{
 
   public QuickFixManager(final GuiEditor editor, final T component) {
     if (editor == null) {
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("editor cannot be null");
     }
     if (component == null) {
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("component cannot be null");
     }
     myEditor = editor;

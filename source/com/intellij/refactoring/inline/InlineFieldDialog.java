@@ -6,6 +6,7 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.ui.IdeBorderFactory;
@@ -15,7 +16,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
 public class InlineFieldDialog extends RefactoringDialog implements InlineOptions {
-  public static final String REFACTORING_NAME = "Inline Field";
+  public static final String REFACTORING_NAME = RefactoringBundle.message("inline.field.title");
   private PsiReferenceExpression myReferenceExpression;
 
   private JLabel myFieldNameLabel = new JLabel();
@@ -38,7 +39,7 @@ public class InlineFieldDialog extends RefactoringDialog implements InlineOption
 
     String fieldText = PsiFormatUtil.formatVariable(myField,
                                                     PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE ,PsiSubstitutor.EMPTY);
-    myFieldNameLabel.setText("Field " + fieldText);
+    myFieldNameLabel.setText(RefactoringBundle.message("inline.field.field.name.label", fieldText));
   }
 
   public boolean isInlineThisOnly() {
@@ -51,13 +52,14 @@ public class InlineFieldDialog extends RefactoringDialog implements InlineOption
 
   protected JComponent createCenterPanel() {
     JPanel optionsPanel = new JPanel();
-    optionsPanel.setBorder(IdeBorderFactory.createTitledBorder("Inline"));
+    optionsPanel.setBorder(IdeBorderFactory.createTitledBorder(RefactoringBundle.message("inline.field.border.title")));
     optionsPanel.setLayout(new BoxLayout(optionsPanel, BoxLayout.Y_AXIS));
 
-    myRbInlineAll = new JRadioButton("All references and remove the field", true);
-    myRbInlineAll.setMnemonic('A');
-    myRbInlineThisOnly = new JRadioButton("This reference only and keep the field");
-    myRbInlineThisOnly.setMnemonic('t');
+    myRbInlineAll = new JRadioButton();
+    myRbInlineAll.setText(RefactoringBundle.message("all.references.and.remove.the.field"));
+    myRbInlineAll.setSelected(true);
+    myRbInlineThisOnly = new JRadioButton();
+    myRbInlineThisOnly.setText(RefactoringBundle.message("this.reference.only.and.keep.the.field"));
 
     optionsPanel.add(myRbInlineAll);
     optionsPanel.add(myRbInlineThisOnly);

@@ -11,6 +11,7 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.ui.VisibilityPanel;
 import com.intellij.refactoring.util.VisibilityUtil;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.usageView.UsageViewUtil;
 
@@ -35,8 +36,8 @@ public abstract class MoveInstanceMethodDialogBase extends RefactoringDialog {
   protected String myRefactoringName;
 
   public MoveInstanceMethodDialogBase(PsiMethod method,
-                                    PsiVariable[] variables,
-                                    String refactoringName) {
+                                      PsiVariable[] variables,
+                                      String refactoringName) {
     super(method.getProject(), true);
     myMethod = method;
     myVariables = variables;
@@ -91,18 +92,17 @@ public abstract class MoveInstanceMethodDialogBase extends RefactoringDialog {
     if (targetClass.isInterface()) {
       final Project project = getProject();
       if (targetClass.getManager().getSearchHelper().findInheritors(targetClass, GlobalSearchScope.allScope(project), false).length == 0) {
-        final String message = UsageViewUtil.getDescriptiveName(targetClass) + " is an interface. \n" +
-                       "that has no implementing classes.";
+        final String message = RefactoringBundle.message("0.is.an.interface.that.has.no.implementing.classes", UsageViewUtil.getDescriptiveName(targetClass));
 
         Messages.showErrorDialog(project, message, myRefactoringName);
         return false;
       }
 
-      final String message = UsageViewUtil.getDescriptiveName(targetClass) + " is an interface. \n" +
-                       "Method implementation will be added to all directly implementing classes.\n Proceed?";
+      final String message = RefactoringBundle.message("0.is.an.interface.method.implementation.will.be.added.to.all.directly.implementing.classes",
+                                                       UsageViewUtil.getDescriptiveName(targetClass));
 
       final int result = Messages.showYesNoDialog(project, message, myRefactoringName,
-                                     Messages.getQuestionIcon());
+                                                  Messages.getQuestionIcon());
       if (result != 0) return false;
     }
 
@@ -124,8 +124,8 @@ public abstract class MoveInstanceMethodDialogBase extends RefactoringDialog {
       super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
       final PsiVariable psiVariable = (PsiVariable)value;
       final String text = PsiFormatUtil.formatVariable(psiVariable,
-                                           PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE,
-                                           PsiSubstitutor.EMPTY);
+                                                       PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE,
+                                                       PsiSubstitutor.EMPTY);
       setIcon(psiVariable.getIcon(0));
       setText(text);
       return this;

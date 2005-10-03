@@ -1,5 +1,8 @@
 package com.intellij.rt.execution.junit2.segments;
 
+/**
+ * @noinspection HardCodedStringLiteral
+ */
 public interface PoolOfDelimiters {
   char REFERENCE_END = ':';
   char INTEGER_DELIMITER = ' ';

@@ -4,6 +4,7 @@ import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -30,7 +31,7 @@ final class ColoredCommanderRenderer extends ColoredListCellRenderer {
   }
 
   protected void customizeCellRenderer(final JList list, final Object value, final int index, final boolean selected, final boolean hasFocus) {
-    Color color = UIManager.getColor("List.foreground");
+    Color color = UIUtil.getListForeground();
     if (value instanceof NodeDescriptor) {
       final NodeDescriptor descriptor = (NodeDescriptor)value;
       setIcon(descriptor.getClosedIcon());

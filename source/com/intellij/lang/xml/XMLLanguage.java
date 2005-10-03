@@ -34,6 +34,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTokenType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * Created by IntelliJ IDEA.
@@ -53,7 +54,7 @@ public class XMLLanguage extends Language {
     this("XML", "text/xml");
   }
 
-  protected XMLLanguage(String name, String... mime) {
+  protected XMLLanguage(@NonNls String name, @NonNls String... mime) {
     super(name, mime);
     myFormattingModelBuilder = new FormattingModelBuilder() {
       @NotNull

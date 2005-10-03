@@ -2,7 +2,11 @@ package com.intellij.openapi.vcs.impl;
 
 import com.intellij.codeInsight.actions.OptimizeImportsProcessor;
 import com.intellij.codeInsight.actions.ReformatCodeProcessor;
+import com.intellij.codeInsight.daemon.impl.*;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.CodeSmellInfo;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.DataConstants;
@@ -19,11 +23,14 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.localVcs.*;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.Annotater;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
@@ -61,9 +68,11 @@ import com.intellij.util.ui.MessageCategory;
 import com.intellij.util.ui.treetable.TreeTable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.List;
 
 public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl");
@@ -76,6 +85,59 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
 
   private static final Key KEY = Key.create("AbstractVcsHelper.KEY");
 
+  public void showCodeSmellErrors(final List<CodeSmellInfo> smellList) {
+
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        if (myProject.isDisposed()) return;
+        if (smellList.isEmpty()) {
+          return;
+        }
+
+        final NewErrorTreeViewPanel errorTreeView = new NewErrorTreeViewPanel(myProject, null){
+          protected boolean canHideWarnings() {
+            return false;
+          }
+        };
+        CommandProcessor commandProcessor = CommandProcessor.getInstance();
+        commandProcessor.executeCommand(myProject, new Runnable() {
+          public void run() {
+            final MessageView messageView = myProject.getComponent(MessageView.class);
+            final String tabDisplayName = VcsBundle.message("code.smells.error.messages.tab.name");
+            final Content content = PeerFactory.getInstance().getContentFactory().createContent(errorTreeView.getComponent(), tabDisplayName, true);
+            content.putUserData(KEY, errorTreeView);
+            messageView.addContent(content);
+            messageView.setSelectedContent(content);
+            removeContents(content, tabDisplayName);
+            messageView.addContentManagerListener(new MyContentDisposer(content, messageView));
+          }
+        },
+                                        VcsBundle.message("command.name.open.error.message.view"),
+                                        null);
+
+        FileDocumentManager fileManager = FileDocumentManager.getInstance();
+
+
+        for (Iterator<CodeSmellInfo> iterator = smellList.iterator(); iterator.hasNext();) {
+          CodeSmellInfo smellInfo = iterator.next();
+          VirtualFile file = fileManager.getFile(smellInfo.getDocument());
+          if (smellInfo.getSeverity() == HighlightSeverity.ERROR) {
+            errorTreeView.addMessage(MessageCategory.ERROR, new String[]{smellInfo.getDescription()}, file, smellInfo.getStartLine(),
+                                     smellInfo.getStartColumn(), null);
+          } else if (smellInfo.getSeverity() == HighlightSeverity.WARNING) {
+            errorTreeView.addMessage(MessageCategory.WARNING, new String[]{smellInfo.getDescription()}, file, smellInfo.getStartLine(),
+                                     smellInfo.getStartColumn(), null);
+          }
+
+        }
+
+        ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.MESSAGES_WINDOW).activate(null);
+      }
+
+    });
+
+  }
+
   public void showErrors(final List abstractVcsExceptions, final String tabDisplayName) {
     LOG.assertTrue(tabDisplayName != null, "tabDisplayName should not be null");
     ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -86,7 +148,11 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
           return;
         }
 
-        final NewErrorTreeViewPanel errorTreeView = new NewErrorTreeViewPanel(myProject, null);
+        final NewErrorTreeViewPanel errorTreeView = new NewErrorTreeViewPanel(myProject, null){
+          protected boolean canHideWarnings() {
+            return false;
+          }
+        };
         CommandProcessor commandProcessor = CommandProcessor.getInstance();
         commandProcessor.executeCommand(myProject, new Runnable() {
           public void run() {
@@ -99,13 +165,13 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
             messageView.addContentManagerListener(new MyContentDisposer(content, messageView));
           }
         },
-                                        "Open message view",
+                                        VcsBundle.message("command.name.open.error.message.view"),
                                         null);
 
         for (Iterator i = abstractVcsExceptions.iterator(); i.hasNext();) {
           VcsException exception = (VcsException)i.next();
           String[] messages = exception.getMessages();
-          if (messages.length == 0) messages = new String[]{"Unknown error"};
+          if (messages.length == 0) messages = new String[]{VcsBundle.message("exception.text.unknown.error")};
           errorTreeView.addMessage(getErrorCategory(exception), messages, exception.getVirtualFile(), -1, -1, null);
         }
 
@@ -252,7 +318,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
                 });
               }
             },
-                                                          "Optimize Imports",
+                                                          VcsBundle.message("process.title.optimize.imports"),
                                                           null);
           }
         };
@@ -283,18 +349,9 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
   }
 
   public List<VcsException> doCheckinProject(final CheckinProjectPanel checkinProjectPanel,
-                               final Object checkinParameters, final AbstractVcs abstractVcs) {
+                                             final Object checkinParameters, final AbstractVcs abstractVcs) {
 
     final ArrayList<VcsException> exceptions = new ArrayList<VcsException>();
-
-    /*
-    ApplicationManager.getApplication().runProcessWithProgressSynchronously(new Runnable() {
-      public void run() {
-        performCheckingIn(checkinProjectPanel, abstractVcs, checkinParameters, exceptions);
-
-      }
-    }, "Checking In Files", false, myProject);
-    */
 
     performCheckingIn(checkinProjectPanel, abstractVcs, checkinParameters, exceptions);
 
@@ -361,7 +418,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
     final CheckinHandler checkinHandler = new CheckinHandler(myProject, abstractVcs);
     List exceptions = checkinHandler.checkin((LvcsObject[])objects.toArray(new LvcsObject[objects.size()]),
                                              checkinParameters);
-    showErrors(exceptions, "Check In");
+    showErrors(exceptions, VcsBundle.message("message.title.check.in"));
 
 
   }
@@ -416,7 +473,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
       version2.loadContent();
 
       if (Comparing.equal(version1.getContent(), version2.getContent())) {
-        Messages.showInfoMessage("Versions are identical", "Diff");
+        Messages.showInfoMessage(VcsBundle.message("message.text.versions.are.identical"), VcsBundle.message("message.title.diff"));
       }
 
       final SimpleDiffRequest request =
@@ -424,7 +481,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
 
       final FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(file.getName());
       if (fileType.isBinary()) {
-        Messages.showInfoMessage("Binary versions differ", "Diff");
+        Messages.showInfoMessage(VcsBundle.message("message.text.binary.versions.differ"), VcsBundle.message("message.title.diff"));
 
         return;
       }
@@ -443,10 +500,10 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
       DiffManager.getInstance().getDiffTool().show(request);
     }
     catch (VcsException e) {
-      showError(e, "Diff");
+      showError(e, VcsBundle.message("message.title.diff"));
     }
     catch (IOException e) {
-      showError(new VcsException(e), "Diff");
+      showError(new VcsException(e), VcsBundle.message("message.title.diff"));
     }
 
   }
@@ -456,17 +513,41 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
   }
 
   public void showRevisions(List<AbstractRevisions> revisions, final String title) {
+    showRevisions(revisions, title, null, null);
+  }
+
+  public void showRevisions(List<AbstractRevisions> revisions, final String title, String commitMessage, String commitMessageTitle) {
     final TreeTable directoryDiffTree = PeerFactory.getInstance().getUIHelper()
         .createDirectoryDiffTree(myProject, revisions.toArray(new AbstractRevisions[revisions.size()]));
     new ShowRevisionChangesAction(myProject).registerCustomShortcutSet(CommonShortcuts.DOUBLE_CLICK_1, directoryDiffTree);
 
     FrameWrapper frameWrapper = new FrameWrapper("vcs.showRevisions");
     frameWrapper.setTitle(title);
-    frameWrapper.setComponent(new JScrollPane(directoryDiffTree));
+    frameWrapper.setComponent(createChangeBrowsePanel(directoryDiffTree, commitMessage, commitMessageTitle));
     frameWrapper.setData(DataConstants.PROJECT, myProject);
     frameWrapper.setImage(ImageLoader.loadFromResource("/diff/Diff.png"));
     frameWrapper.closeOnEsc();
     frameWrapper.show();
+  }
+
+  private JComponent createChangeBrowsePanel(final TreeTable directoryDiffTree,
+                                             final String commitMessage,
+                                             final String commitMessageTitle) {
+    if (commitMessage == null || commitMessageTitle == null) {
+      return new JScrollPane(directoryDiffTree);
+    } else {
+      final JPanel result = new JPanel(new BorderLayout());
+      result.add(new JScrollPane(directoryDiffTree), BorderLayout.CENTER);
+      final JTextArea textArea = new JTextArea(commitMessage);
+      textArea.setEditable(false);
+      textArea.setLineWrap(true);
+      textArea.setWrapStyleWord(true);
+      textArea.setColumns(5);
+      final JScrollPane textAreaScrollPane = new JScrollPane(textArea);
+      textAreaScrollPane.setBorder(BorderFactory.createTitledBorder(commitMessageTitle));
+      result.add(textAreaScrollPane, BorderLayout.SOUTH);
+      return result;
+    }
   }
 
   public void showMergeDialog(List<VirtualFile> files, MergeProvider provider, final AnActionEvent e) {
@@ -474,6 +555,86 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
     new AbstractMergeAction(myProject,
                             files,
                             provider).actionPerformed(e);
+  }
+
+  public List<CodeSmellInfo> findCodeSmells(final List<VirtualFile> filesToCheck) throws ProcessCanceledException {
+    final List<CodeSmellInfo> result = new ArrayList<CodeSmellInfo>();
+    final PsiManager manager = PsiManager.getInstance(myProject);
+    final FileDocumentManager fileManager = FileDocumentManager.getInstance();
+
+    boolean completed = ApplicationManager.getApplication().runProcessWithProgressSynchronously(new Runnable() {
+      public void run() {
+        final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
+        for (int i  = 0; i < filesToCheck.size(); i++) {
+
+          if (progress.isCanceled()) throw new ProcessCanceledException();
+
+          VirtualFile file = filesToCheck.get(i);
+
+          progress.setText(VcsBundle.message("searching.for.code.smells.processing.file.progress.text", file.getPresentableUrl()));
+          progress.setFraction((double)i/(double)filesToCheck.size());
+
+          final PsiFile psiFile = manager.findFile(file);
+          if (psiFile != null) {
+            final Document document = fileManager.getDocument(file);
+            if (document != null) {
+              final List<CodeSmellInfo> codeSmells = findCodeSmells(psiFile, progress, document);
+              result.addAll(codeSmells);
+            }
+          }
+        }
+      }
+    }, VcsBundle.message("checking.code.smells.progress.title"), true, myProject);
+    
+    if (!completed) throw new ProcessCanceledException();
+
+    return result;
+  }
+
+  private List<CodeSmellInfo> findCodeSmells(final PsiFile psiFile, final ProgressIndicator progress, final Document document) {
+
+    final List<CodeSmellInfo> result = new ArrayList<CodeSmellInfo>();
+
+    GeneralHighlightingPass action1 = new GeneralHighlightingPass(myProject, psiFile, document, 0, psiFile.getTextLength(), false, true);
+    action1.doCollectInformation(progress);
+
+    collectErrorsAndWarnings(action1.getHighlights(), result, document);
+
+    PostHighlightingPass action2 = new PostHighlightingPass(myProject, psiFile, document, 0, psiFile.getTextLength(), false);
+    action2.doCollectInformation(progress);
+
+    collectErrorsAndWarnings(action2.getHighlights(), result, document);
+
+    LocalInspectionsPass action3 = new LocalInspectionsPass(myProject, psiFile, document, 0, psiFile.getTextLength());
+    action3.doCollectInformation(progress);
+
+    collectErrorsAndWarnings(action3.getHighlights(), result, document);
+
+    return result;
+
+  }
+
+  private void collectErrorsAndWarnings(final Collection<HighlightInfo> highlights,
+                                        final List<CodeSmellInfo> result,
+                                        final Document document) {
+    for (Iterator<HighlightInfo> iterator = highlights.iterator(); iterator.hasNext();) {
+      HighlightInfo highlightInfo = iterator.next();
+      final HighlightSeverity severity = highlightInfo.getSeverity();
+      String description = highlightInfo.description;
+      if (severity == HighlightSeverity.ERROR || severity == HighlightSeverity.WARNING) {
+        final HighlightInfoType type = highlightInfo.type;
+        if (type instanceof HighlightInfoType.HighlightInfoTypeSeverityByKey) {
+          final HighlightDisplayKey severityKey = ((HighlightInfoType.HighlightInfoTypeSeverityByKey)type).getSeverityKey();
+          final String id = severityKey.getID();
+          if (id != null) {
+            description = "[" + id + "] " + description;
+          }
+        } else {
+        }
+        result.add(new CodeSmellInfo(document, description, new TextRange(highlightInfo.startOffset, highlightInfo.endOffset),
+                                     severity));
+      }
+    }
   }
 
   private DiffContent getContentForVersion(final VcsFileRevision version, final File file) throws IOException {
@@ -527,23 +688,8 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
 
     final CheckinHandler checkinHandler = new CheckinHandler(myProject, vcs);
     return checkinHandler.checkin((LvcsObject[])objects.toArray(new LvcsObject[objects.size()]),
-                                             preparedComment);
+                                  preparedComment);
 
-  }
-
-  private static class DialogWrapperWithCloseButton extends DialogWrapper {
-    private final JComponent myComponent;
-
-    public DialogWrapperWithCloseButton(JComponent component) {
-      super(true);
-      myComponent = component;
-      setTitle("Revisions");
-      init();
-    }
-
-    protected JComponent createCenterPanel() {
-      return myComponent;
-    }
   }
 
   private static class MyContentDisposer implements ContentManagerListener {

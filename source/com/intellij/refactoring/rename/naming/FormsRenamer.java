@@ -3,6 +3,7 @@ package com.intellij.refactoring.rename.naming;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.refactoring.RefactoringBundle;
 
 /**
  * @author ven
@@ -32,14 +33,14 @@ public class FormsRenamer extends AutomaticRenamer {
   }
 
   public String getDialogTitle() {
-    return "Rename bound forms";
+    return RefactoringBundle.message("rename.bound.forms.title");
   }
 
   public String getDialogDescription() {
-    return "Rename forms with the following names to:";
+    return RefactoringBundle.message("rename.forms.with.the.following.names.to");
   }
 
   public String entityName() {
-    return "Form";
+    return RefactoringBundle.message("entity.name.form");
   }
 }

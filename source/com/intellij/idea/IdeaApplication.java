@@ -26,6 +26,8 @@ import com.intellij.ui.Splash;
 import javax.swing.*;
 import java.io.IOException;
 
+import org.jetbrains.annotations.NonNls;
+
 
 public class IdeaApplication {
   private static final Logger LOG = Logger.getInstance("#com.intellij.idea.IdeaApplication");
@@ -34,13 +36,15 @@ public class IdeaApplication {
   private boolean myPerformProjectLoad = true;
   private static IdeaApplication ourInstance;
   private ApplicationStarter myStarter;
+  @NonNls private static final String IDEA_IS_INTERNAL_PROPERTY = "idea.is.internal";
+  @NonNls private static final String IPR_SUFFIX = ".ipr";
 
   protected IdeaApplication(String[] args) {
     LOG.assertTrue(ourInstance == null);
     ourInstance = this;
     myArgs = args;
-    boolean isInternal = "true".equals(System.getProperty("idea.is.internal"));
-    ApplicationManagerEx.createApplication("componentSets/IdeaComponents", isInternal, false, "idea");    
+    boolean isInternal = Boolean.valueOf(System.getProperty(IDEA_IS_INTERNAL_PROPERTY));
+    ApplicationManagerEx.createApplication("componentSets/IdeaComponents", isInternal, false, "idea");
 
     myStarter = getStarter();
     myStarter.premain(args);
@@ -79,6 +83,7 @@ public class IdeaApplication {
     myStarter = null; //GC it
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static void initAlloy() {
     AlloyLookAndFeel.setProperty("alloy.licenseCode", "4#JetBrains#1ou2uex#6920nk");
     AlloyLookAndFeel.setProperty("alloy.isToolbarEffectsEnabled", "false");
@@ -109,7 +114,7 @@ public class IdeaApplication {
     }
 
     public void main(String[] args) {
-     
+
       // Event queue should not be changed during initialization of application components.
       // It also cannot be changed before initialization of application components because IdeEventQueue uses other
       // application components. So it is proper to perform replacement only here.
@@ -153,7 +158,7 @@ public class IdeaApplication {
 
     String projectFile = null;
     if (myArgs != null && myArgs.length > 0) {
-      if (myArgs[0] != null && myArgs[0].endsWith(".ipr")) {
+      if (myArgs[0] != null && myArgs[0].endsWith(IPR_SUFFIX)) {
         projectFile = myArgs[0];
       }
     }

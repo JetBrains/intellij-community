@@ -1,14 +1,12 @@
 package com.intellij.openapi.application.impl;
 
+import com.intellij.CommonBundle;
 import com.intellij.Patches;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.plugins.PluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
-import com.intellij.openapi.application.ApplicationListener;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.RuntimeInterruptedException;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
@@ -41,6 +39,7 @@ import com.intellij.util.containers.HashMap;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.NonNls;
 import org.picocontainer.MutablePicoContainer;
 
 import javax.swing.*;
@@ -66,7 +65,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   private boolean myIsInternal = false;
   private static boolean ourSaveSettingsInProgress = false;
-  private static final String APPLICATION_LAYER = "application-components";
+  @NonNls private static final String APPLICATION_LAYER = "application-components";
   private String myName;
 
   private ReentrantWriterPreferenceReadWriteLock myActionsLock = new ReentrantWriterPreferenceReadWriteLock();
@@ -75,10 +74,16 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   private Thread myExceptionalThreadWithReadAccess = null;
 
   private int myInEditorPaintCounter = 0;
-  private final boolean myAspectJSupportEnabled = "enabled".equals(System.getProperty("idea.aspectj.support"));
+  @NonNls private final boolean myAspectJSupportEnabled = "enabled".equals(System.getProperty("idea.aspectj.support"));
   private long myStartTime = 0;
   private boolean myDoNotSave = false;
   private boolean myIsWaitingForWriteAction = false;
+  @NonNls private static final String APPLICATION_ELEMENT = "application";
+  @NonNls private static final String ELEMENT_COMPONENT = "component";
+  @NonNls private static final String ATTRIBUTE_NAME = "name";
+  @NonNls private static final String ATTRIBUTE_CLASS = "class";
+  @NonNls private static final String NULL_STR = "null";
+  @NonNls private static final String XML_EXTENSION = ".xml";
 
   public ApplicationImpl(String componentsDescriptor, boolean isInternal, boolean isUnitTestMode, String appName) {
     myStartTime = System.currentTimeMillis();
@@ -88,7 +93,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     if (!isUnitTestMode) {
       Toolkit.getDefaultToolkit().getSystemEventQueue().push(IdeEventQueue.getInstance());
     }
-    getPicoContainer().registerComponentInstance(ApplicationEx.class, this);    
+    getPicoContainer().registerComponentInstance(ApplicationEx.class, this);
 
     myComponentsDescriptor = componentsDescriptor;
     myIsInternal = isInternal;
@@ -193,10 +198,10 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
       String fileName;
       if (component instanceof NamedJDOMExternalizable) {
-        fileName = ((NamedJDOMExternalizable)component).getExternalFileName() + ".xml";
+        fileName = ((NamedJDOMExternalizable)component).getExternalFileName() + XML_EXTENSION;
       }
       else {
-        fileName = PathManager.DEFAULT_OPTIONS_FILE_NAME + ".xml";
+        fileName = PathManager.DEFAULT_OPTIONS_FILE_NAME + XML_EXTENSION;
       }
 
       Element root = getRootElement(fileNameToRootElementMap, fileName);
@@ -229,7 +234,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   private static void backupFiles(String path) throws IOException {
     String[] list = new File(path).list();
     for (String name : list) {
-      if (name.toLowerCase().endsWith(".xml")) {
+      if (name.toLowerCase().endsWith(XML_EXTENSION)) {
         File file = new File(path + File.separatorChar + name);
         File newFile = new File(path + File.separatorChar + name + "~");
         FileUtil.rename(file, newFile);
@@ -240,7 +245,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   private static Element getRootElement(Map<String, Element> fileNameToRootElementMap, String fileName) {
     Element root = fileNameToRootElementMap.get(fileName);
     if (root == null) {
-      root = new Element("application");
+      root = new Element(APPLICATION_ELEMENT);
       fileNameToRootElementMap.put(fileName, root);
     }
     return root;
@@ -252,7 +257,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       if (StringUtil.endsWithChar(name.toLowerCase(), '~')) {
         File file = new File(path + File.separatorChar + name);
         if (!file.delete()) {
-          throw new IOException("Cannot delete file " + file.getPath());
+          throw new IOException(ApplicationBundle.message("backup.cannot.delete.file", file.getPath()));
         }
       }
     }
@@ -279,14 +284,14 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
     for (Iterator<String> i = names.iterator(); i.hasNext();) {
       String name = i.next();
-      if (name.endsWith(".xml")) {
+      if (name.endsWith(XML_EXTENSION)) {
         String backupName = name + "~";
         if (names.contains(backupName)) i.remove();
       }
     }
 
     for (String name : names) {
-      if (!name.endsWith(".xml") && !name.endsWith(".xml~")) continue; // see SCR #12791
+      if (!name.endsWith(XML_EXTENSION) && !name.endsWith(XML_EXTENSION + "~")) continue; // see SCR #12791
       final String filePath = path + File.separatorChar + name;
       File file = new File(filePath);
       if (!file.exists() || !file.isFile()) continue;
@@ -307,19 +312,19 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
 
     Element root = document.getRootElement();
-    if (root == null || !"application".equals(root.getName())) {
+    if (root == null || !APPLICATION_ELEMENT.equals(root.getName())) {
       throw new InvalidDataException();
     }
 
     final List<String> additionalFiles = new ArrayList<String>();
     synchronized (this) {
-      List children = root.getChildren("component");
+      List children = root.getChildren(ELEMENT_COMPONENT);
       for (final Object aChildren : children) {
         Element element = (Element)aChildren;
 
-        String name = element.getAttributeValue("name");
+        String name = element.getAttributeValue(ATTRIBUTE_NAME);
         if (name == null || name.length() == 0) {
-          String className = element.getAttributeValue("class");
+          String className = element.getAttributeValue(ATTRIBUTE_CLASS);
           if (className == null) {
             throw new InvalidDataException();
           }
@@ -359,7 +364,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
             canClose[0] = false;
           }
         }
-      }, "Exit", null);
+      }, ApplicationBundle.message("command.exit"), null);
       if (!canClose[0]) break;
       ((ProjectEx)project).dispose();
     }
@@ -403,6 +408,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       private final Runnable myProcess;
 
       public MyThread() {
+        //noinspection HardCodedStringLiteral
         super("Process with Progress");
         myProcess = process;
       }
@@ -715,13 +721,14 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   private String describe(Object o) {
-    if (o == null) return "null";
+    if (o == null) return NULL_STR;
     return o.toString() + " " + System.identityHashCode(o);
   }
 
   private Thread getEventQueueThread() {
     EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
     try {
+      //noinspection HardCodedStringLiteral
       Method method = EventQueue.class.getDeclaredMethod("getDispatchThread");
       method.setAccessible(true);
       return (Thread) method.invoke(eventQueue);
@@ -892,7 +899,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
         throw new InvalidDataException();
       }
       Element root = document.getRootElement();
-      if (root == null || !"component".equals(root.getName())) {
+      if (root == null || !ELEMENT_COMPONENT.equals(root.getName())) {
         throw new InvalidDataException();
       }
       return root;
@@ -929,8 +936,8 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
           ex.printStackTrace();
           invokeLater(new Runnable() {
             public void run() {
-              Messages.showMessageDialog("Could not save application settings: " + ex.getLocalizedMessage(), "Error",
-                                         Messages.getErrorIcon());
+              Messages.showMessageDialog(ApplicationBundle.message("application.save.settings.error", ex.getLocalizedMessage()),
+                                         CommonBundle.getErrorTitle(), Messages.getErrorIcon());
             }
           });
         }

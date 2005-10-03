@@ -6,6 +6,7 @@ package com.intellij.ide.plugins;
 
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.util.containers.HashMap;
+import com.intellij.ide.IdeBundle;
 import gnu.trove.TObjectIntHashMap;
 
 import java.util.Comparator;
@@ -39,7 +40,7 @@ public class PluginDescriptorComparator implements Comparator<PluginDescriptor>{
       final PluginId[] parentIds = idToDescriptorMap.get(id).getDependentPluginIds();
       for (final PluginId parentId : parentIds) {
         if (visited.contains(parentId)) {
-          throw new Exception("Plugins should not have cyclic dependencies:\n" + id + "->" + parentId + "->...->" + id);
+          throw new Exception(IdeBundle.message("error.plugins.should.not.have.cyclic.dependencies") + id + "->" + parentId + "->...->" + id);
         }
       }
       for (PluginId parentId1 : parentIds) {

@@ -20,11 +20,14 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiPackage;
 import com.intellij.util.ui.Tree;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Icons;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.ide.IdeBundle;
+import com.intellij.CommonBundle;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -54,7 +57,7 @@ public class PackageChooserDialog extends DialogWrapper {
     init();
   }
 
-  protected JComponent createCenterPanel(){
+  protected JComponent createCenterPanel() {
     JPanel panel = new JPanel();
     panel.setLayout(new BorderLayout());
 
@@ -63,7 +66,7 @@ public class PackageChooserDialog extends DialogWrapper {
     createTreeModel();
     myTree = new Tree(myModel);
 
-    myTree.putClientProperty("JTree.lineStyle", "Angled");
+    UIUtil.setLineStyleAngled(myTree);
     myTree.setCellRenderer(
       new DefaultTreeCellRenderer() {
         public Component getTreeCellRendererComponent(
@@ -72,7 +75,7 @@ public class PackageChooserDialog extends DialogWrapper {
           boolean expanded,
           boolean leaf, int row,
           boolean hasFocus
-        ){
+        ) {
           super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
           setIcon(expanded ? Icons.PACKAGE_OPEN_ICON : Icons.PACKAGE_ICON);
 
@@ -85,7 +88,7 @@ public class PackageChooserDialog extends DialogWrapper {
                 setText(name);
               }
               else {
-                setText("<default>");
+                setText(IdeBundle.message("node.default"));
               }
             }
           }
@@ -96,14 +99,15 @@ public class PackageChooserDialog extends DialogWrapper {
 
     myTree.setBorder(BorderFactory.createEtchedBorder());
     JScrollPane scrollPane = new JScrollPane(myTree);
-    scrollPane.setPreferredSize(new Dimension(500,300));
+    scrollPane.setPreferredSize(new Dimension(500, 300));
 
     new TreeSpeedSearch(myTree, new Convertor<TreePath, String>() {
       public String convert(TreePath path) {
         DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
         Object object = node.getUserObject();
         if (object instanceof PsiPackage) return ((PsiPackage)object).getName();
-        else return "";
+        else
+          return "";
       }
     });
 
@@ -112,7 +116,7 @@ public class PackageChooserDialog extends DialogWrapper {
         PsiPackage selection = getTreeSelection();
         if (selection != null) {
           String name = selection.getQualifiedName();
-          setTitle(myTitle + " - " + ("".equals(name) ? "<Default Package>" : name));
+          setTitle(myTitle + " - " + ("".equals(name) ? IdeBundle.message("node.default.package") : name));
         }
         else {
           setTitle(myTitle);
@@ -251,7 +255,7 @@ public class PackageChooserDialog extends DialogWrapper {
     final PsiPackage selectedPackage = getTreeSelection();
     if (selectedPackage == null) return;
 
-    final String newPackageName = Messages.showInputDialog(myProject, "Enter a new package name:", "New Package", Messages.getQuestionIcon());
+    final String newPackageName = Messages.showInputDialog(myProject, IdeBundle.message("prompt.enter.a.new.package.name"), IdeBundle.message("title.new.package"), Messages.getQuestionIcon());
     if (newPackageName == null) return;
 
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
@@ -291,7 +295,7 @@ public class PackageChooserDialog extends DialogWrapper {
                   Messages.showMessageDialog(
                     getContentPane(),
                     StringUtil.getMessage(e),
-                    "Error",
+                    CommonBundle.getErrorTitle(),
                     Messages.getErrorIcon()
                   );
                   if (LOG.isDebugEnabled()) {
@@ -303,13 +307,14 @@ public class PackageChooserDialog extends DialogWrapper {
         ApplicationManager.getApplication().runReadAction(action);
       }
     },
-    "Create new package",
+    IdeBundle.message("command.create.new.package"),
     null);
   }
 
   private class NewPackageAction extends AnAction {
     public NewPackageAction() {
-      super("New Package...", "Create new package", IconLoader.getIcon("/actions/newFolder.png"));
+      super(IdeBundle.message("action.new.package"),
+            IdeBundle.message("action.description.create.new.package"), IconLoader.getIcon("/actions/newFolder.png"));
     }
 
     public void actionPerformed(AnActionEvent e) {

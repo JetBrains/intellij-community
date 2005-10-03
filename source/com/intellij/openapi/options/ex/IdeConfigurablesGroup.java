@@ -3,6 +3,7 @@ package com.intellij.openapi.options.ex;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
+import com.intellij.openapi.options.OptionsBundle;
 
 /**
  * Created by IntelliJ IDEA.
@@ -13,11 +14,11 @@ import com.intellij.openapi.options.ConfigurableGroup;
  */
 public class IdeConfigurablesGroup implements ConfigurableGroup {
   public String getDisplayName() {
-    return "IDE Settings";
+    return OptionsBundle.message("ide.settings.display.name");
   }
 
   public String getShortName() {
-    return "IDE";
+    return OptionsBundle.message("ide.settings.short.name");
   }
 
   public Configurable[] getConfigurables() {

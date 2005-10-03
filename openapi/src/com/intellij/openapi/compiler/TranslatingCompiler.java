@@ -18,46 +18,80 @@ package com.intellij.openapi.compiler;
 import com.intellij.openapi.vfs.VirtualFile;
 
 /**
- * Describes compilers that translate one type of files into another (e.g. .java -> .class)
+ * A tag interface indicating that the compiler will translate one type of files into another (e.g. .java -> .class).
+ * This affects the order of compiler calls.
+ * The sequence in which compilers are called:
+ * SourceGeneratingCompiler -> SourceInstrumentingCompiler -> TranslatingCompiler ->  ClassInstrumentingCompiler -> ClassPostProcessingCompiler -> PackagingCompiler -> Validator
  */
 public interface TranslatingCompiler extends Compiler {
+  /**
+   * Empty array of output items which can be reused to avoid unnecessary allocations.
+   */
   OutputItem[] EMPTY_OUTPUT_ITEM_ARRAY = new OutputItem[0];
 
+  /**
+   * Defines a single file compiled by the compiler.
+   */
   interface OutputItem {
     /**
+     * Returns the path to the output file.
+     *
      * @return absolute path of the output file ('/' slashes used)
      */
     String getOutputPath();
 
     /**
+     * Returns the path to the source file.
+     *
      * @return the source file to be compiled
      */
     VirtualFile getSourceFile();
+
     /**
+     * Returns the output directory for this output item.
+     *
      * @return the output directory for this output item
      */
     String getOutputRootDirectory();
   }
 
+  /**
+   * Defines the result of a compile operation.
+   *
+   * @see TranslatingCompiler#compile(CompileContext, com.intellij.openapi.vfs.VirtualFile[])
+   */
   interface ExitStatus {
     /**
+     * Returns the output items that were successfully compiled.
+     *
      * @return all output items that were successfully compiled
      */
     OutputItem[] getSuccessfullyCompiled();
+
     /**
+     * Returns the list of virtual files that should be considered as "modified" next time compilation is invoked.
+     *
      * @return a list of virtual files that should be considered as "modified" next time compilation is invoked
      */
     VirtualFile[] getFilesToRecompile();
   }
 
   /**
-   * @return true if can compile the file, false otherwise
+   * Checks if the compiler can compile the specified file.
+   *
+   * @param file    the file to check.
+   * @param context the context for the current compile operation.
+   * @return true if can compile the file, false otherwise. If the method returns false, <code>file</code>
+   *         will not be included in the list of files passed to {@link #compile(CompileContext, com.intellij.openapi.vfs.VirtualFile[])}.
    */
   boolean isCompilableFile(VirtualFile file, CompileContext context);
 
   /**
-   * @param files source files to compile
-   * @return successfully compiled sources
+   * Compiles the specified files.
+   *
+   * @param context the context for the current compile operation.
+   * @param files   the source files to compile.
+   * @return object containing the result of the compilation.
    */
   ExitStatus compile(CompileContext context, VirtualFile[] files);
 }

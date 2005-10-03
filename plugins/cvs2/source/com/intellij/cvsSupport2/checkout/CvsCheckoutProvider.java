@@ -38,7 +38,8 @@ public class CvsCheckoutProvider implements CheckoutProvider {
     executor.performActionSync(checkoutHandler, CvsOperationExecutorCallback.EMPTY);
 
     if (!executor.hasNoErrors()) {
-      Messages.showErrorDialog("CVS Error: " , executor.getResult().composeError().getLocalizedMessage());
+      Messages.showErrorDialog(com.intellij.CvsBundle.message("message.error.checkout", executor.getResult().composeError().getLocalizedMessage()),
+                               com.intellij.CvsBundle.message("operation.name.check.out.project"));
     }
 
     VirtualFileManager.getInstance().refresh(true);

@@ -2,10 +2,13 @@ package com.intellij.debugger.ui;
 
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.settings.DebuggerSettings;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ui.OptionsDialog;
+import com.intellij.util.ui.UIUtil;
+import com.intellij.CommonBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -45,11 +48,11 @@ public class RunHotswapDialog extends OptionsDialog {
     myPanel.add(myElementsChooser, BorderLayout.CENTER);
     //myPanel.add(new JLabel("Choose debug sessions to reload classes:"), BorderLayout.NORTH);
     if(sessions.size() == 1) {
-      setTitle("Reload Changed Classes for " + sessions.get(0).getSessionName());
+      setTitle(DebuggerBundle.message("hotswap.dialog.title.with.session", sessions.get(0).getSessionName()));
       myPanel.setVisible(false);
     }
     else {
-      setTitle("Reload Changed Classes");
+      setTitle(DebuggerBundle.message("hotswap.dialog.title"));
     }
     setButtonsAlignment(SwingUtilities.CENTER);
     this.init();
@@ -78,16 +81,16 @@ public class RunHotswapDialog extends OptionsDialog {
   }
 
   protected Action[] createActions(){
-    setOKButtonText("Yes");
-    setCancelButtonText("No");
+    setOKButtonText(CommonBundle.getYesButtonText());
+    setCancelButtonText(CommonBundle.getNoButtonText());
     return new Action[]{getOKAction(), getCancelAction()};
   }
 
   protected JComponent createNorthPanel() {
-    JLabel label = new JLabel("Some classes have been changed. Reload changed classes now?");
+    JLabel label = new JLabel(DebuggerBundle.message("hotswap.dialog.run.prompt"));
     JPanel panel = new JPanel(new BorderLayout());
     panel.add(label, BorderLayout.CENTER);
-    Icon icon = UIManager.getIcon("OptionPane.questionIcon");
+    Icon icon = UIUtil.getOptionPanelQuestionIcon();
     if (icon != null) {
       label.setIcon(icon);
       label.setIconTextGap(7);

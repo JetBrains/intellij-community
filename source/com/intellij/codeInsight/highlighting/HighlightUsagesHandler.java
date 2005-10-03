@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.aspects.psi.PsiPointcutDef;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.find.FindManager;
@@ -8,6 +9,7 @@ import com.intellij.find.FindModel;
 import com.intellij.find.FindResult;
 import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.ide.util.PsiClassListCellRenderer;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -123,8 +125,8 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     findManager.setFindWasPerformed();
     findManager.setFindNextModel(model);
 
-    WindowManager.getInstance().getStatusBar(project).setInfo("Highlighted " + count + " occurences of \"" + model.getStringToFind() +
-                                                              "\" (press Escape to remove the highlighting)");
+    WindowManager.getInstance().getStatusBar(project).
+      setInfo(CodeInsightBundle.message("status.bar.highlighted.occurences.message", count, model.getStringToFind()));
   }
 
   private static final Runnable EMPTY_HIGHLIGHT_RUNNABLE = EmptyRunnable.getInstance();
@@ -145,11 +147,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
       doHighlightElements(HighlightManager.getInstance(myProject), myEditor, myExitStatements, attributes);
 
       setupFindModel(myProject);
-      StringBuffer buffer = new StringBuffer();
-      buffer.append(myExitStatements.length);
-      buffer.append(" exit point");
-      if (myExitStatements.length > 1) buffer.append("s");
-      buffer.append(" highlighted (press Escape to remove the highlighting)");
+      String buffer = CodeInsightBundle.message("status.bar.exit.points.highlighted.message", myExitStatements.length);
       WindowManager.getInstance().getStatusBar(myProject).setInfo(buffer.toString());
     }
   }
@@ -225,7 +223,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
         Arrays.sort(myExceptionClasses, renderer.getComparator());
 
         Vector<Object> model = new Vector<Object>(Arrays.asList(myExceptionClasses));
-        model.insertElementAt("All listed", 0);
+        model.insertElementAt(CodeInsightBundle.message("highlight.thrown.exceptions.chooser.all.entry"), 0);
 
         myList = new JList(model);
         myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -245,9 +243,9 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
                                         myTypeFilter);
             }
             else {
-              for (int i = 0; i < myExceptionClasses.length; i++) {
+              for (PsiClass exceptionClass : myExceptionClasses) {
                 findExceptionThrownPlaces(refs,
-                                          factory.createType(myExceptionClasses[i]),
+                                          factory.createType(exceptionClass),
                                           myHighlightInPlace,
                                           myTypeFilter);
               }
@@ -261,7 +259,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
 
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
-            String title = " Choose Exception Classes to Highlight";
+            String title = CodeInsightBundle.message("highlight.exceptions.thrown.chooser.title");
             ListPopup listPopup = new ListPopup(title, myList, callback, myProject);
             LogicalPosition caretPosition = myEditor.getCaretModel().getLogicalPosition();
             Point caretLocation = myEditor.logicalPositionToXY(caretPosition);
@@ -317,12 +315,10 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
         final PsiElement param1 = param;
         TypeFilter filter = new TypeFilter() {
           public boolean accept(PsiType type) {
-            for (int j = 0; j < catchBlockParameters.length; j++) {
-              PsiParameter parameter = catchBlockParameters[j];
+            for (PsiParameter parameter : catchBlockParameters) {
               if (parameter != param1) {
                 if (parameter.getType().isAssignableFrom(type)) return false;
-              }
-              else {
+              } else {
                 return parameter.getType().isAssignableFrom(type);
               }
             }
@@ -425,11 +421,10 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
           super.visitThrowStatement(statement);
           PsiClassType[] exceptionTypes = ExceptionUtil.getUnhandledExceptions(statement, block);
           if (exceptionTypes != null) {
-            for (int i = 0; i < exceptionTypes.length; i++) {
-              final PsiType actualType = exceptionTypes[i];
+            for (final PsiClassType actualType : exceptionTypes) {
               if (type.isAssignableFrom(actualType) && typeFilter.accept(actualType)) {
                 if (!(statement.getException() instanceof PsiNewExpression)) continue;
-                PsiJavaCodeReferenceElement ref = ((PsiNewExpression)statement.getException()).getClassReference();
+                PsiJavaCodeReferenceElement ref = ((PsiNewExpression) statement.getException()).getClassReference();
                 if (refs.contains(ref)) continue;
                 refs.add(ref);
               }
@@ -441,8 +436,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
           super.visitMethodCallExpression(expression);
           if (refs.contains(expression.getMethodExpression().getReference())) return;
           PsiClassType[] exceptionTypes = ExceptionUtil.getUnhandledExceptions(expression, block);
-          for (int i = 0; i < exceptionTypes.length; i++) {
-            final PsiType actualType = exceptionTypes[i];
+          for (final PsiClassType actualType : exceptionTypes) {
             if (type.isAssignableFrom(actualType) && typeFilter.accept(actualType)) {
               refs.add(expression.getMethodExpression().getReference());
             }
@@ -453,8 +447,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
           super.visitNewExpression(expression);
           if (refs.contains(expression.getClassReference())) return;
           PsiClassType[] exceptionTypes = ExceptionUtil.getUnhandledExceptions(expression, block);
-          for (int i = 0; i < exceptionTypes.length; i++) {
-            PsiClassType actualType = exceptionTypes[i];
+          for (PsiClassType actualType : exceptionTypes) {
             if (type.isAssignableFrom(actualType) && typeFilter.accept(actualType)) {
               refs.add(expression.getClassReference());
             }
@@ -572,61 +565,53 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
       if (elementName == null) {
         elementName = ((PsiClass)element).getName();
       }
-      elementName = (((PsiClass)element).isInterface() ? "interface " : "class ") + elementName;
+      elementName = (((PsiClass)element).isInterface() ?
+                     LangBundle.message("java.terms.interface") :
+                     LangBundle.message("java.terms.class")) + " " + elementName;
     }
     else if (element instanceof PsiMethod) {
       elementName = PsiFormatUtil.formatMethod((PsiMethod)element,
                                                PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS |
                                                                      PsiFormatUtil.SHOW_CONTAINING_CLASS,
                                                PsiFormatUtil.SHOW_TYPE);
-      elementName = "method " + elementName;
+      elementName = LangBundle.message("java.terms.method") + " " + elementName;
     }
     else if (element instanceof PsiVariable) {
       elementName = PsiFormatUtil.formatVariable((PsiVariable)element,
                                                  PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_CONTAINING_CLASS,
                                                  PsiSubstitutor.EMPTY);
       if (element instanceof PsiField) {
-        elementName = "field " + elementName;
+        elementName = LangBundle.message("java.terms.field") + " " + elementName;
       }
       else if (element instanceof PsiParameter) {
-        elementName = "parameter " + elementName;
+        elementName = LangBundle.message("java.terms.parameter") + " " + elementName;
       }
       else {
-        elementName = "variable " + elementName;
+        elementName = LangBundle.message("java.terms.variable") + " " + elementName;
       }
     }
     else if (element instanceof PsiPackage) {
       elementName = ((PsiPackage)element).getQualifiedName();
-      elementName = "package " + elementName;
+      elementName = LangBundle.message("java.terms.package") + " " + elementName;
     }
     if (element instanceof PsiKeyword &&
         (PsiKeyword.TRY.equals(element.getText()) || PsiKeyword.CATCH.equals(element.getText()) ||
          PsiKeyword.THROWS.equals(element.getText()))) {
-      elementName = "exception thrown";
+      elementName = LangBundle.message("java.terms.exception");
     }
 
-    StringBuffer buffer = new StringBuffer();
+    String message;
     if (refCount > 0) {
-      buffer.append(refCount);
-      buffer.append(" usage");
-      if (refCount > 1) {
-        buffer.append("s");
-      }
-      if (elementName != null) {
-        buffer.append(" of ");
-        buffer.append(elementName);
-      }
+      message = CodeInsightBundle.message(elementName != null ?
+                                        "status.bar.highlighted.usages.message" :
+                                        "status.bar.highlighted.usages.no.target.message", refCount, elementName);
     }
     else {
-      buffer.append("No usages");
-      if (elementName != null) {
-        buffer.append(" of ");
-        buffer.append(elementName);
-      }
-// [jeka] Redundant "found"
-//      buffer.append(" found");
+      message = CodeInsightBundle.message(elementName != null ?
+                                          "status.bar.highlighted.usages.not.found.message" :
+                                          "status.bar.highlighted.usages.not.found.no.target.message", elementName);
     }
-    buffer.append(" found (press Escape to remove the highlighting)");
-    WindowManager.getInstance().getStatusBar(project).setInfo(buffer.toString());
+
+    WindowManager.getInstance().getStatusBar(project).setInfo(message);
   }
 }

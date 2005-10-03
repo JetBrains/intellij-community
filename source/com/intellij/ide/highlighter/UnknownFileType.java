@@ -32,6 +32,7 @@
 package com.intellij.ide.highlighter;
 
 import com.intellij.ide.structureView.StructureViewBuilder;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
@@ -48,7 +49,7 @@ public class UnknownFileType implements FileType {
   }
 
   public String getDescription() {
-    return "UNKNOWN";
+    return IdeBundle.message("filetype.description.unknown");
   }
 
   public String getDefaultExtension() {

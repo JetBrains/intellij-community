@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -19,12 +20,11 @@ public class InsertSuperFix implements IntentionAction {
   }
 
   public String getText() {
-    String text = "Insert 'super();'";
-    return text;
+    return QuickFixBundle.message("insert.super.constructor.call.text");
   }
 
   public String getFamilyName() {
-    return "Base Ctr call";
+    return QuickFixBundle.message("insert.super.constructor.call.family");
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {

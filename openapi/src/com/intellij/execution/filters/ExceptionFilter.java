@@ -23,8 +23,14 @@ import com.intellij.psi.search.GlobalSearchScope;
 
 import java.io.File;
 
+import org.jetbrains.annotations.NonNls;
+
 public class ExceptionFilter implements Filter{
   private final Project myProject;
+  @NonNls protected static final String AT_STR = "at";
+  protected static final String AT_PREFIX = AT_STR + " ";
+  protected static final String _AT_STR = " " + AT_STR + " ";
+
 
   public ExceptionFilter(final Project project) {
     myProject = project;
@@ -32,13 +38,13 @@ public class ExceptionFilter implements Filter{
 
   public Result applyFilter(final String line, final int entireLength) {
     int atIndex;
-    if (line.startsWith("at ")){
+    if (line.startsWith(AT_PREFIX)){
       atIndex = 0;
     }
     else{
-      atIndex = line.indexOf("at ");
+      atIndex = line.indexOf(AT_PREFIX);
       if (atIndex < 0) {
-        atIndex = line.indexOf(" at ");
+        atIndex = line.indexOf(_AT_STR);
       }
       if (atIndex < 0) return null;
     }
@@ -47,7 +53,7 @@ public class ExceptionFilter implements Filter{
     if (lparenthIndex < 0) return null;
     final int lastDotIndex = line.lastIndexOf('.', lparenthIndex);
     if (lastDotIndex < 0 || lastDotIndex < atIndex) return null;
-    String className = line.substring(atIndex + "at".length() + 1, lastDotIndex).trim();
+    String className = line.substring(atIndex + AT_STR.length() + 1, lastDotIndex).trim();
     final int dollarIndex = className.indexOf('$');
     if (dollarIndex >= 0){
       className = className.substring(0, dollarIndex);

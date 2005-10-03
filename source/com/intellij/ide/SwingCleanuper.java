@@ -61,10 +61,12 @@ public final class SwingCleanuper implements ApplicationComponent{
 
                 SwingUtilities.invokeLater(
                   new Runnable() {
+                    @SuppressWarnings({"HardCodedStringLiteral"})
                     public void run() {
 
                       // KeyboardFocusManager.newFocusOwner
                       try{
+                        //noinspection HardCodedStringLiteral
                         final Field newFocusOwnerField = KeyboardFocusManager.class.getDeclaredField("newFocusOwner");
                         newFocusOwnerField.setAccessible(true);
                         newFocusOwnerField.set(null, null);
@@ -151,6 +153,7 @@ public final class SwingCleanuper implements ApplicationComponent{
   public final void initComponent() { }
 
   private static void fixJTextComponentMemoryLeak() throws NoSuchFieldException, IllegalAccessException {
+    //noinspection HardCodedStringLiteral
     final Field focusedComponentField = JTextComponent.class.getDeclaredField("focusedComponent");
     focusedComponentField.setAccessible(true);
     final JTextComponent component = (JTextComponent)focusedComponentField.get(null);

@@ -5,8 +5,10 @@
  */
 package com.intellij.compiler.make;
 
+import com.intellij.openapi.compiler.CompilerBundle;
+
 public class CacheCorruptedException extends Exception{
-  private static final String DEFAULT_MESSAGE = "Compiler dependency information on disk is corrupted. Rebuild required.";
+  private static final String DEFAULT_MESSAGE = CompilerBundle.message("error.dependency.info.on.disk.corrupted");
   public CacheCorruptedException(String message) {
     super((message == null || message.length() == 0)? DEFAULT_MESSAGE : message);
   }

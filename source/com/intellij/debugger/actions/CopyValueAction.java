@@ -8,11 +8,10 @@ import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
-import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.progress.util.ProgressWindowWithNotification;
 import com.intellij.openapi.project.Project;
@@ -41,7 +40,8 @@ public class CopyValueAction extends DebuggerAction {
         final ProgressWindowWithNotification progressWindow = new ProgressWindowWithNotification(true, project);
         SuspendContextCommandImpl copyValueAction = new SuspendContextCommandImpl(context.getSuspendContext()) {
           public void contextAction() throws Exception {
-            progressWindow.setText("Evaluating toString() for the expression");
+            //noinspection HardCodedStringLiteral
+            progressWindow.setText(DebuggerBundle.message("progress.evaluating", "toString()"));
 
             final String valueAsString = DebuggerUtilsEx.getValueOrErrorAsString(context.createEvaluationContext(), value);
 
@@ -58,7 +58,7 @@ public class CopyValueAction extends DebuggerAction {
             });
           }
         };
-        progressWindow.setTitle("Evaluating...");
+        progressWindow.setTitle(DebuggerBundle.message("title.evaluating"));
         context.getDebugProcess().getManagerThread().startProgress(copyValueAction, progressWindow);
       }
     }

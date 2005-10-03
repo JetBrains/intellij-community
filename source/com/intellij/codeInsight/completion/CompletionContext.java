@@ -2,6 +2,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.html.HtmlTag;
@@ -10,7 +11,19 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
 
-public class CompletionContext {
+public class CompletionContext implements Cloneable {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CompletionContext");
+
+  protected Object clone() {
+    try {
+      return super.clone();
+    }
+    catch (CloneNotSupportedException e) {
+      LOG.error(e);
+      return null;
+    }
+  }
+
   public final Project project;
   public final Editor editor;
   public final PsiFile file;
@@ -98,9 +111,9 @@ public class CompletionContext {
     }
     else if (element instanceof PsiJavaToken){
       final String text = element.getText();
-      if("true".equals(text)) return true;
-      if("false".equals(text)) return true;
-      if("null".equals(text)) return true;
+      if(PsiKeyword.TRUE.equals(text)) return true;
+      if(PsiKeyword.FALSE.equals(text)) return true;
+      if(PsiKeyword.NULL.equals(text)) return true;
       return false;
     }
     else if (element instanceof PsiDocToken) {

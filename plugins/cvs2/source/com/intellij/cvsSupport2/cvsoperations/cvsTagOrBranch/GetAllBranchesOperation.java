@@ -8,14 +8,15 @@ import com.intellij.cvsSupport2.cvsoperations.common.CvsExecutionEnvironment;
 import com.intellij.cvsSupport2.cvsoperations.cvsLog.RlogCommand;
 import com.intellij.util.containers.HashSet;
 import org.netbeans.lib.cvsclient.command.Command;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Collection;
 
 public class GetAllBranchesOperation extends LocalPathIndifferentOperation
   implements BranchesProvider{
   private final Collection<String> myTags = new HashSet<String>();
-  private final static String START = "symbolic names:";
-  private final static String END = "keyword substitution:";
+  @NonNls private final static String START = "symbolic names:";
+  @NonNls private final static String END = "keyword substitution:";
   private boolean myIsInBranchesMode = false;
 
 

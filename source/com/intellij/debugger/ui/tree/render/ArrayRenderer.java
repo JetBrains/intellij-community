@@ -26,6 +26,7 @@ import com.sun.jdi.ArrayType;
 import com.sun.jdi.Type;
 import com.sun.jdi.Value;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,7 +40,7 @@ import java.util.ListIterator;
 public class ArrayRenderer extends NodeRendererImpl{
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.tree.render.ArrayRenderer");
   
-  public static final String UNIQUE_ID = "ArrayRenderer";
+  public static final @NonNls String UNIQUE_ID = "ArrayRenderer";
 
   public int START_INDEX = 0;
   public int END_INDEX   = 100;
@@ -62,7 +63,7 @@ public class ArrayRenderer extends NodeRendererImpl{
     myProperties.setEnabled(enabled);
   }
 
-  public String getName() {
+  public @NonNls String getName() {
     return "Array";
   }
 

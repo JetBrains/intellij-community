@@ -1,5 +1,7 @@
 package com.intellij.cvsSupport2.cvsoperations.cvsAnnotate;
 
+import org.jetbrains.annotations.NonNls;
+
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -15,7 +17,7 @@ public class Annotation {
   private final Date myDate;
 
   public static final DateFormat PRESENTABELE_DATE_FORMAT = SimpleDateFormat.getDateInstance(SimpleDateFormat.SHORT);
-  private static final String DATE_FORMAT_STRING = "dd-MMM-yy";
+  @NonNls private static final String DATE_FORMAT_STRING = "dd-MMM-yy";
   private final static DateFormat DATE_FORMAT = new SimpleDateFormat(DATE_FORMAT_STRING, Locale.US);
   public static final String CONTENT_SEPARATOR = ": ";
 

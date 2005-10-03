@@ -12,6 +12,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.nio.charset.Charset;
@@ -34,7 +35,7 @@ public class CvsApplicationLevelConfiguration implements ApplicationComponent, J
   public ProxySettings PROXY_SETTINGS = new ProxySettings();
   public SshSettings SSH_FOR_EXT_CONFIGURATION = new SshSettings();
 
-  private static final String CONFIGURATION_ELEMENT_NAME = "Configuration";
+  @NonNls private static final String CONFIGURATION_ELEMENT_NAME = "Configuration";
   public String PATH_TO_PASSWORD_FILE = null;
   public int TIMEOUT = 60;
   public boolean MAKE_CHECKED_OUT_FILES_READONLY = false;
@@ -45,9 +46,10 @@ public class CvsApplicationLevelConfiguration implements ApplicationComponent, J
   @NotNull public String ENCODING;
 
   public boolean USE_GZIP = false;
-  public static final String DEFAULT = "Default";
+  @NonNls public static final String DEFAULT = "Default";
 
   public boolean DO_OUTPUT = false;
+  @NonNls private static final String USER_HOME_PROPERTY = "user.home";
 
   public CvsApplicationLevelConfiguration() {
     ENCODING = DEFAULT;
@@ -112,7 +114,7 @@ public class CvsApplicationLevelConfiguration implements ApplicationComponent, J
     return config;
   }
 
-  private String defaultPathToPassFile() {
+  @NonNls private String defaultPathToPassFile() {
     return "$userdir" + "/.cvspass";
   }
 
@@ -122,7 +124,7 @@ public class CvsApplicationLevelConfiguration implements ApplicationComponent, J
   }
 
   public static String convertToIOFilePath(String presentation) {
-    String userHome = System.getProperty("user.home");
+    String userHome = System.getProperty(USER_HOME_PROPERTY);
     userHome = userHome.replace(File.separatorChar, '/');
     presentation = presentation.replace(File.separatorChar, '/');
     try {

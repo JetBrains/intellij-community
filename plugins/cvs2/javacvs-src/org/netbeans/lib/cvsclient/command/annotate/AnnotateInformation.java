@@ -38,7 +38,8 @@ public final class AnnotateInformation {
 
 	// Implemented ============================================================
 
-	public String toString() {
+	@SuppressWarnings({"HardCodedStringLiteral"})
+        public String toString() {
 		return "\nFile: " + file.getAbsolutePath();
 	}
 

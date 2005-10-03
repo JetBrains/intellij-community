@@ -2,6 +2,7 @@ package com.intellij.compiler.ant.taskdefs;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.compiler.ant.Tag;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Eugene Zhuravlev
@@ -9,7 +10,8 @@ import com.intellij.compiler.ant.Tag;
  */
 public class DirSet extends Tag{
 
-  public DirSet(final String dir) {
+  public DirSet(@NonNls final String dir) {
+    //noinspection HardCodedStringLiteral
     super("dirset", new Pair[] {new Pair<String, String>("dir", dir)});
   }
 }

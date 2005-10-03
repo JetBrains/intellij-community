@@ -1,6 +1,7 @@
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.ide.actions.CopyReferenceAction;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
@@ -23,8 +24,10 @@ import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.ListScrollingUtilEx;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.diff.Diff;
 import org.apache.oro.text.regex.*;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -72,10 +75,10 @@ public abstract class ChooseByNameBase{
   private static int VISIBLE_LIST_SIZE_LIMIT = 10;
   private static final int MAXIMUM_LIST_SIZE_LIMIT = 30;
   private int myMaximumListSizeLimit = MAXIMUM_LIST_SIZE_LIMIT;
-  private static final String NOT_FOUND_IN_PROJECT_CARD = "syslib";
-  private static final String NOT_FOUND_CARD = "nfound";
-  private static final String CHECK_BOX_CARD = "chkbox";
-  private static final String SEARCHING_CARD = "searching";
+  @NonNls private static final String NOT_FOUND_IN_PROJECT_CARD = "syslib";
+  @NonNls private static final String NOT_FOUND_CARD = "nfound";
+  @NonNls private static final String CHECK_BOX_CARD = "chkbox";
+  @NonNls private static final String SEARCHING_CARD = "searching";
   private static final int REBUILD_DELAY = 300;
 
   private static class MatchesComparator implements Comparator<String> {
@@ -194,7 +197,7 @@ public abstract class ChooseByNameBase{
 
     if (myModel.getPromptText() != null) {
       JLabel label = new JLabel(" " + myModel.getPromptText());
-      label.setFont(UIManager.getFont("Label.font").deriveFont(Font.BOLD));
+      label.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
       hBox.add(label);
     }
 
@@ -204,7 +207,6 @@ public abstract class ChooseByNameBase{
     final JPanel checkBoxPanel = new JPanel();
     checkBoxPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
     myCheckBox = new JCheckBox(myModel.getCheckBoxName());
-    myCheckBox.setMnemonic(myModel.getCheckBoxMnemonic());
     myCheckBox.setSelected(myModel.loadInitialCheckBoxState());
 
     if (myModel.getPromptText() != null){
@@ -224,8 +226,8 @@ public abstract class ChooseByNameBase{
     panel.add(checkBoxPanel, BorderLayout.CENTER);
     myCardContainer.add(panel, CHECK_BOX_CARD);
     myCardContainer.add(new JLabel("  (" + myModel.getNotInMessage() + ")"), NOT_FOUND_IN_PROJECT_CARD);
-    myCardContainer.add(new JLabel("  (no matches found)"), NOT_FOUND_CARD);
-    myCardContainer.add(new JLabel("  (searching...)"), SEARCHING_CARD);
+    myCardContainer.add(new JLabel("  " + IdeBundle.message("label.choosebyname.no.matches.found")), NOT_FOUND_CARD);
+    myCardContainer.add(new JLabel("  " + IdeBundle.message("label.choosebyname.searching")), SEARCHING_CARD);
     myCard.show(myCardContainer, CHECK_BOX_CARD);
 
     //myCaseCheckBox = new JCheckBox("Ignore case");
@@ -366,10 +368,10 @@ public abstract class ChooseByNameBase{
 
     myListScrollPane = new JScrollPane(myList);
 
-    if (!"Motif".equals(UIManager.getLookAndFeel().getID())) {
-      LookAndFeel.installBorder(myTextFieldPanel, "PopupMenu.border");
+    if (!UIUtil.isMotifLookAndFeel()) {
+      UIUtil.installPopupMenuBorder(myTextFieldPanel);
     }
-    LookAndFeel.installColorsAndFont(myTextFieldPanel, "PopupMenu.background", "PopupMenu.foreground", "PopupMenu.font");
+    UIUtil.installPopupMenuColorAndFonts(myTextFieldPanel);
 
     showTextFieldPanel();
 
@@ -575,7 +577,7 @@ public abstract class ChooseByNameBase{
       change = change.link;
     }
 
-    myTextField.setForeground(UIManager.getColor("TextField.foreground"));
+    myTextField.setForeground(UIUtil.getTextFieldForeground());
     if (!commands.isEmpty()) {
       showList();
       myListUpdater.appendToModel(commands, pos);

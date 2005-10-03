@@ -4,6 +4,8 @@
  */
 package com.intellij.openapi.module;
 
+import com.intellij.openapi.project.ProjectBundle;
+
 
 public class UnknownModuleType extends JavaModuleType {
 
@@ -12,6 +14,6 @@ public class UnknownModuleType extends JavaModuleType {
   }
 
   public String getName() {
-    return "Unknown module type. Used \"" + super.getName() + "\" as a substitute";
+    return ProjectBundle.message("module.type.unknown.name", super.getName());
   }
 }

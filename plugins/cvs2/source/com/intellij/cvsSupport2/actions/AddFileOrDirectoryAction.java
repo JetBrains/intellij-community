@@ -1,5 +1,6 @@
 package com.intellij.cvsSupport2.actions;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.CvsVcs2;
 import com.intellij.cvsSupport2.actions.actionVisibility.CvsActionVisibility;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContext;
@@ -21,7 +22,6 @@ import com.intellij.util.ui.OptionsDialog;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -34,11 +34,11 @@ public class AddFileOrDirectoryAction extends ActionOnSelectedElement {
   private final boolean myIsAutomaticallyAction;
 
   public static AddFileOrDirectoryAction createActionToAddNewFileAutomatically() {
-    return new AddFileOrDirectoryAction("Adding files", Options.ON_FILE_ADDING, true);
+    return new AddFileOrDirectoryAction(CvsBundle.getAddingFilesOperationName(), Options.ON_FILE_ADDING, true);
   }
 
   public AddFileOrDirectoryAction() {
-    this("Adding files to CVS", Options.ADD_ACTION, false);
+    this(CvsBundle.getAddingFilesOperationName(), Options.ADD_ACTION, false);
     getVisibility().canBePerformedOnSeveralFiles();
   }
 
@@ -92,44 +92,38 @@ public class AddFileOrDirectoryAction extends ActionOnSelectedElement {
 
   private ArrayList<VirtualFile> collectFilesToAdd(final VirtualFile[] files) {
     ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
-    for (int i = 0; i < files.length; i++) {
-      VirtualFile file = files[i];
-      //if (CvsEntriesManager.getInstance().fileIsIgnored(file)) continue;
+    for (VirtualFile file : files) {
       addFilesToCollection(result, file);
     }
     return result;
   }
 
-  private void addFilesToCollection(Collection collection, VirtualFile file) {
+  private void addFilesToCollection(Collection<VirtualFile> collection, VirtualFile file) {
     if (DeletedCVSDirectoryStorage.isAdminDir(file)) return;
     collection.add(file);
     VirtualFile[] children = file.getChildren();
     if (children == null) return;
-    for (int i = 0; i < children.length; i++) {
-      VirtualFile child = children[i];
+    for (VirtualFile child : children) {
       addFilesToCollection(collection, child);
     }
   }
 
-  class CreateTreeOnFileList {
+  static class CreateTreeOnFileList {
     private final Collection<VirtualFile> myFiles;
     private final Map<VirtualFile, AddedFileInfo> myResult
       = new HashMap<VirtualFile, AddedFileInfo>();
     private final Project myProject;
-    private final boolean myShouldIncludeAllRoots;
 
     public CreateTreeOnFileList(Collection<VirtualFile> files, Project project, boolean shouldIncludeAllRoots) {
       myFiles = files;
       myProject = project;
-      myShouldIncludeAllRoots = shouldIncludeAllRoots;
       fillFileToInfoMap();
       setAllParents();
-      if (!myShouldIncludeAllRoots) {
+      if (!shouldIncludeAllRoots) {
         final CvsEntriesManager entriesManager = CvsEntriesManager.getInstance();
         for (final VirtualFile file : files) {
-          VirtualFile virtualFile = (VirtualFile)file;
-          if (entriesManager.fileIsIgnored(virtualFile)) {
-            myResult.get(virtualFile).setIncluded(false);
+          if (entriesManager.fileIsIgnored(file)) {
+            myResult.get(file).setIncluded(false);
           }
         }
       }
@@ -141,12 +135,11 @@ public class AddFileOrDirectoryAction extends ActionOnSelectedElement {
     }
 
     private void removeFromMapInfoWithParentAndResortAll() {
-      for (Iterator each = myFiles.iterator(); each.hasNext();) {
-        VirtualFile root = (VirtualFile)each.next();
-        if (myResult.containsKey(root)) {
-          AddedFileInfo info = myResult.get(root);
+      for (final VirtualFile file : myFiles) {
+        if (myResult.containsKey(file)) {
+          AddedFileInfo info = myResult.get(file);
           if (info.getParent() != null) {
-            myResult.remove(root);
+            myResult.remove(file);
           }
           else {
             info.sort();
@@ -156,18 +149,16 @@ public class AddFileOrDirectoryAction extends ActionOnSelectedElement {
     }
 
     private void setAllParents() {
-      for (Iterator each = myFiles.iterator(); each.hasNext();) {
-        VirtualFile root = (VirtualFile)each.next();
-        if (myResult.containsKey(root.getParent()) && myResult.containsKey(root)) {
-          AddedFileInfo info = myResult.get(root);
-          info.setParent(myResult.get(root.getParent()));
+      for (final VirtualFile file : myFiles) {
+        if (myResult.containsKey(file.getParent()) && myResult.containsKey(file)) {
+          AddedFileInfo info = myResult.get(file);
+          info.setParent(myResult.get(file.getParent()));
         }
       }
     }
 
     private void fillFileToInfoMap() {
-      for (Iterator each = myFiles.iterator(); each.hasNext();) {
-        VirtualFile file = (VirtualFile)each.next();
+      for (final VirtualFile file : myFiles) {
         myResult.put(file, new AddedFileInfo(file, CvsConfiguration.getInstance(myProject)));
       }
     }

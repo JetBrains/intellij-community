@@ -4,10 +4,12 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
+import com.intellij.usageView.UsageViewBundle;
 
 class MoveFilesOrDirectoriesViewDescriptor implements UsageViewDescriptor {
   private PsiElement[] myElementsToMove;
@@ -26,17 +28,20 @@ class MoveFilesOrDirectoriesViewDescriptor implements UsageViewDescriptor {
     mySearchInComments = isSearchInComments;
     mySearchInNonJavaFiles = searchInNonJavaFiles;
     if (elementsToMove.length == 1) {
-      myProcessedElementsHeader = UsageViewUtil.capitalize(UsageViewUtil.getType(elementsToMove[0]) + " to be moved to " + newParent.getVirtualFile().getPresentableUrl());
-      myCodeReferencesText = "References in code to " + UsageViewUtil.getType(elementsToMove[0]) + " " + UsageViewUtil.getLongName(elementsToMove[0]) + " ";
+      myProcessedElementsHeader = UsageViewUtil.capitalize(RefactoringBundle.message("move.single.element.elements.header", UsageViewUtil.getType(elementsToMove[0]), newParent.getVirtualFile().getPresentableUrl()));
+      myCodeReferencesText = RefactoringBundle.message("references.in.code.to.0.1",
+                                                       UsageViewUtil.getType(elementsToMove[0]), UsageViewUtil.getLongName(elementsToMove[0]));
     }
     else {
       if (elementsToMove[0] instanceof PsiFile) {
-        myProcessedElementsHeader = UsageViewUtil.capitalize("Files to be moved to " + newParent.getVirtualFile().getPresentableUrl());
+        myProcessedElementsHeader = UsageViewUtil.capitalize(RefactoringBundle.message("move.files.elements.header",
+                                                                                       newParent.getVirtualFile().getPresentableUrl()));
       }
       else if (elementsToMove[0] instanceof PsiDirectory){
-        myProcessedElementsHeader = UsageViewUtil.capitalize("Directories to be moved to " + newParent.getVirtualFile().getPresentableUrl());
+        myProcessedElementsHeader = UsageViewUtil.capitalize(RefactoringBundle.message("move.directories.elements.header",
+                                                                                       newParent.getVirtualFile().getPresentableUrl()));
       }
-      myCodeReferencesText = "References found in code ";
+      myCodeReferencesText = RefactoringBundle.message("references.found.in.code");
     }
     myHelpID = HelpID.getMoveHelpID(elementsToMove[0]);
   }
@@ -84,11 +89,12 @@ class MoveFilesOrDirectoriesViewDescriptor implements UsageViewDescriptor {
   }
 
   public String getCodeReferencesText(int usagesCount, int filesCount) {
-    return myCodeReferencesText + UsageViewUtil.getUsageCountInfo(usagesCount, filesCount, "reference");
+    return myCodeReferencesText + UsageViewBundle.getReferencesString(usagesCount, filesCount);
   }
 
   public String getCommentReferencesText(int usagesCount, int filesCount) {
-    return "Occurrences found in comments, strings and non-java files " + UsageViewUtil.getUsageCountInfo(usagesCount, filesCount, "occurrence");
+    return RefactoringBundle.message("comments.elements.header",
+                                     UsageViewBundle.getOccurencesString(usagesCount, filesCount));
   }
 
   public boolean isCancelInCommonGroup() {

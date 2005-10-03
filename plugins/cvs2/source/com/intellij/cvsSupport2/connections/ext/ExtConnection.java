@@ -8,6 +8,7 @@ import com.intellij.cvsSupport2.javacvsImpl.io.InputStreamWrapper;
 import com.intellij.cvsSupport2.javacvsImpl.io.ReadWriteStatistics;
 import org.netbeans.lib.cvsclient.ICvsCommandStopper;
 import org.netbeans.lib.cvsclient.connection.AuthenticationException;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -20,7 +21,7 @@ import java.util.StringTokenizer;
 
 public class ExtConnection extends ConnectionOnProcess {
 
-  public static final String DEFAULT_RSH = "ssh";
+  @NonNls public static final String DEFAULT_RSH = "ssh";
 
   public static final int DEFAULT_PORT = 9999;
 
@@ -39,16 +40,17 @@ public class ExtConnection extends ConnectionOnProcess {
 
   public void open() throws AuthenticationException {
     try {
+      //noinspection HardCodedStringLiteral
       open(new String[]{"cvs", "server"}, null, null);
     }
     catch (IOException e) {
-      throw new AuthenticationException("Cannot establish external connection", e);
+      throw new AuthenticationException(com.intellij.CvsBundle.message("error.message.cannot.establish.external.connection"), e);
     }
   }
 
   private void open(String[] commands, String expectedResult, ICvsCommandStopper stopper)
     throws AuthenticationException, IOException {
-    if (isOpen()) throw new RuntimeException("Connection already open");
+    if (isOpen()) throw new RuntimeException(com.intellij.CvsBundle.message("error.message.connection.already.open"));
 
     ArrayList command = createRshCommand(myHost, myUserName, myConfiguration);
 
@@ -76,7 +78,7 @@ public class ExtConnection extends ConnectionOnProcess {
       String read = buffer.toString().trim();
       if (!expectedResult.equals(read)) {
         if (read.startsWith(myUserName + "@" + myHost)) {
-          throw new AuthenticationException("Server rejected access", null);
+          throw new AuthenticationException(com.intellij.CvsBundle.message("exception.text.ext.server.rejected.access"), null);
         }
         else {
           InputStream errorStream = myProcess.getErrorStream();
@@ -84,7 +86,7 @@ public class ExtConnection extends ConnectionOnProcess {
             throw new AuthenticationException(readFrom(errorStream), null);
           }
           else {
-            throw new AuthenticationException("Cannot establish external connection", null);
+            throw new AuthenticationException(com.intellij.CvsBundle.message("exception.text.ext.cannot.establish.external.connection"), null);
           }
         }
       }
@@ -98,10 +100,12 @@ public class ExtConnection extends ConnectionOnProcess {
     ArrayList command = new ArrayList();
     command.add(config.CVS_RSH);
     command.add(host);
+    //noinspection HardCodedStringLiteral
     command.add("-l");
     command.add(userName);
 
     if (config.PRIVATE_KEY_FILE.length() > 0) {
+      //noinspection HardCodedStringLiteral
       command.add("-i");
       command.add(config.PRIVATE_KEY_FILE);
     }

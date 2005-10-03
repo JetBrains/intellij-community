@@ -6,6 +6,7 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 
 public class LightClassReference extends LightElement implements PsiJavaCodeReferenceElement {
   private final String myText;
@@ -17,7 +18,7 @@ public class LightClassReference extends LightElement implements PsiJavaCodeRefe
 
   private LightReferenceParameterList myParameterList;
 
-  private LightClassReference(PsiManager manager, String text, String className, PsiSubstitutor substitutor, GlobalSearchScope resolveScope) {
+  private LightClassReference(PsiManager manager, @NonNls String text, @NonNls String className, PsiSubstitutor substitutor, GlobalSearchScope resolveScope) {
     super(manager);
     myText = text;
     myClassName = className;
@@ -28,11 +29,11 @@ public class LightClassReference extends LightElement implements PsiJavaCodeRefe
     mySubstitutor = substitutor;
   }
 
-  public LightClassReference(PsiManager manager, String text, String className, GlobalSearchScope resolveScope) {
+  public LightClassReference(PsiManager manager, @NonNls String text, @NonNls String className, GlobalSearchScope resolveScope) {
     this (manager, text, className, null, resolveScope);
   }
 
-  public LightClassReference(PsiManager manager, String text, String className, PsiSubstitutor substitutor, PsiElement context) {
+  public LightClassReference(PsiManager manager, @NonNls String text, @NonNls String className, PsiSubstitutor substitutor, PsiElement context) {
     super(manager);
     myText = text;
     myClassName = className;
@@ -43,11 +44,11 @@ public class LightClassReference extends LightElement implements PsiJavaCodeRefe
     myRefClass = null;
   }
 
-  public LightClassReference(PsiManager manager, String text, PsiClass refClass) {
+  public LightClassReference(PsiManager manager, @NonNls String text, PsiClass refClass) {
     this(manager, text, refClass, null);
   }
 
-  public LightClassReference(PsiManager manager, String text, PsiClass refClass, PsiSubstitutor substitutor) {
+  public LightClassReference(PsiManager manager, @NonNls String text, PsiClass refClass, PsiSubstitutor substitutor) {
     super(manager);
     myText = text;
     myRefClass = refClass;

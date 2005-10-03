@@ -34,6 +34,7 @@ package com.intellij.ide.highlighter;
 import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.ide.IdeBundle;
 
 import javax.swing.*;
 
@@ -49,7 +50,7 @@ public class XHtmlFileType extends LanguageFileType {
   }
 
   public String getDescription() {
-    return "XHTML files";
+    return IdeBundle.message("filetype.description.xhtml");
   }
 
   public String getDefaultExtension() {

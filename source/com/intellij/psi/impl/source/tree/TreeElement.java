@@ -9,6 +9,8 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.ElementBase;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.CharTable;
+import org.jetbrains.annotations.NonNls;
 
 public abstract class TreeElement extends ElementBase implements ASTNode, Constants, Cloneable {
   public static final TreeElement[] EMPTY_ARRAY = new TreeElement[0];
@@ -26,25 +28,8 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Consta
   }
 
   public ASTNode copyElement() {
-    if (getTreeParent() != null) {
-                 CompositeElement parentCopy = (CompositeElement)getTreeParent().copyElement();
-    synchronized (PsiLock.LOCK) {
-      int index = 0;
-      for (ASTNode child = getTreeParent().firstChild; child != this; child = child.getTreeNext()) {
-        index++;
-      }
-      ASTNode child;
-      for (child = parentCopy.firstChild; index > 0; child = child.getTreeNext(), index--) {
-      }
-      //child.putUserData(MANAGER_KEY, getManager()); //?
-      return child;
-    }
-    }
-    else {
-      final ASTNode clone = (ASTNode)clone();
-      clone.putUserData(MANAGER_KEY, getManager()); //?
-      return clone;
-    }
+    CharTable table = SharedImplUtil.findCharTableByTree(this);
+    return ChangeUtil.copyElement(this, table);
   }
 
   public PsiManager getManager() {
@@ -141,6 +126,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Consta
     return textMatches(element.getText());
   }
 
+  @NonNls
   public String toString() {
     return "Element" + "(" + getElementType().toString() + ")";
   }

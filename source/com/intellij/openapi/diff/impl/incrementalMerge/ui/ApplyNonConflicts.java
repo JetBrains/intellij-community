@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diff.impl.incrementalMerge.Change;
 import com.intellij.openapi.diff.impl.incrementalMerge.MergeList;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FilteringIterator;
@@ -14,7 +15,7 @@ import java.util.Iterator;
 
 public class ApplyNonConflicts extends AnAction {
   public ApplyNonConflicts() {
-    super("Apply all non-conflicting changes", null, IconLoader.getIcon("/diff/applyNotConflicts.png"));
+    super(DiffBundle.message("merge.dialog.apply.all.non.conflicting.changes.action.name"), null, IconLoader.getIcon("/diff/applyNotConflicts.png"));
   }
 
   public void actionPerformed(AnActionEvent e) {

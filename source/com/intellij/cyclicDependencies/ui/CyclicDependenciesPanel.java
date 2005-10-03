@@ -18,7 +18,10 @@ import com.intellij.ui.*;
 import com.intellij.ui.content.Content;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.ui.Tree;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.CommonBundle;
+import com.intellij.analysis.AnalysisScopeBundle;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -30,6 +33,7 @@ import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
+import java.text.MessageFormat;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -52,7 +56,7 @@ public class CyclicDependenciesPanel extends JPanel {
   private CyclicDependenciesBuilder myBuilder;
   private Content myContent;
   private DependenciesPanel.DependencyPanelSettings mySettings = new DependenciesPanel.DependencyPanelSettings();
-  public static final String DEFAULT_PACKAGE_ABBREVIATION = "<default package>";
+  public static final String DEFAULT_PACKAGE_ABBREVIATION = AnalysisScopeBundle.message("dependencies.tree.node.default.package.abbreviation");
 
 
   public CyclicDependenciesPanel(Project project, final CyclicDependenciesBuilder builder) {
@@ -109,7 +113,7 @@ public class CyclicDependenciesPanel extends JPanel {
               myUsagesPanel.setToInitialPosition();
             }
             else {
-              myBuilder.setRootNodeNameInUsageView("Usages of package \'" + ((PsiPackage)nextPackageNode.getPsiElement()).getQualifiedName() + "\' in package \'" + ((PsiPackage)selectedPackageNode.getPsiElement()).getQualifiedName() + "\'");
+              myBuilder.setRootNodeNameInUsageView(AnalysisScopeBundle.message("cyclic.dependencies.usage.view.root.node.text", ((PsiPackage)nextPackageNode.getPsiElement()).getQualifiedName(), ((PsiPackage)selectedPackageNode.getPsiElement()).getQualifiedName()));
               myUsagesPanel.findUsages(searchIn, searchFor);
             }
           }
@@ -205,7 +209,7 @@ public class CyclicDependenciesPanel extends JPanel {
     tree.setCellRenderer(new MyTreeCellRenderer());
     tree.setRootVisible(false);
     tree.setShowsRootHandles(true);
-    tree.putClientProperty("JTree.lineStyle", "Angled");
+    UIUtil.setLineStyleAngled(tree);
 
     TreeToolTipHandler.install(tree);
     TreeUtil.installActions(tree);
@@ -375,7 +379,7 @@ public class CyclicDependenciesPanel extends JPanel {
 
   private final class CloseAction extends AnAction {
     public CloseAction() {
-      super("Close", "Close Dependency Viewer", IconLoader.getIcon("/actions/cancel.png"));
+      super(CommonBundle.message("action.close"), AnalysisScopeBundle.message("action.close.dependency.description"), IconLoader.getIcon("/actions/cancel.png"));
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -387,7 +391,7 @@ public class CyclicDependenciesPanel extends JPanel {
 
   private final class ShowFilesAction extends ToggleAction {
     ShowFilesAction() {
-      super("Show Files", "Show/Hide Files", IconLoader.getIcon("/fileTypes/java.png"));
+      super(AnalysisScopeBundle.message("action.show.files"), AnalysisScopeBundle.message("action.show.files.description"), IconLoader.getIcon("/fileTypes/java.png"));
     }
 
     public boolean isSelected(AnActionEvent event) {
@@ -404,7 +408,7 @@ public class CyclicDependenciesPanel extends JPanel {
 
   private final class GroupByScopeTypeAction extends ToggleAction {
     GroupByScopeTypeAction() {
-      super("Group by Scope Type", "Group by Scope Type (production, test, libraries)", IconLoader.getIcon("/nodes/testSourceFolder.png"));
+      super(AnalysisScopeBundle.message("action.group.by.scope.type"), AnalysisScopeBundle.message("action.group.by.scope.type.description"), IconLoader.getIcon("/nodes/testSourceFolder.png"));
     }
 
     public boolean isSelected(AnActionEvent event) {
@@ -420,7 +424,7 @@ public class CyclicDependenciesPanel extends JPanel {
 
   private class RerunAction extends AnAction {
     public RerunAction(JComponent comp) {
-      super("Rerun", "Rerun Dependency Analysis", IconLoader.getIcon("/actions/refreshUsages.png"));
+      super(CommonBundle.message("action.rerun"), AnalysisScopeBundle.message("action.rerun.dependency"), IconLoader.getIcon("/actions/refreshUsages.png"));
       registerCustomShortcutSet(CommonShortcuts.getRerun(), comp);
     }
 
@@ -441,7 +445,7 @@ public class CyclicDependenciesPanel extends JPanel {
 
   private static class HelpAction extends AnAction {
     private HelpAction() {
-      super("Help", null, IconLoader.getIcon("/actions/help.png"));
+      super(CommonBundle.message("action.help"), null, IconLoader.getIcon("/actions/help.png"));
     }
 
     public void actionPerformed(AnActionEvent event) {

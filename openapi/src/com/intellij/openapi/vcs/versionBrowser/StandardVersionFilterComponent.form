@@ -3,7 +3,7 @@
   <grid id="c8d20" binding="myPanel" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="18" y="16" width="366" height="101"/>
+      <xy x="18" y="16" width="578" height="101"/>
       <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
     </constraints>
     <properties/>
@@ -12,16 +12,16 @@
       <grid id="cce22" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="0" y="0" width="366" height="48"/>
+          <xy x="0" y="0" width="578" height="48"/>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1"/>
         </constraints>
         <properties/>
-        <border type="etched" title="Date"/>
+        <border type="etched" title-resource-bundle="messages/VcsBundle" title-key="border.changes.filter.date.filter"/>
         <children>
           <grid id="28216" row-count="1" column-count="4" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="6" y="20" width="354" height="22"/>
+              <xy x="6" y="20" width="566" height="22"/>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
             </constraints>
             <properties/>
@@ -33,12 +33,12 @@
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
-                  <text value="&amp;After"/>
+                  <text resource-bundle="messages/VcsBundle" key="checkbox.show.changes.after.date"/>
                 </properties>
               </component>
               <component id="36ee9" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myDateAfter">
                 <constraints>
-                  <xy x="61" y="1" width="108" height="20"/>
+                  <xy x="61" y="1" width="214" height="20"/>
                   <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="0" fill="1">
                     <preferred-size width="100" height="-1"/>
                   </grid>
@@ -47,16 +47,16 @@
               </component>
               <component id="179e" class="javax.swing.JCheckBox" binding="myUseDateBeforeFilter">
                 <constraints>
-                  <xy x="179" y="0" width="58" height="22"/>
+                  <xy x="285" y="0" width="58" height="22"/>
                   <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
-                  <text value="&amp;Before"/>
+                  <text resource-bundle="messages/VcsBundle" key="checkbox.show.changes.before.date"/>
                 </properties>
               </component>
               <component id="e98e3" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myDateBefore">
                 <constraints>
-                  <xy x="247" y="1" width="107" height="20"/>
+                  <xy x="353" y="1" width="213" height="20"/>
                   <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="0" fill="1">
                     <preferred-size width="100" height="-1"/>
                   </grid>
@@ -70,11 +70,11 @@
       <grid id="2ab92" row-count="1" column-count="4" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="0" y="53" width="366" height="48"/>
+          <xy x="0" y="53" width="578" height="48"/>
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
         </constraints>
         <properties/>
-        <border type="etched" title="Change"/>
+        <border type="etched" title-resource-bundle="messages/VcsBundle" title-key="border.changes.filter.change.number.filter"/>
         <children>
           <component id="33df6" class="javax.swing.JCheckBox" binding="myUseNumAfterFilter">
             <constraints>
@@ -82,12 +82,12 @@
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
-              <text value="&amp;From"/>
+              <text resource-bundle="messages/VcsBundle" key="checkbox.show.changes.after.num"/>
             </properties>
           </component>
           <component id="7a847" class="javax.swing.JTextField" binding="myNumAfter">
             <constraints>
-              <xy x="66" y="21" width="118" height="20"/>
+              <xy x="66" y="21" width="222" height="20"/>
               <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
                 <preferred-size width="50" height="-1"/>
               </grid>
@@ -96,16 +96,16 @@
           </component>
           <component id="17476" class="javax.swing.JCheckBox" binding="myUseNumBeforeFilter">
             <constraints>
-              <xy x="194" y="20" width="38" height="22"/>
+              <xy x="298" y="20" width="42" height="22"/>
               <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
-              <text value="&amp;To"/>
+              <text resource-bundle="messages/VcsBundle" key="checkbox.show.changes.before.num"/>
             </properties>
           </component>
           <component id="76327" class="javax.swing.JTextField" binding="myNumBefore">
             <constraints>
-              <xy x="242" y="21" width="118" height="20"/>
+              <xy x="350" y="21" width="222" height="20"/>
               <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
                 <preferred-size width="50" height="-1"/>
               </grid>

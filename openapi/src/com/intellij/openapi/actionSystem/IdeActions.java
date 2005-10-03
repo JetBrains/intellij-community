@@ -87,6 +87,7 @@ public interface IdeActions {
   String ACTION_COMPILE = "Compile";
   String ACTION_COMPILE_PROJECT = "CompileProject";
   String ACTION_MAKE_MODULE = "MakeModule";
+  String ACTION_GENERATE_ANT_BUILD = "GenerateAntBuild";
   String ACTION_INSPECT_CODE = "InspectCode";
 
   String ACTION_FIND_USAGES = "FindUsages";

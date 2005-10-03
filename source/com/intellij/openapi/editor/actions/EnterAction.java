@@ -13,6 +13,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
+import com.intellij.CommonBundle;
 
 public class EnterAction extends EditorAction {
   public EnterAction() {
@@ -21,7 +22,7 @@ public class EnterAction extends EditorAction {
 
   private static class Handler extends EditorWriteActionHandler {
     public void executeWriteAction(Editor editor, DataContext dataContext) {
-      CommandProcessor.getInstance().setCurrentCommandName("Typing");
+      CommandProcessor.getInstance().setCurrentCommandName(EditorBundle.message("typing.command.name"));
       insertNewLineAtCaret(editor);
     }
 

@@ -9,6 +9,7 @@
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.reporter.ConnectionException;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -19,6 +20,7 @@ import com.intellij.util.net.HttpConfigurable;
 import org.jdom.Document;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -38,10 +40,13 @@ import java.net.URL;
  */
 public final class UpdateChecker implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.updateSettings.impl.UpdateChecker");
-  private static String UPDATE_URL = null;
+  @NonNls private static String UPDATE_URL = null;
 
   private static long checkInterval = 0;
   private static boolean myVeryFirstOpening = true;
+  @NonNls private static final String BUILD_NUMBER_STUB = "__BUILD_NUMBER__";
+  @NonNls private static final String ELEMENT_BUILD = "build";
+  @NonNls private static final String ELEMENT_VERSION = "version";
 
   private static String getUpdateUrl() {
     if (UPDATE_URL == null) {
@@ -110,10 +115,10 @@ public final class UpdateChecker implements ApplicationComponent {
       throw new ConnectionException(t);
     }
 
-    final String availBuild = document.getRootElement().getChild("build").getTextTrim();
-    final String availVersion = document.getRootElement().getChild("version").getTextTrim();
+    final String availBuild = document.getRootElement().getChild(ELEMENT_BUILD).getTextTrim();
+    final String availVersion = document.getRootElement().getChild(ELEMENT_VERSION).getTextTrim();
     String ourBuild = ApplicationInfo.getInstance().getBuildNumber().trim();
-    if ("__BUILD_NUMBER__".equals(ourBuild)) ourBuild = Integer.toString(Integer.MAX_VALUE);
+    if (BUILD_NUMBER_STUB.equals(ourBuild)) ourBuild = Integer.toString(Integer.MAX_VALUE);
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("build available:'" + availBuild + "' ourBuild='" + ourBuild + "' ");
@@ -167,7 +172,7 @@ public final class UpdateChecker implements ApplicationComponent {
 
     if (downloadThread.isAlive()) {
       downloadThread.interrupt();
-      throw new ConnectionException("Connection timed out");
+      throw new ConnectionException(IdeBundle.message("updates.timeout.error"));
     }
 
     if (exception[0] != null) throw exception[0];

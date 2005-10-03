@@ -14,6 +14,8 @@ package org.netbeans.lib.cvsclient.admin;
 
 import com.intellij.openapi.util.io.FileUtil;
 import org.netbeans.lib.cvsclient.util.BugLog;
+import org.netbeans.lib.cvsclient.JavaCvsSrcBundle;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.*;
 import java.util.*;
@@ -26,8 +28,9 @@ public final class Entries {
 	// Fields =================================================================
 
 	private final Map fileNameToEntryMap = new HashMap();
+  @NonNls private static final String DIRECTORY_PREFIX = "D";
 
-	// Setup ==================================================================
+  // Setup ==================================================================
 
 	public Entries() {
 	}
@@ -85,7 +88,7 @@ public final class Entries {
 					continue;
 				}
 
-				if (line.startsWith("D") && line.trim().length() == 1) {
+				if (line.startsWith(DIRECTORY_PREFIX) && line.trim().length() == 1) {
 					continue;
 				}
 
@@ -104,7 +107,8 @@ public final class Entries {
 		write(writer, lineSeparator);
 		if (entriesFile.exists()) {
 			if (!entriesFile.delete()) {
-				throw new IOException("Could not delete file " + entriesFile.getAbsolutePath());
+				throw new IOException(
+                                  JavaCvsSrcBundle.message("could.not.delete.file.error.message", entriesFile.getAbsolutePath()));
 			}
 		}
 
@@ -115,7 +119,7 @@ public final class Entries {
     writer = new BufferedWriter(writer);
     try {
       if (fileNameToEntryMap.size() == 0) {
-        writer.write("D");
+        writer.write(DIRECTORY_PREFIX);
         writer.write(lineSeparator);
       }
       else {

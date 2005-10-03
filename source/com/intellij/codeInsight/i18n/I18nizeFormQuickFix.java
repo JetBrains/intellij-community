@@ -1,21 +1,24 @@
 package com.intellij.codeInsight.i18n;
 
-import com.intellij.uiDesigner.quickFixes.QuickFix;
+import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiManager;
 import com.intellij.uiDesigner.GuiEditor;
 import com.intellij.uiDesigner.RadComponent;
 import com.intellij.uiDesigner.lw.StringDescriptor;
-import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
-import com.intellij.psi.*;
+import com.intellij.uiDesigner.quickFixes.QuickFix;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.codeInsight.CodeInsightUtil;
 
 import java.util.Collection;
 
@@ -26,20 +29,17 @@ import java.util.Collection;
  * Time: 18:34:04
  * To change this template use File | Settings | File Templates.
  */
-public class I18nizeFormQuickFix extends QuickFix {
+public abstract class I18nizeFormQuickFix extends QuickFix {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.i18n.I18nizeFormQuickFix");
-  private final RadComponent myComponent;
-  private final IntrospectedProperty myProperty;
+  protected final RadComponent myComponent;
 
-  public I18nizeFormQuickFix(final GuiEditor editor, final String name,
-                             final RadComponent component, final IntrospectedProperty property) {
+  public I18nizeFormQuickFix(final GuiEditor editor, final String name, final RadComponent component) {
     super(editor, name);
     myComponent = component;
-    myProperty = property;
   }
 
   public void run() {
-    final StringDescriptor descriptor = (StringDescriptor) myProperty.getValue(myComponent);
+    final StringDescriptor descriptor = getStringDescriptorValue();
     final Project project = myEditor.getProject();
     final PsiManager psiManager = PsiManager.getInstance(project);
     final PsiFile formPsiFile = psiManager.findFile(myEditor.getFile());
@@ -85,7 +85,7 @@ public class I18nizeFormQuickFix extends QuickFix {
           }
         });
       }
-    },"i18nize",project);
+    }, CodeInsightBundle.message("quickfix.i18n.command.name"),project);
 
     if (aPropertiesFile != null) {
       final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
@@ -94,7 +94,7 @@ public class I18nizeFormQuickFix extends QuickFix {
         String bundleName = packageName + "." + aPropertiesFile.getResourceBundle().getBaseName();
         bundleName = bundleName.replace('.', '/');
         try {
-          myProperty.setValue(myComponent, new StringDescriptor(bundleName, dlg.getKey()));
+          setStringDescriptorValue(new StringDescriptor(bundleName, dlg.getKey()));
         }
         catch (Exception e) {
           LOG.error(e);
@@ -103,4 +103,7 @@ public class I18nizeFormQuickFix extends QuickFix {
       }
     }
   }
+
+  protected abstract StringDescriptor getStringDescriptorValue();
+  protected abstract void setStringDescriptorValue(final StringDescriptor descriptor) throws Exception;
 }

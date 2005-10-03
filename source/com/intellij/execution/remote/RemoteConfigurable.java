@@ -19,6 +19,8 @@ import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.*;
 
+import org.jetbrains.annotations.NonNls;
+
 public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.remote.RemoteConfigurable");
   JPanel myPanel;
@@ -35,6 +37,8 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
   private JPanel myLogsPanel;
   private final LogConfigurationPanel myLogConfigurations;
   private String myHostName = "";
+  @NonNls
+  protected static final String LOCALHOST = "localhost";
 
   public RemoteConfigurable() {
     final ButtonGroup transportGroup = new ButtonGroup();
@@ -83,7 +87,7 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
         myHostField.setEditable(isAttach);
         myHostField.setEnabled(isAttach);
 
-        myHostField.setText(isAttach ? myHostName : "localhost");
+        myHostField.setText(isAttach ? myHostName : LOCALHOST);
         updateHelpText();
       }
     };
@@ -169,7 +173,7 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
   }
 
 
-  public String getHelpTopic() {
+  @NonNls public String getHelpTopic() {
     return "project.runDebugRemote";
   }
 }

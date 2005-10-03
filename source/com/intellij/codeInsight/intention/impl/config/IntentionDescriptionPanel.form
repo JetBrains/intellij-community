@@ -16,11 +16,11 @@
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
         </constraints>
         <properties/>
-        <border type="none" title="Description"/>
+        <border type="none" title-resource-bundle="messages/CodeInsightBundle" title-key="dialog.intention.settings.description.panel.title"/>
         <children>
           <scrollpane id="f9e30">
             <constraints>
-              <xy x="5" y="20" width="480" height="61"/>
+              <xy x="6" y="20" width="478" height="60"/>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="7" anchor="0" fill="3"/>
             </constraints>
             <properties/>
@@ -29,7 +29,7 @@
               <component id="3f761" class="javax.swing.JEditorPane" binding="myDescriptionBrowser">
                 <constraints/>
                 <properties>
-                  <contentType value="text/html"/>
+                  <contentType value="text/html" noi18n="true"/>
                   <editable value="false"/>
                 </properties>
               </component>
@@ -48,13 +48,13 @@
         <children>
           <component id="aa4f3" class="javax.swing.JLabel">
             <constraints>
-              <xy x="0" y="2" width="490" height="15"/>
+              <xy x="0" y="3" width="490" height="14"/>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="1"/>
             </constraints>
             <properties>
               <horizontalAlignment value="0"/>
               <horizontalTextPosition value="0"/>
-              <text value="&lt;html&gt;&lt;body&gt;&lt;center&gt;&lt;b&gt;Usage Example:&lt;/b&gt;&lt;/center&gt;&lt;/body&gt;&lt;/html&gt;"/>
+              <text resource-bundle="messages/CodeInsightBundle" key="dialog.intention.settings.description.usage.example.title"/>
             </properties>
           </component>
           <xy id="fa495" binding="myBeforePanel" hgap="-1" vgap="-1">

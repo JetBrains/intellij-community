@@ -2,6 +2,7 @@
 package com.intellij.ide.macro;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.ide.IdeBundle;
 
 import java.io.File;
 
@@ -11,7 +12,7 @@ public final class FilePathRelativeToSourcepathMacro2 extends FilePathRelativeTo
   }
 
   public String getDescription() {
-    return "File path relative to the sourcepath root the file belongs to (with forward slashes)";
+    return IdeBundle.message("macro.file.path.relative.to.sourcepath.root.fwd.slash");
   }
 
   public String expand(DataContext dataContext) {

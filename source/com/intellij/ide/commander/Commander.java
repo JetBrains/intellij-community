@@ -28,6 +28,7 @@ import com.intellij.psi.*;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.ListDataEvent;
@@ -57,6 +58,16 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
   private boolean myAutoScrollMode = false;
   private final ToolWindowManager myToolWindowManager;
   private final java.util.List<Disposable> myDisposables = new ArrayList<Disposable>();
+  @NonNls private static final String ACTION_BACKCOMMAND = "backCommand";
+  @NonNls private static final String ACTION_FORWARDCOMMAND = "forwardCommand";
+  @NonNls private static final String ELEMENT_LEFTPANEL = "leftPanel";
+  @NonNls private static final String ATTRIBUTE_MOVE_FOCUS = "MOVE_FOCUS";
+  @NonNls private static final String ELEMENT_OPTION = "OPTION";
+  @NonNls private static final String ATTRIBUTE_PROPORTION = "proportion";
+  @NonNls private static final String ELEMENT_SPLITTER = "splitter";
+  @NonNls private static final String ELEMENT_RIGHTPANEL = "rightPanel";
+  @NonNls private static final String ATTRIBUTE_URL = "url";
+  @NonNls private static final String ATTRIBUTE_CLASS = "class";
 
   /**
    * FOR USE IN TESTS ONLY!!!
@@ -83,15 +94,15 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
       }
     };
     final ActionMap actionMap = getActionMap();
-    actionMap.put("backCommand", backAction);
-    actionMap.put("forwardCommand", fwdAction);
+    actionMap.put(ACTION_BACKCOMMAND, backAction);
+    actionMap.put(ACTION_FORWARDCOMMAND, fwdAction);
     final KeyStroke[] backStrokes = getKeyStrokes(IdeActions.ACTION_GOTO_BACK, keymapManager);
     for (int idx = 0; idx < backStrokes.length; idx++) {
       KeyStroke stroke = backStrokes[idx];
       //getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(stroke, "backCommand");
       //getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(stroke, "backCommand");
-      registerKeyboardAction(backAction, "backCommand", stroke, JComponent.WHEN_IN_FOCUSED_WINDOW);
-      registerKeyboardAction(backAction, "backCommand", stroke, JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+      registerKeyboardAction(backAction, ACTION_BACKCOMMAND, stroke, JComponent.WHEN_IN_FOCUSED_WINDOW);
+      registerKeyboardAction(backAction, ACTION_BACKCOMMAND, stroke, JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
     }
 
     final KeyStroke[] fwdStrokes = getKeyStrokes(IdeActions.ACTION_GOTO_FORWARD, keymapManager);
@@ -99,8 +110,8 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
       KeyStroke stroke = fwdStrokes[idx];
       //getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(stroke, "forwardCommand");
       //getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(stroke, "forwardCommand");
-      registerKeyboardAction(fwdAction, "forwardCommand", stroke, JComponent.WHEN_IN_FOCUSED_WINDOW);
-      registerKeyboardAction(fwdAction, "forwardCommand", stroke, JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+      registerKeyboardAction(fwdAction, ACTION_FORWARDCOMMAND, stroke, JComponent.WHEN_IN_FOCUSED_WINDOW);
+      registerKeyboardAction(fwdAction, ACTION_FORWARDCOMMAND, stroke, JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
     }
 
     myHistory = new CommanderHistory(this);
@@ -122,7 +133,7 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
 
     Element element;
 
-    element = myElement.getChild("leftPanel");
+    element = myElement.getChild(ELEMENT_LEFTPANEL);
     if (element != null) {
       final PsiElement parentElement = readParentElement(element);
       if (parentElement != null) {
@@ -130,7 +141,7 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
       }
     }
 
-    element = myElement.getChild("rightPanel");
+    element = myElement.getChild(ELEMENT_RIGHTPANEL);
     if (element != null) {
       final PsiElement parentElement = readParentElement(element);
       if (parentElement != null) {
@@ -138,9 +149,9 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
       }
     }
 
-    element = myElement.getChild("splitter");
+    element = myElement.getChild(ELEMENT_SPLITTER);
     if (element != null) {
-      final String attribute = element.getAttributeValue("proportion");
+      final String attribute = element.getAttributeValue(ATTRIBUTE_PROPORTION);
       if (attribute != null) {
         try {
           final float proportion = Float.valueOf(attribute).floatValue();
@@ -152,9 +163,10 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
       }
     }
 
-    element = myElement.getChild("OPTION");
+    element = myElement.getChild(ELEMENT_OPTION);
     if (element != null) {
-      MOVE_FOCUS = !"false".equals(element.getAttributeValue("MOVE_FOCUS"));
+      //noinspection HardCodedStringLiteral
+      MOVE_FOCUS = !"false".equals(element.getAttributeValue(ATTRIBUTE_MOVE_FOCUS));
     }
 
     myLeftPanel.setActive(false);
@@ -450,19 +462,20 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
       return;
     }
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-    Element e = new Element("leftPanel");
+    Element e = new Element(ELEMENT_LEFTPANEL);
     element.addContent(e);
     writePanel(myLeftPanel, e);
-    e = new Element("rightPanel");
+    e = new Element(ELEMENT_RIGHTPANEL);
     element.addContent(e);
     writePanel(myRightPanel, e);
-    e = new Element("splitter");
+    e = new Element(ELEMENT_SPLITTER);
     element.addContent(e);
-    e.setAttribute("proportion", Float.toString(mySplitter.getProportion()));
+    e.setAttribute(ATTRIBUTE_PROPORTION, Float.toString(mySplitter.getProportion()));
     if (!MOVE_FOCUS) {
-      e = new Element("OPTION");
+      e = new Element(ELEMENT_OPTION);
       element.addContent(e);
-      e.setAttribute("MOVE_FOCUS", "false");
+      //noinspection HardCodedStringLiteral
+      e.setAttribute(ATTRIBUTE_MOVE_FOCUS, "false");
     }
   }
 
@@ -475,14 +488,14 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
     final Object parentElement = parentNode != null? parentNode.getValue() : null;
     if (parentElement instanceof PsiDirectory) {
       final PsiDirectory directory = (PsiDirectory) parentElement;
-      element.setAttribute("url", directory.getVirtualFile().getUrl());
+      element.setAttribute(ATTRIBUTE_URL, directory.getVirtualFile().getUrl());
     }
     else if (parentElement instanceof PsiClass) {
       for (PsiElement e = (PsiElement) parentElement; e != null; e = e.getParent()) {
         if (e instanceof PsiClass) {
           final String qualifiedName = ((PsiClass) e).getQualifiedName();
           if (qualifiedName != null) {
-            element.setAttribute("class", qualifiedName);
+            element.setAttribute(ATTRIBUTE_CLASS, qualifiedName);
             break;
           }
         }
@@ -495,12 +508,12 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
   }
 
   private PsiElement readParentElement(final Element element) {
-    if (element.getAttributeValue("url") != null) {
-      final String url = element.getAttributeValue("url");
+    if (element.getAttributeValue(ATTRIBUTE_URL) != null) {
+      final String url = element.getAttributeValue(ATTRIBUTE_URL);
       final VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
       return file != null ? PsiManager.getInstance(myProject).findDirectory(file) : null;
-    } else if (element.getAttributeValue("class") != null) {
-      final String className = element.getAttributeValue("class");
+    } else if (element.getAttributeValue(ATTRIBUTE_CLASS) != null) {
+      final String className = element.getAttributeValue(ATTRIBUTE_CLASS);
       return className != null ? PsiManager.getInstance(myProject).findClass(className) : null;
     }
     return null;

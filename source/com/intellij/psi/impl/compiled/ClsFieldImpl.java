@@ -19,10 +19,12 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.cls.BytePointer;
 import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.cls.ClsUtil;
-import gnu.trove.THashSet;
+import org.jetbrains.annotations.NonNls;
 
 import java.text.StringCharacterIterator;
 import java.util.Set;
+
+import gnu.trove.THashSet;
 
 public class ClsFieldImpl extends ClsRepositoryPsiElement implements PsiField, PsiVariableEx, ClsModifierListOwner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsFieldImpl");
@@ -110,7 +112,7 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement implements PsiField, P
                return myNameIdentifier;
   }
 
-  public String getName() {
+  public @NonNls String getName() {
     if (myName == null) {
     synchronized (PsiLock.LOCK) {
       long repositoryId = getRepositoryId();
@@ -327,7 +329,7 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement implements PsiField, P
         throw new ClsFormatException();
       }
       float v = ClsUtil.readFloat(ptr);
-      String text;
+      @NonNls String text;
       if (Float.isInfinite(v)) {
         text = v > 0 ? "Float.POSITIVE_INFINITY" : "Float.NEGATIVE_INFINITY";
       }
@@ -344,7 +346,7 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement implements PsiField, P
         throw new ClsFormatException();
       }
       double v = ClsUtil.readDouble(ptr);
-      String text;
+      @NonNls String text;
       if (Double.isInfinite(v)) {
         text = v > 0 ? "Double.POSITIVE_INFINITY" : "Double.NEGATIVE_INFINITY";
       }
@@ -383,7 +385,7 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement implements PsiField, P
   }
 
   private PsiExpression _createNumberExpr(long v, boolean negated) {
-    String text = Long.toString(v);
+    @NonNls String text = Long.toString(v);
     if (negated && StringUtil.startsWithChar(text, '-')) {
       LOG.assertTrue(v == -1L << 63);
       text = text.substring(1);
@@ -421,7 +423,7 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement implements PsiField, P
 
   private static String literalToString(String value, char quote) {
     int length = value.length();
-    StringBuffer buffer = new StringBuffer(length + 3);
+    @NonNls StringBuffer buffer = new StringBuffer(length + 3);
     buffer.append(quote);
 
     for (int i = 0; i < length; i++) {
@@ -481,6 +483,7 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement implements PsiField, P
     return computeConstantValue(new THashSet<PsiVariable>());
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public Object computeConstantValue(Set<PsiVariable> visitedVars) {
     if (!hasModifierProperty(PsiModifier.FINAL)) return null;
     PsiExpression initializer = getInitializer();
@@ -488,14 +491,16 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement implements PsiField, P
 
     final String qName = getContainingClass().getQualifiedName();
     if ("java.lang.Float".equals(qName)) {
-      if ("POSITIVE_INFINITY".equals(getName())) return new Float(Float.POSITIVE_INFINITY);
-      if ("NEGATIVE_INFINITY".equals(getName())) return new Float(Float.NEGATIVE_INFINITY);
-      if ("NaN".equals(getName())) return new Float(Float.NaN);
+      final @NonNls String name = getName();
+      if ("POSITIVE_INFINITY".equals(name)) return new Float(Float.POSITIVE_INFINITY);
+      if ("NEGATIVE_INFINITY".equals(name)) return new Float(Float.NEGATIVE_INFINITY);
+      if ("NaN".equals(name)) return new Float(Float.NaN);
     }
     else if ("java.lang.Double".equals(qName)) {
-      if ("POSITIVE_INFINITY".equals(getName())) return new Double(Double.POSITIVE_INFINITY);
-      if ("NEGATIVE_INFINITY".equals(getName())) return new Double(Double.NEGATIVE_INFINITY);
-      if ("NaN".equals(getName())) return new Double(Double.NaN);
+      final @NonNls String name = getName();
+      if ("POSITIVE_INFINITY".equals(name)) return new Double(Double.POSITIVE_INFINITY);
+      if ("NEGATIVE_INFINITY".equals(name)) return new Double(Double.NEGATIVE_INFINITY);
+      if ("NaN".equals(name)) return new Double(Double.NaN);
     }
 
     return PsiConstantEvaluationHelperImpl.computeCastTo(initializer, getType(), visitedVars);

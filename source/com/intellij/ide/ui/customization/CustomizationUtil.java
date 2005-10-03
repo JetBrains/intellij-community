@@ -117,6 +117,7 @@ public class CustomizationUtil {
   }
 
   public static void optimizeSchema(final JTree tree, final CustomActionsSchema schema) {
+    //noinspection HardCodedStringLiteral
     Group rootGroup = new Group("root", null, null);
     DefaultMutableTreeNode root = new DefaultMutableTreeNode(rootGroup);
     root.removeAllChildren();

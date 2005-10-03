@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.ui;
 import com.intellij.openapi.editor.actions.ContentChooser;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.VcsBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -30,15 +31,14 @@ import java.util.List;
 public class CommitMessage extends JPanel{
 
   private final JTextArea myCommentArea = new JTextArea();
-  private final JButton myHistory = new JButton("History...");
+  private final JButton myHistory = new JButton(VcsBundle.message("botton.text.commit.messages.history"));
 
   public CommitMessage(final VcsConfiguration configuration, final Project project) {
     super(new BorderLayout());
-    myHistory.setMnemonic('H');
     final JScrollPane scrollPane = new JScrollPane(myCommentArea);
     scrollPane.setPreferredSize(myCommentArea.getPreferredSize());
     add(scrollPane, BorderLayout.CENTER);
-    add(new JLabel("Comment:"), BorderLayout.NORTH);
+    add(new JLabel(VcsBundle.message("label.commit.comment")), BorderLayout.NORTH);
     final ArrayList<String> recentMessages = configuration.getRecentMessages();
     Collections.reverse(recentMessages);
 
@@ -49,7 +49,7 @@ public class CommitMessage extends JPanel{
 
       myHistory.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
-          final ContentChooser<String> contentChooser = new ContentChooser<String>(project, "Choose Message", false){
+          final ContentChooser<String> contentChooser = new ContentChooser<String>(project, VcsBundle.message("dialog.title.choose.commit.message.from.history"), false){
             protected void removeContentAt(final String content) {
               configuration.removeMessage(content);
             }

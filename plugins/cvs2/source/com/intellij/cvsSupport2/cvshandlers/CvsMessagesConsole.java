@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.EditorAdapter;
 
 import java.awt.*;
+import java.text.MessageFormat;
 
 /**
  * author: lesya
@@ -53,7 +54,7 @@ public class CvsMessagesConsole extends CvsMessagesAdapter {
   }
 
   public void commandFinished(String commandName, long time) {
-    appendString("Command finished ( " + time/1000 + " )", COMMAND);
+    appendString(com.intellij.CvsBundle.message("message.command.finished", time / 1000), COMMAND);
   }
 
 }

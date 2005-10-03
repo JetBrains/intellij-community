@@ -11,10 +11,13 @@ import com.intellij.j2ee.openapi.impl.ExternalResourceManagerImpl;
 import com.intellij.j2ee.j2eeDom.web.WebModuleProperties;
 import com.intellij.j2ee.jsp.MyTEI;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.jsp.JspBundle;
 
 import javax.servlet.jsp.tagext.*;
 import java.net.URL;
 import java.util.List;
+
+import org.jetbrains.annotations.NonNls;
 
 /**
  * Created by IntelliJ IDEA.
@@ -26,6 +29,7 @@ import java.util.List;
 public class TldTagDescriptor extends CustomTagDescriptorBase  {
   private String myTagClass;
   private String myTeiClass;
+  @NonNls public static final String EMPTY_BODY_CONTENT = "empty";
 
   public TldTagDescriptor() {}
 
@@ -37,14 +41,14 @@ public class TldTagDescriptor extends CustomTagDescriptorBase  {
     if (myAttributeDescriptors==null) {
       final XmlTag[] subTags = myTag.findSubTags("attribute", null);
       final XmlAttributeDescriptor[] xmlAttributeDescriptors = new XmlAttributeDescriptor[subTags.length];
-      
+
       for (int i = 0; i < subTags.length; i++) {
         xmlAttributeDescriptors[i] = new TldAttributeDescriptor(
           subTags[i],
           CustomTagSupportUtil.ValueAccessor.SUB_TAG_ACCESSOR
         );
       }
-      
+
       myAttributeDescriptors = xmlAttributeDescriptors;
     }
     return myAttributeDescriptors;
@@ -53,7 +57,7 @@ public class TldTagDescriptor extends CustomTagDescriptorBase  {
   public String getName() {
     if (myName == null) {
       final XmlTag firstSubTag = myTag.findFirstSubTag("name");
-      myName = (firstSubTag!=null)?firstSubTag.getValue().getText():null;
+      myName = (firstSubTag!=null)?firstSubTag.getValue().getTrimmedText():null;
     }
     return myName;
   }
@@ -64,7 +68,7 @@ public class TldTagDescriptor extends CustomTagDescriptorBase  {
     }
     myTag = (XmlTag)element;
     final XmlTag bodyContent = myTag.findFirstSubTag("bodycontent");
-    if (bodyContent!=null) myEmpty = bodyContent.getValue().getText().equals("empty");
+    if (bodyContent!=null) myEmpty = bodyContent.getValue().getTrimmedText().equals(EMPTY_BODY_CONTENT);
 
     XmlTag tei = myTag.findFirstSubTag("teiclass");
     if (tei == null) tei = myTag.findFirstSubTag("tei-class");
@@ -124,10 +128,10 @@ public class TldTagDescriptor extends CustomTagDescriptorBase  {
         if (info.isValid(JspImplUtil.getTagData((XmlTag)context))) return;
       }
       catch (Throwable e) {
-        host.addMessage(context,"Exception during TEI processing occured: " + e.getMessage(),ValidationHost.ERROR);
+        host.addMessage(context, JspBundle.message("exception.during.tei.processing.occured.with.error.error.message", e.getMessage()),ValidationHost.ERROR);
       }
 
-      host.addMessage(context,"Wrong Tag Data",ValidationHost.ERROR);
+      host.addMessage(context, JspBundle.message("wrong.tag.data.error.message"),ValidationHost.ERROR);
     }
   }
 
@@ -170,7 +174,7 @@ public class TldTagDescriptor extends CustomTagDescriptorBase  {
   public XmlTag findVariableWithName(String name) {
     return findVariableWithName(
       myTag.findSubTags("variable"),
-      name, 
+      name,
       CustomTagSupportUtil.ValueAccessor.SUB_TAG_ACCESSOR
     );
   }

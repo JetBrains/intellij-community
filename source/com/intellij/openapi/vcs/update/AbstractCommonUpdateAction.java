@@ -116,7 +116,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
             }
 
             if (progressIndicator != null) {
-              progressIndicator.setText("Synchronizing files...");
+              progressIndicator.setText(VcsBundle.message("progress.text.synchronizing.files"));
               progressIndicator.setText2("");
             }
 
@@ -148,7 +148,8 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
               if (!vcsExceptions.isEmpty()) {
-                AbstractVcsHelper.getInstance(project).showErrors(vcsExceptions, getCompleteActionName(context) + " Errors");
+                AbstractVcsHelper.getInstance(project).showErrors(vcsExceptions, VcsBundle.message("message.title.vcs.update.errors",
+                                                                                                   getCompleteActionName(context)));
               }
               if (updatedFiles.isEmpty() && vcsExceptions.isEmpty()) {
                 Messages.showMessageDialog(getAllFilesAreUpToDateMessage(roots),
@@ -183,10 +184,10 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
 
   private String getAllFilesAreUpToDateMessage(FilePath[] roots) {
     if (roots.length == 1 && !roots[0].isDirectory()) {
-      return "File is up-to-date";
+      return VcsBundle.message("message.text.file.is.up.to.date");
     }
     else {
-      return "All files are up-to-date";
+      return VcsBundle.message("message.text.all.files.are.up.to.date");
     }
   }
 
@@ -196,7 +197,8 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
                                            ActionInfo actionInfo) {
     ContentManager contentManager = ProjectLevelVcsManagerEx.getInstanceEx(project).getContentManager();
     final UpdateInfoTree updateInfoTree = new UpdateInfoTree(contentManager, null, project, updatedFiles, actionName, actionInfo);
-    Content content = PeerFactory.getInstance().getContentFactory().createContent(updateInfoTree, actionInfo.getActionName() + " Info",
+    Content content = PeerFactory.getInstance().getContentFactory().createContent(updateInfoTree, VcsBundle.message(
+      "toolwindow.title.update.action.info", actionInfo.getActionName()),
                                                                                   true);
     ContentsUtil.addOrReplaceContent(contentManager, content, true);
     ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS).activate(null);

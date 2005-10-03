@@ -38,11 +38,15 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Iterator;
 
 public class PropertiesComponentImpl extends PropertiesComponent implements JDOMExternalizable, ProjectComponent, ApplicationComponent {
   private HashMap<String, String> myMap = new HashMap<String, String>();
+  @NonNls private static final String ELEMENT_PROPERTY = "property";
+  @NonNls private static final String ATTRIBUTE_NAME = "name";
+  @NonNls private static final String ATTRIBUTE_VALUE = "value";
 
 
   public String getComponentName() {
@@ -58,11 +62,11 @@ public class PropertiesComponentImpl extends PropertiesComponent implements JDOM
   public void moduleAdded() {}
 
   public void readExternal(Element parentNode) throws InvalidDataException {
-    for (Iterator iterator = parentNode.getChildren("property").iterator(); iterator.hasNext();) {
+    for (Iterator iterator = parentNode.getChildren(ELEMENT_PROPERTY).iterator(); iterator.hasNext();) {
       Element e = (Element)iterator.next();
 
-      String name = e.getAttributeValue("name");
-      String value = e.getAttributeValue("value");
+      String name = e.getAttributeValue(ATTRIBUTE_NAME);
+      String value = e.getAttributeValue(ATTRIBUTE_VALUE);
 
       if (name != null) {
         myMap.put(name, value);
@@ -75,9 +79,9 @@ public class PropertiesComponentImpl extends PropertiesComponent implements JDOM
       String key = (String)iterator.next();
       String value = myMap.get(key);
       if (value != null) {
-        Element element = new Element("property");
-        element.setAttribute("name", key);
-        element.setAttribute("value", value);
+        Element element = new Element(ELEMENT_PROPERTY);
+        element.setAttribute(ATTRIBUTE_NAME, key);
+        element.setAttribute(ATTRIBUTE_VALUE, value);
         parentNode.addContent(element);
       }
     }

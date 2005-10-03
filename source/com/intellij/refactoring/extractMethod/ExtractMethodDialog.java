@@ -8,21 +8,27 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.ui.VisibilityPanel;
+import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.ParameterTablePanel;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.VisibilityUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 
 class ExtractMethodDialog extends DialogWrapper {
@@ -90,7 +96,8 @@ class ExtractMethodDialog extends DialogWrapper {
       height += myExceptions.length + 1;
     }
     mySignatureArea = new JTextArea(height, 30);
-    myCbMakeStatic = new NonFocusableCheckBox("Declare static");
+    myCbMakeStatic = new NonFocusableCheckBox();
+    myCbMakeStatic.setText(RefactoringBundle.message("declare.static.checkbox"));
 
     // Initialize UI
 
@@ -127,13 +134,24 @@ class ExtractMethodDialog extends DialogWrapper {
     HelpManager.getInstance().invokeHelp(myHelpId);
   }
 
+  protected void doOKAction() {
+    Set<String> conflicts = new HashSet<String>();
+    checkMethodConflicts(conflicts);
+    if (conflicts.size() > 0) {
+      final ConflictsDialog conflictsDialog = new ConflictsDialog(conflicts.toArray(new String[conflicts.size()]), myProject);
+      conflictsDialog.show();
+      if (!conflictsDialog.isOK()) return;
+    }
+
+    super.doOKAction();
+  }
+
   protected JComponent createNorthPanel() {
     JPanel panel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP));
-    panel.setBorder(IdeBorderFactory.createTitledBorder("Method"));
+    panel.setBorder(IdeBorderFactory.createTitledBorder(RefactoringBundle.message("extract.method.method.panel.border")));
 
-    JLabel nameLabel = new JLabel("Name:");
-    nameLabel.setDisplayedMnemonic('N');
-    nameLabel.setLabelFor(myNameField);
+    JLabel nameLabel = new JLabel();
+    nameLabel.setText(RefactoringBundle.message("name.prompt"));
     panel.add(nameLabel);
 
     panel.add(myNameField);
@@ -145,7 +163,6 @@ class ExtractMethodDialog extends DialogWrapper {
     });
 
     setOKActionEnabled(false);
-    myCbMakeStatic.setMnemonic('s');
     panel.add(myCbMakeStatic);
     if (myStaticFlag || myCanBeStatic) {
       myCbMakeStatic.setEnabled(!myStaticFlag);
@@ -202,13 +219,13 @@ class ExtractMethodDialog extends DialogWrapper {
         ExtractMethodDialog.this.doCancelAction();
       }
     };
-    panel.setBorder(IdeBorderFactory.createTitledBorder("Parameters"));
+    panel.setBorder(IdeBorderFactory.createTitledBorder(RefactoringBundle.message("parameters.border.title")));
     return panel;
   }
 
   private JComponent createSignaturePanel() {
     JPanel panel = new JPanel(new BorderLayout());
-    panel.setBorder(IdeBorderFactory.createTitledBorder("Signature Preview"));
+    panel.setBorder(IdeBorderFactory.createTitledBorder(RefactoringBundle.message("signature.preview.border.title")));
 
     mySignatureArea.setEditable(false);
     mySignatureArea.setBackground(this.getContentPane().getBackground());
@@ -221,42 +238,9 @@ class ExtractMethodDialog extends DialogWrapper {
     return panel;
   }
 
-  protected void doOKAction() {
-    if (!checkMethodConflicts()) {
-      return;
-    }
-    super.doOKAction();
-  }
-
-  private boolean checkMethodConflicts() {
-    PsiMethod prototype;
-    try {
-      PsiElementFactory factory = PsiManager.getInstance(myProject).getElementFactory();
-      prototype = factory.createMethod(
-              myNameField.getText().trim(),
-              myReturnType
-      );
-      if (myTypeParameterList != null) prototype.getTypeParameterList().replace(myTypeParameterList);
-      for (ParameterTablePanel.VariableData data : myVariableData) {
-        if (data.passAsParameter) {
-          prototype.getParameterList().add(factory.createParameter(data.name, data.type));
-        }
-      }
-      // set the modifiers with which the method is supposed to be created
-      prototype.getModifierList().setModifierProperty(PsiModifier.PRIVATE, true);
-    } catch (IncorrectOperationException e) {
-      prototype = null;
-    }
-    return RefactoringMessageUtil.checkMethodConflicts(
-            myTargetClass,
-            null,
-            prototype
-    );
-  }
-
   private void updateSignature() {
     if (mySignatureArea == null) return;
-    StringBuffer buffer = new StringBuffer();
+    @NonNls StringBuffer buffer = new StringBuffer();
     final String visibilityString = VisibilityUtil.getVisibilityString(myVisibilityPanel.getVisibility());
     buffer.append(visibilityString);
     if (buffer.length() > 0) {
@@ -306,5 +290,31 @@ class ExtractMethodDialog extends DialogWrapper {
       }
     }
     mySignatureArea.setText(buffer.toString());
+  }
+
+  private void checkMethodConflicts(Collection<String> conflicts) {
+    PsiMethod prototype;
+    try {
+      PsiElementFactory factory = PsiManager.getInstance(myProject).getElementFactory();
+      prototype = factory.createMethod(
+              myNameField.getText().trim(),
+              myReturnType
+      );
+      if (myTypeParameterList != null) prototype.getTypeParameterList().replace(myTypeParameterList);
+      for (ParameterTablePanel.VariableData data : myVariableData) {
+        if (data.passAsParameter) {
+          prototype.getParameterList().add(factory.createParameter(data.name, data.type));
+        }
+      }
+      // set the modifiers with which the method is supposed to be created
+      prototype.getModifierList().setModifierProperty(PsiModifier.PRIVATE, true);
+    } catch (IncorrectOperationException e) {
+      return;
+    }
+
+    ConflictsUtil.checkMethodConflicts(
+      myTargetClass,
+      null,
+      prototype, conflicts);
   }
 }

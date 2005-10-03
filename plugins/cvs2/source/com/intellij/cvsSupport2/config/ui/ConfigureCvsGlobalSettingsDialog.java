@@ -16,7 +16,7 @@ public class ConfigureCvsGlobalSettingsDialog extends DialogWrapper {
 
   public ConfigureCvsGlobalSettingsDialog() {
     super(true);
-    setTitle("Global CVS Settings");
+    setTitle(com.intellij.CvsBundle.message("dialog.title.global.cvs.settings"));
     myGlobalCvsSettingsPanel.updateFrom(CvsApplicationLevelConfiguration.getInstance());
     init();
   }

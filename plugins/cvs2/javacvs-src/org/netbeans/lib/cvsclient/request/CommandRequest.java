@@ -12,6 +12,8 @@
  */
 package org.netbeans.lib.cvsclient.request;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * The request for a command.
  * Always a response is expected.
@@ -20,32 +22,32 @@ package org.netbeans.lib.cvsclient.request;
  */
 public final class CommandRequest extends ResponseExpectingRequest {
 
-	// Constants ==============================================================
+        // Constants ==============================================================
 
-	public static final CommandRequest ADD = new CommandRequest("add");
-	public static final CommandRequest ADMIN = new CommandRequest("admin");
-	public static final CommandRequest ANNOTATE = new CommandRequest("annotate");
-	public static final CommandRequest CHECKOUT = new CommandRequest("co");
-	public static final CommandRequest COMMIT = new CommandRequest("ci");
-	public static final CommandRequest EDITORS = new CommandRequest("editors");
-	public static final CommandRequest IMPORT = new CommandRequest("import");
-	public static final CommandRequest LOG = new CommandRequest("log");
-	public static final CommandRequest RLOG = new CommandRequest("rlog");
-	public static final CommandRequest NOOP = new CommandRequest("noop");
-	public static final CommandRequest REMOVE = new CommandRequest("remove");
-	public static final CommandRequest STATUS = new CommandRequest("status");
-	public static final CommandRequest TAG = new CommandRequest("tag");
-	public static final CommandRequest RTAG = new CommandRequest("rtag");
-	public static final CommandRequest UPDATE = new CommandRequest("update");
-	public static final CommandRequest WATCH_ADD = new CommandRequest("watch-add");
-	public static final CommandRequest WATCH_ON = new CommandRequest("watch-on");
-	public static final CommandRequest WATCH_OFF = new CommandRequest("watch-off");
-	public static final CommandRequest WATCH_REMOVE = new CommandRequest("watch-remove");
-	public static final CommandRequest WATCHERS = new CommandRequest("watchers");
+        public static final CommandRequest ADD = new CommandRequest("add");
+        public static final CommandRequest ADMIN = new CommandRequest("admin");
+        public static final CommandRequest ANNOTATE = new CommandRequest("annotate");
+        public static final CommandRequest CHECKOUT = new CommandRequest("co");
+        public static final CommandRequest COMMIT = new CommandRequest("ci");
+        public static final CommandRequest EDITORS = new CommandRequest("editors");
+        public static final CommandRequest IMPORT = new CommandRequest("import");
+        public static final CommandRequest LOG = new CommandRequest("log");
+        public static final CommandRequest RLOG = new CommandRequest("rlog");
+        public static final CommandRequest NOOP = new CommandRequest("noop");
+        public static final CommandRequest REMOVE = new CommandRequest("remove");
+        public static final CommandRequest STATUS = new CommandRequest("status");
+        public static final CommandRequest TAG = new CommandRequest("tag");
+        public static final CommandRequest RTAG = new CommandRequest("rtag");
+        public static final CommandRequest UPDATE = new CommandRequest("update");
+        public static final CommandRequest WATCH_ADD = new CommandRequest("watch-add");
+        public static final CommandRequest WATCH_ON = new CommandRequest("watch-on");
+        public static final CommandRequest WATCH_OFF = new CommandRequest("watch-off");
+        public static final CommandRequest WATCH_REMOVE = new CommandRequest("watch-remove");
+        public static final CommandRequest WATCHERS = new CommandRequest("watchers");
 
-	// Setup ==================================================================
+        // Setup ==================================================================
 
-	private CommandRequest(String requestString) {
-		super(requestString);
-	}
+        private CommandRequest(@NonNls String requestString) {
+                super(requestString);
+        }
 }

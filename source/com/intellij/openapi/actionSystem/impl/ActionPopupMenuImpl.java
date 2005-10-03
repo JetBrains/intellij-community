@@ -40,6 +40,7 @@ final class ActionPopupMenuImpl implements ActionPopupMenu{
 
     public void show(final Component component, int x, int y) {
       if(!component.isShowing()){
+        //noinspection HardCodedStringLiteral
         throw new IllegalArgumentException("component must be shown on the screen");
       }
 
@@ -82,6 +83,7 @@ final class ActionPopupMenuImpl implements ActionPopupMenu{
         targetGraphicsConfiguration = env.getDefaultScreenDevice().getDefaultConfiguration();
       }
       if(targetGraphicsConfiguration==null){
+        //noinspection HardCodedStringLiteral
         throw new IllegalStateException(
           "It's impossible to determine target graphics environment for point ("+_x+","+_y+")"
         );

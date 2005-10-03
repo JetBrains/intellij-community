@@ -3,10 +3,11 @@ package com.intellij.refactoring.encapsulateFields;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
-import com.intellij.usageView.UsageViewUtil;
+import com.intellij.usageView.UsageViewBundle;
 
 class EncapsulateFieldsViewDescriptor implements UsageViewDescriptor {
   private PsiField[] myFields;
@@ -20,7 +21,7 @@ class EncapsulateFieldsViewDescriptor implements UsageViewDescriptor {
   }
 
   public String getProcessedElementsHeader() {
-    return "Fields to be encapsulated";
+    return RefactoringBundle.message("encapsulate.fields.fields.to.be.encapsulated");
   }
 
   public PsiElement[] getElements() {
@@ -64,7 +65,7 @@ class EncapsulateFieldsViewDescriptor implements UsageViewDescriptor {
   }
 
   public String getCodeReferencesText(int usagesCount, int filesCount) {
-    return "References to be changed " + UsageViewUtil.getUsageCountInfo(usagesCount, filesCount, "reference");
+    return RefactoringBundle.message("references.to.be.changed", UsageViewBundle.getReferencesString(usagesCount, filesCount));
   }
 
   public String getCommentReferencesText(int usagesCount, int filesCount) {

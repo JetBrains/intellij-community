@@ -14,6 +14,7 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
@@ -25,6 +26,7 @@ import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -55,13 +57,13 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
   }
 
   protected String getCommandName() {
-    return "Encapsulating fields in " + UsageViewUtil.getDescriptiveName(myClass);
+    return RefactoringBundle.message("encapsulate.fields.command.name", UsageViewUtil.getDescriptiveName(myClass));
   }
 
   public void doRun() {
     myFields = myDialog.getSelectedFields();
     if (myFields.length == 0){
-      String message = "No fields selected";
+      String message = RefactoringBundle.message("encapsulate.fields.no.fields.selected");
       RefactoringMessageUtil.showErrorMessage(EncapsulateFieldsHandler.REFACTORING_NAME, message, HelpID.ENCAPSULATE_FIELDS, myProject);
       return;
     }
@@ -74,8 +76,8 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     ArrayList<String> conflicts = new ArrayList<String>();
 
     if (myDialog != null) {
-      checkExistingMethods(myDialog.getGetterPrototypes(), conflicts, "getter");
-      checkExistingMethods(myDialog.getSetterPrototypes(), conflicts, "setter");
+      checkExistingMethods(myDialog.getGetterPrototypes(), conflicts, true);
+      checkExistingMethods(myDialog.getSetterPrototypes(), conflicts, false);
 
       if(conflicts.size() > 0) {
         ConflictsDialog dialog = new ConflictsDialog(conflicts.toArray(new String[conflicts.size()]), myProject);
@@ -88,7 +90,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     return true;
   }
 
-  private void checkExistingMethods(PsiMethod[] prototypes, ArrayList<String> conflicts, String methodRole) {
+  private void checkExistingMethods(PsiMethod[] prototypes, ArrayList<String> conflicts, boolean isGetter) {
     if(prototypes == null) return;
     for (PsiMethod prototype : prototypes) {
       final PsiType prototypeReturnType = prototype.getReturnType();
@@ -101,8 +103,11 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
                                                           PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS | PsiFormatUtil.SHOW_TYPE,
                                                           PsiFormatUtil.SHOW_TYPE
           );
-          String message = "There already is a method " + ConflictsUtil.htmlEmphasize(descr) + " which differs from "
-                           + methodRole + " " + ConflictsUtil.htmlEmphasize(prototype.getName()) + " by return type only.";
+          String message = isGetter ?
+                           RefactoringBundle.message("encapsulate.fields.getter.exists", ConflictsUtil.htmlEmphasize(descr),
+                                                ConflictsUtil.htmlEmphasize(prototype.getName())) :
+                           RefactoringBundle.message("encapsulate.fields.setter.exists", ConflictsUtil.htmlEmphasize(descr),
+                                                ConflictsUtil.htmlEmphasize(prototype.getName()));
           conflicts.add(message);
         }
       }
@@ -319,7 +324,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
               }
             }
 
-            String text = "a" + opName + "b";
+            @NonNls String text = "a" + opName + "b";
             PsiBinaryExpression binExpr = (PsiBinaryExpression)factory.createExpressionFromText(text, expr);
             binExpr = (PsiBinaryExpression)CodeStyleManager.getInstance(myProject).reformat(binExpr);
             binExpr.getLOperand().replace(getExpr);
@@ -362,7 +367,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
           }
         }
 
-        String text;
+        @NonNls String text;
         if (tokenType == JavaTokenType.PLUSPLUS){
           text = "a+1";
         }
@@ -406,7 +411,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     String[] setterNames = myDialog.getSetterNames();
     PsiElementFactory factory = expr.getManager().getElementFactory();
     final String setterName = setterNames[fieldIndex];
-    String text = setterName + "(a)";
+    @NonNls String text = setterName + "(a)";
     PsiExpression qualifier = expr.getQualifierExpression();
     if (qualifier != null){
       text = "q." + text;
@@ -431,7 +436,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     String[] getterNames = myDialog.getGetterNames();
     PsiElementFactory factory = expr.getManager().getElementFactory();
     final String getterName = getterNames[fieldIndex];
-    String text = getterName + "()";
+    @NonNls String text = getterName + "()";
     PsiExpression qualifier = expr.getQualifierExpression();
     if (qualifier != null){
       text = "q." + text;

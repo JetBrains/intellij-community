@@ -1,16 +1,15 @@
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.DebuggerManager;
-import com.intellij.debugger.jdi.ObjectReferenceCachingProxy;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessAdapter;
 import com.intellij.debugger.engine.SuspendContext;
 import com.intellij.debugger.engine.SuspendContextImpl;
-import com.intellij.debugger.engine.managerThread.SuspendContextCommand;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
+import com.intellij.debugger.engine.managerThread.SuspendContextCommand;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.rt.debugger.BatchEvaluatorServer;
@@ -51,7 +50,7 @@ public class BatchEvaluator {
     });
   }
 
-  public boolean hasBatchEvaluator(EvaluationContext evaluationContext) {
+  @SuppressWarnings({"HardCodedStringLiteral"}) public boolean hasBatchEvaluator(EvaluationContext evaluationContext) {
     if (!myBatchEvaluatorChecked) {
       myBatchEvaluatorChecked = true;
 
@@ -153,6 +152,7 @@ public class BatchEvaluator {
     return batchEvaluator;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private boolean doEvaluateBatch(List<ToStringCommand> requests, EvaluationContext evaluationContext) {
     try {
       DebugProcess debugProcess = evaluationContext.getDebugProcess();
@@ -160,7 +160,7 @@ public class BatchEvaluator {
       for (Iterator<ToStringCommand> iterator = requests.iterator(); iterator.hasNext();) {
         ToStringCommand toStringCommand = iterator.next();
         final Value value = toStringCommand.getValue();
-        values.add(value instanceof ObjectReference? ObjectReferenceCachingProxy.unwrap(((ObjectReference)value)) : value);
+        values.add(value instanceof ObjectReference? ((ObjectReference)value) : value);
       }
 
       ArrayType objectArrayClass = (ArrayType)debugProcess.findClass(

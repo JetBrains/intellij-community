@@ -2,6 +2,7 @@ package com.intellij.ide.actionMacro;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.ide.IdeBundle;
 
 import javax.swing.Icon;
 import javax.swing.JComponent;
@@ -17,7 +18,7 @@ public class ActionMacroConfigurable implements Configurable {
   private ActionMacroConfigurationPanel myPanel;
 
   public String getDisplayName() {
-    return "Edit Macros";
+    return IdeBundle.message("title.edit.macros");
   }
 
   public Icon getIcon() {

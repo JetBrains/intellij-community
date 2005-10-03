@@ -16,13 +16,19 @@
 package com.intellij.openapi.compiler;
 
 /**
- * Describes a task to be executed before or after compilation
- * @see CompilerManager
+ * Describes a task to be executed before or after compilation.
+ *
+ * @see CompilerManager#addAfterTask(CompileTask)
+ * @see CompilerManager#addBeforeTask(CompileTask)
  */
 public interface CompileTask {
   /**
+   * Executes the task.
+   *
    * @param context current compile context
-   * @return true if execution succeeded, false otherwise
+   * @return true if execution succeeded, false otherwise. If the task returns false, the compilation
+   *         is aborted, and it's expected that the task adds a message defining the reason for the failure
+   *         to the compile context.
    */
   boolean execute(CompileContext context);
 }

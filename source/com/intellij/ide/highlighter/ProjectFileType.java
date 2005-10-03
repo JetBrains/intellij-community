@@ -32,6 +32,7 @@
 package com.intellij.ide.highlighter;
 
 import com.intellij.ide.structureView.StructureViewBuilder;
+import com.intellij.ide.IdeBundle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
@@ -41,7 +42,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 import javax.swing.*;
 
+import org.jetbrains.annotations.NonNls;
+
 public class ProjectFileType implements FileType {
+  @NonNls public static final String DEFAULT_EXTENSION = "ipr";
+  @NonNls public static final String DOT_DEFAULT_EXTENSION = ".ipr";
   private static final Icon ICON = IconLoader.getIcon("/nodes/ideaProject.png");
 
   public String getName() {
@@ -49,11 +54,11 @@ public class ProjectFileType implements FileType {
   }
 
   public String getDescription() {
-    return "Idea Project";
+    return IdeBundle.message("filetype.description.idea.project");
   }
 
   public String getDefaultExtension() {
-    return "ipr";
+    return DEFAULT_EXTENSION;
   }
 
   public Icon getIcon() {

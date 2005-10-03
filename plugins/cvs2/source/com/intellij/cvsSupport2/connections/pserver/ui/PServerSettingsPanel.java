@@ -18,7 +18,7 @@ public class PServerSettingsPanel {
   private JLabel myPasswordFileLabel;
 
   public PServerSettingsPanel() {
-    CvsConfigurationPanel.addBrowseHandler(myPathToPasswordFile, "Select Path to Cvs Password File");
+    CvsConfigurationPanel.addBrowseHandler(myPathToPasswordFile, com.intellij.CvsBundle.message("dialog.title.select.path.to.cvs.password.file"));
     myConnectionTimeoutLabel.setLabelFor(myTimeout);
     myPasswordFileLabel.setLabelFor(myPathToPasswordFile.getTextField());
   }
@@ -47,7 +47,7 @@ public class PServerSettingsPanel {
   }
 
   private void throwInvalidTimeoutException() {
-    throw new InputException("Invalid timeout value: " + myTimeout.getText(), myTimeout);
+    throw new InputException(com.intellij.CvsBundle.message("exception.message.invalid.timeout.value", myTimeout.getText()), myTimeout);
   }
 
 

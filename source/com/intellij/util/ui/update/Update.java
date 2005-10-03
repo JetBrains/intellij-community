@@ -4,6 +4,8 @@
  */
 package com.intellij.util.ui.update;
 
+import org.jetbrains.annotations.NonNls;
+
 import java.util.Arrays;
 
 public abstract class Update extends ComparableObject.Impl implements Runnable, Comparable {
@@ -16,7 +18,7 @@ public abstract class Update extends ComparableObject.Impl implements Runnable, 
 
   private int myPriority = LOW_PRIORITY;
 
-  public Update(Object identity) {
+  public Update(@NonNls Object identity) {
     this(identity, false);
   }
 
@@ -54,6 +56,7 @@ public abstract class Update extends ComparableObject.Impl implements Runnable, 
     return myExecuteInWriteAction;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return super.toString() + " Objects: " + Arrays.asList(getEqualityObjects());
   }

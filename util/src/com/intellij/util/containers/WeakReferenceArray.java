@@ -49,7 +49,8 @@ public class WeakReferenceArray <T> {
   private void checkThread() {}
 
   private void checkRange(int index) {
-    if (index >= mySize) throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + mySize);
+    if (index >= mySize) //noinspection HardCodedStringLiteral
+      throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + mySize);
   }
 
   public int getCorpseCount() {

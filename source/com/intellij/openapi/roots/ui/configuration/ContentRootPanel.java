@@ -11,6 +11,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.ui.HoverHyperlinkLabel;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
@@ -95,15 +96,15 @@ public class ContentRootPanel extends JPanel {
     }
 
     if (sources.size() > 0) {
-      final JComponent sourcesComponent = createFolderGroupComponent("Source Folders", sources.toArray(new ContentFolder[sources.size()]), SOURCES_COLOR);
+      final JComponent sourcesComponent = createFolderGroupComponent(ProjectBundle.message("module.paths.sources.group"), sources.toArray(new ContentFolder[sources.size()]), SOURCES_COLOR);
       this.add(sourcesComponent, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 10, 0), 0, 0));
     }
     if (testSources.size() > 0) {
-      final JComponent testSourcesComponent = createFolderGroupComponent("Test Source Folders", testSources.toArray(new ContentFolder[testSources.size()]), TESTS_COLOR);
+      final JComponent testSourcesComponent = createFolderGroupComponent(ProjectBundle.message("module.paths.test.sources.group"), testSources.toArray(new ContentFolder[testSources.size()]), TESTS_COLOR);
       this.add(testSourcesComponent, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 10, 0), 0, 0));
     }
     if (excluded.size() > 0) {
-      final JComponent excludedComponent = createFolderGroupComponent("Excluded Folders", excluded.toArray(new ContentFolder[excluded.size()]), EXCLUDED_COLOR);
+      final JComponent excludedComponent = createFolderGroupComponent(ProjectBundle.message("module.paths.excluded.group"), excluded.toArray(new ContentFolder[excluded.size()]), EXCLUDED_COLOR);
       this.add(excludedComponent, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 10, 0), 0, 0));
     }
 
@@ -122,7 +123,8 @@ public class ContentRootPanel extends JPanel {
     if (myContentEntry.getFile() == null) {
       headerLabel.setForeground(Color.RED);
     }
-    final IconActionComponent deleteIconComponent = new IconActionComponent(DELETE_ROOT_ICON, DELETE_ROOT_ROLLOVER_ICON, "Remove Content Entry", new Runnable() {
+    final IconActionComponent deleteIconComponent = new IconActionComponent(DELETE_ROOT_ICON, DELETE_ROOT_ROLLOVER_ICON,
+                                                                            ProjectBundle.message("module.paths.remove.content.tooltip"), new Runnable() {
       public void run() {
         myCallback.deleteContentEntry();
       }
@@ -152,7 +154,7 @@ public class ContentRootPanel extends JPanel {
     }
 
     final JLabel titleLabel = new JLabel(title);
-    final Font labelFont = UIManager.getFont("Label.font");
+    final Font labelFont = UIUtil.getLabelFont();
     titleLabel.setFont(labelFont.deriveFont(Font.BOLD).deriveFont((float)labelFont.getSize() - 0.5f ));
     titleLabel.setOpaque(false);
     titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 0));
@@ -207,17 +209,19 @@ public class ContentRootPanel extends JPanel {
     final String tooltipText;
     if (folder.getFile() != null && myContentEntry.getFile() != null) {
       if (folder instanceof SourceFolder) {
-        tooltipText = ((SourceFolder)folder).isTestSource()? "Unmark Tests" : "Unmark Source";
+        tooltipText = ((SourceFolder)folder).isTestSource()
+                      ? ProjectBundle.message("module.paths.unmark.tests.tooltip")
+                      : ProjectBundle.message("module.paths.unmark.source.tooltip");
       }
       else if (folder instanceof ExcludeFolder) {
-        tooltipText = "Include";
+        tooltipText = ProjectBundle.message("module.paths.include.excluded.tooltip");
       }
       else {
         tooltipText = null;
       }
     }
     else {
-      tooltipText = "Remove";
+      tooltipText = ProjectBundle.message("module.paths.remove.tooltip");
     }
     return new IconActionComponent(DELETE_FOLDER_ICON, DELETE_FOLDER_ROLLOVER_ICON, tooltipText, new Runnable() {
       public void run() {
@@ -227,10 +231,13 @@ public class ContentRootPanel extends JPanel {
   }
 
   private JComponent createAddPrefixComponent(final SourceFolder folder) {
-    final IconActionComponent iconComponent = new IconActionComponent(ADD_PREFIX_ICON, ADD_PREFIX_ROLLOVER_ICON, "Set package prefix", new Runnable() {
+    final IconActionComponent iconComponent = new IconActionComponent(ADD_PREFIX_ICON, ADD_PREFIX_ROLLOVER_ICON,
+                                                                      ProjectBundle.message("module.paths.package.prefix.tooltip"), new Runnable() {
       public void run() {
-        final String message = "Enter package prefix for " + toRelativeDisplayPath(folder.getUrl(), myContentEntry.getUrl() + ":");
-        final String prefix = Messages.showInputDialog(ContentRootPanel.this, message, "Set Package Prefix", Messages.getQuestionIcon(), folder.getPackagePrefix(), null);
+        final String message = ProjectBundle.message("module.paths.package.prefix.prompt",
+                                                     toRelativeDisplayPath(folder.getUrl(), myContentEntry.getUrl() + ":"));
+        final String prefix = Messages.showInputDialog(ContentRootPanel.this, message,
+                                                       ProjectBundle.message("module.paths.package.prefix.title"), Messages.getQuestionIcon(), folder.getPackagePrefix(), null);
         if (prefix != null) {
           myCallback.setPackagePrefix(folder, prefix);
         }

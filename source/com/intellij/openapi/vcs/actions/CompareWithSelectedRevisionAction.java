@@ -2,10 +2,7 @@ package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.FilePathImpl;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.HistoryAsTreeProvider;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
@@ -32,25 +29,25 @@ import java.util.List;
 
 public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
 
-  private static final ColumnInfo<TreeNodeAdapter,String> BRANCH_COLUMN = new ColumnInfo<TreeNodeAdapter, String>("Branch"){
+  private static final ColumnInfo<TreeNodeAdapter,String> BRANCH_COLUMN = new ColumnInfo<TreeNodeAdapter, String>(VcsBundle.message("column.name.revisions.list.branch")){
     public String valueOf(final TreeNodeAdapter object) {
       return object.getRevision().getBranchName();
     }
   };
   
-  private static final ColumnInfo<TreeNodeAdapter,String> REVISION_COLUMN = new ColumnInfo<TreeNodeAdapter, String>("Revision"){
+  private static final ColumnInfo<TreeNodeAdapter,String> REVISION_COLUMN = new ColumnInfo<TreeNodeAdapter, String>(VcsBundle.message("column.name.revision.list.revision")){
     public String valueOf(final TreeNodeAdapter object) {
       return object.getRevision().getRevisionNumber().asString();
     }
   };
 
-  private static final ColumnInfo<TreeNodeAdapter,String> DATE_COLUMN = new ColumnInfo<TreeNodeAdapter, String>("Date"){
+  private static final ColumnInfo<TreeNodeAdapter,String> DATE_COLUMN = new ColumnInfo<TreeNodeAdapter, String>(VcsBundle.message("column.name.revisions.list.filter")){
     public String valueOf(final TreeNodeAdapter object) {
       return VcsRevisionListCellRenderer.DATE_FORMAT.format(object.getRevision().getRevisionDate());
     }
   };
 
-  private static final ColumnInfo<TreeNodeAdapter,String> AUTHOR_COLUMN = new ColumnInfo<TreeNodeAdapter, String>("Author"){
+  private static final ColumnInfo<TreeNodeAdapter,String> AUTHOR_COLUMN = new ColumnInfo<TreeNodeAdapter, String>(VcsBundle.message("column.name.revision.list.author")){
     public String valueOf(final TreeNodeAdapter object) {
       return object.getRevision().getAuthor();
     }
@@ -126,7 +123,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
     TreeUtil.expandAll(treeTable.getTree());
 
 
-    TreeTablePopup popup = new TreeTablePopup("File Revisions", createMainPanel(treeTable),treeTable, runnable, project);
+    TreeTablePopup popup = new TreeTablePopup(VcsBundle.message("lookup.title.vcs.file.revisions"), createMainPanel(treeTable),treeTable, runnable, project);
 
     popup.getWindow().pack();
     Dimension popupSize = popup.getSize();
@@ -171,7 +168,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
     });
     final JScrollPane textScrollPane = new JScrollPane(textArea);
     panel.add(textScrollPane, BorderLayout.SOUTH);
-    textScrollPane.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.lightGray),"Commit message:"));
+    textScrollPane.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.lightGray),VcsBundle.message("border.selected.revision.commit.message")));
     return panel;
   }
 
@@ -231,7 +228,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
       r = WindowManagerEx.getInstanceEx().getScreenBounds();
     }
 
-    ListPopup popup = new ListPopup("File Revisions", createListMainPanel(list),list, runnable, project);
+    ListPopup popup = new ListPopup(VcsBundle.message("lookup.title.vcs.file.revisions"), createListMainPanel(list),list, runnable, project);
 
     if (model.getSize() > 0) {
       Dimension listPreferredSize = list.getPreferredSize();
@@ -267,7 +264,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
       }
     });
     final JScrollPane textScrollPane = new JScrollPane(textArea);
-    textScrollPane.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.lightGray),"Commit message:"));
+    textScrollPane.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.lightGray),VcsBundle.message("border.selected.revision.commit.message")));
     jPanel.add(textScrollPane, BorderLayout.SOUTH);
     
     jPanel.setPreferredSize(new Dimension(300, jPanel.getPreferredSize().height + 10));

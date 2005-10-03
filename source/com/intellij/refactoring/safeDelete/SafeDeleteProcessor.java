@@ -1,7 +1,6 @@
 package com.intellij.refactoring.safeDelete;
 
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
-import com.intellij.lang.Language;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
@@ -9,16 +8,16 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.safeDelete.usageInfo.*;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
@@ -33,6 +32,8 @@ import com.intellij.util.containers.HashMap;
 
 import java.util.*;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author dsl
  */
@@ -44,7 +45,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
   private boolean myPreviewNonCodeUsages = true;
 
   private SafeDeleteProcessor(Project project, Runnable prepareSuccessfulCallback,
-                             PsiElement[] elementsToDelete, boolean isSearchInComments, boolean isSearchNonJava) {
+                              PsiElement[] elementsToDelete, boolean isSearchInComments, boolean isSearchNonJava) {
     super(project, prepareSuccessfulCallback);
     myElements = elementsToDelete;
     mySearchInCommentsAndStrings = isSearchInComments;
@@ -80,6 +81,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     return false;
   }
 
+  @NotNull
   protected UsageInfo[] findUsages() {
     ArrayList<UsageInfo> usages = new ArrayList<UsageInfo>();
     for (PsiElement element : myElements) {
@@ -140,12 +142,12 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
         final PsiClass containingClass = ((PsiMethod)element).getContainingClass();
 
         if (!containingClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-          final PsiMethod[] superMethods = PsiSuperMethodUtil.findSuperMethods((PsiMethod)element);
+          final PsiMethod[] superMethods = ((PsiMethod) element).findSuperMethods();
           for (PsiMethod superMethod : superMethods) {
             if (isInside(superMethod, myElements)) continue;
             if (superMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
-              String message = ConflictsUtil.getDescription(element, true) + " implements "
-                               + ConflictsUtil.getDescription(superMethod, true) + ".";
+              String message = RefactoringBundle.message("0.implements.1", ConflictsUtil.getDescription(element, true),
+                                                         ConflictsUtil.getDescription(superMethod, true));
               conflicts.add(message);
               break;
             }
@@ -192,13 +194,13 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
 
   private void showUsages(final UsageInfo[] usages) {
     UsageViewPresentation presentation = new UsageViewPresentation();
-    presentation.setTabText("Safe Delete");
-    presentation.setTargetsNodeText("Attempting to delete");
+    presentation.setTabText(RefactoringBundle.message("safe.delete.title"));
+    presentation.setTargetsNodeText(RefactoringBundle.message("attempting.to.delete.targets.node.text"));
     presentation.setShowReadOnlyStatusAsRed(true);
     presentation.setShowCancelButton(true);
-    presentation.setCodeUsagesString("References found in code");
-    presentation.setNonCodeUsagesString("Occurrences found in comments, strings and non-java files");
-    presentation.setUsagesString("usages");
+    presentation.setCodeUsagesString(RefactoringBundle.message("references.found.in.code"));
+    presentation.setNonCodeUsagesString(RefactoringBundle.message("occurrences.found.in.comments.strings.and.non.java.files"));
+    presentation.setUsagesString(RefactoringBundle.message("usageView.usagesText"));
 
     UsageViewManager manager = UsageViewManager.getInstance(myProject);
     UsageTarget[] targets = new UsageTarget[myElements.length];
@@ -211,7 +213,8 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
       UsageInfoToUsageConverter.convert(new UsageInfoToUsageConverter.TargetElementsDescriptor(myElements), usages),
       presentation
     );
-    usageView.addPerformOperationAction(new RerunSafeDelete(myProject, myElements, usageView), "Retry", null, "Rerun Safe Delete", 'r');
+    usageView.addPerformOperationAction(new RerunSafeDelete(myProject, myElements, usageView),
+                                        RefactoringBundle.message("retry.command"), null, RefactoringBundle.message("rerun.safe.delete"), 'r');
   }
 
   public PsiElement[] getElements() {
@@ -239,10 +242,9 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
             PsiDocumentManager.getInstance(myProject).commitAllDocuments();
             myUsageView.close();
             ArrayList<PsiElement> elements = new ArrayList<PsiElement>();
-            for (int i = 0; i < myPointers.length; i++) {
-              SmartPsiElementPointer pointer = myPointers[i];
+            for (SmartPsiElementPointer pointer : myPointers) {
               final PsiElement element = pointer.getElement();
-              if(element != null) {
+              if (element != null) {
                 elements.add(element);
               }
             }
@@ -308,7 +310,8 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
 
   protected boolean isPreviewUsages(UsageInfo[] usages) {
     if(myPreviewNonCodeUsages && UsageViewUtil.hasNonCodeUsages(usages)) {
-      WindowManager.getInstance().getStatusBar(myProject).setInfo("Occurrences found in comments, strings and non-java files");
+      WindowManager.getInstance().getStatusBar(myProject).setInfo(
+        RefactoringBundle.message("occurrences.found.in.comments.strings.and.non.java.files"));
       return true;
     }
 
@@ -369,9 +372,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
   }
 
   private String calcCommandName() {
-    StringBuffer buffer = new StringBuffer();
-    buffer.append("Deleting ");
-    return RefactoringUtil.calculatePsiElementDescriptionList(myElements, buffer);
+    return RefactoringBundle.message("safe.delete.command", RefactoringUtil.calculatePsiElementDescriptionList(myElements));
   }
 
   private String myCachedCommandName = null;
@@ -534,7 +535,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
   }
 
   private Set<PsiMethod> validateOverridingMethods(PsiMethod originalMethod, final PsiReference[] originalReferences,
-                                         Collection<PsiMethod> overridingMethods, HashMap<PsiMethod,PsiReference[]> methodToReferences, ArrayList<UsageInfo> usages) {
+                                                   Collection<PsiMethod> overridingMethods, HashMap<PsiMethod,PsiReference[]> methodToReferences, ArrayList<UsageInfo> usages) {
     Set<PsiMethod> validOverriding = new LinkedHashSet<PsiMethod>(overridingMethods);
     boolean anyNewBadRefs;
     do {
@@ -692,22 +693,19 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
 
   public static boolean validElement(PsiElement element) {
     if (element instanceof PsiFile) return true;
-    final Language language = element.getLanguage();
-    if (language != null) {
-      final RefactoringSupportProvider provider = language.getRefactoringSupportProvider();
-      if (provider != null && provider.isSafeDeleteAvailable(element)) return true;
-    }
+    final RefactoringSupportProvider provider = element.getLanguage().getRefactoringSupportProvider();
+    if (provider.isSafeDeleteAvailable(element)) return true;
     return false;
   }
 
   public static SafeDeleteProcessor createInstance(Project project, Runnable prepareSuccessfulCallback,
-                                                                   PsiElement[] elementsToDelete, boolean isSearchInComments, boolean isSearchNonJava) {
+                                                   PsiElement[] elementsToDelete, boolean isSearchInComments, boolean isSearchNonJava) {
     return new SafeDeleteProcessor(project, prepareSuccessfulCallback, elementsToDelete, isSearchInComments, isSearchNonJava);
   }
 
   public static SafeDeleteProcessor createInstance(Project project, Runnable prepareSuccessfulCallBack,
-                                                         PsiElement[] elementsToDelete, boolean isSearchInComments, boolean isSearchNonJava,
-                                                         boolean askForAccessors) {
+                                                   PsiElement[] elementsToDelete, boolean isSearchInComments, boolean isSearchNonJava,
+                                                   boolean askForAccessors) {
     PsiManager manager = PsiManager.getInstance(project);
     ArrayList<PsiElement> elements = new ArrayList<PsiElement>(Arrays.asList(elementsToDelete));
     HashSet<PsiElement> elementsToDeleteSet = new HashSet<PsiElement>(Arrays.asList(elementsToDelete));
@@ -726,8 +724,8 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
           PsiMethod setter = PropertyUtil.findPropertySetter(aClass, propertyName, isStatic, false);
           if (elementsToDeleteSet.contains(setter)) setter = null;
           if (askForAccessors && (getter != null || setter != null)) {
-            final String message = RefactoringMessageUtil.getGetterSetterMessage(field.getName(), "Delete", getter, setter);
-            if (Messages.showYesNoDialog(project, message, "Safe Delete", Messages.getQuestionIcon()) != 0) {
+            final String message = RefactoringMessageUtil.getGetterSetterMessage(field.getName(), RefactoringBundle.message("delete.title"), getter, setter);
+            if (Messages.showYesNoDialog(project, message, RefactoringBundle.message("safe.delete.title"), Messages.getQuestionIcon()) != 0) {
               getter = null;
               setter = null;
             }
@@ -740,7 +738,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
 
     return new SafeDeleteProcessor(project, prepareSuccessfulCallBack,
                                    elements.toArray(new PsiElement[elements.size()]),
-            isSearchInComments, isSearchNonJava);
+                                   isSearchInComments, isSearchNonJava);
   }
 
   public boolean isSearchInCommentsAndStrings() {

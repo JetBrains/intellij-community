@@ -5,6 +5,9 @@ package com.intellij.application.options;
 
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.CommonBundle;
+
 import java.awt.*;
 import java.util.ArrayList;
 import javax.swing.JComponent;
@@ -34,7 +37,7 @@ public class SaveSchemeDialog extends DialogWrapper {
     gc.gridy = 0;
     gc.weightx = 0;
     gc.insets = new Insets(5, 0, 5, 5);
-    panel.add(new JLabel("Name: "), gc);
+    panel.add(new JLabel(ApplicationBundle.message("label.name")), gc);
 
     gc = new GridBagConstraints();
     gc.gridx = 1;
@@ -51,16 +54,21 @@ public class SaveSchemeDialog extends DialogWrapper {
 
   protected void doOKAction() {
     if (getSchemeName().trim().length()==0) {
-      Messages.showMessageDialog(getContentPane(),"Scheme must have a name", "Error", Messages.getErrorIcon());
+      Messages.showMessageDialog(getContentPane(), ApplicationBundle.message("error.scheme.must.have.a.name"),
+                                 CommonBundle.getErrorTitle(), Messages.getErrorIcon());
       return;
-    } else if ("default".equals(getSchemeName())) {
-      Messages.showMessageDialog(getContentPane(),"Illegal scheme name", "Error", Messages.getErrorIcon());
+    }
+    else
+    //noinspection HardCodedStringLiteral
+    if ("default".equals(getSchemeName())) {
+      Messages.showMessageDialog(getContentPane(),ApplicationBundle.message("error.illegal.scheme.name"),
+                                 CommonBundle.getErrorTitle(), Messages.getErrorIcon());
       return;
     } else if (myInvalidNames.contains(getSchemeName())) {
       Messages.showMessageDialog(
         getContentPane(),
-        "A scheme with this name already exists or was deleted without applying the changes",
-        "Error",
+        ApplicationBundle.message("error.a.scheme.with.this.name.already.exists.or.was.deleted.without.applying.the.changes"),
+        CommonBundle.getErrorTitle(),
         Messages.getErrorIcon()
       );
       return;

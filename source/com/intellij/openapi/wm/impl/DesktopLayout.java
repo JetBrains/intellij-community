@@ -4,6 +4,7 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,7 +15,7 @@ import java.util.Iterator;
  * @author Vladimir Kondratyev
  */
 public final class DesktopLayout implements JDOMExternalizable {
-  static final String TAG = "layout";
+  @NonNls static final String TAG = "layout";
   /**
    * Map between <code>id</code>s and registered <code>WindowInfo</code>s.
    */
@@ -45,6 +46,7 @@ public final class DesktopLayout implements JDOMExternalizable {
    * if the cached data is invalid.
    */
   private WindowInfo[] myAllInfos;
+  @NonNls public static final String ID_ATTR = "id";
 
   public DesktopLayout() {
     myRegisteredId2Info = new com.intellij.util.containers.HashMap<String, WindowInfo>();
@@ -264,7 +266,7 @@ public final class DesktopLayout implements JDOMExternalizable {
     for (Iterator i = layoutElement.getChildren().iterator(); i.hasNext();) {
       final Element e = (Element)i.next();
       if (WindowInfo.TAG.equals(e.getName())) {
-        final WindowInfo info = new WindowInfo(e.getAttributeValue("id"));
+        final WindowInfo info = new WindowInfo(e.getAttributeValue(ID_ATTR));
         info.readExternal(e);
         if (info.getOrder() == -1) { // if order isn't defined then window's button will be the last one in the stripe
           info.setOrder(getMaxOrder(info.getAnchor()) + 1);

@@ -34,10 +34,13 @@ package com.intellij.ide.structureView.impl.java;
 import com.intellij.ide.util.treeView.smartTree.Sorter;
 import com.intellij.ide.util.treeView.smartTree.ActionPresentation;
 import com.intellij.ide.structureView.impl.VisibilityComparator;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.util.IconLoader;
 
 import javax.swing.*;
 import java.util.Comparator;
+
+import org.jetbrains.annotations.NonNls;
 
 public class VisibilitySorter implements Sorter{
 
@@ -46,7 +49,7 @@ public class VisibilitySorter implements Sorter{
   private static final Icon ICON = IconLoader.getIcon("/objectBrowser/visibilitySort.png");
   private static final ActionPresentation PRESENTATION = new ActionPresentation() {
     public String getText() {
-      return "Sort by Visibility";
+      return IdeBundle.message("action.structureview.sort.by.visibility");
     }
 
     public String getDescription() {
@@ -57,7 +60,7 @@ public class VisibilitySorter implements Sorter{
       return ICON;
     }
   };
-  public static final String ID = "VISIBILITY_SORTER";
+  @NonNls public static final String ID = "VISIBILITY_SORTER";
 
   public Comparator getComparator() {
     return VisibilityComparator.IMSTANCE;

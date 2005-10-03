@@ -8,6 +8,7 @@ import com.intellij.openapi.command.undo.NonUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.util.DocumentUtil;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
@@ -50,7 +51,7 @@ public interface MergeVersion {
       final DocumentReference ref = DocumentReferenceByDocument.createDocumentReference(workingDocument);
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
-          setDocumentText(workingDocument, myOriginalText, "initMergeContent", project);
+          setDocumentText(workingDocument, myOriginalText, DiffBundle.message("merge.init.merge.content.command.name"), project);
           UndoManager.getInstance(project).undoableActionPerformed(new NonUndoableAction() {
             public boolean isComplex() {
               return false;
@@ -68,7 +69,7 @@ public interface MergeVersion {
     public void applyText(final String text, final Project project) {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
-          setDocumentText(myDocument, text, "Merge", project);
+          setDocumentText(myDocument, text, DiffBundle.message("save.merge.result.command.name"), project);
 
           FileDocumentManager.getInstance().saveDocument(myDocument);
           final VirtualFile file = getFile();

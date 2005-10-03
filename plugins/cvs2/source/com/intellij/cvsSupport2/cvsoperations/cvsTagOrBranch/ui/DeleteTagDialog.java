@@ -33,7 +33,7 @@ public class DeleteTagDialog extends CvsTagDialog {
     });
     CvsFieldValidator.installOn(this, myTagName.getTextField(), myErrorLabel);
 
-    setTitle("Delete Tag");
+    setTitle(com.intellij.CvsBundle.message("action.name.delete.tag"));
     init();
   }
 

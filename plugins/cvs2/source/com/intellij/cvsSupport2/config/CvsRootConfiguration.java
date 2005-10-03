@@ -19,6 +19,7 @@ import com.intellij.openapi.cvsIntegration.CvsResult;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.CvsBundle;
 import org.netbeans.lib.cvsclient.CvsRoot;
 import org.netbeans.lib.cvsclient.ValidRequestsExpectedException;
 import org.netbeans.lib.cvsclient.command.CommandException;
@@ -109,17 +110,11 @@ public class CvsRootConfiguration
   }
 
   public String toString() {
-    StringBuffer result = new StringBuffer();
-    result.append(getCvsRootAsString());
     if (useBranch()) {
-      result.append(" (on branch " + DATE_OR_REVISION_SETTINGS.BRANCH + ")");
+      return CvsBundle.message("cvs.root.configuration.on.branch.string.representation", getCvsRootAsString(), DATE_OR_REVISION_SETTINGS.BRANCH);
+    } else {
+      return CvsBundle.message("cvs.root.configuration.on.date.string.representation", getCvsRootAsString(), DATE_OR_REVISION_SETTINGS.getDate());
     }
-
-    if (useDate()) {
-      result.append(" (for date " + DATE_OR_REVISION_SETTINGS.getDate() + ")");
-    }
-
-    return result.toString();
   }
 
   private boolean useDate() {
@@ -179,7 +174,7 @@ public class CvsRootConfiguration
             result.addError(new CvsException(e, cvsRootProvider.getCvsRootAsString()));
           }
         }
-      }, "Test Connection", true, null);
+      }, com.intellij.CvsBundle.message("operation.name.test.connection"), true, null);
       if (result.isCanceled()) throw new ProcessCanceledException();
 
       if (!result.hasNoErrors()) {

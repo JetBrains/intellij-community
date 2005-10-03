@@ -381,7 +381,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     if (lookupData.prefix == null) {
 //      Toolkit.getDefaultToolkit().beep();
     } else {
-      HintManager.getInstance().showErrorHint(editor, "No suggestions");
+      HintManager.getInstance().showErrorHint(editor, CompletionBundle.message("completion.no.suggestions"));
     }
     DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
     if (codeAnalyzer != null) {

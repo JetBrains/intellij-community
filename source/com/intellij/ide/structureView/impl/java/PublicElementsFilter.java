@@ -4,11 +4,13 @@ import com.intellij.ide.util.treeView.smartTree.ActionPresentation;
 import com.intellij.ide.util.treeView.smartTree.ActionPresentationData;
 import com.intellij.ide.util.treeView.smartTree.Filter;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.Icons;
+import org.jetbrains.annotations.NonNls;
 
 public class PublicElementsFilter implements Filter{
-  public static final String ID = "SHOW_NON_PUBLIC";
+  @NonNls public static final String ID = "SHOW_NON_PUBLIC";
 
   public boolean isVisible(TreeElement treeNode) {
     if (treeNode instanceof JavaClassTreeElementBase) {
@@ -20,7 +22,7 @@ public class PublicElementsFilter implements Filter{
   }
 
   public ActionPresentation getPresentation() {
-    return new ActionPresentationData("Show non-public", null, Icons.PRIVATE_ICON);
+    return new ActionPresentationData(IdeBundle.message("action.structureview.show.non.public"), null, Icons.PRIVATE_ICON);
   }
 
   public String getName() {

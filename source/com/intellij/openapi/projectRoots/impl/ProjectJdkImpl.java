@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 
@@ -29,6 +30,17 @@ public class ProjectJdkImpl implements JDOMExternalizable, ProjectJdk, SdkModifi
   private ProjectJdkImpl myOrigin = null;
   private SdkAdditionalData myAdditionalData = null;
   private SdkType mySdkType;
+  @NonNls private static final String ELEMENT_NAME = "name";
+  @NonNls private static final String ATTRIBUTE_VALUE = "value";
+  @NonNls private static final String ELEMENT_TYPE = "type";
+  @NonNls private static final String ELEMENT_VERSION = "version";
+  @NonNls private static final String ELEMENT_ROOTS = "roots";
+  @NonNls private static final String ELEMENT_ROOT = "root";
+  @NonNls private static final String ELEMENT_PROPERTY = "property";
+  @NonNls private static final String VALUE_JDKHOME = "jdkHome";
+  @NonNls private static final String ATTRIBUTE_FILE = "file";
+  @NonNls private static final String ELEMENT_HOMEPATH = "homePath";
+  @NonNls private static final String ELEMENT_ADDITIONAL = "additional";
 
   public ProjectJdkImpl(String name, SdkType sdkType) {
     mySdkType = sdkType;
@@ -76,9 +88,9 @@ public class ProjectJdkImpl implements JDOMExternalizable, ProjectJdk, SdkModifi
   }
 
   public void readExternal(Element element) throws InvalidDataException {
-    myName = element.getChild("name").getAttributeValue("value");
-    final Element typeChild = element.getChild("type");
-    final String sdkTypeName = typeChild != null? typeChild.getAttributeValue("value") : null;
+    myName = element.getChild(ELEMENT_NAME).getAttributeValue(ATTRIBUTE_VALUE);
+    final Element typeChild = element.getChild(ELEMENT_TYPE);
+    final String sdkTypeName = typeChild != null? typeChild.getAttributeValue(ATTRIBUTE_VALUE) : null;
     if (sdkTypeName != null) {
       mySdkType = getSdkTypeByName(sdkTypeName);
     }
@@ -86,30 +98,30 @@ public class ProjectJdkImpl implements JDOMExternalizable, ProjectJdk, SdkModifi
       // assume java sdk by default
       mySdkType = JavaSdk.getInstance();
     }
-    final Element version = element.getChild("version");
-    this.setVersionString((version != null) ? version.getAttributeValue("value") : null);
+    final Element version = element.getChild(ELEMENT_VERSION);
+    this.setVersionString((version != null) ? version.getAttributeValue(ATTRIBUTE_VALUE) : null);
 
-    if (element.getAttribute("version") == null || !"2".equals(element.getAttributeValue("version"))) {
+    if (element.getAttribute(ELEMENT_VERSION) == null || !"2".equals(element.getAttributeValue(ELEMENT_VERSION))) {
       myRootContainer.startChange();
-      myRootContainer.readOldVersion(element.getChild("roots"));
-      final List children = element.getChild("roots").getChildren("root");
+      myRootContainer.readOldVersion(element.getChild(ELEMENT_ROOTS));
+      final List children = element.getChild(ELEMENT_ROOTS).getChildren(ELEMENT_ROOT);
       for (Iterator iterator = children.iterator(); iterator.hasNext();) {
         Element root = (Element)iterator.next();
-        for (Iterator j = root.getChildren("property").iterator(); j.hasNext();) {
+        for (Iterator j = root.getChildren(ELEMENT_PROPERTY).iterator(); j.hasNext();) {
           Element prop = (Element)j.next();
-          if ("type".equals(prop.getAttributeValue("name")) && "jdkHome".equals(prop.getAttributeValue("value"))) {
-            myHomePath = VirtualFileManager.extractPath(root.getAttributeValue("file"));
+          if (ELEMENT_TYPE.equals(prop.getAttributeValue(ELEMENT_NAME)) && VALUE_JDKHOME.equals(prop.getAttributeValue(ATTRIBUTE_VALUE))) {
+            myHomePath = VirtualFileManager.extractPath(root.getAttributeValue(ATTRIBUTE_FILE));
           }
         }
       }
       myRootContainer.finishChange();
     }
     else {
-      myHomePath = element.getChild("homePath").getAttributeValue("value");
-      myRootContainer.readExternal(element.getChild("roots"));
+      myHomePath = element.getChild(ELEMENT_HOMEPATH).getAttributeValue(ATTRIBUTE_VALUE);
+      myRootContainer.readExternal(element.getChild(ELEMENT_ROOTS));
     }
 
-    final Element additional = element.getChild("additional");
+    final Element additional = element.getChild(ELEMENT_ADDITIONAL);
     myAdditionalData = (additional != null)? mySdkType.loadAdditionalData(additional) : null;
   }
 
@@ -125,33 +137,33 @@ public class ProjectJdkImpl implements JDOMExternalizable, ProjectJdk, SdkModifi
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    element.setAttribute("version", "2");
+    element.setAttribute(ELEMENT_VERSION, "2");
 
-    final Element name = new Element("name");
-    name.setAttribute("value", myName);
+    final Element name = new Element(ELEMENT_NAME);
+    name.setAttribute(ATTRIBUTE_VALUE, myName);
     element.addContent(name);
 
     if (mySdkType != null) {
-      final Element sdkType = new Element("type");
-      sdkType.setAttribute("value", mySdkType.getName());
+      final Element sdkType = new Element(ELEMENT_TYPE);
+      sdkType.setAttribute(ATTRIBUTE_VALUE, mySdkType.getName());
       element.addContent(sdkType);
     }
 
     if (myVersionString != null) {
-      final Element version = new Element("version");
-      version.setAttribute("value", myVersionString);
+      final Element version = new Element(ELEMENT_VERSION);
+      version.setAttribute(ATTRIBUTE_VALUE, myVersionString);
       element.addContent(version);
     }
 
-    final Element home = new Element("homePath");
-    home.setAttribute("value", myHomePath);
+    final Element home = new Element(ELEMENT_HOMEPATH);
+    home.setAttribute(ATTRIBUTE_VALUE, myHomePath);
     element.addContent(home);
 
-    Element roots = new Element("roots");
+    Element roots = new Element(ELEMENT_ROOTS);
     myRootContainer.writeExternal(roots);
     element.addContent(roots);
 
-    Element additional = new Element("additional");
+    Element additional = new Element(ELEMENT_ADDITIONAL);
     if (myAdditionalData != null) {
       mySdkType.saveAdditionalData(myAdditionalData, additional);
     }

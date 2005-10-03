@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -152,9 +153,8 @@ public class GuiUtils {
       aRight ? paddingInsideDialog.right : 0));
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static void setAdditionalIcon(JRadioButton button, Icon icon) {
-    final Icon defaultIcon = UIManager.getIcon("RadioButton.icon");
+    final Icon defaultIcon = UIUtil.getRadioButtonIcon();
     LayeredIcon deficon = new LayeredIcon(2);
     deficon.setIcon(defaultIcon, 0);
     deficon.setIcon(icon, 1, defaultIcon.getIconWidth() + 5, 0);
@@ -273,12 +273,12 @@ public class GuiUtils {
     if (component instanceof JPanel) {
       final Border border = ((JPanel)component).getBorder();
       if (border instanceof TitledBorder) {
-        Color color = enabled ? component.getForeground() : UIManager.getColor("textInactiveText");
+        Color color = enabled ? component.getForeground() : UIUtil.getTextInactiveTextColor();
         ((TitledBorder)border).setTitleColor(color);
       }
     }
     else if (component instanceof JLabel) {
-      Color color = UIManager.getColor("textInactiveText");
+      Color color = UIUtil.getTextInactiveTextColor();
       if (color == null) color = component.getForeground();
       String changeColorString = "<font color=#"+Integer.toHexString(color.getRed())+Integer.toHexString(color.getGreen())+Integer.toHexString(color.getBlue())+">";
       final JLabel label = (JLabel)component;

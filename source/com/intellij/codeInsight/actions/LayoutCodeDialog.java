@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.actions;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
@@ -7,6 +8,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -23,7 +25,7 @@ public class LayoutCodeDialog extends DialogWrapper {
   private JRadioButton myRbDirectory;
   private JCheckBox myCbIncludeSubdirs;
   private JCheckBox myCbOptimizeImports;
-  public static final String OPTIMIZE_IMPORTS_KEY = "LayoutCode.optimizeImports";
+  public static final @NonNls String OPTIMIZE_IMPORTS_KEY = "LayoutCode.optimizeImports";
   private final String myHelpId;
 
   public LayoutCodeDialog(Project project,
@@ -37,7 +39,7 @@ public class LayoutCodeDialog extends DialogWrapper {
     myDirectory = directory;
     myTextSelected = isTextSelected;
 
-    setOKButtonText("Run");
+    setOKButtonText(CodeInsightBundle.message("reformat.code.accept.button.text"));
     setTitle(title);
     init();
     myHelpId = helpId;
@@ -75,11 +77,11 @@ public class LayoutCodeDialog extends DialogWrapper {
   }
 
   private boolean isOptmizeImportsOptionOn() {
-    return "true".equals(PropertiesComponent.getInstance().getValue(OPTIMIZE_IMPORTS_KEY));
+    return Boolean.toString(true).equals(PropertiesComponent.getInstance().getValue(OPTIMIZE_IMPORTS_KEY));
   }
 
   private void setOptimizeImportsOption(boolean state) {
-    PropertiesComponent.getInstance().setValue(OPTIMIZE_IMPORTS_KEY, state ? "true" : "false");
+    PropertiesComponent.getInstance().setValue(OPTIMIZE_IMPORTS_KEY, Boolean.toString(state));
   }
 
   private void updateState() {
@@ -101,12 +103,11 @@ public class LayoutCodeDialog extends DialogWrapper {
     gbConstraints.fill = GridBagConstraints.BOTH;
     gbConstraints.insets = new Insets(0, 0, 0, 0);
 
-    myRbFile =
-    new JRadioButton("File" + (myFile != null ? " '" + myFile.getVirtualFile().getPresentableUrl() + "'" : ""));
-    myRbFile.setMnemonic('F');
+    myRbFile = new JRadioButton(CodeInsightBundle.message("process.scope.file",
+                                                          (myFile != null ? "'" + myFile.getVirtualFile().getPresentableUrl() + "'" : "")));
     panel.add(myRbFile, gbConstraints);
 
-    myRbSelectedText = new JRadioButton("Selected text");
+    myRbSelectedText = new JRadioButton(CodeInsightBundle.message("reformat.option.selected.text"));
     myRbSelectedText.setMnemonic('S');
     if (myTextSelected != null) {
       gbConstraints.gridy++;
@@ -114,22 +115,20 @@ public class LayoutCodeDialog extends DialogWrapper {
       panel.add(myRbSelectedText, gbConstraints);
     }
 
-    myRbDirectory = new JRadioButton("All files in directory " + myDirectory.getVirtualFile().getPresentableUrl());
-    myRbDirectory.setMnemonic('A');
+    myRbDirectory = new JRadioButton(CodeInsightBundle.message("reformat.option.all.files.in.directory",
+                                                               myDirectory.getVirtualFile().getPresentableUrl()));
     gbConstraints.gridy++;
     gbConstraints.insets = new Insets(0, 0, 0, 0);
     panel.add(myRbDirectory, gbConstraints);
 
-    myCbIncludeSubdirs = new JCheckBox("Include subdirectories");
-    myCbIncludeSubdirs.setMnemonic('I');
+    myCbIncludeSubdirs = new JCheckBox(CodeInsightBundle.message("reformat.option.include.subdirectories"));
     if (myDirectory.getSubdirectories().length > 0) {
       gbConstraints.gridy++;
       gbConstraints.insets = new Insets(0, 20, 0, 0);
       panel.add(myCbIncludeSubdirs, gbConstraints);
     }
 
-    myCbOptimizeImports = new JCheckBox("Optimize imports");
-    myCbOptimizeImports.setMnemonic('O');
+    myCbOptimizeImports = new JCheckBox(CodeInsightBundle.message("reformat.option.optimize.imports"));
     if (myTextSelected != null) {
       gbConstraints.gridy++;
       gbConstraints.insets = new Insets(0, 0, 0, 0);

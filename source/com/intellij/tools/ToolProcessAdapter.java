@@ -7,6 +7,7 @@ package com.intellij.tools;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -28,7 +29,7 @@ class ToolProcessAdapter extends ProcessAdapter {
   }
 
   public void processTerminated(ProcessEvent event) {
-    final String message = "External tool '" + myName + "' completed with exit code " + event.getExitCode();
+    final String message = ToolsBundle.message("tools.completed.message", myName, event.getExitCode());
 
     if (mySynchronizeAfterExecution) {
       ApplicationManager.getApplication().runReadAction(new Runnable() {

@@ -4,6 +4,7 @@ package com.intellij.ide.macro;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiJavaFile;
+import com.intellij.ide.IdeBundle;
 
 public final class FileClassMacro extends Macro {
   public String getName() {
@@ -11,7 +12,7 @@ public final class FileClassMacro extends Macro {
   }
 
   public String getDescription() {
-    return "Class name";
+    return IdeBundle.message("macro.class.name");
   }
 
   public String expand(DataContext dataContext) {

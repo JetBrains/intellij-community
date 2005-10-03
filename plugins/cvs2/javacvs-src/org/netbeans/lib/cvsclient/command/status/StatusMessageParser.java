@@ -19,6 +19,7 @@ import org.netbeans.lib.cvsclient.file.FileObject;
 import org.netbeans.lib.cvsclient.file.FileStatus;
 import org.netbeans.lib.cvsclient.file.ICvsFileSystem;
 import org.netbeans.lib.cvsclient.util.BugLog;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -36,20 +37,20 @@ final class StatusMessageParser extends AbstractMessageParser {
 
 	// Constants ==============================================================
 
-	private static final String NO_REVISION_CONTROL_FILE = "No revision control file";
+	@NonNls private static final String NO_REVISION_CONTROL_FILE = "No revision control file";
 	private static final String SEPARATOR = "===================================================================";
 
-	private static final String FILE = "File: ";
-	private static final String STATUS = "\tStatus: ";
-	private static final String NO_FILE = "no file ";
-	private static final String WORK_REVISION = "   Working revision:\t";
-	private static final String REPOSITORY_REVISION = "   Repository revision:\t";
-	private static final String STICKY_TAG = "   Sticky Tag:";
-	private static final String STICKY_DATE = "   Sticky Date:";
-	private static final String STICKY_OPTIONS = "   Sticky Options:";
-	private static final String EXISTING_TAGS = "   Existing Tags:";
-	private static final String NO_TAGS = "   No Tags Exist";
-	private static final String NO_ENTRY_FOR = "No entry for ";
+	@NonNls private static final String FILE = "File: ";
+	@NonNls private static final String STATUS = "\tStatus: ";
+	@NonNls private static final String NO_FILE = "no file ";
+	@NonNls private static final String WORK_REVISION = "   Working revision:\t";
+	@NonNls private static final String REPOSITORY_REVISION = "   Repository revision:\t";
+	@NonNls private static final String STICKY_TAG = "   Sticky Tag:";
+	@NonNls private static final String STICKY_DATE = "   Sticky Date:";
+	@NonNls private static final String STICKY_OPTIONS = "   Sticky Options:";
+	@NonNls private static final String EXISTING_TAGS = "   Existing Tags:";
+	@NonNls private static final String NO_TAGS = "   No Tags Exist";
+	@NonNls private static final String NO_ENTRY_FOR = "No entry for ";
 	private static final String QUESTION_MARK = "? ";
 
 	// Fields =================================================================

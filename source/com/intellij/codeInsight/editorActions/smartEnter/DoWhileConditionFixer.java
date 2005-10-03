@@ -15,6 +15,7 @@ import com.intellij.util.IncorrectOperationException;
  * Time: 5:32:01 PM
  * To change this template use Options | File Templates.
  */
+@SuppressWarnings({"HardCodedStringLiteral"})
 public class DoWhileConditionFixer implements Fixer {
   public void apply(Editor editor, SmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
     if (psiElement instanceof PsiDoWhileStatement) {

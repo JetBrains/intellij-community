@@ -14,6 +14,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vcs.ui.ReplaceFileConfirmationDialog;
 import com.intellij.util.ui.OptionsDialog;
+import com.intellij.CvsBundle;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -35,7 +36,7 @@ public class CheckoutFileAction extends ActionOnSelectedElement {
   }
 
   protected String getTitle(VcsContext context) {
-    return "Check Out";
+    return CvsBundle.getCheckoutOperationName();
   }
 
   public void update(AnActionEvent e) {
@@ -51,7 +52,7 @@ public class CheckoutFileAction extends ActionOnSelectedElement {
   protected CvsHandler getCvsHandler(CvsContext context) {
     if (myModifiedFiles != null) {
       if (!myModifiedFiles.isEmpty()) {
-        if (!new ReplaceFileConfirmationDialog(context.getProject(), "Checkout").requestConfirmation(myModifiedFiles)) {
+        if (!new ReplaceFileConfirmationDialog(context.getProject(), CvsBundle.getCheckoutOperationName()).requestConfirmation(myModifiedFiles)) {
           return CvsHandler.NULL;
         }
 
@@ -77,6 +78,6 @@ public class CheckoutFileAction extends ActionOnSelectedElement {
   protected void beforeActionPerformed(VcsContext context) {
     super.beforeActionPerformed(context);
     myModifiedFiles =
-      new ReplaceFileConfirmationDialog(context.getProject(), "Checkout").collectModifiedFiles(context.getSelectedFiles());
+      new ReplaceFileConfirmationDialog(context.getProject(), CvsBundle.getCheckoutOperationName()).collectModifiedFiles(context.getSelectedFiles());
   }
 }

@@ -9,6 +9,7 @@ public class RootNode extends PackageDependenciesNode {
     return 0;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return "Root";
   }

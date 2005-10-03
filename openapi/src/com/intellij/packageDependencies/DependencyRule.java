@@ -18,6 +18,8 @@ package com.intellij.packageDependencies;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.packageSet.ComplementPackageSet;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.analysis.AnalysisScopeBundle;
 
 public class DependencyRule {
   private NamedScope myFromScope;
@@ -36,28 +38,29 @@ public class DependencyRule {
     return (myDenyRule
             ? myFromScope.getValue().contains(from, holder)
             : new ComplementPackageSet(myFromScope.getValue()).contains(from, holder)) &&
-           myToScope.getValue().contains(to, holder);
+                                                                                       myToScope.getValue().contains(to, holder);
   }
 
   public String getDisplayText() {
-    StringBuffer buf = new StringBuffer();
-    buf.append(myDenyRule ? "Deny " : "Allow ");
-    buf.append("usages of scope '");
-    if (myToScope != null) {
-      buf.append(myToScope.getName());
-    }
-    buf.append("' " + (myDenyRule ? " " : "only ") + "in scope '");
-    if (myFromScope != null) {
-      buf.append(myFromScope.getName());
-    }
-    buf.append('\'');
-    return buf.toString();
+    String toScopeName = myToScope == null ? "" : myToScope.getName();
+    String fromScopeName = myFromScope == null ? "" : myFromScope.getName();
+
+    return myDenyRule
+           ? AnalysisScopeBundle.message("scope.display.name.deny.scope", toScopeName, fromScopeName)
+           : AnalysisScopeBundle.message("scope.display.name.allow.scope", toScopeName, fromScopeName);
   }
 
   public boolean equals(Object o) {
     if (!(o instanceof DependencyRule)) return false;
-    DependencyRule rule = (DependencyRule)o;
-    return getDisplayText().equals(rule.getDisplayText());
+    DependencyRule other = (DependencyRule)o;
+    if (!getDisplayText().equals(other.getDisplayText())) return false;
+    String toScopeValue = myToScope == null ? null : myToScope.getValue().getText();
+    String otherToScopeValue = other.myToScope == null ? null : other.myToScope.getValue().getText();
+    String fromScopeValue = myFromScope == null ? null : myFromScope.getValue().getText();
+    String otherFromScopeValue = other.myFromScope == null ? null : other.myFromScope.getValue().getText();
+
+    return Comparing.strEqual(fromScopeValue, otherFromScopeValue)
+           && Comparing.strEqual(toScopeValue, otherToScopeValue);
   }
 
   public int hashCode() {

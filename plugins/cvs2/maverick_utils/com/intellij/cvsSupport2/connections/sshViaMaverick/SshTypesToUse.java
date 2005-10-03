@@ -1,5 +1,7 @@
 package com.intellij.cvsSupport2.connections.sshViaMaverick;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author Thomas Singer
  */
@@ -17,7 +19,7 @@ public final class SshTypesToUse {
 
   // Setup ==================================================================
 
-  private SshTypesToUse(String name) {
+  private SshTypesToUse(@NonNls String name) {
     this.name = name;
   }
 

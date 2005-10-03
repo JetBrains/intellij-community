@@ -12,7 +12,7 @@
       <grid id="d5f42" row-count="4" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="0" y="0" width="552" height="101"/>
+          <xy x="0" y="0" width="552" height="109"/>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
         </constraints>
         <properties/>
@@ -21,7 +21,7 @@
           <grid id="2dbd6" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="5" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="0" y="0" width="552" height="20"/>
+              <xy x="0" y="0" width="552" height="22"/>
               <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
             </constraints>
             <properties/>
@@ -29,41 +29,42 @@
             <children>
               <component id="559dd" class="javax.swing.JLabel">
                 <constraints>
-                  <xy x="0" y="3" width="97" height="14"/>
+                  <xy x="0" y="3" width="111" height="16"/>
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
-                  <text value="Resource patterns:"/>
+                  <text resource-bundle="messages/CompilerBundle" key="label.option.resource.patterns.text"/>
                 </properties>
               </component>
               <component id="263f1" class="javax.swing.JTextField" binding="myResourcePatternsField">
                 <constraints>
-                  <xy x="102" y="1" width="450" height="18"/>
+                  <xy x="116" y="0" width="436" height="22"/>
                   <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
                     <preferred-size width="150" height="-1"/>
                   </grid>
                 </constraints>
                 <properties>
-                  <text value=".+\.(properties|xml|html|dtd|tld);.+\.(gif|jpeg|jpg)"/>
+                  <focusable value="true"/>
                   <margin top="0" left="2" bottom="0" right="0"/>
+                  <text value="" noi18n="true"/>
                 </properties>
               </component>
             </children>
           </grid>
           <component id="889a8" class="javax.swing.JCheckBox" binding="myCbClearOutputDirectory">
             <constraints>
-              <xy x="0" y="25" width="181" height="22"/>
+              <xy x="0" y="27" width="217" height="24"/>
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
-              <text value="Clear output directory on rebuild"/>
               <margin top="2" left="3" bottom="2" right="3"/>
+              <text resource-bundle="messages/CompilerBundle" key="label.option.clear.output.directory.on.rebuild"/>
             </properties>
           </component>
           <grid id="2aa28" row-count="1" column-count="4" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="0" y="79" width="552" height="22"/>
+              <xy x="0" y="85" width="552" height="24"/>
               <grid row="3" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
             </constraints>
             <properties/>
@@ -71,69 +72,69 @@
             <children>
               <component id="9e3fc" class="javax.swing.JLabel">
                 <constraints>
-                  <xy x="0" y="4" width="124" height="14"/>
+                  <xy x="0" y="4" width="306" height="16"/>
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
-                  <text value="Deploy web applications to server after compilation:"/>
+                  <text resource-bundle="messages/CompilerBundle" key="label.option.deploy.text"/>
                 </properties>
               </component>
               <component id="42c2e" class="javax.swing.JRadioButton" binding="myDeploy">
                 <constraints>
-                  <xy x="134" y="0" width="61" height="22"/>
+                  <xy x="316" y="0" width="64" height="24"/>
                   <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
-                  <text value="Always"/>
                   <selected value="false"/>
+                  <text resource-bundle="messages/CompilerBundle" key="label.option.deploy.always"/>
                 </properties>
               </component>
               <component id="d789a" class="javax.swing.JRadioButton" binding="myDoNotDeploy">
                 <constraints>
-                  <xy x="284" y="0" width="56" height="22"/>
+                  <xy x="406" y="0" width="59" height="24"/>
                   <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
-                  <text value="Never"/>
+                  <text resource-bundle="messages/CompilerBundle" key="label.option.deploy.never"/>
                 </properties>
               </component>
               <component id="7298a" class="javax.swing.JRadioButton" binding="myShowDialog">
                 <constraints>
-                  <xy x="429" y="0" width="44" height="22"/>
+                  <xy x="491" y="0" width="46" height="24"/>
                   <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
-                  <text value="Ask"/>
+                  <text resource-bundle="messages/CompilerBundle" key="label.option.deploy.ask"/>
                 </properties>
               </component>
             </children>
           </grid>
           <component id="660fd" class="javax.swing.JCheckBox" binding="myCbCompileInBackground">
             <constraints>
-              <xy x="290" y="25" width="133" height="22"/>
+              <xy x="292" y="27" width="160" height="24"/>
               <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
-              <text value="Compile in background"/>
               <margin top="2" left="3" bottom="2" right="3"/>
+              <text resource-bundle="messages/CompilerBundle" key="label.option.compile.in.background"/>
             </properties>
           </component>
           <component id="62fec" class="javax.swing.JCheckBox" binding="myCbCloseMessageViewOnSuccess">
             <constraints>
-              <xy x="290" y="52" width="218" height="22"/>
+              <xy x="292" y="56" width="260" height="24"/>
               <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
-              <text value="Close message view if no error occurred"/>
+              <text resource-bundle="messages/CompilerBundle" key="label.option.close.view"/>
             </properties>
           </component>
           <component id="97c22" class="javax.swing.JCheckBox" binding="myCbCompileDependent">
             <constraints>
-              <xy x="0" y="52" width="235" height="22"/>
+              <xy x="0" y="56" width="282" height="24"/>
               <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
-              <text value="Honor dependencies on &quot;Compile&quot; command"/>
+              <text resource-bundle="messages/CompilerBundle" key="label.option.honor.dependencies"/>
             </properties>
           </component>
         </children>
@@ -141,7 +142,7 @@
       <xy id="b10b9" binding="myExcludeTablePanel" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="0" y="106" width="552" height="155"/>
+          <xy x="0" y="114" width="552" height="130"/>
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="3" anchor="0" fill="3"/>
         </constraints>
         <properties/>
@@ -151,7 +152,7 @@
       <xy id="84d2f" binding="myTabbedPanePanel" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="0" y="266" width="552" height="113"/>
+          <xy x="0" y="249" width="552" height="130"/>
           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
         </constraints>
         <properties/>

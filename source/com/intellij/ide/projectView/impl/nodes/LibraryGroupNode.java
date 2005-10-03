@@ -4,6 +4,7 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.*;
@@ -80,7 +81,7 @@ public class LibraryGroupNode extends ProjectViewNode<LibraryGroupElement> {
   }
 
   public void update(PresentationData presentation) {
-    presentation.setPresentableText("Libraries");
+    presentation.setPresentableText(IdeBundle.message("node.projectview.libraries"));
     presentation.setIcons(Icons.LIBRARY_ICON);
   }
 }

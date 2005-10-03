@@ -190,7 +190,7 @@ public class VcsGeneralConfigurationPanel {
       final JCheckBox checkBox = myPromptOptions.get(setting);
       checkBox.setEnabled(setting.isApplicableTo(activeVcses) || myProject.isDefault());
       if (!myProject.isDefault()) {
-        checkBox.setToolTipText("Applicable to: " + composeText(setting.getApplicableVcses()));
+        checkBox.setToolTipText(VcsBundle.message("tooltip.text.action.applicable.to.vcses", composeText(setting.getApplicableVcses())));
       }
     }
 
@@ -198,11 +198,13 @@ public class VcsGeneralConfigurationPanel {
       final ProjectLevelVcsManagerEx vcsManager = ProjectLevelVcsManagerEx.getInstanceEx(myProject);
       final VcsShowConfirmationOptionImpl addConfirmation = vcsManager.getConfirmation(VcsConfiguration.StandardConfirmation.ADD);
       UIUtil.setEnabled(myAddConfirmationPanel, addConfirmation.isApplicableTo(activeVcses), true);
-      myAddConfirmationPanel.setToolTipText("Applicable to: " + composeText(addConfirmation.getApplicableVcses()));
+      myAddConfirmationPanel.setToolTipText(
+        VcsBundle.message("tooltip.text.action.applicable.to.vcses", composeText(addConfirmation.getApplicableVcses())));
 
       final VcsShowConfirmationOptionImpl removeConfirmation = vcsManager.getConfirmation(VcsConfiguration.StandardConfirmation.REMOVE);
       UIUtil.setEnabled(myRemoveConfirmationPanel, removeConfirmation.isApplicableTo(activeVcses), true);
-      myRemoveConfirmationPanel.setToolTipText("Applicable to: " + composeText(removeConfirmation.getApplicableVcses()));
+      myRemoveConfirmationPanel.setToolTipText(
+        VcsBundle.message("tooltip.text.action.applicable.to.vcses", composeText(removeConfirmation.getApplicableVcses())));
     }
 
   }

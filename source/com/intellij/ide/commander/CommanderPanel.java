@@ -3,6 +3,7 @@ package com.intellij.ide.commander;
 import com.intellij.ide.CopyPasteManagerEx;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.IdeView;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
 import com.intellij.ide.projectView.impl.nodes.Form;
@@ -30,7 +31,9 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.ui.*;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
@@ -60,6 +63,10 @@ public class CommanderPanel extends JPanel {
   protected final ListSpeedSearch myListSpeedSearch;
   private final IdeView myIdeView = new MyIdeView();
   private final MyDeleteElementProvider myDeleteElementProvider = new MyDeleteElementProvider();
+  @NonNls
+  private static final String ACTION_DRILL_DOWN = "DrillDown";
+  @NonNls
+  private static final String ACTION_GO_UP = "GoUp";
 
   public CommanderPanel(final Project project, final Commander commander) {
     super(new BorderLayout());
@@ -94,14 +101,14 @@ public class CommanderPanel extends JPanel {
 
     myList.getInputMap(JComponent.WHEN_FOCUSED).put(
       KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0),
-      "DrillDown"
+      ACTION_DRILL_DOWN
     );
     myList.getInputMap(JComponent.WHEN_FOCUSED).put(
       KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, SystemInfo.isMac ? KeyEvent.META_MASK : KeyEvent.CTRL_MASK),
-      "DrillDown"
+      ACTION_DRILL_DOWN
     );
     myList.getActionMap().put(
-      "DrillDown",
+      ACTION_DRILL_DOWN,
       new AbstractAction() {
         public void actionPerformed(final ActionEvent e) {
           drillDown();
@@ -117,14 +124,14 @@ public class CommanderPanel extends JPanel {
     });
     myList.getInputMap(JComponent.WHEN_FOCUSED).put(
       KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_UP, SystemInfo.isMac ? KeyEvent.META_MASK : KeyEvent.CTRL_MASK),
-      "GoUp"
+      ACTION_GO_UP
     );
     myList.getInputMap(JComponent.WHEN_FOCUSED).put(
       KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, 0),
-      "GoUp"
+      ACTION_GO_UP
     );
     myList.getActionMap().put(
-      "GoUp",
+      ACTION_GO_UP,
       new AbstractAction() {
         public void actionPerformed(final ActionEvent e) {
           goUp();
@@ -132,6 +139,7 @@ public class CommanderPanel extends JPanel {
       }
     );
 
+    //noinspection HardCodedStringLiteral
     myList.getActionMap().put(
       "selectAll",
       new AbstractAction() {
@@ -258,12 +266,14 @@ public class CommanderPanel extends JPanel {
     removeAll();
 
     myTitlePanel = new JPanel(new BorderLayout());
-    myTitlePanel.setBackground(UIManager.getColor("control"));
+    //noinspection HardCodedStringLiteral
+    myTitlePanel.setBackground(UIUtil.getControlColor());
     myTitlePanel.setOpaque(true);
 
     myParentTitle = new MyTitleLabel(myTitlePanel);
     myParentTitle.setText(" ");
-    myParentTitle.setFont(UIManager.getFont("Label.font").deriveFont(Font.BOLD));
+    //noinspection HardCodedStringLiteral
+    myParentTitle.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
     myParentTitle.setForeground(Color.black);
     myParentTitle.setUI(new RightAlignedLabelUI());
     final JPanel panel1 = new JPanel(new BorderLayout());
@@ -354,7 +364,7 @@ public class CommanderPanel extends JPanel {
       myParentTitle.setForeground(Color.white);
     }
     else {
-      final Color color = UIManager.getColor("Panel.background");
+      final Color color = UIUtil.getPanelBackground();
       LOG.assertTrue(color != null);
       myTitlePanel.setBackground(color);
       myTitlePanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED, color.brighter(), color.darker()));
@@ -508,7 +518,7 @@ public class CommanderPanel extends JPanel {
   private final class MyDeleteElementProvider implements DeleteProvider {
     public void deleteElement(final DataContext dataContext) {
       final com.intellij.openapi.localVcs.LvcsAction action = LvcsIntegration.checkinFilesBeforeRefactoring(myProject,
-                                                                                                      "Deleting");
+                                                                                                      IdeBundle.message("progress.deleting"));
       try {
         final PsiElement[] elements = getSelectedElements();
         DeleteHandler.deletePsiElement(elements, myProject);

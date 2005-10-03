@@ -9,7 +9,7 @@ import com.intellij.openapi.vcs.FilePath;
  */
 public class CheckoutHandler extends CommandCvsHandler{
   public CheckoutHandler(FilePath[] files, CvsConfiguration configuration) {
-    super("Check Out Files", new CheckoutFilesOperation(files, configuration), FileSetToBeUpdated.selectedFiles(files));
+    super(com.intellij.CvsBundle.message("operation.name.check.out.files"), new CheckoutFilesOperation(files, configuration), FileSetToBeUpdated.selectedFiles(files));
   }
 
 }

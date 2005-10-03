@@ -6,11 +6,12 @@ import com.intellij.ant.impl.AntInstallation;
 import com.intellij.ant.impl.references.PsiNoWhereElement;
 import com.intellij.codeInsight.javadoc.JavaDocManager;
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.PsiElementProcessor;
@@ -19,17 +20,20 @@ import com.intellij.psi.xml.XmlComment;
 import com.intellij.psi.xml.XmlElementDecl;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.xml.XmlElementDescriptor;
-import com.intellij.xml.XmlNSDescriptor;
-import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
-import com.intellij.xml.impl.schema.ComplexTypeDescriptor;
-import com.intellij.xml.impl.schema.TypeDescriptor;
-import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.XmlBundle;
+import com.intellij.xml.XmlNSDescriptor;
+import com.intellij.xml.impl.schema.TypeDescriptor;
+import com.intellij.xml.impl.schema.ComplexTypeDescriptor;
+import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
+import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Iterator;
+
+import org.jetbrains.annotations.NonNls;
 
 /**
  * Created by IntelliJ IDEA.
@@ -40,6 +44,12 @@ import java.util.Iterator;
  */
 public class XmlDocumentationProvider implements JavaDocManager.DocumentationProvider {
   private static final Key<XmlElementDescriptor> DESCRIPTOR_KEY = Key.create("Original element");
+  @NonNls private static final String CORE_TASKS_FOLDER_NAME = "/CoreTasks/";
+  @NonNls private static final String CORE_TYPES_FOLDER_NAME = "/CoreTypes/";
+  @NonNls private static final String OPTIONAL_TASKS_FOLDER_NAME = "/OptionalTasks/";
+  @NonNls private static final String OPTIONAL_TYPES_FOLDER_NAME = "/OptionalTypes/";
+
+  private static final Logger LOG = Logger.getInstance("#com.intellij.xml.util.documentation.XmlDocumentationProvider");
 
   public String getUrlFor(PsiElement element, PsiElement originalElement) {
     if (element instanceof XmlTag) {
@@ -108,31 +118,33 @@ public class XmlDocumentationProvider implements JavaDocManager.DocumentationPro
           AntInstallation installation = BuildFile.ANT_INSTALLATION.get(buildFile.getAllOptions());
 
           if (installation != null) {
-            String path = AntInstallation.HOME_DIR.get(installation.getProperties());
-            path += "/docs/manual";
+            final @NonNls String path = AntInstallation.HOME_DIR.get(installation.getProperties()) + "/docs/manual";
             XmlTag tag = PsiTreeUtil.getParentOfType(originalElement, XmlTag.class);
-            final String helpFileShortName = tag.getName() + ".html";
 
             if (tag == null) return null;
+
+            @NonNls final String helpFileShortName = tag.getName() + ".html";
+
+
             File file = new File(path);
             File helpFile = null;
 
             if (file.exists()) {
-              File candidateHelpFile = new File(path + "/CoreTasks/" + helpFileShortName);
+              File candidateHelpFile = new File(path + CORE_TASKS_FOLDER_NAME + helpFileShortName);
               if (candidateHelpFile.exists()) helpFile = candidateHelpFile;
 
               if (helpFile == null) {
-                candidateHelpFile = new File(path + "/CoreTypes/" + helpFileShortName);
+                candidateHelpFile = new File(path + CORE_TYPES_FOLDER_NAME + helpFileShortName);
                 if (candidateHelpFile.exists()) helpFile = candidateHelpFile;
               }
 
               if (helpFile == null) {
-                candidateHelpFile = new File(path + "/OptionalTasks/" + helpFileShortName);
+                candidateHelpFile = new File(path + OPTIONAL_TASKS_FOLDER_NAME + helpFileShortName);
                 if (candidateHelpFile.exists()) helpFile = candidateHelpFile;
               }
 
               if (helpFile == null) {
-                candidateHelpFile = new File(path + "/OptionalTypes/" + helpFileShortName);
+                candidateHelpFile = new File(path + OPTIONAL_TYPES_FOLDER_NAME + helpFileShortName);
                 if (candidateHelpFile.exists()) helpFile = candidateHelpFile;
               }
             }
@@ -146,11 +158,13 @@ public class XmlDocumentationProvider implements JavaDocManager.DocumentationPro
                   }
                 }
               );
-              
+
               if (fileByIoFile != null) {
                 try {
                   return new String(fileByIoFile.contentsToCharArray());
-                } catch(IOException ex) {}
+                } catch(IOException ex) {
+                  //ignore exception
+                }
               }
             }
           }
@@ -186,14 +200,13 @@ public class XmlDocumentationProvider implements JavaDocManager.DocumentationPro
     StringBuffer buf = new StringBuffer(str.length() + 20);
 
     if (typeName==null) {
-      JavaDocUtil.formatEntityName("Tag name",name,buf);
+      JavaDocUtil.formatEntityName(XmlBundle.message("xml.javadoc.tag.name.message"),name,buf);
     } else {
-      JavaDocUtil.formatEntityName("Complex type",name,buf);
+      JavaDocUtil.formatEntityName(XmlBundle.message("xml.javadoc.complex.type.message"),name,buf);
     }
 
-    buf.append("Description  :&nbsp;").append(str);
-
-    return buf.toString();
+    return buf.append(XmlBundle.message("xml.javadoc.description.message")).append("  ").
+      append(HtmlDocumentationProvider.NBSP).append(str).toString();
   }
 
   public PsiElement getDocumentationElementForLookupItem(Object object, PsiElement element) {
@@ -201,22 +214,20 @@ public class XmlDocumentationProvider implements JavaDocManager.DocumentationPro
 
     if (element instanceof XmlTag) {
       XmlTag xmlTag = (XmlTag)element;
-      XmlElementDescriptor elementDescriptor = null;
+      XmlElementDescriptor elementDescriptor;
 
       try {
-        String tagText = object.toString();
-        String namespacePrefix = XmlUtil.findPrefixByQualifiedName(tagText);
+        @NonNls StringBuffer tagText = new StringBuffer(object.toString());
+        String namespacePrefix = XmlUtil.findPrefixByQualifiedName(object.toString());
         String namespace = xmlTag.getNamespaceByPrefix(namespacePrefix);
 
         if (namespace!=null && namespace.length() > 0) {
-          tagText+=" xmlns";
-          if (namespacePrefix.length() > 0) tagText += ":" + namespacePrefix;
-          tagText +="=\""+namespace+"\"";
+          tagText.append(" xmlns");
+          if (namespacePrefix.length() > 0) tagText.append(":").append(namespacePrefix);
+          tagText.append("=\"").append(namespace).append("\"");
         }
 
-        tagText = "<" + tagText +"/>";
-
-        XmlTag tagFromText = xmlTag.getManager().getElementFactory().createTagFromText(tagText);
+        XmlTag tagFromText = xmlTag.getManager().getElementFactory().createTagFromText("<" + tagText +"/>");
         XmlElementDescriptor parentDescriptor = xmlTag.getDescriptor();
         elementDescriptor = (parentDescriptor!=null)?parentDescriptor.getElementDescriptor(tagFromText):null;
 
@@ -240,7 +251,7 @@ public class XmlDocumentationProvider implements JavaDocManager.DocumentationPro
         }
       }
       catch (IncorrectOperationException e) {
-        e.printStackTrace();
+        LOG.error(e);
       }
     }
     return null;
@@ -253,10 +264,11 @@ public class XmlDocumentationProvider implements JavaDocManager.DocumentationPro
   private static class MyPsiElementProcessor implements PsiElementProcessor {
     String result;
     String url;
+    @NonNls public static final String DOCUMENTATION_ELEMENT_LOCAL_NAME = "documentation";
 
     public boolean execute(PsiElement element) {
       if (element instanceof XmlTag &&
-          ((XmlTag)element).getLocalName().equals("documentation")
+          ((XmlTag)element).getLocalName().equals(DOCUMENTATION_ELEMENT_LOCAL_NAME)
       ) {
         final XmlTag tag = ((XmlTag)element);
         result = tag.getValue().getText().trim();

@@ -7,6 +7,7 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.ide.util.projectWizard.ProjectJdkListRenderer;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.ui.SimpleTextAttributes;
 
 import javax.swing.*;
@@ -145,7 +146,7 @@ class JdkComboBox extends JComboBox{
     }
 
     public String toString() {
-      return "<None>";
+      return ProjectBundle.message("jdk.combo.box.none.item");
     }
   }
 
@@ -154,7 +155,7 @@ class JdkComboBox extends JComboBox{
 
     public InvalidJdkComboBoxItem(String name) {
       super(null);
-      myName = name + " [Invalid]";
+      myName = ProjectBundle.message("jdk.combo.box.invalid.item", name);
     }
 
     public String toString() {

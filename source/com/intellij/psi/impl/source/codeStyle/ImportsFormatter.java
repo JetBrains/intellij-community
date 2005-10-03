@@ -28,6 +28,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * Created by IntelliJ IDEA.
@@ -41,6 +42,8 @@ public class ImportsFormatter extends AbstractPostFormatProcessor {
 
   private FormattingDocumentModelImpl myDocumentModel;
   private final CodeStyleSettings.IndentOptions myIndentOptions;
+  private static final @NonNls String PAGE_DIRECTIVE = "page";
+  private static final @NonNls String IMPORT_ATT = "import";
 
   public ImportsFormatter(final CodeStyleSettings settings, PsiFile file) {
     super(settings);
@@ -55,7 +58,7 @@ public class ImportsFormatter extends AbstractPostFormatProcessor {
   }
 
   private boolean isPageDirectiveTag(final XmlTag tag) {
-    return "page".equals(tag.getName());
+    return PAGE_DIRECTIVE.equals(tag.getName());
   }
 
   public void visitXmlText(XmlText text) {
@@ -138,7 +141,7 @@ public class ImportsFormatter extends AbstractPostFormatProcessor {
   }
 
   private boolean isImportAttribute(final XmlAttribute attribute) {
-    return "import".equals(attribute.getName());
+    return IMPORT_ATT.equals(attribute.getName());
   }
 
 }

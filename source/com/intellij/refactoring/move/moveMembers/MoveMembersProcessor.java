@@ -9,8 +9,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.MethodSignatureUtil;
@@ -18,6 +18,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.ui.ConflictsDialog;
@@ -28,10 +29,9 @@ import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-
-import org.jetbrains.annotations.NotNull;
 
 public class MoveMembersProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.move.moveMembers.MoveMembersProcessor");
@@ -72,7 +72,9 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
   }
 
   private void setCommandName(final PsiMember[] members) {
-    StringBuffer commandName = new StringBuffer("Move ");
+    StringBuffer commandName = new StringBuffer();
+    commandName.append(RefactoringBundle.message("move.tltle"));
+    commandName.append(" ");
     boolean first = true;
     for (PsiMember member : members) {
       if (!first) commandName.append(", ");
@@ -308,8 +310,8 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
             if (!ResolveUtil.isAccessible(member, myTargetClass, modifierListCopies.get(member), element, accessObjectClass, null)) {
               final String newVisibility = myNewVisibility == null ? VisibilityUtil.getVisiblityStringToDisplay(member) : myNewVisibility;
               String message =
-                ConflictsUtil.getDescription(member, true) + " with " + newVisibility + " visibility is not accesible from " +
-                ConflictsUtil.getDescription(ConflictsUtil.getContainer(element), true);
+                RefactoringBundle.message("0.with.1.visibility.is.not.accesible.from.2", ConflictsUtil.getDescription(member, true),
+                                          newVisibility, ConflictsUtil.getDescription(ConflictsUtil.getContainer(element), true));
               conflicts.add(message);
             }
           }
@@ -320,7 +322,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
 
   public void doRun() {
     if (myMembersToMove.size() == 0){
-      String message = "No members selected";
+      String message = RefactoringBundle.message("no.members.selected");
       RefactoringMessageUtil.showErrorMessage(MoveMembersImpl.REFACTORING_NAME, message, HelpID.MOVE_MEMBERS, myProject);
       return;
     }
@@ -345,7 +347,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
       if (member instanceof PsiMethod) {
         PsiMethod method = (PsiMethod)member;
         if (hasMethod(targetClass, method)) {
-          String message = ConflictsUtil.getDescription(method, false) + " already exists in the target class.";
+          String message = RefactoringBundle.message("0.already.exists.in.the.target.class", ConflictsUtil.getDescription(method, false));
           message = ConflictsUtil.capitalize(message);
           conflicts.add(message);
         }
@@ -353,7 +355,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
       else if (member instanceof PsiField) {
         PsiField field = (PsiField)member;
         if (hasField(targetClass, field)) {
-          String message = ConflictsUtil.getDescription(field, false) + " already exists in the target class.";
+          String message = RefactoringBundle.message("0.already.exists.in.the.target.class", ConflictsUtil.getDescription(field, false));
           message = ConflictsUtil.capitalize(message);
           conflicts.add(message);
         }
@@ -391,11 +393,10 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
           PsiElement ref = psiReference.getElement();
           if (!RefactoringHierarchyUtil.willBeInTargetClass(ref, membersToMove, targetClass, false)) {
             if (!manager.getResolveHelper().isAccessible(member, modifierList, ref, null, null)) {
-              String message = ConflictsUtil.getDescription(member, true)
-                               + " is " + VisibilityUtil.getVisiblityStringToDisplay(member)
-                               + " and will not be accessible from "
-                               + ConflictsUtil.getDescription(ConflictsUtil.getContainer(ref), true)
-                               + " when moved to the target class.";
+              String message = RefactoringBundle.message("0.is.1.and.will.not.be.accessible.from.2.in.the.target.class",
+                                                         ConflictsUtil.getDescription(member, true),
+                                                         VisibilityUtil.getVisiblityStringToDisplay(member),
+                                                         ConflictsUtil.getDescription(ConflictsUtil.getContainer(ref), true));
               message = ConflictsUtil.capitalize(message);
               conflicts.add(message);
             }
@@ -450,11 +451,10 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
                                          PsiMember member,
                                          LinkedHashSet<String> conflicts) {
     if (!PsiUtil.isAccessible(refMember, newContext, accessClass)) {
-      String message = ConflictsUtil.getDescription(refMember, true)
-                       + " is " + VisibilityUtil.getVisiblityStringToDisplay(refMember)
-                       + " and will not be accessible from "
-                       + ConflictsUtil.getDescription(member, false)
-                       + " in the target class.";
+      String message = RefactoringBundle.message("0.is.1.and.will.not.be.accessible.from.2.in.the.target.class",
+                                                 ConflictsUtil.getDescription(refMember, true),
+                                                 VisibilityUtil.getVisiblityStringToDisplay(refMember),
+                                                 ConflictsUtil.getDescription(member, false));
       message = ConflictsUtil.capitalize(message);
       conflicts.add(message);
     }

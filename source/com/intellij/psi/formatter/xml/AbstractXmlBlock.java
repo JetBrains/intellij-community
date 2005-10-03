@@ -25,6 +25,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,8 +35,9 @@ import java.util.List;
 
 public abstract class AbstractXmlBlock extends AbstractBlock {
   protected final XmlFormattingPolicy myXmlFormattingPolicy;
-  public static final String JSPX_DECLARATION_TAG_NAME = "jsp:declaration";
-  public static final String JSPX_SCRIPTLET_TAG_NAME = "jsp:scriptlet";
+  public static final @NonNls String JSPX_DECLARATION_TAG_NAME = "jsp:declaration";
+  public static final @NonNls String JSPX_SCRIPTLET_TAG_NAME = "jsp:scriptlet";
+  private static final @NonNls String JSP_TAG_PREFIX = "jsp:";
 
   public AbstractXmlBlock(final ASTNode node,
                           final Wrap wrap,
@@ -87,7 +89,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
   }
 
   private boolean canWrapTagEnd(final XmlTag tag) {
-    return tag.getSubTags().length > 0 || tag.getName().toLowerCase().startsWith("jsp:");
+    return tag.getSubTags().length > 0 || tag.getName().toLowerCase().startsWith(JSP_TAG_PREFIX);
   }
 
   protected XmlTag getTag() {

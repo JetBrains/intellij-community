@@ -20,9 +20,11 @@ public final class ComponentPtr{
   public ComponentPtr(final GuiEditor editor,final RadComponent component){
     // Check args
     if(editor==null){
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("editor cannot be null");
     }
     if(component==null){
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("component cannot be null");
     }
 
@@ -31,6 +33,7 @@ public final class ComponentPtr{
 
     validate();
     if(!isValid()){
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("invalid component: "+component);
     }
   }

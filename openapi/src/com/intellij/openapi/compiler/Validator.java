@@ -16,8 +16,11 @@
 package com.intellij.openapi.compiler;
 
 /**
- * Allows one to perform any validation on the files in given compile scope
- * Error/Warning messages should be added to the CompileContext object  
+ * A tag interface indicating that the compiler will perform any validation on the files in given compile scope.
+ * Error/Warning messages should be added to the CompileContext object.
+ * This affects the order of compiler calls.
+ * The sequence in which compilers are called:
+ * SourceGeneratingCompiler -> SourceInstrumentingCompiler -> TranslatingCompiler ->  ClassInstrumentingCompiler -> ClassPostProcessingCompiler -> PackagingCompiler -> Validator
  */
 public interface Validator extends FileProcessingCompiler {
 }

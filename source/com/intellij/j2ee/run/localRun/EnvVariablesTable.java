@@ -6,17 +6,20 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
+import com.intellij.j2ee.J2EEBundle;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
 
+import org.jetbrains.annotations.NonNls;
+
 public class EnvVariablesTable extends Observable {
   private final List<EnvironmentVariable> myVariables = new ArrayList<EnvironmentVariable>();
   private final JPanel myPanel = new JPanel(new BorderLayout());
 
-  private ColumnInfo NAME = new ColumnInfo<EnvironmentVariable, String>("Name") {
+  private ColumnInfo NAME = new ColumnInfo<EnvironmentVariable, String>(J2EEBundle.message("column.name.environment.variables.name")) {
     public String valueOf(EnvironmentVariable environmentVariable) {
       return environmentVariable.getName();
     }
@@ -38,7 +41,7 @@ public class EnvVariablesTable extends Observable {
     }
   };
 
-  private ColumnInfo VALUE = new ColumnInfo<EnvironmentVariable, String>("Value") {
+  private ColumnInfo VALUE = new ColumnInfo<EnvironmentVariable, String>(J2EEBundle.message("column.name.environment.variables.value")) {
     public String valueOf(EnvironmentVariable environmentVariable) {
       return environmentVariable.getValue();
     }
@@ -118,7 +121,7 @@ public class EnvVariablesTable extends Observable {
 
   private final class DeleteAction extends AnAction {
     public DeleteAction() {
-      super("Delete", null, IconLoader.getIcon("/general/remove.png"));
+      super(J2EEBundle.message("action.name.delete"), null, IconLoader.getIcon("/general/remove.png"));
     }
 
     public void update(AnActionEvent e) {
@@ -151,7 +154,7 @@ public class EnvVariablesTable extends Observable {
 
   private final class AddAction extends AnAction {
     public AddAction() {
-      super("Add", null, IconLoader.getIcon("/general/add.png"));
+      super(J2EEBundle.message("action.name.add"), null, IconLoader.getIcon("/general/add.png"));
     }
 
     public void update(AnActionEvent e) {
@@ -174,7 +177,7 @@ public class EnvVariablesTable extends Observable {
     private String getUniqueName() {
       Set<String> names = collectAllNames();
       for (int i = 2; ; i++) {
-        String newName = "EnvVar" + i;
+        @NonNls String newName = "EnvVar" + i;
         if (names.contains(newName)) continue;
         return newName;
       }

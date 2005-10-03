@@ -10,8 +10,11 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.SystemProperties;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -24,6 +27,7 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements NamedJDOMExt
   private EventDispatcher<Listener> myEventDispatcher = EventDispatcher.create(Listener.class);
   private JavaSdk myJavaSdk;
   private JarFileSystem myJarFileSystem;
+  @NonNls private static final String ELEMENT_JDK = "jdk";
 
   public ProjectJdkTableImpl(JavaSdk javaSdk, JarFileSystem jarFileSystem) {
     myJavaSdk = javaSdk;
@@ -40,7 +44,7 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements NamedJDOMExt
   }
 
   public String getPresentableName() {
-    return "JDK Table";
+    return ProjectBundle.message("sdk.table.settings");
   }
 
   public ProjectJdk findJdk(String name) {
@@ -55,8 +59,8 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements NamedJDOMExt
 
   public ProjectJdk getInternalJdk() {
     if (myInternalJdk == null) {
-      final String jdkHome = System.getProperty("java.home");
-      final String versionName = "java version \"" + System.getProperty("java.version") + "\"";
+      final String jdkHome = SystemProperties.getJavaHome();
+      final String versionName = ProjectBundle.message("sdk.java.name.template", SystemProperties.getJavaVersion());
       myInternalJdk = myJavaSdk.createJdk(versionName, jdkHome);
     }
     return myInternalJdk;
@@ -109,7 +113,7 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements NamedJDOMExt
     myInternalJdk = null;
     myJdks.clear();
 
-    final List children = element.getChildren("jdk");
+    final List children = element.getChildren(ELEMENT_JDK);
     final List<ProjectJdkImpl> jdks = new ArrayList<ProjectJdkImpl>(children.size());
     try {
       for (Iterator iterator = children.iterator(); iterator.hasNext();) {
@@ -134,7 +138,7 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements NamedJDOMExt
   public void writeExternal(Element element) throws WriteExternalException {
     for (int i = 0; i < myJdks.size(); i++) {
       final ProjectJdkImpl jdk = (ProjectJdkImpl)myJdks.get(i);
-      final Element e = new Element("jdk");
+      final Element e = new Element(ELEMENT_JDK);
       element.addContent(e);
       jdk.writeExternal(e);
     }

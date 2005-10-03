@@ -13,7 +13,7 @@
       <grid id="b689b" binding="myBehaviourPanel" row-count="6" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <tabbedpane title="Behavior"/>
+          <tabbedpane title-resource-bundle="messages/ApplicationBundle" title-key="tab.editor.settings.behavior"/>
         </constraints>
         <properties/>
         <border type="none"/>
@@ -25,7 +25,7 @@
               <grid row="0" column="0" row-span="2" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="3"/>
             </constraints>
             <properties/>
-            <border type="none" title="Smart Keys"/>
+            <border type="none" title-resource-bundle="messages/ApplicationBundle" title-key="group.smart.keys"/>
             <children>
               <component id="d78f0" class="javax.swing.JCheckBox" binding="myCbSmartHome">
                 <constraints>
@@ -34,7 +34,7 @@
                 </constraints>
                 <properties>
                   <selected value="true"/>
-                  <text value="Home"/>
+                  <text resource-bundle="messages/ApplicationBundle" key="checkbox.smart.home"/>
                 </properties>
               </component>
               <component id="d3814" class="javax.swing.JCheckBox" binding="myCbSmartEnd">
@@ -44,7 +44,7 @@
                 </constraints>
                 <properties>
                   <selected value="true"/>
-                  <text value="End (on blank line)"/>
+                  <text resource-bundle="messages/ApplicationBundle" key="checkbox.smart.end.on.blank.line"/>
                 </properties>
               </component>
               <component id="6a095" class="javax.swing.JLabel">
@@ -53,7 +53,7 @@
                   <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
-                  <text value="Enter:"/>
+                  <text resource-bundle="messages/ApplicationBundle" key="label.smart.enter"/>
                 </properties>
               </component>
               <component id="a5c7a" class="javax.swing.JCheckBox" binding="myCbSmartIndentOnEnter">
@@ -64,7 +64,7 @@
                 <properties>
                   <margin top="2" left="15" bottom="2" right="2"/>
                   <selected value="true"/>
-                  <text value="Smart indent"/>
+                  <text resource-bundle="messages/ApplicationBundle" key="checkbox.smart.indent"/>
                 </properties>
               </component>
               <component id="a1584" class="javax.swing.JCheckBox" binding="myCbInsertPairCurlyBraceOnEnter">
@@ -75,7 +75,7 @@
                 <properties>
                   <margin top="2" left="15" bottom="2" right="2"/>
                   <selected value="true"/>
-                  <text value="Insert pair '}'"/>
+                  <text resource-bundle="messages/ApplicationBundle" key="checkbox.insert.pair.curly.brace"/>
                 </properties>
               </component>
               <component id="7fed6" class="javax.swing.JCheckBox" binding="myCbInsertScriptletEndOnEnter">
@@ -86,7 +86,7 @@
                 <properties>
                   <margin top="2" left="15" bottom="2" right="2"/>
                   <selected value="true"/>
-                  <text value="Insert pair '%&gt;' in JSP"/>
+                  <text resource-bundle="messages/ApplicationBundle" key="checkbox.insert.pair.percent.gt.in.jsp"/>
                 </properties>
               </component>
               <component id="7ef1d" class="javax.swing.JCheckBox" binding="myCbInsertJavadocStubOnEnter">
@@ -97,7 +97,7 @@
                 <properties>
                   <margin top="2" left="15" bottom="2" right="2"/>
                   <selected value="true"/>
-                  <text value="JavaDoc stub after '/**'"/>
+                  <text resource-bundle="messages/ApplicationBundle" key="checkbox.javadoc.stub.after.slash.star.star"/>
                 </properties>
               </component>
               <component id="79418" class="javax.swing.JCheckBox" binding="myCbInsertPairBracket">
@@ -107,7 +107,7 @@
                 </constraints>
                 <properties>
                   <selected value="true"/>
-                  <text value="Insert pair bracket"/>
+                  <text resource-bundle="messages/ApplicationBundle" key="checkbox.insert.pair.bracket"/>
                 </properties>
               </component>
               <component id="458d0" class="javax.swing.JCheckBox" binding="myCbInsertPairQuote">
@@ -117,7 +117,7 @@
                 </constraints>
                 <properties>
                   <selected value="true"/>
-                  <text value="Insert pair quote"/>
+                  <text resource-bundle="messages/ApplicationBundle" key="checkbox.insert.pair.quote"/>
                 </properties>
               </component>
               <component id="c4d91" class="javax.swing.JCheckBox" binding="myCbCamelWords">
@@ -126,7 +126,7 @@
                   <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
-                  <text value="Use &quot;CamelHumps&quot; words"/>
+                  <text resource-bundle="messages/ApplicationBundle" key="checkbox.use.camelhumps.words"/>
                 </properties>
               </component>
               <vspacer id="b85b8">
@@ -144,7 +144,7 @@
               <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="3"/>
             </constraints>
             <properties/>
-            <border type="none" title="Advanced mouse usages"/>
+            <border type="none" title-resource-bundle="messages/ApplicationBundle" title-key="group.advanced.mouse.usages"/>
             <children>
               <component id="18220" class="javax.swing.JCheckBox" binding="myCbHonorCamelHumpsWhenSelectingByClicking">
                 <constraints>
@@ -152,7 +152,7 @@
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
-                  <text value="&lt;html&gt;&lt;body&gt;Honor &quot;CamelHumps&quot;  words settings&lt;br&gt; when selecting on double click&lt;/body&gt;&lt;/html&gt;"/>
+                  <text resource-bundle="messages/ApplicationBundle" key="checkbox.honor.camelhumps.words.settings.on.double.click"/>
                 </properties>
               </component>
               <component id="34803" class="javax.swing.JCheckBox" binding="myCbEnableDnD">
@@ -161,7 +161,7 @@
                   <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
-                  <text value="&lt;html&gt;Enable Drag'n'Drop functionality in editor&lt;/html&gt;"/>
+                  <text resource-bundle="messages/ApplicationBundle" key="checkbox.enable.drag.n.drop.functionality.in.editor"/>
                 </properties>
               </component>
               <component id="d0105" class="javax.swing.JCheckBox" binding="myCbEnableWheelFontChange">
@@ -170,7 +170,7 @@
                   <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
-                  <text value="&lt;html&gt;Enable Ctrl+MouseWheel changes font size&lt;/html&gt;"/>
+                  <text resource-bundle="messages/ApplicationBundle" key="checkbox.enable.ctrl.mousewheel.changes.font.size"/>
                 </properties>
               </component>
             </children>
@@ -182,7 +182,7 @@
               <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="3"/>
             </constraints>
             <properties/>
-            <border type="none" title="Paste"/>
+            <border type="none" title-resource-bundle="messages/ApplicationBundle" title-key="group.paste"/>
             <children>
               <component id="630f6" class="javax.swing.JLabel">
                 <constraints>
@@ -190,7 +190,7 @@
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
-                  <text value="Reformat:"/>
+                  <text resource-bundle="messages/ApplicationBundle" key="combobox.paste.reformat"/>
                 </properties>
               </component>
               <component id="4eeb7" class="javax.swing.JComboBox" binding="myReformatOnPasteCombo">
@@ -206,7 +206,7 @@
                   <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
-                  <text value="Insert imports:"/>
+                  <text resource-bundle="messages/ApplicationBundle" key="combobox.paste.insert.imports"/>
                 </properties>
               </component>
               <component id="1688" class="javax.swing.JComboBox" binding="mySmartPasteCombo">
@@ -231,7 +231,7 @@
               <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="3"/>
             </constraints>
             <properties/>
-            <border type="none" title="Brace Highlighting"/>
+            <border type="none" title-resource-bundle="messages/ApplicationBundle" title-key="group.brace.highlighting"/>
             <children>
               <component id="917a4" class="javax.swing.JCheckBox" binding="myCbHighlightScope">
                 <constraints>
@@ -239,7 +239,7 @@
                   <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
-                  <text value="Highlight current scope"/>
+                  <text resource-bundle="messages/ApplicationBundle" key="checkbox.highlight.current.scope"/>
                 </properties>
               </component>
               <component id="18ff6" class="javax.swing.JCheckBox" binding="myCbHighlightBraces">
@@ -248,7 +248,7 @@
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
-                  <text value="Highlight matched brace"/>
+                  <text resource-bundle="messages/ApplicationBundle" key="checkbox.highlight.matched.brace"/>
                 </properties>
               </component>
               <vspacer id="52d7f">
@@ -266,7 +266,7 @@
               <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="3"/>
             </constraints>
             <properties/>
-            <border type="none" title="Limits"/>
+            <border type="none" title-resource-bundle="messages/ApplicationBundle" title-key="group.limits"/>
             <children>
               <component id="498f1" class="javax.swing.JLabel">
                 <constraints>
@@ -274,7 +274,7 @@
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="0" anchor="9" fill="1"/>
                 </constraints>
                 <properties>
-                  <text value="&lt;html&gt;Maximum number of contents to keep  in clipboard:&lt;/html&gt;"/>
+                  <text resource-bundle="messages/ApplicationBundle" key="editbox.maximum.number.of.contents.to.keep.in.clipboard"/>
                 </properties>
               </component>
               <component id="25b75" class="javax.swing.JTextField" binding="myClipboardContentLimitTextField">
@@ -294,7 +294,7 @@
                   <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
-                  <text value="Recent files limit:"/>
+                  <text resource-bundle="messages/ApplicationBundle" key="editbox.recent.files.limit"/>
                 </properties>
               </component>
               <component id="695ab" class="javax.swing.JTextField" binding="myRecentFilesLimitField">
@@ -338,7 +338,7 @@
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
-                  <text value="Strip trailing spaces on Save:"/>
+                  <text resource-bundle="messages/ApplicationBundle" key="combobox.strip.trailing.spaces.on.save"/>
                 </properties>
               </component>
             </children>
@@ -362,7 +362,7 @@
               <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="3"/>
             </constraints>
             <properties/>
-            <border type="none" title="Imports"/>
+            <border type="none" title-resource-bundle="messages/ApplicationBundle" title-key="title.imports"/>
             <children>
               <component id="5b608" class="javax.swing.JCheckBox" binding="myCbAddUnabmigiousImports">
                 <constraints>
@@ -370,7 +370,7 @@
                   <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
-                  <text value="Add unambiguous imports on the fly"/>
+                  <text resource-bundle="messages/ApplicationBundle" key="checkbox.add.unambiguous.imports.on.the.fly"/>
                 </properties>
               </component>
               <component id="b9c63" class="javax.swing.JCheckBox" binding="myCbOptimizeImports">
@@ -379,7 +379,7 @@
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
-                  <text value="Optimize imports on the fly"/>
+                  <text resource-bundle="messages/ApplicationBundle" key="checkbox.optimize.imports.on.the.fly"/>
                 </properties>
               </component>
               <vspacer id="53505">
@@ -397,7 +397,7 @@
               <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="1" fill="3"/>
             </constraints>
             <properties/>
-            <border type="none" title="Virtual Space"/>
+            <border type="none" title-resource-bundle="messages/ApplicationBundle" title-key="group.virtual.space"/>
             <children>
               <component id="400d4" class="javax.swing.JCheckBox" binding="myCbVirtualPageAtBottom">
                 <constraints>
@@ -405,7 +405,7 @@
                   <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
-                  <text value="Show virtual space at file bottom"/>
+                  <text resource-bundle="messages/ApplicationBundle" key="checkbox.show.virtual.space.at.file.bottom"/>
                 </properties>
               </component>
               <component id="f762" class="javax.swing.JCheckBox" binding="myCbCaretInsideTabs">
@@ -414,7 +414,7 @@
                   <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
-                  <text value="Allow placement of caret inside tabs"/>
+                  <text resource-bundle="messages/ApplicationBundle" key="checkbox.allow.placement.of.caret.inside.tabs"/>
                 </properties>
               </component>
               <component id="bb18b" class="javax.swing.JCheckBox" binding="myCbVirtualSpace">
@@ -424,7 +424,7 @@
                 </constraints>
                 <properties>
                   <selected value="true"/>
-                  <text value="Allow placement of caret after end of line"/>
+                  <text resource-bundle="messages/ApplicationBundle" key="checkbox.allow.placement.of.caret.after.end.of.line"/>
                 </properties>
               </component>
               <vspacer id="944a3">
@@ -440,7 +440,7 @@
       <grid id="650a0" binding="myAppearancePanel" row-count="3" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <tabbedpane title="Appearance"/>
+          <tabbedpane title-resource-bundle="messages/ApplicationBundle" title-key="tab.editor.settings.appearance"/>
         </constraints>
         <properties/>
         <border type="none"/>
@@ -458,7 +458,7 @@
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="3"/>
             </constraints>
             <properties/>
-            <border type="none" title="Tab Closing Policy"/>
+            <border type="none" title-resource-bundle="messages/ApplicationBundle" title-key="group.tab.closing.policy"/>
             <children>
               <component id="5689d" class="javax.swing.JLabel">
                 <constraints>
@@ -466,7 +466,7 @@
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
-                  <text value="&lt;html&gt;When number of opened editors exceeds tab limit:&lt;/html&gt;"/>
+                  <text resource-bundle="messages/ApplicationBundle" key="label.when.number.of.opened.editors.exceeds.tab.limit"/>
                 </properties>
               </component>
               <component id="a9aa" class="javax.swing.JRadioButton" binding="myCloseNonModifiedFilesFirstRadio">
@@ -476,7 +476,7 @@
                 </constraints>
                 <properties>
                   <margin top="2" left="15" bottom="2" right="2"/>
-                  <text value="Close non-modified files first"/>
+                  <text resource-bundle="messages/ApplicationBundle" key="radio.close.non.modified.files.first"/>
                 </properties>
               </component>
               <component id="27127" class="javax.swing.JRadioButton" binding="myCloseLRUFilesRadio">
@@ -486,7 +486,7 @@
                 </constraints>
                 <properties>
                   <margin top="2" left="15" bottom="2" right="2"/>
-                  <text value="Close less frequently used files"/>
+                  <text resource-bundle="messages/ApplicationBundle" key="radio.close.less.frequently.used.files"/>
                 </properties>
               </component>
               <component id="b233" class="javax.swing.JLabel">
@@ -495,7 +495,7 @@
                   <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
-                  <text value="When closing active editor:"/>
+                  <text resource-bundle="messages/ApplicationBundle" key="label.when.closing.active.editor"/>
                 </properties>
               </component>
               <component id="3914d" class="javax.swing.JRadioButton" binding="myActivateLeftEditorOnCloseRadio">
@@ -505,7 +505,7 @@
                 </constraints>
                 <properties>
                   <margin top="2" left="15" bottom="2" right="2"/>
-                  <text value="&lt;html&gt;Activate left neighbouring tab&lt;/html&gt;"/>
+                  <text resource-bundle="messages/ApplicationBundle" key="radio.activate.left.neighbouring.tab"/>
                 </properties>
               </component>
               <component id="ec599" class="javax.swing.JRadioButton" binding="myActivateMRUEditorOnCloseRadio">
@@ -515,7 +515,7 @@
                 </constraints>
                 <properties>
                   <margin top="2" left="15" bottom="2" right="2"/>
-                  <text value="&lt;html&gt;Activate most recently opened tab&lt;/html&gt;"/>
+                  <text resource-bundle="messages/ApplicationBundle" key="radio.activate.most.recently.opened.tab"/>
                 </properties>
               </component>
               <vspacer id="1bedd">
@@ -533,7 +533,7 @@
               <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="9" fill="3"/>
             </constraints>
             <properties/>
-            <border type="none" title="Tab Appearance"/>
+            <border type="none" title-resource-bundle="messages/ApplicationBundle" title-key="group.tab.appearance"/>
             <children>
               <component id="f95c3" class="javax.swing.JCheckBox" binding="myHideKnownExtensions">
                 <constraints>
@@ -542,7 +542,7 @@
                 </constraints>
                 <properties>
                   <margin top="2" left="0" bottom="2" right="2"/>
-                  <text value="Hide file extension in editor tabs"/>
+                  <text resource-bundle="messages/ApplicationBundle" key="checkbox.hide.file.extension.in.editor.tabs"/>
                 </properties>
               </component>
               <component id="1013f" class="javax.swing.JCheckBox" binding="myScrollTabLayoutInEditorCheckBox">
@@ -552,7 +552,7 @@
                 </constraints>
                 <properties>
                   <margin top="2" left="0" bottom="2" right="2"/>
-                  <text value="Editor tabs in single row"/>
+                  <text resource-bundle="messages/ApplicationBundle" key="checkbox.editor.tabs.in.single.row"/>
                 </properties>
               </component>
               <vspacer id="80a61">
@@ -577,7 +577,7 @@
                     </constraints>
                     <properties>
                       <iconTextGap value="4"/>
-                      <text value="Editor tab placement:"/>
+                      <text resource-bundle="messages/ApplicationBundle" key="combobox.editor.tab.placement"/>
                     </properties>
                   </component>
                   <component id="774ac" class="javax.swing.JTextField" binding="myEditorTabLimitField">
@@ -597,7 +597,7 @@
                       <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
                     </constraints>
                     <properties>
-                      <text value="Tab limit:"/>
+                      <text resource-bundle="messages/ApplicationBundle" key="editbox.tab.limit"/>
                     </properties>
                   </component>
                   <component id="87b20" class="javax.swing.JComboBox" binding="myEditorTabPlacement">
@@ -626,7 +626,7 @@
               <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="3"/>
             </constraints>
             <properties/>
-            <border type="none" title="Code Folding"/>
+            <border type="none" title-resource-bundle="messages/ApplicationBundle" title-key="group.code.folding"/>
             <children>
               <component id="f26ff" class="javax.swing.JCheckBox" binding="myCbFolding">
                 <constraints>
@@ -634,9 +634,9 @@
                   <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
-                  <actionCommand value="Show code folding outline"/>
+                  <actionCommand resource-bundle="messages/ApplicationBundle" key="checkbox.show.code.folding.outline"/>
                   <selected value="true"/>
-                  <text value="Show code folding outline"/>
+                  <text resource-bundle="messages/ApplicationBundle" key="checkbox.show.code.folding.outline"/>
                 </properties>
               </component>
               <component id="562b8" class="javax.swing.JLabel">
@@ -645,7 +645,7 @@
                   <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
-                  <text value="Collapse by default:"/>
+                  <text resource-bundle="messages/ApplicationBundle" key="label.collapse.by.default"/>
                 </properties>
               </component>
               <component id="af43a" class="javax.swing.JCheckBox" binding="myCbCollapseFileHeader">
@@ -656,7 +656,7 @@
                 <properties>
                   <margin top="2" left="15" bottom="2" right="2"/>
                   <selected value="true"/>
-                  <text value="File header"/>
+                  <text resource-bundle="messages/ApplicationBundle" key="checkbox.collapse.file.header"/>
                 </properties>
               </component>
               <component id="ba41d" class="javax.swing.JCheckBox" binding="myCbCollapseImports">
@@ -667,7 +667,7 @@
                 <properties>
                   <margin top="2" left="15" bottom="2" right="2"/>
                   <selected value="true"/>
-                  <text value="Imports"/>
+                  <text resource-bundle="messages/ApplicationBundle" key="checkbox.collapse.title.imports"/>
                 </properties>
               </component>
               <component id="820d5" class="javax.swing.JCheckBox" binding="myCbCollapseJavadocComments">
@@ -677,7 +677,7 @@
                 </constraints>
                 <properties>
                   <margin top="2" left="15" bottom="2" right="2"/>
-                  <text value="&lt;html&gt;JavaDoc comments&lt;/html&gt;"/>
+                  <text resource-bundle="messages/ApplicationBundle" key="checkbox.collapse.javadoc.comments"/>
                 </properties>
               </component>
               <component id="827c7" class="javax.swing.JCheckBox" binding="myCbCollapseMethodBodies">
@@ -687,7 +687,7 @@
                 </constraints>
                 <properties>
                   <margin top="2" left="15" bottom="2" right="2"/>
-                  <text value="Method bodies"/>
+                  <text resource-bundle="messages/ApplicationBundle" key="checkbox.collapse.method.bodies"/>
                 </properties>
               </component>
               <component id="44b56" class="javax.swing.JCheckBox" binding="myCbCollapseAccessors">
@@ -697,7 +697,7 @@
                 </constraints>
                 <properties>
                   <margin top="2" left="0" bottom="2" right="2"/>
-                  <text value="&lt;html&gt;Simple property accessors&lt;html&gt;"/>
+                  <text resource-bundle="messages/ApplicationBundle" key="checkbox.collapse.simple.property.accessors"/>
                 </properties>
               </component>
               <component id="41ff8" class="javax.swing.JCheckBox" binding="myCbCollapseInnerClasses">
@@ -707,7 +707,7 @@
                 </constraints>
                 <properties>
                   <margin top="2" left="0" bottom="2" right="2"/>
-                  <text value="Inner classes"/>
+                  <text resource-bundle="messages/ApplicationBundle" key="checkbox.collapse.inner.classes"/>
                 </properties>
               </component>
               <component id="16c6f" class="javax.swing.JCheckBox" binding="myCbCollapseAnonymousClasses">
@@ -717,7 +717,7 @@
                 </constraints>
                 <properties>
                   <margin top="2" left="0" bottom="2" right="2"/>
-                  <text value="&lt;html&gt;Anonymous classes&lt;/html&gt;"/>
+                  <text resource-bundle="messages/ApplicationBundle" key="checkbox.collapse.anonymous.classes"/>
                 </properties>
               </component>
               <component id="1f32f" class="javax.swing.JCheckBox" binding="myCbCollapseXMLTags">
@@ -727,7 +727,7 @@
                 </constraints>
                 <properties>
                   <margin top="2" left="0" bottom="2" right="2"/>
-                  <text value="XML tags"/>
+                  <text resource-bundle="messages/ApplicationBundle" key="checkbox.collapse.xml.tags"/>
                 </properties>
               </component>
               <vspacer id="d4905">
@@ -745,7 +745,7 @@
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="3"/>
             </constraints>
             <properties/>
-            <border type="none" title="Display"/>
+            <border type="none" title-resource-bundle="messages/ApplicationBundle" title-key="groupbox.display"/>
             <children>
               <component id="2b4c4" class="javax.swing.JCheckBox" binding="myCbModifiedTabsMarkedWithAsterisk">
                 <constraints>
@@ -753,7 +753,7 @@
                   <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
-                  <text value="Mark modified tabs with asterisk"/>
+                  <text resource-bundle="messages/ApplicationBundle" key="checkbox.mark.modified.tabs.with.asterisk"/>
                 </properties>
               </component>
               <component id="718a" class="javax.swing.JCheckBox" binding="myCbBlinkCaret">
@@ -763,7 +763,7 @@
                 </constraints>
                 <properties>
                   <selected value="true"/>
-                  <text value="Caret blinking (ms):"/>
+                  <text resource-bundle="messages/ApplicationBundle" key="checkbox.caret.blinking.ms"/>
                 </properties>
               </component>
               <component id="68f0a" class="javax.swing.JCheckBox" binding="myCbBlockCursor">
@@ -772,7 +772,7 @@
                   <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
-                  <text value="Use block caret"/>
+                  <text resource-bundle="messages/ApplicationBundle" key="checkbox.use.block.caret"/>
                 </properties>
               </component>
               <component id="9fe07" class="javax.swing.JCheckBox" binding="myCbRightMargin">
@@ -782,7 +782,7 @@
                 </constraints>
                 <properties>
                   <selected value="true"/>
-                  <text value="Right margin (configured in Code Style options)"/>
+                  <text resource-bundle="messages/ApplicationBundle" key="checkbox.right.margin"/>
                 </properties>
               </component>
               <component id="a2796" class="javax.swing.JCheckBox" binding="myCbShowLineNumbers">
@@ -791,7 +791,7 @@
                   <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
-                  <text value="Show line numbers"/>
+                  <text resource-bundle="messages/ApplicationBundle" key="checkbox.show.line.numbers"/>
                 </properties>
               </component>
               <component id="52af3" class="javax.swing.JCheckBox" binding="myCbShowMethodSeparators">
@@ -800,7 +800,7 @@
                   <grid row="5" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
-                  <text value="Show method separators"/>
+                  <text resource-bundle="messages/ApplicationBundle" key="checkbox.show.method.separators"/>
                 </properties>
               </component>
               <component id="1f86" class="javax.swing.JCheckBox" binding="myCbShowWhitespaces">
@@ -809,7 +809,7 @@
                   <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
-                  <text value="Show whitespaces"/>
+                  <text resource-bundle="messages/ApplicationBundle" key="checkbox.show.whitespaces"/>
                 </properties>
               </component>
               <component id="61cf9" class="javax.swing.JCheckBox" binding="myCbSmoothScrolling">
@@ -819,7 +819,7 @@
                 </constraints>
                 <properties>
                   <selected value="true"/>
-                  <text value="Smooth scrolling"/>
+                  <text resource-bundle="messages/ApplicationBundle" key="checkbox.smooth.scrolling"/>
                 </properties>
               </component>
               <component id="2459c" class="javax.swing.JTextField" binding="myBlinkIntervalField">

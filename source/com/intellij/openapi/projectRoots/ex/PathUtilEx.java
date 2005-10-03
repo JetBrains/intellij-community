@@ -19,11 +19,15 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author Eugene Zhuravlev
  *         Date: Apr 14, 2004
  */
 public class PathUtilEx {
+  @NonNls private static final String IDEA_PREPEND_RTJAR = "idea.prepend.rtjar";
+
   private static final Convertor<Module, ProjectJdk> MODULE_JDK = new Convertor<Module, ProjectJdk>() {
     public ProjectJdk convert(Module module) {
       return ModuleRootManager.getInstance(module).getJdk();
@@ -37,7 +41,7 @@ public class PathUtilEx {
 
   public static void addRtJar(PathsList pathsList) {
     final String ideaRtJarPath = getIdeaRtJarPath();
-    if (Boolean.getBoolean("idea.prepend.rtjar")) {
+    if (Boolean.getBoolean(IDEA_PREPEND_RTJAR)) {
       pathsList.addFirst(ideaRtJarPath);
     }
     else {

@@ -1,5 +1,6 @@
 package com.intellij.ui;
 
+import org.jetbrains.annotations.NonNls;
 
 
 /**
@@ -7,6 +8,8 @@ package com.intellij.ui;
  */
 public abstract class AnimatingSurface extends Surface implements Runnable {
   public Thread thread;
+  @NonNls protected static final String DEFAULT_THREAD_NAME = "Animating surface";
+  @NonNls protected static final String THREAD_NAME_SUFFIX = " Demo";
 
   public abstract void step(int w, int h);
 
@@ -14,9 +17,9 @@ public abstract class AnimatingSurface extends Surface implements Runnable {
 
   public void start() {
     if (thread == null && !dontThread){
-      thread = new Thread(this, "Animating surface");
+      thread = new Thread(this, DEFAULT_THREAD_NAME);
       thread.setPriority(Thread.MIN_PRIORITY);
-      thread.setName(name + " Demo");
+      thread.setName(name + THREAD_NAME_SUFFIX);
       thread.start();
     }
   }

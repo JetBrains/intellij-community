@@ -2,6 +2,7 @@ package com.intellij.xml.util.documentation;
 
 import org.jdom.Document;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 
@@ -19,12 +20,46 @@ public class HtmlDescriptorsTable {
   private static final HashMap<String,HtmlAttributeDescriptor> ourAttributeTable = new HashMap<String, HtmlAttributeDescriptor>();
   private static String[] ourHtmlTagNames;
 
+  @NonNls
+  public static final String HTMLTABLE_RESOURCE_NAME = "htmltable.xml";
+
+  @NonNls
+  public static final String TAG_ELEMENT_NAME = "tag";
+
+  @NonNls
+  public static final String BASE_HELP_REF_ATTR = "baseHelpRef";
+
+  @NonNls
+  public static final String NAME_ATTR = "name";
+
+  @NonNls
+  public static final String HELPREF_ATTR = "helpref";
+
+  @NonNls
+  public static final String DESCRIPTION_ATTR = "description";
+
+  @NonNls public static final String STARTTAG_ATTR = "startTag";
+
+  @NonNls public static final String ENDTAG_ATTR = "endTag";
+
+  @NonNls public static final String EMPTY_ATTR = "empty";
+
+  @NonNls public static final String DTD_ATTR = "dtd";
+
+  @NonNls public static final String ATTRIBUTE_ELEMENT_NAME = "attribute";
+
+  @NonNls public static final String TYPE_ATTR = "type";
+
+  @NonNls public static final String DEFAULT_ATTR = "default";
+
+  @NonNls public static final String RELATED_TAGS_ATTR = "relatedTags";
+
   static {
     try {
-      final Document document = JDOMUtil.loadDocument(HtmlDescriptorsTable.class.getResourceAsStream("htmltable.xml"));
-      final List elements = document.getRootElement().getChildren("tag");
+      final Document document = JDOMUtil.loadDocument(HtmlDescriptorsTable.class.getResourceAsStream(HTMLTABLE_RESOURCE_NAME));
+      final List elements = document.getRootElement().getChildren(TAG_ELEMENT_NAME);
       HtmlDocumentationProvider.setBaseHtmlExtDocUrl(
-        document.getRootElement().getAttribute("baseHelpRef").getValue()
+        document.getRootElement().getAttribute(BASE_HELP_REF_ATTR).getValue()
       );
 
       ourHtmlTagNames = new String[elements.size()];
@@ -32,19 +67,19 @@ public class HtmlDescriptorsTable {
       int i = 0;
       for (Iterator iterator = elements.iterator(); iterator.hasNext();) {
         final Element element = (Element) iterator.next();
-        ourHtmlTagNames[i] = element.getAttributeValue("name");
+        ourHtmlTagNames[i] = element.getAttributeValue(NAME_ATTR);
 
         HtmlTagDescriptor value = new HtmlTagDescriptor();
         ourTagTable.put(ourHtmlTagNames[i],value);
-        value.setHelpRef( element.getAttributeValue("helpref") );
-        value.setDescription( element.getAttributeValue("description") );
+        value.setHelpRef( element.getAttributeValue(HELPREF_ATTR) );
+        value.setDescription( element.getAttributeValue(DESCRIPTION_ATTR) );
         value.setName(ourHtmlTagNames[i]);
 
-        value.setHasStartTag(element.getAttribute("startTag").getBooleanValue());
-        value.setHasEndTag(element.getAttribute("endTag").getBooleanValue());
-        value.setEmpty(element.getAttribute("empty").getBooleanValue());
+        value.setHasStartTag(element.getAttribute(STARTTAG_ATTR).getBooleanValue());
+        value.setHasEndTag(element.getAttribute(ENDTAG_ATTR).getBooleanValue());
+        value.setEmpty(element.getAttribute(EMPTY_ATTR).getBooleanValue());
 
-        String attributeValue = element.getAttributeValue("dtd");
+        String attributeValue = element.getAttributeValue(DTD_ATTR);
         if (attributeValue.length() > 0) {
           value.setDtd(attributeValue.charAt(0));
         }
@@ -52,10 +87,10 @@ public class HtmlDescriptorsTable {
         ++i;
       }
 
-      final List attributes = document.getRootElement().getChildren("attribute");
+      final List attributes = document.getRootElement().getChildren(ATTRIBUTE_ELEMENT_NAME);
       for (Iterator iterator = attributes.iterator(); iterator.hasNext();) {
         final Element element = (Element) iterator.next();
-        String attrName = element.getAttributeValue("name");
+        String attrName = element.getAttributeValue(NAME_ATTR);
 
         HtmlAttributeDescriptor value = new HtmlAttributeDescriptor();
         HtmlAttributeDescriptor previousDescriptor = ourAttributeTable.get(attrName);
@@ -76,19 +111,19 @@ public class HtmlDescriptorsTable {
           parentDescriptor.attributes.add(value);
         }
 
-        value.setHelpRef( element.getAttributeValue("helpref") );
-        value.setDescription( element.getAttributeValue("description") );
+        value.setHelpRef( element.getAttributeValue(HELPREF_ATTR) );
+        value.setDescription( element.getAttributeValue(DESCRIPTION_ATTR) );
         value.setName(attrName);
 
-        String attributeValue = element.getAttributeValue("dtd");
+        String attributeValue = element.getAttributeValue(DTD_ATTR);
         if (attributeValue.length() > 0) {
           value.setDtd(attributeValue.charAt(0));
         }
 
-        value.setType( element.getAttributeValue("type") );
-        value.setHasDefaultValue( element.getAttribute("default").getBooleanValue() );
+        value.setType( element.getAttributeValue(TYPE_ATTR) );
+        value.setHasDefaultValue( element.getAttribute(DEFAULT_ATTR).getBooleanValue() );
 
-        StringTokenizer tokenizer = new StringTokenizer(element.getAttributeValue("relatedTags"),",");
+        StringTokenizer tokenizer = new StringTokenizer(element.getAttributeValue(RELATED_TAGS_ATTR),",");
         int tokenCount = tokenizer.countTokens();
 
         for(i = 0;i < tokenCount;++i) {

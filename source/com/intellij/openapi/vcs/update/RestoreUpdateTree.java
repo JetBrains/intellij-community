@@ -38,13 +38,15 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.vcs.VcsBundle;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 public class RestoreUpdateTree implements ProjectComponent, JDOMExternalizable {
   private final Project myProject;
 
   private UpdateInfo myUpdateInfo;
-  private static final String UPDATE_INFO = "UpdateInfo";
+  @NonNls private static final String UPDATE_INFO = "UpdateInfo";
 
   public RestoreUpdateTree(Project project) {
     myProject = project;
@@ -56,7 +58,7 @@ public class RestoreUpdateTree implements ProjectComponent, JDOMExternalizable {
         if (myUpdateInfo != null && !myUpdateInfo.isEmpty() && ProjectReloadState.getInstance(myProject).isAfterAutomaticReload()) {
           ActionInfo actionInfo = myUpdateInfo.getActionInfo();
           if (actionInfo != null) {
-            CommonUpdateProjectAction.showUpdateProjectInfo(myProject, myUpdateInfo.getFileInformation(), "Update", actionInfo);
+            CommonUpdateProjectAction.showUpdateProjectInfo(myProject, myUpdateInfo.getFileInformation(), VcsBundle.message("action.name.update"), actionInfo);
           }
           myUpdateInfo = null;
         }

@@ -8,6 +8,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.ide.IdeBundle;
 
 public class SearchAgainAction extends AnAction {
   public SearchAgainAction() {
@@ -30,7 +31,7 @@ public class SearchAgainAction extends AnAction {
           FindUtil.searchAgain(project, editor);
         }
       },
-      "Find Next",
+      IdeBundle.message("command.find.next"),
       null
     );
   }

@@ -16,6 +16,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.idea.ActionsBundle;
+import com.intellij.util.SystemProperties;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -45,12 +47,12 @@ public class ExportThreadsAction extends AnAction {
         try {
           File file = new File(dialog.getFilePath());
           BufferedWriter writer = new BufferedWriter(new FileWriter(file));
-          String text = StringUtil.convertLineSeparators(dialog.getTextToSave(), System.getProperty("line.separator"));
+          String text = StringUtil.convertLineSeparators(dialog.getTextToSave(), SystemProperties.getLineSeparator());
           writer.write(text);
           writer.close();
         }
         catch (IOException ex) {
-          Messages.showMessageDialog(project, ex.getMessage(), "Error Saving to File", Messages.getErrorIcon());
+          Messages.showMessageDialog(project, ex.getMessage(), ActionsBundle.actionText(DebuggerActions.EXPORT_THREADS), Messages.getErrorIcon());
         }
       }
     }

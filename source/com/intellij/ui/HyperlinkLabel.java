@@ -2,6 +2,7 @@ package com.intellij.ui;
 
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -22,7 +23,7 @@ public class HyperlinkLabel extends HighlightableComponent {
   private final Color myTextEffectColor;
 
   public HyperlinkLabel(String text) {
-    this(text, Color.BLUE, UIManager.getColor("Label.background"), Color.BLUE);
+    this(text, Color.BLUE, UIUtil.getLabelBackground(), Color.BLUE);
   }
 
   public HyperlinkLabel(String text, final Color textForegroundColor, final Color textBackgroundColor, final Color textEffectColor) {
@@ -65,7 +66,7 @@ public class HyperlinkLabel extends HighlightableComponent {
   }
 
   private void prepareText(String text, final Color textForegroundColor, final Color textBackgroundColor, final Color textEffectColor) {
-    setFont(UIManager.getFont("Label.font"));
+    setFont(UIUtil.getLabelFont());
     myHighlightedText = new HighlightedText();
     myHighlightedText.appendText(text, new TextAttributes(
       textForegroundColor, textBackgroundColor, textEffectColor, EffectType.LINE_UNDERSCORE, Font.PLAIN

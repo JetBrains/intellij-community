@@ -1,10 +1,11 @@
 package com.intellij.debugger.ui;
 
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.actions.EvaluateAction;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
-import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -19,6 +20,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -35,26 +37,25 @@ import java.awt.event.KeyEvent;
 public class StatementEvaluationDialog extends EvaluationDialog{
   private JPanel myPanel;
   private final Action mySwitchAction = new SwitchAction();
-  private static final String STATEMENT_EDITOR_DIMENSION_KEY = "#com.intellij.debugger.ui.StatementEvaluationDialog.StatementEditor";
-  private static final String EVALUATION_PANEL_DIMENSION_KEY = "#com.intellij.debugger.ui.StatementEvaluationDialog.EvaluationPanel";
+  private static final @NonNls String STATEMENT_EDITOR_DIMENSION_KEY = "#com.intellij.debugger.ui.StatementEvaluationDialog.StatementEditor";
+  private static final @NonNls String EVALUATION_PANEL_DIMENSION_KEY = "#com.intellij.debugger.ui.StatementEvaluationDialog.EvaluationPanel";
   private JLabel myLanguageLabel;
 
   public StatementEvaluationDialog(final Project project, TextWithImports text) {
     super(project, text);
-    setTitle("Code Fragment Evaluation");
+    setTitle(DebuggerBundle.message("evaluate.statement.dialog.title"));
     myPanel = new JPanel(new BorderLayout());
 
     final Splitter splitter = new Splitter(true);
     splitter.setHonorComponentsMinimumSize(true);
 
     final JPanel editorPanel = new JPanel(new GridBagLayout());
-    myLanguageLabel = new JLabel("Language:");
+    myLanguageLabel = new JLabel(DebuggerBundle.message("label.evaluate.dialog.language"));
     myLanguageLabel.setVisible(getCodeFragmentFactoryChooserComponent().isVisible());
     editorPanel.add(myLanguageLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(5, 0, 0, 0), 0, 0));
     editorPanel.add(getCodeFragmentFactoryChooserComponent(), new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(5, 0, 0, 0), 0, 0));
 
-    final JLabel statementsLabel = new JLabel("Statements to evaluate:");
-    statementsLabel.setDisplayedMnemonic('e');
+    final JLabel statementsLabel = new JLabel(DebuggerBundle.message("label.evaluation.dialog.statements"));
     editorPanel.add(statementsLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(5, 0, 0, 0), 0, 0));
     editorPanel.add(getStatementEditor(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(2, 0, 0, 0), 0, 0));
 
@@ -62,8 +63,7 @@ public class StatementEvaluationDialog extends EvaluationDialog{
 
     final EvaluationDialog.MyEvaluationPanel evaluationPanel = getEvaluationPanel();
     final JPanel ep = new JPanel(new BorderLayout());
-    final JLabel resultLabel = new JLabel("Result:");
-    resultLabel.setDisplayedMnemonic('R');
+    final JLabel resultLabel = new JLabel(DebuggerBundle.message("label.evaluate.dialog.result"));
     ep.add(resultLabel, BorderLayout.NORTH);
     ep.add(evaluationPanel, BorderLayout.CENTER);
     splitter.setSecondComponent(ep);
@@ -193,7 +193,7 @@ public class StatementEvaluationDialog extends EvaluationDialog{
 
   private class SwitchAction extends AbstractAction {
     public SwitchAction() {
-      putValue(Action.NAME, "Expression Mode");
+      putValue(Action.NAME, DebuggerBundle.message("action.evaluate.statement.dialog.switch.mode.description"));
     }
 
     public void actionPerformed(ActionEvent e) {

@@ -20,6 +20,8 @@ import com.intellij.util.ui.ErrorTreeView;
 
 import javax.swing.*;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * author: lesya
  */
@@ -62,7 +64,7 @@ public class CvsTabbedWindow implements ProjectComponent {
   public void disposeComponent() {
     if (myOutput != null) {
       EditorFactory.getInstance().releaseEditor(myOutput);
-      myOutput = null;      
+      myOutput = null;
     }
   }
 
@@ -106,7 +108,7 @@ public class CvsTabbedWindow implements ProjectComponent {
                     boolean selectTab,
                     boolean replaceContent,
                     boolean lockable,
-                    boolean addDefaultToolbar, String helpId) {
+                    boolean addDefaultToolbar, @NonNls String helpId) {
 
     int existing = getComponentNumNamed(s);
     if (existing != -1) {
@@ -142,7 +144,7 @@ public class CvsTabbedWindow implements ProjectComponent {
   public Editor addOutput(Editor output) {
     LOG.assertTrue(myOutput == null);
     if (myOutput == null) {
-      addTab("Cvs Output", output.getComponent(), false, false, false, true, "cvs.cvsOutput");
+      addTab(com.intellij.CvsBundle.message("tab.title.cvs.output"), output.getComponent(), false, false, false, true, "cvs.cvsOutput");
       myOutput = output;
     }
     return myOutput;
@@ -150,7 +152,7 @@ public class CvsTabbedWindow implements ProjectComponent {
 
   public ErrorTreeView addErrorsTreeView(ErrorTreeView view) {
     if (myErrorsView == null) {
-      addTab("Errors", view.getComponent(), true, false, true, false, "cvs.errors");
+      addTab(com.intellij.CvsBundle.message("tab.title.errors"), view.getComponent(), true, false, true, false, "cvs.errors");
       myErrorsView = view;
     }
     return myErrorsView;

@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 
@@ -83,9 +84,9 @@ public class VcsVirtualFile extends AbstractVcsVirtualFile {
       myContent = new byte[0];
       setRevision("0");
 
-      Messages.showMessageDialog("Could not load content for file " + getPresentableUrl() +
-                                 ": " + e.getLocalizedMessage(),
-                                 "Could Not Load Content",
+      Messages.showMessageDialog(
+        VcsBundle.message("message.text.could.not.load.virtual.file.content", getPresentableUrl(), e.getLocalizedMessage()),
+                                 VcsBundle.message("message.title.could.not.load.content"),
                                  Messages.getInformationIcon());
 
       ApplicationManager.getApplication().runWriteAction(new Runnable() {

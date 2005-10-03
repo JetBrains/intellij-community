@@ -1,18 +1,19 @@
 package com.intellij.codeInsight.generation;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.j2ee.j2eeDom.ejb.CmpField;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PropertyUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 
 public class GenerateSetterHandler extends GenerateGetterSetterHandlerBase {
 
   public GenerateSetterHandler() {
-    super("Select Fields to Generate Setters");
+    super(CodeInsightBundle.message("generate.setter.fields.chooser.title"));
   }
 
   protected Object[] generateMemberPrototypes(PsiClass aClass, Object original) throws IncorrectOperationException {

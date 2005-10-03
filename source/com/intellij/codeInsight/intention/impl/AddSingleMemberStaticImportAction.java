@@ -3,6 +3,8 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
+import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -10,16 +12,13 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.codeInsight.CodeInsightUtil;
-
-import java.text.MessageFormat;
 
 public class AddSingleMemberStaticImportAction extends BaseIntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.AddSingleMemberStaticImportAction");
   private static final Key<PsiElement> TEMP_REFERENT_USER_DATA = new Key<PsiElement>("TEMP_REFERENT_USER_DATA");
 
   public String getFamilyName() {
-    return "Add Single-Member Static Import";
+    return CodeInsightBundle.message("intention.add.single.member.static.import.family");
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
@@ -39,8 +38,7 @@ public class AddSingleMemberStaticImportAction extends BaseIntentionAction {
             qName = qName + "." +refExpr.getReferenceName();
             if (file instanceof PsiJavaFile) {
               if (((PsiJavaFile)file).getImportList().findSingleImportStatement(refExpr.getReferenceName()) == null) {
-                String text = MessageFormat.format("Add static import for ''{0}''", new Object[]{qName});
-                setText(text);
+                setText(CodeInsightBundle.message("intention.add.single.member.static.import.text", qName));
                 return true;
               }
             }

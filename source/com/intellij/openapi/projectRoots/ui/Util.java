@@ -5,6 +5,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.project.ProjectBundle;
 
 import javax.swing.*;
 import java.net.MalformedURLException;
@@ -18,7 +19,8 @@ import java.net.URL;
 public class Util{
 
   public static VirtualFile showSpecifyJavadocUrlDialog(JComponent parent){
-    final String url = Messages.showInputDialog(parent, "Enter javadoc URL:", "Specify Javadoc URL", Messages.getQuestionIcon(), "", new InputValidator() {
+    final String url = Messages.showInputDialog(parent, ProjectBundle.message("sdk.configure.javadoc.url.prompt"),
+                                                ProjectBundle.message("sdk.configure.javadoc.url.title"), Messages.getQuestionIcon(), "", new InputValidator() {
       public boolean checkInput(String inputString) {
         return true;
       }
@@ -28,7 +30,7 @@ public class Util{
           return true;
         }
         catch (MalformedURLException e1) {
-          Messages.showErrorDialog(e1.getMessage(), "Specify Javadoc URL");
+          Messages.showErrorDialog(e1.getMessage(), ProjectBundle.message("sdk.configure.javadoc.url.title"));
         }
         return false;
       }

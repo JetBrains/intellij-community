@@ -25,6 +25,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 
@@ -98,7 +99,7 @@ public abstract class LocalInspectionTool {
    *         description to be shown in "Inspect Code..." dialog and also provide some file name convention when using offline
    *         inspection or export to HTML function. Should be unique among all inspections.
    */
-  public abstract String getShortName();
+  @NonNls public abstract String getShortName();
 
   /**
    * @return highlighting level for this inspection tool that is used in default settings
@@ -123,7 +124,7 @@ public abstract class LocalInspectionTool {
    * @return descriptive name to be used in "suppress" comments and annotations,
    *         must consist of [a-zA-Z_0-9]+
    */
-  public String getID() {
+  @NonNls public String getID() {
     return getShortName();
   }
 

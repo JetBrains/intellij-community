@@ -7,6 +7,7 @@ import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 
@@ -17,7 +18,15 @@ public class ProductivityFeaturesRegistryImpl extends ProductivityFeaturesRegist
   private List<Pair<String, ApplicabilityFilter>> myApplicabilityFilters = new ArrayList<Pair<String,ApplicabilityFilter>>();
 
   private boolean myLoadAdditionFeatures = false;
-  public static final String WELCOME = "features.welcome";
+
+  public static final @NonNls String WELCOME = "features.welcome";
+
+  private static final @NonNls String TAG_FILTER = "filter";
+  private static final @NonNls String TAG_GROUP = "group";
+  private static final @NonNls String TAG_FEATURE = "feature";
+  private static final @NonNls String TODO_HTML_MARKER = "todo.html";
+  @NonNls private static final String CLASS_ATTR = "class";
+  @NonNls private static final String PREFIX_ATTR = "prefix";
 
   public String getComponentName() {
     return "ProductivityFeaturesRegistry";
@@ -65,10 +74,10 @@ public class ProductivityFeaturesRegistryImpl extends ProductivityFeaturesRegist
   }
 
   private void readFilters(Element element) {
-    List filters = element.getChildren("filter");
+    List filters = element.getChildren(TAG_FILTER);
     for (int i = 0; i < filters.size(); i++) {
       Element filterElement = (Element)filters.get(i);
-      String className = filterElement.getAttributeValue("class");
+      String className = filterElement.getAttributeValue(CLASS_ATTR);
       try {
         Class klass = Class.forName(className);
         if (!ApplicabilityFilter.class.isAssignableFrom(klass)) {
@@ -77,7 +86,7 @@ public class ProductivityFeaturesRegistryImpl extends ProductivityFeaturesRegist
         }
 
         ApplicabilityFilter filter = (ApplicabilityFilter)klass.newInstance();
-        myApplicabilityFilters.add(new Pair<String, ApplicabilityFilter>(filterElement.getAttributeValue("prefix"), filter));
+        myApplicabilityFilters.add(new Pair<String, ApplicabilityFilter>(filterElement.getAttributeValue(PREFIX_ATTR), filter));
       }
       catch (Exception e) {
         LOG.error("Cannot instantiate filter " + className, e);
@@ -86,7 +95,7 @@ public class ProductivityFeaturesRegistryImpl extends ProductivityFeaturesRegist
   }
 
   private void readGroups(Element element) {
-    List groups = element.getChildren("group");
+    List groups = element.getChildren(TAG_GROUP);
     for (int i = 0; i < groups.size(); i++) {
       Element groupElement = (Element)groups.get(i);
       readGroup(groupElement);
@@ -102,12 +111,12 @@ public class ProductivityFeaturesRegistryImpl extends ProductivityFeaturesRegist
   }
 
   private void readFeatures(Element groupElement, GroupDescriptor groupDescriptor) {
-    List features = groupElement.getChildren("feature");
+    List features = groupElement.getChildren(TAG_FEATURE);
     for (int i = 0; i < features.size(); i++) {
       Element featureElement = (Element)features.get(i);
       FeatureDescriptor featureDescriptor = new FeatureDescriptor(groupDescriptor);
       featureDescriptor.readExternal(featureElement);
-      if (!"todo.html".equals(featureDescriptor.getTipFileName())) {
+      if (!TODO_HTML_MARKER.equals(featureDescriptor.getTipFileName())) {
         myFeatures.put(featureDescriptor.getId(), featureDescriptor);
       }
     }
@@ -122,7 +131,7 @@ public class ProductivityFeaturesRegistryImpl extends ProductivityFeaturesRegist
 
   public FeatureDescriptor getFeatureDescriptor(String id) {
     if (WELCOME.equals(id)) {
-      FeatureDescriptor descriptor = new FeatureDescriptor(WELCOME, "AdaptiveWelcome.html", "Productivity Features Guide");
+      FeatureDescriptor descriptor = new FeatureDescriptor(WELCOME, "AdaptiveWelcome.html", FeatureStatisticsBundle.message("feature.statistics.welcome.tip.name"));
       return descriptor;
     }
     if (!myLoadAdditionFeatures){
@@ -133,7 +142,7 @@ public class ProductivityFeaturesRegistryImpl extends ProductivityFeaturesRegist
 
   public FeatureDescriptor getFeatureDescriptorEx(String id) {
     if (WELCOME.equals(id)) {
-      FeatureDescriptor descriptor = new FeatureDescriptor(WELCOME, "AdaptiveWelcome.html", "Productivity Features Guide");
+      FeatureDescriptor descriptor = new FeatureDescriptor(WELCOME, "AdaptiveWelcome.html", FeatureStatisticsBundle.message("feature.statistics.welcome.tip.name"));
       return descriptor;
     }
     return myFeatures.get(id);

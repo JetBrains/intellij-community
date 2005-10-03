@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -13,6 +14,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,7 +31,7 @@ public class AddMethodFix implements IntentionAction {
     init(method, implClass);
   }
 
-  public AddMethodFix(String methodText, PsiClass implClass) {
+  public AddMethodFix(@NonNls String methodText, PsiClass implClass) {
     try {
       init(implClass.getManager().getElementFactory().createMethodFromText(methodText, implClass), implClass);
     } catch (IncorrectOperationException e) {
@@ -41,7 +43,7 @@ public class AddMethodFix implements IntentionAction {
     if (method == null || implClass == null) return;
     myMethod = method;
     myClass = implClass;
-    setText("Add Method '" + method.getName() + "' to Class '" + implClass.getName() + "'");
+    setText(QuickFixBundle.message("add.method.text", method.getName(), implClass.getName()));
   }
 
   private static PsiMethod reformat(Project project, PsiMethod result) throws IncorrectOperationException {
@@ -60,7 +62,7 @@ public class AddMethodFix implements IntentionAction {
   }
 
   public String getFamilyName() {
-    return "Add Method";
+    return QuickFixBundle.message("add.method.family");
   }
 
   public void addException(String exception) {
@@ -69,12 +71,12 @@ public class AddMethodFix implements IntentionAction {
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
     return myMethod != null
-        && myMethod.isValid()
-        && myClass != null
-        && myClass.isValid()
-        && myClass.getManager().isInProject(myClass)
-        && myText != null
-        && MethodSignatureUtil.findMethodBySignature(myClass, myMethod, false) == null
+           && myMethod.isValid()
+           && myClass != null
+           && myClass.isValid()
+           && myClass.getManager().isInProject(myClass)
+           && myText != null
+           && MethodSignatureUtil.findMethodBySignature(myClass, myMethod, false) == null
         ;
   }
 

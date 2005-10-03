@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.compiler.CompilerBundle;
 
 import java.io.File;
 
@@ -42,7 +43,7 @@ public class ChunkBuild extends CompositeGenerator{
       final String outputPathUrl = chunk.getOutputDirUrl();
       String location = outputPathUrl != null?
                         GenerationUtils.toRelativePath(VirtualFileManager.extractPath(outputPathUrl), chunkBaseDir, BuildProperties.getModuleChunkBasedirProperty(chunk), genOptions, !chunk.isSavePathsRelative()) :
-                        "undefined";
+                        CompilerBundle.message("value.undefined");
       add(new Property(BuildProperties.getOutputPathProperty(chunk.getName()), location), 1);
 
       final String testOutputPathUrl = chunk.getTestsOutputDirUrl();
@@ -70,7 +71,7 @@ public class ChunkBuild extends CompositeGenerator{
 
   private Generator createBootclasspath(ModuleChunk chunk) {
     final Path bootclasspath = new Path(BuildProperties.getBootClasspathProperty(chunk.getName()));
-    bootclasspath.add(new Comment("Paths to be included in compilation bootclasspath"));
+    bootclasspath.add(new Comment(CompilerBundle.message("generated.ant.build.bootclasspath.comment")));
     return bootclasspath;
   }
 

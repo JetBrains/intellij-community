@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.pom.Navigatable;
+import com.intellij.analysis.AnalysisScopeBundle;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -78,7 +79,7 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
 
   public String getPresentableFilesCount(){
     final int filesCount = getContainingFiles();
-    return filesCount > 0 ? " (" + filesCount + (filesCount > 1 ? " entries" : " entry") + ")" : "";
+    return filesCount > 0 ? " (" + AnalysisScopeBundle.message("package.dependencies.node.items.count", filesCount) + ")" : "";
   }
 
   public void add(MutableTreeNode newChild) {

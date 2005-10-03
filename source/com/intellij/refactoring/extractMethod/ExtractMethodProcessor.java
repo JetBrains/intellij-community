@@ -22,6 +22,9 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.ui.ConflictsDialog;
+import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.ParameterTablePanel;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
@@ -30,12 +33,11 @@ import com.intellij.refactoring.util.duplicates.DuplicatesFinder;
 import com.intellij.refactoring.util.duplicates.Match;
 import com.intellij.refactoring.util.duplicates.MatchProvider;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.IntArrayList;
+import org.jetbrains.annotations.NonNls;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Comparator;
+import java.util.*;
 
 public class ExtractMethodProcessor implements MatchProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.extractMethod.ExtractMethodProcessor");
@@ -60,7 +62,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   private String myMethodName; // name for extracted method
   private PsiType myReturnType; // return type for extracted method
   private PsiTypeParameterList myTypeParameterList; //type parameter list of extracted method
-  private ParameterTablePanel.VariableData[] myVariableDatas; // parameter data for extracted method
+  private ParameterTablePanel.VariableData[] myVariableDatum; // parameter data for extracted method
   private PsiClassType[] myThrownExceptions; // exception to declare as thrown by extracted method
   private boolean myStatic; // whether to declare extracted method static
 
@@ -165,8 +167,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       myControlFlow = analyzer.buildControlFlow();
     }
     catch (AnalysisCanceledException e) {
-      throw new PrepareFailedException("Code contains syntax errors." +
-                                       "Cannot perform neccessary analysis.",
+      throw new PrepareFailedException(RefactoringBundle.message("extract.method.control.flow.analysis.failed"),
                                        e.getErrorElement());
     }
 
@@ -321,9 +322,10 @@ public class ExtractMethodProcessor implements MatchProvider {
     dialog.show();
     if (!dialog.isOK()) return false;
     myMethodName = dialog.getChoosenMethodName();
-    myVariableDatas = dialog.getChoosenParameters();
+    myVariableDatum = dialog.getChoosenParameters();
     myStatic = myStatic || dialog.isMakeStatic();
     myMethodVisibility = dialog.getVisibility();
+
     return true;
   }
 
@@ -338,7 +340,7 @@ public class ExtractMethodProcessor implements MatchProvider {
                                                          myRefactoringName,
                                                          myHelpId);
     myMethodName = dialog.getChoosenMethodName();
-    myVariableDatas = dialog.getChoosenParameters();
+    myVariableDatum = dialog.getChoosenParameters();
     doRefactoring();
   }
 
@@ -530,7 +532,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     final PsiExpression[] expressions = methodCallExpression.getArgumentList().getExpressions();
 
     ArrayList<ParameterTablePanel.VariableData> datas = new ArrayList<ParameterTablePanel.VariableData>();
-    for (final ParameterTablePanel.VariableData variableData : myVariableDatas) {
+    for (final ParameterTablePanel.VariableData variableData : myVariableDatum) {
       if (variableData.passAsParameter) {
         datas.add(variableData);
       }
@@ -591,7 +593,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private void renameInputVariables() throws IncorrectOperationException {
-    for (ParameterTablePanel.VariableData data : myVariableDatas) {
+    for (ParameterTablePanel.VariableData data : myVariableDatum) {
       PsiVariable variable = data.variable;
       if (!data.name.equals(variable.getName())) {
         for (PsiElement element : myElements) {
@@ -617,7 +619,7 @@ public class ExtractMethodProcessor implements MatchProvider {
 
     boolean isFinal = CodeStyleSettingsManager.getSettings(myProject).GENERATE_FINAL_PARAMETERS;
     PsiParameterList list = newMethod.getParameterList();
-    for (ParameterTablePanel.VariableData data : myVariableDatas) {
+    for (ParameterTablePanel.VariableData data : myVariableDatum) {
       if (data.passAsParameter) {
         PsiParameter parm = myElementFactory.createParameter(data.name, data.type);
         if (isFinal) {
@@ -626,7 +628,7 @@ public class ExtractMethodProcessor implements MatchProvider {
         list.add(parm);
       }
       else {
-        StringBuffer buffer = new StringBuffer();
+        @NonNls StringBuffer buffer = new StringBuffer();
         if (isFinal) {
           buffer.append("final ");
         }
@@ -658,7 +660,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private PsiMethodCallExpression generateMethodCall(PsiExpression instanceQualifier) throws IncorrectOperationException {
-    StringBuffer buffer = new StringBuffer();
+    @NonNls StringBuffer buffer = new StringBuffer();
 
     final boolean skipInstanceQualifier = instanceQualifier == null || instanceQualifier instanceof PsiThisExpression;
     if (skipInstanceQualifier) {
@@ -688,7 +690,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     buffer.append(myMethodName);
     buffer.append("(");
     int count = 0;
-    for (ParameterTablePanel.VariableData data : myVariableDatas) {
+    for (ParameterTablePanel.VariableData data : myVariableDatum) {
       if (data.passAsParameter) {
         if (count > 0) {
           buffer.append(",");
@@ -745,7 +747,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private String getNewVariableName(PsiVariable variable) {
-    for (ParameterTablePanel.VariableData data : myVariableDatas) {
+    for (ParameterTablePanel.VariableData data : myVariableDatum) {
       if (data.variable.equals(variable)) {
         return data.name;
       }
@@ -810,21 +812,21 @@ public class ExtractMethodProcessor implements MatchProvider {
       EditorColorsManager manager = EditorColorsManager.getInstance();
       TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
       highlightManager.addOccurrenceHighlights(myEditor, exitStatementsArray, attributes, true, null);
-      String message =
-        "Cannot perform the refactoring.\n" +
-        "There are multiple exit points in the selected code fragment.";
+      String message = RefactoringBundle.getCannotRefactorMessage(
+        RefactoringBundle.message("there.are.multiple.exit.points.in.the.selected.code.fragment"));
       RefactoringMessageUtil.showErrorMessage(myRefactoringName, message, myHelpId, myProject);
-      WindowManager.getInstance().getStatusBar(myProject).setInfo("Press Escape to remove the highlighting");
+      WindowManager.getInstance().getStatusBar(myProject).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
     }
   }
 
   private void showMultipleOutputMessage(PsiType expressionType) {
     if (myShowErrorDialogs) {
       StringBuffer buffer = new StringBuffer();
-      buffer.append("Cannot perform the refactoring.\n");
-      buffer.append("There are multiple output values for the selected code fragment:\n");
+      buffer.append(RefactoringBundle.getCannotRefactorMessage(
+        RefactoringBundle.message("there.are.multiple.output.values.for.the.selected.code.fragment")));
+      buffer.append("\n");
       if (myHasExpressionOutput) {
-        buffer.append("    expression result : ");
+        buffer.append("    ").append(RefactoringBundle.message("expression.result")).append(": ");
         buffer.append(PsiFormatUtil.formatType(expressionType, 0, PsiSubstitutor.EMPTY));
         buffer.append(",\n");
       }

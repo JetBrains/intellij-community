@@ -19,7 +19,7 @@ class RemovePropertyFix implements IntentionAction {
   }
 
   public String getText() {
-    return "Remove property";
+    return PropertiesBundle.message("remove.property.intention.text");
   }
 
   public String getFamilyName() {

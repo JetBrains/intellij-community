@@ -1,5 +1,7 @@
 package com.intellij.util.config;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author dyoma
  */
@@ -7,7 +9,7 @@ public class ValueProperty<T> extends AbstractProperty<T> {
   private final T myDefault;
   private final String myName;
 
-  public ValueProperty(String name, T defaultValue) {
+  public ValueProperty(@NonNls String name, T defaultValue) {
     myName = name;
     myDefault = defaultValue;
   }

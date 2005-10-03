@@ -124,8 +124,7 @@ public class FocusTrackback {
     }
 
     if(((ApplicationEx)ApplicationManager.getApplication()).isInternal()) {
-      String className = root == null ? "null" : root.getClass().getName();
-      LOG.assertTrue(root instanceof IdeFrame, "Expected to be child for " + IdeFrame.class.getName() + " but was child of: " + className);
+      LOG.assertTrue(root instanceof IdeFrame, "Expected to be child for " + IdeFrame.class.getName() + " but was child of: " + (root == null ? "null" : root.getClass().getName()));
     }
 
 
@@ -137,6 +136,7 @@ public class FocusTrackback {
     return myFocusOwner;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return getClass().getName() + " requestor: " + myRequestorName + " parent=" + myParentWindow;
   }

@@ -1,7 +1,9 @@
 package com.intellij.util.config;
 
+import org.jetbrains.annotations.NonNls;
+
 public class BooleanProperty extends ValueProperty<Boolean> {
-  public BooleanProperty(String name, boolean defaultValue) {
+  public BooleanProperty(@NonNls String name, boolean defaultValue) {
     super(name, Boolean.valueOf(defaultValue));
   }
 

@@ -2,21 +2,28 @@ package com.intellij.find.impl;
 
 import com.intellij.find.FindModel;
 import com.intellij.find.FindSettings;
+import com.intellij.find.FindBundle;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.util.*;
+import com.intellij.ide.highlighter.HtmlFileType;
+import com.intellij.ide.highlighter.XmlFileType;
+import com.intellij.ide.highlighter.NewJspFileType;
+import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.lang.properties.PropertiesFileType;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class FindSettingsImpl extends FindSettings implements ApplicationComponent, JDOMExternalizable{
-  public static final String FIND_DIRECTION_FORWARD = "forward";
-  public static final String FIND_DIRECTION_BACKWARD = "backward";
-  public static final String FIND_ORIGIN_FROM_CURSOR = "from_cursor";
-  public static final String FIND_ORIGIN_ENTIRE_SCOPE = "entire_scope";
-  public static final String FIND_SCOPE_GLOBAL = "global";
-  public static final String FIND_SCOPE_SELECTED = "selected";
-  public static final String DEFAULT_SEARCH_SCOPE = "All Project Classes";
+  @NonNls public static final String FIND_DIRECTION_FORWARD = "forward";
+  @NonNls public static final String FIND_DIRECTION_BACKWARD = "backward";
+  @NonNls public static final String FIND_ORIGIN_FROM_CURSOR = "from_cursor";
+  @NonNls public static final String FIND_ORIGIN_ENTIRE_SCOPE = "entire_scope";
+  @NonNls public static final String FIND_SCOPE_GLOBAL = "global";
+  @NonNls public static final String FIND_SCOPE_SELECTED = "selected";
+  public static final String DEFAULT_SEARCH_SCOPE = FindBundle.message("find.scope.all.project.classes");
   
   public static final int MAX_RECENT_SIZE = 30;
 
@@ -64,11 +71,11 @@ public class FindSettingsImpl extends FindSettings implements ApplicationCompone
   public void readExternal(Element element) throws InvalidDataException{
     DefaultJDOMExternalizer.readExternal(this, element);
     if (RECENT_FILE_MASKS.size() == 0) {
-      RECENT_FILE_MASKS.add("*.properties");
-      RECENT_FILE_MASKS.add("*.html");
-      RECENT_FILE_MASKS.add("*.jsp");
-      RECENT_FILE_MASKS.add("*.xml");
-      RECENT_FILE_MASKS.add("*.java");
+      RECENT_FILE_MASKS.add("*" + PropertiesFileType.DOT_DEFAULT_EXTENSION);
+      RECENT_FILE_MASKS.add("*" + HtmlFileType.DOT_DEFAULT_EXTENSION);
+      RECENT_FILE_MASKS.add("*" + NewJspFileType.DOT_DEFAULT_EXTENSION);
+      RECENT_FILE_MASKS.add("*" + XmlFileType.DOT_DEFAULT_EXTENSION);
+      RECENT_FILE_MASKS.add("*" + JavaFileType.DOT_DEFAULT_EXTENSION);
     }
   }
 
@@ -81,7 +88,7 @@ public class FindSettingsImpl extends FindSettings implements ApplicationCompone
   }
 
   public void setSkipResultsWithOneUsage(boolean skip){
-    this.SKIP_RESULTS_WHEN_ONE_USAGE = skip;
+    SKIP_RESULTS_WHEN_ONE_USAGE = skip;
   }
 
   public boolean isSearchForTextOccurences(){
@@ -89,7 +96,7 @@ public class FindSettingsImpl extends FindSettings implements ApplicationCompone
   }
 
   public void setSearchForTextOccurences(boolean search){
-    this.SEARCH_FOR_TEXT_OCCURENCES = search;
+    SEARCH_FOR_TEXT_OCCURENCES = search;
   }
 
   public String getDefaultScopeName() {
@@ -129,7 +136,7 @@ public class FindSettingsImpl extends FindSettings implements ApplicationCompone
   }
 
   public void setCaseSensitive(boolean caseSensitiveSearch){
-    this.CASE_SENSITIVE_SEARCH = caseSensitiveSearch;
+    CASE_SENSITIVE_SEARCH = caseSensitiveSearch;
   }
 
   public boolean isPreserveCase() {
@@ -145,7 +152,7 @@ public class FindSettingsImpl extends FindSettings implements ApplicationCompone
   }
 
   public void setWholeWordsOnly(boolean wholeWordsOnly){
-    this.WHOLE_WORDS_ONLY = wholeWordsOnly;
+    WHOLE_WORDS_ONLY = wholeWordsOnly;
   }
 
   public boolean isRegularExpressions(){
@@ -153,11 +160,11 @@ public class FindSettingsImpl extends FindSettings implements ApplicationCompone
   }
 
   public void setRegularExpressions(boolean regularExpressions){
-    this.REGULAR_EXPRESSIONS = regularExpressions;
+    REGULAR_EXPRESSIONS = regularExpressions;
   }
 
   public void setWithSubdirectories(boolean b){
-    this.WITH_SUBDIRECTORIES = b;
+    WITH_SUBDIRECTORIES = b;
   }
 
   public boolean isWithSubdirectories(){
@@ -227,7 +234,7 @@ public class FindSettingsImpl extends FindSettings implements ApplicationCompone
   }
 
   public void setFileMask(String _fileMask) {
-    this.FILE_MASK = _fileMask;
+    FILE_MASK = _fileMask;
     if (_fileMask != null && _fileMask.length() > 0) {
       addStringToList(_fileMask, RECENT_FILE_MASKS, MAX_RECENT_SIZE);
     }

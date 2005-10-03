@@ -47,7 +47,7 @@ public class PlainTextFileType implements FileType {
   }
 
   public String getDescription() {
-    return "Text files";
+    return FileTypesBundle.message("filetype.plaintext.description");
   }
 
   public String getDefaultExtension() {

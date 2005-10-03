@@ -31,6 +31,7 @@ import org.netbeans.lib.cvsclient.progress.sending.FileStateRequestsProgressHand
 import org.netbeans.lib.cvsclient.progress.sending.IRequestsProgressHandler;
 import org.netbeans.lib.cvsclient.request.CommandRequest;
 import org.netbeans.lib.cvsclient.request.Requests;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
 
@@ -43,8 +44,8 @@ public final class TagCommand extends AbstractCommand {
 
 	// Constants ==============================================================
 
-	public static final String EXAM_DIR_TAG = "server: Tagging ";
-	public static final String EXAM_DIR_UNTAG = "server: Untagging ";
+	@NonNls public static final String EXAM_DIR_TAG = "server: Tagging ";
+	@NonNls public static final String EXAM_DIR_UNTAG = "server: Untagging ";
 
 	// Fields =================================================================
 
@@ -108,7 +109,7 @@ public final class TagCommand extends AbstractCommand {
 	 * command line.
 	 */
 	public String getCvsCommandLine() {
-		final StringBuffer cvsCommandLine = new StringBuffer("tag ");
+		@NonNls final StringBuffer cvsCommandLine = new StringBuffer("tag ");
 		cvsCommandLine.append(getCvsArguments());
 		if (getTag() != null) {
 			cvsCommandLine.append(getTag());
@@ -186,7 +187,7 @@ public final class TagCommand extends AbstractCommand {
 	// Utils ==================================================================
 
 	private String getCvsArguments() {
-		final StringBuffer arguments = new StringBuffer();
+		@NonNls final StringBuffer arguments = new StringBuffer();
 		if (!isRecursive()) {
 			arguments.append("-l ");
 		}

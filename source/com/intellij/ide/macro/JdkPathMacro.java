@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.ex.PathUtilEx;
 import com.intellij.util.PathUtil;
+import com.intellij.ide.IdeBundle;
 
 import java.io.File;
 
@@ -16,7 +17,7 @@ public final class JdkPathMacro extends Macro {
   }
 
   public String getDescription() {
-    return "JDK path";
+    return IdeBundle.message("macro.jdk.path");
   }
 
   public String expand(DataContext dataContext) {

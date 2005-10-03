@@ -98,6 +98,7 @@ public class IdeEventQueue extends EventQueue {
     mySuspendModeAlarm = new Alarm();
 
     final KeyboardFocusManager keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+    //noinspection HardCodedStringLiteral
     keyboardFocusManager.addPropertyChangeListener(
       "permanentFocusOwner",
       new PropertyChangeListener() {
@@ -241,10 +242,12 @@ public class IdeEventQueue extends EventQueue {
     // find such situations we will specially check InvokationEvents
     try {
       if (e instanceof InvocationEvent) {
+        //noinspection HardCodedStringLiteral
         final Field field = InvocationEvent.class.getDeclaredField("runnable");
         field.setAccessible(true);
         final Object runnable = field.get(e);
         if (runnable == null) {
+          //noinspection HardCodedStringLiteral
           throw new IllegalStateException("InvocationEvent contains null runnable: " + e);
         }
       }

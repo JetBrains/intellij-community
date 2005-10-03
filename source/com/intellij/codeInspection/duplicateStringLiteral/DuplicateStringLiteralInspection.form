@@ -11,16 +11,16 @@
     <children>
       <component id="e2f1f" class="javax.swing.JLabel" binding="myMinStringLengthLabel">
         <constraints>
-          <xy x="0" y="3" width="83" height="14"/>
+          <xy x="0" y="3" width="87" height="14"/>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
         </constraints>
         <properties>
-          <text value="&amp;Min string length:"/>
+          <text resource-bundle="messages/InspectionsBundle" key="inspection.duplicates.option"/>
         </properties>
       </component>
       <component id="c3779" class="javax.swing.JTextField" binding="myMinStringLengthField">
         <constraints>
-          <xy x="93" y="0" width="162" height="20"/>
+          <xy x="97" y="0" width="158" height="20"/>
           <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
             <preferred-size width="150" height="-1"/>
           </grid>

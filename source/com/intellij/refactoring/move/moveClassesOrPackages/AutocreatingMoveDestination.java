@@ -8,6 +8,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.PackageWrapper;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.IncorrectOperationException;
 
 /**
@@ -34,9 +35,8 @@ public abstract class AutocreatingMoveDestination implements MoveDestination {
     final String targetQName = myPackage.getQualifiedName();
     final String sourceRootPackage = myFileIndex.getPackageNameByDirectory(targetSourceRoot);
     if (!targetQName.startsWith(sourceRootPackage)) {
-      String message = "Source folder " + targetSourceRoot.getPresentableUrl() + " has package prefix '" + sourceRootPackage + "'\n" +
-                       "Package '" + targetQName + "' cannot be created there.";
-      return message;
+      return RefactoringBundle.message("source.folder.0.has.package.prefix.1", targetSourceRoot.getPresentableUrl(),
+                                       sourceRootPackage, targetQName);
     }
     return null;
   }

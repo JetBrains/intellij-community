@@ -227,7 +227,6 @@ public class SimpleColoredComponent extends JComponent {
     }
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   private void doPaint(final Graphics g) {
     checkCanPaint();
     int xOffset=0;
@@ -291,7 +290,7 @@ public class SimpleColoredComponent extends JComponent {
         color = getForeground();
       }
       if (!isEnabled()) {
-        color = UIManager.getColor("textInactiveText");
+        color = UIUtil.getTextInactiveTextColor();
       }
       g.setColor(color);
 

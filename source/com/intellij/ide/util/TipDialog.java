@@ -2,6 +2,8 @@
 package com.intellij.ide.util;
 
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.ide.IdeBundle;
+import com.intellij.CommonBundle;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -12,8 +14,8 @@ public class TipDialog extends DialogWrapper{
   public TipDialog(){
     super(true);
     setModal(false);
-    setTitle("Tip of the Day");
-    setCancelButtonText("&Close");
+    setTitle(IdeBundle.message("title.tip.of.the.day"));
+    setCancelButtonText(CommonBundle.getCloseButtonText());
     myTipPanel = new TipPanel();
     myTipPanel.nextTip();
     setHorizontalStretch(1.33f);
@@ -35,7 +37,7 @@ public class TipDialog extends DialogWrapper{
 
   private class PreviousTipAction extends AbstractAction{
     public PreviousTipAction(){
-      super("&Previous Tip");
+      super(IdeBundle.message("action.previous.tip"));
     }
 
     public void actionPerformed(ActionEvent e){
@@ -45,7 +47,7 @@ public class TipDialog extends DialogWrapper{
 
   private class NextTipAction extends AbstractAction{
     public NextTipAction(){
-      super("&Next Tip");
+      super(IdeBundle.message("action.next.tip"));
       putValue(DialogWrapper.DEFAULT_ACTION,Boolean.TRUE);
     }
 

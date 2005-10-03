@@ -77,6 +77,7 @@ public abstract class EditorActionTestCase extends LightCodeInsightTestCase {
   private void invokeAction() {
     final String actionId = getActionId();
     final AnAction action = ActionManager.getInstance().getAction(actionId);
+    //noinspection HardCodedStringLiteral
     assertNotNull("Can find registered action with id=" + actionId, action);
     action.actionPerformed(
         new AnActionEvent(

@@ -5,6 +5,7 @@ import com.intellij.psi.PsiPackage;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -18,7 +19,7 @@ import java.util.regex.Pattern;
  * To change this template use Options | File Templates.
  */
 public class JavaClassListReferenceProvider extends JavaClassReferenceProvider{
-  private static final Pattern PATTERN = Pattern.compile("([A-Za-z]\\w*\\s*(\\.\\s*[A-Za-z]\\w*\\s*)+)");
+  private static final @NonNls Pattern PATTERN = Pattern.compile("([A-Za-z]\\w*\\s*(\\.\\s*[A-Za-z]\\w*\\s*)+)");
 
   public PsiReference[] getReferencesByString(String str, PsiElement position, ReferenceType type, int offsetInPosition){
     final List<ReferenceSet.JavaReference> results = new ArrayList<ReferenceSet.JavaReference>();

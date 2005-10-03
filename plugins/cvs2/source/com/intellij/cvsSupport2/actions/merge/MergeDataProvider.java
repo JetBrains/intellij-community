@@ -2,6 +2,7 @@ package com.intellij.cvsSupport2.actions.merge;
 
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.merge.MergeData;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by IntelliJ IDEA.
@@ -12,5 +13,6 @@ import com.intellij.openapi.vcs.merge.MergeData;
  */
 
 interface MergeDataProvider {
+  @NotNull
   MergeData createData() throws VcsException;
 }

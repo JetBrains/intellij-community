@@ -3,10 +3,7 @@ package com.intellij.openapi.vcs.actions;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -88,7 +85,7 @@ public class TabbedShowHistoryAction extends AbstractVcsAction {
       List<VcsFileRevision> revisionsList = session.getRevisionList();
       if (revisionsList.isEmpty()) return;
 
-      String actionName = "File " + path.getName() + " History";
+      String actionName = VcsBundle.message("action.name.file.history", path.getName());
 
       ContentManager contentManager = ProjectLevelVcsManagerEx.getInstanceEx(project).getContentManager();
 
@@ -107,6 +104,6 @@ public class TabbedShowHistoryAction extends AbstractVcsAction {
 
   protected void reportError(Exception exception) {
     exception.printStackTrace();
-    Messages.showMessageDialog(exception.getLocalizedMessage(), "Could Not Load File History", Messages.getErrorIcon());
+    Messages.showMessageDialog(exception.getLocalizedMessage(), VcsBundle.message("message.title.could.not.load.file.history"), Messages.getErrorIcon());
   }
 }

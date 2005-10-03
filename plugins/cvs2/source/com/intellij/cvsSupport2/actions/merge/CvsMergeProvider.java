@@ -123,10 +123,12 @@ public class CvsMergeProvider implements MergeProvider {
   @NotNull private MergeDataProvider parseConflictsInFile(final VirtualFile file) {
 
     return new MergeDataProvider() {
+      @NotNull
       public MergeData createData() throws VcsException {
         try {
-          final BufferedInputStream input = new BufferedInputStream(new FileInputStream(CvsVfsUtil.getFileFor(file)));
+          BufferedInputStream input = null;
           try {
+            input = new BufferedInputStream(new FileInputStream(CvsVfsUtil.getFileFor(file)));
             final CvsConflictsParser parser = CvsConflictsParser.createOn(input);
             final MergeData mergeData = new MergeData();
             mergeData.ORIGINAL = parser.getCenterVersion().getBytes();
@@ -135,7 +137,9 @@ public class CvsMergeProvider implements MergeProvider {
             return mergeData;
           }
           finally {
-            input.close();
+            if (input != null) {
+              input.close();
+            }
           }
         }
         catch (IOException e) {

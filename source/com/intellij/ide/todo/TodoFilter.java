@@ -5,6 +5,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.TodoPattern;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.HashSet;
 import java.util.Iterator;
@@ -18,6 +19,9 @@ public class TodoFilter implements Cloneable{
   private String myName;
   // TODO[vova] use array for storing TodoPatterns. Perhaps it's better...
   private HashSet myTodoPatterns;
+  @NonNls private static final String ATTRIBUTE_NAME = "name";
+  @NonNls private static final String ELEMENT_PATTERN = "pattern";
+  @NonNls private static final String ATTRIBUTE_INDEX = "index";
 
   /**
    * Creates filter with empty name and empty set of patterns.
@@ -108,18 +112,18 @@ public class TodoFilter implements Cloneable{
    * @param patterns all available patterns
    */
   public void readExternal(Element element,TodoPattern[] patterns) {
-    myName=element.getAttributeValue("name");
+    myName=element.getAttributeValue(ATTRIBUTE_NAME);
     if(myName==null){
       throw new IllegalArgumentException();
     }
     myTodoPatterns.clear();
     for(Iterator i=element.getChildren().iterator();i.hasNext();){
       Element child=(Element)i.next();
-      if(!"pattern".equals(child.getName())){
+      if(!ELEMENT_PATTERN.equals(child.getName())){
         continue;
       }
       try{
-        int index=Integer.parseInt(child.getAttributeValue("index"));
+        int index=Integer.parseInt(child.getAttributeValue(ATTRIBUTE_INDEX));
         if(index<0||index>patterns.length-1){
           continue;
         }
@@ -139,13 +143,13 @@ public class TodoFilter implements Cloneable{
    * @param patterns all available patterns
    */
   public void writeExternal(Element element,TodoPattern[] patterns){
-    element.setAttribute("name",myName);
+    element.setAttribute(ATTRIBUTE_NAME,myName);
     for(Iterator i=myTodoPatterns.iterator();i.hasNext();){
       TodoPattern pattern=(TodoPattern)i.next();
       int index=getPatterIndex(pattern,patterns);
       LOG.assertTrue(index!=-1);
-      Element child=new Element("pattern");
-      child.setAttribute("index",Integer.toString(index));
+      Element child=new Element(ELEMENT_PATTERN);
+      child.setAttribute(ATTRIBUTE_INDEX,Integer.toString(index));
       element.addContent(child);
     }
   }

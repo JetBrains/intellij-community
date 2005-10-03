@@ -15,12 +15,13 @@
  */
 package com.intellij.openapi.vcs.ui;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * author: lesya
  */
 public interface Refreshable {
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  String PANEL = "Panel";
+  @NonNls String PANEL = "Panel";
 
   void refresh();
 

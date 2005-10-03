@@ -1,6 +1,7 @@
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.ui.ClassFilterEditor;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
@@ -121,7 +122,7 @@ public class DebuggerGeneralConfigurable implements Configurable{
   }
 
   public String getDisplayName() {
-    return "General";
+    return DebuggerBundle.message("debugger.general.configurable.display.name");
   }
 
   public Icon getIcon() {
@@ -152,26 +153,21 @@ public class DebuggerGeneralConfigurable implements Configurable{
 
   private JComponent createGeneralGroup() {
     final JPanel panel = new JPanel(new GridBagLayout());
-    panel.setBorder(IdeBorderFactory.createTitledBorder("General"));
+    panel.setBorder(IdeBorderFactory.createTitledBorder(getDisplayName()));
 
-    myHideDebuggerCheckBox = new JCheckBox("Hide debug window on process termination");
-    myHideDebuggerCheckBox.setMnemonic('w');
+    myHideDebuggerCheckBox = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.hide.window"));
     panel.add(myHideDebuggerCheckBox, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
 
-    final JLabel tooltipLabel = new JLabel("Value tooltips delay (ms):");
+    final JLabel tooltipLabel = new JLabel(DebuggerBundle.message("label.debugger.general.configurable.tooltips.delay"));
     panel.add(tooltipLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     myValueTooltipDelayField = new JTextField(10);
     panel.add(myValueTooltipDelayField, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     tooltipLabel.setLabelFor(myValueTooltipDelayField);
-    tooltipLabel.setDisplayedMnemonic('d');
 
-    panel.add(new JLabel("Reload classes after compilation:"), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
-    myRbAlways = new JRadioButton("Always");
-    myRbAlways.setMnemonic('A');
-    myRbNever = new JRadioButton("Never");
-    myRbNever.setMnemonic('N');
-    myRbAsk = new JRadioButton("Ask");
-    myRbAsk.setMnemonic('k');
+    panel.add(new JLabel(DebuggerBundle.message("label.debugger.general.configurable.reload.classes")), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+    myRbAlways = new JRadioButton(DebuggerBundle.message("label.debugger.general.configurable.always"));
+    myRbNever = new JRadioButton(DebuggerBundle.message("label.debugger.general.configurable.never"));
+    myRbAsk = new JRadioButton(DebuggerBundle.message("label.debugger.general.configurable.ask"));
     final ButtonGroup group = new ButtonGroup();
     group.add(myRbAlways);
     group.add(myRbNever);
@@ -187,17 +183,14 @@ public class DebuggerGeneralConfigurable implements Configurable{
 
   private JComponent createLaunchingGroup() {
     final JPanel panel = new JPanel(new GridBagLayout());
-    panel.setBorder(IdeBorderFactory.createTitledBorder("Launching"));
+    panel.setBorder(IdeBorderFactory.createTitledBorder(DebuggerBundle.message("label.debugger.general.configurable.group.launching")));
 
-    myCbForceClassicVM = new StateRestoringCheckBox("Force Classic VM for JDK 1.3.x and earlier");
-    myCbForceClassicVM.setMnemonic('i');
+    myCbForceClassicVM = new StateRestoringCheckBox(DebuggerBundle.message("label.debugger.general.configurable.force.classic.vm"));
     panel.add(myCbForceClassicVM, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
 
-    panel.add(new JLabel("Debugger transport:"), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
-    myRbSocket = new JRadioButton("Socket");
-    myRbSocket.setMnemonic('S');
-    myRbShmem = new JRadioButton("Shared memory");
-    myRbShmem.setMnemonic('m');
+    panel.add(new JLabel(DebuggerBundle.message("label.debugger.general.configurable.debugger.transport")), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+    myRbSocket = new JRadioButton(DebuggerBundle.message("label.debugger.general.configurable.socket"));
+    myRbShmem = new JRadioButton(DebuggerBundle.message("label.debugger.general.configurable.shmem"));
     final ButtonGroup gr = new ButtonGroup();
     gr.add(myRbSocket);
     gr.add(myRbShmem);
@@ -211,22 +204,19 @@ public class DebuggerGeneralConfigurable implements Configurable{
 
   private JComponent createBaseRenderersGroup() {
     final JComponent component = myBaseRenderersConfigurable.createComponent();
-    component.setBorder(IdeBorderFactory.createTitledBorder("Views"));
+    component.setBorder(IdeBorderFactory.createTitledBorder(
+      DebuggerBundle.message("label.debugger.general.configurable.group.base.renderers")));
     return component;
   }
 
   private JComponent createSteppingGroup() {
     final JPanel panel = new JPanel(new GridBagLayout());
-    panel.setBorder(IdeBorderFactory.createTitledBorder("Stepping"));
+    panel.setBorder(IdeBorderFactory.createTitledBorder(DebuggerBundle.message("label.debugger.general.configurable.group.stepping")));
 
-    myCbSkipSyntheticMethods = new JCheckBox("Skip synthetic methods");
-    myCbSkipSyntheticMethods.setMnemonic('p');
-    myCbSkipConstructors = new JCheckBox("Skip constructors");
-    myCbSkipConstructors.setMnemonic('c');
-    myCbSkipSimpleGetters = new JCheckBox("Skip simple getters");
-    myCbSkipSimpleGetters.setMnemonic('g');
-    myCbStepInfoFiltersEnabled = new JCheckBox("Do not step into the classes");
-    myCbStepInfoFiltersEnabled.setMnemonic('i');
+    myCbSkipSyntheticMethods = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.skip.synthetic.methods"));
+    myCbSkipConstructors = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.skip.constructors"));
+    myCbSkipSimpleGetters = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.skip.simple.getters"));
+    myCbStepInfoFiltersEnabled = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.step.filters.list.header"));
     panel.add(myCbSkipSyntheticMethods, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 4, 0, 0),0, 0));
     panel.add(myCbSkipConstructors, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 4, 0, 0),0, 0));
     panel.add(myCbSkipSimpleGetters, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 4, 0, 0),0, 0));

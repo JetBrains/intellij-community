@@ -39,6 +39,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.util.Icons;
 import com.intellij.util.ValueHolder;
@@ -79,7 +80,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
 
     fillWrappingCombo(myWrapAttributes);
 
-    customizeField("Insert New Line Before Tags", myInsertNewLineTagNames, new ValueHolder<String, CodeStyleSettings>() {
+    customizeField(ApplicationBundle.message("title.insert.new.line.before.tags"), myInsertNewLineTagNames, new ValueHolder<String, CodeStyleSettings>() {
       public String getValue(final CodeStyleSettings dataHolder) {
         return dataHolder.HTML_ELEMENTS_TO_INSERT_NEW_LINE_BEFORE;
       }
@@ -89,7 +90,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
       }
     });
 
-    customizeField("Always Wrap Tags", myAlwaysWrapTags, new ValueHolder<String, CodeStyleSettings>() {
+    customizeField(ApplicationBundle.message("title.always.wrap.tags"), myAlwaysWrapTags, new ValueHolder<String, CodeStyleSettings>() {
       public String getValue(final CodeStyleSettings dataHolder) {
         return dataHolder.HTML_PLACE_ON_NEW_LINE;
       }
@@ -99,7 +100,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
       }
     });
 
-    customizeField("Remove Line Breaks Before Tags", myRemoveNewLineTagNames, new ValueHolder<String, CodeStyleSettings>() {
+    customizeField(ApplicationBundle.message("title.remove.line.breaks.before.tags"), myRemoveNewLineTagNames, new ValueHolder<String, CodeStyleSettings>() {
       public String getValue(final CodeStyleSettings dataHolder) {
         return dataHolder.HTML_ELEMENTS_TO_REMOVE_NEW_LINE_BEFORE;
       }
@@ -109,7 +110,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
       }
     });
 
-    customizeField("Do not Indent Children Of", myDoNotAlignChildrenTagNames, new ValueHolder<String, CodeStyleSettings>() {
+    customizeField(ApplicationBundle.message("title.do.not.indent.children.of"), myDoNotAlignChildrenTagNames, new ValueHolder<String, CodeStyleSettings>() {
       public String getValue(final CodeStyleSettings dataHolder) {
         return dataHolder.HTML_DO_NOT_INDENT_CHILDREN_OF;
       }
@@ -119,7 +120,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
       }
     });
 
-    customizeField("Text Elements", myTextElementsTagNames, new ValueHolder<String, CodeStyleSettings>() {
+    customizeField(ApplicationBundle.message("title.text.elements"), myTextElementsTagNames, new ValueHolder<String, CodeStyleSettings>() {
       public String getValue(final CodeStyleSettings dataHolder) {
         return dataHolder.HTML_TEXT_ELEMENTS;
       }
@@ -129,7 +130,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
       }
     });
 
-    customizeField("Keep Whitespaces Inside", myKeepWhiteSpacesTagNames, new ValueHolder<String, CodeStyleSettings>() {
+    customizeField(ApplicationBundle.message("title.keep.whitespaces.inside"), myKeepWhiteSpacesTagNames, new ValueHolder<String, CodeStyleSettings>() {
       public String getValue(final CodeStyleSettings dataHolder) {
         return dataHolder.HTML_KEEP_WHITESPACES_INSIDE;
       }

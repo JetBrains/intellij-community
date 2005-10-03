@@ -1,6 +1,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.reporter.ConnectionException;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.ui.Messages;
@@ -30,7 +31,8 @@ public class CheckForUpdateAction extends AnAction {
       }
     }
     catch (ConnectionException e) {
-      Messages.showErrorDialog("Connection failed. Please check your network connection and try again.", "Connection Error");
+      Messages.showErrorDialog(IdeBundle.message("error.checkforupdates.connection.failed"),
+                               IdeBundle.message("title.connection.error"));
     }
   }
 }

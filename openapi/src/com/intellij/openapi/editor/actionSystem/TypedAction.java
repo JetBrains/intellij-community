@@ -20,10 +20,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorModificationUtil;
-import com.intellij.openapi.editor.ReadOnlyFragmentModificationException;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -60,7 +57,7 @@ public class TypedAction {
       if (project != null) PsiManager.getInstance(project).addPsiTreeChangeListener(myCommitLogger);
       try {
         final String str = String.valueOf(charTyped);
-        CommandProcessor.getInstance().setCurrentCommandName("Typing");
+        CommandProcessor.getInstance().setCurrentCommandName(EditorBundle.message("typing.in.editor.command.name"));
         EditorModificationUtil.typeInStringAtCaretHonorBlockSelection(editor, str, true);
       }
       catch (ReadOnlyFragmentModificationException e) {

@@ -8,6 +8,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 
@@ -18,8 +19,9 @@ public class RecentsManager implements JDOMExternalizable, ProjectComponent {
   private final Map<String, LinkedList<String>> myMap = new HashMap<String, LinkedList<String>>();
 
   private int myRecentsNumberToKeep = 5;
-  private static final String KEY_ELEMENT_NAME = "key";
-  private static final String RECENT_ELEMENT_NAME = "recent";
+  @NonNls private static final String KEY_ELEMENT_NAME = "key";
+  @NonNls private static final String RECENT_ELEMENT_NAME = "recent";
+  @NonNls protected static final String NAME_ATTR = "name";
 
   public static RecentsManager getInstance(Project project) {
     return project.getComponent(RecentsManager.class);
@@ -57,11 +59,11 @@ public class RecentsManager implements JDOMExternalizable, ProjectComponent {
     final List keyElements = element.getChildren(KEY_ELEMENT_NAME);
     for (Iterator iterator = keyElements.iterator(); iterator.hasNext();) {
       Element keyElement = (Element)iterator.next();
-      final String key = keyElement.getAttributeValue("name");
+      final String key = keyElement.getAttributeValue(NAME_ATTR);
       LinkedList<String> recents = new LinkedList<String>();
       final List children = keyElement.getChildren(RECENT_ELEMENT_NAME);
       for (Iterator<Element> iterator1 = children.iterator(); iterator1.hasNext();) {
-        recents.addLast(iterator1.next().getAttributeValue("name"));
+        recents.addLast(iterator1.next().getAttributeValue(NAME_ATTR));
       }
 
       myMap.put(key, recents);
@@ -72,11 +74,11 @@ public class RecentsManager implements JDOMExternalizable, ProjectComponent {
     final Set<Map.Entry<String, LinkedList<String>>> entries = myMap.entrySet();
     for (Map.Entry<String, LinkedList<String>> entry : entries) {
       final Element keyElement = new Element(KEY_ELEMENT_NAME);
-      keyElement.setAttribute("name", entry.getKey());
+      keyElement.setAttribute(NAME_ATTR, entry.getKey());
       final LinkedList<String> recents = entry.getValue();
       for (String recent : recents) {
         final Element recentElement = new Element(RECENT_ELEMENT_NAME);
-        recentElement.setAttribute("name", recent);
+        recentElement.setAttribute(NAME_ATTR, recent);
         keyElement.addContent(recentElement);
       }
       element.addContent(keyElement);

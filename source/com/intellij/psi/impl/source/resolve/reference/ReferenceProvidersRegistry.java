@@ -1,26 +1,33 @@
 package com.intellij.psi.impl.source.resolve.reference;
 
 import com.intellij.ant.impl.dom.impl.RegisterInPsi;
+import com.intellij.lang.properties.PropertiesReferenceProvider;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiPlainTextFile;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.position.NamespaceFilter;
 import com.intellij.psi.filters.position.ParentElementFilter;
 import com.intellij.psi.filters.position.TokenTypeFilter;
+import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.jsp.jspJava.JspDirective;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.*;
-import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.xml.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
-import com.intellij.lang.properties.PropertiesReferenceProvider;
-import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NonNls;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by IntelliJ IDEA.
@@ -34,17 +41,17 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
   private final List<ProviderBinding> myBindings = new ArrayList<ProviderBinding>();
   private final List<Pair<Class, ElementManipulator>> myManipulators = new ArrayList<Pair<Class, ElementManipulator>>();
   private final Map<ReferenceProviderType,PsiReferenceProvider> myReferenceTypeToProviderMap = new HashMap<ReferenceProviderType, PsiReferenceProvider>(5);
-  
+
 
   static public class ReferenceProviderType {
     private String myId;
-    public ReferenceProviderType(String id) { myId = id; }
+    public ReferenceProviderType(@NonNls String id) { myId = id; }
     public String toString() { return myId; }
   }
 
-  public static ReferenceProviderType PROPERTY_FILE_KEY_PROVIDER = new ReferenceProviderType("Property File Key Provider");
-  public static ReferenceProviderType CLASS_REFERENCE_PROVIDER = new ReferenceProviderType("Class Reference Provider");
-  public static ReferenceProviderType PATH_REFERENCES_PROVIDER = new ReferenceProviderType("Path References Provider");
+  private static ReferenceProviderType PROPERTIES_FILE_KEY_PROVIDER = new ReferenceProviderType("Properties File Key Provider");
+  private static ReferenceProviderType CLASS_REFERENCE_PROVIDER = new ReferenceProviderType("Class Reference Provider");
+  private static ReferenceProviderType PATH_REFERENCES_PROVIDER = new ReferenceProviderType("Path References Provider");
   public static ReferenceProviderType DYNAMIC_PATH_REFERENCES_PROVIDER = new ReferenceProviderType("Dynamic Path References Provider");
   public static ReferenceProviderType CSS_CLASS_OR_ID_KEY_PROVIDER = new ReferenceProviderType("Css Class or ID Provider");
   public static ReferenceProviderType URI_PROVIDER = new ReferenceProviderType("Uri references provider");
@@ -56,7 +63,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
   public void registerTypeWithProvider(ReferenceProviderType type, PsiReferenceProvider provider) {
     myReferenceTypeToProviderMap.put(type, provider);
   }
-  
+
   private ReferenceProvidersRegistry() {
     // Temp scopes declarations
     myTempScopes.add(PsiIdentifier.class);
@@ -72,7 +79,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
     myReferenceTypeToProviderMap.put(CLASS_REFERENCE_PROVIDER, new JavaClassReferenceProvider());
     myReferenceTypeToProviderMap.put(PATH_REFERENCES_PROVIDER, new JspxIncludePathReferenceProvider());
     myReferenceTypeToProviderMap.put(DYNAMIC_PATH_REFERENCES_PROVIDER, new JspxDynamicPathReferenceProvider());
-    myReferenceTypeToProviderMap.put(PROPERTY_FILE_KEY_PROVIDER, new PropertiesReferenceProvider());
+    myReferenceTypeToProviderMap.put(PROPERTIES_FILE_KEY_PROVIDER, new PropertiesReferenceProvider());
 
     registerXmlAttributeValueReferenceProvider(
       new String[]{"class", "type"},
@@ -265,9 +272,9 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
             )
           ), 2
         )
-      ), getProviderByType(PROPERTY_FILE_KEY_PROVIDER)
+      ), getProviderByType(PROPERTIES_FILE_KEY_PROVIDER)
     );
-    
+
     registerXmlAttributeValueReferenceProvider(
       new String[]{"altKey","titleKey","pageKey","srcKey"},
       new ScopeFilter(
@@ -277,7 +284,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
             new ClassFilter(XmlTag.class)
           ), 2
         )
-      ), getProviderByType(PROPERTY_FILE_KEY_PROVIDER)
+      ), getProviderByType(PROPERTIES_FILE_KEY_PROVIDER)
     );
 
     registerXmlAttributeValueReferenceProvider(
@@ -292,7 +299,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
             )
           ), 2
         )
-      ), getProviderByType(PROPERTY_FILE_KEY_PROVIDER)
+      ), getProviderByType(PROPERTIES_FILE_KEY_PROVIDER)
     );
 
     registerXmlAttributeValueReferenceProvider(
@@ -359,23 +366,23 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
 
     registerReferenceProvider(new TokenTypeFilter(XmlTokenType.XML_DATA_CHARACTERS), XmlToken.class,
                               classListProvider);
-    
+
     registerReferenceProvider(
       new ScopeFilter(
         new AndFilter(
           new TextFilter(
             new String[] {
-              "function-class", "tag-class", "tei-class", "variable-class", "type", "path", 
+              "function-class", "tag-class", "tei-class", "variable-class", "type", "path",
               "function-signature", "name", "name-given"
             }
           ),
           new NamespaceFilter(MetaRegistry.TAGLIB_URIS)
         )
-      ), 
+      ),
       XmlTag.class,
       new TaglibReferenceProvider( getProviderByType(CLASS_REFERENCE_PROVIDER) )
     );
-    
+
     final DtdReferencesProvider dtdReferencesProvider = new DtdReferencesProvider();
     //registerReferenceProvider(null, XmlEntityDecl.class,dtdReferencesProvider);
     registerReferenceProvider(null, XmlEntityRef.class,dtdReferencesProvider);
@@ -383,9 +390,9 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
     registerReferenceProvider(null, XmlElementDecl.class,dtdReferencesProvider);
     registerReferenceProvider(null, XmlAttlistDecl.class,dtdReferencesProvider);
     registerReferenceProvider(null, XmlElementContentSpec.class,dtdReferencesProvider);
-    
+
     URIReferenceProvider uriProvider = new URIReferenceProvider();
-    
+
     registerTypeWithProvider(URI_PROVIDER,uriProvider);
     registerXmlAttributeValueReferenceProvider(
       null,
@@ -415,19 +422,19 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
       ),
       schemaReferencesProvider
     );
-    
+
     registerXmlAttributeValueReferenceProvider(
       new String[] {"xsi:type"},
       null,
       schemaReferencesProvider
     );
-    
+
     registerXmlAttributeValueReferenceProvider(
       new String[] {"xsi:noNamespaceSchemaLocation"},
       null,
       uriProvider
     );
-    
+
     registerXmlAttributeValueReferenceProvider(
       new String[] {"schemaLocation"},
       new ScopeFilter(
@@ -443,7 +450,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
       ),
       uriProvider
     );
-    
+
     registerXmlAttributeValueReferenceProvider(
       null,
       uriProvider.getNamespaceAttributeFilter(),
@@ -451,7 +458,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
     );
 
     final JspReferencesProvider jspReferencesProvider = new JspReferencesProvider();
-    
+
     registerXmlAttributeValueReferenceProvider(
       new String[] {"fragment","name","property","id","name-given"},
       new ScopeFilter(
@@ -460,8 +467,8 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
             new ClassFilter(XmlTag.class),
             new NamespaceFilter(
               new String[] {
-                XmlUtil.JSP_URI, 
-                XmlUtil.STRUTS_BEAN_URI, 
+                XmlUtil.JSP_URI,
+                XmlUtil.STRUTS_BEAN_URI,
                 XmlUtil.STRUTS_LOGIC_URI
               }
             )
@@ -470,7 +477,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
       ),
       jspReferencesProvider
     );
-    
+
     registerXmlAttributeValueReferenceProvider(
       new String[] {"var"},
       new ScopeFilter(
@@ -483,7 +490,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
       ),
       jspReferencesProvider
     );
-    
+
     registerXmlAttributeValueReferenceProvider(
       new String[] {"scope"},
       null,
@@ -518,7 +525,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
     myBindings.add(binding);
   }
 
-  public void registerXmlAttributeValueReferenceProvider(String[] attributeNames, ElementFilter elementFilter, PsiReferenceProvider provider) {
+  public void registerXmlAttributeValueReferenceProvider(@NonNls String[] attributeNames, ElementFilter elementFilter, PsiReferenceProvider provider) {
     XmlAttributeValueProviderBinding attributeValueProviderBinding = null;
     for(ProviderBinding binding:myBindings) {
       if (binding instanceof XmlAttributeValueProviderBinding) {

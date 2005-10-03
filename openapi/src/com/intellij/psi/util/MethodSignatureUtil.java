@@ -23,6 +23,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -35,7 +37,7 @@ public class MethodSignatureUtil {
 
   private static final Key<CachedValue<MethodSignatureToMethods>> METHOD_SIGNATURES_COLLECTION_KEY = Key.create("METHOD_SIGNATURES_COLLECTION");
 
-  public static MethodSignature createMethodSignature(String name,
+  public static MethodSignature createMethodSignature(@NonNls String name,
                                                       PsiParameterList parameterTypes,
                                                       PsiTypeParameterList typeParameterList,
                                                       PsiSubstitutor substitutor) {
@@ -44,7 +46,7 @@ public class MethodSignatureUtil {
     return new MethodSignatureHandMade(name, parameterTypes, typeParameterList, substitutor);
   }
 
-  public static MethodSignature createMethodSignature(String name,
+  public static MethodSignature createMethodSignature(@NonNls String name,
                                                       PsiType[] parameterTypes,
                                                       PsiTypeParameter[] typeParameterList,
                                                       PsiSubstitutor substitutor) {
@@ -70,8 +72,8 @@ public class MethodSignatureUtil {
   }
 
   private static boolean checkSignaturesEqualInner(final MethodSignature subSignature,
-                                                  final MethodSignature superSignature,
-                                                  PsiSubstitutor unifyingSubstitutor) {
+                                                   final MethodSignature superSignature,
+                                                   PsiSubstitutor unifyingSubstitutor) {
     if (unifyingSubstitutor == null) return false;
 
     final PsiType[] subParameterTypes = subSignature.getParameterTypes();
@@ -365,7 +367,7 @@ public class MethodSignatureUtil {
     }
   }
 
-  public static PsiMethod[] convertMethodSignaturesToMethods(List<MethodSignatureBackedByPsiMethod> sameNameMethodList) {
+  public static @NotNull PsiMethod[] convertMethodSignaturesToMethods(List<MethodSignatureBackedByPsiMethod> sameNameMethodList) {
     final PsiMethod[] methods = new PsiMethod[sameNameMethodList.size()];
     for (int i = 0; i < sameNameMethodList.size(); i++) {
       MethodSignatureBackedByPsiMethod methodBackedMethodSignature = sameNameMethodList.get(i);

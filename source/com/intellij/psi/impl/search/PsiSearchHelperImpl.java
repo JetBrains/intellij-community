@@ -441,7 +441,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
               if (expr instanceof PsiMethodCallExpression) {
                 PsiReferenceExpression refExpr = ((PsiMethodCallExpression)expr).getMethodExpression();
                 if (PsiSearchScopeUtil.isInScope(searchScope, refExpr)) {
-                  if (refExpr.getText().equals("this")) {
+                  if (refExpr.getText().equals(PsiKeyword.THIS)) {
                     PsiElement referencedElement = refExpr.resolve();
                     if (referencedElement instanceof PsiMethod) {
                       PsiMethod constructor1 = (PsiMethod)referencedElement;
@@ -482,7 +482,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                   if (expr instanceof PsiMethodCallExpression) {
                     PsiReferenceExpression refExpr = ((PsiMethodCallExpression)expr).getMethodExpression();
                     if (PsiSearchScopeUtil.isInScope(searchScope, refExpr)) {
-                      if (refExpr.getText().equals("super")) {
+                      if (refExpr.getText().equals(PsiKeyword.SUPER)) {
                         PsiElement referencedElement = refExpr.resolve();
                         if (referencedElement instanceof PsiMethod) {
                           PsiMethod constructor1 = (PsiMethod)referencedElement;
@@ -753,7 +753,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     if (progress != null) {
       progress.pushState();
       String className = aClass.getName();
-      progress.setText("Searching inheritors" + (className != null ? " of " + className : "") + "...");
+      progress.setText(className != null ?
+                       PsiBundle.message("psi.search.inheritors.of.class.progress", className) :
+                       PsiBundle.message("psi.search.inheritors.progress"));
     }
 
     ArrayList<PsiClass> processed = new ArrayList<PsiClass>();
@@ -1332,7 +1334,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
     if (progress != null) {
       progress.pushState();
-      progress.setText("Scanning files...");
+      progress.setText(PsiBundle.message("psi.scanning.files.progress"));
     }
     myManager.startBatchFilesProcessingMode();
 
@@ -1348,7 +1350,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       PsiFile[] files = fileSet.toArray(new PsiFile[fileSet.size()]);
 
       if (progress != null) {
-        progress.setText("Searching for " + searcher.getPattern() + "...");
+        progress.setText(PsiBundle.message("psi.search.for.word.progress", searcher.getPattern()));
       }
 
       for (int i = 0; i < files.length; i++) {
@@ -1442,7 +1444,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
     if (progress != null) {
       progress.pushState();
-      progress.setText("Analyzing usages in non-java files...");
+      progress.setText(PsiBundle.message("psi.search.in.non.java.files.progress"));
     }
 
     AllFilesLoop:

@@ -5,6 +5,9 @@ import junit.framework.TestSuite;
 
 import java.lang.reflect.Method;
 
+/**
+ * @noinspection HardCodedStringLiteral
+ */
 public class TestAllInPackage2 extends TestSuite {
 
   public TestAllInPackage2(final String packageName, String[] classNames) {

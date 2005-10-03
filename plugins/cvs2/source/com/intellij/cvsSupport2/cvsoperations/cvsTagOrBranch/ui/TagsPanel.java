@@ -13,6 +13,8 @@ import java.awt.event.MouseEvent;
 import java.util.Collection;
 import java.util.Iterator;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * author: lesya
  */
@@ -23,7 +25,7 @@ public class TagsPanel extends JPanel implements TableCellRenderer{
 
   private final JLabel myTextLabel = new JLabel();
 
-  private final JLabel myMoreLabel = new JLabel("<html><b>(...)</b></html>"){
+  private final JLabel myMoreLabel = new JLabel(MORE_LABEL_TEXT){
     private final Cursor myCursor = new Cursor(Cursor.HAND_CURSOR);
     public Cursor getCursor() {
       return myCursor;
@@ -33,6 +35,7 @@ public class TagsPanel extends JPanel implements TableCellRenderer{
   private Collection myTags;
   private final JList myList = new JList();
   private final Project myProject;
+  @NonNls private static final String MORE_LABEL_TEXT = "<html><b>(...)</b></html>";
 
 
   public TagsPanel(Project project) {
@@ -61,7 +64,7 @@ public class TagsPanel extends JPanel implements TableCellRenderer{
     Rectangle bounds = myMoreLabel.getBounds();
     Point location = new Point(bounds.x + 20, bounds.y);
     SwingUtilities.convertPointToScreen(location, this);
-    PeerFactory.getInstance().getUIHelper().showListPopup("Tags", myList, EmptyRunnable.getInstance(), myProject, location.x, location.y);
+    PeerFactory.getInstance().getUIHelper().showListPopup(com.intellij.CvsBundle.message("list.popup.text.tags"), myList, EmptyRunnable.getInstance(), myProject, location.x, location.y);
   }
 
   public void setTags(Collection tags) {

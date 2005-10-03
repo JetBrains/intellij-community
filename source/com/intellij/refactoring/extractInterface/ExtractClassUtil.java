@@ -7,6 +7,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.turnRefsToSuper.TurnRefsToSuperProcessor;
 import com.intellij.refactoring.ui.YesNoPreviewUsagesDialog;
@@ -24,20 +25,19 @@ public class ExtractClassUtil {
         final PsiElement interfaceElement = interfacePointer.getElement();
         if (classElement != null && classElement instanceof PsiClass && interfaceElement != null && interfaceElement instanceof PsiClass) {
           final PsiClass superClass = (PsiClass) interfaceElement;
-          String interfaceName = superClass.getName();
+          String superClassName = superClass.getName();
           String className = ((PsiClass) classElement).getName();
-          String message = (superClass.isInterface() ? "Interface " : "Class ") +
-                  interfaceName + " has been successfully created.\n" +
-                  "At this stage, " + ApplicationNamesInfo.getInstance().getProductName() +
-                  " can analyze usages of " + className + "\nand replace them with usages of the " +
-                  (superClass.isInterface() ? "interface " : "superclass ") +
-                  "where possible.\n" +
-                  "Do you want to proceed?";
+          String createdString = superClass.isInterface() ?
+                                 RefactoringBundle.message("interface.has.been.successfully.created", superClassName) :
+                                 RefactoringBundle.message("class.has.been.successfully.created", superClassName);
+          String message = createdString + "\n" +
+                           RefactoringBundle.message("use.super.references.prompt",
+                             ApplicationNamesInfo.getInstance().getProductName(), className, superClassName);
           YesNoPreviewUsagesDialog dialog = new YesNoPreviewUsagesDialog(
-                  "Analyze and Replace Usages",
-                  message,
-                  RefactoringSettings.getInstance().EXTRACT_INTERFACE_PREVIEW_USAGES,
-                  /*HelpID.TURN_REFS_TO_SUPER*/null, project);
+            RefactoringBundle.message("analyze.and.replace.usages"),
+            message,
+            RefactoringSettings.getInstance().EXTRACT_INTERFACE_PREVIEW_USAGES,
+            /*HelpID.TURN_REFS_TO_SUPER*/null, project);
           dialog.show();
           if (dialog.isOK()) {
             final boolean isPreviewUsages = dialog.isPreviewUsages();

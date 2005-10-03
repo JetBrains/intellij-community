@@ -3,6 +3,7 @@ package com.intellij.lang.properties.editor;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.lang.properties.structureView.GroupByWordPrefixes;
+import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -84,7 +85,7 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
 
     public final JComponent createCustomComponent(Presentation presentation) {
       myPanel = new JPanel(new GridBagLayout());
-      myPanel.add(new JLabel("Group by:"),
+      myPanel.add(new JLabel(PropertiesBundle.message("properties.structure.view.group.by.label")),
                   new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.BOTH,
                                          new Insets(0, 5, 0, 0), 0, 0));
       myPanel.add(super.createCustomComponent(presentation),
@@ -97,7 +98,7 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
       private final String myActionSeparator;
 
       public SelectSeparatorAction(String separator, final String presentableText) {
-        super(separator == null ? "other..." : presentableText);
+        super(separator == null ? PropertiesBundle.message("select.separator.action.with.empty.separator.name") : presentableText);
         myActionSeparator = separator;
       }
 
@@ -106,7 +107,8 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
         if (myActionSeparator == null) {
           String[] strings = myPredefindedSeparators.keySet().toArray(new String[myPredefindedSeparators.size()]);
           String current = getCurrentSeparator();
-          separator = Messages.showEditableChooseDialog("Select separator", "Property Keys Separator", Messages.getQuestionIcon(),
+          separator = Messages.showEditableChooseDialog(PropertiesBundle.message("select.property.separator.dialog.text"),
+                                                        PropertiesBundle.message("select.property.separator.dialog.title"), Messages.getQuestionIcon(),
                                                         strings, current, null);
           if (separator == null) {
             return;

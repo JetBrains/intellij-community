@@ -10,11 +10,15 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.javadoc.MethodJavaDocHelper;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.text.MessageFormat;
+
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author ven
@@ -103,7 +107,7 @@ public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<P
   }
 
   private void addAssignmentToField(final String parameterName, final PsiMethod constructor) {
-    String fieldName = convertToFieldName(parameterName);
+    @NonNls String fieldName = convertToFieldName(parameterName);
     final PsiManager manager = PsiManager.getInstance(myProject);
     PsiElementFactory factory = manager.getElementFactory();
     final PsiCodeBlock body = constructor.getBody();
@@ -218,7 +222,7 @@ public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<P
 
     if (instanceRef == null || instanceRef instanceof PsiSuperExpression) {
       final PsiClass thisClass = RefactoringUtil.getThisClass(element);
-      String thisText;
+      @NonNls String thisText;
       if (thisClass.getManager().areElementsEquivalent(thisClass, myMember.getContainingClass())) {
         thisText = "this";
       }
@@ -296,8 +300,8 @@ public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<P
       final String fieldName = convertToFieldName(mySettings.getClassParameterName());
       final PsiField existing = myMember.findFieldByName(fieldName, false);
       if (existing != null) {
-        String message = "There is already a " + ConflictsUtil.getDescription(existing, false)
-                               + " in " + ConflictsUtil.getDescription(myMember, false);
+        String message = RefactoringBundle.message("there.is.already.a.0.in.1", ConflictsUtil.getDescription(existing, false),
+                                              ConflictsUtil.getDescription(myMember, false));
               conflicts.add(message);
       }
     }
@@ -309,8 +313,8 @@ public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<P
         final PsiField existing = myMember.findFieldByName(fieldName, false);
 
         if (existing != null) {
-          String message = "There is already a " + ConflictsUtil.getDescription(existing, false)
-                           + " in " + ConflictsUtil.getDescription(myMember, false);
+          String message = RefactoringBundle.message("there.is.already.a.0.in.1", ConflictsUtil.getDescription(existing, false),
+                                                ConflictsUtil.getDescription(myMember, false));
           conflicts.add(message);
         }
       }

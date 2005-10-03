@@ -8,6 +8,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.uiDesigner.UIDesignerBundle;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
@@ -100,7 +101,9 @@ final class BindToExistingBeanStep extends StepAdapter{
     private final String[] myColumnNames;
 
     public MyTableModel() {
-      myColumnNames = new String[]{"Form Field", "Bean Property"};
+      myColumnNames = new String[]{
+        UIDesignerBundle.message("column.form.field"),
+        UIDesignerBundle.message("column.bean.property")};
     }
 
     public int getColumnCount() {
@@ -127,6 +130,7 @@ final class BindToExistingBeanStep extends StepAdapter{
         return myData.myBindings[row].myBeanProperty;
       }
       else{
+        //noinspection HardCodedStringLiteral
         throw new IllegalArgumentException("unknown column: " + column);
       }
     }
@@ -147,6 +151,7 @@ final class BindToExistingBeanStep extends StepAdapter{
       myCbx = new ComboBox();
       myCbx.setEditable(true);
       myCbx.setRenderer(new BeanPropertyListCellRenderer());
+      //noinspection HardCodedStringLiteral
       myCbx.putClientProperty("tableCellEditor", this);
 
       final JComponent editorComponent = (JComponent)myCbx.getEditor().getEditorComponent();
@@ -160,6 +165,7 @@ final class BindToExistingBeanStep extends StepAdapter{
      * and vice versa.
      */
     private boolean canConvert(final String type1, final String type2){
+      //noinspection HardCodedStringLiteral
       if("boolean".equals(type1) || "boolean".equals(type2)){
         return type1.equals(type2);
       }
@@ -197,6 +203,7 @@ final class BindToExistingBeanStep extends StepAdapter{
           // There are two possible types: boolean and java.lang.String
           final String typeName = returnType.getCanonicalText();
           LOG.assertTrue(typeName != null);
+          //noinspection HardCodedStringLiteral
           if(!"boolean".equals(typeName) && !"java.lang.String".equals(typeName)){
             continue;
           }
@@ -262,6 +269,7 @@ final class BindToExistingBeanStep extends StepAdapter{
           return new BeanProperty(fieldName, fieldType);
         }
         else{
+          //noinspection HardCodedStringLiteral
           throw new IllegalArgumentException("unknown selectedItem: " + selectedItem);
         }
       }

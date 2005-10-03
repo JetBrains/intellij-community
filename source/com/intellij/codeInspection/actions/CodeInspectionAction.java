@@ -4,6 +4,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.BaseAnalysisAction;
 import com.intellij.analysis.BaseAnalysisActionDialog;
 import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionProfileManager;
@@ -12,6 +13,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.ui.ComboboxWithBrowseButton;
+import com.intellij.CommonBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -20,7 +22,7 @@ import java.awt.event.ActionListener;
 
 public class CodeInspectionAction extends BaseAnalysisAction {
   public CodeInspectionAction() {
-    super("Inspection", "Inspect", "Inspection");
+    super(InspectionsBundle.message("inspection.action.title"), InspectionsBundle.message("inspection.action.noun"));
   }
 
   protected void analyze(Project project, AnalysisScope scope) {
@@ -34,7 +36,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     final InspectionProfileManager inspectionManager = InspectionProfileManager.getInstance();
     final InspectionManagerEx manager = (InspectionManagerEx)InspectionManager.getInstance(project);
     LabeledComponent component = new LabeledComponent();
-    component.setText("&Inspection Profile:");
+    component.setText(InspectionsBundle.message("inspection.action.profile.label"));
     component.setLabelLocation(BorderLayout.WEST);
     ComboboxWithBrowseButton comboboxWithBrowseButton = new ComboboxWithBrowseButton();
     component.setComponent(comboboxWithBrowseButton);
@@ -45,7 +47,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
         InspectCodePanel inspectCodeDialog = new InspectCodePanel(manager, null, (String)profiles.getSelectedItem()){
           protected void init() {
             super.init();
-            setOKButtonText("OK");
+            setOKButtonText(CommonBundle.getOkButtonText());
           }
         };
         inspectCodeDialog.show();

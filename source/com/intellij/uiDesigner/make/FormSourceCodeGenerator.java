@@ -12,10 +12,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.uiDesigner.ErrorAnalyzer;
-import com.intellij.uiDesigner.ErrorInfo;
-import com.intellij.uiDesigner.FormEditingUtil;
-import com.intellij.uiDesigner.PsiPropertiesProvider;
+import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.compiler.AlienFormFileException;
 import com.intellij.uiDesigner.compiler.ClassToBindNotFoundException;
 import com.intellij.uiDesigner.compiler.CodeGenerationException;
@@ -34,6 +31,9 @@ import java.awt.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.*;
+import java.text.MessageFormat;
+
+import org.jetbrains.annotations.NonNls;
 
 public final class FormSourceCodeGenerator {
   private StringBuffer myBuffer;
@@ -46,6 +46,7 @@ public final class FormSourceCodeGenerator {
 
   public FormSourceCodeGenerator(final Project project){
     if (project == null){
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("project cannot be null");
     }
     myProject = project;
@@ -70,7 +71,7 @@ public final class FormSourceCodeGenerator {
       return;
     }
     catch (Exception e) {
-      myErrors.add("Cannot process form file. Reason: " + e);
+      myErrors.add(UIDesignerBundle.message("error.cannot.process.form.file", e));
       return;
     }
 
@@ -78,7 +79,7 @@ public final class FormSourceCodeGenerator {
       // form skipped - no class to bind
       return;
     }
-      
+
     ErrorAnalyzer.analyzeErrors(module, formFile, null, rootContainer);
     FormEditingUtil.iterate(
       rootContainer,
@@ -91,8 +92,8 @@ public final class FormSourceCodeGenerator {
           return true;
         }
       }
-    );    
-    
+    );
+
     if (myErrors.size() != 0) {
       return;
     }
@@ -116,10 +117,11 @@ public final class FormSourceCodeGenerator {
     return myErrors;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private void _generate(final LwRootContainer rootContainer, final Module module) throws CodeGenerationException, IncorrectOperationException{
     myBuffer = new StringBuffer();
     myIsFirstParameterStack = new Stack<Boolean>();
-    
+
     final HashMap<LwComponent,String> component2variable = new HashMap<LwComponent,String>();
     final TObjectIntHashMap<String> class2variableIndex = new TObjectIntHashMap<String>();
 
@@ -142,7 +144,7 @@ public final class FormSourceCodeGenerator {
     if (aClass == null) {
       throw new ClassToBindNotFoundException("Class to bind not found: " + rootContainer.getClassToBind());
     }
-    
+
     cleanup(aClass);
 
     // [anton] the comments are written according to the SCR 26896  
@@ -159,8 +161,8 @@ public final class FormSourceCodeGenerator {
       " * DO NOT edit this method OR call it in your code!\t" +
       " */\n" +
       "private void " + METHOD_NAME + "()\n" +
-      "{\n" + 
-      methodText + 
+      "{\n" +
+      methodText +
       "}\n",
       null
     );
@@ -174,9 +176,10 @@ public final class FormSourceCodeGenerator {
     codeStyleManager.shortenClassReferences(initializer);
     codeStyleManager.reformat(initializer);
   }
-  
+
+  @NonNls
   public final static String METHOD_NAME = "$$$setupUI$$$";
-  
+
   public static void cleanup(final PsiClass aClass) throws IncorrectOperationException{
     final PsiMethod[] methods = aClass.findMethodsByName(METHOD_NAME, false);
     for (int i = 0; i < methods.length; i++) {
@@ -185,16 +188,16 @@ public final class FormSourceCodeGenerator {
       final PsiClassInitializer[] initializers = aClass.getInitializers();
       for (int j = 0; j < initializers.length; j++) {
         final PsiClassInitializer initializer = initializers[j];
-        
+
         if (containsMethodIdentifier(initializer, method)) {
           initializer.delete();
         }
       }
-      
+
       method.delete();
     }
   }
-  
+
   private static boolean containsMethodIdentifier(final PsiElement element, final PsiMethod setupMethod) {
     if (element instanceof PsiMethodCallExpression) {
       final PsiMethod psiMethod = ((PsiMethodCallExpression)element).resolveMethod();
@@ -210,8 +213,8 @@ public final class FormSourceCodeGenerator {
     }
     return false;
   }
-  
-  
+
+
   private static boolean containsNotEmptyPanelsWithXYLayout(final LwComponent component) {
     if (!(component instanceof LwContainer)) {
       return false;
@@ -246,6 +249,7 @@ public final class FormSourceCodeGenerator {
       myBuffer.append(binding);
     }
     else {
+      //noinspection HardCodedStringLiteral
       myBuffer.append("final ");
       myBuffer.append(component.getComponentClassName());
       myBuffer.append(" ");
@@ -270,6 +274,7 @@ public final class FormSourceCodeGenerator {
 
       if (container.isXY()) {
         if (container.getComponentCount() != 0) {
+          //noinspection HardCodedStringLiteral
           throw new IllegalStateException("only empty xys are accepted");
         }
         // no layout needed
@@ -277,9 +282,9 @@ public final class FormSourceCodeGenerator {
       else {
         if (container.isGrid()) {
           final GridLayoutManager layout = (GridLayoutManager)container.getLayout();
-          
+
           startMethodCall(variable, "setLayout");
-          
+
           startConstructor(GridLayoutManager.class.getName());
 
           push(layout.getRowCount());
@@ -297,18 +302,20 @@ public final class FormSourceCodeGenerator {
           }
 
           endConstructor(); // GridLayoutManager
-          
+
           endMethod();
         }
         else if (container.isXY()) {
+          //noinspection HardCodedStringLiteral
           throw new IllegalArgumentException("XY is not supported");
         }
         else {
+          //noinspection HardCodedStringLiteral
           throw new IllegalArgumentException("unknown layout: " + container.getLayout());
         }
       }
     }
-    
+
     // introspected properties
     final LwIntrospectedProperty[] introspectedProperties = component.getAssignedIntrospectedProperties();
 
@@ -325,6 +332,7 @@ public final class FormSourceCodeGenerator {
       Object value = component.getPropertyValue(property);
 
       final String componentClass = component.getComponentClassName();
+      //noinspection HardCodedStringLiteral
       final boolean isTextWithMnemonicProperty =
         "text".equals(property.getName()) &&
         (isAssignableFrom(AbstractButton.class.getName(), componentClass, globalSearchScope) ||
@@ -386,8 +394,9 @@ public final class FormSourceCodeGenerator {
         push((String)value);
       }
       else {
+        //noinspection HardCodedStringLiteral
         throw new RuntimeException("unexpected property class: " + propertyClass);
-      }                                                            
+      }
 
       endMethod();
 
@@ -400,7 +409,7 @@ public final class FormSourceCodeGenerator {
       if (textWithMnemonic.myMnemonicIndex == -1) {
         continue;
       }
-      
+
       if (isAssignableFrom(AbstractButton.class.getName(), componentClass, globalSearchScope)) {
         startMethodCall(variable, "setMnemonic");
         push(textWithMnemonic.getMnemonicChar());
@@ -415,7 +424,7 @@ public final class FormSourceCodeGenerator {
         startMethodCall(variable, "setDisplayedMnemonic");
         push(textWithMnemonic.getMnemonicChar());
         endMethod();
-        
+
         startStaticMethodCall(SupportCode.class, "setDisplayedMnemonicIndex");
         pushVar(variable);
         push(textWithMnemonic.myMnemonicIndex);
@@ -434,6 +443,7 @@ public final class FormSourceCodeGenerator {
       else if (parent instanceof LwTabbedPane) {
         final LwTabbedPane.Constraints tabConstraints = (LwTabbedPane.Constraints)component.getCustomLayoutConstraints();
         if (tabConstraints == null){
+          //noinspection HardCodedStringLiteral
           throw new IllegalArgumentException("tab constraints cannot be null: " + component.getId());
         }
 
@@ -443,9 +453,10 @@ public final class FormSourceCodeGenerator {
         endMethod();
       }
       else if (parent instanceof LwSplitPane) {
+        //noinspection HardCodedStringLiteral
         final String methodName =
           LwSplitPane.POSITION_LEFT.equals(component.getCustomLayoutConstraints()) ?
-          "setLeftComponent" : 
+          "setLeftComponent" :
           "setRightComponent";
 
         startMethodCall(getVariable(parent, component2TempVariable, class2variableIndex), methodName);
@@ -473,18 +484,18 @@ public final class FormSourceCodeGenerator {
       if (!borderNone || borderTitle != null) {
         startMethodCall(variable, "setBorder");
 
-        
+
         startStaticMethodCall(BorderFactory.class, "createTitledBorder");
 
         if (!borderNone) {
           startStaticMethodCall(BorderFactory.class, borderFactoryMethodName);
           endMethod();
         }
-        
+
         push(borderTitle);
 
         endMethod(); // createTitledBorder
-        
+
         endMethod(); // setBorder
       }
 
@@ -537,7 +548,9 @@ public final class FormSourceCodeGenerator {
     final String className = component.getComponentClassName();
 
     final String shortName;
+    //noinspection HardCodedStringLiteral
     if (className.startsWith("javax.swing.J")) {
+      //noinspection HardCodedStringLiteral
       shortName =  className.substring("javax.swing.J".length());
     }
     else {
@@ -582,6 +595,7 @@ public final class FormSourceCodeGenerator {
   private void newDimensionOrNull(final Dimension dimension) {
     if (dimension.width == -1 && dimension.height == -1) {
       checkParameter();
+      //noinspection HardCodedStringLiteral
       myBuffer.append("null");
     }
     else {
@@ -604,7 +618,7 @@ public final class FormSourceCodeGenerator {
     push(insets.right);
     endConstructor();
   }
-  
+
   private void newRectangle(final Rectangle rectangle){
     startConstructor(Insets.class.getName());
     push(rectangle.x);
@@ -613,54 +627,55 @@ public final class FormSourceCodeGenerator {
     push(rectangle.height);
     endConstructor();
   }
-  
-  
-  private void startMethodCall(final String variable, final String methodName) {
+
+
+  private void startMethodCall(final String variable, @NonNls final String methodName) {
     checkParameter();
 
     appendVarName(variable);
     myBuffer.append('.');
     myBuffer.append(methodName);
     myBuffer.append('(');
-    
+
     myIsFirstParameterStack.push(Boolean.TRUE);
   }
 
-  private void startStaticMethodCall(final Class aClass, final String methodName) {
+  private void startStaticMethodCall(final Class aClass, @NonNls final String methodName) {
     checkParameter();
 
     myBuffer.append(aClass.getName());
     myBuffer.append('.');
     myBuffer.append(methodName);
     myBuffer.append('(');
-    
+
     myIsFirstParameterStack.push(Boolean.TRUE);
   }
-  
+
   private void endMethod() {
     myBuffer.append(')');
-    
+
     myIsFirstParameterStack.pop();
-    
+
     if (myIsFirstParameterStack.empty()) {
       myBuffer.append(";\n");
     }
   }
-  
+
   private void startConstructor(final String className) {
     checkParameter();
-    
+
+    //noinspection HardCodedStringLiteral
     myBuffer.append("new ");
     myBuffer.append(className);
     myBuffer.append('(');
 
     myIsFirstParameterStack.push(Boolean.TRUE);
   }
-  
+
   private void endConstructor() {
     endMethod();
   }
-  
+
   private void push(final int value) {
     checkParameter();
     myBuffer.append(value);
@@ -677,6 +692,7 @@ public final class FormSourceCodeGenerator {
     }
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private void pushSizePolicy(final int value) {
     final String className = GridConstraints.class.getName();
 
@@ -732,6 +748,7 @@ public final class FormSourceCodeGenerator {
   private void push(final String value) {
     checkParameter();
     if (value == null) {
+      //noinspection HardCodedStringLiteral
       myBuffer.append("null");
     }
     else {
@@ -749,7 +766,7 @@ public final class FormSourceCodeGenerator {
   private void appendVarName(final String variable) {
     myBuffer.append(variable);
   }
-  
+
   private void checkParameter() {
     if (!myIsFirstParameterStack.empty()) {
       final Boolean b = myIsFirstParameterStack.pop();
@@ -760,7 +777,7 @@ public final class FormSourceCodeGenerator {
     }
   }
 
-  private static TIntObjectHashMap fillMap(final Class aClass, final String prefix) {
+  private static TIntObjectHashMap fillMap(final Class aClass, @NonNls final String prefix) {
     final TIntObjectHashMap map = new TIntObjectHashMap();
 
     final Field[] fields = aClass.getFields();

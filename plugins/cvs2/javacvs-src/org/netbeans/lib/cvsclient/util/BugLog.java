@@ -12,58 +12,60 @@
  */
 package org.netbeans.lib.cvsclient.util;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author  Thomas Singer
  */
 public class BugLog {
 
-	// Static =================================================================
+        // Static =================================================================
 
-	private static BugLog instance;
+        private static BugLog instance;
 
-	public synchronized static BugLog getInstance() {
-		if (instance == null) {
-			instance = new BugLog();
-		}
-		return instance;
-	}
+        public synchronized static BugLog getInstance() {
+                if (instance == null) {
+                        instance = new BugLog();
+                }
+                return instance;
+        }
 
-	public synchronized static void setInstance(BugLog instance) {
-		BugLog.instance = instance;
-	}
+        public synchronized static void setInstance(BugLog instance) {
+                BugLog.instance = instance;
+        }
 
-	// Setup ==================================================================
+        // Setup ==================================================================
 
-	public BugLog() {
-	}
+        public BugLog() {
+        }
 
-	// Actions ================================================================
+        // Actions ================================================================
 
-	public void showException(Exception ex) {
-		ex.printStackTrace();
-	}
+        public void showException(Exception ex) {
+                ex.printStackTrace();
+        }
 
-	public void assertTrue(boolean value, String message) {
-		if (value) {
-			return;
-		}
+        public void assertTrue(boolean value,@NonNls  String message) {
+                if (value) {
+                        return;
+                }
 
-		throw new BugException(message);
-	}
+                throw new BugException(message);
+        }
 
-	public void assertNotNull(Object obj) {
-		if (obj != null) {
-			return;
-		}
+        public void assertNotNull(Object obj) {
+                if (obj != null) {
+                        return;
+                }
 
-		throw new BugException("Value must not be null!");
-	}
+                throw new BugException("Value must not be null!");
+        }
 
-	// Inner classes ==========================================================
+        // Inner classes ==========================================================
 
-	private static final class BugException extends RuntimeException {
-		private BugException(String message) {
-			super(message);
-		}
-	}
+        private static final class BugException extends RuntimeException {
+                private BugException(@NonNls String message) {
+                        super(message);
+                }
+        }
 }

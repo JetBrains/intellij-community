@@ -34,6 +34,7 @@ package com.intellij.refactoring.ui;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.refactoring.RefactoringBundle;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -132,7 +133,7 @@ public abstract class RefactoringDialog extends DialogWrapper {
 
   private class RefactorAction extends AbstractAction {
     public RefactorAction() {
-      putValue(Action.NAME, "&Refactor");
+      putValue(Action.NAME, RefactoringBundle.message("refactor.button"));
       putValue(DEFAULT_ACTION, Boolean.TRUE);
     }
 
@@ -143,7 +144,7 @@ public abstract class RefactoringDialog extends DialogWrapper {
 
   private class PreviewAction extends AbstractAction {
     public PreviewAction() {
-      putValue(Action.NAME, "&Preview");
+      putValue(Action.NAME, RefactoringBundle.message("preview.button"));
     }
 
     public void actionPerformed(ActionEvent e) {

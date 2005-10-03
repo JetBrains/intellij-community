@@ -2,12 +2,15 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.j2ee.j2eeDom.web.WebModuleProperties;
 import com.intellij.j2ee.module.view.web.WebUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.jsp.JspManager;
 import com.intellij.psi.impl.source.resolve.reference.ProcessorRegistry;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
@@ -64,11 +67,11 @@ public class FileReferenceSet {
     myElement = element;
   }
 
-  boolean isCaseSensitive() {
+  public boolean isCaseSensitive() {
     return myCaseSensitive;
   }
 
-  void setCaseSensitive(final boolean caseSensitive) {
+  public void setCaseSensitive(final boolean caseSensitive) {
     myCaseSensitive = caseSensitive;
   }
 
@@ -107,7 +110,7 @@ public class FileReferenceSet {
     myReferences = references;
   }
 
-  FileReference getReference(int index){
+  public FileReference getReference(int index){
     return myReferences[index];
   }
 

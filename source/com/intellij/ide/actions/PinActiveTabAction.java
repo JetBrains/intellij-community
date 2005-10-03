@@ -10,6 +10,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerUtil;
+import com.intellij.ide.IdeBundle;
 
 public class PinActiveTabAction extends ToggleAction {
   /**
@@ -82,7 +83,7 @@ public class PinActiveTabAction extends ToggleAction {
       }
     }
     Content content = getContent(context); // at this point content cannot be null
-    content.setPinned(state);    
+    content.setPinned(state);
   }
 
   private EditorWindow getEditorWindow(DataContext context) {
@@ -101,9 +102,9 @@ public class PinActiveTabAction extends ToggleAction {
     DataContext context = e.getDataContext();
     presentation.setEnabled(getFile(context) != null || getContent(context) != null);
     if (ActionPlaces.EDITOR_TAB_POPUP.equals(e.getPlace())) {
-      presentation.setText(isSelected(e) ? "Unp_in Tab" : "P_in Tab");
+      presentation.setText(isSelected(e) ? IdeBundle.message("action.unpin.tab") : IdeBundle.message("action.pin.tab"));
     } else {
-      presentation.setText(isSelected(e) ? "Unp_in Active Tab" : "P_in Active Tab");
+      presentation.setText(isSelected(e) ? IdeBundle.message("action.unpin.active.tab") : IdeBundle.message("action.pin.active.tab"));
     }
   }
 }

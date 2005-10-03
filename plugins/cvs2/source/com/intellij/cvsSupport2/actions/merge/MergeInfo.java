@@ -17,10 +17,13 @@ import com.intellij.openapi.ui.SelectFromListDialog;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.merge.MergeData;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.CvsBundle;
 
 import javax.swing.*;
 import java.io.IOException;
 import java.util.ArrayList;
+
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by IntelliJ IDEA.
@@ -68,6 +71,7 @@ class MergeInfo implements MergeDataProvider{
     return myResultRevision;
   }
 
+  @NotNull
   public MergeData createData() throws VcsException {
     return loadRevisionsInternal(getOriginalRevision(),
                                  getLastRevision());
@@ -76,10 +80,13 @@ class MergeInfo implements MergeDataProvider{
   protected VirtualFile[] getStoredFiles() {
     ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
     String prefix = ".#" + myFile.getName() + ".";
-    VirtualFile[] children = myFile.getParent().getChildren();
-    if (children != null) {
-      for (VirtualFile child : children) {
-        if (child.getName().startsWith(prefix)) result.add(child);
+    final VirtualFile parent = myFile.getParent();
+    if (parent != null) {
+      VirtualFile[] children = parent.getChildren();
+      if (children != null) {
+        for (VirtualFile child : children) {
+          if (child.getName().startsWith(prefix)) result.add(child);
+        }
       }
     }
 
@@ -99,16 +106,16 @@ class MergeInfo implements MergeDataProvider{
         VirtualFile[] storedFiles = getStoredFiles();
 
         if (storedFiles.length == 0) {
-          Messages.showMessageDialog("Cannot find any stored copy of file " + myFile.getName(),
-                                     "Merge",
+          Messages.showMessageDialog(CvsBundle.message("message.error.cannot.find.storing.copy", myFile.getName()),
+                                     CvsBundle.getMergeOperationName(),
                                      Messages.getErrorIcon());
           return null;
         }
 
         if (storedFiles.length == 1) {
           VirtualFile storedCopy = storedFiles[0];
-          if (Messages.showYesNoDialog("Use stored copy " + CvsVfsUtil.getPathFor(storedCopy) + " to merge with?",
-                                       "Merge", Messages.getQuestionIcon()) != DialogWrapper.OK_EXIT_CODE) {
+          if (Messages.showYesNoDialog(CvsBundle.message("message.confirmation.use.stored.copy.for.merge", CvsVfsUtil.getPathFor(storedCopy)),
+                                       CvsBundle.getMergeOperationName(), Messages.getQuestionIcon()) != DialogWrapper.OK_EXIT_CODE) {
             return null;
           }
           return storedCopy.contentsToByteArray();
@@ -127,7 +134,7 @@ class MergeInfo implements MergeDataProvider{
 
 
           CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
-          executor.performActionSync(new CommandCvsHandler("Merge", operation),
+          executor.performActionSync(new CommandCvsHandler(CvsBundle.getMergeOperationName(), operation),
                                      new CvsOperationExecutorCallback() {
                                        public void executionFinished(boolean successfully) {
                                        }
@@ -157,7 +164,7 @@ class MergeInfo implements MergeDataProvider{
         return ((VirtualFile)obj).getName();
       }
     },
-                                                                         "Choose stored version",
+                                                                         CvsBundle.message("message.choose.stored.file.version.title"),
                                                                          ListSelectionModel.SINGLE_SELECTION);
     selectFromListDialog.show();
 
@@ -169,6 +176,7 @@ class MergeInfo implements MergeDataProvider{
   }
 
 
+  @NotNull
   private MergeData loadRevisionsInternal(final String firstRevision, final String secondRevision) throws VcsException {
     try {
       final GetFileContentOperation fileToMergeWithContentOperation = GetFileContentOperation.
@@ -183,7 +191,7 @@ class MergeInfo implements MergeDataProvider{
       compositeOperaton.addOperation(originalFileContentOperation);
 
       CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
-      executor.performActionSync(new CommandCvsHandler("Merge", compositeOperaton),
+      executor.performActionSync(new CommandCvsHandler(CvsBundle.getMergeOperationName(), compositeOperaton),
                                  new CvsOperationExecutorCallback() {
                                    public void executionFinished(boolean successfully) {
                                    }

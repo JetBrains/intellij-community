@@ -35,10 +35,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.diff.DiffManager;
-import com.intellij.openapi.diff.DiffRequestFactory;
-import com.intellij.openapi.diff.MergeRequest;
-import com.intellij.openapi.diff.ActionButtonPresentation;
+import com.intellij.openapi.diff.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -82,12 +79,13 @@ public class MergeFilesAction extends AnAction{
       diffData.setVersionTitles(new String[]{files[0].getPresentableUrl(),
                                              files[1].getPresentableUrl(),
                                              files[2].getPresentableUrl()});
-      diffData.setWindowTitle("Merge");
+      diffData.setWindowTitle(DiffBundle.message("merge.files.dialog.title"));
       diffData.setHelpId("cvs.merge");
       DiffManager.getInstance().getDiffTool().show(diffData);
     }
     catch (IOException e1) {
-      Messages.showErrorDialog("Cannot load file: " + e1.getLocalizedMessage(), "Merge");
+      Messages.showErrorDialog(DiffBundle.message("merge.dialog.cannot.load.file.error.message", e1.getLocalizedMessage()),
+                               DiffBundle.message("merge.files.dialog.title"));
     }
   }
   private String createValidContent(String str) {

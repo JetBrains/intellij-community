@@ -23,6 +23,7 @@ public final class MarginProperty extends AbstractInsetsProperty{
 
   public Object getValue(final RadComponent component){
     if(!(component instanceof RadContainer)){
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("component must be an instance of RadContainer: "+component);
     }
     final RadContainer container=(RadContainer)component;
@@ -33,10 +34,12 @@ public final class MarginProperty extends AbstractInsetsProperty{
 
   protected void setValueImpl(final RadComponent component,final Object value) throws Exception{
     if(!(component instanceof RadContainer)){
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("component must be an instance of RadContainer: "+component);
     }
     final RadContainer container=(RadContainer)component;
     if(value==null){
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("value cannot be null");
     }
 

@@ -1,6 +1,7 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.Patches;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.ide.actions.HideAllToolWindowsAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.customization.CustomizableActionsSchemas;
@@ -20,6 +21,8 @@ import javax.swing.plaf.basic.BasicTabbedPaneUI;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Anton Katilin
@@ -77,7 +80,7 @@ final class EditorTabbedContainer extends TabbedPaneWrapper {
             continue;
           }
           JPanel panel = (JPanel)((JViewport)c).getView();
-          panel.setBackground(UIManager.getColor("TabbedPane.background"));
+          panel.setBackground(UIUtil.getTabbedPaneBackground());
 
           for (MouseListener listener : panel.getListeners(MouseListener.class)) {
             panel.removeMouseListener(listener);
@@ -139,14 +142,14 @@ final class EditorTabbedContainer extends TabbedPaneWrapper {
         // have a special sense under Mac OS X. There is a special scroll button
         // in Aqua LAF which shows drop down list with opened tab. To make it
         // work we also have to specially hande clicks outsode the tab bounds.
-        
+
         if (MouseEvent.MOUSE_PRESSED == e.getID()) {
           // use index from mouse pressed event, cause when MOUSE_release event is dispatched, 
           // the tab may shift because the toolwindow at the left will hide, 
           // so the situation is: the mouse is pressed over one tab and released over another tab (or even outside the tab area)
           myLastClickedIndex = getTabIndexAt(e.getX(), e.getY());
         }
-        
+
         if (MouseEvent.MOUSE_RELEASED == e.getID()) {
           if (myLastClickedIndex != -1) {
             if (e.getClickCount() == 1 ) {
@@ -227,6 +230,8 @@ final class EditorTabbedContainer extends TabbedPaneWrapper {
   }
 
   private final class MyTabbedPaneHolder extends TabbedPaneWrapper.TabbedPaneHolder implements DataProvider {
+    @NonNls public static final String HELP_ID = "ideaInterface.editor";
+
     public Object getData(String dataId) {
       if (DataConstants.VIRTUAL_FILE.equals(dataId)) {
         return myWindow.getSelectedFile();
@@ -235,7 +240,7 @@ final class EditorTabbedContainer extends TabbedPaneWrapper {
         return myWindow;
       }
       if (DataConstants.HELP_ID.equals(dataId)) {
-        return "ideaInterface.editor";
+        return HELP_ID;
       }
       return null;
     }

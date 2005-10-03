@@ -90,6 +90,7 @@ public final class RadSplitPane extends RadContainer{
     try{
       final String position = (String)child.getCustomLayoutConstraints();
       if (!LwSplitPane.POSITION_LEFT.equals(position) && !LwSplitPane.POSITION_RIGHT.equals(position)) {
+        //noinspection HardCodedStringLiteral
         throw new IllegalStateException("invalid position: " + position);
       }
       writer.addAttribute("position", position);

@@ -1,23 +1,22 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.j2ee.ExternalResourceManager;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.filters.ElementFilter;
+import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.filters.ElementFilter;
-import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlNSDescriptor;
-
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -102,6 +101,7 @@ public class URIReferenceProvider implements PsiReferenceProvider {
     }
   }
   
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public PsiReference[] getReferencesByElement(PsiElement element) {
     final String text = element.getText();
     String s = StringUtil.stripQuotesAroundValue(text);

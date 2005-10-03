@@ -17,6 +17,7 @@ package com.intellij.openapi.actionSystem.ex;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.event.PopupMenuEvent;
@@ -124,13 +125,12 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       setToolTipText(tooltip.length() > 0 ? tooltip : null);
     }
 
-    @SuppressWarnings({"HardCodedStringLiteral"})
     public void updateUI() {
       super.updateUI();
-      if("Motif".equals(UIManager.getLookAndFeel().getID())){
+      if(UIUtil.isMotifLookAndFeel()){
         setBorder(BorderFactory.createEtchedBorder());
       }else{
-        setBorder(UIManager.getBorder("Button.border"));
+        setBorder(UIUtil.getButtonBorder());
       }
     }
 

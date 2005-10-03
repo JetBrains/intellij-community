@@ -10,6 +10,8 @@ import com.intellij.uiDesigner.propertyInspector.renderers.IntRenderer;
 
 import java.awt.*;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
@@ -18,7 +20,7 @@ public abstract class AbstractInsetsProperty extends Property{
   private final Property[] myChildren;
   private final InsetsPropertyRenderer myRenderer;
 
-  public AbstractInsetsProperty(final String name){
+  public AbstractInsetsProperty(@NonNls final String name){
     super(null, name);
     myChildren=new Property[]{
       new MyTopProperty(this),

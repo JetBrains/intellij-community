@@ -5,6 +5,6 @@ package com.intellij.cvsSupport2.cvsBrowser;
  */
 public class LoginAbortedException extends RuntimeException{
   public LoginAbortedException() {
-    super("Cannot login to CVS");
+    super(com.intellij.CvsBundle.message("exception.text.cannot.login.to.cvs"));
   }
 }

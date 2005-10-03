@@ -12,6 +12,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.jetbrains.annotations.NonNls;
+
 public class ThreadGroupReferenceProxyImpl extends ObjectReferenceProxyImpl implements ThreadGroupReferenceProxy{
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.jdi.ThreadGroupReferenceProxyImpl");
   //caches
@@ -45,7 +47,7 @@ public class ThreadGroupReferenceProxyImpl extends ObjectReferenceProxyImpl impl
     return myParentThreadGroupProxy;
   }
 
-  public String toString() {
+  public @NonNls String toString() {
     return "ThreadGroupReferenceProxy: " + getThreadGroupReference().toString();
   }
 

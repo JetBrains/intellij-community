@@ -16,6 +16,7 @@
 package com.intellij.util.net;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.MnemonicHelper;
 
 import javax.swing.*;
 import java.awt.*;
@@ -46,8 +47,11 @@ public class IOExceptionDialog extends JDialog {
   public IOExceptionDialog(IOException e, String title, String errorText)  {
     super (JOptionPane.getRootFrame(), title, true);
 
-    getContentPane().add(mainPanel);
+    new MnemonicHelper().register(getContentPane());
     
+    getContentPane().add(mainPanel);
+
+    //noinspection HardCodedStringLiteral
     mainPanel.getActionMap().put(
       "close",
       new AbstractAction() {
@@ -57,7 +61,8 @@ public class IOExceptionDialog extends JDialog {
         }
       }
     );
-    
+
+    //noinspection HardCodedStringLiteral
     mainPanel.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(
       KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE,0),
       "close"
@@ -132,6 +137,7 @@ public class IOExceptionDialog extends JDialog {
     return ! dlg.cancelPressed;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static void main(String[] args) {
     IOExceptionDialog.showErrorDialog(new IOException("test"), "Test", "Something failed");
   }

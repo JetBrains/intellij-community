@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.impl.ui.KeyboardShortcutDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -27,6 +28,8 @@ import java.awt.event.KeyEvent;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * This class is automaton with finite number of state.
  *
@@ -34,6 +37,9 @@ import java.util.ArrayList;
  * @author Vladimir Kondratyev
  */
 public final class IdeKeyEventDispatcher {
+  @NonNls
+  private static final String GET_CACHED_STROKE_METHOD_NAME = "getCachedStroke";
+
   private static final int STATE_INIT = 0;
   private static final int STATE_WAIT_FOR_SECOND_KEYSTROKE = 1;
   private static final int STATE_SECOND_STROKE_IN_PROGRESS = 2;
@@ -150,14 +156,14 @@ public final class IdeKeyEventDispatcher {
    */
   private KeyStroke getKeyStrokeWithoutMouseModifiers(KeyStroke originalKeyStroke){
     int modifier=originalKeyStroke.getModifiers()&~InputEvent.BUTTON1_DOWN_MASK&~InputEvent.BUTTON1_MASK&
-      ~InputEvent.BUTTON2_DOWN_MASK&~InputEvent.BUTTON2_MASK&
-      ~InputEvent.BUTTON3_DOWN_MASK&~InputEvent.BUTTON3_MASK;
+                 ~InputEvent.BUTTON2_DOWN_MASK&~InputEvent.BUTTON2_MASK&
+                 ~InputEvent.BUTTON3_DOWN_MASK&~InputEvent.BUTTON3_MASK;
     try {
       Method[] methods=AWTKeyStroke.class.getDeclaredMethods();
       Method getCachedStrokeMethod=null;
       for(int i=0;i<methods.length;i++){
         Method method=methods[i];
-        if("getCachedStroke".equals(method.getName())){
+        if(GET_CACHED_STROKE_METHOD_NAME.equals(method.getName())){
           getCachedStrokeMethod=method;
           getCachedStrokeMethod.setAccessible(true);
           break;
@@ -261,7 +267,8 @@ public final class IdeKeyEventDispatcher {
 
       Project project = (Project)dataContext.getData(DataConstants.PROJECT);
       StringBuffer message = new StringBuffer();
-      message.append("Prefix Key Pressed. ");
+      message.append(KeyMapBundle.message("prefix.key.pressed.message"));
+      message.append(' ');
       for (int i = 0; i < secondKeyStorkes.size(); i++) {
         Pair<AnAction, KeyStroke> pair = secondKeyStorkes.get(i);
         if (i > 0) message.append(", ");

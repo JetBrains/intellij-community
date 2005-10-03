@@ -35,6 +35,7 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -93,7 +94,7 @@ public class PackageViewLibrariesNode extends ProjectViewNode<LibrariesElement>{
   }
 
   public void update(final PresentationData presentation) {
-    presentation.setPresentableText("Libraries");
+    presentation.setPresentableText(IdeBundle.message("node.projectview.libraries"));
     presentation.setIcons(Icons.LIBRARY_ICON);
   }
 

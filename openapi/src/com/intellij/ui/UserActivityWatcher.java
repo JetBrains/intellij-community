@@ -31,7 +31,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 
-public class UserActivityWatcher {
+public class UserActivityWatcher extends ComponentTreeWatcher {
   private boolean myIsModified = false;
   private ArrayList<UserActivityListener> myListeners = new ArrayList<UserActivityListener>();
 
@@ -40,7 +40,6 @@ public class UserActivityWatcher {
       fireUIChanged();
     }
   };
-  private final Class[] myControlsToIgnore;
   private TableModelListener myTableModelListener = new TableModelListener() {
     public void tableChanged(TableModelEvent e) {
       fireUIChanged();
@@ -86,18 +85,9 @@ public class UserActivityWatcher {
       fireUIChanged();
     }
   };
-  private final ContainerListener myContainerListener = new ContainerListener() {
-    public void componentAdded(ContainerEvent e) {
-      register(e.getChild());
-    }
-
-    public void componentRemoved(ContainerEvent e) {
-      unregister(e.getChild());
-    }
-  };
 
   public UserActivityWatcher(Class[] controlsToIgnore) {
-    myControlsToIgnore = controlsToIgnore;
+    super(controlsToIgnore);
   }
 
   public UserActivityWatcher() {
@@ -105,36 +95,12 @@ public class UserActivityWatcher {
 
   }
 
-  private boolean shouldBeIgnored(Object object) {
-    if (object instanceof CellRendererPane) return true;
-    if (object == null) {
-      return true;
-    }
-    for (int i = 0; i < myControlsToIgnore.length; i++) {
-      Class aClass = myControlsToIgnore[i];
-      if (aClass.isAssignableFrom(object.getClass())) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  public void register(Component parentComponent) {
-    if (shouldBeIgnored(parentComponent)) {
-      return;
-    }
+  protected void processComponent(final Component parentComponent) {
     if (parentComponent instanceof JTextComponent) {
       ((JTextComponent)parentComponent).getDocument().addDocumentListener(myDocumentListener);
     }
     else if (parentComponent instanceof ItemSelectable) {
       ((ItemSelectable)parentComponent).addItemListener(myItemListener);
-    }
-    else if (parentComponent instanceof Container) {
-      Container container = ((Container)parentComponent);
-      for (int i = 0; i < container.getComponentCount(); i++) {
-        register(container.getComponent(i));
-      }
-      container.addContainerListener(myContainerListener);
     }
 
     if (parentComponent instanceof JComboBox) {
@@ -155,19 +121,12 @@ public class UserActivityWatcher {
     }
   }
 
-  private void unregister(Component component) {
+  protected void unprocessComponent(final Component component) {
     if (component instanceof JTextComponent) {
       ((JTextComponent)component).getDocument().removeDocumentListener(myDocumentListener);
     }
     else if (component instanceof ItemSelectable) {
       ((ItemSelectable)component).removeItemListener(myItemListener);
-    }
-    else if (component instanceof Container) {
-      Container container = ((Container)component);
-      for (int i = 0; i < container.getComponentCount(); i++) {
-        unregister(container.getComponent(i));
-      }
-      container.removeContainerListener(myContainerListener);
     }
 
     if (component instanceof JTable) {

@@ -18,19 +18,21 @@ package com.intellij.openapi.ui;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.FocusWatcher;
+import com.intellij.ui.UIBundle;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author Vladimir Kondratyev
  */
 public class Splitter extends JPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.Splitter");
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public static final String PROP_PROPORTION = "proportion";
+  @NonNls public static final String PROP_PROPORTION = "proportion";
 
   private int myDividerWidth;
   /**
@@ -155,7 +157,7 @@ public class Splitter extends JPanel {
         final Dimension firstMinSize = myFirstComponent.getMinimumSize();
         final Dimension secondMinSize = mySecondComponent.getMinimumSize();
         return getOrientation() ? new Dimension(Math.max(firstMinSize.width, secondMinSize.width), firstMinSize.height + dividerWidth + secondMinSize.height) :
-                                  new Dimension(firstMinSize.width + dividerWidth + secondMinSize.width, Math.max(firstMinSize.height, secondMinSize.height));
+               new Dimension(firstMinSize.width + dividerWidth + secondMinSize.width, Math.max(firstMinSize.height, secondMinSize.height));
       }
 
       if (myFirstComponent != null && myFirstComponent.isVisible()) { // only first component is visible
@@ -407,7 +409,8 @@ public class Splitter extends JPanel {
           new GridBagConstraints(0, 0, 1, 1, 0, 0, isVerticalSplit ? GridBagConstraints.EAST : GridBagConstraints.NORTH, glueFill, new Insets(0, 0, 0, 0), 0, 0));
       JLabel splitDownlabel = new JLabel(IconLoader.getIcon(isVerticalSplit ? "/general/splitDown.png" : "/general/splitRight.png"));
       splitDownlabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-      splitDownlabel.setToolTipText(isVerticalSplit ? "Down" : "Right");
+      splitDownlabel.setToolTipText(isVerticalSplit ? UIBundle.message("splitter.down.tooltip.text") : UIBundle
+        .message("splitter.right.tooltip.text"));
       splitDownlabel.addMouseListener(new MouseAdapter() {
         public void mouseClicked(MouseEvent e) {
           setProportion(1.0f - getMinProportion(mySecondComponent));
@@ -422,7 +425,7 @@ public class Splitter extends JPanel {
           new GridBagConstraints(2 * xMask, 2 * yMask, 1, 1, 0, 0, GridBagConstraints.CENTER, glueFill, new Insets(0, 0, 0, 0), 0, 0));
       JLabel splitCenterlabel = new JLabel(IconLoader.getIcon(isVerticalSplit ? "/general/splitCenterV.png" : "/general/splitCenterH.png"));
       splitCenterlabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-      splitCenterlabel.setToolTipText("Center");
+      splitCenterlabel.setToolTipText(UIBundle.message("splitter.center.tooltip.text"));
       splitCenterlabel.addMouseListener(new MouseAdapter() {
         public void mouseClicked(MouseEvent e) {
           setProportion(.5f);
@@ -435,7 +438,8 @@ public class Splitter extends JPanel {
       //
       JLabel splitUpLabel = new JLabel(IconLoader.getIcon(isVerticalSplit ? "/general/splitUp.png" : "/general/splitLeft.png"));
       splitUpLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-      splitUpLabel.setToolTipText(isVerticalSplit ? "Up" : "Left");
+      splitUpLabel.setToolTipText(isVerticalSplit ? UIBundle.message("splitter.up.tooltip.text") : UIBundle
+        .message("splitter.left.tooltip.text"));
       splitUpLabel.addMouseListener(new MouseAdapter() {
         public void mouseClicked(MouseEvent e) {
           setProportion(getMinProportion(myFirstComponent));

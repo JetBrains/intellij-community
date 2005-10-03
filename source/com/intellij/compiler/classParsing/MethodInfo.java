@@ -14,6 +14,8 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import org.jetbrains.annotations.NonNls;
+
 public class MethodInfo extends MemberInfo {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.classParsing.MethodInfo");
 
@@ -172,7 +174,7 @@ public class MethodInfo extends MemberInfo {
     return (String[])list.toArray(new String[list.size()]);
   }
 
-  private String parseFieldType(String signature) {
+  private @NonNls String parseFieldType(@NonNls String signature) {
     if (signature.length() == 0) {
       return null;
     }

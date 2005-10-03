@@ -9,7 +9,6 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
-import com.intellij.debugger.jdi.ObjectReferenceCachingProxy;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
@@ -127,7 +126,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
           myIsDirty = (value == null) ? myValue != null : !value.equals(myValue);
         }
       }
-      myValue = (value instanceof ObjectReference)? ObjectReferenceCachingProxy.wrap((ObjectReference)value) : value;
+      myValue = (value instanceof ObjectReference)? (ObjectReference)value : value;
       myValueException = null;
     }
     catch (EvaluateException e) {
@@ -170,6 +169,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
       }
     }
     if(label == null) {
+      //noinspection HardCodedStringLiteral
       buf.append("null");
     }
     else {
@@ -284,6 +284,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     buf.append('{');
     buf.append(objRef.type().name()).append('@');
     if(ApplicationManager.getApplication().isUnitTestMode()) {
+      //noinspection HardCodedStringLiteral
       buf.append("uniqueID");
     }
     else {

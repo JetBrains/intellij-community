@@ -17,12 +17,13 @@ package com.intellij.psi.javadoc;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author mike
  */
 public interface JavadocTagInfo {
-  String getName();
+  @NonNls String getName();
   boolean isInline();
   boolean isValidInContext(PsiElement element);
 

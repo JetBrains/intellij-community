@@ -27,7 +27,7 @@ public class MethodSignatureBackedByPsiMethod extends MethodSignatureBase {
   private final boolean myIsRaw;
   private boolean myIsInGenericContext;
 
-  private MethodSignatureBackedByPsiMethod(PsiMethod method,
+  protected MethodSignatureBackedByPsiMethod(PsiMethod method,
                                            PsiSubstitutor substitutor,
                                            boolean isRaw,
                                            final boolean isInGenericContext, PsiType[] parameterTypes,

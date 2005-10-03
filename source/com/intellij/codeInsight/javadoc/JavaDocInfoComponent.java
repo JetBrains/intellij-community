@@ -1,9 +1,9 @@
 package com.intellij.codeInsight.javadoc;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.IconLoader;
@@ -17,6 +17,7 @@ import com.intellij.psi.PsiVariable;
 import com.intellij.ui.EdgeBorder;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -27,8 +28,6 @@ import java.awt.event.*;
 import java.util.Stack;
 
 public class JavaDocInfoComponent extends JPanel {
-    private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.javadoc.JavaDocInfoComponent");
-
     private static final Icon LIB_ICON_CLOSED = IconLoader.getIcon("/nodes/ppLibClosed.png");
 
     private static final int MAX_WIDTH = 500;
@@ -77,7 +76,7 @@ public class JavaDocInfoComponent extends JPanel {
         myIsEmpty = true;
         myIsShown = false;
 
-        myEditorPane = new JEditorPane("text/html", "") {
+        myEditorPane = new JEditorPane(UIUtil.HTML_MIME, "") {
             public Dimension getPreferredScrollableViewportSize() {
                 if (getWidth() == 0 || getHeight() == 0) {
                     setSize(MAX_WIDTH, MAX_HEIGHT);
@@ -357,7 +356,7 @@ public class JavaDocInfoComponent extends JPanel {
 
     private class BackAction extends AnAction implements HintManager.ActionToIgnore {
         public BackAction() {
-            super("Back", null, IconLoader.getIcon("/actions/back.png"));
+            super(CodeInsightBundle.message("javadoc.action.back"), null, IconLoader.getIcon("/actions/back.png"));
         }
 
         public void actionPerformed(AnActionEvent e) {
@@ -372,7 +371,7 @@ public class JavaDocInfoComponent extends JPanel {
 
     private class ForwardAction extends AnAction implements HintManager.ActionToIgnore {
         public ForwardAction() {
-            super("Forward", null, IconLoader.getIcon("/actions/forward.png"));
+            super(CodeInsightBundle.message("javadoc.action.forward"), null, IconLoader.getIcon("/actions/forward.png"));
         }
 
         public void actionPerformed(AnActionEvent e) {
@@ -387,7 +386,7 @@ public class JavaDocInfoComponent extends JPanel {
 
     private class ExternalDocAction extends AnAction implements HintManager.ActionToIgnore {
         public ExternalDocAction() {
-            super("View External JavaDoc", null, IconLoader.getIcon("/actions/browser-externalJavaDoc.png"));
+            super(CodeInsightBundle.message("javadoc.action.view.external"), null, IconLoader.getIcon("/actions/browser-externalJavaDoc.png"));
             registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_EXTERNAL_JAVADOC).getShortcutSet(), null);
         }
 

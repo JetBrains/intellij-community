@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -16,11 +17,11 @@ public class GenerifyFileFix implements IntentionAction {
   }
 
   public String getText() {
-    return "Try to generify '"+myFile.getName()+"'";
+    return QuickFixBundle.message("generify.text", myFile.getName());
   }
 
   public String getFamilyName() {
-    return "Generify File";
+    return QuickFixBundle.message("generify.family");
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {

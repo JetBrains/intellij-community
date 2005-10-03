@@ -16,6 +16,7 @@
 package com.intellij.execution.ui;
 
 import com.intellij.execution.ExecutionManager;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.runners.JavaProgramRunner;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
@@ -33,7 +34,7 @@ public class CloseAction extends AnAction {
     copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_CLOSE_ACTIVE_TAB));
     final Presentation templatePresentation = getTemplatePresentation();
     templatePresentation.setIcon(IconLoader.getIcon("/actions/cancel.png"));
-    templatePresentation.setText("Close");
+    templatePresentation.setText(ExecutionBundle.message("close.tab.action.name"));
     templatePresentation.setDescription(null);
   }
 

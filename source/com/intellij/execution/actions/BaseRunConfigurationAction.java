@@ -1,13 +1,8 @@
 package com.intellij.execution.actions;
 
 import com.intellij.execution.ExecutionUtil;
-import com.intellij.execution.RuntimeConfiguration;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.LocatableConfiguration;
-import com.intellij.execution.applet.AppletConfiguration;
-import com.intellij.execution.application.ApplicationConfiguration;
-import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
-import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;

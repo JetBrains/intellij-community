@@ -258,7 +258,8 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
                         }
                       };
                       ApplicationManager.getApplication().runProcessWithProgressSynchronously(process,
-                                                                                              "Updating Modified Files...",
+                                                                                              VfsBundle.message(
+                                                                                                "file.update.modified.progress"),
                                                                                               false, null);
                     }
                     else {

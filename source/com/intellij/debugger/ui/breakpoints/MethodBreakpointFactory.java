@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.debugger.ui.breakpoints.actions.*;
 import com.intellij.debugger.HelpID;
+import com.intellij.debugger.DebuggerBundle;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -42,7 +43,7 @@ public class MethodBreakpointFactory extends BreakpointFactory{
       new RemoveAction(project),
       new ToggleGroupByClassesAction(),
       new ToggleFlattenPackagesAction(),
-    }, getBreakpointCategory(), "Method Breakpoints", HelpID.METHOD_BREAKPOINTS);
+    }, getBreakpointCategory(), DebuggerBundle.message("method.breakpoints.tab.title"), HelpID.METHOD_BREAKPOINTS);
     panel.getTree().setGroupByMethods(false);
     return panel;
   }

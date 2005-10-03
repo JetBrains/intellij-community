@@ -9,6 +9,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.jdi.StackFrameProxy;
 import com.intellij.openapi.diagnostic.Logger;
 import com.sun.jdi.*;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 
@@ -68,7 +69,6 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
 
   /**
    * Use with caution. Better access stackframe data through the Proxy's methods
-   * @return
    */
 
   public StackFrame getStackFrame() throws EvaluateException  {
@@ -97,7 +97,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
       if(myFrameFromBottomIndex  > count) {
         throw EvaluateExceptionUtil.createEvaluateException(new IncompatibleThreadStateException());
       }
-      
+
       myFrameIndex = count - myFrameFromBottomIndex;
     }
     return myFrameIndex;
@@ -137,7 +137,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
     return myThreadProxy;
   }
 
-  public String toString() {
+  public @NonNls String toString() {
     try {
       return "StackFrameProxyImpl: " + getStackFrame().toString();
     }
@@ -151,8 +151,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
     checkValid();
     try {
       if(myThisReference == null) {
-        final ObjectReference thisObject = !isObsolete() ? getStackFrame().thisObject() : null;
-        myThisReference = thisObject != null? ObjectReferenceCachingProxy.wrap(thisObject) : null;
+        myThisReference = getStackFrame().thisObject();
       }
     }
     catch (InvalidStackFrameException e) {
@@ -160,12 +159,15 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
       return thisObject();
     }
     catch (InternalException e) {
-      if(e.errorCode() == 35) {
-        LOG.debug(e); //bug in JDK 1.5 beta
+      if(e.errorCode() == 35/*bug in JDK 1.5 beta*/) {
+        LOG.debug(e);
         throw EvaluateExceptionUtil.createEvaluateException(e);
-      } 
+      }
       else {
-        throw e;
+        // supress some internal errors caused by bugs in specific JDI implementations
+        if (e.errorCode() != 23/*bug in JDK 1.4*/) {
+          throw e;
+        }
       }
     }
     return myThisReference;
@@ -244,7 +246,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
         for (Iterator<LocalVariable> it = values.keySet().iterator(); it.hasNext();) {
           final LocalVariable variable = it.next();
           final Value value = values.get(variable);
-          myAllValues.put(variable, (value instanceof ObjectReference)? ObjectReferenceCachingProxy.wrap((ObjectReference)value) : value);
+          myAllValues.put(variable, (value instanceof ObjectReference)? (ObjectReference)value : value);
         }
       }
       catch (InconsistentDebugInfoException e) {
@@ -259,13 +261,13 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
   }
 
   public void setValue(LocalVariableProxyImpl localVariable, Value value) throws EvaluateException,
-                                                                             ClassNotLoadedException,
-                                                                             InvalidTypeException {
+                                                                                 ClassNotLoadedException,
+                                                                                 InvalidTypeException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     try {
       final LocalVariable variable = localVariable.getVariable();
       final StackFrame stackFrame = getStackFrame();
-      stackFrame.setValue(variable, (value instanceof ObjectReference)? ObjectReferenceCachingProxy.unwrap(((ObjectReference)value)) : value);
+      stackFrame.setValue(variable, (value instanceof ObjectReference)? ((ObjectReference)value) : value);
       if (myAllValues != null) {
         // update cached data if any
         // re-read the value just set from the stackframe to be 100% sure
@@ -300,7 +302,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
     }
     catch (IllegalArgumentException e) {
       // can be thrown if frame's method is different than variable's method
-      throw EvaluateExceptionUtil.createEvaluateException("Internal error - frame's method is different than variable's method");
+      return false;
     }
   }
 

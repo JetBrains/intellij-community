@@ -18,24 +18,20 @@ public class JikesOutputParser extends OutputParser {
 
   public JikesOutputParser(Project project) {
     myJikesSettings = JikesSettings.getInstance(project);
+    myParserActions.add(new ParserActionJikes());
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public boolean processMessageLine(Callback callback) {
-    String line = callback.getNextLine();
+    if (super.processMessageLine(callback)) {
+      return true;
+    }
+    String line = callback.getCurrentLine();
     if (line == null) {
       return false;
     }
-    if (line.equals("")) {
-      /*
-      if (JikesSettings.getInstance(project).IS_INCREMENTAL_MODE) {
-        return true;
-      }
-      */
+    if (line.length() == 0) {
       return false;
-    }
-    if (StringUtil.startsWithChar(line, '[') && StringUtil.endsWithChar(line, ']')) {
-      processLoading(line, callback);
-      return true;
     }
 //sae
     if (myJikesSettings.IS_EMACS_ERRORS_MODE) {

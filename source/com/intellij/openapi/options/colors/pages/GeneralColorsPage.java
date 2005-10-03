@@ -41,43 +41,44 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
+import com.intellij.openapi.options.OptionsBundle;
 
 import javax.swing.*;
 import java.util.Map;
 
 public class GeneralColorsPage implements ColorSettingsPage {
   private static final AttributesDescriptor[] ATT_DESCRIPTORS = new AttributesDescriptor[] {
-    new AttributesDescriptor("Default text", HighlighterColors.TEXT),
+    new AttributesDescriptor(OptionsBundle.message("options.general.attribute.descriptor.default.text"), HighlighterColors.TEXT),
 
-    new AttributesDescriptor("Folded text", EditorColors.FOLDED_TEXT_ATTRIBUTES),
-    new AttributesDescriptor("Search result", EditorColors.SEARCH_RESULT_ATTRIBUTES),
-    new AttributesDescriptor("Search result (write access)", EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES),
-    new AttributesDescriptor("Text search result", EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES),
+    new AttributesDescriptor(OptionsBundle.message("options.general.attribute.descriptor.folded.text"), EditorColors.FOLDED_TEXT_ATTRIBUTES),
+    new AttributesDescriptor(OptionsBundle.message("options.general.attribute.descriptor.search.result"), EditorColors.SEARCH_RESULT_ATTRIBUTES),
+    new AttributesDescriptor(OptionsBundle.message("options.general.attribute.descriptor.search.result.write.access"), EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES),
+    new AttributesDescriptor(OptionsBundle.message("options.general.attribute.descriptor.text.search.result"), EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES),
 
-    new AttributesDescriptor("Template variable", TemplateColors.TEMPLATE_VARIABLE_ATTRIBUTES)
+    new AttributesDescriptor(OptionsBundle.message("options.general.attribute.descriptor.template.variable"), TemplateColors.TEMPLATE_VARIABLE_ATTRIBUTES)
   };
 
   private static final ColorDescriptor[] COLOR_DESCRIPTORS = new ColorDescriptor[] {
-    new ColorDescriptor("Background in readonly files", EditorColors.READONLY_BACKGROUND_COLOR, ColorDescriptor.Kind.BACKGROUND),
-    new ColorDescriptor("Readonly fragment background", EditorColors.READONLY_FRAGMENT_BACKGROUND_COLOR, ColorDescriptor.Kind.BACKGROUND),
-    new ColorDescriptor("Gutter background", EditorColors.LEFT_GUTTER_BACKGROUND, ColorDescriptor.Kind.BACKGROUND),
+    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.background.in.readonly.files"), EditorColors.READONLY_BACKGROUND_COLOR, ColorDescriptor.Kind.BACKGROUND),
+    new ColorDescriptor(OptionsBundle.message("options.deneral.color.descriptor.readonly.fragment.background"), EditorColors.READONLY_FRAGMENT_BACKGROUND_COLOR, ColorDescriptor.Kind.BACKGROUND),
+    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.gutter.background"), EditorColors.LEFT_GUTTER_BACKGROUND, ColorDescriptor.Kind.BACKGROUND),
 
-    new ColorDescriptor("Selection Background", EditorColors.SELECTION_BACKGROUND_COLOR, ColorDescriptor.Kind.BACKGROUND),
-    new ColorDescriptor("Selection Foreground", EditorColors.SELECTION_FOREGROUND_COLOR, ColorDescriptor.Kind.FOREGROUND),
-    new ColorDescriptor("Caret", EditorColors.CARET_COLOR, ColorDescriptor.Kind.FOREGROUND),
-    new ColorDescriptor("Caret row", EditorColors.CARET_ROW_COLOR, ColorDescriptor.Kind.BACKGROUND),
-    new ColorDescriptor("Right margin", EditorColors.RIGHT_MARGIN_COLOR, ColorDescriptor.Kind.FOREGROUND),
-    new ColorDescriptor("Whitespaces", EditorColors.WHITESPACES_COLOR, ColorDescriptor.Kind.BACKGROUND),
-    new ColorDescriptor("Line number", EditorColors.LINE_NUMBERS_COLOR, ColorDescriptor.Kind.FOREGROUND),
-    new ColorDescriptor("VCS annotations", EditorColors.ANNOTATIONS_COLOR, ColorDescriptor.Kind.FOREGROUND),
-    new ColorDescriptor("Folding outline", EditorColors.FOLDING_TREE_COLOR, ColorDescriptor.Kind.FOREGROUND),
-    new ColorDescriptor("Selected folding outline", EditorColors.SELECTED_FOLDING_TREE_COLOR, ColorDescriptor.Kind.FOREGROUND),
-    new ColorDescriptor("Added lines", EditorColors.ADDED_LINES_COLOR, ColorDescriptor.Kind.BACKGROUND),
-    new ColorDescriptor("Modified lines", EditorColors.MODIFIED_LINES_COLOR, ColorDescriptor.Kind.BACKGROUND),
+    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.selection.background"), EditorColors.SELECTION_BACKGROUND_COLOR, ColorDescriptor.Kind.BACKGROUND),
+    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.selection.foreground"), EditorColors.SELECTION_FOREGROUND_COLOR, ColorDescriptor.Kind.FOREGROUND),
+    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.caret"), EditorColors.CARET_COLOR, ColorDescriptor.Kind.FOREGROUND),
+    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.caret.row"), EditorColors.CARET_ROW_COLOR, ColorDescriptor.Kind.BACKGROUND),
+    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.right.margin"), EditorColors.RIGHT_MARGIN_COLOR, ColorDescriptor.Kind.FOREGROUND),
+    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.whitespaces"), EditorColors.WHITESPACES_COLOR, ColorDescriptor.Kind.BACKGROUND),
+    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.line.number"), EditorColors.LINE_NUMBERS_COLOR, ColorDescriptor.Kind.FOREGROUND),
+    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.vcs.annotations"), EditorColors.ANNOTATIONS_COLOR, ColorDescriptor.Kind.FOREGROUND),
+    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.folding.outline"), EditorColors.FOLDING_TREE_COLOR, ColorDescriptor.Kind.FOREGROUND),
+    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.selected.folding.outline"), EditorColors.SELECTED_FOLDING_TREE_COLOR, ColorDescriptor.Kind.FOREGROUND),
+    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.added.lines"), EditorColors.ADDED_LINES_COLOR, ColorDescriptor.Kind.BACKGROUND),
+    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.modified.lines"), EditorColors.MODIFIED_LINES_COLOR, ColorDescriptor.Kind.BACKGROUND),
   };
 
   public String getDisplayName() {
-    return "General";
+    return OptionsBundle.message("options.general.display.name");
   }
 
   public Icon getIcon() {
@@ -97,12 +98,10 @@ public class GeneralColorsPage implements ColorSettingsPage {
   }
 
   public String getDemoText() {
-    String text =
+    return
       "IntelliJ IDEA is a full-featured Java IDE\n" +
       "with a high level of usability and outstanding\n" +
       "advanced code editing and refactoring support.\n";
-
-    return text;
   }
 
   public Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {

@@ -13,7 +13,9 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.project.ProjectBundle;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.io.*;
@@ -27,12 +29,14 @@ import java.util.regex.Pattern;
  */
 public class JavaSdkImpl extends JavaSdk {
   // do not use javaw.exe for Windows because of issues with encoding
-  private static final String VM_EXE_NAME = "java";
+  @NonNls private static final String VM_EXE_NAME = "java";
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private final Pattern myVersionStringPattern = Pattern.compile("^(.*)java version \"([1234567890_.]*)\"(.*)$");
   public static final Icon ICON = IconLoader.getIcon("/nodes/ppJdkClosed.png");
   private static final Icon JDK_ICON_EXPANDED = IconLoader.getIcon("/nodes/ppJdkOpen.png");
   private static final Icon ADD_ICON = IconLoader.getIcon("/general/addJdk.png");
   private final JarFileSystem myJarFileSystem;
+  @NonNls private static final String JAVA_VERSION_PREFIX = "java version ";
 
   public JavaSdkImpl(JarFileSystem jarFileSystem) {
     super("JavaSDK");
@@ -40,7 +44,7 @@ public class JavaSdkImpl extends JavaSdk {
   }
 
   public String getPresentableName() {
-    return "JSDK";
+    return ProjectBundle.message("sdk.java.name");
   }
 
   public Icon getIcon() {
@@ -66,10 +70,12 @@ public class JavaSdkImpl extends JavaSdk {
     return null;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public String getBinPath(Sdk sdk) {
     return getConvertedHomePath(sdk) + "bin";
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public String getToolsPath(Sdk sdk) {
     final String versionString = sdk.getVersionString();
     final boolean isJdk1_x = versionString.indexOf("1.0") > -1 || versionString.indexOf("1.1") > -1;
@@ -85,6 +91,7 @@ public class JavaSdkImpl extends JavaSdk {
     return getBinPath(sdk) + File.separator + VM_EXE_NAME;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public String getRtLibraryPath(Sdk sdk) {
     return getConvertedHomePath(sdk) + "jre" + File.separator + "lib" + File.separator + "rt.jar";
   }
@@ -97,6 +104,7 @@ public class JavaSdkImpl extends JavaSdk {
     return path;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public String suggestHomePath() {
     if (SystemInfo.isMac) {
       return "/System/Library/Frameworks/JavaVM.framework/Versions/";
@@ -125,8 +133,8 @@ public class JavaSdkImpl extends JavaSdk {
     else {
       String versionString = getVersionString(sdkHome);
       if (versionString != null) {
-        if (versionString.startsWith("java version ")) {
-          versionString = versionString.substring("java version ".length());
+        if (versionString.startsWith(JAVA_VERSION_PREFIX)) {
+          versionString = versionString.substring(JAVA_VERSION_PREFIX.length());
           if (versionString.startsWith("\"") && versionString.endsWith("\"")) {
             versionString = versionString.substring(1, versionString.length() - 1);
           }
@@ -148,12 +156,13 @@ public class JavaSdkImpl extends JavaSdk {
         suggestedName = versionString;
       }
       else {
-        suggestedName = "Unknown";
+        suggestedName = ProjectBundle.message("sdk.java.unknown.name");
       }
     }
     return suggestedName;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public void setupSdkPaths(Sdk sdk) {
     final File jdkHome = new File(sdk.getHomePath());
     VirtualFile[] classes = findClasses(jdkHome, false, JarFileSystem.getInstance());
@@ -198,7 +207,8 @@ public class JavaSdkImpl extends JavaSdk {
       versionString = null;
     }
     if (versionString == null){
-      Messages.showMessageDialog("Probably JDK installed in '" + sdkHome + "' is corrupt", "Cannot Detect JDK Version", Messages.getErrorIcon());
+      Messages.showMessageDialog(ProjectBundle.message("sdk.java.corrupt.error", sdkHome),
+                                 ProjectBundle.message("sdk.java.corrupt.title"), Messages.getErrorIcon());
     }
     return versionString;
   }
@@ -219,6 +229,7 @@ public class JavaSdkImpl extends JavaSdk {
     }
     final String[] versionString = new String[1];
     try {
+      //noinspection HardCodedStringLiteral
       Process process = Runtime.getRuntime().exec(new String[] {homePath + File.separator + "bin" + File.separator + "java",  "-version"});
       VersionParsingThread parsingThread = new VersionParsingThread(process.getErrorStream(), versionString);
       parsingThread.start();
@@ -264,12 +275,14 @@ public class JavaSdkImpl extends JavaSdk {
     return jdk;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static ProjectJdk getMockJdk(String versionName) {
     final String forcedPath = System.getProperty("idea.testingFramework.mockJDK");
     String jdkHome = forcedPath != null ? forcedPath : PathManager.getHomePath() + File.separator + "mockJDK";
     return createMockJdk(jdkHome, versionName, getInstance());
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static ProjectJdk getMockJdk15(String versionName) {
     String jdkHome = PathManager.getHomePath() + File.separator + "mockJDK-1.5";
     return createMockJdk(jdkHome, versionName, getInstance());
@@ -301,8 +314,10 @@ public class JavaSdkImpl extends JavaSdk {
     }
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static VirtualFile[] findClasses(File file, boolean isJre, JarFileSystem jarFileSystem) {
     FileFilter jarFileFilter = new FileFilter(){
+      @SuppressWarnings({"HardCodedStringLiteral"})
       public boolean accept(File f){
         if (f.isDirectory()) return false;
         if (f.getName().endsWith(".jar")) return true;
@@ -365,6 +380,7 @@ public class JavaSdkImpl extends JavaSdk {
     }
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static VirtualFile findSources(File file) {
     File srcfile = new File(file, "src");
     File jarfile = new File(file, "src.jar");
@@ -387,6 +403,7 @@ public class JavaSdkImpl extends JavaSdk {
     }
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static void addDocs(File file, SdkModificator rootContainer) {
     VirtualFile vFile = findDocs(file, "docs/api");
     if (vFile != null) {
@@ -410,10 +427,12 @@ public class JavaSdkImpl extends JavaSdk {
     return vFile;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static boolean checkForJdk(File file) {
     file = new File(file.getAbsolutePath() + File.separator + "bin");
     if (!file.exists()) return false;
     FileFilter fileFilter = new FileFilter() {
+      @SuppressWarnings({"HardCodedStringLiteral"})
       public boolean accept(File f) {
         if (f.isDirectory()) return false;
         if (f.getName().startsWith("javac")) return true;
@@ -425,10 +444,12 @@ public class JavaSdkImpl extends JavaSdk {
     return (children != null && children.length >= 2);
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static boolean checkForJre(String file){
     File ioFile = new File(new File(file.replace('/', File.separatorChar)).getAbsolutePath() + File.separator + "bin");
     if (!ioFile.exists()) return false;
     FileFilter fileFilter = new FileFilter() {
+      @SuppressWarnings({"HardCodedStringLiteral"})
       public boolean accept(File f) {
         if (f.isDirectory()) return false;
         if (f.getName().startsWith("java")) return true;
@@ -462,6 +483,7 @@ public class JavaSdkImpl extends JavaSdk {
     private Reader myReader;
     private boolean mySkipLF = false;
     private String[] myVersionString;
+    @NonNls private static final String VERSION = "version";
 
     protected VersionParsingThread(InputStream input, String[] versionString) {
       myReader = new InputStreamReader(input);
@@ -473,7 +495,7 @@ public class JavaSdkImpl extends JavaSdk {
         while (true) {
           String line = readLine();
           if (line == null) return;
-          if (line.indexOf("version") >= 0) {
+          if (line.indexOf(VERSION) >= 0) {
             myVersionString[0] = line;
           }
         }

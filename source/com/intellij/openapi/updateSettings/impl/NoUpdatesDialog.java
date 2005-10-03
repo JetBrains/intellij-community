@@ -2,6 +2,8 @@ package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.ide.IdeBundle;
+import com.intellij.CommonBundle;
 
 import javax.swing.*;
 import java.awt.event.MouseListener;
@@ -17,11 +19,11 @@ import java.awt.*;
  */
 
 class NoUpdatesDialog extends DialogWrapper {
-  private static NoUpdatesPanel myNoUpdatesPanel;
+  private NoUpdatesPanel myNoUpdatesPanel;
 
   protected NoUpdatesDialog(final boolean canBeParent) {
     super(canBeParent);
-    setTitle("Update Info");
+    setTitle(IdeBundle.message("updates.info.dialog.title"));
     init();
   }
 
@@ -32,7 +34,7 @@ class NoUpdatesDialog extends DialogWrapper {
 
   protected Action[] createActions() {
     final Action cancelAction = getCancelAction();
-    cancelAction.putValue(Action.NAME, "&Close");
+    cancelAction.putValue(Action.NAME, CommonBundle.getCloseButtonText());
     return new Action[] {cancelAction};
   }
 
@@ -44,7 +46,7 @@ class NoUpdatesDialog extends DialogWrapper {
     if (enableLink) {
       myNoUpdatesPanel.myUpdatesLink.setForeground(Color.BLUE); // TODO: specify correct color
       myNoUpdatesPanel.myUpdatesLink.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-      myNoUpdatesPanel.myUpdatesLink.setToolTipText("Click to open Updates Settings dialog");
+      myNoUpdatesPanel.myUpdatesLink.setToolTipText(IdeBundle.message("updates.open.settings.link"));
       myNoUpdatesPanel.myUpdatesLink.addMouseListener(new MouseListener() {
         public void mouseClicked(MouseEvent e) {
           UpdateSettingsConfigurable updatesSettings = UpdateSettingsConfigurable.getInstance();

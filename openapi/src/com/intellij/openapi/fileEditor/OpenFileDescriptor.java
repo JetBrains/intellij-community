@@ -101,7 +101,7 @@ public class OpenFileDescriptor implements Navigatable {
   public void navigate(boolean requestFocus) {
     FileEditor fileEditor = openFileAskingType(myProject, requestFocus);
     if (fileEditor == null) {
-      final SelectInTarget projectSelector = SelectInManager.getInstance(myProject).getTarget("Project");
+      final SelectInTarget projectSelector = SelectInManager.getInstance(myProject).getTarget(SelectInManager.PROJECT);
       if (projectSelector != null) {
         projectSelector.selectIn(new SelectInContext() {
           public Project getProject() {

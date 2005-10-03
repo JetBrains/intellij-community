@@ -39,6 +39,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
+import com.intellij.openapi.options.OptionsBundle;
 
 import javax.swing.*;
 import java.util.Map;
@@ -46,17 +47,17 @@ import java.util.Map;
 public class XMLColorsPage implements ColorSettingsPage {
   private static final ColorDescriptor[] COLORS = new ColorDescriptor[0];
   private static final AttributesDescriptor[] ATTRS = new AttributesDescriptor[] {
-    new AttributesDescriptor("Prologue", HighlighterColors.XML_PROLOGUE),
-    new AttributesDescriptor("Comment", HighlighterColors.XML_COMMENT),
-    new AttributesDescriptor("Tag", HighlighterColors.XML_TAG),
-    new AttributesDescriptor("Tag name", HighlighterColors.XML_TAG_NAME),
-    new AttributesDescriptor("Attribute name", HighlighterColors.XML_ATTRIBUTE_NAME),
-    new AttributesDescriptor("Attribute value", HighlighterColors.XML_ATTRIBUTE_VALUE),
-    new AttributesDescriptor("Tag data", HighlighterColors.XML_TAG_DATA),
+    new AttributesDescriptor(OptionsBundle.message("options.xml.attribute.descriptor.prologue"), HighlighterColors.XML_PROLOGUE),
+    new AttributesDescriptor(OptionsBundle.message("options.xml.attribute.descriptor.comment"), HighlighterColors.XML_COMMENT),
+    new AttributesDescriptor(OptionsBundle.message("options.xml.attribute.descriptor.tag"), HighlighterColors.XML_TAG),
+    new AttributesDescriptor(OptionsBundle.message("options.xml.attribute.descriptor.tag.name"), HighlighterColors.XML_TAG_NAME),
+    new AttributesDescriptor(OptionsBundle.message("options.xml.attribute.descriptor.attribute.name"), HighlighterColors.XML_ATTRIBUTE_NAME),
+    new AttributesDescriptor(OptionsBundle.message("options.xml.attribute.descriptor.attribute.value"), HighlighterColors.XML_ATTRIBUTE_VALUE),
+    new AttributesDescriptor(OptionsBundle.message("options.xml.attribute.descriptor.tag.data"), HighlighterColors.XML_TAG_DATA),
   };
 
   public String getDisplayName() {
-    return "XML";
+    return OptionsBundle.message("options.xml.display.name");
   }
 
   public Icon getIcon() {

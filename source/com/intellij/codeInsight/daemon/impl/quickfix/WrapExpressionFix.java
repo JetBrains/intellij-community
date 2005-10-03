@@ -1,14 +1,14 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
-
-import java.text.MessageFormat;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author ven
@@ -27,7 +27,7 @@ public class WrapExpressionFix implements IntentionAction {
     PsiMethod wrapper = findWrapper(myExpression.getType(), myExpectedType);
     PsiClass aClass = wrapper.getContainingClass();
     String methodPresentation = aClass.getName() + "." + wrapper.getName();
-    return MessageFormat.format("Wrap ''{0}'' using ''{1}''", new Object[]{myExpression.getText(), methodPresentation});
+    return QuickFixBundle.message("wrap.expression.using.static.accessor.text", myExpression.getText(), methodPresentation);
   }
 
   private static PsiMethod findWrapper(PsiType type, PsiClassType expectedType) {
@@ -50,7 +50,7 @@ public class WrapExpressionFix implements IntentionAction {
   }
 
   public String getFamilyName() {
-    return "Wrap Expression";
+    return QuickFixBundle.message("wrap.expression.using.static.accessor.family");
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
@@ -63,7 +63,7 @@ public class WrapExpressionFix implements IntentionAction {
     if (!CodeInsightUtil.prepareFileForWrite(file)) return;
     PsiMethod wrapper = findWrapper(myExpression.getType(), myExpectedType);
     PsiElementFactory factory = file.getManager().getElementFactory();
-    String methodCallText = "Foo." + wrapper.getName() + "()";
+    @NonNls String methodCallText = "Foo." + wrapper.getName() + "()";
     PsiMethodCallExpression call = (PsiMethodCallExpression) factory.createExpressionFromText(methodCallText,
                                                                                               null);
     call.getArgumentList().add(myExpression);

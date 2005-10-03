@@ -41,6 +41,7 @@ class MacroParser {
   }
 
 //-----------------------------------------------------------------------------------
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static Expression parseMacro(Lexer lexer, String expression) {
     IElementType tokenType = lexer.getTokenType();
     String token = getString(lexer, expression);

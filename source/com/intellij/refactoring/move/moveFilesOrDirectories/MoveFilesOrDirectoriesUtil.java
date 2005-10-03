@@ -10,6 +10,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringSettings;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
@@ -82,7 +83,7 @@ public class MoveFilesOrDirectoriesUtil {
         }
         catch (IncorrectOperationException e) {
           String helpId = HelpID.getMoveHelpID(elements[0]);
-          RefactoringMessageUtil.showErrorMessage("Error", e.getMessage(), helpId, project);
+          RefactoringMessageUtil.showErrorMessage(RefactoringBundle.message("error.title"), e.getMessage(), helpId, project);
           return;
         }
       }

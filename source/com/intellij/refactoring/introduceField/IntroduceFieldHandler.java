@@ -8,13 +8,14 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.occurences.*;
 
 public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
 
-  public static final String REFACTORING_NAME = "Introduce Field";
+  public static final String REFACTORING_NAME = RefactoringBundle.message("introduce.field.title");
   private static final MyOccurenceFilter MY_OCCURENCE_FILTER = new MyOccurenceFilter();
 
   protected String getRefactoringName() {
@@ -23,7 +24,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
 
   protected boolean validClass(PsiClass parentClass) {
     if (parentClass.isInterface()) {
-      String message = "Cannot introduce field in interface";
+      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("cannot.introduce.field.in.interface"));
       RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, getHelpID(),
                                               parentClass.getProject());
       return false;
@@ -85,7 +86,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
     }
 
     int occurencesNumber = occurences.length;
-    final boolean currentMethodConstructor = (containingMethod != null ? containingMethod.isConstructor() : false);
+    final boolean currentMethodConstructor = (containingMethod != null && containingMethod.isConstructor());
     final boolean allowInitInMethod = (!currentMethodConstructor || !isInSuperOrThis) && (anchorElement instanceof PsiStatement);
     final boolean allowInitInMethodIfAll = (!currentMethodConstructor || !isInSuperOrThis) && (anchorElementIfAll instanceof PsiStatement);
     IntroduceFieldDialog dialog = new IntroduceFieldDialog(
@@ -99,7 +100,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
 
     if (!dialog.isOK()) {
       if (occurencesNumber > 1) {
-        WindowManager.getInstance().getStatusBar(project).setInfo("Press Escape to remove the highlighting");
+        WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
       }
       return null;
     }
@@ -113,7 +114,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
                         declareStatic, dialog.isDeclareFinal(),
                         dialog.getInitializerPlace(), dialog.getFieldVisibility(),
                         localVariable,
-                        dialog.getFieldType(), localVariable != null, null);
+                        dialog.getFieldType(), localVariable != null, null, false);
   }
 
   private static boolean isInSuperOrThis(PsiExpression occurence) {
@@ -129,10 +130,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
 
   protected OccurenceManager createOccurenceManager(final PsiExpression selectedExpr, final PsiClass parentClass) {
     final OccurenceFilter occurenceFilter = isInSuperOrThis(selectedExpr) ? null : MY_OCCURENCE_FILTER;
-    OccurenceManager occurenceManager = new ExpressionOccurenceManager(selectedExpr, parentClass,
-                                                                       occurenceFilter,
-                                                                       true);
-    return occurenceManager;
+    return new ExpressionOccurenceManager(selectedExpr, parentClass, occurenceFilter, true);
   }
 
   protected boolean invokeImpl(Project project, PsiLocalVariable localVariable, Editor editor) {

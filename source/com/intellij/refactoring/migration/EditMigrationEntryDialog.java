@@ -6,6 +6,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.refactoring.RefactoringBundle;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -22,7 +23,7 @@ public class EditMigrationEntryDialog extends DialogWrapper{
   public EditMigrationEntryDialog(Project project) {
     super(project, true);
     myProject = project;
-    setTitle("Edit Class/Package Migration Description");
+    setTitle(RefactoringBundle.message("edit.migration.entry.title"));
     setHorizontalStretch(1.2f);
     init();
   }
@@ -45,13 +46,13 @@ public class EditMigrationEntryDialog extends DialogWrapper{
     gbConstraints.gridwidth = GridBagConstraints.RELATIVE;
     gbConstraints.fill = GridBagConstraints.BOTH;
     gbConstraints.weightx = 0;
-    myRbPackage = new JRadioButton("Package");
+    myRbPackage = new JRadioButton(RefactoringBundle.message("migration.entry.package"));
     panel.add(myRbPackage, gbConstraints);
 
     gbConstraints.gridwidth = GridBagConstraints.RELATIVE;
     gbConstraints.fill = GridBagConstraints.BOTH;
     gbConstraints.weightx = 0;
-    myRbClass = new JRadioButton("Class");
+    myRbClass = new JRadioButton(RefactoringBundle.message("migration.entry.class"));
     panel.add(myRbClass, gbConstraints);
 
     gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
@@ -66,7 +67,7 @@ public class EditMigrationEntryDialog extends DialogWrapper{
     gbConstraints.weightx = 0;
     gbConstraints.gridwidth = GridBagConstraints.RELATIVE;
     gbConstraints.fill = GridBagConstraints.VERTICAL;
-    JLabel oldNamePrompt = new JLabel("Old name:");
+    JLabel oldNamePrompt = new JLabel(RefactoringBundle.message("migration.entry.old.name"));
     panel.add(oldNamePrompt, gbConstraints);
 
     gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
@@ -78,7 +79,7 @@ public class EditMigrationEntryDialog extends DialogWrapper{
     gbConstraints.weightx = 0;
     gbConstraints.gridwidth = GridBagConstraints.RELATIVE;
     gbConstraints.fill = GridBagConstraints.VERTICAL;
-    JLabel newNamePrompt = new JLabel("New name:");
+    JLabel newNamePrompt = new JLabel(RefactoringBundle.message("migration.entry.new.name"));
     panel.add(newNamePrompt, gbConstraints);
 
     gbConstraints.gridwidth = GridBagConstraints.REMAINDER;

@@ -5,7 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 /**
  * Author: msk
  */
-public class ConditionalBranchingInstruction extends BranchingInstruction {
+public abstract class ConditionalBranchingInstruction extends BranchingInstruction {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.psi.controlFlow.ConditionalGoToInstruction");
 
   public ConditionalBranchingInstruction(int offset) {

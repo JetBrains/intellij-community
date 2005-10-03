@@ -66,7 +66,7 @@ public abstract class FileSetToBeUpdated {
   }
 
   protected void setSynchronizingFilesTextToProgress(ProgressIndicator progressIndicator) {
-    progressIndicator.setText("Synchronizing files...");
+    progressIndicator.setText(com.intellij.CvsBundle.message("progress.text.synchronizing.files"));
     progressIndicator.setText2("");
   }
 }

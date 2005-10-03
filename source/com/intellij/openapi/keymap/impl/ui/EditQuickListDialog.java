@@ -3,6 +3,7 @@ package com.intellij.openapi.keymap.impl.ui;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.keymap.KeyMapBundle;
 
 import javax.swing.*;
 
@@ -17,7 +18,7 @@ public class EditQuickListDialog extends DialogWrapper {
     myProject = project;
     myList = list;
     myAllQuickLists = allQuickLists;
-    setTitle("Edit Quick List");
+    setTitle(KeyMapBundle.message("edit.quick.list.dialog.title"));
     init();
   }
 

@@ -38,6 +38,12 @@ public class MakeMethodStaticTest extends CodeInsightTestCase {
     checkResultByFile("/refactoring/makeMethodStatic/after3.java");
   }
 
+  public void testIDEADEV2556() throws Exception {
+    configureByFile("/refactoring/makeMethodStatic/before21.java");
+    perform(false);
+    checkResultByFile("/refactoring/makeMethodStatic/after21.java");
+  }
+
   public void testUseFieldWithThis() throws Exception {
     configureByFile("/refactoring/makeMethodStatic/before4.java");
     perform(true);

@@ -15,10 +15,11 @@
  */
 package com.intellij.execution.configurations;
 
+import com.intellij.execution.ExecutionBundle;
 
 
 public class RuntimeConfigurationWarning extends RuntimeConfigurationException{
   public RuntimeConfigurationWarning(final String message) {
-    super(message, "Warning");
+    super(message, ExecutionBundle.message("warning.common.title"));
   }
 }

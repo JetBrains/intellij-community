@@ -8,6 +8,7 @@ import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.util.DocumentUtil;
 import com.intellij.openapi.diff.impl.util.GutterActionRenderer;
 import com.intellij.openapi.diff.impl.util.TextDiffType;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
@@ -82,7 +83,7 @@ public abstract class Change {
           public void run() {
             change.apply(fromSide);
           }
-        }, null, "MergeApply");
+        }, null, DiffBundle.message("save.merge.result.command.name"));
       }
     });
   }

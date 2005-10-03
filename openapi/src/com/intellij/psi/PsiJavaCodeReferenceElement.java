@@ -17,6 +17,7 @@ package com.intellij.psi;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * Represents a reference found in Java code (either an identifier or a sequence of identifiers
@@ -82,6 +83,6 @@ public interface PsiJavaCodeReferenceElement extends PsiElement, PsiJavaReferenc
    * @return the non-qualified text of the reference, or null if the reference
    * element is incomplete.
    */
-  @Nullable
+  @Nullable @NonNls
   String getReferenceName();
 }

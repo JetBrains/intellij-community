@@ -16,7 +16,7 @@ public class BegTabbedPaneUI extends MetalTabbedPaneUI {
 
   public void installUI(JComponent c) {
     super.installUI(c);
-    Object clientProperty = c.getClientProperty("TabbedPane.paintContentBorder");
+    Object clientProperty = UIUtil.getTabbedPanePaintContentBorder(c);
     if (clientProperty instanceof Boolean) {
       Boolean aBoolean = (Boolean)clientProperty;
       myPaintContentBorder = aBoolean.booleanValue();

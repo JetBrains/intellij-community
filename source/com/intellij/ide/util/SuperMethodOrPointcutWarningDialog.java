@@ -3,6 +3,9 @@ package com.intellij.ide.util;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.ide.IdeBundle;
+import com.intellij.CommonBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -30,9 +33,9 @@ class SuperMethodOrPointcutWarningDialog extends DialogWrapper {
     myIsParentInterface = isParentInterface;
     myIsContainedInInterface = isContainedInInterface;
     myIsContainedInAspect = isContainedInAspect;
-    setTitle("Warning");
+    setTitle(IdeBundle.message("title.warning"));
     setButtonsAlignment(SwingUtilities.CENTER);
-    setOKButtonText("&Yes");
+    setOKButtonText(CommonBundle.getYesButtonText());
     init();
   }
 
@@ -43,23 +46,28 @@ class SuperMethodOrPointcutWarningDialog extends DialogWrapper {
   public JComponent createNorthPanel() {
     JPanel panel = new JPanel(new BorderLayout());
     panel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
-    Icon icon = UIManager.getIcon("OptionPane.warningIcon");
+    Icon icon = Messages.getWarningIcon();
     if (icon != null){
-      JLabel iconLabel = new JLabel(UIManager.getIcon("OptionPane.questionIcon"));
+      JLabel iconLabel = new JLabel(Messages.getQuestionIcon());
       panel.add(iconLabel, BorderLayout.WEST);
     }
     JPanel labelsPanel = new JPanel(new GridLayout(3, 1, 0, 0));
     labelsPanel.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 10));
-    String classType = myIsContainedInAspect ? "aspect" : (myIsParentInterface ? "interface" : "class");
-    String methodOrPointcut = myIsPointcut ? "pointcut" : "method";
-    labelsPanel.add(new JLabel(capitalize(methodOrPointcut + " " + myName)));
+    String classType = myIsContainedInAspect
+                       ? IdeBundle.message("element.of.aspect")
+                       : (myIsParentInterface ? IdeBundle.message("element.of.interface") : IdeBundle.message("element.of.class"));
+    String methodOrPointcut = myIsPointcut ? IdeBundle.message("element.pointcut") : IdeBundle.message("element.method");
+    labelsPanel.add(new JLabel(myIsPointcut ? IdeBundle.message("label.pointcut", myName) : IdeBundle.message("label.method", myName)));
     if (myIsContainedInInterface || !myIsSuperAbstract){
-      labelsPanel.add(new JLabel("overrides " + methodOrPointcut + " of " + classType + " " + myClassName + "."));
+      labelsPanel.add(new JLabel(IdeBundle.message("label.overrides.method_or_pointcut.of_class_or_interface.name", methodOrPointcut, classType, myClassName)));
     }
     else{
-      labelsPanel.add(new JLabel("implements " + methodOrPointcut + " of " + classType + " " + myClassName + "."));
+      labelsPanel.add(new JLabel(IdeBundle.message("label.implements.method_or_pointcut.of_class_or_interface.name", methodOrPointcut, classType, myClassName)));
     }
-    String s = "Do you want to " + myActionString + " the " + methodOrPointcut + " from " + (myIsParentInterface ? "" : "base ") + classType + "?";
+    String fromClassType = myIsContainedInAspect
+                       ? IdeBundle.message("element.from.base.aspect")
+                       : (myIsParentInterface ? IdeBundle.message("element.from.interface") : IdeBundle.message("element.from.base.class"));
+    String s = IdeBundle.message("prompt.do.you.want.to.action_verb.the.method_or_pointcut.from_class", myActionString, methodOrPointcut, fromClassType);
     labelsPanel.add(new JLabel(s));
     panel.add(labelsPanel, BorderLayout.CENTER);
     return panel;
@@ -75,7 +83,7 @@ class SuperMethodOrPointcutWarningDialog extends DialogWrapper {
 
   private class NoAction extends AbstractAction {
     public NoAction() {
-      super("&No");
+      super(CommonBundle.getNoButtonText());
     }
 
     public void actionPerformed(ActionEvent e) {

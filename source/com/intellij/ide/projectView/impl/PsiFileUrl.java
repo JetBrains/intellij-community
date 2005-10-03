@@ -5,10 +5,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import org.jetbrains.annotations.NonNls;
 
 public class PsiFileUrl extends AbstractUrl {
 
-  private static final String ELEMENT_TYPE = "psiFile";
+  @NonNls private static final String ELEMENT_TYPE = "psiFile";
 
   public PsiFileUrl(String url, String moduleName) {
     super(url, moduleName, ELEMENT_TYPE);

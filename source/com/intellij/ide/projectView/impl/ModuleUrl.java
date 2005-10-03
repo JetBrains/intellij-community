@@ -3,12 +3,13 @@ package com.intellij.ide.projectView.impl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author cdr
  */
 public class ModuleUrl extends AbstractUrl {
-  private static final String ELEMENT_TYPE = "module";
+  @NonNls private static final String ELEMENT_TYPE = "module";
 
   public ModuleUrl(String url, String moduleName) {
     super(url, moduleName,ELEMENT_TYPE);

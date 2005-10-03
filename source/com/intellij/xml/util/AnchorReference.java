@@ -17,6 +17,8 @@ import com.intellij.util.IncorrectOperationException;
 import java.util.List;
 import java.util.ArrayList;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * Created by IntelliJ IDEA.
  * User: Maxim.Mossienko
@@ -29,6 +31,8 @@ class AnchorReference implements PsiReference {
   private PsiReference myFileReference;
   private PsiElement myElement;
   private int myOffset;
+  @NonNls
+  public static final String ANCHOR_ELEMENT_NAME = "a";
 
   AnchorReference(final String anchor, final PsiReference psiReference, final PsiElement element) {
     myAnchor = anchor;
@@ -60,7 +64,7 @@ class AnchorReference implements PsiReference {
 
   static boolean processXmlElements(XmlTag element, PsiElementProcessor processor) {
     if (!_processXmlElements(element,processor)) return false;
-    
+
     for(PsiElement next = element.getNextSibling(); next != null; next = next.getNextSibling()) {
       if (next instanceof XmlTag) {
         if (!_processXmlElements((XmlTag)next,processor)) return false;
@@ -69,7 +73,7 @@ class AnchorReference implements PsiReference {
 
     return true;
   }
-  
+
   static boolean _processXmlElements(XmlTag element, PsiElementProcessor processor) {
     if (!processor.execute(element)) return false;
     final XmlTag[] subTags = element.getSubTags();
@@ -117,7 +121,7 @@ class AnchorReference implements PsiReference {
         return attributeValue;
       }
 
-      if ("a".equalsIgnoreCase(xmlTag.getName())) {
+      if (ANCHOR_ELEMENT_NAME.equalsIgnoreCase(xmlTag.getName())) {
         final String attributeValue2 = xmlTag.getAttributeValue("name");
         if (attributeValue2!=null) {
           return attributeValue2;

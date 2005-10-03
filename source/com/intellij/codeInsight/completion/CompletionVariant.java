@@ -14,6 +14,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.apache.oro.text.regex.Pattern;
 import org.apache.oro.text.regex.PatternMatcher;
 import org.apache.oro.text.regex.Perl5Matcher;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.Serializable;
 import java.util.*;
@@ -157,7 +158,7 @@ public class CompletionVariant {
     myCompletionsList.add(new CompletionVariantItem(completion, tail));
   }
 
-  public void addCompletion(String[] keywordList){
+  public void addCompletion(@NonNls String[] keywordList){
     addCompletion(keywordList, DEFAULT_TAIL_TYPE);
   }
 
@@ -194,7 +195,7 @@ public class CompletionVariant {
 
     for (final Object key : myItemProperties.keySet()) {
       if (key == LookupItem.FORCE_SHOW_FQN_ATTR && ret.getObject() instanceof PsiClass) {
-        String packageName = ((PsiClass)ret.getObject()).getQualifiedName();
+        @NonNls String packageName = ((PsiClass)ret.getObject()).getQualifiedName();
         if (packageName != null && packageName.lastIndexOf('.') > 0) {
           packageName = packageName.substring(0, packageName.lastIndexOf('.'));
         }
@@ -363,6 +364,7 @@ public class CompletionVariant {
     }
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString(){
     return "completion variant at " + myPosition.toString() + " completions: " + myCompletionsList;
   }

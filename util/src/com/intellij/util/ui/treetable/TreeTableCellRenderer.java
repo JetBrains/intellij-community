@@ -15,6 +15,8 @@
  */
 package com.intellij.util.ui.treetable;
 
+import com.intellij.util.ui.UIUtil;
+
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.table.TableCellRenderer;
@@ -29,8 +31,7 @@ public class TreeTableCellRenderer implements TableCellRenderer {
   private TreeTable myTreeTable;
   private final TreeTableTree myTree;
   private TreeCellRenderer myTreeCellRenderer;
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private Border myDefaultBorder = UIManager.getBorder("Table.focusCellHighlightBorder");
+  private Border myDefaultBorder = UIUtil.getTableFocusCellHighlightBorder();
 
 
   public TreeTableCellRenderer(TreeTable treeTable, TreeTableTree tree) {

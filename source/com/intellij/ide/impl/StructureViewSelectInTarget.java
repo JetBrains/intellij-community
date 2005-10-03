@@ -3,6 +3,7 @@ package com.intellij.ide.impl;
 import com.intellij.ide.SelectInContext;
 import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.StandardTargetWeights;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.structureView.StructureViewFactoryEx;
 import com.intellij.ide.structureView.StructureViewWrapper;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -19,7 +20,7 @@ public class StructureViewSelectInTarget implements SelectInTarget {
 
 
   public String toString() {
-    return "File Structure";
+    return IdeBundle.message("select.in.file.structure");
   }
 
   public boolean canSelect(SelectInContext context) {

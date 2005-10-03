@@ -21,12 +21,17 @@ import com.intellij.util.IncorrectOperationException;
 
 import java.net.URL;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author Eugene Zhuravlev
  *         Date: Jul 5, 2005
  */
 final class ResourceBundleFileReference extends ReferenceInForm {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.ResourceBundleFileReference");
+
+  @NonNls
+  static final String PROPERTIES_EXTENSION = ".properties";
 
   public ResourceBundleFileReference(final PsiPlainTextFile file, TextRange bundleNameRange) {
     super(file, bundleNameRange);
@@ -46,13 +51,14 @@ final class ResourceBundleFileReference extends ReferenceInForm {
     return ReferenceUtil.getPropertiesFile(getRangeText(), module);
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public PsiElement handleElementRename(final String newElementName){
     final String currentName = getRangeText();
     final int slashIndex = currentName.lastIndexOf('/');
     final String prefix = currentName.substring(0, slashIndex);
-    final String baseName = newElementName.endsWith(".properties")?
-                      newElementName.substring(0, newElementName.length() - ".properties".length()) :
-                      newElementName;
+    final String baseName = newElementName.endsWith(PROPERTIES_EXTENSION)?
+                            newElementName.substring(0, newElementName.length() - PROPERTIES_EXTENSION.length()) :
+                            newElementName;
     return super.handleElementRename(prefix + "/" + baseName);
   }
 

@@ -3,6 +3,7 @@ package com.intellij.ide.fileTemplates.ui;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.FixedSizeButton;
@@ -27,7 +28,7 @@ public class SelectTemplateDialog extends DialogWrapper{
     super(project, true);
     myDirectory = directory;
     myProject = project;
-    setTitle("Select Template");
+    setTitle(IdeBundle.message("title.select.template"));
     init();
   }
 
@@ -37,7 +38,7 @@ public class SelectTemplateDialog extends DialogWrapper{
     JButton editTemplatesButton = new FixedSizeButton(myCbxTemplates);
 
     JPanel centerPanel = new JPanel(new GridBagLayout());
-    JLabel selectTemplateLabel = new JLabel("Name:");
+    JLabel selectTemplateLabel = new JLabel(IdeBundle.message("label.name"));
 
     centerPanel.add(selectTemplateLabel,       new GridBagConstraints(0, 1, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(2, 2, 2, 2), 0, 0));
     centerPanel.add(myCbxTemplates,       new GridBagConstraints(1, 1, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.HORIZONTAL, new Insets(2, 2, 2, 2), 50, 0));

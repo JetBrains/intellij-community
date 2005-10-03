@@ -4,6 +4,7 @@ import com.intellij.aspects.psi.PsiAspectFile;
 import com.intellij.aspects.psi.PsiPointcutDef;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.analysis.aspect.AspectHighlighter;
 import com.intellij.codeInsight.daemon.impl.analysis.ejb.EjbHighlightVisitor;
@@ -28,18 +29,17 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.javadoc.PsiDocToken;
-import com.intellij.psi.jsp.el.ELExpressionHolder;
 import com.intellij.psi.jsp.JspFile;
+import com.intellij.psi.jsp.el.ELExpressionHolder;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
-import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.NonNls;
 
-import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -69,7 +69,6 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   // map codeBlock->List of PsiReferenceExpression of extra initailization of final variable
   private final Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> myFinalVarProblems = Collections.synchronizedMap(new THashMap<PsiElement, Collection<ControlFlowUtil.VariableInfo>>());
   private final Map<PsiParameter, Boolean> myParameterIsReassigned = Collections.synchronizedMap(new THashMap<PsiParameter, Boolean>());
-  public static final String UNKNOWN_SYMBOL = "Cannot resolve symbol ''{0}''";
 
   private final Map<String, PsiClass> mySingleImportedClasses = Collections.synchronizedMap(new THashMap<String, PsiClass>());
   private final Map<String, PsiElement> mySingleImportedFields = Collections.synchronizedMap(new THashMap<String, PsiElement>());
@@ -403,7 +402,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     if (statement.getManager().getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) < 0) {
       myHolder.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                      statement.getFirstChild(),
-                                                     "Static imports are not supported at this language level"));
+                                                     JavaErrorMessages.message("static.imports.prior.15")));
     }
   }
 
@@ -411,7 +410,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     if (statement.getManager().getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) < 0) {
       myHolder.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                      statement.getFirstChild(),
-                                                     "Foreach loops are not supported at this language level"));
+                                                     JavaErrorMessages.message("foreach.prior.15")));
     }
     else {
       myHolder.add(GenericsHighlightUtil.checkForeachLoopParameterType(statement));
@@ -500,7 +499,6 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkConstructorHandleSuperClassExceptions(method));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkMethodSameNameAsConstructor(method));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkRecursiveConstructorInvocation(method));
-    if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkSameErasureMethods(method));
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkOverrideAnnotation(method));
     if (!myHolder.hasErrorResults() && method.isConstructor()) {
       myHolder.add(HighlightClassUtil.checkThingNotAllowedInInterface(method, method.getContainingClass()));
@@ -560,8 +558,8 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
       PsiMethod method = (PsiMethod)parent;
       MethodSignatureBackedByPsiMethod methodSignature = MethodSignatureBackedByPsiMethod.create(method, PsiSubstitutor.EMPTY);
       if (!method.isConstructor()) {
-        List<MethodSignatureBackedByPsiMethod> superMethodSignatures = PsiSuperMethodUtil.findSuperMethodSignaturesIncludingStatic(method, true);
-        List<MethodSignatureBackedByPsiMethod> superMethodCandidateSignatures = PsiSuperMethodUtil.findSuperMethodSignaturesIncludingStatic(method, false);
+        List<MethodSignatureBackedByPsiMethod> superMethodSignatures = method.findSuperMethodSignaturesIncludingStatic(true);
+        List<MethodSignatureBackedByPsiMethod> superMethodCandidateSignatures = method.findSuperMethodSignaturesIncludingStatic(false);
         if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkMethodWeakerPrivileges(methodSignature, superMethodCandidateSignatures, true));
         if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkMethodIncompatibleReturnType(methodSignature, superMethodSignatures, true));
         if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkMethodIncompatibleThrows(methodSignature, superMethodSignatures, true));
@@ -583,7 +581,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
         myHolder.add(HighlightClassUtil.checkClassDoesNotCallSuperConstructorOrHandleExceptions(aClass, myRefCountHolder));
       }
       if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkOverrideEquivalentInheritedMethods(aClass));
-      if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkOverrideEquivalentInheritedMethods(aClass));
+      if (!myHolder.hasErrorResults()) myHolder.addAll(GenericsHighlightUtil.checkOverrideEquivalentMethods(aClass));
       if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkCyclicInheritance(aClass));
     }
     else if (parent instanceof PsiPointcutDef) {
@@ -626,6 +624,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   public void visitPackageStatement(PsiPackageStatement statement) {
     super.visitPackageStatement(statement);
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkPackageNameConformsToDirectoryName(statement));
+    myHolder.add(HighlightClassUtil.checkPackageAnnotationContainingFile(statement));
   }
 
   public void visitParameter(PsiParameter parameter) {
@@ -656,7 +655,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     JavaResolveResult[] results = ref.multiResolve(false);
 
     if (results.length == 0) {
-      String description = MessageFormat.format(UNKNOWN_SYMBOL, new Object[]{refName});
+      String description = JavaErrorMessages.message("cannot.resolve.symbol", refName);
       HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.WRONG_REF, ref.getReferenceNameElement(), description);
       myHolder.add(info);
       QuickFixAction.registerQuickFixAction(info, SetupJDKFix.getInstnace(), null);
@@ -668,18 +667,18 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
         if (!(element instanceof PsiModifierListOwner) || !((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.STATIC)) {
           continue;
         }
-        String importedString = null;
+        @NonNls String messageKey = null;
         if (element instanceof PsiClass) {
           PsiClass aClass = mySingleImportedClasses.get(refName);
           if (aClass != null && !manager.areElementsEquivalent(aClass, element)) {
-            importedString = "class '" + refName + "'";
+            messageKey = "class.is.already.defined.in.single.type.import";
           }
           mySingleImportedClasses.put(refName, (PsiClass)element);
         }
         else if (element instanceof PsiField) {
           PsiField field = (PsiField)mySingleImportedFields.get(refName);
           if (field != null && !manager.areElementsEquivalent(field, element)) {
-            importedString = "field '" + refName + "'";
+            messageKey = "field.is.already.defined.in.single.type.import";
           }
           mySingleImportedFields.put(refName, element);
         }
@@ -687,14 +686,13 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
           MethodSignature signature = ((PsiMethod)element).getSignature(PsiSubstitutor.EMPTY);
           PsiMethod method = (PsiMethod)mySingleImportedMethods.get(signature);
           if (method != null && !manager.areElementsEquivalent(method, element)) {
-            importedString = "method '" + refName + "'";
+            messageKey = "method.is.already.defined.in.single.type.import";
           }
           mySingleImportedMethods.put(signature, element);
         }
 
-        if (importedString != null) {
-          String description = MessageFormat.format("{0} is already defined in a single-type import",
-                                                    new Object[]{importedString});
+        if (messageKey != null) {
+          String description = JavaErrorMessages.message(messageKey, refName);
           myHolder.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, ref, description));
         }
       }
@@ -839,7 +837,9 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
 
   public void visitParameterList(PsiParameterList list) {
     if (list.getParent() instanceof PsiAnnotationMethod && list.getParameters().length > 0) {
-      myHolder.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, list, "@interface members may not have parameters"));
+      myHolder.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
+                                                     list,
+                                                     JavaErrorMessages.message("annotation.interface.members.may.not.have.parameters")));
     }
   }
 

@@ -12,6 +12,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.ParameterTablePanel;
 import com.intellij.refactoring.util.RefactoringUtil;
 
@@ -28,7 +29,8 @@ public class MakeStaticUtil {
     return classRefs.toArray(new InternalUsageInfo[classRefs.size()]);
   }
 
-  private static void addClassRefs(PsiTypeParameterListOwner originalMember, ArrayList<InternalUsageInfo> classRefs, PsiClass containingClass, PsiElement element, boolean includeSelf) {
+  private static void addClassRefs(PsiTypeParameterListOwner originalMember, ArrayList<InternalUsageInfo> classRefs,
+                                   PsiClass containingClass, PsiElement element, boolean includeSelf) {
     if (element instanceof PsiReferenceExpression) {
       PsiReferenceExpression ref = (PsiReferenceExpression)element;
 
@@ -50,27 +52,41 @@ public class MakeStaticUtil {
         }
       }
     }
-    else if (element instanceof PsiThisExpression || element instanceof PsiSuperExpression || element instanceof PsiNewExpression) {
-      PsiJavaCodeReferenceElement classRef;
-      if (element instanceof PsiThisExpression) {
-        classRef = ((PsiThisExpression)element).getQualifier();
-
-      }
-      else if (element instanceof PsiSuperExpression) {
-        classRef = ((PsiSuperExpression)element).getQualifier();
-      }
-      else {
-        classRef = ((PsiNewExpression)element).getClassReference();
-      }
-      if (classRef != null) {
-        PsiElement resolved = classRef.resolve();
-        if (resolved instanceof PsiClass && isPartOf((PsiClass)resolved, containingClass)) {
-          classRefs.add(new InternalUsageInfo(element, containingClass));
+    else if (element instanceof PsiThisExpression) {
+      PsiJavaCodeReferenceElement qualifier = ((PsiThisExpression) element).getQualifier();
+      PsiElement refElement = qualifier != null ?
+          qualifier.resolve() : PsiTreeUtil.getParentOfType(element, PsiClass.class);
+      if (refElement instanceof PsiClass && isPartOf((PsiClass)refElement, containingClass)) {
+        final PsiElement parent = element.getParent();
+        if (parent instanceof PsiReferenceExpression && ((PsiReferenceExpression)parent).isReferenceTo(originalMember)) {
+          if (includeSelf) {
+            classRefs.add(new SelfUsageInfo(parent, originalMember));
+          }
+        } else {
+          classRefs.add(new InternalUsageInfo(element, refElement));
         }
-
       }
-      else if (!(element instanceof PsiNewExpression) && !RefactoringUtil.isInsideAnonymous(element, containingClass)) {
-        classRefs.add(new InternalUsageInfo(element, containingClass));
+    }
+    else if (element instanceof PsiSuperExpression) {
+      PsiJavaCodeReferenceElement qualifier = ((PsiSuperExpression) element).getQualifier();
+      PsiElement refElement = qualifier != null ?
+          qualifier.resolve() : PsiTreeUtil.getParentOfType(element, PsiClass.class);
+      if (refElement instanceof PsiClass) {
+        if (isPartOf((PsiClass) refElement, containingClass)) {
+          classRefs.add(new InternalUsageInfo(element, refElement));
+        }
+      }
+    }
+    else if (element instanceof PsiNewExpression) {
+      PsiJavaCodeReferenceElement classReference = ((PsiNewExpression) element).getClassReference();
+      if (classReference != null) {
+        PsiElement refElement = classReference.resolve();
+        if (refElement instanceof PsiClass) {
+          PsiClass hisClass = ((PsiClass) refElement).getContainingClass();
+          if (hisClass != null && isPartOf(hisClass, containingClass)) {
+            classRefs.add(new InternalUsageInfo(element, refElement));
+          }
+        }
       }
     }
 

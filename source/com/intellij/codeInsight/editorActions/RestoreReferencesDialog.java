@@ -1,11 +1,12 @@
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.CommonBundle;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.util.FQNameCellRenderer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiNamedElement;
 
 import javax.swing.*;
 import java.awt.*;
@@ -25,7 +26,12 @@ class RestoreReferencesDialog extends DialogWrapper {
         break;
       }
     }
-    setTitle("Select " + (myContainsClassesOnly ? "Classes" : "Elements") + " to Import");
+    if (myContainsClassesOnly) {
+      setTitle(CodeInsightBundle.message("dialog.import.on.paste.title"));
+    }
+    else {
+      setTitle(CodeInsightBundle.message("dialog.import.on.paste.title2"));
+    }
     init();
 
     myList.setSelectionInterval(0, myNamedElements.length - 1);
@@ -44,22 +50,20 @@ class RestoreReferencesDialog extends DialogWrapper {
     myList.setCellRenderer(new FQNameCellRenderer());
     myList.setBorder(BorderFactory.createEtchedBorder());
     panel.add(new JScrollPane(myList), BorderLayout.CENTER);
-    final String what = myContainsClassesOnly ? "classes" : "elements";
-    final String text =
-      "The code fragment which you have pasted uses " + what + "\n"
-      + "that are not accessible by imports in the new context.\n"
-      + "Select " + what + " that you want to import to the new file.";
-    JTextArea area = new JTextArea(text);
+
+    JTextArea area = new JTextArea(myContainsClassesOnly ?
+                                   CodeInsightBundle.message("dialog.paste.on.import.text") :
+                                   CodeInsightBundle.message("dialog.paste.on.import.text2"));
     area.setEditable(false);
     area.setBackground(this.getContentPane().getBackground());
     area.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
     panel.add(area, BorderLayout.NORTH);
 
     final JPanel buttonPanel = new JPanel(new VerticalFlowLayout());
-    final JButton okButton = new JButton("OK");
+    final JButton okButton = new JButton(CommonBundle.getOkButtonText());
     getRootPane().setDefaultButton(okButton);
     buttonPanel.add(okButton);
-    final JButton cancelButton = new JButton("Cancel");
+    final JButton cancelButton = new JButton(CommonBundle.getCancelButtonText());
     buttonPanel.add(cancelButton);
 
     panel.setPreferredSize(new Dimension(500, 400));

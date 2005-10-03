@@ -12,6 +12,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.IncorrectOperationException;
@@ -42,25 +43,33 @@ class CopyFilesOrDirectoriesDialog extends DialogWrapper{
       throw new IllegalArgumentException("wrong number of elements to clone: " + elements.length);
     }
 
-    setTitle(doClone ? "Clone" : "Copy");
+    setTitle(doClone ?
+             RefactoringBundle.message("copy.files.clone.title") :
+             RefactoringBundle.message("copy.files.copy.title"));
     init();
 
     if (elements.length == 1) {
       String text;
       if (elements[0] instanceof PsiFile) {
         PsiFile file = (PsiFile)elements[0];
-        text = (doClone ? "Clone file " : "Copy file ") + file.getVirtualFile().getPresentableUrl();
+        text = doClone ?
+               RefactoringBundle.message("copy.files.clone.file.0", file.getVirtualFile().getPresentableUrl()) :
+               RefactoringBundle.message("copy.files.copy.file.0", file.getVirtualFile().getPresentableUrl());
         myNewNameField.setText(file.getName());
       }
       else {
         PsiDirectory directory = (PsiDirectory)elements[0];
-        text = (doClone ? "Clone directory" : "Copy directory ") + directory.getVirtualFile().getPresentableUrl();
+        text = doClone ?
+               RefactoringBundle.message("copy.files.clone.directory.0", directory.getVirtualFile().getPresentableUrl()) :
+               RefactoringBundle.message("copy.files.copy.directory.0", directory.getVirtualFile().getPresentableUrl());
         myNewNameField.setText(directory.getName());
       }
       myInformationLabel.setText(text);
     }
     else {
-      myInformationLabel.setText((elements[0] instanceof PsiFile)? "Copy specified files" : "Copy specified directories");
+      myInformationLabel.setText((elements[0] instanceof PsiFile)?
+                                 RefactoringBundle.message("copy.files.copy.specified.files.label") :
+                                 RefactoringBundle.message("copy.files.copy.specified.directories.label"));
     }
 
     if (myShowDirectoryField) {
@@ -78,8 +87,7 @@ class CopyFilesOrDirectoriesDialog extends DialogWrapper{
   }
 
   protected JComponent createCenterPanel() {
-    JPanel panel = new JPanel(new BorderLayout());
-    return panel;
+    return new JPanel(new BorderLayout());
   }
 
   protected JComponent createNorthPanel() {
@@ -98,10 +106,13 @@ class CopyFilesOrDirectoriesDialog extends DialogWrapper{
     };
 
     if (myShowDirectoryField) {
-      panel.add(new JLabel("To directory: "), new GridBagConstraints(0,1,1,1,0,0,GridBagConstraints.WEST,GridBagConstraints.HORIZONTAL,new Insets(4,8,4,8),0,0));
+      panel.add(new JLabel(RefactoringBundle.message("copy.files.to.directory.label")), new GridBagConstraints(0,1,1,1,0,0,GridBagConstraints.WEST,GridBagConstraints.HORIZONTAL,new Insets(4,8,4,8),0,0));
 
       myTargetDirectoryField = new TextFieldWithBrowseButton();
-      myTargetDirectoryField.addBrowseFolderListener("Select target directory", "The file will be copied to this directory", null, FileChooserDescriptorFactory.createSingleFolderDescriptor());
+      myTargetDirectoryField.addBrowseFolderListener(RefactoringBundle.message("select.target.directory"),
+                                                     RefactoringBundle.message("the.file.will.be.copied.to.this.directory"),
+                                                     null,
+                                                     FileChooserDescriptorFactory.createSingleFolderDescriptor());
       myTargetDirectoryField.setTextFieldPreferredWidth(60);
       panel.add(myTargetDirectoryField, new GridBagConstraints(1,1,1,1,1,0,GridBagConstraints.WEST,GridBagConstraints.HORIZONTAL,new Insets(4,0,4,8),0,0));
 
@@ -115,7 +126,7 @@ class CopyFilesOrDirectoriesDialog extends DialogWrapper{
       size.width = fontMetrics.charWidth('a') * 60;
       myNewNameField.setPreferredSize(size);
 
-      panel.add(new JLabel("New name: "), new GridBagConstraints(0,2,1,1,0,0,GridBagConstraints.WEST,GridBagConstraints.HORIZONTAL,new Insets(4,8,4,8),0,0));
+      panel.add(new JLabel(RefactoringBundle.message("copy.files.new.name.label")), new GridBagConstraints(0,2,1,1,0,0,GridBagConstraints.WEST,GridBagConstraints.HORIZONTAL,new Insets(4,8,4,8),0,0));
 
       panel.add(myNewNameField, new GridBagConstraints(1,2,1,1,1,0,GridBagConstraints.WEST,GridBagConstraints.HORIZONTAL,new Insets(4,0,4,8),0,0));
 
@@ -138,7 +149,7 @@ class CopyFilesOrDirectoriesDialog extends DialogWrapper{
       String newName = getNewName();
 
       if (newName.length() == 0) {
-        Messages.showMessageDialog(myProject, "No new name specified", "Error", Messages.getErrorIcon());
+        Messages.showMessageDialog(myProject, RefactoringBundle.message("no.new.name.specified"), RefactoringBundle.message("error.title"), Messages.getErrorIcon());
         return;
       }
     }
@@ -147,7 +158,7 @@ class CopyFilesOrDirectoriesDialog extends DialogWrapper{
       final String targetDirectoryName = myTargetDirectoryField.getText();
 
       if (targetDirectoryName.length() == 0) {
-        Messages.showMessageDialog(myProject, "No target directory specified", "Error", Messages.getErrorIcon());
+        Messages.showMessageDialog(myProject, RefactoringBundle.message("no.target.directory.specified"), RefactoringBundle.message("error.title"), Messages.getErrorIcon());
         return;
       }
 
@@ -163,10 +174,10 @@ class CopyFilesOrDirectoriesDialog extends DialogWrapper{
             }
           });
         }
-      }, "Create directory", null);
+      }, RefactoringBundle.message("create.directory"), null);
 
       if (myTargetDirectory == null) {
-        Messages.showMessageDialog(myProject, "Cannot create directory", "Error", Messages.getErrorIcon());
+        Messages.showMessageDialog(myProject, RefactoringBundle.message("cannot.create.directory"), RefactoringBundle.message("error.title"), Messages.getErrorIcon());
         return;
       }
     }

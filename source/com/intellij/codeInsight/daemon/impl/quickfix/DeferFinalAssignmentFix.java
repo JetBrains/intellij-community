@@ -8,15 +8,16 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.controlFlow.*;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.ArrayList;
@@ -34,11 +35,11 @@ public class DeferFinalAssignmentFix implements IntentionAction {
   }
 
   public String getFamilyName() {
-    return "Defer final assignment with temp";
+    return QuickFixBundle.message("defer.final.assignment.with.temp.family");
   }
 
   public String getText() {
-    return "Defer assignment to '"+variable.getName()+"' using temp variable";
+    return QuickFixBundle.message("defer.final.assignment.with.temp.text", variable.getName());
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
@@ -72,7 +73,6 @@ public class DeferFinalAssignmentFix implements IntentionAction {
     PsiClassInitializer[] initializers = aClass.getInitializers();
     for (PsiClassInitializer initializer : initializers) {
       PsiCodeBlock body = initializer.getBody();
-      if (body == null) continue;
       if (PsiTreeUtil.isAncestor(body, element, true)) return body;
     }
     return null;

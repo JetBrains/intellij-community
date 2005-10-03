@@ -1,6 +1,7 @@
 package com.intellij.jar;
 
 import com.intellij.ide.RecentProjectsManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
@@ -70,7 +71,7 @@ public class BuildJarActionDialog extends DialogWrapper {
 
     setupControls();
 
-    setTitle("Build Jars");
+    setTitle(IdeBundle.message("jar.build.dialog.title"));
     init();
     mySplitterProportionsData.externalizeFromDimensionService(getDimensionKey());
     mySplitterProportionsData.restoreSplitterProportions(myPanel);
@@ -158,7 +159,7 @@ public class BuildJarActionDialog extends DialogWrapper {
         fileChooser.setFileView(fileView);
         fileChooser.setMultiSelectionEnabled(false);
         fileChooser.setAcceptAllFileFilterUsed(false);
-        fileChooser.setDialogTitle("Save Jar File");
+        fileChooser.setDialogTitle(IdeBundle.message("jar.build.save.title"));
         fileChooser.addChoosableFileFilter(new FileTypeFilter(StdFileTypes.ARCHIVE));
 
         if (fileChooser.showSaveDialog(WindowManager.getInstance().suggestParentWindow(myProject)) != JFileChooser.APPROVE_OPTION) {
@@ -176,7 +177,7 @@ public class BuildJarActionDialog extends DialogWrapper {
         GlobalSearchScope scope = createMainClassScope();
         PsiClass aClass = PsiManager.getInstance(myProject).findClass(mainClass, scope);
         TreeClassChooserFactory factory = TreeClassChooserFactory.getInstance(myProject);
-        final TreeClassChooser dialog = factory.createNoInnerClassesScopeChooser("Choose Main Class", scope, null, aClass);
+        final TreeClassChooser dialog = factory.createNoInnerClassesScopeChooser(IdeBundle.message("jar.build.main.class.title"), scope, null, aClass);
         dialog.showDialog();
         final PsiClass psiClass = dialog.getSelectedClass();
         if (psiClass != null && psiClass.getQualifiedName() != null) {
@@ -297,6 +298,7 @@ public class BuildJarActionDialog extends DialogWrapper {
   }
 
   private static void copySettings(BuildJarSettings from, BuildJarSettings to) {
+    //noinspection HardCodedStringLiteral
     Element element = new Element("dummy");
     try {
       from.writeExternal(element);

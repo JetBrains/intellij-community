@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.completion.CompletionBundle;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.*;
@@ -205,7 +206,7 @@ public class LookupImpl extends LightweightHint implements Lookup {
     }
     boolean isEmpty = array.size() == 0;
     if (isEmpty){
-      LookupItem item = new LookupItem("No suggestions", "");
+      LookupItem item = new LookupItem(CompletionBundle.message("completion.no.suggestions"), "");
       item.setAttribute(EMPTY_ITEM_ATTRIBUTE, "");
       model.addElement(item);
       array.add(item);

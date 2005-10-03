@@ -5,6 +5,7 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.ui.HighlightableCellRenderer;
 import com.intellij.ui.HighlightedRegion;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -29,7 +30,7 @@ final class TodoCompositeRenderer implements TreeCellRenderer{
     Object userObject=((DefaultMutableTreeNode)obj).getUserObject();
     if(userObject instanceof SummaryNode){
       myNodeRenderer.getTreeCellRendererComponent(tree,userObject.toString(),selected,expanded,leaf,row,hasFocus);
-      myNodeRenderer.setFont(UIManager.getFont("Tree.font").deriveFont(Font.BOLD));
+      myNodeRenderer.setFont(UIUtil.getTreeFont().deriveFont(Font.BOLD));
       myNodeRenderer.setIcon(null);
       return myNodeRenderer;
     }else if(userObject instanceof HighlightedRegionProvider){

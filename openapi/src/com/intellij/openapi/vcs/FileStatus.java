@@ -29,17 +29,17 @@ public interface FileStatus extends NamedComponent {
   Color COLOR_OUT_OF_DATE = Color.yellow.darker().darker();
   Color COLOR_UNKNOWN = new Color(153, 51, 0);
 
-  FileStatus NOT_CHANGED = PeerFactory.getInstance().getFileStatusFactory().createFileStatus("NOT_CHANGED", "Up to date", COLOR_NOT_CHANGED);
-  FileStatus DELETED = PeerFactory.getInstance().getFileStatusFactory().createFileStatus("DELETED", "Deleted", COLOR_MISSING);
-  FileStatus MODIFIED = PeerFactory.getInstance().getFileStatusFactory().createFileStatus("MODIFIED", "Modified", COLOR_MODIFIED);
-  FileStatus ADDED = PeerFactory.getInstance().getFileStatusFactory().createFileStatus("ADDED", "Added", COLOR_ADDED);
-  FileStatus MERGE = PeerFactory.getInstance().getFileStatusFactory().createFileStatus("MERGED", "Merged", COLOR_MERGE);
-  FileStatus UNKNOWN = PeerFactory.getInstance().getFileStatusFactory().createFileStatus("UNKNOWN", "Unknown", COLOR_UNKNOWN);
-  FileStatus IGNORED = PeerFactory.getInstance().getFileStatusFactory().createFileStatus("IDEA_FILESTATUS_IGNORED", "Ignored", new Color(114, 114, 56));
+  FileStatus NOT_CHANGED = PeerFactory.getInstance().getFileStatusFactory().createFileStatus("NOT_CHANGED", VcsBundle.message("file.status.name.up.to.date"), COLOR_NOT_CHANGED);
+  FileStatus DELETED = PeerFactory.getInstance().getFileStatusFactory().createFileStatus("DELETED", VcsBundle.message("file.status.name.deleted"), COLOR_MISSING);
+  FileStatus MODIFIED = PeerFactory.getInstance().getFileStatusFactory().createFileStatus("MODIFIED", VcsBundle.message("file.status.name.modified"), COLOR_MODIFIED);
+  FileStatus ADDED = PeerFactory.getInstance().getFileStatusFactory().createFileStatus("ADDED", VcsBundle.message("file.status.name.added"), COLOR_ADDED);
+  FileStatus MERGE = PeerFactory.getInstance().getFileStatusFactory().createFileStatus("MERGED", VcsBundle.message("file.status.name.merged"), COLOR_MERGE);
+  FileStatus UNKNOWN = PeerFactory.getInstance().getFileStatusFactory().createFileStatus("UNKNOWN", VcsBundle.message("file.status.name.unknown"), COLOR_UNKNOWN);
+  FileStatus IGNORED = PeerFactory.getInstance().getFileStatusFactory().createFileStatus("IDEA_FILESTATUS_IGNORED", VcsBundle.message("file.status.name.ignored"), new Color(114, 114, 56));
   FileStatus MERGED_WITH_CONFLICTS = PeerFactory.getInstance().getFileStatusFactory()
-   .createFileStatus("IDEA_FILESTATUS_MERGED_WITH_CONFLICTS", "Merged with conflicts", Color.red);
+   .createFileStatus("IDEA_FILESTATUS_MERGED_WITH_CONFLICTS", VcsBundle.message("file.status.name.merged.with.conflicts"), Color.red);
   FileStatus DELETED_FROM_FS = PeerFactory.getInstance().getFileStatusFactory()
-   .createFileStatus("IDEA_FILESTATUS_DELETED_FROM_FILE_SYSTEM", "Deleted from file system",
+   .createFileStatus("IDEA_FILESTATUS_DELETED_FROM_FILE_SYSTEM", VcsBundle.message("file.status.name.deleted.from.file.system"),
                      new Color(119, 56, 149));
 
   Color getColor();

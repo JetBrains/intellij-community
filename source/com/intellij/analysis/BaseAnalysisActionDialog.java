@@ -4,11 +4,13 @@ import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.psi.search.SearchScope;
+import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
+import com.intellij.find.FindSettings;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyEvent;
 
 /**
  * User: anna
@@ -20,6 +22,8 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
   private JRadioButton myFileButton;
   private JRadioButton myProjectButton;
   private JRadioButton myModuleButton;
+  private JRadioButton myCustomScopeButton;
+  private ScopeChooserCombo myScopeCombo;
   private JCheckBox myInspectTestSource;
   private Project myProject;
   private boolean myRememberScope;
@@ -52,38 +56,63 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
 
   protected JComponent createCenterPanel() {
     final InspectionManagerEx.UIOptions uiOptions = ((InspectionManagerEx)InspectionManagerEx.getInstance(myProject)).getUIOptions();
-    JPanel wholePanel = new JPanel(new BorderLayout());
+
     JPanel panel = new JPanel(new GridBagLayout());
-    GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0,0,0,0), 0, 0);
+    GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0,0,0,0), 0, 0);
     panel.setBorder(IdeBorderFactory.createTitledBorder(myAnalysisNoon));
-    myFileButton = new JRadioButton(myFileName);
-    myFileButton.setMnemonic(myFileName.charAt(0));
-    myProjectButton = new JRadioButton("Whole project");
-    myProjectButton.setMnemonic(KeyEvent.VK_W);
+
     ButtonGroup group = new ButtonGroup();
+
+    //project scope
+    myProjectButton = new JRadioButton(AnalysisScopeBundle.message("scope.option.whole.project"));
     group.add(myProjectButton);
-    group.add(myFileButton);
     panel.add(myProjectButton, gc);
+
+    //module scope if applicable
     boolean useModuleScope = false;
     if (myModuleName != null) {
-      myModuleButton = new JRadioButton("Module \'" + myModuleName + "\'");
-      myModuleButton.setMnemonic(KeyEvent.VK_M);
+      myModuleButton = new JRadioButton(AnalysisScopeBundle.message("scope.option.module.with.mnemonic", myModuleName));
       group.add(myModuleButton);
       useModuleScope = uiOptions.SCOPE_TYPE == AnalysisScope.MODULE;
       myModuleButton.setSelected(myRememberScope && useModuleScope);
       panel.add(myModuleButton, gc);
     }
+
+    //file/package/directory/module scope
+    myFileButton = new JRadioButton(myFileName);
+    myFileButton.setMnemonic(myFileName.charAt(0));
+    group.add(myFileButton);
     panel.add(myFileButton, gc);
-    myInspectTestSource = new JCheckBox("Include Test Sources", uiOptions.ANALYZE_TEST_SOURCES);
+
+    //custom scope
+    myCustomScopeButton = new JRadioButton(AnalysisScopeBundle.message("scope.option.custom"));
+    myCustomScopeButton.setSelected(myRememberScope && uiOptions.SCOPE_TYPE == AnalysisScope.CUSTOM);
+    group.add(myCustomScopeButton);
+    gc.gridwidth = 1;
+    panel.add(myCustomScopeButton, gc);
+
+    myScopeCombo = new ScopeChooserCombo(myProject, false, true, uiOptions.CUSTOM_SCOPE_NAME.length() > 0 ? uiOptions.CUSTOM_SCOPE_NAME : FindSettings.getInstance().getDefaultScopeName());
+    gc.gridx = 1;
+    panel.add(myScopeCombo, gc);
+    gc.gridx = 0;
+    gc.gridwidth = 2;
+
+    //include test option
+    myInspectTestSource = new JCheckBox(AnalysisScopeBundle.message("scope.option.include.test.sources"), uiOptions.ANALYZE_TEST_SOURCES);
     gc.insets.left = 15;
     panel.add(myInspectTestSource, gc);
+
+    //correct selection
+    myProjectButton.setSelected(myRememberScope && uiOptions.SCOPE_TYPE == AnalysisScope.PROJECT);
+    myFileButton.setSelected(!myRememberScope || (uiOptions.SCOPE_TYPE != AnalysisScope.PROJECT && !useModuleScope && uiOptions.SCOPE_TYPE != AnalysisScope.CUSTOM));
+
+    //additional panel - inspection profile chooser
+    JPanel wholePanel = new JPanel(new BorderLayout());
     wholePanel.add(panel, BorderLayout.NORTH);
     final JComponent additionalPanel = getAdditionalActionSettings(myProject);
     if (additionalPanel!= null){
       wholePanel.add(additionalPanel, BorderLayout.CENTER);
     }
-    myProjectButton.setSelected(myRememberScope && uiOptions.SCOPE_TYPE == AnalysisScope.PROJECT);
-    myFileButton.setSelected(!myRememberScope || (uiOptions.SCOPE_TYPE != AnalysisScope.PROJECT && !useModuleScope));
     return wholePanel;
   }
 
@@ -97,7 +126,19 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
   }
 
   public boolean isModuleScopeSelected() {
-    return myModuleButton != null ? myModuleButton.isSelected() : false;
+    return myModuleButton != null && myModuleButton.isSelected();
+  }
+
+  public SearchScope getCustomScope(){
+    if (myCustomScopeButton.isSelected()){
+      return myScopeCombo.getSelectedScope();
+    }
+    return null;
+  }
+
+  protected void doOKAction() {
+    ((InspectionManagerEx)InspectionManagerEx.getInstance(myProject)).getUIOptions().CUSTOM_SCOPE_NAME = myScopeCombo.getSelectedScopeName();
+    super.doOKAction();
   }
 
   public boolean isInspectTestSources(){

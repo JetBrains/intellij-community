@@ -8,6 +8,7 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -19,7 +20,7 @@ import com.intellij.util.IncorrectOperationException;
 
 public class ImplementAbstractMethodAction extends BaseIntentionAction {
   public String getFamilyName() {
-    return "Implement Abstract Method";
+    return CodeInsightBundle.message("intention.implement.abstract.method.family");
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
@@ -27,7 +28,7 @@ public class ImplementAbstractMethodAction extends BaseIntentionAction {
     final PsiMethod method = findMethod(file, offset);
 
     if (method == null || !method.isValid()) return false;
-    setText("Implement method '" + method.getName() + "'");
+    setText(CodeInsightBundle.message("intention.implement.abstract.method.text", method.getName()));
 
     if (!method.getManager().isInProject(method)) return false;
 

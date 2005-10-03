@@ -23,7 +23,7 @@ public class CheckboxTree extends Tree {
     setCellRenderer(cellRenderer);
     setRootVisible(false);
     setShowsRootHandles(true);
-    putClientProperty("JTree.lineStyle", "Angled");
+    setLineStyleAngled();
     TreeToolTipHandler.install(this);
     TreeUtil.installActions(this);
     installSpeedSearch();

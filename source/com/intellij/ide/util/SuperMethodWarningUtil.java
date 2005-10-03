@@ -13,18 +13,19 @@ public class SuperMethodWarningUtil {
     PsiClass aClass = method.getContainingClass();
     if (aClass == null) return method;
 
-    PsiMethod superMethod = PsiSuperMethodUtil.findDeepestSuperMethod(method);
+    PsiMethod superMethod = method.findDeepestSuperMethod();
     if (superMethod == null) return method;
 
     PsiClass containingClass = superMethod.getContainingClass();
 
-    SuperMethodOrPointcutWarningDialog dialog = new SuperMethodOrPointcutWarningDialog(method.getProject(),
-                                                                                       UsageViewUtil.getDescriptiveName(method),
-        false, containingClass.getQualifiedName(),
-        actionString,
-        containingClass.isInterface() || superMethod.hasModifierProperty(PsiModifier.ABSTRACT),
-        containingClass.isInterface(),
-        aClass.isInterface(), containingClass instanceof PsiAspect);
+    SuperMethodOrPointcutWarningDialog dialog =
+      new SuperMethodOrPointcutWarningDialog(method.getProject(),
+                                             UsageViewUtil.getDescriptiveName(method),
+                                             false, containingClass.getQualifiedName(),
+                                             actionString,
+                                             containingClass.isInterface() || superMethod.hasModifierProperty(PsiModifier.ABSTRACT),
+                                             containingClass.isInterface(),
+                                             aClass.isInterface(), containingClass instanceof PsiAspect);
     dialog.show();
 
     if (dialog.getExitCode() == SuperMethodOrPointcutWarningDialog.OK_EXIT_CODE) return superMethod;
@@ -42,13 +43,14 @@ public class SuperMethodWarningUtil {
 
     PsiClass containingClass = superPointcut.getContainingClass();
 
-    SuperMethodOrPointcutWarningDialog dialog = new SuperMethodOrPointcutWarningDialog(pointcut.getProject(),
-                                                                                       UsageViewUtil.getDescriptiveName(pointcut),
-        true, containingClass.getQualifiedName(),
-        actionString,
-        containingClass.isInterface() || superPointcut.hasModifierProperty(PsiModifier.ABSTRACT),
-        containingClass.isInterface(),
-        aClass.isInterface(), containingClass instanceof PsiAspect);
+    SuperMethodOrPointcutWarningDialog dialog =
+      new SuperMethodOrPointcutWarningDialog(pointcut.getProject(),
+                                             UsageViewUtil.getDescriptiveName(pointcut),
+                                             true, containingClass.getQualifiedName(),
+                                             actionString,
+                                             containingClass.isInterface() || superPointcut.hasModifierProperty(PsiModifier.ABSTRACT),
+                                             containingClass.isInterface(),
+                                             aClass.isInterface(), containingClass instanceof PsiAspect);
     dialog.show();
 
     if (dialog.getExitCode() == SuperMethodOrPointcutWarningDialog.OK_EXIT_CODE) return superPointcut;

@@ -13,12 +13,15 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlEnumeratedType;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Mike
  */
 public class XmlAttributeDeclImpl extends XmlElementImpl implements XmlAttributeDecl {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlAttributeDeclImpl");
+  @NonNls private static final String ID_ATT = "ID";
+  @NonNls private static final String IDREF_ATT = "IDREF";
 
   public XmlAttributeDeclImpl() {
     super(XML_ATTRIBUTE_DECL);
@@ -87,7 +90,7 @@ public class XmlAttributeDeclImpl extends XmlElementImpl implements XmlAttribute
   public boolean isIdAttribute() {
     final PsiElement elementType = findElementType();
 
-    return elementType != null && elementType.getText().equals("ID");
+    return elementType != null && elementType.getText().equals(ID_ATT);
   }
 
   private PsiElement findElementType() {
@@ -101,7 +104,7 @@ public class XmlAttributeDeclImpl extends XmlElementImpl implements XmlAttribute
   public boolean isIdRefAttribute() {
     final PsiElement elementType = findElementType();
 
-    return elementType != null && elementType.getText().equals("IDREF");
+    return elementType != null && elementType.getText().equals(IDREF_ATT);
   }
 
   public PsiMetaData getMetaData() {

@@ -16,18 +16,20 @@
 package com.intellij.j2ee.make;
 
 import com.intellij.openapi.module.Module;
+import org.jetbrains.annotations.NonNls;
 
 public abstract class ModuleBuildProperties {
   public static ModuleBuildProperties getInstance(Module module) {
     return module.getComponent(ModuleBuildProperties.class);
   }
 
+  @NonNls
   public abstract String getArchiveExtension();
 
   public abstract String getJarPath();
 
   public abstract String getExplodedPath();
-  
+
   public abstract Module getModule();
 
   public abstract boolean isJarEnabled();

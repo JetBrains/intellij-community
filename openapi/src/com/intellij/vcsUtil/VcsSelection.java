@@ -18,26 +18,27 @@ package com.intellij.vcsUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.localVcs.LocalVcsBundle;
 
 public class VcsSelection {
   private final Document myDocument;
   private final int mySelectionStartLineNumber;
   private final int mySelectionEndLineNumber;
-  private final String mySelectedAreaName;
+  private final String myActionName;
 
   public VcsSelection(Document document, SelectionModel selectionModel) {
     this(document,
          new TextRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd()),
-         "Selection");
+         LocalVcsBundle.message("acrtion.name.show.history.for.selection"));
   }
 
-  public VcsSelection(Document document, TextRange textRange, String selectedAreaName) {
+  public VcsSelection(Document document, TextRange textRange, String actionName) {
     myDocument = document;
     int startOffset = textRange.getStartOffset();
     mySelectionStartLineNumber = document.getLineNumber(startOffset);
     int endOffset = textRange.getEndOffset();
     mySelectionEndLineNumber = endOffset >= document.getTextLength() ? document.getLineCount() : document.getLineNumber(endOffset);
-    mySelectedAreaName = selectedAreaName;
+    myActionName = actionName;
   }
 
   public Document getDocument() {
@@ -52,7 +53,7 @@ public class VcsSelection {
     return mySelectionEndLineNumber;
   }
 
-  public String getSelectedAreaName() {
-    return mySelectedAreaName;
+  public String getActionName() {
+    return myActionName;
   }
 }

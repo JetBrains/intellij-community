@@ -1,5 +1,7 @@
 package com.intellij.codeInsight.generation;
 
+import com.intellij.CommonBundle;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -11,6 +13,7 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 
@@ -19,7 +22,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
   private boolean myCopyJavadoc;
 
   public GenerateConstructorHandler() {
-    super("Choose Fields to Initialize by Constructor");
+    super(CodeInsightBundle.message("generate.constructor.fields.chooser.title"));
   }
 
   protected Object[] getAllOriginalMembers(PsiClass aClass) {
@@ -36,7 +39,10 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
 
   protected Object[] chooseOriginalMembers(PsiClass aClass, Project project) {
     if (aClass instanceof PsiAnonymousClass){
-      Messages.showMessageDialog(project,"Cannot add constructor to an anonymous class", "Error", Messages.getErrorIcon());
+      Messages.showMessageDialog(project,
+                                 CodeInsightBundle.message("error.attempt.to.generate.constructor.for.anonymous.class"),
+                                 CommonBundle.getErrorTitle(),
+                                 Messages.getErrorIcon());
       return null;
     }
 
@@ -69,7 +75,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
             constructors = array.toArray(new Object[array.size()]);
           }
           MemberChooser chooser = new MemberChooser(constructors, false, true, project);
-          chooser.setTitle("Choose Super Class Constructor");
+          chooser.setTitle(CodeInsightBundle.message("generate.constructor.super.constructor.chooser.title"));
           chooser.show();
           Object[] elements = chooser.getSelectedElements();
           if (elements == null || elements.length == 0) return null;
@@ -166,7 +172,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
       }
     }
 
-    StringBuffer buffer = new StringBuffer();
+    @NonNls StringBuffer buffer = new StringBuffer();
     buffer.append("{\n");
 
     if (baseConstructor != null){

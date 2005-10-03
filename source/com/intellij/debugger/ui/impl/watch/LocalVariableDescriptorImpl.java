@@ -2,6 +2,7 @@ package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.SourcePosition;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
@@ -24,7 +25,7 @@ public class LocalVariableDescriptorImpl extends ValueDescriptorImpl implements 
   private final StackFrameProxyImpl myFrameProxy;
   private final LocalVariableProxyImpl myLocalVariable;
 
-  private String myTypeName = "<unknown>";
+  private String myTypeName = DebuggerBundle.message("label.unknown.value");
   private boolean myIsPrimitive;
 
   private boolean myIsNewLocal = true;
@@ -127,7 +128,7 @@ public class LocalVariableDescriptorImpl extends ValueDescriptorImpl implements 
       return elementFactory.createExpressionFromText(getName(), PositionUtil.getContextElement(context));
     }
     catch (IncorrectOperationException e) {
-      throw new EvaluateException("Invalid local variable name '" + getName() + "'", e);
+      throw new EvaluateException(DebuggerBundle.message("error.invalid.local.variable.name", getName()), e);
     }
   }
 }

@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -18,6 +19,8 @@ import java.util.Collection;
 public abstract class ModuleBasedConfiguration extends RuntimeConfiguration {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit.ModuleBasedConfiguration");
   private final RunConfigurationModule myModule;
+  @NonNls
+  protected static final String TO_CLONE_ELEMENT_NAME = "toClone";
 
   public ModuleBasedConfiguration(final String name,
                                   final RunConfigurationModule configurationModule, final ConfigurationFactory factory) {
@@ -66,7 +69,7 @@ public abstract class ModuleBasedConfiguration extends RuntimeConfiguration {
   protected abstract ModuleBasedConfiguration createInstance();
 
   public ModuleBasedConfiguration clone() {
-    final Element element = new Element("toClone");
+    final Element element = new Element(TO_CLONE_ELEMENT_NAME);
     try {
       writeExternal(element);
       final ModuleBasedConfiguration configuration = createInstance();

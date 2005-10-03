@@ -17,14 +17,13 @@ package com.intellij.execution.configurations;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.io.FileUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
-import java.io.File;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.Map;
 
 /**
  * @author dyoma
@@ -34,15 +33,13 @@ public abstract class RunConfigurationBase implements RunConfiguration {
   private final Project myProject;
   private String myName = "";
 
-  private Map<Pair<String, String >, Boolean> myLogFiles = new HashMap<Pair<String, String>, Boolean>();
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private final String LOG_FILE = "log_file";
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private final String PATH = "path";
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private final String CHECKED = "checked";
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private final String ALIAS = "alias";
+  private ArrayList<LogFileOptions> myLogFiles = new ArrayList<LogFileOptions>();
+  @NonNls private static final String LOG_FILE = "log_file";
+  @NonNls private static final String PATH = "path";
+  @NonNls private static final String CHECKED = "checked";
+  @NonNls private static final String ALIAS = "alias";
+  @NonNls private static final String SKIPPED = "skipped";
+
   protected RunConfigurationBase(final Project project, final ConfigurationFactory factory, final String name) {
     myProject = project;
     myFactory = factory;
@@ -80,7 +77,7 @@ public abstract class RunConfigurationBase implements RunConfiguration {
   public RunConfiguration clone() {
     try {
       final RunConfigurationBase runConfiguration = (RunConfigurationBase)super.clone();
-      runConfiguration.myLogFiles = new HashMap<Pair<String, String>, Boolean>(myLogFiles);
+      runConfiguration.myLogFiles = new ArrayList<LogFileOptions>(myLogFiles);
       return runConfiguration;
     }
     catch (CloneNotSupportedException e) {
@@ -88,12 +85,16 @@ public abstract class RunConfigurationBase implements RunConfiguration {
     }
   }
 
-  public Map<Pair<String, String >, Boolean> getLogFiles() {
+  public ArrayList<LogFileOptions> getLogFiles() {
     return myLogFiles;
   }
 
   public void addLogFile(String file, String alias, boolean checked){
-    myLogFiles.put(Pair.create(file, alias), new Boolean(checked));
+    myLogFiles.add(new LogFileOptions(alias, file, checked, true));
+  }
+
+  public void addLogFile(String file, String alias, boolean checked, boolean skipContent){
+    myLogFiles.add(new LogFileOptions(alias, file, checked, skipContent));
   }
 
   public void removeAllLogFiles(){
@@ -110,25 +111,61 @@ public abstract class RunConfigurationBase implements RunConfiguration {
       Element logFile = iterator.next();
       String file = logFile.getAttributeValue(PATH);
       if (file != null){
-        file.replace('/', File.separatorChar);
+        file = FileUtil.toSystemDependentName(file);
       }
       Boolean checked = Boolean.valueOf(logFile.getAttributeValue(CHECKED));
+      final String skipped = logFile.getAttributeValue(SKIPPED);
+      Boolean skip = skipped != null ? Boolean.valueOf(skipped) : Boolean.TRUE;
       String alias = logFile.getAttributeValue(ALIAS);
-      addLogFile(file, alias, checked);
+      addLogFile(file, alias, checked.booleanValue(), skip.booleanValue());
     }
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    for (Iterator<Pair<String, String>> iterator = myLogFiles.keySet().iterator(); iterator.hasNext();) {
-      final Pair<String, String> pair = iterator.next();
-      String file = pair.first;
-      String alias = pair.second;
-      boolean checked = myLogFiles.get(pair).booleanValue();
+    for (final LogFileOptions options : myLogFiles) {
       Element logFile = new Element(LOG_FILE);
-      logFile.setAttribute(PATH, file.replace(File.separatorChar, '/'));
-      logFile.setAttribute(CHECKED, String.valueOf(checked));
-      logFile.setAttribute(ALIAS, alias != null ? alias : file);
+      logFile.setAttribute(PATH, FileUtil.toSystemIndependentName(options.getPath()));
+      logFile.setAttribute(CHECKED, String.valueOf(options.isEnabled()));
+      logFile.setAttribute(SKIPPED, String.valueOf(options.isSkipContent()));
+      logFile.setAttribute(ALIAS, options.getName());
       element.addContent(logFile);
+    }
+  }
+
+  public static class LogFileOptions {
+    private String myName;
+    private String myPath;
+    private boolean myEnabled;
+    private boolean mySkipContent;
+
+    public LogFileOptions(String name,
+                          String path,
+                          boolean enabled,
+                          boolean skipContent) {
+      myName = name;
+      myPath = path;
+      myEnabled = enabled;
+      mySkipContent = skipContent;
+    }
+
+    public String getName() {
+      return myName;
+    }
+
+    public String getPath() {
+      return myPath;
+    }
+
+    public boolean isEnabled() {
+      return myEnabled;
+    }
+
+    public boolean isSkipContent() {
+      return mySkipContent;
+    }
+
+    public void setEnable(boolean enable) {
+      myEnabled = enable;
     }
   }
 }

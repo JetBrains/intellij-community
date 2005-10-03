@@ -11,6 +11,7 @@ package com.intellij.refactoring.util;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 
 
 public class VisibilityUtil  {
@@ -70,7 +71,7 @@ public class VisibilityUtil  {
     else return visibilityModifier;
   }
 
-  public static String getVisiblityStringToDisplay(PsiMember member) {
+  public static @NonNls String getVisiblityStringToDisplay(PsiMember member) {
     if (member.hasModifierProperty(PsiModifier.PUBLIC)) {
       return "public";
     }

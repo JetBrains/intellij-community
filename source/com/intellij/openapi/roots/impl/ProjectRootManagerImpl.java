@@ -13,6 +13,7 @@ import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.projectRoots.ProjectJdk;
@@ -35,6 +36,7 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 
@@ -44,9 +46,9 @@ import java.util.*;
 public class ProjectRootManagerImpl extends ProjectRootManagerEx implements ProjectComponent, JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.impl.ProjectRootManagerImpl");
 
-  private static final String ASSERT_KEYWORD_ATTR = "assert-keyword";
-  private static final String JDK_15_ATTR = "jdk-15";
-  private static final String PROJECT_JDK_NAME_ATTR = "project-jdk-name";
+  @NonNls private static final String ASSERT_KEYWORD_ATTR = "assert-keyword";
+  @NonNls private static final String JDK_15_ATTR = "jdk-15";
+  @NonNls private static final String PROJECT_JDK_NAME_ATTR = "project-jdk-name";
 
   private final ProjectEx myProject;
   private ProjectFileIndex myProjectFileIndex;
@@ -67,6 +69,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   private long myModificationCount = 0;
   private Set<LocalFileSystem.WatchRequest> myRootsToWatch = new HashSet<LocalFileSystem.WatchRequest>();
   private Runnable myReloadProjectRequest = null;
+  @NonNls private static final String ATTRIBUTE_VERSION = "version";
 
   static ProjectRootManagerImpl getInstanceImpl(Project project) {
     return (ProjectRootManagerImpl)getInstance(project);
@@ -148,8 +151,8 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
             // the question does not make sence now
             return;
           }
-          final String _message = "Language level changes will take effect on project reload.\nWould you like to reload project \"" + myProject.getName() + "\" now?";
-          if (Messages.showYesNoDialog(myProject, _message, "Language Level Changed", Messages.getQuestionIcon()) == 0) {
+          final String _message = ProjectBundle.message("project.language.level.reload.prompt", myProject.getName());
+          if (Messages.showYesNoDialog(myProject, _message, ProjectBundle.message("project.language.level.reload.title"), Messages.getQuestionIcon()) == 0) {
             ProjectManagerEx.getInstanceEx().reloadProject(myProject);
           }
           myReloadProjectRequest = null;
@@ -339,7 +342,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    element.setAttribute("version", "2");
+    element.setAttribute(ATTRIBUTE_VERSION, "2");
     final boolean is14 = LanguageLevel.JDK_1_4.equals(myLanguageLevel);
     final boolean is15 = LanguageLevel.JDK_1_5.equals(myLanguageLevel);
     element.setAttribute(ASSERT_KEYWORD_ATTR, Boolean.toString(is14 || is15));
@@ -409,7 +412,8 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
           synchronizer.execute();
         }
       };
-      ApplicationManager.getApplication().runProcessWithProgressSynchronously(process, "Loading Files...", false, myProject);
+      ApplicationManager.getApplication().runProcessWithProgressSynchronously(process,
+                                                                              ProjectBundle.message("project.root.change.loading.progress"), false, myProject);
     }
     else {
       synchronizer.execute();

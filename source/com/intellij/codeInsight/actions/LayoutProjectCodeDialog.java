@@ -1,9 +1,11 @@
 package com.intellij.codeInsight.actions;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -12,8 +14,8 @@ import java.awt.*;
  * @author max
  */
 public class LayoutProjectCodeDialog extends DialogWrapper {
-  private static final String OPTIMIZE_IMPORTS_KEY = "LayoutCode.optimizeImports";
-  public static final String HELP_ID = "editing.codeReformatting";
+  private static @NonNls final String OPTIMIZE_IMPORTS_KEY = "LayoutCode.optimizeImports";
+  private static @NonNls final String HELP_ID = "editing.codeReformatting";
 
   private String myText;
   private boolean mySuggestOptmizeImports;
@@ -23,7 +25,7 @@ public class LayoutProjectCodeDialog extends DialogWrapper {
     super(project, false);
     myText = text;
     mySuggestOptmizeImports = suggestOptmizeImports;
-    setOKButtonText("Run");
+    setOKButtonText(CodeInsightBundle.message("reformat.code.accept.button.text"));
     setTitle(title);
     init();
   }
@@ -32,14 +34,14 @@ public class LayoutProjectCodeDialog extends DialogWrapper {
     if (!mySuggestOptmizeImports) return new JLabel(myText);
     JPanel panel = new JPanel(new GridLayout(2, 1));
     panel.add(new JLabel(myText));
-    myCbOptimizeImports = new JCheckBox("Optimize imports");
+    myCbOptimizeImports = new JCheckBox(CodeInsightBundle.message("reformat.option.optimize.imports"));
     panel.add(myCbOptimizeImports);
-    myCbOptimizeImports.setSelected("true".equals(PropertiesComponent.getInstance().getValue(OPTIMIZE_IMPORTS_KEY)));
+    myCbOptimizeImports.setSelected(Boolean.toString(true).equals(PropertiesComponent.getInstance().getValue(OPTIMIZE_IMPORTS_KEY)));
     return panel;
   }
 
   private void setOptimizeImportsOption(boolean state) {
-    PropertiesComponent.getInstance().setValue(OPTIMIZE_IMPORTS_KEY, state ? "true" : "false");
+    PropertiesComponent.getInstance().setValue(OPTIMIZE_IMPORTS_KEY, Boolean.toString(state));
   }
 
   protected Action[] createActions() {

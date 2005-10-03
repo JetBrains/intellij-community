@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -27,11 +28,11 @@ public class RemoveNewQualifierFix implements IntentionAction {
   }
 
   public String getText() {
-    return "Remove qualifier";
+    return QuickFixBundle.message("remove.qualifier.fix");
   }
 
   public String getFamilyName() {
-    return "Remove qualifier";
+    return QuickFixBundle.message("remove.qualifier.fix");
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {

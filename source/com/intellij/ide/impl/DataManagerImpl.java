@@ -23,6 +23,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.jetbrains.annotations.NonNls;
+
 public class DataManagerImpl extends DataManager implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.impl.DataManagerImpl");
   private Map<String, GetDataRule> myDataConstantToRuleMap = new THashMap<String, GetDataRule>();
@@ -238,6 +240,7 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
       }
     }
 
+    @NonNls
     public String toString() {
       return "component=" + String.valueOf(myRef.get());
     }

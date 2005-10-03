@@ -8,7 +8,10 @@ import com.intellij.psi.filters.NotFilter;
 import com.intellij.psi.filters.classes.InterfaceFilter;
 import com.intellij.psi.javadoc.PsiDocComment;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by IntelliJ IDEA.
@@ -18,6 +21,7 @@ import java.util.*;
  * To change this template use Options | File Templates.
  */
 
+@SuppressWarnings({"HardCodedStringLiteral"})
 public class ModifierChooser
  implements KeywordChooser{
   private static Map myMap = new com.intellij.util.containers.HashMap();

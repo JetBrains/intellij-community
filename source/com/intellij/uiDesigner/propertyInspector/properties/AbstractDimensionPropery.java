@@ -10,6 +10,8 @@ import com.intellij.uiDesigner.propertyInspector.renderers.IntRenderer;
 
 import java.awt.*;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * This class is a base for implementing such properties
  * as "minimum size", "preferred size" and "maximum size".
@@ -21,7 +23,7 @@ public abstract class AbstractDimensionPropery extends Property{
   private final Property[] myChildren;
   private final DimensionRenderer myRenderer;
 
-  public AbstractDimensionPropery(final String name){
+  public AbstractDimensionPropery(@NonNls final String name){
     super(null, name);
     myChildren=new Property[]{
       new MyWidthProperty(this),

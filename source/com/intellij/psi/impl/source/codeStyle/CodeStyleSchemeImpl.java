@@ -1,17 +1,20 @@
 package com.intellij.psi.impl.source.codeStyle;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.psi.PsiBundle;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,9 +24,10 @@ import java.io.IOException;
  * Date: Jul 17, 2002
  */
 public class CodeStyleSchemeImpl implements JDOMExternalizable, CodeStyleScheme{
-  private static final String CODE_SCHEME = "code_scheme";
-  private static final String NAME = "name";
-  private static final String PARENT = "parent";
+  private static final @NonNls String CODE_SCHEME = "code_scheme";
+  private static final @NonNls String NAME = "name";
+  private static final @NonNls String PARENT = "parent";
+  private static final @NonNls String XML_EXTENSION = ".xml";
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeImpl");
 
   private String myName;
@@ -143,12 +147,12 @@ public class CodeStyleSchemeImpl implements JDOMExternalizable, CodeStyleScheme{
     }
     (this).writeExternal(newElement);
 
-    String filePath = dir.getAbsolutePath() + File.separator + getName() + ".xml";
+    String filePath = dir.getAbsolutePath() + File.separator + getName() + XML_EXTENSION;
     try {
       JDOMUtil.writeDocument(new Document(newElement), filePath, getCodeStyleSettings().getLineSeparator());
     }
     catch (IOException e) {
-      Messages.showErrorDialog("Can't save code style scheme " + filePath + ". " + e.getLocalizedMessage(), "Cannot Save File");
+      Messages.showErrorDialog(PsiBundle.message("codestyle.cannot.save.scheme.file", filePath, e.getLocalizedMessage()), CommonBundle.getErrorTitle());
     }
   }
 }

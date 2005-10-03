@@ -36,6 +36,7 @@ public class XmlTextChangedImpl implements XmlTextChanged {
     return event;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return "text changed to '" + StringUtil.escapeStringCharacters(myText.getValue()) + "' was: '"
            + StringUtil.escapeStringCharacters(myOldText) + "'";

@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.ui.ScrollPaneFactory;
@@ -13,6 +14,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.treetable.ListTreeTableModel;
 import com.intellij.util.ui.treetable.TreeTable;
 import com.intellij.util.ui.treetable.TreeTableCellRenderer;
@@ -30,12 +32,15 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author max
  */
 public abstract class OptionTableWithPreviewPanel extends CodeStyleAbstractPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.CodeStyleSpacesPanel");
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public final ColumnInfo TITLE = new ColumnInfo("TITLE") {
     public Object valueOf(Object o) {
       if (o instanceof MyTreeNode) {
@@ -50,6 +55,7 @@ public abstract class OptionTableWithPreviewPanel extends CodeStyleAbstractPanel
     }
   };
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public final ColumnInfo VALUE = new ColumnInfo("VALUE") {
     private TableCellEditor myEditor = new MyValueEditor();
     private TableCellRenderer myRenderer = new MyValueRenderer();
@@ -105,8 +111,8 @@ public abstract class OptionTableWithPreviewPanel extends CodeStyleAbstractPanel
       }
 
       Color foreground = selected
-                         ? UIManager.getColor("Table.selectionForeground")
-                         : UIManager.getColor("Table.textForeground");
+                         ? UIUtil.getTableSelectionForeground()
+                         : UIUtil.getTableForeground();
       myLabel.setForeground(foreground);
 
       return myLabel;
@@ -127,8 +133,8 @@ public abstract class OptionTableWithPreviewPanel extends CodeStyleAbstractPanel
 
     myTreeTable = createOptionsTree(settings);
     myPanel.add(ScrollPaneFactory.createScrollPane(myTreeTable),
-        new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.BOTH,
-                               new Insets(7, 7, 3, 4), 0, 0));
+                new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.BOTH,
+                                       new Insets(7, 7, 3, 4), 0, 0));
 
     final JPanel previewPanel = createPreviewPanel();
     myPanel.add(previewPanel,
@@ -174,7 +180,7 @@ public abstract class OptionTableWithPreviewPanel extends CodeStyleAbstractPanel
     TreeTable treeTable = new TreeTable(model) {
       public TreeTableCellRenderer createTableRenderer(TreeTableModel treeTableModel) {
         TreeTableCellRenderer tableRenderer = super.createTableRenderer(treeTableModel);
-        tableRenderer.putClientProperty("JTree.lineStyle", "Angled");
+        UIUtil.setLineStyleAngled(tableRenderer);
         tableRenderer.setRootVisible(false);
         tableRenderer.setShowsRootHandles(true);
 
@@ -221,7 +227,7 @@ public abstract class OptionTableWithPreviewPanel extends CodeStyleAbstractPanel
 
     final TableColumn levelColumn = treeTable.getColumnModel().getColumn(1);
     //TODO[max]: better preffered size...
-    JLabel value = new JLabel("Chop down if long.");
+    JLabel value = new JLabel(ApplicationBundle.message("option.table.sizing.text"));
     final Dimension valueSize = value.getPreferredSize();
     levelColumn.setPreferredWidth(valueSize.width);
     levelColumn.setMaxWidth(valueSize.width);
@@ -252,7 +258,7 @@ public abstract class OptionTableWithPreviewPanel extends CodeStyleAbstractPanel
         return new Dimension(200, 0);
       }
     };
-    p.setBorder(IdeBorderFactory.createTitledBorder("Preview"));
+    p.setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.preview")));
     return p;
   }
 
@@ -291,7 +297,7 @@ public abstract class OptionTableWithPreviewPanel extends CodeStyleAbstractPanel
     return false;
   }
 
-  protected void initBooleanField(String fieldName, String cbName, String groupName) {
+  protected void initBooleanField(@NonNls String fieldName, String cbName, String groupName) {
     try {
       Class styleSettingsClass = CodeStyleSettings.class;
       Field field = styleSettingsClass.getField(fieldName);
@@ -305,7 +311,7 @@ public abstract class OptionTableWithPreviewPanel extends CodeStyleAbstractPanel
     }
   }
 
-  protected void initRadioGroupField(String fieldName, String groupName, String[] rbNames, int[] values) {
+  protected void initRadioGroupField(@NonNls String fieldName, String groupName, String[] rbNames, int[] values) {
     try {
       Class styleSettingsClass = CodeStyleSettings.class;
       Field field = styleSettingsClass.getField(fieldName);

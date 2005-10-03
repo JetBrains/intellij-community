@@ -25,6 +25,7 @@ import org.netbeans.lib.cvsclient.progress.IProgressViewer;
 import org.netbeans.lib.cvsclient.progress.sending.FileStateRequestsProgressHandler;
 import org.netbeans.lib.cvsclient.request.CommandRequest;
 import org.netbeans.lib.cvsclient.request.Requests;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
 
@@ -65,7 +66,7 @@ public final class EditorsCommand extends AbstractCommand {
 	}
 
 	public String getCvsCommandLine() {
-		final StringBuffer cvsCommandLine = new StringBuffer("editors ");
+		@NonNls final StringBuffer cvsCommandLine = new StringBuffer("editors ");
 		cvsCommandLine.append(getCVSArguments());
 		appendFileArguments(cvsCommandLine);
 		return cvsCommandLine.toString();
@@ -83,7 +84,7 @@ public final class EditorsCommand extends AbstractCommand {
 	 * Similar to getCVSCommand() however without the files and command's name
 	 */
 	private String getCVSArguments() {
-		final StringBuffer toReturn = new StringBuffer();
+		@NonNls final StringBuffer toReturn = new StringBuffer();
 		if (!isRecursive()) {
 			toReturn.append("-l ");
 		}

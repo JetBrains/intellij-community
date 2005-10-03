@@ -1,6 +1,7 @@
 package com.intellij.cyclicDependencies;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -42,7 +43,7 @@ public class CyclicDependenciesBuilder{
       }
 
       public String getInitialUsagesPosition() {
-        return "Select package to analyze from the left tree";
+        return AnalysisScopeBundle.message("cyclic.dependencies.usage.view.initial.text");
       }
     };
   }
@@ -126,7 +127,7 @@ public class CyclicDependenciesBuilder{
       if (indicator.isCanceled()) {
         throw new ProcessCanceledException();
       }
-      indicator.setText("Building dependencies graph");
+      indicator.setText(AnalysisScopeBundle.message("cyclic.dependencies.progress.text"));
       indicator.setText2("");
       indicator.setIndeterminate(true);
     }

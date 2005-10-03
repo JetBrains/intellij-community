@@ -20,6 +20,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.debugger.DebuggerInvocationUtil;
+import com.intellij.debugger.DebuggerBundle;
 import com.sun.jdi.*;
 
 import javax.swing.*;
@@ -30,19 +31,22 @@ import java.io.File;
 import java.util.Iterator;
 import java.util.List;
 
+import org.jetbrains.annotations.NonNls;
+
 public class ExportDialog extends DialogWrapper {
   private JTextArea myTextArea = new JTextArea();
   private TextFieldWithBrowseButton myTfFilePath;
   private Project myProject;
   private final DebugProcessImpl myDebugProcess;
   private CopyToClipboardAction myCopyToClipboardAction = new CopyToClipboardAction();
+  private static final @NonNls String DEFAULT_REPORT_FILE_NAME = "threads_report.txt";
 
   public ExportDialog(DebugProcessImpl debugProcess, String destinationDirectory) {
     super(debugProcess.getProject(), true);
     myDebugProcess = debugProcess;
     myProject = debugProcess.getProject();
-    setTitle("Export Threads");
-    setOKButtonText("Save");
+    setTitle(DebuggerBundle.message("threads.export.dialog.title"));
+    setOKButtonText(DebuggerBundle.message("button.save"));
 
     init();
 
@@ -52,7 +56,7 @@ public class ExportDialog extends DialogWrapper {
     myTextArea.setText(MessageDescriptor.EVALUATING.getLabel());
     debugProcess.getManagerThread().invoke(new ExportThreadsCommand(ApplicationManager.getApplication().getModalityStateForComponent(myTextArea)));
 
-    myTfFilePath.setText(destinationDirectory + File.separator + "threads_report.txt");
+    myTfFilePath.setText(destinationDirectory + File.separator + DEFAULT_REPORT_FILE_NAME);
     setHorizontalStretch(1.5f);
   }
 
@@ -62,7 +66,7 @@ public class ExportDialog extends DialogWrapper {
 
   protected JComponent createNorthPanel() {
     JPanel box = new JPanel(new BorderLayout());
-    box.add(new JLabel("Export to file:"), BorderLayout.WEST);
+    box.add(new JLabel(DebuggerBundle.message("label.threads.export.dialog.file")), BorderLayout.WEST);
     myTfFilePath = new TextFieldWithBrowseButton();
     myTfFilePath.addBrowseFolderListener(null, null, myProject, FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
     box.add(myTfFilePath, BorderLayout.CENTER);
@@ -85,16 +89,16 @@ public class ExportDialog extends DialogWrapper {
     if (file.isDirectory()) {
       Messages.showMessageDialog(
         myProject,
-        "The specified file is a directory.\nPlease specify a correct file name.",
-        "Error",
+        DebuggerBundle.message("error.threads.export.dialog.file.is.directory"),
+        DebuggerBundle.message("threads.export.dialog.title"),
         Messages.getErrorIcon()
       );
     }
     else if (file.exists()) {
       int answer = Messages.showYesNoDialog(
         myProject,
-        "The file\n\"" + path + "\"\nalready exists. Would you like to overwrite it?",
-        "File Exists",
+        DebuggerBundle.message("error.threads.export.dialog.file.already.exists", path),
+        DebuggerBundle.message("threads.export.dialog.title"),
         Messages.getQuestionIcon()
       );
       if (answer == 0) {
@@ -126,31 +130,30 @@ public class ExportDialog extends DialogWrapper {
       buffer.append(threadName(threadReference));
       ReferenceType referenceType = threadReference.referenceType();
       if(referenceType != null) {
+        //noinspection HardCodedStringLiteral
         Field daemon = referenceType.fieldByName("daemon");
         if(daemon != null) {
           Value value = threadReference.getValue(daemon);
           if(value instanceof BooleanValue && ((BooleanValue)value).booleanValue()) {
-            buffer.append(" daemon");
+            buffer.append(" ").append(DebuggerBundle.message("threads.export.attribute.label.daemon"));
           }
         }
 
+        //noinspection HardCodedStringLiteral
         Field priority = referenceType.fieldByName("priority");
         if(priority != null) {
           Value value = threadReference.getValue(priority);
           if(value instanceof IntegerValue) {
-            buffer.append(" prio=" + ((IntegerValue)value).intValue());
+            buffer.append(", ").append(DebuggerBundle.message("threads.export.attribute.label.priority", ((IntegerValue) value).intValue()));
           }
         }
       }
 
       ThreadGroupReference groupReference = threadReference.threadGroup();
       if (groupReference != null) {
-        buffer.append(", in group \"");
-        buffer.append(groupReference.name());
-        buffer.append("\"");
+        buffer.append(", ").append(DebuggerBundle.message("threads.export.attribute.label.group", groupReference.name()));
       }
-      buffer.append(", status: ");
-      buffer.append(DebuggerUtilsEx.getThreadStatusText(threadReference.status()));
+      buffer.append(", ").append(DebuggerBundle.message("threads.export.attribute.label.status", DebuggerUtilsEx.getThreadStatusText(threadReference.status())));
 
       try {
         if(vmProxy.canGetOwnedMonitorInfo() && vmProxy.canGetMonitorInfo()) {
@@ -160,7 +163,7 @@ public class ExportDialog extends DialogWrapper {
             List waiting = reference.waitingThreads();
             for (Iterator iterator1 = waiting.iterator(); iterator1.hasNext();) {
               ThreadReference thread = (ThreadReference)iterator1.next();
-              buffer.append("\n\t blocks " + threadName(thread));
+              buffer.append("\n\t ").append(DebuggerBundle.message("threads.export.attribute.label.blocks.thread", threadName(thread)));
             }
           }
         }
@@ -170,7 +173,7 @@ public class ExportDialog extends DialogWrapper {
           if(vmProxy.canGetMonitorInfo()) {
             ThreadReference waitedThread = waitedMonitor.owningThread();
             if (waitedThread != null) {
-              buffer.append("\n\t waiting for " + threadName(waitedThread));
+              buffer.append("\n\t ").append(DebuggerBundle.message("threads.export.attribute.label.waiting.for.thread", threadName(waitedThread)));
             }
           }
         }
@@ -180,14 +183,10 @@ public class ExportDialog extends DialogWrapper {
           StackFrame stackFrame = (StackFrame)frit.next();
           Location location = stackFrame.location();
           Method method = location.method();
-          buffer.append("\n\t  ");
-          buffer.append(method.name());
-          buffer.append("():");
-          buffer.append(Integer.toString(location.lineNumber()));
+          buffer.append("\n\t  ").append(method.name()).append("():").append(Integer.toString(location.lineNumber()));
           try {
             String sourceName = location.sourceName();
-            buffer.append(", ");
-            buffer.append(sourceName);
+            buffer.append(", ").append(sourceName);
           }
           catch (AbsentInformationException e) {
           }
@@ -196,7 +195,7 @@ public class ExportDialog extends DialogWrapper {
         }
       }
       catch (IncompatibleThreadStateException e) {
-        buffer.append("\n\t Incompatible thread state");
+        buffer.append("\n\t ").append(DebuggerBundle.message("threads.export.attribute.error.incompatible.state"));
       }
       buffer.append("\n\n");
     }
@@ -209,8 +208,8 @@ public class ExportDialog extends DialogWrapper {
 
   private class CopyToClipboardAction extends AbstractAction {
     public CopyToClipboardAction() {
-      super("Copy");
-      putValue(Action.SHORT_DESCRIPTION,"&Copy text to clipboard");
+      super(DebuggerBundle.message("button.copy"));
+      putValue(Action.SHORT_DESCRIPTION, DebuggerBundle.message("export.dialog.copy.action.description"));
     }
 
     public void actionPerformed(ActionEvent e) {

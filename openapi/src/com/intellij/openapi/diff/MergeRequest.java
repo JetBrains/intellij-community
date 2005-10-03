@@ -16,6 +16,7 @@
 package com.intellij.openapi.diff;
 
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NonNls;
 
 public abstract class MergeRequest extends DiffRequest {
   public MergeRequest(Project project) {
@@ -26,7 +27,7 @@ public abstract class MergeRequest extends DiffRequest {
 
   public abstract void setWindowTitle(String windowTitle);
 
-  public abstract void setHelpId(String helpId);
+  public abstract void setHelpId(@NonNls String helpId);
 
 
   public abstract int getResult();

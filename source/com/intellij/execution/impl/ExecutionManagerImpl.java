@@ -30,6 +30,8 @@ import com.intellij.compiler.impl.ProjectCompileScope;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author dyoma
  */
@@ -38,6 +40,8 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
   private final Project myProject;
 
   private RunContentManagerImpl myContentManager;
+  @NonNls
+  protected static final String MAKE_PROJECT_ON_RUN_KEY = "makeProjectOnRun";
 
   /**
    * reflection
@@ -116,7 +120,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
         }
       };
       CompileScope scope;
-      if ("true".equals(System.getProperty("makeProjectOnRun", "false"))) {
+      if (Boolean.valueOf(System.getProperty(MAKE_PROJECT_ON_RUN_KEY, Boolean.FALSE.toString()))) {
         // user explicitly requested whole-project make
         scope = new ProjectCompileScope(myProject);
       }
@@ -132,8 +136,8 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
   }
 
   public void execute(JavaParameters cmdLine,
-                            String contentName,
-                            final DataContext dataContext) throws ExecutionException {
+                      String contentName,
+                      final DataContext dataContext) throws ExecutionException {
     execute(cmdLine, contentName, dataContext, null);
   }
 

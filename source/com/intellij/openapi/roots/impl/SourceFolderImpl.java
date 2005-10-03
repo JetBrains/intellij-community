@@ -7,6 +7,7 @@ import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 /**
  *  @author dsl
@@ -14,11 +15,11 @@ import org.jdom.Element;
 public class SourceFolderImpl extends ContentFolderBaseImpl implements SourceFolder, ClonableContentFolder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.SimpleSourceFolderImpl");
   private boolean myIsTestSource;
-  static final String ELEMENT_NAME = "sourceFolder";
-  private static final String TEST_SOURCE_ATTR = "isTestSource";
+  @NonNls static final String ELEMENT_NAME = "sourceFolder";
+  @NonNls private static final String TEST_SOURCE_ATTR = "isTestSource";
   private String myPackagePrefix;
   static final String DEFAULT_PACKAGE_PREFIX = "";
-  private static final String PACKAGE_PREFIX_ATTR = "packagePrefix";
+  @NonNls private static final String PACKAGE_PREFIX_ATTR = "packagePrefix";
 
   SourceFolderImpl(VirtualFile file, boolean isTestSource, ContentEntryImpl contentEntry) {
     this(file, isTestSource, DEFAULT_PACKAGE_PREFIX, contentEntry);
@@ -33,7 +34,7 @@ public class SourceFolderImpl extends ContentFolderBaseImpl implements SourceFol
   SourceFolderImpl(Element element, ContentEntryImpl contentEntry) throws InvalidDataException {
     super(element, contentEntry);
     LOG.assertTrue(element.getName().equals(ELEMENT_NAME));
-    final String testSource = element.getAttributeValue("isTestSource");
+    final String testSource = element.getAttributeValue(TEST_SOURCE_ATTR);
     if (testSource == null) throw new InvalidDataException();
     myIsTestSource = Boolean.valueOf(testSource).booleanValue();
     final String packagePrefix = element.getAttributeValue(PACKAGE_PREFIX_ATTR);

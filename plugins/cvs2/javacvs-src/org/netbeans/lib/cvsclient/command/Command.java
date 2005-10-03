@@ -19,6 +19,7 @@ import org.netbeans.lib.cvsclient.IRequestProcessor;
 import org.netbeans.lib.cvsclient.event.ICvsListenerRegistry;
 import org.netbeans.lib.cvsclient.event.IEventSender;
 import org.netbeans.lib.cvsclient.progress.IProgressViewer;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * All commands must extend this class. A command is essentially a
@@ -33,69 +34,69 @@ import org.netbeans.lib.cvsclient.progress.IProgressViewer;
  */
 public abstract class Command {
 
-	// Abstract ===============================================================
+        // Abstract ===============================================================
 
-	public abstract boolean execute(IRequestProcessor requestProcessor, IEventSender eventManager, ICvsListenerRegistry listenerRegistry, IClientEnvironment clientEnvironment, IProgressViewer progressViewer) throws CommandException;
+        public abstract boolean execute(IRequestProcessor requestProcessor, IEventSender eventManager, ICvsListenerRegistry listenerRegistry, IClientEnvironment clientEnvironment, IProgressViewer progressViewer) throws CommandException;
 
-	/**
-	 * This method returns how the command would looklike when typed on the
-	 * command line.
-	 *
-	 * Each command is responsible for constructing this information.
-	 *
-	 * @return <command's name> [<parameters>] files/dirs. Example: checkout -p CvsCommand.java
-	 */
-	public abstract String getCvsCommandLine();
+        /**
+         * This method returns how the command would looklike when typed on the
+         * command line.
+         *
+         * Each command is responsible for constructing this information.
+         *
+         * @return <command's name> [<parameters>] files/dirs. Example: checkout -p CvsCommand.java
+         */
+        @NonNls public abstract String getCvsCommandLine();
 
-	// Fields =================================================================
+        // Fields =================================================================
 
-	private final GlobalOptions globalOptions = new GlobalOptions();
+        private final GlobalOptions globalOptions = new GlobalOptions();
 
-	// Setup ==================================================================
+        // Setup ==================================================================
 
-	protected Command() {
-		resetCvsCommand();
-	}
+        protected Command() {
+                resetCvsCommand();
+        }
 
-	// Implemented ============================================================
+        // Implemented ============================================================
 
-	public final IGlobalOptions getIGlobalOptions() {
-		return globalOptions;
-	}
+        public final IGlobalOptions getIGlobalOptions() {
+                return globalOptions;
+        }
 
-	// Accessing ==============================================================
+        // Accessing ==============================================================
 
-	public final GlobalOptions getGlobalOptions() {
-		return globalOptions;
-	}
+        public final GlobalOptions getGlobalOptions() {
+                return globalOptions;
+        }
 
-	// Utils ==================================================================
+        // Utils ==================================================================
 
-	/**
-	 * Returns the trimmed version of the specified String s.
-	 * The returned String is null if the specified String is null or contains
-	 * only white spaces.
-	 */
-	protected static final String getTrimmedString(String s) {
-		if (s == null) {
-			return null;
-		}
+        /**
+         * Returns the trimmed version of the specified String s.
+         * The returned String is null if the specified String is null or contains
+         * only white spaces.
+         */
+        protected static final String getTrimmedString(String s) {
+                if (s == null) {
+                        return null;
+                }
 
-		s = s.trim();
-		if (s.length() == 0) {
-			return null;
-		}
+                s = s.trim();
+                if (s.length() == 0) {
+                        return null;
+                }
 
-		return s;
-	}
+                return s;
+        }
 
-	/**
-	 * Resets all switches in the command to the default behaviour.
-	 * After calling this method, the command should behave defaultly.
-	 */
-	protected void resetCvsCommand() {
-		if (globalOptions != null) {
-			globalOptions.reset();
-		}
-	}
+        /**
+         * Resets all switches in the command to the default behaviour.
+         * After calling this method, the command should behave defaultly.
+         */
+        protected void resetCvsCommand() {
+                if (globalOptions != null) {
+                        globalOptions.reset();
+                }
+        }
 }

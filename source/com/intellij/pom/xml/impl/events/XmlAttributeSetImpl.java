@@ -41,6 +41,7 @@ public class XmlAttributeSetImpl implements XmlAttributeSet {
     return event;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return "Attribute \"" + getName() + "\" for tag \"" + getTag().getName() + "\" set to \"" + getValue() + "\"";
   }

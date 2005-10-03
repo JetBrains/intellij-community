@@ -8,7 +8,7 @@
  */
 package com.intellij.refactoring.introduceField;
 
-import static com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler.InitializationPlace.*;
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -26,11 +26,14 @@ import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.IntroduceHandlerBase;
 import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.RefactoringBundle;
+import static com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler.InitializationPlace.*;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.occurences.OccurenceManager;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -60,7 +63,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     if (myParentClass == null) {
       if (file instanceof JspFile) {
         RefactoringMessageUtil.showErrorMessage(getRefactoringName(),
-                                                getRefactoringName() + " refactoring is not supported for JSP", getHelpID(), project
+                                                RefactoringBundle.message("error.not.supported.for.jsp", getRefactoringName()), getHelpID(), project
         );
         return false;
       }
@@ -76,17 +79,13 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
 
     PsiType tempType = getTypeByExpression(selectedExpr);
     if (tempType == null) {
-      String message =
-        "Cannot perform the refactoring.\n" +
-        "Unknown expression type.";
+      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("unknown.expression.type"));
       RefactoringMessageUtil.showErrorMessage(getRefactoringName(), message, getHelpID(), project);
       return false;
     }
 
     if (tempType == PsiType.VOID) {
-      String message =
-        "Cannot perform the refactoring.\n" +
-        "Selected expression has void type.";
+      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("selected.expression.has.void.type"));
       RefactoringMessageUtil.showErrorMessage(getRefactoringName(), message, getHelpID(), project);
       return false;
     }
@@ -94,7 +93,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     PsiElement tempAnchorElement = RefactoringUtil.getParentExpressionAnchorElement(selectedExpr);
     if (tempAnchorElement == null) {
       //TODO : work outside code block (e.g. field initializer)
-      String message = getRefactoringName() + " refactoring is not supported in the current context";
+      String message = RefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", getRefactoringName());
       RefactoringMessageUtil.showErrorMessage(getRefactoringName(), message, getHelpID(), project);
       return false;
     }
@@ -190,6 +189,11 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
           if (settings.isDeclareStatic()) {
             field.getModifierList().setModifierProperty(PsiModifier.STATIC, true);
           }
+          if (settings.isAnnotateAsNonNls()) {
+            PsiAnnotation annotation = myParentClass.getManager().getElementFactory().createAnnotationFromText("@" + AnnotationUtil.NON_NLS, myParentClass);
+            field.getModifierList().addAfter(annotation, null);
+            CodeStyleManager.getInstance(myParentClass.getProject()).shortenClassReferences(field.getModifierList());
+          }
           PsiElement finalAnchorElement = null;
           if (destClass == myParentClass) {
             for (finalAnchorElement = anchorElement;
@@ -254,7 +258,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
                 PsiElement[] exprsToHighlight = array.toArray(new PsiElement[array.size()]);
                 HighlightManager highlightManager = HighlightManager.getInstance(project);
                 highlightManager.addOccurrenceHighlights(editor, exprsToHighlight, highlightAttributes(), true, null);
-                WindowManager.getInstance().getStatusBar(project).setInfo("Press Escape to remove the highlighting");
+                WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
               }
             }
           }
@@ -409,7 +413,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
           if (first instanceof PsiExpressionStatement) {
             PsiExpression expression = ((PsiExpressionStatement)first).getExpression();
             if (expression instanceof PsiMethodCallExpression) {
-              String text = ((PsiMethodCallExpression)expression).getMethodExpression().getText();
+              @NonNls String text = ((PsiMethodCallExpression)expression).getMethodExpression().getText();
               if ("this".equals(text)) {
                 continue;
               }
@@ -434,7 +438,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
   }
 
   private PsiField createField(String fieldName, PsiType type, PsiExpression initializerExpr, boolean includeInitializer) {
-    StringBuffer pattern = new StringBuffer();
+    @NonNls StringBuffer pattern = new StringBuffer();
     pattern.append("private int ");
     pattern.append(fieldName);
     if (includeInitializer) {
@@ -460,7 +464,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
 
   private PsiStatement createAssignment(PsiField field, PsiExpression initializerExpr, PsiElement context) {
     try {
-      String pattern = "x=0;";
+      @NonNls String pattern = "x=0;";
       PsiManager psiManager = myParentClass.getManager();
       PsiElementFactory factory = psiManager.getElementFactory();
       PsiExpressionStatement statement = (PsiExpressionStatement)factory.createStatementFromText(pattern, null);
@@ -498,6 +502,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     private final String myVisibility;
     private final boolean myDeleteLocalVariable;
     private final PsiClass myTargetClass;
+    private final boolean myAnnotateAsNonNls;
 
     public PsiLocalVariable getLocalVariable() {
       return myLocalVariable;
@@ -539,10 +544,14 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       return myReplaceAll;
     }
 
+    public boolean isAnnotateAsNonNls() {
+      return myAnnotateAsNonNls;
+    }
+
     public Settings(String fieldName, boolean replaceAll,
-             boolean declareStatic, boolean declareFinal,
-             InitializationPlace initializerPlace, String visibility, PsiLocalVariable localVariableToRemove, PsiType forcedType,
-             boolean deleteLocalVariable, PsiClass targetClass) {
+                    boolean declareStatic, boolean declareFinal,
+                    InitializationPlace initializerPlace, String visibility, PsiLocalVariable localVariableToRemove, PsiType forcedType,
+                    boolean deleteLocalVariable, PsiClass targetClass, final boolean annotateAsNonNls) {
 
       myFieldName = fieldName;
       myReplaceAll = replaceAll;
@@ -554,6 +563,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       myDeleteLocalVariable = deleteLocalVariable;
       myForcedType = forcedType;
       myTargetClass = targetClass;
+      myAnnotateAsNonNls = annotateAsNonNls;
     }
 
 

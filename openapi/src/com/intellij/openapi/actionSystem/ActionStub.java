@@ -16,6 +16,7 @@
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * The main (and single) purpose of this class is provide lazy initialization
@@ -30,6 +31,7 @@ public class ActionStub extends AnAction{
   private final String myId;
   private final String myText;
   private final ClassLoader myLoader;
+  @NonNls protected static final String INTERNAL_EXCEPTION_TEXT = "targetAction cannot be null";
 
   public ActionStub(String actionClass, String id, String text, ClassLoader loader){
     myLoader = loader;
@@ -68,7 +70,7 @@ public class ActionStub extends AnAction{
    */
   public final void initAction(AnAction targetAction){
     if (targetAction == null) {
-      throw new IllegalArgumentException("targetAction cannot be null");
+      throw new IllegalArgumentException(INTERNAL_EXCEPTION_TEXT);
     }
     Presentation sourcePresentation = getTemplatePresentation();
     Presentation targetPresentation = targetAction.getTemplatePresentation();

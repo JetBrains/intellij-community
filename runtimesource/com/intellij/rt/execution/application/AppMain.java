@@ -1,6 +1,9 @@
 package com.intellij.rt.execution.application;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.ServerSocket;
@@ -8,6 +11,7 @@ import java.net.Socket;
 
 /**
  * @author ven
+ * @noinspection HardCodedStringLiteral
  */
 public class AppMain {
   private static final String PROPERTY_PORT_NUMBER = "idea.launcher.port";

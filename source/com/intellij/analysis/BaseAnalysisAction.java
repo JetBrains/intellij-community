@@ -9,18 +9,17 @@ import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 public abstract class BaseAnalysisAction extends AnAction {
   protected final String myTitle;
-  protected final String myAnalysisVerb;
   protected final String myAnalysisNoon;
 
-  protected BaseAnalysisAction(String title, String analysisVerb, String analysisNoon) {
+  protected BaseAnalysisAction(String title, String analysisNoon) {
     myTitle = title;
-    myAnalysisVerb = analysisVerb;
     myAnalysisNoon = analysisNoon;
   }
 
@@ -45,8 +44,8 @@ public abstract class BaseAnalysisAction extends AnAction {
       }
       final boolean rememberScope = e.getPlace().equals(ActionPlaces.MAIN_MENU);
       final InspectionManagerEx.UIOptions uiOptions = ((InspectionManagerEx)InspectionManagerEx.getInstance(project)).getUIOptions();
-      BaseAnalysisActionDialog dlg = new BaseAnalysisActionDialog("Specify " + myTitle + " Scope",
-                                                                  myAnalysisNoon + " scope",
+      BaseAnalysisActionDialog dlg = new BaseAnalysisActionDialog(AnalysisScopeBundle.message("specify.analysis.scope", myTitle),
+                                                                  AnalysisScopeBundle.message("analysis.scope.title", myAnalysisNoon),
                                                                   project,
                                                                   scope.getShortenName(),
                                                                   module != null && scope.getScopeType() != AnalysisScope.MODULE ? ModuleUtil.getModuleNameInReadAction(module) : null,
@@ -65,7 +64,12 @@ public abstract class BaseAnalysisAction extends AnAction {
         uiOptions.SCOPE_TYPE = AnalysisScope.PROJECT;
       }
       else {
-        if (dlg.isModuleScopeSelected()) {
+        final SearchScope customScope = dlg.getCustomScope();
+        if (customScope != null){
+          scope = new AnalysisScope(customScope, project);
+          uiOptions.SCOPE_TYPE = AnalysisScope.CUSTOM;
+          uiOptions.CUSTOM_SCOPE_NAME = customScope.getDisplayName();
+        } else if (dlg.isModuleScopeSelected()) {
           scope = getModuleScope(dataContext);
           uiOptions.SCOPE_TYPE = AnalysisScope.MODULE;
         } else {

@@ -1,5 +1,6 @@
 package com.intellij.ide.fileTemplates.impl;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.*;
 import com.intellij.j2ee.J2EEFileTemplateNames;
 import com.intellij.openapi.actionSystem.*;
@@ -17,14 +18,15 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.Map;
 
 /*
@@ -58,10 +60,10 @@ public class AllFileTemplatesConfigurable implements Configurable, ApplicationCo
   private static final Icon ourIcon = IconLoader.getIcon("/general/fileTemplates.png");
 
   private FileTemplateTab[] myTabs;
-  private static final String TEMPLATES_TITLE = "Templates";
-  private static final String INCLUDES_TITLE = "Includes";
-  private static final String CODE_TITLE = "Code";
-  private static final String J2EE_TITLE = "J2EE";
+  private static final String TEMPLATES_TITLE = IdeBundle.message("tab.filetemplates.templates");
+  private static final String INCLUDES_TITLE = IdeBundle.message("tab.filetemplates.includes");
+  private static final String CODE_TITLE = IdeBundle.message("tab.filetemplates.code");
+  private static final String J2EE_TITLE = IdeBundle.message("tab.filetemplates.j2ee");
 
   public void disposeComponent() {
   }
@@ -82,14 +84,13 @@ public class AllFileTemplatesConfigurable implements Configurable, ApplicationCo
   }
 
   private void onAdd() {
-    createTemplate("Unnamed", "java", "");
+    createTemplate(IdeBundle.message("template.unnamed"), "java", "");
   }
 
-  private FileTemplate createTemplate(String prefName, String extension, String content) {
+  private FileTemplate createTemplate(String prefName, @NonNls String extension, String content) {
     FileTemplate[] templates = myCurrentTab.getTemplates();
-    ArrayList names = new ArrayList(templates.length);
-    for (int i = 0; i < templates.length; i++) {
-      FileTemplate template = templates[i];
+    ArrayList<String> names = new ArrayList<String>(templates.length);
+    for (FileTemplate template : templates) {
       names.add(template.getName());
     }
     String name = prefName;
@@ -111,17 +112,15 @@ public class AllFileTemplatesConfigurable implements Configurable, ApplicationCo
     if (selected == null) return;
 
     final FileTemplate[] templates = myCurrentTab.getTemplates();
-    ArrayList names = new ArrayList(templates.length);
-    for (int i = 0; i < templates.length; i++) {
-      FileTemplate template = templates[i];
+    ArrayList<String> names = new ArrayList<String>(templates.length);
+    for (FileTemplate template : templates) {
       names.add(template.getName());
     }
-    String name1String = "Copy ";
-    String name2String = "of " + selected.getName();
-    String name = name1String + name2String;
+    String nameTemplate = IdeBundle.message("template.copy.N.of.T");
+    String name = MessageFormat.format(nameTemplate, "", selected.getName());
     int i = 0;
     while (names.contains(name)) {
-      name = name1String + (++i) + " " + name2String;
+      name = MessageFormat.format(nameTemplate, (++i) + " ", selected.getName());
     }
     FileTemplate newTemplate = new FileTemplateImpl(selected.getText(), name, selected.getExtension());
     myCurrentTab.addTemplate(newTemplate);
@@ -131,7 +130,7 @@ public class AllFileTemplatesConfigurable implements Configurable, ApplicationCo
   }
 
   public String getDisplayName() {
-    return "File Templates";
+    return IdeBundle.message("title.file.templates");
   }
 
   public String getHelpTopic() {
@@ -174,8 +173,8 @@ public class AllFileTemplatesConfigurable implements Configurable, ApplicationCo
 
       protected FileTemplateTabAsTree.TreeNode initModel() {
         ArrayList<TreeNode> categories = new ArrayList<TreeNode>();
-        categories.add(new TreeNode("EJB", ModuleType.EJB.getNodeIcon(true), new TreeNode[]{
-          new TreeNode("Java code templates", StdFileTypes.JAVA.getIcon(), new TreeNode[]{
+        categories.add(new TreeNode(IdeBundle.message("template.node.ejb"), ModuleType.EJB.getNodeIcon(true), new TreeNode[]{
+          new TreeNode(IdeBundle.message("template.node.java.code.templates"), StdFileTypes.JAVA.getIcon(), new TreeNode[]{
             new TreeNode(StdFileTypes.JAVA.getIcon(), J2EEFileTemplateNames.ENTITY_CLASS_BMP_TEMPLATE),
             new TreeNode(StdFileTypes.JAVA.getIcon(), J2EEFileTemplateNames.ENTITY_CLASS_CMP_1x_TEMPLATE),
             new TreeNode(StdFileTypes.JAVA.getIcon(), J2EEFileTemplateNames.ENTITY_CLASS_CMP_2x_TEMPLATE),
@@ -189,50 +188,50 @@ public class AllFileTemplatesConfigurable implements Configurable, ApplicationCo
             new TreeNode(StdFileTypes.JAVA.getIcon(), J2EEFileTemplateNames.SESSION_LOCAL_HOME_INTERFACE_TEMPLATE),
             new TreeNode(StdFileTypes.JAVA.getIcon(), J2EEFileTemplateNames.MESSAGE_CLASS_TEMPLATE),
           }),
-          new TreeNode("Deployment descriptors", StdFileTypes.XML.getIcon(), new TreeNode[]{
+          new TreeNode(IdeBundle.message("template.node.deployment.descriptors"), StdFileTypes.XML.getIcon(), new TreeNode[]{
             new TreeNode(StdFileTypes.XML.getIcon(), J2EEFileTemplateNames.EJB_JAR_XML_1_1),
             new TreeNode(StdFileTypes.XML.getIcon(), J2EEFileTemplateNames.EJB_JAR_XML_2_0),
           }),
         }));
-        categories.add(new TreeNode("Application", ModuleType.J2EE_APPLICATION.getNodeIcon(true), new TreeNode[]{
-          new TreeNode("Deployment descriptors", StdFileTypes.XML.getIcon(), new TreeNode[]{
+        categories.add(new TreeNode(IdeBundle.message("template.node.application"), ModuleType.J2EE_APPLICATION.getNodeIcon(true), new TreeNode[]{
+          new TreeNode(IdeBundle.message("template.node.deployment.descriptors"), StdFileTypes.XML.getIcon(), new TreeNode[]{
             new TreeNode(StdFileTypes.XML.getIcon(), J2EEFileTemplateNames.APPLICATION_XML_1_2),
             new TreeNode(StdFileTypes.XML.getIcon(), J2EEFileTemplateNames.APPLICATION_XML_1_3),
             new TreeNode(StdFileTypes.XML.getIcon(), J2EEFileTemplateNames.APPLICATION_XML_1_4),
           }),
         }));
-        categories.add(new TreeNode("Web", ModuleType.WEB.getNodeIcon(true), new TreeNode[]{
-          new TreeNode("Java code templates", StdFileTypes.JAVA.getIcon(), new TreeNode[]{
+        categories.add(new TreeNode(IdeBundle.message("template.node.web"), ModuleType.WEB.getNodeIcon(true), new TreeNode[]{
+          new TreeNode(IdeBundle.message("template.node.java.code.templates"), StdFileTypes.JAVA.getIcon(), new TreeNode[]{
             new TreeNode(StdFileTypes.JAVA.getIcon(), J2EEFileTemplateNames.SERVLET_CLASS_TEMPLATE),
             new TreeNode(StdFileTypes.JAVA.getIcon(), J2EEFileTemplateNames.FILTER_CLASS_TEMPLATE),
           }),
-          new TreeNode("Deployment descriptors", StdFileTypes.XML.getIcon(), new TreeNode[]{
+          new TreeNode(IdeBundle.message("template.node.deployment.descriptors"), StdFileTypes.XML.getIcon(), new TreeNode[]{
             new TreeNode(StdFileTypes.XML.getIcon(), J2EEFileTemplateNames.WEB_XML_22),
             new TreeNode(StdFileTypes.XML.getIcon(), J2EEFileTemplateNames.WEB_XML_23),
             new TreeNode(StdFileTypes.XML.getIcon(), J2EEFileTemplateNames.WEB_XML_24),
           }),
-          new TreeNode("Jsp files", StdFileTypes.JSP.getIcon(), new TreeNode[]{
+          new TreeNode(IdeBundle.message("template.node.jsp.files"), StdFileTypes.JSP.getIcon(), new TreeNode[]{
             new TreeNode(StdFileTypes.JSP.getIcon(), J2EEFileTemplateNames.JSP_FILE),
             new TreeNode(StdFileTypes.JSPX.getIcon(), J2EEFileTemplateNames.JSPX_FILE)
           }),
         }));
 
-        FileTemplateGroupDescriptorFactory[] templateGroupFactories = (FileTemplateGroupDescriptorFactory[])ApplicationManager.getApplication().getComponents(FileTemplateGroupDescriptorFactory.class);
-        for (int i = 0; i < templateGroupFactories.length; i++) {
-          FileTemplateGroupDescriptor fileTemplatesDescriptor = templateGroupFactories[i].getFileTemplatesDescriptor();
+        FileTemplateGroupDescriptorFactory[] templateGroupFactories = ApplicationManager.getApplication().getComponents(FileTemplateGroupDescriptorFactory.class);
+        for (FileTemplateGroupDescriptorFactory templateGroupFactory : templateGroupFactories) {
+          FileTemplateGroupDescriptor fileTemplatesDescriptor = templateGroupFactory.getFileTemplatesDescriptor();
           if (fileTemplatesDescriptor != null) {
             categories.add(createNode(fileTemplatesDescriptor));
           }
         }
-        
+
+        //noinspection HardCodedStringLiteral
         return new TreeNode("ROOT", null, categories.toArray(new TreeNode[categories.size()]));
       }
     };
     myTabs = new FileTemplateTab[]{myTemplatesList, myPatternsList, myCodeTemplatesList, myJ2eeTemplatesList};
     myTabbedPane = new TabbedPaneWrapper();
     myTabbedPane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
-    for (int i = 0; i < myTabs.length; i++) {
-      FileTemplateTab tab = myTabs[i];
+    for (FileTemplateTab tab : myTabs) {
       myTabbedPane.addTab(tab.getTitle(), new JScrollPane(tab.getComponent()));
     }
 
@@ -243,7 +242,7 @@ public class AllFileTemplatesConfigurable implements Configurable, ApplicationCo
     });
 
     DefaultActionGroup group = new DefaultActionGroup();
-    AnAction removeAction = new AnAction("Remove Template", null, IconLoader.getIcon("/general/remove.png")) {
+    AnAction removeAction = new AnAction(IdeBundle.message("action.remove.template"), null, IconLoader.getIcon("/general/remove.png")) {
       public void actionPerformed(AnActionEvent e) {
         onRemove();
       }
@@ -254,7 +253,7 @@ public class AllFileTemplatesConfigurable implements Configurable, ApplicationCo
         e.getPresentation().setEnabled(selectedItem != null && !isInternalTemplate(selectedItem.getName(), myCurrentTab.getTitle()));
       }
     };
-    AnAction addAction = new AnAction("Create Template", null, IconLoader.getIcon("/general/add.png")) {
+    AnAction addAction = new AnAction(IdeBundle.message("action.create.template"), null, IconLoader.getIcon("/general/add.png")) {
       public void actionPerformed(AnActionEvent e) {
         onAdd();
       }
@@ -264,7 +263,7 @@ public class AllFileTemplatesConfigurable implements Configurable, ApplicationCo
         e.getPresentation().setEnabled(!(myCurrentTab == myCodeTemplatesList || myCurrentTab == myJ2eeTemplatesList));
       }
     };
-    AnAction cloneAction = new AnAction("Copy Template", null, IconLoader.getIcon("/actions/copy.png")) {
+    AnAction cloneAction = new AnAction(IdeBundle.message("action.copy.template"), null, IconLoader.getIcon("/actions/copy.png")) {
       public void actionPerformed(AnActionEvent e) {
         onClone();
       }
@@ -276,7 +275,7 @@ public class AllFileTemplatesConfigurable implements Configurable, ApplicationCo
                                        && myCurrentTab.getSelectedTemplate() != null);
       }
     };
-    AnAction resetAction = new AnAction("Reset To Default", null, IconLoader.getIcon("/actions/reset.png")) {
+    AnAction resetAction = new AnAction(IdeBundle.message("action.reset.to.default"), null, IconLoader.getIcon("/actions/reset.png")) {
       public void actionPerformed(AnActionEvent e) {
         onReset();
       }
@@ -347,7 +346,8 @@ public class AllFileTemplatesConfigurable implements Configurable, ApplicationCo
   private void onReset() {
     FileTemplate selected = myCurrentTab.getSelectedTemplate();
     if (selected != null) {
-      if (Messages.showOkCancelDialog("Reset to original template?", "Reset Template", Messages.getQuestionIcon()) !=
+      if (Messages.showOkCancelDialog(IdeBundle.message("prompt.reset.to.original.template"),
+                                      IdeBundle.message("title.reset.template"), Messages.getQuestionIcon()) !=
           DialogWrapper.OK_EXIT_CODE) {
         return;
       }
@@ -482,8 +482,7 @@ public class AllFileTemplatesConfigurable implements Configurable, ApplicationCo
    * If apply is acceptable, returns true. If no, returns false and fills error string.
    */
   public boolean canApply(final boolean showErrorDialog, String[] errorString) {
-    for (int i = 0; i < myTabs.length; i++) {
-      FileTemplateTab list = myTabs[i];
+    for (FileTemplateTab list : myTabs) {
       if (!canApply(showErrorDialog, errorString, list)) return false;
     }
     return true;
@@ -491,13 +490,12 @@ public class AllFileTemplatesConfigurable implements Configurable, ApplicationCo
 
   public boolean canApply(final boolean showErrorDialog, String[] errorString, FileTemplateTab list) {
     final FileTemplate[] templates = myCurrentTab.getTemplates();
-    ArrayList allNames = new ArrayList();
+    ArrayList<String> allNames = new ArrayList<String>();
     FileTemplate itemWithError = null;
     String errorMessage = null;
     String errorTitle = null;
     boolean errorInName = true;
-    for (int i = 0; i < templates.length; i++) {
-      FileTemplate template = templates[i];
+    for (FileTemplate template : templates) {
       boolean isClassTemplate = Comparing.strEqual(template.getName(),
                                                    FileTemplateManager.INTERNAL_CLASS_TEMPLATE_NAME);
       boolean isInterfaceTemplate = Comparing.strEqual(template.getName(),
@@ -507,23 +505,23 @@ public class AllFileTemplatesConfigurable implements Configurable, ApplicationCo
       String currExt = template.getExtension();
       if (currName.length() == 0) {
         itemWithError = template;
-        errorMessage = "Please specify a name for this template";
-        errorTitle = "Template Name Not Specified";
-        errorString[0] = "Please specify template name";
+        errorMessage = IdeBundle.message("error.please.specify.a.name.for.this.template");
+        errorTitle = IdeBundle.message("title.template.name.not.specified");
+        errorString[0] = IdeBundle.message("error.please.specify.template.name");
         break;
       }
       if (allNames.contains(currName)) {
         itemWithError = template;
-        errorMessage = "Please specify a different name for this template";
-        errorTitle = "Template already exists";
-        errorString[0] = "Template with such name already exists. Please specify a different template name";
+        errorMessage = IdeBundle.message("error.please.specify.a.different.name.for.this.template");
+        errorTitle = IdeBundle.message("title.template.already.exists");
+        errorString[0] = IdeBundle.message("error.template.with.such.name.already.exists");
         break;
       }
       if (currExt.length() == 0) {
         itemWithError = template;
-        errorMessage = "Please specify an extension for this template";
-        errorTitle = "Template Extension Not Specified";
-        errorString[0] = "Please specify template extension";
+        errorMessage = IdeBundle.message("error.please.specify.extension");
+        errorTitle = IdeBundle.message("title.template.extension.not.specified");
+        errorString[0] = IdeBundle.message("error.please.specify.template.extension");
         errorInName = false;
         break;
       }
@@ -574,38 +572,34 @@ public class AllFileTemplatesConfigurable implements Configurable, ApplicationCo
     }
 
     // Apply templates
-    ArrayList newModifiedItems = new ArrayList();
+    ArrayList<FileTemplate> newModifiedItems = new ArrayList<FileTemplate>();
     FileTemplate[] templates = myTemplatesList.getTemplates();
-    for (int i = 0; i < templates.length; i++) {
-      FileTemplate template = templates[i];
+    for (FileTemplate template : templates) {
       newModifiedItems.add(template);
     }
     FileTemplateManager templatesManager = FileTemplateManager.getInstance();
     apply(newModifiedItems, myTemplatesList.savedTemplates, TEMPLATE_ID, templatesManager.getAllTemplates());
 
     // Apply patterns
-    newModifiedItems = new ArrayList();
+    newModifiedItems = new ArrayList<FileTemplate>();
     templates = myPatternsList.getTemplates();
-    for (int i = 0; i < templates.length; i++) {
-      FileTemplate template = templates[i];
+    for (FileTemplate template : templates) {
       newModifiedItems.add(template);
     }
     apply(newModifiedItems, myPatternsList.savedTemplates, PATTERN_ID, templatesManager.getAllPatterns());
 
     //Apply code templates
-    newModifiedItems = new ArrayList();
+    newModifiedItems = new ArrayList<FileTemplate>();
     templates = myCodeTemplatesList.getTemplates();
-    for (int i = 0; i < templates.length; i++) {
-      FileTemplate template = templates[i];
+    for (FileTemplate template : templates) {
       newModifiedItems.add(template);
     }
     apply(newModifiedItems, myCodeTemplatesList.savedTemplates, CODE_ID, templatesManager.getAllCodeTemplates());
 
     //Apply J2EE templates
-    newModifiedItems = new ArrayList();
+    newModifiedItems = new ArrayList<FileTemplate>();
     templates = myJ2eeTemplatesList.getTemplates();
-    for (int i = 0; i < templates.length; i++) {
-      FileTemplate template = templates[i];
+    for (FileTemplate template : templates) {
       newModifiedItems.add(template);
     }
     apply(newModifiedItems, myJ2eeTemplatesList.savedTemplates, J2EE_ID, templatesManager.getAllJ2eeTemplates());
@@ -639,8 +633,8 @@ public class AllFileTemplatesConfigurable implements Configurable, ApplicationCo
     }
   }
 
-  private static void apply(ArrayList newModifiedItems,
-                            Map savedTemplate2ModifiedTemplate,
+  private static void apply(ArrayList<FileTemplate> newModifiedItems,
+                            Map<FileTemplate,FileTemplate> savedTemplate2ModifiedTemplate,
                             int listId,
                             FileTemplate[] templates) {
     FileTemplateManager templatesManager = FileTemplateManager.getInstance();
@@ -648,29 +642,25 @@ public class AllFileTemplatesConfigurable implements Configurable, ApplicationCo
       FileTemplate[] internals = templatesManager.getInternalTemplates();
       templates = ArrayUtil.mergeArrays(internals, templates, FileTemplate.class);
     }
-    ArrayList savedTemplates = new ArrayList();
+    ArrayList<FileTemplate> savedTemplates = new ArrayList<FileTemplate>();
     // Delete removed and fill savedTemplates
-    for (int i = 0; i < templates.length; i++) {
-      FileTemplate aTemplate = templates[i];
-      FileTemplate aModifiedTemplate = (FileTemplate)savedTemplate2ModifiedTemplate.get(aTemplate);
+    for (FileTemplate aTemplate : templates) {
+      FileTemplate aModifiedTemplate = savedTemplate2ModifiedTemplate.get(aTemplate);
       if (newModifiedItems.contains(aModifiedTemplate)) {
         savedTemplates.add(aTemplate);
-      }
-      else {
+      } else {
         removeTemplate(aTemplate, listId, false);
         savedTemplate2ModifiedTemplate.remove(aTemplate);
       }
     }
     // Now all removed templates deleted from table, savedTemplates contains all templates in table
-    for (Iterator iterator = savedTemplates.iterator(); iterator.hasNext();) {
-      FileTemplate aTemplate = (FileTemplate)iterator.next();
-      FileTemplate aModifiedTemplate = (FileTemplate)savedTemplate2ModifiedTemplate.get(aTemplate);
+    for (FileTemplate aTemplate : savedTemplates) {
+      FileTemplate aModifiedTemplate = savedTemplate2ModifiedTemplate.get(aTemplate);
       LOG.assertTrue(aModifiedTemplate != null);
       aTemplate.setAdjust(aModifiedTemplate.isAdjust());
       if (!aModifiedTemplate.isDefault()) {
         FileTemplateUtil.copyTemplate(aModifiedTemplate, aTemplate);
-      }
-      else {
+      } else {
         if (!aTemplate.isDefault()) {
           removeTemplate(aTemplate, listId, true);
         }
@@ -678,20 +668,16 @@ public class AllFileTemplatesConfigurable implements Configurable, ApplicationCo
     }
 
     // Add new templates to table
-    for (Iterator iterator = newModifiedItems.iterator(); iterator.hasNext();) {
-      FileTemplate aModifiedTemplate = (FileTemplate)iterator.next();
+    for (FileTemplate aModifiedTemplate : newModifiedItems) {
       LOG.assertTrue(aModifiedTemplate != null);
       if (!savedTemplate2ModifiedTemplate.containsValue(aModifiedTemplate)) {
         if (listId == AllFileTemplatesConfigurable.TEMPLATE_ID) {
           templatesManager.addTemplate(aModifiedTemplate.getName(), aModifiedTemplate.getExtension()).setText(aModifiedTemplate.getText());
-        }
-        else if (listId == AllFileTemplatesConfigurable.PATTERN_ID) {
+        } else if (listId == AllFileTemplatesConfigurable.PATTERN_ID) {
           templatesManager.addPattern(aModifiedTemplate.getName(), aModifiedTemplate.getExtension()).setText(aModifiedTemplate.getText());
-        }
-        else if (listId == CODE_ID) {
+        } else if (listId == CODE_ID) {
           templatesManager.addCodeTemplate(aModifiedTemplate.getName(), aModifiedTemplate.getExtension()).setText(aModifiedTemplate.getText());
-        }
-        else if (listId == J2EE_ID) {
+        } else if (listId == J2EE_ID) {
           templatesManager.addJ2eeTemplate(aModifiedTemplate.getName(), aModifiedTemplate.getExtension()).setText(aModifiedTemplate.getText());
         }
       }

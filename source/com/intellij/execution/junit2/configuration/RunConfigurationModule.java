@@ -1,6 +1,7 @@
 package com.intellij.execution.junit2.configuration;
 
 import com.intellij.execution.ExecutionUtil;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RuntimeConfigurationError;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
@@ -21,6 +22,7 @@ import com.intellij.util.containers.CollectUtil;
 import com.intellij.util.containers.ConvertingIterator;
 import com.intellij.util.containers.HashSet;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -28,8 +30,8 @@ import java.util.List;
 
 public class RunConfigurationModule implements JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit2.configuration.RunConfigurationModule");
-  private static final String ELEMENT = "module";
-  private static final String ATTRIBUTE = "name";
+  @NonNls private static final String ELEMENT = "module";
+  @NonNls private static final String ATTRIBUTE = "name";
   private String myModuleName = "";
   private final Project myProject;
   private final boolean myClassesInLibraries;
@@ -106,24 +108,24 @@ public class RunConfigurationModule implements JDOMExternalizable {
     final Module module = getModule();
     if (module != null) {
       if (ModuleRootManager.getInstance(module).getJdk() == null) {
-        throw new RuntimeConfigurationWarning("No JDK specified for module \"" + module.getName() + "\"");
+        throw new RuntimeConfigurationWarning(ExecutionBundle.message("no.jdk.specified.for.module.warning.text", module.getName()));
       }
       else {
         return;
       }
     }else {
     if (myModuleName == null || myModuleName.trim().length() == 0) {
-      throw new RuntimeConfigurationError("Module not specified");
+      throw new RuntimeConfigurationError(ExecutionBundle.message("module.not.specified.error.text"));
     }
     else {
-      throw new RuntimeConfigurationError("Module \"" + myModuleName + "\" doesn't exist in project");
+      throw new RuntimeConfigurationError(ExecutionBundle.message("module.doesn.t.exist.in.project.error.text", myModuleName));
     }
     }
   }
 
-  public PsiClass checkClassName(final String className, final String expectedClassMessage) throws RuntimeConfigurationException {
+  public PsiClass checkClassName(final String className, final String errorMessage) throws RuntimeConfigurationException {
     if (className == null || className.length() == 0) {
-      throw new RuntimeConfigurationError("No " + expectedClassMessage + " specified");
+      throw new RuntimeConfigurationError(errorMessage);
     }
     return findNotNullClass(className);
   }
@@ -131,8 +133,8 @@ public class RunConfigurationModule implements JDOMExternalizable {
   public PsiClass findNotNullClass(final String className) throws RuntimeConfigurationWarning {
     final PsiClass psiClass = findClass(className);
     if (psiClass == null) {
-      throw new RuntimeConfigurationWarning("Class \"" + className + "\" not found in module \"" +
-                                       getModuleName() + "\"");
+      throw new RuntimeConfigurationWarning(
+        ExecutionBundle.message("class.not.found.in.module.error.message", className, getModuleName()));
     }
     return psiClass;
   }

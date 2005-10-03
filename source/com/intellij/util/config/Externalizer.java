@@ -5,12 +5,13 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Iterator;
 import java.util.List;
 
 public interface Externalizer<T> {
-  String VALUE_ATTRIBUTE = "value";
+  @NonNls String VALUE_ATTRIBUTE = "value";
   Externalizer<String> STRING = new BaseExternalizer<String>(){
     public String readValue(Element dataElement) {
       return dataElement.getAttributeValue(VALUE_ATTRIBUTE);
@@ -66,9 +67,9 @@ public interface Externalizer<T> {
   }
 
   class StorageExternalizer implements Externalizer<Storage> {
-    private static final String ITEM_TAG = "item";
-    private static final String KEY_ATTR = "key";
-    private static final String VALUE_ATTR = "value";
+    @NonNls private static final String ITEM_TAG = "item";
+    @NonNls private static final String KEY_ATTR = "key";
+    @NonNls private static final String VALUE_ATTR = "value";
 
     public Storage readValue(Element dataElement) throws InvalidDataException {
       Storage.MapStorage storage = new Storage.MapStorage();

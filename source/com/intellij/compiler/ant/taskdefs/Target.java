@@ -6,6 +6,8 @@ import com.intellij.openapi.util.Pair;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author Eugene Zhuravlev
  *         Date: Mar 19, 2004
@@ -15,7 +17,8 @@ public class Target extends Tag{
     super("target", getOptions(name, depends, description, unlessCondition));
   }
 
-  private static Pair[] getOptions(String name, String depends, String description, String unlessCondition) {
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  private static Pair[] getOptions(@NonNls String name, @NonNls String depends, String description, @NonNls String unlessCondition) {
     final List<Pair> options = new ArrayList<Pair>();
     options.add(new Pair<String, String>("name", name));
     if (depends != null && depends.length() > 0) {

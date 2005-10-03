@@ -33,6 +33,7 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -46,6 +47,8 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
 
   private final PsiManagerImpl myManager;
   private VirtualFile myFile;
+
+  @NonNls private static final String TEMPLATE_NAME_PROPERTY = "NAME";
 
   public PsiDirectoryImpl(PsiManagerImpl manager, VirtualFile file) {
     myManager = manager;
@@ -327,7 +330,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
     Properties defaultProperties = FileTemplateManager.getInstance().getDefaultProperties();
     Properties properties = new Properties(defaultProperties);
     FileTemplateUtil.setPackageNameAttribute(properties, this);
-    properties.setProperty("NAME", name);
+    properties.setProperty(TEMPLATE_NAME_PROPERTY, name);
     String text;
     try {
       text = template.getText(properties);
@@ -353,10 +356,8 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
   }
 
   private String getIncorrectTemplateMessage(String templateName) {
-    String incorrectTemplateMessage =
-      "Cannot create " + FileTemplateManager.getInstance().internalTemplateToSubject(templateName) + " - incorrect " + templateName +
-      " template.";
-    return incorrectTemplateMessage;
+    return PsiBundle.message("psi.error.incorroect.class.template.message",
+                             FileTemplateManager.getInstance().internalTemplateToSubject(templateName), templateName);
   }
 
   public void checkCreateClass(String name) throws IncorrectOperationException {

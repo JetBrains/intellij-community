@@ -17,22 +17,22 @@ import java.util.Iterator;
 public class SelectTagDialog extends DialogWrapper {
   private final Collection<JList> myLists =  new ArrayList<JList>();
   private JPanel myPanel;
-  public static final String EXISTING_REVISIONS = "Existing revisions:";
-  public static final String EXISTING_TAGS = "Existing tags:";
+  public static final String EXISTING_REVISIONS = com.intellij.CvsBundle.message("label.existing.revisions");
+  public static final String EXISTING_TAGS = com.intellij.CvsBundle.message("label.existing.tags");
 
   public SelectTagDialog(Collection<String> tags, Collection<String> revisions) {
     super(true);
     myPanel = new JPanel(new GridLayout(1, 0, 4, 8));
 
     if (tags.isEmpty()){
-      createList("Select Revision", revisions, BorderLayout.CENTER, EXISTING_REVISIONS);
+      createList(com.intellij.CvsBundle.message("dialog.title.select.revision"), revisions, BorderLayout.CENTER, EXISTING_REVISIONS);
     }
     else if (revisions.isEmpty()){
-      createList("Select Tag", tags, BorderLayout.CENTER, EXISTING_TAGS);
+      createList(com.intellij.CvsBundle.message("operation.name.select.tag"), tags, BorderLayout.CENTER, EXISTING_TAGS);
     }
     else{
-      createList("Select Revision or Tag", revisions, BorderLayout.EAST, EXISTING_REVISIONS);
-      createList("Select Revision or Tag", tags, BorderLayout.WEST, EXISTING_TAGS);
+      createList(com.intellij.CvsBundle.message("dialog.title.select.revision.or.tag"), revisions, BorderLayout.EAST, EXISTING_REVISIONS);
+      createList(com.intellij.CvsBundle.message("dialog.title.select.revision.or.tag"), tags, BorderLayout.WEST, EXISTING_TAGS);
     }
 
     setOkEnabled();

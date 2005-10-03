@@ -1,17 +1,18 @@
 package com.intellij.psi.impl.source.parsing;
 
+import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lexer.FilterLexer;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.LexerPosition;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
-import com.intellij.pom.java.LanguageLevel;
 
 public class ExpressionParsing extends Parsing {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.parsing.ExpressionParsing");
@@ -77,7 +78,7 @@ public class ExpressionParsing extends Parsing {
     }
 
     if (lexer.getTokenType() != null) {
-      TreeUtil.addChildren(dummyRoot, Factory.createErrorElement("Unexpected token(s) beyond the end of expression"));
+      TreeUtil.addChildren(dummyRoot, Factory.createErrorElement(JavaErrorMessages.message("unexpected.tokens.beyond.the.end.of.expression")));
       while (lexer.getTokenType() != null) {
         TreeUtil.addChildren(dummyRoot, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
         lexer.advance();
@@ -195,7 +196,7 @@ public class ExpressionParsing extends Parsing {
     while (true) {
       IElementType tokenType = GTTokens.getTokenType(lexer);
       if (tokenType == null) break;
-      if (!opSignBitSet.isInSet(tokenType)) break;
+      if (!opSignBitSet.contains(tokenType)) break;
 
       CompositeElement result = Factory.createCompositeElement(elementType);
       TreeUtil.addChildren(result, element);
@@ -203,7 +204,7 @@ public class ExpressionParsing extends Parsing {
 
       TreeElement element1 = parseConstruct(lexer, argNumber);
       if (element1 == null) {
-        TreeUtil.addChildren(result, Factory.createErrorElement("Expression expected"));
+        TreeUtil.addChildren(result, Factory.createErrorElement(JavaErrorMessages.message("expected.expression")));
         return result;
       }
 
@@ -240,7 +241,7 @@ public class ExpressionParsing extends Parsing {
 
         TreeElement element2 = parseAssignmentExpression(lexer);
         if (element2 == null) {
-          TreeUtil.addChildren(element, Factory.createErrorElement("Expression expected"));
+          TreeUtil.addChildren(element, Factory.createErrorElement(JavaErrorMessages.message("expected.expression")));
           return element;
         }
 
@@ -267,14 +268,14 @@ public class ExpressionParsing extends Parsing {
 
     CompositeElement element2 = parseExpression(lexer);
     if (element2 == null) {
-      TreeUtil.addChildren(element, Factory.createErrorElement("Expression expected"));
+      TreeUtil.addChildren(element, Factory.createErrorElement(JavaErrorMessages.message("expected.expression")));
       return element;
     }
 
     TreeUtil.addChildren(element, element2);
 
     if (lexer.getTokenType() != COLON) {
-      TreeUtil.addChildren(element, Factory.createErrorElement("':' expected"));
+      TreeUtil.addChildren(element, Factory.createErrorElement(JavaErrorMessages.message("expected.colon")));
       return element;
     }
 
@@ -283,7 +284,7 @@ public class ExpressionParsing extends Parsing {
 
     CompositeElement element3 = parseConditionalExpression(lexer);
     if (element3 == null) {
-      TreeUtil.addChildren(element, Factory.createErrorElement("Expression expected"));
+      TreeUtil.addChildren(element, Factory.createErrorElement(JavaErrorMessages.message("expected.expression")));
       return element;
     }
 
@@ -321,7 +322,9 @@ public class ExpressionParsing extends Parsing {
 
       TreeElement element1 = parseConstruct(lexer, argNumber);
       if (element1 == null) {
-        CompositeElement errorElement = Factory.createErrorElement(argNumber == PARSE_TYPE ? "Type expected" : "Expression expected");
+        CompositeElement errorElement = Factory.createErrorElement(argNumber == PARSE_TYPE ?
+                                                                   JavaErrorMessages.message("expected.type") :
+                                                                   JavaErrorMessages.message("expected.expression"));
         TreeUtil.addChildren(result, errorElement);
         return result;
       }
@@ -343,7 +346,7 @@ public class ExpressionParsing extends Parsing {
         lexer.advance();
         CompositeElement element1 = parseUnaryExpression(lexer);
         if (element1 == null) {
-          TreeUtil.addChildren(element, Factory.createErrorElement("Expression expected"));
+          TreeUtil.addChildren(element, Factory.createErrorElement(JavaErrorMessages.message("expected.expression")));
           return element;
         }
         TreeUtil.addChildren(element, element1);
@@ -368,7 +371,7 @@ public class ExpressionParsing extends Parsing {
 
         if (lexer.getTokenType() == PLUS || lexer.getTokenType() == MINUS ||
             lexer.getTokenType() == PLUSPLUS || lexer.getTokenType() == MINUSMINUS) {
-          if (!PRIMITIVE_TYPE_BIT_SET.isInSet(type.getFirstChildNode().getElementType())) {
+          if (!PRIMITIVE_TYPE_BIT_SET.contains(type.getFirstChildNode().getElementType())) {
             lexer.restore(pos);
             return parsePostfixExpression(lexer);
           }
@@ -435,7 +438,7 @@ public class ExpressionParsing extends Parsing {
               lexer.advance();
             }
             else {
-              TreeUtil.addChildren(element1, Factory.createErrorElement("Identifier expected"));
+              TreeUtil.addChildren(element1, Factory.createErrorElement(JavaErrorMessages.message("expected.identifier")));
               return element1;
             }
 
@@ -449,7 +452,7 @@ public class ExpressionParsing extends Parsing {
             if (lexer.getTokenStart() <= pos1.getOffset()) {
               lexer.restore(pos1);
               TreeUtil.addChildren(element, dot);
-              TreeUtil.addChildren(element, Factory.createErrorElement("Identifier expected"));
+              TreeUtil.addChildren(element, Factory.createErrorElement(JavaErrorMessages.message("expected.identifier")));
               return element;
             }
             element = element1;
@@ -501,7 +504,7 @@ public class ExpressionParsing extends Parsing {
               lexer.advance();
             }
             else {
-              TreeUtil.addChildren(element1, Factory.createErrorElement("Identifier expected"));
+              TreeUtil.addChildren(element1, Factory.createErrorElement(JavaErrorMessages.message("expected.identifier")));
               return element1;
             }
 
@@ -566,14 +569,14 @@ public class ExpressionParsing extends Parsing {
 
             TreeElement expr = parseExpression(lexer);
             if (expr == null) {
-              TreeUtil.addChildren(element1, Factory.createErrorElement("Expression expected"));
+              TreeUtil.addChildren(element1, Factory.createErrorElement(JavaErrorMessages.message("expected.expression")));
               return element1;
             }
 
             TreeUtil.addChildren(element1, expr);
 
             if (lexer.getTokenType() != RBRACKET) {
-              TreeUtil.addChildren(element1, Factory.createErrorElement("']' expected"));
+              TreeUtil.addChildren(element1, Factory.createErrorElement(JavaErrorMessages.message("expected.rbracket")));
               return element1;
             }
 
@@ -617,7 +620,7 @@ public class ExpressionParsing extends Parsing {
 
         TreeElement expression = parseExpression(lexer);
         if (expression == null) {
-          TreeUtil.addChildren(element, Factory.createErrorElement("Expression expected"));
+          TreeUtil.addChildren(element, Factory.createErrorElement(JavaErrorMessages.message("expected.expression")));
         }
         else {
           TreeUtil.addChildren(element, expression);
@@ -625,7 +628,7 @@ public class ExpressionParsing extends Parsing {
 
         if (lexer.getTokenType() != RPARENTH) {
           if (expression != null) {
-            TreeUtil.addChildren(element, Factory.createErrorElement("')' expected"));
+            TreeUtil.addChildren(element, Factory.createErrorElement(JavaErrorMessages.message("expected.rparen")));
           }
         }
         else {
@@ -684,7 +687,7 @@ public class ExpressionParsing extends Parsing {
       return parseNewExpression(lexer, null, null/*, referenceParameterList*/);
     }
     else {
-      if (tokenType != null && PRIMITIVE_TYPE_BIT_SET.isInSet(tokenType)) {
+      if (tokenType != null && PRIMITIVE_TYPE_BIT_SET.contains(tokenType)) {
         return parseClassObjectAccessExpression(lexer);
       }
       return null;
@@ -713,13 +716,13 @@ public class ExpressionParsing extends Parsing {
       isPrimitive = false;
       refOrType = parseJavaCodeReference(lexer, true, true);
     }
-    else if (lexer.getTokenType() != null && PRIMITIVE_TYPE_BIT_SET.isInSet(lexer.getTokenType())) {
+    else if (lexer.getTokenType() != null && PRIMITIVE_TYPE_BIT_SET.contains(lexer.getTokenType())) {
       isPrimitive = true;
       refOrType = ParseUtil.createTokenElement(lexer, myContext.getCharTable());
       lexer.advance();
     }
     else {
-      TreeUtil.addChildren(element, Factory.createErrorElement("Identifier expected"));
+      TreeUtil.addChildren(element, Factory.createErrorElement(JavaErrorMessages.message("expected.identifier")));
       return element;
     }
 
@@ -741,7 +744,9 @@ public class ExpressionParsing extends Parsing {
       TreeUtil.addChildren(element, refOrType);
 
       if (lexer.getTokenType() != LBRACKET) {
-        String description = isPrimitive ? "'[' expected" : "'(' or '[' expected";
+        String description = isPrimitive ?
+                             JavaErrorMessages.message("expected.lbracket") :
+                             JavaErrorMessages.message("expected.lparen.or.lbracket");
         TreeUtil.addChildren(element, Factory.createErrorElement(description));
         return element;
       }
@@ -765,7 +770,7 @@ public class ExpressionParsing extends Parsing {
         bracketCount++;
 
         if (lexer.getTokenType() != RBRACKET) {
-          TreeUtil.addChildren(element, Factory.createErrorElement("']' expected"));
+          TreeUtil.addChildren(element, Factory.createErrorElement(JavaErrorMessages.message("expected.rbracket")));
           return element;
         }
 
@@ -781,7 +786,7 @@ public class ExpressionParsing extends Parsing {
           }
         }
         else {
-          TreeUtil.addChildren(element, Factory.createErrorElement("Array initializer expected"));
+          TreeUtil.addChildren(element, Factory.createErrorElement(JavaErrorMessages.message("expected.array.initializer")));
         }
       }
     }
@@ -827,7 +832,7 @@ public class ExpressionParsing extends Parsing {
       TreeElement arg = parseExpression(lexer);
       if (arg == null) {
         if (lexer.getTokenType() == COMMA || (lexer.getTokenType() == RPARENTH && argCount > 0)) {
-          TreeUtil.addChildren(element, Factory.createErrorElement("Expression expected"));
+          TreeUtil.addChildren(element, Factory.createErrorElement(JavaErrorMessages.message("expected.expression")));
           TreeUtil.addChildren(element, Factory.createCompositeElement(EMPTY_EXPRESSION));
         }
         else {
@@ -851,7 +856,7 @@ public class ExpressionParsing extends Parsing {
       lexer.advance();
     }
     else {
-      TreeUtil.addChildren(element, Factory.createErrorElement("')' expected"));
+      TreeUtil.addChildren(element, Factory.createErrorElement(JavaErrorMessages.message("expected.rparen")));
       element.putUserData(ParseUtil.UNCLOSED_ELEMENT_PROPERTY, "");
     }
 
@@ -873,7 +878,7 @@ public class ExpressionParsing extends Parsing {
       }
 
       if (lexer.getTokenType() == null) {
-        TreeUtil.addChildren(element, Factory.createErrorElement("'}' expected"));
+        TreeUtil.addChildren(element, Factory.createErrorElement(JavaErrorMessages.message("expected.rbrace")));
         element.putUserData(ParseUtil.UNCLOSED_ELEMENT_PROPERTY, "");
         return element;
       }
@@ -881,12 +886,12 @@ public class ExpressionParsing extends Parsing {
       TreeElement arg = parseExpression(lexer);
       if (arg == null) {
         if (lexer.getTokenType() != COMMA) {
-          TreeUtil.addChildren(element, Factory.createErrorElement("'}' expected"));
+          TreeUtil.addChildren(element, Factory.createErrorElement(JavaErrorMessages.message("expected.rbrace")));
           element.putUserData(ParseUtil.UNCLOSED_ELEMENT_PROPERTY, "");
           return element;
         }
         else {
-          TreeUtil.addChildren(element, Factory.createErrorElement("Expression expected"));
+          TreeUtil.addChildren(element, Factory.createErrorElement(JavaErrorMessages.message("expected.expression")));
         }
       }
       else {
@@ -904,7 +909,7 @@ public class ExpressionParsing extends Parsing {
         lexer.advance();
       }
       else {
-        TreeUtil.addChildren(element, Factory.createErrorElement("',' expected"));
+        TreeUtil.addChildren(element, Factory.createErrorElement(JavaErrorMessages.message("expected.comma")));
       }
     }
   }

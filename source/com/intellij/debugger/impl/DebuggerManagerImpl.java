@@ -1,6 +1,7 @@
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.apiAdapters.TransportServiceWrapper;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.settings.DebuggerSettings;
@@ -27,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.PathUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.io.File;
@@ -67,7 +69,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
       }
     }
   };
-  private static final String DEBUG_KEY_NAME = "idea.xdebug.key";
+  private static final @NonNls String DEBUG_KEY_NAME = "idea.xdebug.key";
 
   public void addDebuggerManagerListener(DebuggerManagerListener listener) {
     myDispatcher.addListener(listener);
@@ -235,24 +237,25 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
   private static void checkTargetJPDAInstalled(JavaParameters parameters) throws ExecutionException {
     final ProjectJdk jdk = parameters.getJdk();
     if (jdk == null) {
-      throw new ExecutionException("JDK is not specified");
+      throw new ExecutionException(DebuggerBundle.message("error.jdk.not.specified"));
     }
     final String versionString = jdk.getVersionString();
     if (versionString.indexOf("1.0") > -1 || versionString.indexOf("1.1") > -1) {
-      throw new ExecutionException("Debugging is not supported for JDK " + versionString);
+      throw new ExecutionException(DebuggerBundle.message("error.unsupported.jdk.version", versionString));
     }
     if (SystemInfo.isWindows && versionString.indexOf("1.2") > -1) {
       final VirtualFile homeDirectory = jdk.getHomeDirectory();
       if (homeDirectory == null || !homeDirectory.isValid()) {
-        throw new ExecutionException("Invalid JDK home directory specified." + versionString);
+        throw new ExecutionException(DebuggerBundle.message("error.invalid.jdk.home", versionString));
       }
+      //noinspection HardCodedStringLiteral
       File dllFile = new File(
-        homeDirectory.getPath().replace('/', File.separatorChar) + File.separator + "bin" + File.separator + "jdwp.dll");
+        homeDirectory.getPath().replace('/', File.separatorChar) + File.separator + "bin" + File.separator + "jdwp.dll"
+      );
       if (!dllFile.exists()) {
         GetJPDADialog dialog = new GetJPDADialog();
         dialog.show();
-        throw new ExecutionException(
-          "Debug libraries are missig from JDK home.\nIn order for debugger to start, the libraries should be installed.\nPlease visit http://java.sun.com/products/jpda");
+        throw new ExecutionException(DebuggerBundle.message("error.debug.libraries.missing"));
       }
     }
   }
@@ -286,6 +289,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
     return DebuggerSettings.getInstance().FORCE_CLASSIC_VM;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static RemoteConnection createDebugParameters(final JavaParameters parameters,
                                                        final boolean serverMode,
                                                        int transport, final String debugPort,
@@ -326,6 +330,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
     }
 
     ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @SuppressWarnings({"HardCodedStringLiteral"})
       public void run() {
         PathUtilEx.addRtJar(parameters.getClassPath());
         boolean classicVM = shouldForceClassicVM(parameters.getJdk());

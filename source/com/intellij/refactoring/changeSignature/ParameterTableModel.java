@@ -3,6 +3,7 @@ package com.intellij.refactoring.changeSignature;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.refactoring.ui.RowEditableTableModel;
+import com.intellij.refactoring.RefactoringBundle;
 
 import javax.swing.table.AbstractTableModel;
 import java.util.ArrayList;
@@ -19,7 +20,7 @@ class ParameterTableModel extends AbstractTableModel implements RowEditableTable
   private List<PsiCodeFragment> myDefaultValuesCodeFragments;
   private final PsiElement myContext;
   private final ChangeSignatureDialog myDialog;
-  static final String ANY_VAR_COLUMN_NAME = "Any var";
+  static final String ANY_VAR_COLUMN_NAME = RefactoringBundle.message("column.name.any.var");
 
   public ParameterTableModel(PsiElement context, ChangeSignatureDialog dialog) {
     myContext = context;
@@ -127,11 +128,11 @@ class ParameterTableModel extends AbstractTableModel implements RowEditableTable
   public String getColumnName(int column) {
     switch (column) {
       case 0:
-        return "Type";
+        return RefactoringBundle.message("column.name.type");
       case 1:
-        return "Name";
+        return RefactoringBundle.message("column.name.name");
       case 2:
-        return "Default value";
+        return RefactoringBundle.message("column.name.default.value");
       case 3:
         return ANY_VAR_COLUMN_NAME;
       default:
@@ -193,8 +194,7 @@ class ParameterTableModel extends AbstractTableModel implements RowEditableTable
     myParameterInfos = parameterInfos;
     myTypeCodeFraments = new ArrayList<PsiTypeCodeFragment>(parameterInfos.size());
     myDefaultValuesCodeFragments = new ArrayList<PsiCodeFragment>(parameterInfos.size());
-    for (int i = 0; i < parameterInfos.size(); i++) {
-      ParameterInfo parameterInfo = parameterInfos.get(i);
+    for (ParameterInfo parameterInfo : parameterInfos) {
       final PsiTypeCodeFragment typeCodeFragment = createParameterTypeCodeFragment(parameterInfo.getTypeText(), context);
       parameterInfo.getTypeWrapper().addImportsTo(typeCodeFragment);
       myTypeCodeFraments.add(typeCodeFragment);

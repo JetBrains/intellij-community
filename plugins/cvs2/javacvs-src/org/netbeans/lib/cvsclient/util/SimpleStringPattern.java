@@ -14,6 +14,8 @@
  *****************************************************************************/
 package org.netbeans.lib.cvsclient.util;
 
+import org.jetbrains.annotations.NonNls;
+
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -33,7 +35,7 @@ public final class SimpleStringPattern
 	 * Creates a SimpleStringPattern for the specified definition.
 	 * The definition might contain two special characters ('*' and '?').
 	 */
-	public SimpleStringPattern(String definition) {
+	public SimpleStringPattern(@NonNls String definition) {
 		splitInSubPattern(definition);
 	}
 

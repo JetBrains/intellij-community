@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.generation.surroundWith;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
@@ -12,11 +13,14 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
 
 class JavaWithCastSurrounder extends JavaExpressionSurrounder {
+  @NonNls private static final String TYPE_TEMPLATE_VARIABLE = "type";
+
   public boolean isApplicable(PsiExpression expr) {
     return true;
   }
@@ -59,7 +63,7 @@ class JavaWithCastSurrounder extends JavaExpressionSurrounder {
       }
     };
     template.addTextSegment("((");
-    template.addVariable("type", expr, expr, true);
+    template.addVariable(TYPE_TEMPLATE_VARIABLE, expr, expr, true);
     template.addTextSegment(")" + exprText + ")");
     template.addEndVariable();
 
@@ -67,6 +71,6 @@ class JavaWithCastSurrounder extends JavaExpressionSurrounder {
   }
 
   public String getTemplateDescription() {
-    return "((Type)expr)";
+    return CodeInsightBundle.message("surround.with.cast.template");
   }
 }

@@ -8,8 +8,10 @@ import com.intellij.openapi.actionSystem.ex.QuickListsManager;
 import com.intellij.openapi.actionSystem.impl.EmptyIcon;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -23,6 +25,8 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
+
+import org.jetbrains.annotations.NonNls;
 
 public class QuickListPanel {
   private static final Icon EMPTY_ICON = EmptyIcon.create(18, 18);
@@ -287,10 +291,10 @@ public class QuickListPanel {
         }
         setIcon(layeredIcon);
         if (sel) {
-          setForeground(UIManager.getColor("Tree.selectionForeground"));
+          setForeground(UIUtil.getTreeSelectionForeground());
         }
         else {
-          Color foreground = used ? UIManager.getColor("textInactiveText") : UIManager.getColor("Tree.foreground");
+          Color foreground = used ? UIUtil.getTextInactiveTextColor() :UIUtil.getTreeForeground();
           setForeground(foreground);
         }
       }

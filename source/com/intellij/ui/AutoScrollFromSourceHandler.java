@@ -18,7 +18,8 @@ public abstract class AutoScrollFromSourceHandler {
   public abstract void dispose();
 
   public ToggleAction createToggleAction() {
-    return new ToggleAction("Autoscroll from Source", "Autoscroll from Source", IconLoader.getIcon("/general/autoscrollFromSource.png")) {
+    return new ToggleAction(UIBundle.message("autoscroll.from.source.action.name"),
+                            UIBundle.message("autoscroll.from.source.action.description"), IconLoader.getIcon("/general/autoscrollFromSource.png")) {
       public boolean isSelected(AnActionEvent event) {
         return isAutoScrollMode();
       }

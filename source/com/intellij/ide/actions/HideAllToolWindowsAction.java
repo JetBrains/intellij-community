@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.DesktopLayout;
+import com.intellij.ide.IdeBundle;
 
 public class HideAllToolWindowsAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
@@ -66,7 +67,7 @@ public class HideAllToolWindowsAction extends AnAction {
     for (String id : ids) {
       if (toolWindowManager.getToolWindow(id).isVisible()) {
         presentation.setEnabled(true);
-        presentation.setText("Hide All _Windows", true);
+        presentation.setText(IdeBundle.message("action.hide.all.windows"), true);
         return;
       }
     }
@@ -74,7 +75,7 @@ public class HideAllToolWindowsAction extends AnAction {
     final DesktopLayout layout = toolWindowManager.getLayoutToRestoreLater();
     if (layout != null) {
       presentation.setEnabled(true);
-      presentation.setText("Restore _Windows");
+      presentation.setText(IdeBundle.message("action.restore.windows"));
       return;
     }
 

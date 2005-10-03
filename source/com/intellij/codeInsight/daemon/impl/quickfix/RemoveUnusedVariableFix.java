@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.ApplicationManager;
@@ -15,8 +16,8 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NonNls;
 
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -24,22 +25,20 @@ import java.util.Set;
 public class RemoveUnusedVariableFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableFix");
   private final PsiVariable myVariable;
+  private static final @NonNls String JAVA_LANG_PCKG = "java.lang";
+  private static final @NonNls String JAVA_IO_PCKG = "java.io";
 
   public RemoveUnusedVariableFix(PsiVariable variable) {
     myVariable = variable;
   }
 
   public String getText() {
-    String text = MessageFormat.format("Remove {0} ''{1}''",
-                                             new Object[]{
-                                               myVariable instanceof PsiField ? "field" : "variable",
-                                               myVariable.getName(),
-                                             });
-    return text;
+    return QuickFixBundle.message(myVariable instanceof PsiField ? "remove.unused.field" : "remove.unused.variable",
+                                  myVariable.getName());
   }
 
   public String getFamilyName() {
-    return "Remove unused variable";
+    return QuickFixBundle.message("remove.unused.variable.family");
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
@@ -79,8 +78,8 @@ public class RemoveUnusedVariableFix implements IntentionAction {
       public void run() {
         try {
           PsiElement context = variable instanceof PsiField
-                                     ? ((PsiField)variable).getContainingClass()
-                                     : PsiUtil.getVariableCodeBlock(variable, null);
+                               ? ((PsiField)variable).getContainingClass()
+                               : PsiUtil.getVariableCodeBlock(variable, null);
           collectReferences(context, variable, references);
           // do not forget to delete variable declaration
           references.add(variable);
@@ -113,11 +112,11 @@ public class RemoveUnusedVariableFix implements IntentionAction {
   }
 
   public static int showSideEffectsWarning(List<PsiElement> sideEffects,
-                                            PsiVariable variable,
-                                            Editor editor,
-                                            boolean canCopeWithSideEffects,
-                                            String beforeText,
-                                            String afterText) {
+                                           PsiVariable variable,
+                                           Editor editor,
+                                           boolean canCopeWithSideEffects,
+                                           @NonNls String beforeText,
+                                           @NonNls String afterText) {
     if (sideEffects.size() == 0) return SideEffectWarningDialog.DELETE_ALL;
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return canCopeWithSideEffects
@@ -349,7 +348,7 @@ public class RemoveUnusedVariableFix implements IntentionAction {
     String packageName = classPackage.getQualifiedName();
 
     // all Throwable descendants from java.lang are side effects free
-    if ("java.lang".equals(packageName) || "java.io".equals(packageName)) {
+    if (JAVA_LANG_PCKG.equals(packageName) || JAVA_IO_PCKG.equals(packageName)) {
       PsiClass throwableClass = aClass.getManager().findClass("java.lang.Throwable", aClass.getResolveScope());
       if (throwableClass != null && InheritanceUtil.isInheritorOrSelf(aClass, throwableClass, true)) {
         return true;

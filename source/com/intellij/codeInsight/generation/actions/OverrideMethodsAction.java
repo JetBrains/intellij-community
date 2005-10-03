@@ -18,6 +18,6 @@ public class OverrideMethodsAction extends BaseCodeInsightAction {
   }
 
   protected boolean isValidForFile(Project project, Editor editor, final PsiFile file) {
-    return file.canContainJavaCode() && OverrideImplementUtil.getContextClass(project, editor, file) != null;
+    return file.canContainJavaCode() && OverrideImplementUtil.getContextClass(project, editor, file, true) != null;
   }
 }

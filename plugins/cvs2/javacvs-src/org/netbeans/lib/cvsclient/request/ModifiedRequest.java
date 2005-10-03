@@ -16,6 +16,7 @@ package org.netbeans.lib.cvsclient.request;
 
 import org.netbeans.lib.cvsclient.file.FileDetails;
 import org.netbeans.lib.cvsclient.file.FileObject;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * Sends the server a copy of a locally modified file.
@@ -23,49 +24,49 @@ import org.netbeans.lib.cvsclient.file.FileObject;
  */
 public final class ModifiedRequest extends AbstractFileStateRequest {
 
-	// Fields =================================================================
+        // Fields =================================================================
 
-	private final FileDetails fileDetails;
-	private final boolean writable;
+        private final FileDetails fileDetails;
+        private final boolean writable;
 
-	// Setup ==================================================================
+        // Setup ==================================================================
 
-	public ModifiedRequest(FileObject fileObject, boolean isBinary, boolean writable) {
-		super(fileObject);
+        public ModifiedRequest(FileObject fileObject, boolean isBinary, boolean writable) {
+                super(fileObject);
 
-		this.fileDetails = new FileDetails(fileObject, isBinary);
-		this.writable = writable;
-	}
+                this.fileDetails = new FileDetails(fileObject, isBinary);
+                this.writable = writable;
+        }
 
-	// Implemented ============================================================
+        // Implemented ============================================================
 
-	/**
-	 * Get the request String that will be passed to the server
-	 * @return the request String
-	 */
-	public String getRequestString() {
-		final StringBuffer request = new StringBuffer();
-		request.append("Modified ");
-		request.append(getFileName());
-		request.append('\n');
-		if (writable) {
-			request.append("u=rw,g=r,o=r");
-		}
-		else {
-			request.append("u=r,g=r,o=r");
-		}
-		request.append('\n');
-		return request.toString();
-	}
+        /**
+         * Get the request String that will be passed to the server
+         * @return the request String
+         */
+        public String getRequestString() {
+                @NonNls final StringBuffer request = new StringBuffer();
+                request.append("Modified ");
+                request.append(getFileName());
+                request.append('\n');
+                if (writable) {
+                        request.append("u=rw,g=r,o=r");
+                }
+                else {
+                        request.append("u=r,g=r,o=r");
+                }
+                request.append('\n');
+                return request.toString();
+        }
 
-	/**
-	 * If a file transmission is required, get the file object representing
-	 * the file to transmit after the request string. The default
-	 * implementation returns null, indicating no file is to be transmitted
-	 * @return the file details object, if one should be transmitted, or null
-	 * if no file object is to be transmitted.
-	 */
-	public FileDetails getFileForTransmission() {
-		return fileDetails;
-	}
+        /**
+         * If a file transmission is required, get the file object representing
+         * the file to transmit after the request string. The default
+         * implementation returns null, indicating no file is to be transmitted
+         * @return the file details object, if one should be transmitted, or null
+         * if no file object is to be transmitted.
+         */
+        public FileDetails getFileForTransmission() {
+                return fileDetails;
+        }
 }

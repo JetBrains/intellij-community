@@ -6,6 +6,9 @@ import javax.swing.plaf.ColorUIResource;
 import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
 
+//TODO remove the class
+
+@SuppressWarnings({"HardCodedStringLiteral"})
 public class BegCellRenderer extends JLabel implements TreeCellRenderer, ListCellRenderer {
   protected Icon myLeafIcon;
   protected Color myTextBackground;

@@ -8,11 +8,12 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author dsl
  */
-public class ConditionalOperatorConvertor implements ProjectComponent, IntentionAction {
+@NonNls public class ConditionalOperatorConvertor implements ProjectComponent, IntentionAction {
   private final Project myProject;
 
   public static ConditionalOperatorConvertor getInstance(Project project) {
@@ -74,10 +75,10 @@ public class ConditionalOperatorConvertor implements ProjectComponent, Intention
     final int offset = editor.getCaretModel().getOffset();
     final PsiElement element = file.findElementAt(offset);
     PsiConditionalExpression conditionalExpression = (PsiConditionalExpression) PsiTreeUtil.getParentOfType(element,
-                                                                                 PsiConditionalExpression.class, false);
+                                                                                                            PsiConditionalExpression.class, false);
     if (conditionalExpression == null) return;
     if (conditionalExpression.getThenExpression() == null || conditionalExpression.getElseExpression() == null) return;
-    
+
     final PsiElementFactory factory = PsiManager.getInstance(project).getElementFactory();
 
     PsiElement originalStatement = PsiTreeUtil.getParentOfType(conditionalExpression, PsiStatement.class, false);
@@ -124,8 +125,9 @@ public class ConditionalOperatorConvertor implements ProjectComponent, Intention
     PsiIfStatement statement = (PsiIfStatement)factory.createStatementFromText("if (true) { a = b } else { c = d }",
                                                                                null);
     statement = (PsiIfStatement)CodeStyleManager.getInstance(project).reformat(statement);
-    statement = (PsiIfStatement)originalStatement.replace(statement);
     statement.getCondition().replace(condition);
+    statement = (PsiIfStatement)originalStatement.replace(statement);
+
     ((PsiBlockStatement)statement.getThenBranch()).getCodeBlock().getStatements()[0].replace(thenElements[0]);
     ((PsiBlockStatement)statement.getElseBranch()).getCodeBlock().getStatements()[0].replace(elseElements[0]);
   }

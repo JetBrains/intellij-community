@@ -77,6 +77,6 @@ public class RemoveLocallyFileOrDirectoryAction extends ActionOnSelectedElement 
   }
 
   protected String getTitle(VcsContext context) {
-    return "Remove";
+    return com.intellij.CvsBundle.message("operation.name.mark.as.deleted");
   }
 }

@@ -14,8 +14,10 @@ package org.netbeans.lib.cvsclient.admin;
 
 import org.netbeans.lib.cvsclient.CvsRoot;
 import org.netbeans.lib.cvsclient.IClientEnvironment;
+import org.netbeans.lib.cvsclient.SmartCvsSrcBundle;
 import org.netbeans.lib.cvsclient.file.*;
 import org.netbeans.lib.cvsclient.util.BugLog;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.*;
 
@@ -36,8 +38,21 @@ public final class AdminWriter
 
          private final String myLineSeparator;
          private final String myCharset;
+
          // for tests only!
          public static boolean WRITE_RELATIVE_PATHS = true;
+
+  @NonNls private static final String CVS_DIR_NAME = "CVS";
+  @NonNls private static final String TAG_FILE_NAME = "Tag";
+  @NonNls private static final String ENTRIES_STATIC_FILE_NAME = "Entries.Static";
+  @NonNls private static final String CVS_TEMPLATE_FILE_PATH = "CVS/Template";
+  @NonNls private static final String ROOT_FILE_NAME = "Root";
+  @NonNls private static final String REPOSITORY_FILE_NAME = "Repository";
+  @NonNls private static final String ENTRIES_FILE_NAME = "Entries";
+  @NonNls private static final String CVS_ROOT_FILE_PATH = "CVS/Root";
+  @NonNls private static final String CVS_REPOSITORY_FILE_PATH = "CVS/Repository";
+  @NonNls private static final String CVS_BASE_FILE_PATH = "CVS/Base/";
+  @NonNls private static final String CVS_BASEREV_FILE_PATH = "CVS/Baserev";
 
   // Setup ==================================================================
 
@@ -60,7 +75,7 @@ public final class AdminWriter
                 final File file = cvsFileSystem.getAdminFileSystem().getFile(fileObject);
                 final File directory = file.getParentFile();
                 if (directory == null) {
-                        throw new IOException("File '" + file + "' does not have a parent directory.");
+                        throw new IOException(SmartCvsSrcBundle.message("file.does.not.have.a.parent.directory.error.message", file));
                 }
 
                 final EntriesHandler entriesHandler = new EntriesHandler(directory);
@@ -77,12 +92,12 @@ public final class AdminWriter
         }
 
         public void setStickyTagForDirectory(DirectoryObject directoryObject, String tag, ICvsFileSystem cvsFileSystem) throws IOException {
-                final File cvsDirectory = new File(cvsFileSystem.getAdminFileSystem().getFile(directoryObject), "CVS");
+                final File cvsDirectory = new File(cvsFileSystem.getAdminFileSystem().getFile(directoryObject), CVS_DIR_NAME);
                 if (!cvsDirectory.isDirectory()) {
                         return;
                 }
 
-                final File tagFile = new File(cvsDirectory, "Tag");
+                final File tagFile = new File(cvsDirectory, TAG_FILE_NAME);
                 if (tag != null) {
                         FileUtils.writeLine(tagFile, tag);
                 }
@@ -116,12 +131,12 @@ public final class AdminWriter
                 if (set) {
                         final File cvsDirectory = getCvsDirectoryForLocalDirectory(localDirectory);
                         if (cvsDirectory.exists()) {
-                                final File staticFile = new File(cvsDirectory, "Entries.Static");
+                                final File staticFile = new File(cvsDirectory, ENTRIES_STATIC_FILE_NAME);
                                 staticFile.createNewFile();
                         }
                 }
                 else {
-                        final File entriesDotStaticFile = new File(getCvsDirectoryForLocalDirectory(localDirectory), "Entries.Static");
+                        final File entriesDotStaticFile = new File(getCvsDirectoryForLocalDirectory(localDirectory), ENTRIES_STATIC_FILE_NAME);
                         if (entriesDotStaticFile.exists()) {
                                 entriesDotStaticFile.delete();
                         }
@@ -144,7 +159,7 @@ public final class AdminWriter
         }
 
         public void writeTemplateFile(DirectoryObject directoryObject, int fileLength, InputStream inputStream, IReaderFactory readerFactory, IClientEnvironment clientEnvironment) throws IOException {
-                final FileObject fileObject = FileObject.createInstance(directoryObject, "CVS/Template");
+                final FileObject fileObject = FileObject.createInstance(directoryObject, CVS_TEMPLATE_FILE_PATH);
                 final IFileSystem adminFileSystem = clientEnvironment.getCvsFileSystem().getAdminFileSystem();
                 if (fileLength == 0) {
                         adminFileSystem.getFile(fileObject).delete();
@@ -162,9 +177,9 @@ public final class AdminWriter
 
                 final File cvsDirectory = ensureCvsDirectory(directoryObject, cvsFileSystem);
                 // now ensure that the Root and Repository files exist
-                FileUtils.writeLine(new File(cvsDirectory, "Root"), cvsRoot);
-                FileUtils.writeLine(new File(cvsDirectory, "Repository"), repositoryPath);
-                new Entries().write(new File(cvsDirectory, "Entries"), myLineSeparator, myCharset);
+                FileUtils.writeLine(new File(cvsDirectory, ROOT_FILE_NAME), cvsRoot);
+                FileUtils.writeLine(new File(cvsDirectory, REPOSITORY_FILE_NAME), repositoryPath);
+                new Entries().write(new File(cvsDirectory, ENTRIES_FILE_NAME), myLineSeparator, myCharset);
                 setStickyTagForDirectory(directoryObject, stickyTag, cvsFileSystem);
                 addDirectoryToParentEntriesFile(cvsDirectory.getParentFile());
         }
@@ -172,17 +187,17 @@ public final class AdminWriter
         // Utils ==================================================================
 
         private String getCvsRoot(DirectoryObject directoryObject, ICvsFileSystem cvsFileSystem) throws IOException {
-                final File cvsRootFile = cvsFileSystem.getAdminFileSystem().getFile(FileObject.createInstance(directoryObject, "CVS/Root"));
+                final File cvsRootFile = cvsFileSystem.getAdminFileSystem().getFile(FileObject.createInstance(directoryObject, CVS_ROOT_FILE_PATH));
                 return FileUtils.readLineFromFile(cvsRootFile);
         }
 
         private String getRepository(DirectoryObject directoryObject, ICvsFileSystem cvsFileSystem) throws IOException {
-                final File cvsRootFile = cvsFileSystem.getAdminFileSystem().getFile(FileObject.createInstance(directoryObject, "CVS/Repository"));
+                final File cvsRootFile = cvsFileSystem.getAdminFileSystem().getFile(FileObject.createInstance(directoryObject, CVS_REPOSITORY_FILE_PATH));
                 return FileUtils.readLineFromFile(cvsRootFile);
         }
 
         private File getCvsDirectoryForLocalDirectory(File directory) {
-                return new File(directory, "CVS");
+                return new File(directory, CVS_DIR_NAME);
         }
 
         private void deleteDirectoryRecursively(File directory) {
@@ -204,13 +219,13 @@ public final class AdminWriter
         }
 
         private File ensureCvsDirectory(DirectoryObject directoryObject, ICvsFileSystem cvsFileSystem) {
-                final File cvsDirectory = new File(cvsFileSystem.getAdminFileSystem().getFile(directoryObject), "CVS");
+                final File cvsDirectory = new File(cvsFileSystem.getAdminFileSystem().getFile(directoryObject), CVS_DIR_NAME);
                 cvsDirectory.mkdirs();
                 return cvsDirectory;
         }
 
         private void ensureExistingRootFile(File cvsDirectory, CvsRoot cvsRoot) throws IOException {
-                final File rootFile = new File(cvsDirectory, "Root");
+                final File rootFile = new File(cvsDirectory, ROOT_FILE_NAME);
                 if (rootFile.exists()) {
                         return;
                 }
@@ -219,7 +234,7 @@ public final class AdminWriter
         }
 
         private void ensureRepositoryFile(File cvsDirectory, String repositoryPath) throws IOException {
-                final File repositoryFile = new File(cvsDirectory, "Repository");
+                final File repositoryFile = new File(cvsDirectory, REPOSITORY_FILE_NAME);
                 if (repositoryFile.exists()) {
                         return;
                 }
@@ -228,7 +243,7 @@ public final class AdminWriter
         }
 
         private void ensureExistingEntriesFile(File cvsDirectory) throws IOException {
-                final File entriesFile = new File(cvsDirectory, "Entries");
+                final File entriesFile = new File(cvsDirectory, ENTRIES_FILE_NAME);
                 if (entriesFile.exists()) {
                         return;
                 }
@@ -258,7 +273,7 @@ public final class AdminWriter
                 }
 
                 final File file = cvsFileSystem.getAdminFileSystem().getFile(fileObject);
-                final File baserevFile = new File(file.getParentFile(), "CVS/Baserev");
+                final File baserevFile = new File(file.getParentFile(), CVS_BASEREV_FILE_PATH);
                 final File backupFile = new File(baserevFile.getAbsolutePath() + '~');
 
                 BufferedReader reader = null;
@@ -318,7 +333,7 @@ public final class AdminWriter
 
         private void removeBaserevEntry(FileObject fileObject, ICvsFileSystem cvsFileSystem) throws IOException {
                 final File file = cvsFileSystem.getAdminFileSystem().getFile(fileObject);
-                final File baserevFile = new File(file.getParentFile(), "CVS/Baserev");
+                final File baserevFile = new File(file.getParentFile(), CVS_BASEREV_FILE_PATH);
                 final File backupFile = new File(baserevFile.getAbsolutePath() + '~');
 
                 BufferedReader reader = null;
@@ -372,6 +387,6 @@ public final class AdminWriter
 
         private File getEditBackupFile(FileObject fileObject, ICvsFileSystem cvsFileSystem) {
                 final File file = cvsFileSystem.getAdminFileSystem().getFile(fileObject);
-                return new File(file.getParentFile(), "CVS/Base/" + file.getName());
+                return new File(file.getParentFile(), CVS_BASE_FILE_PATH + file.getName());
         }
 }

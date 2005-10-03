@@ -6,6 +6,7 @@ import com.intellij.cvsSupport2.config.CvsRootEditor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.ui.InputException;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.CvsBundle;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -28,7 +29,8 @@ public class SshConnectionSettingsPanel {
 
   public SshConnectionSettingsPanel(final CvsRootEditor rootProvider) {
     myRootProvider = rootProvider;
-    myPathToPrivateKeyFile.addBrowseFolderListener("Path to Private Key File", "Path to private key file",
+    myPathToPrivateKeyFile.addBrowseFolderListener(com.intellij.CvsBundle.message("dialog.title.path.to.private.key.file"),
+                                                   com.intellij.CvsBundle.message("dialog.description.path.to.private.key.file"),
                                                    null, new FileChooserDescriptor(true, false, false, false, false, false));
     ActionListener actionListener = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -84,7 +86,7 @@ public class SshConnectionSettingsPanel {
 
   public void saveTo(SshSettings ssh_configuration) {
     if (myUsePrivateKeyFile.isSelected() && myPathToPrivateKeyFile.getText().trim().length() == 0){
-      throw new InputException("Path to private key file must not be empty", myPathToPrivateKeyFile.getTextField());
+      throw new InputException(CvsBundle.message("error.message.path.to.private.key.file.must.not.be.empty"), myPathToPrivateKeyFile.getTextField());
     }
     ssh_configuration.USE_PPK = myUsePrivateKeyFile.isSelected();
     ssh_configuration.PATH_TO_PPK = myPathToPrivateKeyFile.getText().trim();
@@ -117,14 +119,14 @@ public class SshConnectionSettingsPanel {
     final SSHPasswordProvider sshPasswordProvider = SSHPasswordProvider.getInstance();
     if (!myUsePrivateKeyFile.isSelected()) {
       final String cvsRoot = myRootProvider.getCurrentRoot();
-      SshPasswordDialog sshPasswordDialog = new SshPasswordDialog(cvsRoot, "Enter password for ");
+      SshPasswordDialog sshPasswordDialog = new SshPasswordDialog(CvsBundle.message("propmt.text.enter.password.for", cvsRoot));
       sshPasswordDialog.show();
       if (!sshPasswordDialog.isOK()) return;
       sshPasswordProvider.removePPKPasswordFor(cvsRoot);
       sshPasswordProvider.storePasswordForCvsRoot(cvsRoot, sshPasswordDialog.getPassword(), sshPasswordDialog.saveThisPassword());
     } else {
       final String cvsRoot = myRootProvider.getCurrentRoot();
-      SshPasswordDialog sshPasswordDialog = new SshPasswordDialog(cvsRoot, "Enter private key file password for ");
+      SshPasswordDialog sshPasswordDialog = new SshPasswordDialog(CvsBundle.message("prompt.text.enter.private.key.file.password.for", cvsRoot));
       sshPasswordDialog.show();
       if (!sshPasswordDialog.isOK()) return;
       sshPasswordProvider.removePasswordFor(cvsRoot);

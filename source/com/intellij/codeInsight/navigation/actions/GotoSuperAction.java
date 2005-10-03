@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.navigation.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.openapi.editor.Editor;
@@ -14,7 +15,9 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.ListPopup;
 
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -41,7 +44,10 @@ public class GotoSuperAction extends BaseCodeInsightAction implements CodeInsigh
       OpenFileDescriptor descriptor = new OpenFileDescriptor(project, superElement.getContainingFile().getVirtualFile(), superElement.getTextOffset());
       FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
     } else {
-      String title = " Choose super " + (superElements[0] instanceof PsiMethod ? "method " : "class or interface ");
+      String title = superElements[0] instanceof PsiMethod  ?
+                     CodeInsightBundle.message("goto.super.method.chooser.title") :
+                     CodeInsightBundle.message("goto.super.class.chooser.title");
+
       ListPopup listPopup = NavigationUtil.getPsiElementPopup(superElements, title, project);
       LogicalPosition caretPosition = editor.getCaretModel().getLogicalPosition();
       Point caretLocation = editor.logicalPositionToXY(caretPosition);
@@ -79,7 +85,7 @@ public class GotoSuperAction extends BaseCodeInsightAction implements CodeInsigh
           return new PsiElement[]{constructorInSuper};
         }
       } else {
-        return PsiSuperMethodUtil.findSuperMethods(method, false);
+        return method.findSuperMethods(false);
       }
     }
     return null;

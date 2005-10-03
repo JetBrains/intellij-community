@@ -8,6 +8,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.analysis;
 
+import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
@@ -20,12 +21,9 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiMatcherImpl;
 import com.intellij.psi.util.PsiUtil;
 
-import java.text.MessageFormat;
 import java.util.*;
 
 public class HighlightControlFlowUtil {
-  private static final String VARIABLE_NOT_INITIALIZED = "Variable ''{0}'' might not have been initialized";
-
   //@top
   public static HighlightInfo checkMissingReturnStatement(PsiMethod method) {
     PsiCodeBlock body = method.getBody();
@@ -47,7 +45,7 @@ public class HighlightControlFlowUtil {
         final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(
             HighlightInfoType.ERROR,
             context,
-            "Missing return statement");
+            JavaErrorMessages.message("missing.return.statement"));
         QuickFixAction.registerQuickFixAction(highlightInfo, new AddReturnFix(method), null);
         QuickFixAction.registerQuickFixAction(highlightInfo, new MethodReturnFix(method, PsiType.VOID, false), null);
         return highlightInfo;
@@ -74,7 +72,7 @@ public class HighlightControlFlowUtil {
         return HighlightInfo.createHighlightInfo(
             HighlightInfoType.ERROR,
             unreachableStatement,
-            "Unreachable statement");
+            JavaErrorMessages.message("unreachable.statement"));
       }
     }
     catch (AnalysisCanceledException e) {
@@ -230,7 +228,7 @@ public class HighlightControlFlowUtil {
     if (!field.hasModifierProperty(PsiModifier.FINAL)) return null;
     boolean isInitialized = isFinalFieldInitialized(field);
     if (!isInitialized) {
-      String description = MessageFormat.format(VARIABLE_NOT_INITIALIZED, new Object[]{field.getName()});
+      String description = JavaErrorMessages.message("variable.not.initialized", field.getName());
       int start = field.getModifierList().getTextRange().getStartOffset();
       int end = field.getNameIdentifier().getTextRange().getEndOffset();
       final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(
@@ -370,7 +368,7 @@ public class HighlightControlFlowUtil {
     }
     if (codeBlockProblems.contains(expression)) {
       final String name = expression.getElement().getText();
-      String description = MessageFormat.format(VARIABLE_NOT_INITIALIZED, new Object[]{name});
+      String description = JavaErrorMessages.message("variable.not.initialized", name);
       HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(
         HighlightInfoType.ERROR,
         expression,
@@ -512,8 +510,7 @@ public class HighlightControlFlowUtil {
     }
 
     if (alreadyAssigned) {
-      String description = MessageFormat.format("Variable ''{0}'' might already have been assigned to",
-                                                new Object[]{variable.getName()});
+      String description = JavaErrorMessages.message("variable.already.assigned", variable.getName());
       final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(
           HighlightInfoType.ERROR,
           expression,
@@ -544,8 +541,7 @@ public class HighlightControlFlowUtil {
   //@top
   public static HighlightInfo checkFinalVariableInitalizedInLoop(PsiReferenceExpression expression, PsiElement resolved) {
     if (ControlFlowUtil.isVariableAssignedInLoop(expression, resolved)) {
-      String description = MessageFormat.format("Variable ''{0}'' might be assigned in loop",
-                                                new Object[]{((PsiVariable)resolved).getName()});
+      String description = JavaErrorMessages.message("variable.assigned.in.loop", ((PsiVariable)resolved).getName());
       final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(
           HighlightInfoType.ERROR,
           expression,
@@ -584,7 +580,7 @@ public class HighlightControlFlowUtil {
     if (variable == null || !variable.hasModifierProperty(PsiModifier.FINAL)) return null;
     if (!canWriteToFinal(variable, expression, reference)) {
       final String name = variable.getName();
-      String description = MessageFormat.format("Cannot assign a value to final variable ''{0}''", new Object[]{name});
+      String description = JavaErrorMessages.message("assignment.to.final.variable", name);
       final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(
           HighlightInfoType.ERROR,
           expression,
@@ -639,8 +635,8 @@ public class HighlightControlFlowUtil {
     if (variable.hasModifierProperty(PsiModifier.FINAL)) return null;
     final PsiClass innerClass = getInnerClassVariableReferencedFrom(variable, context);
     if (innerClass != null) {
-      String description = MessageFormat.format("Variable ''{0}'' is accessed from within inner class. Needs to be declared final.",
-                                                new Object[]{context.getText()});
+      String description = JavaErrorMessages.message("variable.must.be.final", context.getText());
+
       final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, context, description);
       QuickFixAction.registerQuickFixAction(highlightInfo, new VariableAccessFromInnerClassFix(variable, innerClass), null);
       return highlightInfo;
@@ -687,7 +683,7 @@ public class HighlightControlFlowUtil {
         return HighlightInfo.createHighlightInfo(
             HighlightInfoType.ERROR,
             body,
-            "Initializer must be able to complete normally");
+            JavaErrorMessages.message("initializer.must.be.able.to.complete.normally"));
       }
     }
     catch (AnalysisCanceledException e) {

@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.template.macro;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.template.*;
 import com.intellij.psi.PsiDocumentManager;
@@ -17,7 +18,7 @@ public class SuggestVariableNameMacro implements Macro {
   }
 
   public String getDescription() {
-    return "suggestVariableName()";
+    return CodeInsightBundle.message("macro.suggest.variable.name");
   }
 
   public String getDefaultValue() {

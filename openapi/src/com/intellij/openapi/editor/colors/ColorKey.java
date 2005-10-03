@@ -74,7 +74,7 @@ public final class ColorKey implements Comparable<ColorKey> {
     return find(externalName);
   }
 
-  public static ColorKey createColorKey(String externalName, Color defaultColor) {
+  public static ColorKey createColorKey(@NonNls String externalName, Color defaultColor) {
     ColorKey key = ourRegistry.get(externalName);
     if (key == null) {
       key = find(externalName);

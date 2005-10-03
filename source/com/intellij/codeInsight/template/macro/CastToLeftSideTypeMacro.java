@@ -3,6 +3,7 @@
  */
 package com.intellij.codeInsight.template.macro;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.project.Project;
@@ -15,7 +16,7 @@ public class CastToLeftSideTypeMacro implements Macro {
   }
 
   public String getDescription() {
-    return "castToLeftSideType()";
+    return CodeInsightBundle.message("macro.cast.to.left.side.type");
   }
 
   public String getDefaultValue() {

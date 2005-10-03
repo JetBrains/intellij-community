@@ -1,14 +1,13 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
-
-import java.text.MessageFormat;
 
 public class MakeClassInterfaceFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.MakeClassInterfaceFix");
@@ -20,14 +19,11 @@ public class MakeClassInterfaceFix implements IntentionAction {
   }
 
   public String getText() {
-    String text = MessageFormat.format("Make ''{0}'' an interface",
-        new Object[]{myClass.getName(),
-        });
-    return text;
+    return QuickFixBundle.message("make.class.an.interface.text", myClass.getName());
   }
 
   public String getFamilyName() {
-    return "Make Class an Interface";
+    return QuickFixBundle.message("make.class.an.interface.family");
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {

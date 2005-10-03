@@ -18,6 +18,7 @@ package com.intellij.psi.meta;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * Created by IntelliJ IDEA.
@@ -29,8 +30,8 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 public interface PsiMetaData{
   PsiElement getDeclaration();
   boolean processDeclarations(PsiElement context, PsiScopeProcessor processor, PsiSubstitutor substitutor, PsiElement lastElement, PsiElement place);
-  String getName(PsiElement context);
-  String getName();
+  @NonNls String getName(PsiElement context);
+  @NonNls String getName();
 
   void init(PsiElement element);
   /**

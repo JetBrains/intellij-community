@@ -4,6 +4,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DocumentContent;
 import com.intellij.openapi.diff.SimpleDiffRequest;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.external.DiffManagerImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
@@ -58,9 +59,7 @@ class OpenPartialDiffAction extends AnAction {
   }
 
   private String composeName(MergePanel2 mergePanel2) {
-    String left = mergePanel2.getVersionTitle(myLeftIndex);
-    String right = mergePanel2.getVersionTitle(myRightIndex);
-    return "Compare " + left + " and " + right;
+    return DiffBundle.message("merge.partial.diff.action.name");
   }
 
   private Project projectFromDataContext(DataContext dataContext) {

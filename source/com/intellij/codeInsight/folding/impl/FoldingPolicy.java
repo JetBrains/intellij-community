@@ -1,19 +1,22 @@
 package com.intellij.codeInsight.folding.impl;
 
+import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lang.Language;
-import com.intellij.lang.xml.XmlFoldingBuilder;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
+import com.intellij.lang.xml.XmlFoldingBuilder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.uiDesigner.compiler.CodeGenerator;
 import com.intellij.xml.util.HtmlUtil;
 
@@ -242,7 +245,7 @@ class FoldingPolicy {
     }
     else if (element instanceof PsiMethod && CodeGenerator.SETUP_METHOD_NAME.equals(((PsiMethod)element).getName()) ||
              (element instanceof PsiClassInitializer && isGeneratedUIInitializer((PsiClassInitializer)element))) {
-      return "Automatically generated code";
+      return JavaErrorMessages.message("uidesigner.generated.code.folding.placeholder.text");
     }
     else if (element instanceof PsiMethod || element instanceof PsiClassInitializer || element instanceof PsiClass) {
       return "{...}";
@@ -365,6 +368,7 @@ class FoldingPolicy {
     return index;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static String getSignature(PsiElement element) {
     if (element instanceof PsiImportList) {
       PsiFile file = element.getContainingFile();
@@ -530,6 +534,7 @@ class FoldingPolicy {
     return null;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static PsiElement restoreBySignature(PsiFile file, String signature) {
     int semicolonIndex = signature.indexOf(";");
     PsiElement parent;

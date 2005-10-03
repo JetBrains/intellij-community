@@ -6,10 +6,7 @@ import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.highlighting.HighlightManagerImpl;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintUtil;
-import com.intellij.find.FindManager;
-import com.intellij.find.FindModel;
-import com.intellij.find.FindResult;
-import com.intellij.find.FindSettings;
+import com.intellij.find.*;
 import com.intellij.find.findUsages.FindUsagesManager;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -26,9 +23,9 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
@@ -38,14 +35,14 @@ import com.intellij.psi.search.SearchScopeCache;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ReplacePromptDialog;
 import com.intellij.util.text.StringSearcher;
+import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
-
-import org.jdom.Element;
 
 public class FindManagerImpl extends FindManager implements ProjectComponent, JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.find.impl.FindManagerImpl");
@@ -61,6 +58,7 @@ public class FindManagerImpl extends FindManager implements ProjectComponent, JD
   private Project myProject;
   private com.intellij.usages.UsageViewManager myAnotherManager;
   private Key HIGHLIGHTER_WAS_NOT_FOUND_KEY = Key.create("com.intellij.find.impl.FindManagerImpl.HighlighterNotFoundKey");
+  @NonNls private static final String FIND_USAGES_MANAGER_ELEMENT = "FindUsagesManager";
 
   public FindManagerImpl(Project project, FindSettings findSettings, SearchScopeCache searchScopeCache, com.intellij.usages.UsageViewManager anotherManager) {
     myProject = project;
@@ -84,14 +82,14 @@ public class FindManagerImpl extends FindManager implements ProjectComponent, JD
   }
 
   public void readExternal(Element element) throws InvalidDataException {
-    final Element findUsages = element.getChild("FindUsagesManager");
+    final Element findUsages = element.getChild(FIND_USAGES_MANAGER_ELEMENT);
     if (findUsages != null) {
       myFindUsagesManager.readExternal(findUsages);
     }
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    final Element findUsages = new Element("FindUsagesManager");
+    final Element findUsages = new Element(FIND_USAGES_MANAGER_ELEMENT);
     element.addContent(findUsages);
     myFindUsagesManager.writeExternal(findUsages);
   }
@@ -314,14 +312,16 @@ public class FindManagerImpl extends FindManager implements ProjectComponent, JD
       catch (Exception e) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
               public void run() {
-                Messages.showErrorDialog(myProject, "You have entered malformed replacement string", "Replace Error");
+                Messages.showErrorDialog(myProject, FindBundle.message("find.replace.invalid.replacement.string"),
+                                         FindBundle.message("find.replace.invalid.replacement.string.title"));
               }
             });
         return null;
       }
     } else {
-      //Seems like a bug in JDK 1.4
-      Messages.showErrorDialog("Unknown Error in Replace", "Internal Error");
+      // There are valid situations (for example, IDEADEV-2543 or positive lookbehind assertions)
+      // where an expression which matches a string in context will not match the same string
+      // separately).
       return toReplace;
     }
   }
@@ -435,28 +435,26 @@ public class FindManagerImpl extends FindManager implements ProjectComponent, JD
 
     if (wasNotFound == null) {
       editor.putUserData(HIGHLIGHTER_WAS_NOT_FOUND_KEY, Boolean.TRUE);
-      String message = "No more highlights found";
+      String message = FindBundle.message("find.highlight.no.more.highlights.found");
       if (isForward) {
         AnAction action=ActionManager.getInstance().getAction(IdeActions.ACTION_FIND_NEXT);
         String shortcutsText=KeymapUtil.getFirstKeyboardShortcutText(action);
         if (shortcutsText.length() > 0) {
-          message += ", press " + shortcutsText;
+          message = FindBundle.message("find.search.again.from.top.hotkey.message", message, shortcutsText);
         }
-        else{
-          message += ", perform \"Find Next\" again ";
+        else {
+          message = FindBundle.message("find.search.again.from.top.action.message", message);
         }
-        message += " to search from the top";
       }
       else {
         AnAction action=ActionManager.getInstance().getAction(IdeActions.ACTION_FIND_PREVIOUS);
         String shortcutsText=KeymapUtil.getFirstKeyboardShortcutText(action);
         if (shortcutsText.length() > 0) {
-          message += ", press " + shortcutsText;
+          message = FindBundle.message("find.search.again.from.bottom.hotkey.message", message, shortcutsText);
         }
-        else{
-          message += ", perform \"Find Previous\" again ";
+        else {
+          message = FindBundle.message("find.search.again.from.bottom.action.message", message);
         }
-        message += " to search from the bottom";
       }
       HintManager hintManager = HintManager.getInstance();
       JComponent component = HintUtil.createInformationLabel(message);

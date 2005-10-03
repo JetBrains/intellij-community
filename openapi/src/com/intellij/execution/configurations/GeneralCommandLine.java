@@ -17,6 +17,7 @@ package com.intellij.execution.configurations;
 
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.process.ProcessNotCreatedException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,6 +25,7 @@ import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.j2ee.J2EEBundle;
 
 import java.io.File;
 import java.io.IOException;
@@ -33,6 +35,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.jetbrains.annotations.NonNls;
+
 public class GeneralCommandLine {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.configurations.GeneralCommandLine");
   private Map<String, String> myEnvParams;
@@ -41,11 +45,11 @@ public class GeneralCommandLine {
   private ParametersList myProgramParams = new ParametersList();
   private Charset myCharset = CharsetToolkit.getDefaultSystemCharset();
 
-  public void setExePath(final String exePath) {
+  public void setExePath(@NonNls final String exePath) {
     myExePath = quote(exePath.trim());
   }
 
-  public void setWorkDirectory(final String path) {
+  public void setWorkDirectory(@NonNls final String path) {
     setWorkingDirectory(path != null? new File(path) : null);
   }
 
@@ -79,7 +83,7 @@ public class GeneralCommandLine {
     }
   }
 
-  public void addParameter(final String parameter) {
+  public void addParameter(@NonNls final String parameter) {
     LOG.assertTrue(parameter != null);
     myProgramParams.add(quote(parameter));
   }
@@ -101,8 +105,8 @@ public class GeneralCommandLine {
     checkWorkingDirectory();
     try {
       final String[] commands = getCommands();
-      if(commands[0] == null) throw new CantRunException("Executable is not specified");
-      
+      if(commands[0] == null) throw new CantRunException(J2EEBundle.message("run.configuration.error.executable.not.specified"));
+
       return myWorkDirectory != null
              ? Runtime.getRuntime().exec(commands, getEnvParamsArray(), myWorkDirectory)
              : Runtime.getRuntime().exec(commands, getEnvParamsArray());
@@ -117,10 +121,11 @@ public class GeneralCommandLine {
       return;
     }
     if (!myWorkDirectory.exists()) {
-      throw new ExecutionException("Cannot start process, the working directory " + myWorkDirectory.getAbsolutePath() + " does not exist");
+      throw new ExecutionException(
+        J2EEBundle.message("run.configuration.error.working.directory.does.not.exist", myWorkDirectory.getAbsolutePath()));
     }
     if (!myWorkDirectory.isDirectory()) {
-      throw new ExecutionException("Cannot start process, the path specified for working directory is not a directory");
+      throw new ExecutionException(J2EEBundle.message("run.configuration.error.working.directory.not.directory"));
     }
   }
 
@@ -181,12 +186,12 @@ public class GeneralCommandLine {
             final GeneralCommandLine commandLine = new GeneralCommandLine();
             final ProjectJdk jdk = javaParameters.getJdk();
             if(jdk == null) {
-              throw new CantRunException("No JDK specified");
+              throw new CantRunException(J2EEBundle.message("run.configuration.error.no.jdk.specified"));
             }
 
             final String exePath = jdk.getVMExecutablePath();
             if(exePath == null) {
-              throw new CantRunException("Cannot find VM executable");
+              throw new CantRunException(J2EEBundle.message("run.configuration.cannot.find.vm.executable"));
             }
             commandLine.setExePath(exePath);
             commandLine.addParameters(javaParameters.getVMParametersList().getList());
@@ -201,7 +206,7 @@ public class GeneralCommandLine {
             }
 
             String mainClass = javaParameters.getMainClass();
-            if(mainClass == null) throw new CantRunException("Main class is not specified");
+            if(mainClass == null) throw new CantRunException(ExecutionBundle.message("main.class.is.not.specified.error.message"));
             commandLine.addParameter(mainClass);
             commandLine.addParameters(javaParameters.getProgramParametersList().getList());
             commandLine.setWorkDirectory(javaParameters.getWorkingDirectory());

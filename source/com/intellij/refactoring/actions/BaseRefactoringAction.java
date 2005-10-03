@@ -7,14 +7,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.lang.Language;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class BaseRefactoringAction extends AnAction {
   protected abstract boolean isAvailableInEditorOnly();
 
   protected abstract boolean isEnabledOnElements(PsiElement[] elements);
 
-  protected abstract RefactoringActionHandler getHandler(DataContext dataContext);
+  protected abstract @Nullable RefactoringActionHandler getHandler(DataContext dataContext);
 
   public final void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
@@ -74,7 +77,7 @@ public abstract class BaseRefactoringAction extends AnAction {
         }
       }
       presentation.setEnabled(element != null && isAvailableForLanguage(element.getLanguage()));
-      
+
     } else {
       if (isAvailableInEditorOnly()) {
         presentation.setEnabled(false);

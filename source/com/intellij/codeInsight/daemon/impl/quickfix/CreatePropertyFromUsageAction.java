@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.TypeExpression;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
@@ -18,6 +19,7 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -27,8 +29,11 @@ import java.util.Set;
  */
 public class CreatePropertyFromUsageAction extends CreateFromUsageBaseAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.CreatePropertyFromUsageAction");
-  private static final String FIELD_VARIABLE = "FIELD_NAME_VARIABLE";
-  private static final String TYPE_VARIABLE = "FIELD_TYPE_VARIABLE";
+  private static final @NonNls String FIELD_VARIABLE = "FIELD_NAME_VARIABLE";
+  private static final @NonNls String TYPE_VARIABLE = "FIELD_TYPE_VARIABLE";
+  private static final @NonNls String GET_PREFIX = "get";
+  private static final @NonNls String IS_PREFIX = "is";
+  private static final @NonNls String SET_PREFIX = "set";
 
   public CreatePropertyFromUsageAction(PsiMethodCallExpression methodCall) {
     myMethodCall = methodCall;
@@ -37,7 +42,7 @@ public class CreatePropertyFromUsageAction extends CreateFromUsageBaseAction {
   private final PsiMethodCallExpression myMethodCall;
 
   public String getFamilyName() {
-    return "Create Property From Usage";
+    return QuickFixBundle.message("create.property.from.usage.family");
   }
 
   protected PsiElement getElement() {
@@ -52,12 +57,12 @@ public class CreatePropertyFromUsageAction extends CreateFromUsageBaseAction {
     if (propertyName == null || propertyName.length() == 0) return false;
 
     String getterOrSetter = null;
-    if (methodName.startsWith("get") || methodName.startsWith("is")) {
+    if (methodName.startsWith(GET_PREFIX) || methodName.startsWith(IS_PREFIX)) {
       if (myMethodCall.getArgumentList().getExpressions().length != 0) return false;
-      getterOrSetter = "Getter";
-    } else if (methodName.startsWith("set")) {
+      getterOrSetter = QuickFixBundle.message("create.getter");
+    } else if (methodName.startsWith(SET_PREFIX)) {
       if (myMethodCall.getArgumentList().getExpressions().length != 1) return false;
-      getterOrSetter = "Setter";
+      getterOrSetter = QuickFixBundle.message("create.setter");
     } else {
       LOG.error("Internal error in create property intention");
     }
@@ -68,7 +73,7 @@ public class CreatePropertyFromUsageAction extends CreateFromUsageBaseAction {
     for (PsiClass aClass : classes) {
       if (!aClass.isInterface()) {
         if (shouldShowTag(offset, ref.getReferenceNameElement(), myMethodCall)) {
-          setText("Create " + getterOrSetter);
+          setText(getterOrSetter);
           return true;
         }
         else {
@@ -150,10 +155,10 @@ public class CreatePropertyFromUsageAction extends CreateFromUsageBaseAction {
     String callText = myMethodCall.getMethodExpression().getReferenceName();
     PsiType[] expectedTypes;
     PsiType type;
-    if (callText.startsWith("get")) {
+    if (callText.startsWith(GET_PREFIX)) {
       expectedTypes = CreateFromUsageUtils.guessType(myMethodCall, false);
       type = expectedTypes[0];
-    } else if (callText.startsWith("is")) {
+    } else if (callText.startsWith(IS_PREFIX)) {
       type = PsiType.BOOLEAN;
       expectedTypes = new PsiType[] {type};
     } else {
@@ -175,7 +180,7 @@ public class CreatePropertyFromUsageAction extends CreateFromUsageBaseAction {
       PsiMethod accessor;
       PsiElement fieldReference;
       PsiElement typeReference;
-      if (callText.startsWith("get") || callText.startsWith("is")) {
+      if (callText.startsWith(GET_PREFIX) || callText.startsWith(IS_PREFIX)) {
         accessor = (PsiMethod) targetClass.add(PropertyUtil.generateGetterPrototype(field));
         fieldReference = ((PsiReturnStatement) accessor.getBody().getStatements()[0]).getReturnValue();
         typeReference = accessor.getReturnTypeElement();

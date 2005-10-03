@@ -38,7 +38,11 @@ public class CompareClipboardWithSelection extends BaseDiffAction {
     }
 
     public String[] getContentTitles() {
-      return new String[]{"Clipboard", "Selection from " + getContentTitle(getDocument())};
+      return new String[]{DiffBundle.message("diff.content.clipboard.content.title"),
+        isEditorContent(getDocument()) ?
+        DiffBundle.message("diff.content.selection.from.editor.content.title") :
+        DiffBundle.message("diff.content.selection.from.file.content.title", getDocumentFileUrl(getDocument()))
+      };
     }
 
     public DiffContent[] getContents() {
@@ -60,7 +64,11 @@ public class CompareClipboardWithSelection extends BaseDiffAction {
     }
 
     public String getWindowTitle() {
-      return "Clipboard vs " + getContentTitle(getDocument());
+      if (isEditorContent(getDocument())) {
+        return DiffBundle.message("diff.clipboard.vs.editor.dialog.title");
+      } else {
+        return DiffBundle.message("diff.clipboard.vs.file.dialog.title", getDocumentFileUrl(getDocument()));
+      }
     }
 
     private DiffContent createClipboardContent() {

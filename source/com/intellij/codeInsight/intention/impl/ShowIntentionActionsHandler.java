@@ -47,7 +47,9 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
         }
       }
       else if (action.isAvailable(project, editor, file)) {
-        intentionsToShow.add(new Pair<IntentionAction, List<IntentionAction>>(action, null));
+        List<IntentionAction> enableDisableIntentionAction = new ArrayList<IntentionAction>();
+        enableDisableIntentionAction.add(new IntentionHintComponent.EnableDisableIntentionAction(action));
+        intentionsToShow.add(new Pair<IntentionAction, List<IntentionAction>>(action, enableDisableIntentionAction));
       }
     }
 

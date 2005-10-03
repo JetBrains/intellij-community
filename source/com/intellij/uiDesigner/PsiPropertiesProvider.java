@@ -12,6 +12,8 @@ import com.intellij.uiDesigner.lw.*;
 import java.awt.*;
 import java.util.HashMap;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
@@ -22,6 +24,7 @@ public final class PsiPropertiesProvider implements PropertiesProvider{
 
   public PsiPropertiesProvider(final Module module){
     if (module == null){
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("module cannot be null");
     }
     myModule = module;
@@ -46,7 +49,7 @@ public final class PsiPropertiesProvider implements PropertiesProvider{
       final PsiMethod method = methods[i];
 
       // it's a setter candidate.. try to find getter
-      
+
       if (!PropertyUtil.isSimplePropertySetter(method)) {
         continue;
       }
@@ -59,6 +62,7 @@ public final class PsiPropertiesProvider implements PropertiesProvider{
         continue;
       }
 
+      //noinspection HardCodedStringLiteral
       if (
         name.equals("preferredSize") ||
         name.equals("minimumSize") ||

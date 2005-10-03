@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.navigation;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -24,6 +25,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.text.StringSearcher;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -32,8 +35,8 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 public class IncrementalSearchHandler {
-  private static final Key SEARCH_DATA_IN_EDITOR_VIEW_KEY = Key.create("IncrementalSearchHandler.SEARCH_DATA_IN_EDITOR_VIEW_KEY");
-  private static final Key SEARCH_DATA_IN_HINT_KEY = Key.create("IncrementalSearchHandler.SEARCH_DATA_IN_HINT_KEY");
+  private static final Key<PerEditorSearchData> SEARCH_DATA_IN_EDITOR_VIEW_KEY = Key.create("IncrementalSearchHandler.SEARCH_DATA_IN_EDITOR_VIEW_KEY");
+  private static final Key<PerHintSearchData> SEARCH_DATA_IN_HINT_KEY = Key.create("IncrementalSearchHandler.SEARCH_DATA_IN_HINT_KEY");
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.navigation.IncrementalSearchHandler");
 
   private static boolean ourActionsRegistered = false;
@@ -58,7 +61,7 @@ public class IncrementalSearchHandler {
   }
 
   public static boolean isHintVisible(final Editor editor) {
-    final PerEditorSearchData data = (PerEditorSearchData) editor.getUserData(SEARCH_DATA_IN_EDITOR_VIEW_KEY);
+    final PerEditorSearchData data = editor.getUserData(SEARCH_DATA_IN_EDITOR_VIEW_KEY);
     return data != null && data.hint != null && data.hint.isVisible();
   }
 
@@ -80,14 +83,14 @@ public class IncrementalSearchHandler {
 
     String selection = editor.getSelectionModel().getSelectedText();
     JLabel label2 = new MyLabel(selection == null ? "" : selection);
-    
-    PerEditorSearchData data = (PerEditorSearchData)editor.getUserData(SEARCH_DATA_IN_EDITOR_VIEW_KEY);
+
+    PerEditorSearchData data = editor.getUserData(SEARCH_DATA_IN_EDITOR_VIEW_KEY);
     if (data == null) {
       data = new PerEditorSearchData();
     } else {
       if (data.hint != null) {
         if (data.lastSearch != null) {
-          PerHintSearchData hintData = (PerHintSearchData) data.hint.getUserData(SEARCH_DATA_IN_HINT_KEY);
+          PerHintSearchData hintData = data.hint.getUserData(SEARCH_DATA_IN_HINT_KEY);
           //The user has not started typing
           if ("".equals(hintData.label.getText())) {
             label2 = new MyLabel(data.lastSearch);
@@ -97,8 +100,8 @@ public class IncrementalSearchHandler {
       }
     }
 
-    JLabel label1 = new MyLabel(" Search for: ");
-    label1.setFont(UIManager.getFont("Label.font").deriveFont(Font.BOLD));
+    JLabel label1 = new MyLabel(" " + CodeInsightBundle.message("incremental.search.tooltip.prefix"));
+    label1.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
 
     JPanel panel = new MyPanel(label1);
     panel.add(label1, BorderLayout.WEST);
@@ -109,7 +112,7 @@ public class IncrementalSearchHandler {
     final CaretListener[] caretListener = new CaretListener[1];
     final LightweightHint hint = new LightweightHint(panel) {
       public void hide() {
-        PerHintSearchData data = (PerHintSearchData)getUserData(SEARCH_DATA_IN_HINT_KEY);
+        PerHintSearchData data = getUserData(SEARCH_DATA_IN_HINT_KEY);
         LOG.assertTrue(data != null);
         String prefix = data.label.getText();
 
@@ -118,7 +121,7 @@ public class IncrementalSearchHandler {
         if (data.segmentHighlighter != null){
           editor.getMarkupModel().removeHighlighter(data.segmentHighlighter);
         }
-        PerEditorSearchData editorData = (PerEditorSearchData) editor.getUserData(SEARCH_DATA_IN_EDITOR_VIEW_KEY);
+        PerEditorSearchData editorData = editor.getUserData(SEARCH_DATA_IN_EDITOR_VIEW_KEY);
         editorData.hint = null;
         editorData.lastSearch = prefix;
 
@@ -143,7 +146,7 @@ public class IncrementalSearchHandler {
 
     caretListener[0] = new CaretListener() {
       public void caretPositionChanged(CaretEvent e) {
-        PerHintSearchData data = (PerHintSearchData)hint.getUserData(SEARCH_DATA_IN_HINT_KEY);
+        PerHintSearchData data = hint.getUserData(SEARCH_DATA_IN_HINT_KEY);
         if (data != null && data.ignoreCaretMove) return;
         if (!hint.isVisible()) return;
         hint.hide();
@@ -223,7 +226,7 @@ public class IncrementalSearchHandler {
       final boolean caseSensitive = detectSmartCaseSensitive(prefix);
 
       if (acceptableRegExp(prefix)) {
-        final StringBuffer buf = new StringBuffer(prefix.length());
+        final @NonNls StringBuffer buf = new StringBuffer(prefix.length());
         final int len = prefix.length();
 
         for(int i=0;i<len;++i) {
@@ -356,13 +359,13 @@ public class IncrementalSearchHandler {
     }
 
     public void execute(Editor editor, char charTyped, DataContext dataContext) {
-      PerEditorSearchData data = (PerEditorSearchData)editor.getUserData(SEARCH_DATA_IN_EDITOR_VIEW_KEY);
+      PerEditorSearchData data = editor.getUserData(SEARCH_DATA_IN_EDITOR_VIEW_KEY);
       if (data == null || data.hint == null){
         myOriginalHandler.execute(editor, charTyped, dataContext);
       }
       else{
         LightweightHint hint = data.hint;
-        PerHintSearchData hintData = (PerHintSearchData) hint.getUserData(SEARCH_DATA_IN_HINT_KEY);
+        PerHintSearchData hintData = hint.getUserData(SEARCH_DATA_IN_HINT_KEY);
         String text = hintData.label.getText();
         text += charTyped;
         hintData.label.setText(text);
@@ -385,13 +388,13 @@ public class IncrementalSearchHandler {
     }
 
     public void execute(Editor editor, DataContext dataContext) {
-      PerEditorSearchData data = (PerEditorSearchData) editor.getUserData(SEARCH_DATA_IN_EDITOR_VIEW_KEY);
+      PerEditorSearchData data = editor.getUserData(SEARCH_DATA_IN_EDITOR_VIEW_KEY);
       if (data == null || data.hint == null){
         myOriginalHandler.execute(editor, dataContext);
       }
       else{
         LightweightHint hint = data.hint;
-        PerHintSearchData hintData = (PerHintSearchData) hint.getUserData(SEARCH_DATA_IN_HINT_KEY);
+        PerHintSearchData hintData = hint.getUserData(SEARCH_DATA_IN_HINT_KEY);
         String text = hintData.label.getText();
         if (text.length() > 0){
           text = text.substring(0, text.length() - 1);
@@ -410,13 +413,13 @@ public class IncrementalSearchHandler {
     }
 
     public void execute(Editor editor, DataContext dataContext) {
-      PerEditorSearchData data = (PerEditorSearchData) editor.getUserData(SEARCH_DATA_IN_EDITOR_VIEW_KEY);
+      PerEditorSearchData data = editor.getUserData(SEARCH_DATA_IN_EDITOR_VIEW_KEY);
       if (data == null || data.hint == null){
         myOriginalHandler.execute(editor, dataContext);
       }
       else{
         LightweightHint hint = data.hint;
-        PerHintSearchData hintData = (PerHintSearchData) hint.getUserData(SEARCH_DATA_IN_HINT_KEY);
+        PerHintSearchData hintData = hint.getUserData(SEARCH_DATA_IN_HINT_KEY);
         String prefix = hintData.label.getText();
         if (prefix == null) return;
         hintData.searchStart = editor.getCaretModel().getOffset();
@@ -428,7 +431,7 @@ public class IncrementalSearchHandler {
     }
 
     public boolean isEnabled(Editor editor, DataContext dataContext) {
-      PerEditorSearchData data = (PerEditorSearchData) editor.getUserData(SEARCH_DATA_IN_EDITOR_VIEW_KEY);
+      PerEditorSearchData data = editor.getUserData(SEARCH_DATA_IN_EDITOR_VIEW_KEY);
       return (data != null && data.hint != null) || myOriginalHandler.isEnabled(editor, dataContext);
     }
   }
@@ -441,13 +444,13 @@ public class IncrementalSearchHandler {
     }
 
     public void execute(Editor editor, DataContext dataContext) {
-      PerEditorSearchData data = (PerEditorSearchData) editor.getUserData(SEARCH_DATA_IN_EDITOR_VIEW_KEY);
+      PerEditorSearchData data = editor.getUserData(SEARCH_DATA_IN_EDITOR_VIEW_KEY);
       if (data == null || data.hint == null){
         myOriginalHandler.execute(editor, dataContext);
       }
       else{
         LightweightHint hint = data.hint;
-        PerHintSearchData hintData = (PerHintSearchData) hint.getUserData(SEARCH_DATA_IN_HINT_KEY);
+        PerHintSearchData hintData = hint.getUserData(SEARCH_DATA_IN_HINT_KEY);
         String prefix = hintData.label.getText();
         if (prefix == null) return;
         hintData.searchStart = editor.getCaretModel().getOffset();
@@ -459,7 +462,7 @@ public class IncrementalSearchHandler {
     }
 
     public boolean isEnabled(Editor editor, DataContext dataContext) {
-      PerEditorSearchData data = (PerEditorSearchData) editor.getUserData(SEARCH_DATA_IN_EDITOR_VIEW_KEY);
+      PerEditorSearchData data = editor.getUserData(SEARCH_DATA_IN_EDITOR_VIEW_KEY);
       return (data != null && data.hint != null) || myOriginalHandler.isEnabled(editor, dataContext);
     }
   }

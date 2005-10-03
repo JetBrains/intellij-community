@@ -6,6 +6,7 @@ package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.HelpID;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.ui.breakpoints.actions.*;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
@@ -37,7 +38,7 @@ public class ExceptionBreakpointFactory extends BreakpointFactory{
   }
 
   public BreakpointPanel createBreakpointPanel(final Project project, DialogWrapper parentDialog) {
-    BreakpointPanel panel = new BreakpointPanel(project, new ExceptionBreakpointPropertiesPanel(project), createActions(project), getBreakpointCategory(), "Exception Breakpoints", HelpID.EXCEPTION_BREAKPOINTS) {
+    BreakpointPanel panel = new BreakpointPanel(project, new ExceptionBreakpointPropertiesPanel(project), createActions(project), getBreakpointCategory(), DebuggerBundle.message("exception.breakpoints.tab.title"), HelpID.EXCEPTION_BREAKPOINTS) {
       public void setBreakpoints(Breakpoint[] breakpoints) {
         super.setBreakpoints(breakpoints);
         final AnyExceptionBreakpoint anyExceptionBreakpoint = DebuggerManagerEx.getInstanceEx(project).getBreakpointManager().getAnyExceptionBreakpoint();
@@ -98,7 +99,8 @@ public class ExceptionBreakpointFactory extends BreakpointFactory{
     public void actionPerformed(ActionEvent e) {
       final PsiClass throwableClass = PsiManager.getInstance(myProject).findClass("java.lang.Throwable", GlobalSearchScope.allScope(myProject));
       TreeClassChooser chooser =
-        TreeClassChooserFactory.getInstance(myProject).createInheritanceClassChooser("Enter Exception Class", GlobalSearchScope.allScope(myProject),
+        TreeClassChooserFactory.getInstance(myProject).createInheritanceClassChooser(
+          DebuggerBundle.message("add.exception.breakpoint.classchooser.title"), GlobalSearchScope.allScope(myProject),
                                                                                      throwableClass, true, true, null);
       chooser.showDialog();
       PsiClass selectedClass = chooser.getSelectedClass();

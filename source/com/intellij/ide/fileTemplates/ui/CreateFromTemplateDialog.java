@@ -3,6 +3,7 @@ package com.intellij.ide.fileTemplates.ui;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -11,7 +12,9 @@ import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
+import com.intellij.CommonBundle;
 import org.apache.velocity.runtime.parser.ParseException;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -33,7 +36,7 @@ public class CreateFromTemplateDialog extends DialogWrapper {
     myDirectory = directory;
     myProject = project;
     myTemplate = template;
-    setTitle("New " + template.getName());
+    setTitle(IdeBundle.message("title.new.from.template", template.getName()));
 
     PsiPackage aPackage = myDirectory.getPackage();
     String packageName = aPackage == null ? "" : aPackage.getQualifiedName();
@@ -57,7 +60,8 @@ public class CreateFromTemplateDialog extends DialogWrapper {
     if (!myTemplate.isJavaClassTemplate()){
       fileName = myAttrPanel.getFileName();
       if (fileName.length() == 0){
-        Messages.showMessageDialog(myAttrComponent, "Please enter a file name", "Error", Messages.getErrorIcon());
+        Messages.showMessageDialog(myAttrComponent, IdeBundle.message("error.please.enter.a.file.name"),
+                                   CommonBundle.getErrorTitle(), Messages.getErrorIcon());
         return;
       }
     }
@@ -74,12 +78,13 @@ public class CreateFromTemplateDialog extends DialogWrapper {
   }
 
   private static void showErrorMessage(Component parentComponent, FileTemplate template, Exception e){
-    Messages.showMessageDialog(parentComponent, filterMessage(e.getMessage()), "Cannot Create " + (template.isJavaClassTemplate() ? "Class" : "File"), Messages.getErrorIcon());
+    Messages.showMessageDialog(parentComponent, filterMessage(e.getMessage()),
+                               template.isJavaClassTemplate() ? IdeBundle.message("title.cannot.create.class") : IdeBundle.message("title.cannot.create.file"), Messages.getErrorIcon());
   }
 
   private static String filterMessage(String message){
     if (message == null) return null;
-    String ioExceptionPrefix = "java.io.IOException:";
+    @NonNls String ioExceptionPrefix = "java.io.IOException:";
     if (message.startsWith(ioExceptionPrefix)){
       message = message.substring(ioExceptionPrefix.length());
     }

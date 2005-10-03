@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.editor;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Created by IntelliJ IDEA.
  * User: lesya
@@ -23,7 +25,8 @@ package com.intellij.openapi.editor;
  * To change this template use File | Settings | File Templates.
  */
 public interface EditorGutter {
-  void registerTextAnnotation(TextAnnotationGutterProvider provider);
+  void registerTextAnnotation(@NotNull TextAnnotationGutterProvider provider);
+  void registerTextAnnotation(@NotNull TextAnnotationGutterProvider provider, @NotNull EditorGutterAction action);
 
   void closeAllAnnotations();
 }

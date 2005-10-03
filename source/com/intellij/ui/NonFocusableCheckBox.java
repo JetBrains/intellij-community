@@ -10,4 +10,8 @@ public class NonFocusableCheckBox extends JCheckBox {
     super(text);
     setFocusable(false);
   }
+
+  public NonFocusableCheckBox() {
+    setFocusable(false);
+  }
 }

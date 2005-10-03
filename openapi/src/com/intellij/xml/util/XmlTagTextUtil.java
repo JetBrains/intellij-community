@@ -15,6 +15,8 @@
  */
 package com.intellij.xml.util;
 
+import org.jetbrains.annotations.NonNls;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -69,7 +71,7 @@ public class XmlTagTextUtil {
   }
 
 
-  public static String composeTagText(String tagName, String tagValue) {
+  public static String composeTagText(@NonNls String tagName, @NonNls String tagValue) {
     String result = "<" + tagName;
     if (tagValue == null || "".equals(tagValue)) {
       result += "/>";

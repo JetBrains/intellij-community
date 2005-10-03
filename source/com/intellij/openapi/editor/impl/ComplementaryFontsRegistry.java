@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author max
  */
@@ -47,13 +49,17 @@ public class ComplementaryFontsRegistry {
     }
   }
 
+  @NonNls private static final String BOLD_SUFFIX = ".bold";
+
+  @NonNls private static final String ITALIC_SUFFIX = ".italic";
+
   static {
     ourFontNames = new ArrayList<String>();
     GraphicsEnvironment graphicsEnvironment = GraphicsEnvironment.getLocalGraphicsEnvironment();
     String[] fontNames = graphicsEnvironment.getAvailableFontFamilyNames();
     for (int i = 0; i < fontNames.length; i++) {
       final String fontName = fontNames[i];
-      if (!fontName.endsWith(".bold") && !fontName.endsWith(".italic")) {
+      if (!fontName.endsWith(BOLD_SUFFIX) && !fontName.endsWith(ITALIC_SUFFIX)) {
         ourFontNames.add(fontName);
       }
     }

@@ -10,6 +10,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.sun.jdi.ClassType;
 import com.sun.jdi.Method;
@@ -22,9 +23,9 @@ import java.util.List;
 
 public class MethodEvaluator implements Evaluator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.evaluation.expression.MethodEvaluator");
-  private JVMName myClassName;
-  private JVMName myMethodSignature;
-  private String myMethodName;
+  private final JVMName myClassName;
+  private final JVMName myMethodSignature;
+  private final String myMethodName;
   private List myArgumentEvaluators;
   private Evaluator myObjectEvaluator;
 
@@ -51,7 +52,7 @@ public class MethodEvaluator implements Evaluator {
       throw EvaluateExceptionUtil.createEvaluateException(new NullPointerException());
     }
     if (!(object instanceof ObjectReference || object instanceof ClassType)) {
-      throw EvaluateExceptionUtil.createEvaluateException("Error evaluating method : " + myMethodName);
+      throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.evaluating.method", myMethodName));
     }
     List args = new ArrayList(myArgumentEvaluators.size());
     for (Iterator it = myArgumentEvaluators.iterator(); it.hasNext();) {
@@ -72,6 +73,8 @@ public class MethodEvaluator implements Evaluator {
         referenceType = debugProcess.findClass(context, className, context.getClassLoader());
       }
 
+      final String signature = myMethodSignature != null ? myMethodSignature.getName(debugProcess) : null;
+      final String methodName = DebuggerUtilsEx.methodName(referenceType.name(), myMethodName, signature);
       if (object instanceof ClassType) {
         if(referenceType instanceof ClassType) {
           Method jdiMethod;
@@ -86,13 +89,13 @@ public class MethodEvaluator implements Evaluator {
             return debugProcess.invokeMethod(context, (ClassType)referenceType, jdiMethod, args);
           }
         }
-        throw EvaluateExceptionUtil.createEvaluateException("No such static method: " + DebuggerUtilsEx.methodName(referenceType.name(), myMethodName, myMethodSignature != null ? myMethodSignature.getName(debugProcess) : null));
+        throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.no.static.method", methodName));
       }
       // object should be ObjectReference
       ObjectReference objRef = (ObjectReference)object;
-      Method jdiMethod = DebuggerUtilsEx.findMethod(referenceType, myMethodName, myMethodSignature != null ? myMethodSignature.getName(debugProcess) : null);
+      Method jdiMethod = DebuggerUtilsEx.findMethod(referenceType, myMethodName, signature);
       if (jdiMethod == null) {
-        throw EvaluateExceptionUtil.createEvaluateException("No such non-static method: " + DebuggerUtilsEx.methodName(referenceType.name(), myMethodName, myMethodSignature != null ? myMethodSignature.getName(debugProcess) : null));
+        throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.no.instance.method", methodName));
       }
       return debugProcess.invokeMethod(context, objRef, jdiMethod, args);
     }

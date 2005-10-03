@@ -5,14 +5,15 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 /**
  *  @author dsl
  */
 class OrderEntryFactory {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.OrderEntryFactory");
-  static final String ORDER_ENTRY_ELEMENT_NAME = "orderEntry";
-  static final String ORDER_ENTRY_TYPE_ATTR = "type";
+  @NonNls static final String ORDER_ENTRY_ELEMENT_NAME = "orderEntry";
+  @NonNls static final String ORDER_ENTRY_TYPE_ATTR = "type";
 
   static OrderEntry createOrderEntryByElement(Element element,
                                               RootModelImpl rootModel,

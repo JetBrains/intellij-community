@@ -15,12 +15,14 @@
  */
 package com.intellij.openapi.util;
 
+import org.jetbrains.annotations.NonNls;
+
 public class InvalidDataException extends Exception {
   public InvalidDataException(){
     super();
   }
 
-  public InvalidDataException(String s){
+  public InvalidDataException(@NonNls String s){
     super(s);
   }
 

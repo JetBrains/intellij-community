@@ -1,6 +1,8 @@
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NonNls;
 
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
@@ -15,7 +17,8 @@ class TextBlockTransferable implements Transferable {
   private final String myText;
 
   public static class ReferenceData implements Cloneable, Serializable {
-    public static final DataFlavor FLAVOR = new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType+";class="+ReferenceData.class.getName(), "ReferenceData");
+    public static final @NonNls DataFlavor FLAVOR = new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType+";class="+ReferenceData.class.getName(),
+                                                                   CodeInsightBundle.message("paste.dataflavor.referencedata"));
 
     public int startOffset;
     public int endOffset;
@@ -40,7 +43,8 @@ class TextBlockTransferable implements Transferable {
   }
 
   public static class FoldingData implements Cloneable, Serializable {
-    public static final DataFlavor FLAVOR = new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType+";class="+FoldingData.class.getName(), "FoldingData");
+    public static final @NonNls DataFlavor FLAVOR = new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType + ";class=" + FoldingData.class.getName(),
+                                                                   CodeInsightBundle.message("paste.data.flavor.folding"));
 
     public int startOffset;
     public int endOffset;

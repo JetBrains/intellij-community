@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.generation.surroundWith;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -9,12 +10,13 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 
 public class JavaWithTryCatchSurrounder extends JavaStatementsSurrounder {
   protected boolean myGenerateFinally = false;
 
   public String getTemplateDescription() {
-    return "try / catch";
+    return CodeInsightBundle.message("surround.with.try.catch.template");
   }
 
   public TextRange surroundStatements(Project project, Editor editor, PsiElement container, PsiElement[] statements)
@@ -36,7 +38,8 @@ public class JavaWithTryCatchSurrounder extends JavaStatementsSurrounder {
       }
     }
 
-    StringBuffer buffer = new StringBuffer("try{\n}");
+    @NonNls StringBuffer buffer = new StringBuffer();
+    buffer.append("try{\n}");
     for (PsiClassType exception : exceptions) {
       buffer.append("catch(Exception e){\n}");
     }
@@ -64,7 +67,9 @@ public class JavaWithTryCatchSurrounder extends JavaStatementsSurrounder {
         catchSection = factory.createCatchSection(exception, name, null);
       }
       catch (IncorrectOperationException e) {
-        Messages.showErrorDialog(project, "Invalid File Template for Catch Body!", "Surround With Try / Catch");
+        Messages.showErrorDialog(project,
+                                 CodeInsightBundle.message("surround.with.try.catch.incorrect.template.message"),
+                                 CodeInsightBundle.message("surround.with.try.catch.incorrect.template.title"));
         return null;
       }
       catchSection = (PsiCatchSection)catchSections[i].replace(catchSection);

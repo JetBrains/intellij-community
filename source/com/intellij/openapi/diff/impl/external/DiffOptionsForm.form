@@ -7,32 +7,32 @@
       <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
     </constraints>
     <properties/>
-    <border type="etched" title="Diff Options"/>
+    <border type="etched" title-resource-bundle="messages/DiffBundle" title-key="diff.options.diff.options.border"/>
     <children>
       <component id="4eaba" class="javax.swing.JCheckBox" binding="myEnableFolders">
         <constraints>
-          <xy x="11" y="20" width="203" height="22"/>
+          <xy x="6" y="20" width="203" height="22"/>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
         </constraints>
         <properties>
           <margin top="4" left="2" bottom="0" right="2"/>
-          <text value="Use external tool to compare folders:"/>
+          <text resource-bundle="messages/DiffBundle" key="diff.options.use.external.tool.for.directories.checkbox"/>
         </properties>
       </component>
       <component id="7ecb6" class="javax.swing.JCheckBox" binding="myEnableFiles">
         <constraints>
-          <xy x="11" y="74" width="189" height="22"/>
+          <xy x="6" y="74" width="189" height="22"/>
           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
         </constraints>
         <properties>
           <margin top="4" left="2" bottom="0" right="2"/>
-          <text value="Use external tool to compare files:"/>
+          <text resource-bundle="messages/DiffBundle" key="diff.options.use.external.tool.for.files.checkbox"/>
         </properties>
       </component>
       <grid id="9beaf" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="0" vgap="0">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="11" y="44" width="541" height="28"/>
+          <xy x="6" y="44" width="546" height="28"/>
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
         </constraints>
         <properties/>
@@ -53,7 +53,7 @@
           </xy>
           <component id="89fa" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myFoldersTool">
             <constraints>
-              <xy x="20" y="4" width="521" height="20"/>
+              <xy x="20" y="4" width="526" height="20"/>
               <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="8" fill="1"/>
             </constraints>
             <properties>
@@ -65,7 +65,7 @@
       <grid id="10020" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="0" vgap="0">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="11" y="98" width="541" height="28"/>
+          <xy x="6" y="98" width="546" height="28"/>
           <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
         </constraints>
         <properties/>
@@ -86,7 +86,7 @@
           </xy>
           <component id="553c9" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myFilesTool">
             <constraints>
-              <xy x="20" y="4" width="521" height="20"/>
+              <xy x="20" y="4" width="526" height="20"/>
               <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="8" fill="1"/>
             </constraints>
             <properties>

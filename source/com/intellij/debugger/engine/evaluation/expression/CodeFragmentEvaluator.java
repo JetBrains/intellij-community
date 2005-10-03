@@ -2,8 +2,8 @@ package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.HashMap;
 import com.sun.jdi.Value;
@@ -37,7 +37,7 @@ public class CodeFragmentEvaluator extends BlockStatementEvaluator{
       if(myParentFragmentEvaluator != null){
         return myParentFragmentEvaluator.getValue(localName, vm);
       } else {
-        throw EvaluateExceptionUtil.createEvaluateException("Variable is not declared " + localName);
+        throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.variable.not.declared", localName));
       }
     }
     Object value = mySyntheticLocals.get(localName);
@@ -95,7 +95,7 @@ public class CodeFragmentEvaluator extends BlockStatementEvaluator{
   public void setInitialValue(String localName, Object value) throws EvaluateException {
     LOG.assertTrue(!(value instanceof Value), "use setValue for jdi values");
     if(hasValue(localName)) {
-      throw EvaluateExceptionUtil.createEvaluateException("Variable is already declared :" + localName);
+      throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.variable.already.declared", localName));
     }
     mySyntheticLocals.put(localName, value);
   }
@@ -105,7 +105,7 @@ public class CodeFragmentEvaluator extends BlockStatementEvaluator{
       if(myParentFragmentEvaluator != null){
         myParentFragmentEvaluator.setValue(localName, value);
       } else {
-        throw EvaluateExceptionUtil.createEvaluateException("Variable is not declared " + localName);
+        throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.variable.not.declared", localName));
       }
     }
     mySyntheticLocals.put(localName, value);

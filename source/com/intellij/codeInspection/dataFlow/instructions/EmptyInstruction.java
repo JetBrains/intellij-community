@@ -18,6 +18,7 @@ public class EmptyInstruction extends Instruction {
     return new DfaInstructionState[] {new DfaInstructionState(nextInstruction, nextState)};
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return "EMPTY";
   }

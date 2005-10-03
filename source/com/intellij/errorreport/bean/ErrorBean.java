@@ -1,6 +1,10 @@
 package com.intellij.errorreport.bean;
 
+import com.intellij.util.SystemProperties;
+
 import java.util.Date;
+
+import org.jetbrains.annotations.NonNls;
 
 /**
  * Created by IntelliJ IDEA.
@@ -18,7 +22,7 @@ public class ErrorBean {
   private String description;
 
   public void autoInit () {
-    os = System.getProperty("os.name");
+    os = SystemProperties.getOsName();
     date = new Date();
   }
 
@@ -58,7 +62,7 @@ public class ErrorBean {
     return description;
   }
 
-  public void setDescription(String description) {
+  public void setDescription(@NonNls String description) {
     this.description = description;
   }
 

@@ -18,8 +18,7 @@ package com.intellij.openapi.compiler;
 import java.io.DataInputStream;
 import java.io.IOException;
 /**
- * A factory for creating ValidityStateObjects
- * @see ValidityState
+ * A factory for creating {@link ValidityState} objects.
  */
 public interface ValidityStateFactory {
   /**

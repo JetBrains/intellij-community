@@ -10,17 +10,20 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefManager;
+import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.ui.InspectionTreeNode;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.codeInspection.ui.InspectionPackageNode;
+import com.intellij.codeInspection.ui.RefElementNode;
+import com.intellij.openapi.util.*;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.util.Map;
 import java.util.Set;
+import java.util.HashSet;
 
 public abstract class InspectionTool implements JDOMExternalizable {
   private InspectionManagerEx myManager;
@@ -80,8 +83,10 @@ public abstract class InspectionTool implements JDOMExternalizable {
 
   public abstract String getGroupDisplayName();
 
+  @NonNls
   public abstract String getShortName();
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public final String getDescriptionFileName() {
     return getShortName() + ".html";
   }
@@ -110,4 +115,46 @@ public abstract class InspectionTool implements JDOMExternalizable {
   public abstract InspectionTreeNode[] getContents();
 
   public abstract Map<String, Set<RefElement>> getPackageContent();
+
+  public abstract void ignoreElement(RefElement refElement);
+
+  protected RefElementNode addNodeToParent(RefElement refElement, InspectionPackageNode packageNode){
+    final Set<InspectionTreeNode> children = new HashSet<InspectionTreeNode>();
+    TreeUtil.traverseDepth(packageNode, new TreeUtil.Traverse() {
+      public boolean accept(Object node) {
+        children.add((InspectionTreeNode)node);
+        return true;
+      }
+    });
+    RefElementNode nodeToAdd = new RefElementNode(refElement);
+    boolean firstLevel = true;
+    RefElementNode prevNode = null;
+    while (true) {
+      RefElementNode currentNode = firstLevel ? nodeToAdd : new RefElementNode(refElement);
+      for (InspectionTreeNode node : children) {
+        if (node instanceof RefElementNode){
+          final RefElementNode refElementNode = (RefElementNode)node;
+          if (Comparing.equal(refElementNode.getElement(), refElement)){
+            if (firstLevel){
+              return refElementNode;
+            } else {
+              refElementNode.add(prevNode);
+              return nodeToAdd;
+            }
+          }
+        }
+      }
+      if (!firstLevel) {
+        currentNode.add(prevNode);
+      }
+      RefEntity owner = refElement.getOwner();
+      if (!(owner instanceof RefElement)){
+        packageNode.add(currentNode);
+        return nodeToAdd;
+      }
+      refElement = (RefElement)owner;
+      prevNode = currentNode;
+      firstLevel = false;
+    }
+  }
 }

@@ -64,7 +64,7 @@ public class CompositeElement extends TreeElement implements Cloneable {
 
     TreeElement treePrev = prev;
     TreeElement last = this;
-    TreeElement current = null;
+    TreeElement current;
     { // Step 1: trying to find known startOffset in previous composites (getTreePrev for composite is cheap)
       while(treePrev instanceof CompositeElement){
         final CompositeElement compositeElement = (CompositeElement)treePrev;
@@ -258,7 +258,7 @@ public class CompositeElement extends TreeElement implements Cloneable {
     final ASTNode[] result = new ASTNode[count];
     count = 0;
     for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
-      if (filter == null || filter.isInSet(child.getElementType())) {
+      if (filter == null || filter.contains(child.getElementType())) {
         result[count++] = child;
       }
     }
@@ -279,7 +279,7 @@ public class CompositeElement extends TreeElement implements Cloneable {
     T[] result = constructor.newPsiElementArray(count);
     count = 0;
     for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
-      if (filter == null || filter.isInSet(child.getElementType())) {
+      if (filter == null || filter.contains(child.getElementType())) {
         result[count++] = (T)SourceTreeToPsiMap.treeElementToPsi(child);
       }
     }
@@ -292,7 +292,7 @@ public class CompositeElement extends TreeElement implements Cloneable {
     // no lock is needed because all chameleons are expanded already
     int count = 0;
     for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
-      if (filter == null || filter.isInSet(child.getElementType())) {
+      if (filter == null || filter.contains(child.getElementType())) {
         count++;
       }
     }
@@ -324,7 +324,7 @@ public class CompositeElement extends TreeElement implements Cloneable {
   }
 
   public void replaceChildInternal(ASTNode child, TreeElement newElement) {
-    if (ElementType.EXPRESSION_BIT_SET.isInSet(child.getElementType())) {
+    if (ElementType.EXPRESSION_BIT_SET.contains(child.getElementType())) {
       boolean needParenth = ReplaceExpressionUtil.isNeedParenthesis(child, newElement);
       if (needParenth) {
         newElement = SourceUtil.addParenthToReplacedChild(JavaElementType.PARENTH_EXPRESSION, newElement, getManager());

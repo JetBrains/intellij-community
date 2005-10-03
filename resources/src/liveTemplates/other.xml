@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templateSet group="other">
-  <template description="Checks object type with instanceof and down-casts it" name="inst" toReformat="true" toShortenFQNames="true" value="if ($EXPR$ instanceof $TYPE$) {&#13;&#10;  $TYPE$ $VAR1$ = ($TYPE$)$EXPR$;&#13;&#10;  $END$&#13;&#10;}">
+  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.inst"
+    name="inst" toReformat="true" toShortenFQNames="true" value="if ($EXPR$ instanceof $TYPE$) {&#13;&#10;  $TYPE$ $VAR1$ = ($TYPE$)$EXPR$;&#13;&#10;  $END$&#13;&#10;}">
     <variable alwaysStopAt="true" defaultValue="expr" expression="variableOfType(&quot;Object&quot;)" name="EXPR" />
     <variable alwaysStopAt="true" defaultValue="" expression="&quot;Object&quot;" name="TYPE" />
     <variable alwaysStopAt="true" defaultValue="" expression="suggestVariableName()" name="VAR1" />
@@ -15,7 +16,8 @@
       <option name="OTHER" value="false" />
     </context>
   </template>
-  <template description="Fetches last element of an array" name="lst" toReformat="true" toShortenFQNames="true" value="$ARRAY$[$ARRAY$.length - 1]">
+  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.lst"
+     name="lst" toReformat="true" toShortenFQNames="true" value="$ARRAY$[$ARRAY$.length - 1]">
     <variable alwaysStopAt="true" defaultValue="array" expression="arrayVariable()" name="ARRAY" />
     <context>
       <option name="JAVA_CODE" value="true" />
@@ -28,7 +30,8 @@
       <option name="OTHER" value="false" />
     </context>
   </template>
-  <template description="Sets lesser value to a variable" name="mn" toReformat="true" toShortenFQNames="true" value="$VAR$ = Math.min($VAR$, $END$);">
+  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.mn"
+    name="mn" toReformat="true" toShortenFQNames="true" value="$VAR$ = Math.min($VAR$, $END$);">
     <variable alwaysStopAt="true" defaultValue="" expression="variableOfType(&quot;double&quot;)" name="VAR" />
     <context>
       <option name="JAVA_CODE" value="true" />
@@ -41,7 +44,8 @@
       <option name="OTHER" value="false" />
     </context>
   </template>
-  <template description="Sets greater value to a variable" name="mx" toReformat="true" toShortenFQNames="true" value="$VAR$ = Math.max($VAR$, $END$);">
+  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.mx"
+    name="mx" toReformat="true" toShortenFQNames="true" value="$VAR$ = Math.max($VAR$, $END$);">
     <variable alwaysStopAt="true" defaultValue="" expression="variableOfType(&quot;double&quot;)" name="VAR" />
     <context>
       <option name="JAVA_CODE" value="true" />
@@ -54,7 +58,8 @@
       <option name="OTHER" value="false" />
     </context>
   </template>
-  <template description="main() method declaration" name="psvm" toReformat="true" toShortenFQNames="true" value="public static void main(String[] args){&#13;&#10;  $END$&#13;&#10;}">
+  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.psvm"
+    name="psvm" toReformat="true" toShortenFQNames="true" value="public static void main(String[] args){&#13;&#10;  $END$&#13;&#10;}">
     <context>
       <option name="JAVA_CODE" value="true" />
       <option name="JAVA_COMMENT" value="false" />
@@ -66,7 +71,8 @@
       <option name="OTHER" value="false" />
     </context>
   </template>
-  <template description="Stores elements of java.util.Collection into array" name="toar" toReformat="true" toShortenFQNames="true" value="($COMPONENT_TYPE$[])$COLLECTION$.toArray(new $COMPONENT_TYPE$[$COLLECTION$.size()]);$END$">
+  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.toar"
+     name="toar" toReformat="true" toShortenFQNames="true" value="($COMPONENT_TYPE$[])$COLLECTION$.toArray(new $COMPONENT_TYPE$[$COLLECTION$.size()]);$END$">
     <variable alwaysStopAt="true" defaultValue="&quot;Object&quot;" expression="componentTypeOf(expectedType())" name="COMPONENT_TYPE" />
     <variable alwaysStopAt="true" defaultValue="collection" expression="variableOfType(&quot;java.util.Collection&quot;)" name="COLLECTION" />
     <context>
@@ -81,4 +87,3 @@
     </context>
   </template>
 </templateSet>
-

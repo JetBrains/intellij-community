@@ -4,6 +4,7 @@
 package com.intellij.psi.controlFlow;
 
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -81,7 +82,14 @@ public class ControlFlowSubRange implements ControlFlow {
   }
 
   public String toString() {
-    StringBuffer buffer = new StringBuffer("CF range:["+myStart+"-"+myEnd+"]\n");
+    @NonNls StringBuffer buffer = new StringBuffer();
+    buffer.
+      append("CF range:[").
+      append(myStart).
+      append("-").
+      append(myEnd).
+      append("]\n");
+
     final List<Instruction> instructions = getInstructionsList();
     for(int i = 0; i < instructions.size(); i++){
       Instruction instruction = instructions.get(i);

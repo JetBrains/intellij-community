@@ -6,15 +6,17 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlTag;
+import org.jetbrains.annotations.NonNls;
 
 public class PsiChangeHandler extends PsiTreeChangeAdapter {
   private final Project myProject;
   private final DaemonCodeAnalyzerImpl myDaemonCodeAnalyzer;
+  private static final @NonNls String HEAD_TAG = "head";
 
   public PsiChangeHandler(Project project, DaemonCodeAnalyzerImpl daemonCodeAnalyzer) {
     myProject = project;
@@ -77,15 +79,15 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter {
         return;
       }
       PsiElement pparent = parent.getParent();
-      
+
       if(parent instanceof XmlTag){
         PsiElement dirtyScope = pparent;
-        
+
         if (pparent instanceof XmlTag &&
-            "head".equals(((XmlTag)pparent).getLocalName())) { 
+            HEAD_TAG.equals(((XmlTag)pparent).getLocalName())) {
           final PsiFile containingFile = parent.getContainingFile();
           final FileType fileType = (containingFile != null)? containingFile.getFileType() : null;
-          
+
           if (fileType == StdFileTypes.JSP ||
               fileType == StdFileTypes.JSPX ||
               fileType == StdFileTypes.HTML ||
@@ -94,12 +96,12 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter {
             // change in head will result in changes for css/javascript code highlighting
             dirtyScope = containingFile;
           }
-        } 
-        
+        }
+
         myDaemonCodeAnalyzer.getFileStatusMap().markFileScopeDirty(document, dirtyScope);
         return;
       }
-      
+
       if (parent instanceof PsiCodeBlock
           && pparent instanceof PsiMethod
           && !((PsiMethod) pparent).isConstructor()

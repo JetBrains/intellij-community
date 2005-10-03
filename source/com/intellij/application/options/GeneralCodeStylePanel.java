@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.ui.OptionGroup;
@@ -16,11 +17,13 @@ import javax.swing.event.DocumentListener;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 
+import org.jetbrains.annotations.NotNull;
+
 public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
-  private static final String SYSTEM_DEPENDANT_STRING = "System Dependent";
-  private static final String UNIX_STRING = "Unix \\n";
-  private static final String WINDOWS_STRING = "Windows \\r\\n";
-  private static final String MACINTOSH_STRING = "Mac \\r";
+  private static final String SYSTEM_DEPENDANT_STRING = ApplicationBundle.message("combobox.crlf.system.dependent");
+  private static final String UNIX_STRING = ApplicationBundle.message("combobox.crlf.unix");
+  private static final String WINDOWS_STRING = ApplicationBundle.message("combobox.crlf.windows");
+  private static final String MACINTOSH_STRING = ApplicationBundle.message("combobox.crlf.mac");
 
   private JCheckBox myCbUseSameIndents;
   private IndentOptions myJavaIndentOptions = new IndentOptions(IndentOptions.LIST_LABEL_INDENT +
@@ -95,16 +98,16 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   }
 
   private JPanel createTabOptionsPanel() {
-    OptionGroup optionGroup = new OptionGroup("Tabs and Indents");
+    OptionGroup optionGroup = new OptionGroup(ApplicationBundle.message("group.tabs.and.indents"));
 
-    myCbUseSameIndents = createCheckBox("Use same settings for all file types");
+    myCbUseSameIndents = createCheckBox(ApplicationBundle.message("checkbox.indent.use.same.settings.for.all.file.types"));
     optionGroup.add(myCbUseSameIndents);
 
     myIndentOptionsTabs = new TabbedPaneWrapper(JTabbedPane.RIGHT);
-    myIndentOptionsTabs.addTab("Java", myJavaIndentOptions.createPanel());
-    myIndentOptionsTabs.addTab("JSP", myJspIndentOptions.createPanel());
-    myIndentOptionsTabs.addTab("XML", myXMLIndentOptions.createPanel());
-    myIndentOptionsTabs.addTab("Other", myOtherIndentOptions.createPanel());
+    myIndentOptionsTabs.addTab(ApplicationBundle.message("tab.indent.java"), myJavaIndentOptions.createPanel());
+    myIndentOptionsTabs.addTab(ApplicationBundle.message("tab.indent.jsp"), myJspIndentOptions.createPanel());
+    myIndentOptionsTabs.addTab(ApplicationBundle.message("tab.indent.xml"), myXMLIndentOptions.createPanel());
+    myIndentOptionsTabs.addTab(ApplicationBundle.message("tab.indent.other"), myOtherIndentOptions.createPanel());
     optionGroup.add(myIndentOptionsTabs.getComponent());
 
     return optionGroup.createPanel();
@@ -119,6 +122,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     return myRightMargin;
   }
 
+  @NotNull
   protected FileType getFileType() {
     return StdFileTypes.JAVA;
   }
@@ -325,39 +329,39 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     }
 
     public JPanel createPanel() {
-      myCbUseTab = createCheckBox("Use Tab Character");
+      myCbUseTab = createCheckBox(ApplicationBundle.message("checkbox.indent.use.tab.character"));
       add(myCbUseTab);
 
       if (isListSmartTabs()) {
-        myCbSmartTabs = createCheckBox("Smart Tabs");
+        myCbSmartTabs = createCheckBox(ApplicationBundle.message("checkbox.indent.smart.tabs"));
         add(myCbSmartTabs, true);
       }
 
       myTabSizeField = new JTextField(4);
       myTabSizeField.setMinimumSize(myTabSizeField.getPreferredSize());
-      myTabSizeLabel = new JLabel("Tab size");
+      myTabSizeLabel = new JLabel(ApplicationBundle.message("editbox.indent.tab.size"));
       add(myTabSizeLabel, myTabSizeField);
 
       myIndentField = new JTextField(4);
       myIndentField.setMinimumSize(myTabSizeField.getPreferredSize());
-      myIndentLabel = new JLabel("Indent");
+      myIndentLabel = new JLabel(ApplicationBundle.message("editbox.indent.indent"));
       add(myIndentLabel, myIndentField);
 
       if (isListContIndent()) {
         myContinuationIndentField = new JTextField(4);
         myContinuationIndentField.setMinimumSize(myContinuationIndentField.getPreferredSize());
-        myContinuationIndentLabel = new JLabel("Continuation indent");
+        myContinuationIndentLabel = new JLabel(ApplicationBundle.message("editbox.indent.continuation.indent"));
         add(myContinuationIndentLabel, myContinuationIndentField);
       }
 
       if (isListLabelIndent()) {
         myLabelIndent = new JTextField(4);
-        add(myLabelIndentLabel = new JLabel("Label indent"), myLabelIndent);
+        add(myLabelIndentLabel = new JLabel(ApplicationBundle.message("editbox.indent.label.indent")), myLabelIndent);
 
-        myLabelIndentAbsolute = createCheckBox("absolute label indent");
+        myLabelIndentAbsolute = createCheckBox(ApplicationBundle.message("checkbox.indent.absolute.label.indent"));
         add(myLabelIndentAbsolute);
 
-        myCbDontIndentTopLevelMembers = createCheckBox("<html>Do not indent top<br>level class members</html>");
+        myCbDontIndentTopLevelMembers = createCheckBox(ApplicationBundle.message("checkbox.do.not.indent.top.level.class.members"));
         add(myCbDontIndentTopLevelMembers);
       }
 
@@ -472,7 +476,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
         boolean smartTabsValid = smartTabsChecked && isSmartTabValid(getUIIndent(), getUITabSize());
         myCbSmartTabs.setEnabled(smartTabsValid);
         myCbSmartTabs.setToolTipText(
-          smartTabsChecked && !smartTabsValid ? "Indent must be multiple of tab size for smart tabs to operate" : null);
+          smartTabsChecked && !smartTabsValid ? ApplicationBundle.message("tooltip.indent.must.be.multiple.of.tab.size.for.smart.tabs.to.operate") : null);
       }
       if (isListLabelIndent()) {
         myContinuationIndentField.setEnabled(enabled);

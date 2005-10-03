@@ -4,9 +4,7 @@ package com.intellij.refactoring;
 import com.intellij.aspects.psi.PsiPointcutDef;
 import com.intellij.psi.*;
 
-/**
- *
- */
+@SuppressWarnings({"HardCodedStringLiteral"})
 public class HelpID {
   private static final String RENAME_PACKAGE   = "refactoring.renamePackage";
   private static final String RENAME_CLASS     = "refactoring.renameClass";

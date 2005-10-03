@@ -2,6 +2,7 @@ package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.codeInsight.template.impl.TemplateColors;
 import com.intellij.ide.fileTemplates.FileTemplate;
+import com.intellij.ide.IdeBundle;
 import com.intellij.lexer.CompositeLexer;
 import com.intellij.lexer.FlexAdapter;
 import com.intellij.lexer.Lexer;
@@ -44,6 +45,7 @@ import java.io.IOException;
 import java.util.Vector;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 /*
  * @author: MYakovlev
@@ -65,6 +67,9 @@ public class FileTemplateConfigurable implements Configurable {
   private boolean myModified = false;
   private Vector<ChangeListener> myChangeListeners = new Vector<ChangeListener>();
   private VirtualFile myDefaultDescription;
+  @NonNls private static final String CONTENT_TYPE_HTML = "text/html";
+  @NonNls private static final String EMPTY_HTML = "<html></html>";
+  @NonNls private static final String CONTENT_TYPE_PLAIN = "text/plain";
 
   public FileTemplate getTemplate() {
     return myTemplate;
@@ -81,13 +86,13 @@ public class FileTemplateConfigurable implements Configurable {
   public void setShowInternalMessage(String message) {
     if (message == null) {
       myTopPanel.removeAll();
-      myTopPanel.add(new JLabel("Name:"),
+      myTopPanel.add(new JLabel(IdeBundle.message("label.name")),
                      new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
                                             new Insets(0, 0, 0, 2), 0, 0));
       myTopPanel.add(myNameField,
                      new GridBagConstraints(1, 0, 1, 1, 1.0, 0.0, GridBagConstraints.CENTER,
                                             GridBagConstraints.HORIZONTAL, new Insets(0, 2, 0, 2), 0, 0));
-      myTopPanel.add(new JLabel("Extension:"),
+      myTopPanel.add(new JLabel(IdeBundle.message("label.extension")),
                      new GridBagConstraints(2, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
                                             new Insets(0, 2, 0, 2), 0, 0));
       myTopPanel.add(myExtensionField,
@@ -113,7 +118,7 @@ public class FileTemplateConfigurable implements Configurable {
   }
 
   public String getDisplayName() {
-    return "File Templates";
+    return IdeBundle.message("title.file.templates");
   }
 
   public Icon getIcon() {
@@ -131,7 +136,7 @@ public class FileTemplateConfigurable implements Configurable {
     myExtensionField = new JTextField();
     final Splitter splitter = new Splitter(true, 0.66f);
 
-    myDescriptionComponent = new JEditorPane("text/html", "<html></html>");
+    myDescriptionComponent = new JEditorPane(CONTENT_TYPE_HTML, EMPTY_HTML);
     myDescriptionComponent.setEditable(false);
 //    myDescriptionComponent.setMargin(new Insets(2, 2, 2, 2));
 
@@ -139,11 +144,11 @@ public class FileTemplateConfigurable implements Configurable {
 //    myDescriptionComponent.setBorder(BorderFactory.createEmptyBorder(2,2,2,2));
 //    myDescriptionComponent.setVerticalAlignment(SwingConstants.TOP);
 
-    myAdjustBox = new JCheckBox("Reformat according to style");
+    myAdjustBox = new JCheckBox(IdeBundle.message("checkbox.reformat.according.to.style"));
     myTopPanel = new JPanel(new GridBagLayout());
 
     JPanel secondPanel = new JPanel(new GridBagLayout());
-    secondPanel.add(new JLabel("Description:"),
+    secondPanel.add(new JLabel(IdeBundle.message("label.description")),
                     new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
                                            new Insets(0, 0, 2, 0), 0, 0));
     secondPanel.add(new JScrollPane(myDescriptionComponent),
@@ -287,13 +292,13 @@ public class FileTemplateConfigurable implements Configurable {
     myNameField.setText(name);
     myExtensionField.setText(extension);
     myAdjustBox.setSelected(adjust);
-    String desc = description.length() > 0 ? description : "<html></html>";
+    String desc = description.length() > 0 ? description : EMPTY_HTML;
 
     // [myakovlev] do not delete these stupid lines! Or you get Exception!
-    myDescriptionComponent.setContentType("text/plain");
+    myDescriptionComponent.setContentType(CONTENT_TYPE_PLAIN);
     myDescriptionComponent.setEditable(true);
     myDescriptionComponent.setText(desc);
-    myDescriptionComponent.setContentType("text/html");
+    myDescriptionComponent.setContentType(CONTENT_TYPE_HTML);
     myDescriptionComponent.setText(desc);
     myDescriptionComponent.setCaretPosition(0);
     myDescriptionComponent.setEditable(false);

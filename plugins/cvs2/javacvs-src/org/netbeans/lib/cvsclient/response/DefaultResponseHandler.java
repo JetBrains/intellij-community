@@ -20,6 +20,7 @@ import org.netbeans.lib.cvsclient.command.update.UpdatedFileInfo;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.admin.IAdminWriter;
 import org.netbeans.lib.cvsclient.file.*;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.IOException;
@@ -236,7 +237,7 @@ public final class DefaultResponseHandler extends AbstractResponseHandler {
         }
     }
 
-    private static String getEntryConflict(Date date, boolean conflict, boolean merged) {
+    @NonNls private static String getEntryConflict(Date date, boolean conflict, boolean merged) {
         if (merged) {
             if (conflict) {
                 return "Result of merge+" + Entry.formatLastModifiedDate(date);

@@ -1,6 +1,7 @@
 package com.intellij.execution.actions;
 
 import com.intellij.execution.impl.EditConfigurationsDialog;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -22,7 +23,7 @@ public class EditRunConfigurationsAction extends AnAction{
   public void update(final AnActionEvent e) {
     e.getPresentation().setEnabled(getProject(e) != null);
     if (ActionPlaces.RUN_CONFIGURATIONS_COMBOBOX.equals(e.getPlace())) {
-      e.getPresentation().setText("&Edit Configurations");
+      e.getPresentation().setText(ExecutionBundle.message("edit.configuration.action"));
     }
   }
 }

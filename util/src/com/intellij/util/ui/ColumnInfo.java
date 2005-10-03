@@ -24,6 +24,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import org.jetbrains.annotations.NonNls;
+
 public abstract class ColumnInfo <Item, Aspect> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.ui.ColumnInfo");
   private String myName;

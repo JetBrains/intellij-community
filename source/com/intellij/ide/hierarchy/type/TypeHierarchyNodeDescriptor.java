@@ -1,6 +1,7 @@
 package com.intellij.ide.hierarchy.type;
 
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.util.CompositeAppearance;
@@ -29,7 +30,7 @@ public final class TypeHierarchyNodeDescriptor extends HierarchyNodeDescriptor {
     boolean changes = super.update();
 
     if (myElement == null){
-      final String invalidPrefix = "[Invalid] ";
+      final String invalidPrefix = IdeBundle.message("node.hierarchy.invalid");
       if (!myHighlightedText.getText().startsWith(invalidPrefix)) {
         myHighlightedText.getBeginning().addText(invalidPrefix, HierarchyNodeDescriptor.getInvalidPrefixAttributes());
       }

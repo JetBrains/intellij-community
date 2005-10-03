@@ -10,6 +10,8 @@ import gnu.trove.*;
 
 import java.io.*;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author Eugene Zhuravlev
  * Date: Aug 8, 2003
@@ -25,11 +27,13 @@ public class Cache {
 
   private final File myDeclarationsIndexFile;
   private final File myClassInfosIndexFile;
+  @NonNls private static final String DECLARATIONS_INDEX_FILE_NAME = "declarations_index.dat";
+  @NonNls private static final String CLASSINFO_INDEX_FILE_NAME = "classinfo_index.dat";
 
   public Cache(String storePath, int minViewCount, int maxViewCount) throws CacheCorruptedException {
     myViewPool = new ViewPool(storePath, minViewCount, maxViewCount);
-    myDeclarationsIndexFile = new File(storePath + "/declarations_index.dat");
-    myClassInfosIndexFile = new File(storePath + "/classinfo_index.dat");
+    myDeclarationsIndexFile = new File(storePath + "/" + DECLARATIONS_INDEX_FILE_NAME);
+    myClassInfosIndexFile = new File(storePath + "/" + CLASSINFO_INDEX_FILE_NAME);
   }
 
   public synchronized void dispose() {
@@ -648,20 +652,17 @@ public class Cache {
       final TIntObjectHashMap dependencies = new TIntObjectHashMap();
       final ClassDeclarationView classDeclarationView = myViewPool.getClassDeclarationView(classDeclarationId);
       final int[] classReferencers = classDeclarationView.getReferencers();
-      for (int idx = 0; idx < classReferencers.length; idx++) {
-        final int referencer = classReferencers[idx];
+      for (final int referencer : classReferencers) {
         if (referencer != classQName) { // skip self-dependencies
           addDependency(dependencies, referencer);
         }
       }
 
       final int[] fieldIds = classDeclarationView.getFieldIds();
-      for (int idx = 0; idx < fieldIds.length; idx++) {
-        final int fieldId = fieldIds[idx];
+      for (final int fieldId : fieldIds) {
         final FieldDeclarationView fieldDeclarationView = myViewPool.getFieldDeclarationView(fieldId);
         final int[] fieldReferencers = fieldDeclarationView.getReferencers();
-        for (int i = 0; i < fieldReferencers.length; i++) {
-          int referencer = fieldReferencers[i];
+        for (int referencer : fieldReferencers) {
           if (referencer != classQName) { // skip self-dependencies
             final Dependency dependency = addDependency(dependencies, referencer);
             dependency.addMemberInfo(createFieldInfo(fieldId));
@@ -670,12 +671,10 @@ public class Cache {
       }
 
       final int[] methodIds = classDeclarationView.getMethodIds();
-      for (int idx = 0; idx < methodIds.length; idx++) {
-        final int methodId = methodIds[idx];
+      for (final int methodId : methodIds) {
         final MethodDeclarationView methodDeclarationView = myViewPool.getMethodDeclarationView(methodId);
         final int[] methodReferencers = methodDeclarationView.getReferencers();
-        for (int i = 0; i < methodReferencers.length; i++) {
-          int referencer = methodReferencers[i];
+        for (int referencer : methodReferencers) {
           if (referencer != classQName) {
             final Dependency dependency = addDependency(dependencies, referencer);
             dependency.addMemberInfo(createMethodInfo(methodId));
@@ -869,7 +868,7 @@ public class Cache {
     }
   }
 
-  private void removeMethodDeclaration(int classDeclarationId, int methodId) throws IOException {
+  private void removeMethodDeclaration(int classDeclarationId, int methodId) throws IOException, CacheCorruptedException {
     final ClassDeclarationView classDeclarationView = myViewPool.getClassDeclarationView(classDeclarationId);
     classDeclarationView.removeMethodId(methodId);
     final MethodDeclarationView methodDeclarationView = myViewPool.getMethodDeclarationView(methodId);
@@ -878,7 +877,7 @@ public class Cache {
   }
 
 
-  private void removeFieldDeclaration(int classDeclarationId, int fieldId) throws IOException {
+  private void removeFieldDeclaration(int classDeclarationId, int fieldId) throws IOException, CacheCorruptedException {
     final ClassDeclarationView classDeclarationView = myViewPool.getClassDeclarationView(classDeclarationId);
     classDeclarationView.removeFieldId(fieldId);
     final FieldDeclarationView fieldDeclarationView = myViewPool.getFieldDeclarationView(fieldId);
@@ -982,12 +981,10 @@ public class Cache {
     }
   }
 
-  public synchronized void init() throws CacheCorruptedException {
-    myViewPool.init();
-  }
-
   public synchronized void wipe() {
     myViewPool.wipe();
+    myQNameToClassDeclarationIdMap = null;
+    myQNameToClassInfoIdMap = null;
     myClassInfosIndexFile.delete();
     myDeclarationsIndexFile.delete();
   }

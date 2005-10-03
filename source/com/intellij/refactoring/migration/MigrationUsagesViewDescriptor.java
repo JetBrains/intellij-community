@@ -6,9 +6,10 @@ package com.intellij.refactoring.migration;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
-import com.intellij.usageView.UsageViewUtil;
+import com.intellij.usageView.UsageViewBundle;
 
 class MigrationUsagesViewDescriptor implements UsageViewDescriptor {
   private boolean isSearchInComments;
@@ -62,8 +63,8 @@ class MigrationUsagesViewDescriptor implements UsageViewDescriptor {
   }
 
   public String getCodeReferencesText(int usagesCount, int filesCount) {
-    return "References in code to elements from migration map \"" + myMigrationMap.getName() + "\" "
-      + UsageViewUtil.getUsageCountInfo(usagesCount, filesCount, "reference");
+    return RefactoringBundle.message("references.in.code.to.elements.from.migration.map", myMigrationMap.getName(),
+                                          UsageViewBundle.getReferencesString(usagesCount, filesCount));
   }
 
   public String getCommentReferencesText(int usagesCount, int filesCount) {
@@ -71,8 +72,7 @@ class MigrationUsagesViewDescriptor implements UsageViewDescriptor {
   }
 
   public String getInfo() {
-    return "Press the \"Do Migrate\" button at the bottom of the search results panel\n" +
-      "to migrate using the migration map \"" + myMigrationMap.getName() + "\"\n";
+    return RefactoringBundle.message("press.the.do.migrate.button", myMigrationMap.getName());
   }
 
   public boolean isCancelInCommonGroup() {

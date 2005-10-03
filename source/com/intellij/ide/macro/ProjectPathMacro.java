@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootsTraversing;
+import com.intellij.ide.IdeBundle;
 
 public final class ProjectPathMacro extends Macro {
   public String getName() {
@@ -12,7 +13,7 @@ public final class ProjectPathMacro extends Macro {
   }
 
   public String getDescription() {
-    return "Project source path";
+    return IdeBundle.message("macro.project.source.path");
   }
 
   public String expand(DataContext dataContext) {

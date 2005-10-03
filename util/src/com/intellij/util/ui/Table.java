@@ -72,14 +72,11 @@ public class Table extends JTable {
           setFont(header.getFont());
         }
         if (!table.isEnabled()) {
-          //noinspection HardCodedStringLiteral
-          Color color = UIManager.getColor("textInactiveText");
-          setForeground(color);
+          setForeground(UIUtil.getTextInactiveTextColor());
         }
       }
       setText(value == null ? "" : value.toString());
-      //noinspection HardCodedStringLiteral
-      setBorder(UIManager.getBorder("TableHeader.cellBorder"));
+      setBorder(UIUtil.getTableHeaderCellBorder());
       setHorizontalAlignment(JLabel.CENTER);
 
       return this;

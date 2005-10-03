@@ -1,13 +1,14 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.controlFlow.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 
 /**
@@ -17,11 +18,11 @@ public class RemoveRedundantElseAction implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.RemoveRedundantElseAction");
 
   public String getText() {
-    return getFamilyName();
+    return QuickFixBundle.message("remove.redundant.else.fix");
   }
 
   public String getFamilyName() {
-    return "Remove Redundant 'else'";
+    return QuickFixBundle.message("remove.redundant.else.fix");
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {

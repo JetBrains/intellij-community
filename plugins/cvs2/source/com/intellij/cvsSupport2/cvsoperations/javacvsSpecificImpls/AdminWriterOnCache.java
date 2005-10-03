@@ -137,7 +137,7 @@ public class AdminWriterOnCache implements IAdminWriter {
 
   private File getEditBackupFile(FileObject fileObject, ICvsFileSystem cvsFileSystem) {
     final File file = cvsFileSystem.getAdminFileSystem().getFile(fileObject);
-    return new File(file.getParentFile(), "CVS/Base/" + file.getName());
+    return new File(file.getParentFile(), CvsUtil.CVS + File.separatorChar + CvsUtil.BASE + File.separatorChar + file.getName());
   }
 
 

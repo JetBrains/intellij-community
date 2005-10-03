@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.psi.PsiClass;
 import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.UIDesignerBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -48,7 +49,7 @@ public final class ComponentItemDialog extends DialogWrapper{
     myTfClassName.addActionListener(
       new ActionListener() {
         public void actionPerformed(final ActionEvent e) {
-          final TreeClassChooser chooser = TreeClassChooserFactory.getInstance(project).createProjectScopeChooser("Choose Component Class");
+          final TreeClassChooser chooser = TreeClassChooserFactory.getInstance(project).createProjectScopeChooser(UIDesignerBundle.message("title.choose.component.class"));
           chooser.showDialog();
           final PsiClass result = chooser.getSelectedClass();
           if (result != null) {

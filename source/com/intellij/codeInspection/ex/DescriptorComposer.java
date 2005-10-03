@@ -2,6 +2,7 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,7 +33,7 @@ public class DescriptorComposer extends HTMLComposer {
       genPageHeader(buf, refElement);
 
       if (myTool.getDescriptions(refElement) != null) {
-        appendHeading(buf, "Problem synopsis");
+        appendHeading(buf, InspectionsBundle.message("inspection.problem.synopsis"));
 
         ProblemDescriptor[] descriptions = myTool.getDescriptions(refElement);
 
@@ -69,39 +70,48 @@ public class DescriptorComposer extends HTMLComposer {
     if (problemIdx == -1) return;
 
     genPageHeader(buf, refElement);
-    appendHeading(buf, "Problem synopsis");
+    appendHeading(buf, InspectionsBundle.message("inspection.problem.synopsis"));
+    //noinspection HardCodedStringLiteral
     buf.append("<br>");
     appendAfterHeaderIndention(buf);
 
     composeDescription(descriptor, problemIdx, buf);
     final LocalQuickFix[] fixes = descriptor.getFixes();
     if (fixes != null) {
+      //noinspection HardCodedStringLiteral
       buf.append("<br><br>");
-      appendHeading(buf, "Problem resolution");
+      appendHeading(buf, InspectionsBundle.message("inspection.problem.resolution"));
+      //noinspection HardCodedStringLiteral
       buf.append("<br>");
       appendAfterHeaderIndention(buf);
 
       int idx = 0;
       for (LocalQuickFix fix : fixes) {
+        //noinspection HardCodedStringLiteral
         buf.append("<font style=\"font-family:verdana;\"");
+        //noinspection HardCodedStringLiteral
         buf.append("<a HREF=\"file://bred.txt#invokelocal:" + (idx++));
         buf.append("\">");
         buf.append(fix.getName());
+        //noinspection HardCodedStringLiteral
         buf.append("</a></font>");
+        //noinspection HardCodedStringLiteral
         buf.append("<br>");
         appendAfterHeaderIndention(buf);
       }
     }
   }
 
-  private void composeDescription(final ProblemDescriptor description, int i, StringBuffer buf) {
+  protected void composeDescription(final ProblemDescriptor description, int i, StringBuffer buf) {
     PsiElement expression = description.getPsiElement();
     StringBuffer anchor = new StringBuffer();
     if (expression != null) {
       VirtualFile vFile = expression.getContainingFile().getVirtualFile();
 
+      //noinspection HardCodedStringLiteral
       anchor.append("<a HREF=\"");
       try {
+        //noinspection HardCodedStringLiteral
         anchor.append(new URL(vFile.getUrl() + "#descr:" + i));
       }
       catch (MalformedURLException e) {
@@ -110,21 +120,28 @@ public class DescriptorComposer extends HTMLComposer {
 
       anchor.append("\">");
       anchor.append(expression.getText().replaceAll("\\$", "\\\\\\$"));
+      //noinspection HardCodedStringLiteral
       anchor.append("</a>");
     }
     else {
-      anchor.append("<font style=\"font-family:verdana; font-weight:bold; color:#FF0000\";>invalidated item</font>");
+      //noinspection HardCodedStringLiteral
+      anchor.append("<font style=\"font-family:verdana; font-weight:bold; color:#FF0000\";>");
+      anchor.append(InspectionsBundle.message("inspection.export.results.invalidated.item"));
+      //noinspection HardCodedStringLiteral
+      anchor.append("</font>");
     }
 
     String descriptionTemplate = description.getDescriptionTemplate();
     if (descriptionTemplate != null) {
+      //noinspection HardCodedStringLiteral
       String res = descriptionTemplate.replaceAll("#ref", anchor.toString());
       final int lineNumber = description.getLineNumber();
       StringBuffer lineAnchor = new StringBuffer();
       if (expression != null && lineNumber > 0) {
         VirtualFile vFile = expression.getContainingFile().getVirtualFile();
         Document doc = FileDocumentManager.getInstance().getDocument(vFile);
-        lineAnchor.append("at line ");
+        lineAnchor.append(InspectionsBundle.message("inspection.export.results.at.line") + " ");
+        //noinspection HardCodedStringLiteral
         lineAnchor.append("<a HREF=\"");
         try {
           int offset = doc.getLineStartOffset(lineNumber - 1);
@@ -136,13 +153,15 @@ public class DescriptorComposer extends HTMLComposer {
         }
         lineAnchor.append("\">");
         lineAnchor.append(Integer.toString(lineNumber));
+        //noinspection HardCodedStringLiteral
         lineAnchor.append("</a>");
+        //noinspection HardCodedStringLiteral
         res = res.replaceAll("#loc", lineAnchor.toString());
       }
       buf.append(res);
     }
     else {
-      buf.append("No error message provided.");
+      buf.append(InspectionsBundle.message("inspection.export.results.no.error"));
     }
   }
 }

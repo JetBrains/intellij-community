@@ -19,26 +19,27 @@
 package com.intellij.openapi.util;
 
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.List;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class JDOMExternalizer {
-  public static void write(Element root, String name, String value) {
+  public static void write(Element root, @NonNls String name, String value) {
     Element element = new Element("setting");
     element.setAttribute("name", name);
     element.setAttribute("value", value == null ? "" : value);
     root.addContent(element);
   }
 
-  public static void write(Element root, String name, boolean value) {
+  public static void write(Element root, @NonNls String name, boolean value) {
     write(root, name, Boolean.toString(value));
   }
   public static void write(Element root, String name, int value) {
     write(root, name, Integer.toString(value));
   }
 
-  public static boolean readBoolean(Element root, String name) {
+  public static boolean readBoolean(Element root, @NonNls String name) {
     return Boolean.valueOf(readString(root, name)).booleanValue();
   }
   public static int readInteger(Element root, String name, int defaultValue) {
@@ -50,7 +51,7 @@ public class JDOMExternalizer {
     }
   }
 
-  public static String readString(Element root, String name) {
+  public static String readString(Element root, @NonNls String name) {
     List list = root.getChildren("setting");
     for (int i = 0; i < list.size(); i++) {
       Element element = (Element)list.get(i);

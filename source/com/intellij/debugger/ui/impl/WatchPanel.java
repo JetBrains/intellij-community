@@ -22,7 +22,11 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Enumeration;
 
+import org.jetbrains.annotations.NonNls;
+
 public abstract class WatchPanel extends DebuggerPanel {
+  @NonNls private static final String HELP_ID = "debugging.debugWatches";
+
   public WatchPanel(Project project, DebuggerStateManager stateManager) {
     super(project, stateManager);
     add(new JScrollPane(getWatchTree()), BorderLayout.CENTER);
@@ -54,7 +58,7 @@ public abstract class WatchPanel extends DebuggerPanel {
 
   public Object getData(String dataId) {
     if (DataConstantsEx.HELP_ID.equals(dataId)) {
-      return "debugging.debugWatches";
+      return HELP_ID;
     }
     return super.getData(dataId);
   }

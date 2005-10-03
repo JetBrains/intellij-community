@@ -1,6 +1,7 @@
 package com.intellij.codeInspection.equalsAndHashcode;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
@@ -9,12 +10,13 @@ import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.JobDescriptor;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignatureUtil;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author max
  */
 public class EqualsAndHashcode extends DescriptorProviderInspection {
-  private static final JobDescriptor JOB_DESCRIPTOR = new JobDescriptor("Searching for equals() and hashCode() in ");
+  private static final JobDescriptor JOB_DESCRIPTOR = new JobDescriptor(InspectionsBundle.message("inspection.equals.hashcode.job.descriptor"));
 
   private PsiMethod myHashCode;
   private PsiMethod myEquals;
@@ -31,11 +33,13 @@ public class EqualsAndHashcode extends DescriptorProviderInspection {
     PsiMethod[] methods = psiObjectClass.getMethods();
     for (int i = 0; i < methods.length; i++) {
       PsiMethod method = methods[i];
-      if ("equals".equals(method.getName())) {
+      @NonNls final String name = method.getName();
+      if ("equals".equals(name)) {
         myEquals = method;
-      } else if ("hashCode".equals(method.getName())) {
-        myHashCode = method;
-      }
+      } else
+        if ("hashCode".equals(name)) {
+          myHashCode = method;
+        }
     }
   }
 
@@ -51,6 +55,7 @@ public class EqualsAndHashcode extends DescriptorProviderInspection {
       }
 
       public void visitClass(PsiClass aClass) {
+        if (!InspectionManagerEx.isToCheckMember(aClass, EqualsAndHashcode.this.getShortName())) return;
         super.visitClass(aClass);
 
         boolean hasEquals = false;
@@ -66,13 +71,13 @@ public class EqualsAndHashcode extends DescriptorProviderInspection {
         }
 
         if (hasEquals != hasHashCode) {
-            addProblemElement(getManager().getRefManager().getReference(aClass),
+          addProblemElement(getManager().getRefManager().getReference(aClass),
                             new ProblemDescriptor[]{getManager().createProblemDescriptor(aClass,
                                                                                          hasEquals
-                                                                                         ? "Class has <code>equals()</code> defined but " +
-                                                                                           "does not define <code>hashCode()</code>."
-                                                                                         : "Class has <code>hashCode()</code> defined but " +
-                                                                                           "does not define <code>equals()</code>.", (LocalQuickFix [])null,ProblemHighlightType.GENERIC_ERROR_OR_WARNING)});
+                                                                                         ? InspectionsBundle.message("inspection.equals.hashcode.only.one.defined.problem.descriptor", "<code>equals()</code>", "<code>hashCode()</code>")
+                                                                                         : InspectionsBundle.message("inspection.equals.hashcode.only.one.defined.problem.descriptor", "<code>hashCode()</code>", "<code>equals()</code>"),
+                                                                                         (LocalQuickFix [])null,
+                                                                                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING)});
         }
       }
     });
@@ -83,7 +88,7 @@ public class EqualsAndHashcode extends DescriptorProviderInspection {
   }
 
   public String getDisplayName() {
-    return "equals() and hashCode() not paired";
+    return InspectionsBundle.message("inspection.equals.hashcode.display.name");
   }
 
   public String getGroupDisplayName() {

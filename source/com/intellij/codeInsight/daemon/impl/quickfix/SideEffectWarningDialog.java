@@ -1,9 +1,11 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiVariable;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -32,7 +34,7 @@ public class SideEffectWarningDialog extends DialogWrapper {
     myBeforeText = beforeText;
     myAfterText = afterText;
     myCanCopeWithSideEffects = canCopeWithSideEffects;
-    setTitle("Side Effects Found");
+    setTitle(QuickFixBundle.message("side.effects.warning.dialog.title"));
     init();
 
   }
@@ -41,8 +43,7 @@ public class SideEffectWarningDialog extends DialogWrapper {
     List<AbstractAction> actions = new ArrayList<AbstractAction>();
     myRemoveAllAction = new AbstractAction() {
       {
-        putValue(Action.NAME, "Remove");
-        putValue(Action.MNEMONIC_KEY, new Integer('R'));
+        UIUtil.setActionNameAndMnemonic(QuickFixBundle.message("side.effect.action.remove"), this);
         putValue(DEFAULT_ACTION, this);
       }
 
@@ -55,8 +56,7 @@ public class SideEffectWarningDialog extends DialogWrapper {
     if (myCanCopeWithSideEffects) {
       myMakeStmtAction = new AbstractAction() {
         {
-          putValue(Action.NAME, "Transform");
-          putValue(Action.MNEMONIC_KEY, new Integer('T'));
+          UIUtil.setActionNameAndMnemonic(QuickFixBundle.message("side.effect.action.transform"), this);
         }
 
         public void actionPerformed(ActionEvent e) {
@@ -68,8 +68,7 @@ public class SideEffectWarningDialog extends DialogWrapper {
     }
     myCancelAllAction = new AbstractAction() {
       {
-        putValue(Action.NAME, "Cancel");
-        putValue(Action.MNEMONIC_KEY, new Integer('C'));
+        UIUtil.setActionNameAndMnemonic(QuickFixBundle.message("side.effect.action.cancel"), this);
       }
 
       public void actionPerformed(ActionEvent e) {
@@ -96,20 +95,16 @@ public class SideEffectWarningDialog extends DialogWrapper {
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new BorderLayout());
 
-    String text =
-            "<html>There are possible side effects found in expressions assigned to the variable '" + myVariable.getName()+"'"
-            +"<br>"
-            +"You can:"
-            +"<ul>"
-            + "<li><b>Remove</b> variable usages along with all expressions involved" + (myCanCopeWithSideEffects ? ", or" : "") + "</li>"
-      ;
+    String text;
     if (myCanCopeWithSideEffects) {
-      text+= "<li><b>Transform</b> expressions assigned to variable into the statements on their own."
-             +"<br>That is,<br>"
-             +"<table border=1><tr><td><code>"+myVariable.getType().getPresentableText()+" "+myVariable.getName()+" = "+myBeforeText+";</code></td></tr></table>"
-             +"<br> becomes: <br>"
-             +"<table border=1><tr><td><code>" + myAfterText + ";</code></td></tr></table>"
-             +"</li>";
+      text = QuickFixBundle.message("side.effect.message2",
+                                    myVariable.getName(),
+                                    myVariable.getType().getPresentableText(),
+                                    myBeforeText,
+                                    myAfterText);
+    }
+    else {
+      text = QuickFixBundle.message("side.effect.message1", myVariable.getName());
     }
 
     JLabel label = new JLabel(text);

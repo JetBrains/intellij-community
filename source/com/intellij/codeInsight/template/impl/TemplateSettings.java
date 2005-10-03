@@ -1,9 +1,10 @@
 package com.intellij.codeInsight.template.impl;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.Template;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,6 +15,7 @@ import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.IllegalDataException;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,15 +27,15 @@ public class TemplateSettings implements JDOMExternalizable, ExportableApplicati
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.template.impl.TemplateSettings");
 
-  public static final String USER_GROUP_NAME = "user";
-  private static final String TEMPLATE_SET = "templateSet";
-  private static final String GROUP = "group";
-  private static final String TEMPLATE = "template";
+  public  @NonNls static final String USER_GROUP_NAME = "user";
+  private @NonNls static final String TEMPLATE_SET = "templateSet";
+  private @NonNls static final String GROUP = "group";
+  private @NonNls static final String TEMPLATE = "template";
 
-  private static final String DELETED_TEMPLATES = "deleted_templates";
+  private @NonNls static final String DELETED_TEMPLATES = "deleted_templates";
   private List<String> myDeletedTemplates = new ArrayList<String>();
 
-  private static final String[] DEFAULT_TEMPLATES = new String[]{
+  private static final @NonNls String[] DEFAULT_TEMPLATES = new String[]{
     "/liveTemplates/html_xml",
     "/liveTemplates/iterations",
     "/liveTemplates/other",
@@ -47,32 +49,39 @@ public class TemplateSettings implements JDOMExternalizable, ExportableApplicati
   public static final char ENTER_CHAR = '\n';
   public static final char DEFAULT_CHAR = 'D';
 
-  private static final String SPACE = "SPACE";
-  private static final String TAB = "TAB";
-  private static final String ENTER = "ENTER";
+  private static final @NonNls String SPACE = "SPACE";
+  private static final @NonNls String TAB = "TAB";
+  private static final @NonNls String ENTER = "ENTER";
 
-  private static final String NAME = "name";
-  private static final String VALUE = "value";
-  private static final String DESCRIPTION = "description";
-  private static final String SHORTCUT = "shortcut";
+  private static final @NonNls String NAME = "name";
+  private static final @NonNls String VALUE = "value";
+  private static final @NonNls String DESCRIPTION = "description";
+  private static final @NonNls String SHORTCUT = "shortcut";
 
-  private static final String VARIABLE = "variable";
-  private static final String EXPRESSION = "expression";
-  private static final String DEFAULT_VALUE = "defaultValue";
-  private static final String ALWAYS_STOP_AT = "alwaysStopAt";
+  private static final @NonNls String VARIABLE = "variable";
+  private static final @NonNls String EXPRESSION = "expression";
+  private static final @NonNls String DEFAULT_VALUE = "defaultValue";
+  private static final @NonNls String ALWAYS_STOP_AT = "alwaysStopAt";
 
-  private static final String CONTEXT = "context";
-  private static final String TO_REFORMAT = "toReformat";
-  private static final String TO_SHORTEN_FQ_NAMES = "toShortenFQNames";
+  private static final @NonNls String CONTEXT = "context";
+  private static final @NonNls String TO_REFORMAT = "toReformat";
+  private static final @NonNls String TO_SHORTEN_FQ_NAMES = "toShortenFQNames";
 
-  private static final String DEFAULT_SHORTCUT = "defaultShortcut";
-  private String DEACTIVATED = "deactivated";
+  private static final @NonNls String DEFAULT_SHORTCUT = "defaultShortcut";
+  private static final @NonNls String DEACTIVATED = "deactivated";
+
+  @NonNls private static final String RESOURCE_BUNDLE = "resource-bundle";
+  @NonNls private static final String KEY = "key";
+
+  private static final @NonNls String TEMPLATES_CONFIG_FOLDER = "templates";
 
   private Map myTemplates = new LinkedHashMap();
-  private Map myDefaultTemplates = new LinkedHashMap();
+  private Map<String,TemplateImpl> myDefaultTemplates = new LinkedHashMap<String, TemplateImpl>();
   private int myMaxKeyLength = 0;
   private char myDefaultShortcutChar = TAB_CHAR;
   private String myLastSelectedTemplateKey;
+  @NonNls
+  public static final String XML_EXTENSION = ".xml";
 
   public TemplateSettings(Application application) {
     loadTemplates(application);
@@ -83,7 +92,7 @@ public class TemplateSettings implements JDOMExternalizable, ExportableApplicati
   }
 
   public String getPresentableName() {
-    return "Code templates";
+    return CodeInsightBundle.message("templates.export.display.name");
   }
 
   public void disposeComponent() {
@@ -211,7 +220,7 @@ public class TemplateSettings implements JDOMExternalizable, ExportableApplicati
   }
 
   private static File getTemplateDirectory(boolean toCreate) {
-    String directoryPath = PathManager.getConfigPath() + File.separator + "templates";
+    String directoryPath = PathManager.getConfigPath() + File.separator + TEMPLATES_CONFIG_FOLDER;
     File directory = new File(directoryPath);
     if (!directory.exists()) {
       if (!toCreate) {
@@ -244,7 +253,7 @@ public class TemplateSettings implements JDOMExternalizable, ExportableApplicati
     try {
       for (File file : files) {
         String name = file.getName();
-        if (!name.toLowerCase().endsWith(".xml")) continue;
+        if (!name.toLowerCase().endsWith(XML_EXTENSION)) continue;
         readTemplateFile(file);
       }
 
@@ -289,13 +298,22 @@ public class TemplateSettings implements JDOMExternalizable, ExportableApplicati
 
       String name = element.getAttributeValue(NAME);
       String value = element.getAttributeValue(VALUE);
-      String description = element.getAttributeValue(DESCRIPTION);
+      String description;
+      String resourceBundle = element.getAttributeValue(RESOURCE_BUNDLE);
+      String key = element.getAttributeValue(KEY);
+      if (resourceBundle != null && key != null) {
+        ResourceBundle bundle = ResourceBundle.getBundle(resourceBundle);
+        description = bundle.getString(key);
+      }
+      else {
+        description = element.getAttributeValue(DESCRIPTION);
+      }
       String shortcut = element.getAttributeValue(SHORTCUT);
       if (isDefault && myDeletedTemplates.contains(name)) continue;
       TemplateImpl template = addTemplate(name, value, groupName, description, shortcut, isDefault);
-      template.setToReformat("true".equals(element.getAttributeValue(TO_REFORMAT)));
-      template.setToShortenLongNames("true".equals(element.getAttributeValue(TO_SHORTEN_FQ_NAMES)));
-      template.setDeactivated("true".equals(element.getAttributeValue(DEACTIVATED)));
+      template.setToReformat(Boolean.valueOf(element.getAttributeValue(TO_REFORMAT)));
+      template.setToShortenLongNames(Boolean.valueOf(element.getAttributeValue(TO_SHORTEN_FQ_NAMES)));
+      template.setDeactivated(Boolean.valueOf(element.getAttributeValue(DEACTIVATED)));
 
 
       for (final Object o : element.getChildren(VARIABLE)) {
@@ -303,7 +321,7 @@ public class TemplateSettings implements JDOMExternalizable, ExportableApplicati
         String variableName = e.getAttributeValue(NAME);
         String expression = e.getAttributeValue(EXPRESSION);
         String defaultValue = e.getAttributeValue(DEFAULT_VALUE);
-        boolean isAlwaysStopAt = "true".equals(e.getAttributeValue(ALWAYS_STOP_AT));
+        boolean isAlwaysStopAt = Boolean.valueOf(e.getAttributeValue(ALWAYS_STOP_AT));
         template.addVariable(variableName, expression, defaultValue, isAlwaysStopAt);
       }
 
@@ -317,13 +335,13 @@ public class TemplateSettings implements JDOMExternalizable, ExportableApplicati
   private void saveTemplates(final TemplateImpl[] templates) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        List templateNames = new ArrayList();
+        List<String> templateNames = new ArrayList<String>();
         for (int i = 0; i < templates.length; i++) {
           templateNames.add(templates[i].getKey());
         }
         myDeletedTemplates.clear();
-        for (Iterator it = myDefaultTemplates.keySet().iterator(); it.hasNext();) {
-          String defTemplateName = (String) it.next();
+        for (Iterator<String> it = myDefaultTemplates.keySet().iterator(); it.hasNext();) {
+          String defTemplateName = it.next();
           if (!templateNames.contains(defTemplateName)) {
             myDeletedTemplates.add(defTemplateName);
           }
@@ -337,13 +355,13 @@ public class TemplateSettings implements JDOMExternalizable, ExportableApplicati
         }
 
         if (templates.length == 0) return;
-        com.intellij.util.containers.HashMap groupToDocumentMap = new com.intellij.util.containers.HashMap();
+        com.intellij.util.containers.HashMap<String,Element> groupToDocumentMap = new com.intellij.util.containers.HashMap<String, Element>();
         for (int i = 0; i < templates.length; i++) {
           TemplateImpl template = templates[i];
           if (template.equals(myDefaultTemplates.get(template.getKey()))) continue;
 
           String groupName = templates[i].getGroupName();
-          Element templateSetElement = (Element) groupToDocumentMap.get(groupName);
+          Element templateSetElement = groupToDocumentMap.get(groupName);
           if (templateSetElement == null) {
             templateSetElement = new Element(TEMPLATE_SET);
             templateSetElement.setAttribute(GROUP, groupName);
@@ -360,14 +378,14 @@ public class TemplateSettings implements JDOMExternalizable, ExportableApplicati
           return;
         }
 
-        Collection groups = groupToDocumentMap.entrySet();
-        for (Iterator it = groups.iterator(); it.hasNext();) {
-          Map.Entry entry = (Map.Entry) it.next();
-          String groupName = (String) entry.getKey();
-          Element templateSetElement = (Element) entry.getValue();
+        Collection<Map.Entry<String,Element>> groups = groupToDocumentMap.entrySet();
+        for (Iterator<Map.Entry<String,Element>> it = groups.iterator(); it.hasNext();) {
+          Map.Entry<String,Element> entry = it.next();
+          String groupName = entry.getKey();
+          Element templateSetElement = entry.getValue();
 
           String fileName = convertName(groupName);
-          String filePath = findFirstNotExistingFile(dir, fileName, ".xml");
+          String filePath = findFirstNotExistingFile(dir, fileName, XML_EXTENSION);
           try {
             JDOMUtil.writeDocument(new Document(templateSetElement), filePath, CodeStyleSettingsManager.getSettings(null).getLineSeparator());
           } catch (IOException e) {
@@ -392,10 +410,10 @@ public class TemplateSettings implements JDOMExternalizable, ExportableApplicati
     if (template.getDescription() != null) {
       element.setAttribute(DESCRIPTION, template.getDescription());
     }
-    element.setAttribute(TO_REFORMAT, template.isToReformat() ? "true" : "false");
-    element.setAttribute(TO_SHORTEN_FQ_NAMES, template.isToShortenLongNames() ? "true" : "false");
+    element.setAttribute(TO_REFORMAT, Boolean.toString(template.isToReformat()));
+    element.setAttribute(TO_SHORTEN_FQ_NAMES, Boolean.toString(template.isToShortenLongNames()));
     if (template.isDeactivated()) {
-      element.setAttribute(DEACTIVATED, "true");
+      element.setAttribute(DEACTIVATED, Boolean.toString(true));
     }
 
     for (int i = 0; i < template.getVariableCount(); i++) {
@@ -403,7 +421,7 @@ public class TemplateSettings implements JDOMExternalizable, ExportableApplicati
       variableElement.setAttribute(NAME, template.getVariableNameAt(i));
       variableElement.setAttribute(EXPRESSION, template.getExpressionStringAt(i));
       variableElement.setAttribute(DEFAULT_VALUE, template.getDefaultValueStringAt(i));
-      variableElement.setAttribute(ALWAYS_STOP_AT, template.isAlwaysStopAt(i) ? "true" : "false");
+      variableElement.setAttribute(ALWAYS_STOP_AT, Boolean.toString(template.isAlwaysStopAt(i)));
       element.addContent(variableElement);
     }
 

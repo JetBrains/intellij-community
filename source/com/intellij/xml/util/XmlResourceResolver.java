@@ -24,6 +24,7 @@ import org.apache.xerces.xni.parser.XMLInputSource;
 import org.apache.xerces.xni.parser.XMLEntityResolver;
 import org.apache.xerces.xni.XMLResourceIdentifier;
 import org.apache.xerces.xni.XNIException;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * Created by IntelliJ IDEA.
@@ -38,6 +39,8 @@ public class XmlResourceResolver implements XMLEntityResolver {
   private Project myProject;
   private Map<String,String> myExternalResourcesMap = new HashMap<String, String>(1);
   private boolean myStopOnUnDeclaredResource;
+  @NonNls
+  public static final String FILE_PREFIX = "file://";
 
   public XmlResourceResolver(XmlFile _xmlFile, Project _project) {
     myFile = _xmlFile;
@@ -47,7 +50,7 @@ public class XmlResourceResolver implements XMLEntityResolver {
   public String getPathByPublicId(String baseId) {
     return myExternalResourcesMap.get(baseId);
   }
-  
+
   public String[] getResourcePaths() {
     return myExternalResourcesMap.values().toArray(new String[myExternalResourcesMap.size()]);
   }
@@ -57,7 +60,7 @@ public class XmlResourceResolver implements XMLEntityResolver {
       LOG.debug("enter: resolveEntity(baseSystemId='" + baseSystemId + "' systemId='" + systemId + "')");
     }
     if (systemId == null) return null;
-    if (myStopOnUnDeclaredResource && 
+    if (myStopOnUnDeclaredResource &&
         ExternalResourceManagerEx.getInstanceEx().isIgnoredResource(systemId)) {
       throw new ProcessCanceledException();
     }
@@ -105,25 +108,25 @@ public class XmlResourceResolver implements XMLEntityResolver {
           String fullUrl = baseSystemId.substring( 0, baseSystemId.lastIndexOf('/') + 1 ) + systemId;
           psiFile = XmlUtil.findXmlFile(baseFile,fullUrl);
         }
-        
+
         if (psiFile == null && systemId != null && baseSystemId == null) { // entity file
           File workingFile = new File("");
           String workingDir = workingFile.getAbsoluteFile().getAbsolutePath().replace(File.separatorChar, '/');
-            
+
           for(String path:myExternalResourcesMap.values()) {
             String id = StringUtil.replace(
-              systemId, 
-              workingDir, 
-              path.substring(path.startsWith("file://")?"file://".length():0,path.lastIndexOf('/'))
+              systemId,
+              workingDir,
+              path.substring(path.startsWith(FILE_PREFIX)?FILE_PREFIX.length():0,path.lastIndexOf('/'))
             );
             final VirtualFile relativeFile = VfsUtil.findRelativeFile(id, null);
-            
+
             if (relativeFile != null) {
               psiFile = PsiManager.getInstance(myProject).findFile(relativeFile);
               if (psiFile != null) break;
             }
           }
-        }     
+        }
 
         if (LOG.isDebugEnabled()) {
           LOG.debug("resolveEntity: psiFile='" + (psiFile != null ? psiFile.getVirtualFile() : null) + "'");

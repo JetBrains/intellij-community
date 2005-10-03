@@ -2,6 +2,7 @@ package com.intellij.ide.macro;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.module.Module;
+import com.intellij.ide.IdeBundle;
 
 public final class ModuleNameMacro extends Macro {
   public String getName() {
@@ -9,7 +10,7 @@ public final class ModuleNameMacro extends Macro {
   }
 
   public String getDescription() {
-    return "The name of the module file without extension";
+    return IdeBundle.message("macro.module.file.name");
   }
 
   public String expand(DataContext dataContext) {

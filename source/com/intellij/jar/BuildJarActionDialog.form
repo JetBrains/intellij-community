@@ -27,7 +27,7 @@
               <splitpane position="left"/>
             </constraints>
             <properties/>
-            <border type="none" title="Select Modules to Jar"/>
+            <border type="none"/>
             <children/>
           </xy>
           <grid id="603c0" binding="myModuleSettingsPanel" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
@@ -36,12 +36,12 @@
               <splitpane position="right"/>
             </constraints>
             <properties/>
-            <border type="none" title="Module Jar Settings"/>
+            <border type="none"/>
             <children>
               <xy id="a3d48" binding="myEditorPanel" hgap="-1" vgap="-1">
                 <margin top="0" left="0" bottom="0" right="0"/>
                 <constraints>
-                  <xy x="5" y="101" width="204" height="106"/>
+                  <xy x="0" y="82" width="214" height="134"/>
                   <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
                 </constraints>
                 <properties/>
@@ -50,22 +50,22 @@
               </xy>
               <component id="85dcb" class="com.intellij.openapi.ui.LabeledComponent" binding="myJarFilePathComponent">
                 <constraints>
-                  <xy x="5" y="19" width="204" height="36"/>
+                  <xy x="0" y="0" width="214" height="36"/>
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1"/>
                 </constraints>
                 <properties>
                   <componentClass value="com.intellij.openapi.ui.TextFieldWithBrowseButton"/>
-                  <text value="Jar file &amp;path:"/>
+                  <text resource-bundle="messages/IdeBundle" key="jar.build.path"/>
                 </properties>
               </component>
               <component id="d106c" class="com.intellij.openapi.ui.LabeledComponent" binding="myMainClassComponent">
                 <constraints>
-                  <xy x="5" y="60" width="204" height="36"/>
+                  <xy x="0" y="41" width="214" height="36"/>
                   <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1"/>
                 </constraints>
                 <properties>
                   <componentClass value="com.intellij.openapi.ui.TextFieldWithBrowseButton"/>
-                  <text value="Main &amp;class:"/>
+                  <text resource-bundle="messages/IdeBundle" key="jar.build.main.class"/>
                 </properties>
               </component>
             </children>

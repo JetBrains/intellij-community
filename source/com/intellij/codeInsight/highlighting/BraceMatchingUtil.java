@@ -662,10 +662,7 @@ public class BraceMatchingUtil {
       if (isLBraceToken(iterator, fileText, fileType)){
         if (braceStack.size() > 0){
           IElementType topToken = braceStack.pop();
-          if (isPairBraces(tokenType, topToken, fileType)){
-            continue;
-          }
-          else{
+          if (!isPairBraces(tokenType, topToken, fileType)) {
             break; // unmatched braces
           }
         }
@@ -697,10 +694,7 @@ public class BraceMatchingUtil {
       if (isRBraceToken(iterator, fileText, fileType)){
         if (braceStack.size() > 0){
           IElementType topToken = braceStack.pop();
-          if (isPairBraces(tokenType, topToken, fileType)){
-            continue;
-          }
-          else{
+          if (!isPairBraces(tokenType, topToken, fileType)) {
             break; // unmatched braces
           }
         }

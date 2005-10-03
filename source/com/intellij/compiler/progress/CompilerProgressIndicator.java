@@ -13,10 +13,7 @@ import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.compiler.CompilationStatusListener;
-import com.intellij.openapi.compiler.CompilerManager;
-import com.intellij.openapi.compiler.CompilerMessage;
-import com.intellij.openapi.compiler.CompilerMessageCategory;
+import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
@@ -353,10 +350,10 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
             if (shouldRetainView) {
               addMessage(
                 new CompilerMessageImpl(myProject, CompilerMessageCategory.STATISTICS,
-                                    myErrorCount + (myErrorCount == 1 ? " error" : " errors"), null, -1, -1));
+                                        CompilerBundle.message("statistics.error.count", myErrorCount), null, -1, -1));
               addMessage(
                 new CompilerMessageImpl(myProject, CompilerMessageCategory.STATISTICS,
-                                    myWarningCount + (myWarningCount == 1 ? " warning" : " warnings"), null, -1, -1));
+                                        CompilerBundle.message("statistics.warnings.count", myWarningCount), null, -1, -1));
               activateMessageView();
               myErrorTreeView.selectFirstMessage();
             }
@@ -406,8 +403,8 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
       if (shouldAskUser()) {
         int result = Messages.showOkCancelDialog(
           myProject,
-          "The compiler is running. Proceed with project closing?",
-          "Compiler Running",
+          CompilerBundle.message("warning.compiler.running.on.project.close"),
+          CompilerBundle.message("compiler.running.dialog.title"),
           Messages.getQuestionIcon()
         );
         if (result != 0) {
@@ -457,8 +454,8 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
         if (!isCanceled() && shouldAskUser()) {
           int result = Messages.showOkCancelDialog(
             myProject,
-            "The compiler is running. Terminate it?",
-            "Compiler Running",
+            CompilerBundle.message("warning.compiler.running.on.toolwindow.close"),
+            CompilerBundle.message("compiler.running.dialog.title"),
             Messages.getQuestionIcon()
           );
           if (result != 0) {

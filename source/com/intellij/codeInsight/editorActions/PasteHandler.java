@@ -27,6 +27,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.Indent;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.NonNls;
 
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
@@ -259,20 +260,20 @@ public class PasteHandler extends EditorActionHandler {
   }
 
   private static String escapeIfStringLiteral(final Project project,
-                                       final PsiFile file,
-                                       final Editor editor,
-                                       String text) {
+                                              final PsiFile file,
+                                              final Editor editor,
+                                              String text) {
     if ("\n".equals(text)) return text;
     final Document document = editor.getDocument();
     PsiDocumentManager.getInstance(project).commitDocument(document);
     int caretOffset = editor.getCaretModel().getOffset();
     PsiElement elementAtCaret = file.findElementAt(caretOffset);
     if (elementAtCaret instanceof PsiJavaToken &&
-    ((PsiJavaToken)elementAtCaret).getTokenType() == JavaTokenType.STRING_LITERAL &&
-    caretOffset > elementAtCaret.getTextOffset()) {
+        ((PsiJavaToken)elementAtCaret).getTokenType() == JavaTokenType.STRING_LITERAL &&
+        caretOffset > elementAtCaret.getTextOffset()) {
       StringBuffer buffer = new StringBuffer(text.length());
       CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(project);
-      String breaker = codeStyleSettings.BINARY_OPERATION_SIGN_ON_NEXT_LINE ? "\\n\"\n+ \"" : "\\n\" +\n\"";
+      @NonNls String breaker = codeStyleSettings.BINARY_OPERATION_SIGN_ON_NEXT_LINE ? "\\n\"\n+ \"" : "\\n\" +\n\"";
       final String[] lines = LineTokenizer.tokenize(text.toCharArray(), false, true);
       for (int i = 0; i < lines.length; i++) {
         String line = lines[i];
@@ -285,8 +286,8 @@ public class PasteHandler extends EditorActionHandler {
   }
 
   private static PsiJavaCodeReferenceElement[] findReferencesToRestore(PsiFile file,
-                                                                RangeMarker bounds,
-                                                                TextBlockTransferable.ReferenceData[] referenceData) {
+                                                                       RangeMarker bounds,
+                                                                       TextBlockTransferable.ReferenceData[] referenceData) {
     PsiManager manager = file.getManager();
     PsiResolveHelper helper = manager.getResolveHelper();
     PsiJavaCodeReferenceElement[] refs = new PsiJavaCodeReferenceElement[referenceData.length];
@@ -313,7 +314,7 @@ public class PasteHandler extends EditorActionHandler {
             if (reference instanceof PsiReferenceExpression) {
               PsiElement referent = reference.resolve();
               if (!(referent instanceof PsiNamedElement) || !data.staticMemberName.equals(((PsiNamedElement)referent).getName())
-               || !(referent instanceof PsiMember) || !data.qClassName.equals(((PsiMember)referent).getContainingClass().getQualifiedName())) {
+                  || !(referent instanceof PsiMember) || !data.qClassName.equals(((PsiMember)referent).getContainingClass().getQualifiedName())) {
                 refs[i] = reference;
               }
             }
@@ -325,7 +326,7 @@ public class PasteHandler extends EditorActionHandler {
   }
 
   private static void restoreReferences(TextBlockTransferable.ReferenceData[] referenceData,
-                                 PsiJavaCodeReferenceElement[] refs) {
+                                        PsiJavaCodeReferenceElement[] refs) {
     for (int i = 0; i < refs.length; i++) {
       PsiJavaCodeReferenceElement reference = refs[i];
       if (reference != null) {
@@ -437,10 +438,10 @@ public class PasteHandler extends EditorActionHandler {
   }
 
   private static void indentJavaBlock(Project project, Document document,
-                               int startOffset,
-                               int endOffset,
-                               PsiFile file,
-                               final FileType fileType) {
+                                      int startOffset,
+                                      int endOffset,
+                                      PsiFile file,
+                                      final FileType fileType) {
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
     CharSequence chars = document.getCharsSequence();
     int spaceStart = CharArrayUtil.shiftBackwardUntil(chars, startOffset - 1, "\n\r") + 1;

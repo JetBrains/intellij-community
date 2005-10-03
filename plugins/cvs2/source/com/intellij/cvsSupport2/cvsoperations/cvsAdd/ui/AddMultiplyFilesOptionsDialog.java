@@ -20,6 +20,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.treetable.ListTreeTableModelOnColumns;
 import com.intellij.util.ui.treetable.TreeTable;
 import com.intellij.util.ui.treetable.TreeTableModel;
+import com.intellij.CvsBundle;
 
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
@@ -63,7 +64,7 @@ public class AddMultiplyFilesOptionsDialog extends AbstractAddOptionsDialog {
   };
 
 
-  private static final ColumnInfo FILE = new ColumnInfo("File") {
+  private static final ColumnInfo FILE = new ColumnInfo(CvsBundle.message("add.multiple.files.file.column.name")) {
     public Object valueOf(Object object) {
       return ((AddedFileInfo)object).getPresentableText();
     }
@@ -77,7 +78,8 @@ public class AddMultiplyFilesOptionsDialog extends AbstractAddOptionsDialog {
     }
   };
 
-  private static final ColumnInfo KEYWORD_SUBSTITUTION = new ColumnInfo("Keyword Substitution") {
+  private static final ColumnInfo KEYWORD_SUBSTITUTION = new ColumnInfo(
+    CvsBundle.message("add.multiple.files.keyword.substitution.column.name")) {
     public Object valueOf(Object object) {
       return ((AddedFileInfo)object).getKeywordSubstitutionsWithSelection();
     }
@@ -142,7 +144,7 @@ public class AddMultiplyFilesOptionsDialog extends AbstractAddOptionsDialog {
       ((AddedFileInfo)each.next()).addIncludedObserver(myObserver);
     }
 
-    setTitle("Add Files to CVS");
+    setTitle(com.intellij.CvsBundle.message("dialog.title.add.files.to.cvs"));
 
     createTree();
 
@@ -254,7 +256,7 @@ public class AddMultiplyFilesOptionsDialog extends AbstractAddOptionsDialog {
   private class SelectAllAction extends SelectUnselectAllAction {
 
     public SelectAllAction() {
-      super("Select All", IconLoader.getIcon("/actions/selectall.png"));
+      super(com.intellij.CvsBundle.message("action.name.select.all"), IconLoader.getIcon("/actions/selectall.png"));
     }
 
     protected boolean includedValue() {
@@ -264,7 +266,7 @@ public class AddMultiplyFilesOptionsDialog extends AbstractAddOptionsDialog {
 
   private class UnselectAllAction extends SelectUnselectAllAction {
     public UnselectAllAction() {
-      super("Unselect All", IconLoader.getIcon("/actions/unselectall.png"));
+      super(com.intellij.CvsBundle.message("action.name.unselect.all"), IconLoader.getIcon("/actions/unselectall.png"));
     }
 
     protected boolean includedValue() {

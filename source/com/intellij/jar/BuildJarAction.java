@@ -19,6 +19,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.ide.IdeBundle;
 import gnu.trove.THashSet;
 
 import java.io.*;
@@ -27,17 +28,22 @@ import java.util.Set;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author cdr
  */
 public class BuildJarAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.jar.BuildJarAction");
+  @NonNls private static final String MAIN_CLASS = "Main-Class";
+  @NonNls private static final String JAR_EXTENSION = ".jar";
 
   public void actionPerformed(AnActionEvent e) {
     Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
     Collection<Module> modulesToJar = BuildJarActionDialog.getModulesToJar(project);
     if (modulesToJar.size() == 0) {
-      Messages.showErrorDialog(project, "There are no Java modules found in the project.\nOnly Java modules can be jarred.", "No Modules To Jar Found");
+      Messages.showErrorDialog(project, IdeBundle.message("jar.no.java.modules.in.project.error"),
+                               IdeBundle.message("jar.no.java.modules.in.project.title"));
       return;
     }
     BuildJarActionDialog dialog = new BuildJarActionDialog(project);
@@ -56,19 +62,19 @@ public class BuildJarAction extends AnAction {
             BuildJarSettings buildJarSettings = BuildJarSettings.getInstance(module);
             if (buildJarSettings == null || !buildJarSettings.isBuildJar()) continue;
             String presentableJarPath = "'"+buildJarSettings.getJarPath()+"'";
-            ProgressManager.getInstance().getProgressIndicator().setText("Building jar "+presentableJarPath+" ...");
+            ProgressManager.getInstance().getProgressIndicator().setText(IdeBundle.message("jar.build.progress", presentableJarPath));
             buildJar(module, buildJarSettings);
-            WindowManager.getInstance().getStatusBar(project).setInfo("Jar has been built in "+presentableJarPath);
+            WindowManager.getInstance().getStatusBar(project).setInfo(IdeBundle.message("jar.build.success.message", presentableJarPath));
           }
         }
         catch (ProcessCanceledException e) {
-          WindowManager.getInstance().getStatusBar(project).setInfo("Jar creation has been canceled");
+          WindowManager.getInstance().getStatusBar(project).setInfo(IdeBundle.message("jar.build.cancelled"));
         }
         catch (IOException e) {
-          Messages.showErrorDialog(project, e.toString(), "Error Creating Jar");
+          Messages.showErrorDialog(project, e.toString(), IdeBundle.message("jar.build.error.title"));
         }
       }
-    },"Building Jar", true, project);
+    }, IdeBundle.message("jar.build.progress.title"), true, project);
   }
 
   private static void buildJar(final Module module, final BuildJarSettings buildJarSettings) throws IOException {
@@ -84,7 +90,7 @@ public class BuildJarAction extends AnAction {
       }
 
       public String getDescription() {
-        return "All file types";
+        return IdeBundle.message("filter.all.file.types");
       }
     };
     BuildRecipeImpl buildRecipe = new BuildRecipeImpl();
@@ -98,11 +104,11 @@ public class BuildJarAction extends AnAction {
     Manifest manifest = MakeUtil.getInstance().createManifest(buildRecipe);
     String mainClass = buildJarSettings.getMainClass();
     if (manifest != null && !Comparing.strEqual(mainClass, null)) {
-      manifest.getMainAttributes().putValue("Main-Class",mainClass);
+      manifest.getMainAttributes().putValue(MAIN_CLASS,mainClass);
     }
 
     // write temp file and rename it to the jar to avoid deployment of incomplete jar. SCR #30303
-    final File tempFile = File.createTempFile("_"+ FileUtil.getNameWithoutExtension(jarFile), ".jar", jarFile.getParentFile());
+    final File tempFile = File.createTempFile("_"+ FileUtil.getNameWithoutExtension(jarFile), JAR_EXTENSION, jarFile.getParentFile());
     final JarOutputStream jarOutputStream = manifest == null ?
                                             new JarOutputStream(new BufferedOutputStream(new FileOutputStream(tempFile))) :
                                             new JarOutputStream(new BufferedOutputStream(new FileOutputStream(tempFile)), manifest);
@@ -118,7 +124,8 @@ public class BuildJarAction extends AnAction {
             File file = fileCopyInstruction.getFile();
             if (file == null || !file.exists()) return true;
             String presentablePath = FileUtil.toSystemDependentName(file.getPath());
-            ProgressManager.getInstance().getProgressIndicator().setText2("Processing file "+presentablePath+" ...");
+            ProgressManager.getInstance().getProgressIndicator().setText2(
+              IdeBundle.message("jar.build.processing.file.progress", presentablePath));
           }
           instruction.addFilesToJar(compileContext, tempFile, jarOutputStream, dependencies, tempWrittenRelativePaths, allFilesFilter);
           return true;
@@ -137,9 +144,9 @@ public class BuildJarAction extends AnAction {
         FileUtil.rename(tempFile, jarFile);
       }
       catch (IOException e) {
-        String message = "Cannot overwrite file '" + FileUtil.toSystemDependentName(jarFile.getPath()) + "'." +
-                         " Copy have been saved to '" + FileUtil.toSystemDependentName(tempFile.getPath()) + "'.";
-        Messages.showErrorDialog(module.getProject(), message, "Error Creating Jar");
+        String message = IdeBundle.message("jar.build.cannot.overwrite.error", FileUtil.toSystemDependentName(jarFile.getPath()),
+                                           FileUtil.toSystemDependentName(tempFile.getPath()));
+        Messages.showErrorDialog(module.getProject(), message, IdeBundle.message("jar.build.error.title"));
       }
     }
   }

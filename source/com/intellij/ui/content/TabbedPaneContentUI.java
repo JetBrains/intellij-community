@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.TabbedPaneWrapper;
+import com.intellij.ui.UIBundle;
 import com.intellij.util.IJSwingUtilities;
 
 import javax.swing.*;
@@ -125,7 +126,7 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
    */
   private class CloseAllAction extends AnAction {
     public CloseAllAction() {
-      super("Close All");
+      super(UIBundle.message("tabbed.pane.close.all.action.name"));
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -146,7 +147,7 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
     private Content myContent;
 
     public CloseAllButThisAction(Content content) {
-      super("Close All But This");
+      super(UIBundle.message("tabbed.pane.close.all.but.this.action.name"));
       myContent = content;
     }
 
@@ -163,7 +164,7 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
 
     public void update(AnActionEvent e) {
       Presentation presentation = e.getPresentation();
-      presentation.setText(myManager.getCloseActionName().replaceFirst(" ", " All ") + "s But This");
+      presentation.setText(myManager.getCloseAllButThisActionName());
       presentation.setEnabled(myContent != null && myManager.canCloseContents() && myManager.getContentCount() > 1);
       presentation.setVisible(myManager.canCloseContents());
     }
@@ -178,8 +179,8 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
     public MyPinTabAction(Content content) {
       myContent = content;
       Presentation presentation = getTemplatePresentation();
-      presentation.setText("Pin Tab");
-      presentation.setDescription("Pin tool window tab");
+      presentation.setText(UIBundle.message("tabbed.pane.pin.tab.action.name"));
+      presentation.setDescription(UIBundle.message("tabbed.pane.pin.tab.action.description"));
     }
 
     public boolean isSelected(AnActionEvent event) {

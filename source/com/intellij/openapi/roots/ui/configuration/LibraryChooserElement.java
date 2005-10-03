@@ -9,6 +9,7 @@ import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.util.Icons;
 
 import javax.swing.*;
@@ -42,7 +43,7 @@ public class LibraryChooserElement {
     myOrderEntry = orderEntry;
     if (myLibrary == null && myOrderEntry == null) {
       LOG.assertTrue(false, "Both library and order entry are null");
-      myName = "Unknown";
+      myName = ProjectBundle.message("module.libraries.unknown.item");
     }
     else {
       myName = myLibrary != null? myLibrary.getName() : myOrderEntry.getLibraryName();

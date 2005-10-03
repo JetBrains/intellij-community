@@ -94,8 +94,8 @@ public interface PsiReference {
   boolean isReferenceTo(PsiElement element);
 
   /**
-   * Returns the array of {@link PsiElement} and/or {@link com.intellij.psi.infos.CandidateInfo} instances
-   * representing all identifiers that are visible at the location of the reference. The contents
+   * Returns the array of String, {@link PsiElement} and/or {@link com.intellij.psi.infos.CandidateInfo}
+   * instances representing all identifiers that are visible at the location of the reference. The contents
    * of the returned array is used to build the lookup list for basic code completion. (The list
    * of visible identifiers must not be filtered by the completion prefix string - the
    * filtering is performed later by IDEA core.)

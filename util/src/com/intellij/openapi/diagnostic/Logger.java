@@ -34,7 +34,7 @@ public abstract class Logger {
     ourFactory = factory;
   }
 
-  public static Logger getInstance(String category) {
+  public static Logger getInstance(@NonNls String category) {
     return ourFactory.getLoggerInstance(category);
   }
 
@@ -63,7 +63,7 @@ public abstract class Logger {
 
   public abstract void info(@NonNls String message);
 
-  public abstract void info(String message, Throwable t);
+  public abstract void info(@NonNls String message, Throwable t);
 
   public void info(Throwable t) {
     info("", t);

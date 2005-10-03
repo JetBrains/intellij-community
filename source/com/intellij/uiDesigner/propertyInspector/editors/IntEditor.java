@@ -1,11 +1,14 @@
 package com.intellij.uiDesigner.propertyInspector.editors;
 
 import com.intellij.uiDesigner.RadComponent;
+import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.text.MessageFormat;
 
 /**
  * @author Anton Katilin
@@ -33,7 +36,8 @@ public final class IntEditor extends PropertyEditor{
     myTf.setText(integer.toString());
 
     if(inplace){
-      myTf.setBorder(UIManager.getBorder("TextField.border"));
+      //noinspection HardCodedStringLiteral
+      myTf.setBorder(UIUtil.getTextFieldBorder());
     }
     else{
       myTf.setBorder(null);
@@ -46,12 +50,12 @@ public final class IntEditor extends PropertyEditor{
     try {
       final Integer value = Integer.valueOf(myTf.getText());
       if(value.intValue() < myLowBoundary){
-        throw new RuntimeException("Value should not be less than " + myLowBoundary);
+        throw new RuntimeException(UIDesignerBundle.message("error.value.should.not.be.less", myLowBoundary));
       }
       return value;
     }
     catch (final NumberFormatException exc) {
-      throw new RuntimeException("Entered value is not an integer number");
+      throw new RuntimeException(UIDesignerBundle.message("error.not.an.integer"));
     }
   }
 

@@ -1,6 +1,7 @@
 package com.intellij.ide.todo.configurable;
 
 import com.intellij.ide.todo.TodoFilter;
+import com.intellij.ide.IdeBundle;
 import com.intellij.psi.search.TodoPattern;
 import com.intellij.util.ui.ItemRemovable;
 
@@ -9,7 +10,10 @@ import java.util.Iterator;
 import java.util.List;
 
 final class FiltersTableModel extends AbstractTableModel implements ItemRemovable{
-  private final String[] ourColumnNames=new String[]{"Name","Patterns"};
+  private final String[] ourColumnNames=new String[] {
+    IdeBundle.message("column.todo.filters.name"),
+    IdeBundle.message("column.todo.filter.patterns")
+  };
   private final Class[] ourColumnClasses=new Class[]{String.class,String.class};
 
   private List<TodoFilter> myFilters;

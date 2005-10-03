@@ -9,9 +9,11 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.UniqueFileNamesProvider;
+import com.intellij.refactoring.RefactoringBundle;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -24,19 +26,19 @@ public class MigrationMapSet implements ExportableApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.migration.MigrationMapSet");
 
   private ArrayList<MigrationMap> myMaps = null;
-  private static final String MIGRATION_MAP = "migrationMap";
-  private static final String ENTRY = "entry";
-  private static final String NAME = "name";
-  private static final String OLD_NAME = "oldName";
-  private static final String NEW_NAME = "newName";
-  private static final String DESCRIPTION = "description";
-  private static final String VALUE = "value";
-  private static final String TYPE = "type";
-  private static final String PACKAGE_TYPE = "package";
-  private static final String CLASS_TYPE = "class";
-  private static final String RECURSIVE = "recursive";
+  @NonNls private static final String MIGRATION_MAP = "migrationMap";
+  @NonNls private static final String ENTRY = "entry";
+  @NonNls private static final String NAME = "name";
+  @NonNls private static final String OLD_NAME = "oldName";
+  @NonNls private static final String NEW_NAME = "newName";
+  @NonNls private static final String DESCRIPTION = "description";
+  @NonNls private static final String VALUE = "value";
+  @NonNls private static final String TYPE = "type";
+  @NonNls private static final String PACKAGE_TYPE = "package";
+  @NonNls private static final String CLASS_TYPE = "class";
+  @NonNls private static final String RECURSIVE = "recursive";
 
-  private static final String[] DEFAULT_MAPS = new  String[] {
+  @NonNls private static final String[] DEFAULT_MAPS = new  String[] {
     "/com/intellij/refactoring/migration/res/Swing__1_0_3____1_1_.xml",
   };
 
@@ -48,7 +50,7 @@ public class MigrationMapSet implements ExportableApplicationComponent {
   }
 
   public String getPresentableName() {
-    return "Migration maps";
+    return RefactoringBundle.message("migration.map.set.migration.maps");
   }
 
   public String getComponentName() {
@@ -98,7 +100,7 @@ public class MigrationMapSet implements ExportableApplicationComponent {
   }
 
   private File getMapDirectory() {
-    String directoryPath = PathManager.getConfigPath() + File.separator + "migration";
+    @NonNls String directoryPath = PathManager.getConfigPath() + File.separator + "migration";
     File dir = new File(directoryPath);
 
     if (!dir.exists()){
@@ -141,6 +143,7 @@ public class MigrationMapSet implements ExportableApplicationComponent {
       return new File[0];
     }
     File[] ret = dir.listFiles(new FileFilter() {
+      @SuppressWarnings({"HardCodedStringLiteral"})
       public boolean accept(File file){
         return !file.isDirectory() && file.getName().toLowerCase().endsWith(".xml");
       }
@@ -216,7 +219,7 @@ public class MigrationMapSet implements ExportableApplicationComponent {
         entry.setType(MigrationMapEntry.CLASS);
         if (typeStr.equals(PACKAGE_TYPE)){
           entry.setType(MigrationMapEntry.PACKAGE);
-          String isRecursiveStr = node.getAttributeValue(RECURSIVE);
+          @NonNls String isRecursiveStr = node.getAttributeValue(RECURSIVE);
           if (isRecursiveStr != null && isRecursiveStr.equals("true")){
             entry.setRecursive(true);
           }
@@ -239,7 +242,7 @@ public class MigrationMapSet implements ExportableApplicationComponent {
 
     File[] files = getMapFiles();
 
-    String[] filePaths = new String[myMaps.size()];
+    @NonNls String[] filePaths = new String[myMaps.size()];
     Document[] documents = new Document[myMaps.size()];
 
     UniqueFileNamesProvider namesProvider = new UniqueFileNamesProvider();
@@ -271,7 +274,7 @@ public class MigrationMapSet implements ExportableApplicationComponent {
       element.setAttribute(NEW_NAME, entry.getNewName());
       if (entry.getType() == MigrationMapEntry.PACKAGE){
         element.setAttribute(TYPE, PACKAGE_TYPE);
-        element.setAttribute(RECURSIVE, entry.isRecursive() ? "true" : "false");
+        element.setAttribute(RECURSIVE, Boolean.valueOf(entry.isRecursive()).toString());
       }
       else{
         element.setAttribute(TYPE, CLASS_TYPE);

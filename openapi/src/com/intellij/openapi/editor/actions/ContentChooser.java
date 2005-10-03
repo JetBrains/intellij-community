@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.CommonBundle;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -53,7 +54,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     myProject = project;
     myUseIdeaEditor = useIdeaEditor;
 
-    setOKButtonText("OK");
+    setOKButtonText(CommonBundle.getOkButtonText());
     setTitle(title);
 
     init();

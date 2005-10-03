@@ -33,6 +33,7 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder{
     super(tree,(DefaultTreeModel)tree.getModel(),null,MyComparator.ourComparator);
 
     if(editor==null){
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("editor cannot be null");
     }
 

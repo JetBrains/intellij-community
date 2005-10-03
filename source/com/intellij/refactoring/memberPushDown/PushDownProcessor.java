@@ -1,5 +1,6 @@
 package com.intellij.refactoring.memberPushDown;
 
+import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -9,6 +10,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.JavaDocPolicy;
 import com.intellij.refactoring.util.RefactoringUtil;
@@ -18,7 +20,6 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
-import com.intellij.codeInsight.ChangeContextUtil;
 
 import java.util.Set;
 
@@ -63,10 +64,11 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
     pushDownConflicts.checkSourceClassConflicts();
 
     if (usagesIn.length == 0) {
-      final String message = (myClass.isInterface() ? "Interface " : "Class ")
-                             + myClass.getQualifiedName() + " does not have inheritors.\n" +
-                             "Pushing members down will result in them being deleted. Continue?";
-      final int answer = Messages.showYesNoDialog(message, "Push Down", Messages.getWarningIcon());
+      String noInheritors = myClass.isInterface() ?
+                            RefactoringBundle.message("interface.0.does.not.have.inheritors", myClass.getQualifiedName()) :
+                            RefactoringBundle.message("class.0.does.not.have.inheritors", myClass.getQualifiedName());
+      final String message = noInheritors + "\n" + RefactoringBundle.message("push.down.will.delete.members");
+      final int answer = Messages.showYesNoDialog(message, PushDownHandler.REFACTORING_NAME, Messages.getWarningIcon());
       if (answer != 0) return false;
     }
     for (UsageInfo usage : usagesIn) {

@@ -28,7 +28,7 @@
               <splitpane position="left"/>
             </constraints>
             <properties/>
-            <border type="none" title="Intention List"/>
+            <border type="none" title-resource-bundle="messages/CodeInsightBundle" title-key="dialog.intention.settings.intention.list.title"/>
             <children/>
           </xy>
           <grid id="5528c" binding="myDescriptionPanel" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">

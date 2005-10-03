@@ -33,10 +33,12 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiClass;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.DebuggerBundle;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.event.LocatableEvent;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.util.Iterator;
@@ -51,7 +53,7 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
   public boolean LOG_ENABLED            = false;
   public boolean LOG_EXPRESSION_ENABLED = false;
   private TextWithImports  myLogMessage; // an expression to be evaluated and printed
-  private static final String LOG_MESSAGE_OPTION_NAME = "LOG_MESSAGE";
+  private static final @NonNls String LOG_MESSAGE_OPTION_NAME = "LOG_MESSAGE";
   public static final Breakpoint[] EMPTY_ARRAY = new Breakpoint[0];
 
   protected Breakpoint(Project project) {
@@ -139,7 +141,7 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
       return true;
     }
 
-    final String[] errorMsg = new String[] {"Breakpoint Condition Error" };
+    final String[] title = new String[] {DebuggerBundle.message("title.error.evaluating.breakpoint.condition") };
 
     try {
       StackFrameProxyImpl frameProxy = context.getThread().frame(0);
@@ -151,7 +153,7 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
         return true;
       }
 
-      errorMsg[0] = "Breakpoint Action Error";
+      title[0] = DebuggerBundle.message("title.error.evaluating.breakpoint.action");
       runAction(evaluationContext, event);
     }
     catch (final EvaluateException ex) {
@@ -165,21 +167,11 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
           public void run() {
             DebuggerSession session = DebuggerManagerEx.getInstanceEx(getProject()).getSession(context.getDebugProcess());
             DebuggerPanelsManager.getInstance(getProject()).toFront(session);
-            final StringBuffer text = new StringBuffer(128);
-            text.append("'Breakpoint '");
-            text.append(getDisplayName());
-            text.append("'\n");
-            text.append(ex.getMessage());
-            text.append("\nWould you like to stop at the breakpoint?");
+            final String text = DebuggerBundle.message("error.evaluating.breakpoint.condition.or.action", getDisplayName(), ex.getMessage());
             if (LOG.isDebugEnabled()) {
-              LOG.debug(text.toString());
+              LOG.debug(text);
             }
-            shouldResume[0] = Messages.showYesNoDialog(
-                getProject(),
-              text.toString(),
-              errorMsg[0],
-              Messages.getQuestionIcon()
-            ) != 0;
+            shouldResume[0] = Messages.showYesNoDialog(getProject(), text, title[0], Messages.getQuestionIcon()) != 0;
           }
         }, ModalityState.NON_MMODAL);
 
@@ -210,8 +202,10 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
           buf.append(getLogMessage());
           buf.append(" = ");
           buf.append(result);
-        } catch (EvaluateException e) {
-          buf.append("unable to evaluate the expression \"");
+        }
+        catch (EvaluateException e) {
+          buf.append(DebuggerBundle.message("error.unable.to.evaluate.expression"));
+          buf.append("\"");
           buf.append(getLogMessage());
           buf.append("\"");
           buf.append(" : ");

@@ -11,8 +11,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.XmlBundle;
 import com.intellij.xml.util.XmlUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * Created by IntelliJ IDEA.
@@ -25,6 +27,9 @@ public class HtmlDocumentationProvider implements JavaDocManager.DocumentationPr
   private static String baseHtmlExtDocUrl;
   private JavaDocManager.DocumentationProvider styleProvider;
   protected Project myProject;
+  @NonNls public static final String ELEMENT_ELEMENT_NAME = "element";
+  @NonNls public static final String NBSP = ":&nbsp;";
+  @NonNls public static final String BR = "<br>";
 
   public HtmlDocumentationProvider(Project project) {
     myProject = project;
@@ -68,7 +73,7 @@ public class HtmlDocumentationProvider implements JavaDocManager.DocumentationPr
       final XmlTag xmlTag = ((XmlTag)element);
       final PsiMetaData metaData = xmlTag.getMetaData();
       key = (metaData!=null)?metaData.getName():null;
-      isTag = xmlTag.getLocalName().equals("element");
+      isTag = xmlTag.getLocalName().equals(ELEMENT_ELEMENT_NAME);
     } else if (element.getParent() instanceof XmlAttributeValue) {
       isTag = false;
       key = ((XmlAttribute)element.getParent().getParent()).getName();
@@ -128,18 +133,15 @@ public class HtmlDocumentationProvider implements JavaDocManager.DocumentationPr
 
   private String generateJavaDoc(EntityDescriptor descriptor, boolean ommitHtmlSpecifics) {
     StringBuffer buf = new StringBuffer();
-
-    String entityType;
-
     if (descriptor instanceof HtmlTagDescriptor) {
-      entityType = "Tag";
+      JavaDocUtil.formatEntityName(XmlBundle.message("xml.javadoc.tag.name.message"),descriptor.getName(),buf);
     } else {
-      entityType = "Attribute";
+      JavaDocUtil.formatEntityName(XmlBundle.message("xml.javadoc.attribute.name.message"),descriptor.getName(),buf);
     }
 
-    JavaDocUtil.formatEntityName(entityType + " name",descriptor.getName(),buf);
 
-    buf.append("Description").append(":&nbsp;").append(descriptor.getDescription()).append("<br>");
+
+    buf.append(XmlBundle.message("xml.javadoc.description.message")).append(NBSP).append(descriptor.getDescription()).append(BR);
 
     if (descriptor instanceof HtmlTagDescriptor) {
       final HtmlTagDescriptor tagDescriptor = (HtmlTagDescriptor)descriptor;
@@ -147,33 +149,41 @@ public class HtmlDocumentationProvider implements JavaDocManager.DocumentationPr
       if (!ommitHtmlSpecifics) {
         boolean hasStartTag = tagDescriptor.isHasStartTag();
         if (!hasStartTag) {
-          buf.append("Start tag:&nbsp;").append("could be omitted").append("<br>");
+          buf.append(XmlBundle.message("xml.javadoc.start.tag.could.be.omitted.message")).append(BR);
         }
         if (!tagDescriptor.isEmpty() && !tagDescriptor.isHasEndTag()) {
-          buf.append("End tag:&nbsp;").append("could be omitted").append("<br>");
+          buf.append(XmlBundle.message("xml.javadoc.end.tag.could.be.omitted.message")).append(BR);
         }
       }
 
       if (tagDescriptor.isEmpty()) {
-        buf.append("Is empty:&nbsp;").append("true").append("<br>");
+        buf.append(XmlBundle.message("xml.javadoc.is.empty.message")).append(BR);
       }
     } else {
       final HtmlAttributeDescriptor attributeDescriptor = (HtmlAttributeDescriptor)descriptor;
 
-      buf.append(  "Attr type:&nbsp;").append(attributeDescriptor.getType()).append("<br>");
+      buf.append(XmlBundle.message("xml.javadoc.attr.type.message", attributeDescriptor.getType())).append(BR);
       if (!attributeDescriptor.isHasDefaultValue())
-        buf.append("Attr default:&nbsp;").append("required").append("<br>");
+        buf.append(XmlBundle.message("xml.javadoc.attr.default.required.message")).append(BR);
     }
 
     char dtdId = descriptor.getDtd();
     boolean deprecated = dtdId == HtmlTagDescriptor.LOOSE_DTD;
     if (deprecated) {
-      buf.append("Deprecated ").append(":&nbsp;").append(deprecated).append("<br>");
+      buf.append(XmlBundle.message("xml.javadoc.deprecated.message", deprecated)).append(BR);
     }
 
-    String dtd = (dtdId == HtmlTagDescriptor.LOOSE_DTD)? "loose": (dtdId == HtmlTagDescriptor.FRAME_DTD)?"frameset":"any";
-    dtd += " dtd";
-    buf.append   ("Defined in").append(":&nbsp;").append(dtd).append("<br>");
+    if (dtdId == HtmlTagDescriptor.LOOSE_DTD) {
+      buf.append(XmlBundle.message("xml.javadoc.defined.in.loose.dtd.message"));
+    }
+    else if (dtdId == HtmlTagDescriptor.FRAME_DTD) {
+      buf.append(XmlBundle.message("xml.javadoc.defined.in.frameset.dtd.message"));
+    }
+    else {
+      buf.append(XmlBundle.message("xml.javadoc.defined.in.any.dtd.message"));
+    }
+
+    buf.append(BR);
 
     return buf.toString();
   }
@@ -216,7 +226,7 @@ public class HtmlDocumentationProvider implements JavaDocManager.DocumentationPr
       if (myAttributeDescriptor != null && tagContext != null) {
         XmlElementDescriptor tagDescriptor = tagContext.getDescriptor();
         XmlAttributeDescriptor attributeDescriptor = tagDescriptor.getAttributeDescriptor(text);
-        
+
         return (attributeDescriptor != null)?attributeDescriptor.getDeclaration():null;
       }
     }

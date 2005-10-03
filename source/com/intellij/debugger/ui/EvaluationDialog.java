@@ -1,6 +1,7 @@
 package com.intellij.debugger.ui;
 
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.evaluation.CodeFragmentFactory;
@@ -42,8 +43,8 @@ public abstract class EvaluationDialog extends DialogWrapper {
     super(project, true);
     myProject = project;
     setModal(false);
-    setCancelButtonText("Close");
-    setOKButtonText("Evaluate");
+    setCancelButtonText(DebuggerBundle.message("button.close.no.mnemonic"));
+    setOKButtonText(DebuggerBundle.message("button.evaluate"));
 
     myEditor   = createEditor();
     myEvaluationPanel = new MyEvaluationPanel(myProject);

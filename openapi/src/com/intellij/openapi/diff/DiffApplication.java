@@ -40,7 +40,7 @@ public class DiffApplication implements ApplicationStarter {
   }
 
   private void printHelp() {
-    System.err.println("Usage: idea diff <file1> <file2>");
+    System.err.println(DiffBundle.message("diff.application.usage.parameters.and.description"));
     System.exit(1);
   }
 
@@ -72,7 +72,7 @@ public class DiffApplication implements ApplicationStarter {
   private VirtualFile findFile(final String path1) throws FileNotFoundException {
     final VirtualFile vFile = LocalFileSystem.getInstance().findFileByIoFile(new File(path1));
     if (vFile == null) {
-      throw new FileNotFoundException("Cannot file file: " + path1);
+      throw new FileNotFoundException(DiffBundle.message("cannot.file.file.error.message", path1));
     }
     return vFile;
   }

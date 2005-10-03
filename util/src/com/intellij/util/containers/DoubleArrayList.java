@@ -124,6 +124,7 @@ public class DoubleArrayList implements Cloneable {
 
   public void add(int index, double element) {
     if (index > mySize || index < 0){
+      //noinspection HardCodedStringLiteral
       throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + mySize);
     }
 
@@ -159,6 +160,7 @@ public class DoubleArrayList implements Cloneable {
 
   private void checkRange(int index) {
     if (index >= mySize || index < 0){
+      //noinspection HardCodedStringLiteral
       throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + mySize);
     }
   }

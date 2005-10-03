@@ -12,6 +12,7 @@ import com.intellij.util.IncorrectOperationException;
  * Time: 4:20:36 PM
  * To change this template use Options | File Templates.
  */
+@SuppressWarnings({"HardCodedStringLiteral"})
 public class MissingThrowExpressionFixer implements Fixer {
   public void apply(Editor editor, SmartEnterProcessor processor, PsiElement psiElement)
       throws IncorrectOperationException {

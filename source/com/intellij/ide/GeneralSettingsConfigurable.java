@@ -11,6 +11,7 @@ import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.vfs.CharsetSettings;
 import com.intellij.util.net.HTTPProxySettingsPanel;
 
 import javax.swing.*;
@@ -82,7 +83,8 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements App
     EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
     editorSettings.setNative2AsciiForPropertiesFiles(myComponent.myCbNative2Ascii.isSelected());
     String charsetName = (String)myComponent.myDefaultPropertiesFilesCharset.getSelectedItem();
-    if (charsetName == null) charsetName = "System Default";
+    if (charsetName == null)
+      charsetName = CharsetSettings.SYSTEM_DEFAULT_CHARSET_NAME;
     editorSettings.setDefaultPropertiesCharsetName(charsetName);
   }
 
@@ -146,9 +148,9 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements App
     });
 
     FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor();
-    myComponent.myBrowserPathField.addBrowseFolderListener("Select Path to Browser", null, null, descriptor);
+    myComponent.myBrowserPathField.addBrowseFolderListener(IdeBundle.message("title.select.path.to.browser"), null, null, descriptor);
 
-    myComponent.myIgnoreFilesField.setText("skdjf arfgvkbdfugbvr");
+    myComponent.myIgnoreFilesField.setText("##### ##############");
     setupCharsetComboModel(myComponent.myCharsetNameCombo);
 
     return myComponent.myPanel;
@@ -156,10 +158,11 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements App
 
   public static void setupCharsetComboModel(JComboBox charsetNameCombo) {
     Vector<String> charsets = new Vector<String>();
-    charsets.add("System Default");
+    charsets.add(CharsetSettings.SYSTEM_DEFAULT_CHARSET_NAME);
     SortedMap avaliableCharsets = Charset.availableCharsets();
     for (Object cs : avaliableCharsets.keySet()) {
       String name = (String)cs;
+      //noinspection HardCodedStringLiteral
       if (!name.startsWith("UTF-16")) {
         charsets.add(name);
       }
@@ -169,7 +172,7 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements App
   }
 //--------------------------------------------------------
   public String getDisplayName() {
-    return "General";
+    return IdeBundle.message("title.general");
   }
 
   public Icon getIcon() {

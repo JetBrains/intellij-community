@@ -4,24 +4,31 @@ package com.intellij.codeInsight.navigation;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.ide.structureView.StructureViewBuilder;
+import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
+import com.intellij.ide.structureView.StructureViewModel;
+import com.intellij.ide.structureView.StructureViewTreeElement;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 
 public class MethodUpDownUtil {
+  private MethodUpDownUtil() {
+  }
+
   public static int[] getNavigationOffsets(PsiElement element) {
-    ArrayList array = new ArrayList();
+    ArrayList<PsiElement> array = new ArrayList<PsiElement>();
     addNavigationElements(array, element);
     int[] offsets = new int[array.size()];
     for(int i = 0; i < array.size(); i++){
-      PsiElement e = (PsiElement)array.get(i);
+      PsiElement e = array.get(i);
       offsets[i] = e.getTextOffset();
     }
     Arrays.sort(offsets);
     return offsets;
   }
 
-  private static void addNavigationElements(ArrayList array, PsiElement element) {
+  private static void addNavigationElements(ArrayList<PsiElement> array, PsiElement element) {
     if (element instanceof PsiJavaFile || element instanceof PsiClass){
       PsiElement[] children = element.getChildren();
       for (PsiElement child : children) {
@@ -33,7 +40,8 @@ public class MethodUpDownUtil {
           array.add(child);
         }
       }
-    } else if (element instanceof XmlFile || element instanceof XmlTag) {
+    }
+    else if (element instanceof XmlFile || element instanceof XmlTag) {
       PsiElement parent = element instanceof XmlFile ? element : element.getParent();
 
       PsiElement[] children = parent.getChildren();
@@ -43,6 +51,24 @@ public class MethodUpDownUtil {
         }
       }
       addNavigationElements(array, element.getParent());
+    }
+    else if (element instanceof PsiFile) {
+      StructureViewBuilder structureViewBuilder = element.getLanguage().getStructureViewBuilder((PsiFile) element);
+      if (structureViewBuilder instanceof TreeBasedStructureViewBuilder) {
+        TreeBasedStructureViewBuilder builder = (TreeBasedStructureViewBuilder) structureViewBuilder;
+        StructureViewModel model = builder.createStructureViewModel();
+        addStructureViewElements(model.getRoot(), array);
+      }
+    }
+  }
+
+  private static void addStructureViewElements(final StructureViewTreeElement parent, final ArrayList<PsiElement> array) {
+    for(StructureViewTreeElement svElement: parent.getChildren()) {
+      Object value = svElement.getValue();
+      if (value instanceof PsiElement) {
+        array.add((PsiElement) value);
+      }
+      addStructureViewElements(svElement, array);
     }
   }
 }

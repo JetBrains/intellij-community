@@ -16,9 +16,12 @@
 package com.intellij.openapi.progress;
 
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 
 public interface ProgressFunComponentProvider {
-  JComponent getProgressFunComponent(Project project, String processId);
+  @NonNls String COMPILATION_ID = "compilation";
+
+  JComponent getProgressFunComponent(Project project, @NonNls String processId);
 }

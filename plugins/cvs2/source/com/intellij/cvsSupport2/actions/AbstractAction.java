@@ -3,7 +3,6 @@ package com.intellij.cvsSupport2.actions;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContext;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContextWrapper;
 import com.intellij.openapi.vcs.actions.VcsContext;
-import com.intellij.cvsSupport2.config.CvsConfiguration;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutor;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutorCallback;
 import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
@@ -20,11 +19,10 @@ import com.intellij.openapi.localVcs.LvcsAction;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsConfiguration;
-import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.CvsBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -126,7 +124,7 @@ public abstract class AbstractAction extends AnAction {
     if (lvcs != null && getTitle(context) != null) {
 
       synchronized (lvcs) {
-        myLvcsAction = lvcs.startAction("CVS: " + getTitle(context), "", true);
+        myLvcsAction = lvcs.startAction(CvsBundle.getCvsDisplayName() + ": " + getTitle(context), "", true);
       }
     }
   }

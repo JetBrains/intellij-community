@@ -14,6 +14,8 @@ import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +24,10 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   private List<DependencyRule> myRules = new ArrayList<DependencyRule>();
   private Project myProject;
   private ContentManager myContentManager;
+  @NonNls private static final String DENY_RULE_KEY = "deny_rule";
+  @NonNls private static final String FROM_SCOPE_KEY = "from_scope";
+  @NonNls private static final String TO_SCOPE_KEY = "to_scope";
+  @NonNls private static final String IS_DENY_KEY = "is_deny";
 
   public DependencyValidationManagerImpl(Project project) {
     myProject = project;
@@ -32,25 +38,23 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   }
 
   public DependencyRule getViolatorDependencyRule(PsiFile from, PsiFile to) {
-    for (int i = 0; i < myRules.size(); i++) {
-      DependencyRule dependencyRule = myRules.get(i);
+    for (DependencyRule dependencyRule : myRules) {
       if (dependencyRule.isForbiddenToUse(from, to)) return dependencyRule;
     }
 
     return null;
   }
 
+  @NotNull
   public DependencyRule[] getViolatorDependencyRules(PsiFile from, PsiFile to) {
     ArrayList<DependencyRule> result = new ArrayList<DependencyRule>();
-      for (int i = 0; i < myRules.size(); i++) {
-        DependencyRule dependencyRule = myRules.get(i);
-        if (dependencyRule.isForbiddenToUse(from, to)){
-          result.add(dependencyRule);
-        }
+    for (DependencyRule dependencyRule : myRules) {
+      if (dependencyRule.isForbiddenToUse(from, to)) {
+        result.add(dependencyRule);
       }
-      return result.toArray(new DependencyRule[result.size()]);
-
     }
+    return result.toArray(new DependencyRule[result.size()]);
+  }
 
 
   public DependencyRule[] getAllRules() {
@@ -80,7 +84,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     });
   }
 
-  public void addContent(Content content) {    
+  public void addContent(Content content) {
     myContentManager.addContent(content);
     myContentManager.setSelectedContent(content);
     ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.DEPENDENCIES).activate(null);
@@ -106,9 +110,9 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     DefaultJDOMExternalizer.readExternal(this, element);
     super.readExternal(element);
 
-    List rules = element.getChildren("deny_rule");
-    for (int i = 0; i < rules.size(); i++) {
-      DependencyRule rule = readRule((Element)rules.get(i));
+    List rules = element.getChildren(DENY_RULE_KEY);
+    for (Object rule1 : rules) {
+      DependencyRule rule = readRule((Element)rule1);
       if (rule != null) {
         addRule(rule);
       }
@@ -119,8 +123,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     DefaultJDOMExternalizer.writeExternal(this, element);
     super.writeExternal(element);
 
-    for (int i = 0; i < myRules.size(); i++) {
-      DependencyRule rule = myRules.get(i);
+    for (DependencyRule rule : myRules) {
       Element ruleElement = writeRule(rule);
       if (ruleElement != null) {
         element.addContent(ruleElement);
@@ -128,22 +131,22 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     }
   }
 
-  private Element writeRule(DependencyRule rule) {
+  private static Element writeRule(DependencyRule rule) {
     NamedScope fromScope = rule.getFromScope();
     NamedScope toScope = rule.getToScope();
     if (fromScope == null || toScope == null) return null;
-    Element ruleElement = new Element("deny_rule");
-    ruleElement.setAttribute("from_scope", fromScope.getName());
-    ruleElement.setAttribute("to_scope", toScope.getName());
-    ruleElement.setAttribute("is_deny", rule.isDenyRule() ? "true" : "false");
+    Element ruleElement = new Element(DENY_RULE_KEY);
+    ruleElement.setAttribute(FROM_SCOPE_KEY, fromScope.getName());
+    ruleElement.setAttribute(TO_SCOPE_KEY, toScope.getName());
+    ruleElement.setAttribute(IS_DENY_KEY, Boolean.valueOf(rule.isDenyRule()).toString());
     return ruleElement;
   }
 
   private DependencyRule readRule(Element ruleElement) {
-    String fromScope = ruleElement.getAttributeValue("from_scope");
-    String toScope = ruleElement.getAttributeValue("to_scope");
-    String denyRule = ruleElement.getAttributeValue("is_deny");
+    String fromScope = ruleElement.getAttributeValue(FROM_SCOPE_KEY);
+    String toScope = ruleElement.getAttributeValue(TO_SCOPE_KEY);
+    String denyRule = ruleElement.getAttributeValue(IS_DENY_KEY);
     if (fromScope == null || toScope == null || denyRule == null) return null;
-    return new DependencyRule(getScope(fromScope), getScope(toScope), denyRule.equals("true"));
+    return new DependencyRule(getScope(fromScope), getScope(toScope), Boolean.valueOf(denyRule).booleanValue());
   }
 }

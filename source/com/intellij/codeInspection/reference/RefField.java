@@ -20,11 +20,11 @@ public class RefField extends RefElement {
   private static final int USED_FOR_WRITING_MASK = 0x20000;
   private static final int ASSIGNED_ONLY_IN_INITIALIZER = 0x40000;
 
-  public RefField(PsiField field, RefManager manager) {
+  RefField(PsiField field, RefManager manager) {
       this((RefClass) manager.getReference(field.getContainingClass()), field, manager);
   }
 
-  public RefField(RefClass ownerClass, PsiField field, RefManager manager) {
+  RefField(RefClass ownerClass, PsiField field, RefManager manager) {
     super(field, manager);
 
     ownerClass.add(this);
@@ -180,5 +180,9 @@ public class RefField extends RefElement {
     if (isEntry()) return false;
     if (super.isSuspicious()) return true;
     return isUsedForReading() != isUsedForWriting();
+  }
+
+  protected void initialize() {
+
   }
 }

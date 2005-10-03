@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Iterator;
 import java.util.List;
@@ -22,13 +23,13 @@ import java.util.Set;
  * @author dsl
  */
 public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOrderEntry, WritableOrderEntry, ClonableOrderEntry {
-  static final String ENTRY_TYPE = "module";
+  @NonNls static final String ENTRY_TYPE = "module";
   private Module myModule;
   private String myModuleName; // non-null if myProject is null
-  private static final String MODULE_NAME_ATTR = "module-name";
+  @NonNls private static final String MODULE_NAME_ATTR = "module-name";
   private final MyModuleListener myListener = new MyModuleListener();
   protected boolean myExported = false;
-  protected static final String EXPORTED_ATTR = "exported";
+  @NonNls protected static final String EXPORTED_ATTR = "exported";
 
   ModuleOrderEntryImpl(Module module, RootModelImpl rootModel) {
     super(rootModel);

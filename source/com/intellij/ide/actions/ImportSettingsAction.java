@@ -4,6 +4,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.startup.StartupActionScriptManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -33,22 +34,24 @@ public class ImportSettingsAction extends AnAction {
     final DataContext dataContext = e.getDataContext();
     final Component component = (Component)dataContext.getData(DataConstantsEx.CONTEXT_COMPONENT);
     final String path = ChooseComponentsToExportDialog.chooseSettingsFile(PathManager.getConfigPath(), component,
-                                                                "Import File Location",
-                                                                "Choose import file path or directory where the file located");
+                                                                IdeBundle.message("title.import.file.location"),
+                                                                IdeBundle.message("prompt.choose.import.file.path"));
     if (path == null) return;
 
     final File saveFile = new File(path);
     try {
       if (!saveFile.exists()) {
-        Messages.showErrorDialog("Cannot find file " + presentableFileName(saveFile), "File Not Found");
+        Messages.showErrorDialog(IdeBundle.message("error.cannot.find.file", presentableFileName(saveFile)),
+                                 IdeBundle.message("title.file.not.found"));
         return;
       }
       final ZipFile zipFile = new ZipFile(saveFile);
 
       final ZipEntry magicEntry = zipFile.getEntry(ExportSettingsAction.SETTINGS_JAR_MARKER);
       if (magicEntry == null) {
-        Messages.showErrorDialog("The file " + presentableFileName(saveFile) +
-                                 " contains no settings to import.\n" + promptLocationMessage(), "Invalid File");
+        Messages.showErrorDialog(
+          IdeBundle.message("error.file.contains.no.settings.to.import", presentableFileName(saveFile), promptLocationMessage()),
+          IdeBundle.message("title.invalid.file"));
         return;
       }
 
@@ -56,8 +59,8 @@ public class ImportSettingsAction extends AnAction {
       final Map<File, Set<ExportableApplicationComponent>> filesToComponents = ExportSettingsAction.getRegisteredComponentsAndFiles(registeredComponents);
       List<ExportableApplicationComponent> components = getComponentsStored(saveFile, registeredComponents);
       final ChooseComponentsToExportDialog dialog = new ChooseComponentsToExportDialog(components, filesToComponents, false,
-                                                                       "Select Components to Import",
-                                                                       "Please check all components to import:");
+                                                                       IdeBundle.message("title.select.components.to.import"),
+                                                                       IdeBundle.message("prompt.check.components.to.import"));
       dialog.show();
       if (!dialog.isOK()) return;
       final Set<ExportableApplicationComponent> chosenComponents = dialog.getExportableComponents();
@@ -83,21 +86,22 @@ public class ImportSettingsAction extends AnAction {
       StartupActionScriptManager.ActionCommand deleteTemp = new StartupActionScriptManager.DeleteCommand(tempFile);
       StartupActionScriptManager.addActionCommand(deleteTemp);
 
-      final int ret = Messages.showOkCancelDialog("Settings imported successfully. You have to restart " +
-                                                  ApplicationNamesInfo.getInstance().getProductName() + " to reload the settings." +
-                                                  "\nShutdown " + ApplicationNamesInfo.getInstance().getFullProductName() + "?",
-                                                  "Restart Needed", Messages.getQuestionIcon());
+      final int ret = Messages.showOkCancelDialog(IdeBundle.message("message.settings.imported.successfully",
+                                                                    ApplicationNamesInfo.getInstance().getProductName(),
+                                                                    ApplicationNamesInfo.getInstance().getFullProductName()),
+                                                  IdeBundle.message("title.restart.needed"), Messages.getQuestionIcon());
       if (ret == 0) {
         ApplicationManager.getApplication().exit();
       }
     }
     catch (ZipException e1) {
-      Messages.showErrorDialog("Error reading file " + presentableFileName(saveFile) + ".\n" +
-                               "There was " +e1.getMessage() +"\n\n" + promptLocationMessage(),
-                               "Invalid File");
+      Messages.showErrorDialog(
+        IdeBundle.message("error.reading.settings.file", presentableFileName(saveFile), e1.getMessage(), promptLocationMessage()),
+                               IdeBundle.message("title.invalid.file"));
     }
     catch (IOException e1) {
-      Messages.showErrorDialog("Error reading file " + presentableFileName(saveFile) + ".\n\n"+ e1.getMessage(), "Error Reading File");
+      Messages.showErrorDialog(IdeBundle.message("error.reading.settings.file.2", presentableFileName(saveFile), e1.getMessage()),
+                               IdeBundle.message("title.error.reading.file"));
     }
   }
 
@@ -106,7 +110,7 @@ public class ImportSettingsAction extends AnAction {
   }
 
   private static String promptLocationMessage() {
-    return "Please make sure you have generated the file using 'File|Export Settings' feature.";
+    return IdeBundle.message("message.please.ensure.correct.settings");
   }
 
   private static List<ExportableApplicationComponent> getComponentsStored(File zipFile,

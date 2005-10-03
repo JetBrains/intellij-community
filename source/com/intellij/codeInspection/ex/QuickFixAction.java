@@ -6,6 +6,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefImplicitConstructor;
 import com.intellij.codeInspection.ui.InspectionResultsView;
+import com.intellij.codeInspection.ui.InspectionTree;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
@@ -51,14 +52,15 @@ public abstract class QuickFixAction extends AnAction {
       return;
     }
 
-    if (!view.isSingleToolInSelection() || view.getSelectedTool() != myTool) {
+    final InspectionTree tree = view.getTree();
+    if (!view.isSingleToolInSelection() || tree.getSelectedTool() != myTool) {
       e.getPresentation().setVisible(false);
       e.getPresentation().setEnabled(false);
       return;
     }
 
-    if (!isProblemDescriptorsAcceptable() && view.getSelectedElements().length > 0 ||
-        isProblemDescriptorsAcceptable() && view.getSelectedDescriptors().length > 0) {
+    if (!isProblemDescriptorsAcceptable() && tree.getSelectedElements().length > 0 ||
+        isProblemDescriptorsAcceptable() && tree.getSelectedDescriptors().length > 0) {
       e.getPresentation().setVisible(true);
       e.getPresentation().setEnabled(true);
     }
@@ -75,9 +77,10 @@ public abstract class QuickFixAction extends AnAction {
   public void actionPerformed(final AnActionEvent e) {
     if (isProblemDescriptorsAcceptable()) {
       final InspectionResultsView view = getInvoker(e);
-      final ProblemDescriptor[] descriptors = view.getSelectedDescriptors();
+      final InspectionTree tree = view.getTree();
+      final ProblemDescriptor[] descriptors = tree.getSelectedDescriptors();
       if (descriptors.length > 0) {
-        doApplyFix(view.getProject(), (DescriptorProviderInspection)view.getSelectedTool(), descriptors);
+        doApplyFix(view.getProject(), (DescriptorProviderInspection)tree.getSelectedTool(), descriptors);
         return;
       }
     }
@@ -88,7 +91,7 @@ public abstract class QuickFixAction extends AnAction {
   protected RefElement[] getSelectedElements(AnActionEvent e) {
     final InspectionResultsView invoker = getInvoker(e);
     if (invoker == null) return new RefElement[0];
-    List<RefElement> selection = new ArrayList<RefElement>(Arrays.asList(invoker.getSelectedElements()));
+    List<RefElement> selection = new ArrayList<RefElement>(Arrays.asList(invoker.getTree().getSelectedElements()));
     PsiDocumentManager.getInstance(invoker.getProject()).commitAllDocuments();
     Collections.sort(selection, new Comparator() {
       public int compare(Object o1, Object o2) {

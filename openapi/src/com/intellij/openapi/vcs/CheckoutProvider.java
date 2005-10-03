@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.components.ApplicationComponent;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * Implement this interface and register it as ApplicationComponent in order to provide checkout
@@ -23,5 +24,5 @@ import com.intellij.openapi.components.ApplicationComponent;
 
 public interface CheckoutProvider extends ApplicationComponent {
   void doCheckout();
-  String getVcsName();
+  @NonNls String getVcsName();
 }

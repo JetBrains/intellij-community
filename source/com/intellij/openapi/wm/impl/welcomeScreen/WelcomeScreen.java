@@ -20,7 +20,9 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.LabeledIcon;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.UIBundle;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -33,7 +35,6 @@ import java.awt.font.FontRenderContext;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 
@@ -52,18 +53,12 @@ public class WelcomeScreen {
   private static final Insets ICON_INSETS = new Insets(15, 30, 15, 0);
   private static final Insets ACTION_GROUP_CAPTION_INSETS = new Insets(20, 30, 5, 0);
 
-  // The below 3 array lists are reserved for future use
-  private static ArrayList<MyActionButton> ourMainButtons = new ArrayList<MyActionButton>(5);
-  private static ArrayList<MyActionButton> ourPluginButtons = new ArrayList<MyActionButton>(5);
-  private static ArrayList<PluginDescriptor> ourPluginsWithActions = new ArrayList<PluginDescriptor>();
-
   private MyActionButton myKeypressedButton = null;
   private int mySelectedRow = -1;
   private int mySelectedColumn = -1;
   private int mySelectedGroup = -1;
   private static final int MAIN_GROUP = 0;
   private static final int PLUGINS_GROUP = 1;
-  private static final int COLUMNS_IN_MAIN = 2;
   private static final int PLUGIN_DSC_MAX_WIDTH = 260;
   private static final int PLUGIN_DSC_MAX_ROWS = 2;
   private static final int PLUGIN_NAME_MAX_WIDTH = 180;
@@ -82,18 +77,18 @@ public class WelcomeScreen {
   private static final Icon OPEN_PROJECT_ICON = IconLoader.getIcon("/general/openProject.png");
   private static final Icon REOPEN_RECENT_ICON = IconLoader.getIcon("/general/reopenRecentProject.png");
   private static final Icon FROM_VCS_ICON = IconLoader.getIcon("/general/getProjectfromVCS.png");
-  private static final Icon CHECK_FOR_UPDATE_ICON = IconLoader.getIcon("/general/checkForUpdate.png");
   private static final Icon READ_HELP_ICON = IconLoader.getIcon("/general/readHelp.png");
   private static final Icon PLUGIN_ICON = IconLoader.getIcon("/general/pluginManager.png");
   private static final Icon DEFAULT_ICON = IconLoader.getIcon("/general/configurableDefault.png");
   private static Icon CAPTION_IMAGE;
   private static Icon DEVELOPER_SLOGAN;
 
-  private static final String PLUGIN_URL = PathManager.getHomePath() + "/Plugin Development Readme.html";
+  @NonNls private static final String PLUGIN_URL = PathManager.getHomePath() + "/Plugin Development Readme.html";
 
-  private static final Font TEXT_FONT = new Font("Tahoma", Font.PLAIN, 11);
-  private static final Font LINK_FONT = new Font("Tahoma", Font.BOLD, 12);
-  private static final Font GROUP_CAPTION_FONT = new Font("Tahoma", Font.BOLD, 18);
+  @NonNls protected static final String TAHOMA_FONT_NAME = "Tahoma";
+  private static final Font TEXT_FONT = new Font(TAHOMA_FONT_NAME, Font.PLAIN, 11);
+  private static final Font LINK_FONT = new Font(TAHOMA_FONT_NAME, Font.BOLD, 12);
+  private static final Font GROUP_CAPTION_FONT = new Font(TAHOMA_FONT_NAME, Font.BOLD, 18);
 
   private static final Color CAPTION_COLOR = new Color(47, 67, 96);
   private static final Color PLUGINS_PANEL_COLOR = new Color(229, 229, 229);
@@ -110,12 +105,16 @@ public class WelcomeScreen {
 
   private int myPluginsButtonsCount = 0;
   private int myPluginsIdx = -1;
+  @NonNls protected static final String ___HTML_SUFFIX = "...</html>";
+  @NonNls protected static final String ESC_NEW_LINE = "\\n";
 
   private class ActionGroupDescriptor {
     private int myIdx = -1;
     private int myCount = 0;
     private JPanel myPanel;
     private final int myColumnIdx;
+    @NonNls protected static final String HTML_PREFIX = "<html>";
+    @NonNls protected static final String HTML_SUFFIX = "</html>";
 
     public ActionGroupDescriptor(final String caption, final int columnIndex) {
       JPanel panel = new JPanel(new GridBagLayout()) {
@@ -145,7 +144,7 @@ public class WelcomeScreen {
       button.setupWithinPanel(myMainPanel, MAIN_GROUP, myCount, myColumnIdx);
       myCount++;
 
-      JLabel name = new JLabel("<html><nobr><u>" + commandLink + "</u></nobr></html>");
+      JLabel name = new JLabel(underlineHtmlText(commandLink));
       name.addMouseListener(new MouseAdapter() {
         public void mouseClicked(MouseEvent e) {
           button.onPress(e);
@@ -159,12 +158,21 @@ public class WelcomeScreen {
       gBC = new GridBagConstraints(1, y, 1, 1, 0, 0, GridBagConstraints.SOUTHWEST, GridBagConstraints.NONE, new Insets(15, 15, 0, 0), 5, 0);
       myPanel.add(name, gBC);
 
-      description = "<HTML>" + description + "</html>";
+      description = wrapWithHtml(description);
       JLabel shortDescription = new JLabel(description);
       shortDescription.setFont(TEXT_FONT);
 
       gBC = new GridBagConstraints(1, y + 1, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(7, 15, 0, 30), 5, 0);
       myPanel.add(shortDescription, gBC);
+    }
+
+    private String wrapWithHtml(final String description) {
+      return HTML_PREFIX + description + HTML_SUFFIX;
+    }
+
+    @SuppressWarnings({"HardCodedStringLiteral"})
+    private String underlineHtmlText(final String commandLink) {
+      return "<html><nobr><u>" + commandLink + "</u></nobr></html>";
     }
 
     private void appendActionsFromGroup(final DefaultActionGroup group) {
@@ -221,7 +229,7 @@ public class WelcomeScreen {
     myMainPanel = new WelcomeScrollablePanel(new GridLayout(1, 2));
     myMainPanel.setBackground(MAIN_PANEL_COLOR);
     // Create QuickStarts group of actions
-    ActionGroupDescriptor quickStarts = new ActionGroupDescriptor("Quick Start", 0);
+    ActionGroupDescriptor quickStarts = new ActionGroupDescriptor(UIBundle.message("welcome.screen.quick.start.action.group.name"), 0);
     addDefaultQuickStartActions(quickStarts, actionManager);
     // Append plug-in actions to the end of the QuickStart list
     quickStarts.appendActionsFromGroup((DefaultActionGroup)actionManager.getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART));
@@ -232,7 +240,7 @@ public class WelcomeScreen {
     quickStartPanel.add(emptyPanel_2, new GridBagConstraints(0, quickStarts.getIdx() + 2, 2, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
 
     // Create Documentation group of actions
-    ActionGroupDescriptor docsGroup = new ActionGroupDescriptor("Documentation", 1);
+    ActionGroupDescriptor docsGroup = new ActionGroupDescriptor(UIBundle.message("welcome.screen.documentation.action.group.name"), 1);
     addDefaultDocsActions(docsGroup, actionManager);
     // Append plug-in actions to the end of the QuickStart list
     docsGroup.appendActionsFromGroup((DefaultActionGroup)actionManager.getAction(IdeActions.GROUP_WELCOME_SCREEN_DOC));
@@ -278,6 +286,7 @@ public class WelcomeScreen {
           CAPTION_BACKGROUND = new Color(pixels[0]);
         }
         catch (InterruptedException e) {
+          //ignore exception
         }
       }
     }
@@ -293,7 +302,7 @@ public class WelcomeScreen {
         Icon welcome = CAPTION_IMAGE;
         welcome.paintIcon(null, g, 0, 0);
         g.setColor(CAPTION_BACKGROUND);
-        g.fillRect(welcome.getIconWidth(), 0, this.getWidth() - welcome.getIconWidth(), welcome.getIconHeight());
+        g.fillRect(welcome.getIconWidth(), 0, getWidth() - welcome.getIconWidth(), welcome.getIconHeight());
         super.paint(g);
       }
     };
@@ -319,7 +328,9 @@ public class WelcomeScreen {
         HelpManagerImpl.getInstance().invokeHelp("");
       }
     };
-    docsGroup.addButton(readHelp, "Read Help", "Open " + ApplicationNamesInfo.getInstance().getFullProductName() + " \"Help Topics\" in a new window.");
+    docsGroup.addButton(readHelp, UIBundle.message("welcome.screen.read.help.action.name"),
+                        UIBundle.message("welcome.screen.read.help.action.description", ApplicationNamesInfo.getInstance().getFullProductName()));
+
 
     docsGroup.appendButtonForAction(actionManager.getAction(IdeActions.ACTION_KEYMAP_REFERENCE));
 
@@ -334,7 +345,8 @@ public class WelcomeScreen {
           }
         }
       };
-      docsGroup.addButton(pluginDev, "Plugin Development", "Get started developing plugins for " + ApplicationNamesInfo.getInstance().getFullProductName() + ".");
+      docsGroup.addButton(pluginDev, UIBundle.message("welcome.screen.plugin.development.action.name"),
+                          UIBundle.message("welcome.screen.plugin.development.action.description", ApplicationNamesInfo.getInstance().getFullProductName()));
     }
   }
 
@@ -344,8 +356,8 @@ public class WelcomeScreen {
         ProjectUtil.createNewProject(null);
       }
     };
-    quickStarts.addButton(newProject, "Create New Project", "Start the \"New Project\" Wizard that will guide you through " +
-                                                            "the steps necessary for creating a new project.");
+    quickStarts.addButton(newProject, UIBundle.message("welcome.screen.create.new.project.action.name"),
+                          UIBundle.message("welcome.screen.create.new.project.action.description"));
 
     MyActionButton openProject = new ButtonWithExtension(OPEN_PROJECT_ICON, null) {
       protected void onPress(InputEvent e, final MyActionButton button) {
@@ -361,8 +373,8 @@ public class WelcomeScreen {
       }
     };
 
-    quickStarts.addButton(openProject, "Open Project", "You can open any arbitrary " + ApplicationNamesInfo.getInstance().getFullProductName() + " project. " +
-                                                       "Click the icon or link to select the .IPR file from the File Chooser.");
+    quickStarts.addButton(openProject, UIBundle.message("welcome.screen.open.project.action.name"),
+                          UIBundle.message("welcome.screen.open.project.action.description", ApplicationNamesInfo.getInstance().getFullProductName()));
 
     MyActionButton openRecentProject = new ButtonWithExtension(REOPEN_RECENT_ICON, null) {
       protected void onPress(InputEvent e, final MyActionButton button) {
@@ -377,9 +389,8 @@ public class WelcomeScreen {
         }, ActionPlaces.UNKNOWN, new PresentationFactory().getPresentation(action), actionManager, 0));
       }
     };
-    quickStarts.addButton(openRecentProject, "Reopen Recent Project", "You can open one of the most recent " +
-                                                                      "projects you were working with. Click the icon " +
-                                                                      "or link to select a project from the list.");
+    quickStarts.addButton(openRecentProject, UIBundle.message("welcome.screen.reopen.recent.project.action.name"),
+                          UIBundle.message("welcome.screen.reopen.recent.project.action.description"));
 
     MyActionButton getFromVCS = new ButtonWithExtension(FROM_VCS_ICON, null) {
       protected void onPress(InputEvent e, final MyActionButton button) {
@@ -388,9 +399,8 @@ public class WelcomeScreen {
       }
     };
 
-    quickStarts.addButton(getFromVCS, "Check out from Version Control", "You can check out an entire project from " +
-                                                                        "a Version Control System. Click the icon or link to " +
-                                                                        "select your VCS.");
+    quickStarts.addButton(getFromVCS, UIBundle.message("welcome.screen.check.out.from.version.control.action.name"),
+                          UIBundle.message("welcome.screen.check.out.from.version.control.action.description"));
 
     /*
     MyActionButton checkForUpdate = new MyActionButton (CHECK_FOR_UPDATE_ICON, null) {
@@ -409,18 +419,18 @@ public class WelcomeScreen {
     myPluginsPanel = new WelcomeScrollablePanel(new GridBagLayout());
     myPluginsPanel.setBackground(PLUGINS_PANEL_COLOR);
 
-    JLabel pluginsCaption = new JLabel("Plugins");
+    JLabel pluginsCaption = new JLabel(UIBundle.message("welcome.screen.plugins.panel.plugins.label"));
     pluginsCaption.setFont(GROUP_CAPTION_FONT);
     pluginsCaption.setForeground(CAPTION_COLOR);
 
-    JLabel installedPluginsCaption = new JLabel("My Plugins:");
+    JLabel installedPluginsCaption = new JLabel(UIBundle.message("welcome.screen.plugins.panel.my.plugins.label"));
     installedPluginsCaption.setFont(LINK_FONT);
     installedPluginsCaption.setForeground(CAPTION_COLOR);
 
     JPanel installedPluginsPanel = new JPanel(new GridBagLayout());
     installedPluginsPanel.setBackground(PLUGINS_PANEL_COLOR);
 
-    JLabel bundledPluginsCaption = new JLabel("Bundled Plugins:");
+    JLabel bundledPluginsCaption = new JLabel(UIBundle.message("welcome.screen.plugins.panel.bundled.plugins.label"));
     bundledPluginsCaption.setFont(LINK_FONT);
     bundledPluginsCaption.setForeground(CAPTION_COLOR);
 
@@ -500,8 +510,10 @@ public class WelcomeScreen {
     //Create the list of installed plugins
     PluginDescriptor[] myInstalledPlugins = PluginManager.getPlugins();
     if (myInstalledPlugins == null || myInstalledPlugins.length == 0) {
-      addListItemToPlugins(installedPluginsPanel, "<i>No plugins currently installed.</i>", null, null, null, null);
-      addListItemToPlugins(bundledPluginsPanel, "<i>All bundled plugins were uninstalled.</i>", null, null, null, null);
+      addListItemToPlugins(installedPluginsPanel, makeItalic(UIBundle
+        .message("welcome.screen.plugins.panel.no.plugins.currently.installed.message.text")), null, null, null, null);
+      addListItemToPlugins(bundledPluginsPanel, makeItalic(UIBundle
+        .message("welcome.screen.plugins.panel.all.bundled.plugins.were.uninstalled.message.text")), null, null, null, null);
     }
     else {
       final Comparator<PluginDescriptor> pluginsComparator = new Comparator<PluginDescriptor>() {
@@ -515,8 +527,7 @@ public class WelcomeScreen {
       int installedPlugins = 0;
       String preinstalledPrefix = PathManager.getPreinstalledPluginsPath();
 
-      for (int i = 0; i < myInstalledPlugins.length; i++) {
-        PluginDescriptor plugin = myInstalledPlugins[i];
+      for (PluginDescriptor plugin : myInstalledPlugins) {
         if (plugin.getPath().getAbsolutePath().startsWith(preinstalledPrefix)) {
           embeddedPlugins++;
           addListItemToPlugins(bundledPluginsPanel, plugin.getName(), plugin.getDescription(), plugin.getVendorLogoPath(),
@@ -529,12 +540,19 @@ public class WelcomeScreen {
         }
       }
       if (embeddedPlugins == 0) {
-        addListItemToPlugins(bundledPluginsPanel, "<i>All bundled plugins were uninstalled.</i>", null, null, null, null);
+        addListItemToPlugins(bundledPluginsPanel, makeItalic(UIBundle
+          .message("welcome.screen.plugins.panel.all.bundled.plugins.were.uninstalled.message.text")), null, null, null, null);
       }
       if (installedPlugins == 0) {
-        addListItemToPlugins(installedPluginsPanel, "<i>No plugins currently installed.</i>", null, null, null, null);
+        addListItemToPlugins(installedPluginsPanel, makeItalic(UIBundle
+          .message("welcome.screen.plugins.panel.no.plugins.currently.installed.message.text")), null, null, null, null);
       }
     }
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  private String makeItalic(final String message) {
+    return "<i>" + message + "</i>";
   }
 
   public void addListItemToPlugins(JPanel panel, String name, String description, String iconPath, ClassLoader pluginClassLoader, final String url) {
@@ -566,8 +584,8 @@ public class WelcomeScreen {
     JLabel logoName = new JLabel(shortenedName);
     logoName.setFont(LINK_FONT);
     logoName.setForeground(CAPTION_COLOR);
-    if (shortenedName.endsWith("...</html>")) {
-      logoName.setToolTipText(adjustStringBreaksByWidth(name, UIManager.getFont("ToolTip.font"), false, MAX_TOOLTIP_WIDTH, 0));
+    if (shortenedName.endsWith(___HTML_SUFFIX)) {
+      logoName.setToolTipText(adjustStringBreaksByWidth(name, UIUtil.getToolTipFont(), false, MAX_TOOLTIP_WIDTH, 0));
     }
 
     gBC = new GridBagConstraints(1, y, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
@@ -576,18 +594,18 @@ public class WelcomeScreen {
 
     if (!StringUtil.isEmpty(description)) {
       description = description.trim();
-      if (description.startsWith("<html>")) {
-        description = description.replaceAll("<html>", "");
-        if (description.endsWith("</html>")) {
-          description = description.replaceAll("</html>", "");
+      if (description.startsWith(ActionGroupDescriptor.HTML_PREFIX)) {
+        description = description.replaceAll(ActionGroupDescriptor.HTML_PREFIX, "");
+        if (description.endsWith(ActionGroupDescriptor.HTML_SUFFIX)) {
+          description = description.replaceAll(ActionGroupDescriptor.HTML_SUFFIX, "");
         }
       }
-      description = description.replaceAll("\\n", "");
+      description = description.replaceAll(ESC_NEW_LINE, "");
       String shortenedDcs = adjustStringBreaksByWidth(description, TEXT_FONT, false, PLUGIN_DSC_MAX_WIDTH, PLUGIN_DSC_MAX_ROWS);
       JLabel pluginDescription = new JLabel(shortenedDcs);
       pluginDescription.setFont(TEXT_FONT);
-      if (shortenedDcs.endsWith("...</html>")) {
-        pluginDescription.setToolTipText(adjustStringBreaksByWidth(description, UIManager.getFont("ToolTip.font"), false, MAX_TOOLTIP_WIDTH, 0));
+      if (shortenedDcs.endsWith(___HTML_SUFFIX)) {
+        pluginDescription.setToolTipText(adjustStringBreaksByWidth(description, UIUtil.getToolTipFont(), false, MAX_TOOLTIP_WIDTH, 0));
       }
 
       gBC = new GridBagConstraints(1, y + 1, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
@@ -608,7 +626,7 @@ public class WelcomeScreen {
         }
       };
       learnMore.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-      learnMore.setToolTipText("Learn more...");
+      learnMore.setToolTipText(UIBundle.message("welcome.screen.plugins.panel.learn.more.tooltip.text"));
       panel.add(learnMore, gBC);
       learnMore.setupWithinPanel(myPluginsPanel, PLUGINS_GROUP, myPluginsButtonsCount, 0);
       myPluginsButtonsCount++;
@@ -635,6 +653,7 @@ public class WelcomeScreen {
    * the specified number, and method adds an ellipsis instead of the exceeding part. If the value is zero or negative, the entire string is broken
    * into lines until its end.
    */
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private String adjustStringBreaksByWidth(String string,
                                            final Font font,
                                            final boolean isAntiAliased,
@@ -643,7 +662,7 @@ public class WelcomeScreen {
 
     string = string.trim();
     if (StringUtil.isEmpty(string)) {
-      return "<html>Not specified</html>";
+      return "<html>" + UIBundle.message("welcome.script.text.not.specified.message") + "</html>";
     }
 
     string = string.replaceAll("<li>", " <>&gt; ");
@@ -654,7 +673,7 @@ public class WelcomeScreen {
 
     if (r.getWidth() > maxWidth) {
 
-      String prefix = "";
+      StringBuffer prefix = new StringBuffer();
       String suffix = string;
       int maxIdxPerLine = (int)(maxWidth / r.getWidth() * string.length());
       int lengthLeft = string.length();
@@ -667,7 +686,7 @@ public class WelcomeScreen {
         int i;
         for (i = maxIdxPerLine; i > 0; i--) {
           if (suffix.charAt(i) == ' ') {
-            prefix += suffix.substring(0, i) + "<br>";
+            prefix.append(suffix.substring(0, i)).append("<br>");
             suffix = suffix.substring(i + 1, suffix.length());
             lengthLeft = suffix.length();
             if (maxRows > 0) {
@@ -681,7 +700,7 @@ public class WelcomeScreen {
         }
         if (i == 0) {
           if (rows > 1 && maxRows <= 0) {
-            prefix += suffix.substring(0, maxIdxPerLine) + "<br>";
+            prefix.append(suffix.substring(0, maxIdxPerLine)).append("<br>");
             suffix = suffix.substring(maxIdxPerLine, suffix.length());
             lengthLeft = suffix.length();
             rows--;
@@ -700,6 +719,7 @@ public class WelcomeScreen {
               break;
             }
             else if (suffix.charAt(i - 1) == '>') {
+              //noinspection AssignmentToForLoopParameter
               i--;
             }
             else if (suffix.charAt(i - 1) == '.') {
@@ -716,7 +736,7 @@ public class WelcomeScreen {
       string = prefix + suffix;
     }
     string = string.replaceAll(" <>", "<br>");
-    return "<html>" + string + "</html>";
+    return ActionGroupDescriptor.HTML_PREFIX + string + ActionGroupDescriptor.HTML_SUFFIX;
   }
 
   private abstract class MyActionButton extends JComponent implements ActionButtonComponent {
@@ -735,12 +755,6 @@ public class WelcomeScreen {
       myGroupIdx = groupIdx;
       myRowIdx = rowIdx;
       myColumnIdx = columnIdx;
-      if (groupIdx == MAIN_GROUP) {
-        ourMainButtons.add(MyActionButton.this);
-      }
-      else if (groupIdx == PLUGINS_GROUP) {
-        ourPluginButtons.add(MyActionButton.this);
-      }
       setToolTipText(null);
       setupListeners(panel);
     }

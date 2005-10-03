@@ -41,7 +41,7 @@ public class ChangeClassSignatureProcessor extends BaseRefactoringProcessor {
   }
 
   protected String getCommandName() {
-    return "Change Class Signature";
+    return ChangeClassSignatureDialog.REFACTORING_NAME;
   }
 
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages, FindUsagesCommand refreshCommand) {

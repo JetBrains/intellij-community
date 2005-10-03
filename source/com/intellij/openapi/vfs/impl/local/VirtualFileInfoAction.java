@@ -15,6 +15,7 @@ import java.util.Date;
 /**
  * author: lesya
  */
+@SuppressWarnings({"HardCodedStringLiteral"})
 public class VirtualFileInfoAction extends AnAction{
 
   public static final DateFormat DATE_FORMAT =

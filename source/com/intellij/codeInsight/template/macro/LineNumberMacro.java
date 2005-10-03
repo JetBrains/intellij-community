@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.template.macro;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.template.*;
 
@@ -9,7 +10,7 @@ public class LineNumberMacro implements Macro{
   }
 
   public String getDescription() {
-    return "lineNumber()";
+    return CodeInsightBundle.message("macro.linenumber");
   }
 
   public String getDefaultValue() {

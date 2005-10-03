@@ -19,6 +19,7 @@ import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.editors.IntEnumEditor;
 import com.intellij.uiDesigner.propertyInspector.properties.*;
 import com.intellij.uiDesigner.propertyInspector.renderers.IntEnumRenderer;
+import com.intellij.uiDesigner.UIDesignerBundle;
 import org.jdom.Element;
 
 import javax.swing.*;
@@ -30,6 +31,7 @@ import java.beans.PropertyDescriptor;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.List;
+import java.text.MessageFormat;
 
 /**
  * @author Anton Katilin
@@ -109,6 +111,7 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
     myGroups.clear();
 
     // Parse XML
+    //noinspection HardCodedStringLiteral
     final List groupElements = element.getChildren("group");
     processGroups(groupElements);
 
@@ -142,6 +145,7 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
    */
   public ComponentItem getItem(final String componentClassName) {
     if(componentClassName == null){
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("componentClassName cannot be null");
     }
     return myClassName2Item.get(componentClassName);
@@ -181,7 +185,7 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
     final String componentClassName = item.getClassName();
     if (getItem(componentClassName) != null) {
       Messages.showMessageDialog(
-        "GUI Designer palette: item for this class already is added: " + componentClassName,
+        UIDesignerBundle.message("error.item.already.added", componentClassName),
         ApplicationNamesInfo.getInstance().getFullProductName(),
         Messages.getErrorIcon()
       );
@@ -201,6 +205,7 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
   /**
    * Helper method.
    */
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static GridConstraints processDefaultConstraintsElement(final Element element){
     LOG.assertTrue(element != null);
 
@@ -236,6 +241,7 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
     return constraints;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private void processItemElement(final Element itemElement, final GroupItem group){
     LOG.assertTrue(itemElement != null);
     LOG.assertTrue(group != null);
@@ -293,9 +299,11 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
   private void processGroups(final List groupElements){
     for (Iterator i = groupElements.iterator(); i.hasNext();) {
       final Element groupElement = (Element)i.next();
+      //noinspection HardCodedStringLiteral
       final String groupName = LwXmlReader.getRequiredString(groupElement, "name");
       final GroupItem group = new GroupItem(groupName);
       myGroups.add(group);
+      //noinspection HardCodedStringLiteral
       final Iterator iterator = groupElement.getChildren("item").iterator();
       while (iterator.hasNext()) {
         final Element itemElement = (Element)iterator.next();
@@ -310,6 +318,7 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
   }
 
   /** Helper method */
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static void writeDefaultConstraintsElement(final Element itemElement, final GridConstraints c){
     LOG.assertTrue(itemElement != null);
     LOG.assertTrue("item".equals(itemElement.getName()));
@@ -358,6 +367,7 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
   }
 
   /** Helper method */
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static void writeInitialValuesElement(
     final Element itemElement,
     final HashMap<String, StringDescriptor> name2value
@@ -383,6 +393,7 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
   }
 
   /** Helper method */
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static void writeComponentItem(final Element groupElement, final ComponentItem item){
     LOG.assertTrue(groupElement != null);
     LOG.assertTrue("group".equals(groupElement.getName()));
@@ -418,6 +429,7 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
   /**
    * @param parentElement element to which all "group" elements will be appended
    */
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private void writeGroups(final Element parentElement){
     LOG.assertTrue(parentElement != null);
 
@@ -460,6 +472,7 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
    */
   public IntrospectedProperty[] getIntrospectedProperties(final Class aClass){
     if (aClass == null) {
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("aClass cannot be null");
     }
 
@@ -484,6 +497,7 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
 
         final String name = descriptor.getName();
 
+        //noinspection HardCodedStringLiteral
         if (
           name.equals("preferredSize") ||
           name.equals("minimumSize") ||
@@ -497,51 +511,58 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
 
         final Class propertyType = descriptor.getPropertyType();
         if (int.class.equals(propertyType)) { // int
+          //noinspection HardCodedStringLiteral
           if(
             JSplitPane.class.isAssignableFrom(aClass) &&
             "orientation".equals(name)
           ){ // JSplitPane#orientation
             final IntEnumEditor.Pair[] pairs = new IntEnumEditor.Pair[]{
-              new IntEnumEditor.Pair(JSplitPane.HORIZONTAL_SPLIT, "Horizontal"),
-              new IntEnumEditor.Pair(JSplitPane.VERTICAL_SPLIT, "Vertical")
+              new IntEnumEditor.Pair(JSplitPane.HORIZONTAL_SPLIT, UIDesignerBundle.message("property.horizontal")),
+              new IntEnumEditor.Pair(JSplitPane.VERTICAL_SPLIT, UIDesignerBundle.message("property.vertical"))
             };
             property = createIntEnumProperty(name, readMethod, writeMethod, pairs);
           }
           else if (JScrollPane.class.isAssignableFrom(aClass)) {
+            //noinspection HardCodedStringLiteral
             if("horizontalScrollBarPolicy".equals(name)){
               final IntEnumEditor.Pair[] pairs = new IntEnumEditor.Pair[]{
-                new IntEnumEditor.Pair(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS, "Always"),
-                new IntEnumEditor.Pair(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED, "As needed"),
-                new IntEnumEditor.Pair(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER, "Never")
+                new IntEnumEditor.Pair(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS, UIDesignerBundle.message("property.always")),
+                new IntEnumEditor.Pair(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED, UIDesignerBundle.message("property.as.needed")),
+                new IntEnumEditor.Pair(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER, UIDesignerBundle.message("property.never"))
               };
               property = createIntEnumProperty(name, readMethod, writeMethod, pairs);
             }
-            else if("verticalScrollBarPolicy".equals(name)){
-              final IntEnumEditor.Pair[] pairs = new IntEnumEditor.Pair[]{
-                new IntEnumEditor.Pair(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, "Always"),
-                new IntEnumEditor.Pair(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, "As needed"),
-                new IntEnumEditor.Pair(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER, "Never")
-              };
-              property = createIntEnumProperty(name, readMethod, writeMethod, pairs);
-            }
-            else{
-              property = new IntroIntProperty(name, readMethod, writeMethod);
-            }
+            else
+            //noinspection HardCodedStringLiteral
+            if("verticalScrollBarPolicy".equals(name)){
+                final IntEnumEditor.Pair[] pairs = new IntEnumEditor.Pair[]{
+                  new IntEnumEditor.Pair(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, UIDesignerBundle.message("property.always")),
+                  new IntEnumEditor.Pair(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, UIDesignerBundle.message("property.as.needed")),
+                  new IntEnumEditor.Pair(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER, UIDesignerBundle.message("property.never"))
+                };
+                property = createIntEnumProperty(name, readMethod, writeMethod, pairs);
+              }
+              else{
+                property = new IntroIntProperty(name, readMethod, writeMethod);
+              }
           }
           else if(JTabbedPane.class.isAssignableFrom(aClass)){ // special handling for javax.swing.JTabbedPane
+            //noinspection HardCodedStringLiteral
             if("tabLayoutPolicy".equals(name)){
               final IntEnumEditor.Pair[] pairs = new IntEnumEditor.Pair[]{
-                new IntEnumEditor.Pair(JTabbedPane.WRAP_TAB_LAYOUT, "Wrap"),
-                new IntEnumEditor.Pair(JTabbedPane.SCROLL_TAB_LAYOUT, "Scroll")
+                new IntEnumEditor.Pair(JTabbedPane.WRAP_TAB_LAYOUT, UIDesignerBundle.message("property.wrap")),
+                new IntEnumEditor.Pair(JTabbedPane.SCROLL_TAB_LAYOUT, UIDesignerBundle.message("property.scroll"))
               };
               property = createIntEnumProperty(name, readMethod, writeMethod, pairs);
             }
-            else if("tabPlacement".equals(name)){
+            else
+            // noinspection HardCodedStringLiteral
+            if("tabPlacement".equals(name)){
               final IntEnumEditor.Pair[] pairs = new IntEnumEditor.Pair[]{
-                new IntEnumEditor.Pair(JTabbedPane.TOP, "Top"),
-                new IntEnumEditor.Pair(JTabbedPane.LEFT, "Left"),
-                new IntEnumEditor.Pair(JTabbedPane.BOTTOM, "Bottom"),
-                new IntEnumEditor.Pair(JTabbedPane.RIGHT, "Right")
+                new IntEnumEditor.Pair(JTabbedPane.TOP, UIDesignerBundle.message("property.top")),
+                new IntEnumEditor.Pair(JTabbedPane.LEFT, UIDesignerBundle.message("property.left")),
+                new IntEnumEditor.Pair(JTabbedPane.BOTTOM, UIDesignerBundle.message("property.bottom")),
+                new IntEnumEditor.Pair(JTabbedPane.RIGHT, UIDesignerBundle.message("property.right"))
               };
               property = createIntEnumProperty(name, readMethod, writeMethod, pairs);
             }
@@ -550,45 +571,54 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
             }
           }
           else if(JLabel.class.isAssignableFrom(aClass)){ // special handling for javax.swing.JLabel
+            //noinspection HardCodedStringLiteral
             if(
               JLabel.class.isAssignableFrom(aClass) &&
               ("displayedMnemonic".equals(name) || "displayedMnemonicIndex".equals(name))
             ){ // skip JLabel#displayedMnemonic and JLabel#displayedMnemonicIndex
               continue;
             }
-            else if("horizontalAlignment".equals(name)){
+            else
+            //noinspection HardCodedStringLiteral
+            if("horizontalAlignment".equals(name)){
               final IntEnumEditor.Pair[] pairs = new IntEnumEditor.Pair[]{
-                new IntEnumEditor.Pair(JLabel.LEFT, "Left"),
-                new IntEnumEditor.Pair(JLabel.CENTER, "Center"),
-                new IntEnumEditor.Pair(JLabel.RIGHT, "Right"),
-                new IntEnumEditor.Pair(JLabel.LEADING, "Leading"),
-                new IntEnumEditor.Pair(JLabel.TRAILING, "Trailing")
+                new IntEnumEditor.Pair(JLabel.LEFT, UIDesignerBundle.message("property.left")),
+                new IntEnumEditor.Pair(JLabel.CENTER, UIDesignerBundle.message("property.center")),
+                new IntEnumEditor.Pair(JLabel.RIGHT, UIDesignerBundle.message("property.right")),
+                new IntEnumEditor.Pair(JLabel.LEADING, UIDesignerBundle.message("property.leading")),
+                new IntEnumEditor.Pair(JLabel.TRAILING, UIDesignerBundle.message("property.trailing"))
               };
               property = createIntEnumProperty(name, readMethod, writeMethod, pairs);
             }
-            else if("horizontalTextPosition".equals(name)){
+            else
+            //noinspection HardCodedStringLiteral
+            if("horizontalTextPosition".equals(name)){
               final IntEnumEditor.Pair[] pairs = new IntEnumEditor.Pair[]{
-                new IntEnumEditor.Pair(JLabel.LEFT, "Left"),
-                new IntEnumEditor.Pair(JLabel.CENTER, "Center"),
-                new IntEnumEditor.Pair(JLabel.RIGHT, "Right"),
-                new IntEnumEditor.Pair(JLabel.LEADING, "Leading"),
-                new IntEnumEditor.Pair(JLabel.TRAILING, "Trailing")
+                new IntEnumEditor.Pair(JLabel.LEFT, UIDesignerBundle.message("property.left")),
+                new IntEnumEditor.Pair(JLabel.CENTER, UIDesignerBundle.message("property.center")),
+                new IntEnumEditor.Pair(JLabel.RIGHT, UIDesignerBundle.message("property.right")),
+                new IntEnumEditor.Pair(JLabel.LEADING, UIDesignerBundle.message("property.leading")),
+                new IntEnumEditor.Pair(JLabel.TRAILING, UIDesignerBundle.message("property.trailing"))
               };
               property = createIntEnumProperty(name, readMethod, writeMethod, pairs);
             }
-            else if("verticalAlignment".equals(name)){
+            else
+            //noinspection HardCodedStringLiteral
+            if("verticalAlignment".equals(name)){
               final IntEnumEditor.Pair[] pairs = new IntEnumEditor.Pair[]{
-                new IntEnumEditor.Pair(JLabel.TOP, "Top"),
-                new IntEnumEditor.Pair(JLabel.CENTER, "Center"),
-                new IntEnumEditor.Pair(JLabel.BOTTOM, "Bottom")
+                new IntEnumEditor.Pair(JLabel.TOP, UIDesignerBundle.message("property.top")),
+                new IntEnumEditor.Pair(JLabel.CENTER, UIDesignerBundle.message("property.center")),
+                new IntEnumEditor.Pair(JLabel.BOTTOM, UIDesignerBundle.message("property.bottom"))
               };
               property = createIntEnumProperty(name, readMethod, writeMethod, pairs);
             }
-            else if("verticalTextPosition".equals(name)){
+            else
+            //noinspection HardCodedStringLiteral
+            if("verticalTextPosition".equals(name)){
               final IntEnumEditor.Pair[] pairs = new IntEnumEditor.Pair[]{
-                new IntEnumEditor.Pair(JLabel.TOP, "Top"),
-                new IntEnumEditor.Pair(JLabel.CENTER, "Center"),
-                new IntEnumEditor.Pair(JLabel.BOTTOM, "Bottom")
+                new IntEnumEditor.Pair(JLabel.TOP, UIDesignerBundle.message("property.top")),
+                new IntEnumEditor.Pair(JLabel.CENTER, UIDesignerBundle.message("property.center")),
+                new IntEnumEditor.Pair(JLabel.BOTTOM, UIDesignerBundle.message("property.bottom"))
               };
               property = createIntEnumProperty(name, readMethod, writeMethod, pairs);
             }
@@ -596,126 +626,146 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
               property = new IntroIntProperty(name, readMethod, writeMethod);
             }
           }
-          else if(AbstractButton.class.isAssignableFrom(aClass)){ // special handling AbstractButton subclasses
-            if(
+          else if(AbstractButton.class.isAssignableFrom(aClass)) {  // special handling AbstractButton subclasses
+              //noinspection HardCodedStringLiteral
+              if (
               "mnemonic".equals(name) || "displayedMnemonicIndex".equals(name)
-            ){ // AbstractButton#mnemonic
+              ) { // AbstractButton#mnemonic
               continue;
             }
-            else if("horizontalAlignment".equals(name)){
+            else
+              //noinspection HardCodedStringLiteral
+              if ("horizontalAlignment".equals(name)) {
+                final IntEnumEditor.Pair[] pairs = new IntEnumEditor.Pair[]{
+                  new IntEnumEditor.Pair(SwingConstants.LEFT, UIDesignerBundle.message("property.left")),
+                  new IntEnumEditor.Pair(SwingConstants.CENTER, UIDesignerBundle.message("property.center")),
+                  new IntEnumEditor.Pair(SwingConstants.RIGHT, UIDesignerBundle.message("property.right")),
+                  new IntEnumEditor.Pair(SwingConstants.LEADING, UIDesignerBundle.message("property.leading")),
+                  new IntEnumEditor.Pair(SwingConstants.TRAILING, UIDesignerBundle.message("property.trailing"))
+                };
+                property = createIntEnumProperty(name, readMethod, writeMethod, pairs);
+              }
+              else
+                //noinspection HardCodedStringLiteral
+                if ("horizontalTextPosition".equals(name)) {
+                  final IntEnumEditor.Pair[] pairs = new IntEnumEditor.Pair[]{
+                    new IntEnumEditor.Pair(SwingConstants.LEFT, UIDesignerBundle.message("property.left")),
+                    new IntEnumEditor.Pair(SwingConstants.CENTER, UIDesignerBundle.message("property.center")),
+                    new IntEnumEditor.Pair(SwingConstants.RIGHT, UIDesignerBundle.message("property.right")),
+                    new IntEnumEditor.Pair(SwingConstants.LEADING, UIDesignerBundle.message("property.leading")),
+                    new IntEnumEditor.Pair(SwingConstants.TRAILING, UIDesignerBundle.message("property.trailing"))
+                  };
+                  property = createIntEnumProperty(name, readMethod, writeMethod, pairs);
+                }
+                else
+                  //noinspection HardCodedStringLiteral
+                  if ("verticalAlignment".equals(name)) {
+                    final IntEnumEditor.Pair[] pairs = new IntEnumEditor.Pair[]{
+                      new IntEnumEditor.Pair(SwingConstants.TOP, UIDesignerBundle.message("property.top")),
+                      new IntEnumEditor.Pair(SwingConstants.CENTER, UIDesignerBundle.message("property.center")),
+                      new IntEnumEditor.Pair(SwingConstants.BOTTOM, UIDesignerBundle.message("property.bottom"))
+                    };
+                    property = createIntEnumProperty(name, readMethod, writeMethod, pairs);
+                  }
+                  else
+                    //noinspection HardCodedStringLiteral
+                    if ("verticalTextPosition".equals(name)) {
+                      final IntEnumEditor.Pair[] pairs = new IntEnumEditor.Pair[]{
+                        new IntEnumEditor.Pair(SwingConstants.TOP, UIDesignerBundle.message("property.top")),
+                        new IntEnumEditor.Pair(SwingConstants.CENTER, UIDesignerBundle.message("property.center")),
+                        new IntEnumEditor.Pair(SwingConstants.BOTTOM, UIDesignerBundle.message("property.bottom"))
+                      };
+                      property = createIntEnumProperty(name, readMethod, writeMethod, pairs);
+                    }
+                    else {
+                      property = new IntroIntProperty(name, readMethod, writeMethod);
+                    }
+            }
+            else
+            //noinspection HardCodedStringLiteral
+            if(
+              JTextField.class.isAssignableFrom(aClass) &&
+              "horizontalAlignment".equals(name)
+            ){
               final IntEnumEditor.Pair[] pairs = new IntEnumEditor.Pair[]{
-                new IntEnumEditor.Pair(SwingConstants.LEFT, "Left"),
-                new IntEnumEditor.Pair(SwingConstants.CENTER, "Center"),
-                new IntEnumEditor.Pair(SwingConstants.RIGHT, "Right"),
-                new IntEnumEditor.Pair(SwingConstants.LEADING, "Leading"),
-                new IntEnumEditor.Pair(SwingConstants.TRAILING, "Trailing")
+                new IntEnumEditor.Pair(SwingConstants.LEFT, UIDesignerBundle.message("property.left")),
+                new IntEnumEditor.Pair(SwingConstants.CENTER, UIDesignerBundle.message("property.center")),
+                new IntEnumEditor.Pair(SwingConstants.RIGHT, UIDesignerBundle.message("property.right")),
+                new IntEnumEditor.Pair(SwingConstants.LEADING, UIDesignerBundle.message("property.leading")),
+                new IntEnumEditor.Pair(SwingConstants.TRAILING, UIDesignerBundle.message("property.trailing"))
               };
               property = createIntEnumProperty(name, readMethod, writeMethod, pairs);
             }
-            else if("horizontalTextPosition".equals(name)){
+            else if(
+              JList.class.isAssignableFrom(aClass)
+            ){
+              //noinspection HardCodedStringLiteral
+              if ("layoutOrientation".equals(name)) {
+                final IntEnumEditor.Pair[] pairs = new IntEnumEditor.Pair[]{
+                  new IntEnumEditor.Pair(JList.VERTICAL, UIDesignerBundle.message("property.vertical")),
+                  new IntEnumEditor.Pair(JList.HORIZONTAL_WRAP, UIDesignerBundle.message("property.horizontal.wrap")),
+                  new IntEnumEditor.Pair(JList.VERTICAL_WRAP, UIDesignerBundle.message("property.vertical.wrap"))
+                };
+                property = createIntEnumProperty(name, readMethod, writeMethod, pairs);
+              }
+              else
+              //noinspection HardCodedStringLiteral
+              if ("selectionMode".equals(name)) {
+                final IntEnumEditor.Pair[] pairs = new IntEnumEditor.Pair[]{
+                  new IntEnumEditor.Pair(ListSelectionModel.SINGLE_SELECTION, UIDesignerBundle.message("property.selection.single")),
+                  new IntEnumEditor.Pair(ListSelectionModel.SINGLE_INTERVAL_SELECTION, UIDesignerBundle.message("property.selection.single.interval")),
+                  new IntEnumEditor.Pair(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION, UIDesignerBundle.message("property.selection.multiple.interval"))
+                };
+                property = createIntEnumProperty(name, readMethod, writeMethod, pairs);
+              }
+              else {
+                property = new IntroIntProperty(name, readMethod, writeMethod);
+              }
+            }
+            else
+            //noinspection HardCodedStringLiteral
+            if(
+              JTable.class.isAssignableFrom(aClass) &&
+              "autoResizeMode".equals(name)
+            ){
               final IntEnumEditor.Pair[] pairs = new IntEnumEditor.Pair[]{
-                new IntEnumEditor.Pair(SwingConstants.LEFT, "Left"),
-                new IntEnumEditor.Pair(SwingConstants.CENTER, "Center"),
-                new IntEnumEditor.Pair(SwingConstants.RIGHT, "Right"),
-                new IntEnumEditor.Pair(SwingConstants.LEADING, "Leading"),
-                new IntEnumEditor.Pair(SwingConstants.TRAILING, "Trailing")
+                new IntEnumEditor.Pair(JTable.AUTO_RESIZE_OFF, UIDesignerBundle.message("property.resize.off")),
+                new IntEnumEditor.Pair(JTable.AUTO_RESIZE_NEXT_COLUMN, UIDesignerBundle.message("property.resize.next.column")),
+                new IntEnumEditor.Pair(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS, UIDesignerBundle.message("property.resize.subsequent.columns")),
+                new IntEnumEditor.Pair(JTable.AUTO_RESIZE_LAST_COLUMN, UIDesignerBundle.message("property.resize.last.column")),
+                new IntEnumEditor.Pair(JTable.AUTO_RESIZE_ALL_COLUMNS, UIDesignerBundle.message("property.resize.all.columns"))
               };
               property = createIntEnumProperty(name, readMethod, writeMethod, pairs);
             }
-            else if("verticalAlignment".equals(name)){
+            else
+            //noinspection HardCodedStringLiteral
+            if(
+              JSlider.class.isAssignableFrom(aClass) &&
+              "orientation".equals(name)
+            ){
               final IntEnumEditor.Pair[] pairs = new IntEnumEditor.Pair[]{
-                new IntEnumEditor.Pair(SwingConstants.TOP, "Top"),
-                new IntEnumEditor.Pair(SwingConstants.CENTER, "Center"),
-                new IntEnumEditor.Pair(SwingConstants.BOTTOM, "Bottom")
+                new IntEnumEditor.Pair(JSlider.HORIZONTAL, UIDesignerBundle.message("property.horizontal")),
+                new IntEnumEditor.Pair(JSlider.VERTICAL, UIDesignerBundle.message("property.vertical"))
               };
               property = createIntEnumProperty(name, readMethod, writeMethod, pairs);
             }
-            else if("verticalTextPosition".equals(name)){
+            else
+            //noinspection HardCodedStringLiteral
+            if(
+              JFormattedTextField.class.isAssignableFrom(aClass) &&
+              "focusLostBehavior".equals(name)
+            ){
               final IntEnumEditor.Pair[] pairs = new IntEnumEditor.Pair[]{
-                new IntEnumEditor.Pair(SwingConstants.TOP, "Top"),
-                new IntEnumEditor.Pair(SwingConstants.CENTER, "Center"),
-                new IntEnumEditor.Pair(SwingConstants.BOTTOM, "Bottom")
+                new IntEnumEditor.Pair(JFormattedTextField.COMMIT, UIDesignerBundle.message("property.focuslost.commit")),
+                new IntEnumEditor.Pair(JFormattedTextField.COMMIT_OR_REVERT, UIDesignerBundle.message("property.focuslost.commit.or.revert")),
+                new IntEnumEditor.Pair(JFormattedTextField.PERSIST, UIDesignerBundle.message("property.focuslost.persist")),
+                new IntEnumEditor.Pair(JFormattedTextField.REVERT, UIDesignerBundle.message("property.focuslost.revert"))
               };
               property = createIntEnumProperty(name, readMethod, writeMethod, pairs);
             }
             else{
               property = new IntroIntProperty(name, readMethod, writeMethod);
             }
-          }
-          else if(
-            JTextField.class.isAssignableFrom(aClass) &&
-            "horizontalAlignment".equals(name)
-          ){
-            final IntEnumEditor.Pair[] pairs = new IntEnumEditor.Pair[]{
-              new IntEnumEditor.Pair(SwingConstants.LEFT, "Left"),
-              new IntEnumEditor.Pair(SwingConstants.CENTER, "Center"),
-              new IntEnumEditor.Pair(SwingConstants.RIGHT, "Right"),
-              new IntEnumEditor.Pair(SwingConstants.LEADING, "Leading"),
-              new IntEnumEditor.Pair(SwingConstants.TRAILING, "Trailing")
-            };
-            property = createIntEnumProperty(name, readMethod, writeMethod, pairs);
-          }
-          else if(
-            JList.class.isAssignableFrom(aClass)
-          ){
-            if ("layoutOrientation".equals(name)) {
-              final IntEnumEditor.Pair[] pairs = new IntEnumEditor.Pair[]{
-                new IntEnumEditor.Pair(JList.VERTICAL, "Vertical"),
-                new IntEnumEditor.Pair(JList.HORIZONTAL_WRAP, "Horizontal Wrap"),
-                new IntEnumEditor.Pair(JList.VERTICAL_WRAP, "Vertical Wrap")
-              };
-              property = createIntEnumProperty(name, readMethod, writeMethod, pairs);
-            }
-            else if ("selectionMode".equals(name)) {
-              final IntEnumEditor.Pair[] pairs = new IntEnumEditor.Pair[]{
-                new IntEnumEditor.Pair(ListSelectionModel.SINGLE_SELECTION, "Single"),
-                new IntEnumEditor.Pair(ListSelectionModel.SINGLE_INTERVAL_SELECTION, "Single Interval"),
-                new IntEnumEditor.Pair(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION, "Multiple Interval")
-              };
-              property = createIntEnumProperty(name, readMethod, writeMethod, pairs);
-            }
-            else {
-              property = new IntroIntProperty(name, readMethod, writeMethod);
-            }
-          }
-          else if(
-            JTable.class.isAssignableFrom(aClass) &&
-            "autoResizeMode".equals(name)
-          ){
-            final IntEnumEditor.Pair[] pairs = new IntEnumEditor.Pair[]{
-              new IntEnumEditor.Pair(JTable.AUTO_RESIZE_OFF, "Off"),
-              new IntEnumEditor.Pair(JTable.AUTO_RESIZE_NEXT_COLUMN, "Next Column"),
-              new IntEnumEditor.Pair(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS, "Subsequent Columns"),
-              new IntEnumEditor.Pair(JTable.AUTO_RESIZE_LAST_COLUMN, "Last Column"),
-              new IntEnumEditor.Pair(JTable.AUTO_RESIZE_ALL_COLUMNS, "All Columns")
-            };
-            property = createIntEnumProperty(name, readMethod, writeMethod, pairs);
-          }
-          else if(
-            JSlider.class.isAssignableFrom(aClass) &&
-            "orientation".equals(name)
-          ){
-            final IntEnumEditor.Pair[] pairs = new IntEnumEditor.Pair[]{
-              new IntEnumEditor.Pair(JSlider.HORIZONTAL, "Horizontal"),
-              new IntEnumEditor.Pair(JSlider.VERTICAL, "Vertical")
-            };
-            property = createIntEnumProperty(name, readMethod, writeMethod, pairs);
-          }
-          else if(
-            JFormattedTextField.class.isAssignableFrom(aClass) &&
-            "focusLostBehavior".equals(name)
-          ){
-            final IntEnumEditor.Pair[] pairs = new IntEnumEditor.Pair[]{
-              new IntEnumEditor.Pair(JFormattedTextField.COMMIT, "Commit"),
-              new IntEnumEditor.Pair(JFormattedTextField.COMMIT_OR_REVERT, "Commit or Revert"),
-              new IntEnumEditor.Pair(JFormattedTextField.PERSIST, "Persist"),
-              new IntEnumEditor.Pair(JFormattedTextField.REVERT, "Revert")
-            };
-            property = createIntEnumProperty(name, readMethod, writeMethod, pairs);
-          }
-          else{
-            property = new IntroIntProperty(name, readMethod, writeMethod);
-          }
         }
         else if (boolean.class.equals(propertyType)) { // boolean
           property = new IntroBooleanProperty(name, readMethod, writeMethod);
@@ -759,9 +809,11 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
    */
   public IntrospectedProperty getIntrospectedProperty(final Class aClass, final String name){
     if (aClass == null){
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("aClass cannot be null");
     }
     if (name == null) {
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("name cannot be null");
     }
     final IntrospectedProperty[] properties = getIntrospectedProperties(aClass);
@@ -781,6 +833,7 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
    */
   public IntrospectedProperty getInplaceProperty(final Class aClass){
     if (aClass == null) {
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("aClass cannot be null");
     }
     final String inplaceProperty = com.intellij.uiDesigner.Properties.getInstance().getInplaceProperty(aClass);

@@ -6,6 +6,7 @@ package com.intellij.application.options.colors;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.EffectType;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.ui.ColorPanel;
 
 import javax.swing.*;
@@ -21,21 +22,21 @@ public class ColorAndFontDescriptionPanel extends JPanel {
   private ColorPanel myEffectsColorChooser = new ColorPanel();
   private ColorPanel myErrorStripeColorChooser = new ColorPanel();
 
-  private JCheckBox myCbBackground = new JCheckBox("Background");
-  private JCheckBox myCbForeground = new JCheckBox("Foreground");
-  private JCheckBox myCbEffects = new JCheckBox("Effects");
-  private JCheckBox myCbErrorStripe = new JCheckBox("Error Stripe Mark");
+  private JCheckBox myCbBackground = new JCheckBox(ApplicationBundle.message("checkbox.color.background"));
+  private JCheckBox myCbForeground = new JCheckBox(ApplicationBundle.message("checkbox.color.foreground"));
+  private JCheckBox myCbEffects = new JCheckBox(ApplicationBundle.message("checkbox.color.effects"));
+  private JCheckBox myCbErrorStripe = new JCheckBox(ApplicationBundle.message("checkbox.color.error.stripe.mark"));
 
-  private static final String BORDERED_EFFECT = "Bordered";
-  private static final String UNDERSCORED_EFFECT = "Underscored";
-  private static final String UNDERWAVED_EFFECT = "Underwaved";
-  private static final String STRIKEOUT_EFFECT = "Strikeout";
+  private static final String BORDERED_EFFECT = ApplicationBundle.message("combobox.effect.bordered");
+  private static final String UNDERSCORED_EFFECT = ApplicationBundle.message("combobox.effect.underscored");
+  private static final String UNDERWAVED_EFFECT = ApplicationBundle.message("combobox.effect.underwaved");
+  private static final String STRIKEOUT_EFFECT = ApplicationBundle.message("combobox.effect.strikeout");
 
   private JComboBox myEffectsCombo = new JComboBox(
     new String[]{UNDERSCORED_EFFECT, UNDERWAVED_EFFECT, BORDERED_EFFECT, STRIKEOUT_EFFECT});
 
-  private JCheckBox myCbBold = new JCheckBox("Bold  ");
-  private JCheckBox myCbItalic = new JCheckBox("Italic");
+  private JCheckBox myCbBold = new JCheckBox(ApplicationBundle.message("checkbox.font.bold"));
+  private JCheckBox myCbItalic = new JCheckBox(ApplicationBundle.message("checkbox.font.italic"));
   public boolean updatingEffects;
   private ActionListener myActionListener;
 
@@ -75,7 +76,7 @@ public class ColorAndFontDescriptionPanel extends JPanel {
     gbConstraints.gridwidth = 1;
     gbConstraints.gridy = 1;
     gbConstraints.gridx = 1;
-    panel.add(new JLabel("Font type: "), gbConstraints);
+    panel.add(new JLabel(ApplicationBundle.message("label.font.type")), gbConstraints);
     gbConstraints.gridx = 2;
     panel.add(myCbBold, gbConstraints);
     gbConstraints.gridx = 3;

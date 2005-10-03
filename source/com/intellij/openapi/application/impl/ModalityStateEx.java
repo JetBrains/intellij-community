@@ -57,6 +57,7 @@ public class ModalityStateEx extends ModalityState {
     return false;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     if (myModalEntities.length == 0) return "ModalityState.NON_MODAL";
     StringBuffer buffer = new StringBuffer();

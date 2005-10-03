@@ -7,6 +7,7 @@ import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.ElementType;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author ven
@@ -17,7 +18,7 @@ public class PsiJavaCodeReferenceCodeFragmentImpl extends PsiCodeFragmentImpl im
 
   public PsiJavaCodeReferenceCodeFragmentImpl(final Project project,
                                               final boolean isPhysical,
-                                              final String name,
+                                              final @NonNls String name,
                                               final CharSequence text,
                                               boolean isClassesAccepted) {
     super(project, REFERENCE_TEXT, isPhysical, name, text);

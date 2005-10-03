@@ -20,6 +20,7 @@ import org.netbeans.lib.cvsclient.event.IEventSender;
 import org.netbeans.lib.cvsclient.progress.IProgressViewer;
 import org.netbeans.lib.cvsclient.progress.sending.FileStateRequestsProgressHandler;
 import org.netbeans.lib.cvsclient.request.Requests;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
 
@@ -91,7 +92,7 @@ public final class WatchCommand extends AbstractCommand {
 	 * Returns how this command would look like when typed on the command line.
 	 */
 	public String getCvsCommandLine() {
-		final StringBuffer cvsCommand = new StringBuffer("watch ");
+		@NonNls final StringBuffer cvsCommand = new StringBuffer("watch ");
 		cvsCommand.append(getCVSArguments());
 		appendFileArguments(cvsCommand);
 		return cvsCommand.toString();
@@ -137,7 +138,7 @@ public final class WatchCommand extends AbstractCommand {
 	private String getCVSArguments() {
 		checkState();
 
-		final StringBuffer cvsArguments = new StringBuffer();
+		@NonNls final StringBuffer cvsArguments = new StringBuffer();
 		cvsArguments.append(getWatchMode().toString());
 		cvsArguments.append(' ');
 

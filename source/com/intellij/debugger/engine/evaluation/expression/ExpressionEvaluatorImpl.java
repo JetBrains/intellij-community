@@ -4,10 +4,9 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.debugger.jdi.ObjectReferenceCachingProxy;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.sun.jdi.Value;
-import com.sun.jdi.ObjectReference;
 
 /**
  * Created by IntelliJ IDEA.
@@ -38,7 +37,7 @@ public class ExpressionEvaluatorImpl implements ExpressionEvaluator {
   // EvaluationContextImpl should be at the same stackFrame as it was in the call to EvaluatorBuilderImpl.build
   public Value evaluate(final EvaluationContext context) throws EvaluateException {
     if (!context.getDebugProcess().isAttached()) {
-      throw EvaluateExceptionUtil.createEvaluateException("VM disconnected");
+      throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("error.vm.disconnected"));
     }
     try {
       if (context.getFrameProxy() == null) {
@@ -48,7 +47,8 @@ public class ExpressionEvaluatorImpl implements ExpressionEvaluator {
       Object value = myEvaluator.evaluate((EvaluationContextImpl)context);
 
       if(value != null && !(value instanceof Value)) {
-        throw EvaluateExceptionUtil.INVALID_EXPRESSION("");
+        throw EvaluateExceptionUtil
+          .createEvaluateException(DebuggerBundle.message("evaluation.error.invalid.expression", ""));
       }
 
       myValue = (Value) value;

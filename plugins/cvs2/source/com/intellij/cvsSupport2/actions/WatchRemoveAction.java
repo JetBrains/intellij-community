@@ -12,7 +12,7 @@ import org.netbeans.lib.cvsclient.command.watch.WatchMode;
  */
 public class WatchRemoveAction extends AbstractWatchAction {
   protected String getTitle(VcsContext context) {
-    return "Watching Remove";
+    return com.intellij.CvsBundle.message("operation.name.watching.remove");
   }
 
   protected WatcherDialog createDialog(CvsConfiguration configuration, VcsContext context) {

@@ -1,27 +1,29 @@
 package com.intellij.refactoring.util.classMembers;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.util.containers.HashMap;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 public class UsedByMemberDependencyGraph implements MemberDependencyGraph {
-  protected HashSet mySelectedNormal;
-  protected HashSet mySelectedAbstract;
-  protected HashSet myMembers;
-  protected HashSet myDependencies = null;
-  protected com.intellij.util.containers.HashMap myDependenciesToDependent = null;
+  protected HashSet<PsiMember> mySelectedNormal;
+  protected HashSet<PsiMember> mySelectedAbstract;
+  protected HashSet<PsiMember> myMembers;
+  protected HashSet<PsiMember> myDependencies = null;
+  protected HashMap<PsiMember,HashSet<PsiMember>> myDependenciesToDependent = null;
   private final MemberDependenciesStorage myMemberDependenciesStorage;
 
   UsedByMemberDependencyGraph(PsiClass aClass) {
     myMemberDependenciesStorage = new MemberDependenciesStorage(aClass, null);
-    mySelectedNormal = new HashSet();
-    mySelectedAbstract = new HashSet();
-    myMembers = new HashSet();
+    mySelectedNormal = new HashSet<PsiMember>();
+    mySelectedAbstract = new HashSet<PsiMember>();
+    myMembers = new HashSet<PsiMember>();
   }
 
   public void memberChanged(MemberInfo memberInfo) {
@@ -29,7 +31,7 @@ public class UsedByMemberDependencyGraph implements MemberDependencyGraph {
     {
       myDependencies = null;
       myDependenciesToDependent = null;
-      PsiElement member = memberInfo.getMember();
+      PsiMember member = memberInfo.getMember();
       myMembers.add(member);
       if (!memberInfo.isChecked()) {
         mySelectedNormal.remove(member);
@@ -48,23 +50,21 @@ public class UsedByMemberDependencyGraph implements MemberDependencyGraph {
     }
   }
 
-  public Set getDependent() {
+  public Set<? extends PsiMember> getDependent() {
     if(myDependencies == null) {
-      myDependencies = new HashSet();
-      myDependenciesToDependent = new com.intellij.util.containers.HashMap();
-      for (Iterator iterator = myMembers.iterator(); iterator.hasNext();) {
-        PsiElement element = (PsiElement) iterator.next();
-        Set dependent = myMemberDependenciesStorage.getMemberDependencies(element);
-        for (Iterator iterator1 = dependent.iterator(); iterator1.hasNext();) {
-          PsiElement dependentOn = (PsiElement) iterator1.next();
-          if(mySelectedNormal.contains(dependentOn) && !mySelectedAbstract.contains(dependentOn)) {
-            myDependencies.add(element);
-            HashSet deps = (HashSet) myDependenciesToDependent.get(element);
-            if(deps == null) {
-              deps = new HashSet();
-              myDependenciesToDependent.put(element, deps);
+      myDependencies = new HashSet<PsiMember>();
+      myDependenciesToDependent = new HashMap<PsiMember, HashSet<PsiMember>>();
+      for (PsiMember member : myMembers) {
+        Set<PsiMember> dependent = myMemberDependenciesStorage.getMemberDependencies(member);
+        for (final PsiMember aDependent : dependent) {
+          if (mySelectedNormal.contains(aDependent) && !mySelectedAbstract.contains(aDependent)) {
+            myDependencies.add(member);
+            HashSet<PsiMember> deps = myDependenciesToDependent.get(member);
+            if (deps == null) {
+              deps = new HashSet<PsiMember>();
+              myDependenciesToDependent.put(member, deps);
             }
-            deps.add(dependentOn);
+            deps.add(aDependent);
           }
         }
       }
@@ -73,38 +73,24 @@ public class UsedByMemberDependencyGraph implements MemberDependencyGraph {
     return myDependencies;
   }
 
-  public Set getDependenciesOf(PsiElement element) {
-    final Set dependent = getDependent();
-    if(!dependent.contains(element)) return null;
-    return (Set) myDependenciesToDependent.get(element);
+  public Set<? extends PsiMember> getDependenciesOf(PsiMember member) {
+    final Set<? extends PsiMember> dependent = getDependent();
+    if(!dependent.contains(member)) return null;
+    return myDependenciesToDependent.get(member);
   }
 
-  public String getElementTooltip(PsiElement element) {
-    final Set dependencies = getDependenciesOf(element);
+  public String getElementTooltip(PsiMember element) {
+    final Set<? extends PsiMember> dependencies = getDependenciesOf(element);
     if (dependencies == null || dependencies.size() == 0) return null;
 
-    ArrayList strings = new ArrayList();
-    for (Iterator iterator = dependencies.iterator(); iterator.hasNext();) {
-      PsiElement dep = (PsiElement) iterator.next();
+    ArrayList<String> strings = new ArrayList<String>();
+    for (PsiMember dep : dependencies) {
       if (dep instanceof PsiNamedElement) {
-        final String name = ((PsiNamedElement) dep).getName();
-        if (name != null) {
-          strings.add(name);
-        }
+        strings.add(dep.getName());
       }
     }
 
     if (strings.isEmpty()) return null;
-    StringBuffer buffer = new StringBuffer("uses ");
-    final int size = strings.size();
-    for (int i = 0; i < size; i++) {
-      String s = (String) strings.get(i);
-      buffer.append(s);
-      if (i < size - 1) {
-        buffer.append(", ");
-      }
-    }
-    return buffer.toString();
+    return RefactoringBundle.message("uses.0", StringUtil.join(strings, ", "));
   }
-
 }

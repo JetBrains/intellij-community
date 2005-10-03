@@ -22,6 +22,8 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * Created by IntelliJ IDEA.
  * User: max
@@ -30,7 +32,7 @@ import java.util.List;
  * To change this template use File | Settings | File Templates.
  */
 public class FindUsagesProcessPresentation {
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @NonNls
   public static final String NAME_WITH_MNEMONIC_KEY = "NameWithMnemonic";
 
   private List<Action> myNotFoundActions;

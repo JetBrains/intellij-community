@@ -20,8 +20,8 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -30,6 +30,7 @@ import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.impl.ant.AntPropertyDeclaration;
 import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.util.*;
@@ -37,6 +38,7 @@ import java.util.*;
 /**
  * @author Mike
  */
+@SuppressWarnings({"HardCodedStringLiteral"})
 public class XmlUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.xml.util.XmlUtil");
 
@@ -58,24 +60,27 @@ public class XmlUtil {
   public static final Key<String> TEST_PATH = Key.create("TEST PATH");
   public static final String JSP_URI = "http://java.sun.com/JSP/Page";
   public static final String ANY_URI = "http://www.intellij.net/ns/any";
-  
+
   private static final String JSTL_CORE_URI = "http://java.sun.com/jsp/jstl/core";
   private static final String JSTL_CORE_URI2 = "http://java.sun.com/jstl/core";
   private static final String JSTL_CORE_URI3 = "http://java.sun.com/jstl/core_rt";
   public static final String[] JSTL_CORE_URIS = { JSTL_CORE_URI, JSTL_CORE_URI2, JSTL_CORE_URI3 };
-  
+
   public static final String JSF_HTML_URI = "http://java.sun.com/jsf/html";
-  
+
   private static final String JSTL_FORMAT_URI = "http://java.sun.com/jsp/jstl/fmt";
   private static final String JSTL_FORMAT_URI2 = "http://java.sun.com/jstl/fmt";
   private static final String JSTL_FORMAT_URI3 = "http://java.sun.com/jstl/fmt_rt";
   public static final String[] JSTL_FORMAT_URIS = { JSTL_FORMAT_URI, JSTL_FORMAT_URI2, JSTL_FORMAT_URI3 };
-  
+
   public static final String SPRING_URI = "http://www.springframework.org/tags";
   public static final String STRUTS_BEAN_URI = "http://struts.apache.org/tags-bean";
   public static final String STRUTS_LOGIC_URI = "http://struts.apache.org/tags-logic";
   public static final String STRUTS_HTML_URI = "http://struts.apache.org/tags-html";
   public static final String SPRING_CORE_URI = "http://www.springframework.org/dtd/spring-beans.dtd";
+  public static final String XSD_SIMPLE_CONTENT_TAG = "simpleContent";
+  public static final @NonNls String NO_NAMESPACE_SCHEMA_LOCATION_ATT = "noNamespaceSchemaLocation";
+  public static final @NonNls String SCHEMA_LOCATION_ATT = "schemaLocation";
 
   public static String getSchemaLocation(XmlTag tag, String namespace) {
     final String uri = ExternalResourceManagerEx.getInstanceEx().getResourceLocation(namespace);
@@ -112,7 +117,7 @@ public class XmlUtil {
     return null;
   }
 
-  public static String findNamespacePrefixByURI(XmlFile file, String uri) {
+  public static String findNamespacePrefixByURI(XmlFile file, @NonNls String uri) {
     if (file == null) return null;
     final XmlDocument document = file.getDocument();
     if (document == null) return null;
@@ -224,10 +229,10 @@ public class XmlUtil {
   }
 
   private static boolean _processXmlElements(PsiElement element,
-                                           PsiElementProcessor processor,
-                                           PsiFile targetFile,
-                                           boolean deepFlag,
-                                           boolean wideFlag) {
+                                             PsiElementProcessor processor,
+                                             PsiFile targetFile,
+                                             boolean deepFlag,
+                                             boolean wideFlag) {
     if (deepFlag) if (!processor.execute(element)) return false;
 
     if (element instanceof XmlEntityRef) {
@@ -252,10 +257,10 @@ public class XmlUtil {
   }
 
   private static boolean processElement(PsiElement child,
-                                      PsiElementProcessor processor,
-                                      PsiFile targetFile,
-                                      boolean deepFlag,
-                                      boolean wideFlag) {
+                                        PsiElementProcessor processor,
+                                        PsiFile targetFile,
+                                        boolean deepFlag,
+                                        boolean wideFlag) {
     if (deepFlag) {
       if (!_processXmlElements(child, processor, targetFile, true, wideFlag)) {
         return false;

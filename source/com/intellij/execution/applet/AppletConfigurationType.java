@@ -37,11 +37,11 @@ public class AppletConfigurationType implements LocatableConfigurationType {
   }
 
   public String getDisplayName() {
-    return "Applet";
+    return ExecutionBundle.message("applet.configuration.name");
   }
 
   public String getConfigurationTypeDescription() {
-    return "Applet configuration";
+    return ExecutionBundle.message("applet.configuration.description");
   }
 
   public Icon getIcon() {

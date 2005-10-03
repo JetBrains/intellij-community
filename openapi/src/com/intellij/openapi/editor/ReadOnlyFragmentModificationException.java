@@ -16,13 +16,15 @@
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.editor.event.DocumentEvent;
+import org.jetbrains.annotations.NonNls;
 
 public class ReadOnlyFragmentModificationException extends RuntimeException {
   private DocumentEvent myIllegalAttemptEvent;
   private RangeMarker myGuardedBlock;
+  @NonNls public static final String MESSAGE = "Attempt to modify read-only fragment";
 
   public ReadOnlyFragmentModificationException(DocumentEvent illegalAttemptEvent, RangeMarker guardedBlock) {
-    super("Attempt to modify read-only fragment");
+    super(MESSAGE);
     myIllegalAttemptEvent = illegalAttemptEvent;
     myGuardedBlock = guardedBlock;
   }

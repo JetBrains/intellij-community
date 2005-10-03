@@ -19,27 +19,31 @@ import javax.swing.*;
 import java.awt.*;
 
 
-@SuppressWarnings({"HardCodedStringLiteral"})
+/**
+ * @deprecated Use UIUtil instead
+ */
+
+
 public class IdeaUIManager {
 
   public static Color getTableSelectionBackgroung(){
-    return UIManager.getColor("Table.selectionBackground");
+    return UIUtil.getTableSelectionBackground();
   }
 
   public static Color getTableBackgroung(){
-    return UIManager.getColor("Table.Backgroung");
+    return UIUtil.getTableBackground();
   }
 
   public static Color getTableSelectionForegroung(){
-    return UIManager.getColor("Table.selectionForeground");
+    return UIUtil.getTableSelectionForeground();
   }
 
   public static Color getTableForegroung(){
-    return UIManager.getColor("Table.Foregroung");
+    return UIUtil.getTableForeground();
   }
 
   public static Color getTreeForegroung() {
-    return UIManager.getColor("Tree.Foregroung");
+    return UIUtil.getTreeForeground();
   }
 
 }

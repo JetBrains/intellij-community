@@ -12,6 +12,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.util.XMLExportUtl;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.j2ee.ejb.EjbUtil;
 import com.intellij.j2ee.j2eeDom.ejb.Ejb;
 import com.intellij.j2ee.j2eeDom.ejb.EjbModel;
@@ -20,7 +21,9 @@ import com.intellij.j2ee.j2eeDom.xmlData.ObjectsList;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.codeInsight.daemon.GroupNames;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -34,9 +37,9 @@ public class VisibilityInspection extends FilteringInspectionTool {
   public boolean SUGGEST_PRIVATE_FOR_INNERS = false;
   private WeakerAccessFilter myFilter;
   private QuickFixAction[] myQuickFixActions;
-  public static final String DISPLAY_NAME = "Declaration access can be weaker";
+  public static final String DISPLAY_NAME = InspectionsBundle.message("inspection.visibility.display.name");
   private VisibilityPageComposer myComposer;
-  public static final String SHORT_NAME = "WeakerAccess";
+  @NonNls public static final String SHORT_NAME = "WeakerAccess";
 
   public VisibilityInspection() {
     myQuickFixActions = new QuickFixAction[]{new AcceptSuggestedAccess()};
@@ -56,7 +59,7 @@ public class VisibilityInspection extends FilteringInspectionTool {
       gc.weighty = 0;
       gc.anchor = GridBagConstraints.NORTHWEST;
 
-      myPackageLocalForMembersCheckbox = new JCheckBox("Suggest package local visibility level for class members");
+      myPackageLocalForMembersCheckbox = new JCheckBox(InspectionsBundle.message("inspection.visibility.option"));
       myPackageLocalForMembersCheckbox.setSelected(SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS);
       myPackageLocalForMembersCheckbox.getModel().addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent e) {
@@ -68,7 +71,7 @@ public class VisibilityInspection extends FilteringInspectionTool {
       gc.gridy = 0;
       add(myPackageLocalForMembersCheckbox, gc);
 
-      myPackageLocalForTopClassesCheckbox = new JCheckBox("Suggest package local visibility level for top-level classes");
+      myPackageLocalForTopClassesCheckbox = new JCheckBox(InspectionsBundle.message("inspection.visibility.option1"));
       myPackageLocalForTopClassesCheckbox.setSelected(SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES);
       myPackageLocalForTopClassesCheckbox.getModel().addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent e) {
@@ -81,7 +84,7 @@ public class VisibilityInspection extends FilteringInspectionTool {
       add(myPackageLocalForTopClassesCheckbox, gc);
 
 
-      myPrivateForInnersCheckbox = new JCheckBox("Suggest private for inner class members when referenced from outer class only");
+      myPrivateForInnersCheckbox = new JCheckBox(InspectionsBundle.message("inspection.visibility.option2"));
       myPrivateForInnersCheckbox.setSelected(SUGGEST_PRIVATE_FOR_INNERS);
       myPrivateForInnersCheckbox.getModel().addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent e) {
@@ -105,7 +108,7 @@ public class VisibilityInspection extends FilteringInspectionTool {
   }
 
   public String getGroupDisplayName() {
-    return "Declaration Redundancy";
+    return GroupNames.DECLARATION_REDUNDANCY;
   }
 
   public String getShortName() {
@@ -113,21 +116,26 @@ public class VisibilityInspection extends FilteringInspectionTool {
   }
 
   public WeakerAccessFilter getFilter() {
+    if (myFilter == null){
+      myFilter = new WeakerAccessFilter(isPackageLocalForMembersShouldBeSuggested(),
+                                            isPackageLocalForTopClassesShouldBeSuggested(),
+                                            isPrivateForInnersShouldBeSuggested());
+
+    }
     return myFilter;
+  }
+
+  protected void resetFilter() {
+    myFilter = null;
   }
 
   public void runInspection(AnalysisScope scope) {
     getRefManager().findAllDeclarations(); // Find all declaration elements.
-
-    myFilter = new WeakerAccessFilter(isPackageLocalForMembersShouldBeSuggested(),
-                                      isPackageLocalForTopClassesShouldBeSuggested(),
-                                      isPrivateForInnersShouldBeSuggested());
-
     SmartRefElementPointer[] entryPoints = EntryPointsManager.getInstance(getManager().getProject()).getEntryPoints();
     for (int i = 0; i < entryPoints.length; i++) {
       RefElement refElement = entryPoints[i].getRefElement();
       if (refElement != null) {
-        myFilter.addIgnoreList(refElement);
+        getFilter().addIgnoreList(refElement);
       }
     }
 
@@ -145,7 +153,7 @@ public class VisibilityInspection extends FilteringInspectionTool {
                 PsiField field = fields[k];
                 RefField refField = (RefField)getRefManager().getReference(field);
                 if (refField != null) {
-                  myFilter.addIgnoreList(refField);
+                  getFilter().addIgnoreList(refField);
                 }
               }
 
@@ -155,7 +163,7 @@ public class VisibilityInspection extends FilteringInspectionTool {
                 if (constructor.getParameterList().getParameters().length == 0) {
                   RefMethod refConstructor = (RefMethod)getRefManager().getReference(constructor);
                   if (refConstructor != null) {
-                    myFilter.addIgnoreList(refConstructor);
+                    getFilter().addIgnoreList(refConstructor);
                   }
                 }
               }
@@ -169,13 +177,13 @@ public class VisibilityInspection extends FilteringInspectionTool {
   public boolean queryExternalUsagesRequests() {
     getRefManager().iterate(new RefManager.RefIterator() {
       public void accept(RefElement refElement) {
-        if (myFilter.accepts(refElement)) {
+        if (getFilter().accepts(refElement)) {
           refElement.accept(new RefVisitor() {
             public void visitField(final RefField refField) {
               if (refField.getAccessModifier() != PsiModifier.PRIVATE) {
                 getManager().enqueueFieldUsagesProcessor(refField, new InspectionManagerEx.UsagesProcessor() {
                   public boolean process(PsiReference psiReference) {
-                    myFilter.addIgnoreList(refField);
+                    getFilter().addIgnoreList(refField);
                     return false;
                   }
                 });
@@ -184,20 +192,20 @@ public class VisibilityInspection extends FilteringInspectionTool {
 
             public void visitMethod(final RefMethod refMethod) {
               if (refMethod.isAppMain()) {
-                myFilter.addIgnoreList(refMethod);
+                getFilter().addIgnoreList(refMethod);
               }
               else if (!refMethod.isLibraryOverride() && refMethod.getAccessModifier() != PsiModifier.PRIVATE &&
                        !(refMethod instanceof RefImplicitConstructor)) {
                 getManager().enqueueDerivedMethodsProcessing(refMethod, new InspectionManagerEx.DerivedMethodsProcessor() {
                   public boolean process(PsiMethod derivedMethod) {
-                    myFilter.addIgnoreList(refMethod);
+                    getFilter().addIgnoreList(refMethod);
                     return false;
                   }
                 });
 
                 getManager().enqueueMethodUsagesProcessor(refMethod, new InspectionManagerEx.UsagesProcessor() {
                   public boolean process(PsiReference psiReference) {
-                    myFilter.addIgnoreList(refMethod);
+                    getFilter().addIgnoreList(refMethod);
                     return false;
                   }
                 });
@@ -208,14 +216,14 @@ public class VisibilityInspection extends FilteringInspectionTool {
               if (!refClass.isAnonymous()) {
                 getManager().enqueueDerivedClassesProcessing(refClass, new InspectionManagerEx.DerivedClassesProcessor() {
                   public boolean process(PsiClass inheritor) {
-                    myFilter.addIgnoreList(refClass);
+                    getFilter().addIgnoreList(refClass);
                     return false;
                   }
                 });
 
                 getManager().enqueueClassUsagesProcessing(refClass, new InspectionManagerEx.UsagesProcessor() {
                   public boolean process(PsiReference psiReference) {
-                    myFilter.addIgnoreList(refClass);
+                    getFilter().addIgnoreList(refClass);
                     return false;
                   }
                 });
@@ -232,14 +240,14 @@ public class VisibilityInspection extends FilteringInspectionTool {
   public void exportResults(final Element parentNode) {
     getRefManager().iterate(new RefManager.RefIterator() {
       public void accept(RefElement refElement) {
-        if (myFilter.accepts(refElement)) {
+        if (getFilter().accepts(refElement)) {
           Element element = XMLExportUtl.createElement(refElement, parentNode, -1);
-          Element problemClassElement = new Element("problem_class");
-          problemClassElement.addContent("access modifier can be weaker");
+          Element problemClassElement = new Element(InspectionsBundle.message("inspection.export.results.problem.element.tag"));
+          problemClassElement.addContent(InspectionsBundle.message("inspection.visibility.export.results.visibility"));
           element.addContent(problemClassElement);
-          Element descriptionElement = new Element("description");
-          String possibleAccess = myFilter.getPossibleAccess(refElement);
-          descriptionElement.addContent("can be " + (possibleAccess == PsiModifier.PACKAGE_LOCAL ? "package local" : possibleAccess));
+          Element descriptionElement = new Element(InspectionsBundle.message("inspection.export.results.description.tag"));
+          String possibleAccess = getFilter().getPossibleAccess(refElement);
+          descriptionElement.addContent(InspectionsBundle.message("inspection.visibility.compose.suggestion", possibleAccess == PsiModifier.PACKAGE_LOCAL ? InspectionsBundle.message("inspection.package.local") : possibleAccess));
           element.addContent(descriptionElement);
         }
       }
@@ -286,7 +294,7 @@ public class VisibilityInspection extends FilteringInspectionTool {
 
       list.setModifierProperty(newAccess, true);
       refElement.setAccessModifier(newAccess);
-      myFilter.addIgnoreList(refElement);
+      getFilter().addIgnoreList(refElement);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
@@ -302,14 +310,14 @@ public class VisibilityInspection extends FilteringInspectionTool {
 
   public HTMLComposer getComposer() {
     if (myComposer == null) {
-      myComposer = new VisibilityPageComposer(myFilter, this);
+      myComposer = new VisibilityPageComposer(getFilter(), this);
     }
     return myComposer;
   }
 
   private class AcceptSuggestedAccess extends QuickFixAction {
     private AcceptSuggestedAccess() {
-      super("Accept Suggested Access Level", VisibilityInspection.this);
+      super(InspectionsBundle.message("inspection.visibility.accept.quickfix"), VisibilityInspection.this);
     }
 
     protected boolean applyFix(RefElement[] refElements) {

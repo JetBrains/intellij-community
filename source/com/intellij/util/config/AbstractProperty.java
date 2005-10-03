@@ -4,6 +4,8 @@ import com.intellij.openapi.util.Comparing;
 
 import java.util.Comparator;
 
+import org.jetbrains.annotations.NonNls;
+
 public abstract class AbstractProperty<T> {
   public static final Comparator<AbstractProperty> NAME_COMPARATOR = new Comparator<AbstractProperty>() {
     public int compare(AbstractProperty property, AbstractProperty property1) {
@@ -11,7 +13,7 @@ public abstract class AbstractProperty<T> {
     }
   };
 
-  public abstract String getName();
+  @NonNls public abstract String getName();
   public abstract T getDefault(AbstractPropertyContainer container);
   public abstract T copy(T value);
 

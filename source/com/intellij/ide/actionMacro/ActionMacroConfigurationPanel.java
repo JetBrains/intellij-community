@@ -6,6 +6,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.ListUtil;
 import com.intellij.util.containers.HashSet;
+import com.intellij.ide.IdeBundle;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -78,7 +79,8 @@ public class ActionMacroConfigurationPanel {
         final int selIndex = myMacrosList.getSelectedIndex();
         if (selIndex == -1) return;
         final ActionMacro macro = (ActionMacro) myMacrosModel.getElementAt(selIndex);
-        final String newName = Messages.showInputDialog(myPanel, "Enter New Name", "Rename Macro",
+        final String newName = Messages.showInputDialog(myPanel, IdeBundle.message("prompt.enter.new.name"),
+                                                        IdeBundle.message("title.rename.macro"),
                                                         Messages.getQuestionIcon(), macro.getName(), null);
         if (newName != null) {
           macro.setName(newName);

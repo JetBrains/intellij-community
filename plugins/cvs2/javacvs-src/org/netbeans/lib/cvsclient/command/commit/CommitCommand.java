@@ -29,6 +29,7 @@ import org.netbeans.lib.cvsclient.progress.sending.FileStateRequestsProgressHand
 import org.netbeans.lib.cvsclient.progress.sending.IRequestsProgressHandler;
 import org.netbeans.lib.cvsclient.request.CommandRequest;
 import org.netbeans.lib.cvsclient.request.Requests;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
 import java.util.Date;
@@ -41,7 +42,7 @@ public final class CommitCommand extends AbstractCommand {
 
 	// Constants ==============================================================
 
-	public static final String EXAM_DIR = "server: Examining ";
+	@NonNls public static final String EXAM_DIR = "server: Examining ";
 
 	// Fields =================================================================
 
@@ -109,7 +110,7 @@ public final class CommitCommand extends AbstractCommand {
 	 * @return <command's name> [<parameters>] files/dirs
 	 */
 	public String getCvsCommandLine() {
-		final StringBuffer cvsCommandLine = new StringBuffer("commit ");
+		@NonNls final StringBuffer cvsCommandLine = new StringBuffer("commit ");
 		cvsCommandLine.append(getCvsArguments());
 		appendFileArguments(cvsCommandLine);
 		return cvsCommandLine.toString();
@@ -166,7 +167,7 @@ public final class CommitCommand extends AbstractCommand {
 	// Utils ==================================================================
 
 	private String getCvsArguments() {
-		final StringBuffer arguments = new StringBuffer();
+		@NonNls final StringBuffer arguments = new StringBuffer();
 		if (!isRecursive()) {
 			arguments.append("-l ");
 		}

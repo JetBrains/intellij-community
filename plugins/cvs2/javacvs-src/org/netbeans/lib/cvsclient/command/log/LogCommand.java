@@ -32,6 +32,7 @@ import org.netbeans.lib.cvsclient.progress.sending.FileStateRequestsProgressHand
 import org.netbeans.lib.cvsclient.progress.sending.IRequestsProgressHandler;
 import org.netbeans.lib.cvsclient.request.CommandRequest;
 import org.netbeans.lib.cvsclient.request.Requests;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
 
@@ -42,7 +43,7 @@ public class LogCommand extends AbstractCommand {
 
 	// Constants ==============================================================
 
-	private static final String EXAM_DIR = " server: Logging ";
+	@NonNls private static final String EXAM_DIR = " server: Logging ";
 
 	// Fields =================================================================
 
@@ -103,7 +104,7 @@ public class LogCommand extends AbstractCommand {
 	}
 
 	public final String getCvsCommandLine() {
-		final StringBuffer cvsCommandLine = new StringBuffer("log ");
+		@NonNls final StringBuffer cvsCommandLine = new StringBuffer("log ");
 		cvsCommandLine.append(getCVSArguments());
 		appendFileArguments(cvsCommandLine);
 		return cvsCommandLine.toString();
@@ -245,7 +246,7 @@ public class LogCommand extends AbstractCommand {
 	 * Similar to getCVSCommand() however without the files and command's name
 	 */
 	private String getCVSArguments() {
-		final StringBuffer cvsArguments = new StringBuffer();
+		@NonNls final StringBuffer cvsArguments = new StringBuffer();
 		if (isDefaultBranch()) {
 			cvsArguments.append("-b ");
 		}

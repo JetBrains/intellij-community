@@ -1,9 +1,9 @@
 package com.intellij.openapi.updateSettings.impl;
 
+import com.intellij.CommonBundle;
 import com.intellij.ide.BrowserUtil;
-import com.intellij.ide.license.LicenseManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationInfo;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -28,7 +28,7 @@ class UpdateInfoDialog extends DialogWrapper {
   protected UpdateInfoDialog(final boolean canBeParent, UpdateChecker.NewVersion newVersion) {
     super(canBeParent);
     myNewVersion = newVersion;
-    setTitle("Update Info");
+    setTitle(IdeBundle.message("updates.info.dialog.title"));
     init();
   }
 
@@ -39,9 +39,9 @@ class UpdateInfoDialog extends DialogWrapper {
 
   protected Action[] createActions() {
     final Action cancelAction = getCancelAction();
-    cancelAction.putValue(Action.NAME, "&Close");
+    cancelAction.putValue(Action.NAME, CommonBundle.getCloseButtonText());
     final Action okAction = getOKAction();
-    okAction.putValue(Action.NAME, "&More Info...");
+    okAction.putValue(Action.NAME, IdeBundle.message("updates.more.info.button"));
     return new Action[] {cancelAction, okAction};
   }
 
@@ -61,7 +61,7 @@ class UpdateInfoDialog extends DialogWrapper {
     if (enableLink) {
       myUpdateInfoPanel.myUpdatesLink.setForeground(Color.BLUE); // TODO: specify correct color
       myUpdateInfoPanel.myUpdatesLink.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-      myUpdateInfoPanel.myUpdatesLink.setToolTipText("Click to open Updates Settings dialog");
+      myUpdateInfoPanel.myUpdatesLink.setToolTipText(IdeBundle.message("updates.open.settings.link"));
       myUpdateInfoPanel.myUpdatesLink.addMouseListener(new MouseListener() {
         public void mouseClicked(MouseEvent e) {
           UpdateSettingsConfigurable updatesSettings = UpdateSettingsConfigurable.getInstance();

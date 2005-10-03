@@ -22,6 +22,7 @@ import com.intellij.util.containers.CollectUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.ide.util.PropertiesComponent;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 
@@ -41,11 +42,18 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   protected MyRefactoringElementListenerProvider myRefactoringElementListenerProvider;
   private RunnerAndConfigurationSettingsImpl myTempConfiguration;
 
+  @NonNls
   private static final String ACTIVE_TYPE = "activeType";
+  @NonNls
   private static final String TEMP_CONFIGURATION = "tempConfiguration";
+  @NonNls
   private static final String CONFIGURATION = "configuration";
   private ConfigurationType[] myTypes;
   private final RunManagerConfig myConfig;
+  @NonNls
+  protected static final String NAME_ATTR = "name";
+  @NonNls
+  protected static final String SELECTED_ATTR = "selected";
 
   public RunManagerImpl(final Project project,
                         PropertiesComponent propertiesComponent,
@@ -245,7 +253,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     if (myActiveConfigurationType != null) {
       final Element element = new Element(ACTIVE_TYPE);
       parentNode.addContent(element);
-      element.setAttribute("name", myActiveConfigurationType.getComponentName());
+      element.setAttribute(NAME_ATTR, myActiveConfigurationType.getComponentName());
     }
 
     if (myTempConfiguration != null) {
@@ -272,7 +280,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     throws WriteExternalException {
     final ConfigurationType type = configuration.getType();
     final boolean isSelected = mySelectedConfigurations.get(type) == configuration;
-    element.setAttribute("selected", isSelected ? "true" : "false");
+    element.setAttribute(SELECTED_ATTR, Boolean.valueOf(isSelected).toString());
     configuration.writeExternal(element);
   }
 
@@ -284,7 +292,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
       final Element element = (Element)iterator.next();
       final String elementName = element.getName();
       if (ACTIVE_TYPE.equals(elementName)) {
-        final String typeName = element.getAttributeValue("name");
+        final String typeName = element.getAttributeValue(NAME_ATTR);
         if (typeName != null) myActiveConfigurationType = myTypesByName.get(typeName);
       }
       else {
@@ -303,7 +311,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
       myTemplateConfigurationsMap.put(factory, configuration);
     }
     else {
-      if ("true".equals(element.getAttributeValue("selected"))) {
+      if (Boolean.valueOf(element.getAttributeValue(SELECTED_ATTR))) {
         mySelectedConfigurations.put(factory.getType(), configuration);
       }
       if (TEMP_CONFIGURATION.equals(element.getName())) {

@@ -88,7 +88,7 @@ public class HttpConfigurable implements JDOMExternalizable, ApplicationComponen
         if (PROXY_AUTHENTICATION &&
             ! KEEP_PROXY_PASSWORD) {
           AuthenticationDialog dlg = new AuthenticationDialog(getRequestingHost(), getRequestingPrompt());
-          dlg.show();
+          dlg.setVisible(true);
         }
         return new PasswordAuthentication(PROXY_LOGIN,
                                           getPlainProxyPassword().toCharArray());
@@ -105,6 +105,7 @@ public class HttpConfigurable implements JDOMExternalizable, ApplicationComponen
    * @param url URL for HTTP connection
    * @throws IOException
    */
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public void prepareURL (String url) throws IOException {
     if (USE_HTTP_PROXY) {
       System.setProperty("proxySet", "true");

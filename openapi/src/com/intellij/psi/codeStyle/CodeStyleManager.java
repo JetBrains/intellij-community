@@ -22,6 +22,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * Service for reformatting code fragments, getting names for elements
@@ -270,7 +271,7 @@ public abstract class CodeStyleManager {
    * @param variableKind the kind of the variable.
    * @return the stipped-down name.
    */
-  public abstract String variableNameToPropertyName(String name, VariableKind variableKind);
+  public abstract String variableNameToPropertyName(@NonNls String name, VariableKind variableKind);
 
   /**
    * Appends code style defined prefixes and/or suffixes for the specified variable kind
@@ -280,7 +281,7 @@ public abstract class CodeStyleManager {
    * @param variableKind the kind of the variable.
    * @return the variable name.
    */
-  public abstract String propertyNameToVariableName(String propertyName, VariableKind variableKind);
+  public abstract String propertyNameToVariableName(@NonNls String propertyName, VariableKind variableKind);
 
   /**
    * Suggests a unique name for the variable used at the specified location.
@@ -290,7 +291,7 @@ public abstract class CodeStyleManager {
    * @param lookForward if true, the existing variables are searched in both directions; if false - only backward
    * @return the generated unique name,
    */
-  public abstract String suggestUniqueVariableName(String baseName, PsiElement place, boolean lookForward);
+  public abstract String suggestUniqueVariableName(@NonNls String baseName, PsiElement place, boolean lookForward);
 
   /**
    * Checks if the specified identifier is valid for the specified role (local variable,

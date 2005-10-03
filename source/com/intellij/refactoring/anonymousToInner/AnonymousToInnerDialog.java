@@ -9,16 +9,17 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.ParameterTablePanel;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyEvent;
 import java.util.Map;
 
 class AnonymousToInnerDialog extends DialogWrapper{
@@ -31,7 +32,6 @@ class AnonymousToInnerDialog extends DialogWrapper{
   private EditorTextField myNameField;
   private final ParameterTablePanel.VariableData[] myVariableData;
   private Map<PsiVariable,VariableInfo> myVariableToInfoMap = new HashMap<PsiVariable, VariableInfo>();
-  private static final String REFACTORING_NAME = "Convert Anonymous to Inner";
   private JCheckBox myCbMakeStatic;
 
   public AnonymousToInnerDialog(Project project, PsiAnonymousClass anonClass, final VariableInfo[] variableInfos,
@@ -41,7 +41,7 @@ class AnonymousToInnerDialog extends DialogWrapper{
     myAnonClass = anonClass;
     myNeedsThis = needsThis;
 
-    setTitle(REFACTORING_NAME);
+    setTitle(AnonymousToInnerHandler.REFACTORING_NAME);
 
     for (VariableInfo info : variableInfos) {
       myVariableToInfoMap.put(info.variable, info);
@@ -64,7 +64,8 @@ class AnonymousToInnerDialog extends DialogWrapper{
     init();
 
     String name = myAnonClass.getBaseClassReference().getReferenceName();
-    name = "My" + name; //?
+    @NonNls final String prefix = "My";
+    name = prefix + name; //?
     myNameField.setText(name);
     myNameField.selectAll();
   }
@@ -113,7 +114,7 @@ class AnonymousToInnerDialog extends DialogWrapper{
     final String innerClassName = getClassName();
     final PsiManager manager = PsiManager.getInstance(myProject);
     if ("".equals(innerClassName)) {
-      errorString = "Class name should be specified";
+      errorString = RefactoringBundle.message("anonymousToInner.no.inner.class.name");
     }
     else if (!manager.getNameHelper().isIdentifier(innerClassName)) {
       errorString = RefactoringMessageUtil.getIncorrectIdentifierMessage(innerClassName);
@@ -125,9 +126,7 @@ class AnonymousToInnerDialog extends DialogWrapper{
         PsiClass[] innerClasses = targetClass.getInnerClasses();
         for (PsiClass innerClass : innerClasses) {
           if (innerClassName.equals(innerClass.getName())) {
-            errorString =
-              "Inner class named '" + innerClassName + "' is already defined\n" +
-              "in the class " + targetClass.getName();
+            errorString = RefactoringBundle.message("inner.class.exists", innerClassName, targetClass.getName());
             break;
           }
         }
@@ -139,7 +138,7 @@ class AnonymousToInnerDialog extends DialogWrapper{
 
     if (errorString != null) {
       RefactoringMessageUtil.showErrorMessage(
-        REFACTORING_NAME,
+        AnonymousToInnerHandler.REFACTORING_NAME,
         errorString,
         HelpID.ANONYMOUS_TO_INNER,
         myProject);
@@ -163,7 +162,7 @@ class AnonymousToInnerDialog extends DialogWrapper{
     gbConstraints.weighty = 1;
     gbConstraints.gridx = 0;
     gbConstraints.gridy = 0;
-    JLabel namePrompt = new JLabel("Class name: ");
+    JLabel namePrompt = new JLabel(RefactoringBundle.message("anonymousToInner.class.name.label.text"));
     panel.add(namePrompt, gbConstraints);
 
     myNameField = new EditorTextField("");
@@ -174,9 +173,9 @@ class AnonymousToInnerDialog extends DialogWrapper{
     panel.add(myNameField, gbConstraints);
 
     if(!myNeedsThis) {
-      myCbMakeStatic = new NonFocusableCheckBox("Make class static");
-      myCbMakeStatic.setMnemonic(KeyEvent.VK_S);
-      myCbMakeStatic.setDisplayedMnemonicIndex(11);
+      myCbMakeStatic = new NonFocusableCheckBox();
+      myCbMakeStatic.setText(RefactoringBundle.message("anonymousToInner.make.class.static.checkbox.text"));
+      //myCbMakeStatic.setDisplayedMnemonicIndex(11);
       gbConstraints.gridx = 0;
       gbConstraints.gridy++;
       gbConstraints.gridwidth = 2;
@@ -199,7 +198,7 @@ class AnonymousToInnerDialog extends DialogWrapper{
         AnonymousToInnerDialog.this.doCancelAction();
       }
     };
-    panel.setBorder(IdeBorderFactory.createTitledBorder("Constructor Parameters"));
+    panel.setBorder(IdeBorderFactory.createTitledBorder(RefactoringBundle.message("anonymousToInner.parameters.panel.border.title")));
     return panel;
   }
 

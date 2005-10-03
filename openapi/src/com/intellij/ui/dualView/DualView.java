@@ -26,6 +26,7 @@ import com.intellij.openapi.vcs.fileView.DualViewColumnInfo;
 import com.intellij.peer.PeerFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.UIHelper;
+import com.intellij.ui.UIBundle;
 import com.intellij.ui.table.BaseTableView;
 import com.intellij.ui.table.SelectionProvider;
 import com.intellij.ui.table.TableView;
@@ -36,6 +37,7 @@ import com.intellij.util.ui.Table;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.treetable.ListTreeTableModelOnColumns;
 import com.intellij.util.ui.treetable.TreeTableModel;
+import com.intellij.execution.ExecutionBundle;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionListener;
@@ -54,6 +56,8 @@ import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.List;
 
+import org.jetbrains.annotations.NonNls;
+
 public class DualView extends JPanel {
   private final CardLayout myCardLayout;
   private TreeTableView myTreeView;
@@ -61,8 +65,8 @@ public class DualView extends JPanel {
   private JTable myCurrentView = null;
 
   private TableView myFlatView;
-  private static final String TREE = "TREE";
-  private static final String FLAT = "FLAT";
+  @NonNls private static final String TREE = "TREE";
+  @NonNls private static final String FLAT = "FLAT";
   private TreeCellRenderer myTreeCellRenderer;
   private boolean myRootVisible;
   private boolean myTableRefreshingIsLocked = false;
@@ -72,13 +76,13 @@ public class DualView extends JPanel {
   private final Storage.PropertiesComponentStorage myTreeStorage;
   private final PropertyChangeListener myPropertyChangeListener;
 
-  public DualView(Object root, DualViewColumnInfo[] columns, String columnServiceKey, Project project) {
+  public DualView(Object root, DualViewColumnInfo[] columns, @NonNls String columnServiceKey, Project project) {
     super(new CardLayout());
 
     myTreeStorage = new Storage.PropertiesComponentStorage(columnServiceKey + "_tree",
-                                                             PropertiesComponent.getInstance(project));
+                                                           PropertiesComponent.getInstance(project));
     myFlatStorage = new Storage.PropertiesComponentStorage(columnServiceKey + "_flat",
-                                                             PropertiesComponent.getInstance(project));
+                                                           PropertiesComponent.getInstance(project));
 
     myCardLayout = (CardLayout)getLayout();
 
@@ -337,7 +341,7 @@ public class DualView extends JPanel {
     setRootVisible(myRootVisible);
 
     refreshFlatModel();
-    
+
     addWidthListenersTo(myTreeView);
     addWidthListenersTo(myFlatView);
   }
@@ -365,7 +369,7 @@ public class DualView extends JPanel {
   }
 
   public AnAction getExpandAllAction() {
-    return new AnAction("Expand All", null, IconLoader.getIcon("/actions/expandall.png")) {
+    return new AnAction(UIBundle.message("tree.view.expand.all.action.name"), null, IconLoader.getIcon("/actions/expandall.png")) {
       public void update(AnActionEvent e) {
         Presentation presentation = e.getPresentation();
         presentation.setVisible(true);
@@ -379,7 +383,7 @@ public class DualView extends JPanel {
   }
 
   public AnAction getCollapseAllAction() {
-    return new AnAction("Collapse All", null, IconLoader.getIcon("/actions/collapseall.png")) {
+    return new AnAction(UIBundle.message("tree.view.collapse.all.action.name"), null, IconLoader.getIcon("/actions/collapseall.png")) {
       public void update(AnActionEvent e) {
         Presentation presentation = e.getPresentation();
         presentation.setVisible(true);

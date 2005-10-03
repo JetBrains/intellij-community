@@ -9,6 +9,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ide.IdeBundle;
 
 public class CloseAllEditorsAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
@@ -34,19 +35,19 @@ public class CloseAllEditorsAction extends AnAction {
             fileEditorManager.closeFile(openFiles[i]);
           }
         }
-      }, "Close All Editors", null
+      }, IdeBundle.message("command.close.all.editors"), null
     );
   }
-  
+
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
     final DataContext dataContext = event.getDataContext();
     final EditorWindow editorWindow = (EditorWindow)dataContext.getData(DataConstantsEx.EDITOR_WINDOW);
     if (editorWindow != null && editorWindow.inSplitter()) {
-      presentation.setText("Close _All Editors In Tab Group");
+      presentation.setText(IdeBundle.message("action.close.all.editors.in.tab.group"));
     }
     else {
-      presentation.setText("Close _All Editors");
+      presentation.setText(IdeBundle.message("action.close.all.editors"));
     }
     Project project = (Project)dataContext.getData(DataConstants.PROJECT);
     if (project == null) {

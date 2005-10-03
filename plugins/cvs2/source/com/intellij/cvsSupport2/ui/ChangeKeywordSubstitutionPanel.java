@@ -1,5 +1,7 @@
 package com.intellij.cvsSupport2.ui;
 
+import org.jetbrains.annotations.NonNls;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -38,6 +40,7 @@ public class ChangeKeywordSubstitutionPanel {
 
   public String getKeywordSubstitution() {
     if (!myChangeCheckbox.isSelected()) {
+      //noinspection HardCodedStringLiteral
       return "NONE";
     }
     else {

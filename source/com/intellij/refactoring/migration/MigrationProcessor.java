@@ -14,6 +14,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMigration;
 import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
@@ -26,6 +27,7 @@ import java.util.ArrayList;
 class MigrationProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.migration.MigrationProcessor");
   private final MigrationMap myMigrationMap;
+  private static final String REFACTORING_NAME = RefactoringBundle.message("migration.title");
 
   public MigrationProcessor(Project project, MigrationMap migrationMap) {
     super(project);
@@ -80,7 +82,7 @@ class MigrationProcessor extends BaseRefactoringProcessor {
     PsiMigration psiMigration = startMigration(psiManager);
     try {
       if (myMigrationMap == null) {
-        return null;
+        return UsageInfo.EMPTY_ARRAY;
       }
       for (int i = 0; i < myMigrationMap.getEntryCount(); i++) {
         MigrationMapEntry entry = myMigrationMap.getEntryAt(i);
@@ -108,7 +110,9 @@ class MigrationProcessor extends BaseRefactoringProcessor {
 
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
     if (refUsages.get().length == 0) {
-      Messages.showInfoMessage(myProject, "No Usages Found in the Project", "Migration");
+      Messages.showInfoMessage(myProject,
+                               RefactoringBundle.message("migration.no.usages.found.in.the.project"),
+                               REFACTORING_NAME);
       return false;
     }
     setPreviewUsages(true);
@@ -139,7 +143,7 @@ class MigrationProcessor extends BaseRefactoringProcessor {
 
 
   protected String getCommandName() {
-    return "Migration";
+    return REFACTORING_NAME;
   }
 
   public static class MigrationUsageInfo extends UsageInfo {

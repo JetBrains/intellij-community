@@ -19,6 +19,7 @@ class PassiveDecorationLayer extends JComponent{
 
   public PassiveDecorationLayer(final GuiEditor editor) {
     if (editor == null) {
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("editor cannot be null");
     }
     myEditor = editor;

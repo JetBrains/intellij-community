@@ -1,5 +1,7 @@
 package com.intellij.refactoring.ui;
 
+import com.intellij.refactoring.RefactoringBundle;
+
 import javax.swing.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
@@ -14,12 +16,12 @@ public class DelegationPanel extends JPanel {
   public DelegationPanel() {
     final BoxLayout boxLayout = new BoxLayout(this, BoxLayout.X_AXIS);
     setLayout(boxLayout);
-    add(new JLabel("Method calls:"));
-    myRbModifyCalls = new JRadioButton("Modify");
-    myRbModifyCalls.setMnemonic('M');
+    add(new JLabel(RefactoringBundle.message("delegation.panel.method.calls.label")));
+    myRbModifyCalls = new JRadioButton();
+    myRbModifyCalls.setText(RefactoringBundle.message("delegation.panel.modify.radio"));
     add(myRbModifyCalls);
-    myRbGenerateDelegate = new JRadioButton("Delegate via overloading method");
-    myRbGenerateDelegate.setMnemonic('l');
+    myRbGenerateDelegate = new JRadioButton();
+    myRbGenerateDelegate.setText(RefactoringBundle.message("delegation.panel.delegate.via.overloading.method"));
     add(myRbGenerateDelegate);
     myRbModifyCalls.setSelected(true);
     final ButtonGroup bg = new ButtonGroup();

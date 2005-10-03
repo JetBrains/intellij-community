@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vcs.VcsBundle;
 
 import java.io.IOException;
 import java.util.Date;
@@ -26,7 +27,7 @@ import java.util.Date;
 
 public class CurrentRevision implements VcsFileRevision {
   private final VirtualFile myFile;
-  public static final String CURRENT = "Current";
+  public static final String CURRENT = VcsBundle.message("vcs.revision.name.current");
   private final VcsRevisionNumber myRevisionNumber;
   
   public CurrentRevision(VirtualFile file, VcsRevisionNumber revision) {
@@ -35,7 +36,7 @@ public class CurrentRevision implements VcsFileRevision {
   }
 
   public String getCommitMessage() {
-    return "[Current revision]";
+    return "[" + CURRENT + "]";
   }
 
   public void loadContent() {
@@ -56,7 +57,7 @@ public class CurrentRevision implements VcsFileRevision {
       }
     }
     catch (IOException e) {
-      Messages.showMessageDialog(e.getLocalizedMessage(), "Could Not Load File Content", Messages.getErrorIcon());
+      Messages.showMessageDialog(e.getLocalizedMessage(), VcsBundle.message("message.text.could.not.load.file.content"), Messages.getErrorIcon());
       return null;
     }
 

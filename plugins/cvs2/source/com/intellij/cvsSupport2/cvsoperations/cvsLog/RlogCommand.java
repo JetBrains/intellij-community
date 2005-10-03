@@ -12,6 +12,7 @@ import org.netbeans.lib.cvsclient.progress.IProgressViewer;
 import org.netbeans.lib.cvsclient.progress.sending.DummyRequestsProgressHandler;
 import org.netbeans.lib.cvsclient.request.CommandRequest;
 import org.netbeans.lib.cvsclient.request.Requests;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * author: lesya
@@ -36,6 +37,7 @@ public class RlogCommand extends AbstractCommand {
 
 
   public final String getCvsCommandLine() {
+    //noinspection HardCodedStringLiteral
     final StringBuffer cvsCommandLine = new StringBuffer("log ");
     cvsCommandLine.append(getCVSArguments());
     appendFileArguments(cvsCommandLine);
@@ -49,6 +51,7 @@ public class RlogCommand extends AbstractCommand {
 
   private String getCVSArguments() {
     final StringBuffer cvsArguments = new StringBuffer();
+    //noinspection HardCodedStringLiteral
     cvsArguments.append("-h ");
     return cvsArguments.toString();
   }

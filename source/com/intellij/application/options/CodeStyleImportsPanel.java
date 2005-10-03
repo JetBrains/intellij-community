@@ -2,6 +2,7 @@ package com.intellij.application.options;
 
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.ui.*;
 import com.intellij.util.ui.Table;
@@ -69,25 +70,27 @@ public class CodeStyleImportsPanel extends JPanel {
 
   private JPanel createJspImportLayoutPanel() {
     ButtonGroup buttonGroup = new ButtonGroup();
-    myJspImportCommaSeparated = new JRadioButton("Prefer comma separated import list");
-    myJspOneImportPerDirective = new JRadioButton("Prefer one import statement per page directive");
+    myJspImportCommaSeparated = new JRadioButton(ApplicationBundle.message("radio.prefer.comma.separated.import.list"));
+    myJspOneImportPerDirective = new JRadioButton(ApplicationBundle.message("radio.prefer.one.import.statement.per.page.directive"));
     buttonGroup.add(myJspImportCommaSeparated);
     buttonGroup.add(myJspOneImportPerDirective);
     JPanel btnPanel = new JPanel(new BorderLayout());
     btnPanel.add(myJspImportCommaSeparated, BorderLayout.NORTH);
     btnPanel.add(myJspOneImportPerDirective, BorderLayout.CENTER);
 
+    //noinspection HardCodedStringLiteral
     final MultiLineLabel commaSeparatedLabel = new MultiLineLabel("<% page import=\"com.company.Boo, \n" +
                                                                   "                 com.company.Far\"%>");
+    //noinspection HardCodedStringLiteral
     final MultiLineLabel oneImportPerDirectiveLabel = new MultiLineLabel("<% page import=\"com.company.Boo\"%>\n" +
-                                                                   "<% page import=\"com.company.Far\"%>");
+                                                                         "<% page import=\"com.company.Far\"%>");
     final JPanel labelPanel = new JPanel(new BorderLayout());
-    labelPanel.setBorder(IdeBorderFactory.createTitledBorder("Preview"));
+    labelPanel.setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.preview")));
 
     JPanel resultPanel = new JPanel(new BorderLayout());
     resultPanel.add(btnPanel, BorderLayout.NORTH);
     resultPanel.add(labelPanel, BorderLayout.CENTER);
-    resultPanel.setBorder(IdeBorderFactory.createTitledBorder("JSP imports layout"));
+    resultPanel.setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.jsp.imports.layout")));
 
 
     ActionListener actionListener = new ActionListener() {
@@ -105,25 +108,25 @@ public class CodeStyleImportsPanel extends JPanel {
   }
 
   private JPanel createGeneralOptionsPanel() {
-    OptionGroup group = new OptionGroup("General");
-    myCbUseSingleClassImports = new JCheckBox("Use single class import");
+    OptionGroup group = new OptionGroup(ApplicationBundle.message("title.general"));
+    myCbUseSingleClassImports = new JCheckBox(ApplicationBundle.message("checkbox.use.single.class.import"));
     group.add(myCbUseSingleClassImports);
 
-    myCbUseFQClassNames = new JCheckBox("Use fully qualified class names");
+    myCbUseFQClassNames = new JCheckBox(ApplicationBundle.message("checkbox.use.fully.qualified.class.names"));
     group.add(myCbUseFQClassNames);
 
-    myCbInsertInnerClassImports = new JCheckBox("Insert imports for inner classes");
+    myCbInsertInnerClassImports = new JCheckBox(ApplicationBundle.message("checkbox.insert.imports.for.inner.classes"));
     group.add(myCbInsertInnerClassImports);
 
-    myCbUseFQClassNamesInJavaDoc = new JCheckBox("Use fully qualified class names in javadoc");
+    myCbUseFQClassNamesInJavaDoc = new JCheckBox(ApplicationBundle.message("checkbox.use.fully.qualified.class.names.in.javadoc"));
     group.add(myCbUseFQClassNamesInJavaDoc);
 
     myClassCountField = new JTextField(3);
     myNamesCountField = new JTextField(3);
     final JPanel panel = new JPanel(new GridBagLayout());
-    panel.add(new JLabel("Class count to use import with '*':"), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 3, 0, 0), 0, 0));
+    panel.add(new JLabel(ApplicationBundle.message("editbox.class.count.to.use.import.with.star")), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 3, 0, 0), 0, 0));
     panel.add(myClassCountField, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 1, 0, 0), 0, 0));
-    panel.add(new JLabel("Names count to use static import with '*':"), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 3, 0, 0), 0, 0));
+    panel.add(new JLabel(ApplicationBundle.message("editbox.names.count.to.use.static.import.with.star")), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 3, 0, 0), 0, 0));
     panel.add(myNamesCountField, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 1, 0, 0), 0, 0));
 
     group.add(panel);
@@ -132,7 +135,7 @@ public class CodeStyleImportsPanel extends JPanel {
 
   private JPanel createPackagesPanel() {
     JPanel panel = new JPanel(new BorderLayout());
-    panel.setBorder(IdeBorderFactory.createTitledBorder("Packages to Use Import with '*'"));
+    panel.setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.packages.to.use.import.with")));
 
     panel.add(createPackagesTable(), BorderLayout.CENTER);
     panel.add(createPackagesButtonsPanel(), BorderLayout.EAST);
@@ -141,7 +144,7 @@ public class CodeStyleImportsPanel extends JPanel {
 
   private JPanel createImportLayoutPanel() {
     JPanel panel = new JPanel(new BorderLayout());
-    panel.setBorder(IdeBorderFactory.createTitledBorder("Import Layout"));
+    panel.setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.import.layout")));
     panel.add(createImportLayoutTable(), BorderLayout.CENTER);
     panel.add(createImportLayoutButtonsPanel(), BorderLayout.EAST);
     return panel;
@@ -150,24 +153,19 @@ public class CodeStyleImportsPanel extends JPanel {
   private JPanel createImportLayoutButtonsPanel() {
     JPanel tableButtonsPanel = new JPanel(new VerticalFlowLayout());
 
-    myAddPackageToImportLayoutButton = new JButton("Add Package");
-    myAddPackageToImportLayoutButton.setMnemonic('g');
+    myAddPackageToImportLayoutButton = new JButton(ApplicationBundle.message("button.add.package"));
     tableButtonsPanel.add(myAddPackageToImportLayoutButton);
 
-    myAddBlankLineButton = new JButton("Add Blank");
-    myAddBlankLineButton.setMnemonic('B');
+    myAddBlankLineButton = new JButton(ApplicationBundle.message("button.add.blank"));
     tableButtonsPanel.add(myAddBlankLineButton);
 
-    myMoveUpButton = new JButton("Move Up");
-    myMoveUpButton.setMnemonic('U');
+    myMoveUpButton = new JButton(ApplicationBundle.message("button.move.up"));
     tableButtonsPanel.add(myMoveUpButton);
 
-    myMoveDownButton = new JButton("Move Down");
-    myMoveDownButton.setMnemonic('D');
+    myMoveDownButton = new JButton(ApplicationBundle.message("button.move.down"));
     tableButtonsPanel.add(myMoveDownButton);
 
-    myRemovePackageFromImportLayoutButton = new JButton("Remove");
-    myRemovePackageFromImportLayoutButton.setMnemonic('e');
+    myRemovePackageFromImportLayoutButton = new JButton(ApplicationBundle.message("button.remove"));
     tableButtonsPanel.add(myRemovePackageFromImportLayoutButton);
 
     myAddPackageToImportLayoutButton.addActionListener(
@@ -217,12 +215,10 @@ public class CodeStyleImportsPanel extends JPanel {
     JPanel tableButtonsPanel = new JPanel(new VerticalFlowLayout());
     tableButtonsPanel.setBorder(BorderFactory.createEmptyBorder(4,4,4,4));
 
-    myAddPackageToPackagesButton = new JButton("Add Package");
-    myAddPackageToPackagesButton.setMnemonic('P');
+    myAddPackageToPackagesButton = new JButton(ApplicationBundle.message("button.add.package.p"));
     tableButtonsPanel.add(myAddPackageToPackagesButton);
 
-    myRemovePackageFromPackagesButton = new JButton("Remove");
-    myRemovePackageFromPackagesButton.setMnemonic('R');
+    myRemovePackageFromPackagesButton = new JButton(ApplicationBundle.message("button.remove.r"));
     tableButtonsPanel.add(myRemovePackageFromPackagesButton);
 
     myAddPackageToPackagesButton.addActionListener(
@@ -393,7 +389,10 @@ public class CodeStyleImportsPanel extends JPanel {
   }
 
   private JComponent createPackagesTable() {
-    final String[] names = {"Package", "With Subpackages"};
+    final String[] names = {
+      ApplicationBundle.message("listbox.import.package"),
+      ApplicationBundle.message("listbox.import.with.subpackages")
+    };
     // Create a model of the data.
     TableModel dataModel = new AbstractTableModel() {
       public int getColumnCount() { return names.length; }
@@ -487,7 +486,10 @@ public class CodeStyleImportsPanel extends JPanel {
   }
 
   private JComponent createImportLayoutTable() {
-    final String[] names = {"Package", "With Subpackages"};
+    final String[] names = {
+      ApplicationBundle.message("listbox.import.package"),
+      ApplicationBundle.message("listbox.import.with.subpackages")
+    };
     // Create a model of the data.
     TableModel dataModel = new AbstractTableModel() {
       public int getColumnCount() { return names.length; }
@@ -496,14 +498,14 @@ public class CodeStyleImportsPanel extends JPanel {
         CodeStyleSettings.ImportLayoutTable.Entry entry = myImportLayoutList.getEntryAt(row);
         if(col == 0) {
           if(isOtherEntry(entry) && entry == myOtherPackageEntry) {
-            return "<all other imports>";
+            return ApplicationBundle.message("listbox.import.all.other.imports");
           }
           else if(entry instanceof CodeStyleSettings.ImportLayoutTable.PackageEntry) {
             CodeStyleSettings.ImportLayoutTable.PackageEntry packageEntry = (CodeStyleSettings.ImportLayoutTable.PackageEntry)entry;
             return packageEntry.getPackageName();
           }
           else {
-            return "<blank line>";
+            return ApplicationBundle.message("listbox.import.blank.line");
           }
         }
 

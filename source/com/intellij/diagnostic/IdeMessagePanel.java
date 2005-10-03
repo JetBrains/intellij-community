@@ -24,9 +24,7 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener {
   private IconPane myIdeFatal;
 
   private IconPane[] myIcons;
-  private static final String INTERNAL_ERROR_NOTICE =
-      "<html><body><b>IDE internal error occured."+
-      "<br>Click to see details and post bug report to JetBrains.</b></body></html>";
+  private static final String INTERNAL_ERROR_NOTICE = DiagnosticBundle.message("error.notification.tooltip");
 
   private long myPreviousExceptionTimeStamp;
   private IdeErrorsDialog myDialog;
@@ -35,7 +33,8 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener {
 
   public IdeMessagePanel(MessagePool messagePool) {
     super(new BorderLayout());
-    myIdeFatal = new IconPane(IconLoader.getIcon("/general/ideFatalError.png"), "No new IDE fatal errors", new ActionListener() {
+    myIdeFatal = new IconPane(IconLoader.getIcon("/general/ideFatalError.png"),
+                              DiagnosticBundle.message("error.notification.empty.text"), new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         openFatals();
       }
@@ -120,7 +119,7 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener {
   }
 
   private void showErrorCallout() {
-    if ("true".equals(PropertiesComponent.getInstance().getValue(IdeErrorsDialog.IMMEDIATE_POPUP_OPTION))) {
+    if (PropertiesComponent.getInstance().isTrueValue(IdeErrorsDialog.IMMEDIATE_POPUP_OPTION)) {
       openFatals();
     }
   }

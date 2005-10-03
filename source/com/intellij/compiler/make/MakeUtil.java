@@ -16,8 +16,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.cls.ClsUtil;
+import org.jetbrains.annotations.NonNls;
 
 public class MakeUtil {
+
+  private MakeUtil() {
+  }
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.make.MakeUtil");
   public static final int[] EMPTY_INT_ARRAY = new int[0];
 
@@ -30,8 +35,7 @@ public class MakeUtil {
     }
     // try to find among roots of generated files.
     final VirtualFile[] sourceRoots = context.getSourceRoots(module);
-    for (int idx = 0; idx < sourceRoots.length; idx++) {
-      final VirtualFile sourceRoot = sourceRoots[idx];
+    for (final VirtualFile sourceRoot : sourceRoots) {
       if (fileIndex.isInSourceContent(sourceRoot)) {
         continue; // skip content source roots, need only roots for generated files
       }
@@ -56,7 +60,7 @@ public class MakeUtil {
     // the name of a dir should be lowercased because javac seem to allow difference in case
     // between the physical directory and package name.
     final int dotIndex = qName.lastIndexOf('.');
-    StringBuffer buf = new StringBuffer(qName);
+    final StringBuffer buf = new StringBuffer(qName);
     for (int idx = 0; idx < dotIndex; idx++) {
       buf.setCharAt(idx, Character.toLowerCase(buf.charAt(idx)));
     }
@@ -111,6 +115,7 @@ public class MakeUtil {
     return false;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static String relativeClassPathToQName(String relativePath, char separator) {
     int start = 0;
     int end = relativePath.length() - ".class".length();
@@ -120,7 +125,7 @@ public class MakeUtil {
     return (start <= end)? relativePath.substring(start, end).replace(separator, '.') : null;
   }
 
-  public static String parseObjectType(final String descriptor, int fromIndex) {
+  public static @NonNls String parseObjectType(final String descriptor, int fromIndex) {
     int semicolonIndex = descriptor.indexOf(';', fromIndex);
     if (descriptor.charAt(fromIndex) == 'L' && semicolonIndex > fromIndex) { // isObjectType
       return descriptor.substring(fromIndex + 1, semicolonIndex).replace('/', '.');
@@ -131,6 +136,7 @@ public class MakeUtil {
     return null;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static boolean isPrimitiveType(String descriptor) {
     return
       "V".equals(descriptor) ||
@@ -184,32 +190,31 @@ public class MakeUtil {
     ConstantValueArray value = (ConstantValueArray)memberValues[0].getValue();
     final ConstantValue[] targets = value.getValue();
     int annotationTargets = 0;
-    for (int idx = 0; idx < targets.length; idx++) {
-      ConstantValue target = targets[idx];
+    for (final ConstantValue target : targets) {
       if (target instanceof EnumConstantValue) {
         final String constantName = symbolTable.getSymbol(((EnumConstantValue)target).getConstantName());
-        if ("TYPE".equals(constantName)) {
+        if (AnnotationTargets.TYPE_STR.equals(constantName)) {
           annotationTargets |= AnnotationTargets.TYPE;
         }
-        if ("FIELD".equals(constantName)) {
+        if (AnnotationTargets.FIELD_STR.equals(constantName)) {
           annotationTargets |= AnnotationTargets.FIELD;
         }
-        if ("METHOD".equals(constantName)) {
+        if (AnnotationTargets.METHOD_STR.equals(constantName)) {
           annotationTargets |= AnnotationTargets.METHOD;
         }
-        if ("PARAMETER".equals(constantName)) {
+        if (AnnotationTargets.PARAMETER_STR.equals(constantName)) {
           annotationTargets |= AnnotationTargets.PARAMETER;
         }
-        if ("CONSTRUCTOR".equals(constantName)) {
+        if (AnnotationTargets.CONSTRUCTOR_STR.equals(constantName)) {
           annotationTargets |= AnnotationTargets.CONSTRUCTOR;
         }
-        if ("LOCAL_VARIABLE".equals(constantName)) {
+        if (AnnotationTargets.LOCAL_VARIABLE_STR.equals(constantName)) {
           annotationTargets |= AnnotationTargets.LOCAL_VARIABLE;
         }
-        if ("ANNOTATION_TYPE".equals(constantName)) {
+        if (AnnotationTargets.ANNOTATION_TYPE_STR.equals(constantName)) {
           annotationTargets |= AnnotationTargets.ANNOTATION_TYPE;
         }
-        if ("PACKAGE".equals(constantName)) {
+        if (AnnotationTargets.PACKAGE_STR.equals(constantName)) {
           annotationTargets |= AnnotationTargets.PACKAGE;
         }
       }
@@ -228,23 +233,22 @@ public class MakeUtil {
     final AnnotationNameValuePair[] memberValues = retentionPolicyAnnotation.getMemberValues();
     final EnumConstantValue value = (EnumConstantValue)memberValues[0].getValue();
     final String constantName = symbolTable.getSymbol(value.getConstantName());
-    if ("SOURCE".equals(constantName)) {
+    if (RetentionPolicies.SOURCE_STR.equals(constantName)) {
       return RetentionPolicies.SOURCE;
     }
-    if ("CLASS".equals(constantName)) {
+    if (RetentionPolicies.CLASS_STR.equals(constantName)) {
       return RetentionPolicies.CLASS;
     }
-    if ("RUNTIME".equals(constantName)) {
+    if (RetentionPolicies.RUNTIME_STR.equals(constantName)) {
       return RetentionPolicies.RUNTIME;
     }
     LOG.error("Unknown retention policy: " + constantName);
     return -1;
   }
 
-  public static AnnotationConstantValue findAnnotation(final String annotationQName,
-                                                 AnnotationConstantValue[] annotations, final SymbolTable symbolTable) throws CacheCorruptedException {
-    for (int idx = 0; idx < annotations.length; idx++) {
-      final AnnotationConstantValue annotation = annotations[idx];
+  public static AnnotationConstantValue findAnnotation(@NonNls final String annotationQName,
+                                                       AnnotationConstantValue[] annotations, final SymbolTable symbolTable) throws CacheCorruptedException {
+    for (final AnnotationConstantValue annotation : annotations) {
       if (annotationQName.equals(symbolTable.getSymbol(annotation.getAnnotationQName()))) {
         return annotation;
       }

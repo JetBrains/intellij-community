@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.template.impl;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.util.IconLoader;
@@ -31,7 +32,7 @@ public class LiveTemplatesConfigurable extends BaseConfigurable implements Appli
   }
 
   public String getDisplayName() {
-    return "Live Templates";
+    return CodeInsightBundle.message("templates.settings.page.title");
   }
 
   public Icon getIcon() {

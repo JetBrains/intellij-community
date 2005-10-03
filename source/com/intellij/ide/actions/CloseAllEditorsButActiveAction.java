@@ -7,6 +7,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ide.IdeBundle;
 
 public class CloseAllEditorsButActiveAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
@@ -44,10 +45,10 @@ public class CloseAllEditorsButActiveAction extends AnAction {
       return;
     }
     if (ActionPlaces.EDITOR_POPUP.equals(event.getPlace())) {
-      presentation.setText("Close All _But Current");
+      presentation.setText(IdeBundle.message("action.close.all.but.current"));
     }
     else if (ActionPlaces.EDITOR_TAB_POPUP.equals(event.getPlace())) {
-      presentation.setText("Close All _But This");
+      presentation.setText(IdeBundle.message("action.close.all.but.this"));
     }
     FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
     VirtualFile selectedFile;

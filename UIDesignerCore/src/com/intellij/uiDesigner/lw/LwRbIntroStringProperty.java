@@ -16,6 +16,7 @@
 package com.intellij.uiDesigner.lw;
 
 import org.jdom.Element;
+import com.intellij.uiDesigner.UIFormXmlConstants;
 
 /**
  * @author Vladimir Kondratyev
@@ -29,15 +30,14 @@ public final class LwRbIntroStringProperty extends LwIntrospectedProperty {
    * @return instance of {@link com.intellij.uiDesigner.lw.StringDescriptor}
    */
   public Object read(final Element element) throws Exception{
-    final String value = element.getAttributeValue("value");
-    if(value != null){ // direct value is specified
-      return StringDescriptor.create(value);
+    final StringDescriptor descriptor = LwXmlReader.getStringDescriptor(element,
+                                                                        UIFormXmlConstants.ATTRIBUTE_VALUE,
+                                                                        UIFormXmlConstants.ATTRIBUTE_RESOURCE_BUNDLE,
+                                                                        UIFormXmlConstants.ATTRIBUTE_KEY);
+    if (descriptor == null) {
+      throw new IllegalArgumentException("String descriptor value required");
     }
-    else{ // in that case both "resource-bundle" and "key" should be specified
-      final String rbName = LwXmlReader.getRequiredString(element, "resource-bundle");
-      final String key = LwXmlReader.getRequiredString(element, "key");
-      return new StringDescriptor(rbName, key);
-    }
+    return descriptor;
   }
 }
 

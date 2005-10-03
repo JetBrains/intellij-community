@@ -2,6 +2,7 @@ package com.intellij.openapi.options.ex;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -43,8 +44,8 @@ public class ProjectConfigurableWrapper implements Configurable {
         if (file.exists() && !file.canWrite()) {
           Messages.showMessageDialog(
             myProject,
-            "The project file is read-only.\nThe settings will not be saved until you make the file writable.",
-            "Cannot Save Settings",
+            OptionsBundle.message("project.file.read.only.error.message"),
+            OptionsBundle.message("cannot.save.settings.default.dialog.title"),
             Messages.getErrorIcon()
           );
         }

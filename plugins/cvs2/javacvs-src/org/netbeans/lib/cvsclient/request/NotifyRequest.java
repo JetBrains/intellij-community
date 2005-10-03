@@ -14,6 +14,7 @@ package org.netbeans.lib.cvsclient.request;
 
 import org.netbeans.lib.cvsclient.file.FileObject;
 import org.netbeans.lib.cvsclient.util.BugLog;
+import org.jetbrains.annotations.NonNls;
 
 import java.net.InetAddress;
 import java.text.DateFormat;
@@ -34,19 +35,21 @@ public final class NotifyRequest extends AbstractRequest {
 	private static final DateFormat DATE_FORMAT;
 	private static final String HOST_NAME;
 
-	static {
-		DATE_FORMAT = new SimpleDateFormat("EEE MMM dd hh:mm:ss yyyy z", Locale.US);
+        @NonNls private static final String DATE_FORMAT_STR = "EEE MMM dd hh:mm:ss yyyy z";
 
-		// detect host name
-		String hostName = "";
-		try {
-			hostName = InetAddress.getLocalHost().getHostName();
-		}
-		catch (Exception ex) {
-			ex.printStackTrace();
-		}
-		HOST_NAME = hostName;
-	}
+        static {
+          DATE_FORMAT = new SimpleDateFormat(DATE_FORMAT_STR, Locale.US);
+
+          // detect host name
+          String hostName = "";
+          try {
+                  hostName = InetAddress.getLocalHost().getHostName();
+          }
+          catch (Exception ex) {
+                  ex.printStackTrace();
+          }
+          HOST_NAME = hostName;
+  }
 
 	// Fields =================================================================
 
@@ -57,7 +60,7 @@ public final class NotifyRequest extends AbstractRequest {
 	public NotifyRequest(FileObject fileObject, String path, String command, String parameters) {
 		BugLog.getInstance().assertNotNull(fileObject);
 
-		final StringBuffer buffer = new StringBuffer();
+		@NonNls final StringBuffer buffer = new StringBuffer();
 		buffer.append("Notify "); // NOI18N
 		buffer.append(fileObject.getName());
 		buffer.append('\n');

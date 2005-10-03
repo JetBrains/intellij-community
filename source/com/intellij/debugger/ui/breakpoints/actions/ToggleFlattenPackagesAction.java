@@ -5,6 +5,7 @@
 package com.intellij.debugger.ui.breakpoints.actions;
 
 import com.intellij.debugger.ui.breakpoints.BreakpointPanel;
+import com.intellij.debugger.DebuggerBundle;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -15,7 +16,7 @@ import java.awt.event.ActionEvent;
  */
 public class ToggleFlattenPackagesAction extends BreakpointPanelAction {
   public ToggleFlattenPackagesAction() {
-    super("Flatten packages");
+    super(DebuggerBundle.message("button.flatten.packages"));
   }
 
   public boolean isStateAction() {
@@ -24,7 +25,6 @@ public class ToggleFlattenPackagesAction extends BreakpointPanelAction {
 
   public void setButton(AbstractButton button) {
     super.setButton(button);
-    getButton().setMnemonic('f');
     getButton().setSelected(getPanel().getTree().isFlattenPackages());
   }
 

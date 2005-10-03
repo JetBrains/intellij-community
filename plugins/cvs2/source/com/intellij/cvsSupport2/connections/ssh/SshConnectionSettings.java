@@ -47,6 +47,7 @@ import com.intellij.cvsSupport2.javacvsImpl.io.ReadWriteStatistics;
 import com.intellij.cvsSupport2.javacvsImpl.io.StreamLogger;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.CvsBundle;
 import org.netbeans.lib.cvsclient.command.CommandException;
 import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.connection.IConnection;
@@ -137,7 +138,7 @@ public class SshConnectionSettings extends CvsConnectionSettings {
       String password = sshPasswordProvider.getPasswordForCvsRoot(cvsRoot);
 
       if (password == null) {
-        SshPasswordDialog sshPasswordDialog = new SshPasswordDialog(cvsRoot, "Enter password for ");
+        SshPasswordDialog sshPasswordDialog = new SshPasswordDialog(CvsBundle.message("propmt.text.enter.password.for", cvsRoot));
         sshPasswordDialog.show();
         if (!sshPasswordDialog.isOK()) return false;
         password = sshPasswordDialog.getPassword();
@@ -150,7 +151,7 @@ public class SshConnectionSettings extends CvsConnectionSettings {
       String password = sshPasswordProvider.getPPKPasswordForCvsRoot(cvsRoot);
 
       if (password == null) {
-        SshPasswordDialog sshPasswordDialog = new SshPasswordDialog(cvsRoot, "Enter private key password for ");
+        SshPasswordDialog sshPasswordDialog = new SshPasswordDialog(CvsBundle.message("propmt.text.enter.private.key.password.for", cvsRoot));
         sshPasswordDialog.show();
         if (!sshPasswordDialog.isOK()) return false;
         password = sshPasswordDialog.getPassword();
@@ -181,13 +182,13 @@ public class SshConnectionSettings extends CvsConnectionSettings {
     }
     catch (AuthenticationException e) {
       if (e.getCause() instanceof UnknownHostException) {
-        Messages.showMessageDialog("Unknown host: " + e.getCause().getLocalizedMessage(),
-                                   "Cannot Connect", Messages.getErrorIcon());
+        Messages.showMessageDialog(CvsBundle.message("error.message.unknown.host", e.getCause().getLocalizedMessage()),
+                                   CvsBundle.message("error.dialog.title.cannot.connect.to.cvs"), Messages.getErrorIcon());
 
       }
       else if (e instanceof SolveableAuthenticationException) {
         Messages.showMessageDialog(e.getLocalizedMessage(),
-                                   "Cannot Connect", Messages.getErrorIcon());
+                                   CvsBundle.message("error.dialog.title.cannot.connect.to.cvs"), Messages.getErrorIcon());
 
         if (getSshConfiguration().USE_PPK) {
           SSHPasswordProvider.getInstance().removePPKPasswordFor(myStringRepsentation);
@@ -198,7 +199,7 @@ public class SshConnectionSettings extends CvsConnectionSettings {
         }
       } else {
         Messages.showMessageDialog(e.getLocalizedMessage(),
-                                   "Cannot Connect", Messages.getErrorIcon());
+                                   CvsBundle.message("error.dialog.title.cannot.connect.to.cvs"), Messages.getErrorIcon());
         return false;
       }
 

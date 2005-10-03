@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.vfs.local.win32.FileWatcher;
 import org.apache.log4j.Appender;
 import org.apache.log4j.Category;
+import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
 import java.util.Enumeration;
@@ -17,7 +18,7 @@ public abstract class CommandLineApplication {
   protected static CommandLineApplication ourInstance = null;
 
   static {
-    System.setProperty(FileWatcher.PROPERTY_WATCHER_DISABLED, "true");
+    System.setProperty(FileWatcher.PROPERTY_WATCHER_DISABLED, Boolean.TRUE.toString());
 
     final Category category = Category.getRoot();
     final Enumeration enumeration = category.getAllAppenders();
@@ -32,11 +33,11 @@ public abstract class CommandLineApplication {
 
   protected CommandLineApplication() {}
 
-  protected CommandLineApplication(boolean isInternal, boolean isUnitTestMode, String componentsDescriptor) {
+  protected CommandLineApplication(boolean isInternal, boolean isUnitTestMode, @NonNls String componentsDescriptor) {
     this(isInternal, isUnitTestMode, componentsDescriptor, "idea");
   }
 
-  protected CommandLineApplication(boolean isInternal, boolean isUnitTestMode, String componentsDescriptor, String appName) {
+  protected CommandLineApplication(boolean isInternal, boolean isUnitTestMode, String componentsDescriptor, @NonNls String appName) {
     LOG.assertTrue(ourInstance == null, "Only one instance allowed.");
     ourInstance = this;
     ApplicationManagerEx.createApplication(componentsDescriptor, isInternal, isUnitTestMode, appName);

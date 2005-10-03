@@ -21,7 +21,7 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.usages.UsageView;
-import com.intellij.usages.UsageViewBundle;
+import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.impl.rules.*;
 import com.intellij.usages.rules.UsageGroupingRule;
 import com.intellij.usages.rules.UsageGroupingRuleProvider;
@@ -166,7 +166,6 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider,
     }
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public String getComponentName() {
     return "UsageGroupingRuleProvider";
   }

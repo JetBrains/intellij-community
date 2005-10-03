@@ -26,6 +26,10 @@ public final class IdeaAntLogger2 extends DefaultLogger {
   public static final char ERROR = 'E';
   public static final char EXCEPTION = 'X';
   public static final char EXCEPTION_LINE_SEPARATOR = 0;
+
+  /**
+   * @noinspection HardCodedStringLiteral
+   */
   public static final String OUTPUT_PREFIX = "IDEA_ANT_INTEGRATION";
 
   private final Priority myMessagePriority = new MessagePriority();

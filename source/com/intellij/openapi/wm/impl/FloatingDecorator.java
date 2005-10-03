@@ -5,6 +5,7 @@ import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.openapi.MnemonicHelper;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
 
@@ -42,7 +43,7 @@ public final class FloatingDecorator extends JDialog{
 
   FloatingDecorator(final IdeFrame owner,final WindowInfo info,final InternalDecorator internalDecorator){
     super(owner,internalDecorator.getToolWindow().getId());
-
+    new MnemonicHelper().register(getContentPane());
     myInternalDecorator=internalDecorator;
 
     setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);

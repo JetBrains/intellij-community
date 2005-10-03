@@ -18,10 +18,13 @@ import java.io.File;
 import java.util.List;
 import java.util.ArrayList;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author Eugene Zhuravlev
  *         Date: Oct 9, 2004
  */
+@SuppressWarnings({"HardCodedStringLiteral"})
 public class DummySourceGeneratingCompiler implements SourceGeneratingCompiler{
   public static final String MODULE_NAME = "generated";
   private final Project myProject;

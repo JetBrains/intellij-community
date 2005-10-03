@@ -8,7 +8,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.HashMap;
 
@@ -51,7 +50,7 @@ final class MethodHierarchyUtil {
           final PsiMethod declaration = declarations[k];
           if (declaration.equals(derivedMethod)) return ejbMethod;
 
-          final PsiMethod[] superMethods = PsiSuperMethodUtil.findSuperMethods(declaration);
+          final PsiMethod[] superMethods = declaration.findSuperMethods();
           for (int i = 0; i < superMethods.length; i++) {
             final PsiMethod superMethod = superMethods[i];
             if (declaration.equals(superMethod)) return ejbMethod;

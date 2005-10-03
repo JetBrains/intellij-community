@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.containers.HashSet;
+import com.intellij.CommonBundle;
 
 import java.util.*;
 
@@ -186,7 +187,8 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   
   public void dropHistory() {
     // Run dummy command in order to drop all mergers...
-    CommandProcessor.getInstance().executeCommand(myProject, EmptyRunnable.getInstance(), "Dummy", null);
+    CommandProcessor.getInstance().executeCommand(myProject, EmptyRunnable.getInstance(),
+                                                  CommonBundle.message("drop.undo.history.command.name"), null);
 
     LOG.assertTrue(myCommandLevel == 0);
 
@@ -350,7 +352,8 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     };
 
     CommandProcessor.getInstance().executeCommand(myProject, executeUndoOrRedoAction,
-                                                  isUndoInProgress() ? "Undo" : "Redo", null, myLastMerger.getUndoConfirmationPolicy());
+                                                  isUndoInProgress() ? CommonBundle.message("undo.command.name") : CommonBundle
+                                                    .message("redo.command.name"), null, myLastMerger.getUndoConfirmationPolicy());
     if (exception[0] != null) throw exception[0];
   }
 

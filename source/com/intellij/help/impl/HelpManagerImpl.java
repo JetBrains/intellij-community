@@ -1,11 +1,14 @@
 package com.intellij.help.impl;
 
-import com.intellij.openapi.help.HelpManager;
+import com.intellij.CommonBundle;
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.plugins.PluginDescriptor;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.ide.plugins.PluginManager;
-import com.intellij.ide.plugins.PluginDescriptor;
+import org.jetbrains.annotations.NonNls;
 
 import javax.help.BadIDException;
 import javax.help.HelpSet;
@@ -16,6 +19,7 @@ import java.net.URL;
 public class HelpManagerImpl extends HelpManager implements ApplicationComponent {
   private HelpSet myHelpSet = null;
   private IdeaHelpBroker myBroker = null;
+  @NonNls private static final String HELP_HS = "Help.hs";
 
   public void initComponent() { }
 
@@ -30,7 +34,8 @@ public class HelpManagerImpl extends HelpManager implements ApplicationComponent
       }
     }
     if (myHelpSet == null) {
-      Messages.showMessageDialog("Help not found for " + id, "Help Not Found", Messages.getErrorIcon());
+      Messages.showMessageDialog(IdeBundle.message("help.not.found.error", id),
+                                 IdeBundle.message("help.not.found.title"), Messages.getErrorIcon());
       return;
     }
     if (myBroker == null) {
@@ -48,7 +53,8 @@ public class HelpManagerImpl extends HelpManager implements ApplicationComponent
         myBroker.setCurrentID(id);
       }
       catch (BadIDException e) {
-        Messages.showMessageDialog("Help topic \"" + id + "\" not found", "Error", Messages.getErrorIcon());
+        Messages.showMessageDialog(IdeBundle.message("help.topic.not.found.error", id),
+                                   CommonBundle.getErrorTitle(), Messages.getErrorIcon());
         return;
       }
     }
@@ -59,9 +65,10 @@ public class HelpManagerImpl extends HelpManager implements ApplicationComponent
     return "HelpManager";
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static HelpSet createHelpSet() {
     // This is a temporary solution: path to the help should be customized somehow
-    String urlToHelp = PathManager.getHelpURL() + "/" + "Help.hs";
+    String urlToHelp = PathManager.getHelpURL() + "/" + HELP_HS;
 
     try {
       HelpSet helpSet = new HelpSet(null, new URL (urlToHelp));

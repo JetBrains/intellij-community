@@ -16,7 +16,10 @@ import com.intellij.uiDesigner.lw.LwRootContainer;
 
 import java.io.*;
 
+import org.jetbrains.annotations.NonNls;
+
 final class BindingsCache {
+  @NonNls
   private static final String BINDINGS_FILE_NAME = "formbinding.dat";
   private final StateCache<MyState> myCache;
 

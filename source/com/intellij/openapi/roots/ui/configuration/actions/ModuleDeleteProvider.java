@@ -11,6 +11,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.ProjectBundle;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,8 +26,8 @@ public class ModuleDeleteProvider  implements DeleteProvider  {
   public void deleteElement(DataContext dataContext) {
     final Module module = ((Module)dataContext.getData(DataConstantsEx.MODULE_CONTEXT));
 
-    int ret = Messages.showOkCancelDialog("Remove Module '" + module.getName() + "' from the project?" +
-                                          "\nNo files will be deleted.", "Remove Module", Messages.getQuestionIcon());
+    int ret = Messages.showOkCancelDialog(ProjectBundle.message("module.remove.confirmation.prompt", module.getName()),
+                                          ProjectBundle.message("module.remove.confirmation.title"), Messages.getQuestionIcon());
     if (ret != 0) return;
     CommandProcessor.getInstance().executeCommand(module.getProject(), new Runnable() {
       public void run() {
@@ -37,7 +38,7 @@ public class ModuleDeleteProvider  implements DeleteProvider  {
         };
         ApplicationManager.getApplication().runWriteAction(action);
       }
-    }, "Detach module from project", null);
+    }, ProjectBundle.message("module.remove.command"), null);
   }
 
   public static void removeModule(final Module module) {

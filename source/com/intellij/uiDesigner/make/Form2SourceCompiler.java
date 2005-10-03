@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.uiDesigner.GuiDesignerConfiguration;
+import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.compiler.AlienFormFileException;
 
 import java.io.DataInputStream;
@@ -21,6 +22,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.text.MessageFormat;
 
 public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.make.Form2SourceCompiler");
@@ -32,13 +34,13 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
   }
 
   public String getDescription() {
-    return "GUI Designer form to source compiler";
+    return UIDesignerBundle.message("component.gui.designer.form.to.source.compiler");
   }
 
   public boolean validateConfiguration(CompileScope scope) {
     return true;
   }
-  
+
   public ProcessingItem[] getProcessingItems(final CompileContext context) {
     if (GuiDesignerConfiguration.getInstance(myProject).INSTRUMENT_CLASSES) {
       return ProcessingItem.EMPTY_ARRAY;
@@ -74,7 +76,7 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
               continue;
             }
             catch (Exception e) {
-              addError(context, "Cannot process form file. Reason: " + e, formFile);
+              addError(context, UIDesignerBundle.message("error.cannot.process.form.file", e), formFile);
               continue;
             }
 
@@ -85,7 +87,7 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
             final VirtualFile sourceFile = FormCompilerManager.findSourceFile(context, formFile, classToBind);
             if (sourceFile == null) {
               if (scope.belongs(formFile.getUrl())) {
-                addError(context, "Class to bind does not exist: " + classToBind, formFile);
+                addError(context, UIDesignerBundle.message("error.class.to.bind.does.not.exist", classToBind), formFile);
               }
               continue;
             }
@@ -97,8 +99,8 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
               if (inScope) {
                 addError(
                   context,
-                  "The form is bound to the class " + classToBind + ".\n" +
-                  "Another form " + alreadyProcessedForm.getPresentableUrl() + " is also bound to this class.",
+                  UIDesignerBundle.message("error.duplicate.bind",
+                                           classToBind, alreadyProcessedForm.getPresentableUrl()),
                   formFile
                 );
               }
@@ -125,20 +127,20 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
 
   public ProcessingItem[] process(final CompileContext context, final ProcessingItem[] items) {
     final ArrayList<ProcessingItem> compiledItems = new ArrayList<ProcessingItem>();
-    
-    context.getProgressIndicator().setText("Compiling UI forms...");
-    
-    int formsProcessed = 0; 
-    
+
+    context.getProgressIndicator().setText(UIDesignerBundle.message("progress.compiling.ui.forms"));
+
+    int formsProcessed = 0;
+
     final FormSourceCodeGenerator generator = new FormSourceCodeGenerator(myProject);
 
     final HashSet<Module> processedModules = new HashSet<Module>();
 
     for (int i = 0; i < items.length; i++) {
       context.getProgressIndicator().setFraction((double)(++formsProcessed) / ((double)items.length));
-      
+
       final MyInstrumentationItem item = (MyInstrumentationItem)items[i];
-      
+
       final VirtualFile formFile = item.getFormFile();
 
       if (GuiDesignerConfiguration.getInstance(myProject).COPY_FORMS_RUNTIME_TO_OUTPUT) {
@@ -160,8 +162,8 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
               catch (IOException e) {
                 addError(
                   context,
-                  "Cannot copy GUI designer form runtime classes to the output directory of module " + module.getName() +
-                  ".\nReason: " + e.toString(),
+                  UIDesignerBundle.message("error.cannot.copy.gui.designer.form.runtime",
+                                           module.getName(), e.toString()),
                   null
                 );
               }
@@ -205,7 +207,7 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
     }
     return compiledItems.toArray(new ProcessingItem[compiledItems.size()]);
   }
-  
+
   private static void addError(final CompileContext context, final String message, final VirtualFile formFile) {
     if (formFile != null) {
       context.addMessage(CompilerMessageCategory.ERROR, formFile.getPresentableUrl() + ": " + message, formFile.getUrl(), -1, -1);
@@ -242,5 +244,5 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
       return myState;
     }
   }
-  
+
 }

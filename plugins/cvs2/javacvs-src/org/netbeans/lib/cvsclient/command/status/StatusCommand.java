@@ -31,6 +31,7 @@ import org.netbeans.lib.cvsclient.progress.sending.FileStateRequestsProgressHand
 import org.netbeans.lib.cvsclient.progress.sending.IRequestsProgressHandler;
 import org.netbeans.lib.cvsclient.request.CommandRequest;
 import org.netbeans.lib.cvsclient.request.Requests;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
 
@@ -42,7 +43,7 @@ public final class StatusCommand extends AbstractCommand {
 
 	// Constants ==============================================================
 
-	static final String EXAM_DIR = "server: Examining ";
+	@NonNls static final String EXAM_DIR = "server: Examining ";
 
 	// Fields =================================================================
 
@@ -103,7 +104,7 @@ public final class StatusCommand extends AbstractCommand {
 	 * Each command is responsible for constructing this information.
 	 */
 	public String getCvsCommandLine() {
-		final StringBuffer cvsCommand = new StringBuffer("status ");
+		@NonNls final StringBuffer cvsCommand = new StringBuffer("status ");
 		cvsCommand.append(getCVSArguments());
 		appendFileArguments(cvsCommand);
 		return cvsCommand.toString();
@@ -122,7 +123,7 @@ public final class StatusCommand extends AbstractCommand {
 	// Utils ==================================================================
 
 	private String getCVSArguments() {
-		final StringBuffer toReturn = new StringBuffer("");
+		@NonNls final StringBuffer toReturn = new StringBuffer("");
 		if (isIncludeTags()) {
 			toReturn.append("-v ");
 		}

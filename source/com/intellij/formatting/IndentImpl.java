@@ -1,5 +1,7 @@
 package com.intellij.formatting;
 
+import org.jetbrains.annotations.NonNls;
+
 class IndentImpl extends Indent {
   private final boolean myIsAbsolute;
 
@@ -15,7 +17,7 @@ class IndentImpl extends Indent {
     private final String myName;
 
 
-    public Type(final String name) {
+    public Type(@NonNls final String name) {
       myName = name;
     }
 

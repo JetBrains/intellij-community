@@ -1,5 +1,7 @@
 package com.intellij.util.config;
 
+import org.jetbrains.annotations.NonNls;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -8,11 +10,11 @@ import java.util.List;
 public class ListProperty<T> extends AbstractProperty<List<T>> {
   private final String myName;
 
-  public ListProperty(String name) {
+  public ListProperty(@NonNls String name) {
     myName = name;
   }
 
-  public static <T> ListProperty<T> create(String name) {
+  public static <T> ListProperty<T> create(@NonNls String name) {
     return new ListProperty<T>(name);
   }
 

@@ -13,6 +13,7 @@ import com.intellij.ide.util.gotoByName.ChooseByNamePopupComponent;
 import com.intellij.ide.util.gotoByName.GotoClassModel2;
 import com.intellij.ide.util.treeView.AlphaComparator;
 import com.intellij.ide.util.treeView.NodeRenderer;
+import com.intellij.ide.IdeBundle;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -28,6 +29,7 @@ import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.containers.FilteringIterator;
 import com.intellij.util.ui.Tree;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -151,7 +153,7 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
     myTree.expandRow(0);
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
     myTree.setCellRenderer(new NodeRenderer());
-    myTree.putClientProperty("JTree.lineStyle", "Angled");
+    UIUtil.setLineStyleAngled(myTree);
 
     JScrollPane scrollPane = new JScrollPane(myTree);
     scrollPane.setPreferredSize(new Dimension(500, 300));
@@ -215,8 +217,8 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
       }
     };
 
-    myTabbedPane.addTab("Search by Name", dummyPanel);
-    myTabbedPane.addTab("Project", scrollPane);
+    myTabbedPane.addTab(IdeBundle.message("tab.chooser.search.by.name"), dummyPanel);
+    myTabbedPane.addTab(IdeBundle.message("tab.chooser.project"), scrollPane);
 
     myGotoByNamePanel.invoke(new MyCallback(), getModalityState(), false);
 

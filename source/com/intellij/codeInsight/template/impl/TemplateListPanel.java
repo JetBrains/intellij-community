@@ -1,19 +1,23 @@
 package com.intellij.codeInsight.template.impl;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.util.ui.ColumnInfo;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.ui.*;
+import com.intellij.ui.BooleanTableCellRenderer;
+import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.dualView.TreeTableView;
+import com.intellij.util.Alarm;
+import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.ui.treetable.ListTreeTableModelOnColumns;
 import com.intellij.util.ui.treetable.TreeTable;
 import com.intellij.util.ui.treetable.TreeTableModel;
-import com.intellij.util.ui.treetable.ListTreeTableModelOnColumns;
-import com.intellij.util.Alarm;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -37,10 +41,14 @@ class TemplateListPanel extends JPanel {
   private SortedMap<TemplateKey,TemplateImpl> myTemplates = new TreeMap<TemplateKey, TemplateImpl>();
   private JComboBox myExpandByCombo;
   private boolean isModified = false;
-  private static final String SPACE = "Space";
-  private static final String TAB = "Tab";
-  private static final String ENTER = "Enter";
-  private static final String[] myColumnNames = {"Abbreviation", "Description", "Active"};
+  private static final String SPACE = CodeInsightBundle.message("template.shortcut.space");
+  private static final String TAB = CodeInsightBundle.message("template.shortcut.tab");
+  private static final String ENTER = CodeInsightBundle.message("template.shortcut.enter");
+  private static final String[] myColumnNames = {
+    CodeInsightBundle.message("templates.dialog.table.column.abbreviation"),
+    CodeInsightBundle.message("templates.dialog.table.column.description"),
+    CodeInsightBundle.message("templates.dialog.table.column.active")};
+
   private DefaultMutableTreeNode myTreeRoot = new DefaultMutableTreeNode();
   private DefaultTreeModel myTreeTableModel;
 
@@ -130,23 +138,19 @@ class TemplateListPanel extends JPanel {
     gbConstraints.fill = GridBagConstraints.HORIZONTAL;
     gbConstraints.insets = new Insets(0, 0, 4, 0);
 
-    final JButton addButton = new JButton("Add...");
-    addButton.setMnemonic('A');
+    final JButton addButton = new JButton(CodeInsightBundle.message("templates.dialog.table.action.add"));
     addButton.setMargin(new Insets(2, 4, 2, 4));
     tableButtonsPanel.add(addButton, gbConstraints);
-    myCopyButton = new JButton("Copy...");
+    myCopyButton = new JButton(CodeInsightBundle.message("templates.dialog.table.action.copy"));
     myCopyButton.setEnabled(false);
-    myCopyButton.setMnemonic('C');
     myCopyButton.setMargin(new Insets(2, 4, 2, 4));
     tableButtonsPanel.add(myCopyButton, gbConstraints);
-    myEditButton = new JButton("Edit...");
+    myEditButton = new JButton(CodeInsightBundle.message("templates.dialog.table.action.edit"));
     myEditButton.setEnabled(false);
-    myEditButton.setMnemonic('E');
     myEditButton.setMargin(new Insets(2, 4, 2, 4));
     tableButtonsPanel.add(myEditButton, gbConstraints);
-    myRemoveButton = new JButton("Remove");
+    myRemoveButton = new JButton(CodeInsightBundle.message("templates.dialog.table.action.remove"));
     myRemoveButton.setEnabled(false);
-    myRemoveButton.setMnemonic('R');
     myRemoveButton.setMargin(new Insets(2, 4, 2, 4));
     tableButtonsPanel.add(myRemoveButton, gbConstraints);
 
@@ -206,7 +210,7 @@ class TemplateListPanel extends JPanel {
     gbConstraints.weightx = 0;
     gbConstraints.gridy = 0;
 //    panel.add(createLabel("By default expand with       "), gbConstraints);
-    panel.add(new JLabel("By default expand with       "), gbConstraints);
+    panel.add(new JLabel(CodeInsightBundle.message("templates.dialog.shortcut.chooser.label")), gbConstraints);
 
     gbConstraints.gridx = 1;
     myExpandByCombo = new JComboBox();
@@ -243,7 +247,7 @@ class TemplateListPanel extends JPanel {
     if (templateKey == null) return;
 
     TemplateImpl template = myTemplates.get(templateKey);
-    EditTemplateDialog dialog = new EditTemplateDialog(this, "Edit Live Template", template, getTemplates(),
+    EditTemplateDialog dialog = new EditTemplateDialog(this, CodeInsightBundle.message("dialog.edit.live.template.title"), template, getTemplates(),
                                                        (String)myExpandByCombo.getSelectedItem());
     dialog.show();
     if (!dialog.isOK()) return;
@@ -263,7 +267,7 @@ class TemplateListPanel extends JPanel {
 
   private void addRow() {
     TemplateImpl template = new TemplateImpl("", "", TemplateSettings.USER_GROUP_NAME);
-    EditTemplateDialog dialog = new EditTemplateDialog(this, "Edit Live Template", template, getTemplates(),
+    EditTemplateDialog dialog = new EditTemplateDialog(this, CodeInsightBundle.message("dialog.edit.live.template.title"), template, getTemplates(),
                                                        (String)myExpandByCombo.getSelectedItem());
     dialog.show();
     if (!dialog.isOK()) return;
@@ -280,7 +284,7 @@ class TemplateListPanel extends JPanel {
     TemplateKey templateKey = getTemplateKey(selected);
     LOG.assertTrue(templateKey != null);
     TemplateImpl template = (myTemplates.get(templateKey)).copy();
-    EditTemplateDialog dialog = new EditTemplateDialog(this, "Copy Live Template", template, getTemplates(),
+    EditTemplateDialog dialog = new EditTemplateDialog(this, CodeInsightBundle.message("dialog.copy.live.template.title"), template, getTemplates(),
                                                        (String)myExpandByCombo.getSelectedItem());
     dialog.show();
     if (!dialog.isOK()) return;
@@ -293,7 +297,8 @@ class TemplateListPanel extends JPanel {
   private void removeRow() {
     int selected = myTreeTable.getSelectedRow();
     if (selected < 0) return;
-    int result = Messages.showOkCancelDialog(this, "Do you want to delete this template?", "Confirm Delete",
+    int result = Messages.showOkCancelDialog(this, CodeInsightBundle.message("template.delete.confirmation.text"),
+                                             CodeInsightBundle.message("template.delete.confirmation.title"),
                                              Messages.getQuestionIcon());
     if (result != DialogWrapper.OK_EXIT_CODE) return;
 

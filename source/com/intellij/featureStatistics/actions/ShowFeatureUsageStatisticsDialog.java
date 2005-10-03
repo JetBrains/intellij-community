@@ -1,6 +1,6 @@
 package com.intellij.featureStatistics.actions;
 
-import com.intellij.featureStatistics.ProductivityFeaturesRegistryImpl;
+import com.intellij.CommonBundle;
 import com.intellij.featureStatistics.*;
 import com.intellij.ide.util.TipUIUtil;
 import com.intellij.openapi.application.Application;
@@ -62,7 +62,7 @@ public class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
     }
   };
 
-  private static final ColumnInfo<FeatureDescriptor, String> DISPLAY_NAME = new ColumnInfo<FeatureDescriptor, String>("Feature") {
+  private static final ColumnInfo<FeatureDescriptor, String> DISPLAY_NAME = new ColumnInfo<FeatureDescriptor, String>(FeatureStatisticsBundle.message("feature.statistics.column.feature")) {
     public String valueOf(FeatureDescriptor featureDescriptor) {
       return featureDescriptor.getDisplayName();
     }
@@ -71,7 +71,7 @@ public class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
       return DISPLAY_NAME_COMPARATOR;
     }
   };
-  private static final ColumnInfo<FeatureDescriptor, String> GROUP_NAME = new ColumnInfo<FeatureDescriptor, String>("Group") {
+  private static final ColumnInfo<FeatureDescriptor, String> GROUP_NAME = new ColumnInfo<FeatureDescriptor, String>(FeatureStatisticsBundle.message("feature.statistics.column.group")) {
     public String valueOf(FeatureDescriptor featureDescriptor) {
       return getGroupName(featureDescriptor);
     }
@@ -80,23 +80,20 @@ public class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
       return GROUP_NAME_COMPARATOR;
     }
   };
-  private static final ColumnInfo<FeatureDescriptor, String> USED_TOTAL = new ColumnInfo<FeatureDescriptor, String>("Used") {
+  private static final ColumnInfo<FeatureDescriptor, String> USED_TOTAL = new ColumnInfo<FeatureDescriptor, String>(FeatureStatisticsBundle.message("feature.statistics.column.usage.count")) {
     public String valueOf(FeatureDescriptor featureDescriptor) {
       int count = featureDescriptor.getUsageCount();
-      if (count == 0) return "Never";
-      if (count == 1) return "Once";
-      if (count == 2) return "Twice";
-      return String.valueOf(count) + " times";
+      return FeatureStatisticsBundle.message("feature.statistics.usage.count", count);
     }
 
     public Comparator<FeatureDescriptor> getComparator() {
       return USAGE_COUNT_COMPARATOR;
     }
   };
-  private static final ColumnInfo<FeatureDescriptor, String> LAST_USED = new ColumnInfo<FeatureDescriptor, String>("Last used") {
+  private static final ColumnInfo<FeatureDescriptor, String> LAST_USED = new ColumnInfo<FeatureDescriptor, String>(FeatureStatisticsBundle.message("feature.statistics.column.last.used")) {
     public String valueOf(FeatureDescriptor featureDescriptor) {
       long tm = featureDescriptor.getLastTimeUsed();
-      if (tm <= 0) return "N/A";
+      if (tm <= 0) return FeatureStatisticsBundle.message("feature.statistics.not.applicable");
       return DateFormatUtil.formatBetweenDates(tm, System.currentTimeMillis());
     }
 
@@ -104,11 +101,11 @@ public class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
       return LAST_USED_COMPARATOR;
     }
   };
-  private static final ColumnInfo<FeatureDescriptor, String> USAGE_FREQUENCY = new ColumnInfo<FeatureDescriptor, String>("Average usage frequency") {
+  private static final ColumnInfo<FeatureDescriptor, String> USAGE_FREQUENCY = new ColumnInfo<FeatureDescriptor, String>(FeatureStatisticsBundle.message("feature.statistics.column.usage.frequency")) {
     public String valueOf(FeatureDescriptor featureDescriptor) {
       long tm = featureDescriptor.getAverageFrequency();
-      if (tm <= 0) return "N/A";
-      return "Once " + DateFormatUtil.formatBetweenDates(tm, 0);
+      if (tm <= 0) return FeatureStatisticsBundle.message("feature.statistics.not.applicable");
+      return DateFormatUtil.formatFrequency(tm);
     }
 
     public Comparator<FeatureDescriptor> getComparator() {
@@ -120,8 +117,8 @@ public class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
 
   public ShowFeatureUsageStatisticsDialog(Project project) {
     super(project, true);
-    setTitle("Productivity Guide");
-    setCancelButtonText("Close");
+    setTitle(FeatureStatisticsBundle.message("feature.statistics.dialog.title"));
+    setCancelButtonText(CommonBundle.getCloseButtonText());
     init();
   }
 
@@ -156,10 +153,18 @@ public class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
     Application app = ApplicationManager.getApplication();
     long uptime = System.currentTimeMillis() - app.getStartTime();
     long idletime = app.getIdleTime();
-    controlsPanel.add(new JLabel(ApplicationNamesInfo.getInstance().getProductName() + " uptime: " + DateFormatUtil.formatDuration(uptime) +
-                                 ", idle time: " + DateFormatUtil.formatDuration(idletime)), BorderLayout.NORTH);
 
-    final JCheckBox compiler = new JCheckBox("Show productivity hints while compiling");
+    final String uptimeS = FeatureStatisticsBundle.message("feature.statistics.application.uptime",
+                                                           ApplicationNamesInfo.getInstance().getProductName(),
+                                                           DateFormatUtil.formatDuration(uptime));
+
+    final String idleTimeS = FeatureStatisticsBundle .message("feature.statistics.application.idle.time",
+                                                              ApplicationNamesInfo.getInstance().getProductName(),
+                                                              DateFormatUtil.formatDuration(idletime));
+
+    controlsPanel.add(new JLabel(uptimeS + ", " + idleTimeS), BorderLayout.NORTH);
+
+    final JCheckBox compiler = new JCheckBox(FeatureStatisticsBundle.message("feature.statistics.show.while.compiling"));
     compiler.setSelected(FeatureUsageTracker.getInstance().SHOW_IN_COMPILATION_PROGRESS);
     compiler.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -167,7 +172,7 @@ public class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
       }
     });
 
-    final JCheckBox other = new JCheckBox("Show productivity hints during startup or other lengthy processes");
+    final JCheckBox other = new JCheckBox(FeatureStatisticsBundle.message("feature.statistics.show.on.startup"));
     other.setSelected(FeatureUsageTracker.getInstance().SHOW_IN_OTHER_PROGRESS);
     other.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -184,6 +189,7 @@ public class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
 
     splitter.setFirstComponent(topPanel);
 
+    //noinspection HardCodedStringLiteral
     final JEditorPane browser = new JEditorPane("text/html", "");
     splitter.setSecondComponent(ScrollPaneFactory.createScrollPane(browser));
 

@@ -4,6 +4,7 @@ import org.netbeans.lib.cvsclient.IClientEnvironment;
 import org.netbeans.lib.cvsclient.IConnectionStreams;
 import org.netbeans.lib.cvsclient.io.StreamUtilities;
 import org.netbeans.lib.cvsclient.util.BugLog;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -20,7 +21,7 @@ public final class ResponseParser {
 
 	private final IResponseHandler responseProcessor;
 	private final StreamUtilities myStreamUtilities;
-  public static final String PREFIX_TO_REMOVE = "-f ";
+        @NonNls public static final String PREFIX_TO_REMOVE = "-f ";
 
   // Setup ==================================================================
 
@@ -34,7 +35,8 @@ public final class ResponseParser {
 
 	// Implemented ============================================================
 
-	public Boolean processResponse(String responseName, IConnectionStreams connectionStreams, IResponseServices responseServices, IClientEnvironment clientEnvironment) throws IOException {
+	@SuppressWarnings({"HardCodedStringLiteral"})
+        public Boolean processResponse(String responseName, IConnectionStreams connectionStreams, IResponseServices responseServices, IClientEnvironment clientEnvironment) throws IOException {
     InputStream loggedInputStream = connectionStreams.getLoggedInputStream();
     if (responseName.equalsIgnoreCase("E")) {
       final byte[] line = StreamUtilities.readLineBytes(loggedInputStream);

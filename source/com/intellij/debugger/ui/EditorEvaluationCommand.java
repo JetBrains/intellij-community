@@ -14,6 +14,7 @@ import com.intellij.openapi.progress.util.ProgressWindowWithNotification;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.debugger.DebuggerInvocationUtil;
+import com.intellij.debugger.DebuggerBundle;
 
 /**
  * Created by IntelliJ IDEA.
@@ -40,7 +41,7 @@ public abstract class EditorEvaluationCommand<T> extends DebuggerContextCommandI
   protected abstract T evaluate(EvaluationContextImpl evaluationContext) throws EvaluateException;
 
   public T evaluate() throws EvaluateException {
-    getProgressWindow().setText("Evaluating " + myElement.getText());
+    getProgressWindow().setText(DebuggerBundle.message("progress.evaluating", myElement.getText()));
 
     try {
       T result = evaluate(myDebuggerContext.createEvaluationContext());

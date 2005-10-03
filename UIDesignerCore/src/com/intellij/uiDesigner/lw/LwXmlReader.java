@@ -16,6 +16,7 @@
 package com.intellij.uiDesigner.lw;
 
 import org.jdom.Element;
+import com.intellij.uiDesigner.UIFormXmlConstants;
 
 public final class LwXmlReader {
   /**
@@ -27,7 +28,7 @@ public final class LwXmlReader {
 
   /**
    * @return never <code>null</code>.
-   */ 
+   */
   public static Element getRequiredChild(final Element element, final String childName) {
     final Element child = getChild(element, childName);
     if(child == null){
@@ -46,7 +47,7 @@ public final class LwXmlReader {
 
   /**
    * @return never <code>null</code> trimmed attribute value.
-   */ 
+   */
   public static String getRequiredString(final Element element, final String attributeName) {
     final String value = getString(element, attributeName);
     if(value != null){
@@ -83,5 +84,24 @@ public final class LwXmlReader {
     catch (NumberFormatException e) {
       throw new IllegalArgumentException("attribute '" + attributeName + "' is not a proper double: " + str);
     }
+  }
+
+  public static StringDescriptor getStringDescriptor(final Element element, final String valueAttr,
+                                                     final String bundleAttr, final String keyAttr) {
+    final String title = element.getAttributeValue(valueAttr);
+    if (title != null) {
+      StringDescriptor descriptor = StringDescriptor.create(title);
+      descriptor.setNoI18n(getOptionalBoolean(element, UIFormXmlConstants.ATTRIBUTE_NOI18N, false));
+      return descriptor;
+    }
+    else {
+      final String bundle = element.getAttributeValue(bundleAttr);
+      if (bundle != null) {
+        final String key = getRequiredString(element, keyAttr);
+        return new StringDescriptor(bundle, key);
+      }
+    }
+
+    return null;
   }
 }

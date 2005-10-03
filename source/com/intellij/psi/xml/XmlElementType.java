@@ -82,7 +82,7 @@ public interface XmlElementType {
       try {
         return parser.parse(chars, 0, chars.length, SharedImplUtil.findCharTableByTree(chameleon), SharedImplUtil.getManagerByTree(chameleon));
       }
-      catch (ParsingException e) {}       
+      catch (ParsingException e) {}
       return null;
     }
     public boolean isParsable(CharSequence buffer, final Project project) {return true;}

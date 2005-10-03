@@ -2,6 +2,7 @@ package com.intellij.lang.xml;
 
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.cacheBuilder.WordsScanner;
+import com.intellij.lang.LangBundle;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.jsp.JspFile;
@@ -24,11 +25,11 @@ public class XmlFindUsagesProvider implements FindUsagesProvider {
 
   public String getType(PsiElement element) {
     if (element instanceof XmlElementDecl || element instanceof XmlTag) {
-      return "tag";
+      return LangBundle.message("xml.terms.tag");
     } else if (element instanceof XmlAttributeDecl) {
-      return "attribute";
+      return LangBundle.message("xml.terms.attribute");
     } else if (element instanceof XmlAttributeValue) {
-      return "attribute value";
+      return LangBundle.message("xml.terms.attribute.value");
     }
 
     return null;

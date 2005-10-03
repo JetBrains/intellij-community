@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.ArrayUtil;
+import com.intellij.ide.IdeBundle;
 
 import java.util.Set;
 import java.util.Arrays;
@@ -33,7 +34,7 @@ public class AddNewFavoritesListAction extends AnAction {
 
   public static FavoritesTreeViewPanel doAddNewFavoritesList(final Project project) {
     final String s =
-      Messages.showInputDialog(project, "Input new favorites list name", "Add New Favorites List", Messages.getInformationIcon(), getUniqueName(project),
+      Messages.showInputDialog(project, IdeBundle.message("prompt.input.new.favorites.list.name"), IdeBundle.message("title.add.new.favorites.list"), Messages.getInformationIcon(), getUniqueName(project),
                                new InputValidator() {
                                  public boolean checkInput(String inputString) {
                                    return inputString != null && inputString.trim().length() > 0;
@@ -42,7 +43,8 @@ public class AddNewFavoritesListAction extends AnAction {
                                  public boolean canClose(String inputString) {
                                    final boolean isNew = ArrayUtil.find(FavoritesViewImpl.getInstance(project).getAvailableFavoritesLists(), inputString.trim()) == -1;
                                    if (!isNew) {
-                                     Messages.showErrorDialog(project, "Favorites list with name \'" + inputString.trim() + "\' already exists", "Unable To Add Favorites List");
+                                     Messages.showErrorDialog(project,
+                                                              IdeBundle.message("error.favorites.list.already.exists", inputString.trim()), IdeBundle.message("title.unable.to.add.favorites.list"));
                                      return false;
                                    }
                                    return inputString.trim().length() > 0;
@@ -56,7 +58,7 @@ public class AddNewFavoritesListAction extends AnAction {
   private static String getUniqueName(Project project) {
       String[] names = FavoritesViewImpl.getInstance(project).getAvailableFavoritesLists();
       for (int i = 0; ; i++) {
-        String newName = "Unnamed" + (i > 0 ? i : "");
+        String newName = IdeBundle.message("favorites.list.unnamed", (i > 0 ? i : ""));
         if (ArrayUtil.find(names, newName) > -1) continue;
         return newName;
       }

@@ -1,15 +1,16 @@
 package com.intellij.codeInsight.generation.surroundWith;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.lang.surroundWith.SurroundDescriptor;
 import com.intellij.lang.surroundWith.Surrounder;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -19,7 +20,7 @@ import com.intellij.util.IncorrectOperationException;
 
 public class SurroundWithHandler implements CodeInsightActionHandler{
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.surroundWith.SurroundWithHandler");
-  private static final String CHOOSER_TITLE = "Surround With";
+  private static final String CHOOSER_TITLE = CodeInsightBundle.message("surround.with.chooser.title");
 
   public void invoke(final Project project, final Editor editor, PsiFile file){
     invoke(project, editor, file, null);

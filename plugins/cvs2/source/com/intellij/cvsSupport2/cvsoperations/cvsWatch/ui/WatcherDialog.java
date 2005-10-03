@@ -4,6 +4,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import org.netbeans.lib.cvsclient.command.Watch;
 
 import javax.swing.*;
+import java.text.MessageFormat;
 
 /**
  * author: lesya
@@ -21,7 +22,7 @@ public class WatcherDialog extends DialogWrapper{
 
     myWatchingActions.setSelectedItem(defaultWatch);
 
-    setTitle(title + " Settings");
+    setTitle(com.intellij.CvsBundle.message("dialog.title.watchers.or.editors.settings", title));
 
     init();
   }

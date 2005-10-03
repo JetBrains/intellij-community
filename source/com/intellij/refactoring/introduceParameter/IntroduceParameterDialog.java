@@ -14,7 +14,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.IntroduceParameterRefactoring;
-import com.intellij.refactoring.ui.RefactoringDialog;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.ui.*;
 import com.intellij.ui.IdeBorderFactory;
@@ -57,6 +57,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
 
   private final NameSuggestionsGenerator myNameSuggestionsGenerator;
   private final TypeSelectorManager myTypeSelectorManager;
+  private static final String REFACTORING_NAME = RefactoringBundle.message("introduce.parameter.title");
 
 
   IntroduceParameterDialog(Project project,
@@ -82,7 +83,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     myNameSuggestionsGenerator = generator;
     myTypeSelectorManager = typeSelectorManager;
 
-    setTitle("Introduce Parameter");
+    setTitle(REFACTORING_NAME);
     init();
   }
 
@@ -168,7 +169,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     gbConstraints.weightx = 0;
     gbConstraints.weighty = 0;
     gbConstraints.gridy = 0;
-    JLabel type = new JLabel("Parameter of type: ");
+    JLabel type = new JLabel(RefactoringBundle.message("parameter.of.type"));
     panel.add(type, gbConstraints);
 
     gbConstraints.insets = new Insets(4, 4, 4, 8);
@@ -185,7 +186,10 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     gbConstraints.gridx = 0;
     gbConstraints.gridy = 1;
     gbConstraints.fill = GridBagConstraints.NONE;
-    final JLabel nameLabel = new JLabel("Name: ");
+
+    myParameterNameField = new NameSuggestionsField(myProject);
+    final JLabel nameLabel = new JLabel(RefactoringBundle.message("name.prompt"));
+    nameLabel.setLabelFor(myParameterNameField.getComponent());
     panel.add(nameLabel, gbConstraints);
 
 /*
@@ -196,7 +200,6 @@ public class IntroduceParameterDialog extends RefactoringDialog {
       myParameterNameField = createTextFieldForName();
     }
 */
-    myParameterNameField = new NameSuggestionsField(myProject);
     gbConstraints.gridx++;
     gbConstraints.insets = new Insets(4, 4, 4, 8);
     gbConstraints.weightx = 1;
@@ -210,16 +213,15 @@ public class IntroduceParameterDialog extends RefactoringDialog {
 
     myNameSuggestionsManager =
             new NameSuggestionsManager(myTypeSelector, myParameterNameField, myNameSuggestionsGenerator, myProject);
-    myNameSuggestionsManager.setMnemonics(type, nameLabel);
+    myNameSuggestionsManager.setLabelsFor(type, nameLabel);
 
     gbConstraints.gridx = 0;
     gbConstraints.insets = new Insets(4, 0, 4, 8);
     gbConstraints.gridwidth = 2;
     if (myOccurenceNumber > 1 && !myIsInvokedOnDeclaration) {
       gbConstraints.gridy++;
-      myCbReplaceAllOccurences = new NonFocusableCheckBox("Replace all occurences (" + myOccurenceNumber + " occurences)");
-      myCbReplaceAllOccurences.setMnemonic('a');
-      myCbReplaceAllOccurences.setDisplayedMnemonicIndex("Replace ".length());
+      myCbReplaceAllOccurences = new NonFocusableCheckBox();
+      myCbReplaceAllOccurences.setText(RefactoringBundle.message("replace.all.occurences", myOccurenceNumber));
 
       panel.add(myCbReplaceAllOccurences, gbConstraints);
       myCbReplaceAllOccurences.setSelected(false);
@@ -228,8 +230,8 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     RefactoringSettings settings = RefactoringSettings.getInstance();
 
     gbConstraints.gridy++;
-    myCbDeclareFinal = new NonFocusableCheckBox("Declare final");
-    myCbDeclareFinal.setMnemonic('f');
+    myCbDeclareFinal = new NonFocusableCheckBox();
+    myCbDeclareFinal.setText(RefactoringBundle.message("declare.final"));
 
     final Boolean settingsFinals = settings.INTRODUCE_PARAMETER_CREATE_FINALS;
     myCbDeclareFinal.setSelected(settingsFinals == null ?
@@ -239,8 +241,8 @@ public class IntroduceParameterDialog extends RefactoringDialog {
 
 
     if(myIsLocalVariable && !myIsInvokedOnDeclaration) {
-      myCbDeleteLocalVariable = new StateRestoringCheckBox("Delete variable definition");
-      myCbDeleteLocalVariable.setMnemonic('D');
+      myCbDeleteLocalVariable = new StateRestoringCheckBox();
+      myCbDeleteLocalVariable.setText(RefactoringBundle.message("delete.variable.definition"));
 
       if(myCbReplaceAllOccurences != null) {
         gbConstraints.insets = new Insets(0, 16, 4, 8);
@@ -251,9 +253,8 @@ public class IntroduceParameterDialog extends RefactoringDialog {
 
       gbConstraints.insets = new Insets(4, 0, 4, 8);
       if(myHasInitializer) {
-        myCbUseInitializer = new StateRestoringCheckBox("Use variable initializer to initialize parameter");
-        myCbUseInitializer.setMnemonic('i');
-        myCbUseInitializer.setDisplayedMnemonicIndex("Use variable ".length());
+        myCbUseInitializer = new StateRestoringCheckBox();
+        myCbUseInitializer.setText(RefactoringBundle.message("use.variable.initializer.to.initialize.parameter"));
 
         gbConstraints.gridy++;
         panel.add(myCbUseInitializer, gbConstraints);
@@ -306,16 +307,16 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     gbConstraints.fill = GridBagConstraints.BOTH;
     gbConstraints.anchor = GridBagConstraints.WEST;
     radioButtonPanel.add(
-            new JLabel("Replace fields used in expressions with their getters"), gbConstraints);
+            new JLabel(RefactoringBundle.message("replace.fields.used.in.expressions.with.their.getters")), gbConstraints);
 
-    myReplaceFieldsWithGettersNoneRadio = new JRadioButton("Do not replace");
-    myReplaceFieldsWithGettersNoneRadio.setMnemonic('n');
+    myReplaceFieldsWithGettersNoneRadio = new JRadioButton();
+    myReplaceFieldsWithGettersNoneRadio.setText(RefactoringBundle.message("do.not.replace"));
 
-    myReplaceFieldsWithGettersInaccessibleRadio = new JRadioButton("Replace fields inaccessible in usage context");
-    myReplaceFieldsWithGettersInaccessibleRadio.setMnemonic('i');
+    myReplaceFieldsWithGettersInaccessibleRadio = new JRadioButton();
+    myReplaceFieldsWithGettersInaccessibleRadio.setText(RefactoringBundle.message("replace.fields.inaccessible.in.usage.context"));
 
-    myReplaceFieldsWithGettersAllRadio = new JRadioButton("Replace all fields");
-    myReplaceFieldsWithGettersAllRadio.setMnemonic('R');
+    myReplaceFieldsWithGettersAllRadio = new JRadioButton();
+    myReplaceFieldsWithGettersAllRadio.setText(RefactoringBundle.message("replace.all.fields"));
 
     gbConstraints.gridy++;
     radioButtonPanel.add(myReplaceFieldsWithGettersNoneRadio, gbConstraints);

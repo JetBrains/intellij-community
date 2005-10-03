@@ -1,13 +1,14 @@
 package com.intellij.application.options;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 
 import javax.swing.*;
 
 public class CodeStyleIndentAndBracesConfigurable extends CodeStyleAbstractConfigurable {
   public CodeStyleIndentAndBracesConfigurable(CodeStyleSettings settings, CodeStyleSettings cloneSettings) {
-    super(settings, cloneSettings,"Alignment and Braces");
+    super(settings, cloneSettings, ApplicationBundle.message("title.alignment.and.braces"));
   }
 
   public Icon getIcon() {

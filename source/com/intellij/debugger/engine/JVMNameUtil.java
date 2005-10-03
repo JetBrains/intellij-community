@@ -2,6 +2,7 @@ package com.intellij.debugger.engine;
 
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.SourcePosition;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,6 +25,7 @@ import java.util.List;
 public class JVMNameUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.JVMNameUtil");
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static String getPrimitiveSignature(String typeName) {
     if(PsiType.BOOLEAN.getCanonicalText().equals(typeName)) {
       return "Z";
@@ -55,6 +57,7 @@ public class JVMNameUtil {
     return null;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static void appendJVMSignature(JVMNameBuffer buffer , PsiType type)
     throws EvaluateException {
     final PsiType psiType = TypeConversionUtil.erasure(type);
@@ -187,7 +190,7 @@ public class JVMNameUtil {
         return allClasses.get(0).name();
       }
 
-      throw EvaluateExceptionUtil.createEvaluateException("JVM class name is unknown - class is not prepared : " + getDisplayName(process));
+      throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("error.class.not.loaded", getDisplayName(process)));
     }
 
     public String getDisplayName(DebugProcessImpl debugProcess) {
@@ -235,6 +238,7 @@ public class JVMNameUtil {
     }
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static JVMName getJVMSignature(PsiMethod method) throws EvaluateException {
     JVMNameBuffer signature = new JVMNameBuffer();
     signature.append("(");
@@ -275,7 +279,7 @@ public class JVMNameUtil {
         return allClasses.get(0).name();
       }
     }
-    return "Class at " + classAt.getFile().getName() + ":" + classAt.getLine();
+    return DebuggerBundle.message("string.file.line.position", classAt.getFile().getName(), classAt.getLine());
   }
 
   public static String getPackageDisplayName(DebugProcessImpl debugProcess, SourcePosition classAt) {

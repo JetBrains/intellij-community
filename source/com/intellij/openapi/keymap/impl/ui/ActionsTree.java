@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.impl.EmptyIcon;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
@@ -15,6 +16,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ui.treetable.TreeTable;
 import com.intellij.util.ui.treetable.TreeTableCellRenderer;
 import com.intellij.util.ui.treetable.TreeTableModel;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionListener;
@@ -24,6 +26,8 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Iterator;
+
+import org.jetbrains.annotations.NonNls;
 
 public class ActionsTree {
   private static final Icon EMPTY_ICON = EmptyIcon.create(18, 18);
@@ -35,14 +39,17 @@ public class ActionsTree {
   private Group myMainGroup = new Group("", null, null);
   private ShortcutColumnCellRenderer myShortcutColumnCellRenderer;
 
+  @NonNls
+  private static final String ROOT = "ROOT";
+
   public ActionsTree() {
-    myRoot = new DefaultMutableTreeNode("ROOT");
+    myRoot = new DefaultMutableTreeNode(ROOT);
     myShortcutColumnCellRenderer = new ShortcutColumnCellRenderer();
 
     myTreeTable = new TreeTable(new MyModel(myRoot)) {
       public TreeTableCellRenderer createTableRenderer(TreeTableModel treeTableModel) {
         TreeTableCellRenderer tableRenderer = super.createTableRenderer(treeTableModel);
-        tableRenderer.putClientProperty("JTree.lineStyle", "Angled");
+        UIUtil.setLineStyleAngled(tableRenderer);
         return tableRenderer;
       }
 
@@ -114,12 +121,12 @@ public class ActionsTree {
           // Set color
 
           if(sel){
-            setForeground(UIManager.getColor("Tree.selectionForeground"));
+            setForeground(UIUtil.getTreeSelectionForeground());
           }else{
             if(changed){
               setForeground(Color.BLUE);
             }else{
-              setForeground(UIManager.getColor("Tree.foreground"));
+              setForeground(UIUtil.getTreeForeground());
             }
           }
         }
@@ -202,8 +209,8 @@ public class ActionsTree {
 
     public String getColumnName(int column) {
       switch (column) {
-        case 0: return "Action";
-        case 1: return "Shortcuts";
+        case 0: return KeyMapBundle.message("action.column.name");
+        case 1: return KeyMapBundle.message("shortcuts.column.name");
       }
       return "";
     }
@@ -461,7 +468,7 @@ public class ActionsTree {
       else{
         panel.setBackground(table.getBackground());
       }
-      panel.setBorder(hasFocus ? UIManager.getBorder("Table.focusCellHighlightBorder") : BorderFactory.createEmptyBorder(1,1,1,1));
+      panel.setBorder(hasFocus ? UIUtil.getTableFocusCellHighlightBorder() : BorderFactory.createEmptyBorder(1,1,1,1));
 
       return panel;
     }

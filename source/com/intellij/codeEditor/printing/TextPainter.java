@@ -34,6 +34,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 
+import org.jetbrains.annotations.NonNls;
+
 public class TextPainter implements Printable {
   private DocumentEx myDocument;
 
@@ -58,6 +60,10 @@ public class TextPainter implements Printable {
   private CodeStyleSettings myCodeStyleSettings;
   private FileType myFileType;
   private ProgressIndicator myProgress;
+  @NonNls private static final String DEFAULT_MEASURE_HEIGHT_TEXT = "A";
+  @NonNls private static final String DEFAULT_MEASURE_WIDTH_TEXT = "w";
+  @NonNls private static final String HEADER_TOKEN_PAGE = "PAGE";
+  @NonNls private static final String HEADER_TOKEN_FILE = "FILE";
 
   public TextPainter(DocumentEx editorDocument, EditorHighlighter highlighter, String fileName, final PsiFile psiFile,
                      final Project project) {
@@ -123,7 +129,7 @@ public class TextPainter implements Printable {
       return myLineHeight;
     }
     FontRenderContext fontRenderContext = ((Graphics2D) g).getFontRenderContext();
-    LineMetrics lineMetrics = myPlainFont.getLineMetrics("A", fontRenderContext);
+    LineMetrics lineMetrics = myPlainFont.getLineMetrics(DEFAULT_MEASURE_HEIGHT_TEXT, fontRenderContext);
     myLineHeight = lineMetrics.getHeight();
     return myLineHeight;
   }
@@ -133,7 +139,7 @@ public class TextPainter implements Printable {
       return myDescent;
     }
     FontRenderContext fontRenderContext = ((Graphics2D) g).getFontRenderContext();
-    LineMetrics lineMetrics = myPlainFont.getLineMetrics("A", fontRenderContext);
+    LineMetrics lineMetrics = myPlainFont.getLineMetrics(DEFAULT_MEASURE_HEIGHT_TEXT, fontRenderContext);
     myDescent = lineMetrics.getDescent();
     return myDescent;
   }
@@ -160,7 +166,7 @@ public class TextPainter implements Printable {
       return Printable.PAGE_EXISTS;
     }
 
-    myProgress.setText("Printing " + myFileName + ". Page " + (pageIndex + 1) + "...");
+    myProgress.setText(CodeEditorBundle.message("print.file.page.progress", myFileName, (pageIndex + 1)));
 
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
@@ -206,7 +212,7 @@ public class TextPainter implements Printable {
   private double getCharWidth(Graphics2D g) {
     if (myCharWidth < 0) {
       FontRenderContext fontRenderContext = (g).getFontRenderContext();
-      myCharWidth = myPlainFont.getStringBounds("w", fontRenderContext).getWidth();
+      myCharWidth = myPlainFont.getStringBounds(DEFAULT_MEASURE_WIDTH_TEXT, fontRenderContext).getWidth();
     }
     return myCharWidth;
   }
@@ -417,9 +423,9 @@ public class TextPainter implements Printable {
       if (c == '$') {
         String token = s.substring(start, i);
         if (isExpression) {
-          if ("PAGE".equals(token)) {
+          if (HEADER_TOKEN_PAGE.equals(token)) {
             result.append(myPageIndex + 1);
-          } else if ("FILE".equals(token)) {
+          } else if (HEADER_TOKEN_FILE.equals(token)) {
             result.append(myFileName);
           }
         } else {
@@ -437,7 +443,7 @@ public class TextPainter implements Printable {
 
   private LineMetrics getHeaderFooterLineMetrics(Graphics2D g) {
     FontRenderContext fontRenderContext = g.getFontRenderContext();
-    return myHeaderFont.getLineMetrics("A", fontRenderContext);
+    return myHeaderFont.getLineMetrics(DEFAULT_MEASURE_HEIGHT_TEXT, fontRenderContext);
   }
 
   private double calcNumbersStripWidth(Graphics2D g, Rectangle2D clip) {

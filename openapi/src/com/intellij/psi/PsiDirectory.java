@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * Represents a file system directory and allows to access its contents.
@@ -98,7 +99,7 @@ public interface PsiDirectory extends PsiElement, PsiFileSystemItem, NavigationI
    * @return the file instance, or null if no file with such a name is found.
    */
   @Nullable
-  PsiFile findFile(String name);
+  PsiFile findFile(@NonNls String name);
 
   /**
    * Creates a class with the specified name in the directory.

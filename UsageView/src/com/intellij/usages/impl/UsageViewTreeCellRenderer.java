@@ -19,10 +19,12 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.usageView.UsageTreeColors;
 import com.intellij.usageView.UsageTreeColorsScheme;
+import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.*;
 
 import javax.swing.*;
@@ -36,6 +38,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
  * To change this template use File | Settings | File Templates.
  */
 class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.usages.impl.UsageViewTreeCellRenderer");
   private static EditorColorsScheme ourColorsScheme = UsageTreeColorsScheme.getInstance().getScheme();
   private static final SimpleTextAttributes ourInvalidAttributes = SimpleTextAttributes.fromTextAttributes(ourColorsScheme.getAttributes(UsageTreeColors.INVALID_PREFIX));
   private static final SimpleTextAttributes ourReadOnlyAttributes = SimpleTextAttributes.fromTextAttributes(ourColorsScheme.getAttributes(UsageTreeColors.READONLY_PREFIX));
@@ -69,11 +72,13 @@ class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
 
       if (userObject instanceof UsageTarget) {
         UsageTarget usageTarget = (UsageTarget)userObject;
-        ItemPresentation presentation = usageTarget.getPresentation();
+        final ItemPresentation presentation = usageTarget.getPresentation();
+        LOG.assertTrue(presentation != null);
         if (showAsReadOnly) {
           append(UsageViewBundle.message("node.readonly") + " ", ourReadOnlyAttributes);
         }
-        append(presentation.getPresentableText(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        final String text = presentation.getPresentableText();
+        append(text != null? text : "", SimpleTextAttributes.REGULAR_ATTRIBUTES);
         setIcon(presentation.getIcon(expanded));
       }
       else if (treeNode instanceof GroupNode) {

@@ -216,6 +216,7 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
   }
 
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   void readOldVersion(Element child) {
     for (Iterator iterator = child.getChildren("root").iterator(); iterator.hasNext();) {
       Element root = (Element)iterator.next();

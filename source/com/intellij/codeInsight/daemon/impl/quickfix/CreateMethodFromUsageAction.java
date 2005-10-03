@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateStateListener;
@@ -31,7 +32,7 @@ public class CreateMethodFromUsageAction extends CreateFromUsageBaseAction {
 
     if (name == null || !ref.getManager().getNameHelper().isIdentifier(name)) return false;
 
-    setText("Create Method '" + name + "'");
+    setText(QuickFixBundle.message("create.method.from.usage.text", name));
     return true;
   }
 
@@ -155,6 +156,6 @@ public class CreateMethodFromUsageAction extends CreateFromUsageBaseAction {
   }
 
   public String getFamilyName() {
-    return "Create Method from Usage";
+    return QuickFixBundle.message("create.method.from.usage.family");
   }
 }

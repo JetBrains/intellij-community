@@ -59,7 +59,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
       toolbar.addAction(PreviousDiffAction.find());
       toolbar.addAction(NextDiffAction.find());
       toolbar.addSeparator();
-      toolbar.addAction(new LabelAction("Ignore whitespace: "));
+      toolbar.addAction(new LabelAction(DiffBundle.message("comparison.ignore.whitespace.acton.name")));
       toolbar.addAction(new IgnoreWhiteSpacesAction(DiffPanelImpl.this));
     }
   };
@@ -71,8 +71,8 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     myPanel.disableToolbar(!enableToolbar);
     if (enableToolbar) myPanel.resetToolbar();
     myOwnerWindow = owner;
-    myLeftSide = new DiffSideView("left...", this);
-    myRightSide = new DiffSideView("right...", this);
+    myLeftSide = new DiffSideView(DiffBundle.message("diff.left.side.default.title"), this);
+    myRightSide = new DiffSideView(DiffBundle.message("diff.right.side.default.title"), this);
     myLeftSide.becomeMaster();
     myDiffUpdater = new Rediffers(this);
 
@@ -169,16 +169,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
   private void updateStatusBar() {
     int differentLineBlocks = getLineBlocks().getCount();
     String text;
-    if (differentLineBlocks > 1) {
-      text = differentLineBlocks + " differences";
-    }
-    else if (differentLineBlocks == 1) {
-      text = "1 difference";
-    }
-    else {
-      text = "No differences";
-    }
-    myPanel.setStatusBarText(text);
+    myPanel.setStatusBarText(DiffBundle.message("diff.count.differences.status.text", differentLineBlocks));
   }
 
   public boolean hasDifferences() {

@@ -14,13 +14,13 @@ import java.awt.*;
 public class EditOptionsDialog extends OptionsDialog {
 
   private final JPanel myPanel = new JPanel(new BorderLayout());
-  private final JCheckBox myReservedEdit = new JCheckBox("Reserved edit (-c)");
+  private final JCheckBox myReservedEdit = new JCheckBox(com.intellij.CvsBundle.message("checkbox.text.reserved.edit"));
 
   public EditOptionsDialog(Project project) {
     super(project);
     myPanel.add(myReservedEdit, BorderLayout.NORTH);
     myReservedEdit.setSelected(CvsConfiguration.getInstance(project).RESERVED_EDIT);
-    setTitle("Edit Options");
+    setTitle(com.intellij.CvsBundle.message("dialog.title.edit.options"));
     init();
   }
 

@@ -4,8 +4,11 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.CommonBundle;
 
 import javax.swing.*;
+
+import org.jetbrains.annotations.NonNls;
 
 public class ContextHelpAction extends AnAction {
   private static final Icon myIcon=IconLoader.getIcon("/actions/help.png");
@@ -15,7 +18,7 @@ public class ContextHelpAction extends AnAction {
     this(null);
   }
 
-  public ContextHelpAction(String helpID) {
+  public ContextHelpAction(@NonNls String helpID) {
     myHelpID = helpID;
   }
 
@@ -36,7 +39,7 @@ public class ContextHelpAction extends AnAction {
     }
     else {
       presentation.setIcon(myIcon);
-      presentation.setText("Help");
+      presentation.setText(CommonBundle.getHelpButtonText());
     }
   }
 }

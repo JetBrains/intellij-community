@@ -13,6 +13,7 @@ import com.intellij.ui.LightweightHint;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.propertyInspector.PropertyInspectorTable;
+import com.intellij.uiDesigner.UIDesignerBundle;
 
 import javax.swing.*;
 import java.awt.event.FocusEvent;
@@ -42,8 +43,8 @@ public final class ShowJavadocAction extends AnAction {
 
     final TabbedPaneWrapper tabbedPane = new TabbedPaneWrapper();
 
-    tabbedPane.addTab("Getter", component1);
-    tabbedPane.addTab("Setter", component2);
+    tabbedPane.addTab(UIDesignerBundle.message("tab.getter"), component1);
+    tabbedPane.addTab(UIDesignerBundle.message("tab.setter"), component2);
 
     final LightweightHint hint = new LightweightHint(tabbedPane.getComponent()) {
       public void hide() {

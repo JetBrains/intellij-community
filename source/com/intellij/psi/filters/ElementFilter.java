@@ -1,7 +1,7 @@
 package com.intellij.psi.filters;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.openapi.util.JDOMExternalizable;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * Created by IntelliJ IDEA.
@@ -13,4 +13,9 @@ import com.intellij.openapi.util.JDOMExternalizable;
 public interface ElementFilter{
   boolean isAcceptable(Object element, PsiElement context);
   boolean isClassAcceptable(Class hintClass);
+
+  /**
+   * Means toString() should only be used for debug purposes and never presented to the user.
+   */
+  @NonNls String toString();
 }

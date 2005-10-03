@@ -10,6 +10,7 @@ import org.apache.log4j.xml.DOMConfigurator;
 import java.io.File;
 import java.io.StringReader;
 
+@SuppressWarnings({"HardCodedStringLiteral"})
 public class LoggerFactory implements Logger.Factory {
   private static final String SYSTEM_MACRO = "$SYSTEM_DIR$";
   private static final String APPLICATION_MACRO = "$APPLICATION_DIR$";

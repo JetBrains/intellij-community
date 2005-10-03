@@ -7,6 +7,7 @@ import com.intellij.debugger.jdi.ThreadGroupReferenceProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.ui.tree.ThreadGroupDescriptor;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
+import com.intellij.debugger.DebuggerBundle;
 
 public class ThreadGroupDescriptorImpl extends NodeDescriptorImpl implements ThreadGroupDescriptor{
   private final ThreadGroupReferenceProxyImpl myThreadGroup;
@@ -34,11 +35,11 @@ public class ThreadGroupDescriptorImpl extends NodeDescriptorImpl implements Thr
     DebuggerManagerThreadImpl.assertIsManagerThread();
     ThreadGroupReferenceProxyImpl group = getThreadGroupReference();
     if (group.isCollected()) {
-      return myName != null ? "Thread Group \"" + myName + "\" is garbage-collected" : "";
+      return myName != null ? DebuggerBundle.message("label.thread.group.node.group.collected", myName) : "";
     }
     myName = group.name();
 
-    return "Thread Group \"" + myName + "\"@" + group.uniqueID();
+    return DebuggerBundle.message("label.thread.group.node", myName, group.uniqueID());
   }
 
   public boolean isExpandable() {

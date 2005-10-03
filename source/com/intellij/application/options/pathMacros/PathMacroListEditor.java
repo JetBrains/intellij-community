@@ -1,6 +1,7 @@
 package com.intellij.application.options.pathMacros;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.ConfigurationException;
 
 import javax.swing.*;
@@ -32,19 +33,16 @@ public class PathMacroListEditor {
         myPathMacroTable.addMacro();
       }
     });
-    myAddButton.setMnemonic('A');
     myRemoveButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         myPathMacroTable.removeSelectedMacros();
       }
     });
-    myRemoveButton.setMnemonic('R');
     myEditButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         myPathMacroTable.editMacro();
       }
     });
-    myEditButton.setMnemonic('E');
     myPathMacroTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {
         updateControls();
@@ -65,7 +63,7 @@ public class PathMacroListEditor {
     for (int idx = 0; idx < count; idx++) {
       String value = myPathMacroTable.getMacroValueAt(idx);
       if (value == null || value.length() == 0) {
-        throw new ConfigurationException("Path variable \"" + myPathMacroTable.getMacroNameAt(idx) + "\" is undefined");
+        throw new ConfigurationException(ApplicationBundle.message("error.path.variable.is.undefined", myPathMacroTable.getMacroNameAt(idx)));
       }
     }
     ApplicationManager.getApplication().runWriteAction(new Runnable() {

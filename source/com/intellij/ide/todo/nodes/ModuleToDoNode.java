@@ -6,6 +6,7 @@ import com.intellij.ide.todo.TodoFileDirAndModuleComparator;
 import com.intellij.ide.todo.TodoTreeBuilder;
 import com.intellij.ide.todo.TodoTreeStructure;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -62,20 +63,10 @@ public class ModuleToDoNode extends BaseToDoNode<Module> implements HighlightedR
 
   public void update(PresentationData presentation) {
     String newName = getValue().getName();
-    StringBuffer sb = new StringBuffer(newName);
     int nameEndOffset = newName.length();
     int todoItemCount = getStructure().getTodoItemCount(getValue());
-    sb.append(" (").append(todoItemCount).append(" item");
-    if (todoItemCount != 1) {
-      sb.append('s');
-    }
     int fileCount = getStructure().getFileCount(getValue());
-    sb.append(" in ").append(fileCount).append(" file");
-    if (fileCount != 1) {
-      sb.append('s');
-    }
-    sb.append(')');
-    newName = sb.toString();
+    newName = IdeBundle.message("node.todo.group", newName, todoItemCount, fileCount);
     myHighlightedRegions.clear();
 
     TextAttributes textAttributes = new TextAttributes();

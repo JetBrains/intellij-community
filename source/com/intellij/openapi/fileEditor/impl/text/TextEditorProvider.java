@@ -21,6 +21,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
@@ -31,9 +32,15 @@ import java.beans.PropertyChangeListener;
  */
 public final class TextEditorProvider implements FileEditorProvider, ApplicationComponent {
 
-  private static final String TYPE_ID = "text-editor";
+  @NonNls private static final String TYPE_ID = "text-editor";
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.text.TextEditorProvider");
   private static final Key TEXT_EDITOR_KEY = Key.create("textEditor");
+  @NonNls public static final String LINE_ATTR = "line";
+  @NonNls public static final String COLUMN_ATTR = "column";
+  @NonNls public static final String SELECTION_START_ATTR = "selection-start";
+  @NonNls public static final String SELECTION_END_ATTR = "selection-end";
+  @NonNls public static final String VERTICAL_SCROLL_PROPORTION_ATTR = "vertical-scroll-proportion";
+  @NonNls public static final String FOLDING_ELEMENT = "folding";
 
   public static TextEditorProvider getInstance() {
     return ApplicationManager.getApplication().getComponent(TextEditorProvider.class);
@@ -69,18 +76,18 @@ public final class TextEditorProvider implements FileEditorProvider, Application
     TextEditorState state = new TextEditorState();
 
     try {
-      state.LINE = Integer.parseInt(element.getAttributeValue("line"));
-      state.COLUMN = Integer.parseInt(element.getAttributeValue("column"));
-      state.SELECTION_START = Integer.parseInt(element.getAttributeValue("selection-start"));
-      state.SELECTION_END = Integer.parseInt(element.getAttributeValue("selection-end"));
-      state.VERTICAL_SCROLL_PROPORTION = Float.parseFloat(element.getAttributeValue("vertical-scroll-proportion"));
+      state.LINE = Integer.parseInt(element.getAttributeValue(LINE_ATTR));
+      state.COLUMN = Integer.parseInt(element.getAttributeValue(COLUMN_ATTR));
+      state.SELECTION_START = Integer.parseInt(element.getAttributeValue(SELECTION_START_ATTR));
+      state.SELECTION_END = Integer.parseInt(element.getAttributeValue(SELECTION_END_ATTR));
+      state.VERTICAL_SCROLL_PROPORTION = Float.parseFloat(element.getAttributeValue(VERTICAL_SCROLL_PROPORTION_ATTR));
     }
     catch (NumberFormatException ignored) {
     }
 
     // Foldings
     if (project != null) {
-      Element child = element.getChild("folding");
+      Element child = element.getChild(FOLDING_ELEMENT);
       Document document = FileDocumentManager.getInstance().getDocument(file);
       if (child != null && document != null) {
         //PsiDocumentManager.getInstance(project).commitDocument(document);
@@ -97,15 +104,15 @@ public final class TextEditorProvider implements FileEditorProvider, Application
   public void writeState(FileEditorState _state, Project project, Element element) {
     TextEditorState state = (TextEditorState)_state;
 
-    element.setAttribute("line", Integer.toString(state.LINE));
-    element.setAttribute("column", Integer.toString(state.COLUMN));
-    element.setAttribute("selection-start", Integer.toString(state.SELECTION_START));
-    element.setAttribute("selection-end", Integer.toString(state.SELECTION_END));
-    element.setAttribute("vertical-scroll-proportion", Float.toString(state.VERTICAL_SCROLL_PROPORTION));
+    element.setAttribute(LINE_ATTR, Integer.toString(state.LINE));
+    element.setAttribute(COLUMN_ATTR, Integer.toString(state.COLUMN));
+    element.setAttribute(SELECTION_START_ATTR, Integer.toString(state.SELECTION_START));
+    element.setAttribute(SELECTION_END_ATTR, Integer.toString(state.SELECTION_END));
+    element.setAttribute(VERTICAL_SCROLL_PROPORTION_ATTR, Float.toString(state.VERTICAL_SCROLL_PROPORTION));
 
     // Foldings
     if (state.FOLDING_STATE != null) {
-      Element e = new Element("folding");
+      Element e = new Element(FOLDING_ELEMENT);
       try {
         CodeFoldingManager.getInstance(project).writeFoldingState(state.FOLDING_STATE, e);
       }

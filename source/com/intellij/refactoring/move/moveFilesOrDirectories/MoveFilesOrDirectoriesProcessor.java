@@ -9,6 +9,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.usageView.FindUsagesCommand;
@@ -18,6 +19,8 @@ import com.intellij.util.IncorrectOperationException;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import org.jetbrains.annotations.NonNls;
 
 public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance(
@@ -117,12 +120,13 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
 
     }
     catch (IncorrectOperationException e) {
-      final String message = e.getMessage();
+      final @NonNls String message = e.getMessage();
       final int index = (message != null) ? message.indexOf("java.io.IOException") : -1;
       if (index >= 0) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
               public void run() {
-                Messages.showMessageDialog(myProject, message.substring(index + "java.io.IOException".length()), "Error",
+                Messages.showMessageDialog(myProject, message.substring(index + "java.io.IOException".length()),
+                                           RefactoringBundle.message("error.title"),
                                            Messages.getErrorIcon());
               }
             });
@@ -134,7 +138,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
   }
 
   protected String getCommandName() {
-    return "Move"; //TODO!!
+    return RefactoringBundle.message("move.tltle"); //TODO!!
   }
 
   protected boolean isPreviewUsages(UsageInfo[] usages) {

@@ -2,6 +2,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
@@ -31,7 +32,7 @@ public class SynchronizeAction extends AnAction {
       application.runProcessWithProgressSynchronously(new Runnable() {
         public void run() {
           final ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
-          pi.setText("Synchronizing files...");
+          pi.setText(IdeBundle.message("progress.synchronizing.files"));
           pi.setIndeterminate(true);
           final Semaphore refreshSemaphore = new Semaphore();
           refreshSemaphore.down();

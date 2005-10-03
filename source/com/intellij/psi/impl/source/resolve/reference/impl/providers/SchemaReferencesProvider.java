@@ -1,27 +1,32 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
-import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
-import com.intellij.psi.PsiReference;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.*;
-import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.xml.util.XmlUtil;
+import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
-import com.intellij.xml.XmlAttributeDescriptor;
-import com.intellij.xml.impl.schema.*;
+import com.intellij.xml.impl.schema.ComplexTypeDescriptor;
+import com.intellij.xml.impl.schema.TypeDescriptor;
+import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
+import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
-import java.util.StringTokenizer;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -308,6 +313,7 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
     }
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public PsiReference[] getReferencesByElement(PsiElement element) {
     final PsiElement parent = element.getParent();
     if (parent instanceof XmlAttribute &&

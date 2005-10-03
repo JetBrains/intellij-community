@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.OptionsDialog;
 import com.intellij.util.ui.OptionsDialog;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -38,10 +39,8 @@ public abstract class AbstractAddOptionsDialog extends OptionsDialog {
   public AbstractAddOptionsDialog(Project project, Options options) {
     super(project);
     myOptions = options;
-    getOKAction().putValue(Action.NAME, "Add to CVS");
-    getOKAction().putValue(Action.MNEMONIC_KEY, new Integer('A'));
-    getCancelAction().putValue(Action.NAME, "Don't Add");
-    getCancelAction().putValue(Action.MNEMONIC_KEY, new Integer('N'));
+    UIUtil.setActionNameAndMnemonic(com.intellij.CvsBundle.message("button.text.add.to.cvs"), getOKAction());
+    UIUtil.setActionNameAndMnemonic(com.intellij.CvsBundle.message("button.text.dont.add.to.cvs"), getCancelAction());
 
   }
 

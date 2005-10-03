@@ -1,6 +1,8 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.CommonBundle;
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,8 +16,6 @@ import com.intellij.refactoring.move.moveClassesOrPackages.SingleSourceRootMoveD
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.util.IncorrectOperationException;
 
-import java.text.MessageFormat;
-
 public class MoveToPackageFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.MoveToPackageFix");
   private PsiFile myFile;
@@ -27,15 +27,12 @@ public class MoveToPackageFix implements IntentionAction {
   }
 
   public String getText() {
-    String text = MessageFormat.format("Move to package ''{0}''",
-        new Object[]{
-          myTargetPackage.getQualifiedName(),
-        });
-    return text;
+    return QuickFixBundle.message("move.class.to.package.text",
+                                  myTargetPackage.getQualifiedName());
   }
 
   public String getFamilyName() {
-    return "Move Class to Package";
+    return QuickFixBundle.message("move.class.to.package.family");
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
@@ -61,7 +58,7 @@ public class MoveToPackageFix implements IntentionAction {
       }
       String error = RefactoringMessageUtil.checkCanCreateFile(directory, myFile.getName());
       if (error != null) {
-        Messages.showMessageDialog(project, error, "Error", Messages.getErrorIcon());
+        Messages.showMessageDialog(project, error, CommonBundle.getErrorTitle(), Messages.getErrorIcon());
         return;
       }
       new MoveClassesOrPackagesProcessor(

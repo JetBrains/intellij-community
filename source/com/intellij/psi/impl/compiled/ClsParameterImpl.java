@@ -7,6 +7,7 @@ import com.intellij.psi.impl.SharedPsiElementImplUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 
 public class ClsParameterImpl extends ClsElementImpl implements PsiParameter, ClsModifierListOwner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsParameterImpl");
@@ -106,7 +107,7 @@ public class ClsParameterImpl extends ClsElementImpl implements PsiParameter, Cl
   private String getMirrorName() {
   synchronized (PsiLock.LOCK) {
     if (myMirrorName == null) {
-      String name = getName();
+      @NonNls String name = getName();
       if (name != null) return name;
 
       String[] nameSuggestions = getManager().getCodeStyleManager().suggestVariableName(VariableKind.PARAMETER, null,

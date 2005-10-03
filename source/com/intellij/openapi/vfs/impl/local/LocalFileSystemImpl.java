@@ -10,10 +10,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileOperationsHandler;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
@@ -372,7 +369,7 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
         final ProgressIndicator indicator = getManager().getRefreshIndicator();
         if (indicator != null) {
           indicator.start();
-          indicator.setText("Synchronizing files...");
+          indicator.setText(VfsBundle.message("file.synchronize.progress"));
         }
 
         storeRefreshStatusToFiles();
@@ -690,6 +687,7 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
 
   private class WatchForChangesThread extends Thread {
     public WatchForChangesThread() {
+      //noinspection HardCodedStringLiteral
       super("WatchForChangesThread");
     }
 
@@ -780,6 +778,7 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
     private static final long PERIOD = 1000;
 
     public StoreRefreshStatusThread() {
+      //noinspection HardCodedStringLiteral
       super("StoreRefreshStatusThread");
       setPriority(MIN_PRIORITY);
     }

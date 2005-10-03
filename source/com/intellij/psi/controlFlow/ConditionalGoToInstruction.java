@@ -1,5 +1,7 @@
 package com.intellij.psi.controlFlow;
 
+import org.jetbrains.annotations.NonNls;
+
 
 public class ConditionalGoToInstruction extends ConditionalBranchingInstruction {
 
@@ -19,7 +21,7 @@ public class ConditionalGoToInstruction extends ConditionalBranchingInstruction 
   }
 
   public String toString() {
-    final String sRole;
+    final @NonNls String sRole;
     if (role == ControlFlow.JUMP_ROLE_GOTO_ELSE) sRole = "[ELSE]";
     else if (role == ControlFlow.JUMP_ROLE_GOTO_THEN) sRole = "[THEN]";
     else if (role == ControlFlow.JUMP_ROLE_GOTO_END) sRole = "[END]";

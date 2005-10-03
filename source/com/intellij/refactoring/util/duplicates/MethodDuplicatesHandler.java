@@ -6,38 +6,38 @@ package com.intellij.refactoring.util.duplicates;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 
 /**
  * @author dsl
  */
 public class MethodDuplicatesHandler implements RefactoringActionHandler {
-  public static final String REFACTORING_NAME = "Replace Method Code Duplicates";
+  public static final String REFACTORING_NAME = RefactoringBundle.message("replace.method.code.duplicates.title");
 
   public void invoke(Project project, Editor editor, PsiFile file, DataContext dataContext) {
     final int offset = editor.getCaretModel().getOffset();
     final PsiElement element = file.findElementAt(offset);
     final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
     if (method == null) {
-      String message = "Cannot perform the refactoring.\n" +
-                       "Locate caret inside a method.";
+      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("locate.caret.inside.a.method"));
       showErrorMessage(message, project);
       return;
     }
@@ -45,24 +45,21 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
       if (!RefactoringMessageUtil.checkReadOnlyStatus(project, file)) return;
     }
     if (method.isConstructor()) {
-      String message = "Cannot perform refactoring.\n" +
-                       "Replace With Method Call does not work for constructors";
+      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("replace.with.method.call.does.not.work.for.constructors"));
       showErrorMessage(message, project);
     }
     final PsiCodeBlock body = method.getBody();
     if (body == null) {
-      String message = "Cannot perform refactring.\n" +
-                       "Method " + method.getName() + " does not have a body";
+      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("method.does.not.have.a.body", method.getName()));
       showErrorMessage(message, project);
       return;
     }
     final PsiStatement[] statements = body.getStatements();
     if (statements.length == 0) {
-      String message = "Cannot perform refactoring.\n" +
-                       "Method " + method.getName() + " has an empty body";
+      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("method.has.an.empty.body", method.getName()));
 
       showErrorMessage(message, project);
-      return;      
+      return;
     }
     final DuplicatesFinder duplicatesFinder;
     final PsiElement[] pattern;
@@ -80,23 +77,21 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
     duplicatesFinder = new DuplicatesFinder(pattern, Arrays.asList(method.getParameterList().getParameters()),
                                             new ArrayList<PsiVariable>(), !method.hasModifierProperty(PsiModifier.STATIC));
 
-    PsiElement scope = file;
-    final List<Match> duplicates = duplicatesFinder.findDuplicates(scope);
+    final List<Match> duplicates = duplicatesFinder.findDuplicates(file);
     if (duplicates.isEmpty()) {
-      final String message = ApplicationNamesInfo.getInstance().getProductName() + " has not found any code that can be replaced with method call";
+      final String message =
+        RefactoringBundle.message("idea.has.not.found.any.code.that.can.be.replaced.with.method.call", ApplicationNamesInfo.getInstance().getProductName());
       Messages.showInfoMessage(project, message, REFACTORING_NAME);
       return;
     }
     final int duplicatesNo = duplicates.size();
     final ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
-    for (Iterator<Match> iterator = duplicates.iterator(); iterator.hasNext();) {
-      final Match match = iterator.next();
+    for (final Match match : duplicates) {
       DuplicatesImpl.highlightMatch(project, editor, match, highlighters);
     }
     final MethodDuplicatesDialog dialog = new MethodDuplicatesDialog(project, method, duplicatesNo);
     dialog.show();
-    for (Iterator<RangeHighlighter> iterator = highlighters.iterator(); iterator.hasNext();) {
-      final RangeHighlighter rangeHighlighter = iterator.next();
+    for (final RangeHighlighter rangeHighlighter : highlighters) {
       HighlightManager.getInstance(project).removeSegmentHighlighter(editor, rangeHighlighter);
     }
     if (!dialog.isOK()) return;
@@ -106,7 +101,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
   }
 
   static String getStatusMessage(final int duplicatesNo) {
-    return duplicatesNo + " code " + (duplicatesNo == 1 ? "fragment" : "framents") + " found";
+    return RefactoringBundle.message("method.duplicates.found.message", duplicatesNo);
   }
 
   private static void showErrorMessage(String message, Project project) {
@@ -129,12 +124,11 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
     public void processMatch(Match match) throws IncorrectOperationException {
       final PsiElementFactory factory = myMethod.getManager().getElementFactory();
       final boolean needQualifier = match.getInstanceExpression() != null;
-      final String text = needQualifier ?  "q." + myMethod.getName() + "()": myMethod.getName() + "()";
+      final @NonNls String text = needQualifier ?  "q." + myMethod.getName() + "()": myMethod.getName() + "()";
       PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)factory.createExpressionFromText(text, null);
       methodCallExpression = (PsiMethodCallExpression)CodeStyleManager.getInstance(myMethod.getManager()).reformat(methodCallExpression);
       final PsiParameter[] parameters = myMethod.getParameterList().getParameters();
-      for (int i = 0; i < parameters.length; i++) {
-        final PsiParameter parameter = parameters[i];
+      for (final PsiParameter parameter : parameters) {
         methodCallExpression.getArgumentList().add(match.getParameterValue(parameter));
       }
       if (needQualifier) {

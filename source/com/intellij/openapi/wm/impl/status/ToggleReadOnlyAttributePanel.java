@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
+import com.intellij.ui.UIBundle;
 
 import javax.swing.*;
 import java.awt.event.MouseAdapter;
@@ -19,7 +20,7 @@ import java.io.IOException;
 //Made public for Fabrique
 public class ToggleReadOnlyAttributePanel extends JLabel {
   public ToggleReadOnlyAttributePanel() {
-    setToolTipText("Double-click to toggle the read-only attribute");
+    setToolTipText(UIBundle.message("read.only.attr.panel.double.click.to.toggle.attr.tooltip.text"));
     addMouseListener(new MouseAdapter() {
       public void mouseClicked(final MouseEvent e) {
         if (e.getClickCount() == 2) {
@@ -48,7 +49,7 @@ public class ToggleReadOnlyAttributePanel extends JLabel {
           ReadOnlyAttributeUtil.setReadOnlyAttribute(files[0], files[0].isWritable());
         }
         catch (IOException e) {
-          Messages.showMessageDialog(project, e.getMessage(), "Error", Messages.getErrorIcon());
+          Messages.showMessageDialog(project, e.getMessage(), UIBundle.message("error.dialog.title"), Messages.getErrorIcon());
         }
       }
     });

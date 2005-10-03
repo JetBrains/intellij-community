@@ -12,7 +12,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.ui.IdeaUIManager;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.tree.TreeNode;
 import java.awt.*;
@@ -42,8 +42,7 @@ public class MethodNode extends CheckedTreeNode {
     if (children == null) {
       final PsiMethod[] callers = findCallers();
       children = new Vector(callers.length);
-      for (int i = 0; i < callers.length; i++) {
-        PsiMethod caller = callers[i];
+      for (PsiMethod caller : callers) {
         final MethodNode child = new MethodNode(caller);
         children.add(child);
         child.parent = this;
@@ -74,18 +73,18 @@ public class MethodNode extends CheckedTreeNode {
       public void run() {
         final PsiSearchHelper searchHelper = PsiManager.getInstance(project).getSearchHelper();
         final PsiReference[] refs = searchHelper.findReferencesIncludingOverriding(myMethod, GlobalSearchScope.allScope(project), true);
-        for (int i = 0; i < refs.length; i++) {
-          final PsiElement element = refs[i].getElement();
+        for (PsiReference ref : refs) {
+          final PsiElement element = ref.getElement();
           if (!(element instanceof PsiReferenceExpression) ||
-              !(((PsiReferenceExpression)element).getQualifierExpression() instanceof PsiSuperExpression)) {
+              !(((PsiReferenceExpression) element).getQualifierExpression() instanceof PsiSuperExpression)) {
             final PsiElement enclosingContext = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiClass.class);
             if (enclosingContext instanceof PsiMethod) {
-              callers.add((PsiMethod)enclosingContext);
+              callers.add((PsiMethod) enclosingContext);
             }
           }
         }
       }
-    }, "Looking For Callers...", false, project);
+    }, com.intellij.refactoring.RefactoringBundle.message("caller.chooser.looking.for.callers"), false, project);
     return callers.toArray(new PsiMethod[callers.size()]);
   }
 
@@ -108,8 +107,8 @@ public class MethodNode extends CheckedTreeNode {
     buffer.append(methodText);
 
     final SimpleTextAttributes attributes = isEnabled() ?
-        new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, IdeaUIManager.getTreeForegroung()) :
-        SimpleTextAttributes.EXCLUDED_ATTRIBUTES;
+                                            new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, UIUtil.getTreeForeground()) :
+                                            SimpleTextAttributes.EXCLUDED_ATTRIBUTES;
     renderer.append(buffer.toString(), attributes);
 
     final String packageName = getPackageName(myMethod.getContainingClass());

@@ -17,6 +17,7 @@ import com.intellij.util.CharTable;
 /**
  *
  */
+@SuppressWarnings({"HardCodedStringLiteral"})
 public class DebugUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.DebugUtil");
 

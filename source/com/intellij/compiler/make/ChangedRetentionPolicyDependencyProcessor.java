@@ -4,6 +4,7 @@ import com.intellij.compiler.SymbolTable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.cls.ClsUtil;
@@ -56,6 +57,9 @@ public class ChangedRetentionPolicyDependencyProcessor {
         }
         catch (CacheCorruptedException e) {
          _ex[0] = e;
+        }
+        catch (ProcessCanceledException e) {
+          // supressed deliberately
         }
       }
     });

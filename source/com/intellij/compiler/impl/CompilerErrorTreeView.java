@@ -16,6 +16,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.compiler.CompilerBundle;
 
 public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
   public CompilerErrorTreeView(Project project) {
@@ -37,7 +38,7 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
 
   private static class CompilerPropertiesAction extends AnAction {
     public CompilerPropertiesAction() {
-      super("Compiler Properties", null, IconLoader.getIcon("/general/ideOptions.png"));
+      super(CompilerBundle.message("action.compiler.properties.text"), null, IconLoader.getIcon("/general/ideOptions.png"));
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -48,7 +49,7 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
 
   private class ExcludeFromCompileAction extends AnAction {
     public ExcludeFromCompileAction() {
-      super("Exclude From Compile");
+      super(CompilerBundle.message("actions.exclude.from.compile.text"));
     }
 
     public void actionPerformed(AnActionEvent e) {

@@ -1,9 +1,6 @@
 package com.intellij.openapi.diff.impl.external;
 
-import com.intellij.openapi.diff.DiffContent;
-import com.intellij.openapi.diff.DiffPanel;
-import com.intellij.openapi.diff.DiffRequest;
-import com.intellij.openapi.diff.DiffTool;
+import com.intellij.openapi.diff.*;
 import com.intellij.openapi.diff.impl.DiffPanelImpl;
 import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.diff.impl.FrameWrapper;
@@ -73,8 +70,6 @@ class FrameDiffTool implements DiffTool {
   }
 
   private boolean askForceOpenDiff(DiffRequest data) {
-    String title1 = data.getContentTitles()[0];
-    String title2 = data.getContentTitles()[1];
     byte[] bytes1;
     byte[] bytes2;
     try {
@@ -87,10 +82,10 @@ class FrameDiffTool implements DiffTool {
     }
     String message;
     if (Arrays.equals(bytes1, bytes2))
-      message = title1 + " and " + title2 + " are identical";
+      message = DiffBundle.message("diff.contents.are.identical.message.text");
     else
-      message = title1 + " and " + title2 + " have differences only in line separators";
-    Messages.showInfoMessage(data.getProject(), message, "No Differences");
+      message = DiffBundle.message("diff.contents.have.differences.only.in.line.separators.message.text");
+    Messages.showInfoMessage(data.getProject(), message, DiffBundle.message("no.differences.dialog.title"));
     return false;
     //return Messages.showDialog(data.getProject(), message + "\nShow diff anyway?", "No Differences", new String[]{"Yes", "No"}, 1,
     //                    Messages.getQuestionIcon()) == 0;

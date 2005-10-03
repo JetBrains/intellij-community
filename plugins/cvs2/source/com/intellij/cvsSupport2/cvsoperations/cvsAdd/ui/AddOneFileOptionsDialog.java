@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 
 import javax.swing.*;
 import java.awt.*;
+import java.text.MessageFormat;
 
 /**
  * author: lesya
@@ -23,7 +24,7 @@ public class AddOneFileOptionsDialog extends AbstractAddOptionsDialog{
     super(project, options);
     myAddedFileInfo = file;
     myAddedFileInfo.setIncluded(true);
-    setTitle("Add File " + file.getFile().getName() + " to CVS");
+    setTitle(com.intellij.CvsBundle.message("dialog.title.add.file.to.cvs", file.getFile().getName()));
     init();
   }
 

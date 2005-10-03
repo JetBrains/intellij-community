@@ -36,11 +36,13 @@ import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.containers.WeakValueHashMap;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.Writer;
 import java.util.*;
+
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class FileManagerImpl implements FileManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.impl.FileManagerImpl");
@@ -73,6 +75,9 @@ public class FileManagerImpl implements FileManager {
   private HashSet<String> myNontrivialPackagePrefixes;
   private final VirtualFileManager myVirtualFileManager;
   private final FileDocumentManager myFileDocumentManager;
+  private static final @NonNls String JAVA_EXTENSION = ".java";
+  private static final @NonNls String CLASS_EXTENSION = ".class";
+  @NonNls private static final String MAX_INTELLISENSE_SIZE_PROPERTY = "idea.max.intellisense.filesize";
 
   public FileManagerImpl(PsiManagerImpl manager,
                          FileTypeManager fileTypeManager,
@@ -100,7 +105,7 @@ public class FileManagerImpl implements FileManager {
   }
 
   private static int maxIntellisenseFileSize() {
-    final String maxSizeS = System.getProperty("idea.max.intellisense.filesize");
+    final String maxSizeS = System.getProperty(MAX_INTELLISENSE_SIZE_PROPERTY);
     final int maxSize = maxSizeS != null ? Integer.parseInt(maxSizeS) * 1024 : -1;
     return maxSize;
   }
@@ -551,8 +556,8 @@ public class FileManagerImpl implements FileManager {
         for (VirtualFile vDir : vDirs) {
           if (vDir != null) {
             VirtualFile vChild = type == sourceType
-                                 ? vDir.findChild(name + ".java")
-                                 : vDir.findChild(name + ".class");
+                                 ? vDir.findChild(name + JAVA_EXTENSION)
+                                 : vDir.findChild(name + CLASS_EXTENSION);
             if (vChild != null) {
               PsiFile file = findFile(vChild);
               if (file instanceof PsiJavaFile) {
@@ -1263,6 +1268,7 @@ public class FileManagerImpl implements FileManager {
     }
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public void dumpFilesWithContentLoaded(Writer out) throws IOException {
     out.write("Files with content loaded cached in FileManagerImpl:\n");
     Set<VirtualFile> vFiles = myVFileToPsiFileMap.keySet();

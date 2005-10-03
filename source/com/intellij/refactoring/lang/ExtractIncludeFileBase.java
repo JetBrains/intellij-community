@@ -27,23 +27,22 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlTagChild;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.ui.ReplacePromptDialog;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlUtil;
 import com.intellij.find.FindManager;
-
+import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
  */
 public abstract class ExtractIncludeFileBase implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.lang.ExtractIncludeFileBase");
-  private static final String REFACTORING_NAME = "Extract include file";
+  private static final String REFACTORING_NAME = RefactoringBundle.message("extract.include.file.title");
   protected PsiFile myIncludingFile;
 
   protected ExtractIncludeFileBase(final PsiFile includingFile) {
@@ -65,8 +64,8 @@ public abstract class ExtractIncludeFileBase implements RefactoringActionHandler
                                    final Editor editor,
                                    final Project project) {
     if (duplicates.size() > 0) {
-      final String message = ApplicationNamesInfo.getInstance().getProductName() + " has found fragments that can be replaced with include directive\n" +
-                             "Do you want to review them?";
+      final String message = RefactoringBundle.message("idea.has.found.fragments.that.can.be.replaced.with.include.directive",
+                                                  ApplicationNamesInfo.getInstance().getProductName());
       final int exitCode = Messages.showYesNoDialog(project, message, REFACTORING_NAME, Messages.getInformationIcon());
       if (exitCode == DialogWrapper.OK_EXIT_CODE) {
         CommandProcessor.getInstance().executeCommand(project, new Runnable() {
@@ -77,7 +76,7 @@ public abstract class ExtractIncludeFileBase implements RefactoringActionHandler
 
                 highlightInEditor(project, pair, editor);
 
-                ReplacePromptDialog promptDialog = new ReplacePromptDialog(false, "Replace Fragment", project);
+                ReplacePromptDialog promptDialog = new ReplacePromptDialog(false, RefactoringBundle.message("replace.fragment"), project);
                 promptDialog.show();
                 final int promptResult = promptDialog.getExitCode();
                 if (promptResult == FindManager.PromptResult.SKIP) continue;
@@ -99,7 +98,7 @@ public abstract class ExtractIncludeFileBase implements RefactoringActionHandler
               }
             }
           }
-        }, "Remove Duplicates", null);
+        }, RefactoringBundle.message("remove.duplicates.command"), null);
       }
     }
   }
@@ -132,7 +131,7 @@ public abstract class ExtractIncludeFileBase implements RefactoringActionHandler
 
   public void invoke(final Project project, final Editor editor, final PsiFile file, DataContext dataContext) {
     if (!editor.getSelectionModel().hasSelection()) {
-      String message = "Cannot extract: no selection";
+      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("no.selection"));
       RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.EXTRACT_INCLUDE, project);
       return;
     }
@@ -141,20 +140,20 @@ public abstract class ExtractIncludeFileBase implements RefactoringActionHandler
 
     final Pair<XmlTagChild, XmlTagChild> children = XmlUtil.findTagChildrenInRange(myIncludingFile, start, end);
     if (children == null) {
-      String message = "Cannot extract: selection does not form a fragment for extraction";
+      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("selection.does.not.form.a.fragment.for.extraction"));
       RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.EXTRACT_INCLUDE, project);
       return;
     }
 
     if (!verifyChildRange(children.getFirst(), children.getSecond())) {
-      String message = "Cannot extract selected elements into include file";
+      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("cannot.extract.selected.elements.into.include.file"));
       RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.EXTRACT_INCLUDE, project);
       return;
     }
 
     final FileType fileType = getFileType(getLanguageForExtract(children.getFirst()));
     if (!(fileType instanceof LanguageFileType)) {
-      String message = "The language for selected elements has no associated file type";
+      String message = RefactoringBundle.message("the.language.for.selected.elements.has.no.associated.file.type");
       RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.EXTRACT_INCLUDE, project);
       return;
     }

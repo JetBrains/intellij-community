@@ -6,6 +6,7 @@ import com.intellij.openapi.diff.impl.highlighting.Util;
 import com.intellij.openapi.diff.impl.processing.DiffCorrection;
 import com.intellij.openapi.diff.impl.processing.Formatting;
 import com.intellij.openapi.diff.impl.processing.Word;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -34,7 +35,7 @@ public abstract class ComparisonPolicy {
     return DiffFragmentBuilder.buildFragments(builder, change);
   }
 
-  public static final ComparisonPolicy DEFAULT = new ComparisonPolicy("Default") {
+  public static final ComparisonPolicy DEFAULT = new ComparisonPolicy(DiffBundle.message("comparison.policy.default.name")) {
     protected Object[] getWrappers(String[] strings) {
       return strings;
     }
@@ -47,12 +48,13 @@ public abstract class ComparisonPolicy {
       return createFragment(word1.getText(), word2.getText());
     }
 
+    @SuppressWarnings({"HardCodedStringLiteral"})
     public String toString() {
       return "DEFAULT";
     }
   };
 
-  public static final ComparisonPolicy TRIM_SPACE = new ComparisonPolicy("Trim space") {
+  public static final ComparisonPolicy TRIM_SPACE = new ComparisonPolicy(DiffBundle.message("comparison.policy.trim.space.name")) {
     protected Object[] getLineWrappers(String[] lines) {
       return trimStrings(lines);
     }
@@ -97,6 +99,7 @@ public abstract class ComparisonPolicy {
       return string.substring(0, index + 1);
     }
 
+    @SuppressWarnings({"HardCodedStringLiteral"})
     public String toString() {
       return "TRIM";
     }
@@ -164,7 +167,7 @@ public abstract class ComparisonPolicy {
 
   private static class IgnoreSpacePolicy extends ComparisonPolicy implements DiffCorrection.FragmentProcessor<DiffCorrection.FragmentsCollector> {
     public IgnoreSpacePolicy() {
-      super("Ignore spaces");
+      super(DiffBundle.message("comparison.policy.ignore.spaces.name"));
     }
 
     protected Object[] getLineWrappers(String[] lines) {
@@ -219,6 +222,7 @@ public abstract class ComparisonPolicy {
       return trimStrings(strings);
     }
 
+    @SuppressWarnings({"HardCodedStringLiteral"})
     public String toString() {
       return "IGNORE";
     }

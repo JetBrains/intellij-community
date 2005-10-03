@@ -3,6 +3,7 @@ package com.intellij.ide.macro;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.ide.IdeBundle;
 
 public final class ColumnNumberMacro extends Macro {
   public String getName() {
@@ -10,7 +11,7 @@ public final class ColumnNumberMacro extends Macro {
   }
 
   public String getDescription() {
-    return "Column number";
+    return IdeBundle.message("macro.column.number");
   }
 
   public String expand(DataContext dataContext) {

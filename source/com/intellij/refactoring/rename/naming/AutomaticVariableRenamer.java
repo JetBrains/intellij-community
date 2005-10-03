@@ -3,6 +3,7 @@ package com.intellij.refactoring.rename.naming;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.refactoring.RefactoringBundle;
 
 import java.util.Iterator;
 import java.util.List;
@@ -25,15 +26,15 @@ public class AutomaticVariableRenamer extends AutomaticRenamer {
   }
 
   public String getDialogTitle() {
-    return "Rename Variables";
+    return RefactoringBundle.message("rename.variables.title");
   }
 
   public String getDialogDescription() {
-    return "Rename variables with the following names to:";
+    return RefactoringBundle.message("rename.variables.with.the.following.names.to");
   }
 
   public String entityName() {
-    return "Variable";
+    return RefactoringBundle.message("entity.name.variable");
   }
 
   public String nameToCanonicalName(String name, PsiNamedElement psiVariable) {

@@ -178,6 +178,17 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
       }
       return false;
     }
+    
+    if (insertingAnnotation()) {
+      final Document document = context.editor.getDocument();
+      PsiDocumentManager.getInstance(context.project).commitDocument(document);
+      final PsiElement elementAt = myFile.findElementAt(myStartOffset);
+      final PsiElement prevSibling = elementAt != null? elementAt.getParent().getPrevSibling():null;
+      
+      if(prevSibling == null || !"@".equals(prevSibling.getText())) {
+        document.insertString(myStartOffset, "@");
+      }
+    }
     return true;
   }
 
@@ -312,6 +323,8 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
           break;
         }
       }
+    } else if (insertingAnnotationWithParameters()) {
+      needParens = true;
     }
     return needParens;
   }
@@ -344,7 +357,22 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
              || PsiKeyword.CATCH.equals(myLookupItem.getLookupString())
              || PsiKeyword.SWITCH.equals(myLookupItem.getLookupString()))
       hasParms = true;
+    else if (insertingAnnotationWithParameters()) {
+      hasParms = true;
+    }
     return hasParms;
+  }
+
+  private boolean insertingAnnotationWithParameters() {
+    if(insertingAnnotation()) {
+      return ((PsiClass)myLookupItem.getObject()).getMethods().length > 0;
+    }
+    return false;
+  }
+
+  private boolean insertingAnnotation() {
+    return myLookupItem.getObject() instanceof PsiClass &&
+           ((PsiClass)myLookupItem.getObject()).isAnnotationType();
   }
 
   private boolean hasOverloads() {
@@ -831,7 +859,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
 
               clear();
             }
-          }, "generate anonymous body", null);
+          }, CompletionBundle.message("completion.smart.type.generate.anonymous.body"), null);
         }
       });
   }
@@ -851,7 +879,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
 
     boolean isJdk15Enabled = LanguageLevel.JDK_1_5.compareTo(PsiManager.getInstance(project).getEffectiveLanguageLevel()) <= 0;
     final MemberChooser chooser = new MemberChooser(methods.toArray(), false, true, project, isJdk15Enabled);
-    chooser.setTitle("Select Methods to Override");
+    chooser.setTitle(CompletionBundle.message("completion.smarttype.select.methods.to.override"));
     chooser.setCopyJavadocVisible(true);
 
     chooser.show();

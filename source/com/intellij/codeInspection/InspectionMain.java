@@ -18,6 +18,7 @@ public class InspectionMain implements ApplicationStarter {
     return "inspect";
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public void premain(String[] args) {
     if (args.length < 4) {
       printHelp();
@@ -60,10 +61,7 @@ public class InspectionMain implements ApplicationStarter {
   }
 
   public static void printHelp() {
-    System.out.println("Expected parameters: <project_file_path> <inspection_profile_file_path> <output_path> [<options>]\n" +
-                       "Avaliable options are:\n" +
-                       "-d <directory_path>  --  directory to be inspected. Optional. Whole project is inspected by default.\n" +
-                       "-v[0|1|2]            --  verbose level. 0 - silent, 1 - verbose, 2 - most verbose.");
+    System.out.println(InspectionsBundle.message("inspection.command.line.explanation"));
     System.exit(1);
   }
 }

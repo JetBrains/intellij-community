@@ -19,6 +19,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.execution.ExecutionBundle;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author dyoma
@@ -27,6 +29,9 @@ public class ProcessTerminatedListener extends ProcessAdapter {
   private static final Key<ProcessTerminatedListener> KEY = new Key<ProcessTerminatedListener>("processTerminatedListener");
   private final String myProcessFinishedMessage;
   private final Project myProject;
+  @NonNls protected static final String EXIT_CODE_ENTRY = "$EXIT_CODE$";
+  @NonNls
+  protected static final String EXIT_CODE_REGEX = "\\$EXIT_CODE\\$";
 
   private ProcessTerminatedListener(final Project project, final String processFinishedMessage) {
     myProject = project;
@@ -46,7 +51,8 @@ public class ProcessTerminatedListener extends ProcessAdapter {
   }
 
   public static void attach(final ProcessHandler processHandler, final Project project) {
-    attach(processHandler, project, "\nProcess finished with exit code $EXIT_CODE$\n");
+    String message = ExecutionBundle.message("finished.with.exit.code.text.message", EXIT_CODE_ENTRY);
+    attach(processHandler, project, "\n" + message + "\n");
   }
 
   public static void attach(final ProcessHandler processHandler) {
@@ -56,7 +62,7 @@ public class ProcessTerminatedListener extends ProcessAdapter {
   public void processTerminated(ProcessEvent event) {
     final ProcessHandler processHandler = event.getProcessHandler();
     processHandler.removeProcessListener(this);
-    final String message = myProcessFinishedMessage.replaceAll("\\$EXIT_CODE\\$", String.valueOf(event.getExitCode()));
+    final String message = myProcessFinishedMessage.replaceAll(EXIT_CODE_REGEX, String.valueOf(event.getExitCode()));
     if (myProcessFinishedMessage != null)
       processHandler.notifyTextAvailable(message, ProcessOutputTypes.SYSTEM);
     if (myProject != null) ApplicationManager.getApplication().invokeLater(new Runnable(){

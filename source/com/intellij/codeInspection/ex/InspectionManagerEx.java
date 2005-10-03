@@ -8,10 +8,7 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.InspectCodePanel;
 import com.intellij.codeInspection.ui.InspectionResultsView;
@@ -49,8 +46,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.ui.content.*;
 import com.intellij.util.containers.HashMap;
+import com.intellij.CommonBundle;
 import org.jdom.Document;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -58,6 +57,7 @@ import java.io.OutputStream;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.text.MessageFormat;
 
 public class InspectionManagerEx extends InspectionManager implements JDOMExternalizable, ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.InspectionManagerEx");
@@ -75,19 +75,19 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
   private HashMap<PsiElement, List<UsagesProcessor>> myFieldUsagesRequests;
   private HashMap<PsiElement, List<UsagesProcessor>> myClassUsagesRequests;
   private ProgressIndicator myProgressIndicator;
-  private String myCurrentProfileName;
+  @NonNls private String myCurrentProfileName;
 
 
-  public static final JobDescriptor BUILD_GRAPH = new JobDescriptor("Processing project usages in ");
-  public static final JobDescriptor FIND_EXTERNAL_USAGES = new JobDescriptor("Processing external usages of ");
-  private static final JobDescriptor LOCAL_ANALYSIS = new JobDescriptor("Analyzing code in ");
+  public static final JobDescriptor BUILD_GRAPH = new JobDescriptor(InspectionsBundle.message("inspection.processing.job.descriptor"));
+  public static final JobDescriptor FIND_EXTERNAL_USAGES = new JobDescriptor(InspectionsBundle.message("inspection.processing.job.descriptor1"));
+  private static final JobDescriptor LOCAL_ANALYSIS = new JobDescriptor(InspectionsBundle.message("inspection.processing.job.descriptor2"));
 
 
-  public static final String SUPPRESS_INSPECTIONS_TAG_NAME = "noinspection";
+  @NonNls public static final String SUPPRESS_INSPECTIONS_TAG_NAME = "noinspection";
   public static final String SUPPRESS_INSPECTIONS_ANNOTATION_NAME = "java.lang.SuppressWarnings";
 
   //for use in local comments
-  private static final Pattern SUPPRESS_PATTERN = Pattern.compile("//\\s*" + SUPPRESS_INSPECTIONS_TAG_NAME + "\\s+(\\w+(,\\w+)*)");
+  @NonNls private static final Pattern SUPPRESS_PATTERN = Pattern.compile("//\\s*" + SUPPRESS_INSPECTIONS_TAG_NAME + "\\s+(\\w+(,\\w+)*)");
 
   private InspectionProfile myExternalProfile = null;
 
@@ -134,6 +134,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
     });
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(myUIOptions, element);
 
@@ -146,6 +147,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
     }
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(myUIOptions, element);
 
@@ -192,9 +194,10 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
     myView = view;
     ContentManager contentManager = getContentManager();
 
+    //noinspection HardCodedStringLiteral
     Content content = PeerFactory.getInstance().getContentFactory().createContent(view, "FOOO", false);
 
-    content.setDisplayName("Results for Inspection Profile \'" + view.getCurrentProfileName() + "\'");
+    content.setDisplayName(InspectionsBundle.message("inspection.results.for.profile.toolwindow.title", view.getCurrentProfileName()));
     contentManager.addContent(content);
     contentManager.setSelectedContent(content);
 
@@ -203,13 +206,13 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
 
   private static boolean isInspectionToolIdMentioned(String inspectionsList, String inspectionToolID) {
     String[] ids = inspectionsList.split("[,]");
-    for (String id : ids) {
+    for (@NonNls String id : ids) {
       if (id.equals(inspectionToolID) || id.equals("ALL")) return true;
     }
     return false;
   }
 
-  public static boolean isToCheckMember(PsiDocCommentOwner owner, String inspectionToolID) {
+  public static boolean isToCheckMember(PsiDocCommentOwner owner, @NonNls String inspectionToolID) {
     if (!isToCheckMemberInDocComment(owner, inspectionToolID)){
       return false;
     }
@@ -392,8 +395,8 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
   public void doInspections(final AnalysisScope scope) {
     while (PsiManager.getInstance(getProject()).findClass("java.lang.Object") == null) {
       Messages.showMessageDialog(getProject(),
-                                 "The JDK is not configured properly for this project. Inspection cannot proceed.",
-                                 "Error",
+                                 InspectionsBundle.message("inspection.no.jdk.error.message"),
+                                 CommonBundle.message("title.error"),
                                  Messages.getErrorIcon());
       final ProjectJdk projectJdk = LibrariesEditor.chooseAndSetJDK(myProject);
       if (projectJdk == null) return;
@@ -433,7 +436,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
     cleanup();
 
     myCurrentScope = scope;
-    final Element root = new Element("problems");
+    final Element root = new Element(InspectionsBundle.message("inspection.problems"));
     final Document doc = new Document(root);
 
 
@@ -668,13 +671,13 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
       }
     };
 
-    if (!ApplicationManager.getApplication().runProcessWithProgressSynchronously(runInspection, "Inspecting Code...", true, myProject)) return;
+    if (!ApplicationManager.getApplication().runProcessWithProgressSynchronously(runInspection, InspectionsBundle.message("inspection.progress.title"), true, myProject)) return;
 
     InspectionResultsView view = new InspectionResultsView(myProject, getCurrentProfile(), scope);
     if (!view.update()) {
       Messages.showMessageDialog(myProject,
-                                 "No suspicious code found",
-                                 "Code Inspection",
+                                 InspectionsBundle.message("inspection.no.problems.message"),
+                                 InspectionsBundle.message("inspection.no.problems.dialog.title"),
                                  Messages.getInformationIcon());
     }
     else {
@@ -823,38 +826,41 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
   }
 
   public class UIOptions implements JDOMExternalizable {
-      public boolean AUTOSCROLL_TO_SOURCE = false;
-      public float SPLITTER_PROPORTION = 0.5f;
-      public boolean GROUP_BY_SEVERITY = false;
-      public boolean ANALYZE_TEST_SOURCES = true;
-      public int SCOPE_TYPE = 1;
-      public final AutoScrollToSourceHandler myAutoScrollToSourceHandler;
-      public final GroupBySeverityAction myGroupBySeverityAction;
-      public UIOptions() {
-        myAutoScrollToSourceHandler = new AutoScrollToSourceHandler() {
-          protected boolean isAutoScrollMode() {
-            return AUTOSCROLL_TO_SOURCE;
-          }
+    public boolean AUTOSCROLL_TO_SOURCE = false;
+    public float SPLITTER_PROPORTION = 0.5f;
+    public boolean GROUP_BY_SEVERITY = false;
+    public boolean ANALYZE_TEST_SOURCES = true;
+    public int SCOPE_TYPE = 1;
+    public String CUSTOM_SCOPE_NAME = "";
+    public final AutoScrollToSourceHandler myAutoScrollToSourceHandler;
+    public final GroupBySeverityAction myGroupBySeverityAction;
 
-          protected void setAutoScrollMode(boolean state) {
-            AUTOSCROLL_TO_SOURCE = state;
-          }
-        };
-        myGroupBySeverityAction = new GroupBySeverityAction();
-      }
 
-      public void readExternal(Element element) throws InvalidDataException {
-        DefaultJDOMExternalizer.readExternal(this, element);
-      }
+    public UIOptions() {
+      myAutoScrollToSourceHandler = new AutoScrollToSourceHandler() {
+        protected boolean isAutoScrollMode() {
+          return AUTOSCROLL_TO_SOURCE;
+        }
 
-      public void writeExternal(Element element) throws WriteExternalException {
-        DefaultJDOMExternalizer.writeExternal(this, element);
-      }
+        protected void setAutoScrollMode(boolean state) {
+          AUTOSCROLL_TO_SOURCE = state;
+        }
+      };
+      myGroupBySeverityAction = new GroupBySeverityAction();
+    }
+
+    public void readExternal(Element element) throws InvalidDataException {
+      DefaultJDOMExternalizer.readExternal(this, element);
+    }
+
+    public void writeExternal(Element element) throws WriteExternalException {
+      DefaultJDOMExternalizer.writeExternal(this, element);
+    }
   }
 
   private class GroupBySeverityAction extends ToggleAction {
     public GroupBySeverityAction() {
-      super("Group by Severity", "Group Inspections By Severity", IconLoader.getIcon("/nodes/sortBySeverity.png"));
+      super(InspectionsBundle.message("inspection.action.group.by.severity"), InspectionsBundle.message("inspection.action.group.by.severity.description"), IconLoader.getIcon("/nodes/sortBySeverity.png"));
     }
 
     public boolean isSelected(AnActionEvent e) {

@@ -14,6 +14,7 @@ import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * Created by IntelliJ IDEA.
@@ -28,7 +29,7 @@ public class GenerateDTDAction extends BaseCodeInsightAction{
     return new CodeInsightActionHandler(){
       public void invoke(Project project, Editor editor, PsiFile file){
         if(file instanceof XmlFile && file.getVirtualFile() != null && file.getVirtualFile().isWritable()){
-          final StringBuffer buffer = new StringBuffer();
+          final @NonNls StringBuffer buffer = new StringBuffer();
           final XmlDocument document = ((XmlFile) file).getDocument();
           if(document.getRootTag() != null){
             buffer.append("<!DOCTYPE " + document.getRootTag().getName() + " [\n");

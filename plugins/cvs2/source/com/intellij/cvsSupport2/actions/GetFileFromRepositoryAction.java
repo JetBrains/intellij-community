@@ -20,7 +20,7 @@ public class GetFileFromRepositoryAction extends ActionOnSelectedElement{
   }
 
   protected String getTitle(VcsContext context) {
-    return "Get File From Repository";
+    return com.intellij.CvsBundle.message("action.name.get.file.from.repository");
   }
 
   protected CvsHandler getCvsHandler(CvsContext context) {

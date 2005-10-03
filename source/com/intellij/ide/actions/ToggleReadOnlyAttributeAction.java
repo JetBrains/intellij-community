@@ -14,6 +14,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
+import com.intellij.CommonBundle;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -54,7 +55,7 @@ public class ToggleReadOnlyAttributeAction extends AnAction{
             Messages.showMessageDialog(
               project,
               exc.getMessage(),
-              "Error",Messages.getErrorIcon()
+              CommonBundle.getErrorTitle(),Messages.getErrorIcon()
             );
           }
         }

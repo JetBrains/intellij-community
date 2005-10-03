@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.generation;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.fileTemplates.FileTemplate;
@@ -29,6 +30,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -101,7 +103,7 @@ public class OverrideImplementUtil {
     }
 
     Map<MethodSignature, CandidateInfo> result = new LinkedHashMap<MethodSignature,CandidateInfo>();
-    if (toImplement) {
+    if (toImplement || aClass.isInterface()) {
       for (Map.Entry<MethodSignature, PsiMethod> entry : abstracts.entrySet()) {
         MethodSignature signature = entry.getKey();
         PsiMethod abstractOne = entry.getValue();
@@ -252,7 +254,7 @@ public class OverrideImplementUtil {
   }
 
   private static String callSuper (PsiMethod superMethod, PsiMethod overriding) {
-    StringBuffer buffer = new StringBuffer();
+    @NonNls StringBuffer buffer = new StringBuffer();
     if (!superMethod.isConstructor() && superMethod.getReturnType() != PsiType.VOID) {
         buffer.append("return ");
     }
@@ -273,6 +275,11 @@ public class OverrideImplementUtil {
   }
 
   public static void setupBody(PsiMethod result, PsiMethod originalMethod, PsiClass targetClass) throws IncorrectOperationException {
+    if (targetClass.isInterface()) {
+      final PsiCodeBlock body = result.getBody();
+      if (body != null) body.delete();
+    }
+
     String templName = originalMethod.hasModifierProperty(PsiModifier.ABSTRACT) ?
                        FileTemplateManager.TEMPLATE_IMPLEMENTED_METHOD_BODY : FileTemplateManager.TEMPLATE_OVERRIDDEN_METHOD_BODY;
     FileTemplate template = FileTemplateManager.getInstance().getCodeTemplate(templName);
@@ -288,7 +295,7 @@ public class OverrideImplementUtil {
     FileTemplateUtil.setClassAndMethodNameProperties(properties, targetClass, result);
 
     PsiElementFactory factory = originalMethod.getManager().getElementFactory();
-    String methodText;
+    @NonNls String methodText;
     try {
       String bodyText = template.getText(properties);
       if (!"".equals(bodyText)) bodyText += "\n";
@@ -305,7 +312,8 @@ public class OverrideImplementUtil {
       catch (IncorrectOperationException e) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
               public void run() {
-                Messages.showErrorDialog("Please Correct \"Overridden/Implemented Method Body\" Template", "File Template Error");
+                Messages.showErrorDialog(CodeInsightBundle.message("override.implement.broken.file.template.message"),
+                                         CodeInsightBundle.message("override.implement.broken.file.template.title"));
               }
             });
         return;
@@ -337,7 +345,9 @@ public class OverrideImplementUtil {
 
     boolean isJdk15Enabled = LanguageLevel.JDK_1_5.compareTo(PsiManager.getInstance(project).getEffectiveLanguageLevel()) <= 0;
     final MemberChooser chooser = new MemberChooser(candidates, false, true, project, !toImplement && isJdk15Enabled);
-    chooser.setTitle(toImplement ? "Select Methods to Implement" : "Select Methods to Override");
+    chooser.setTitle(toImplement
+                     ? CodeInsightBundle.message("methods.to.implement.chooser.title")
+                     : CodeInsightBundle.message("methods.to.override.chooser.title"));
     chooser.setCopyJavadocVisible(true);
     chooser.show();
     if (chooser.getExitCode() != DialogWrapper.OK_EXIT_CODE) return;
@@ -444,7 +454,7 @@ public class OverrideImplementUtil {
     editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
   }
 
-  public static PsiClass getContextClass(Project project, Editor editor, PsiFile file) {
+  public static PsiClass getContextClass(Project project, Editor editor, PsiFile file, boolean allowInterface) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     int offset = editor.getCaretModel().getOffset();
@@ -455,6 +465,6 @@ public class OverrideImplementUtil {
     while (element instanceof PsiTypeParameter);
 
     final PsiClass aClass = (PsiClass)element;
-    return aClass == null || aClass.isInterface() ? null : aClass;
+    return aClass == null || (!allowInterface && aClass.isInterface()) ? null : aClass;
   }
 }

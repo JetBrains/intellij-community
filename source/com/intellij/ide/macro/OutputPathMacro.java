@@ -11,6 +11,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.ide.IdeBundle;
 
 import java.io.File;
 
@@ -20,7 +21,7 @@ public final class OutputPathMacro extends Macro {
   }
 
   public String getDescription() {
-    return "Output path";
+    return IdeBundle.message("macro.output.path");
   }
 
   public String expand(DataContext dataContext) {

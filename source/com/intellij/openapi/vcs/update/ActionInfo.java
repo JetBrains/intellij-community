@@ -2,6 +2,7 @@ package com.intellij.openapi.vcs.update;
 
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.options.Configurable;
@@ -19,7 +20,7 @@ public interface ActionInfo {
     }
 
     public String getActionName() {
-      return "Update";
+      return VcsBundle.message("action.name.update");
     }
 
     public UpdateOrStatusOptionsDialog createOptionsDialog(final Project project,
@@ -42,7 +43,7 @@ public interface ActionInfo {
     }
 
     public String getActionName(String scopeName) {
-      return "Update " + scopeName;
+      return VcsBundle.message("action.anme.update.scope", scopeName);
     }
 
     public String getGroupName(FileGroup fileGroup) {
@@ -79,17 +80,59 @@ public interface ActionInfo {
     }
 
     public String getActionName() {
-      return "Check Status";
+      return VcsBundle.message("action.name.check.status");
     }
 
     public String getActionName(String scopeName) {
-      return "Check " + scopeName + " Status";
+      return VcsBundle.message("action.name.check.scope.status", scopeName);
     }
 
     public String getGroupName(FileGroup fileGroup) {
       return fileGroup.getStatusName();
     }
   };
+
+  ActionInfo INTEGRATE = new ActionInfo() {
+    public boolean showOptions(Project project) {
+      return true;
+    }
+
+    public UpdateEnvironment getEnvironment(AbstractVcs vcs) {
+      return vcs.getIntegrateEnvironment();
+    }
+
+    public UpdateOrStatusOptionsDialog createOptionsDialog(final Project project, LinkedHashMap<Configurable, AbstractVcs> envToConfMap) {
+      return new UpdateOrStatusOptionsDialog(project, envToConfMap) {
+        protected String getRealTitle() {
+          return "Integrate";
+        }
+
+        protected boolean canBeHidden() {
+          return false;
+        }
+
+        protected boolean isToBeShown() {
+          return true;
+        }
+
+        protected void setToBeShown(boolean value, boolean onOk) {
+        }
+      };
+    }
+
+    public String getActionName(String scopeName) {
+      return "Integrate " + scopeName;
+    }
+
+    public String getActionName() {
+      return "Integrate";
+    }
+
+    public String getGroupName(FileGroup fileGroup) {
+      return fileGroup.getUpdateName();
+    }
+  };
+
 
   boolean showOptions(Project project);
 

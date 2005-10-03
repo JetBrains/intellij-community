@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.text.StringUtil;
@@ -14,6 +15,7 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.THashMap;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
@@ -30,6 +32,57 @@ import java.util.Iterator;
  * @author Vladimir Kondratyev
  */
 public class KeymapImpl implements Keymap {
+  @NonNls
+  private static final String KEY_MAP = "keymap";
+  @NonNls
+  private static final String KEYBOARD_SHORTCUT = "keyboard-shortcut";
+  @NonNls
+  private static final String KEYSTROKE_ATTRIBUTE = "keystroke";
+  @NonNls
+  private static final String FIRST_KEYSTROKE_ATTRIBUTE = "first-keystroke";
+  @NonNls
+  private static final String SECOND_KEYSTROKE_ATTRIBUTE = "second-keystroke";
+  @NonNls
+  private static final String ACTION = "action";
+  @NonNls
+  private static final String VERSION_ATTRIBUTE = "version";
+  @NonNls
+  private static final String PARENT_ATTRIBUTE = "parent";
+  @NonNls
+  private static final String NAME_ATTRIBUTE = "name";
+  @NonNls
+  private static final String ID_ATTRIBUTE = "id";
+  @NonNls
+  private static final String TRUE_WORD = "true";
+  @NonNls
+  private static final String FALSE_WORD = "false";
+  @NonNls
+  private static final String DISABLE_MNEMONICS_ATTRIBUTE = "disable-mnemonics";
+  @NonNls
+  private static final String MOUSE_SHORTCUT = "mouse-shortcut";
+  @NonNls
+  private static final String SHIFT = "shift";
+  @NonNls
+  private static final String CONTROL = "control";
+  @NonNls
+  private static final String META = "meta";
+  @NonNls
+  private static final String ALT = "alt";
+  @NonNls
+  private static final String ALT_GRAPH = "altGraph";
+  @NonNls
+  private static final String BUTTON1 = "button1";
+  @NonNls
+  private static final String BUTTON2 = "button2";
+  @NonNls
+  private static final String BUTTON3 = "button3";
+  @NonNls
+  private static final String DOUBLE_CLICK = "doubleClick";
+  @NonNls
+  private static final String VIRTUAL_KEY_PREFIX = "VK_";
+  @NonNls
+  private static final String EDITOR_ACTION_PREFIX = "Editor";
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.keymap.KeymapImpl");
 
   private String myName;
@@ -62,7 +115,7 @@ public class KeymapImpl implements Keymap {
       for(int i = 0; i < fields.length; i++){
         Field field = fields[i];
         String fieldName = field.getName();
-        if(fieldName.startsWith("VK_")) {
+        if(fieldName.startsWith(VIRTUAL_KEY_PREFIX)) {
           int keyCode = field.getInt(KeyEvent.class);
           ourNamesForKeycodes.put(new Integer(keyCode), fieldName.substring(3));
         }
@@ -385,14 +438,14 @@ public class KeymapImpl implements Keymap {
    */
   public void readExternal(Element keymapElement, Keymap[] existingKeymaps) throws InvalidDataException {
     // Check and convert parameters
-    if(!"keymap".equals(keymapElement.getName())){
+    if(!KEY_MAP.equals(keymapElement.getName())){
       throw new InvalidDataException("unknown element: "+keymapElement);
     }
-    if(keymapElement.getAttributeValue("version")==null){
+    if(keymapElement.getAttributeValue(VERSION_ATTRIBUTE)==null){
       Converter01.convert(keymapElement);
     }
     //
-    String parentName = keymapElement.getAttributeValue("parent");
+    String parentName = keymapElement.getAttributeValue(PARENT_ATTRIBUTE);
     if(parentName != null) {
       for(int i = 0; i < existingKeymaps.length; i++) {
         Keymap existingKeymap = existingKeymaps[i];
@@ -403,26 +456,26 @@ public class KeymapImpl implements Keymap {
         }
       }
     }
-    myName = keymapElement.getAttributeValue("name");
+    myName = keymapElement.getAttributeValue(NAME_ATTRIBUTE);
 
-    myDisableMnemonics = "true".equals(keymapElement.getAttributeValue("disable-mnemonics"));
+    myDisableMnemonics = TRUE_WORD.equals(keymapElement.getAttributeValue(DISABLE_MNEMONICS_ATTRIBUTE));
     HashMap id2shortcuts=new HashMap();
     for (Iterator i = keymapElement.getChildren().iterator(); i.hasNext();) {
       Element actionElement=(Element)i.next();
-      if("action".equals(actionElement.getName())){
-        String id = actionElement.getAttributeValue("id");
+      if(ACTION.equals(actionElement.getName())){
+        String id = actionElement.getAttributeValue(ID_ATTRIBUTE);
         if(id==null){
           throw new InvalidDataException("Attribute 'id' cannot be null; Keymap's name="+myName);
         }
         id2shortcuts.put(id,new ArrayList(1));
         for(Iterator j=actionElement.getChildren().iterator();j.hasNext();){
           Element shortcutElement=(Element)j.next();
-          if ("keyboard-shortcut".equals(shortcutElement.getName())){
+          if (KEYBOARD_SHORTCUT.equals(shortcutElement.getName())){
 
             // Parse first keystroke
 
             KeyStroke firstKeyStroke;
-            String firstKeyStrokeStr = shortcutElement.getAttributeValue("first-keystroke");
+            String firstKeyStrokeStr = shortcutElement.getAttributeValue(FIRST_KEYSTROKE_ATTRIBUTE);
             if(firstKeyStrokeStr != null) {
               firstKeyStroke = ActionManagerEx.getKeyStroke(firstKeyStrokeStr);
               if(firstKeyStroke==null){
@@ -440,7 +493,7 @@ public class KeymapImpl implements Keymap {
             // Parse second keystroke
 
             KeyStroke secondKeyStroke = null;
-            String secondKeyStrokeStr=shortcutElement.getAttributeValue("second-keystroke");
+            String secondKeyStrokeStr=shortcutElement.getAttributeValue(SECOND_KEYSTROKE_ATTRIBUTE);
             if (secondKeyStrokeStr!=null) {
               secondKeyStroke = ActionManagerEx.getKeyStroke(secondKeyStrokeStr);
               if (secondKeyStroke == null) {
@@ -452,8 +505,8 @@ public class KeymapImpl implements Keymap {
             Shortcut shortcut = new KeyboardShortcut(firstKeyStroke, secondKeyStroke);
             ArrayList shortcuts=(ArrayList)id2shortcuts.get(id);
             shortcuts.add(shortcut);
-          }else if("mouse-shortcut".equals(shortcutElement.getName())){
-            String keystrokeString=shortcutElement.getAttributeValue("keystroke");
+          }else if(MOUSE_SHORTCUT.equals(shortcutElement.getName())){
+            String keystrokeString=shortcutElement.getAttributeValue(KEYSTROKE_ATTRIBUTE);
             if (keystrokeString == null) {
               throw new InvalidDataException(
                 "Attribute 'keystroke' cannot be null; Action's id=" + id + "; Keymap's name="+myName
@@ -490,35 +543,35 @@ public class KeymapImpl implements Keymap {
   }
 
   public Element writeExternal() {
-    Element keymapElement = new Element("keymap");
-    keymapElement.setAttribute("version",Integer.toString(1));
-    keymapElement.setAttribute("name", myName);
-    keymapElement.setAttribute("disable-mnemonics", myDisableMnemonics ? "true" : "false");
+    Element keymapElement = new Element(KEY_MAP);
+    keymapElement.setAttribute(VERSION_ATTRIBUTE,Integer.toString(1));
+    keymapElement.setAttribute(NAME_ATTRIBUTE, myName);
+    keymapElement.setAttribute(DISABLE_MNEMONICS_ATTRIBUTE, myDisableMnemonics ? TRUE_WORD : FALSE_WORD);
     if(myParent != null) {
-      keymapElement.setAttribute("parent", myParent.getName());
+      keymapElement.setAttribute(PARENT_ATTRIBUTE, myParent.getName());
     }
     String[] ownActionIds = getOwnActionIds();
     Arrays.sort(ownActionIds);
     for(int i = 0; i < ownActionIds.length; i++){
       String actionId = ownActionIds[i];
-      Element actionElement=new Element("action");
-      actionElement.setAttribute("id",actionId);
+      Element actionElement=new Element(ACTION);
+      actionElement.setAttribute(ID_ATTRIBUTE,actionId);
       // Save keyboad shortcuts
       Shortcut[] shortcuts = getShortcuts(actionId);
       for(int j = 0; j < shortcuts.length; j++){
         Shortcut shortcut = shortcuts[j];
         if (shortcut instanceof KeyboardShortcut) {
           KeyboardShortcut keyboardShortcut = (KeyboardShortcut)shortcut;
-          Element element = new Element("keyboard-shortcut");
-          element.setAttribute("first-keystroke", getKeyShortcutString(keyboardShortcut.getFirstKeyStroke()));
+          Element element = new Element(KEYBOARD_SHORTCUT);
+          element.setAttribute(FIRST_KEYSTROKE_ATTRIBUTE, getKeyShortcutString(keyboardShortcut.getFirstKeyStroke()));
           if (keyboardShortcut.getSecondKeyStroke() != null){
-            element.setAttribute("second-keystroke", getKeyShortcutString(keyboardShortcut.getSecondKeyStroke()));
+            element.setAttribute(SECOND_KEYSTROKE_ATTRIBUTE, getKeyShortcutString(keyboardShortcut.getSecondKeyStroke()));
           }
           actionElement.addContent(element);
         } else if (shortcut instanceof MouseShortcut) {
           MouseShortcut mouseShortcut = (MouseShortcut)shortcut;
-          Element element = new Element("mouse-shortcut");
-          element.setAttribute("keystroke", getMouseShortcutString(mouseShortcut));
+          Element element = new Element(MOUSE_SHORTCUT);
+          element.setAttribute(KEYSTROKE_ATTRIBUTE, getMouseShortcutString(mouseShortcut));
           actionElement.addContent(element);
         }else{
           throw new IllegalStateException("unknown shortcut class: " + shortcut);
@@ -557,16 +610,20 @@ public class KeymapImpl implements Keymap {
     StringBuffer buf = new StringBuffer();
     int modifiers = keyStroke.getModifiers();
     if((modifiers & InputEvent.SHIFT_MASK) != 0) {
-      buf.append("shift ");
+      buf.append(SHIFT);
+      buf.append(' ');
     }
     if((modifiers & InputEvent.CTRL_MASK) != 0) {
-      buf.append("control ");
+      buf.append(CONTROL);
+      buf.append(' ');
     }
     if((modifiers & InputEvent.META_MASK) != 0) {
-      buf.append("meta ");
+      buf.append(META);
+      buf.append(' ');
     }
     if((modifiers & InputEvent.ALT_MASK) != 0) {
-      buf.append("alt ");
+      buf.append(ALT);
+      buf.append(' ');
     }
 
     buf.append((String)ourNamesForKeycodes.get(new Integer(keyStroke.getKeyCode())));
@@ -585,36 +642,44 @@ public class KeymapImpl implements Keymap {
 
     int modifiers=shortcut.getModifiers();
     if((MouseEvent.SHIFT_DOWN_MASK&modifiers)>0){
-      buffer.append("shift ");
+      buffer.append(SHIFT);
+      buffer.append(' ');
     }
     if((MouseEvent.CTRL_DOWN_MASK&modifiers)>0){
-      buffer.append("control ");
+      buffer.append(CONTROL);
+      buffer.append(' ');
     }
     if((MouseEvent.META_DOWN_MASK&modifiers)>0){
-      buffer.append("meta ");
+      buffer.append(META);
+      buffer.append(' ');
     }
     if((MouseEvent.ALT_DOWN_MASK&modifiers)>0){
-      buffer.append("alt ");
+      buffer.append(ALT);
+      buffer.append(' ');
     }
     if((MouseEvent.ALT_GRAPH_DOWN_MASK&modifiers)>0){
-      buffer.append("altGraph ");
+      buffer.append(ALT_GRAPH);
+      buffer.append(' ');
     }
 
     // button
 
     int button=shortcut.getButton();
     if(MouseEvent.BUTTON1==button){
-      buffer.append("button1 ");
+      buffer.append(BUTTON1);
+      buffer.append(' ');
     }else if(MouseEvent.BUTTON2==button){
-      buffer.append("button2 ");
+      buffer.append(BUTTON2);
+      buffer.append(' ');
     }else if(MouseEvent.BUTTON3==button){
-      buffer.append("button3 ");
+      buffer.append(BUTTON3);
+      buffer.append(' ');
     }else{
       throw new IllegalStateException("unknown button: "+button);
     }
 
     if(shortcut.getClickCount()>1){
-      buffer.append("doubleClick");
+      buffer.append(DOUBLE_CLICK);
     }
     return buffer.toString().trim(); // trim trailing space (if any)
   }
@@ -668,10 +733,10 @@ public class KeymapImpl implements Keymap {
         continue;
       }
 
-      if (actionId.startsWith("Editor") && id.equals("$" + actionId.substring(6))) {
+      if (actionId.startsWith(EDITOR_ACTION_PREFIX) && id.equals("$" + actionId.substring(6))) {
         continue;
       }
-      if (StringUtil.startsWithChar(actionId, '$') && id.equals("Editor" + actionId.substring(1))) {
+      if (StringUtil.startsWithChar(actionId, '$') && id.equals(EDITOR_ACTION_PREFIX + actionId.substring(1))) {
         continue;
       }
 

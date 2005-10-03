@@ -2,6 +2,7 @@ package com.intellij.ide.macro;
 
 import com.intellij.ant.impl.MapDataContext;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
@@ -28,8 +29,8 @@ public final class MacrosDialog extends DialogWrapper {
   public MacrosDialog(Project project) {
     super(project, true);
     MacroManager.getInstance().cacheMacrosPreview(MapDataContext.singleData(DataConstants.PROJECT, project));
-    setTitle("Macros");
-    setOKButtonText("Insert");
+    setTitle(IdeBundle.message("title.macros"));
+    setOKButtonText(IdeBundle.message("button.insert"));
 
     myMacrosModel = new DefaultListModel();
     myMacrosList = new JList(myMacrosModel);
@@ -41,8 +42,8 @@ public final class MacrosDialog extends DialogWrapper {
   public MacrosDialog(Component parent) {
     super(parent, true);
     MacroManager.getInstance().cacheMacrosPreview(DataManager.getInstance().getDataContext(parent));
-    setTitle("Macros");
-    setOKButtonText("Insert");
+    setTitle(IdeBundle.message("title.macros"));
+    setOKButtonText(IdeBundle.message("button.insert"));
 
     myMacrosModel = new DefaultListModel();
     myMacrosList = new JList(myMacrosModel);
@@ -104,7 +105,7 @@ public final class MacrosDialog extends DialogWrapper {
     constr.gridy = 0;
     constr.anchor = GridBagConstraints.WEST;
     constr.insets = new Insets(5, 5, 0, 5);
-    panel.add(new JLabel("Macros:"), constr);
+    panel.add(new JLabel(IdeBundle.message("label.macros")), constr);
 
     // macros list
     constr = new GridBagConstraints();
@@ -124,7 +125,7 @@ public final class MacrosDialog extends DialogWrapper {
     constr.gridy = 2;
     constr.anchor = GridBagConstraints.WEST;
     constr.insets = new Insets(5, 5, 0, 5);
-    panel.add(new JLabel("Macro preview:"), constr);
+    panel.add(new JLabel(IdeBundle.message("label.macro.preview")), constr);
 
     // preview
     constr = new GridBagConstraints();

@@ -81,14 +81,12 @@ public class NameSuggestionsManager {
     myNameField.setSuggestions(nameInfo.names);
   }
 
-  public void setMnemonics(JLabel typeSelectorLabel, JLabel nameLabel) {
+  public void setLabelsFor(JLabel typeSelectorLabel, JLabel nameLabel) {
     if(myTypeSelector.getFocusableComponent() != null) {
-      typeSelectorLabel.setDisplayedMnemonic(KeyEvent.VK_T);
       typeSelectorLabel.setLabelFor(myTypeSelector.getFocusableComponent());
     }
 
     if(myNameField.getFocusableComponent() != null) {
-      nameLabel.setDisplayedMnemonic(KeyEvent.VK_N);
       nameLabel.setLabelFor(myNameField.getFocusableComponent());
     }
   }

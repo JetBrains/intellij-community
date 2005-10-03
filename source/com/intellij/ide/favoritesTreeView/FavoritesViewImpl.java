@@ -2,6 +2,7 @@ package com.intellij.ide.favoritesTreeView;
 
 import com.intellij.ide.SelectInManager;
 import com.intellij.ide.SelectInTarget;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.ContentManagerWatcher;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
@@ -16,6 +17,7 @@ import com.intellij.peer.PeerFactory;
 import com.intellij.ui.content.*;
 import com.intellij.ui.content.impl.ContentManagerImpl;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 
@@ -24,6 +26,9 @@ public class FavoritesViewImpl extends ContentManagerImpl implements ProjectComp
   public String myCurrentFavoritesList;
   private Map<String, AddToFavoritesAction> myActions = new HashMap<String, AddToFavoritesAction>();
   private Project myCurrentProject;
+  @NonNls private static final String ELEMENT_FAVORITES_LIST = "favorites_list";
+  @NonNls private static final String ATTRIBUTE_NAME = "name";
+
   public static FavoritesViewImpl getInstance(Project project) {
     return project.getComponent(FavoritesViewImpl.class);
   }
@@ -161,9 +166,9 @@ public class FavoritesViewImpl extends ContentManagerImpl implements ProjectComp
 
   public void readExternal(Element element) throws InvalidDataException {
     myName2FavoritesListSet.clear();
-    for (Iterator<Element> iterator = element.getChildren("favorites_list").iterator(); iterator.hasNext();) {
+    for (Iterator<Element> iterator = element.getChildren(ELEMENT_FAVORITES_LIST).iterator(); iterator.hasNext();) {
       Element el = iterator.next();
-      final String name = el.getAttributeValue("name");
+      final String name = el.getAttributeValue(ATTRIBUTE_NAME);
       final ContentFactory contentFactory = PeerFactory.getInstance().getContentFactory();
       final FavoritesTreeViewPanel favoritesPanel = new FavoritesTreeViewPanel(myCurrentProject, null, name);
       myName2FavoritesListSet.put(name, contentFactory.createContent(favoritesPanel, name, false));
@@ -174,9 +179,9 @@ public class FavoritesViewImpl extends ContentManagerImpl implements ProjectComp
 
   public void writeExternal(Element element) throws WriteExternalException {
     for (Iterator<String> iterator = myName2FavoritesListSet.keySet().iterator(); iterator.hasNext();) {
-      Element el = new Element("favorites_list");
+      Element el = new Element(ELEMENT_FAVORITES_LIST);
       final String key = iterator.next();
-      el.setAttribute("name", key);
+      el.setAttribute(ATTRIBUTE_NAME, key);
       FavoritesTreeViewPanel favoritesTreeViewPanel = (FavoritesTreeViewPanel)myName2FavoritesListSet.get(key).getComponent();
       favoritesTreeViewPanel.getFavoritesTreeStructure().writeExternal(el);
       element.addContent(el);
@@ -189,7 +194,11 @@ public class FavoritesViewImpl extends ContentManagerImpl implements ProjectComp
   }
 
   public String getCloseActionName() {
-    return "Delete Favorites List";
+    return IdeBundle.message("action.delete.favorites.list");
+  }
+
+  public String getCloseAllButThisActionName() {
+    return IdeBundle.message("action.delete.all.favorites.lists.but.this");
   }
 
   public boolean canCloseAllContents() {

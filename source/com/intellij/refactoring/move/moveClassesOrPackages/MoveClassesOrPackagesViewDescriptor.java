@@ -9,10 +9,9 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.PackageWrapper;
-import com.intellij.usageView.FindUsagesCommand;
-import com.intellij.usageView.UsageInfo;
-import com.intellij.usageView.UsageViewDescriptor;
-import com.intellij.usageView.UsageViewUtil;
+import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.usageView.*;
+import com.intellij.usageView.UsageViewBundle;
 
 class MoveClassesOrPackagesViewDescriptor implements UsageViewDescriptor {
   private PsiElement[] myPsiElements;
@@ -38,17 +37,17 @@ class MoveClassesOrPackagesViewDescriptor implements UsageViewDescriptor {
     myTargetPackage = newParent;
     myNewParentPackageName = MoveClassesOrPackagesUtil.getPackageName(myTargetPackage);
     if (psiElements.length == 1) {
-      myProcessedElementsHeader = UsageViewUtil.capitalize(UsageViewUtil.getType(psiElements[0]) + " to be moved to " + myNewParentPackageName);
-      myCodeReferencesText = "References in code to " + UsageViewUtil.getType(psiElements[0]) + " " + UsageViewUtil.getLongName(psiElements[0]) + " ";
+      myProcessedElementsHeader = UsageViewUtil.capitalize(RefactoringBundle.message("move.single.element.elements.header", UsageViewUtil.getType(psiElements[0]), myNewParentPackageName));
+      myCodeReferencesText = RefactoringBundle.message("references.in.code.to.0.1", UsageViewUtil.getType(psiElements[0]), UsageViewUtil.getLongName(psiElements[0]));
     }
     else {
       if (psiElements[0] instanceof PsiClass) {
-        myProcessedElementsHeader = UsageViewUtil.capitalize("Classes to be moved to " + myNewParentPackageName);
+        myProcessedElementsHeader = UsageViewUtil.capitalize(RefactoringBundle.message("move.classes.elements.header", myNewParentPackageName));
       }
       else if (psiElements[0] instanceof PsiDirectory){
-        myProcessedElementsHeader = UsageViewUtil.capitalize("Packages to be moved to " + myNewParentPackageName);
+        myProcessedElementsHeader = UsageViewUtil.capitalize(RefactoringBundle.message("move.packages.elements.header", myNewParentPackageName));
       }
-      myCodeReferencesText = "References found in code ";
+      myCodeReferencesText = RefactoringBundle.message("references.found.in.code");
     }
     myHelpID = HelpID.getMoveHelpID(psiElements[0]);
   }
@@ -96,11 +95,12 @@ class MoveClassesOrPackagesViewDescriptor implements UsageViewDescriptor {
   }
 
   public String getCodeReferencesText(int usagesCount, int filesCount) {
-    return myCodeReferencesText + UsageViewUtil.getUsageCountInfo(usagesCount, filesCount, "reference");
+    return myCodeReferencesText + UsageViewBundle.getReferencesString(usagesCount, filesCount);
   }
 
   public String getCommentReferencesText(int usagesCount, int filesCount) {
-    return "Occurrences found in comments, strings and non-java files " + UsageViewUtil.getUsageCountInfo(usagesCount, filesCount, "occurrence");
+    return RefactoringBundle.message("comments.elements.header",
+                                UsageViewBundle.getOccurencesString(usagesCount, filesCount));
   }
 
   public boolean isCancelInCommonGroup() {

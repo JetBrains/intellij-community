@@ -28,7 +28,9 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.EditorPopupHandler;
+import com.intellij.ui.UIBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -247,9 +249,10 @@ final class TextEditorComponent extends JPanel implements DataProvider{
     final StatusBarEx statusBar = (StatusBarEx)WindowManager.getInstance().getStatusBar(myProject);
     final Editor editor = getEditor();
     if (editor.isColumnMode()) {
-      statusBar.setStatus("Column");
+      statusBar.setStatus(UIBundle.message("status.bar.column.status.text"));
     } else {
-      statusBar.setStatus(editor.isInsertMode() ? "Insert" : "Overwrite");
+      statusBar.setStatus(editor.isInsertMode() ? UIBundle.message("status.bar.insert.status.text")
+                          : UIBundle.message("status.bar.overwrite.status.text"));
     }
     boolean isWritable = editor.getDocument().isWritable();
     statusBar.setStatusEnabled(isWritable);
@@ -276,6 +279,14 @@ final class TextEditorComponent extends JPanel implements DataProvider{
                                             TargetElementUtil.ELEMENT_NAME_ACCEPTED |
                                             TargetElementUtil.NEW_AS_CONSTRUCTOR |
                                             TargetElementUtil.LOOKUP_ITEM_ACCEPTED);
+    }
+    else if (DataConstants.LANGUAGE.equals(dataId)) {
+      final Editor editor = getEditor();
+      final PsiFile psiFile = (PsiFile)getData(DataConstants.PSI_FILE);
+      if (psiFile == null) {
+        return null;
+      }
+      return PsiUtil.getLanguageAtOffset(psiFile, editor.getCaretModel().getOffset());
     }
     else if (DataConstants.VIRTUAL_FILE.equals(dataId)) {
       return myFile.isValid()? myFile : null;  // fix for SCR 40329

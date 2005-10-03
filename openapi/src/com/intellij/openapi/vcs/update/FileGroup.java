@@ -22,6 +22,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -29,7 +30,6 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
-@SuppressWarnings({"HardCodedStringLiteral"})
 public class FileGroup implements JDOMExternalizable {
 
   public String myUpdateName;
@@ -39,21 +39,21 @@ public class FileGroup implements JDOMExternalizable {
   public boolean mySupportsDeletion;
   public boolean myCanBeAbsent;
   public String myId;
-  private static final String PATH = "PATH";
+  @NonNls private static final String PATH = "PATH";
 
   private final List<FileGroup> myChildren = new ArrayList<FileGroup>();
-  private static final String FILE_GROUP_ELEMENT_NAME = "FILE-GROUP";
-  public static final String MODIFIED_ID = "MODIFIED";
-  public static final String MERGED_WITH_CONFLICT_ID = "MERGED_WITH_CONFLICTS";
-  public static final String MERGED_ID = "MERGED";
-  public static final String UNKNOWN_ID = "UNKNOWN";
-  public static final String LOCALLY_ADDED_ID = "LOCALLY_ADDED";
-  public static final String LOCALLY_REMOVED_ID = "LOCALLY_REMOVED";
-  public static final String UPDATED_ID = "UPDATED";
-  public static final String REMOVED_FROM_REPOSITORY_ID = "REMOVED_FROM_REPOSITORY";
-  public static final String CREATED_ID = "CREATED";
-  public static final String RESTORED_ID = "RESTORED";
-  public static final String CHANGED_ON_SERVER_ID = "CHANGED_ON_SERVER";
+  @NonNls private static final String FILE_GROUP_ELEMENT_NAME = "FILE-GROUP";
+  @NonNls public static final String MODIFIED_ID = "MODIFIED";
+  @NonNls public static final String MERGED_WITH_CONFLICT_ID = "MERGED_WITH_CONFLICTS";
+  @NonNls public static final String MERGED_ID = "MERGED";
+  @NonNls public static final String UNKNOWN_ID = "UNKNOWN";
+  @NonNls public static final String LOCALLY_ADDED_ID = "LOCALLY_ADDED";
+  @NonNls public static final String LOCALLY_REMOVED_ID = "LOCALLY_REMOVED";
+  @NonNls public static final String UPDATED_ID = "UPDATED";
+  @NonNls public static final String REMOVED_FROM_REPOSITORY_ID = "REMOVED_FROM_REPOSITORY";
+  @NonNls public static final String CREATED_ID = "CREATED";
+  @NonNls public static final String RESTORED_ID = "RESTORED";
+  @NonNls public static final String CHANGED_ON_SERVER_ID = "CHANGED_ON_SERVER";
 
   /**
    * @param updateName - Name for "update" action
@@ -163,6 +163,7 @@ public class FileGroup implements JDOMExternalizable {
     return myUpdateName;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return myId + " " + myFiles.size() + " items";
   }

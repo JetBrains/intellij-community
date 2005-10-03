@@ -2,6 +2,7 @@ package com.intellij.compiler.ant.taskdefs;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.compiler.ant.Tag;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Eugene Zhuravlev
@@ -9,7 +10,7 @@ import com.intellij.compiler.ant.Tag;
  */
 public class Path extends Tag{
 
-  public Path(final String id) {
+  public Path(@NonNls final String id) {
     super("path", new Pair[] {pair("id", id)});
   }
 }

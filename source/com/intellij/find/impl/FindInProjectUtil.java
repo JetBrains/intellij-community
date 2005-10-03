@@ -1,10 +1,7 @@
 package com.intellij.find.impl;
 
 import com.intellij.Patches;
-import com.intellij.find.FindManager;
-import com.intellij.find.FindModel;
-import com.intellij.find.FindProgressIndicator;
-import com.intellij.find.FindResult;
+import com.intellij.find.*;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -193,8 +190,10 @@ public class FindInProjectUtil {
         if (fileLength == -1) continue; // Binary or invalid
 
         if (fileLength > SINGLE_FILE_SIZE_LIMIT) {
-          int retCode = showMessage(project, ApplicationNamesInfo.getInstance().getProductName() + " is about to scan for occurences in\n" + getPresentablePath(virtualFile) + "\n" +
-                                             "which is " + presentableSize(fileLength) + " long. Skip?", "Too Large File");
+          int retCode = showMessage(project, FindBundle.message("find.skip.large.file.prompt",
+                                                                ApplicationNamesInfo.getInstance().getProductName(),
+                                                                getPresentablePath(virtualFile), presentableSize(fileLength)),
+                                    FindBundle.message("find.skip.large.file.title"));
           if (retCode == DialogWrapper.OK_EXIT_CODE) continue;
         }
 
@@ -211,12 +210,11 @@ public class FindInProjectUtil {
 
                 if (progress != null) {
                   progress.setFraction((double)index / psiFiles.size());
-                  String text = "Searching for '" + findModel.getStringToFind() + "' in " + virtualFile.getPresentableUrl() + "...";
+                  String text = FindBundle.message("find.searching.for.string.in.file.progress",
+                                                   findModel.getStringToFind(), virtualFile.getPresentableUrl());
                   progress.setText(text);
                   int size = consumer.getCount();
-                  progress.setText2((size == 0 ? "No" : Integer.toString(size)) + " occurrence" +
-                                    (size != 1 ? "s" : "") + " found so far");
-
+                  progress.setText2(FindBundle.message("find.searching.for.string.in.file.occurrences.progress", size));
                 }
               }
             }
@@ -226,15 +224,14 @@ public class FindInProjectUtil {
         if (countBefore < count[0]) {
           totalFilesSize += fileLength;
           if (totalFilesSize > FILES_SIZE_LIMIT && !warningShown) {
-            showTooManyUsagesWaring(project, "Usages in files of total size " + presentableSize(totalFilesSize) + " found. " +
-                                             ApplicationNamesInfo.getInstance().getProductName() + " may become " +
-                                             "unresponsive or even fail with OutOfMemoryError if you continue. Continue?");
+            showTooManyUsagesWaring(project, FindBundle.message("find.excessive.total.size.prompt", presentableSize(totalFilesSize),
+                                                                ApplicationNamesInfo.getInstance().getProductName()));
             warningShown = true;
           }
         }
 
         if (count[0] > USAGES_LIMIT && !warningShown) {
-          showTooManyUsagesWaring(project, Integer.toString(count[0]) + " usages found so far. Are you sure wish to continue?");
+          showTooManyUsagesWaring(project, FindBundle.message("find.excessive.usage.count.prompt", count[0]));
           warningShown = true;
         }
       }
@@ -244,7 +241,7 @@ public class FindInProjectUtil {
     }
 
     if (progress != null) {
-      progress.setText("Search completed");
+      progress.setText(FindBundle.message("find.progress.search.completed"));
     }
 
     consumer.findUsagesCompleted();
@@ -260,7 +257,7 @@ public class FindInProjectUtil {
 
   private static String presentableSize(long bytes) {
     long megabytes = bytes / (1024 * 1024);
-    return Long.toString(megabytes) + " megabytes";
+    return FindBundle.message("find.file.size.megabytes", Long.toString(megabytes));
   }
 
   private static long getFileLength(final VirtualFile virtualFile) {
@@ -276,7 +273,7 @@ public class FindInProjectUtil {
   }
 
   private static void showTooManyUsagesWaring(final Project project, final String message) {
-    if (showMessage(project, message, "Too Many Usages") != DialogWrapper.OK_EXIT_CODE) {
+    if (showMessage(project, message, FindBundle.message("find.excessive.usages.title")) != DialogWrapper.OK_EXIT_CODE) {
       throw new ProcessCanceledException();
     }
   }
@@ -475,31 +472,31 @@ public class FindInProjectUtil {
   }
 
   public static String getTitleForScope(final FindModel findModel) {
-    StringBuffer result = new StringBuffer();
+    String result;
 
     if (findModel.isProjectScope()) {
-      result.append("Project");
+      result = FindBundle.message("find.scope.project.title");
     }
     else if (findModel.getModuleName() != null) {
-      result.append("Module ").append(findModel.getModuleName());
+      result = FindBundle.message("find.scope.module.title", findModel.getModuleName());
     }
     else {
-      result.append("Directory ").append(findModel.getDirectoryName());
+      result = FindBundle.message("find.scope.directory.title", findModel.getDirectoryName());
     }
 
     if (findModel.getFileFilter() != null) {
-      result.append(" Files with Mask ").append(findModel.getFileFilter());
+      result = FindBundle.message("find.scope.files.with.mask", result, findModel.getFileFilter());
     }
 
-    return result.toString();
+    return result;
   }
 
   public static UsageViewPresentation setupViewPresentation(final boolean toOpenInNewTab, final FindModel findModelCopy) {
     final UsageViewPresentation presentation = new UsageViewPresentation();
 
     presentation.setScopeText(getTitleForScope(findModelCopy));
-    presentation.setTabText("Occurrences of '" + findModelCopy.getStringToFind() + "'");
-    presentation.setUsagesString("occurrences of '" + findModelCopy.getStringToFind() + "'");
+    presentation.setTabText(FindBundle.message("find.usage.view.tab.text", findModelCopy.getStringToFind()));
+    presentation.setUsagesString(FindBundle.message("find.usage.view.usages.text", findModelCopy.getStringToFind()));
     presentation.setOpenInNewTab(toOpenInNewTab);
     presentation.setCodeUsages(false);
 
@@ -535,7 +532,7 @@ public class FindInProjectUtil {
 
     private ItemPresentation myItemPresentation = new ItemPresentation() {
       public String getPresentableText() {
-        return "String '" + myStringToFind + "'";
+        return FindBundle.message("find.usage.target.string.text", myStringToFind);
       }
 
       public String getLocationString() {

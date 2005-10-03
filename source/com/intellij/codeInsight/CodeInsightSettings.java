@@ -36,7 +36,7 @@ public class CodeInsightSettings implements NamedJDOMExternalizable, Cloneable, 
   }
 
   public String getPresentableName() {
-    return "CodeInsight settings";
+    return CodeInsightBundle.message("codeinsight.settings");
   }
 
   public Object clone() {

@@ -21,9 +21,11 @@ public class TransportServiceWrapper {
 
   private final Object myDelegateObject;
   private final Class myDelegateClass;
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static final String SOCKET_TRANSPORT_CLASS = SystemInfo.JAVA_VERSION.startsWith("1.4")
                                                        ? "com.sun.tools.jdi.SocketTransport"
                                                        : "com.sun.tools.jdi.SocketTransportService";
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static final String SHMEM_TRANSPORT_CLASS = SystemInfo.JAVA_VERSION.startsWith("1.4")
                                                       ? "com.sun.tools.jdi.SharedMemoryTransport"
                                                       : "com.sun.tools.jdi.SharedMemoryTransportService";
@@ -53,6 +55,7 @@ public class TransportServiceWrapper {
     try {
       // Applicable if IDEA is run on JDK 1.4.2.x only!
       // in JDK 1.5 the signature of the "attach" method has been changed to "attach(String, long, long)"
+      //noinspection HardCodedStringLiteral
       final Method method = myDelegateClass.getMethod("attach", new Class[]{String.class});
       method.setAccessible(true);
       return new ConnectionServiceWrapper(method.invoke(myDelegateObject, new Object[]{s}));
@@ -75,6 +78,7 @@ public class TransportServiceWrapper {
 
   public String startListening() throws IOException {
     try {
+      //noinspection HardCodedStringLiteral
       final Method method = myDelegateClass.getMethod("startListening", new Class[0]);
       method.setAccessible(true);
       final Object rv = method.invoke(myDelegateObject, new Object[0]);
@@ -109,6 +113,7 @@ public class TransportServiceWrapper {
       for (Class superClass = paramClass.getSuperclass(); !Object.class.equals(superClass); superClass = superClass.getSuperclass()) {
         paramClass = superClass;
       }
+      //noinspection HardCodedStringLiteral
       final Method method = myDelegateClass.getMethod("stopListening", new Class[] {paramClass});
       method.setAccessible(true);
       method.invoke(myDelegateObject, new Object[]{value});
@@ -128,6 +133,7 @@ public class TransportServiceWrapper {
     }
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public String transportId() {
     if (SOCKET_TRANSPORT_CLASS.equals(myDelegateClass.getName())) {
       return "dt_socket";

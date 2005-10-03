@@ -174,9 +174,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
 
   public String getMirrorText() {
     StringBuffer buffer = new StringBuffer();
-    buffer.append("// IntelliJ API Decompiler stub source generated from a class file\n");
-    buffer.append("// Implementation of methods is not available\n");
-    buffer.append("\n");
+    buffer.append(PsiBundle.message("psi.decompiled.text.header"));
     if (getPackageStatement() != null) {
       buffer.append(((ClsElementImpl)getPackageStatement()).getMirrorText());
     }
@@ -189,16 +187,19 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
     LOG.assertTrue(myMirror == null);
     myMirror = element;
 
-    PsiPackageStatement packageStatement = ((PsiJavaFile)SourceTreeToPsiMap.treeElementToPsi(myMirror)).getPackageStatement();
-    if (packageStatement != null) {
-        ((ClsElementImpl)getPackageStatement()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(packageStatement));
-    }
-    PsiClass[] classes = getClasses();
-    PsiClass[] mirrorClasses = ((PsiJavaFile)SourceTreeToPsiMap.treeElementToPsi(myMirror)).getClasses();
-    LOG.assertTrue(classes.length == mirrorClasses.length);
-    if (classes.length == mirrorClasses.length) {
-      for (int i = 0; i < classes.length; i++) {
-          ((ClsElementImpl)classes[i]).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirrorClasses[i]));
+    PsiElement mirrorFile = SourceTreeToPsiMap.treeElementToPsi(myMirror);
+    if (mirrorFile instanceof PsiJavaFile) {
+      PsiPackageStatement packageStatement = ((PsiJavaFile)mirrorFile).getPackageStatement();
+      if (packageStatement != null) {
+          ((ClsElementImpl)getPackageStatement()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(packageStatement));
+      }
+      PsiClass[] classes = getClasses();
+      PsiClass[] mirrorClasses = ((PsiJavaFile)mirrorFile).getClasses();
+      LOG.assertTrue(classes.length == mirrorClasses.length);
+      if (classes.length == mirrorClasses.length) {
+        for (int i = 0; i < classes.length; i++) {
+            ((ClsElementImpl)classes[i]).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirrorClasses[i]));
+        }
       }
     }
   }

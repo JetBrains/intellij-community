@@ -11,7 +11,7 @@
     <children>
       <tabbedpane id="c0822" binding="tabs">
         <constraints>
-          <xy x="0" y="25" width="581" height="76"/>
+          <xy x="0" y="25" width="581" height="73"/>
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3">
             <minimum-size width="500" height="-1"/>
             <preferred-size width="500" height="200"/>
@@ -22,7 +22,7 @@
         <children>
           <scrollpane id="6df57" binding="installedScrollPane">
             <constraints>
-              <tabbedpane title="Running"/>
+              <tabbedpane title-resource-bundle="messages/IdeBundle" title-key="tab.plugins.running"/>
             </constraints>
             <properties/>
             <border type="none"/>
@@ -30,7 +30,7 @@
           </scrollpane>
           <scrollpane id="bc54f" binding="availableScrollPane">
             <constraints>
-              <tabbedpane title="Available"/>
+              <tabbedpane title-resource-bundle="messages/IdeBundle" title-key="tab.plugins.available"/>
             </constraints>
             <properties/>
             <border type="none"/>
@@ -41,7 +41,7 @@
       <grid id="7d113" row-count="3" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="3" left="3" bottom="3" right="3"/>
         <constraints>
-          <xy x="0" y="106" width="581" height="136"/>
+          <xy x="0" y="103" width="581" height="136"/>
           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="0" fill="3"/>
         </constraints>
         <properties/>
@@ -49,27 +49,27 @@
         <children>
           <component id="c8342" class="javax.swing.JLabel">
             <constraints>
-              <xy x="3" y="6" width="88" height="14"/>
+              <xy x="3" y="6" width="92" height="14"/>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
             </constraints>
             <properties>
-              <text value="Plugin home page:"/>
+              <text resource-bundle="messages/IdeBundle" key="label.plugin.home.page"/>
             </properties>
           </component>
           <component id="533b6" class="javax.swing.JLabel" binding="myPluginUrlLabel">
             <constraints>
-              <xy x="101" y="6" width="69" height="14"/>
+              <xy x="105" y="6" width="73" height="14"/>
               <grid row="0" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="7" anchor="8" fill="0">
                 <minimum-size width="10" height="-1"/>
               </grid>
             </constraints>
             <properties>
-              <text value="(not specified)"/>
+              <text resource-bundle="messages/IdeBundle" key="plugin.status.not.specified"/>
             </properties>
           </component>
           <scrollpane id="b4e7c">
             <constraints>
-              <xy x="101" y="28" width="477" height="50"/>
+              <xy x="105" y="28" width="473" height="50"/>
               <grid row="1" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="7" anchor="8" fill="1">
                 <minimum-size width="-1" height="50"/>
                 <preferred-size width="-1" height="50"/>
@@ -93,16 +93,16 @@
           </scrollpane>
           <component id="4de96" class="javax.swing.JLabel">
             <constraints>
-              <xy x="3" y="83" width="71" height="14"/>
+              <xy x="3" y="83" width="75" height="14"/>
               <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="9" fill="0"/>
             </constraints>
             <properties>
-              <text value="Change notes:"/>
+              <text resource-bundle="messages/IdeBundle" key="editbox.plugin.change.notes"/>
             </properties>
           </component>
           <scrollpane id="59a2">
             <constraints>
-              <xy x="101" y="83" width="477" height="50"/>
+              <xy x="105" y="83" width="473" height="50"/>
               <grid row="2" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="7" anchor="8" fill="1">
                 <minimum-size width="-1" height="50"/>
                 <preferred-size width="-1" height="50"/>
@@ -124,11 +124,11 @@
           </scrollpane>
           <component id="e8c9f" class="javax.swing.JLabel">
             <constraints>
-              <xy x="3" y="28" width="57" height="14"/>
+              <xy x="3" y="28" width="61" height="14"/>
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="9" fill="0"/>
             </constraints>
             <properties>
-              <text value="Description:"/>
+              <text resource-bundle="messages/IdeBundle" key="editbox.plugin.description"/>
             </properties>
           </component>
         </children>
@@ -145,7 +145,7 @@
       </xy>
       <vspacer id="136c2">
         <constraints>
-          <xy x="285" y="356" width="11" height="20"/>
+          <xy x="285" y="355" width="11" height="20"/>
           <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="1" anchor="0" fill="2">
             <minimum-size width="-1" height="20"/>
             <preferred-size width="-1" height="20"/>
@@ -156,7 +156,7 @@
       <grid id="774ef" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="0" y="247" width="581" height="104"/>
+          <xy x="0" y="244" width="581" height="106"/>
           <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
         </constraints>
         <properties/>
@@ -165,70 +165,70 @@
           <grid id="50d9b" row-count="3" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="5" left="5" bottom="5" right="5"/>
             <constraints>
-              <xy x="0" y="0" width="561" height="104"/>
+              <xy x="0" y="0" width="581" height="106"/>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="9" fill="1"/>
             </constraints>
             <properties/>
-            <border type="none" title="Vendor"/>
+            <border type="none" title-resource-bundle="messages/IdeBundle" title-key="group.vendor"/>
             <children>
               <component id="c8f9f" class="javax.swing.JLabel">
                 <constraints>
-                  <xy x="10" y="77" width="58" height="14"/>
+                  <xy x="11" y="78" width="62" height="14"/>
                   <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
-                  <text value="Home page:"/>
+                  <text resource-bundle="messages/IdeBundle" key="label.plugin.vendor.home.page"/>
                 </properties>
               </component>
               <component id="94bc5" class="javax.swing.JLabel">
                 <constraints>
-                  <xy x="10" y="27" width="31" height="14"/>
+                  <xy x="11" y="28" width="35" height="14"/>
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
-                  <text value="Name:"/>
+                  <text resource-bundle="messages/IdeBundle" key="label.plugin.vendor.name"/>
                 </properties>
               </component>
               <component id="20d29" class="javax.swing.JLabel">
                 <constraints>
-                  <xy x="10" y="52" width="32" height="14"/>
+                  <xy x="11" y="53" width="36" height="14"/>
                   <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
-                  <text value="E-mail:"/>
+                  <text resource-bundle="messages/IdeBundle" key="label.plugin.vendor.email"/>
                 </properties>
               </component>
               <component id="ea08a" class="javax.swing.JLabel" binding="myVendorUrlLabel">
                 <constraints>
-                  <xy x="78" y="77" width="69" height="14"/>
+                  <xy x="83" y="78" width="73" height="14"/>
                   <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="8" fill="0">
                     <minimum-size width="10" height="-1"/>
                   </grid>
                 </constraints>
                 <properties>
-                  <text value="(not specified)"/>
+                  <text resource-bundle="messages/IdeBundle" key="plugin.status.not.specified"/>
                 </properties>
               </component>
               <component id="64984" class="javax.swing.JLabel" binding="myVendorEmailLabel">
                 <constraints>
-                  <xy x="78" y="52" width="69" height="14"/>
+                  <xy x="83" y="53" width="73" height="14"/>
                   <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="8" fill="0">
                     <minimum-size width="10" height="-1"/>
                   </grid>
                 </constraints>
                 <properties>
-                  <text value="(not specified)"/>
+                  <text resource-bundle="messages/IdeBundle" key="plugin.status.not.specified"/>
                 </properties>
               </component>
               <component id="271bf" class="javax.swing.JLabel" binding="myVendorLabel">
                 <constraints>
-                  <xy x="78" y="27" width="67" height="14"/>
+                  <xy x="83" y="28" width="73" height="14"/>
                   <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="8" fill="0">
                     <minimum-size width="10" height="-1"/>
                   </grid>
                 </constraints>
                 <properties>
-                  <text value="(not specfied)"/>
+                  <text resource-bundle="messages/IdeBundle" key="plugin.status.not.specified"/>
                 </properties>
               </component>
             </children>
@@ -237,11 +237,11 @@
       </grid>
       <component id="c101a" class="javax.swing.JButton" binding="myHttpProxySettingsButton">
         <constraints>
-          <xy x="0" y="376" width="144" height="24"/>
+          <xy x="0" y="375" width="147" height="25"/>
           <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
         </constraints>
         <properties>
-          <text value="HTTP Proxy Settings..."/>
+          <text resource-bundle="messages/IdeBundle" key="button.http.proxy.settings"/>
         </properties>
       </component>
     </children>

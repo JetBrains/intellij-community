@@ -11,11 +11,13 @@ import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.idea.ActionsBundle;
 import com.sun.jdi.InvalidStackFrameException;
 import com.sun.jdi.NativeMethodException;
 import com.sun.jdi.VMDisconnectedException;
@@ -39,7 +41,7 @@ public class PopFrameAction extends DebuggerAction {
           stackFrame));
     }
     catch (NativeMethodException e2){
-      Messages.showMessageDialog(project, "None of the frames through and including frame may be native", "Drop to Frame", Messages.getErrorIcon());
+      Messages.showMessageDialog(project, DebuggerBundle.message("error.native.method.exception"), ActionsBundle.actionText(DebuggerActions.POP_FRAME), Messages.getErrorIcon());
     }
     catch (InvalidStackFrameException ignored) {
     }

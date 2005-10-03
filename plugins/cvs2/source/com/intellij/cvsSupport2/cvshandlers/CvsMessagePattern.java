@@ -6,6 +6,8 @@ import com.intellij.util.PatternUtil;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * author: lesya
  */
@@ -13,13 +15,13 @@ public class CvsMessagePattern {
   private final Pattern myPattern;
   private final int myFileNameGroup;
 
-  public CvsMessagePattern(String[] groups, int fileNameGroup) {
+  public CvsMessagePattern(@NonNls String[] groups, int fileNameGroup) {
     myFileNameGroup = fileNameGroup;
     String regex = createRegex(groups);
     myPattern = Pattern.compile(regex);
   }
 
-  private String createRegex(String[] groups) {
+  private String createRegex(@NonNls String[] groups) {
     StringBuffer result = new StringBuffer();
     for (int i = 0; i < groups.length; i++) {
       String group = groups[i];
@@ -39,7 +41,7 @@ public class CvsMessagePattern {
   }
 
 
-  public CvsMessagePattern(String pattern) {
+  public CvsMessagePattern(@NonNls String pattern) {
     this(new String[]{pattern});
   }
 

@@ -6,36 +6,39 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author mike
  */
 public class ProjectRootUtil {
-  public static final String SIMPLE_ROOT = "simple";
-  public static final String COMPOSITE_ROOT = "composite";
+  @NonNls public static final String SIMPLE_ROOT = "simple";
+  @NonNls public static final String COMPOSITE_ROOT = "composite";
   /**
    * @deprecated
    */
-  public static final String JDK_ROOT = "jdk";
+  @NonNls public static final String JDK_ROOT = "jdk";
   /**
    * @deprecated
    */
-  public static final String OUTPUT_ROOT = "output";
+  @NonNls public static final String OUTPUT_ROOT = "output";
   /**
    * @deprecated
    */
-  public static final String EXCLUDED_OUTPUT = "excludedOutput";
+  @NonNls public static final String EXCLUDED_OUTPUT = "excludedOutput";
   /**
    * @deprecated
    */
-  public static final String LIBRARY_ROOT = "library";
+  @NonNls public static final String LIBRARY_ROOT = "library";
   /**
    * @deprecated
    */
-  public static final String EJB_ROOT = "ejb";
+  @NonNls public static final String EJB_ROOT = "ejb";
+  @NonNls private static final String ATTRIBUTE_TYPE = "type";
+  @NonNls private static final String ELEMENT_ROOT = "root";
 
   static ProjectRoot read(Element element) throws InvalidDataException {
-    final String type = element.getAttributeValue("type");
+    final String type = element.getAttributeValue(ATTRIBUTE_TYPE);
 
     if (type.equals(SIMPLE_ROOT)) {
       final SimpleProjectRoot root = new SimpleProjectRoot();
@@ -51,13 +54,13 @@ public class ProjectRootUtil {
   }
 
   static Element write(ProjectRoot projectRoot) throws WriteExternalException {
-    Element element = new Element("root");
+    Element element = new Element(ELEMENT_ROOT);
     if (projectRoot instanceof SimpleProjectRoot) {
-      element.setAttribute("type", SIMPLE_ROOT);
+      element.setAttribute(ATTRIBUTE_TYPE, SIMPLE_ROOT);
       ((JDOMExternalizable)projectRoot).writeExternal(element);
     }
     else if (projectRoot instanceof CompositeProjectRoot) {
-      element.setAttribute("type", COMPOSITE_ROOT);
+      element.setAttribute(ATTRIBUTE_TYPE, COMPOSITE_ROOT);
       ((CompositeProjectRoot)projectRoot).writeExternal(element);
     }
     else {
@@ -67,6 +70,7 @@ public class ProjectRootUtil {
     return element;
   }
 
+  @NonNls
   public static String typeToString(ProjectRootType type) {
     if (type == ProjectRootType.SOURCE) {
       return "sourcePath";
@@ -87,7 +91,7 @@ public class ProjectRootUtil {
     throw new IllegalArgumentException("Wrong type: " + type);
   }
 
-  public static ProjectRootType stringToType(String s) {
+  public static ProjectRootType stringToType(@NonNls String s) {
     if (s.equals("sourcePath")) {
       return ProjectRootType.SOURCE;
     }

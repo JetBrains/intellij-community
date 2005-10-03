@@ -16,6 +16,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.util.Alarm;
+import com.intellij.analysis.AnalysisScopeBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -117,7 +118,7 @@ public class UsagesPanel extends JPanel {
   }
 
   private void setToCanceled() {
-    setToComponent(createLabel("Canceled"));
+    setToComponent(createLabel(AnalysisScopeBundle.message("usage.view.canceled")));
   }
 
   private void setToComponent(final JComponent cmp) {

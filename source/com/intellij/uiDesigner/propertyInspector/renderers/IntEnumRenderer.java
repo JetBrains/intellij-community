@@ -11,6 +11,7 @@ public final class IntEnumRenderer extends LabelPropertyRenderer{
 
   public IntEnumRenderer(final IntEnumEditor.Pair[] pairs) {
     if (pairs == null) {
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("pairs cannot be null");
     }
     myPairs = pairs;
@@ -18,6 +19,7 @@ public final class IntEnumRenderer extends LabelPropertyRenderer{
 
   protected void customize(final Object value) {
     if (value == null) {
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("value cannot be null");
     }
     final Integer _int = (Integer)value;
@@ -28,6 +30,7 @@ public final class IntEnumRenderer extends LabelPropertyRenderer{
         return;
       }
     }
+    //noinspection HardCodedStringLiteral
     throw new IllegalArgumentException("unknown value: " + value);
   }
 }

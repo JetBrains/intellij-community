@@ -7,6 +7,7 @@ import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.ide.CopyPasteManagerEx;
 import com.intellij.ide.PasteProvider;
+import com.intellij.ide.IdeBundle;
 import com.intellij.j2ee.j2eeDom.web.WebModuleProperties;
 import com.intellij.j2ee.j2eeDom.web.WebRoot;
 import com.intellij.j2ee.module.view.web.WebUtil;
@@ -117,7 +118,7 @@ public class CopyReferenceAction extends AnAction {
     CopyPasteManagerEx.getInstance().setContents(new MyTransferable(fqn));
 
     final StatusBarEx statusBar = (StatusBarEx)WindowManager.getInstance().getStatusBar(project);
-    statusBar.setInfo("Reference to '"+fqn+"' has been copied.");
+    statusBar.setInfo(IdeBundle.message("message.reference.to.fqn.has.been.copied", fqn));
   }
 
   private static void insert(final String fqn, final PsiNamedElement element, final Editor editor) {
@@ -138,10 +139,10 @@ public class CopyReferenceAction extends AnAction {
           }
         });
       }
-    }, "Pasting reference", null);
+    }, IdeBundle.message("command.pasting.reference"), null);
 
     final StatusBarEx statusBar = (StatusBarEx)WindowManager.getInstance().getStatusBar(project);
-    statusBar.setInfo("Reference to '"+fqn+"' has been pasted.");
+    statusBar.setInfo(IdeBundle.message("message.reference.to.fqn.has.been.pasted", fqn));
   }
 
   private static void doInsert(String fqn,
@@ -249,6 +250,7 @@ public class CopyReferenceAction extends AnAction {
   private static final DataFlavor OUR_DATA_FLAVOR;
   static {
     try {
+      //noinspection HardCodedStringLiteral
       OUR_DATA_FLAVOR = new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType + ";class=" + MyTransferable.class.getName());
     }
     catch (ClassNotFoundException e) {

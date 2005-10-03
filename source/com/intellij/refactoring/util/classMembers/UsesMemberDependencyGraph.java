@@ -11,90 +11,77 @@ package com.intellij.refactoring.util.classMembers;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiMember;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.containers.HashMap;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 public class UsesMemberDependencyGraph implements MemberDependencyGraph {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.util.classMembers.UsesMemberDependencyGraph");
-  protected HashSet mySelectedNormal;
-  protected HashSet<PsiElement> mySelectedAbstract;
-  protected HashSet<PsiElement> myDependencies = null;
-  protected HashMap<PsiElement,HashSet<PsiElement>> myDependenciesToDependentMap = null;
-  private final PsiClass mySuperClass;
+  protected HashSet<PsiMember> mySelectedNormal;
+  protected HashSet<PsiMember> mySelectedAbstract;
+  protected HashSet<PsiMember> myDependencies = null;
+  protected HashMap<PsiMember,HashSet<PsiMember>> myDependenciesToDependentMap = null;
   private final boolean myRecursive;
   private MemberDependenciesStorage myMemberDependenciesStorage;
-  private PsiClass myClass;
 
   public UsesMemberDependencyGraph(PsiClass aClass, PsiClass superClass, boolean recursive) {
-    mySuperClass = superClass;
     myRecursive = recursive;
-    mySelectedNormal = new HashSet();
-    mySelectedAbstract = new HashSet<PsiElement>();
-    myClass = aClass;
-    myMemberDependenciesStorage = new MemberDependenciesStorage(myClass, superClass);
+    mySelectedNormal = new HashSet<PsiMember>();
+    mySelectedAbstract = new HashSet<PsiMember>();
+    myMemberDependenciesStorage = new MemberDependenciesStorage(aClass, superClass);
   }
 
 
-  public Set getDependent() {
+  public Set<? extends PsiMember> getDependent() {
     if (myDependencies == null) {
-      myDependencies = new HashSet<PsiElement>();
-      myDependenciesToDependentMap = new com.intellij.util.containers.HashMap<PsiElement, HashSet<PsiElement>>();
+      myDependencies = new HashSet<PsiMember>();
+      myDependenciesToDependentMap = new HashMap<PsiMember, HashSet<PsiMember>>();
       buildDeps(null, mySelectedNormal, myDependencies, myDependenciesToDependentMap, true);
     }
     return myDependencies;
   }
 
-  public Set getDependenciesOf(PsiElement element) {
+  public Set<? extends PsiMember> getDependenciesOf(PsiMember member) {
     final Set dependent = getDependent();
-    if(!dependent.contains(element)) return null;
-    return (Set<PsiElement>) myDependenciesToDependentMap.get(element);
+    if(!dependent.contains(member)) return null;
+    return myDependenciesToDependentMap.get(member);
   }
 
-  public String getElementTooltip(PsiElement element) {
-    final Set dependencies = getDependenciesOf(element);
+  public String getElementTooltip(PsiMember element) {
+    final Set<? extends PsiMember> dependencies = getDependenciesOf(element);
     if(dependencies == null || dependencies.size() == 0) return null;
 
     ArrayList<String> strings = new ArrayList<String>();
-    for (Iterator iterator = dependencies.iterator(); iterator.hasNext();) {
-      PsiElement dep = (PsiElement) iterator.next();
-      if(dep instanceof PsiNamedElement) {
-        final String name = ((PsiNamedElement) dep).getName();
-        if(name != null) {
-          strings.add(name);
-        }
-      }
+    for (PsiMember dep : dependencies) {
+      strings.add(dep.getName());
     }
 
     if(strings.isEmpty()) return null;
-    return "used by " + StringUtil.join(strings,", ");
+    return RefactoringBundle.message("used.by.0", StringUtil.join(strings, ", "));
   }
 
 
-  protected void buildDeps(PsiElement sourceElement, Set elements, Set<PsiElement> result, HashMap<PsiElement,HashSet<PsiElement>> relationMap, boolean recurse) {
-    for (Iterator iterator = elements.iterator(); iterator.hasNext();) {
-      PsiElement element = (PsiElement) iterator.next();
-
-      if (!result.contains(element)) {
+  protected void buildDeps(PsiMember sourceElement, Set<PsiMember> members, Set<PsiMember> result, HashMap<PsiMember,HashSet<PsiMember>> relationMap, boolean recurse) {
+    for (PsiMember member : members) {
+      if (!result.contains(member)) {
         if (LOG.isDebugEnabled()) {
-          LOG.debug(element.toString());
+          LOG.debug(member.toString());
         }
-        result.add(element);
+        result.add(member);
         if (sourceElement != null) {
-          HashSet<PsiElement> relations = relationMap.get(element);
-          if(relations == null) {
-            relations = new HashSet<PsiElement>();
-            relationMap.put(element, relations);
+          HashSet<PsiMember> relations = relationMap.get(member);
+          if (relations == null) {
+            relations = new HashSet<PsiMember>();
+            relationMap.put(member, relations);
           }
           relations.add(sourceElement);
         }
-        if (recurse && !mySelectedAbstract.contains(element)) {
-          buildDeps(element, myMemberDependenciesStorage.getMemberDependencies(element), result, relationMap, myRecursive);
+        if (recurse && !mySelectedAbstract.contains(member)) {
+          buildDeps(member, myMemberDependenciesStorage.getMemberDependencies(member), result, relationMap, myRecursive);
         }
       }
     }
@@ -104,7 +91,7 @@ public class UsesMemberDependencyGraph implements MemberDependencyGraph {
     if (ClassMembersUtil.isProperMember(memberInfo)) {
       myDependencies = null;
       myDependenciesToDependentMap = null;
-      PsiElement member = memberInfo.getMember();
+      PsiMember member = memberInfo.getMember();
       if (!memberInfo.isChecked()) {
         mySelectedNormal.remove(member);
         mySelectedAbstract.remove(member);

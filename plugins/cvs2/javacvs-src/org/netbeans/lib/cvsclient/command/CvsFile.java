@@ -82,7 +82,8 @@ final class CvsFile {
 
 	// Implemented ============================================================
 
-	public String toString() {
+	@SuppressWarnings({"HardCodedStringLiteral"})
+        public String toString() {
 		return "fileObject='" + fileObject + "', entry=" + (entry != null ? "'" + entry + "'" : null);
 	}
 }

@@ -1,30 +1,30 @@
 package com.intellij.codeInsight.javadoc;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.util.gotoByName.ChooseByNameBase;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrame;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
-import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.impl.source.jsp.JspImplUtil;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -32,9 +32,10 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Alarm;
-import com.intellij.xml.util.documentation.XmlDocumentationProvider;
 import com.intellij.xml.util.documentation.HtmlDocumentationProvider;
 import com.intellij.xml.util.documentation.XHtmlDocumentationProvider;
+import com.intellij.xml.util.documentation.XmlDocumentationProvider;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -53,6 +54,10 @@ public class JavaDocManager implements ProjectComponent {
   private Component myPreviouslyFocused = null;
   private HashMap<FileType,DocumentationProvider> documentationProviders = new HashMap<FileType, DocumentationProvider>();
   public static final Key<PsiElement> ORIGINAL_ELEMENT_KEY = Key.create("Original element");
+  public static final @NonNls String HTML_EXTENSION = ".html";
+  public static final @NonNls String PACKAGE_SUMMARY_FILE = "package-summary.html";
+  public static final @NonNls String PSI_ELEMENT_PROTOCOL = "psi_element://";
+  public static final @NonNls String DOC_ELEMENT_PROTOCOL = "doc_element://";
 
   public DocumentationProvider getProvider(FileType fileType) {
     return documentationProviders.get(fileType);
@@ -425,8 +430,8 @@ public class JavaDocManager implements ProjectComponent {
     }
     else {
       Messages.showMessageDialog(myProject,
-                                 "The documentation for this element is not found.\nPlease add all the needed paths to API docs in Project Settings.",
-                                 "No Documentation",
+                                 CodeInsightBundle.message("javadoc.documentation.not.found.message"),
+                                 CodeInsightBundle.message("javadoc.documentation.not.found.title"),
                                  Messages.getErrorIcon());
     }
   }
@@ -450,10 +455,10 @@ public class JavaDocManager implements ProjectComponent {
 
     String relPath;
     if (packageName.length() > 0) {
-      relPath = packageName.replace('.', '/') + '/' + qName.substring(packageName.length() + 1) + ".html";
+      relPath = packageName.replace('.', '/') + '/' + qName.substring(packageName.length() + 1) + HTML_EXTENSION;
     }
     else {
-      relPath = qName + ".html";
+      relPath = qName + HTML_EXTENSION;
     }
 
     final PsiFile containingFile = aClass.getContainingFile();
@@ -461,6 +466,10 @@ public class JavaDocManager implements ProjectComponent {
     final VirtualFile virtualFile = containingFile.getVirtualFile();
     if (virtualFile == null) return null;
 
+    return findUrlForVirtualFile(virtualFile, relPath);
+  }
+
+  private String findUrlForVirtualFile(final VirtualFile virtualFile, final String relPath) {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     Module module = fileIndex.getModuleForFile(virtualFile);
 
@@ -495,12 +504,12 @@ public class JavaDocManager implements ProjectComponent {
 
   private String findUrlForPackage(PsiPackage aPackage) {
     String qName = aPackage.getQualifiedName();
-    qName = qName.replace('.', File.separatorChar);
-    String[] docPaths = JavaDocUtil.getDocPaths(myProject);
-    for (String docPath : docPaths) {
-      String url = docPath + File.separator + qName + File.separatorChar + "package-summary.html";
-      File file = new File(url);
-      if (file.exists()) return /*"file:///" + */url;
+    qName = qName.replace('.', '/') +  '/' + PACKAGE_SUMMARY_FILE;
+    for(PsiDirectory directory: aPackage.getDirectories()) {
+      String url = findUrlForVirtualFile(directory.getVirtualFile(), qName);
+      if (url != null) {
+        return url;
+      }
     }
     return null;
   }
@@ -532,7 +541,7 @@ public class JavaDocManager implements ProjectComponent {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
             if (component.isEmpty()) {
-              component.setText("Fetching JavaDocs....");
+              component.setText(CodeInsightBundle.message("javadoc.fetching.progress"));
             }
           }
         });
@@ -548,7 +557,7 @@ public class JavaDocManager implements ProjectComponent {
             SwingUtilities.invokeLater(new Runnable() {
               public void run() {
                 if (text == null) {
-                  component.setText("No documentation found.", true);
+                  component.setText(CodeInsightBundle.message("no.documentation.found"), true);
                 }
                 else if (text.length() == 0) {
                   component.setText(component.getText(), true);
@@ -569,20 +578,18 @@ public class JavaDocManager implements ProjectComponent {
       return getMethodCandidateInfo(((PsiMethodCallExpression)element));
     }
     else {
-      String externalDoc;
       JavaDocExternalFilter docFilter = new JavaDocExternalFilter(myProject);
       String docURL = getExternalJavaDocUrl(element);
 
-      return
-        (
-          element instanceof PsiCompiledElement &&
-          (externalDoc = docFilter.getExternalDocInfo(docURL)) != null
-        )
-        ? externalDoc
-        : docFilter.filterInternalDocInfo(
-            new JavaDocInfoGenerator(myProject, element, getProviderFromElement(element)).generateDocInfo(),
-            docURL
-        );
+      if (element instanceof PsiCompiledElement) {
+        String externalDoc = docFilter.getExternalDocInfoForElement(docURL, element);
+        if (externalDoc != null) {
+          return externalDoc;
+        }
+      }
+      return docFilter.filterInternalDocInfo(
+        new JavaDocInfoGenerator(myProject, element, getProviderFromElement(element)).generateDocInfo(),
+        docURL);
     }
   }
 
@@ -600,7 +607,7 @@ public class JavaDocManager implements ProjectComponent {
 
     final String text = expr.getText();
     if (candidates.length > 0) {
-      final StringBuffer sb = new StringBuffer();
+      final @NonNls StringBuffer sb = new StringBuffer();
 
       for (final CandidateInfo candidate : candidates) {
         final PsiElement element = candidate.getElement();
@@ -618,18 +625,17 @@ public class JavaDocManager implements ProjectComponent {
         sb.append("</a><br>");
       }
 
-      return "<html>Candidates for method call <b>" + text + "</b> are:<br><br>" + sb + "</html>";
+      return CodeInsightBundle.message("javadoc.candiates", text, sb);
     }
 
-    return "<html>No candidates found for method call <b>" + text + "</b>.</html>";
+    return CodeInsightBundle.message("javadoc.candidates.not.found", text);
   }
 
   void navigateByLink(final JavaDocInfoComponent component, String url) {
     component.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
     final PsiManager manager = PsiManager.getInstance(myProject);
-    String prefix = "psi_element://";
-    if (url.startsWith(prefix)) {
-      final String refText = url.substring(prefix.length());
+    if (url.startsWith(PSI_ELEMENT_PROTOCOL)) {
+      final String refText = url.substring(PSI_ELEMENT_PROTOCOL.length());
       final PsiElement targetElement = JavaDocUtil.findReferenceTarget(manager, refText, component.getElement());
       if (targetElement != null) {
         fetchDocInfo(getDefaultProvider(targetElement), component);
@@ -641,9 +647,8 @@ public class JavaDocManager implements ProjectComponent {
       fetchDocInfo
         (new JavaDocProvider() {
           String getElementLocator(String url) {
-            String prefix = "doc_element://";
-            if (url.startsWith(prefix)) {
-              return url.substring(prefix.length());
+            if (url.startsWith(DOC_ELEMENT_PROTOCOL)) {
+              return url.substring(DOC_ELEMENT_PROTOCOL.length());
             }
             return null;
           }

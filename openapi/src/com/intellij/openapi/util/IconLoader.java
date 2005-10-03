@@ -48,7 +48,7 @@ public final class IconLoader {
    */
   private static final JComponent ourFakeComponent=new JLabel();
   private static final ImageIcon EMPTY_ICON = new ImageIcon(new BufferedImage(1, 1, BufferedImage.TYPE_3BYTE_BGR)){
-    public String toString() {
+    @NonNls public String toString() {
       return "Empty icon " + super.toString();
     }
   };
@@ -79,7 +79,7 @@ public final class IconLoader {
   }
 
 
-  public static Icon findIcon(final String path) {
+  public static Icon findIcon(@NonNls final String path) {
     int stackFrameCount = 2;
     Class callerClass = Reflection.getCallerClass(stackFrameCount);
     while (callerClass != null && callerClass.getClassLoader() == null) { // looks like a system class

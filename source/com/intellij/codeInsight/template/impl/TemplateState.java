@@ -4,6 +4,8 @@ import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.completion.DefaultCharFilter;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.template.*;
+import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandAdapter;
 import com.intellij.openapi.command.CommandEvent;
@@ -27,6 +29,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.IntArrayList;
+import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
 import java.util.*;
@@ -35,7 +38,7 @@ import java.util.List;
 /**
  *
  */
-public class TemplateState {
+public class TemplateState implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.template.impl.TemplateState");
   private Project myProject;
   private Editor myEditor;
@@ -60,6 +63,9 @@ public class TemplateState {
   private boolean myTemplateIndented = false;
   private CodeStyleManager myCodeStyleManager;
   private Document myDocument;
+
+  private static final String UP_ACTION = ActionsBundle.actionText("EditorUp");
+  private static final String DOWN_ACTION = ActionsBundle.actionText("EditorDown");
 
   public TemplateState(Project project, final Editor editor) {
     myProject = project;
@@ -88,7 +94,7 @@ public class TemplateState {
     myCommandListener = new CommandAdapter() {
       public void beforeCommandFinished(CommandEvent event) {
         //This is a hack to deal with closing lookup, TODO: remove redundant  string on update
-        if (!"Up".equals(event.getCommandName()) && !"Down".equals(event.getCommandName())) {
+        if (!UP_ACTION.equals(event.getCommandName()) && !DOWN_ACTION.equals(event.getCommandName())) {
           afterChangedUpdate();
         }
       }
@@ -772,7 +778,7 @@ public class TemplateState {
       for (int j = 0; j < myTemplate.getVariableCount(); j++) {
         if (myTemplate.getVariableNameAt(j).equals(name)) {
           Expression e = myTemplate.getExpressionAt(j);
-          String marker = "a";
+          @NonNls String marker = "a";
           if (e instanceof MacroCallNode) {
             marker = ((MacroCallNode)e).getMacro().getDefaultValue();
           }
@@ -797,7 +803,7 @@ public class TemplateState {
       for (int j = 0; j < myTemplate.getVariableCount(); j++) {
         if (myTemplate.getVariableNameAt(j).equals(name)) {
           Expression e = myTemplate.getExpressionAt(j);
-          String marker = "a"; //was default
+          @NonNls String marker = "a"; //was default
           if (e instanceof MacroCallNode) {
             marker = ((MacroCallNode)e).getMacro().getDefaultValue();
           }

@@ -6,6 +6,7 @@ import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 
@@ -13,6 +14,8 @@ import java.util.*;
  * @author mike
  */
 public class ExceptionUtil {
+  private static final @NonNls String CLONE_METHOD_NAME = "clone";
+
   public static PsiClassType[] getThrownExceptions(PsiElement[] elements) {
     List<PsiClassType> array = new ArrayList<PsiClassType>();
     for (PsiElement element : elements) {
@@ -287,9 +290,9 @@ public class ExceptionUtil {
 
 
   private static PsiClassType[] getUnhandledExceptions(PsiMethod method,
-                                                   PsiElement element,
-                                                   PsiElement topElement,
-                                                   PsiSubstitutor substitutor) {
+                                                       PsiElement element,
+                                                       PsiElement topElement,
+                                                       PsiSubstitutor substitutor) {
     if (method == null || isArrayClone(method, element)) {
       return PsiClassType.EMPTY_ARRAY;
     }
@@ -321,7 +324,7 @@ public class ExceptionUtil {
 
   private static boolean isArrayClone(PsiMethod method, PsiElement element) {
     if (!(element instanceof PsiMethodCallExpression)) return false;
-    if (!method.getName().equals("clone")) return false;
+    if (!method.getName().equals(CLONE_METHOD_NAME)) return false;
     PsiClass containingClass = method.getContainingClass();
     if (containingClass == null || !"java.lang.Object".equals(containingClass.getQualifiedName())) {
       return false;

@@ -22,10 +22,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.refactoring.RefactoringBundle;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.text.MessageFormat;
 
 /**
  * @author dsl
@@ -42,7 +44,8 @@ public class DuplicatesImpl {
       final LogicalPosition logicalPosition = editor.offsetToLogicalPosition(textRange.getStartOffset());
       expandAllRegionsCoveringRange(project, editor, textRange);
       editor.getScrollingModel().scrollTo(logicalPosition, ScrollType.MAKE_VISIBLE);
-      final int matchAnswer = Messages.showYesNoCancelDialog(project, "Replace this code fragment?", "Process Duplicates", Messages.getQuestionIcon());
+      final int matchAnswer = Messages.showYesNoCancelDialog(project, RefactoringBundle.message("replace.this.code.fragment"),
+                                                             RefactoringBundle.message("process.duplicates.title"), Messages.getQuestionIcon());
       HighlightManager.getInstance(project).removeSegmentHighlighter(editor, highlighters.get(0));
       if (matchAnswer == 0) {
         CommandProcessor.getInstance().executeCommand(
@@ -61,7 +64,7 @@ public class DuplicatesImpl {
                   }
                 },
             commandName,
-                null
+            null
         );
 
       }
@@ -99,16 +102,16 @@ public class DuplicatesImpl {
     EditorColorsManager colorsManager = EditorColorsManager.getInstance();
     TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
     HighlightManager.getInstance(project).addRangeHighlight(editor, match.getTextRange().getStartOffset(), match.getTextRange().getEndOffset(),
-                                       attributes, true, highlighters);
+                                                            attributes, true, highlighters);
   }
 
   public static void processDuplicates(final MatchProvider provider, final Project project, Editor editor, final String commandName) {
     boolean hasDuplicates = provider.hasDuplicates();
     if (hasDuplicates) {
-      final int answer = Messages.showYesNoDialog(project, ApplicationNamesInfo.getInstance().getProductName() + " has detected " + provider.getDuplicates().size()
-                                                           + " code fragments in this file that can be replaced with "
-                                                  + "a call to extracted method. Would you like to review and replace them?",
-                                         "Process Duplicates", Messages.getQuestionIcon());
+      final int answer = Messages.showYesNoDialog(project,
+        RefactoringBundle.message("0.has.detected.1.code.fragments.in.this.file.that.can.be.replaced.with.a.call.to.extracted.method",
+        ApplicationNamesInfo.getInstance().getProductName(), provider.getDuplicates().size()),
+        RefactoringBundle.message("process.duplicates.title"), Messages.getQuestionIcon());
       if (answer == 0) {
         invoke(project, editor, commandName, provider);
       }

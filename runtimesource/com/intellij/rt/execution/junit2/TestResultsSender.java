@@ -53,6 +53,7 @@ public class TestResultsSender implements TestListener, TestSkippingListener, Po
   private void stopMeter(Test test) {
     if (test != myCurrentTest) {
       myCurrentTestMeter = new TestMeter();
+      //noinspection HardCodedStringLiteral
       System.err.println("Wrong test finished. Last started: " + myCurrentTest + " stopped: " + test);
     }
     myCurrentTestMeter.stop();

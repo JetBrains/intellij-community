@@ -7,6 +7,7 @@ package com.intellij.debugger.ui.breakpoints.actions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.ide.IdeBundle;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -19,13 +20,12 @@ public class ViewSourceAction extends BreakpointPanelAction {
   private final Project myProject;
 
   public ViewSourceAction(final Project project) {
-    super("View Source");
+    super(IdeBundle.message("button.view.source"));
     myProject = project;
   }
 
   public void setButton(AbstractButton button) {
     super.setButton(button);
-    getButton().setMnemonic('S');
   }
 
   public void actionPerformed(ActionEvent e) {

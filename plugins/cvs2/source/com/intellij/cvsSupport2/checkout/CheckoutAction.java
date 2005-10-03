@@ -22,7 +22,7 @@ public class CheckoutAction extends AbstractAction {
   }
 
   protected String getTitle(VcsContext context) {
-    return "Check Out Project";
+    return com.intellij.CvsBundle.message("operation.name.check.out.project");
   }
 
   protected CvsHandler getCvsHandler(CvsContext context) {

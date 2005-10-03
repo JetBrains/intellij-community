@@ -7,13 +7,5 @@ package com.intellij.diagnostic;
 
 public class ReportMessages {
 
-  public static final boolean isEAP = true;
-  public static final String ERROR_REPORT = "Error Report";
-
-  public static String getReportAddress() {
-    if (isEAP) {
-      return "Please submit bug report to http://www.intellij.net/tracker/idea/browse";
-    }
-    return "For assistance, contact support@intellij.com";
-  }
+  public static final String ERROR_REPORT = DiagnosticBundle.message("error.report.title");
 }

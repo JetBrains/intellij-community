@@ -61,7 +61,7 @@ public class UpdateOptionsPanel {
     myKeywordSubstitutionPanel.add(myChangeKeywordSubstitutionPanel.getPanel(), BorderLayout.CENTER);
     myDateOrRevisionOrTagSettings = new DateOrRevisionOrTagSettings(new TagsProviderOnVirtualFiles(files),
                                                                     project, false);
-    myDateOrRevisionOrTagSettings.setHeadCaption("Default");
+    myDateOrRevisionOrTagSettings.setHeadCaption(com.intellij.CvsBundle.message("label.default.update.branch"));
     myDateOrRevisionPanel.setLayout(new BorderLayout());
     myDateOrRevisionPanel.add(myDateOrRevisionOrTagSettings.getPanel(), BorderLayout.CENTER);
 
@@ -129,8 +129,8 @@ public class UpdateOptionsPanel {
     configuration.CLEAN_COPY = false;
     if (myCleanCopy.isSelected()) {
       if (Messages.showYesNoDialog(
-        "'Clean copy' option was enabled and your changes will be replaced. Are you sure you want to perform update with this option?",
-        "Clean Copy Confirmation", Messages.getWarningIcon()) == DialogWrapper.OK_EXIT_CODE) {
+        com.intellij.CvsBundle.message("confirmation.clean.copy"),
+        com.intellij.CvsBundle.message("confirmation.title.clean.copy"), Messages.getWarningIcon()) == DialogWrapper.OK_EXIT_CODE) {
         configuration.CLEAN_COPY = true;
       }
     }

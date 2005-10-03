@@ -20,7 +20,6 @@ import com.intellij.psi.PsiFile;
 
 public class RunToCursorAction extends AnAction {
   public RunToCursorAction() {
-    super("Run to Cursor");
   }
 
   public void actionPerformed(AnActionEvent e) {

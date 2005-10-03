@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.wm.WindowManager;
 import gnu.trove.TObjectIntHashMap;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
 import java.util.HashMap;
@@ -37,12 +38,15 @@ public class DimensionService implements JDOMExternalizable, ApplicationComponen
   private final Map<String,Point> myKey2Location;
   private final Map<String,Dimension> myKey2Size;
   private final TObjectIntHashMap<String> myKey2ExtendedState;
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private static final String EXTENDED_STATE = "extendedState";
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private static final String KEY = "key";
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private static final String STATE = "state";
+  @NonNls private static final String EXTENDED_STATE = "extendedState";
+  @NonNls private static final String KEY = "key";
+  @NonNls private static final String STATE = "state";
+  @NonNls private static final String ELEMENT_LOCATION = "location";
+  @NonNls private static final String ELEMENT_SIZE = "size";
+  @NonNls private static final String ATTRIBUTE_X = "x";
+  @NonNls private static final String ATTRIBUTE_Y = "y";
+  @NonNls private static final String ATTRIBUTE_WIDTH = "width";
+  @NonNls private static final String ATTRIBUTE_HEIGHT = "height";
 
   public static DimensionService getInstance() {
     return ApplicationManager.getApplication().getComponent(DimensionService.class);
@@ -105,7 +109,7 @@ public class DimensionService implements JDOMExternalizable, ApplicationComponen
    * <code>null</code> if there is no stored value under the <code>key</code>.
    * @exception java.lang.IllegalArgumentException if <code>key</code> is <code>null</code>.
    */
-  public synchronized Dimension getSize(String key) {
+  public synchronized Dimension getSize(@NonNls String key) {
     if(key==null){
       throw new IllegalArgumentException("key cannot be null");
     }
@@ -122,7 +126,7 @@ public class DimensionService implements JDOMExternalizable, ApplicationComponen
    * <code>null</code> then the value stored under <code>key</code> will be removed.
    * @exception java.lang.IllegalArgumentException if <code>key</code> is <code>null</code>.
    */
-  public synchronized void setSize(String key, Dimension size){
+  public synchronized void setSize(@NonNls String key, Dimension size){
     if(key==null){
       throw new IllegalArgumentException("key cannot be null");
     }
@@ -133,31 +137,32 @@ public class DimensionService implements JDOMExternalizable, ApplicationComponen
     }
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public synchronized void readExternal(Element element) throws InvalidDataException {
     for (Iterator i = element.getChildren().iterator(); i.hasNext();) {
       Element e = (Element)i.next();
-      if("location".equals(e.getName())){
+      if(ELEMENT_LOCATION.equals(e.getName())){
         try{
           myKey2Location.put(
             e.getAttributeValue(KEY),
             new Point(
-              Integer.parseInt(e.getAttributeValue("x")),
-              Integer.parseInt(e.getAttributeValue("y"))
+              Integer.parseInt(e.getAttributeValue(ATTRIBUTE_X)),
+              Integer.parseInt(e.getAttributeValue(ATTRIBUTE_Y))
             )
           );
         }catch (NumberFormatException ignored){}
-      }else if("size".equals(e.getName())){
+      }
+      else if(ELEMENT_SIZE.equals(e.getName())){
         try{
           myKey2Size.put(
             e.getAttributeValue(KEY),
             new Dimension(
-              Integer.parseInt(e.getAttributeValue("width")),
-              Integer.parseInt(e.getAttributeValue("height"))
+              Integer.parseInt(e.getAttributeValue(ATTRIBUTE_WIDTH)),
+              Integer.parseInt(e.getAttributeValue(ATTRIBUTE_HEIGHT))
             )
           );
         }catch (NumberFormatException ignored){}
-      }else if(EXTENDED_STATE.equals(e.getName())) {
+      }
+      else if(EXTENDED_STATE.equals(e.getName())) {
         try {
           myKey2ExtendedState.put(e.getAttributeValue(KEY), Integer.parseInt(e.getAttributeValue(STATE)));
         } catch(NumberFormatException ignored){}
@@ -165,17 +170,16 @@ public class DimensionService implements JDOMExternalizable, ApplicationComponen
     }
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public synchronized void writeExternal(Element element) throws WriteExternalException {
     // Save locations
     for(Iterator<String> i=myKey2Location.keySet().iterator();i.hasNext();){
       String key=i.next();
       Point point=myKey2Location.get(key);
       LOG.assertTrue(point!=null);
-      Element e=new Element("location");
+      Element e=new Element(ELEMENT_LOCATION);
       e.setAttribute(KEY,key);
-      e.setAttribute("x", String.valueOf(point.x));
-      e.setAttribute("y", String.valueOf(point.y));
+      e.setAttribute(ATTRIBUTE_X, String.valueOf(point.x));
+      e.setAttribute(ATTRIBUTE_Y, String.valueOf(point.y));
       element.addContent(e);
     }
     // Save sizes
@@ -183,10 +187,10 @@ public class DimensionService implements JDOMExternalizable, ApplicationComponen
       String key = i.next();
       Dimension size = myKey2Size.get(key);
       LOG.assertTrue(size!=null);
-      Element e = new Element("size");
+      Element e = new Element(ELEMENT_SIZE);
       e.setAttribute(KEY,key);
-      e.setAttribute("width", String.valueOf(size.width));
-      e.setAttribute("height", String.valueOf(size.height));
+      e.setAttribute(ATTRIBUTE_WIDTH, String.valueOf(size.width));
+      e.setAttribute(ATTRIBUTE_HEIGHT, String.valueOf(size.height));
       element.addContent(e);
     }
     // Save extended states

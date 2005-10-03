@@ -13,16 +13,17 @@ import com.intellij.psi.filters.position.*;
 import com.intellij.psi.filters.types.TypeCodeFragmentIsVoidEnabledFilter;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.jsp.JspElementType;
+import org.jetbrains.annotations.NonNls;
 
 public class JavaCompletionData extends CompletionData{
 
-  protected static final String[] MODIFIERS_LIST = {
+  protected static final @NonNls String[] MODIFIERS_LIST = {
     "public", "protected", "private",
     "static", "final", "native",
     "abstract", "synchronized", "volatile", "transient"
   };
 
-  private static final String[] ourBlockFinalizers = {"{", "}", ";", ":", "else"};
+  private static final @NonNls String[] ourBlockFinalizers = {"{", "}", ";", ":", "else"};
 
   public JavaCompletionData(){
     declareCompletionSpaces();
@@ -270,7 +271,7 @@ public class JavaCompletionData extends CompletionData{
     {
 // parameters list completion
       final CompletionVariant variant = new CompletionVariant(
-        new LeftNeighbour(new OrFilter(new TextFilter(new String[]{"(", ",", "final"}),
+        new LeftNeighbour(new OrFilter(new TextFilter(new String[]{"(", ",", PsiKeyword.FINAL}),
                                        new SuperParentFilter(new ClassFilter(PsiAnnotation.class)))));
       variant.includeScopeClass(PsiParameterList.class, true);
       addPrimitiveTypes(variant);
@@ -317,8 +318,7 @@ public class JavaCompletionData extends CompletionData{
 
     {
 // completion for declarations
-      final CompletionVariant variant = new CompletionVariant(PsiMethod.class, new OrFilter(END_OF_BLOCK, new LeftNeighbour(new TextFilter("final"))));
-      variant.excludeScopeClass(PsiTypeCodeFragment.class);
+      final CompletionVariant variant = new CompletionVariant(PsiMethod.class, new OrFilter(END_OF_BLOCK, new LeftNeighbour(new TextFilter(PsiKeyword.FINAL))));
       addPrimitiveTypes(variant);
       variant.addCompletion(PsiKeyword.CLASS);
       this.registerVariant(variant);
@@ -339,7 +339,7 @@ public class JavaCompletionData extends CompletionData{
 // instanceof keyword
       final ElementFilter position = new LeftNeighbour(new OrFilter(new ElementFilter[]{
         new ReferenceOnFilter(new ClassFilter(PsiVariable.class)),
-        new TextFilter("this"),
+        new TextFilter(PsiKeyword.THIS),
         new AndFilter(new TextFilter(")"), new ParentElementFilter(new AndFilter(
           new ClassFilter(PsiTypeCastExpression.class, false),
           new OrFilter(
@@ -389,7 +389,7 @@ public class JavaCompletionData extends CompletionData{
 
     {
 // Keyword completion in returns
-      final CompletionVariant variant = new CompletionVariant(PsiMethod.class, new LeftNeighbour(new TextFilter("return")));
+      final CompletionVariant variant = new CompletionVariant(PsiMethod.class, new LeftNeighbour(new TextFilter(PsiKeyword.RETURN)));
       variant.addCompletion(PsiKeyword.THIS, TailType.NONE);
       variant.addCompletion(PsiKeyword.SUPER, TailType.NONE);
       this.registerVariant(variant);
@@ -401,7 +401,7 @@ public class JavaCompletionData extends CompletionData{
       final ElementFilter position = new LeftNeighbour(new AndFilter(
         new TextFilter("}"),
         new ParentElementFilter(new AndFilter(
-          new LeftNeighbour(new TextFilter("try")),
+          new LeftNeighbour(new TextFilter(PsiKeyword.TRY)),
           new ParentElementFilter(new ClassFilter(PsiTryStatement.class))))));
 
       final CompletionVariant variant = new CompletionVariant(position);
@@ -417,7 +417,7 @@ public class JavaCompletionData extends CompletionData{
       final ElementFilter position = new LeftNeighbour(new AndFilter(
         new TextFilter("}"),
         new ParentElementFilter(new AndFilter(
-          new LeftNeighbour(new NotFilter(new TextFilter("try"))),
+          new LeftNeighbour(new NotFilter(new TextFilter(PsiKeyword.TRY))),
           new OrFilter(
             new ParentElementFilter(new ClassFilter(PsiTryStatement.class)),
             new ParentElementFilter(new ClassFilter(PsiCatchSection.class)))
@@ -533,7 +533,7 @@ public class JavaCompletionData extends CompletionData{
     {
 // primitive arrays after new
       final CompletionVariant variant = new CompletionVariant(PsiExpression.class, new LeftNeighbour(
-        new AndFilter(new TextFilter("new"), new LeftNeighbour(new NotFilter(new TextFilter(".", "throw")))))
+        new AndFilter(new TextFilter(PsiKeyword.NEW), new LeftNeighbour(new NotFilter(new TextFilter(".", PsiKeyword.THROW)))))
       );
       variant.includeScopeClass(PsiNewExpression.class, true);
       addPrimitiveTypes(variant);
@@ -543,7 +543,7 @@ public class JavaCompletionData extends CompletionData{
 
     {
 // after new
-      final CompletionVariant variant = new CompletionVariant(new LeftNeighbour(new TextFilter("new")));
+      final CompletionVariant variant = new CompletionVariant(new LeftNeighbour(new TextFilter(PsiKeyword.NEW)));
       variant.includeScopeClass(PsiNewExpression.class, true);
       variant.addCompletionFilterOnElement(new ClassFilter(PsiClass.class));
 
@@ -574,7 +574,7 @@ public class JavaCompletionData extends CompletionData{
     {
       // null completion
       final CompletionVariant variant = new CompletionVariant(new NotFilter(new LeftNeighbour(new TextFilter("."))));
-      variant.addCompletion("null",TailType.NONE);
+      variant.addCompletion(PsiKeyword.NULL,TailType.NONE);
       variant.includeScopeClass(PsiExpressionList.class);
       this.registerVariant(variant);
     }

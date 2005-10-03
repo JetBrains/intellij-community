@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.peer.PeerFactory;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
@@ -41,9 +42,9 @@ public class ColorAndFontOptions extends BaseConfigurable implements Application
   private ColorAndFontPanel myPanel;
   private HashMap<String,MyColorScheme> mySchemes;
   private MyColorScheme mySelectedScheme;
-  public static final String DIFF_GROUP = "Diff";
-  public static final String FILE_STATUS_GROUP = "File Status";
-  public static final String SCOPES_GROUP = "Scope Based";
+  public static final String DIFF_GROUP = ApplicationBundle.message("title.diff");
+  public static final String FILE_STATUS_GROUP = ApplicationBundle.message("title.file.status");
+  public static final String SCOPES_GROUP = ApplicationBundle.message("title.scope.based");
 
   public void disposeComponent() {
   }
@@ -121,6 +122,7 @@ public class ColorAndFontOptions extends BaseConfigurable implements Application
 
   public void removeScheme(String name) {
     if (mySelectedScheme.getName().equals(name)) {
+      //noinspection HardCodedStringLiteral
       myPanel.changeToScheme(selectScheme("Default"));
     }
 
@@ -311,7 +313,7 @@ public class ColorAndFontOptions extends BaseConfigurable implements Application
   }
 
   public String getDisplayName() {
-    return "Colors & Fonts";
+    return ApplicationBundle.message("title.colors.and.fonts");
   }
 
   public Icon getIcon() {

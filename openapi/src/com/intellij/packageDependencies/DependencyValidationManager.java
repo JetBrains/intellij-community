@@ -19,6 +19,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * User: anna
@@ -33,7 +34,7 @@ public abstract class DependencyValidationManager extends NamedScopesHolder impl
 
   public abstract DependencyRule getViolatorDependencyRule(PsiFile from, PsiFile to);
 
-  public abstract DependencyRule[] getViolatorDependencyRules(PsiFile from, PsiFile to);
+  public abstract @NotNull DependencyRule[] getViolatorDependencyRules(PsiFile from, PsiFile to);
 
   public abstract DependencyRule[] getAllRules();
 

@@ -4,6 +4,7 @@ import com.intellij.codeInsight.daemon.QuickFixProvider;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.j2ee.j2eeDom.web.WebModuleProperties;
 import com.intellij.j2ee.module.view.web.WebUtil;
+import com.intellij.codeInsight.daemon.quickFix.FileReferenceQuickFixProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -154,7 +155,7 @@ public class FileReference implements PsiPolyVariantReference, QuickFixProvider 
     return myIndex > 0 ? myFileReferenceSet.getReference(myIndex - 1) : null;
   }
 
-  ReferenceType getType(){
+  public ReferenceType getType(){
     return myFileReferenceSet.getType(myIndex);
   }
 

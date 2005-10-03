@@ -6,10 +6,13 @@ package com.intellij.refactoring.safeDelete;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.refactoring.RefactoringBundle;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+
+import org.jetbrains.annotations.NonNls;
 
 public class UnsafeUsagesDialog extends DialogWrapper {
   private JEditorPane myMessagePane;
@@ -19,8 +22,8 @@ public class UnsafeUsagesDialog extends DialogWrapper {
   public UnsafeUsagesDialog(String[] conflictDescriptions, Project project) {
     super(project, true);
     myConflictDescriptions = conflictDescriptions;
-    setTitle("Usages Detected");
-    setOKButtonText("Ignore");
+    setTitle(RefactoringBundle.message("usages.detected"));
+    setOKButtonText(RefactoringBundle.message("ignore.button"));
     getOKAction().putValue(Action.MNEMONIC_KEY, new Integer('I'));
     init();
   }
@@ -31,17 +34,18 @@ public class UnsafeUsagesDialog extends DialogWrapper {
 
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new BorderLayout());
-    myMessagePane = new JEditorPane("text/html", "");
+    @NonNls final String contentType = "text/html";
+    myMessagePane = new JEditorPane(contentType, "");
     myMessagePane.setEditable(false);
     JScrollPane scrollPane = new JScrollPane(myMessagePane);
     scrollPane.setPreferredSize(new Dimension(500, 400));
-    panel.add(new JLabel("The following problems were found:"), BorderLayout.NORTH);
+    panel.add(new JLabel(RefactoringBundle.message("the.following.problems.were.found")), BorderLayout.NORTH);
     panel.add(scrollPane, BorderLayout.CENTER);
 
-    StringBuffer buf = new StringBuffer();
-    for (int idx = 0; idx < myConflictDescriptions.length; idx++) {
-      String description = myConflictDescriptions[idx];
-      buf.append(description).append("<br><br>");
+    @NonNls StringBuffer buf = new StringBuffer();
+    for (String description : myConflictDescriptions) {
+      buf.append(description);
+      buf.append("<br><br>");
     }
     myMessagePane.setText(buf.toString());
     return panel;
@@ -62,7 +66,7 @@ public class UnsafeUsagesDialog extends DialogWrapper {
 
   private class CancelAction extends AbstractAction {
     public CancelAction() {
-      super("Cancel");
+      super(RefactoringBundle.message("cancel.button"));
     }
 
     public void actionPerformed(ActionEvent e) {
@@ -72,7 +76,7 @@ public class UnsafeUsagesDialog extends DialogWrapper {
 
   private class ViewUsagesAction extends AbstractAction {
     public ViewUsagesAction() {
-      super("View usages");
+      super(RefactoringBundle.message("view.usages"));
       putValue(Action.MNEMONIC_KEY, new Integer('V'));
       putValue(DialogWrapper.DEFAULT_ACTION, Boolean.TRUE);
     }

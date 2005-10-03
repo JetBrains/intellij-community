@@ -8,6 +8,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -18,6 +19,7 @@ import java.util.List;
  */
 public class DefaultColorSchemesManager implements ApplicationComponent, JDOMExternalizable {
   private ArrayList mySchemes;
+  @NonNls private static final String SCHEME_ELEMENT = "scheme";
 
   public String getComponentName() {
     return "DefaultColorSchemesManager";
@@ -37,7 +39,7 @@ public class DefaultColorSchemesManager implements ApplicationComponent, JDOMExt
   }
 
   public void readExternal(Element element) throws InvalidDataException {
-    List schemes = element.getChildren("scheme");
+    List schemes = element.getChildren(SCHEME_ELEMENT);
     for (Iterator iterator = schemes.iterator(); iterator.hasNext();) {
       Element schemeElement = (Element) iterator.next();
       DefaultColorsScheme newScheme = new DefaultColorsScheme(this);

@@ -8,6 +8,7 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -21,18 +22,19 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 
 public class ImplementAbstractClassAction implements IntentionAction {
-  private static final Logger LOG = Logger.getInstance(
-    "#com.intellij.codeInsight.intention.impl.ImplementAbstractClassAction");
-  private String myText = "Implement Abstract Class";
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.ImplementAbstractClassAction");
+  private String myText = CodeInsightBundle.message("intention.implement.abstract.class.default.text");
+  private static final @NonNls String IMPL_SUFFIX = "Impl";
 
   public String getText() {
     return myText;
   }
 
   public String getFamilyName() {
-    return "Implement Abstract Class or Interface";
+    return CodeInsightBundle.message("intention.implement.abstract.class.family");
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
@@ -46,7 +48,9 @@ public class ImplementAbstractClassAction implements IntentionAction {
     if (element.getTextOffset() >= lBrace.getTextOffset()) return false;
     if (!psiClass.isInterface() && !psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) return false;
 
-    myText = "Implement " + (psiClass.isInterface() ? "Interface" : "Abstract Class");
+    myText = psiClass.isInterface() ?
+             CodeInsightBundle.message("intention.implement.abstract.class.interface.text") :
+             CodeInsightBundle.message("intention.implement.abstract.class.default.text");
     return true;
   }
 
@@ -61,7 +65,7 @@ public class ImplementAbstractClassAction implements IntentionAction {
     final CreateClassDialog dialog = new CreateClassDialog(
       project,
       myText,
-      psiClass.getName() + "Impl",
+      psiClass.getName() + IMPL_SUFFIX,
       aPackage != null ? aPackage.getQualifiedName() : "",
       false, true);
     dialog.show();
@@ -81,8 +85,9 @@ public class ImplementAbstractClassAction implements IntentionAction {
         catch (IncorrectOperationException e) {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
                   public void run() {
-                    Messages.showErrorDialog(project, "Cannot Create Class '" + dialog.getClassName() + "'",
-                                             "Failed to Create Class");
+                    Messages.showErrorDialog(project,
+                                             CodeInsightBundle.message( "intention.implement.abstract.class.error.cannot.create.class.message", dialog.getClassName()),
+                                             CodeInsightBundle.message("intention.implement.abstract.class.error.cannot.create.class.title"));
                   }
                 });
           return null;

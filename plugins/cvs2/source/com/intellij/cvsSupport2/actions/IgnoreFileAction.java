@@ -18,6 +18,7 @@ import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.CvsBundle;
 
 import java.io.File;
 import java.io.IOException;
@@ -59,8 +60,8 @@ public class IgnoreFileAction extends AnAction {
         CvsUtil.ignoreFile(selectedFile);
       }
       catch (IOException e1) {
-        Messages.showErrorDialog("Cannot ignore file " + selectedFile.getPresentableUrl() + ": " + e1.getLocalizedMessage(),
-                                 "Ignore Files");
+        Messages.showErrorDialog(CvsBundle.message("message.error.ignore.files", selectedFile.getPresentableUrl(), e1.getLocalizedMessage()),
+                                 com.intellij.CvsBundle.message("message.error.ignore.files.title"));
       }
     }
 
@@ -130,7 +131,7 @@ public class IgnoreFileAction extends AnAction {
       }
 
       private AddFileOrDirectoryAction createAddFilesAction() {
-        return new AddFileOrDirectoryAction("Adding .cvsignore Files to CVS", Options.ON_FILE_ADDING, true) {
+        return new AddFileOrDirectoryAction(CvsBundle.message("adding.cvsignore.files.to.cvs.action.name"), Options.ON_FILE_ADDING, true) {
           protected void onActionPerformed(CvsContext context,
                                            CvsTabbedWindow tabbedWindow,
                                            boolean successfully,

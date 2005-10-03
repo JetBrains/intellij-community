@@ -32,8 +32,10 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.errorView.ContentManagerProvider;
 import com.intellij.util.ui.ErrorTreeView;
 import com.intellij.util.ui.MessageCategory;
+import com.intellij.CvsBundle;
 
 import java.util.*;
+import java.text.MessageFormat;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -115,20 +117,20 @@ public class CvsOperationExecutor {
       public void run() {
         try {
           if (handler == CvsHandler.NULL) return;
-          setText("Preparing for login...");
+          setText(com.intellij.CvsBundle.message("progress.text.preparing.for.login"));
 
           handler.beforeLogin();
 
 
           if (myResult.finishedUnsuccessfully(false, handler)) return;
 
-          setText("Login");
+          setText(com.intellij.CvsBundle.message("progress.text.login"));
           setCancelText(handler);
 
           login(handler);
           if (myResult.finishedUnsuccessfully(true, handler)) return;
 
-          setText("Preparing for " + handler.getTitle());
+          setText(com.intellij.CvsBundle.message("progress.text.preparing.for.action", handler.getTitle()));
 
           handler.run(myExecutor);
           if (myResult.finishedUnsuccessfully(true, handler)) return;
@@ -233,7 +235,8 @@ public class CvsOperationExecutor {
                                                                                           (DefaultActionGroup)ActionManager.getInstance()
                                                                                                               .getAction("CvsActions")},
                                                                                         new AnAction[]{new AnAction(
-                                                                                          "Configure Global CVS Settings", null,
+                                                                                          CvsBundle.message(
+                                                                                            "configure.global.cvs.settings.action.name"), null,
                                                                                           IconLoader.getIcon("/nodes/cvs_global.png")) {
                                                                                           public void actionPerformed(AnActionEvent e) {
                                                                                             new ConfigureCvsGlobalSettingsDialog().show();
@@ -277,9 +280,12 @@ public class CvsOperationExecutor {
   }
 
   private String getStatusMessage(final CvsHandler handler) {
-    String result = handler.getTitle() + " completed";
-    if (!handler.getErrors().isEmpty()) result += " with errors";
-    return result;
+    final String actionName = handler.getTitle();
+    if (handler.getErrors().isEmpty()) {
+      return com.intellij.CvsBundle.message("status.text.action.completed", actionName);
+    } else {
+      return com.intellij.CvsBundle.message("status.text.action.completed.with.errors", actionName);
+    }
   }
 
 
@@ -330,7 +336,7 @@ public class CvsOperationExecutor {
 
   private class ReconfigureCvsRootAction extends AnAction {
     public ReconfigureCvsRootAction() {
-      super("Reconfigure CVS Root", null, IconLoader.getIcon("/nodes/cvs_roots.png"));
+      super(com.intellij.CvsBundle.message("action.name.reconfigure.cvs.root"), null, IconLoader.getIcon("/nodes/cvs_roots.png"));
     }
 
     public void update(AnActionEvent e) {

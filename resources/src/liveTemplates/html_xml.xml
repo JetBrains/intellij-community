@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templateSet group="html/xml">
-  <template description="Tag pair" name="t" toReformat="false" toShortenFQNames="true" value="&lt;$TAG_NAME$&gt;$END$&lt;/$TAG_NAME$&gt;">
+  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.tag.pair" 
+      name="t" toReformat="false" toShortenFQNames="true" value="&lt;$TAG_NAME$&gt;$END$&lt;/$TAG_NAME$&gt;">
     <variable alwaysStopAt="true" defaultValue="" expression="&quot;tag&quot;" name="TAG_NAME" />
     <context>
       <option name="JAVA_CODE" value="false" />

@@ -4,6 +4,7 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.SelectInContext;
 import com.intellij.ide.SelectInManager;
 import com.intellij.ide.SelectInTarget;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionListPopup;
@@ -54,7 +55,7 @@ public class SelectInAction extends AnAction {
       group.add(new NoTargetsAction());
     }
 
-    ListPopup listPopup = ActionListPopup.createListPopup("Select Target", group, dataContext, true, true);
+    ListPopup listPopup = ActionListPopup.createListPopup(IdeBundle.message("title.popup.select.target"), group, dataContext, true, true);
 
     Point p = contextProvider.getInvocationPoint();
 
@@ -116,7 +117,7 @@ public class SelectInAction extends AnAction {
 
   private static class NoTargetsAction extends AnAction {
     public NoTargetsAction() {
-      super("No targets available in this context");
+      super(IdeBundle.message("message.no.targets.available"));
     }
 
     public void actionPerformed(AnActionEvent e) {

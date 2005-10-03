@@ -4,7 +4,11 @@
  */
 package com.intellij.debugger.settings;
 
+import org.jetbrains.annotations.NonNls;
+
 import java.lang.reflect.Field;
+
+import com.intellij.debugger.DebuggerBundle;
 
 /**
  * @author Eugene Zhuravlev
@@ -14,7 +18,7 @@ public abstract class FieldDataBinding implements DataBinding{
 
   private final String myFieldName;
 
-  protected FieldDataBinding(String fieldName) {
+  protected FieldDataBinding(@NonNls String fieldName) {
     myFieldName = fieldName;
   }
 
@@ -67,6 +71,6 @@ public abstract class FieldDataBinding implements DataBinding{
         // ignored, just continue
       }
     }
-    throw new RuntimeException("No such field " + myFieldName + " in " + from.getClass().getName());
+    throw new RuntimeException(DebuggerBundle.message("error.field.not.found.in.class", myFieldName, from.getClass().getName()));
   }
 }

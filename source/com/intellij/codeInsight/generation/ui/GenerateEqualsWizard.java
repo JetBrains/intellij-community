@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.generation.ui;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.generation.GenerateEqualsHelper;
 import com.intellij.ide.wizard.AbstractWizard;
 import com.intellij.ide.wizard.StepAdapter;
@@ -38,7 +39,7 @@ public class GenerateEqualsWizard extends AbstractWizard {
 
 
   public GenerateEqualsWizard(Project project, PsiClass aClass, boolean needEquals, boolean needHashCode) {
-    super("Generate equals() and hashCode()", project);
+    super(CodeInsightBundle.message("generate.equals.hashcode.wizard.title"), project);
     LOG.assertTrue(needEquals || needHashCode);
     myClass = aClass;
 
@@ -48,7 +49,8 @@ public class GenerateEqualsWizard extends AbstractWizard {
     }
     myTestBoxedStep = 0;
     if (needEquals) {
-      myEqualsPanel = new MemberSelectionPanel("Choose fields to be included in equals()", myClassFields, null);
+      myEqualsPanel = new MemberSelectionPanel(CodeInsightBundle.message("generate.equals.hashcode.equals.fields.chooser.title"),
+                                               myClassFields, null);
       myEqualsPanel.getTable().setMemberInfoModel(new EqualsMemberInfoModel());
       myTestBoxedStep++;
     } else {
@@ -63,7 +65,8 @@ public class GenerateEqualsWizard extends AbstractWizard {
         hashCodeMemberInfos = myClassFields;
         myFieldsToHashCode = null;
       }
-      myHashCodePanel = new MemberSelectionPanel("Choose fields to be included in hashCode()", hashCodeMemberInfos, null);
+      myHashCodePanel = new MemberSelectionPanel(CodeInsightBundle.message("generate.equals.hashcode.hashcode.fields.chooser.title"),
+                                                 hashCodeMemberInfos, null);
       myHashCodePanel.getTable().setMemberInfoModel(new HashCodeMemberInfoModel());
       if (needEquals) {
         updateHashCodeMemberInfos(myClassFields);
@@ -73,7 +76,8 @@ public class GenerateEqualsWizard extends AbstractWizard {
       myHashCodePanel = null;
       myFieldsToHashCode = null;
     }
-    myNonNullPanel = new MemberSelectionPanel("Select all non-null fields", new MemberInfo[0], null);
+    myNonNullPanel = new MemberSelectionPanel(CodeInsightBundle.message("generate.equals.hashcode.non.null.fields.chooser.title"),
+                                              new MemberInfo[0], null);
     myFieldsToNonNull = createFieldToMemberInfoMap(false);
 
     final MyTableModelListener listener = new MyTableModelListener();
@@ -269,10 +273,14 @@ public class GenerateEqualsWizard extends AbstractWizard {
     MemberInfoTooltipManager myTooltipManager = new MemberInfoTooltipManager(new MemberInfoTooltipManager.TooltipProvider() {
       public String getTooltip(MemberInfo memberInfo) {
         if(checkForProblems(memberInfo) == OK) return null;
-        if (!(memberInfo.getMember() instanceof PsiField)) return "Internal error";
+        if (!(memberInfo.getMember() instanceof PsiField)) return CodeInsightBundle.message("generate.equals.hashcode.internal.error");
         final PsiType type = ((PsiField) memberInfo.getMember()).getType();
-        if (GenerateEqualsHelper.isNestedArray(type)) return "equals() for nested arrays is not supported";
-        if (GenerateEqualsHelper.isArrayOfObjects(type)) return "Generated equals() for Object[] can be incorrect";
+        if (GenerateEqualsHelper.isNestedArray(type)) {
+          return CodeInsightBundle .message("generate.equals.warning.equals.for.nested.arrays.not.supported");
+        }
+        if (GenerateEqualsHelper.isArrayOfObjects(type)) {
+          return CodeInsightBundle.message("generate.equals.warning.generated.equals.could.be.incorrect");
+        }
         return null;
       }
     });
@@ -319,10 +327,10 @@ public class GenerateEqualsWizard extends AbstractWizard {
     private MemberInfoTooltipManager myTooltipManager = new MemberInfoTooltipManager(new MemberInfoTooltipManager.TooltipProvider() {
       public String getTooltip(MemberInfo memberInfo) {
         if (isMemberEnabled(memberInfo)) return null;
-        if (!(memberInfo.getMember() instanceof PsiField)) return "Internal error";
+        if (!(memberInfo.getMember() instanceof PsiField)) return CodeInsightBundle.message("generate.equals.hashcode.internal.error");
         final PsiType type = ((PsiField) memberInfo.getMember()).getType();
         if (!(type instanceof PsiArrayType)) return null;
-        return "hashCode () for arrays is not supported";
+        return CodeInsightBundle.message("generate.equals.hashcode.warning.hashcode.for.arrays.is.not.supported");
       }
     });
     public boolean isMemberEnabled(MemberInfo member) {

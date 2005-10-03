@@ -18,6 +18,7 @@ package com.intellij.psi;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * Represents a Java local variable, method parameter or field.
@@ -68,6 +69,8 @@ public interface PsiVariable extends PsiElement, PsiModifierListOwner, PsiNamedE
    * the initializer does not evaluate to a constant.
    */
   @Nullable Object computeConstantValue();
+
+  @NotNull @NonNls String getName();
 
   /**
    * Returns the identifier declaring the name of the variable.

@@ -27,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.CvsBundle;
 import org.netbeans.lib.cvsclient.command.KeywordSubstitution;
 
 import java.io.File;
@@ -134,11 +135,11 @@ public class CvsServicesImpl extends CvsServices implements ApplicationComponent
     );
 
     final CvsOperationExecutor executor = new CvsOperationExecutor(project);
-    executor.performActionSync(new CommandCvsHandler("Load File Content", operation, false),
+    executor.performActionSync(new CommandCvsHandler(CvsBundle.message("operation.name.load.file.content"), operation, false),
                                CvsOperationExecutorCallback.EMPTY);
 
     if (!executor.hasNoErrors()) throw new RuntimeException(executor.getFirstError());
-    if (operation.isDeleted()) throw new IOException("Revision does not exist");
+    if (operation.isDeleted()) throw new IOException(CvsBundle.message("exception.text.revision.has.been.deleted"));
     return operation.getFileBytes();
   }
 
@@ -159,7 +160,7 @@ public class CvsServicesImpl extends CvsServices implements ApplicationComponent
                                                                       pruneEmptyDirectories,
                                                                       (KeywordSubstitution)keywordSubstitution);
     final CvsOperationExecutor executor = new CvsOperationExecutor(project);
-    executor.performActionSync(new CommandCvsHandler("Checkout", operation, true),
+    executor.performActionSync(new CommandCvsHandler(CvsBundle.message("operation.name.checkout"), operation, true),
                                CvsOperationExecutorCallback.EMPTY);
     return executor.getResult();
   }

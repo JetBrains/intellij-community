@@ -16,6 +16,7 @@
 package com.intellij.openapi.util.io;
 
 import com.intellij.Patches;
+import com.intellij.CommonBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
@@ -25,6 +26,8 @@ import java.io.*;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.jetbrains.annotations.NonNls;
 
 public class FileUtil {
   private static final byte[] BUFFER = new byte[1024 * 20];
@@ -138,7 +141,7 @@ public class FileUtil {
     return bytes;
   }
 
-  public static File createTempDirectory(String prefix, String suffix) throws IOException{
+  public static File createTempDirectory(@NonNls String prefix, @NonNls String suffix) throws IOException{
     File file = doCreateTempFile(prefix, suffix);
     file.delete();
     file.mkdir();
@@ -321,8 +324,8 @@ public class FileUtil {
       return;
     }
     File[] files = fromDir.listFiles();
-    if(!fromDir.canRead()) throw new IOException("Directory is not readable " + fromDir.getPath());
-    if(files == null) throw new IOException("Directory is invalid " + fromDir.getPath());
+    if(!fromDir.canRead()) throw new IOException(CommonBundle.message("exception.directory.is.not.readable", fromDir.getPath()));
+    if(files == null) throw new IOException(CommonBundle.message("exception.directory.is.invalid", fromDir.getPath()));
     for (File file : files) {
       if (file.isDirectory()) {
         copyDir(file, new File(toDir, file.getName()));
@@ -354,7 +357,7 @@ public class FileUtil {
     return candidate.getName();
   }
 
-  public static String toSystemDependentName(String aFileName) {
+  public static String toSystemDependentName(@NonNls String aFileName) {
     return aFileName.replace('/', File.separatorChar).replace('\\', File.separatorChar);
   }
 

@@ -1,6 +1,8 @@
 package com.intellij.codeInspection.unusedReturnValue;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
@@ -12,10 +14,7 @@ import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.reference.RefMethod;
 import com.intellij.codeInspection.reference.RefVisitor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfo;
 
@@ -32,6 +31,7 @@ public class UnusedReturnValue extends DescriptorProviderInspection {
       public void accept(RefElement refElement) {
         if (refElement instanceof RefMethod) {
           RefMethod refMethod = (RefMethod) refElement;
+          if (!InspectionManagerEx.isToCheckMember((PsiDocCommentOwner) refMethod.getElement(), UnusedReturnValue.this.getShortName())) return;
           ProblemDescriptor[] descriptors = checkMethod(refMethod);
           if (descriptors != null) {
             addProblemElement(refElement, descriptors);
@@ -49,7 +49,7 @@ public class UnusedReturnValue extends DescriptorProviderInspection {
 
     if (!refMethod.isReturnValueUsed()) {
       return new ProblemDescriptor[]{
-        getManager().createProblemDescriptor(refMethod.getElement(), "Return value of the method is never used.",
+        getManager().createProblemDescriptor(refMethod.getElement(), InspectionsBundle.message("inspection.unused.return.value.problem.descriptor"),
                                              getFix(), ProblemHighlightType.GENERIC_ERROR_OR_WARNING)};
     }
 
@@ -82,11 +82,11 @@ public class UnusedReturnValue extends DescriptorProviderInspection {
   }
 
   public String getDisplayName() {
-    return "Unused method return value";
+    return InspectionsBundle.message("inspection.unused.return.value.display.name");
   }
 
   public String getGroupDisplayName() {
-    return "Declaration Redundancy";
+    return GroupNames.DECLARATION_REDUNDANCY;
   }
 
   public String getShortName() {
@@ -105,7 +105,7 @@ public class UnusedReturnValue extends DescriptorProviderInspection {
 
   private class QuickFix implements LocalQuickFix {
     public String getName() {
-      return "Make Method void";
+      return InspectionsBundle.message("inspection.unused.return.value.make.void.quickfix");
     }
 
     public void applyFix(Project project, ProblemDescriptor descriptor) {

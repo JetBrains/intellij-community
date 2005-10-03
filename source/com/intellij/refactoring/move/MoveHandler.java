@@ -16,6 +16,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.anonymousToInner.AnonymousToInnerHandler;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesImpl;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
@@ -41,6 +42,7 @@ public class MoveHandler implements RefactoringActionHandler {
   public static final int DIRECTORIES = 7;
   public static final int MOVE_OR_REARRANGE_PACKAGE = 8;
   public static final int INSTANCE_METHOD = 9;
+  public static final String REFACTORING_NAME = RefactoringBundle.message("move.tltle");
 
 
   public static interface TargetContainerFinder {
@@ -71,10 +73,8 @@ public class MoveHandler implements RefactoringActionHandler {
           return;
         }
 
-        String message =
-          "Cannot perform the refactoring.\n" +
-          "The caret should be positioned at the class, method or field to be refactored.";
-        RefactoringMessageUtil.showErrorMessage("Move", message, null, project);
+        String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("the.caret.should.be.positioned.at.the.class.method.or.field.to.be.refactored"));
+        RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, null, project);
         return;
       }
 
@@ -86,8 +86,8 @@ public class MoveHandler implements RefactoringActionHandler {
           int relative = offset - range.getStartOffset();
           final PsiReference reference = element.findReferenceAt(relative);
           if (reference != null &&
-            !(reference instanceof PsiJavaCodeReferenceElement &&
-              ((PsiJavaCodeReferenceElement)reference).getParent() instanceof PsiAnonymousClass)) {
+              !(reference instanceof PsiJavaCodeReferenceElement &&
+                ((PsiJavaCodeReferenceElement)reference).getParent() instanceof PsiAnonymousClass)) {
             final PsiElement refElement = reference.resolve();
             if (refElement != null && tryToMoveElement(refElement, project, dataContext)) return;
           }
@@ -367,12 +367,12 @@ public class MoveHandler implements RefactoringActionHandler {
     public SelectMoveOrRearrangePackageDialog(Project project, PsiDirectory[] directories) {
       super(project, true);
       myDirectories = directories;
-      setTitle("Select Refactoring");
+      setTitle(RefactoringBundle.message("select.refactoring.title"));
       init();
     }
 
     protected JComponent createNorthPanel() {
-      return new JLabel("What would you like to do?");
+      return new JLabel(RefactoringBundle.message("what.would.you.like.to.do"));
     }
 
     public JComponent getPreferredFocusedComponent() {
@@ -396,27 +396,27 @@ public class MoveHandler implements RefactoringActionHandler {
       LOG.assertTrue(myDirectories.length > 0);
       LOG.assertTrue(packages.size() > 0);
       if (packages.size() > 1) {
-        moveDescription = "Move " + packages.size() + " packages to another package";
+        moveDescription = RefactoringBundle.message("move.packages.to.another.package", packages.size());
       }
       else {
         final String qName = packages.iterator().next();
-        moveDescription = "Move package '" + qName + "' to another package";
+        moveDescription = RefactoringBundle.message("move.package.to.another.package", qName);
       }
 
-      myRbMovePackage = new JRadioButton(moveDescription, true);
+      myRbMovePackage = new JRadioButton();
+      myRbMovePackage.setText(moveDescription);
+      myRbMovePackage.setSelected(true);
 
       final String rearrangeDescription;
       if (myDirectories.length > 1) {
-        rearrangeDescription = "Move " + myDirectories.length + " directories to another source root";
+        rearrangeDescription = RefactoringBundle.message("move.directories.to.another.source.root", myDirectories.length);
       }
       else {
-        rearrangeDescription = "Move directory " + myDirectories[0].getVirtualFile().getPresentableUrl() + " to another source root";
+        rearrangeDescription = RefactoringBundle.message("move.directory.to.another.source.root", myDirectories[0].getVirtualFile().getPresentableUrl());
       }
-      myRbRearrangePackage = new JRadioButton(rearrangeDescription);
+      myRbRearrangePackage = new JRadioButton();
+      myRbRearrangePackage.setText(rearrangeDescription);
 
-
-      myRbMovePackage.setMnemonic('p');
-      myRbRearrangePackage.setMnemonic('r');
       ButtonGroup gr = new ButtonGroup();
       gr.add(myRbMovePackage);
       gr.add(myRbRearrangePackage);
@@ -447,13 +447,13 @@ public class MoveHandler implements RefactoringActionHandler {
 
     public SelectInnerOrMembersRefactoringDialog(final PsiClass innerClass, Project project) {
       super(project, true);
-      setTitle("Select Refactoring");
+      setTitle(RefactoringBundle.message("select.refactoring.title"));
       myClassName = innerClass.getName();
       init();
     }
 
     protected JComponent createNorthPanel() {
-      return new JLabel("What would you like to do?");
+      return new JLabel(RefactoringBundle.message("what.would.you.like.to.do"));
     }
 
     public JComponent getPreferredFocusedComponent() {
@@ -466,12 +466,13 @@ public class MoveHandler implements RefactoringActionHandler {
 
     protected JComponent createCenterPanel() {
       JPanel panel = new JPanel(new BorderLayout());
-      myRbMoveInner = new JRadioButton("Move inner class "+myClassName+" to upper level", true);
-      myRbMoveMembers = new JRadioButton("Move inner class " + myClassName + " to another class");
+      myRbMoveInner = new JRadioButton();
+      myRbMoveInner.setText(RefactoringBundle.message("move.inner.class.to.upper.level", myClassName));
+      myRbMoveInner.setSelected(true);
+      myRbMoveMembers = new JRadioButton();
+      myRbMoveMembers.setText(RefactoringBundle.message("move.inner.class.to.another.class", myClassName));
 
 
-      myRbMoveInner.setMnemonic('i');
-      myRbMoveMembers.setMnemonic('M');
       ButtonGroup gr = new ButtonGroup();
       gr.add(myRbMoveInner);
       gr.add(myRbMoveMembers);

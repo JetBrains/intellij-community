@@ -3,7 +3,7 @@
   <grid id="6d458" binding="myPanel" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="40" y="55" width="489" height="203"/>
+      <xy x="40" y="55" width="1457" height="203"/>
       <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
     </constraints>
     <properties/>
@@ -12,7 +12,7 @@
       <grid id="13a64" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="0" y="0" width="386" height="97"/>
+          <xy x="0" y="0" width="1437" height="97"/>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
         </constraints>
         <properties/>
@@ -21,7 +21,7 @@
           <grid id="c8f59" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="0" y="0" width="386" height="70"/>
+              <xy x="0" y="0" width="1437" height="70"/>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
             </constraints>
             <properties/>
@@ -29,20 +29,20 @@
             <children>
               <component id="52ba8" class="javax.swing.JLabel" binding="myIconLabel">
                 <constraints>
-                  <xy x="0" y="28" width="18" height="14"/>
+                  <xy x="0" y="28" width="28" height="14"/>
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
-                  <text value="XXX"/>
+                  <text value="###"/>
                 </properties>
               </component>
               <component id="925b3" class="javax.swing.JLabel" binding="myMessageLabel">
                 <constraints>
-                  <xy x="40" y="0" width="337" height="70"/>
+                  <xy x="569" y="0" width="338" height="70"/>
                   <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
-                  <text value="&lt;html&gt;Project file c:/test/test.ipr&lt;br&gt;cannot be merged without conflict.&lt;br&gt;Click 'Skip' to skip all changes in repository for this file.&lt;br&gt;Click 'Get' to skip local changes and get repository version for this file.&lt;br&gt;Click 'Skip All' to skip&lt;/html&gt;"/>
+                  <text resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="label.corrupted.project.files.description"/>
                 </properties>
               </component>
             </children>
@@ -50,7 +50,7 @@
           <grid id="458cd" row-count="1" column-count="4" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="0" y="75" width="386" height="22"/>
+              <xy x="0" y="75" width="1437" height="22"/>
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
             </constraints>
             <properties/>
@@ -58,38 +58,38 @@
             <children>
               <component id="3a7b6" class="javax.swing.JLabel">
                 <constraints>
-                  <xy x="0" y="4" width="66" height="14"/>
+                  <xy x="0" y="4" width="326" height="14"/>
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
-                  <text value="In the future:"/>
+                  <text resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="label.corrupted.project.files.in.the.future"/>
                 </properties>
               </component>
               <component id="6941a" class="javax.swing.JRadioButton" binding="myShowDialogOption">
                 <constraints>
-                  <xy x="76" y="0" width="102" height="22"/>
+                  <xy x="336" y="0" width="367" height="22"/>
                   <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
-                  <text value="Show this dialog"/>
+                  <text resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="radio.corrupted.project.files.show.this.dialog"/>
                 </properties>
               </component>
               <component id="a056b" class="javax.swing.JRadioButton" binding="mySkipAllOption">
                 <constraints>
-                  <xy x="188" y="0" width="93" height="22"/>
+                  <xy x="713" y="0" width="358" height="22"/>
                   <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
-                  <text value="Skip all silently"/>
+                  <text resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="radio.corrupted.project.files.skip.all.silently"/>
                 </properties>
               </component>
               <component id="5fff7" class="javax.swing.JRadioButton" binding="myGetAllOption">
                 <constraints>
-                  <xy x="291" y="0" width="95" height="22"/>
+                  <xy x="1081" y="0" width="356" height="22"/>
                   <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
-                  <text value="Get all silently"/>
+                  <text resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="radio.corrupted.project.files.get.all.silently"/>
                 </properties>
               </component>
             </children>
@@ -98,13 +98,13 @@
       </grid>
       <vspacer id="6faec">
         <constraints>
-          <xy x="187" y="97" width="11" height="106"/>
+          <xy x="713" y="97" width="11" height="106"/>
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
         </constraints>
       </vspacer>
       <hspacer id="995ac">
         <constraints>
-          <xy x="386" y="43" width="103" height="11"/>
+          <xy x="1437" y="43" width="20" height="11"/>
           <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1"/>
         </constraints>
       </hspacer>

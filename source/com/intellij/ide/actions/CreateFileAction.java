@@ -9,17 +9,19 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.ide.IdeBundle;
 
 import java.io.File;
 
 public class CreateFileAction extends CreateElementActionBase {
   public CreateFileAction() {
-    super("Create New File", "Create New File", IconLoader.getIcon("/fileTypes/text.png"));
+    super(IdeBundle.message("action.create.new.file"), IdeBundle.message("action.create.new.file"), IconLoader.getIcon("/fileTypes/text.png"));
   }
 
   protected PsiElement[] invokeDialog(final Project project, PsiDirectory directory) {
     CreateElementActionBase.MyInputValidator validator = new MyValidator(project, directory);
-    Messages.showInputDialog(project, "Enter a new file name:", "New File", Messages.getQuestionIcon(), null, validator);
+    Messages.showInputDialog(project, IdeBundle.message("prompt.enter.new.file.name"),
+                             IdeBundle.message("title.new.file"), Messages.getQuestionIcon(), null, validator);
     return validator.getCreatedElements();
   }
 
@@ -32,15 +34,15 @@ public class CreateFileAction extends CreateElementActionBase {
   }
 
   protected String getActionName(PsiDirectory directory, String newName) {
-    return "Creating file " + directory.getVirtualFile().getPresentableUrl() + File.separator + newName;
+    return IdeBundle.message("progress.creating.file", directory.getVirtualFile().getPresentableUrl(), File.separator, newName);
   }
 
   protected String getErrorTitle() {
-    return "Cannot Create File";
+    return IdeBundle.message("title.cannot.create.file");
   }
 
   protected String getCommandName() {
-    return "Create file";
+    return IdeBundle.message("command.create.file");
   }
 
   private class MyValidator extends CreateElementActionBase.MyInputValidator {

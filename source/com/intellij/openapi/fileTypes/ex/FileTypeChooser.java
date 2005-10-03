@@ -4,6 +4,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.FileTypesBundle;
 import com.intellij.openapi.fileTypes.impl.FileTypeRenderer;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MultiLineLabelUI;
@@ -46,13 +47,13 @@ public class FileTypeChooser extends DialogWrapper{
         myModel.addElement(type);
       }
     }
-    setTitle("Register New Extension");
+    setTitle(FileTypesBundle.message("filetype.chooser.title"));
     init();
   }
 
   protected JComponent createCenterPanel(){
     JPanel panel=new JPanel(new GridBagLayout());
-    JLabel label = new JLabel("The extension '" + myExtension + "' is not associated with a registered file type. Please choose one:");
+    JLabel label = new JLabel(FileTypesBundle.message("filetype.chooser.prompt", myExtension));
     label.setUI(new MultiLineLabelUI());
     panel.add(
       label,

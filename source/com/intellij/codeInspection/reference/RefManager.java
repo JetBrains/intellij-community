@@ -295,6 +295,7 @@ public class RefManager {
         }
 
         getRefTable().put(elem, ref);
+        ref.initialize();
       }
 
       return ref;
@@ -310,6 +311,7 @@ public class RefManager {
 
     if (ref == null) {
       ref = new RefMethod(refClass, psiMethod, this);
+      ref.initialize();
       getRefTable().put(psiMethod, ref);
     }
 
@@ -322,6 +324,7 @@ public class RefManager {
 
     if (ref == null) {
       ref = new RefField(refClass, psiField, this);
+      ref.initialize();
       getRefTable().put(psiField, ref);
     }
 
@@ -334,6 +337,7 @@ public class RefManager {
 
     if (ref == null) {
       ref = new RefParameter(param, index, this);
+      ref.initialize();
       getRefTable().put(param, ref);
     }
 

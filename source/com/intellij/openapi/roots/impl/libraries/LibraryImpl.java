@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Arrays;
 import java.util.List;
@@ -25,15 +26,15 @@ import java.util.List;
  */
 public class LibraryImpl implements Library.ModifiableModel, LibraryEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.impl.LibraryImpl");
-  private static final String LIBRARY_NAME_ATTR = "name";
-  private static final String ROOT_PATH_ELEMENT = "root";
+  @NonNls private static final String LIBRARY_NAME_ATTR = "name";
+  @NonNls private static final String ROOT_PATH_ELEMENT = "root";
   private String myName;
   private final LibraryTable myLibraryTable;
   private com.intellij.util.containers.HashMap<OrderRootType, VirtualFilePointerContainer> myRoots;
   private LibraryImpl mySource;
 
   private final MyRootProviderImpl myRootProvider = new MyRootProviderImpl();
-  public static final String ELEMENT = "library";
+  @NonNls public static final String ELEMENT = "library";
   private ModifiableRootModel myRootModel;
 
   LibraryImpl(String name, LibraryTable table) {

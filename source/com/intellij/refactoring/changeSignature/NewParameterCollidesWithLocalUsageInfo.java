@@ -2,6 +2,7 @@ package com.intellij.refactoring.changeSignature;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo;
 import com.intellij.refactoring.util.ConflictsUtil;
 
@@ -20,14 +21,10 @@ public class NewParameterCollidesWithLocalUsageInfo extends UnresolvableCollisio
   }
 
   public String getDescription() {
-    StringBuffer buffer = new StringBuffer();
+    String buffer = RefactoringBundle.message("there.is.already.a.0.in.1.it.will.conflict.with.the.new.parameter",
+                                     ConflictsUtil.getDescription(myConflictingElement, true),
+                                     ConflictsUtil.getDescription(myMethod, true));
 
-    buffer.append("There is already a ");
-    buffer.append(ConflictsUtil.getDescription(myConflictingElement, true));
-    buffer.append("in a ");
-    buffer.append(ConflictsUtil.getDescription(myMethod, true));
-    buffer.append(". It will conflict with the new parameter.");
-
-    return ConflictsUtil.capitalize(buffer.toString());
+    return ConflictsUtil.capitalize(buffer);
   }
 }

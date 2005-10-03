@@ -18,7 +18,7 @@ import java.util.*;
 public abstract class FilteringInspectionTool extends InspectionTool {
   public abstract RefFilter getFilter();
   HashMap<String, Set<RefElement>> myPackageContents = null;
-
+  Set<RefElement> myIgnoreElements = new HashSet<RefElement>();
   public InspectionTreeNode[] getContents() {
     List<InspectionTreeNode> content = new ArrayList<InspectionTreeNode>();
     Set<String> packages = myPackageContents.keySet();
@@ -28,22 +28,19 @@ public abstract class FilteringInspectionTool extends InspectionTool {
       Set<RefElement> elements = myPackageContents.get(p);
       for(Iterator<RefElement> iterator1 = elements.iterator(); iterator1.hasNext(); ) {
         RefElement refElement = iterator1.next();
-        pNode.add(new RefElementNode(refElement, shouldLoadElementCallees()));
+        addNodeToParent(refElement, pNode);
       }
       content.add(pNode);
     }
     return content.toArray(new InspectionTreeNode[content.size()]);
   }
 
-  protected boolean shouldLoadElementCallees() {
-    return false;
-  }
-
   public void updateContent() {
+    resetFilter();
     myPackageContents = new HashMap<String, Set<RefElement>>();
     getManager().getRefManager().iterate(new RefManager.RefIterator() {
       public void accept(RefElement refElement) {
-        if (refElement.isValid() && getFilter().accepts(refElement)) {
+        if (!myIgnoreElements.contains(refElement) && refElement.isValid() && getFilter().accepts(refElement)) {
           String packageName = RefUtil.getPackageName(refElement);
           Set<RefElement> content = myPackageContents.get(packageName);
           if (content == null) {
@@ -56,12 +53,18 @@ public abstract class FilteringInspectionTool extends InspectionTool {
     });
   }
 
+  protected abstract void resetFilter();
+
   public boolean hasReportedProblems() {
     return myPackageContents.size() > 0;
   }
 
   public Map<String, Set<RefElement>> getPackageContent() {
     return myPackageContents;
+  }
+
+  public void ignoreElement(RefElement refElement) {
+    myIgnoreElements.add(refElement);
   }
 
   public void cleanup() {

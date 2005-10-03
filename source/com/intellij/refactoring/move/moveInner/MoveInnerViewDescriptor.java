@@ -7,10 +7,9 @@ package com.intellij.refactoring.move.moveInner;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.usageView.FindUsagesCommand;
-import com.intellij.usageView.UsageInfo;
-import com.intellij.usageView.UsageViewDescriptor;
-import com.intellij.usageView.UsageViewUtil;
+import com.intellij.usageView.*;
+import com.intellij.usageView.UsageViewBundle;
+import com.intellij.refactoring.RefactoringBundle;
 
 class MoveInnerViewDescriptor implements UsageViewDescriptor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.move.moveInner.MoveInnerViewDescriptor");
@@ -72,7 +71,7 @@ class MoveInnerViewDescriptor implements UsageViewDescriptor {
   }
 
   public String getCodeReferencesText(int usagesCount, int filesCount) {
-    return "References to change " + UsageViewUtil.getUsageCountInfo(usagesCount, filesCount, "reference");
+    return RefactoringBundle.message("references.to.be.changed", UsageViewBundle.getReferencesString(usagesCount, filesCount));
   }
 
   public String getCommentReferencesText(int usagesCount, int filesCount) {

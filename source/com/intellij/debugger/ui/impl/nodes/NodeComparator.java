@@ -12,6 +12,7 @@ import java.util.Comparator;
  * Compares given DebuggerTreeTest by name
  */
 public class NodeComparator implements Comparator {
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public int compare(Object o1, Object o2) {
     DebuggerTreeNodeImpl node1 = (DebuggerTreeNodeImpl)o1;
     DebuggerTreeNodeImpl node2 = (DebuggerTreeNodeImpl)o2;

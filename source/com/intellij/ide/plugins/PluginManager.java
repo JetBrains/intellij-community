@@ -1,12 +1,14 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.ExtensionPoints;
+import com.intellij.CommonBundle;
 import com.intellij.codeInspection.InspectionMain;
 import com.intellij.diagnostic.ITNReporter;
 import com.intellij.execution.JUnitPatcher;
 import com.intellij.ide.plugins.cl.IdeaClassLoader;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.ide.startup.StartupActionScriptManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationStarter;
 import com.intellij.openapi.application.PathManager;
@@ -24,6 +26,7 @@ import com.intellij.util.graph.GraphGenerator;
 import com.intellij.util.text.StringTokenizer;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 import sun.reflect.Reflection;
 
 import javax.swing.*;
@@ -46,6 +49,8 @@ import java.util.zip.ZipFile;
 public class PluginManager {
   //Logger is lasy-initialized in order not to use it outside the appClassLoader
   private static Logger ourLogger = null;
+  @NonNls public static final String AREA_IDEA_PROJECT = "IDEA_PROJECT";
+  @NonNls public static final String AREA_IDEA_MODULE = "IDEA_MODULE";
 
   private static Logger getLogger() {
     if (ourLogger == null) {
@@ -125,14 +130,14 @@ public class PluginManager {
 
   private static void configureExtensions() {
     Extensions.setLogProvider(new IdeaLogProvider());
-    Extensions.registerAreaClass("IDEA_PROJECT", null);
-    Extensions.registerAreaClass("IDEA_MODULE", "IDEA_PROJECT");
+    Extensions.registerAreaClass(AREA_IDEA_PROJECT, null);
+    Extensions.registerAreaClass(AREA_IDEA_MODULE, AREA_IDEA_PROJECT);
 
     Extensions.getRootArea().registerExtensionPoint(ExtensionPoints.COMPONENT, ComponentDescriptor.class.getName());
 
     Extensions.getRootArea().getExtensionPoint(Extensions.AREA_LISTENER_EXTENSION_POINT).registerExtension(new AreaListener() {
       public void areaCreated(String areaClass, AreaInstance areaInstance) {
-        if ("IDEA_PROJECT".equals(areaClass) || "IDEA_MODULE".equals(areaClass)) {
+        if (AREA_IDEA_PROJECT.equals(areaClass) || AREA_IDEA_MODULE.equals(areaClass)) {
           Extensions.getArea(areaInstance).registerExtensionPoint(ExtensionPoints.COMPONENT, ComponentDescriptor.class.getName());
         }
       }
@@ -157,11 +162,13 @@ public class PluginManager {
     catch (ClassNotFoundException e) {
       return false;
     }
+    //noinspection HardCodedStringLiteral
     final String loadPlugins = System.getProperty("idea.load.plugins");
-    return loadPlugins == null || "true".equals(loadPlugins);
+    return loadPlugins == null || Boolean.TRUE.toString().equals(loadPlugins);
   }
 
   public static boolean shouldLoadPlugin(PluginDescriptor descriptor) {
+    //noinspection HardCodedStringLiteral
     final String loadPluginCategory = System.getProperty("idea.load.plugins.category");
     return loadPluginCategory == null || loadPluginCategory.equals(descriptor.getCategory());
   }
@@ -220,6 +227,7 @@ public class PluginManager {
    */
   protected static void start() {
     try {
+      //noinspection HardCodedStringLiteral
       ThreadGroup threadGroup = new ThreadGroup("Idea Thread Group") {
         public void uncaughtException(Thread t, Throwable e) {
           getLogger().error(e);
@@ -242,6 +250,7 @@ public class PluginManager {
         }
       };
 
+      //noinspection HardCodedStringLiteral
       new Thread(threadGroup, runnable, "Idea Main Thread").start();
     }
     catch (Exception e) {
@@ -266,11 +275,11 @@ public class PluginManager {
       Arrays.sort(pluginDescriptors, new PluginDescriptorComparator(pluginDescriptors));
     }
     catch (Exception e) {
-      errorMessage = "Error loading plugins:\n" + e.getMessage() + "\nPlugins were not loaded.\nCorrect the above error and restart IDEA.";
+      errorMessage = IdeBundle.message("error.plugins.were.not.loaded", e.getMessage());
       pluginDescriptors = PluginDescriptor.EMPTY_ARRAY;
     }
     if (errorMessage != null) {
-      JOptionPane.showMessageDialog(null, errorMessage, "Plugin Error", JOptionPane.ERROR_MESSAGE);
+      JOptionPane.showMessageDialog(null, errorMessage, IdeBundle.message("title.plugin.error"), JOptionPane.ERROR_MESSAGE);
     }
     return pluginDescriptors;
   }
@@ -286,7 +295,7 @@ public class PluginManager {
         if (message.length() > 0) {
           message.append("\n");
         }
-        message.append("Duplicate plugin id: ");
+        message.append(IdeBundle.message("message.duplicate.plugin.id"));
         message.append(id);
         it.remove();
       }
@@ -302,11 +311,7 @@ public class PluginManager {
           if (message.length() > 0) {
             message.append("\n");
           }
-          message.append("Plugin \"");
-          message.append(pluginDescriptor.getPluginId());
-          message.append("\" was not loaded: required plugin \"");
-          message.append(dependentPluginId);
-          message.append("\" not found.");
+          message.append(IdeBundle.message("error.required.plugin.not.found", pluginDescriptor.getPluginId(), dependentPluginId));
           it.remove();
           break;
         }
@@ -316,10 +321,10 @@ public class PluginManager {
       if (message.length() > 0) {
         message.append("\n");
       }
-      message.append("There were plugins without id found, all such plugins were skipped.");
+      message.append(IdeBundle.message("error.plugins.without.id.found"));
     }
     if (message.length() > 0) {
-      message.insert(0, "Problems found loading plugins:\n");
+      message.insert(0, IdeBundle.message("error.problems.found.loading.plugins"));
       return message.toString();
     }
     for (Iterator<PluginDescriptor> iterator = result.iterator(); iterator.hasNext();) {
@@ -344,6 +349,7 @@ public class PluginManager {
     }
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static PluginDescriptor loadDescriptor(final File file) {
     PluginDescriptor descriptor = null;
 
@@ -401,6 +407,7 @@ public class PluginManager {
       ZipFile zipFile = new ZipFile(file);
 
       try {
+        //noinspection HardCodedStringLiteral
         final ZipEntry entry = zipFile.getEntry("META-INF/plugin.xml");
         if (entry != null) {
           descriptor = new PluginDescriptor(file);
@@ -421,6 +428,7 @@ public class PluginManager {
     return descriptor;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   protected void bootstrap(List<URL> classpathElements) {
     IdeaClassLoader newClassLoader = initClassloader(classpathElements);
     try {
@@ -461,11 +469,11 @@ public class PluginManager {
       addAdditionalClassPath(classpathElements);
     }
     catch (IllegalArgumentException e) {
-      JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), e.getMessage(), "Error", JOptionPane.INFORMATION_MESSAGE);
+      JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), e.getMessage(), CommonBundle.getErrorTitle(), JOptionPane.INFORMATION_MESSAGE);
       System.exit(1);
     }
     catch (MalformedURLException e) {
-      JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), e.getMessage(), "Error", JOptionPane.INFORMATION_MESSAGE);
+      JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), e.getMessage(), CommonBundle.getErrorTitle(), JOptionPane.INFORMATION_MESSAGE);
       System.exit(1);
     }
 
@@ -524,6 +532,7 @@ public class PluginManager {
       try {
         Class antClassLoaderClass = Class.forName("org.apache.tools.ant.AntClassLoader");
         if (antClassLoaderClass.isInstance(loader)) {
+          //noinspection HardCodedStringLiteral
           final String classpath = (String)antClassLoaderClass.getDeclaredMethod("getClasspath", new Class[0]).invoke(loader, ArrayUtil.EMPTY_OBJECT_ARRAY);
           final StringTokenizer tokenizer = new StringTokenizer(classpath, File.separator, false);
           while (tokenizer.hasMoreTokens()) {
@@ -558,6 +567,7 @@ public class PluginManager {
     addAllFromLibFolder(ideaHomePath, classpathElements);
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static void addAllFromLibFolder(final String aFolderPath, List<URL> classPath) {
     try {
       final Class<PluginManager> aClass = PluginManager.class;
@@ -593,6 +603,7 @@ public class PluginManager {
     }
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static boolean isJarOrZip(File file) {
     if (file.isDirectory()) {
       return false;
@@ -603,6 +614,7 @@ public class PluginManager {
 
   private void addAdditionalClassPath(List<URL> classPath) {
     try {
+      //noinspection HardCodedStringLiteral
       final StringTokenizer tokenizer = new StringTokenizer(System.getProperty("idea.additional.classpath", ""), File.pathSeparator, false);
       while (tokenizer.hasMoreTokens()) {
         String pathItem = tokenizer.nextToken();
@@ -614,6 +626,7 @@ public class PluginManager {
     }
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static boolean isLoadingOfExternalPluginsDisabled() {
     return !"true".equalsIgnoreCase(System.getProperty("idea.plugins.load", "true"));
   }

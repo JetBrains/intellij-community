@@ -48,7 +48,7 @@ public class UnmarkAddedAction extends AnAction{
           CvsUtil.removeEntryFor(file);
         }
       }
-    }, "Undo 'Add'", true, context.getProject());
+    }, com.intellij.CvsBundle.message("operation.name.undo.add"), true, context.getProject());
     VirtualFileManager.getInstance().refresh(true);
   }
 }

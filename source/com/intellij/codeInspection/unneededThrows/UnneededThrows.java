@@ -2,6 +2,8 @@ package com.intellij.codeInspection.unneededThrows;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
@@ -17,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -27,9 +30,9 @@ import java.util.List;
  */
 public class UnneededThrows extends DescriptorProviderInspection {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.unneededThrows.UnneededThrows");
-  public static final String DISPLAY_NAME = "Redundant throws clause";
+  public static final String DISPLAY_NAME = InspectionsBundle.message("inspection.redundant.throws.display.name");
   private QuickFix myQuickFix;
-  public static final String SHORT_NAME = "UnneededThrows";
+  @NonNls public static final String SHORT_NAME = "UnneededThrows";
 
   public void runInspection(AnalysisScope scope) {
     getRefManager().findAllDeclarations();
@@ -38,6 +41,7 @@ public class UnneededThrows extends DescriptorProviderInspection {
       public void accept(RefElement refElement) {
         if (refElement instanceof RefMethod && !refElement.isSyntheticJSP()) {
           RefMethod refMethod = (RefMethod)refElement;
+          if (!InspectionManagerEx.isToCheckMember((PsiDocCommentOwner) refMethod.getElement(), UnneededThrows.this.getShortName())) return;
           ProblemDescriptorImpl[] descriptors = checkMethod(refMethod);
           if (descriptors != null) {
             addProblemElement(refElement, descriptors);
@@ -69,20 +73,26 @@ public class UnneededThrows extends DescriptorProviderInspection {
         if (s.equals(throwsType)) {
           if (problems == null) problems = new ArrayList<ProblemDescriptor>(1);
 
-          final String message;
           if (refMethod.isAbstract() || refMethod.getOwnerClass().isInterface()) {
-            message = " in method implementations";
+            problems.add(
+              getManager().createProblemDescriptor(throwsRef, InspectionsBundle.message("inspection.redundant.throws.problem.descriptor",
+                                                                                        "<code>#ref</code>"), getFix(),
+                                                                                                              ProblemHighlightType.LIKE_UNUSED_SYMBOL));
           }
           else if (refMethod.getDerivedMethods().size() > 0) {
-            message = " in this method, nor in its derivables.";
+            problems.add(
+              getManager().createProblemDescriptor(throwsRef, InspectionsBundle.message("inspection.redundant.throws.problem.descriptor1",
+                                                                                        "<code>#ref</code>"), getFix(),
+                                                                                                              ProblemHighlightType.LIKE_UNUSED_SYMBOL));
           }
           else {
-            message = ".";
+            problems.add(
+              getManager().createProblemDescriptor(throwsRef, InspectionsBundle.message("inspection.redundant.throws.problem.descriptor2",
+                                                                                        "<code>#ref</code>"), getFix(),
+                                                                                                              ProblemHighlightType.LIKE_UNUSED_SYMBOL));
           }
 
-          problems.add(
-            getManager().createProblemDescriptor(throwsRef, "The declared exception <code>#ref</code> is never thrown" + message, getFix(),
-                                                 ProblemHighlightType.LIKE_UNUSED_SYMBOL));
+
         }
       }
     }
@@ -124,7 +134,7 @@ public class UnneededThrows extends DescriptorProviderInspection {
   }
 
   public String getGroupDisplayName() {
-    return "Declaration Redundancy";
+    return GroupNames.DECLARATION_REDUNDANCY;
   }
 
   public String getShortName() {
@@ -143,7 +153,7 @@ public class UnneededThrows extends DescriptorProviderInspection {
 
   private class QuickFix implements LocalQuickFix {
     public String getName() {
-      return "Remove unnecessary throws declarations";
+      return InspectionsBundle.message("inspection.redundant.throws.remove.quickfix");
     }
 
     public void applyFix(Project project, ProblemDescriptor descriptor) {

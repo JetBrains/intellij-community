@@ -6,6 +6,7 @@ package com.intellij.util.config;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author dyoma
@@ -17,7 +18,7 @@ public class StorageAccessors {
     myStorage = storage;
   }
 
-  public static StorageAccessors createGlobal(String prefix) {
+  public static StorageAccessors createGlobal(@NonNls String prefix) {
     Application application = ApplicationManager.getApplication();
     Storage storage;
     if (application != null) storage = new Storage.PropertiesComponentStorage(prefix + ".");
@@ -25,7 +26,7 @@ public class StorageAccessors {
     return new StorageAccessors(storage);
   }
 
-  public float getFloat(String id, float defaultValue) {
+  public float getFloat(@NonNls String id, float defaultValue) {
     String value = myStorage.get(id);
     if (value == null) return defaultValue;
     try {
@@ -41,7 +42,7 @@ public class StorageAccessors {
   }
 
   public boolean getBoolean(String id, boolean defaultValue) {
-    return "true".equals(myStorage.get(id));
+    return Boolean.valueOf(myStorage.get(id));
   }
 
   public void setBoolean(String id, boolean value) {

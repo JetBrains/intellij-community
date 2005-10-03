@@ -1,21 +1,26 @@
 package com.intellij.codeInsight.generation;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 
 import java.text.MessageFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
 
 /**
  * @author dsl
@@ -29,8 +34,12 @@ public class GenerateEqualsHelper implements Runnable {
   private final PsiElementFactory myFactory;
   private final PsiManager myManager;
   private String myParameterName;
-  private static final String BASE_OBJECT_PARAMETER_NAME = "object";
-  private static final String BASE_OBJECT_LOCAL_NAME = "that";
+
+  private static @NonNls final String BASE_OBJECT_PARAMETER_NAME = "object";
+  private static @NonNls final String BASE_OBJECT_LOCAL_NAME = "that";
+  private static @NonNls final String RESULT_VARIABLE = "result";
+  private static @NonNls final String TEMP_VARIABLE = "temp";
+
   private final PsiClass myJavaLangObject;
   private PsiType myObjectType;
   private PsiType myClassType;
@@ -143,7 +152,7 @@ public class GenerateEqualsHelper implements Runnable {
     String instanceBaseName = nameSuggestions.length > 0 && nameSuggestions[0].length() < 10 ? nameSuggestions[0] : BASE_OBJECT_LOCAL_NAME;
     myClassInstanceName = getUniqueLocalVarName(instanceBaseName, myEqualsFields);
 
-    StringBuffer buffer = new StringBuffer();
+    @NonNls StringBuffer buffer = new StringBuffer();
     buffer.append("public boolean equals(Object " + myParameterName + ") {\n");
     addEqualsPrologue(buffer);
     if (myEqualsFields.length > 0) {
@@ -193,30 +202,29 @@ public class GenerateEqualsHelper implements Runnable {
   }
 
   private void addDoubleFieldComparison(final StringBuffer buffer, final PsiField field) {
-    final String type = field.getType() == PsiType.DOUBLE ? "Double" : "Float";
+    final @NonNls String type = field.getType() == PsiType.DOUBLE ? "Double" : "Float";
     final Object[] parameters = new Object[]{type, myClassInstanceName, field.getName()};
     DOUBLE_FIELD_COMPARER_MF.format(parameters, buffer, null);
   }
 
-  private static final MessageFormat ARRAY_COMPARER_MF =
-          new MessageFormat("if(!java.util.Arrays.equals({1}, {0}.{1})) return false;\n");
-  private static final MessageFormat FIELD_COMPARER_MF =
-          new MessageFormat("if({1}!=null ? !{1}.equals({0}.{1}) : {0}.{1}!= null)return false;\n");
-  private static final MessageFormat NON_NULL_FIELD_COMPARER_MF =
-          new MessageFormat("if(!{1}.equals({0}.{1}))return false;\n");
-  private static final MessageFormat PRIMITIVE_FIELD_COMPARER_MF =
-          new MessageFormat("if({1}!={0}.{1})return false;\n");
-  private static final MessageFormat DOUBLE_FIELD_COMPARER_MF =
-          new MessageFormat("if({0}.compare({1}.{2}, {2}) != 0)return false;\n");
+  private static final @NonNls MessageFormat ARRAY_COMPARER_MF = new MessageFormat("if(!java.util.Arrays.equals({1}, {0}.{1})) return false;\n");
+  private static final @NonNls MessageFormat FIELD_COMPARER_MF = new MessageFormat("if({1}!=null ? !{1}.equals({0}.{1}) : {0}.{1}!= null)return false;\n");
+  private static final @NonNls MessageFormat NON_NULL_FIELD_COMPARER_MF = new MessageFormat("if(!{1}.equals({0}.{1}))return false;\n");
+  private static final @NonNls MessageFormat PRIMITIVE_FIELD_COMPARER_MF = new MessageFormat("if({1}!={0}.{1})return false;\n");
+  private static final @NonNls MessageFormat DOUBLE_FIELD_COMPARER_MF = new MessageFormat("if({0}.compare({1}.{2}, {2}) != 0)return false;\n");
 
   private void addArrayEquals(StringBuffer buffer, PsiField field) {
     final PsiType fieldType = field.getType();
     if (isNestedArray(fieldType)) {
-      buffer.append(" // Compare nested arrays - values of " + field.getName() + " here\n");
+      buffer.append(" ");
+      buffer.append(CodeInsightBundle.message("generate.equals.compare.nested.arrays.comment", field.getName()));
+      buffer.append("\n");
       return;
     }
     if (isArrayOfObjects(fieldType)) {
-      buffer.append(" // Probably incorrect - comparing Object[] arrays with Arrays.equals\n");
+      buffer.append(" ");
+      buffer.append(CodeInsightBundle.message("generate.equals.compare.arrays.comment"));
+      buffer.append("\n");
     }
 
     ARRAY_COMPARER_MF.format(getComparerFormatParameters(field), buffer, null);
@@ -240,24 +248,24 @@ public class GenerateEqualsHelper implements Runnable {
     PRIMITIVE_FIELD_COMPARER_MF.format(getComparerFormatParameters(field), buffer, null);
   }
 
-  private void addInstanceOfToText(StringBuffer buffer, String returnValue) {
+  private void addInstanceOfToText(@NonNls StringBuffer buffer, String returnValue) {
     buffer.append("if(" + myParameterName + "== null || getClass() != " + myParameterName + ".getClass()) " +
-            "return " + returnValue + ";\n");
+                  "return " + returnValue + ";\n");
   }
 
-  private void addEqualsPrologue(StringBuffer buffer) {
+  private void addEqualsPrologue(@NonNls StringBuffer buffer) {
     buffer.append("if(this==" + myParameterName + ") return true;\n");
     if (!superMethodExists(getEqualsSignature(myProject, myClass.getResolveScope()))) {
-      addInstanceOfToText(buffer, "false");
+      addInstanceOfToText(buffer, Boolean.toString(false));
     } else {
-      addInstanceOfToText(buffer, "false");
+      addInstanceOfToText(buffer, Boolean.toString(false));
       buffer.append("if(!super.equals(");
       buffer.append(myParameterName);
       buffer.append(")) return false;\n");
     }
   }
 
-  private void addClassInstance(StringBuffer buffer) {
+  private void addClassInstance(@NonNls StringBuffer buffer) {
     buffer.append("\n");
     // A a = (A) object;
     buffer.append("final ");
@@ -279,7 +287,7 @@ public class GenerateEqualsHelper implements Runnable {
   }
 
   private PsiMethod createHashCode() throws IncorrectOperationException {
-    StringBuffer buffer = new StringBuffer();
+    @NonNls StringBuffer buffer = new StringBuffer();
     buffer.append("public int hashCode() {\n");
 
     if(!mySuperHasHashCode && myHashCodeFields.length == 1) {
@@ -295,7 +303,7 @@ public class GenerateEqualsHelper implements Runnable {
     } else if (myHashCodeFields.length > 0) {
       CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(myCodeStyleManager.getProject());
       final String resultName = getUniqueLocalVarName(
-              settings.LOCAL_VARIABLE_NAME_PREFIX + "result", myHashCodeFields);
+              settings.LOCAL_VARIABLE_NAME_PREFIX + RESULT_VARIABLE, myHashCodeFields);
 
       buffer.append("int ");
       buffer.append(resultName);
@@ -343,16 +351,16 @@ public class GenerateEqualsHelper implements Runnable {
     }
   }
 
-  private void addTempForDoubleInitialization(PsiField field, StringBuffer buffer) {
+  private void addTempForDoubleInitialization(PsiField field, @NonNls StringBuffer buffer) {
     buffer.append(" = " + field.getName() + " != +0.0d ? Double.doubleToLongBits(");
     buffer.append(field.getName());
     buffer.append(") : 0L;\n");
   }
 
-  private String addTempDeclaration(StringBuffer buffer) {
+  private String addTempDeclaration(@NonNls StringBuffer buffer) {
     for (PsiField hashCodeField : myHashCodeFields) {
       if (PsiType.DOUBLE == hashCodeField.getType()) {
-        final String name = getUniqueLocalVarName("temp", myHashCodeFields);
+        final String name = getUniqueLocalVarName(TEMP_VARIABLE, myHashCodeFields);
         buffer.append("long " + name + ";\n");
         return name;
       }
@@ -360,9 +368,9 @@ public class GenerateEqualsHelper implements Runnable {
     return null;
   }
 
-  private String addTempForOneField(PsiField field, StringBuffer buffer) {
+  private String addTempForOneField(PsiField field, @NonNls StringBuffer buffer) {
     if(field.getType() == PsiType.DOUBLE) {
-      final String name = getUniqueLocalVarName("temp", myHashCodeFields);
+      final String name = getUniqueLocalVarName(TEMP_VARIABLE, myHashCodeFields);
       buffer.append("final long " + name);
       addTempForDoubleInitialization(field, buffer);
       return name;
@@ -376,7 +384,7 @@ public class GenerateEqualsHelper implements Runnable {
     buffer.append(format.format(new Object[]{field.getName(), tempName}));
   }
 
-  private void addFieldHashCode(StringBuffer buffer, PsiField field) {
+  private void addFieldHashCode(@NonNls StringBuffer buffer, PsiField field) {
     final String name = field.getName();
     if (myNonNullSet.contains(field)) {
       buffer.append(name);
@@ -390,7 +398,7 @@ public class GenerateEqualsHelper implements Runnable {
     }
   }
 
-  private void addSuperHashCode(StringBuffer buffer) {
+  private void addSuperHashCode(@NonNls StringBuffer buffer) {
     if (mySuperHasHashCode) {
       buffer.append("super.hashCode()");
     } else {
@@ -421,9 +429,13 @@ public class GenerateEqualsHelper implements Runnable {
   }
 
   static {
-    final MessageFormat castFormat = new MessageFormat("(int) {0}");
-    PRIMITIVE_HASHCODE_FORMAT.put("byte", castFormat);
-    PRIMITIVE_HASHCODE_FORMAT.put("short", castFormat);
+    initPrimitiveHashcodeFormats();
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  private static void initPrimitiveHashcodeFormats() {
+    PRIMITIVE_HASHCODE_FORMAT.put("byte", new MessageFormat("(int) {0}"));
+    PRIMITIVE_HASHCODE_FORMAT.put("short", new MessageFormat("(int) {0}"));
     PRIMITIVE_HASHCODE_FORMAT.put("int", new MessageFormat("{0}"));
     PRIMITIVE_HASHCODE_FORMAT.put("long", new MessageFormat("(int) ({0} ^ ({0} >>> 32))"));
     PRIMITIVE_HASHCODE_FORMAT.put("boolean", new MessageFormat("({0} ? 1 : 0)"));

@@ -90,6 +90,7 @@ public final class EditorsSplitters extends JPanel {
     }
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public Element writePanel(final JPanel panel) {
     final Component comp = panel.getComponent(0);
     if (comp instanceof Splitter) {
@@ -162,6 +163,7 @@ public final class EditorsSplitters extends JPanel {
     mySplittersElement = element;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public JPanel readExternalPanel(final Element element) {
     final Element splitterElement = element.getChild("splitter");
     if (splitterElement != null) {

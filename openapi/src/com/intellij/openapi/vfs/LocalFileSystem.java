@@ -18,14 +18,14 @@ package com.intellij.openapi.vfs;
 import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.util.Collection;
 import java.util.Set;
 
 public abstract class LocalFileSystem extends VirtualFileSystem {
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public static final String PROTOCOL = "file";
+  @NonNls public static final String PROTOCOL = "file";
 
   public static LocalFileSystem getInstance(){
 

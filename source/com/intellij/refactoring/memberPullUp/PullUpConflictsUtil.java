@@ -10,6 +10,7 @@ package com.intellij.refactoring.memberPullUp;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
@@ -90,17 +91,15 @@ public class PullUpConflictsUtil {
         if (!((PsiModifierListOwner)member).hasModifierProperty(PsiModifier.STATIC)
             && !(member instanceof PsiClass && ((PsiClass)member).isInterface())) {
           String message =
-            ConflictsUtil.getDescription(member, false) + " is not static. "
-            + " It cannot be moved to the interface";
+            RefactoringBundle.message("0.is.not.static.it.cannot.be.moved.to.the.interface", ConflictsUtil.getDescription(member, false));
           message = ConflictsUtil.capitalize(message);
           conflictsList.add(message);
         }
       }
 
       if (member instanceof PsiField && ((PsiField)member).getInitializer() == null) {
-        String message =
-          ConflictsUtil.getDescription(member, false) + " is not initialized in declaration. " +
-          "Such fields are not allowed in interfaces.";
+        String message = RefactoringBundle.message("0.is.not.initialized.in.declaration.such.fields.are.not.allowed.in.interfaces",
+                                                   ConflictsUtil.getDescription(member, false));
         conflictsList.add(ConflictsUtil.capitalize(message));
       }
     }
@@ -124,9 +123,9 @@ public class PullUpConflictsUtil {
       }
 
       if (isConflict) {
-        String message =
-          ConflictsUtil.getDescription(superClass, false) + " already contains a "
-          + ConflictsUtil.getDescription(member, false);
+        String message = RefactoringBundle.message("0.already.contains.a.1",
+                                                   ConflictsUtil.getDescription(superClass, false),
+                                                   ConflictsUtil.getDescription(member, false));
         message = ConflictsUtil.capitalize(message);
         conflictsList.add(message);
       }
@@ -177,9 +176,9 @@ public class PullUpConflictsUtil {
             isAccessible = classMember.hasModifierProperty(PsiModifier.PUBLIC);
           }
           if (!isAccessible) {
-            String message =
-              ConflictsUtil.getDescription(myScope, false) + " uses " +
-              ConflictsUtil.getDescription(classMember, true) + ", which is not accessible from the superclass";
+            String message = RefactoringBundle.message("0.uses.1.which.is.not.accessible.from.the.superclass",
+                                                       ConflictsUtil.getDescription(myScope, false),
+                                                       ConflictsUtil.getDescription(classMember, true));
             message = ConflictsUtil.capitalize(message);
             myConflictsList.add(message);
 
@@ -188,9 +187,9 @@ public class PullUpConflictsUtil {
         }
         if (!myAbstractMethods.contains(classMember) && !willBeMoved(classMember)) {
           if (!existsInSuperClass(classMember)) {
-            String message =
-              ConflictsUtil.getDescription(myScope, false) + " uses " +
-              ConflictsUtil.getDescription(classMember, true) + ", which is not moved to the superclass";
+            String message = RefactoringBundle.message("0.uses.1.which.is.not.moved.to.the.superclass",
+                                                       ConflictsUtil.getDescription(myScope, false),
+                                                       ConflictsUtil.getDescription(classMember, true));
             message = ConflictsUtil.capitalize(message);
             myConflictsList.add(message);
           }

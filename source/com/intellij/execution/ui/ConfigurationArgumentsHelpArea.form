@@ -11,11 +11,11 @@
     <children>
       <component id="25a8e" class="javax.swing.JLabel" binding="myLabel">
         <constraints>
-          <xy x="0" y="9" width="478" height="15"/>
+          <xy x="0" y="10" width="478" height="14"/>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
         </constraints>
         <properties>
-          <text value="Use the following command line arguments for running remote JVM (you may copy and paste them)"/>
+          <text resource-bundle="messages/ExecutionBundle" key="environment.variables.helper.use.arguments.label"/>
         </properties>
       </component>
       <scrollpane id="f35c0">

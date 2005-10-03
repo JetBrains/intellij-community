@@ -5,21 +5,23 @@
 package com.intellij.ide.errorTreeView;
 
 import com.intellij.util.ui.MessageCategory;
+import com.intellij.ide.IdeBundle;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: Nov 12, 2004
  */
 public class ErrorTreeElementKind {
-  public static final ErrorTreeElementKind INFO = new ErrorTreeElementKind("INFO", "Information: ");
-  public static final ErrorTreeElementKind ERROR = new ErrorTreeElementKind("ERROR", "Error: ");
-  public static final ErrorTreeElementKind WARNING = new ErrorTreeElementKind("WARNING", "Warning: ");
+  public static final ErrorTreeElementKind INFO = new ErrorTreeElementKind("INFO", IdeBundle.message("errortree.information"));
+  public static final ErrorTreeElementKind ERROR = new ErrorTreeElementKind("ERROR", IdeBundle.message("errortree.error"));
+  public static final ErrorTreeElementKind WARNING = new ErrorTreeElementKind("WARNING", IdeBundle.message("errortree.warning"));
   public static final ErrorTreeElementKind GENERIC = new ErrorTreeElementKind("GENERIC", "");
 
   private final String myText;
   private final String myPresentableText;
 
-  private ErrorTreeElementKind(String text, String presentableText) {
+  private ErrorTreeElementKind(@NonNls String text, String presentableText) {
     myText = text;
     myPresentableText = presentableText;
   }

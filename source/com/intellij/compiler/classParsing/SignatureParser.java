@@ -1,5 +1,7 @@
 package com.intellij.compiler.classParsing;
 
+import com.intellij.openapi.compiler.CompilerBundle;
+
 import java.text.CharacterIterator;
 
 /**
@@ -19,7 +21,7 @@ public class SignatureParser {
 
   public void parseFormalTypeParameters(CharacterIterator it, final StringBuffer buf) throws SignatureParsingException {
     if (it.current() != '<') {
-      throw new SignatureParsingException("'<' expected");
+      throw new SignatureParsingException(CompilerBundle.message("error.signature.parsing.expected.other.symbol", "<", buf.toString()));
     }
 
     buf.append(it.current()); // skip '<'
@@ -44,7 +46,7 @@ public class SignatureParser {
 
   public void parseClassBound(CharacterIterator it, final StringBuffer buf) throws SignatureParsingException {
     if (it.current() != ':') {
-      throw new SignatureParsingException("':' expected");
+      throw new SignatureParsingException(CompilerBundle.message("error.signature.parsing.expected.other.symbol", ":", buf.toString()));
     }
     buf.append(it.current());
     it.next();
@@ -57,7 +59,7 @@ public class SignatureParser {
 
   public void parseInterfaceBound(CharacterIterator it, final StringBuffer buf) throws SignatureParsingException {
     if (it.current() != ':') {
-      throw new SignatureParsingException("':' expected");
+      throw new SignatureParsingException(CompilerBundle.message("error.signature.parsing.expected.other.symbol", ":", buf.toString()));
     }
     buf.append(it.current());
     it.next();
@@ -83,7 +85,8 @@ public class SignatureParser {
       parseTypeVariableSignature(it, buf);
     }
     else {
-      throw new SignatureParsingException("Expected either 'L' or '[' or 'T': " + buf.toString());
+      //noinspection HardCodedStringLiteral
+      throw new SignatureParsingException(CompilerBundle.message("error.signature.parsing.expected.other.symbol", "'L' / '[' / 'T'", buf.toString()));
     }
   }
 
@@ -95,7 +98,7 @@ public class SignatureParser {
       parseClassTypeSignatureSuffix(it, buf);
     }
     if (it.current() != ';') {
-      throw new SignatureParsingException("';' expected: " + buf.toString());
+      throw new SignatureParsingException(CompilerBundle.message("error.signature.parsing.expected.other.symbol", ";", buf.toString()));
     }
     buf.append(it.current());
     it.next(); // consume ';'
@@ -119,7 +122,7 @@ public class SignatureParser {
     it.next(); // consume 'T'
     parseIdentifier(it, buf);
     if (it.current() != ';') {
-      throw new SignatureParsingException("';' expected");
+      throw new SignatureParsingException(CompilerBundle.message("error.signature.parsing.expected.other.symbol", ";", buf.toString()));
     }
     buf.append(it.current());
     it.next(); // consume ';'
@@ -163,7 +166,7 @@ public class SignatureParser {
       parseFieldTypeSignature(it, buf);
     }
     else {
-      throw new SignatureParsingException("Unknown type signature");
+      throw new SignatureParsingException(CompilerBundle.message("error.signature.parsing.unknown.type.signature"));
     }
   }
 
@@ -179,7 +182,7 @@ public class SignatureParser {
 
   public void parseThrowsSignature(CharacterIterator it, final StringBuffer buf) throws SignatureParsingException {
     if (it.current() != '^') {
-      throw new SignatureParsingException("'^' expected");
+      throw new SignatureParsingException(CompilerBundle.message("error.signature.parsing.expected.other.symbol", "^", buf.toString()));
     }
     buf.append(it.current());
     it.next();
@@ -197,7 +200,7 @@ public class SignatureParser {
     }
 
     if (it.current() != '(') {
-      throw new SignatureParsingException("'(' expected");
+      throw new SignatureParsingException(CompilerBundle.message("error.signature.parsing.expected.other.symbol", "(", buf.toString()));
     }
 
     buf.append(it.current());

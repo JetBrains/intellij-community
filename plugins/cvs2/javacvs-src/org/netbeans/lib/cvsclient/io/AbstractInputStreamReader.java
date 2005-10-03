@@ -91,7 +91,8 @@ public abstract class AbstractInputStreamReader extends Reader {
 
 	// Utils ==================================================================
 
-	private void ensureOpen() throws IOException {
+	@SuppressWarnings({"HardCodedStringLiteral"})
+        private void ensureOpen() throws IOException {
 		if (inputStream == null) {
 			throw new IOException("Stream closed");
 		}

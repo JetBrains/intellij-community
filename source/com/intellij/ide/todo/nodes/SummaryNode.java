@@ -6,6 +6,7 @@ import com.intellij.ide.todo.ToDoSummary;
 import com.intellij.ide.todo.TodoFileDirAndModuleComparator;
 import com.intellij.ide.todo.TodoTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -17,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
+import java.text.MessageFormat;
 
 public class SummaryNode extends BaseToDoNode<ToDoSummary> {
   public SummaryNode(Project project, ToDoSummary value, TodoTreeBuilder builder) {
@@ -44,7 +46,7 @@ public class SummaryNode extends BaseToDoNode<ToDoSummary> {
       }
     }
     else {
-      if (myToDoSettings.getIsPackagesShown()) {        
+      if (myToDoSettings.getIsPackagesShown()) {
         if (myBuilder instanceof CurrentFileTodosTreeBuilder){
           final Iterator allFiles = myBuilder.getAllFiles();
           if(allFiles.hasNext()){
@@ -73,18 +75,9 @@ public class SummaryNode extends BaseToDoNode<ToDoSummary> {
   }
 
   public void update(PresentationData presentation) {
-    StringBuffer sb = new StringBuffer();
     int todoItemCount = getValue().getTodoItemCount();
-    sb.append("Found ").append(todoItemCount).append(" TODO item");
-    if (todoItemCount != 1) {
-      sb.append('s');
-    }
     int fileCount = getValue().getFileCount();
-    sb.append(" in ").append(fileCount).append(" file");
-    if (fileCount != 1) {
-      sb.append('s');
-    }
-    presentation.setPresentableText(sb.toString());
+    presentation.setPresentableText(IdeBundle.message("node.todo.summary", todoItemCount, fileCount));
   }
 
   public String getTestPresentation() {

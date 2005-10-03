@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
@@ -22,7 +23,7 @@ public class EmptyIntentionAction implements IntentionAction{
   }
 
   public String getText() {
-    return "Inspection \'" + myName + "\' options";
+    return InspectionsBundle.message("inspection.options.action.text", myName);
   }
 
   public String getFamilyName() {

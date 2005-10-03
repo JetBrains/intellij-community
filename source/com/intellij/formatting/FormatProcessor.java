@@ -72,6 +72,7 @@ class FormatProcessor {
     return result;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public Element saveToXml(Block root) {
     final Element result = new Element("Block");
     final TextRange textRange = root.getTextRange();
@@ -108,6 +109,7 @@ class FormatProcessor {
     return result;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private Element save(final SpacingImpl spaceProperty) {
     final Element result = new Element("Space");
     spaceProperty.refresh(this);
@@ -117,6 +119,7 @@ class FormatProcessor {
     return result;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private Element save(final WrapImpl wrap) {
     final Element result = new Element("Wrap");
     result.setAttribute("type", wrap.getType().toString());
@@ -124,12 +127,14 @@ class FormatProcessor {
     return result;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private Element save(final IndentImpl indent) {
     final Element element = new Element("Indent");
     element.setAttribute("type", indent.getType().toString());
     return element;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private Element save(final AlignmentImpl alignment) {
     final Element result = new Element("Alignment");
     result.setAttribute("id", alignment.getId());

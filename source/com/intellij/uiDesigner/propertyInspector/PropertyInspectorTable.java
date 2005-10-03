@@ -258,6 +258,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
    * Standard JTable's UI has non convenient keybinding for
    * editing. Therefore we have to replace some standard actions.
    */
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public void setUI(final TableUI ui){
     super.setUI(ui);
 
@@ -520,10 +521,10 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     catch (final Exception exc) {
       final Throwable cause = exc.getCause();
       if(cause != null){
-        Messages.showMessageDialog(cause.getMessage(), "Invalid Input", Messages.getErrorIcon());
+        Messages.showMessageDialog(cause.getMessage(), UIDesignerBundle.message("title.invalid.input"), Messages.getErrorIcon());
       }
       else{
-        Messages.showMessageDialog(exc.getMessage(), "Invalid Input", Messages.getErrorIcon());
+        Messages.showMessageDialog(exc.getMessage(), UIDesignerBundle.message("title.invalid.input"), Messages.getErrorIcon());
       }
     }
     finally {
@@ -617,7 +618,9 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     private final String[] myColumnNames;
 
     public MyModel(){
-      myColumnNames=new String[]{"Property","Value"};
+      myColumnNames=new String[]{
+        UIDesignerBundle.message("column.property"),
+        UIDesignerBundle.message("column.value")};
     }
 
     public int getColumnCount(){
@@ -642,6 +645,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
 
     public void setValueAt(final Object newValue, final int row, final int column){
       if (column != 1){
+        //noinspection HardCodedStringLiteral
         throw new IllegalArgumentException("wrong index: " + column);
       }
       final Property property=myProperties.get(row);
@@ -661,7 +665,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
         if(e instanceof InvocationTargetException){ // special handling of warapped exceptions
           e = ((InvocationTargetException)e).getTargetException();
         }
-        Messages.showMessageDialog(e.getMessage(), "Invalid Input", Messages.getErrorIcon());
+        Messages.showMessageDialog(e.getMessage(), UIDesignerBundle.message("title.invalid.input"), Messages.getErrorIcon());
         return;
       }
 
@@ -679,10 +683,10 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
         catch (final Exception exc) {
           final Throwable cause = exc.getCause();
           if(cause != null){
-            Messages.showMessageDialog(cause.getMessage(), "Invalid Input", Messages.getErrorIcon());
+            Messages.showMessageDialog(cause.getMessage(), UIDesignerBundle.message("title.invalid.input"), Messages.getErrorIcon());
           }
           else{
-            Messages.showMessageDialog(exc.getMessage(), "Invalid Input", Messages.getErrorIcon());
+            Messages.showMessageDialog(exc.getMessage(), UIDesignerBundle.message("title.invalid.input"), Messages.getErrorIcon());
           }
           return;
         }
@@ -794,6 +798,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
         return component;
       }
       else{
+        //noinspection HardCodedStringLiteral
         throw new IllegalArgumentException("wrong column: "+column);
       }
 
@@ -819,6 +824,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
 
     public void setEditor(final PropertyEditor editor){
       if (editor == null) {
+        //noinspection HardCodedStringLiteral
         throw new IllegalArgumentException("editor cannot be null");
       }
       myEditor = editor;

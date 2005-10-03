@@ -24,7 +24,7 @@
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
-              <text value="Generate multiple-file ant build (requires ant 1.6 or later to execute)"/>
+              <text resource-bundle="messages/CompilerBundle" key="label.generate.ant.script.generate.multiple.files"/>
             </properties>
           </component>
           <component id="f1821" class="javax.swing.JRadioButton" binding="myRbGenerateSingleFileBuild">
@@ -33,7 +33,7 @@
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
-              <text value="Generate single-file ant build"/>
+              <text resource-bundle="messages/CompilerBundle" key="label.generate.ant.script.single.file"/>
             </properties>
           </component>
           <component id="81381" class="javax.swing.JRadioButton" binding="myRbBackupFiles">
@@ -42,7 +42,7 @@
               <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
-              <text value="Backup previously generated files"/>
+              <text resource-bundle="messages/CompilerBundle" key="label.generate.ant.script.backup.files"/>
             </properties>
           </component>
           <component id="a019e" class="javax.swing.JRadioButton" binding="myRbOverwriteFiles">
@@ -51,7 +51,7 @@
               <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
-              <text value="Overwrite previously generated files"/>
+              <text resource-bundle="messages/CompilerBundle" key="label.generate.ant.script.overwrite.files"/>
             </properties>
           </component>
         </children>
@@ -62,7 +62,7 @@
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="9" fill="0"/>
         </constraints>
         <properties>
-          <text value="Enable UI forms compilation (requires &quot;javac2&quot; ant task from IDEA distribution)"/>
+          <text resource-bundle="messages/CompilerBundle" key="label.generate.ant.script.enable.ui.forms.compilation"/>
         </properties>
       </component>
       <xy id="6f3e8" binding="myChunksPanel" hgap="-1" vgap="-1">
@@ -77,11 +77,11 @@
       </xy>
       <component id="c9ba" class="javax.swing.JCheckBox" binding="myCbForceTargetJdk">
         <constraints>
-          <xy x="0" y="87" width="81" height="24"/>
+          <xy x="0" y="87" width="252" height="24"/>
           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
         </constraints>
         <properties>
-          <text value="Use JSDK definitions from project files"/>
+          <text resource-bundle="messages/CompilerBundle" key="label.generate.ant.script.use.jdk.definitions"/>
         </properties>
       </component>
     </children>

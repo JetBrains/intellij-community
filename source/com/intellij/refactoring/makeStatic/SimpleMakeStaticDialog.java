@@ -12,6 +12,7 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiTypeParameterListOwner;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.ParameterTablePanel;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.usageView.UsageViewUtil;
@@ -25,7 +26,7 @@ public class SimpleMakeStaticDialog extends AbstractMakeStaticDialog {
   public SimpleMakeStaticDialog(Project project, PsiTypeParameterListOwner member) {
     super(project, member);
     String type = UsageViewUtil.getType(myMember);
-    setTitle("Make " + UsageViewUtil.capitalize(type) + " Static");
+    setTitle(RefactoringBundle.message("make.0.static", UsageViewUtil.capitalize(type)));
     init();
   }
 
@@ -69,7 +70,7 @@ public class SimpleMakeStaticDialog extends AbstractMakeStaticDialog {
     panel.add(createDescriptionLabel(), gbConstraints);
 
     gbConstraints.gridy++;
-    myCbReplaceUsages = new JCheckBox("Replace instance qualifiers with class references");
+    myCbReplaceUsages = new JCheckBox(RefactoringBundle.message("replace.instance.qualifiers.with.class.references"));
     panel.add(myCbReplaceUsages, gbConstraints);
     myCbReplaceUsages.setSelected(true);
     return panel;

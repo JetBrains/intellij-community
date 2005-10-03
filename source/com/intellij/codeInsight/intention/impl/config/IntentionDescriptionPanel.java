@@ -3,11 +3,13 @@
  */
 package com.intellij.codeInsight.intention.impl.config;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
-import com.intellij.openapi.fileTypes.FileType;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -26,14 +28,16 @@ public class IntentionDescriptionPanel {
   private JEditorPane myDescriptionBrowser;
   private List<IntentionUsagePanel> myBeforeUsagePanels = new ArrayList<IntentionUsagePanel>();
   private List<IntentionUsagePanel> myAfterUsagePanels = new ArrayList<IntentionUsagePanel>();
+  private static final @NonNls String BEFORE_TEMPLATE = "before.java.template";
+  private static final @NonNls String AFTER_TEMPLATE = "after.java.template";
 
   public void reset(IntentionActionMetaData actionMetaData)  {
     try {
-      myDescriptionBrowser.setText(loadText(actionMetaData.myDescription));
+      myDescriptionBrowser.setText(loadText(actionMetaData.getDescription()));
       myDescriptionBrowser.setPreferredSize(new Dimension(20, 20));
 
-      showUsages(myBeforePanel, myBeforeUsagePanels, actionMetaData.myExampleUsagesBefore);
-      showUsages(myAfterPanel, myAfterUsagePanels, actionMetaData.myExampleUsagesAfter);
+      showUsages(myBeforePanel, myBeforeUsagePanels, actionMetaData.getExampleUsagesBefore());
+      showUsages(myAfterPanel, myAfterUsagePanels, actionMetaData.getExampleUsagesAfter());
 
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
@@ -48,17 +52,14 @@ public class IntentionDescriptionPanel {
   }
   public void reset(String intentionCategory)  {
     try {
-      String text = "<html><body><font face=\"verdana\" size=\"-1\"><center>You have selected intention category '<b>" + intentionCategory + "</b>'.</center>" +
-                    "<center>Clicking the checkbox you can enable/disable all intentions in this category.</center>" +
-                    "<center>To enable/disable particular intention, select the intention inside this category.</center>" +
-                    "</font></body></html>";
+      String text = CodeInsightBundle.message("intention.settings.category.text", intentionCategory);
 
       myDescriptionBrowser.setText(text);
       myDescriptionBrowser.setPreferredSize(new Dimension(20, 20));
 
-      URL beforeURL = getClass().getClassLoader().getResource(getClass().getPackage().getName().replace('.','/') + "/before.java.template");
+      URL beforeURL = getClass().getClassLoader().getResource(getClass().getPackage().getName().replace('.','/') + "/" + BEFORE_TEMPLATE);
       showUsages(myBeforePanel, myBeforeUsagePanels, new URL[]{beforeURL});
-      URL afterURL = getClass().getClassLoader().getResource(getClass().getPackage().getName().replace('.','/') + "/after.java.template");
+      URL afterURL = getClass().getClassLoader().getResource(getClass().getPackage().getName().replace('.','/') + "/" + AFTER_TEMPLATE);
       showUsages(myAfterPanel, myAfterUsagePanels, new URL[]{afterURL});
 
       SwingUtilities.invokeLater(new Runnable() {
@@ -95,7 +96,7 @@ public class IntentionDescriptionPanel {
 
     for (int i = 0; i < exampleUsages.length; i++) {
       final URL exampleUsage = exampleUsages[i];
-      final String name = StringUtil.trimEnd(exampleUsage.getPath(), IntentionManagerSettings.EXAMPLE_USAGE_URL_SUFFIX);
+      final String name = StringUtil.trimEnd(exampleUsage.getPath(), IntentionActionMetaData.EXAMPLE_USAGE_URL_SUFFIX);
       final FileTypeManagerEx fileTypeManager = FileTypeManagerEx.getInstanceEx();
       final String extension = fileTypeManager.getExtension(name);
       final FileType fileType = fileTypeManager.getFileTypeByExtension(extension);
@@ -110,7 +111,7 @@ public class IntentionDescriptionPanel {
       }
       usagePanel.reset(loadText(exampleUsage), fileType);
 
-      String title = StringUtil.trimEnd(new File(exampleUsage.getFile()).getName(), ".template");
+      String title = StringUtil.trimEnd(new File(exampleUsage.getFile()).getName(), IntentionActionMetaData.EXAMPLE_USAGE_URL_SUFFIX);
       usagePanel.setBorderText(title);
       if (!reuse) {
         if (i == exampleUsages.length) {

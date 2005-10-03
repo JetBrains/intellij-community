@@ -46,6 +46,7 @@ public class RendererConfiguration implements Cloneable, JDOMExternalizable {
     return DebuggerUtilsEx.externalizableEqual(this, (RendererConfiguration)o);
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public void writeExternal(final Element element) throws WriteExternalException {
     for (Iterator<NodeRenderer> iterator = myRepresentationNodes.iterator(); iterator.hasNext();) {
       NodeRenderer renderer = iterator.next();
@@ -54,6 +55,7 @@ public class RendererConfiguration implements Cloneable, JDOMExternalizable {
     element.setAttribute("VERSION", String.valueOf(VERSION));
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public void readExternal(final Element root) {
     String versionAttrib = root.getAttributeValue("VERSION");
     int configurationVersion = -1;
@@ -72,8 +74,7 @@ public class RendererConfiguration implements Cloneable, JDOMExternalizable {
     List<Element> children = root.getChildren(NodeRendererSettings.RENDERER_TAG);
 
     myRepresentationNodes.clear();
-    for (Iterator<Element> iterator = children.iterator(); iterator.hasNext();) {
-      Element nodeElement = iterator.next();
+    for (Element nodeElement : children) {
       try {
         addRenderer((NodeRenderer)myRendererSettings.readRenderer(nodeElement));
       }

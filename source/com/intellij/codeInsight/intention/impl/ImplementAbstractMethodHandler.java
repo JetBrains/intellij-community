@@ -8,18 +8,19 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.generation.OverrideImplementUtil;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
@@ -59,7 +60,7 @@ public class ImplementAbstractMethodHandler {
           result[0] = getClassImplementations(psiClass);
         }
       },
-      "Searching For Descendants...",
+      CodeInsightBundle.message("intention.implement.abstract.method.searching.for.descendants.progress"),
       true,
       myProject
     );
@@ -67,7 +68,10 @@ public class ImplementAbstractMethodHandler {
     if (result[0] == null) return;
 
     if (result[0].length == 0) {
-      Messages.showMessageDialog(myProject, "There are no classes found where this method can be implemented", "No Classes Found", Messages.getInformationIcon());
+      Messages.showMessageDialog(myProject,
+                                 CodeInsightBundle.message("intention.implement.abstract.method.error.no.classes.message"),
+                                 CodeInsightBundle.message("intention.implement.abstract.method.error.no.classes.title"),
+                                 Messages.getInformationIcon());
       return;
     }
 
@@ -93,7 +97,7 @@ public class ImplementAbstractMethodHandler {
       }
     };
 
-    ListPopup listPopup = new ListPopup(" Choose Implementing Class ", myList, runnable, myProject);
+    ListPopup listPopup = new ListPopup(CodeInsightBundle.message("intention.implement.abstract.method.class.chooser.title"), myList, runnable, myProject);
     LogicalPosition caretPosition = myEditor.getCaretModel().getLogicalPosition();
     Point caretLocation = myEditor.logicalPositionToXY(caretPosition);
     int x = caretLocation.x;
@@ -126,7 +130,7 @@ public class ImplementAbstractMethodHandler {
           }
         });
       }
-    }, "Implement method", null);
+    }, CodeInsightBundle.message("intention.implement.abstract.method.command.name"), null);
   }
 
   private PsiClass[] getClassImplementations(final PsiClass psiClass) {

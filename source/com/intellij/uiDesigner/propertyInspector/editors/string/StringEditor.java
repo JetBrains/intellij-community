@@ -10,6 +10,7 @@ import com.intellij.uiDesigner.RadComponent;
 import com.intellij.uiDesigner.editor.UIFormEditor;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -77,7 +78,7 @@ public final class StringEditor extends PropertyEditor{
       }
       else{ // bundled value
         textField.setEditable(false);
-        textField.setBackground(UIManager.getColor("TextField.background"));
+        textField.setBackground(UIUtil.getTextFieldBackground());
         textField.setText("[" + descriptor.getKey() + " / " + descriptor.getBundleName().replace('/', '.') + "]");
       }
     }
@@ -108,7 +109,11 @@ public final class StringEditor extends PropertyEditor{
         return null;
       }
       else{
-        return StringDescriptor.create(value);
+        final StringDescriptor stringDescriptor = StringDescriptor.create(value);
+        if (myValue != null && myValue.isNoI18n()) {
+          stringDescriptor.setNoI18n(true);
+        }
+        return stringDescriptor;
       }
     }
     else{ // editor is for "bundled" StringDescriptor

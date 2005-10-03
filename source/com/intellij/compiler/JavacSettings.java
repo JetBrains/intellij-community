@@ -40,6 +40,7 @@ public class JavacSettings implements JDOMExternalizable, ProjectComponent {
     myTestsUseExternalCompiler = testsUseExternalCompiler;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public String getOptionsString() {
     StringBuffer options = new StringBuffer();
     if(DEBUGGING_INFO) {

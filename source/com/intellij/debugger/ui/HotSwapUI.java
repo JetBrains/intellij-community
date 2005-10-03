@@ -1,6 +1,7 @@
 package com.intellij.debugger.ui;
 
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.impl.DebuggerManagerListener;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.HotSwapFile;
@@ -82,7 +83,7 @@ public class HotSwapUI implements ProjectComponent{
           final Application application = ApplicationManager.getApplication();
           application.invokeLater(new Runnable() {
             public void run() {
-              WindowManager.getInstance().getStatusBar(myProject).setInfo("Loaded classes are up to date. Nothing to reload.");
+              WindowManager.getInstance().getStatusBar(myProject).setInfo(DebuggerBundle.message("status.hotswap.uptodate"));
             }
           }, application.getDefaultModalityState());
           return;

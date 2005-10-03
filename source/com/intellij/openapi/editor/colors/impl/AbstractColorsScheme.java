@@ -13,6 +13,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import gnu.trove.THashMap;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import com.intellij.util.containers.HashMap;
 import com.intellij.codeInsight.CodeInsightColors;
 
@@ -36,11 +37,24 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   protected Map<ColorKey, Color> myColorsMap = new HashMap<ColorKey, Color>();
   protected Map<TextAttributesKey, TextAttributes> myAttributesMap = new HashMap<TextAttributesKey, TextAttributes>();
 
-  private static final String DEFAULT_FONT_NAME = "Courier";
-  protected static final String EDITOR_FONT_NAME = "EDITOR_FONT_NAME";
-  protected static final String SCHEME_NAME = "SCHEME_NAME";
+  @NonNls private static final String DEFAULT_FONT_NAME = "Courier";
+  @NonNls private static final String EDITOR_FONT_NAME = "EDITOR_FONT_NAME";
+  @NonNls protected static final String SCHEME_NAME = "SCHEME_NAME";
   protected DefaultColorSchemesManager myDefaultColorSchemesManager;
   private Color myDeprecatedBackgroundColor = null;
+  @NonNls private static final String SCHEME_ELEMENT = "scheme";
+  @NonNls public static final String NAME_ATTR = "name";
+  @NonNls private static final String VERSION_ATTR = "version";
+  @NonNls private static final String DEFAULT_SCHEME_ATTR = "default_scheme";
+  @NonNls private static final String PARENT_SCHEME_ATTR = "parent_scheme";
+  @NonNls protected static final String DEFAULT_SCHEME_NAME = "Default";
+  @NonNls private static final String OPTION_ELEMENT = "option";
+  @NonNls private static final String COLORS_ELEMENT = "colors";
+  @NonNls private static final String ATTRIBUTES_ELEMENT = "attributes";
+  @NonNls private static final String VALUE_ELEMENT = "value";
+  @NonNls private static final String BACKGROUND_COLOR_NAME = "BACKGROUND";
+  @NonNls private static final String LINE_SPACING = "LINE_SPACING";
+  @NonNls private static final String EDITOR_FONT_SIZE = "EDITOR_FONT_SIZE";
 
   protected AbstractColorsScheme(EditorColorsScheme parentScheme, DefaultColorSchemesManager defaultColorSchemesManager) {
     myParentScheme = parentScheme;
@@ -147,10 +161,10 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   }
 
   public void readExternal(Element parentNode) throws InvalidDataException {
-    if ("scheme".equals(parentNode.getName())) {
+    if (SCHEME_ELEMENT.equals(parentNode.getName())) {
       readScheme(parentNode);
     } else {
-      for (final Object o : parentNode.getChildren("scheme")) {
+      for (final Object o : parentNode.getChildren(SCHEME_ELEMENT)) {
         Element element = (Element)o;
         readScheme(element);
       }
@@ -160,25 +174,25 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
 
   private void readScheme(Element node) throws InvalidDataException {
     myDeprecatedBackgroundColor = null;
-    if ("scheme".equals(node.getName())) {
-      setName(node.getAttributeValue("name"));
-      myVersion = Integer.parseInt(node.getAttributeValue("version", "0"));
-      String isDefaultScheme = node.getAttributeValue("default_scheme");
-      if (isDefaultScheme == null || "false".equals(isDefaultScheme)) {
-        String parentSchemeName = node.getAttributeValue("parent_scheme");
-        if (parentSchemeName == null) parentSchemeName = "Default";
+    if (SCHEME_ELEMENT.equals(node.getName())) {
+      setName(node.getAttributeValue(NAME_ATTR));
+      myVersion = Integer.parseInt(node.getAttributeValue(VERSION_ATTR, "0"));
+      String isDefaultScheme = node.getAttributeValue(DEFAULT_SCHEME_ATTR);
+      if (isDefaultScheme == null || !Boolean.valueOf(isDefaultScheme)) {
+        String parentSchemeName = node.getAttributeValue(PARENT_SCHEME_ATTR);
+        if (parentSchemeName == null) parentSchemeName = DEFAULT_SCHEME_NAME;
         myParentScheme = myDefaultColorSchemesManager.getScheme(parentSchemeName);
       }
 
       for (final Object o : node.getChildren()) {
         Element childNode = (Element)o;
-        if ("option".equals(childNode.getName())) {
+        if (OPTION_ELEMENT.equals(childNode.getName())) {
           readSettings(childNode);
         }
-        else if ("colors".equals(childNode.getName())) {
+        else if (COLORS_ELEMENT.equals(childNode.getName())) {
           readColors(childNode);
         }
-        else if ("attributes".equals(childNode.getName())) {
+        else if (ATTRIBUTES_ELEMENT.equals(childNode.getName())) {
           readAttributes(childNode);
         }
       }
@@ -199,11 +213,11 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   }
 
   private void readAttributes(Element childNode) throws InvalidDataException {
-    for (final Object o : childNode.getChildren("option")) {
+    for (final Object o : childNode.getChildren(OPTION_ELEMENT)) {
       Element e = (Element)o;
-      TextAttributesKey name = TextAttributesKey.find(e.getAttributeValue("name"));
+      TextAttributesKey name = TextAttributesKey.find(e.getAttributeValue(NAME_ATTR));
       TextAttributes attr = new TextAttributes();
-      Element value = e.getChild("value");
+      Element value = e.getChild(VALUE_ELEMENT);
       attr.readExternal(value);
       myAttributesMap.put(name, attr);
       migrateErrorStripeColorFrom45(name, attr);
@@ -228,11 +242,11 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   }
 
   private void readColors(Element childNode) {
-    for (final Object o : childNode.getChildren("option")) {
+    for (final Object o : childNode.getChildren(OPTION_ELEMENT)) {
       Element colorElement = (Element)o;
       Color valueColor = readColorValue(colorElement);
-      final String colorName = colorElement.getAttributeValue("name");
-      if ("BACKGROUND".equals(colorName)) {
+      final String colorName = colorElement.getAttributeValue(NAME_ATTR);
+      if (BACKGROUND_COLOR_NAME.equals(colorName)) {
         // This setting has been deprecated to usages of HighlighterColors.TEXT attributes.
         myDeprecatedBackgroundColor = valueColor;
       }
@@ -243,7 +257,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   }
 
   private static Color readColorValue(final Element colorElement) {
-    String value = colorElement.getAttributeValue("value");
+    String value = colorElement.getAttributeValue(VALUE_ELEMENT);
     Color valueColor = null;
     if (value != null && value.trim().length() > 0) {
       try {
@@ -255,44 +269,44 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   }
 
   private void readSettings(Element childNode) {
-    String name = childNode.getAttributeValue("name");
-    String value = childNode.getAttributeValue("value");
-    if ("LINE_SPACING".equals(name)) {
+    String name = childNode.getAttributeValue(NAME_ATTR);
+    String value = childNode.getAttributeValue(VALUE_ELEMENT);
+    if (LINE_SPACING.equals(name)) {
       myLineSpacing = Float.parseFloat(value);
     }
-    else if ("EDITOR_FONT_SIZE".equals(name)) {
+    else if (EDITOR_FONT_SIZE.equals(name)) {
       myEditorFontSize = Integer.parseInt(value);
     }
-    else if ("EDITOR_FONT_NAME".equals(name)) {
+    else if (AbstractColorsScheme.EDITOR_FONT_NAME.equals(name)) {
       setEditorFontName(value);
     }
   }
 
   public void writeExternal(Element parentNode) throws WriteExternalException {
-    parentNode.setAttribute("name", getName());
-    parentNode.setAttribute("version", Integer.toString(myVersion));
+    parentNode.setAttribute(NAME_ATTR, getName());
+    parentNode.setAttribute(VERSION_ATTR, Integer.toString(myVersion));
 
     if (myParentScheme != null) {
-      parentNode.setAttribute("parent_scheme", myParentScheme.getName());
+      parentNode.setAttribute(PARENT_SCHEME_ATTR, myParentScheme.getName());
     }
 
-    Element element = new Element("option");
-    element.setAttribute("name", "LINE_SPACING");
-    element.setAttribute("value", String.valueOf(getLineSpacing()));
+    Element element = new Element(OPTION_ELEMENT);
+    element.setAttribute(NAME_ATTR, LINE_SPACING);
+    element.setAttribute(VALUE_ELEMENT, String.valueOf(getLineSpacing()));
     parentNode.addContent(element);
 
-    element = new Element("option");
-    element.setAttribute("name", "EDITOR_FONT_SIZE");
-    element.setAttribute("value", String.valueOf(getEditorFontSize()));
+    element = new Element(OPTION_ELEMENT);
+    element.setAttribute(NAME_ATTR, EDITOR_FONT_SIZE);
+    element.setAttribute(VALUE_ELEMENT, String.valueOf(getEditorFontSize()));
     parentNode.addContent(element);
 
-    element = new Element("option");
-    element.setAttribute("name", "EDITOR_FONT_NAME");
-    element.setAttribute("value", getEditorFontName());
+    element = new Element(OPTION_ELEMENT);
+    element.setAttribute(NAME_ATTR, AbstractColorsScheme.EDITOR_FONT_NAME);
+    element.setAttribute(VALUE_ELEMENT, getEditorFontName());
     parentNode.addContent(element);
 
-    Element colorElements = new Element("colors");
-    Element attrElements = new Element("attributes");
+    Element colorElements = new Element(COLORS_ELEMENT);
+    Element attrElements = new Element(ATTRIBUTES_ELEMENT);
 
     writeColors(colorElements);
     writeAttributes(attrElements);
@@ -319,9 +333,9 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     for (TextAttributesKey key: list) {
       TextAttributes value = myAttributesMap.get(key);
       if (!haveToWrite(key,value,defaultAttr)) continue;
-      element = new Element("option");
-      element.setAttribute("name", key.getExternalName());
-      Element valueElement = new Element("value");
+      element = new Element(OPTION_ELEMENT);
+      element.setAttribute(NAME_ATTR, key.getExternalName());
+      Element valueElement = new Element(VALUE_ELEMENT);
       value.writeExternal(valueElement);
       element.addContent(valueElement);
       attrElements.addContent(element);
@@ -339,9 +353,9 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
           continue;
         }
       }
-      Element element = new Element("option");
-      element.setAttribute("name", key.getExternalName());
-      element.setAttribute("value", value != null ? Integer.toString(value.getRGB() & 0xFFFFFF, 16) : "");
+      Element element = new Element(OPTION_ELEMENT);
+      element.setAttribute(NAME_ATTR, key.getExternalName());
+      element.setAttribute(VALUE_ELEMENT, value != null ? Integer.toString(value.getRGB() & 0xFFFFFF, 16) : "");
       colorElements.addContent(element);
     }
   }

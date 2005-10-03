@@ -31,7 +31,7 @@ public class VcsException extends Exception {
 
   public VcsException(String message) {
     super(message);
-    String shownMessage = message == null ? "Unknown error" : message;
+    String shownMessage = message == null ? VcsBundle.message("exception.text.unknown.error") : message;
     myMessages = Collections.singleton(shownMessage);
   }
 

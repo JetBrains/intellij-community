@@ -13,6 +13,7 @@
 package org.netbeans.lib.cvsclient.request;
 
 import org.netbeans.lib.cvsclient.file.FileDetails;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author  Thomas Singer
@@ -20,23 +21,23 @@ import org.netbeans.lib.cvsclient.file.FileDetails;
 public abstract class ResponseExpectingRequest
         implements IRequest {
 
-	// Fields =================================================================
+        // Fields =================================================================
 
-	private final String requestString;
+        private final String requestString;
 
-	// Setup ==================================================================
+        // Setup ==================================================================
 
-	protected ResponseExpectingRequest(String requestString) {
-		this.requestString = requestString + '\n';
-	}
+        protected ResponseExpectingRequest(@NonNls String requestString) {
+                this.requestString = requestString + '\n';
+        }
 
-	// Implemented ============================================================
+        // Implemented ============================================================
 
-	public final String getRequestString() {
-		return requestString;
-	}
+        public final String getRequestString() {
+                return requestString;
+        }
 
-	public final FileDetails getFileForTransmission() {
-		return null;
-	}
+        public final FileDetails getFileForTransmission() {
+                return null;
+        }
 }

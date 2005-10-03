@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.FieldPanel;
 import com.intellij.ide.util.ElementsChooser;
+import com.intellij.ide.IdeBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -21,19 +22,22 @@ import java.io.File;
 import java.util.*;
 import java.util.List;
 
+import org.jetbrains.annotations.NonNls;
+
 public class ChooseComponentsToExportDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.ChooseComponentsToExportDialog");
 
   private ElementsChooser<ComponentElementProperties> myChooser;
   private FieldPanel myPathPanel;
   private ActionListener myBrowseAction;
+  @NonNls
   public static final String DEFAULT_PATH = FileUtil.toSystemDependentName(PathManager.getConfigPath()+"/"+"settings.jar");
   private final boolean myShowFilePath;
   private final String myDescription;
 
   public ChooseComponentsToExportDialog(List<ExportableApplicationComponent> components,
-                                Map<File, Set<ExportableApplicationComponent>> fileToComponents,
-                                boolean showFilePath, final String title, String description) {
+                                        Map<File, Set<ExportableApplicationComponent>> fileToComponents,
+                                        boolean showFilePath, final String title, String description) {
     super(false);
     myDescription = description;
     myShowFilePath = showFilePath;
@@ -58,13 +62,14 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
     myBrowseAction = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         String oldPath = myPathPanel.getText();
-        String path = chooseSettingsFile(oldPath, getWindow(), "Export File Location", "Choose export file path or directory where to create new file");
+        String path = chooseSettingsFile(oldPath, getWindow(), IdeBundle.message("title.export.file.location"), 
+                                         IdeBundle.message("prompt.choose.export.settings.file.path"));
         if (path == null) return;
         myPathPanel.setText(FileUtil.toSystemDependentName(path));
       }
     };
 
-    myPathPanel = new FieldPanel("Export settings to:", null, myBrowseAction, null);
+    myPathPanel = new FieldPanel(IdeBundle.message("editbox.export.settings.to"), null, myBrowseAction, null);
     myPathPanel.setText(DEFAULT_PATH);
 
     setTitle(title);
@@ -72,8 +77,8 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
   }
 
   private boolean addToExistingListElement(ExportableApplicationComponent component,
-                                 Map<ExportableApplicationComponent,ComponentElementProperties> componentToContainingListElement,
-                                 Map<File, Set<ExportableApplicationComponent>> fileToComponents) {
+                                           Map<ExportableApplicationComponent,ComponentElementProperties> componentToContainingListElement,
+                                           Map<File, Set<ExportableApplicationComponent>> fileToComponents) {
     final File[] exportFiles = component.getExportFiles();
     File file = null;
     for (int i = 0; i < exportFiles.length; i++) {

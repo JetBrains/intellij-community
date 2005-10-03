@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.memberPullUp.PullUpHelper;
 import com.intellij.refactoring.util.JavaDocPolicy;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
@@ -22,7 +23,7 @@ import com.intellij.util.IncorrectOperationException;
 public class ExtractInterfaceHandler implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.extractInterface.ExtractInterfaceHandler");
 
-  public static final String REFACTORING_NAME = "Extract Interface";
+  public static final String REFACTORING_NAME = RefactoringBundle.message("extract.interface.title");
 
 
   private Project myProject;
@@ -39,8 +40,7 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler {
     PsiElement element = file.findElementAt(offset);
     while (true) {
       if (element == null || element instanceof PsiFile) {
-        String message = "Cannot perform the refactoring.\n" +
-                "The caret should be positioned inside the class to be refactored.";
+        String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.class"));
         RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.EXTRACT_INTERFACE, project);
         return;
       }
@@ -88,8 +88,8 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler {
                 });
               }
             },
-            REFACTORING_NAME,
-            null
+        REFACTORING_NAME,
+        null
     );
 
   }
@@ -113,13 +113,12 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler {
     }
   }
 
-  static PsiClass extractInterface(PsiDirectory targetDir1,
-                                    PsiClass aClass,
-                                    String interfaceName,
-                                    MemberInfo[] selectedMembers,
-                                    JavaDocPolicy javaDocPolicy) throws IncorrectOperationException {
+  static PsiClass extractInterface(PsiDirectory targetDir,
+                                   PsiClass aClass,
+                                   String interfaceName,
+                                   MemberInfo[] selectedMembers,
+                                   JavaDocPolicy javaDocPolicy) throws IncorrectOperationException {
     PsiClass anInterface;
-    final PsiDirectory targetDir = targetDir1;
     anInterface = targetDir.createInterface(interfaceName);
     PullUpHelper pullUpHelper = new PullUpHelper(aClass, anInterface, selectedMembers, javaDocPolicy);
     pullUpHelper.moveMembersToBase();
@@ -131,7 +130,7 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler {
   }
 
   private String getCommandName() {
-    return "Extracting interface " + myInterfaceName + " from " + UsageViewUtil.getDescriptiveName(myClass);
+    return RefactoringBundle.message("extract.interface.command.name", myInterfaceName, UsageViewUtil.getDescriptiveName(myClass));
   }
 
 }

@@ -17,6 +17,7 @@ package com.intellij.ide.util;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NonNls;
 
 public abstract class PropertiesComponent {
 
@@ -28,14 +29,14 @@ public abstract class PropertiesComponent {
     return ApplicationManager.getApplication().getComponent(PropertiesComponent.class);
   }
 
-  public final boolean isTrueValue(String name) {
+  public final boolean isTrueValue(@NonNls String name) {
     return Boolean.valueOf(getValue(name)).booleanValue();
   }
 
   public abstract boolean isValueSet(String name);
 
-  public abstract String getValue(String name);
+  public abstract String getValue(@NonNls String name);
 
-  public abstract void setValue(String name, String value);
+  public abstract void setValue(@NonNls String name, String value);
 
 }

@@ -37,6 +37,7 @@ public class EncodeEachSymbolPolicy extends DefaultXmlPsiPolicy{
     return dummyParent.getFirstChildNode();
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static TreeElement createCharEntity(char ch, CharTable charTable) {
     switch (ch) {
       case '<':

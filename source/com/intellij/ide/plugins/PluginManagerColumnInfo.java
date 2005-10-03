@@ -3,12 +3,14 @@ package com.intellij.ide.plugins;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.SortableColumnModel;
+import com.intellij.ide.IdeBundle;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.text.SimpleDateFormat;
+import java.text.DateFormat;
 import java.util.Comparator;
 import java.util.Date;
 
@@ -30,7 +32,16 @@ class PluginManagerColumnInfo extends ColumnInfo {
   public static final int COLUMN_CATEGORY = 7;
   public static final int COLUMN_STATE = 8;
 
-  public static final String [] COLUMNS = {"Name", "Status", "Installed", "Version", "Date", "Size", "Downloads", "Category", "State"};
+  public static final String [] COLUMNS = {
+    IdeBundle.message("column.plugins.name"),
+    IdeBundle.message("column.plugins.status"),
+    IdeBundle.message("column.plugins.installed"),
+    IdeBundle.message("column.plugins.version"),
+    IdeBundle.message("column.plugins.date"),
+    IdeBundle.message("column.plugins.size"),
+    IdeBundle.message("column.plugins.downloads"),
+    IdeBundle.message("column.plugins.category"),
+    IdeBundle.message("column.plugins.state")};
   public static final int [] PREFERRED_WIDTH = {300, 80, 80, 80, 80, 80, 80, 80, 80};
 
   private int columnIdx;
@@ -58,12 +69,12 @@ class PluginManagerColumnInfo extends ColumnInfo {
         case COLUMN_INSTALLED_VERSION:
           PluginDescriptor existing = PluginManager.getPlugin(plugin.getId());
           if (existing == null)
-            return "n/a";
+            return IdeBundle.message("plugin.info.not.available");
           else
             return existing.getVersion();
         case COLUMN_VERSION:
           if (plugin.getVersion() == null)
-            return "n/a";
+            return IdeBundle.message("plugin.info.not.available");
           else
             return plugin.getVersion();
         case COLUMN_STATUS:
@@ -71,17 +82,17 @@ class PluginManagerColumnInfo extends ColumnInfo {
         case COLUMN_SIZE:
           final String size = plugin.getSize();
           if (size.equals("-1")) {
-            return "unknown";
+            return IdeBundle.message("plugin.info.unknown");
           }
           return size;
         case COLUMN_DOWNLOADS:
           return plugin.getDownloads();
         case COLUMN_DATE:
           if (plugin.getDate() != null)
-            return new SimpleDateFormat ("MMM dd, yyyy HH:mm").format(
+            return DateFormat.getDateInstance(DateFormat.MEDIUM).format(
               new Date (Long.valueOf(plugin.getDate()).longValue()));
           else
-            return "n/a";
+            return IdeBundle.message("plugin.info.not.available");
         case COLUMN_CATEGORY:
           return ((CategoryNode)plugin.getParent()).getName();
         default:
@@ -96,8 +107,8 @@ class PluginManagerColumnInfo extends ColumnInfo {
           return ((PluginDescriptor) o).getVersion();
         case COLUMN_STATE:
           return ((PluginDescriptor) o).isDeleted() ?
-                 "Will be removed after restart" :
-                 "Installed";
+                 IdeBundle.message("status.plugin.will.be.removed.after.restart") :
+                 IdeBundle.message("status.plugin.installed");
         default:
           return "?";
       }
@@ -122,6 +133,7 @@ class PluginManagerColumnInfo extends ColumnInfo {
       String p2 = part2[idx];
 
       int cmp;
+      //noinspection HardCodedStringLiteral
       if (p1.matches("\\d+") && p2.matches("\\d+")) {
         cmp = new Integer(p1).compareTo(new Integer(p2));
       } else {

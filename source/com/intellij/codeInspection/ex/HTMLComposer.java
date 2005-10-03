@@ -9,11 +9,14 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.export.HTMLExporter;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.psi.*;
 
 import java.util.Iterator;
+
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author max
@@ -22,6 +25,16 @@ public abstract class HTMLComposer {
   private HTMLExporter myExporter;
   private int[] myListStack;
   private int myListStackTop;
+  @NonNls protected static final String BR = "<br>";
+  @NonNls protected static final String NBSP = "&nbsp;";
+  @NonNls protected static final String CODE_CLOSING = "</code>";
+  @NonNls protected static final String CODE_OPENING = "<code>";
+  @NonNls protected static final String FONT_CLOSING = "</font>";
+  @NonNls protected static final String B_OPENING = "<b>";
+  @NonNls protected static final String B_CLOSING = "</b>";
+  @NonNls protected static final String FONT_OPENING = "<font style=\"font-family:verdana;\"";
+  @NonNls protected static final String A_HREF_OPENING = "<a HREF=\"";
+  @NonNls protected static final String A_CLOSING = "</a>";
 
   protected HTMLComposer() {
     myListStack = new int[5];
@@ -42,70 +55,86 @@ public abstract class HTMLComposer {
     if (refEntity instanceof RefElement) {
       RefElement refElement = (RefElement)refEntity;
 
-      appendHeading(buf, "Name");
-      buf.append("<br>");
+      appendHeading(buf, InspectionsBundle.message("inspection.offline.view.tool.display.name.title"));
+      buf.append(BR);
       appendAfterHeaderIndention(buf);
       appendAccessModifier(buf, refElement);
       appendShortName(buf, refElement);
-      buf.append("<br><br>");
+      buf.append(BR).append(BR);
 
-      appendHeading(buf, "Location");
-      buf.append("<br>");
+      appendHeading(buf, InspectionsBundle.message("inspection.export.results.capitalized.location"));
+      buf.append(BR);
       appendAfterHeaderIndention(buf);
       appendLocation(buf, refElement);
-      buf.append("<br><br>");
+      buf.append(BR).append(BR);
     }
   }
 
-  public static void appendHeading(final StringBuffer buf, String name) {
+  public static void appendHeading(@NonNls final StringBuffer buf, String name) {
     buf.append(
       "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font style=\"font-family:verdana; font-weight:bold; color:#005555\"; size = \"3\">");
     buf.append(name);
     buf.append(":</font>");
   }
 
-  private static void appendAccessModifier(final StringBuffer buf, RefElement refElement) {
+  private static void appendAccessModifier(@NonNls final StringBuffer buf, RefElement refElement) {
     String modifier = refElement.getAccessModifier();
     if (modifier != null && modifier != PsiModifier.PACKAGE_LOCAL) {
       buf.append(modifier);
-      buf.append("&nbsp;");
+      buf.append(NBSP);
     }
   }
 
   private void appendLocation(final StringBuffer buf, final RefElement refElement) {
     RefEntity owner = refElement.getOwner();
-    buf.append("<font style=\"font-family:verdana;\"");
+    buf.append(FONT_OPENING);
     if (owner instanceof RefPackage) {
-      buf.append("package&nbsp;<code>");
+      buf.append(InspectionsBundle.message("inspection.export.results.package"));
+      buf.append(NBSP).append(CODE_OPENING);
       buf.append(RefUtil.getPackageName(refElement));
-      buf.append("</code>");
+      buf.append(CODE_CLOSING);
     }
     else if (owner instanceof RefMethod) {
-      buf.append("method&nbsp;");
+      buf.append(InspectionsBundle.message("inspection.export.results.method"));
+      buf.append(NBSP);
       appendElementReference(buf, (RefElement)owner);
     }
     else if (owner instanceof RefField) {
-      buf.append("field&nbsp;");
+      buf.append(InspectionsBundle.message("inspection.export.results.field"));
+      buf.append(NBSP);
       appendElementReference(buf, (RefElement)owner);
-      buf.append("&nbsp;initializer");
+      buf.append(NBSP);
+      buf.append(InspectionsBundle.message("inspection.export.results.initializer"));
     }
     else if (owner instanceof RefClass) {
       appendClassOrInterface(buf, (RefClass)owner, false);
-      buf.append("&nbsp;");
+      buf.append(NBSP);
       appendElementReference(buf, (RefElement)owner);
     }
-    buf.append("</font>");
+    buf.append(FONT_CLOSING);
   }
 
   protected static void appendClassOrInterface(StringBuffer buf, RefClass refClass, boolean capitalizeFirstLetter) {
     if (refClass.isInterface()) {
-      buf.append(capitalizeFirstLetter ? "Interface" : "interface");
+      buf.append(capitalizeFirstLetter ? InspectionsBundle.message("inspection.export.results.capitalized.interface") : InspectionsBundle.message("inspection.export.results.interface"));
     }
     else if (refClass.isAbstract()) {
-      buf.append(capitalizeFirstLetter ? "Abstract&nbsp;class" : "abstract&nbsp;class");
+      buf.append(capitalizeFirstLetter ? InspectionsBundle.message("inspection.export.results.capitalized.abstract.class") : InspectionsBundle.message("inspection.export.results.abstract.class"));
     }
     else {
-      buf.append(capitalizeFirstLetter ? "Class" : "class");
+      buf.append(capitalizeFirstLetter ? InspectionsBundle.message("inspection.export.results.capitalized.class") : InspectionsBundle.message("inspection.export.results.class"));
+    }
+  }
+
+  protected static String getClassOrInterface(RefClass refClass, boolean capitalizeFirstLetter) {
+    if (refClass.isInterface()) {
+      return capitalizeFirstLetter ? InspectionsBundle.message("inspection.export.results.capitalized.interface") : InspectionsBundle.message("inspection.export.results.interface");
+    }
+    else if (refClass.isAbstract()) {
+      return capitalizeFirstLetter ? InspectionsBundle.message("inspection.export.results.capitalized.abstract.class") : InspectionsBundle.message("inspection.export.results.abstract.class");
+    }
+    else {
+      return capitalizeFirstLetter ? InspectionsBundle.message("inspection.export.results.capitalized.class") : InspectionsBundle.message("inspection.export.results.class");
     }
   }
 
@@ -113,28 +142,31 @@ public abstract class HTMLComposer {
     refElement.accept(new RefVisitor() {
       public void visitClass(RefClass refClass) {
         if (refClass.isStatic()) {
-          buf.append("static&nbsp;");
+          buf.append(InspectionsBundle.message("inspection.export.results.static"));
+          buf.append(NBSP);
         }
 
         appendClassOrInterface(buf, refClass, false);
-        buf.append("&nbsp;<b><code>");
+        buf.append(NBSP).append(B_OPENING).append(CODE_OPENING);
         buf.append(refClass.getName());
-        buf.append("</code></b>");
+        buf.append(CODE_CLOSING).append(B_CLOSING);
       }
 
       public void visitField(RefField field) {
         PsiField psiField = (PsiField)field.getElement();
 
         if (field.isStatic()) {
-          buf.append("static&nbsp;");
+          buf.append(InspectionsBundle.message("inspection.export.results.static"));
+          buf.append(NBSP);
         }
 
-        buf.append("field&nbsp;<code>");
+        buf.append(InspectionsBundle.message("inspection.export.results.field"));
+        buf.append(NBSP).append(CODE_OPENING);
 
         buf.append(psiField.getType().getPresentableText());
-        buf.append("&nbsp;<b>");
+        buf.append(NBSP).append(B_OPENING);
         buf.append(psiField.getName());
-        buf.append("</b></code>");
+        buf.append(B_CLOSING).append(CODE_CLOSING);
       }
 
       public void visitMethod(RefMethod method) {
@@ -142,32 +174,33 @@ public abstract class HTMLComposer {
         PsiType returnType = psiMethod.getReturnType();
 
         if (method.isStatic()) {
-          buf.append("static&nbsp;");
+          buf.append(InspectionsBundle.message("inspection.export.results.static"));
+          buf.append(NBSP);
         }
         else if (method.isAbstract()) {
-          buf.append("abstract&nbsp;");
+          buf.append(InspectionsBundle.message("inspection.export.results.abstract"));
+          buf.append(NBSP);
         }
-
-        buf.append(method.isConstructor() ? "constructor&nbsp;" : "method&nbsp;");
-        buf.append("<code>");
+        buf.append(method.isConstructor() ? InspectionsBundle.message("inspection.export.results.constructor") : InspectionsBundle.message("inspection.export.results.method"));
+        buf.append(NBSP).append(CODE_OPENING);
 
         if (returnType != null) {
           buf.append(returnType.getPresentableText());
-          buf.append("&nbsp;");
+          buf.append(NBSP);
         }
 
-        buf.append("<b>");
+        buf.append(B_OPENING);
         buf.append(psiMethod.getName());
-        buf.append("</b>");
+        buf.append(B_CLOSING);
         appendMethodParameters(buf, psiMethod, true);
-        buf.append("</code>");
+        buf.append(CODE_CLOSING);
       }
 
       public void visitFile(RefFile file) {
         final PsiFile psiFile = (PsiFile)file.getElement();
-        buf.append("<b>");
+        buf.append(B_OPENING);
         buf.append(psiFile.getName());
-        buf.append("</b>");
+        buf.append(B_CLOSING);
       }
     });
   }
@@ -218,8 +251,8 @@ public abstract class HTMLComposer {
     appendElementReference(buf, refElement, true);
   }
 
-  public void appendElementReference(final StringBuffer buf, RefElement refElement, String linkText, String frameName) {
-    buf.append("<a HREF=\"");
+  public void appendElementReference(final StringBuffer buf, RefElement refElement, String linkText, @NonNls String frameName) {
+    buf.append(A_HREF_OPENING);
 
     if (myExporter == null) {
       buf.append(refElement.getURL());
@@ -229,18 +262,19 @@ public abstract class HTMLComposer {
     }
 
     if (frameName != null) {
-      buf.append("\" target=\"");
+      @NonNls final String target = "\" target=\"";
+      buf.append(target);
       buf.append(frameName);
     }
 
     buf.append("\">");
     buf.append(linkText);
-    buf.append("</a>");
+    buf.append(A_CLOSING);
   }
 
-  protected void appendQuickFix(final StringBuffer buf, String text, int index) {
+  protected void appendQuickFix(@NonNls final StringBuffer buf, String text, int index) {
     if (myExporter == null) {
-      buf.append("<font style=\"font-family:verdana;\"");
+      buf.append(FONT_OPENING);
       buf.append("<a HREF=\"file://bred.txt#invoke:" + index);
       buf.append("\">");
       buf.append(text);
@@ -248,7 +282,7 @@ public abstract class HTMLComposer {
     }
   }
 
-  private void appendElementReference(final StringBuffer buf, RefElement refElement, boolean isPackageIncluded) {
+  protected void appendElementReference(final StringBuffer buf, RefElement refElement, boolean isPackageIncluded) {
     appendElementReference(buf, refElement, isPackageIncluded, null);
   }
 
@@ -257,16 +291,16 @@ public abstract class HTMLComposer {
                                       boolean isPackageIncluded,
                                       String frameName) {
     if (refElement instanceof RefImplicitConstructor) {
-      buf.append("implicit constructor of ");
+      buf.append(InspectionsBundle.message("inspection.export.results.implicit.constructor"));
       refElement = ((RefImplicitConstructor)refElement).getOwnerClass();
     }
 
-    buf.append("<code>");
+    buf.append(CODE_OPENING);
     if (refElement instanceof RefField) {
       RefField field = (RefField)refElement;
       PsiField psiField = (PsiField)field.getElement();
       buf.append(psiField.getType().getPresentableText());
-      buf.append("&nbsp;");
+      buf.append(NBSP);
     }
     else if (refElement instanceof RefMethod) {
       RefMethod method = (RefMethod)refElement;
@@ -275,11 +309,11 @@ public abstract class HTMLComposer {
 
       if (returnType != null) {
         buf.append(returnType.getPresentableText());
-        buf.append("&nbsp;");
+        buf.append(NBSP);
       }
     }
 
-    buf.append("<a HREF=\"");
+    buf.append(A_HREF_OPENING);
 
     if (myExporter == null) {
       buf.append(refElement.getURL());
@@ -289,14 +323,15 @@ public abstract class HTMLComposer {
     }
 
     if (frameName != null) {
-      buf.append("\" target=\"");
+      @NonNls final String target = "\" target=\"";
+      buf.append(target);
       buf.append(frameName);
     }
 
     buf.append("\">");
 
     if (RefUtil.isAnonymousClass(refElement)) {
-      buf.append("anonymous");
+      buf.append(InspectionsBundle.message("inspection.reference.anonymous"));
     }
     else if (refElement instanceof RefMethod) {
       PsiMethod psiMethod = (PsiMethod)refElement.getElement();
@@ -306,32 +341,35 @@ public abstract class HTMLComposer {
       buf.append(refElement.getName());
     }
 
-    buf.append("</a>");
+    buf.append(A_CLOSING);
 
     if (refElement instanceof RefMethod) {
       PsiMethod psiMethod = (PsiMethod)refElement.getElement();
       appendMethodParameters(buf, psiMethod, false);
     }
 
-    buf.append("</code>");
+    buf.append(CODE_CLOSING);
 
     if (RefUtil.isAnonymousClass(refElement)) {
-      buf.append(" in ");
+      buf.append(" ");
+      buf.append(InspectionsBundle.message("inspection.export.results.anonymous.ref.in.owner"));
+      buf.append(" ");
       appendElementReference(buf, ((RefElement)refElement.getOwner()), isPackageIncluded);
     }
     else if (isPackageIncluded) {
-      buf.append(" <code><font style=\"font-family:verdana;color:#808080\">(");
+      @NonNls final String color = "color:#808080\">";
+      buf.append(" ").append(CODE_OPENING).append(FONT_OPENING).append(color).append("(");
       appendQualifiedName(buf, refElement.getOwner());
 //      buf.append(RefUtil.getPackageName(refElement));
-      buf.append(")</font></code>");
+      buf.append(")").append(FONT_CLOSING).append(CODE_CLOSING);
     }
   }
 
-  protected static void appendNumereable(StringBuffer buf,
-                                         int n,
-                                         String statement,
-                                         String singleEnding,
-                                         String multipleEnding) {
+  protected static String appendNumereable(int n,
+                                           String statement,
+                                           String singleEnding,
+                                           String multipleEnding) {
+    StringBuffer buf = new StringBuffer();
     buf.append(n);
     buf.append(' ');
     buf.append(statement);
@@ -342,11 +380,12 @@ public abstract class HTMLComposer {
     else {
       buf.append(multipleEnding);
     }
+    return buf.toString();
   }
 
   protected void appendElementInReferences(StringBuffer buf, RefElement refElement) {
     if (refElement.getInReferences().size() > 0) {
-      appendHeading(buf, "Used from");
+      appendHeading(buf, InspectionsBundle.message("inspection.export.results.used.from"));
       startList();
       for (Iterator<RefElement> iterator = refElement.getInReferences().iterator(); iterator.hasNext();) {
         RefElement refCaller = iterator.next();
@@ -358,7 +397,8 @@ public abstract class HTMLComposer {
 
   protected void appendElementOutReferences(StringBuffer buf, RefElement refElement) {
     if (refElement.getOutReferences().size() > 0) {
-      appendHeading(buf, "Uses the following");
+      buf.append(BR);
+      appendHeading(buf, InspectionsBundle.message("inspection.export.results.uses"));
       startList();
       for (Iterator<RefElement> iterator = refElement.getOutReferences().iterator(); iterator.hasNext();) {
         RefElement refCallee = iterator.next();
@@ -370,10 +410,10 @@ public abstract class HTMLComposer {
 
   protected void appendListItem(StringBuffer buf, RefElement refElement) {
     startListItem(buf);
-    buf.append("<font style=\"font-family:verdana;\"");
+    buf.append(FONT_OPENING);
     appendElementReference(buf, refElement, true);
     appendAdditionalListItemInfo(buf, refElement);
-    buf.append("</font>");
+    buf.append(FONT_CLOSING);
     doneListItem(buf);
   }
 
@@ -383,7 +423,7 @@ public abstract class HTMLComposer {
 
   protected void appendClassExtendsImplements(StringBuffer buf, RefClass refClass) {
     if (refClass.getBaseClasses().size() > 0) {
-      appendHeading(buf, "Extends/implements");
+      appendHeading(buf, InspectionsBundle.message("inspection.export.results.extends.implements"));
       startList();
       for (Iterator<RefClass> iterator = refClass.getBaseClasses().iterator(); iterator.hasNext();) {
         RefClass refBase = iterator.next();
@@ -396,10 +436,10 @@ public abstract class HTMLComposer {
   protected void appendDerivedClasses(StringBuffer buf, RefClass refClass) {
     if (refClass.getSubClasses().size() > 0) {
       if (refClass.isInterface()) {
-        appendHeading(buf, "Extended/implemented by");
+        appendHeading(buf, InspectionsBundle.message("inspection.export.results.extended.implemented"));
       }
       else {
-        appendHeading(buf, "Extended by");
+        appendHeading(buf, InspectionsBundle.message("inspection.export.results.extended"));
       }
 
       startList();
@@ -413,7 +453,7 @@ public abstract class HTMLComposer {
 
   protected void appendLibraryMethods(StringBuffer buf, RefClass refClass) {
     if (refClass.getLibraryMethods().size() > 0) {
-      appendHeading(buf, "Overrides library methods");
+      appendHeading(buf, InspectionsBundle.message("inspection.export.results.overrides.library.methods"));
 
       startList();
       for (Iterator<RefMethod> iterator = refClass.getLibraryMethods().iterator(); iterator.hasNext();) {
@@ -426,7 +466,7 @@ public abstract class HTMLComposer {
 
   protected void appendSuperMethods(StringBuffer buf, RefMethod refMethod) {
     if (refMethod.getSuperMethods().size() > 0) {
-      appendHeading(buf, "Overrides/implements");
+      appendHeading(buf, InspectionsBundle.message("inspection.export.results.overrides.implements"));
 
       startList();
       for (Iterator<RefMethod> iterator = refMethod.getSuperMethods().iterator(); iterator.hasNext();) {
@@ -439,7 +479,7 @@ public abstract class HTMLComposer {
 
   protected void appendDerivedMethods(StringBuffer buf, RefMethod refMethod) {
     if (refMethod.getDerivedMethods().size() > 0) {
-      appendHeading(buf, "Derived methods");
+      appendHeading(buf, InspectionsBundle.message("inspection.export.results.derived.methods"));
 
       startList();
       for (Iterator<RefMethod> iterator = refMethod.getDerivedMethods().iterator(); iterator.hasNext();) {
@@ -452,7 +492,7 @@ public abstract class HTMLComposer {
 
   protected void appendTypeReferences(StringBuffer buf, RefClass refClass) {
     if (refClass.getInTypeReferences().size() > 0) {
-      appendHeading(buf, "The following uses this type");
+      appendHeading(buf, InspectionsBundle.message("inspection.export.results.type.references"));
 
       startList();
       for (Iterator iterator = refClass.getInTypeReferences().iterator(); iterator.hasNext();) {
@@ -472,7 +512,7 @@ public abstract class HTMLComposer {
         final String text = quickFix.getText(where);
         if (text == null) continue;
         if (!listStarted) {
-          appendHeading(buf, "Problem resolution");
+          appendHeading(buf, InspectionsBundle.message("inspection.problem.resolution"));
           startList();
           listStarted = true;
         }
@@ -492,29 +532,31 @@ public abstract class HTMLComposer {
     myListStack[myListStackTop] = 0;
   }
 
-  protected void doneList(StringBuffer buf) {
+  protected void doneList(@NonNls StringBuffer buf) {
     if (myListStack[myListStackTop] != 0) {
       buf.append("<table cellpadding=\"0\" border=\"0\" cellspacing=\"0\"><tr><td>&nbsp;</td></tr></table>");
     }
     myListStackTop--;
   }
 
-  protected void startListItem(StringBuffer buf) {
+  protected void startListItem(@NonNls StringBuffer buf) {
     myListStack[myListStackTop]++;
     buf.append("<li>");
   }
 
-  protected static void doneListItem(StringBuffer buf) {
+  protected static void doneListItem(@NonNls StringBuffer buf) {
     buf.append("</li>");
   }
 
-  public static void appendAfterHeaderIndention(StringBuffer buf) {
+  public static void appendAfterHeaderIndention(@NonNls StringBuffer buf) {
     buf.append("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
   }
 
   protected static void appendNoProblems(StringBuffer buf) {
-    buf.append("<br>");
+    buf.append(BR);
     appendAfterHeaderIndention(buf);
-    buf.append("<b>No problems found</b></br>");
+    buf.append(B_OPENING);
+    buf.append(InspectionsBundle.message("inspection.export.results.no.problems.found"));
+    buf.append(B_CLOSING).append(BR);
   }
 }

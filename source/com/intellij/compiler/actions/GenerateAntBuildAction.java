@@ -3,15 +3,14 @@ package com.intellij.compiler.actions;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.ant.*;
 import com.intellij.compiler.impl.CompilerUtil;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.compiler.CompilerBundle;
+import com.intellij.idea.ActionsBundle;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -19,7 +18,10 @@ import java.util.Date;
 import java.util.List;
 import java.util.Arrays;
 
+import org.jetbrains.annotations.NonNls;
+
 public class GenerateAntBuildAction extends CompileActionBase {
+  @NonNls private static final String XML_EXTENSION = ".xml";
 
   protected void doAction(DataContext dataContext, final Project project) {
     CompilerConfiguration.getInstance(project).convertPatterns();
@@ -33,6 +35,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
   }
 
   public void update(AnActionEvent event){
+    super.update(event);
     Presentation presentation = event.getPresentation();
     Project project = (Project)event.getDataContext().getData(DataConstants.PROJECT);
     presentation.setEnabled(project != null);
@@ -58,11 +61,11 @@ public class GenerateAntBuildAction extends CompileActionBase {
           }
           filesString.append(file.getPath());
         }
-        Messages.showInfoMessage(project, "Ant build files successfully generated:\n" + filesString.toString(), "Generate Ant Build");
+        Messages.showInfoMessage(project, CompilerBundle.message("message.ant.files.generated.ok", filesString.toString()), ActionsBundle.actionText(IdeActions.ACTION_GENERATE_ANT_BUILD));
       }
     }
     catch (IOException e) {
-      Messages.showErrorDialog(project, "Failed to generate ant build script: " + e.getMessage(), "Generate Ant Build");
+      Messages.showErrorDialog(project, CompilerBundle.message("error.ant.files.generate.failed", e.getMessage()), ActionsBundle.actionText(IdeActions.ACTION_GENERATE_ANT_BUILD));
     }
     finally {
       if (filesToRefresh.size() > 0) {
@@ -78,6 +81,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
     final String path = file.getPath();
     final int extensionIndex = path.lastIndexOf(".");
     final String extension = path.substring(extensionIndex, path.length());
+    //noinspection HardCodedStringLiteral
     final String backupPath = path.substring(0, extensionIndex) + "_" + new Date(file.lastModified()).toString().replaceAll("\\s+", "_").replaceAll(":", "-") + extension;
     final File backupFile = new File(backupPath);
     boolean ok;
@@ -86,7 +90,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
       ok = true;
     }
     catch (IOException e) {
-      Messages.showErrorDialog(project, "Failed to backup file " + path, "Backup Error");
+      Messages.showErrorDialog(project, CompilerBundle.message("error.ant.files.backup.failed", path), ActionsBundle.actionText(IdeActions.ACTION_GENERATE_ANT_BUILD));
       ok = false;
     }
     filesToRefresh.add(backupFile);
@@ -96,7 +100,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
   public File[] generateSingleFileBuild(Project project, GenerationOptions genOptions, List<File> filesToRefresh) throws IOException {
     final File projectBuildFileDestDir = VfsUtil.virtualToIoFile(project.getProjectFile().getParent());
     projectBuildFileDestDir.mkdirs();
-    final File destFile = new File(projectBuildFileDestDir, BuildProperties.getProjectBuildFileName(project) + ".xml");
+    final File destFile = new File(projectBuildFileDestDir, BuildProperties.getProjectBuildFileName(project) + XML_EXTENSION);
     final File propertiesFile = new File(projectBuildFileDestDir, BuildProperties.getPropertyFileName(project));
 
     ensureFilesWritable(project, new File[] {destFile, propertiesFile});
@@ -132,8 +136,8 @@ public class GenerateAntBuildAction extends CompileActionBase {
   private void ensureFilesWritable(Project project, File[] files) throws IOException {
     final List<VirtualFile> toCheck = new ArrayList<VirtualFile>(files.length);
     final LocalFileSystem lfs = LocalFileSystem.getInstance();
-    for (int idx = 0; idx < files.length; idx++) {
-      final VirtualFile vFile = lfs.findFileByIoFile(files[idx]);
+    for (File file : files) {
+      final VirtualFile vFile = lfs.findFileByIoFile(file);
       if (vFile != null) {
         toCheck.add(vFile);
       }
@@ -148,7 +152,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
     final File projectBuildFileDestDir = VfsUtil.virtualToIoFile(project.getProjectFile().getParent());
     projectBuildFileDestDir.mkdirs();
     final List<File> generated = new ArrayList<File>();
-    final File projectBuildFile = new File(projectBuildFileDestDir, BuildProperties.getProjectBuildFileName(project) + ".xml");
+    final File projectBuildFile = new File(projectBuildFileDestDir, BuildProperties.getProjectBuildFileName(project) + XML_EXTENSION);
     final File propertiesFile = new File(projectBuildFileDestDir, BuildProperties.getPropertyFileName(project));
     final ModuleChunk[] chunks = genOptions.getModuleChunks();
 
@@ -156,7 +160,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
     for (int idx = 0; idx < chunks.length; idx++) {
       final ModuleChunk chunk = chunks[idx];
       final File chunkBaseDir = BuildProperties.getModuleChunkBaseDir(chunk);
-      chunkFiles[idx] = new File(chunkBaseDir, BuildProperties.getModuleChunkBuildFileName(chunk) + ".xml");
+      chunkFiles[idx] = new File(chunkBaseDir, BuildProperties.getModuleChunkBuildFileName(chunk) + XML_EXTENSION);
     }
 
     final List<File> allFiles = new ArrayList<File>(2 + chunkFiles.length);

@@ -18,6 +18,7 @@ package com.intellij.openapi.fileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Anton Katilin
@@ -60,12 +61,12 @@ public interface FileEditorProvider {
    * Serializes state into the specified <code>targetElement</code>
    */
   void writeState(FileEditorState state, Project project, Element targetElement);
-  
+
   /**
    * @return id of type of the editors that are created with this FileEditorProvider. Each FileEditorProvider should have 
    * unique non null id. The id is used for saving/loading of EditorStates.
    */
-  String getEditorTypeId();
+  @NonNls String getEditorTypeId();
 
   /**
    * @return policy that specifies how show editor created via this provider be opened

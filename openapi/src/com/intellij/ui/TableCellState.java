@@ -15,6 +15,8 @@
  */
 package com.intellij.ui;
 
+import com.intellij.util.ui.UIUtil;
+
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
@@ -26,7 +28,6 @@ public class TableCellState {
   private Font myFont;
   private Border myCellBorder;
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public void collectState(JTable table, boolean isSelected, boolean hasFocus, int row, int column) {
     clear();
     mySelected = isSelected;
@@ -40,10 +41,10 @@ public class TableCellState {
       myBackground = table.getBackground();
     }
     if (hasFocus) {
-      myCellBorder = UIManager.getBorder("Table.focusCellHighlightBorder");
+      myCellBorder = UIUtil.getTableFocusCellHighlightBorder();
       if (table.isCellEditable(row, column)) {
-        myForeground = UIManager.getColor("Table.focusCellForeground");
-        myBackground = UIManager.getColor("Table.focusCellBackground");
+        myForeground = UIUtil.getTableFocusCellForeground();
+        myBackground = UIUtil.getTableFocusCellBackground();
       }
     }
   }

@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ex.ActionListPopup;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.ListPopup;
+import com.intellij.ui.UIBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -25,7 +26,7 @@ public class RecentProjectsAction extends QuickSwitchSchemeAction {
   protected void fillActions(Project project, final DefaultActionGroup group) {
     final AnAction[] recentProjectActions = RecentProjectsManager.getInstance().getRecentProjectsActions(false);
     if (recentProjectActions == null || recentProjectActions.length == 0) {
-      AnAction action = new AnAction("No recent projects to display.") {
+      AnAction action = new AnAction(UIBundle.message("welcome.screen.recent.projects.action.no.recent.projects.to.display.action.name")) {
         public void actionPerformed(AnActionEvent e) {
           group.setPopup(false);
         }

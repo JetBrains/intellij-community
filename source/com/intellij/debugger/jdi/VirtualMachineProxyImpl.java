@@ -8,6 +8,7 @@ import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.HashMap;
 import com.sun.jdi.*;
@@ -197,7 +198,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     catch (InstantiationException e) {
       LOG.error(e);
     }
-    throw EvaluateExceptionUtil.createEvaluateException("Cannot creat void value");
+    throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("error.cannot.create.void.value"));
   }
 
   public BooleanValue mirrorOf(boolean b) {

@@ -28,6 +28,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+import org.jetbrains.annotations.NonNls;
+
 public abstract class SpeedSearchBase<Comp extends JComponent> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.SpeedSearchBase");
   private SearchPopup mySearchPopup;
@@ -40,6 +42,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> {
   private SpeedSearchComparator myComparator = new SpeedSearchComparator();
 
   private static final Key SPEED_SEARCH_COMPONENT_MARKER = new Key("SPEED_SEARCH_COMPONENT_MARKER");
+  @NonNls protected static final String ENTERED_PREFIX_PROPERTY_NAME = "enteredPrefix";
 
   public SpeedSearchBase(Comp component) {
     myComponent = component;
@@ -92,7 +95,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> {
 
   private void fireStateChanged() {
     String enteredPrefix = getEnteredPrefix();
-    myChangeSupport.firePropertyChange("enteredPrefix", myRecentEnteredPrefix, enteredPrefix);
+    myChangeSupport.firePropertyChange(ENTERED_PREFIX_PROPERTY_NAME, myRecentEnteredPrefix, enteredPrefix);
     myRecentEnteredPrefix = enteredPrefix;
   }
 
@@ -118,14 +121,14 @@ public abstract class SpeedSearchBase<Comp extends JComponent> {
       //}
 
       if (myRecentSearchText != null &&
-        myRecentSearchText.equals(pattern)
+          myRecentSearchText.equals(pattern)
         ) {
         myRecentSearchMatcher.reset(text);
         return myRecentSearchMatcher.find();
       }
       else {
         myRecentSearchText = pattern;
-        final StringBuffer buf = new StringBuffer(pattern.length());
+        @NonNls final StringBuffer buf = new StringBuffer(pattern.length());
         final int len = pattern.length();
         boolean hasCapitals = false;
         buf.append('^');
@@ -250,10 +253,10 @@ public abstract class SpeedSearchBase<Comp extends JComponent> {
     private final SearchField mySearchField;
 
     public SearchPopup(String initialString) {
-      final Color foregroundColor = UIManager.getColor("ToolTip.foreground");
-      Color color1 = UIManager.getColor("ToolTip.background");
+      final Color foregroundColor = UIUtil.getToolTipForeground();
+      Color color1 = UIUtil.getToolTipBackground();
       mySearchField = new SearchField();
-      final JLabel searchLabel = new JLabel(" Search for: ");
+      final JLabel searchLabel = new JLabel(" " + UIBundle.message("search.popup.search.for.label") + " ");
       searchLabel.setFont(searchLabel.getFont().deriveFont(Font.BOLD));
       searchLabel.setForeground(foregroundColor);
       mySearchField.setBorder(null);
@@ -418,7 +421,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> {
       myPopupLayeredPane = null;
     }
     if (myPopupLayeredPane == null) {
-      LOG.error(this.toString() + " in " + String.valueOf(myComponent));
+      LOG.error(toString() + " in " + String.valueOf(myComponent));
       return;
     }
     myPopupLayeredPane.add(mySearchPopup, JLayeredPane.POPUP_LAYER);

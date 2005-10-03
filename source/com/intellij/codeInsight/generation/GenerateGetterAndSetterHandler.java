@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.generation;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.psi.PsiClass;
 import com.intellij.util.IncorrectOperationException;
 
@@ -10,11 +11,11 @@ public class GenerateGetterAndSetterHandler extends GenerateGetterSetterHandlerB
   private final GenerateSetterHandler myGenerateSetterHandler = new GenerateSetterHandler();
 
   public GenerateGetterAndSetterHandler(){
-    super("Select Fields to Generate Getters and Setters");
+    super(CodeInsightBundle.message("generate.getter.setter.title"));
   }
 
   protected Object[] generateMemberPrototypes(PsiClass aClass, Object original) throws IncorrectOperationException {
-    ArrayList array = new ArrayList();
+    ArrayList<Object> array = new ArrayList<Object>();
     Object[] getters = myGenerateGetterHandler.generateMemberPrototypes(aClass, original);
     Object[] setters = myGenerateSetterHandler.generateMemberPrototypes(aClass, original);
 

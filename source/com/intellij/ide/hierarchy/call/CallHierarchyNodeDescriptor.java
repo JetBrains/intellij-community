@@ -2,6 +2,7 @@ package com.intellij.ide.hierarchy.call;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -86,7 +87,7 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
     final PsiElement enclosingElement = getEnclosingElement();
 
     if (enclosingElement == null) {
-      final String invalidPrefix = "[Invalid] ";
+      final String invalidPrefix = IdeBundle.message("node.hierarchy.invalid");
       if (!myHighlightedText.getText().startsWith(invalidPrefix)) {
         myHighlightedText.getBeginning().addText(invalidPrefix, HierarchyNodeDescriptor.getInvalidPrefixAttributes());
       }
@@ -110,7 +111,7 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
     if (enclosingElement instanceof PsiMethod) {
       if (enclosingElement instanceof JspHolderMethod) {
         PsiFile file = enclosingElement.getContainingFile();
-        myHighlightedText.getEnding().addText(file != null ? file.getName() : "unknown jsp", mainTextAttributes);
+        myHighlightedText.getEnding().addText(file != null ? file.getName() : IdeBundle.message("node.call.hierarchy.unknown.jsp"), mainTextAttributes);
       }
       else {
         final PsiMethod method = (PsiMethod)enclosingElement;
@@ -138,7 +139,7 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
       myHighlightedText.getEnding().addText(ClassPresentationUtil.getNameForClass((PsiClass)enclosingElement, false), mainTextAttributes);
     }
     if (myUsageCount > 1) {
-      myHighlightedText.getEnding().addText("  (" + myUsageCount + " usages)", HierarchyNodeDescriptor.getUsageCountPrefixAttributes());
+      myHighlightedText.getEnding().addText(IdeBundle.message("node.call.hierarchy.N.usages", myUsageCount), HierarchyNodeDescriptor.getUsageCountPrefixAttributes());
     }
     if (!(enclosingElement instanceof JspFile)) {
       final String packageName = getPackageName(enclosingElement instanceof PsiMethod ? ((PsiMethod)enclosingElement).getContainingClass() : (PsiClass)enclosingElement);

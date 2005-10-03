@@ -5,6 +5,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.InsertPathAction;
+import com.intellij.execution.ExecutionBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -21,14 +22,13 @@ public class AlternativeJREPanel extends JPanel{
 
   public AlternativeJREPanel() {
     super(new GridBagLayout());
-    myCbEnabled = new JCheckBox("Use alternative JRE: ");
-    myCbEnabled.setMnemonic('U');
+    myCbEnabled = new JCheckBox(ExecutionBundle.message("run.configuration.use.alternate.jre.checkbox"));
     final GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0, GridBagConstraints.NORTHWEST,
                                                          GridBagConstraints.HORIZONTAL, new Insets(2, -2, 2, 2), 0, 0);
     add(myCbEnabled, gc);
 
     myPathField = new TextFieldWithBrowseButton();
-    myPathField.addBrowseFolderListener("Select Alternative JRE", "Select directory with JRE to run with", null, BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR);
+    myPathField.addBrowseFolderListener(ExecutionBundle.message("run.configuration.select.alternate.jre.label"), ExecutionBundle.message("run.configuration.select.jre.dir.label"), null, BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR);
     gc.insets.left = 20;
     add(myPathField, gc);
     InsertPathAction.addTo(myPathField.getTextField());

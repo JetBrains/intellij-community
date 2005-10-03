@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.ApplicationManager;
@@ -13,8 +14,6 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfo;
-
-import java.text.MessageFormat;
 
 public class SuperMethodReturnFix implements IntentionAction {
 
@@ -32,17 +31,13 @@ public class SuperMethodReturnFix implements IntentionAction {
             PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_CONTAINING_CLASS,
             0
     );
-    String text = MessageFormat.format("Make ''{0}'' return ''{1}''",
-            new Object[]{
-              name,
-              HighlightUtil.formatType(mySuperMethodType),
-            }
-    );
-    return text;
+    return QuickFixBundle.message("fix.super.method.return.type.text",
+                                  name,
+                                  HighlightUtil.formatType(mySuperMethodType));
   }
 
   public String getFamilyName() {
-    return "Fix Super Method Return Type";
+    return QuickFixBundle.message("fix.super.method.return.type.family");
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {

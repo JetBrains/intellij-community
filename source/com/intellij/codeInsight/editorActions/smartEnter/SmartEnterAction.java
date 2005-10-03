@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.editorActions.smartEnter;
 
+import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.editorActions.EnterHandler;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.DataConstants;
@@ -132,7 +133,7 @@ public class SmartEnterAction extends EditorAction {
 
           public void visitLiteralExpression(PsiLiteralExpression expression) {
             String parsingError = expression.getParsingError();
-            if (parsingError != null && parsingError.indexOf("Illegal line end in string literal") >= 0) {
+            if (parsingError != null && parsingError.indexOf(JavaErrorMessages.message("illegal.line.end.in.string.literal")) >= 0) {
               myIsStopped = !processor.process(expression);
             }
           }

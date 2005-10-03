@@ -7,7 +7,7 @@ import java.awt.*;
 
 public class IdeaBlueMetalTheme extends DefaultMetalTheme {
   public String getName() {
-    return "beg blue";
+    return UIBundle.message("idea.blue.metal.theme.name");
   }
 
   private static ColorUIResource darkGray = new ColorUIResource(132, 130, 132);

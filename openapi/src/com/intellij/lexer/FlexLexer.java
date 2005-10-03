@@ -19,10 +19,12 @@ import com.intellij.psi.tree.IElementType;
 
 import java.io.IOException;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author max
  */
-public interface FlexLexer {
+@NonNls public interface FlexLexer {
   void yybegin(int state);
   int yystate();
   int getTokenStart();

@@ -55,6 +55,7 @@ import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.Icons;
 import org.jdom.Attribute;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -122,6 +123,32 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   private String mySavedPaneId;
   private static final Icon COMPACT_EMPTY_MIDDLE_PACKAGES_ICON = IconLoader.getIcon("/objectBrowser/compactEmptyPackages.png");
   private static final Icon HIDE_EMPTY_MIDDLE_PACKAGES_ICON = IconLoader.getIcon("/objectBrowser/hideEmptyPackages.png");
+  @NonNls
+  private static final String ELEMENT_NAVIGATOR = "navigator";
+  @NonNls
+  private static final String ATTRIBUTE_CURRENTVIEW = "currentView";
+  @NonNls
+  private static final String ELEMENT_FLATTEN_PACKAGES = "flattenPackages";
+  @NonNls
+  private static final String ELEMENT_SHOW_MEMBERS = "showMembers";
+  @NonNls
+  private static final String ELEMENT_SHOW_MODULES = "showModules";
+  @NonNls
+  private static final String ELEMENT_SHOW_LIBRARY_CONTENTS = "showLibraryContents";
+  @NonNls
+  private static final String ELEMENT_HIDE_EMPTY_PACKAGES = "hideEmptyPackages";
+  @NonNls
+  private static final String ELEMENT_ABBREVIATE_PACKAGE_NAMES = "abbreviatePackageNames";
+  @NonNls
+  private static final String ELEMENT_SHOW_STRUCTURE = "showStructure";
+  @NonNls
+  private static final String ELEMENT_AUTOSCROLL_TO_SOURCE = "autoscrollToSource";
+  @NonNls
+  private static final String ELEMENT_AUTOSCROLL_FROM_SOURCE = "autoscrollFromSource";
+  @NonNls
+  private static final String ELEMENT_SORT_BY_TYPE = "sortByType";
+  @NonNls
+  private static final String ATTRIBUTE_SPLITTER_PROPORTION = "splitterProportion";
 
   public ProjectViewImpl(Project project) {
     myProject = project;
@@ -313,7 +340,8 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
 
   private void createToolbarActions() {
     myActionGroup.removeAll();
-    myActionGroup.add(new PaneOptionAction(myFlattenPackages, "Flatten Packages", "Flatten Packages", Icons.FLATTEN_PACKAGES_ICON, ourFlattenPackagesDefaults) {
+    myActionGroup.add(new PaneOptionAction(myFlattenPackages, IdeBundle.message("action.flatten.packages"), 
+                                           IdeBundle.message("action.flatten.packages"), Icons.FLATTEN_PACKAGES_ICON, ourFlattenPackagesDefaults) {
       public void setSelected(AnActionEvent event, boolean flag) {
         final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
         final SelectionInfo selectionInfo = SelectionInfo.create(viewPane);
@@ -336,12 +364,13 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
       }
     }
     myActionGroup.add(new HideEmptyMiddlePackagesAction());
-    myActionGroup.add(new FlattenPackagesDependableAction(myAbbreviatePackageNames, "Abbreviate Qualified Package Names", "Abbreviate Qualified Package Names", IconLoader.getIcon("/objectBrowser/abbreviatePackageNames.png"), ourAbbreviatePackagesDefaults) {
+    myActionGroup.add(new FlattenPackagesDependableAction(myAbbreviatePackageNames,
+                                                          IdeBundle.message("action.abbreviate.qualified.package.names"), IdeBundle.message("action.abbreviate.qualified.package.names"), IconLoader.getIcon("/objectBrowser/abbreviatePackageNames.png"), ourAbbreviatePackagesDefaults) {
       public boolean isSelected(AnActionEvent event) {
         return super.isSelected(event) && isAbbreviatePackageNames(myCurrentViewId);
       }
     });
-    myActionGroup.add(new PaneOptionAction(myShowMembers, "Show Members", "Show/Hide Members", IconLoader.getIcon("/objectBrowser/showMembers.png"), ourShowMembersDefaults));
+    myActionGroup.add(new PaneOptionAction(myShowMembers, IdeBundle.message("action.show.members"), IdeBundle.message("action.show.hide.members"), IconLoader.getIcon("/objectBrowser/showMembers.png"), ourShowMembersDefaults));
     myActionGroup.add(myAutoScrollToSourceHandler.createToggleAction());
     myActionGroup.add(myAutoScrollFromSourceHandler.createToggleAction());
     myActionGroup.add(new ShowStructureAction());
@@ -524,7 +553,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
 
   private final class ShowStructureAction extends ToggleAction {
     ShowStructureAction() {
-      super("Show Structure", "Show structure view", IconLoader.getIcon("/objectBrowser/showStructure.png"));
+      super(IdeBundle.message("action.show.structure"), IdeBundle.message("action.description.show.structure"), IconLoader.getIcon("/objectBrowser/showStructure.png"));
     }
 
     public boolean isSelected(AnActionEvent event) {
@@ -599,7 +628,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     }
     Dimension size = getComponent().getSize();
     Point loc = getComponent().getLocationOnScreen();
-    ListPopup popup = new ListPopup(" Views ", list, runnable, myProject);
+    ListPopup popup = new ListPopup(" " + IdeBundle.message("title.popup.views") + " ", list, runnable, myProject);
     popup.show(loc.x + size.width / 2 - popup.getSize().width / 2, loc.y + size.height / 2 - popup.getSize().height / 2);
   }
 
@@ -635,7 +664,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
       }
       final PsiElement[] elements = validElements.toArray(new PsiElement[validElements.size()]);
  
-      LvcsAction action = LvcsIntegration.checkinFilesBeforeRefactoring(myProject, "Deleting");
+      LvcsAction action = LvcsIntegration.checkinFilesBeforeRefactoring(myProject, IdeBundle.message("progress.deleting"));
       try {
         DeleteHandler.deletePsiElement(elements, myProject);
       }
@@ -923,7 +952,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     List attributes = node.getAttributes();
     for (final Object attribute1 : attributes) {
       Attribute attribute = (Attribute)attribute1;
-      options.put(attribute.getName(), "true".equals(attribute.getValue()) ? Boolean.TRUE : Boolean.FALSE);
+      options.put(attribute.getName(), Boolean.TRUE.toString().equals(attribute.getValue()) ? Boolean.TRUE : Boolean.FALSE);
     }
   }
 
@@ -932,7 +961,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     for (Map.Entry<String, Boolean> entry : optionsForPanes.entrySet()) {
       final String key = entry.getKey();
       if (key != null) { //SCR48267
-        e.setAttribute(key, entry.getValue().booleanValue() ? "true" : "false");
+        e.setAttribute(key, Boolean.toString(entry.getValue().booleanValue()));
       }
     }
 
@@ -940,22 +969,22 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   }
 
   public void readExternal(Element parentNode) {
-    Element navigatorElement = parentNode.getChild("navigator");
+    Element navigatorElement = parentNode.getChild(ELEMENT_NAVIGATOR);
     if (navigatorElement != null) {
-      mySavedPaneId = navigatorElement.getAttributeValue("currentView");
-      readOption(navigatorElement.getChild("flattenPackages"), myFlattenPackages);
-      readOption(navigatorElement.getChild("showMembers"), myShowMembers);
-      readOption(navigatorElement.getChild("showModules"), myShowModules);
-      readOption(navigatorElement.getChild("showLibraryContents"), myShowLibraryContents);
-      readOption(navigatorElement.getChild("hideEmptyPackages"), myHideEmptyPackages);
-      readOption(navigatorElement.getChild("abbreviatePackageNames"), myAbbreviatePackageNames);
-      readOption(navigatorElement.getChild("showStructure"), myShowStructure);
-      readOption(navigatorElement.getChild("autoscrollToSource"), myAutoscrollToSource);
-      readOption(navigatorElement.getChild("autoscrollFromSource"), myAutoscrollFromSource);
-      readOption(navigatorElement.getChild("sortByType"), mySortByType);
+      mySavedPaneId = navigatorElement.getAttributeValue(ATTRIBUTE_CURRENTVIEW);
+      readOption(navigatorElement.getChild(ELEMENT_FLATTEN_PACKAGES), myFlattenPackages);
+      readOption(navigatorElement.getChild(ELEMENT_SHOW_MEMBERS), myShowMembers);
+      readOption(navigatorElement.getChild(ELEMENT_SHOW_MODULES), myShowModules);
+      readOption(navigatorElement.getChild(ELEMENT_SHOW_LIBRARY_CONTENTS), myShowLibraryContents);
+      readOption(navigatorElement.getChild(ELEMENT_HIDE_EMPTY_PACKAGES), myHideEmptyPackages);
+      readOption(navigatorElement.getChild(ELEMENT_ABBREVIATE_PACKAGE_NAMES), myAbbreviatePackageNames);
+      readOption(navigatorElement.getChild(ELEMENT_SHOW_STRUCTURE), myShowStructure);
+      readOption(navigatorElement.getChild(ELEMENT_AUTOSCROLL_TO_SOURCE), myAutoscrollToSource);
+      readOption(navigatorElement.getChild(ELEMENT_AUTOSCROLL_FROM_SOURCE), myAutoscrollFromSource);
+      readOption(navigatorElement.getChild(ELEMENT_SORT_BY_TYPE), mySortByType);
 
       try {
-        mySplitterProportion = Float.parseFloat(navigatorElement.getAttributeValue("splitterProportion"));
+        mySplitterProportion = Float.parseFloat(navigatorElement.getAttributeValue(ATTRIBUTE_SPLITTER_PROPORTION));
       }
       catch (NumberFormatException e) {
         mySplitterProportion = 0.5f;
@@ -964,22 +993,22 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   }
 
   public void writeExternal(Element parentNode) {
-    Element navigatorElement = new Element("navigator");
+    Element navigatorElement = new Element(ELEMENT_NAVIGATOR);
     if (getCurrentViewId() != null) {
-      navigatorElement.setAttribute("currentView", getCurrentViewId());
+      navigatorElement.setAttribute(ATTRIBUTE_CURRENTVIEW, getCurrentViewId());
     }
-    writeOption(navigatorElement, myFlattenPackages, "flattenPackages");
-    writeOption(navigatorElement, myShowMembers, "showMembers");
-    writeOption(navigatorElement, myShowModules, "showModules");
-    writeOption(navigatorElement, myShowLibraryContents, "showLibraryContents");
-    writeOption(navigatorElement, myHideEmptyPackages, "hideEmptyPackages");
-    writeOption(navigatorElement, myAbbreviatePackageNames, "abbreviatePackageNames");
-    writeOption(navigatorElement, myShowStructure, "showStructure");
-    writeOption(navigatorElement, myAutoscrollToSource, "autoscrollToSource");
-    writeOption(navigatorElement, myAutoscrollFromSource, "autoscrollFromSource");
-    writeOption(navigatorElement, mySortByType, "sortByType");
+    writeOption(navigatorElement, myFlattenPackages, ELEMENT_FLATTEN_PACKAGES);
+    writeOption(navigatorElement, myShowMembers, ELEMENT_SHOW_MEMBERS);
+    writeOption(navigatorElement, myShowModules, ELEMENT_SHOW_MODULES);
+    writeOption(navigatorElement, myShowLibraryContents, ELEMENT_SHOW_LIBRARY_CONTENTS);
+    writeOption(navigatorElement, myHideEmptyPackages, ELEMENT_HIDE_EMPTY_PACKAGES);
+    writeOption(navigatorElement, myAbbreviatePackageNames, ELEMENT_ABBREVIATE_PACKAGE_NAMES);
+    writeOption(navigatorElement, myShowStructure, ELEMENT_SHOW_STRUCTURE);
+    writeOption(navigatorElement, myAutoscrollToSource, ELEMENT_AUTOSCROLL_TO_SOURCE);
+    writeOption(navigatorElement, myAutoscrollFromSource, ELEMENT_AUTOSCROLL_FROM_SOURCE);
+    writeOption(navigatorElement, mySortByType, ELEMENT_SORT_BY_TYPE);
 
-    navigatorElement.setAttribute("splitterProportion", Float.toString(getSplitterProportion()));
+    navigatorElement.setAttribute(ATTRIBUTE_SPLITTER_PROPORTION, Float.toString(getSplitterProportion()));
     parentNode.addContent(navigatorElement);
   }
 
@@ -1098,13 +1127,13 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
       super.update(e);
       final Presentation presentation = e.getPresentation();
       if (isFlattenPackages(myCurrentViewId)){
-        presentation.setText("Hide Empty Middle Packages");
-        presentation.setDescription("Show/Hide Empty Middle Packages");
+        presentation.setText(IdeBundle.message("action.hide.empty.middle.packages"));
+        presentation.setDescription(IdeBundle.message("action.show.hide.empty.middle.packages"));
         presentation.setIcon(HIDE_EMPTY_MIDDLE_PACKAGES_ICON);
       }
       else {
-        presentation.setText("Compact Empty Middle Packages");
-        presentation.setDescription("Show/Compact Empty Middle Packages");
+        presentation.setText(IdeBundle.message("action.compact.empty.middle.packages"));
+        presentation.setDescription(IdeBundle.message("action.show.compact.empty.middle.packages"));
         presentation.setIcon(COMPACT_EMPTY_MIDDLE_PACKAGES_ICON);
       }
     }
@@ -1399,7 +1428,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
 
   private class SortByTypeAction extends ToggleAction {
     private SortByTypeAction() {
-      super("Sort By Type", "Sort by type", IconLoader.getIcon("/objectBrowser/sortByType.png"));
+      super(IdeBundle.message("action.sort.by.type"), IdeBundle.message("action.sort.by.type"), IconLoader.getIcon("/objectBrowser/sortByType.png"));
     }
 
     public boolean isSelected(AnActionEvent event) {

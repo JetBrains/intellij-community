@@ -8,37 +8,30 @@
  */
 package com.intellij.refactoring.introduceParameter;
 
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.RefactoringSettings;
-import com.intellij.refactoring.turnRefsToSuper.TurnRefsToSuperHandler;
-import com.intellij.refactoring.ui.ClassCellRenderer;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.MethodCellRenderer;
-import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 import com.intellij.ui.IdeBorderFactory;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
-import java.util.ArrayList;
 
 public class EnclosingMethodSelectionDialog extends DialogWrapper {
   private final List<PsiMethod> myEnclosingMethods;
 
   private JList myEnclosingMethodsList = null;
-  private final JCheckBox myCbReplaceInstanceOf = new JCheckBox("Use interface/superclass in instanceof");
+  private final JCheckBox myCbReplaceInstanceOf = new JCheckBox(RefactoringBundle.message("use.interface.superclass.in.instanceof"));
+  private static final String REFACTORING_NAME = RefactoringBundle.message("introduce.parameter.title");
 
   EnclosingMethodSelectionDialog(Project project, List<PsiMethod> enclosingMethods) {
     super(project, true);
 
     myEnclosingMethods = enclosingMethods;
 
-    setTitle("Introduce Parameter");
+    setTitle(REFACTORING_NAME);
     init();
   }
 
@@ -74,7 +67,7 @@ public class EnclosingMethodSelectionDialog extends DialogWrapper {
     gbConstraints.gridheight = 1;
     gbConstraints.fill = GridBagConstraints.BOTH;
     gbConstraints.anchor = GridBagConstraints.WEST;
-    panel.add(new JLabel("Introduce parameter to method:"), gbConstraints);
+    panel.add(new JLabel(RefactoringBundle.message("introduce.parameter.to.method")), gbConstraints);
 
     gbConstraints.weighty = 1;
     myEnclosingMethodsList = new JList(myEnclosingMethods.toArray());

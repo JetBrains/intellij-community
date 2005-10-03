@@ -106,6 +106,7 @@ public abstract class InplaceEditor implements AWTEventListener{
     return myNode;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public void show() {
     LOG.assertTrue(myInplaceEditorComponent == null, "editor is not released");
     final DebuggerTree tree = myNode.getTree();

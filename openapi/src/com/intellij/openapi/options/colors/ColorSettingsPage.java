@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.util.Map;
@@ -29,6 +30,6 @@ public interface ColorSettingsPage {
   @NotNull AttributesDescriptor[] getAttributeDescriptors();
   @NotNull ColorDescriptor[] getColorDescriptors();
   @NotNull SyntaxHighlighter getHighlighter();
-  @NotNull String getDemoText();
+  @NonNls @NotNull String getDemoText();
   @Nullable Map<String,TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap();
 }

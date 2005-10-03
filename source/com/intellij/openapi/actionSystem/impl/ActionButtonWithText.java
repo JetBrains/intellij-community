@@ -16,7 +16,7 @@ public class ActionButtonWithText extends ActionButton {
                               final String place,
                               final Dimension minimumSize) {
     super(action, presentation, place, minimumSize);
-    setFont(UIManager.getFont("Label.font"));
+    setFont(UIUtil.getLabelFont());
   }
 
   public Dimension getPreferredSize() {
@@ -40,7 +40,7 @@ public class ActionButtonWithText extends ActionButton {
     look.paintBorder(g, this);
     final int textHeight = fontMetrics.getMaxAscent() + fontMetrics.getMaxDescent();
 
-    g.setColor(isButtonEnabled() ? UIManager.getColor("Label.foreground") : UIManager.getColor("textInactiveText"));
+    g.setColor(isButtonEnabled() ? UIUtil.getLabelForeground() : UIUtil.getTextInactiveTextColor());
     final int iconTextDifference = (int)Math.ceil((icon.getIconHeight() - textHeight) / 2);
     final int textStartX = x + icon.getIconWidth() + ICON_TEXT_SPACE;
     g.drawString(text, textStartX, y + iconTextDifference + fontMetrics.getMaxAscent());

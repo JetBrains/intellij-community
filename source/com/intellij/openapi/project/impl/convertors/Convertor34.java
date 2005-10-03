@@ -13,9 +13,11 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.project.ProjectBundle;
 import org.jdom.Attribute;
 import org.jdom.Document;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,12 +29,12 @@ import java.util.*;
 public class Convertor34 {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.project.impl.convertors.Convertor34");
 
-  public static final String PROJECT_ROOT_MANAGER = "ProjectRootManager";
-  public static final String PROJECT_ROOT_MANAGER_CLASS = "com.intellij.openapi.projectRoots.ProjectRootManager";
+  @NonNls public static final String PROJECT_ROOT_MANAGER = "ProjectRootManager";
+  @NonNls public static final String PROJECT_ROOT_MANAGER_CLASS = "com.intellij.openapi.projectRoots.ProjectRootManager";
 
-  private static final String SOURCE_ROOTS_NOT_UNDER_PROJECT_ROOTS = "There are source roots that are not under project roots.";
-  private static final String JAVA_DOC_ROOTS_CANNOT_BE_CONVERTED = "JavaDoc paths cannot be converted.";
-  private static final String MULTIPLE_OUTPUT_PATHS = "The project uses multiple output paths.";
+  private static final String SOURCE_ROOTS_NOT_UNDER_PROJECT_ROOTS = ProjectBundle.message("project.convert.source.roots.not.under.project.roots.error");
+  private static final String JAVA_DOC_ROOTS_CANNOT_BE_CONVERTED = ProjectBundle.message("project.convert.javadoc.paths.error");
+  private static final String MULTIPLE_OUTPUT_PATHS = ProjectBundle.message("project.convert.multiple.output.paths.error");
 
   public static void execute(Element root, String filePath, ArrayList<String> conversionProblems) {
     if (filePath == null) return;
@@ -43,6 +45,7 @@ public class Convertor34 {
     convertProjectFile(root, filePath, conversionProblems);
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static String convertLibraryTable34(Element root, String filePath) {
     if (filePath == null) return null;
     final Element libraryTable = findNamedChild(root, "component", "ProjectLibraryTable");
@@ -75,6 +78,7 @@ public class Convertor34 {
     return parentPath;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static Element convertLibrary(Element oldLibrary) {
     final Element library = new Element("library");
     final Element nameChild = oldLibrary.getChild("name");
@@ -87,6 +91,7 @@ public class Convertor34 {
     return library;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static void processLibraryRootContainer(Element oldLibrary,
                                                   final Element library,
                                                   String newElementType,
@@ -100,6 +105,7 @@ public class Convertor34 {
     library.addContent(elementCLASSES);
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static void convertProjectFile(Element root, String filePath, ArrayList<String> conversionProblems) {
     Element rootComponent = null;
     List components = root.getChildren("component");
@@ -144,6 +150,7 @@ public class Convertor34 {
     root.addContent(moduleManager);
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static Element createModule(Element root) {
     Element module = new Element("module");
     module.setAttribute("version", "4");
@@ -154,6 +161,7 @@ public class Convertor34 {
     return module;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static void convertWebApps(Element moduleManager, Element projectElement, Element projectRootManager, String mainModule) {
     Element webRootContainer = findNamedChild(projectElement, "component", "WebRootContainer");
     if(webRootContainer == null) return;
@@ -204,6 +212,7 @@ public class Convertor34 {
     }
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static void addSetting(Element parent, String name, String value){
     Element option = new Element("setting");
     option.setAttribute("name", name);
@@ -211,6 +220,7 @@ public class Convertor34 {
     parent.addContent(option);
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static Element createWebModuleProperties(VirtualFile moduleDirectory) {
     Element component = new Element("component");
     component.setAttribute("name", "WebModuleProperties");
@@ -238,6 +248,7 @@ public class Convertor34 {
     return component;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static Element createWebModuleBuildComponent() {
     Element component = new Element("component");
     component.setAttribute("name", "WebModuleBuildComponent");
@@ -248,6 +259,7 @@ public class Convertor34 {
     return component;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static Element createWebModuleRootManager(Element module, VirtualFile moduleDirectory, Element projectRootManager, String mainModule) {
     Element newModuleRootManager = new Element("component");
     newModuleRootManager.setAttribute("name", "NewModuleRootManager");
@@ -296,6 +308,7 @@ public class Convertor34 {
     return newModuleRootManager;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static Element createLibraryEntry(VirtualFile file, Element module, VirtualFile moduleDirectory) {
     String path = file.getPath().substring(moduleDirectory.getPath().length() + 1);
     if(file.getFileSystem() instanceof JarFileSystem) {
@@ -318,6 +331,7 @@ public class Convertor34 {
     return "".equals(path) ? moduleDirectory  : moduleDirectory + "/" + path;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static void addModule(final String moduleFilePath, Element moduleManager) {
     Element moduleEntry = new Element("module");
     final String moduleVfsPath = moduleFilePath.replace(File.separatorChar, '/');
@@ -374,6 +388,7 @@ public class Convertor34 {
       cannotProcess(root);
     }
 
+    @SuppressWarnings({"HardCodedStringLiteral"})
     protected void cannotProcess(Element root) {
       LOG.error("Cannot process roots of type " + root.getAttributeValue("type") + " in " + classId());
     }
@@ -382,6 +397,7 @@ public class Convertor34 {
 
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static void processRoot(Element root, RootElementProcessor processor) {
     LOG.assertTrue("root".equals(root.getName()));
     final String type = root.getAttributeValue("type");
@@ -416,6 +432,7 @@ public class Convertor34 {
     }
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static void processRootTypeElement(Element rootTypeElement, RootElementProcessor rootProcessor) {
     if (rootTypeElement == null) return;
     final List children = rootTypeElement.getChildren("root");
@@ -426,6 +443,7 @@ public class Convertor34 {
   }
 
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static class ProjectToModuleConverter {
     private final Element myProjectRootManager;
     private final Element myModuleRootManager;
@@ -548,6 +566,7 @@ public class Convertor34 {
 
     public Element getModuleRootManager() { return myModuleRootManager; }
 
+    @SuppressWarnings({"HardCodedStringLiteral"})
     private class JavaDocRootProcessor extends EmptyRootProcessor {
 
       protected void cannotProcess(Element root) {
@@ -580,6 +599,7 @@ public class Convertor34 {
       }
     }
 
+    @SuppressWarnings({"HardCodedStringLiteral"})
     private class SourceRootProcessor extends EmptyRootProcessor {
 
       public void processSimpleRoot(Element root) {
@@ -620,6 +640,7 @@ public class Convertor34 {
       }
     }
 
+    @SuppressWarnings({"HardCodedStringLiteral"})
     private class ExcludeRootsProcessor extends EmptyRootProcessor {
       public void processSimpleRoot(Element root) {
         final String url = root.getAttributeValue("url");
@@ -649,6 +670,7 @@ public class Convertor34 {
       }
     }
 
+    @SuppressWarnings({"HardCodedStringLiteral"})
     private class ClassPathRootProcessor extends EmptyRootProcessor {
       public void processSimpleRoot(Element root) {
         final Element orderEntry = new Element("orderEntry");
@@ -695,6 +717,7 @@ public class Convertor34 {
     }
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static boolean isProjectRootManager(Element component) {
     String compName = component.getAttributeValue("name");
     String compClass = component.getAttributeValue("class");
@@ -702,6 +725,7 @@ public class Convertor34 {
            compClass != null && compClass.equals(PROJECT_ROOT_MANAGER_CLASS);
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static Element findNamedChild(Element root, String name, String nameAttributeValue) {
     final List children = root.getChildren(name);
     for (int i = 0; i < children.size(); i++) {
@@ -713,6 +737,7 @@ public class Convertor34 {
     return null;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static class SimpleRootProcessor extends EmptyRootProcessor {
     private final Element myTargetElement;
 

@@ -55,7 +55,10 @@ public class EditorComboBox extends JComboBox implements DocumentListener {
 
     addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        myEditorField.getEditor().getSelectionModel().removeSelection();
+        final Editor editor = myEditorField.getEditor();
+        if (editor != null) {
+          editor.getSelectionModel().removeSelection();
+        }
       }
     });
     setHistory(new String[]{""});

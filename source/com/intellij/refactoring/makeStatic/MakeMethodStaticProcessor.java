@@ -27,6 +27,9 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
     PsiElement parent = usageInfo.getElement().getParent();
     LOG.assertTrue(parent instanceof PsiMethodCallExpression);
     PsiMethodCallExpression methodCall = (PsiMethodCallExpression) parent;
+    final PsiExpression qualifier = methodCall.getMethodExpression().getQualifierExpression();
+    if (qualifier != null) qualifier.delete();
+    
     PsiElementFactory factory = methodCall.getManager().getElementFactory();
     PsiExpressionList args = methodCall.getArgumentList();
     PsiElement addParameterAfter = null;

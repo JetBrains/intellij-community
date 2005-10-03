@@ -16,6 +16,8 @@
 package com.intellij.lang.refactoring;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.refactoring.RefactoringActionHandler;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Allows a custom language plugin to control the operation of refactorings for
@@ -35,4 +37,10 @@ public interface RefactoringSupportProvider {
    * @return true if Safe Delete is available, false otherwise.
    */
   boolean isSafeDeleteAvailable(PsiElement element);
+
+  /**
+   * @return handler for introducing local variables in this language
+   * @see com.intellij.refactoring.RefactoringActionHandler;
+   */
+  @Nullable RefactoringActionHandler getIntroduceVariableHandler();
 }

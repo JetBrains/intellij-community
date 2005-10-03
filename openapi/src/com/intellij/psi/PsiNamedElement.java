@@ -16,6 +16,9 @@
 package com.intellij.psi;
 
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A PSI element which has a name and can be renamed (for example, a class or a method).
@@ -31,7 +34,7 @@ public interface PsiNamedElement extends PsiElement{
    *
    * @return the element name.
    */
-  String getName();
+  @Nullable @NonNls String getName();
 
   /**
    * Renames the element.

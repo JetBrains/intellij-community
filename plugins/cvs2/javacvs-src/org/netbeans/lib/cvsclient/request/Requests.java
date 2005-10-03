@@ -18,6 +18,7 @@ import org.netbeans.lib.cvsclient.admin.IAdminReader;
 import org.netbeans.lib.cvsclient.command.KeywordSubstitution;
 import org.netbeans.lib.cvsclient.file.*;
 import org.netbeans.lib.cvsclient.util.BugLog;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -55,11 +56,11 @@ public final class Requests {
 		requestList.add(request);
 	}
 
-	public void addArgumentRequest(String argument) {
+	public void addArgumentRequest(@NonNls String argument) {
 		addRequest(new ArgumentRequest(argument));
 	}
 
-	public void addArgumentRequest(Object obj, String argument) {
+	public void addArgumentRequest(Object obj, @NonNls String argument) {
 		if (obj == null) {
 			return;
 		}
@@ -73,7 +74,7 @@ public final class Requests {
 		addArgumentRequest(objString);
 	}
 
-	public void addArgumentRequests(Object obj, String argument) {
+	public void addArgumentRequests(Object obj, @NonNls String argument) {
 		if (obj == null) {
 			return;
 		}
@@ -87,7 +88,7 @@ public final class Requests {
 		addArgumentRequest(objString);
 	}
 
-	public void addArgumentRequest(boolean value, String argument) {
+	public void addArgumentRequest(boolean value, @NonNls String argument) {
 		if (value) {
 			addArgumentRequest(argument);
 		}
@@ -99,7 +100,7 @@ public final class Requests {
           addDirectoryRequest(DirectoryObject.getRoot());
 	}
 
-	public String addDirectoryRequest(DirectoryObject directoryObject) {
+	@NonNls public String addDirectoryRequest(DirectoryObject directoryObject) {
 		final String relativeDirPath = directoryObject.toUnixPath();
 		final String repositoryPath = cvsFileSystem.getRepositoryForDirectory(directoryObject, adminReader);
 		addRequest(new DirectoryRequest(relativeDirPath, repositoryPath));
@@ -117,7 +118,7 @@ public final class Requests {
 		addArgumentRequest(fileObject.toUnixPath());
 	}
 
-	public void addMessageRequests(String message) {
+	public void addMessageRequests(@NonNls String message) {
 		addArgumentRequest("-m");
 		boolean first = true;
 		final StringTokenizer token = new StringTokenizer(message, "\n", false);
@@ -171,7 +172,7 @@ public final class Requests {
 		addRequest(new QuestionableRequest(fileObject));
 	}
 
-	public void addNotifyRequest(FileObject fileObject, String command, String temporaryWatch) {
+	public void addNotifyRequest(FileObject fileObject, @NonNls String command, String temporaryWatch) {
 		final String path = cvsFileSystem.getLocalFileSystem().getFile(fileObject.getParent()).getAbsolutePath();
 		addRequest(new NotifyRequest(fileObject, path, command, temporaryWatch));
 	}

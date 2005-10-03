@@ -59,7 +59,7 @@ public class DefaultExecutionResult implements ExecutionResult {
     private final ProcessHandler myProcessHandler;
 
     public StopAction(final ProcessHandler processHandler) {
-      super("Stop", null, IconLoader.getIcon("/actions/suspend.png"));
+      super(ExecutionBundle.message("run.configuration.stop.action.name"), null, IconLoader.getIcon("/actions/suspend.png"));
       getTemplatePresentation().setEnabled(false);
       myProcessHandler = processHandler;
     }

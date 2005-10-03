@@ -9,7 +9,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.uiDesigner.GuiEditor;
+import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.CommonBundle;
 
 /**
  * @author Anton Katilin
@@ -28,14 +30,17 @@ public final class CreateFieldFix extends QuickFix{
     final String fieldClass,
     final String fieldName
   ) {
-    super(editor, "Create Field '" + fieldName + "'");
+    super(editor, UIDesignerBundle.message("action.create.field", fieldName));
     if (aClass == null) {
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("aClass cannot be null");
     }
     if (fieldClass == null) {
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("fieldClass cannot be null");
     }
     if (fieldName == null) {
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("fieldName cannot be null");
     }
     myClass = aClass;
@@ -71,7 +76,7 @@ public final class CreateFieldFix extends QuickFix{
     if(!boundClass.isWritable()){
       if(showErrors) {
         if (!RefactoringMessageUtil.checkReadOnlyStatus(boundClass, project,
-                                                        "Cannot create field '" + fieldClassName + "'")) {
+                                                        UIDesignerBundle.message("error.cannot.create.field", fieldClassName))) {
           return;
         }
       } else return;
@@ -85,8 +90,8 @@ public final class CreateFieldFix extends QuickFix{
       if(showErrors){
         Messages.showErrorDialog(
           editor,
-          "Cannot create field '" + fieldName + "' because\nclass '" + fieldClassName + "' does not exist.",
-          "Error"
+          UIDesignerBundle.message("error.cannot.create.field.no.class", fieldName, fieldClassName),
+          CommonBundle.getErrorTitle()
         );
       }
       return;
@@ -102,7 +107,7 @@ public final class CreateFieldFix extends QuickFix{
                 createField(project, fieldClass, fieldName, boundClass, showErrors, editor);
               }
             },
-            "Create Field",
+            UIDesignerBundle.message("command.create.field"),
             null
           );
         }
@@ -129,8 +134,8 @@ public final class CreateFieldFix extends QuickFix{
             public void run() {
               Messages.showErrorDialog(
                 editor,
-                "Cannot create field '" + fieldName + "'.\nReason: " + exc.getMessage(),
-                "Error"
+                UIDesignerBundle.message("error.cannot.create.field.reason", fieldName, exc.getMessage()),
+                CommonBundle.getErrorTitle()
               );
             }
           }

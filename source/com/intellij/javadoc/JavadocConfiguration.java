@@ -31,6 +31,7 @@ import com.intellij.psi.*;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.HashSet;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -42,7 +43,7 @@ import java.util.Collection;
  */
 public class JavadocConfiguration implements RunProfile, JDOMExternalizable{
   public String OUTPUT_DIRECTORY;
-  public String OPTION_SCOPE = "protected";
+  public String OPTION_SCOPE = PsiKeyword.PROTECTED;
   public boolean OPTION_HIERARCHY = true;
   public boolean OPTION_NAVIGATOR = true;
   public boolean OPTION_INDEX = true;
@@ -89,12 +90,12 @@ public class JavadocConfiguration implements RunProfile, JDOMExternalizable{
   }
 
   public String getName() {
-    return "Javadoc";
+    return JavadocBundle.message("javadoc.settings.title");
   }
 
   public void checkConfiguration() throws RuntimeConfigurationException {
     if (myGenerationOptions == null) {
-      throw new RuntimeConfigurationError("Generation options for javadoc not specified");
+      throw new RuntimeConfigurationError(JavadocBundle.message("javadoc.settings.not.specified"));
     }
   }
 
@@ -117,6 +118,7 @@ public class JavadocConfiguration implements RunProfile, JDOMExternalizable{
   private class MyJavaCommandLineState extends CommandLineState {
     private final GenerationOptions myGenerationOptions;
     private final Project myProject;
+    @NonNls private static final String INDEX_HTML = "index.html";
 
     public MyJavaCommandLineState(Project project, GenerationOptions generationOptions) {
       super(null, null);
@@ -140,7 +142,7 @@ public class JavadocConfiguration implements RunProfile, JDOMExternalizable{
     private void setupExeParams(final ProjectJdk jdk, GeneralCommandLine cmdLine) throws ExecutionException {
       final String jdkPath = jdk != null? new File(jdk.getVMExecutablePath()).getParent() : null;
       if (jdkPath == null) {
-        throw new CantRunException("JDK path is not specified\nCannot generate JavaDoc");
+        throw new CantRunException(JavadocBundle.message("javadoc.generate.no.jdk.path"));
       }
       String versionString = jdk.getVersionString();
       if (HEAP_SIZE != null && HEAP_SIZE.trim().length() != 0) {
@@ -156,7 +158,7 @@ public class JavadocConfiguration implements RunProfile, JDOMExternalizable{
     }
 
     private void setupProgramParameters(final GeneralCommandLine cmdLine) throws CantRunException {
-      final ParametersList parameters = cmdLine.getParametersList();
+      @NonNls final ParametersList parameters = cmdLine.getParametersList();
 
       if (OPTION_SCOPE != null) {
         parameters.add("-" + OPTION_SCOPE);
@@ -236,18 +238,18 @@ public class JavadocConfiguration implements RunProfile, JDOMExternalizable{
         }
       );
       if (packages.size() == 0) {
-        throw new CantRunException("Selected package(s) contain no Java classes");
+        throw new CantRunException(JavadocBundle.message("javadoc.generate.no.classes.in.selected.packages.error"));
       }
       parameters.addAll(new ArrayList<String>(packages));
     }
 
     protected OSProcessHandler startProcess() throws ExecutionException {
       final OSProcessHandler handler = super.startProcess();
-      ProcessTerminatedListener.attach(handler, myProject, "\njavadoc exited with exit code $EXIT_CODE$\n");
+      ProcessTerminatedListener.attach(handler, myProject, JavadocBundle.message("javadoc.generate.exited"));
       handler.addProcessListener(new ProcessAdapter() {
         public void processTerminated(ProcessEvent event) {
           if (!handler.isProcessTerminating() && OPEN_IN_BROWSER) {
-            String url = OUTPUT_DIRECTORY + File.separator + "index.html";
+            String url = OUTPUT_DIRECTORY + File.separator + INDEX_HTML;
             if (new File(url).exists() && event.getExitCode() == 0) {
               BrowserUtil.launchBrowser(url);
             }

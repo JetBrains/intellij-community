@@ -1,13 +1,13 @@
 package com.intellij.psi.impl.source.tree.java;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.util.CharTable;
+import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.impl.source.SrcRepositoryPsiElement;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
-import com.intellij.lang.ASTNode;
 
 /**
  *  @author dsl
@@ -49,7 +49,7 @@ public class TypeParameterExtendsBoundsListElement extends RepositoryTreeElement
     }
 
     final IElementType keywordType = JavaTokenType.EXTENDS_KEYWORD;
-    final String keywordText = "extends";
+    final String keywordText = PsiKeyword.EXTENDS;
     if (TreeUtil.findChild(this, keywordType) == null && TreeUtil.findChild(this, JAVA_CODE_REFERENCE) != null){
       LeafElement keyword = Factory.createSingleLeafElement(keywordType, keywordText.toCharArray(), 0, keywordText.length(), treeCharTab, getManager());
       super.addInternal(keyword, keyword, getFirstChildNode(), Boolean.TRUE);

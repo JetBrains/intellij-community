@@ -6,6 +6,7 @@ import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.ide.plugins.PluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.components.BaseComponent;
@@ -34,6 +35,7 @@ import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.IOException;
@@ -54,15 +56,17 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
   private boolean isModuleAdded;
   private Map<String, String> myOptions = new HashMap<String, String>();
 
-  private static final String MODULE_LAYER = "module-components";
+  @NonNls private static final String MODULE_LAYER = "module-components";
   @NotNull private PomModule myPomModule;
   @NotNull private PomModel myPomModel;
+  @NonNls private static final String OPTION_WORKSPACE = "workspace";
+  @NonNls private static final String ELEMENT_TYPE = "type";
 
   public ModuleImpl(String filePath, Project project, PomModel pomModel, PathMacrosImpl pathMacros) {
     super(false, pathMacros);
     myProject = project;
     myPomModel =  pomModel;
-    Extensions.instantiateArea("IDEA_MODULE", this, project);
+    Extensions.instantiateArea(PluginManager.AREA_IDEA_MODULE, this, project);
     init(filePath);
   }
 
@@ -111,7 +115,7 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
 
     Set<String> optionNames = options.keySet();
     for (String optionName : optionNames) {
-      if (Comparing.equal("workspace", optionName)) continue;
+      if (Comparing.equal(OPTION_WORKSPACE, optionName)) continue;
       if (!parseOptionValue(options.get(optionName)).contains(getOptionValue(optionName))) return false;
     }
 
@@ -144,7 +148,7 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
         throw new InvalidDataException();
       }
       Element root = document.getRootElement();
-      if (root == null || !"component".equals(root.getName())) {
+      if (root == null || !ELEMENT_COMPONENT.equals(root.getName())) {
         throw new InvalidDataException();
       }
 
@@ -168,7 +172,7 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
     final VirtualFile file = myFilePointer.getFile();
     try {
       if (file != null) {
-        file.rename(ModuleUtil.MODULE_RENAMING_REQUESTOR, newName + ".iml");
+        file.rename(ModuleUtil.MODULE_RENAMING_REQUESTOR, newName + ModuleFileType.DOT_DEFAULT_EXTENSION);
         return;
       }
     }
@@ -177,7 +181,7 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
     // [dsl] we get here if either old file didn't exist or renaming failed
     final File oldFile = new File(getModuleFilePath());
     final File parentFile = oldFile.getParentFile();
-    final File newFile = new File(parentFile, newName + ".iml");
+    final File newFile = new File(parentFile, newName + ModuleFileType.DOT_DEFAULT_EXTENSION);
     final String newUrl = VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, newFile.getPath().replace(File.separatorChar, '/'));
     myFilePointer = VirtualFilePointerManager.getInstance().create(newUrl, null);
   }
@@ -253,7 +257,7 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
     result.put(s, path);
   }
 
-  private void getModuleHomeReplacements(ReplacePathToMacroMap result, final boolean addRelativePathMacros) {
+  private void getModuleHomeReplacements(@NonNls ReplacePathToMacroMap result, final boolean addRelativePathMacros) {
     String moduleDir = getModuleDir(getModuleFilePath());
     if (moduleDir == null) return;
 
@@ -264,7 +268,7 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
     String macro = "$" + PathMacrosImpl.MODULE_DIR_MACRO_NAME + "$";
 
     while (f != null) {
-      String path = PathMacroMap.quotePath(f.getAbsolutePath());
+      @NonNls String path = PathMacroMap.quotePath(f.getAbsolutePath());
       String s = macro;
 
       if (StringUtil.endsWithChar(path, '/')) s += "/";
@@ -303,7 +307,7 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
       setOption(attr.getName(), attr.getValue());
     }
 
-    final String moduleTypeId = getOptionValue("type");
+    final String moduleTypeId = getOptionValue(ELEMENT_TYPE);
     final ModuleType moduleType = moduleTypeId == null ? ModuleType.JAVA : ModuleTypeManager.getInstance().findByID(moduleTypeId);
     setModuleType(moduleType);
     super.loadFromXml(root, filePath);
@@ -383,11 +387,7 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
 
   public void setModuleType(ModuleType type) {
     myModuleType = type;
-    setOption("type", type.getId());
-  }
-
-  protected String getConfigurableType() {
-    return "module";
+    setOption(ELEMENT_TYPE, type.getId());
   }
 
   public void setOption(String optionName, String optionValue) {
@@ -403,6 +403,7 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
     return myPomModule;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return "Module:" + getName();
   }

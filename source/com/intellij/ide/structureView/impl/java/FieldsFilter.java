@@ -4,18 +4,20 @@ import com.intellij.ide.util.treeView.smartTree.ActionPresentation;
 import com.intellij.ide.util.treeView.smartTree.ActionPresentationData;
 import com.intellij.ide.util.treeView.smartTree.Filter;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.Icons;
+import org.jetbrains.annotations.NonNls;
 
 public class FieldsFilter implements Filter{
-  public static final String ID = "SHOW_FIELDS";
+  @NonNls public static final String ID = "SHOW_FIELDS";
 
   public boolean isVisible(TreeElement treeNode) {
     return !(treeNode instanceof PsiFieldTreeElement);
   }
 
   public ActionPresentation getPresentation() {
-    return new ActionPresentationData("Show Fields", null, Icons.FIELD_ICON);
+    return new ActionPresentationData(IdeBundle.message("action.structureview.show.fields"), null, Icons.FIELD_ICON);
   }
 
   public String getName() {

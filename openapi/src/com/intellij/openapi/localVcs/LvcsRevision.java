@@ -15,10 +15,10 @@
  */
 package com.intellij.openapi.localVcs;
 
+import org.jetbrains.annotations.NonNls;
 
 public interface LvcsRevision extends Comparable{
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  String PROPERTY_UP_TO_DATE = "upToDate";
+  @NonNls String PROPERTY_UP_TO_DATE = "upToDate";
 
   String getName();
   String getAbsolutePath();

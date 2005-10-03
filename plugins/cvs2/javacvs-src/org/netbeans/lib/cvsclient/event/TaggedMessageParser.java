@@ -14,6 +14,8 @@
  *****************************************************************************/
 package org.netbeans.lib.cvsclient.event;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * An event sent from the server to indicate that a message should be
  * displayed to the user
@@ -21,37 +23,38 @@ package org.netbeans.lib.cvsclient.event;
  */
 public final class TaggedMessageParser {
 
-	// Fields =================================================================
+        // Fields =================================================================
 
-	private final StringBuffer buffer = new StringBuffer();
+        private final StringBuffer buffer = new StringBuffer();
+  @NonNls private static final String NEWLINE_MESSAGE = "newline";
 
-	// Accessing ==============================================================
+  // Accessing ==============================================================
 
-	public String getString() {
-		if (buffer.length() == 0) {
-			return null;
-		}
+        public String getString() {
+                if (buffer.length() == 0) {
+                        return null;
+                }
 
-		final String line = buffer.toString();
-		buffer.setLength(0);
-		return line;
-	}
+                final String line = buffer.toString();
+                buffer.setLength(0);
+                return line;
+        }
 
-	// Actions ================================================================
+        // Actions ================================================================
 
-	public String parseTaggedMessage(String taggedMessage) {
-		if (taggedMessage.charAt(0) == '+' || taggedMessage.charAt(0) == '-') {
-			return null;
-		}
+        public String parseTaggedMessage(String taggedMessage) {
+                if (taggedMessage.charAt(0) == '+' || taggedMessage.charAt(0) == '-') {
+                        return null;
+                }
 
-		if (taggedMessage.equals("newline")) {
-			return getString();
-		}
+                if (taggedMessage.equals(NEWLINE_MESSAGE)) {
+                        return getString();
+                }
 
-		final int index = taggedMessage.indexOf(' ');
-		if (index > 0) {
-			buffer.append(taggedMessage.substring(index + 1));
-		}
-		return null;
-	}
+                final int index = taggedMessage.indexOf(' ');
+                if (index > 0) {
+                        buffer.append(taggedMessage.substring(index + 1));
+                }
+                return null;
+        }
 }

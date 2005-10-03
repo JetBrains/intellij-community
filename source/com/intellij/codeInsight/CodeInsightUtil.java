@@ -1,6 +1,7 @@
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -14,16 +15,16 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.Indent;
+import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
+import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.lang.ASTNode;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -35,6 +36,8 @@ import java.util.List;
  */
 public class CodeInsightUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.CodeInsightUtil");
+  @NonNls private static final String JAVA_PACKAGE_PREFIX = "java.";
+  @NonNls private static final String JAVAX_PACKAGE_PREFIX = "javax.";
 
   public static PsiExpression findExpressionInRange(PsiFile file, int startOffset, int endOffset) {
     PsiElement element1 = file.findElementAt(startOffset);
@@ -180,9 +183,9 @@ public class CodeInsightUtil {
         boolean inProject2 = bClass.getManager().isInProject(aClass);
         if (inProject1 != inProject2) return inProject1 ? -1 : 1;
         String qName1 = aClass.getQualifiedName();
-        boolean isJdk1 = qName1 != null && (qName1.startsWith("java.") || qName1.startsWith("javax."));
+        boolean isJdk1 = qName1 != null && (qName1.startsWith(JAVA_PACKAGE_PREFIX) || qName1.startsWith(JAVAX_PACKAGE_PREFIX));
         String qName2 = bClass.getQualifiedName();
-        boolean isJdk2 = qName2 != null && (qName2.startsWith("java.") || qName2.startsWith("javax."));
+        boolean isJdk2 = qName2 != null && (qName2.startsWith(JAVA_PACKAGE_PREFIX) || qName2.startsWith(JAVAX_PACKAGE_PREFIX));
         if (isJdk1 != isJdk2) return isJdk1 ? -1 : 1;
         return 0;
       }
@@ -225,12 +228,13 @@ public class CodeInsightUtil {
       if (componentType instanceof PsiClassType) {
         final PsiClassType classType = (PsiClassType)componentType;
         if (classType.resolve() instanceof PsiTypeParameter) {
-          return "null";
+          return PsiKeyword.NULL;
         }
       }
 
       StringBuffer buffer = new StringBuffer();
-      buffer.append("new ");
+      buffer.append(PsiKeyword.NEW);
+      buffer.append(" ");
       buffer.append(componentType.getCanonicalText());
       buffer.append("[0]");
       for (int i = 0; i < count; i++) {
@@ -240,14 +244,14 @@ public class CodeInsightUtil {
     }
     else if (type instanceof PsiPrimitiveType) {
       if (PsiType.BOOLEAN == type) {
-        return "false";
+        return PsiKeyword.FALSE;
       }
       else {
         return "0";
       }
     }
     else {
-      return "null";
+      return PsiKeyword.NULL;
     }
   }
 
@@ -355,7 +359,7 @@ public class CodeInsightUtil {
             if (editor != null && editor.getComponent().isDisplayable()) {
               HintManager.getInstance().showErrorHint(
                 editor,
-                "File " + file.getVirtualFile().getPresentableUrl() + " is read-only");
+                CodeInsightBundle.message("error.hint.file.is.readonly", file.getVirtualFile().getPresentableUrl()));
             }
           }
         });

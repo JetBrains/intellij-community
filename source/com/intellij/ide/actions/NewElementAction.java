@@ -1,6 +1,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeView;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionListPopup;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
@@ -17,7 +18,7 @@ public class NewElementAction extends AnAction {
 
   public void actionPerformed(final AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    ListPopup popup =  ActionListPopup.createListPopup("New", getGroup(), dataContext, false, false);
+    ListPopup popup =  ActionListPopup.createListPopup(IdeBundle.message("title.popup.new.element"), getGroup(), dataContext, false, false);
     KeyboardFocusManager focusManager=KeyboardFocusManager.getCurrentKeyboardFocusManager();
     JComponent focusOwner=(JComponent)focusManager.getFocusOwner();
     Point location = ShowPopupMenuAction.getPopupLocation(focusOwner, dataContext);

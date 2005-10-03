@@ -38,6 +38,7 @@ import com.intellij.util.containers.HashMap;
 import org.apache.oro.text.regex.MalformedPatternException;
 import org.apache.oro.text.regex.Pattern;
 import org.apache.oro.text.regex.Perl5Compiler;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -69,6 +70,12 @@ public class CompletionUtil {
   private static HashMap<FileType,CompletionData> completionDatas;
   public static final Key<CompletionData> ENFORCE_COMPLETION_DATA_KEY = new Key<CompletionData>("Enforce completionData");
   private static final int MAX_SCOPE_SIZE_TO_SEARCH_UNRESOLVED = 50000;
+  @NonNls
+  public static final String GET_PREFIX = "get";
+  @NonNls
+  public static final String SET_PREFIX = "set";
+  @NonNls
+  public static final String IS_PREFIX = "is";
 
   private static void initBuiltInCompletionDatas() {
     completionDatas = new HashMap<FileType, CompletionData>();
@@ -76,7 +83,7 @@ public class CompletionUtil {
     registerCompletionData(StdFileTypes.XHTML,new XHtmlCompletionData());
   }
 
-  public static final String DUMMY_IDENTIFIER = "IntellijIdeaRulezzz ";
+  public static final @NonNls String DUMMY_IDENTIFIER = "IntellijIdeaRulezzz ";
   public static final Key<String> COMPLETION_PREFIX = Key.create("Completion prefix");
   public static final Key<PsiElement> ORIGINAL_KEY = Key.create("ORIGINAL_KEY");
   public static final Key<PsiElement> COPY_KEY = Key.create("COPY_KEY");
@@ -278,7 +285,7 @@ public class CompletionUtil {
     if (set.isEmpty() && PsiType.VOID != varType) {
       // use suggested names as suffixes
       final String requiredSuffix = codeStyleManager.getSuffixByVariableKind(varKind);
-      final boolean isMethodPrefix = prefix.startsWith("is") || prefix.startsWith("get") || prefix.startsWith("set");
+      final boolean isMethodPrefix = prefix.startsWith(IS_PREFIX) || prefix.startsWith(GET_PREFIX) || prefix.startsWith(SET_PREFIX);
       if(varKind != VariableKind.STATIC_FINAL_FIELD || isMethodPrefix){
         for (int i = 0; i < suggestedNames.length; i++) {
           suggestedNames[i] = codeStyleManager.variableNameToPropertyName(suggestedNames[i], varKind);
@@ -435,7 +442,7 @@ public class CompletionUtil {
         for (final PsiField field : fields) {
           if (field == element) continue;
           final PsiModifierList modifierList = field.getModifierList();
-          if (staticContext && (modifierList != null && !modifierList.hasModifierProperty("static"))) continue;
+          if (staticContext && (modifierList != null && !modifierList.hasModifierProperty(PsiModifier.STATIC))) continue;
           final PsiMethod getter = PropertyUtil.generateGetterPrototype(field);
           if (getter.getReturnType().equals(varType) && psiClass.findMethodBySignature(getter, true) == null) {
             propertyHandlers.add(getter.getName());

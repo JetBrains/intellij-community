@@ -34,11 +34,13 @@ package com.intellij.openapi.vcs.annotate;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorGutter;
 import com.intellij.openapi.editor.TextAnnotationGutterProvider;
+import com.intellij.openapi.editor.EditorGutterAction;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vcs.VcsBundle;
 
 public class Annotater {
 
@@ -56,8 +58,8 @@ public class Annotater {
     OpenFileDescriptor openFileDescriptor = new OpenFileDescriptor(myProject, myVirtualFile);
     Editor editor = FileEditorManager.getInstance(myProject).openTextEditor(openFileDescriptor, true);
     if (editor == null) {
-      Messages.showMessageDialog("Cannot open text editor for file " + myVirtualFile.getPresentableUrl(),
-                                 "Cannot Open Editor", Messages.getInformationIcon());
+      Messages.showMessageDialog(VcsBundle.message("message.text.cannot.open.editor", myVirtualFile.getPresentableUrl()),
+                                 VcsBundle.message("message.title.cannot.open.editor"), Messages.getInformationIcon());
       return;
     }
 
@@ -67,14 +69,20 @@ public class Annotater {
     final LineAnnotationAspect[] aspects = myFileAnnotation.getAspects();
     for (int i = 0; i < aspects.length; i++) {
       final LineAnnotationAspect aspect = aspects[i];
-      gutterComponent.registerTextAnnotation(new TextAnnotationGutterProvider() {
+      final TextAnnotationGutterProvider provider = new TextAnnotationGutterProvider() {
         public String getLineText(int line, Editor editor) {
           return aspect.getValue(line);
         }
 
         public void gutterClosed() {
         }
-      });
+      };
+      if (aspect instanceof EditorGutterAction) {
+        gutterComponent.registerTextAnnotation(provider, (EditorGutterAction)aspect);
+      } else {
+       gutterComponent.registerTextAnnotation(provider);
+      }
+
 
     }
   }

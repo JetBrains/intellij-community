@@ -34,10 +34,15 @@ package com.intellij.ide.highlighter;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.ide.IdeBundle;
 
 import javax.swing.*;
 
+import org.jetbrains.annotations.NonNls;
+
 public class HtmlFileType extends LanguageFileType {
+  @NonNls public static final String DEFAULT_EXTENSION = "html";
+  @NonNls public static final String DOT_DEFAULT_EXTENSION = ".html";
   private static final Icon ICON = IconLoader.getIcon("/fileTypes/html.png");
 
   public HtmlFileType() {
@@ -49,7 +54,7 @@ public class HtmlFileType extends LanguageFileType {
   }
 
   public String getDescription() {
-    return "HTML files";
+    return IdeBundle.message("filetype.description.html");
   }
 
   public String getDefaultExtension() {

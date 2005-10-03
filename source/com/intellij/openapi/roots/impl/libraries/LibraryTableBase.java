@@ -9,9 +9,8 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.containers.CollectUtil;
-import com.intellij.util.containers.Convertor;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 
@@ -70,7 +69,7 @@ public abstract class LibraryTableBase implements JDOMExternalizable, LibraryTab
     return createLibrary(null);
   }
 
-
+  @NonNls
   public String getComponentName() {
     return "libraryTable";
   }

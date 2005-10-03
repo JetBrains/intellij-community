@@ -1,5 +1,6 @@
 package com.intellij.openapi.actionSystem.impl;
 
+import com.intellij.CommonBundle;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.plugins.PluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
@@ -18,19 +19,19 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.impl.IdeFrame;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.openapi.wm.impl.IdeFrame;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.defaults.ConstructorInjectionComponentAdapter;
 
@@ -61,6 +62,34 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
   private DataManager myDataManager;
   private String myPrevPerformedActionId;
   private long myLastTimeEditorWasTypedIn = 0;
+  @NonNls private static final String ACTION_ELEMENT_NAME = "action";
+  @NonNls private static final String GROUP_ELEMENT_NAME = "group";
+  @NonNls protected static final String ACTIONS_ELEMENT_NAME = "actions";
+  @NonNls protected static final String CLASS_ATTR_NAME = "class";
+  @NonNls protected static final String ID_ATTR_NAME = "id";
+  @NonNls protected static final String INTERNAL_ATTR_NAME = "internal";
+  @NonNls protected static final String ICON_ATTR_NAME = "icon";
+  @NonNls protected static final String ADD_TO_GROUP_ELEMENT_NAME = "add-to-group";
+  @NonNls protected static final String SHORTCUT_ELEMENT_NAME = "keyboard-shortcut";
+  @NonNls protected static final String MOUSE_SHORTCUT_ELEMENT_NAME = "mouse-shortcut";
+  @NonNls protected static final String DESCRIPTION = "description";
+  @NonNls protected static final String TEXT = "text";
+  @NonNls protected static final String POPAP_ATTR_NAME = "popup";
+  @NonNls protected static final String SEPARATOR_ELEMENT_NAME = "separator";
+  @NonNls protected static final String REFERENCE_ELEMENT_NAME = "reference";
+  @NonNls protected static final String GROUPID_ATTR_NAME = "group-id";
+  @NonNls protected static final String ANCHOR_ELEMENT_NAME = "anchor";
+  @NonNls protected static final String FIRST = "first";
+  @NonNls protected static final String LAST = "last";
+  @NonNls protected static final String BEFORE = "before";
+  @NonNls protected static final String AFTER = "after";
+  @NonNls protected static final String RELATIVE_TO_ACTION_ATTR_NAME = "relative-to-action";
+  @NonNls protected static final String FIRST_KEYSTROKE_ATTR_NAME = "first-keystroke";
+  @NonNls protected static final String SECOND_KEYSTROKE_ATTR_NAME = "second-keystroke";
+  @NonNls protected static final String KEYMAP_ATTR_NAME = "keymap";
+  @NonNls protected static final String KEYSTROKE_ATTR_NAME = "keystroke";
+  @NonNls protected static final String REF_ATTR_NAME = "ref";
+  @NonNls private static final String ACTIONS_BUNDLE = "messages.ActionsBundle";
 
   ActionManagerImpl(KeymapManager keymapManager, DataManager dataManager) {
     myId2Action = new THashMap<String, Object>();
@@ -106,7 +135,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     final ClassLoader classLoader = getClass().getClassLoader();
     for (final Object o : element.getChildren()) {
       Element children = (Element)o;
-      if ("actions".equals(children.getName())) {
+      if (ACTIONS_ELEMENT_NAME.equals(children.getName())) {
         processActionsElement(children, classLoader, null);
       }
     }
@@ -134,6 +163,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
       LOG.debug("enter: getAction(" + id + ")");
     }
     if (id == null) {
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("id cannot be null");
     }
     return getActionImpl(id, false);
@@ -150,6 +180,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
   /**
    * Converts action's stub to normal action.
    */
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private AnAction convert(ActionStub stub) {
     synchronized (myLock) {
       LOG.assertTrue(myAction2Id.contains(stub));
@@ -188,6 +219,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
   }
 
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public String getId(AnAction action) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: getId(" + action + ")");
@@ -227,7 +259,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
   @Nullable
   private AnAction processActionElement(Element element, final ClassLoader loader, PluginId pluginId) {
     final PluginDescriptor plugin = PluginManager.getPlugin(pluginId);
-    final String resBundleName = plugin != null ? plugin.getResourceBundleBaseName() : "idea.ActionsBundle";
+    @NonNls final String resBundleName = plugin != null ? plugin.getResourceBundleBaseName() : ACTIONS_BUNDLE;
     ResourceBundle bundle = null;
     if (resBundleName != null) {
       bundle = ResourceBundle.getBundle(resBundleName, Locale.getDefault(), loader);
@@ -236,40 +268,27 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: processActionElement(" + element.getName() + ")");
     }
-    if (!"action".equals(element.getName())) {
+    if (!ACTION_ELEMENT_NAME.equals(element.getName())) {
       LOG.error("unexpected name of element \"" + element.getName() + "\"");
       return null;
     }
-    String className = element.getAttributeValue("class");
+    String className = element.getAttributeValue(CLASS_ATTR_NAME);
     if (className == null || className.length() == 0) {
       LOG.error("action element should have specified \"class\" attribute");
       return null;
     }
     // read ID and register loaded action
-    String id = element.getAttributeValue("id");
+    String id = element.getAttributeValue(ID_ATTR_NAME);
     if (id == null || id.length() == 0) {
       LOG.error("ID of the action cannot be an empty string");
       return null;
     }
-    if (Boolean.valueOf(element.getAttributeValue("internal")).booleanValue() && !ApplicationManagerEx.getApplicationEx().isInternal()) {
+    if (Boolean.valueOf(element.getAttributeValue(INTERNAL_ATTR_NAME)).booleanValue() && !ApplicationManagerEx.getApplicationEx().isInternal()) {
       myNotRegisteredInternalActionIds.add(id);
       return null;
     }
 
-    // text
-    String text = null;
-    if (bundle != null) {
-      try {
-        text = bundle.getString("action." + id + ".text");
-      }
-      catch (MissingResourceException e) {
-        // OK for a while. Try to load regulary from text attribute
-      }
-    }
-
-    if (text == null) {
-      text = element.getAttributeValue("text");
-    }
+    String text = loadTextForElement(element, bundle, id, ACTION_ELEMENT_NAME);
 
     if (text == null) {
       LOG.error("'text' attribute is mandatory (action ID=" + id + ")");
@@ -281,24 +300,11 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     presentation.setText(text);
 
     // description
-    String description = null;
-    if (bundle != null) {
-      try {
-        description = bundle.getString("action." + id + ".description");
-      }
-      catch (MissingResourceException e) {
-        // OK, no description
-      }
-    }
 
-    if (description == null) {
-      description = element.getAttributeValue("description");
-    }
-
-    presentation.setDescription(description);
+    presentation.setDescription(loadDescriptionForElement(element, bundle, id, ACTION_ELEMENT_NAME));
 
     // icon
-    String iconPath = element.getAttributeValue("icon");
+    String iconPath = element.getAttributeValue(ICON_ATTR_NAME);
     if (iconPath != null) {
       try {
         final Class actionClass = Class.forName(className, true, loader);
@@ -310,13 +316,13 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     // process all links and key bindings if any
     for (final Object o : element.getChildren()) {
       Element e = (Element)o;
-      if ("add-to-group".equals(e.getName())) {
+      if (ADD_TO_GROUP_ELEMENT_NAME.equals(e.getName())) {
         processAddToGroupNode(stub, e);
       }
-      else if ("keyboard-shortcut".equals(e.getName())) {
+      else if (SHORTCUT_ELEMENT_NAME.equals(e.getName())) {
         processKeyboardShortcutNode(e, id);
       }
-      else if ("mouse-shortcut".equals(e.getName())) {
+      else if (MOUSE_SHORTCUT_ELEMENT_NAME.equals(e.getName())) {
         processMouseShortcutNode(e, id);
       }
       else {
@@ -329,15 +335,36 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     return stub;
   }
 
+  private String loadDescriptionForElement(final Element element, final ResourceBundle bundle, final String id, String elementType) {
+    String description = null;
+    if (bundle != null) {
+      @NonNls final String key = elementType + "." + id + ".description";
+      return CommonBundle.messageOrDefault(bundle, key, element.getAttributeValue(DESCRIPTION));
+    } else {
+      return element.getAttributeValue(DESCRIPTION);
+    }
+  }
+
+  private String loadTextForElement(final Element element, final ResourceBundle bundle, final String id, String elementType) {
+    return CommonBundle.messageOrDefault(bundle, elementType + "." + id + "." + TEXT, element.getAttributeValue(TEXT));
+  }
+
   private AnAction processGroupElement(Element element, final ClassLoader loader, PluginId pluginId) {
+    final PluginDescriptor plugin = PluginManager.getPlugin(pluginId);
+    @NonNls final String resBundleName = plugin != null ? plugin.getResourceBundleBaseName() : ACTIONS_BUNDLE;
+    ResourceBundle bundle = null;
+    if (resBundleName != null) {
+      bundle = ResourceBundle.getBundle(resBundleName, Locale.getDefault(), loader);
+    }
+
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: processGroupElement(" + element.getName() + ")");
     }
-    if (!"group".equals(element.getName())) {
+    if (!GROUP_ELEMENT_NAME.equals(element.getName())) {
       LOG.error("unexpected name of element \"" + element.getName() + "\"");
       return null;
     }
-    String className = element.getAttributeValue("class");
+    String className = element.getAttributeValue(CLASS_ATTR_NAME);
     if (className == null) { // use default group if class isn't specified
       className = DefaultActionGroup.class.getName();
     }
@@ -349,7 +376,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
         LOG.error("class with name \"" + className + "\" should be instance of " + ActionGroup.class.getName());
         return null;
       }
-      if (element.getChildren().size() != element.getChildren("add-to-group").size() ) {  //
+      if (element.getChildren().size() != element.getChildren(ADD_TO_GROUP_ELEMENT_NAME).size() ) {  //
         if (!(obj instanceof DefaultActionGroup)) {
           LOG.error("class with name \"" + className + "\" should be instance of " + DefaultActionGroup.class.getName() +
                     " because there are children specified");
@@ -358,12 +385,12 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
       }
       ActionGroup group = (ActionGroup)obj;
       // read ID and register loaded group
-      String id = element.getAttributeValue("id");
+      String id = element.getAttributeValue(ID_ATTR_NAME);
       if (id != null && id.length() == 0) {
         LOG.error("ID of the group cannot be an empty string");
         return null;
       }
-      if (Boolean.valueOf(element.getAttributeValue("internal")).booleanValue() && !ApplicationManagerEx.getApplicationEx().isInternal()) {
+      if (Boolean.valueOf(element.getAttributeValue(INTERNAL_ATTR_NAME)).booleanValue() && !ApplicationManagerEx.getApplicationEx().isInternal()) {
         myNotRegisteredInternalActionIds.add(id);
         return null;
       }
@@ -373,18 +400,18 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
       }
       // text
       Presentation presentation = group.getTemplatePresentation();
-      String text = element.getAttributeValue("text");
+      String text = loadTextForElement(element, bundle, id, GROUP_ELEMENT_NAME);
       presentation.setText(text);
       // description
-      String description = element.getAttributeValue("description");
+      String description = loadDescriptionForElement(element, bundle, id, GROUP_ELEMENT_NAME);
       presentation.setDescription(description);
       // icon
-      String iconPath = element.getAttributeValue("icon");
+      String iconPath = element.getAttributeValue(ICON_ATTR_NAME);
       if (iconPath != null) {
         presentation.setIcon(IconLoader.getIcon(iconPath));
       }
       // popup
-      String popup = element.getAttributeValue("popup");
+      String popup = element.getAttributeValue(POPAP_ATTR_NAME);
       if (popup != null) {
         group.setPopup(Boolean.valueOf(popup).booleanValue());
       }
@@ -392,26 +419,26 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
       for (final Object o : element.getChildren()) {
         Element child = (Element)o;
         String name = child.getName();
-        if ("action".equals(name)) {
+        if (ACTION_ELEMENT_NAME.equals(name)) {
           AnAction action = processActionElement(child, loader, pluginId);
           if (action != null) {
             assertActionIsGroupOrStub(action);
             ((DefaultActionGroup)group).add(action, this);
           }
         }
-        else if ("separator".equals(name)) {
+        else if (SEPARATOR_ELEMENT_NAME.equals(name)) {
           processSeparatorNode((DefaultActionGroup)group, child);
         }
-        else if ("group".equals(name)) {
+        else if (GROUP_ELEMENT_NAME.equals(name)) {
           AnAction action = processGroupElement(child, loader, pluginId);
           if (action != null) {
             ((DefaultActionGroup)group).add(action, this);
           }
         }
-        else if ("add-to-group".equals(name)) {
+        else if (ADD_TO_GROUP_ELEMENT_NAME.equals(name)) {
           processAddToGroupNode(group, child);
         }
-        else if ("reference".equals(name)) {
+        else if (REFERENCE_ELEMENT_NAME.equals(name)) {
           AnAction action = processReferenceElement(child);
           if (action != null) {
             ((DefaultActionGroup)group).add(action, this);
@@ -447,11 +474,11 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
       assertActionIsGroupOrStub(action);
     }
 
-    if (!"add-to-group".equals(element.getName())) {
+    if (!ADD_TO_GROUP_ELEMENT_NAME.equals(element.getName())) {
       LOG.error("unexpected name of element \"" + element.getName() + "\"");
       return;
     }
-    String groupId = element.getAttributeValue("group-id");
+    String groupId = element.getAttributeValue(GROUPID_ATTR_NAME);
     if (groupId == null || groupId.length() == 0) {
       LOG.error("attribute \"group-id\" should be defined");
       return;
@@ -465,29 +492,29 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
       LOG.error("action with id \"" + groupId + "\" should be instance of " + DefaultActionGroup.class.getName());
       return;
     }
-    String anchorStr = element.getAttributeValue("anchor");
+    String anchorStr = element.getAttributeValue(ANCHOR_ELEMENT_NAME);
     if (anchorStr == null) {
       LOG.error("attribute \"anchor\" should be defined");
       return;
     }
     Anchor anchor;
-    if ("first".equalsIgnoreCase(anchorStr)) {
+    if (FIRST.equalsIgnoreCase(anchorStr)) {
       anchor = Anchor.FIRST;
     }
-    else if ("last".equalsIgnoreCase(anchorStr)) {
+    else if (LAST.equalsIgnoreCase(anchorStr)) {
       anchor = Anchor.LAST;
     }
-    else if ("before".equalsIgnoreCase(anchorStr)) {
+    else if (BEFORE.equalsIgnoreCase(anchorStr)) {
       anchor = Anchor.BEFORE;
     }
-    else if ("after".equalsIgnoreCase(anchorStr)) {
+    else if (AFTER.equalsIgnoreCase(anchorStr)) {
       anchor = Anchor.AFTER;
     }
     else {
       LOG.error("anchor should be one of the following constants: \"first\", \"last\", \"before\" or \"after\"");
       return;
     }
-    String relativeToActionId = element.getAttributeValue("relative-to-action");
+    String relativeToActionId = element.getAttributeValue(RELATIVE_TO_ACTION_ATTR_NAME);
     if ((Anchor.BEFORE == anchor || Anchor.AFTER == anchor) && relativeToActionId == null) {
       LOG.error("\"relative-to-action\" cannot be null if anchor is \"after\" or \"before\"");
       return;
@@ -501,7 +528,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
    * @param element     XML element which represent separator.
    */
   private void processSeparatorNode(DefaultActionGroup parentGroup, Element element) {
-    if (!"separator".equals(element.getName())) {
+    if (!SEPARATOR_ELEMENT_NAME.equals(element.getName())) {
       LOG.error("unexpected name of element \"" + element.getName() + "\"");
       return;
     }
@@ -512,7 +539,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     // try to find inner <add-to-parent...> tag
     for (final Object o : element.getChildren()) {
       Element child = (Element)o;
-      if ("add-to-group".equals(child.getName())) {
+      if (ADD_TO_GROUP_ELEMENT_NAME.equals(child.getName())) {
         processAddToGroupNode(separator, child);
       }
     }
@@ -523,7 +550,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
       LOG.debug("enter: processKeyboardShortcutNode(" + element.getName() + ")");
     }
 
-    String firstStrokeString = element.getAttributeValue("first-keystroke");
+    String firstStrokeString = element.getAttributeValue(FIRST_KEYSTROKE_ATTR_NAME);
     if (firstStrokeString == null) {
       LOG.error("\"first-keystroke\" attribute must be specified for action with id=" + actionId);
       return;
@@ -535,7 +562,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     }
 
     KeyStroke secondKeyStroke = null;
-    String secondStrokeString = element.getAttributeValue("second-keystroke");
+    String secondStrokeString = element.getAttributeValue(SECOND_KEYSTROKE_ATTR_NAME);
     if (secondStrokeString != null) {
       secondKeyStroke = getKeyStroke(secondStrokeString);
       if (secondKeyStroke == null) {
@@ -544,7 +571,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
       }
     }
 
-    String keymapName = element.getAttributeValue("keymap");
+    String keymapName = element.getAttributeValue(KEYMAP_ATTR_NAME);
     if (keymapName == null || keymapName.trim().length() == 0) {
       LOG.error("attribute \"keymap\" should be defined");
       return;
@@ -563,7 +590,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
       LOG.debug("enter: processMouseShortcutNode(" + element.getName() + ")");
     }
 
-    String keystrokeString = element.getAttributeValue("keystroke");
+    String keystrokeString = element.getAttributeValue(KEYSTROKE_ATTR_NAME);
     if (keystrokeString == null || keystrokeString.trim().length() == 0) {
       LOG.error("\"keystroke\" attribute must be specified for action with id=" + actionId);
       return;
@@ -577,7 +604,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
       return;
     }
 
-    String keymapName = element.getAttributeValue("keymap");
+    String keymapName = element.getAttributeValue(KEYMAP_ATTR_NAME);
     if (keymapName == null || keymapName.length() == 0) {
       LOG.error("attribute \"keymap\" should be defined");
       return;
@@ -596,15 +623,15 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: processReferenceElement(" + element.getName() + ")");
     }
-    if (!"reference".equals(element.getName())) {
+    if (!REFERENCE_ELEMENT_NAME.equals(element.getName())) {
       LOG.error("unexpected name of element \"" + element.getName() + "\"");
       return null;
     }
-    String ref = element.getAttributeValue("ref");
+    String ref = element.getAttributeValue(REF_ATTR_NAME);
 
     if (ref==null) {
       // support old style references by id
-      ref = element.getAttributeValue("id");
+      ref = element.getAttributeValue(ID_ATTR_NAME);
     }
 
     if (LOG.isDebugEnabled()) {
@@ -631,7 +658,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: processActionsNode(" + element.getName() + ")");
     }
-    if (!"actions".equals(element.getName())) {
+    if (!ACTIONS_ELEMENT_NAME.equals(element.getName())) {
       LOG.error("unexpected name of element \"" + element.getName() + "\"");
       return;
     }
@@ -639,16 +666,16 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
       for (final Object o : element.getChildren()) {
         Element child = (Element)o;
         String name = child.getName();
-        if ("action".equals(name)) {
+        if (ACTION_ELEMENT_NAME.equals(name)) {
           AnAction action = processActionElement(child, loader, pluginId);
           if (action != null) {
             assertActionIsGroupOrStub(action);
           }
         }
-        else if ("group".equals(name)) {
+        else if (GROUP_ELEMENT_NAME.equals(name)) {
           processGroupElement(child, loader, pluginId);
         }
-        else if ("separator".equals(name)) {
+        else if (SEPARATOR_ELEMENT_NAME.equals(name)) {
           processSeparatorNode(null, child);
         }
         else {

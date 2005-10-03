@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.concurrency.Semaphore;
 import org.netbeans.lib.cvsclient.ICvsCommandStopper;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,9 +34,10 @@ public class ReadThread extends Thread {
   public static final int TIMEOUT = 3000;
   public static final int END_OF_STREAM = -1;
   private boolean myIsClosed = false;
+  @NonNls private static final String NAME = "CvsReadThread";
 
   public ReadThread(InputStream inputStream, ICvsCommandStopper cvsCommandStopper) {
-    super("CvsReadThread");
+    super(NAME);
     myInputStream = inputStream;
     myCvsCommandStopper = cvsCommandStopper;
     setPriority(Thread.MAX_PRIORITY);
@@ -48,7 +50,7 @@ public class ReadThread extends Thread {
   }
 
   public String toString() {
-    StringBuffer buffer = new StringBuffer();
+    @NonNls StringBuffer buffer = new StringBuffer();
     buffer.append(super.toString());
     buffer.append(", atEnd: ");
     buffer.append(myAtEndOfStream);

@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.TreeToolTipHandler;
+import com.intellij.ui.UIBundle;
 import com.intellij.util.containers.ConvertingIterator;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.Tree;
@@ -64,7 +65,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
     myTreeBuilder = createTreeBuilder(myTree, treeModel, myTreeStructure, FileComparator.getInstance(), descriptor);
 
     new TreeSpeedSearch(myTree);
-    myTree.putClientProperty("JTree.lineStyle", "Angled");
+    myTree.setLineStyleAngled();
     myTree.expandPath(new TreePath(treeModel.getRoot()));
     TreeToolTipHandler.install(myTree);
     TreeUtil.installActions(myTree);
@@ -236,7 +237,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
             });
           }
         },
-        "Create New Folder",
+        UIBundle.message("file.chooser.create.new.folder.command.name"),
         null
     );
     return failReason[0];

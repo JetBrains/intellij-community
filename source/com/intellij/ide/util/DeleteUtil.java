@@ -1,10 +1,13 @@
 package com.intellij.ide.util;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NonNls;
 
+import java.text.MessageFormat;
 import java.util.ArrayList;
 
 /**
@@ -12,19 +15,14 @@ import java.util.ArrayList;
  */
 public class DeleteUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.DeleteUtil");
-  public static void appendMessage(int count, String singleName, String multipleName, StringBuffer buffer) {
+  public static void appendMessage(int count, @NonNls String propertyKey, StringBuffer buffer) {
     if (count > 0) {
       if (buffer.length() > 0) {
-        buffer.append(" and ");
+        buffer.append(" " + IdeBundle.message("prompt.delete.and") + " ");
       }
       buffer.append(count);
       buffer.append(' ');
-      if (count == 1) {
-        buffer.append(singleName);
-      }
-      else {
-        buffer.append(multipleName);
-      }
+      buffer.append(IdeBundle.message(propertyKey, count));
     }
   }
 
@@ -67,7 +65,7 @@ public class DeleteUtil {
     return filteredElements.toArray(new PsiElement[filteredElements.size()]);
   }
 
-  public static String generateWarningMessage(String actionName, final PsiElement[] elements) {
+  public static String generateWarningMessage(String messageTemplate, final PsiElement[] elements) {
     int methods = 0;
     int fields = 0;
     int interfaces = 0;
@@ -82,32 +80,32 @@ public class DeleteUtil {
     for (final PsiElement elementToDelete : elements) {
       if (elementToDelete instanceof Property) {
         objName[0] = ((Property)elementToDelete).getName();
-        objName[1] = "property";
+        objName[1] = IdeBundle.message("prompt.delete.property", 1);
       }
       else if (elementToDelete instanceof PsiMethod) {
         objName[0] = ((PsiMethod)elementToDelete).getName();
-        objName[1] = "method";
+        objName[1] = IdeBundle.message("prompt.delete.method", 1);
         methods++;
       }
       else if (elementToDelete instanceof PsiField) {
         objName[0] = ((PsiField)elementToDelete).getName();
-        objName[1] = "field";
+        objName[1] = IdeBundle.message("prompt.delete.field", 1);
         fields++;
       }
       else if (elementToDelete instanceof PsiClass) {
         objName[0] = ((PsiClass)elementToDelete).getName();
         if (((PsiClass)elementToDelete).isInterface()) {
-          objName[1] = "interface";
+          objName[1] = IdeBundle.message("prompt.delete.interface", 1);
           interfaces++;
         }
         else {
-          objName[1] = elementToDelete instanceof PsiTypeParameter ? "type parameter" : "class";
+          objName[1] = elementToDelete instanceof PsiTypeParameter ? IdeBundle.message("prompt.delete.type.parameter", 1) : IdeBundle.message("prompt.delete.class", 1);
           classes++;
         }
       }
       else if (elementToDelete instanceof PsiFile) {
         objName[0] = ((PsiFile)elementToDelete).getName();
-        objName[1] = "file";
+        objName[1] = IdeBundle.message("prompt.delete.file", 1);
         files++;
       }
       else if (elementToDelete instanceof PsiDirectory) {
@@ -118,7 +116,7 @@ public class DeleteUtil {
         final String name = psiPackage.getName();
         final PsiDirectory[] psiDirectories = psiPackage.getDirectories();
         final int count = psiDirectories.length;
-        objName[1] = "package";
+        objName[1] = IdeBundle.message("prompt.delete.package", 1);
         objName[0] = name;
         objName[2] = " " + buildDirectoryMessage(count);
         packages += 1;
@@ -131,37 +129,36 @@ public class DeleteUtil {
       }
     }
 
-    String warningMessage = actionName + " ";
+    String warningMessage;
     if (elements.length == 1) {
-      warningMessage += objName[1] + " \"" + objName[0] + "\"" + objName[2] + "?";
+      warningMessage = MessageFormat.format(messageTemplate, objName[1] + " \"" + objName[0] + "\"");
     }
     else {
       StringBuffer buffer = new StringBuffer();
-      appendMessage(directories, "directory", "directories", buffer);
-      appendMessage(files, "file", "files", buffer);
-      appendMessage(classes, "class", "classes", buffer);
-      appendMessage(interfaces, "interface", "interfaces", buffer);
-      appendMessage(methods, "method", "methods", buffer);
-      appendMessage(fields, "field", "fields", buffer);
+      appendMessage(directories, "prompt.delete.directory", buffer);
+      appendMessage(files, "prompt.delete.file", buffer);
+      appendMessage(classes, "prompt.delete.class", buffer);
+      appendMessage(interfaces, "prompt.delete.interface", buffer);
+      appendMessage(methods, "prompt.delete.method", buffer);
+      appendMessage(fields, "prompt.delete.field", buffer);
       if (packages > 0) {
-        appendMessage(packages, "package", "packages", buffer);
+        appendMessage(packages, "prompt.delete.package", buffer);
         buffer.append(' ');
         buffer.append(buildDirectoryMessage(packageDirectories));
       }
-      appendMessage(customElements, "element", "elements", buffer);
-      buffer.append('?');
-      warningMessage += buffer.toString();
+      appendMessage(customElements, "prompt.delete.element", buffer);
+      warningMessage = MessageFormat.format(messageTemplate, buffer.toString());
     }
     return warningMessage;
   }
 
   private static String buildDirectoryMessage(final int count) {
-    return "(" + count + " " + (count == 1 ? "directory" : "directories") + ")";
+    return IdeBundle.message("prompt.delete.directory.paren", count);
   }
 
   private static int processDirectory(final PsiElement elementToDelete, String[] objName, int directories) {
     objName[0] = ((PsiDirectory)elementToDelete).getName();
-    objName[1] = "directory";
+    objName[1] = IdeBundle.message("prompt.delete.directory", 1);
     directories++;
     return directories;
   }

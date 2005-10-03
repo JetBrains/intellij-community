@@ -25,6 +25,7 @@ import javax.swing.*;
  * @author Eugene Zhuravlev
  *         Date: Nov 13, 2004
  */
+@SuppressWarnings({"HardCodedStringLiteral"})
 public abstract class TestErrorViewAction extends AnAction{
   private static final int MESSAGE_COUNT = 1000;
   private long myMillis = 0L;

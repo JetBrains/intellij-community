@@ -74,7 +74,7 @@ abstract class ClsElementImpl extends PsiElementBase implements PsiCompiledEleme
     throw new IncorrectOperationException(CAN_NOT_MODIFY_MESSAGE);
   }
 
-  protected static final String CAN_NOT_MODIFY_MESSAGE = "Cannot modify compiled element";
+  protected static final String CAN_NOT_MODIFY_MESSAGE = PsiBundle.message("psi.error.attempt.to.edit.class.file");
 
   public abstract String getMirrorText();
 

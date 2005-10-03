@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.source.jsp.tagLibrary;
 
+import org.jetbrains.annotations.NonNls;
 import sun.misc.Resource;
 
 import java.io.*;
@@ -9,14 +10,16 @@ import java.util.zip.ZipFile;
 
 class JarLoader extends Loader {
   private URL myURL;
+  @NonNls private static final String JAR_PROTOCOL = "jar";
+  @NonNls private static final String FILE_PROTOCOL = "file";
 
   JarLoader(URL url) throws IOException {
-    super(new URL("jar", "", -1, url + "!/"));
+    super(new URL(JAR_PROTOCOL, "", -1, url + "!/"));
     myURL = url;
   }
 
   private ZipFile getZipFile() throws IOException {
-    if ("file".equals(myURL.getProtocol())) {
+    if (FILE_PROTOCOL.equals(myURL.getProtocol())) {
       String s = myURL.getFile().replace('/', File.separatorChar);
       if (!(new File(s)).exists()) throw new FileNotFoundException(s);
       else return new ZipFile(s);

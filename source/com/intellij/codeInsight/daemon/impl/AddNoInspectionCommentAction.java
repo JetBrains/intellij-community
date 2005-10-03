@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -11,13 +12,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author ven
  */
 public class AddNoInspectionCommentAction implements IntentionAction {
   PsiElement myContext;
-  private static final String COMMENT_START_TEXT = "//noinspection ";
+  private static final @NonNls String COMMENT_START_TEXT = "//noinspection ";
 
   private String myDisplayName;
   private String myID;
@@ -35,7 +37,7 @@ public class AddNoInspectionCommentAction implements IntentionAction {
   }
 
   public String getText() {
-    return "Suppress '" + myDisplayName + "' for statement";
+    return InspectionsBundle.message("suppress.inspection.statement", myDisplayName);
   }
 
   private PsiStatement getContainer() {
@@ -43,7 +45,7 @@ public class AddNoInspectionCommentAction implements IntentionAction {
   }
 
   public String getFamilyName() {
-    return "Suppress inspection";
+    return InspectionsBundle.message("suppress.inspection.family");
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {

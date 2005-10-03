@@ -8,6 +8,8 @@
  */
 package com.intellij.codeInspection.reference;
 
+import com.intellij.codeInspection.InspectionsBundle;
+
 public class RefProject extends RefEntity {
   private final RefManager myRefManager;
   private RefPackage myDefaultPackage;
@@ -23,7 +25,7 @@ public class RefProject extends RefEntity {
 
   public RefPackage getDefaultPackage() {
     if (myDefaultPackage == null) {
-      myDefaultPackage = getRefManager().getPackage("default package");
+      myDefaultPackage = getRefManager().getPackage(InspectionsBundle.message("inspection.reference.default.package"));
     }
 
     return myDefaultPackage;

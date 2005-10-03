@@ -9,13 +9,14 @@ import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author cdr
  */
 public class NamedLibraryUrl extends AbstractUrl {
 
-  private static final String ELEMENT_TYPE = "namedLibrary";
+  @NonNls private static final String ELEMENT_TYPE = "namedLibrary";
 
   public NamedLibraryUrl(String url, String moduleName) {
     super(url, moduleName, ELEMENT_TYPE);

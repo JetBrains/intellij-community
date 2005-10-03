@@ -9,12 +9,14 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.LabeledIcon;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.CommonBundle;
 
 import javax.swing.*;
 import javax.swing.plaf.LabelUI;
@@ -45,8 +47,8 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
     super(project, true);
     myProject = project;
     myGroups = groups;
-    setTitle("Settings");
-    setCancelButtonText("Close");
+    setTitle(OptionsBundle.message("settings.panel.title"));
+    setCancelButtonText(CommonBundle.getCloseButtonText());
     init();
     if (preselectedConfigurable != null) {
       selectConfigurable(preselectedConfigurable);
@@ -378,7 +380,7 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
 
   private class SwitchToClassicViewAction extends AbstractAction {
     public SwitchToClassicViewAction() {
-      putValue(Action.NAME, "Classic &View");
+      putValue(Action.NAME, OptionsBundle.message("control.panel.classic.view.button"));
     }
 
     public void actionPerformed(ActionEvent e) {

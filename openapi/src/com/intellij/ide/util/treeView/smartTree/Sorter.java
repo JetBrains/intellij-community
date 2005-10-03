@@ -16,7 +16,9 @@
 package com.intellij.ide.util.treeView.smartTree;
 
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.ide.IdeBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Comparator;
 
@@ -35,8 +37,7 @@ public interface Sorter extends TreeAction {
    */
   Comparator getComparator();
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  String ALPHA_SORTER_ID = "ALPHA_COMPARATOR";
+@NonNls String ALPHA_SORTER_ID = "ALPHA_COMPARATOR";
 
   /**
    * The default sorter which sorts the tree nodes alphabetically.
@@ -64,7 +65,9 @@ public interface Sorter extends TreeAction {
 
     @NotNull
     public ActionPresentation getPresentation() {
-      return new ActionPresentationData("Sort Alphabetically", "Sort Alphabetically", IconLoader.getIcon("/objectBrowser/sorted.png"));
+      return new ActionPresentationData(IdeBundle.message("action.sort.alphabetically"),
+                                        IdeBundle.message("action.sort.alphabetically"),
+                                        IconLoader.getIcon("/objectBrowser/sorted.png"));
     }
 
     @NotNull

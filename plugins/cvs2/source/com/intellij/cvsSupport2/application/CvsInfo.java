@@ -264,13 +264,13 @@ public class CvsInfo {
 
     public IConnection createConnection(ReadWriteStatistics statistics,
                                         ModalityContext executor) {
-      throw new RuntimeException("createConnection() coult not be called (invalid cvs root)");
+      throw new RuntimeException(com.intellij.CvsBundle.message("exception.text.cannot.connect.with.invalid.root"));
     }
 
     protected IConnection createOriginalConnection(ErrorRegistry errorRegistry,
                                                    ModalityContext executor,
                                                    CvsRootConfiguration cvsRootConfiguration) {
-      throw new RuntimeException("createConnection() coult not be called (invalid cvs root)");
+      throw new RuntimeException(com.intellij.CvsBundle.message("exception.text.cannot.connect.with.invalid.root"));
     }
 
     public CommandException processException(CommandException t) {
@@ -278,8 +278,8 @@ public class CvsInfo {
     }
 
     public boolean login(ModalityContext executor) {
-      Messages.showMessageDialog("Invalid cvs root: " + myStringRepsentation,
-                                 "Cannot Connect to CVS",
+      Messages.showMessageDialog(com.intellij.CvsBundle.message("message.error.invalid.cvs.root", myStringRepsentation),
+                                 com.intellij.CvsBundle.message("message.error.cannot.connect.to.cvs.title"),
                                  Messages.getErrorIcon());
 
       return false;

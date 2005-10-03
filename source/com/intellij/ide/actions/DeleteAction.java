@@ -2,6 +2,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.DeleteProvider;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,9 +38,9 @@ public class DeleteAction extends AnAction {
     String place = event.getPlace();
     Presentation presentation = event.getPresentation();
     if (ActionPlaces.PROJECT_VIEW_POPUP.equals(place) || ActionPlaces.COMMANDER_POPUP.equals(place))
-      presentation.setText("_Delete...");
+      presentation.setText(IdeBundle.message("action.delete.ellipsis"));
     else
-      presentation.setText("_Delete");
+      presentation.setText(IdeBundle.message("action.delete"));
     DataContext dataContext = event.getDataContext();
     Project project = (Project)dataContext.getData(DataConstants.PROJECT);
     if (project == null) {

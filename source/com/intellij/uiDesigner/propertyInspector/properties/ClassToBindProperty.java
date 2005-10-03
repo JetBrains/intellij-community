@@ -12,10 +12,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.uiDesigner.FormEditingUtil;
-import com.intellij.uiDesigner.GuiEditor;
-import com.intellij.uiDesigner.RadComponent;
-import com.intellij.uiDesigner.RadRootContainer;
+import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
@@ -111,7 +108,7 @@ public final class ClassToBindProperty extends Property {
         final Project project = myUiEditor.getProject();
         final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
         final TreeClassChooser chooser = TreeClassChooserFactory.getInstance(project).createNoInnerClassesScopeChooser(
-          "Choose Class To Bind",
+          UIDesignerBundle.message("title.choose.class.to.bind"),
           GlobalSearchScope.projectScope(project),
           new TreeClassChooser.ClassFilter() { // we need show classes from the sources roots only
             public boolean isAccepted(final PsiClass aClass) {

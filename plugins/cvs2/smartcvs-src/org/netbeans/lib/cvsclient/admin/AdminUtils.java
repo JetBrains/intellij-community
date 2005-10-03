@@ -15,6 +15,7 @@ package org.netbeans.lib.cvsclient.admin;
 import org.netbeans.lib.cvsclient.file.DirectoryObject;
 import org.netbeans.lib.cvsclient.file.FileUtils;
 import org.netbeans.lib.cvsclient.file.ICvsFileSystem;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,14 +24,17 @@ import java.io.IOException;
  * @author  Thomas Singer
  */
 public final class AdminUtils {
+  @NonNls private static final String CVS_TAG_FILE_PATH = "CVS/Tag";
+  @NonNls private static final String CVS_ENTRIES_FILE_PATH = "CVS/Entries";
+  @NonNls private static final String CVS_ENTRIES_LOG_FILE_PATH = "CVS/Entries.Log";
 
-	public static String getStickyTagForDirectory(DirectoryObject directoryObject, ICvsFileSystem cvsFileSystem) {
-		final File directory = cvsFileSystem.getAdminFileSystem().getFile(directoryObject);
-		return getStickyTagForDirectory(directory);
-	}
+  public static String getStickyTagForDirectory(DirectoryObject directoryObject, ICvsFileSystem cvsFileSystem) {
+          final File directory = cvsFileSystem.getAdminFileSystem().getFile(directoryObject);
+          return getStickyTagForDirectory(directory);
+  }
 
 	public static String getStickyTagForDirectory(File directory) {
-		final File tagFile = new File(directory, "CVS/Tag");
+		final File tagFile = new File(directory, CVS_TAG_FILE_PATH);
 
 		if (!tagFile.isFile()) {
 			return null;
@@ -46,10 +50,10 @@ public final class AdminUtils {
 	}
 
 	public static File createEntriesFile(File directory) {
-		return new File(directory, "CVS/Entries");
+		return new File(directory, CVS_ENTRIES_FILE_PATH);
 	}
 
 	public static File createEntriesDotLogFile(File directory) {
-		return new File(directory, "CVS/Entries.Log");
+		return new File(directory, CVS_ENTRIES_LOG_FILE_PATH);
 	}
 }

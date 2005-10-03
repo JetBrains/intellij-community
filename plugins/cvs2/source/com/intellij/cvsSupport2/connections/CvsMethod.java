@@ -2,6 +2,7 @@ package com.intellij.cvsSupport2.connections;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * author: lesya
@@ -10,9 +11,9 @@ public class CvsMethod {
 
   public static final CvsMethod EXT_METHOD = new CvsMethod("ext", true, true, true, false);
   public static final CvsMethod PSERVER_METHOD = new CvsMethod("pserver", true, true, true, true);
-  public static final CvsMethod SSH_METHOD = new CvsMethod("ssh", "ssh (internal implementation)", true, true, true, true);
+  public static final CvsMethod SSH_METHOD = new CvsMethod("ssh", com.intellij.CvsBundle.message("cvs.root.description.ssh.internal.implementation"), true, true, true, true);
 
-  public static final CvsMethod LOCAL_METHOD = new CvsMethod(null, "local", false, false, false, false);
+  public static final CvsMethod LOCAL_METHOD = new CvsMethod(null, com.intellij.CvsBundle.message("cvs.root.description.local"), false, false, false, false);
 
   private final String myName;
   private final String myDescription;
@@ -28,7 +29,7 @@ public class CvsMethod {
   private boolean mySupportsProxyConnection;
 
 
-  public CvsMethod(String name,
+  public CvsMethod(@NonNls String name,
                    String description,
                    boolean hasUserValue,
                    boolean hasHostValue,
@@ -42,7 +43,7 @@ public class CvsMethod {
     mySupportsProxyConnection = supportsProxy;
   }
 
-  public CvsMethod(String name,
+  public CvsMethod(@NonNls String name,
                    boolean hasUserValue,
                    boolean hasHostValue,
                    boolean hasPortValue,

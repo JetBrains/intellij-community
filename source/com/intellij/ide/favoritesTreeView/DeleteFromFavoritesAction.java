@@ -4,6 +4,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.IdeBundle;
 
 /**
  * User: anna
@@ -11,7 +12,8 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
  */
 public class DeleteFromFavoritesAction extends AnAction {
   public DeleteFromFavoritesAction() {
-    super("Remove From Current Favorites", "Remove Selected Favorite", IconLoader.getIcon("/general/remove.png"));
+    super(IdeBundle.message("action.remove.from.current.favorites"),
+          IdeBundle.message("action.remove.selected.favorite"), IconLoader.getIcon("/general/remove.png"));
   }
 
   public void actionPerformed(AnActionEvent e) {

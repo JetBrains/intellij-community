@@ -30,6 +30,7 @@ import org.netbeans.lib.cvsclient.progress.sending.FileStateRequestsProgressHand
 import org.netbeans.lib.cvsclient.progress.sending.IRequestsProgressHandler;
 import org.netbeans.lib.cvsclient.request.CommandRequest;
 import org.netbeans.lib.cvsclient.request.Requests;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
 
@@ -128,7 +129,7 @@ public final class UpdateCommand extends AbstractCommand
 	 * Each command is responsible for constructing this information.
 	 */
 	public String getCvsCommandLine() {
-		final StringBuffer cvsCommandLine = new StringBuffer("update ");
+		@NonNls final StringBuffer cvsCommandLine = new StringBuffer("update ");
 		cvsCommandLine.append(getCvsArguments());
 		appendFileArguments(cvsCommandLine);
 		return cvsCommandLine.toString();
@@ -261,7 +262,7 @@ public final class UpdateCommand extends AbstractCommand
 	 * Similar to getCVSCommand() however without the files and command's name
 	 */
 	private String getCvsArguments() {
-		final StringBuffer cvsArguments = new StringBuffer("");
+		@NonNls final StringBuffer cvsArguments = new StringBuffer("");
 		if (isCleanCopy()) {
 			cvsArguments.append("-C ");
 		}

@@ -18,9 +18,11 @@ package com.intellij.psi;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.PomMemberOwner;
 import com.intellij.psi.meta.PsiMetaOwner;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -40,7 +42,7 @@ public interface PsiClass
    *
    * @return the qualified name of the class, or null for anonymous and local classes, and for type parameters
    */
-  @Nullable
+  @Nullable @NonNls
   String getQualifiedName();
 
   /**
@@ -231,7 +233,7 @@ public interface PsiClass
    * @return the found methods, or an empty array if no methods are found.
    */
   @NotNull
-  PsiMethod[] findMethodsByName(String name, boolean checkBases);
+  PsiMethod[] findMethodsByName(@NonNls String name, boolean checkBases);
 
   /**
    * Searches the class (and optionally its superclasses) for the methods with the specified name
@@ -321,4 +323,6 @@ public interface PsiClass
    */
   @Nullable
   PsiClass getContainingClass();
+
+  Collection<HierarchicalMethodSignature> getVisibleSignatures();
 }

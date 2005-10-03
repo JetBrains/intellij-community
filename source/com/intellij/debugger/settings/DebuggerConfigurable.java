@@ -11,6 +11,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.ide.DataManager;
+import com.intellij.debugger.DebuggerBundle;
 
 import javax.swing.*;
 import java.util.List;
@@ -34,7 +35,7 @@ public class DebuggerConfigurable extends CompositeConfigurable implements Appli
   }
 
   public String getDisplayName() {
-    return "Debugger";
+    return DebuggerBundle.message("debugger.configurable.display.name");
   }
 
   public String getHelpTopic() {

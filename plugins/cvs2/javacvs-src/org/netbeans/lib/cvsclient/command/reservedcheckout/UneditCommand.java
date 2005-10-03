@@ -23,6 +23,7 @@ import org.netbeans.lib.cvsclient.progress.IProgressViewer;
 import org.netbeans.lib.cvsclient.progress.sending.FileStateRequestsProgressHandler;
 import org.netbeans.lib.cvsclient.request.CommandRequest;
 import org.netbeans.lib.cvsclient.request.Requests;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
 
@@ -74,7 +75,7 @@ public final class UneditCommand extends AbstractCommand {
 	}
 
 	public String getCvsCommandLine() {
-		final StringBuffer cvsCommandLine = new StringBuffer("unedit ");
+		@NonNls final StringBuffer cvsCommandLine = new StringBuffer("unedit ");
 		cvsCommandLine.append(getCVSArguments());
 		appendFileArguments(cvsCommandLine);
 		return cvsCommandLine.toString();
@@ -98,7 +99,7 @@ public final class UneditCommand extends AbstractCommand {
 	// Utils ==================================================================
 
 	private String getCVSArguments() {
-		final StringBuffer cvsArguments = new StringBuffer();
+		@NonNls final StringBuffer cvsArguments = new StringBuffer();
 		if (!isRecursive()) {
 			cvsArguments.append("-l ");
 		}

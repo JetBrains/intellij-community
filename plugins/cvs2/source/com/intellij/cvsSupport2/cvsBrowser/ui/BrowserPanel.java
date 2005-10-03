@@ -72,7 +72,7 @@ public class BrowserPanel extends JPanel implements DataProvider {
 
   private class MyCheckoutAction extends AnAction {
     public MyCheckoutAction() {
-      super("Check Out...");
+      super(com.intellij.CvsBundle.message("operation.name.check.out"));
     }
 
     public void update(AnActionEvent e) {
@@ -111,7 +111,7 @@ public class BrowserPanel extends JPanel implements DataProvider {
 
   private class MyAnnotateAction extends AnAction {
     public MyAnnotateAction() {
-      super("Annotate", null, IconLoader.getIcon("/actions/annotate.png"));
+      super(com.intellij.CvsBundle.message("operation.name.annotate"), null, IconLoader.getIcon("/actions/annotate.png"));
     }
 
     public void update(AnActionEvent e) {
@@ -134,7 +134,7 @@ public class BrowserPanel extends JPanel implements DataProvider {
         AbstractVcsHelper.getInstance(myProject).showAnnotation(annotation, vcsVirtualFile);
       }
       catch (VcsException e1) {
-        AbstractVcsHelper.getInstance(myProject).showError(e1, "CVS Annotate");        
+        AbstractVcsHelper.getInstance(myProject).showError(e1, com.intellij.CvsBundle.message("operation.name.annotate"));
       }
     }
   }

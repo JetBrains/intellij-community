@@ -5,8 +5,11 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.xml.util.XmlUtil;
 
 import javax.swing.*;
+
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author max
@@ -15,11 +18,13 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
   public static final Icon INFO = IconLoader.getIcon("/compiler/information.png");
   private RefElement myElement;
   private ProblemDescriptor myDescriptor;
+  private boolean myReplaceProblemDescriptorTemplateMessage;
 
-  public ProblemDescriptionNode(RefElement element, ProblemDescriptor descriptor) {
+  public ProblemDescriptionNode(RefElement element, ProblemDescriptor descriptor, boolean isReplaceProblemDescriptorTemplateMessage) {
     super(descriptor);
     myElement = element;
     myDescriptor = descriptor;
+    myReplaceProblemDescriptorTemplateMessage = isReplaceProblemDescriptorTemplateMessage;
   }
 
   public RefElement getElement() { return myElement; }
@@ -40,17 +45,25 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
   }
 
   public String toString() {
-    return isValid() ? renderDescriptionMessage(myDescriptor) : "";
+    return isValid() ? renderDescriptionMessage(myDescriptor, myReplaceProblemDescriptorTemplateMessage) : "";
   }
 
-  private static String renderDescriptionMessage(ProblemDescriptor descriptor) {
+  private static String renderDescriptionMessage(ProblemDescriptor descriptor, boolean isReplaceProblemDescriptorTemplateMessage) {
     PsiElement psiElement = descriptor.getPsiElement();
-    String message = descriptor.getDescriptionTemplate();
+    @NonNls String message = descriptor.getDescriptionTemplate();
 
     if (psiElement != null && psiElement.isValid() && message != null) {
       message = message.replaceAll("<[^>]*>", "");
-      message = StringUtil.replace(message, "#ref", psiElement.getText());
+      if (isReplaceProblemDescriptorTemplateMessage){
+        message = StringUtil.replace(message, "#ref", psiElement.getText());
+      } else {
+        final int endIndex = message.indexOf("#end");
+        if (endIndex > 0){
+          message = message.substring(0, endIndex);
+        }
+      }
       message = StringUtil.replace(message, "#loc", "");
+      message = XmlUtil.unescape(message);
       return message;
     }
     return "";

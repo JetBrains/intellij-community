@@ -11,6 +11,7 @@ package com.intellij.refactoring.util.classMembers;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.containers.HashSet;
 
 import java.util.ArrayList;
@@ -75,7 +76,7 @@ public class MemberInfo {
     if (member instanceof PsiMethod) {
       PsiMethod method = (PsiMethod) member;
       displayName = PsiFormatUtil.formatMethod(method,
-          PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.TYPE_AFTER | PsiFormatUtil.SHOW_PARAMETERS,
+                                               PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.TYPE_AFTER | PsiFormatUtil.SHOW_PARAMETERS,
                                                PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.TYPE_AFTER
       );
       PsiMethod[] superMethods = method.findSuperMethods();
@@ -92,7 +93,7 @@ public class MemberInfo {
       displayName = PsiFormatUtil.formatVariable(
               field,
               PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.TYPE_AFTER,
-          PsiSubstitutor.EMPTY);
+              PsiSubstitutor.EMPTY);
       isStatic = field.hasModifierProperty(PsiModifier.STATIC);
       overrides = null;
     }
@@ -101,11 +102,11 @@ public class MemberInfo {
 
       if(isSuperClass) {
         if (aClass.isInterface()) {
-          displayName = "implements " + aClass.getName();
+          displayName = RefactoringBundle.message("member.info.implements.0", aClass.getName());
           overrides = Boolean.FALSE;
         }
         else {
-          displayName = "extends " + aClass.getName();
+          displayName = RefactoringBundle.message("member.info.extends.0", aClass.getName());
           overrides = Boolean.TRUE;
         }
       }
@@ -157,8 +158,7 @@ public class MemberInfo {
     else {
       PsiClass[] interfaces = subclass.getInterfaces();
       PsiReferenceList sourceRefList = subclass.isInterface() ? subclass.getExtendsList() : subclass.getImplementsList();
-      for (int i = 0; i < interfaces.length; i++) {
-        PsiClass anInterface = interfaces[i];
+      for (PsiClass anInterface : interfaces) {
         if (filter.includeMember(anInterface)) {
           result.add(new MemberInfo(anInterface, true, sourceRefList));
         }
@@ -166,21 +166,19 @@ public class MemberInfo {
     }
 
     PsiClass[] innerClasses = subclass.getInnerClasses();
-    for (int idx = 0; idx < innerClasses.length; idx++) {
-      if(filter.includeMember(innerClasses[idx])) {
-        result.add(new MemberInfo(innerClasses[idx]));
+    for (PsiClass innerClass : innerClasses) {
+      if (filter.includeMember(innerClass)) {
+        result.add(new MemberInfo(innerClass));
       }
     }
     PsiMethod[] methods = subclass.getMethods();
-    for (int idx = 0; idx < methods.length; idx++) {
-      PsiMethod method = methods[idx];
+    for (PsiMethod method : methods) {
       if (!method.isConstructor() && filter.includeMember(method)) {
         result.add(new MemberInfo(method));
       }
     }
     PsiField[] fields = subclass.getFields();
-    for (int idx = 0; idx < fields.length; idx++) {
-      final PsiField field = fields[idx];
+    for (final PsiField field : fields) {
       if (filter.includeMember(field)) {
         result.add(new MemberInfo(field));
       }
@@ -204,8 +202,8 @@ public class MemberInfo {
                                                               final Set<PsiClass> processed) {
     if (referenceList != null) {
       final PsiClassType[] extendsListTypes = referenceList.getReferencedTypes();
-      for (int i = 0; i < extendsListTypes.length; i++) {
-        final PsiClass aSuper = extendsListTypes[i].resolve();
+      for (PsiClassType extendsListType : extendsListTypes) {
+        final PsiClass aSuper = extendsListType.resolve();
         if (aSuper != null) {
           if (aSuper.isInterface()) {
             if (filter.includeMember(aSuper)) {

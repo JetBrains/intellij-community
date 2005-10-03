@@ -22,6 +22,8 @@ import com.intellij.openapi.project.Project;
 import java.util.Collection;
 import java.util.Collections;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * Several {@link DiffContent}s to compare
  */
@@ -30,7 +32,7 @@ public abstract class DiffRequest {
   private String myGroupKey = COMMON_DIFF_GROUP_KEY;
   private final Project myProject;
   private ToolbarAddons myToolbarAddons = ToolbarAddons.NOTHING;
-  private static final String COMMON_DIFF_GROUP_KEY = "DiffWindow";
+  @NonNls private static final String COMMON_DIFF_GROUP_KEY = "DiffWindow";
 
   protected DiffRequest(Project project) {
     myProject = project;
@@ -45,7 +47,7 @@ public abstract class DiffRequest {
   }
 
   public String getGroupKey() { return myGroupKey; }
-  public void setGroupKey(String groupKey) { myGroupKey = groupKey; }
+  public void setGroupKey(@NonNls String groupKey) { myGroupKey = groupKey; }
   public Project getProject() { return myProject; }
 
   /**
@@ -102,7 +104,7 @@ public abstract class DiffRequest {
         toolbar.removeActionById(IdeActions.ACTION_FIND);
       }
     };
-    
+
     void customize(DiffToolbar toolbar);
   }
 }

@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsHistorySession;
 import com.intellij.openapi.vcs.history.impl.VcsBlockHistoryDialog;
@@ -68,7 +69,7 @@ public class SelectedBlockHistoryAction extends FileHistoryAction {
     super.update(context, presentation);
     VcsSelection selection = VcsUtil.getSelection(context);
     if (selection != null) {
-      presentation.setText("Show History for " + selection.getSelectedAreaName());
+      presentation.setText(selection.getActionName());
     }
   }
 

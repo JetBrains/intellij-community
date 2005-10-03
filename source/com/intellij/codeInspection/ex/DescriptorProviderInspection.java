@@ -1,7 +1,9 @@
 package com.intellij.codeInspection.ex;
 
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.duplicatePropertyInspection.DuplicatePropertyInspection;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.reference.RefUtil;
@@ -10,11 +12,12 @@ import com.intellij.codeInspection.ui.InspectionTreeNode;
 import com.intellij.codeInspection.ui.ProblemDescriptionNode;
 import com.intellij.codeInspection.ui.RefElementNode;
 import com.intellij.codeInspection.util.XMLExportUtl;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import org.jdom.Element;
+import org.jdom.IllegalDataException;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 
@@ -53,7 +56,7 @@ public abstract class DescriptorProviderInspection extends InspectionTool {
     }
   }
 
-  protected void ignoreElement(RefElement refElement) {
+  public void ignoreElement(RefElement refElement) {
     if (refElement == null) return;
     myProblemElements.remove(refElement);
     myQuickFixActions.remove(refElement);
@@ -133,28 +136,32 @@ public abstract class DescriptorProviderInspection extends InspectionTool {
   }
 
   public void exportResults(final Element parentNode) {
-    final Project project = getManager().getProject();
     getRefManager().iterate(new RefManager.RefIterator() {
       public void accept(final RefElement refElement) {
         if (myProblemElements.containsKey(refElement)) {
           ProblemDescriptor[] descriptions = getDescriptions(refElement);
-          for (int i = 0; i < descriptions.length; i++) {
-            ProblemDescriptor description = descriptions[i];
-
+          for (ProblemDescriptor description : descriptions) {
             int line = description.getLineNumber();
-            final String template = description.getDescriptionTemplate();
+            @NonNls final String template = description.getDescriptionTemplate();
             final PsiElement psiElement = description.getPsiElement();
             final String text = psiElement.getText();
-            String problemText = template.replaceAll("#ref", text.replaceAll("\\$", "\\\\\\$"));
+            @NonNls String problemText = template.replaceAll("#ref", text.replaceAll("\\$", "\\\\\\$"));
             problemText = problemText.replaceAll(" #loc ", " ");
 
             Element element = XMLExportUtl.createElement(refElement, parentNode, line);
-            Element problemClassElement = new Element("problem_class");
+            Element problemClassElement = new Element(InspectionsBundle.message("inspection.export.results.problem.element.tag"));
             problemClassElement.addContent(getDisplayName());
             element.addContent(problemClassElement);
-            Element descriptionElement = new Element("description");
-            descriptionElement.addContent(problemText);
-            element.addContent(descriptionElement);
+            try {
+              Element descriptionElement = new Element(InspectionsBundle.message("inspection.export.results.description.tag"));
+              descriptionElement.addContent(problemText);
+              element.addContent(descriptionElement);
+            }
+            catch (IllegalDataException e) {
+              //noinspection HardCodedStringLiteral,UseOfSystemOutOrSystemErr
+              System.out.println("Cannot save results for "
+                                 + refElement.getElement().getContainingFile().getVirtualFile().getPath());
+            }
           }
         }
       }
@@ -186,11 +193,13 @@ public abstract class DescriptorProviderInspection extends InspectionTool {
       InspectionPackageNode pNode = new InspectionPackageNode(p);
       Set<RefElement> elements = myPackageContents.get(p);
       for (RefElement refElement : elements) {
-        final RefElementNode elemNode = new RefElementNode(refElement, false);
-        pNode.add(elemNode);
+        final RefElementNode elemNode = addNodeToParent(refElement, pNode);
         final ProblemDescriptor[] problems = myProblemElements.get(refElement);
         for (ProblemDescriptor problem : problems) {
-          elemNode.add(new ProblemDescriptionNode(refElement, problem));
+          elemNode.add(new ProblemDescriptionNode(refElement, problem, !(this instanceof DuplicatePropertyInspection)));
+        }
+        if (problems.length == 1){
+          elemNode.setProblem(problems[0]);
         }
       }
       content.add(pNode);
@@ -215,11 +224,11 @@ public abstract class DescriptorProviderInspection extends InspectionTool {
             try {
               String familyName = fix.getFamilyName();
               familyName = familyName != null && familyName.length() > 0 ? "\'" + familyName + "\'" : familyName;
-              ((LocalQuickFixWrapper)quickFixAction).setText("Apply Fix " + familyName);
+              ((LocalQuickFixWrapper)quickFixAction).setText(InspectionsBundle.message("inspection.descriptor.provider.apply.fix", familyName));
             }
             catch (AbstractMethodError e) {
               //for plugin compatibility
-              ((LocalQuickFixWrapper)quickFixAction).setText("Apply Fix");
+              ((LocalQuickFixWrapper)quickFixAction).setText(InspectionsBundle.message("inspection.descriptor.provider.apply.fix", ""));
             }
           } else {
             LocalQuickFixWrapper quickFixWrapper = new LocalQuickFixWrapper(fix, this);

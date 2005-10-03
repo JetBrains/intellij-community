@@ -25,6 +25,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.IOException;
@@ -317,12 +318,9 @@ public class VfsUtil {
     return file;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private static final String FILE = "file";
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private static final String JAR = "jar";
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private static final String MAILTO = "mailto";
+  @NonNls private static final String FILE = "file";
+  @NonNls private static final String JAR = "jar";
+  @NonNls private static final String MAILTO = "mailto";
   private static final String PROTOCOL_DELIMITER = ":";
 
   /**
@@ -399,11 +397,11 @@ public class VfsUtil {
           path = subURL.getPath();
         }
         catch (MalformedURLException e) {
-          throw new RuntimeException("Can not parse URL, unhandled exception thrown ", e);
+          throw new RuntimeException(VfsBundle.message("url.parse.unhandled.exception"), e);
         }
       }
       else {
-        throw new RuntimeException(new IOException("Can not parse URL " + url.toExternalForm()));
+        throw new RuntimeException(new IOException(VfsBundle.message("url.parse.error", url.toExternalForm())));
       }
     }
     if (SystemInfo.isWindows || SystemInfo.isOS2) {

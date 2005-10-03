@@ -4,6 +4,7 @@ import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.SplittingUtil;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -46,7 +47,7 @@ public class TextPanel extends JPanel {
 
   public final void updateUI() {
     super.updateUI();
-    final Font font = UIManager.getFont("Label.font");
+    final Font font = UIUtil.getLabelFont();
     if (font!=null){
       STATUS_FONT = font;//.deriveFont(Font.BOLD, font.getSize());
       setFont(STATUS_FONT);
@@ -65,7 +66,7 @@ public class TextPanel extends JPanel {
   public final void paintComponent(final Graphics g) {
     super.paintComponent(g);
     g.setColor(
-      myEnabled ? UIManager.getColor("Label.foreground") : getBackground().darker()/*UIManager.getColor("Label.disabledForeground")*/
+      myEnabled ? UIUtil.getLabelForeground() : getBackground().darker()/*UIManager.getColor("Label.disabledForeground")*/
     );
     g.setFont(STATUS_FONT);
     g.drawString(myText, 10, getLineHeight()+(getSize().height-getLineHeight())/2);

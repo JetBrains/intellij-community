@@ -13,6 +13,7 @@ import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
 
@@ -20,10 +21,11 @@ import java.awt.*;
  * @author max
  */
 public class ShowSettingsUtilImpl extends ShowSettingsUtil implements ApplicationComponent {
+  @NonNls
   private static final String PREFER_CLASSIC_OPTIONS_EDITOR = "PREFER_CLASSIC_OPTIONS_EDITOR";
 
   public void showSettingsDialog(Project project, ConfigurableGroup[] group) {
-    if ("true".equals(PropertiesComponent.getInstance().getValue(PREFER_CLASSIC_OPTIONS_EDITOR))) {
+    if (Boolean.toString(true).equals(PropertiesComponent.getInstance().getValue(PREFER_CLASSIC_OPTIONS_EDITOR))) {
       showExplorerOptions(project, group);
     }
     else {
@@ -32,14 +34,14 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil implements Applicatio
   }
 
   public void showControlPanelOptions(Project project, ConfigurableGroup[] groups, Configurable preselectedConfigurable) {
-    PropertiesComponent.getInstance().setValue(PREFER_CLASSIC_OPTIONS_EDITOR, "false");
+    PropertiesComponent.getInstance().setValue(PREFER_CLASSIC_OPTIONS_EDITOR, Boolean.toString(false));
 
     ControlPanelSettingsEditor editor = new ControlPanelSettingsEditor(project, groups, preselectedConfigurable);
     editor.show();
   }
 
   public void showExplorerOptions(Project project, ConfigurableGroup[] group) {
-    PropertiesComponent.getInstance().setValue(PREFER_CLASSIC_OPTIONS_EDITOR, "true");
+    PropertiesComponent.getInstance().setValue(PREFER_CLASSIC_OPTIONS_EDITOR, Boolean.toString(true));
     ExplorerSettingsEditor editor = new ExplorerSettingsEditor(project, group);
     editor.show();
   }

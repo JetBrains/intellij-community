@@ -474,24 +474,12 @@ public class MergePanel2 implements DiffViewer {
       int conflicts = counter.getConflictCounter();
       String text;
       if (changes == 0 && conflicts == 0) {
-        text = "All conflicts resolved";
+        text = DiffBundle.message("merge.dialog.all.conflicts.resolved.message.text");
       }
       else {
-        text = stringRepresentation(changes, "change", "changes") + ". " +
-               stringRepresentation(conflicts, "conflict", "conflicts");
+        text = DiffBundle.message("merge.statistics.message", changes, conflicts);
       }
       myPanel.setStatusBarText(text);
-    }
-
-    private String stringRepresentation(int number, String singular, String plural) {
-      switch (number) {
-        case 0:
-          return "No " + plural;
-        case 1:
-          return "One " + singular;
-        default:
-          return number + " " + plural;
-      }
     }
 
     public void dispose(MergeList mergeList) {

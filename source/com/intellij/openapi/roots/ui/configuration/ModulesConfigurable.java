@@ -4,6 +4,7 @@ import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.util.IconLoader;
 
 import javax.swing.*;
@@ -32,7 +33,7 @@ public class ModulesConfigurable implements Configurable {
   }
 
   public String getDisplayName() {
-    return "Modules";
+    return ProjectBundle.message("modules.title");
   }
 
   public void reset() {

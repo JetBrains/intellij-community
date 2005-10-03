@@ -1,6 +1,7 @@
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.openapi.application.ApplicationManager;
@@ -81,7 +82,7 @@ public class HotSwapManager implements ProjectComponent{
         CompilerPathsEx.visitFiles(allDirs, new CompilerPathsEx.FileVisitor() {
 
           protected void acceptDirectory(final VirtualFile file, final String fileRoot, final String filePath) {
-            progress.setText("Scanning: " + filePath);
+            progress.setText(DebuggerBundle.message("progress.hotswap.scanning.path", filePath));
             if(file.getFileSystem() instanceof JarFileSystem && StdFileTypes.ARCHIVE.equals(fileTypeManager.getFileTypeByFile(file))) {
               if(file.getTimeStamp() > timeStamp) {
                 super.acceptDirectory(file, fileRoot, filePath);
@@ -94,8 +95,10 @@ public class HotSwapManager implements ProjectComponent{
 
           protected void acceptFile(VirtualFile file, String fileRoot, String filePath) {
             if (file.getTimeStamp() > timeStamp && StdFileTypes.CLASS.equals(fileTypeManager.getFileTypeByFile(file))) {
+              //noinspection HardCodedStringLiteral
               if (filePath.endsWith(".class")) {
-                progress.setText("Scanning: " + filePath);
+                progress.setText(DebuggerBundle.message("progress.hotswap.scanning.path", filePath));
+                //noinspection HardCodedStringLiteral
                 final String qualifiedName = filePath.substring(fileRoot.length() + 1, filePath.length() - ".class".length()).replace('/', '.');
                 modifiedClasses.put(qualifiedName, new HotSwapFile(file));
               }
@@ -144,7 +147,7 @@ public class HotSwapManager implements ProjectComponent{
       }
     }
 
-    swapProgress.setTitle("Scanning for classes to reload...");
+    swapProgress.setTitle(DebuggerBundle.message("progress.hotswap.scanning.classes"));
     scanClassesCommand.run();
 
     return swapProgress.isCancelled() ? new HashMap<DebuggerSession, HashMap<String, HotSwapFile>>() : modifiedClasses;
@@ -169,7 +172,7 @@ public class HotSwapManager implements ProjectComponent{
       });
     }
 
-    reloadClassesProgress.setTitle("Reloading classes...");
+    reloadClassesProgress.setTitle(DebuggerBundle.message("progress.hotswap.reloading"));
     reloadClassesCommand.run();
   }
 }

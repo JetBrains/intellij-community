@@ -16,6 +16,7 @@
 package com.intellij.execution.configurations;
 
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.execution.ExecutionBundle;
 
 public class RuntimeConfigurationException extends ConfigurationException {
   public RuntimeConfigurationException(final String message, final String title) {
@@ -23,6 +24,6 @@ public class RuntimeConfigurationException extends ConfigurationException {
   }
 
   public RuntimeConfigurationException(final String message) {
-    super(message, "Run Configuration Error");
+    super(message, ExecutionBundle.message("run.configuration.error.dialog.title"));
   }
 }

@@ -44,7 +44,9 @@ import com.intellij.psi.PsiManager;
 
 import java.io.File;
 
-public abstract class TestSourceBasedTestCase extends IdeaTestCase {
+import org.jetbrains.annotations.NonNls;
+
+@NonNls public abstract class TestSourceBasedTestCase extends IdeaTestCase {
   private File myTempDirectory;
 
   protected void setUp() throws Exception {

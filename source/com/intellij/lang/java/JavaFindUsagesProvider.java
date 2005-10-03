@@ -3,6 +3,7 @@ package com.intellij.lang.java;
 import com.intellij.find.impl.HelpID;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.cacheBuilder.WordsScanner;
+import com.intellij.lang.LangBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.tree.IElementType;
@@ -12,6 +13,7 @@ import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.jsp.WebDirectoryElement;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.usageView.UsageViewUtil;
+import com.intellij.codeInsight.daemon.JavaErrorMessages;
 
 /**
  * @author ven
@@ -62,50 +64,50 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
 
   public String getType(PsiElement element) {
     if (element instanceof PsiDirectory) {
-      return "directory";
+      return LangBundle.message("terms.directory");
     }
     if (element instanceof WebDirectoryElement) {
-      return "web directory";
+      return LangBundle.message("terms.web.directory");
     }
     if (element instanceof PsiFile) {
-      return "file";
+      return LangBundle.message("terms.file");
     }
     if (ThrowSearchUtil.isSearchable(element)) {
-      return "exception";
+      return LangBundle.message("java.terms.exception");
     }
     if (element instanceof PsiPackage) {
-      return "package";
+      return LangBundle.message("java.terms.package");
     }
     if (element instanceof PsiLabeledStatement) {
-      return "label";
+      return LangBundle.message("java.terms.label");
     }
     if (element instanceof PsiClass) {
       if (((PsiClass)element).isAnnotationType()) {
-        return "@interface";
+        return LangBundle.message("java.terms.annotation.interface");
       } else if (((PsiClass)element).isEnum()) {
-        return "enum";
+        return LangBundle.message("java.terms.enum");
       } else if (((PsiClass)element).isInterface()) {
-        return "interface";
+        return LangBundle.message("java.terms.interface");
       }
-      return "class";
+      return LangBundle.message("java.terms.class");
     }
     if (element instanceof PsiField) {
-      return "field";
+      return LangBundle.message("java.terms.field");
     }
     if (element instanceof PsiParameter) {
-      return "parameter";
+      return LangBundle.message("java.terms.parameter");
     }
     if (element instanceof PsiLocalVariable) {
-      return "variable";
+      return LangBundle.message("java.terms.variable");
     }
     if (element instanceof PsiMethod) {
       final PsiMethod psiMethod = (PsiMethod)element;
       final boolean isConstructor = psiMethod.isConstructor();
       if (isConstructor) {
-        return "constructor";
+        return LangBundle.message("java.terms.constructor");
       }
       else {
-        return "method";
+        return LangBundle.message("java.terms.method");
       }
     }
     return "";
@@ -129,7 +131,7 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
     }
     else if (element instanceof PsiClass) {
       if (element instanceof PsiAnonymousClass) {
-        return "anonymous class";
+        return LangBundle.message("java.terms.anonymous.class");
       }
       else {
         final PsiClass aClass = (PsiClass)element;
@@ -140,11 +142,11 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
     else if (element instanceof PsiMethod) {
       PsiMethod psiMethod = (PsiMethod)element;
       String formatted = PsiFormatUtil.formatMethod(psiMethod,
-                                       PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS,
-                                       PsiFormatUtil.SHOW_TYPE);
+                                                    PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS,
+                                                    PsiFormatUtil.SHOW_TYPE);
       PsiClass psiClass = psiMethod.getContainingClass();
       if (psiClass != null) {
-        return formatted + getContainingClassDescription(psiClass);
+        return getContainingClassDescription(psiClass, formatted);
       }
 
       return formatted;
@@ -154,7 +156,7 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
       String formatted = PsiFormatUtil.formatVariable(psiField, PsiFormatUtil.SHOW_NAME, PsiSubstitutor.EMPTY);
       PsiClass psiClass = psiField.getContainingClass();
       if (psiClass != null) {
-        return formatted + getContainingClassDescription(psiClass);
+        return getContainingClassDescription(psiClass, formatted);
       }
 
       return formatted;
@@ -166,21 +168,21 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
     return "";
   }
 
-  private String getContainingClassDescription (PsiClass aClass) {
+  private String getContainingClassDescription(PsiClass aClass, String formatted) {
     if (aClass instanceof PsiAnonymousClass) {
-      return " of anonymous class";
+      return LangBundle.message("java.terms.of.anonymous.class", formatted);
     }
     else {
       String className = aClass.getName();
       if (aClass.isInterface()) {
-          return " of interface " + className;
+          return LangBundle.message("java.terms.of.interface", formatted, className);
       } else if (aClass.isEnum()) {
-          return " of enum " + className;
+          return LangBundle.message("java.terms.of.enum", formatted, className);
       } else if (aClass.isAnnotationType()) {
-          return " of annotation type " + className;
+          return LangBundle.message("java.terms.of.annotation.type", formatted, className);
       }
       else {
-        return " of class " + className;
+        return LangBundle.message("java.terms.of.class", formatted, className);
       }
     }
   }
@@ -221,7 +223,12 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
         if (psiClass != null) {
           final String qName = psiClass.getQualifiedName();
           if (qName != null) {
-            s = s + " of " + (psiClass.isInterface() ? "interface " : "class ") + qName;
+            if (psiClass.isInterface()) {
+              s = LangBundle.message("java.terms.of.interface", s, qName);
+            }
+            else {
+              s = LangBundle.message("java.terms.of.class", s, qName);
+            }
           }
         }
         return s;
@@ -235,17 +242,23 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
     }
     else if (element instanceof PsiParameter && ((PsiParameter)element).getDeclarationScope() instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)((PsiParameter)element).getDeclarationScope();
-      String s = PsiFormatUtil.formatVariable((PsiVariable)element,
-                                              PsiFormatUtil.TYPE_AFTER | PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.SHOW_NAME,
-                                              PsiSubstitutor.EMPTY) + " of " +
-                 PsiFormatUtil.formatMethod(method,
-                                            PsiSubstitutor.EMPTY,
-                                            PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS,
-                                            PsiFormatUtil.SHOW_TYPE);
+      String s = LangBundle.message("java.terms.variable.of.method",
+                                    PsiFormatUtil.formatVariable((PsiVariable)element,
+                                                                 PsiFormatUtil.TYPE_AFTER | PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.SHOW_NAME,
+                                                                 PsiSubstitutor.EMPTY),
+                                    PsiFormatUtil.formatMethod(method,
+                                                               PsiSubstitutor.EMPTY,
+                                                               PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS,
+                                                               PsiFormatUtil.SHOW_TYPE));
 
       final PsiClass psiClass = method.getContainingClass();
       if (psiClass != null && psiClass.getQualifiedName() != null) {
-        s += " of " + (psiClass.isInterface() ? "interface " : "class ") + psiClass.getQualifiedName();
+        if (psiClass.isInterface()) {
+          s = LangBundle.message("java.terms.of.interface", s, psiClass.getQualifiedName());
+        }
+        else {
+          s = LangBundle.message("java.terms.of.class", s, psiClass.getQualifiedName());
+        }
       }
       return s;
     }
@@ -258,7 +271,12 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
       if (psiClass != null) {
         String qName = psiClass.getQualifiedName();
         if (qName != null) {
-          s = s + " of " + (psiClass.isInterface() ? "interface " : "class ") + qName;
+          if (psiClass.isInterface()) {
+            s = LangBundle.message("java.terms.of.interface", s, qName);
+          }
+          else {
+            s = LangBundle.message("java.terms.of.class", s, qName);
+          }
         }
       }
       return s;
@@ -294,7 +312,7 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
     if ((searchContext & UsageSearchContext.IN_CODE) != 0 && (token == ElementType.IDENTIFIER || token == ElementType.DOC_TAG_VALUE_TOKEN)) {
       return true;
     }
-    // Java string literal to property file
+    // Java string literal to properties file
     if ((searchContext & UsageSearchContext.IN_FOREIGN_LANGUAGES) != 0 && token == ElementType.LITERAL_EXPRESSION) return true;
     return false;
   }

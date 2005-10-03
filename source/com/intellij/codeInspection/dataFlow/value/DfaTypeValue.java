@@ -9,10 +9,13 @@
 package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiKeyword;
 import com.intellij.util.containers.HashMap;
 import com.intellij.openapi.util.Comparing;
 
 import java.util.ArrayList;
+
+import org.jetbrains.annotations.NonNls;
 
 public class DfaTypeValue extends DfaValue {
   public static class Factory {
@@ -31,7 +34,7 @@ public class DfaTypeValue extends DfaValue {
       mySharedInstance.myCanonicalText = type.getCanonicalText();
       mySharedInstance.myIsNullable = nullable;
       if (mySharedInstance.myCanonicalText == null) {
-        mySharedInstance.myCanonicalText = "null";
+        mySharedInstance.myCanonicalText = PsiKeyword.NULL;
       }
 
       String id = mySharedInstance.toString();
@@ -70,7 +73,7 @@ public class DfaTypeValue extends DfaValue {
     myIsNullable = isNullable;
     myCanonicalText = type.getCanonicalText();
     if (myCanonicalText == null) {
-      myCanonicalText = "null";
+      myCanonicalText = PsiKeyword.NULL;
     }
   }
 
@@ -82,6 +85,7 @@ public class DfaTypeValue extends DfaValue {
     return myIsNullable;
   }
 
+  @NonNls
   public String toString() {
     return myCanonicalText + ", nullable=" + myIsNullable;
   }

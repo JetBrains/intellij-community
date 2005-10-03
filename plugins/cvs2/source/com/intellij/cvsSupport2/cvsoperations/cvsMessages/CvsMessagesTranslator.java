@@ -14,6 +14,7 @@ import org.netbeans.lib.cvsclient.event.IFileInfoListener;
 import org.netbeans.lib.cvsclient.event.IMessageListener;
 import org.netbeans.lib.cvsclient.file.FileObject;
 import org.netbeans.lib.cvsclient.file.ICvsFileSystem;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.util.Map;
@@ -30,7 +31,7 @@ public class CvsMessagesTranslator implements
                                    IMessageListener,
                                    IEntryListener {
 
-  private static CvsMessagePattern[] ERRORS_PATTERNS = new CvsMessagePattern[]{
+  @NonNls private static CvsMessagePattern[] ERRORS_PATTERNS = new CvsMessagePattern[]{
     new CvsMessagePattern("cvs [* aborted]*"),
     new CvsMessagePattern(new String[]{"cvs checkout: could not check out ", "*"}, 2),
     new CvsMessagePattern("cvs update: could not merge revision * of *: No such file or directory"),
@@ -84,6 +85,7 @@ public class CvsMessagesTranslator implements
   private final Map<File, Object> myFileToInfoMap = new HashMap<File, Object>();
 
   private final Collection<String> myPreviousErrorMessages = new ArrayList<String>();
+  @NonNls private static final String CORRECT_ABOVE_ERRORS_FIRST_PREFIX = "correct above errors first";
 
   public CvsMessagesTranslator(CvsMessagesListener listener,
                                ICvsFileSystem cvsFileSystem,
@@ -132,7 +134,7 @@ public class CvsMessagesTranslator implements
 
     CvsMessagePattern errorMessagePattern = getErrorMessagePattern(message, ERRORS_PATTERNS);
     if (errorMessagePattern != null) {
-      if (message.indexOf("correct above errors first") >= 0) {
+      if (message.indexOf(CORRECT_ABOVE_ERRORS_FIRST_PREFIX) >= 0) {
         for (String s : myPreviousErrorMessages) {
           myListener.addError(s, null, myCvsFileSystem, myCvsRoot);
         }

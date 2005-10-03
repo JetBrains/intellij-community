@@ -15,10 +15,10 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.AutomaticRenamingDialog;
 import com.intellij.refactoring.rename.naming.AutomaticVariableRenamer;
 import com.intellij.refactoring.util.RefactoringUtil;
@@ -30,6 +30,8 @@ import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.Queue;
 
 import java.util.*;
+
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author dsl
@@ -76,7 +78,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
       };
 
       if (!ApplicationManager.getApplication().runProcessWithProgressSynchronously(
-        runnable, "Searching for variables", true, myProject)) {
+        runnable, RefactoringBundle.message("searching.for.variables"), true, myProject)) {
         return false;
       }
     }
@@ -295,7 +297,8 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
     tmp = methodRef.resolve();
     if (!(tmp instanceof PsiMethod)) return;
     PsiMethod method = (PsiMethod)tmp;
-    if (!method.getName().equals("toArray")) return;
+    @NonNls final String name = method.getName();
+    if (!name.equals("toArray")) return;
 
     PsiClass methodClass = method.getContainingClass();
     if (!methodClass.isInheritor(javaUtilCollectionClass, true)) return;
@@ -364,7 +367,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
         }
       ;
 
-        final PsiMethod[] superMethods = PsiSuperMethodUtil.findSuperMethods(method);
+        final PsiMethod[] superMethods = method.findSuperMethods();
         new Inner().linkInheritors(superMethods);
         final PsiClass[] subClasses =
           mySearchHelper.findInheritors(method.getContainingClass(), GlobalSearchScope.projectScope(myProject), false);
@@ -400,7 +403,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
       }
     }
 
-    final PsiMethod[] superMethods = PsiSuperMethodUtil.findSuperMethods(method);
+    final PsiMethod[] superMethods = method.findSuperMethods();
     final class Inner {
       public void linkInheritors(final PsiMethod[] methods) {
         for (final PsiMethod superMethod : methods) {

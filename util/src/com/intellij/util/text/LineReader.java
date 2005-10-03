@@ -131,7 +131,8 @@ public class LineReader {
 
   private void unread(int b) throws IOException {
     myPos++;
-    if (myPos >= myBuffer.length) throw new IOException("Push back buffer is full");
+    if (myPos >= myBuffer.length) //noinspection HardCodedStringLiteral
+      throw new IOException("Push back buffer is full");
     myBuffer[myPos] = (byte) b;
 
   }

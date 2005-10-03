@@ -8,6 +8,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * author: lesya
  */
@@ -15,8 +17,10 @@ public class EditorInfo {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.cvsoperations.cvsEdit.EditorInfo");
 
-  public final static DateFormat DATE_FORMAT = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyy zzz", Locale.US);
-  public final static DateFormat DATE_FORMAT1 = new SimpleDateFormat("dd MMM yyyy HH:mm:ss zzz", Locale.US);
+  @NonNls private static final String FORMAT = "EEE MMM dd HH:mm:ss yyyy zzz";
+  public final static DateFormat DATE_FORMAT = new SimpleDateFormat(FORMAT, Locale.US);
+  @NonNls private static final String FORMAT1 = "dd MMM yyyy HH:mm:ss zzz";
+  public final static DateFormat DATE_FORMAT1 = new SimpleDateFormat(FORMAT1, Locale.US);
 
   private final String myFilePath;
   private final String myUserName;
@@ -29,9 +33,9 @@ public class EditorInfo {
     if (strings.length != 5) return null;
     return new EditorInfo(strings[0]
                           , strings[1],
-                          parse(strings[2]),
-                          strings[3],
-                          strings[4]);
+                            parse(strings[2]),
+                            strings[3],
+                            strings[4]);
   }
 
   private EditorInfo(String filePath, String userName, Date editDate, String hostHame, String path) {

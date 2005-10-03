@@ -1,9 +1,11 @@
 package com.intellij.ide.errorTreeView.impl;
 
 import com.intellij.ide.ExporterToTextFile;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.errorTreeView.ErrorTreeElement;
 import com.intellij.ide.errorTreeView.ErrorViewStructure;
 import com.intellij.ide.errorTreeView.NavigatableMessageElement;
+import com.intellij.util.SystemProperties;
 
 import javax.swing.*;
 import javax.swing.event.ChangeListener;
@@ -21,7 +23,7 @@ public class ErrorViewTextExporter implements ExporterToTextFile {
 
   public ErrorViewTextExporter(ErrorViewStructure treeStructure) {
     myStructure = treeStructure;
-    myCbShowDetails = new JCheckBox("Details");
+    myCbShowDetails = new JCheckBox(IdeBundle.message("checkbox.errortree.export.details"));
     myCbShowDetails.setSelected(true);
     myCbShowDetails.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -61,7 +63,7 @@ public class ErrorViewTextExporter implements ExporterToTextFile {
   }
 
   private void getReportText(StringBuffer buffer, final ErrorTreeElement element, boolean withUsages, final int indent) {
-    final String newline = System.getProperty("line.separator");
+    final String newline = SystemProperties.getLineSeparator();
     Object[] children = myStructure.getChildElements(element);
     for (int idx = 0; idx < children.length; idx++) {
       final Object child = children[idx];

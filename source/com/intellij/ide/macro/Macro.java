@@ -6,13 +6,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.File;
 
+import org.jetbrains.annotations.NonNls;
+
 public abstract class Macro {
   public static final class ExecutionCancelledException extends Exception {
   }
 
   protected String myCachedPreview;
 
-  public abstract String getName();
+  @NonNls public abstract String getName();
   public abstract String getDescription();
   public abstract String expand(DataContext dataContext) throws ExecutionCancelledException;
 
@@ -31,7 +33,7 @@ public abstract class Macro {
 
   /**
    * @return never null
-   */ 
+   */
   static String getPath(VirtualFile file) {
     return file.getPath().replace('/', File.separatorChar);
   }

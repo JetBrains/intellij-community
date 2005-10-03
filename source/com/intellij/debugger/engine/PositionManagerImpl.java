@@ -297,6 +297,7 @@ public class PositionManagerImpl implements PositionManager {
 
     public void visitMethod(PsiMethod method) {
       try {
+        //noinspection HardCodedStringLiteral
         String methodName = method.isConstructor() ? "<init>" : method.getName();
         PsiClass containingClass = method.getContainingClass();
 

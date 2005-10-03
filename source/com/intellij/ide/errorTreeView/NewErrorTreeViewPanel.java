@@ -1,9 +1,6 @@
 package com.intellij.ide.errorTreeView;
 
-import com.intellij.ide.ExporterToTextFile;
-import com.intellij.ide.OccurenceNavigator;
-import com.intellij.ide.OccurenceNavigatorSupport;
-import com.intellij.ide.TreeExpander;
+import com.intellij.ide.*;
 import com.intellij.ide.actions.*;
 import com.intellij.ide.errorTreeView.impl.ErrorTreeViewConfiguration;
 import com.intellij.ide.errorTreeView.impl.ErrorViewTextExporter;
@@ -22,6 +19,7 @@ import com.intellij.ui.content.MessageView;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.ui.ErrorTreeView;
 import com.intellij.util.ui.Tree;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 
 import javax.swing.*;
@@ -89,7 +87,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
 
     myMessagePanel = new JPanel(new BorderLayout());
 
-    myErrorViewStructure = new ErrorViewStructure(project);
+    myErrorViewStructure = new ErrorViewStructure(project, canHideWarnings());
     DefaultMutableTreeNode root = new DefaultMutableTreeNode();
     root.setUserObject(myErrorViewStructure.createDescriptor(myErrorViewStructure.getRootElement(), null));
     final DefaultTreeModel treeModel = new DefaultTreeModel(root);
@@ -106,7 +104,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
 
     myAutoScrollToSourceHandler.install(myTree);
     TreeUtil.installActions(myTree);
-    myTree.putClientProperty("JTree.lineStyle", "Angled");
+    UIUtil.setLineStyleAngled(myTree);
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
     myTree.setLargeModel(true);
@@ -213,7 +211,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
   }
 
   public static String createExportPrefix(int line) {
-    return line < 0? "" : "line (" + line + ")";
+    return line < 0? "" : IdeBundle.message("errortree.prefix.line", line);
   }
 
   public static String createRendererPrefix(int line, int column) {
@@ -406,7 +404,9 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
   protected void fillRightToolbarGroup(DefaultActionGroup group) {
     group.add(new ExpandAllToolbarAction(myTreeExpander));
     group.add(new CollapseAllToolbarAction(myTreeExpander));
-    group.add(new HideWarningsAction());
+    if (canHideWarnings()) {
+      group.add(new HideWarningsAction());
+    }
     group.add(myAutoScrollToSourceHandler.createToggleAction());
   }
 
@@ -436,7 +436,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
 
   private class StopAction extends AnAction {
     public StopAction() {
-      super("Stop", null, IconLoader.getIcon("/actions/suspend.png"));
+      super(IdeBundle.message("action.stop"), null, IconLoader.getIcon("/actions/suspend.png"));
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -453,9 +453,13 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     }
   }
 
+  protected boolean canHideWarnings(){
+    return true;
+  }
+
   private class HideWarningsAction extends ToggleAction {
     public HideWarningsAction() {
-      super("Hide warnings", null, IconLoader.getIcon("/compiler/hideWarnings.png"));
+      super(IdeBundle.message("action.hide.warnings"), null, IconLoader.getIcon("/compiler/hideWarnings.png"));
     }
 
     public boolean isSelected(AnActionEvent event) {
@@ -509,11 +513,11 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     }
 
     public String getNextOccurenceActionName() {
-      return "Next Message";
+      return IdeBundle.message("action.next.message");
     }
 
     public String getPreviousOccurenceActionName() {
-      return "Previous Message";
+      return IdeBundle.message("action.previous.message");
     }
   }
 }

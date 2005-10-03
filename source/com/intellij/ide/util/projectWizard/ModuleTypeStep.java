@@ -1,6 +1,7 @@
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.util.BrowseFilesListener;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -12,6 +13,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.ui.FieldPanel;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -52,6 +54,7 @@ public class ModuleTypeStep extends ModuleWizardStep {
     myPanel.setBorder(BorderFactory.createEtchedBorder());
 
     myModuleDescriptionPane = new JEditorPane();
+    //noinspection HardCodedStringLiteral
     myModuleDescriptionPane.setContentType("text/html");
     myModuleDescriptionPane.setEditable(false);
 
@@ -67,6 +70,7 @@ public class ModuleTypeStep extends ModuleWizardStep {
         }
         final ModuleType typeSelected = (ModuleType)myTypesList.getSelectedValue();
         myModuleType = typeSelected;
+        //noinspection HardCodedStringLiteral
         myModuleDescriptionPane.setText("<html><body><font face=\"verdana\" size=\"-1\">"+typeSelected.getDescription()+"</font></body></html>");
         myEventDispatcher.getMulticaster().moduleTypeSelected(typeSelected);
       }
@@ -86,10 +90,8 @@ public class ModuleTypeStep extends ModuleWizardStep {
       }
     );
 
-    myRbCreateNewModule = new JRadioButton("Create new module", true);
-    myRbCreateNewModule.setMnemonic('C');
-    myRbImportModule = new JRadioButton("Import existing module");
-    myRbImportModule.setMnemonic('I');
+    myRbCreateNewModule = new JRadioButton(IdeBundle.message("radio.create.new.module"), true);
+    myRbImportModule = new JRadioButton(IdeBundle.message("radio.import.existing.module"));
     myButtonGroup = new ButtonGroup();
     myButtonGroup.add(myRbCreateNewModule);
     myButtonGroup.add(myRbImportModule);
@@ -99,21 +101,22 @@ public class ModuleTypeStep extends ModuleWizardStep {
 
     JTextField tfModuleFilePath = new JTextField();
     final String productName = ApplicationNamesInfo.getInstance().getProductName();
-    myModulePathFieldPanel = createFieldPanel(tfModuleFilePath, "Path to " + productName + " module file (.iml):",
-                                              new BrowseFilesListener( tfModuleFilePath, "Select " + productName + " module file (.iml) to import", null,
-                                                                                                                          new ModuleFileChooserDescriptor()));
+    myModulePathFieldPanel = createFieldPanel(tfModuleFilePath, IdeBundle.message("label.path.to.module.file", productName),
+                                              new BrowseFilesListener( tfModuleFilePath,
+                                                                       IdeBundle.message("prompt.select.module.file.to.import", productName), null,
+                                                                       new ModuleFileChooserDescriptor()));
     myModulePathFieldPanel.setEnabled(false);
 
     if (createNewProject) {
-      final JLabel moduleTypeLabel = new JLabel("Select module type:");
-      moduleTypeLabel.setFont(UIManager.getFont("Label.font").deriveFont(Font.BOLD));
+      final JLabel moduleTypeLabel = new JLabel(IdeBundle.message("label.select.module.type"));
+      moduleTypeLabel.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
       myPanel.add(moduleTypeLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(8, 10, 0, 10), 0, 0));
     }
     else {
       myPanel.add(myRbCreateNewModule, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(8, 10, 8, 10), 0, 0));
     }
-    final JLabel descriptionLabel = new JLabel("Description:");
-    descriptionLabel.setFont(UIManager.getFont("Label.font").deriveFont(Font.BOLD));
+    final JLabel descriptionLabel = new JLabel(IdeBundle.message("label.description"));
+    descriptionLabel.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
     myPanel.add(descriptionLabel, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.SOUTHWEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
 
     final JScrollPane typesListScrollPane = ScrollPaneFactory.createScrollPane(myTypesList);
@@ -169,20 +172,21 @@ public class ModuleTypeStep extends ModuleWizardStep {
     if (myRbImportModule.isSelected()) {
       final String path = myModulePathFieldPanel.getText().trim();
       if (path.length() == 0) {
-        Messages.showErrorDialog("Please specify path to " + ApplicationNamesInfo.getInstance().getProductName() +
-                                 " module file (.iml)", "Module File Path Not Specified");
+        Messages.showErrorDialog(
+          IdeBundle.message("error.please.specify.path.to.module.file", ApplicationNamesInfo.getInstance().getProductName()),
+          IdeBundle.message("title.module.file.path.not.specified"));
         myModulePathFieldPanel.getTextField().requestFocus();
         return false;
       }
       final File file = new File(path);
       if (!file.exists()) {
-        Messages.showErrorDialog("The specified path to module file does not exist", "Module File Does Not Exist");
+        Messages.showErrorDialog(IdeBundle.message("error.module.file.does.not.exist"), IdeBundle.message("title.module.file.does.not.exist"));
         myModulePathFieldPanel.getTextField().requestFocus();
         return false;
       }
       if (!StdFileTypes.IDEA_MODULE.equals(FileTypeManager.getInstance().getFileTypeByFileName(file.getName()))) {
-        Messages.showErrorDialog("The \"" + path + "\"\nis not an " + ApplicationNamesInfo.getInstance().getProductName() +
-                                 " module file (.iml)", "Incorrect File Type");
+        Messages.showErrorDialog(IdeBundle.message("error.module.not.iml", path, ApplicationNamesInfo.getInstance().getProductName()),
+                                 IdeBundle.message("title.incorrect.file.type"));
         myModulePathFieldPanel.getTextField().requestFocus();
         return false;
       }

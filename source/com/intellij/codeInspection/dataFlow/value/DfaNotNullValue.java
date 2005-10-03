@@ -58,6 +58,7 @@ public class DfaNotNullValue extends DfaValue {
     super(factory);
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return "@notnull " + myType.getCanonicalText();
   }

@@ -22,21 +22,21 @@ public class ImportWizard extends CvsWizard{
   private ImportSettingsStep mySettingsStep;
 
   public ImportWizard(Project project, VirtualFile selectedFile) {
-    super("Import into CVS", project);
+    super(com.intellij.CvsBundle.message("dialog.title.import.into.cvs"), project);
     ImportConfiguration importConfig = ImportConfiguration.getInstanse();
     mySelectCVSConfigurationStep = new SelectCVSConfigurationStep(project, this);
-    mySelectCvsElementStep = new SelectCvsElementStep("Select Directory to Import into",this,
+    mySelectCvsElementStep = new SelectCvsElementStep(com.intellij.CvsBundle.message("dialog.title.select.directory.to.import.into"),this,
                                                       project,
                                                       mySelectCVSConfigurationStep,
                                                       false,TreeSelectionModel.SINGLE_TREE_SELECTION, true, false);
 
     mySelectImportLocationStep = new SelectImportLocationStep(
-                                            "Select Import Directory",
+                                            com.intellij.CvsBundle.message("dialog.title.select.import.directory"),
                                              this,
                                             project,
                                             selectedFile);
 
-    myKeywordSubstitutionStep = new CustomizeKeywordSubstitutionStep("Customize Keyword Substitutions",
+    myKeywordSubstitutionStep = new CustomizeKeywordSubstitutionStep(com.intellij.CvsBundle.message("dialog.title.customize.keyword.substitutions"),
                 this, importConfig);
 
     mySettingsStep = new ImportSettingsStep(this, mySelectImportLocationStep, importConfig);

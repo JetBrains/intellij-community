@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.application.ApplicationBundle;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -36,9 +37,9 @@ public class CodeCompletionPanel {
   private JCheckBox myCbShowFullParameterSignatures;
 
   private JComboBox myCaseSensitiveCombo;
-  private static final String CASE_SENSITIVE_ALL = "All";
-  private static final String CASE_SENSITIVE_NONE = "None";
-  private static final String CASE_SENSITIVE_FIRST_LETTER = "First letter";
+  private static final String CASE_SENSITIVE_ALL = ApplicationBundle.message("combobox.autocomplete.casesensitive.all");
+  private static final String CASE_SENSITIVE_NONE = ApplicationBundle.message("combobox.autocomplete.casesensitive.none");
+  private static final String CASE_SENSITIVE_FIRST_LETTER = ApplicationBundle.message("combobox.autocomplete.casesensitive.first.letter");
   private JRadioButton myRbInsertParenth;
   private JRadioButton myRbInsertBothParenthes;
   private JCheckBox myCbInsertBothParenthesWhenNoArgs;

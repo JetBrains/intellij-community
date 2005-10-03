@@ -1,11 +1,10 @@
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
-import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.CharTable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,10 +12,10 @@ import java.util.List;
 public class PsiKeywordImpl extends LeafPsiElement implements PsiKeyword, PsiJavaToken {
   public PsiElement[] create(Class parentClass, PsiElementFactory factory, String prefix)
   throws IncorrectOperationException{
-    List ret = new ArrayList();
+    List<PsiKeyword> ret = new ArrayList<PsiKeyword>();
     if(parentClass.isAssignableFrom(PsiClass.class)){
-      if("class".startsWith(prefix)){
-        ret.add(factory.createKeyword("class"));
+      if(PsiKeyword.CLASS.startsWith(prefix)){
+        ret.add(factory.createKeyword(PsiKeyword.CLASS));
       }
     }
 

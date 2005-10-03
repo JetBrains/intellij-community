@@ -2,6 +2,7 @@ package com.intellij.application.options;
 
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.util.containers.HashMap;
 
@@ -23,14 +24,14 @@ public class SelectFontDialog extends DialogWrapper {
   public SelectFontDialog(Component parent, List<String> fontNames, String initialFontName, HashMap nameToIsMonospaced) {
     super(parent, true);
     myNameToIsMonospaced = nameToIsMonospaced;
-    setTitle("Select Font");
+    setTitle(ApplicationBundle.message("title.select.font"));
     myFontNames = fontNames;
     myInitialFontName = initialFontName;
     init();
   }
 
   protected JComponent createCenterPanel() {
-    myShowMonospacedCheckbox = new JCheckBox("Show only monospaced fonts");
+    myShowMonospacedCheckbox = new JCheckBox(ApplicationBundle.message("checkbox.show.only.monospaced.fonts"));
     final boolean useOnlyMonospacedFonts = EditorColorsManager.getInstance().isUseOnlyMonospacedFonts();
     myShowMonospacedCheckbox.setSelected(useOnlyMonospacedFonts);
     myFontList = new JList();

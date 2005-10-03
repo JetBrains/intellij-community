@@ -69,8 +69,8 @@ public class BraceHighlighter implements ProjectComponent {
           public void documentChanged(DocumentEvent e) {
             myAlarm.cancelAllRequests();
             Editor[] editors = EditorFactory.getInstance().getEditors(e.getDocument(), myProject);
-            for (int i = 0; i < editors.length; i++) {
-              updateBraces(editors[i]);
+            for (Editor editor : editors) {
+              updateBraces(editor);
             }
           }
         };

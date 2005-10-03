@@ -5,6 +5,7 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -48,7 +49,7 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
     for (HighlightInfo info : highlights) {
       int startOffset = getNavigationPositionFor(info);
       boolean isItBetter = myGoForward ? startOffset > caretOffset && startOffset < offsetToGo
-                                 : startOffset < caretOffset && startOffset > offsetToGo;
+                           : startOffset < caretOffset && startOffset > offsetToGo;
       if (isItBetter) {
         offsetToGo = startOffset;
         infoToGo = info;
@@ -67,10 +68,10 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
     DaemonCodeAnalyzerImpl codeHighlighter = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
     String message;
     if (codeHighlighter.isErrorAnalyzingFinished(file)){
-      message = "No errors found in this file";
+      message = InspectionsBundle.message("no.errors.found.in.this.file");
     }
     else{
-      message = "Error analysis is in progress";
+      message = InspectionsBundle.message("error.analysis.is.in.progress");
     }
     HintManager.getInstance().showInformationHint(editor, message);
   }

@@ -16,10 +16,6 @@ import com.intellij.psi.PsiFile;
 
 public class ToggleBreakpointEnabledAction extends AnAction {
 
-  public ToggleBreakpointEnabledAction() {
-    super("Toggle Breakpoint Enabled");
-  }
-
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     Project project = (Project)dataContext.getData(DataConstants.PROJECT);

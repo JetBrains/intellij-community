@@ -298,23 +298,4 @@ public class LinkLabel extends JLabel {
     myPaintDefaultIcon = paintDefaultIcon;
   }
 
-  public static void main(String[] args) {
-    final JFrame jFrame = new JFrame();
-    final Container contentPane = jFrame.getContentPane();
-    contentPane.setLayout(new FlowLayout());
-
-    final LinkLabel linkLabel = new LinkLabel("text", LINK);
-    //    linkLabel.setFont(linkLabel.getFont().deriveFont(25f));
-    linkLabel.setDefaultIconPainted(true);
-
-    contentPane.add(linkLabel);
-
-    jFrame.setBounds(100, 100, 100, 100);
-    jFrame.show();
-
-    linkLabel.setBorder(new EmptyBorder(10, 10, 10, 10));
-
-
-  }
-
 }

@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.DiffRequest;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.ex.DiffFragment;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.incrementalMerge.ui.MergePanel2;
@@ -23,6 +24,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.jetbrains.annotations.NonNls;
+
 public class MergeList implements ChangeList.Parent, UserDataHolder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.incrementalMerge.MergeList");
   private final Project myProject;
@@ -30,7 +33,7 @@ public class MergeList implements ChangeList.Parent, UserDataHolder {
   private final UserDataHolderBase myDataHolder = new UserDataHolderBase();
   public static final FragmentSide BRANCH_SIDE = FragmentSide.SIDE2;
   public static final FragmentSide BASE_SIDE = FragmentSide.SIDE1;
-  public static final String MERGE_LIST = "mergeList";
+  @NonNls public static final String MERGE_LIST = "mergeList";
 
   private MergeList(Project project, Document left, Document base, Document right) {
     myProject = project;
@@ -43,11 +46,12 @@ public class MergeList implements ChangeList.Parent, UserDataHolder {
     String leftText = left.getText();
     String baseText = base.getText();
     String rightText = right.getText();
-    ContextLogger logger = new ContextLogger(LOG, new ContextLogger.SimpleContext(new Object[]{
+    @NonNls final Object[] data = new Object[]{
       "Left\n" + leftText,
-      "\nBase\n"+baseText,
+      "\nBase\n" + baseText,
       "\nRight\n" + rightText
-    }));
+    };
+    ContextLogger logger = new ContextLogger(LOG, new ContextLogger.SimpleContext(data));
     List<MergeBuilder.MergeFragment> fragmentList = processText(leftText, baseText, rightText, logger);
 
     ArrayList<Change> leftChanges = new ArrayList<Change>();
@@ -80,9 +84,9 @@ public class MergeList implements ChangeList.Parent, UserDataHolder {
   }
 
   private static List<MergeBuilder.MergeFragment> processText(String leftText,
-                                                             String baseText,
-                                                             String rightText,
-                                                             ContextLogger logger) {
+                                                              String baseText,
+                                                              String rightText,
+                                                              ContextLogger logger) {
     DiffFragment[] leftFragments = DiffPolicy.DEFAULT_LINES.buildFragments(baseText, leftText);
     DiffFragment[] rightFragments = DiffPolicy.DEFAULT_LINES.buildFragments(baseText, rightText);
     int[] leftOffsets = new int[]{0, 0};
@@ -165,12 +169,12 @@ public class MergeList implements ChangeList.Parent, UserDataHolder {
     for (int i = 0; i < changeList.getCount(); i++) {
       final Change change = changeList.getChange(i);
       if (!change.canHasActions(originalSide)) continue;
-      AnAction applyAction = new AnAction("Apply change", null, GutterActionRenderer.REPLACE_ARROW) {
+      AnAction applyAction = new AnAction(DiffBundle.message("merge.dialog.apply.change.action.name"), null, GutterActionRenderer.REPLACE_ARROW) {
         public void actionPerformed(AnActionEvent e) {
           apply(change);
         }
       };
-      AnAction ignoreAction = new AnAction("Ignore change", null, GutterActionRenderer.REMOVE_CROSS) {
+      AnAction ignoreAction = new AnAction(DiffBundle.message("merge.dialog.ignore.change.action.name"), null, GutterActionRenderer.REMOVE_CROSS) {
         public void actionPerformed(AnActionEvent e) {
           change.removeFromList();
         }

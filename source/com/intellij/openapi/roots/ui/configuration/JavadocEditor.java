@@ -3,6 +3,7 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.ui.Util;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.util.CellAppearance;
@@ -11,8 +12,6 @@ import com.intellij.openapi.roots.ui.util.SimpleTextCellAppearance;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableUtil;
@@ -40,7 +39,7 @@ public class JavadocEditor extends ModuleElementsEditor {
   private JButton myAddUrlButton;
   private JButton myRemoveButton;
 
-  public static final String NAME = "Javadoc";
+  public static final String NAME = ProjectBundle.message("module.javadoc.title");
   public static final Icon ICON = IconLoader.getIcon("/nodes/javaDocFolder.png");
 
   public JavadocEditor(Project project, ModifiableRootModel model) {
@@ -83,16 +82,13 @@ public class JavadocEditor extends ModuleElementsEditor {
     myTable.setShowVerticalLines(false);
     myTable.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
-    myAddPathButton = new JButton("Add Path...");
-    myAddPathButton.setMnemonic('A');
+    myAddPathButton = new JButton(ProjectBundle.message("module.javadoc.add.path.button"));
     myAddPathButton.addActionListener(new AddPathActionListener());
 
-    myAddUrlButton = new JButton("Add Javadoc URL...");
-    myAddUrlButton.setMnemonic('U');
+    myAddUrlButton = new JButton(ProjectBundle.message("module.javadoc.add.url.button"));
     myAddUrlButton.addActionListener(new AddUrlActionListener());
 
-    myRemoveButton = new JButton("Remove");
-    myRemoveButton.setMnemonic('R');
+    myRemoveButton = new JButton(ProjectBundle.message("module.javadoc.remove.button"));
     myRemoveButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         final ArrayList removedItems = TableUtil.removeSelectedItems(myTable);
@@ -243,8 +239,8 @@ public class JavadocEditor extends ModuleElementsEditor {
 
     public AddPathActionListener() {
       myDescriptor = new FileChooserDescriptor(false, true, true, false, true, true);
-      myDescriptor.setTitle("Add Path To Javadoc");
-      myDescriptor.setDescription("Select jar/zip files or directories in which module javadoc documentation is located");
+      myDescriptor.setTitle(ProjectBundle.message("module.javadoc.add.path.title"));
+      myDescriptor.setDescription(ProjectBundle.message("module.javadoc.add.path.prompt"));
     }
 
     protected VirtualFile[] getFiles() {

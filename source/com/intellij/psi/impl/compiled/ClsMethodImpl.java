@@ -24,6 +24,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.cls.BytePointer;
 import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.cls.ClsUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.text.CharacterIterator;
@@ -51,6 +52,7 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
   private PsiAnnotationMemberValue[] myDefaultValue = null;
   private ClsAnnotationImpl[] myAnnotations = null;
   private ClsAnnotationImpl[][] myParameterAnnotations = null;
+  private static final @NonNls String SYNTHETIC_INIT_METHOD = "<init>";
 
   public ClsMethodImpl(ClsClassImpl parent, int startOffset) {
     super(parent.myManager, -1);
@@ -173,7 +175,7 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
           int index = (b1 << 8) + b2;
           offset = classFileData.getOffsetInConstantPool(index);
           String name = ClsUtil.readUtf8Info(data, offset);
-          if (name.equals("<init>")) {
+          if (name.equals(SYNTHETIC_INIT_METHOD)) {
             name = myParent.getName();
             myConstructorFlag = true;
           }
@@ -604,7 +606,7 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
 
       if (iterator.current() == '^') {
         iterator.next();
-        myThrowsList = new ClsReferenceListImpl(this, "throws");
+        myThrowsList = new ClsReferenceListImpl(this, PsiKeyword.THROWS);
         PsiJavaCodeReferenceElement[] refs = GenericSignatureParsing.parseToplevelClassRefSignatures(iterator, myThrowsList);
           ((ClsReferenceListImpl)myThrowsList).setReferences(refs);
       }
@@ -674,12 +676,12 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
       buffer.append(";");
     }
     else {
-      buffer.append("{ /* compiled code */ }\n");
+      buffer.append(PsiBundle.message("psi.decompiled.method.body"));
     }
     return buffer.toString();
   }
 
-  private void appendMethodHeader(StringBuffer buffer) {
+  private void appendMethodHeader(@NonNls StringBuffer buffer) {
     ClsDocCommentImpl docComment = (ClsDocCommentImpl)getDocComment();
     if (docComment != null) {
       buffer.append(docComment.getMirrorText());

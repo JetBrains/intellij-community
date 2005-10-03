@@ -44,7 +44,8 @@ public final class DefaultFileInfo
         return fileObject;
 	}
 
-	public String toString() {
+	@SuppressWarnings({"HardCodedStringLiteral"})
+        public String toString() {
 		final StringBuffer buffer = new StringBuffer();
 		if (isDirectory()) {
 			buffer.append("Directory ");

@@ -6,6 +6,7 @@ package com.intellij.debugger.settings;
 
 import com.intellij.debugger.ui.tree.render.CompoundNodeRenderer;
 import com.intellij.debugger.ui.tree.render.NodeRenderer;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -45,7 +46,7 @@ public class UserRenderersConfigurable implements Configurable{
   }
 
   public String getDisplayName() {
-    return "Type Renderers";
+    return DebuggerBundle.message("user.renderers.configurable.display.name");
   }
 
   public Icon getIcon() {
@@ -68,7 +69,7 @@ public class UserRenderersConfigurable implements Configurable{
 
     myNameField = new JTextField();
     final JPanel nameFieldPanel = new JPanel(new BorderLayout());
-    nameFieldPanel.add(new JLabel("Renderer name:"), BorderLayout.WEST);
+    nameFieldPanel.add(new JLabel(DebuggerBundle.message("label.user.renderers.configurable.renderer.name")), BorderLayout.WEST);
     nameFieldPanel.add(myNameField, BorderLayout.CENTER);
     panel.add(nameFieldPanel, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(6, 6, 0, 6), 0, 0));
 
@@ -199,7 +200,7 @@ public class UserRenderersConfigurable implements Configurable{
 
   private class AddAction extends AnAction {
     public AddAction() {
-      super("Add", "Add new renderer", ADD_ICON);
+      super(DebuggerBundle.message("button.add"), DebuggerBundle.message("user.renderers.configurable.button.description.add"), ADD_ICON);
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -216,7 +217,7 @@ public class UserRenderersConfigurable implements Configurable{
 
   private class RemoveAction extends AnAction {
     public RemoveAction() {
-      super("Remove", "Remove selected renderer", REMOVE_ICON);
+      super(DebuggerBundle.message("button.remove"), DebuggerBundle.message("user.renderers.configurable.button.description.remove"), REMOVE_ICON);
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -235,7 +236,7 @@ public class UserRenderersConfigurable implements Configurable{
 
   private class CopyAction extends AnAction {
     public CopyAction() {
-      super("Copy", "Copy selected renderer", COPY_ICON);
+      super(DebuggerBundle.message("button.copy"), DebuggerBundle.message("user.renderers.configurable.button.description.copy"), COPY_ICON);
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -257,7 +258,9 @@ public class UserRenderersConfigurable implements Configurable{
     private final boolean myMoveUp;
 
     public MoveAction(boolean up) {
-      super("Move " + (up? "Up" : "Down"), "Move renderer " + (up? "Up" : "Down"), (up? UP_ICON : DOWN_ICON) );
+      super(up? DebuggerBundle.message("button.move.up") : DebuggerBundle.message("button.move.down"),
+            up? DebuggerBundle.message("user.renderers.configurable.button.description.move.up") : DebuggerBundle.message("user.renderers.configurable.button.description.move.down"),
+            up? UP_ICON : DOWN_ICON );
       myMoveUp = up;
     }
 

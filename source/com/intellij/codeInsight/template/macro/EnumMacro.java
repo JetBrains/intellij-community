@@ -1,8 +1,13 @@
 package com.intellij.codeInsight.template.macro;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
-import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.Expression;
+import com.intellij.codeInsight.template.ExpressionContext;
+import com.intellij.codeInsight.template.Macro;
+import com.intellij.codeInsight.template.Result;
+
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -12,7 +17,7 @@ public class EnumMacro implements Macro{
   }
 
   public String getDescription() {
-    return "enum(...)";
+    return CodeInsightBundle.message("macro.enum");
   }
 
   public String getDefaultValue() {

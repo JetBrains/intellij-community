@@ -60,6 +60,7 @@ public final class InplaceEditingLayer extends JComponent{
 
   public InplaceEditingLayer(final GuiEditor editor) {
     if (editor == null) {
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("editor cannot be null");
     }
     myEditor = editor;

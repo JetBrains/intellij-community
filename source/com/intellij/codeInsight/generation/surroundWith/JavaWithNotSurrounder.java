@@ -1,6 +1,7 @@
 
 package com.intellij.codeInsight.generation.surroundWith;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -27,6 +28,6 @@ class JavaWithNotSurrounder extends JavaExpressionSurrounder{
   }
 
   public String getTemplateDescription() {
-    return "!(expr)";
+    return CodeInsightBundle.message("surround.with.not.template");
   }
 }

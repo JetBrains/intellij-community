@@ -22,7 +22,7 @@
  */
 package com.intellij.usages.impl.rules;
 
-import com.intellij.usages.UsageViewBundle;
+import com.intellij.usageView.UsageViewBundle;
 
 public class UsageType {
   public static final UsageType CLASS_INSTANCE_OF = new UsageType(UsageViewBundle.message("usage.type.instanceof"));

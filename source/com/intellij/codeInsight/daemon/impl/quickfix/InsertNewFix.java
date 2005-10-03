@@ -4,6 +4,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -20,7 +21,7 @@ public class InsertNewFix implements IntentionAction {
   }
 
   public String getText() {
-    return "Insert new";
+    return QuickFixBundle.message("insert.new.fix");
   }
 
   public String getFamilyName() {
@@ -38,8 +39,12 @@ public class InsertNewFix implements IntentionAction {
     PsiElementFactory factory = myMethodCall.getManager().getElementFactory();
     PsiNewExpression newExpression = (PsiNewExpression)factory.createExpressionFromText("new X()",null);
 
-    newExpression.getClassReference().replace(factory.createClassReferenceElement(myClass));
-    newExpression.getArgumentList().replace(myMethodCall.getArgumentList().copy());
+    PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
+    assert classReference != null;
+    classReference.replace(factory.createClassReferenceElement(myClass));
+    PsiExpressionList argumentList = newExpression.getArgumentList();
+    assert argumentList != null;
+    argumentList.replace(myMethodCall.getArgumentList());
     myMethodCall.replace(newExpression);
   }
 

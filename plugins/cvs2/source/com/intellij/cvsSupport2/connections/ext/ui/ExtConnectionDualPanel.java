@@ -10,6 +10,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+import org.jetbrains.annotations.NonNls;
+
 public class ExtConnectionDualPanel {
 
   private final ExtConnectionSettingsPanel myExtSettingsPanel;
@@ -17,9 +19,9 @@ public class ExtConnectionDualPanel {
 
   private final JPanel myPanel = new JPanel(new BorderLayout());
   private final JPanel myDualPanel = new JPanel(new CardLayout());
-  private JCheckBox myUseInternalImplementationCheckBox = new JCheckBox("Use internal ssh implementation");
-  private static final String EXT = "EXT";
-  private static final String SSH = "SSH";
+  private JCheckBox myUseInternalImplementationCheckBox = new JCheckBox(com.intellij.CvsBundle.message("checkbox.text.use.internal.ssh.implementation"));
+  @NonNls private static final String EXT = "EXT";
+  @NonNls private static final String SSH = "SSH";
 
   public ExtConnectionDualPanel(final CvsRootEditor rootProvider) {
     myExtSettingsPanel = new ExtConnectionSettingsPanel();

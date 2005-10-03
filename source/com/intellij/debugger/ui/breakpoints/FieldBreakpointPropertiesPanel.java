@@ -5,9 +5,8 @@
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.psi.PsiElement;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.debugger.DebuggerBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -25,10 +24,8 @@ public class FieldBreakpointPropertiesPanel extends BreakpointPropertiesPanel {
   protected JComponent createSpecialBox() {
     JPanel _panel;
     JPanel _panel0;
-    myWatchAccessCheckBox = new JCheckBox("Field access");
-    myWatchAccessCheckBox.setMnemonic('s');
-    myWatchModificationCheckBox = new JCheckBox("Field modification");
-    myWatchModificationCheckBox.setMnemonic('m');
+    myWatchAccessCheckBox = new JCheckBox(DebuggerBundle.message("label.filed.breakpoint.properties.panel.field.access"));
+    myWatchModificationCheckBox = new JCheckBox(DebuggerBundle.message("label.filed.breakpoint.properties.panel.field.modification"));
 
 
     Box watchBox = Box.createVerticalBox();
@@ -45,7 +42,7 @@ public class FieldBreakpointPropertiesPanel extends BreakpointPropertiesPanel {
     _panel0.add(Box.createHorizontalStrut(3), BorderLayout.WEST);
     _panel0.add(Box.createHorizontalStrut(3), BorderLayout.EAST);
     _panel.add(_panel0, BorderLayout.NORTH);
-    _panel.setBorder(IdeBorderFactory.createTitledBorder("Watch"));
+    _panel.setBorder(IdeBorderFactory.createTitledBorder(DebuggerBundle.message("label.group.watch.events")));
 
     ActionListener listener = new ActionListener() {
       public void actionPerformed(ActionEvent e) {

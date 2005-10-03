@@ -14,7 +14,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterProcessor;
 import com.intellij.refactoring.introduceParameter.Util;
 
@@ -213,7 +212,7 @@ public class IntroduceParameterTest extends CodeInsightTestCase {
 
     final PsiMethod methodToSearchFor;
     if (searchForSuper) {
-      methodToSearchFor = PsiSuperMethodUtil.findDeepestSuperMethod(method);
+      methodToSearchFor = method.findDeepestSuperMethod();
     }
     else {
       methodToSearchFor = method;
@@ -234,7 +233,7 @@ public class IntroduceParameterTest extends CodeInsightTestCase {
     PsiMethod method = Util.getContainingMethod(element);
     final PsiMethod methodToSearchFor;
     if (searchForSuper) {
-      final PsiMethod deepestSuperMethod = PsiSuperMethodUtil.findDeepestSuperMethod(method);
+      final PsiMethod deepestSuperMethod = method.findDeepestSuperMethod();
       methodToSearchFor = deepestSuperMethod != null ? deepestSuperMethod : method;
     }
     else {

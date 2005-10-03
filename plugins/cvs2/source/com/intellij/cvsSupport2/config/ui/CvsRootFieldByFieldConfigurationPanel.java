@@ -55,17 +55,17 @@ public class CvsRootFieldByFieldConfigurationPanel {
     if (port.length() > 0) {
       try {
         int intPort = Integer.parseInt(port);
-        if (intPort <= 0) throw new InputException("Invalid port value: " + port, myPort);
+        if (intPort <= 0) throw new InputException(com.intellij.CvsBundle.message("error.message.invalid.port.value", port), myPort);
       }
       catch (NumberFormatException ex) {
-        throw new InputException("Invalid port value: " + port, myPort);
+        throw new InputException(com.intellij.CvsBundle.message("error.message.invalid.port.value", port), myPort);
       }
     }
 
     CvsMethod cvsMethod = (CvsMethod)myMethods.getSelectedItem();
-    String user = checkedField(myUser, "User", cvsMethod.hasUserValue());
-    String host = checkedField(myHost, "Host", cvsMethod.hasHostValue());
-    String repository = checkedField(myRepository, "Repository", true);
+    String user = checkedField(myUser, com.intellij.CvsBundle.message("configure.root.field.name.user"), cvsMethod.hasUserValue());
+    String host = checkedField(myHost, com.intellij.CvsBundle.message("configure.root.field.name.host"), cvsMethod.hasHostValue());
+    String repository = checkedField(myRepository, com.intellij.CvsBundle.message("configure.root.field.name.repository"), true);
 
     return CvsRootConfiguration.createStringRepresentationOn(cvsMethod,
                                                              user,
@@ -77,7 +77,7 @@ public class CvsRootFieldByFieldConfigurationPanel {
   private String checkedField(JTextField field, String name, boolean checkParameters) {
     String value = field.getText().trim();
     if (checkParameters && (value.length() == 0)) {
-      throw new InputException("\'" + name + "\' value cannot be empty", field);
+      throw new InputException(com.intellij.CvsBundle.message("error.message.value.cannot.be.empty", name), field);
     }
     return value;
   }

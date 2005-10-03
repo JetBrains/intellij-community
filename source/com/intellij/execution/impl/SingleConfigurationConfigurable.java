@@ -1,6 +1,7 @@
 package com.intellij.execution.impl;
 
 import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.openapi.diagnostic.Logger;
@@ -19,6 +20,8 @@ import javax.swing.text.PlainDocument;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+
+import org.jetbrains.annotations.NonNls;
 
 /**
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
@@ -112,7 +115,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
                                                                           exception.getQuickFix()) : null;
       }
       catch (ConfigurationException e) {
-        myLastValidationResult = new ValidationResult(e.getLocalizedMessage(), "Invalid Configuration", null);
+        myLastValidationResult = new ValidationResult(e.getLocalizedMessage(), ExecutionBundle.message("invalid.data.dialog.title"), null);
       }
       myValidationResultValid = true;
     }
@@ -233,8 +236,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       if (configurationException != null) {
         myOutlinePanel.setVisible(true);
         myWarningLabel.setVisible(true);
-        myWarningLabel.setText("<html><body><b>" + configurationException.getTitle() + ": </b>" +
-                                                 configurationException.getMessage() + "</body></html>");
+        myWarningLabel.setText(generateWarningLabelText(configurationException));
         final Runnable quickFix = configurationException.getQuickFix();
         if (quickFix == null) {
           myFixButton.setVisible(false);
@@ -250,6 +252,12 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
         myWarningLabel.setVisible(false);
         myFixButton.setVisible(false);
       }
+    }
+
+    @NonNls
+    private String generateWarningLabelText(final ValidationResult configurationException) {
+      return "<html><body><b>" + configurationException.getTitle() + ": </b>" +
+             configurationException.getMessage() + "</body></html>";
     }
   }
 }

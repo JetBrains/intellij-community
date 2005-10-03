@@ -48,8 +48,7 @@ public class SelectCvsConfgurationPanel extends JPanel {
 
   private Component createButtonPanel() {
     JPanel result = new JPanel(new BorderLayout());
-    JButton jButton = new JButton("Configure...");
-    jButton.setMnemonic('C');
+    JButton jButton = new JButton(com.intellij.CvsBundle.message("button.text.configure.cvs.roots"));
     jButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         editConfigurations();

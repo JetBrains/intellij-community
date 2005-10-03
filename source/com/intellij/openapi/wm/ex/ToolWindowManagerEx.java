@@ -1,8 +1,11 @@
 package com.intellij.openapi.wm.ex;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.impl.DesktopLayout;
+
+import javax.swing.*;
 
 public abstract class ToolWindowManagerEx extends ToolWindowManager{
   public static ToolWindowManagerEx getInstanceEx(final Project project){
@@ -17,6 +20,11 @@ public abstract class ToolWindowManagerEx extends ToolWindowManager{
    * @return <code>ID</code> of tool window that was activated last time.
    */
   public abstract String getLastActiveToolWindowId();
+
+  /**
+   * @return <code>ID</code> of tool window which was last activated among tool windows satisfying the current condition
+   */
+  public abstract String getLastActiveToolWindowId(Condition<JComponent> condition);
 
   /**
    * @return layout of tool windows.

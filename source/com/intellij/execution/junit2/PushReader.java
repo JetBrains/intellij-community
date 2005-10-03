@@ -5,12 +5,16 @@ import gnu.trove.TIntArrayList;
 import java.io.IOException;
 import java.io.Reader;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author dyoma
  */
 public class PushReader {
   private final Reader mySource;
   private final TIntArrayList myReadAhead = new TIntArrayList();
+  @NonNls
+  protected static final String INTERNAL_ERROR_UNEXPECTED_END_OF_PIPE = "Unexpected end of pipe";
 
   public PushReader(final Reader source) {
     mySource = source;
@@ -48,7 +52,7 @@ public class PushReader {
     while (offset < chars.length) {
       int bytesRead = mySource.read(chars, offset, chars.length - offset);
       if (bytesRead == -1)
-        throw new IOException ("Unexpected end of pipe");
+        throw new IOException (INTERNAL_ERROR_UNEXPECTED_END_OF_PIPE);
       offset += bytesRead;
     }
 

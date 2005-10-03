@@ -10,6 +10,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.impl.IdeFrame;
 import com.intellij.ui.plaf.beg.IdeaMenuUI;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.event.MenuEvent;
@@ -70,7 +71,7 @@ public final class ActionMenu extends JMenu{
       popupMenu.updateUI();
     }
     setUI(IdeaMenuUI.createUI(this));
-    setFont(UIManager.getFont("Menu.font"));
+    setFont(UIUtil.getMenuFont());
   }
 
   private void init(){

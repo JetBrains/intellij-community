@@ -10,6 +10,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -59,7 +60,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
         append(value == null ? "" : value.toString(), new SimpleTextAttributes(Font.PLAIN, list.getForeground()));
       }
       setPaintFocusBorder(false);
-      setBackground(UIManager.getColor(selected ? "List.selectionBackground" : "List.background"));
+      setBackground(selected ? UIUtil.getListSelectionBackground() : UIUtil.getListBackground());
     }
   }
 
@@ -78,13 +79,13 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
       moduleName = psiElementModuleRenderer.getText();
       final JPanel spacer = new JPanel();
       spacer.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 2));
-      spacer.setBackground(UIManager.getColor(isSelected ? "List.selectionBackground" : "List.background"));
+      spacer.setBackground(isSelected ? UIUtil.getListSelectionBackground() : UIUtil.getListBackground());
       add(spacer, BorderLayout.CENTER);
     }
     final Component leftCellRendererComponent =
       new LeftRenderer(moduleName).getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
     add(leftCellRendererComponent, BorderLayout.WEST);
-    setBackground(UIManager.getColor(isSelected ? "List.selectionBackground" : "List.background"));
+    setBackground(isSelected ? UIUtil.getListSelectionBackground() : UIUtil.getListBackground());
     return this;
   }
 

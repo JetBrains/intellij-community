@@ -36,7 +36,7 @@ public class CvsEntriesManager extends VirtualFileAdapter implements Application
 
   private Map<VirtualFile, CvsInfo> myInfoByParentDirectoryPath = new com.intellij.util.containers.HashMap<VirtualFile, CvsInfo>();
 
-  private static final String CVS_ADMIN_DIRECTORY_NAME = "CVS";
+  private static final String CVS_ADMIN_DIRECTORY_NAME = CvsUtil.CVS;
 
   private Collection<CvsEntriesListener> myEntriesListeners = new ArrayList<CvsEntriesListener>();
   private int myIsActive = 0;

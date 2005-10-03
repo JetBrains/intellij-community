@@ -8,6 +8,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.text.MessageFormat;
 
 public class ProxySettingsPanel {
   private JPanel myPanel;
@@ -139,7 +140,7 @@ public class ProxySettingsPanel {
       return Integer.parseInt(text);
     }
     catch (NumberFormatException e) {
-      throw new InputException("Invalid port value " + text, component);
+      throw new InputException(com.intellij.CvsBundle.message("exception.text.invalid.port.value", text), component);
     }
   }
 

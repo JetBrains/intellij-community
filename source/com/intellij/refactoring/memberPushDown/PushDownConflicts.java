@@ -1,17 +1,20 @@
 package com.intellij.refactoring.memberPushDown;
 
 import com.intellij.psi.*;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 public class PushDownConflicts {
   private PsiClass myClass;
   private Set<PsiMember> myMovedMembers;
   private Set<PsiMember> myAbstractMembers;
-  private ArrayList myConflicts;
+  private ArrayList<String> myConflicts;
 
 
   public PushDownConflicts(PsiClass aClass, MemberInfo[] memberInfos) {
@@ -29,7 +32,7 @@ public class PushDownConflicts {
       }
     }
 
-    myConflicts = new ArrayList();
+    myConflicts = new ArrayList<String>();
   }
 
   public boolean isAnyConflicts() {
@@ -37,7 +40,7 @@ public class PushDownConflicts {
   }
 
   public String[] getConflicts() {
-    return (String[]) myConflicts.toArray(new String[myConflicts.size()]);
+    return myConflicts.toArray(new String[myConflicts.size()]);
   }
 
   public void checkSourceClassConflicts() {
@@ -53,33 +56,31 @@ public class PushDownConflicts {
 
   public void checkTargetClassConflicts(PsiClass targetClass) {
     for (final PsiMember movedMember : myMovedMembers) {
-      PsiMember element = movedMember;
-      if (element instanceof PsiField) {
-        String name = element.getName();
+      if (movedMember instanceof PsiField) {
+        String name = movedMember.getName();
         if (targetClass.findFieldByName(name, false) != null) {
-          String message = ConflictsUtil.getDescription(targetClass, false) + " already contains field "
-                           + ConflictsUtil.htmlEmphasize(name) + ".";
+          String message = RefactoringBundle.message("0.already.contains.field.1", ConflictsUtil.getDescription(targetClass, false), ConflictsUtil.htmlEmphasize(name));
           myConflicts.add(ConflictsUtil.capitalize(message));
         }
       }
-      else if (element instanceof PsiMethod) {
-        PsiMethod method = (PsiMethod)element;
+      else if (movedMember instanceof PsiMethod) {
+        PsiMethod method = (PsiMethod)movedMember;
         if (targetClass.findMethodBySignature(method, false) != null) {
-          String message = ConflictsUtil.getDescription(method, true) + " is already overridden in "
-                           + ConflictsUtil.getDescription(targetClass, false) + ". Method will not be pushed down to that class.";
+          String message = RefactoringBundle.message("0.is.already.overridden.in.1",
+                                                ConflictsUtil.getDescription(method, true), ConflictsUtil.getDescription(targetClass, false));
           myConflicts.add(ConflictsUtil.capitalize(message));
         }
       }
-      else if (element instanceof PsiClass) {
-        PsiClass aClass = (PsiClass)element;
+      else if (movedMember instanceof PsiClass) {
+        PsiClass aClass = (PsiClass)movedMember;
         final String name = aClass.getName();
         final PsiClass[] allInnerClasses = targetClass.getAllInnerClasses();
         for (PsiClass innerClass : allInnerClasses) {
-          if (innerClass.equals(element)) continue;
+          if (innerClass.equals(movedMember)) continue;
 
           if (name.equals(innerClass.getName())) {
-            String message = ConflictsUtil.getDescription(targetClass, false) + " already contains inner class named "
-                             + ConflictsUtil.htmlEmphasize(name) + ".";
+            String message = RefactoringBundle.message("0.already.contains.inner.class.named.1", ConflictsUtil.getDescription(targetClass, false),
+                                                  ConflictsUtil.htmlEmphasize(name));
             myConflicts.add(message);
           }
         }
@@ -97,8 +98,8 @@ public class PushDownConflicts {
 
     protected void visitClassMemberReferenceElement(PsiMember classMember, PsiJavaCodeReferenceElement classMemberReference) {
       if(myMovedMembers.contains(classMember) && !myAbstractMembers.contains(classMember)) {
-        String message = ConflictsUtil.getDescription(mySource, false)
-                + " uses " + ConflictsUtil.getDescription(classMember, false) + ", which is pushed down";
+        String message = RefactoringBundle.message("0.uses.1.which.is.pushed.down", ConflictsUtil.getDescription(mySource, false),
+                                              ConflictsUtil.getDescription(classMember, false));
         message = ConflictsUtil.capitalize(message);
         myConflicts.add(message);
       }

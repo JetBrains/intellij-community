@@ -9,16 +9,19 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * Combobox items are Documents for this combobox
  * @author max
  */
 public class EditorComboBoxEditor implements ComboBoxEditor{
   private final EditorTextField myTextField;
+  @NonNls protected static final String NAME = "ComboBox.textField";
 
   public EditorComboBoxEditor(Project project, FileType fileType) {
     myTextField = new EditorTextField((Document)null, project, fileType);
-    myTextField.setName("ComboBox.textField");
+    myTextField.setName(NAME);
   }
 
   public void selectAll() {

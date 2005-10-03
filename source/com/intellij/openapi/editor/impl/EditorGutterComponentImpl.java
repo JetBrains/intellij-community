@@ -17,10 +17,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.TextAnnotationGutterProvider;
-import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorFontType;
@@ -31,6 +28,7 @@ import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.containers.HashMap;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TIntProcedure;
@@ -49,6 +47,7 @@ import java.awt.event.MouseMotionListener;
 import java.awt.geom.AffineTransform;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Map;
 
 class EditorGutterComponentImpl extends EditorGutterComponentEx implements MouseListener, MouseMotionListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorGutterComponentImpl");
@@ -66,6 +65,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private int myTextAnnotationGuttersSize = 0;
   private TIntArrayList myTextAnnotationGutterSizes = new TIntArrayList();
   private ArrayList<TextAnnotationGutterProvider> myTextAnnotationGutters = new ArrayList<TextAnnotationGutterProvider>();
+  private Map<TextAnnotationGutterProvider, EditorGutterAction> myProviderToListener = new HashMap<TextAnnotationGutterProvider, EditorGutterAction>();
   private static final int GAP_BETWEEN_ANNOTATIONS = 6;
   private Color myBackgroundColor = null;
   private GutterDraggableObject myGutterDraggableObject;
@@ -574,6 +574,13 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     updateSize();
   }
 
+  public void registerTextAnnotation(TextAnnotationGutterProvider provider, EditorGutterAction action) {
+    myTextAnnotationGutters.add(provider);
+    myProviderToListener.put(provider, action);
+    myTextAnnotationGutterSizes.add(0);
+    updateSize();
+  }
+
   private VisualPosition offsetToLineStartPosition(int offset) {
     int line = myEditor.getDocument().getLineNumber(offset);
     return myEditor.logicalToVisualPosition(new LogicalPosition(line, 0));
@@ -900,6 +907,16 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       if (lineRenderer != null) {
         setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
       }
+
+      else {
+        TextAnnotationGutterProvider provider = getProviderAtPoint(e.getPoint());
+        if (provider != null && myProviderToListener.containsKey(provider)) {
+          final EditorGutterAction action = myProviderToListener.get(provider);
+          if (action != null) {
+            setCursor(action.getCursor(getLineNumAtPoint(e.getPoint())));
+          }
+        }
+      }
     }
 
     TooltipController controller = HintManager.getInstance().getTooltipController();
@@ -915,6 +932,43 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     if (e.isPopupTrigger()) {
       invokePopup(e);
     }
+  }
+
+  private void fireEventToTextAnnotationListeners(final MouseEvent e) {
+    if (myEditor.getMouseEventArea(e) == EditorMouseEventArea.ANNOTATIONS_AREA) {
+      final Point clickPoint = e.getPoint();
+
+      final TextAnnotationGutterProvider provider = getProviderAtPoint(clickPoint);
+
+      if (provider == null) {
+        return;
+      }
+
+      if (myProviderToListener.containsKey(provider)) {
+        int line = getLineNumAtPoint(clickPoint);
+
+        if (line > 0) {
+          myProviderToListener.get(provider).doAction(line);
+        }
+
+      }
+    }
+  }
+
+  private int getLineNumAtPoint(final Point clickPoint) {
+    return myEditor.xyToLogicalPosition(new Point(0, clickPoint.y)).line;
+  }
+
+  private TextAnnotationGutterProvider getProviderAtPoint(final Point clickPoint) {
+    int current = getAnnotationsAreaOffset();
+    if (clickPoint.x < current) return null;
+    for (int i = 0; i < myTextAnnotationGutterSizes.size(); i++) {
+      final int size = myTextAnnotationGutterSizes.get(i);
+      current += size;
+      if (clickPoint.x <= current) return myTextAnnotationGutters.get(i);
+    }
+
+    return null;
   }
 
   public void mousePressed(MouseEvent e) {
@@ -953,6 +1007,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       ActiveGutterRenderer lineRenderer = getActiveRendererByMouseEvent(e);
       if (lineRenderer != null) {
         lineRenderer.doAction(myEditor, e);
+      } else {
+        fireEventToTextAnnotationListeners(e);
       }
     }
   }
@@ -1007,7 +1063,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   private class CloseAnnotationsAction extends AnAction {
     public CloseAnnotationsAction() {
-      super("Close Annotations");
+      super(EditorBundle.message("close.editor.annotations.action.name"));
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -1017,7 +1073,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   public void invokePopup(MouseEvent e) {
     if (myEditor.getMouseEventArea(e) == EditorMouseEventArea.ANNOTATIONS_AREA) {
-      DefaultActionGroup actionGroup = new DefaultActionGroup("Annotations", true);
+      DefaultActionGroup actionGroup = new DefaultActionGroup(EditorBundle.message("editor.annotations.action.group.name"), true);
       actionGroup.add(new CloseAnnotationsAction());
       JPopupMenu menu = ActionManager.getInstance().createActionPopupMenu("", actionGroup).getComponent();
       menu.show(this, e.getX(), e.getY());
@@ -1082,6 +1138,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       TextAnnotationGutterProvider gutterProvider = myTextAnnotationGutters.get(j);
       gutterProvider.gutterClosed();
     }
+    myProviderToListener.clear();
   }
 
   private static final DataFlavor[] FLAVORS;
@@ -1089,6 +1146,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     DataFlavor[] flavors;
     try {
       final Class<EditorGutterComponentImpl> aClass = EditorGutterComponentImpl.class;
+      //noinspection HardCodedStringLiteral
       flavors = new DataFlavor[]{new DataFlavor(
         DataFlavor.javaJVMLocalObjectMimeType + ";class=" + aClass.getName(), "GutterTransferable", aClass.getClassLoader()
       )};

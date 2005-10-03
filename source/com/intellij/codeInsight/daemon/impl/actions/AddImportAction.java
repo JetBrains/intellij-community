@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.impl.actions;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.ide.util.FQNameCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
@@ -73,7 +74,7 @@ public class AddImportAction implements QuestionAction {
         addImport(myReference, myTargetClasses[index]);
       }
     };
-    ListPopup listPopup = new ListPopup("Class to Import", list, runnable, myProject);
+    ListPopup listPopup = new ListPopup(QuickFixBundle.message("class.to.import.chooser.title"), list, runnable, myProject);
     Point caretLocation = myEditor.logicalPositionToXY(myEditor.getCaretModel().getLogicalPosition());
     Point location = myEditor.getContentComponent().getLocationOnScreen();
     listPopup.show(caretLocation.x + location.x, caretLocation.y + location.y);
@@ -89,9 +90,7 @@ public class AddImportAction implements QuestionAction {
           }
         });
       }
-    },
-                                                  "Add Import",
-                                                  null);
+    }, QuickFixBundle.message("add.import"), null);
   }
 
   private void _addImport(PsiJavaCodeReferenceElement ref, PsiClass targetClass) {

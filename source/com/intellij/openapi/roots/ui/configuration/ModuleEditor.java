@@ -25,6 +25,7 @@ import java.util.*;
 import java.util.List;
 
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Eugene Zhuravlev
@@ -43,6 +44,7 @@ public class ModuleEditor {
   private DependenciesEditor myDependenciesEditor;
   private ModifiableRootModel myModifiableRootModelProxy;
   private EventDispatcher<ChangeListener> myEventDispatcher = EventDispatcher.create(ChangeListener.class);
+  @NonNls private static final String METHOD_COMMIT = "commit";
 
   public static interface ChangeListener extends EventListener {
     void moduleStateChanged(ModifiableRootModel moduleRootModel);
@@ -243,7 +245,7 @@ public class ModuleEditor {
 
   private class ModifiableRootModelInvocationHandler implements InvocationHandler {
     private final ModifiableRootModel myDelegateModel;
-    private final Set<String> myCheckedNames = new HashSet<String>(
+    @NonNls private final Set<String> myCheckedNames = new HashSet<String>(
       Arrays.asList(
         new String[]{"addOrderEntry", "addLibraryEntry", "addInvalidLibrary", "addModuleOrderEntry", "addInvalidModuleEntry",
                      "removeOrderEntry", "setJdk", "inheritJdk"}
@@ -273,7 +275,7 @@ public class ModuleEditor {
 
   private class LibraryTableInvocationHandler implements InvocationHandler {
     private final LibraryTable myDelegateTable;
-    private final Set<String> myCheckedNames = new HashSet<String>(Arrays.asList(new String[]{"removeLibrary", /*"createLibrary"*/}));
+    @NonNls private final Set<String> myCheckedNames = new HashSet<String>(Arrays.asList(new String[]{"removeLibrary", /*"createLibrary"*/}));
 
     LibraryTableInvocationHandler(LibraryTable table) {
       myDelegateTable = table;
@@ -340,7 +342,7 @@ public class ModuleEditor {
     }
 
     public Object invoke(Object object, Method method, Object[] params) throws Throwable {
-      final boolean needUpdate = "commit".equals(method.getName());
+      final boolean needUpdate = METHOD_COMMIT.equals(method.getName());
       try {
         return method.invoke(myDelegateModel, unwrapParams(params));
       }
@@ -360,7 +362,7 @@ public class ModuleEditor {
     }
 
     public Object invoke(Object object, Method method, Object[] params) throws Throwable {
-      final boolean needUpdate = "commit".equals(method.getName());
+      final boolean needUpdate = METHOD_COMMIT.equals(method.getName());
       try {
         Object result = method.invoke(myDelegateModel, unwrapParams(params));
         if (result instanceof Library[]) {

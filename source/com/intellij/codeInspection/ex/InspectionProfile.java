@@ -17,9 +17,6 @@ import java.io.File;
  */
 public interface InspectionProfile {
 
-  static final String CONFIGURE_LOCAL_NON_DEFAULT = "Configure non-Default local inspection profile";
-  static final String SELECT_NON_DEFAULT = "Select non-Default inspection profile";
-  static final String UNABLE_TO_EDIT_DEFAULT = "Unable to Edit Default Inspection Profile";
   String getName();
 
   HighlightDisplayLevel getErrorLevel(HighlightDisplayKey inspectionToolKey);

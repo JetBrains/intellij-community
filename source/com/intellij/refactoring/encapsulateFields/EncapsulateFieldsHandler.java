@@ -11,13 +11,14 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 
 import java.util.HashSet;
 
 public class EncapsulateFieldsHandler implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.encapsulateFields.EncapsulateFieldsHandler");
-  public static final String REFACTORING_NAME = "Encapsulate Fields";
+  public static final String REFACTORING_NAME = RefactoringBundle.message("encapsulate.fields.title");
 
   public void invoke(Project project, Editor editor, PsiFile file, DataContext dataContext) {
     int offset = editor.getCaretModel().getOffset();
@@ -25,15 +26,13 @@ public class EncapsulateFieldsHandler implements RefactoringActionHandler {
     PsiElement element = file.findElementAt(offset);
     while (true) {
       if (element == null || element instanceof PsiFile) {
-        String message = "Cannot perform the refactoring.\n" +
-                "The caret should be positioned inside the class to be refactored.";
+        String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.class"));
         RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.ENCAPSULATE_FIELDS, project);
         return;
       }
       if (element instanceof PsiField) {
         if (((PsiField) element).getContainingClass() == null) {
-          String message = "Cannot perform the refactoring.\n" +
-                  "The field should be declared in a class.";
+          String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("the.field.should.be.declared.in.a.class"));
           RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.ENCAPSULATE_FIELDS, project);
           return;
         }
@@ -54,7 +53,7 @@ public class EncapsulateFieldsHandler implements RefactoringActionHandler {
    */
   public void invoke(final Project project, final PsiElement[] elements, DataContext dataContext) {
     PsiClass aClass = null;
-    final HashSet preselectedFields = new HashSet();
+    final HashSet<PsiField> preselectedFields = new HashSet<PsiField>();
     if (elements.length == 1) {
       if (elements[0] instanceof PsiClass) {
         aClass = (PsiClass) elements[0];
@@ -66,20 +65,21 @@ public class EncapsulateFieldsHandler implements RefactoringActionHandler {
         return;
       }
     } else {
-      for (int idx = 0; idx < elements.length; idx++) {
-        PsiElement element = elements[idx];
+      for (PsiElement element : elements) {
         if (!(element instanceof PsiField)) {
           return;
         }
-        PsiField field = (PsiField) element;
+        PsiField field = (PsiField)element;
         if (aClass == null) {
           aClass = field.getContainingClass();
           preselectedFields.add(field);
-        } else {
+        }
+        else {
           if (aClass.equals(field.getContainingClass())) {
             preselectedFields.add(field);
-          } else {
-            String message = "Cannot perform the refactoring.\nFields to be refactored should belong to the same class.";
+          }
+          else {
+            String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("fields.to.be.refactored.should.belong.to.the.same.class"));
             RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.ENCAPSULATE_FIELDS, project);
             return;
           }
@@ -90,7 +90,7 @@ public class EncapsulateFieldsHandler implements RefactoringActionHandler {
     LOG.assertTrue(aClass != null);
 
     if (aClass.isInterface()) {
-      String message = REFACTORING_NAME + " refactoring cannot be applied to interface";
+      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("encapsulate.fields.refactoring.cannot.be.applied.to.interface"));
       RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.ENCAPSULATE_FIELDS, project);
       return;
     }

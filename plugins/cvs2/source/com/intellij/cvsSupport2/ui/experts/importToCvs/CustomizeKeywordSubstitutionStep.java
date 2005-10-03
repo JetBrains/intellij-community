@@ -12,6 +12,7 @@ import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ComboBoxTableCellEditor;
 import com.intellij.util.ui.ComboBoxTableCellRenderer;
 import com.intellij.util.ui.ListTableModel;
+import com.intellij.CvsBundle;
 
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
@@ -25,7 +26,7 @@ import java.util.List;
  * author: lesya
  */
 public class CustomizeKeywordSubstitutionStep extends WizardStep {
-  private static final ColumnInfo KEYWORD_SUBSTITUTION = new ColumnInfo("Keyword Substitution") {
+  private static final ColumnInfo KEYWORD_SUBSTITUTION = new ColumnInfo(CvsBundle.message("import.wizard.keyword.substitution.column.name")) {
     public Object valueOf(Object object) {
       return ((FileExtension)object).getKeywordSubstitutionsWithSelection();
     }
@@ -60,7 +61,7 @@ public class CustomizeKeywordSubstitutionStep extends WizardStep {
     }
   };
 
-  private final static ColumnInfo EXTENSION_COLUMN = new ColumnInfo("Extension") {
+  private final static ColumnInfo EXTENSION_COLUMN = new ColumnInfo(CvsBundle.message("import.wizard.file.extension.column.name")) {
     public Object valueOf(Object o) {
       return ((FileExtension)o).getExtension();
     }

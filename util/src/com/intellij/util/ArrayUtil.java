@@ -84,6 +84,7 @@ public class ArrayUtil {
    */
   public static <T> T[] append(final T[] src,final T element){
     if (src == null){
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("src cannot be null");
     }
     int length=src.length;
@@ -101,10 +102,12 @@ public class ArrayUtil {
    */
   public static <T> T[] remove(final T[] src,int idx){
     if (src == null){
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("src cannot be null");
     }
     int length=src.length;
     if (idx < 0 || idx >= length) {
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("invalid index: " + idx);
     }
     T[] result=(T[])Array.newInstance(src.getClass().getComponentType(), length-1);
@@ -123,6 +126,7 @@ public class ArrayUtil {
    */
   public static <T> int find(final T[] src,final T obj){
     if (src == null){
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("src cannot be null");
     }
     for(int i=0;i<src.length;i++){

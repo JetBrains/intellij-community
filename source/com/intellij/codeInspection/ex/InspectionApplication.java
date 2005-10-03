@@ -3,6 +3,7 @@ package com.intellij.codeInspection.ex;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.InspectionMain;
 import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
@@ -21,6 +22,7 @@ import com.intellij.psi.PsiManager;
 
 import javax.swing.*;
 import java.io.*;
+import java.text.MessageFormat;
 
 /**
  * @author max
@@ -44,10 +46,10 @@ public class InspectionApplication {
       public void run() {
         ApplicationEx application = ApplicationManagerEx.getApplicationEx();
         try {
-          logMessage(1, "Starting up... ");
+          logMessage(1, InspectionsBundle.message("inspection.application.starting.up"));
           application.doNotSave();
           application.load(PathManager.getOptionsPath());
-          logMessageLn(1, "done.");
+          logMessageLn(1, InspectionsBundle.message("inspection.done"));
 
           InspectionApplication.this.run();
         }
@@ -66,21 +68,21 @@ public class InspectionApplication {
       myProjectPath = myProjectPath.replace(File.separatorChar, '/');
       VirtualFile vfsProject = LocalFileSystem.getInstance().findFileByPath(myProjectPath);
       if (vfsProject == null) {
-        logError("File " + myProjectPath + " cannot be found");
+        logError(InspectionsBundle.message("inspection.application.file.cannot.be.found", myProjectPath));
         InspectionMain.printHelp();
       }
 
       File profileFile = new File(myProfilePath);
       if (!profileFile.exists()) {
-        logError("File " + myProfilePath + " cannot be found");
+        logError(InspectionsBundle.message("inspection.application.file.cannot.be.found", myProfilePath));
         InspectionMain.printHelp();
       }
 
 
-      logMessage(1, "Opening project... ");
+      logMessage(1, InspectionsBundle.message("inspection.application.opening.project"));
       myProject = ProjectManagerEx.getInstanceEx().loadProject(myProjectPath);
-      logMessageLn(1, "done.");
-      logMessage(1, "Initializing project...");
+      logMessageLn(1, InspectionsBundle.message("inspection.done"));
+      logMessage(1, InspectionsBundle.message("inspection.application.initializing.project"));
 
       final InspectionManagerEx im = (InspectionManagerEx)InspectionManager.getInstance(myProject);
       final AnalysisScope scope;
@@ -97,7 +99,7 @@ public class InspectionApplication {
 
         VirtualFile vfsDir = LocalFileSystem.getInstance().findFileByPath(mySourceDirectory);
         if (vfsDir == null) {
-          logError("Directory " + mySourceDirectory + " cannot be found");
+          logError(InspectionsBundle.message("inspection.application.directory.cannot.be.found", mySourceDirectory));
           InspectionMain.printHelp();
         }
 
@@ -106,20 +108,22 @@ public class InspectionApplication {
         scope = new AnalysisScope(psiDirectory);
       }
 
-      logMessageLn(1, "done.");
+      logMessageLn(1, InspectionsBundle.message("inspection.done"));
 
       final OutputStream outStream = new BufferedOutputStream(new FileOutputStream(myOutPath));
 
       PsiClass psiObjectClass = PsiManager.getInstance(myProject).findClass("java.lang.Object");
       if (psiObjectClass == null) {
-        logError("The JDK is not configured properly for this project. Inspection cannot run.");
+        logError(InspectionsBundle.message("inspection.no.jdk.error.message"));
         return;
       }
 
       ProgressManager.getInstance().runProcess(new Runnable() {
         public void run() {
           im.launchInspectionsOffline(scope, outStream);
-          logMessageLn(1, "\nDone.\n");
+          logMessageLn(1, "\n" +
+                          InspectionsBundle.message("inspection.capitalized.done") +
+                          "\n");
         }
       }, new ProgressIndicatorBase() {
         private String lastPrefix = "";
@@ -128,8 +132,10 @@ public class InspectionApplication {
           if (myVerboseLevel == 0) return;
 
           if (myVerboseLevel == 1) {
+            //noinspection HardCodedStringLiteral
             int idx = text.indexOf(" in ");
             if (idx == -1) {
+              //noinspection HardCodedStringLiteral
               idx = text.indexOf(" of ");
             }
 

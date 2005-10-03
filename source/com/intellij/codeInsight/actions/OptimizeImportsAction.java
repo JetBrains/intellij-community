@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.actions;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.editor.Editor;
@@ -8,9 +9,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NonNls;
 
 public class OptimizeImportsAction extends AnAction {
-  private static final String HELP_ID = "editing.manageImports";
+  private static final @NonNls String HELP_ID = "editing.manageImports";
 
   public void actionPerformed(AnActionEvent event) {
     DataContext dataContext = event.getDataContext();
@@ -42,12 +44,12 @@ public class OptimizeImportsAction extends AnAction {
       if (projectContext != null || moduleContext != null) {
         final String text;
         if (moduleContext != null) {
-          text = "Module '" + moduleContext.getName() + "'";
+          text = CodeInsightBundle.message("process.scope.module", moduleContext.getName());
         }
         else {
-          text = "Project '" + projectContext.getProjectFilePath() + "'";
+          text = CodeInsightBundle.message("process.scope.project", projectContext.getProjectFilePath());
         }
-        LayoutProjectCodeDialog dialog = new LayoutProjectCodeDialog(project, "Optimize Imports", text, false);
+        LayoutProjectCodeDialog dialog = new LayoutProjectCodeDialog(project, CodeInsightBundle.message("process.optimize.imports"), text, false);
         dialog.show();
         if (!dialog.isOK()) return;
         if (moduleContext != null) {
@@ -74,7 +76,7 @@ public class OptimizeImportsAction extends AnAction {
       }
     }
 
-    final LayoutCodeDialog dialog = new LayoutCodeDialog(project, "Optimize Imports", file, dir, null, HELP_ID);
+    final LayoutCodeDialog dialog = new LayoutCodeDialog(project, CodeInsightBundle.message("process.optimize.imports"), file, dir, null, HELP_ID);
     dialog.show();
     if (!dialog.isOK()) return;
 

@@ -19,7 +19,7 @@ public class ReadOnlyModificationException extends RuntimeException {
   private final Document myDocument;
 
   public ReadOnlyModificationException(Document document) {
-    super("Attempt to modify read-only document");
+    super(EditorBundle.message("attempt.to.modify.read.only.document.error.message"));
     myDocument = document;
   }
 

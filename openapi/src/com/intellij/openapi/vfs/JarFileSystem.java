@@ -20,9 +20,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import java.io.IOException;
 import java.util.zip.ZipFile;
 
+import org.jetbrains.annotations.NonNls;
+
 public abstract class JarFileSystem extends VirtualFileSystem {
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public static final String PROTOCOL = "jar";
+  @NonNls public static final String PROTOCOL = "jar";
   public static final String JAR_SEPARATOR = "!/";
 
   public static JarFileSystem getInstance(){

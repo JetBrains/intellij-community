@@ -4,6 +4,7 @@ import com.intellij.execution.junit2.Filter;
 import com.intellij.execution.junit2.TestProxy;
 import com.intellij.execution.junit2.ui.model.JUnitAdapter;
 import com.intellij.execution.junit2.ui.model.JUnitRunningModel;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.pom.Navigatable;
 
@@ -11,8 +12,8 @@ import java.util.List;
 
 public class FailedTestsNavigator implements OccurenceNavigator, TestProxyClient {
   private JUnitRunningModel myModel;
-  private static final String NEXT_NAME = "Next Failed Test";
-  private static final String PREVIOUS_NAME = "Previous Failed Test";
+  private static final String NEXT_NAME = ExecutionBundle.message("next.faled.test.action.name");
+  private static final String PREVIOUS_NAME = ExecutionBundle.message("prev.faled.test.action.name");
 
   public boolean hasNextOccurence() {
     return myModel != null ? getNextOccurenceInfo().hasNextOccurence() : false;

@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -8,8 +9,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.util.IncorrectOperationException;
-
-import java.text.MessageFormat;
 
 public class MethodThrowsFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.MethodThrowsFix");
@@ -30,20 +29,17 @@ public class MethodThrowsFix implements IntentionAction {
   }
 
   public String getText() {
-    String methodName = PsiFormatUtil.formatMethod(
-        myMethod, PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | (myShowContainingClass ? PsiFormatUtil.SHOW_CONTAINING_CLASS: 0),0);
-    String text = MessageFormat.format("{0} ''{1}'' {2} ''{3}'' throws list",
-        new Object[]{
-          (myShouldThrow ? "Add" : "Remove"),
-          myThrowsClassType.getCanonicalText(),
-          (myShouldThrow ? "to" : "from"),
-          methodName,
-        });
-    return text;
+    String methodName = PsiFormatUtil.formatMethod(myMethod,
+                                                   PsiSubstitutor.EMPTY,
+                                                   PsiFormatUtil.SHOW_NAME | (myShowContainingClass ? PsiFormatUtil.SHOW_CONTAINING_CLASS: 0),
+                                                   0);
+    return QuickFixBundle.message(myShouldThrow ? "fix.throws.list.add.exception" : "fix.throws.list.remove.exception",
+                                  myThrowsClassType.getCanonicalText(),
+                                  methodName);
   }
 
   public String getFamilyName() {
-    return "Fix Throws List";
+    return QuickFixBundle.message("fix.throws.list.family");
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {

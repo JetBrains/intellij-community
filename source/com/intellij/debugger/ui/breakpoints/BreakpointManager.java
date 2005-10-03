@@ -7,6 +7,7 @@ package com.intellij.debugger.ui.breakpoints;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.SourcePosition;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.actions.ViewBreakpointsAction;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
@@ -49,6 +50,7 @@ import com.sun.jdi.ObjectReference;
 import gnu.trove.TIntHashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
@@ -57,7 +59,7 @@ import java.util.*;
 public class BreakpointManager implements JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.breakpoints.BreakpointManager");
 
-  private static final String RULES_GROUP_NAME = "breakpoint_rules";
+  private static final @NonNls String RULES_GROUP_NAME = "breakpoint_rules";
   private final Project myProject;
   private AnyExceptionBreakpoint myAnyExceptionBreakpoint;
   private List<Breakpoint> myBreakpoints = new ArrayList<Breakpoint>(); // breakpoints storage, access should be synchronized
@@ -97,8 +99,8 @@ public class BreakpointManager implements JDOMExternalizable {
       }
     }
   };
-  private static final String MASTER_BREAKPOINT_TAGNAME = "master_breakpoint";
-  private static final String SLAVE_BREAKPOINT_TAGNAME = "slave_breakpoint";
+  private static final @NonNls String MASTER_BREAKPOINT_TAGNAME = "master_breakpoint";
+  private static final @NonNls String SLAVE_BREAKPOINT_TAGNAME = "slave_breakpoint";
 
   private void update(List<BreakpointWithHighlighter> breakpoints) {
     final TIntHashSet intHash = new TIntHashSet();
@@ -280,7 +282,7 @@ public class BreakpointManager implements JDOMExternalizable {
                   if(e.getMouseEvent().isShiftDown() && breakpoint != null) {
                     breakpoint.LOG_EXPRESSION_ENABLED = true;
                     final TextWithImports logMessage = DebuggerUtilsEx.getEditorText(editor);
-                    breakpoint.setLogMessage(logMessage != null? logMessage : new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, "\"reached " + breakpoint.getDisplayName() + "\""));
+                    breakpoint.setLogMessage(logMessage != null? logMessage : new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, DebuggerBundle.message("breakpoint.log.message", breakpoint.getDisplayName())));
                     breakpoint.SUSPEND_POLICY = DebuggerSettings.SUSPEND_NONE;
 
                     DialogWrapper dialog = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().createConfigurationDialog(breakpoint, BreakpointPropertiesPanel.CONTROL_LOG_MESSAGE);
@@ -435,8 +437,9 @@ public class BreakpointManager implements JDOMExternalizable {
     LOG.assertTrue(SwingUtilities.isEventDispatchThread());
 
     myStartupManager.registerPostStartupActivity(new Runnable() {
-      public void run() {
+      @SuppressWarnings({"HardCodedStringLiteral"}) public void run() {
         PsiDocumentManager.getInstance(myProject).commitAndRunReadAction(new Runnable() {
+          @SuppressWarnings({"HardCodedStringLiteral"})
           public void run() {
             final Map<String, Breakpoint> nameToBreakpointMap = new java.util.HashMap<String, Breakpoint>();
             try {
@@ -577,7 +580,7 @@ public class BreakpointManager implements JDOMExternalizable {
     }
   }
 
-  public void writeExternal(final Element parentNode) throws WriteExternalException {
+  @SuppressWarnings({"HardCodedStringLiteral"}) public void writeExternal(final Element parentNode) throws WriteExternalException {
     WriteExternalException ex = PsiDocumentManager.getInstance(myProject).commitAndRunReadAction(new Computable<WriteExternalException>() {
       public WriteExternalException compute() {
         try {
@@ -623,20 +626,20 @@ public class BreakpointManager implements JDOMExternalizable {
     }
   }
 
-  private static void writeRule(final EnableBreakpointRule enableBreakpointRule, Element element) {
+  @SuppressWarnings({"HardCodedStringLiteral"}) private static void writeRule(final EnableBreakpointRule enableBreakpointRule, Element element) {
     Element rule = new Element("rule");
     element.addContent(rule);
     writeRuleBreakpoint(rule, MASTER_BREAKPOINT_TAGNAME, enableBreakpointRule.getMasterBreakpoint());
     writeRuleBreakpoint(rule, SLAVE_BREAKPOINT_TAGNAME, enableBreakpointRule.getSlaveBreakpoint());
   }
 
-  private static void writeRuleBreakpoint(final Element element, final String tagName, final Breakpoint breakpoint) {
+  @SuppressWarnings({"HardCodedStringLiteral"}) private static void writeRuleBreakpoint(final Element element, final String tagName, final Breakpoint breakpoint) {
     Element master = new Element(tagName);
     element.addContent(master);
     master.setAttribute("name", breakpoint.getDisplayName());
   }
 
-  private void writeBreakpoint(final Element group, final Breakpoint breakpoint) throws WriteExternalException {
+  @SuppressWarnings({"HardCodedStringLiteral"}) private void writeBreakpoint(final Element group, final Breakpoint breakpoint) throws WriteExternalException {
     Element breakpointNode = new Element("breakpoint");
     group.addContent(breakpointNode);
     breakpoint.writeExternal(breakpointNode);
@@ -707,7 +710,7 @@ public class BreakpointManager implements JDOMExternalizable {
       private Breakpoint myBreakpoint;
 
       public RemoveAction(Breakpoint breakpoint) {
-        super("Remove");
+        super(DebuggerBundle.message("action.remove.text"));
         myBreakpoint = breakpoint;
       }
 
@@ -727,7 +730,7 @@ public class BreakpointManager implements JDOMExternalizable {
       private Breakpoint myBreakpoint;
 
       public SetEnabledAction(Breakpoint breakpoint, boolean newValue) {
-        super(newValue ? "Enable" : "Disable");
+        super(newValue ? DebuggerBundle.message("action.enable.text") : DebuggerBundle.message("action.disable.text"));
         myBreakpoint = breakpoint;
         myNewValue = newValue;
       }
@@ -739,7 +742,7 @@ public class BreakpointManager implements JDOMExternalizable {
       }
     }
 
-      ViewBreakpointsAction viewBreakpointsAction = new ViewBreakpointsAction("Properties");
+      ViewBreakpointsAction viewBreakpointsAction = new ViewBreakpointsAction(DebuggerBundle.message("breakpoint.manager.action.view.breakpoints.text"));
       viewBreakpointsAction.setInitialBreakpoint(breakpoint);
 
       DefaultActionGroup group = new DefaultActionGroup();

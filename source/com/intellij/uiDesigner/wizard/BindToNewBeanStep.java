@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiNameHelper;
+import com.intellij.uiDesigner.UIDesignerBundle;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
@@ -87,7 +88,7 @@ final class BindToNewBeanStep extends StepAdapter{
 
       if (!nameHelper.isIdentifier(binding.myBeanProperty.myName)){
         throw new CommitStepException(
-          "\"" + binding.myBeanProperty.myName + "\" is not a valid property name"
+          UIDesignerBundle.message("error.X.is.not.a.valid.property.name", binding.myBeanProperty.myName)
         );
       }
     }
@@ -104,7 +105,9 @@ final class BindToNewBeanStep extends StepAdapter{
     private final Class[] myColumnClasses;
 
     public MyTableModel() {
-      myColumnNames = new String[]{"Form Field", "Bean Property"};
+      myColumnNames = new String[]{
+        UIDesignerBundle.message("column.form.field"),
+        UIDesignerBundle.message("column.bean.property")};
       myColumnClasses = new Class[]{Object.class, Object.class};
     }
 
@@ -137,6 +140,7 @@ final class BindToNewBeanStep extends StepAdapter{
         return binding.myBeanProperty;
       }
       else{
+        //noinspection HardCodedStringLiteral
         throw new IllegalArgumentException("unknown column: " + column);
       }
     }
@@ -147,6 +151,7 @@ final class BindToNewBeanStep extends StepAdapter{
         binding.myBeanProperty = (BeanProperty)value;
       }
       else{
+        //noinspection HardCodedStringLiteral
         throw new IllegalArgumentException("unknown column: " + column);
       }
     }

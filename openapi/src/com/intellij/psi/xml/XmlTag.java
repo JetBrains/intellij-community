@@ -20,6 +20,7 @@ import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Map;
 
@@ -29,31 +30,31 @@ import java.util.Map;
 public interface XmlTag extends XmlElement, PsiNamedElement, PsiMetaOwner, XmlTagChild {
   XmlTag[] EMPTY = new XmlTag[0];
 
-  String getName();
-  String getNamespace();
-  String getLocalName();
+  @NonNls String getName();
+  @NonNls String getNamespace();
+  @NonNls String getLocalName();
 
   XmlElementDescriptor getDescriptor();
 
   XmlAttribute[] getAttributes();
-  XmlAttribute getAttribute(String name, String namespace);
+  XmlAttribute getAttribute(@NonNls String name, @NonNls String namespace);
 
-  String getAttributeValue(String name);
-  String getAttributeValue(String name, String namespace);
+  String getAttributeValue(@NonNls String name);
+  String getAttributeValue(@NonNls String name, @NonNls String namespace);
 
-  XmlAttribute setAttribute(String name, String namespace, String value) throws IncorrectOperationException;
-  XmlAttribute setAttribute(String name, String value) throws IncorrectOperationException;
+  XmlAttribute setAttribute(@NonNls String name, @NonNls String namespace, @NonNls String value) throws IncorrectOperationException;
+  XmlAttribute setAttribute(@NonNls String name, @NonNls String value) throws IncorrectOperationException;
 
-  XmlTag createChildTag(String localName, String namespace, String bodyText, boolean enforceNamespacesDeep);
+  XmlTag createChildTag(@NonNls String localName, @NonNls String namespace, @NonNls String bodyText, boolean enforceNamespacesDeep);
 
   XmlTag[] getSubTags();
-  XmlTag[] findSubTags(String qname);
-  XmlTag[] findSubTags(String localName, String namespace);
-  XmlTag findFirstSubTag(String qname);
+  XmlTag[] findSubTags(@NonNls String qname);
+  XmlTag[] findSubTags(@NonNls String localName, @NonNls String namespace);
+  XmlTag findFirstSubTag(@NonNls String qname);
 
-  String getNamespacePrefix();
-  String getNamespaceByPrefix(String prefix);
-  String getPrefixByNamespace(String namespace);
+  @NonNls String getNamespacePrefix();
+  String getNamespaceByPrefix(@NonNls String prefix);
+  String getPrefixByNamespace(@NonNls String namespace);
   String[] knownNamespaces();
 
   boolean hasNamespaceDeclarations();
@@ -61,7 +62,7 @@ public interface XmlTag extends XmlElement, PsiNamedElement, PsiMetaOwner, XmlTa
 
   XmlTagValue getValue();
 
-  XmlNSDescriptor getNSDescriptor(String namespace, boolean strict);
+  XmlNSDescriptor getNSDescriptor(@NonNls String namespace, boolean strict);
 
   boolean isEmpty();
 }

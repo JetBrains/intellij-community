@@ -1,5 +1,7 @@
 package com.intellij.ui.plaf.beg;
 
+import org.jetbrains.annotations.NonNls;
+
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicTableUI;
@@ -27,6 +29,7 @@ public class BegTableUI extends BasicTableUI {
         }
       }
     };
+  @NonNls public static final String START_EDITING_ACTION_KEY = "startEditing";
 
   public static ComponentUI createUI(JComponent c) {
     return new BegTableUI();
@@ -34,7 +37,7 @@ public class BegTableUI extends BasicTableUI {
 
   public void installUI(JComponent c) {
     super.installUI(c);
-    c.getActionMap().put("startEditing", new StartEditingAction());
+    c.getActionMap().put(START_EDITING_ACTION_KEY, new StartEditingAction());
   }
 
   protected KeyListener createKeyListener() {

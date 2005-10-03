@@ -8,7 +8,6 @@ import com.intellij.openapi.localVcs.LvcsAction;
 import com.intellij.openapi.localVcs.impl.LvcsIntegration;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -27,12 +26,14 @@ import com.intellij.usages.*;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
-
-import org.jetbrains.annotations.NotNull;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.Set;
 
 public abstract class BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.BaseRefactoringProcessor");
@@ -80,7 +81,7 @@ public abstract class BaseRefactoringProcessor {
    */
   protected boolean isPreviewUsages(UsageInfo[] usages) {
     if (UsageViewUtil.hasReadOnlyUsages(usages)) {
-      WindowManager.getInstance().getStatusBar(myProject).setInfo("Occurrences found in read-only files");
+      WindowManager.getInstance().getStatusBar(myProject).setInfo(RefactoringBundle.message("readonly.occurences.found"));
       return true;
     }
     return myIsPreviewUsages;
@@ -133,7 +134,7 @@ public abstract class BaseRefactoringProcessor {
       }
     };
 
-    if (!ApplicationManager.getApplication().runProcessWithProgressSynchronously(findUsagesRunnable, "Looking For Usages...", true, myProject)) return;
+    if (!ApplicationManager.getApplication().runProcessWithProgressSynchronously(findUsagesRunnable, RefactoringBundle.message("progress.text"), true, myProject)) return;
 
     LOG.assertTrue(!refUsages.isNull());
     if (!preprocessUsages(refUsages)) return;
@@ -185,11 +186,11 @@ public abstract class BaseRefactoringProcessor {
 
   private static UsageViewPresentation createPresentation(UsageViewDescriptor descriptor, final Usage[] usages) {
     UsageViewPresentation presentation = new UsageViewPresentation();
-    presentation.setTabText("Refactoring preview");
+    presentation.setTabText(RefactoringBundle.message("usageView.tabText"));
     presentation.setTargetsNodeText(descriptor.getProcessedElementsHeader());
     presentation.setShowReadOnlyStatusAsRed(true);
     presentation.setShowCancelButton(true);
-    presentation.setUsagesString("usages");
+    presentation.setUsagesString(RefactoringBundle.message("usageView.usagesText"));
     int codeUsageCount = 0;
     int nonCodeUsageCount = 0;
     Set<PsiFile> codeFiles = new HashSet<PsiFile>();
@@ -234,11 +235,9 @@ public abstract class BaseRefactoringProcessor {
       }
     };
 
-    String canNotMakeString = "Cannot perform the refactoring operation.\n" +
-                              "There were changes in code after the usages have been found.\n" +
-                              "Please, perform the usage search again.";
+    String canNotMakeString = RefactoringBundle.message("usageView.need.reRun");
 
-    usageView.addPerformOperationAction(refactoringRunnable, getCommandName(), canNotMakeString, "Do Refactor", 'D');
+    usageView.addPerformOperationAction(refactoringRunnable, getCommandName(), canNotMakeString, RefactoringBundle.message("usageView.doAction"));
   }
 
   private static Set<UsageInfo> getExcludedUsages(final UsageView usageView) {
@@ -251,11 +250,6 @@ public abstract class BaseRefactoringProcessor {
       }
     }
     return excludedUsageInfos;
-  }
-
-  private static String getInfo() {
-    return "Press the \"Do Refactor\" button at the bottom of the search results panel\n" +
-           "to complete the refactoring operation.";
   }
 
   private void doRefactoring(UsageInfo[] usages, Set<UsageInfo> excludedUsages) {
@@ -294,10 +288,10 @@ public abstract class BaseRefactoringProcessor {
     if (usages != null) {
       int count = usages.length;
       if (count > 0) {
-        WindowManager.getInstance().getStatusBar(myProject).setInfo(count + " occurrence" + (count > 1 ? "s" : "") + " changed");
+        WindowManager.getInstance().getStatusBar(myProject).setInfo(RefactoringBundle.message("statusBar.refactoring.result", count));
       } else {
         if (!isPreviewUsages(usages)) {
-          WindowManager.getInstance().getStatusBar(myProject).setInfo("No occurrences found");
+          WindowManager.getInstance().getStatusBar(myProject).setInfo(RefactoringBundle.message("statusBar.noUsages"));
         }
       }
     }

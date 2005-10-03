@@ -15,13 +15,15 @@
  */
 package com.intellij.execution.configurations;
 
+import org.jetbrains.annotations.NonNls;
+
 public class RemoteConnection {
   private boolean myUseSockets;
   private boolean myServerMode;
   private String myHostName;
   private String myAddress;
-  public static final String ONTHROW = ",onthrow=<FQ exception class name>";
-  public static final String ONUNCAUGHT = ",onuncaught=<y/n>";
+  @NonNls public static final String ONTHROW = ",onthrow=<FQ exception class name>";
+  @NonNls public static final String ONUNCAUGHT = ",onuncaught=<y/n>";
 
   public RemoteConnection(boolean useSockets, String hostName, String address, boolean serverMode) {
     myUseSockets = useSockets;
@@ -68,16 +70,16 @@ public class RemoteConnection {
     final boolean shmem = !isUseSockets();
     final boolean serverMode = isServerMode();
 
-    String result;
+    @NonNls String result;
     if (shmem) {
       if (serverMode) {
         result = "-Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_shmem,server=n,address=" +
-                  ((address.length() > 0)? address : "...") +
-                       ONTHROW + ",suspend=y" + ONUNCAUGHT;
+                 ((address.length() > 0)? address : "...") +
+                 ONTHROW + ",suspend=y" + ONUNCAUGHT;
       }
       else {
         result = "-Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_shmem,server=y,suspend=n,address=" +
-                  ((address.length() > 0)? address : "...");
+                 ((address.length() > 0)? address : "...");
       }
     }
     else { // socket transport
@@ -89,12 +91,12 @@ public class RemoteConnection {
       }
       if (serverMode) {
         result = "-Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,server=n,address=" +
-                  ((p == -1)? "..." : Integer.toString(p)) +
-                  ONTHROW + ",suspend=y" + ONUNCAUGHT;
+                 ((p == -1)? "..." : Integer.toString(p)) +
+                 ONTHROW + ",suspend=y" + ONUNCAUGHT;
       }
       else {
         result = "-Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=" +
-                  ((p == -1)? "..." : Integer.toString(p));
+                 ((p == -1)? "..." : Integer.toString(p));
       }
     }
     return result;

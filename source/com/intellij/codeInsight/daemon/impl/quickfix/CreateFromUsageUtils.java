@@ -2,6 +2,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.completion.proc.VariablesProcessor;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.CreateClassDialog;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
@@ -19,15 +20,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
-import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 
@@ -96,7 +98,7 @@ public class CreateFromUsageUtils {
 
     FileTemplateUtil.setClassAndMethodNameProperties(properties, aClass, method);
 
-    String methodText;
+    @NonNls String methodText;
     CodeStyleManager csManager = CodeStyleManager.getInstance(method.getProject());
     try {
       String bodyText = template.getText(properties);
@@ -116,12 +118,20 @@ public class CreateFromUsageUtils {
       catch (IncorrectOperationException e) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
               public void run() {
-                Messages.showErrorDialog("Please Correct \"New Method Body\" Template", "File Template Error");
+                Messages.showErrorDialog(QuickFixBundle.message("new.method.body.template.error.text"),
+                                         QuickFixBundle.message("new.method.body.template.error.title"));
               }
             });
         return;
       }
-      method.getBody().replace(m.getBody());
+      PsiCodeBlock oldBody = method.getBody();
+      PsiCodeBlock newBody = m.getBody();
+      LOG.assertTrue(newBody != null);
+      if (oldBody != null) {
+        oldBody.replace(newBody);
+      } else {
+        method.addBefore(newBody, null);
+      }
       csManager.reformat(method);
     }
   }
@@ -162,7 +172,7 @@ public class CreateFromUsageUtils {
 
       SuggestedNameInfo suggestedInfo = CodeStyleManager.getInstance(psiManager.getProject()).suggestVariableName(
         VariableKind.PARAMETER, null, arg, null);
-      String[] names = suggestedInfo.names; //TODO: callback about used name
+      @NonNls String[] names = suggestedInfo.names; //TODO: callback about used name
 
       if (names.length == 0) {
         names = new String[]{"p" + i};
@@ -229,7 +239,7 @@ public class CreateFromUsageUtils {
     PsiDirectory targetDirectory = null;
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       Project project = manager.getProject();
-      String title = createInterface ? "Create Interface" : "Create Class";
+      String title = createInterface ? QuickFixBundle.message("create.interface.title") : QuickFixBundle.message("create.class.title");
       PsiPackage aPackage = sourceDir.getPackage();
       CreateClassDialog dialog = new CreateClassDialog(project, title, name,
                                                        aPackage != null ? aPackage.getQualifiedName() : "",
@@ -259,13 +269,16 @@ public class CreateFromUsageUtils {
               catch (final IncorrectOperationException e) {
                 ApplicationManager.getApplication().invokeLater(new Runnable() {
                               public void run() {
-                                Messages.showErrorDialog("Cannot create " + name +  ".java in " + directory.getVirtualFile().getName() + ": " + e.getMessage(), "File Creation Failed");
+                                Messages.showErrorDialog(QuickFixBundle.message("cannot.create.java.file.error.text", name,
+                                                                                directory.getVirtualFile().getName(),
+                                                                                e.getLocalizedMessage()),
+                                                         QuickFixBundle.message("cannot.create.java.file.error.title"));
                               }
                             });
                 return null;
               }
               if (!manager.getResolveHelper().isAccessible(targetClass, referenceElement, null)) {
-                targetClass.getModifierList().setModifierProperty("public", true);
+                targetClass.getModifierList().setModifierProperty(PsiKeyword.PUBLIC, true);
               }
             }
             else {
@@ -296,8 +309,9 @@ public class CreateFromUsageUtils {
   }
 
   public static PsiReferenceExpression[] collectExpressions(final PsiExpression expression,
-                                                            Class[] scopes,
-                                                            final boolean includeInvalidResolved) {
+                                                            final boolean includeInvalidResolved,
+                                                            Class<? extends PsiElement>... scopes
+  ) {
     PsiElement parent = PsiTreeUtil.getParentOfType(expression, scopes);
 
     final List<PsiReferenceExpression> result = new ArrayList<PsiReferenceExpression>();
@@ -367,16 +381,16 @@ public class CreateFromUsageUtils {
 
       if (matched) {
         if (!expectedFieldNames.isEmpty() && !expectedMethodNames.isEmpty()) {
-          if (!(varType instanceof PsiClassType)) continue nextVar;
+          if (!(varType instanceof PsiClassType)) continue;
           PsiClass aClass = ((PsiClassType)varType).resolve();
-          if (aClass == null) continue nextVar;
+          if (aClass == null) continue;
           for (String name : expectedFieldNames) {
             if (aClass.findFieldByName(name, true) == null) continue nextVar;
           }
 
           for (String name : expectedMethodNames) {
             PsiMethod[] methods = aClass.findMethodsByName(name, true);
-            if (methods == null || methods.length == 0) continue nextVar;
+            if (methods.length == 0) continue nextVar;
           }
         }
 
@@ -390,9 +404,7 @@ public class CreateFromUsageUtils {
   private static void getExpectedInformation (PsiExpression expression, List<ExpectedTypeInfo[]> types,
                                               List<String> expectedMethodNames,
                                               List<String> expectedFieldNames) {
-    Class[] scopes = new Class[]{PsiMethod.class, PsiClassInitializer.class, PsiClass.class, PsiField.class,
-                                 PsiFile.class};
-    PsiExpression[] expressions = collectExpressions(expression, scopes, false);
+    PsiExpression[] expressions = collectExpressions(expression, false, PsiMember.class, PsiFile.class);
 
     for (PsiExpression expr : expressions) {
       PsiElement parent = expr.getParent();
@@ -614,6 +626,14 @@ public class CreateFromUsageUtils {
     if (l.size() > 0) {
       types.add(l.toArray(new ExpectedTypeInfo[l.size()]));
     }
+  }
+
+  public static boolean isAccessedForWriting(final PsiExpression[] expressionOccurences) {
+    for (PsiExpression expression : expressionOccurences) {
+      if(PsiUtil.isAccessedForWriting(expression)) return true;
+    }
+
+    return false;
   }
 
   private static class ParameterNameExpression implements Expression {

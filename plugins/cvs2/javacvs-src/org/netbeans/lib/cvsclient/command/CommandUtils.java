@@ -14,32 +14,34 @@
  *****************************************************************************/
 package org.netbeans.lib.cvsclient.command;
 
+import org.netbeans.lib.cvsclient.JavaCvsSrcBundle;
+
 /**
  * @author  Thomas Singer
  */
 public final class CommandUtils {
 
-	/**
-	 * Returns the directory relative to local path from the specified message.
-	 * This method returns null, if the specified message isn't a EXAM_DIR-
-	 * message.
-	 */
-	public static String getExaminedDirectory(String message, String examDirPattern) {
-		final int index = message.indexOf(examDirPattern);
-		if (index < 0) {
-			return null;
-		}
+        /**
+         * Returns the directory relative to local path from the specified message.
+         * This method returns null, if the specified message isn't a EXAM_DIR-
+         * message.
+         */
+        public static String getExaminedDirectory(String message, String examDirPattern) {
+                final int index = message.indexOf(examDirPattern);
+                if (index < 0) {
+                        return null;
+                }
 
-		return message.substring(index + examDirPattern.length());
-	}
+                return message.substring(index + examDirPattern.length());
+        }
 
-	public static String getMessageNotNull(String message) {
-		if (message != null) {
-			message = message.trim();
-		}
-		if (message == null || message.length() == 0) {
-			message = "no message";
-		}
-		return message;
-	}
+        public static String getMessageNotNull(String message) {
+                if (message != null) {
+                        message = message.trim();
+                }
+                if (message == null || message.length() == 0) {
+                        message = JavaCvsSrcBundle.message("default.commit.message");
+                }
+                return message;
+        }
 }

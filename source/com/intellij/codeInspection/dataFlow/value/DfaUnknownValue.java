@@ -26,6 +26,7 @@ public class DfaUnknownValue extends DfaValue {
     return this;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return "<unknown>";
   }

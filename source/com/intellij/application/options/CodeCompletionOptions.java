@@ -3,6 +3,7 @@ package com.intellij.application.options;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.application.ApplicationBundle;
 
 import javax.swing.*;
 
@@ -19,7 +20,7 @@ public class CodeCompletionOptions extends BaseConfigurable implements Applicati
   }
 
   public String getDisplayName() {
-    return "Code Completion";
+    return ApplicationBundle.message("title.code.completion");
   }
 
   public Icon getIcon() {

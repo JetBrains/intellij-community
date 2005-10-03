@@ -15,6 +15,8 @@
  */
 package com.intellij.ui;
 
+import com.intellij.util.ui.UIUtil;
+
 import javax.swing.*;
 import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
@@ -51,8 +53,7 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
     if(selected){
       setPaintFocusBorder(true);
       if(myFocused){
-        //noinspection HardCodedStringLiteral
-        setBackground(UIManager.getColor("Tree.selectionBackground"));
+        setBackground(UIUtil.getTreeSelectionBackground());
       }else{
         setBackground(null);
       }
@@ -71,11 +72,10 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
    */
   public void append(String fragment,SimpleTextAttributes attributes){
     if(mySelected && myFocused){
-      //noinspection HardCodedStringLiteral
       super.append(
         fragment,
         new SimpleTextAttributes(
-          attributes.getStyle(), UIManager.getColor("Tree.selectionForeground")
+          attributes.getStyle(), UIUtil.getTreeSelectionForeground()
         )
       );
     }else{

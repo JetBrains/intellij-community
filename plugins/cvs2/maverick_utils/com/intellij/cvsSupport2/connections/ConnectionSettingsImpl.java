@@ -11,10 +11,11 @@ import java.io.IOException;
 import java.net.Socket;
 
 import org.netbeans.lib.cvsclient.connection.ConnectionSettings;
+import org.jetbrains.annotations.NonNls;
 
 public class ConnectionSettingsImpl implements ConnectionSettings {
 
-  private final static String ID = "J2SSH Maverick";
+  @NonNls private final static String ID = "J2SSH Maverick";
 
   private final String myHostName;
   private final int myPort;
@@ -27,14 +28,15 @@ public class ConnectionSettingsImpl implements ConnectionSettings {
   private final String myPassword;
 
   public ConnectionSettingsImpl(String hostName,
-                            int port,
-                            boolean useProxy,
-                            String proxyHostName,
-                            int proxyPort,
-                            int connectionTimeout,
-                            int type,
-                            String login,
-                            String password) {
+                                int port,
+                                boolean useProxy,
+                                String proxyHostName,
+                                int proxyPort,
+                                int connectionTimeout,
+                                int type,
+                                String login,
+                                String password) {
+    //noinspection HardCodedStringLiteral
     LicenseManager.addLicense("----BEGIN 3SP LICENSE----\r\n"
                               + "Product : J2SSH Maverick\r\n"
                               + "Licensee: JetBrains s.r.o.\r\n"

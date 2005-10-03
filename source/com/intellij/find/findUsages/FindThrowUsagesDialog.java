@@ -7,6 +7,7 @@ import com.intellij.psi.impl.search.ThrowSearchUtil;
 import com.intellij.psi.search.SearchScopeCache;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.StateRestoringCheckBox;
+import com.intellij.find.FindBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -66,10 +67,10 @@ public class FindThrowUsagesDialog extends FindUsagesDialog {
 
   protected JPanel createFindWhatPanel() {
     final JPanel findWhatPanel = new JPanel();
-    findWhatPanel.setBorder(IdeBorderFactory.createTitledBorder("Find"));
+    findWhatPanel.setBorder(IdeBorderFactory.createTitledBorder(FindBundle.message("find.what.group")));
     findWhatPanel.setLayout(new BoxLayout(findWhatPanel, BoxLayout.Y_AXIS));
 
-    myCbUsages = addCheckboxToPanel("Usages"       , myFindUsagesOptions.isUsages,            findWhatPanel,  true, 'U');
+    myCbUsages = addCheckboxToPanel(FindBundle.message("find.what.usages.checkbox")       , myFindUsagesOptions.isUsages,            findWhatPanel,  true);
     //final ThrowSearchUtil.Root[] searchRoots = ThrowSearchUtil.getSearchRoots(getPsiElement ());
 
     //final PsiThrowStatement throwStatement = (PsiThrowStatement)getPsiElement();

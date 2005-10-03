@@ -1,7 +1,7 @@
 package com.intellij.debugger.ui.tree.render;
 
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerContext;
-import com.intellij.debugger.jdi.ObjectReferenceCachingProxy;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -20,8 +20,8 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiExpression;
 import com.sun.jdi.BooleanValue;
 import com.sun.jdi.Value;
-import com.sun.jdi.ObjectReference;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,7 +32,7 @@ import java.util.List;
  * Time: 2:04:00 PM
  */
 public class ExpressionChildrenRenderer extends ReferenceRenderer implements ChildrenRenderer {
-  public static final String UNIQUE_ID = "ExpressionChildrenRenderer";
+  public static final @NonNls String UNIQUE_ID = "ExpressionChildrenRenderer";
   private static final Key<Value> EXPRESSION_VALUE = new Key<Value>("EXPRESSION_VALUE");
 
   private final CachedEvaluator myChildrenExpandable = new CachedEvaluator() {
@@ -72,7 +72,7 @@ public class ExpressionChildrenRenderer extends ReferenceRenderer implements Chi
     }
     catch (final EvaluateException e) {
       List<DebuggerTreeNode> errorChildren = new ArrayList<DebuggerTreeNode>();
-      errorChildren.add(nodeManager.createMessageNode(e.getMessage() + " Failed to evaluate expression for this object alternative view."));
+      errorChildren.add(nodeManager.createMessageNode(DebuggerBundle.message("error.unable.to.evaluate.expression") + " " + e.getMessage()));
       builder.setChildren(errorChildren);
     }
   }
@@ -111,7 +111,7 @@ public class ExpressionChildrenRenderer extends ReferenceRenderer implements Chi
     ValueDescriptor descriptor = (ValueDescriptor) node.getParent().getDescriptor();
     Value expressionValue = descriptor.getUserData(EXPRESSION_VALUE);
     if(expressionValue == null) {
-      throw EvaluateExceptionUtil.createEvaluateException("Node is not evaluated - internal error");
+      throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("error.unable.to.evaluate.expression"));
     }
 
     ChildrenRenderer defaultChildrenRenderer = ((DebugProcessImpl)context.getDebugProcess()).getDefaultRenderer(expressionValue.type());

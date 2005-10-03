@@ -8,25 +8,25 @@
  */
 package com.intellij.codeInspection.redundantCast;
 
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.codeInsight.daemon.GroupNames;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.jetbrains.annotations.NonNls;
+
 public class RedundantCastInspection extends BaseLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.redundantCast.RedundantCastInspection");
   private LocalQuickFix myQuickFixAction;
-  public static final String DISPLAY_NAME = "Redundant type cast";
-  public static final String SHORT_NAME = "RedundantCast";
+  public static final String DISPLAY_NAME = InspectionsBundle.message("inspection.redundant.cast.display.name");
+  @NonNls public static final String SHORT_NAME = "RedundantCast";
 
   public RedundantCastInspection() {
     myQuickFixAction = new AcceptSuggested();
@@ -69,15 +69,14 @@ public class RedundantCastInspection extends BaseLocalInspectionTool {
   }
 
   private ProblemDescriptor createDescription(PsiTypeCastExpression cast, InspectionManager manager) {
-    return manager.createProblemDescriptor(cast.getCastType(), "Casting <code>" + cast.getOperand().getText() + "</code> to " +
-                                                               "<code>#ref</code> #loc is redundant", myQuickFixAction,
+    return manager.createProblemDescriptor(cast.getCastType(), InspectionsBundle.message("inspection.redundant.cast.problem.descriptor", "<code>" + cast.getOperand().getText() + "</code>", "<code>#ref</code> #loc"), myQuickFixAction,
                                            ProblemHighlightType.LIKE_UNUSED_SYMBOL);
   }
 
 
   private static class AcceptSuggested implements LocalQuickFix {
     public String getName() {
-      return "Remove Redundant Cast(s)";
+      return InspectionsBundle.message("inspection.redundant.cast.remove.quickfix");
     }
 
     public void applyFix(Project project, ProblemDescriptor descriptor) {
@@ -96,7 +95,7 @@ public class RedundantCastInspection extends BaseLocalInspectionTool {
   }
 
   public String getGroupDisplayName() {
-    return "Verbose or redundant code constructs";
+    return GroupNames.VERBOSE_GROUP_NAME;
   }
 
   public String getShortName() {

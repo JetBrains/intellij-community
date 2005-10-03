@@ -28,11 +28,6 @@ import java.util.ArrayList;
  * To change this template use File | Settings | File Templates.
  */
 public class HtmlFileImpl extends XmlFileImpl {
-  public void subtreeChanged() {
-    super.subtreeChanged();
-    ScriptSupportUtil.clearCaches(this);
-  }
-
   public HtmlFileImpl(Project project, VirtualFile file) {
     super(project, file, XmlElementType.HTML_FILE, XmlElementType.HTML_FILE);
   }
@@ -49,11 +44,5 @@ public class HtmlFileImpl extends XmlFileImpl {
     CompositeElement treeElement = calcTreeElement();
     ChameleonTransforming.transformChildren(treeElement);
     return (XmlDocument)treeElement.findChildByRoleAsPsiElement(ChildRole.HTML_DOCUMENT);
-  }
-
-  public boolean processDeclarations(PsiScopeProcessor processor, PsiSubstitutor substitutor, PsiElement lastParent, PsiElement place) {
-    if (!super.processDeclarations(processor, substitutor, lastParent, place)) return false;
-    
-    return ScriptSupportUtil.processDeclarations(this, processor, substitutor, lastParent, place);
   }
 }

@@ -13,11 +13,14 @@ import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.util.RefFilter;
 import com.intellij.codeInspection.util.XMLExportUtl;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.codeInsight.daemon.GroupNames;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -31,8 +34,8 @@ public class CanBeFinalInspection extends FilteringInspectionTool {
   public boolean REPORT_METHODS = true;
   public boolean REPORT_FIELDS = true;
   private QuickFixAction[] myQuickFixActions;
-  public static final String DISPLAY_NAME = "Declaration can have final modifier";
-  public static final String SHORT_NAME = "CanBeFinal";
+  public static final String DISPLAY_NAME = InspectionsBundle.message("inspection.can.be.final.display.name");
+  @NonNls public static final String SHORT_NAME = "CanBeFinal";
   private CanBeFinalFilter myFilter;
   private CanBeFinalComposer myComposer;
 
@@ -55,7 +58,7 @@ public class CanBeFinalInspection extends FilteringInspectionTool {
       gc.anchor = GridBagConstraints.NORTHWEST;
 
 
-      myReportClassesCheckbox = new JCheckBox("Report classes");
+      myReportClassesCheckbox = new JCheckBox(InspectionsBundle.message("inspection.can.be.final.option"));
       myReportClassesCheckbox.setSelected(REPORT_CLASSES);
       myReportClassesCheckbox.getModel().addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent e) {
@@ -66,7 +69,7 @@ public class CanBeFinalInspection extends FilteringInspectionTool {
       gc.gridy = 0;
       add(myReportClassesCheckbox, gc);
 
-      myReportMethodsCheckbox = new JCheckBox("Report methods");
+      myReportMethodsCheckbox = new JCheckBox(InspectionsBundle.message("inspection.can.be.final.option1"));
       myReportMethodsCheckbox.setSelected(REPORT_METHODS);
       myReportMethodsCheckbox.getModel().addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent e) {
@@ -77,7 +80,7 @@ public class CanBeFinalInspection extends FilteringInspectionTool {
       gc.gridy++;
       add(myReportMethodsCheckbox, gc);
 
-      myReportFieldsCheckbox = new JCheckBox("Report fields");
+      myReportFieldsCheckbox = new JCheckBox(InspectionsBundle.message("inspection.can.be.final.option2"));
       myReportFieldsCheckbox.setSelected(REPORT_FIELDS);
       myReportFieldsCheckbox.getModel().addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent e) {
@@ -168,6 +171,10 @@ public class CanBeFinalInspection extends FilteringInspectionTool {
     return myFilter;
   }
 
+  protected void resetFilter() {
+    myFilter = null;
+  }
+
   public HTMLComposer getComposer() {
     if (myComposer == null) {
       myComposer = new CanBeFinalComposer(this);
@@ -182,12 +189,12 @@ public class CanBeFinalInspection extends FilteringInspectionTool {
       public void accept(RefElement refElement) {
         if (filter.accepts(refElement)) {
           Element element = XMLExportUtl.createElement(refElement, parentNode, -1);
-          Element problemClassElement = new Element("problem_class");
-          problemClassElement.addContent("can be final");
+          Element problemClassElement = new Element(InspectionsBundle.message("inspection.export.results.problem.element.tag"));
+          problemClassElement.addContent(InspectionsBundle.message("inspection.export.results.can.be.final"));
           element.addContent(problemClassElement);
 
-          Element descriptionElement = new Element("description");
-          descriptionElement.addContent("declaration can have final modifier");
+          Element descriptionElement = new Element(InspectionsBundle.message("inspection.export.results.description.tag"));
+          descriptionElement.addContent(InspectionsBundle.message("inspection.export.results.can.be.final.description"));
           element.addContent(descriptionElement);
         }
       }
@@ -207,7 +214,7 @@ public class CanBeFinalInspection extends FilteringInspectionTool {
   }
 
   public String getGroupDisplayName() {
-    return "Declaration Redundancy";
+    return GroupNames.DECLARATION_REDUNDANCY;
   }
 
   public String getShortName() {
@@ -230,7 +237,7 @@ public class CanBeFinalInspection extends FilteringInspectionTool {
 
   private class AcceptSuggested extends QuickFixAction {
     private AcceptSuggested() {
-      super("Accept Suggested Final Modifier", CanBeFinalInspection.this);
+      super(InspectionsBundle.message("inspection.can.be.final.accept.quickfix"), CanBeFinalInspection.this);
     }
 
     protected boolean applyFix(RefElement[] refElements) {

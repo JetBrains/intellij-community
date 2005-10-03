@@ -28,44 +28,44 @@ public class CantRunException extends ExecutionException {
 
   public static CantRunException noModuleConfigured(final String moduleName) {
     if (moduleName.trim().length() == 0) {
-      return new CantRunException("No module defined");
+      return new CantRunException(ExecutionBundle.message("no.module.defined.error.message"));
     }
-    return new CantRunException("Module \"" + moduleName + "\" does not exist");
+    return new CantRunException(ExecutionBundle.message("module.does.not.exist.error.message", moduleName));
   }
 
   public static CantRunException noJdkForModule(final Module module) {
     LOG.assertTrue(module != null);
-    return new CantRunException("No jdk for module \"" + module.getName() + "\"");
+    return new CantRunException(ExecutionBundle.message("no.jdk.for.module.error.message", module.getName()));
   }
 
   public static CantRunException jdkMisconfigured(final ProjectJdk jdk, final Module module) {
     LOG.assertTrue(module != null);
     LOG.assertTrue(jdk != null);
-    return new CantRunException("\"" + jdk.getName() + "\" is bad configured");
+    return new CantRunException(ExecutionBundle.message("jdk.is.bad.configured.error.message", jdk.getName()));
   }
 
   public static CantRunException classNotFound(final String className, final Module module) {
     LOG.assertTrue(className != null);
     LOG.assertTrue(module != null);
-    return new CantRunException("Class \"" + className + "\" not found in module \"" + module.getName() + "\"");
+    return new CantRunException(ExecutionBundle.message("class.not.found.in.module.error.message", className, module.getName()));
   }
 
   public static CantRunException packageNotFound(final String packageName) {
-    return new CantRunException("Package \"" + packageName + "\" not found");
+    return new CantRunException(ExecutionBundle.message("package.not.found.error.message", packageName));
   }
 
   public static CantRunException noJdkConfigured(final String jdkName) {
     if (jdkName != null) {
-      return new CantRunException("Jdk \"" + jdkName + "\" not configured");
+      return new CantRunException(ExecutionBundle.message("jdk.not.configured.error.message", jdkName));
     }
-    return new CantRunException("Project has no JDK");
+    return new CantRunException(ExecutionBundle.message("project.has.no.jdk.error.message"));
   }
 
   public static CantRunException badModuleDependencies() {
-    return new CantRunException("Some modules has circular dependency.");
+    return new CantRunException(ExecutionBundle.message("some.modules.has.circular.dependency.error.message"));
   }
 
   public static CantRunException noJdkConfigured() {
-    return new CantRunException("Project has no JDK configured.");
+    return new CantRunException(ExecutionBundle.message("project.has.no.jdk.configured.error.message"));
   }
 }

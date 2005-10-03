@@ -1,10 +1,11 @@
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NonNls;
 
 
 public class ModuleGroupUrl extends AbstractUrl {
-  private static final String ELEMENT_TYPE = "module_group";
+  @NonNls private static final String ELEMENT_TYPE = "module_group";
 
   public ModuleGroupUrl(String url) {
     super(url, null, ELEMENT_TYPE);

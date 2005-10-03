@@ -64,6 +64,7 @@ public class HighlightInfo {
     return createHighlightInfo(type, element, description, htmlEscapeToolTip(description));
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static String htmlEscapeToolTip(String description) {
     return description == null ? null : "<html><body>"+XmlUtil.escapeString(description)+"</body></html>";
   }
@@ -203,6 +204,7 @@ public class HighlightInfo {
     return startOffset;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return "HighlightInfo(" +
            "text='" + text + "'" +

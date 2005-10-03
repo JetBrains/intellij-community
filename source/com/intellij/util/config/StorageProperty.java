@@ -1,11 +1,13 @@
 package com.intellij.util.config;
 
+import org.jetbrains.annotations.NonNls;
+
 import java.util.Iterator;
 
 public class StorageProperty extends AbstractProperty<Storage> {
   private final String myName;
 
-  public StorageProperty(String name) {
+  public StorageProperty(@NonNls String name) {
     myName = name;
   }
 

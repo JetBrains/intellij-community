@@ -1,6 +1,8 @@
 package org.netbeans.lib.cvsclient.file;
 
 import org.netbeans.lib.cvsclient.util.BugLog;
+import org.netbeans.lib.cvsclient.SmartCvsSrcBundle;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.*;
 import java.util.Date;
@@ -23,8 +25,9 @@ public final class LocalFileWriter
 
         private Date modifiedDate;
         private String nextFileMode;
+  @NonNls private static final String RECEIVING_TMP_FILE_NAME = "receiving";
 
-        // Setup ==================================================================
+  // Setup ==================================================================
 
         public LocalFileWriter(IReceiveTextFilePreprocessor receiveTextFilePreprocessor) {
                 BugLog.getInstance().assertNotNull(receiveTextFilePreprocessor);
@@ -49,7 +52,7 @@ public final class LocalFileWriter
                 // perform a sequence of readLines() until we've read the file from
                 // the server - the file transmission is not followed by a newline.
                 // Bah.
-                final File tempFile = File.createTempFile("receiving", null);
+                final File tempFile = File.createTempFile(RECEIVING_TMP_FILE_NAME, null);
                 try {
                         writeFile(tempFile, length, inputStream);
 
@@ -117,7 +120,7 @@ public final class LocalFileWriter
                         fileReadOnlyHandler.setFileReadOnly(file, false);
                 }
                 if (!file.delete()) {
-                        throw new IOException("Could not delete file " + file);
+                        throw new IOException(SmartCvsSrcBundle.message("could.not.delete.file.error.message", file));
                 }
         }
 

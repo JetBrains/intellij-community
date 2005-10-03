@@ -133,22 +133,22 @@ public class TargetElementUtil {
         return ((PsiClassType) type).resolve();
       }
 
-      if ("try".equals(element.getText())) {
+      if (PsiKeyword.TRY.equals(element.getText())) {
         if ((flags & TRY_ACCEPTED) == 0) return null;
         return element;
       }
 
-      if ("catch".equals(element.getText())) {
+      if (PsiKeyword.CATCH.equals(element.getText())) {
         if ((flags & CATCH_ACCEPTED) == 0) return null;
         return element;
       }
 
-      if ("throws".equals(element.getText())) {
+      if (PsiKeyword.THROWS.equals(element.getText())) {
         if ((flags & THROWS_ACCEPTED) == 0) return null;
         return element;
       }
 
-      if ("throw".equals(element.getText())) {
+      if (PsiKeyword.THROW.equals(element.getText())) {
         if ((flags & THROW_ACCEPTED) != 0) return element;
         if ((flags & THROW_STATEMENT_ACCEPTED) != 0) {
           final PsiElement parent = element.getParent();
@@ -159,7 +159,7 @@ public class TargetElementUtil {
         return null;
       }
 
-      if ("return".equals(element.getText())) {
+      if (PsiKeyword.RETURN.equals(element.getText())) {
         if ((flags & RETURN_ACCEPTED) == 0) return null;
         return element;
       }

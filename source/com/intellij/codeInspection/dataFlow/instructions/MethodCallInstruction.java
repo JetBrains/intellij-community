@@ -117,6 +117,7 @@ public class MethodCallInstruction extends Instruction {
     return myCall;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return "CALL_METHOD: " + myCall.getText();
   }

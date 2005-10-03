@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.IconUtil;
 import com.intellij.util.Icons;
+import com.intellij.ui.UIBundle;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -36,7 +37,7 @@ public class FileChooserDescriptor implements Cloneable{
   private final boolean myChooseJarContents;
   private final boolean myChooseMultiple;
 
-  private String myTitle = "Select path";
+  private String myTitle = UIBundle.message("file.chooser.default.title");
   private String myDescription;
 
   private boolean myHideIgnored = true;

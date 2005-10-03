@@ -3,6 +3,7 @@ package com.intellij.debugger.ui.impl.watch;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.EvaluatingComputable;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.StackFrameContext;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
@@ -101,7 +102,7 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl{
       return value;
     }
     catch (final EvaluateException ex) {
-      throw new EvaluateException(ex.getMessage() + " Failed to evaluate expression", ex);
+      throw new EvaluateException(ex.getLocalizedMessage(), ex);
     }
   }
 
@@ -115,7 +116,7 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl{
       return ((PsiExpressionCodeFragment)evaluationCode).getExpression();
     }
     else {
-      throw new EvaluateException("Cannot create expression from code fragment.", null);
+      throw new EvaluateException(DebuggerBundle.message("error.cannot.create.expression.from.code.fragment"), null);
     }
   }
 

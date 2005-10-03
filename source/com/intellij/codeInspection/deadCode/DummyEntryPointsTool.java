@@ -4,6 +4,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.util.RefFilter;
+import com.intellij.codeInspection.InspectionsBundle;
 import org.jdom.Element;
 
 /**
@@ -25,6 +26,10 @@ public class DummyEntryPointsTool extends FilteringInspectionTool {
     return myFilter;
   }
 
+  protected void resetFilter() {
+    myFilter = null;
+  }
+
   public void runInspection(AnalysisScope scope) {}
 
   public void exportResults(Element parentNode) {}
@@ -34,7 +39,7 @@ public class DummyEntryPointsTool extends FilteringInspectionTool {
   }
 
   public String getDisplayName() {
-    return "Entry Points";
+    return InspectionsBundle.message("inspection.dead.code.entry.points.display.name");
   }
 
   public String getGroupDisplayName() {
@@ -62,7 +67,7 @@ public class DummyEntryPointsTool extends FilteringInspectionTool {
 
   private class MoveEntriesToSuspicious extends QuickFixAction {
     private MoveEntriesToSuspicious() {
-      super("Remove from Entry Points", null, null, DummyEntryPointsTool.this);
+      super(InspectionsBundle.message("inspection.dead.code.remove.from.entry.point.quickfix"), null, null, DummyEntryPointsTool.this);
     }
 
     protected boolean applyFix(RefElement[] refElements) {

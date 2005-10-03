@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
 import com.intellij.openapi.editor.Editor;
@@ -8,11 +9,15 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author mike
  */
 public class IgnoreExtResourceAction extends BaseIntentionAction {
+  @NonNls private static final String HTTP_PROTOCOL = "http://";
+  @NonNls private static final String FTP_PROTOCOL = "ftp://";
+
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
     if (!(file instanceof XmlFile)) return false;
 
@@ -24,14 +29,14 @@ public class IgnoreExtResourceAction extends BaseIntentionAction {
     XmlFile xmlFile = XmlUtil.findXmlFile(file, uri);
     if (xmlFile != null) return false;
 
-    if (!uri.startsWith("http://") && !uri.startsWith("ftp://")) return false;
+    if (!uri.startsWith(HTTP_PROTOCOL) && !uri.startsWith(FTP_PROTOCOL)) return false;
 
-    setText("Ignore External Resource");
+    setText(QuickFixBundle.message("ignore.external.resource.text"));
     return true;
   }
 
   public String getFamilyName() {
-    return "Ignore External Resource";
+    return QuickFixBundle.message("ignore.external.resource.family");
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) {

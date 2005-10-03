@@ -74,6 +74,7 @@ public class DfaVariableValue extends DfaValue {
     return myFactory.getVarFactory().create(getPsiVariable(), !myIsNegated);
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     if (myVariable == null) return "$currentException";
     return (myIsNegated ? "!" : "") + myVariable.getName();

@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
@@ -11,8 +12,6 @@ import com.intellij.psi.PsiSubstitutor;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import com.intellij.util.IncorrectOperationException;
 
-import java.text.MessageFormat;
-
 public class SafeDeleteFix implements IntentionAction {
   private final PsiElement myElement;
 
@@ -21,15 +20,12 @@ public class SafeDeleteFix implements IntentionAction {
   }
 
   public String getText() {
-    String text = MessageFormat.format("Safe delete ''{0}''",
-        new Object[]{
-          HighlightMessageUtil.getSymbolName(myElement, PsiSubstitutor.EMPTY),
-        });
-    return text;
+    return QuickFixBundle.message("safe.delete.text",
+                                  HighlightMessageUtil.getSymbolName(myElement, PsiSubstitutor.EMPTY));
   }
 
   public String getFamilyName() {
-    return "Safe delete";
+    return QuickFixBundle.message("safe.delete.family");
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {

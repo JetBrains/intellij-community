@@ -29,6 +29,7 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * The main entry point for accessing the PSI services for a project.
@@ -80,7 +81,7 @@ public abstract class PsiManager implements UserDataHolder {
    * @return the PSI class, or null if no class with such name is found.
    * @deprecated use {@link #findClass(String, GlobalSearchScope)}
    */
-  public abstract @Nullable PsiClass findClass(@NotNull String qualifiedName);
+  public abstract @Nullable PsiClass findClass(@NotNull @NonNls String qualifiedName);
 
   /**
    * Searches the specified scope within the project for a class with the specified full-qualified
@@ -90,7 +91,7 @@ public abstract class PsiManager implements UserDataHolder {
    * @param scope the scope to search.
    * @return the PSI class, or null if no class with such name is found.
    */
-  public abstract @Nullable PsiClass findClass(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope);
+  public abstract @Nullable PsiClass findClass(@NonNls @NotNull String qualifiedName, @NotNull GlobalSearchScope scope);
 
   /**
    * Searches the specified scope within the project for classes with the specified full-qualified
@@ -100,7 +101,7 @@ public abstract class PsiManager implements UserDataHolder {
    * @param scope the scope to search.
    * @return the array of found classes, or an empty array if no classes are found.
    */
-  public abstract @NotNull PsiClass[] findClasses(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope);
+  public abstract @NotNull PsiClass[] findClasses(@NonNls @NotNull String qualifiedName, @NotNull GlobalSearchScope scope);
 
   /**
    * Searches the project for the package with the specified full-qualified name and retunrs one

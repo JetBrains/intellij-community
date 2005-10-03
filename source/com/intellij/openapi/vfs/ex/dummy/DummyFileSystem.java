@@ -5,12 +5,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
+import org.jetbrains.annotations.NonNls;
 
 /**
  *
  */
 public class DummyFileSystem extends VirtualFileSystem implements ApplicationComponent {
-  public static final String PROTOCOL = "dummy";
+  @NonNls public static final String PROTOCOL = "dummy";
 
   public static DummyFileSystem getInstance() {
     return ApplicationManager.getApplication().getComponent(DummyFileSystem.class);

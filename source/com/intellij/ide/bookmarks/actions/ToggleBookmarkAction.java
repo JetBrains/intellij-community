@@ -5,6 +5,7 @@ import com.intellij.ide.bookmarks.EditorBookmark;
 import com.intellij.ide.commander.Commander;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -14,7 +15,7 @@ import com.intellij.psi.PsiElement;
 
 public class ToggleBookmarkAction extends AnAction {
   public ToggleBookmarkAction() {
-    super("Toggle Bookmark");
+    super(IdeBundle.message("action.toggle.bookmark"));
   }
 
   public void actionPerformed(AnActionEvent e) {
@@ -57,7 +58,7 @@ public class ToggleBookmarkAction extends AnAction {
 
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
-    String s = "Toggle Bookmark";
+    String s = IdeBundle.message("action.toggle.bookmark");
 
     DataContext dataContext = event.getDataContext();
     Project project = (Project)dataContext.getData(DataConstants.PROJECT);
@@ -74,7 +75,7 @@ public class ToggleBookmarkAction extends AnAction {
     }
 
     ProjectView projectView = ProjectView.getInstance(project);
-    presentation.setText("Set Bookmark");
+    presentation.setText(IdeBundle.message("action.set.bookmark"));
     String id=ToolWindowManager.getInstance(project).getActiveToolWindowId();
     if (ToolWindowId.PROJECT_VIEW.equals(id)) {
       presentation.setEnabled(projectView.getParentOfCurrentSelection() != null);

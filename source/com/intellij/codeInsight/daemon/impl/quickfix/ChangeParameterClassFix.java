@@ -8,6 +8,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -24,7 +25,7 @@ public class ChangeParameterClassFix extends ExtendsListFix {
   }
 
   public String getFamilyName() {
-    return "Change Parameter Class";
+    return QuickFixBundle.message("change.parameter.class.family");
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {

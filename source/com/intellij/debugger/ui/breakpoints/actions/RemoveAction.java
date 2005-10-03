@@ -5,6 +5,7 @@
 package com.intellij.debugger.ui.breakpoints.actions;
 
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.ui.breakpoints.AnyExceptionBreakpoint;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
@@ -23,13 +24,12 @@ public class RemoveAction extends BreakpointPanelAction {
   private final Project myProject;
 
   public RemoveAction(final Project project) {
-    super("Remove");
+    super(DebuggerBundle.message("button.remove"));
     myProject = project;
   }
 
   public void setButton(AbstractButton button) {
     super.setButton(button);
-    getButton().setMnemonic('R');
   }
 
   public void setPanel(BreakpointPanel panel) {

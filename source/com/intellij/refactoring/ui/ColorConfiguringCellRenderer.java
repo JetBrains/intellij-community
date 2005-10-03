@@ -1,5 +1,7 @@
 package com.intellij.refactoring.ui;
 
+import com.intellij.util.ui.UIUtil;
+
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 
@@ -17,12 +19,12 @@ public class ColorConfiguringCellRenderer extends DefaultTableCellRenderer {
       setForeground(table.getSelectionForeground());
     }
     else {
-      setForeground(UIManager.getColor("Table.foreground"));
+      setForeground(UIUtil.getTableForeground());
     }
 
 
     if (hasFocus) {
-      setForeground(UIManager.getColor("Table.focusCellForeground"));
+      setForeground(UIUtil.getTableFocusCellForeground());
     }
   }
 }

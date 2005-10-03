@@ -160,6 +160,7 @@ public class ModuleChunkSourcepath extends CompositeGenerator{
   }
 
   private boolean isExcludedByDefault(String name) {
+    //noinspection HardCodedStringLiteral
     return "CVS".equals(name) || "SCCS".equals(name) || ".DS_Store".equals(name);
   }
 }

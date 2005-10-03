@@ -32,15 +32,16 @@
 package com.intellij.openapi.vcs.readOnlyHandler;
 
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.VcsBundle;
 
 public class HandleType {
   private final String myName;
   private final boolean myUseVcs;
 
-  public static final HandleType USE_FILE_SYSTEM = new HandleType("using file system", false);
+  public static final HandleType USE_FILE_SYSTEM = new HandleType(VcsBundle.message("handle.ro.file.status.type.using.file.system"), false);
 
   public static final HandleType createForVcs(AbstractVcs vcs) {
-    return new HandleType("using " + vcs.getDisplayName(), true);
+    return new HandleType(VcsBundle.message("handle.ro.file.status.type.using.vcs", vcs.getDisplayName()), true);
   }
 
   private HandleType(String name, boolean useVcs) {

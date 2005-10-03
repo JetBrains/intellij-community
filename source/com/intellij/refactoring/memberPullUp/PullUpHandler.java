@@ -14,11 +14,12 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.localVcs.impl.LvcsIntegration;
 import com.intellij.openapi.localVcs.LvcsAction;
+import com.intellij.openapi.localVcs.impl.LvcsIntegration;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.JavaDocPolicy;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
@@ -33,7 +34,7 @@ import java.util.List;
 
 public class PullUpHandler implements RefactoringActionHandler, PullUpDialog.Callback {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.memberPullUp.PullUpHandler");
-  public static final String REFACTORING_NAME = "Pull Members Up";
+  public static final String REFACTORING_NAME = RefactoringBundle.message("pull.members.up.title");
   private PsiClass mySubclass;
   private Project myProject;
 
@@ -44,9 +45,7 @@ public class PullUpHandler implements RefactoringActionHandler, PullUpDialog.Cal
 
     while (true) {
       if (element == null || element instanceof PsiFile) {
-        String message =
-                "Cannot perform the refactoring.\n" +
-                "The caret should be positioned inside a class to pull members from.";
+        String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("the.caret.should.be.positioned.inside.a.class.to.pull.members.from"));
         RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, null/*HelpID.MEMBERS_PULL_UP*/, project);
         return;
       }
@@ -82,9 +81,7 @@ public class PullUpHandler implements RefactoringActionHandler, PullUpDialog.Cal
     } else return;
 
     if(aClass == null) {
-      String message =
-              "Cannot perform the refactoring.\n" +
-              "Refactoring is not supported in current context.";
+      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("is.not.supported.in.the.current.context", REFACTORING_NAME));
       RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, null/*HelpID.MEMBERS_PULL_UP*/, project);
       return;
     }
@@ -92,9 +89,8 @@ public class PullUpHandler implements RefactoringActionHandler, PullUpDialog.Cal
     ArrayList<PsiClass> bases = RefactoringHierarchyUtil.createBasesList(aClass, false, true);
 
     if (bases.isEmpty()) {
-      String message =
-              "Cannot perform the refactoring.\n" +
-              aClass.getQualifiedName() + " does not have base classes/interfaces in current project.";
+      String message = RefactoringBundle.getCannotRefactorMessage(
+        RefactoringBundle.message("class.does.not.have.base.classes.interfaces.in.current.project", aClass.getQualifiedName()));
       RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, null/*HelpID.MEMBERS_PULL_UP*/, project);
       return;
     }
@@ -109,9 +105,7 @@ public class PullUpHandler implements RefactoringActionHandler, PullUpDialog.Cal
     List<MemberInfo> members = memberInfoStorage.getClassMemberInfos(mySubclass);
     PsiManager manager = mySubclass.getManager();
 
-    for (int i = 0; i < members.size(); i++) {
-      MemberInfo member = members.get(i);
-
+    for (MemberInfo member : members) {
       if (manager.areElementsEquivalent(member.getMember(), aMember)) {
         member.setChecked(true);
         break;
@@ -136,8 +130,8 @@ public class PullUpHandler implements RefactoringActionHandler, PullUpDialog.Cal
                 ApplicationManager.getApplication().runWriteAction(action);
               }
             },
-            REFACTORING_NAME,
-            null
+        REFACTORING_NAME,
+        null
     );
 
   }
@@ -149,8 +143,8 @@ public class PullUpHandler implements RefactoringActionHandler, PullUpDialog.Cal
       try {
         PullUpHelper helper = new PullUpHelper(mySubclass,
                                                dialog.getSuperClass(),
-                dialog.getSelectedMemberInfos(),
-                new JavaDocPolicy(dialog.getJavaDocPolicy())
+                                               dialog.getSelectedMemberInfos(),
+                                               new JavaDocPolicy(dialog.getJavaDocPolicy())
         );
         helper.moveMembersToBase();
         helper.moveFieldInitializations();
@@ -163,7 +157,7 @@ public class PullUpHandler implements RefactoringActionHandler, PullUpDialog.Cal
   }
 
   private String getCommandName() {
-    return "Pulling members up from " + UsageViewUtil.getDescriptiveName(mySubclass);
+    return RefactoringBundle.message("pullUp.command", UsageViewUtil.getDescriptiveName(mySubclass));
   }
 
   public boolean checkConflicts(PullUpDialog dialog) {
@@ -183,10 +177,8 @@ public class PullUpHandler implements RefactoringActionHandler, PullUpDialog.Cal
     if (!superClass.isWritable()) {
       if (!RefactoringMessageUtil.checkReadOnlyStatus(myProject, superClass)) return false;
     }
-    for (int i = 0; i < infos.length; i++) {
-      MemberInfo info = infos[i];
-
-      if (info.getMember() instanceof  PsiClass && info.getOverrides() != null) continue;
+    for (MemberInfo info : infos) {
+      if (info.getMember() instanceof PsiClass && info.getOverrides() != null) continue;
       if (!info.getMember().isWritable()) {
         if (!RefactoringMessageUtil.checkReadOnlyStatus(myProject, info.getMember())) return false;
       }

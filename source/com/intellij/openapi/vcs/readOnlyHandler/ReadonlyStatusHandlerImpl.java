@@ -41,6 +41,7 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vcs.EditFileProvider;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
 import org.jdom.Element;
@@ -189,8 +190,8 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
         editFileProvider.editFiles(files.toArray(new VirtualFile[files.size()]));
       }
       catch (VcsException e) {
-        Messages.showErrorDialog("Cannot edit file(s): " + e.getLocalizedMessage(),
-                                 "Edit Files");
+        Messages.showErrorDialog(VcsBundle.message("message.text.cannot.edit.file", e.getLocalizedMessage()),
+                                 VcsBundle.message("message.title.edit.files"));
       }
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {

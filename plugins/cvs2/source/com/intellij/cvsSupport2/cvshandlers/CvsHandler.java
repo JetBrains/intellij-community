@@ -12,13 +12,15 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import org.netbeans.lib.cvsclient.file.ICvsFileSystem;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public abstract class CvsHandler extends CvsMessagesAdapter{
 
-  public static CvsHandler NULL = new CvsHandler("Null", FileSetToBeUpdated.EMTPY) {
+  @NonNls private static final String NULL_HANDLER_NAME = "Null";
+  public static CvsHandler NULL = new CvsHandler(NULL_HANDLER_NAME, FileSetToBeUpdated.EMTPY) {
     public void internalRun(ModalityContext executor) {
 
     }

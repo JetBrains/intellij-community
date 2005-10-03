@@ -1,19 +1,18 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.GenericsUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiVariable;
-import com.intellij.psi.GenericsUtil;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
-
-import java.text.MessageFormat;
 
 public class VariableTypeFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.VariableTypeFix");
@@ -27,16 +26,13 @@ public class VariableTypeFix implements IntentionAction {
   }
 
   public String getText() {
-    String text = MessageFormat.format("Change ''{0}'' type to ''{1}''",
-        new Object[]{
-          myVariable.getName(),
-          myReturnType.getCanonicalText(),
-        });
-    return text;
+    return QuickFixBundle.message("fix.variable.type.text",
+                                  myVariable.getName(),
+                                  myReturnType.getCanonicalText());
   }
 
   public String getFamilyName() {
-    return "Fix Variable Type";
+    return QuickFixBundle.message("fix.variable.type.family");
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {

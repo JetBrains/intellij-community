@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 
@@ -15,7 +16,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class MoveMembersImpl {
-  public static final String REFACTORING_NAME = "Move Members";
+  public static final String REFACTORING_NAME = RefactoringBundle.message("move.members.title");
 
   /**
    * element should be either not anonymous PsiClass whose members should be moved
@@ -34,50 +35,52 @@ public class MoveMembersImpl {
       return;
     }
     final Set<PsiMember> preselectMembers = new HashSet<PsiMember>();
-    for (int idx = 0; idx < elements.length; idx++) {
-      PsiElement element = elements[idx];
+    for (PsiElement element : elements) {
       if (!sourceClass.equals(element.getParent())) {
-        String message = "Cannot perform the refactoring.\nMembers to be moved should belong to the same class.";
+        String message = RefactoringBundle.getCannotRefactorMessage(
+          RefactoringBundle.message("members.to.be.moved.should.belong.to.the.same.class"));
         RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.MOVE_MEMBERS, project);
         return;
       }
       if (element instanceof PsiField) {
-        PsiField field = (PsiField) element;
+        PsiField field = (PsiField)element;
         if (!field.hasModifierProperty(PsiModifier.STATIC)) {
           String fieldName = PsiFormatUtil.formatVariable(
-                  field,
-                  PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.TYPE_AFTER,
-              PsiSubstitutor.EMPTY);
-          String message = "Field " + fieldName + " is not static.\n" +
-                  REFACTORING_NAME + " refactoring is supported for static members only.";
+            field,
+            PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.TYPE_AFTER,
+            PsiSubstitutor.EMPTY);
+          String message = RefactoringBundle.message("field.0.is.not.static", fieldName,
+                                                          REFACTORING_NAME);
           RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.MOVE_MEMBERS, project);
           return;
         }
         preselectMembers.add(field);
-      } else if (element instanceof PsiMethod) {
-        PsiMethod method = (PsiMethod) element;
+      }
+      else if (element instanceof PsiMethod) {
+        PsiMethod method = (PsiMethod)element;
         String methodName = PsiFormatUtil.formatMethod(
-                method,
-            PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS,
-                PsiFormatUtil.SHOW_TYPE
+          method,
+          PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS,
+          PsiFormatUtil.SHOW_TYPE
         );
         if (method.isConstructor()) {
-          String message = REFACTORING_NAME + " refactoring cannot be applied to constructors";
+          String message = RefactoringBundle.message("0.refactoring.cannot.be.applied.to.constructors", REFACTORING_NAME);
           RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.MOVE_MEMBERS, project);
           return;
         }
         if (!method.hasModifierProperty(PsiModifier.STATIC)) {
-          String message = "Method " + methodName + " is not static.\n" +
-                  REFACTORING_NAME + " refactoring is supported for static members only.";
+          String message = RefactoringBundle.message("method.0.is.not.static", methodName,
+                                                REFACTORING_NAME);
           RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.MOVE_MEMBERS, project);
           return;
         }
         preselectMembers.add(method);
-      } else if (element instanceof PsiClass) {
-        PsiClass aClass = (PsiClass) element;
+      }
+      else if (element instanceof PsiClass) {
+        PsiClass aClass = (PsiClass)element;
         if (!aClass.hasModifierProperty(PsiModifier.STATIC)) {
-          String message = "Inner class " + aClass.getQualifiedName() + " is not static.\n" +
-                  REFACTORING_NAME + " refactoring is supported for static members only.";
+          String message = RefactoringBundle.message("inner.class.0.is.not.static", aClass.getQualifiedName(),
+                                                REFACTORING_NAME);
           RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.MOVE_MEMBERS, project);
           return;
         }

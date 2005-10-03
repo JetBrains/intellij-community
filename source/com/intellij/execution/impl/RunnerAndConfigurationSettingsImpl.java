@@ -2,6 +2,7 @@ package com.intellij.execution.impl;
 
 import com.intellij.execution.ExecutionRegistry;
 import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.JavaProgramRunner;
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,6 +11,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -22,12 +24,12 @@ import java.util.Map;
 public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, Cloneable, RunnerAndConfigurationSettings {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.impl.RunnerAndConfigurationSettings");
 
-  private static final String RUNNER_ELEMENT = "RunnerSettings";
-  private static final String CONFIGURATION_ELEMENT = "ConfigurationWrapper";
-  private static final String RUNNER_ID = "RunnerId";
-  private static final String CONFIGURATION_TYPE_ATTRIBUTE = "type";
-  private static final String FACTORY_NAME_ATTRIBUTE = "factoryName";
-  private static final String TEMPLATE_FLAG_ATTRIBUTE = "default";
+  @NonNls private static final String RUNNER_ELEMENT = "RunnerSettings";
+  @NonNls private static final String CONFIGURATION_ELEMENT = "ConfigurationWrapper";
+  @NonNls private static final String RUNNER_ID = "RunnerId";
+  @NonNls private static final String CONFIGURATION_TYPE_ATTRIBUTE = "type";
+  @NonNls private static final String FACTORY_NAME_ATTRIBUTE = "factoryName";
+  @NonNls private static final String TEMPLATE_FLAG_ATTRIBUTE = "default";
 
   private final RunManagerImpl myManager;
   private RunConfiguration myConfiguration;
@@ -35,6 +37,10 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
 
   private Map<JavaProgramRunner, RunnerSettings> myRunnerSettings = new HashMap<JavaProgramRunner, RunnerSettings>();
   private Map<JavaProgramRunner, ConfigurationPerRunnerSettings> myConfigurationPerRunnerSettings = new HashMap<JavaProgramRunner, ConfigurationPerRunnerSettings>();
+  @NonNls
+  protected static final String NAME_ATTR = "name";
+  @NonNls
+  protected static final String DUMMY_ELEMENT_NANE = "dummy";
 
   public RunnerAndConfigurationSettingsImpl(RunManagerImpl manager) {
     myManager = manager;
@@ -61,7 +67,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
   public Factory<RunnerAndConfigurationSettingsImpl> createFactory() {
     return new Factory<RunnerAndConfigurationSettingsImpl>() {
       public RunnerAndConfigurationSettingsImpl create() {
-        RunConfiguration configuration = myConfiguration.getFactory().createConfiguration("<unnamed>", myConfiguration);
+        RunConfiguration configuration = myConfiguration.getFactory().createConfiguration(ExecutionBundle.message("default.run.configuration.name"), myConfiguration);
         RunnerAndConfigurationSettingsImpl copy = new RunnerAndConfigurationSettingsImpl(myManager, configuration, false);
         return copy;
       }
@@ -83,7 +89,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
   }
 
   public void readExternal(Element element) throws InvalidDataException {
-    myIsTemplate = "true".equals(element.getAttributeValue(TEMPLATE_FLAG_ATTRIBUTE));
+    myIsTemplate = Boolean.valueOf(element.getAttributeValue(TEMPLATE_FLAG_ATTRIBUTE));
     final ConfigurationFactory factory = getFactory(element);
     if (factory == null) return;
 
@@ -91,7 +97,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
       myConfiguration = myManager.getConfigurationTemplate(factory).getConfiguration();
     }
     else {
-      final String name = element.getAttributeValue("name");
+      final String name = element.getAttributeValue(NAME_ATTR);
       myConfiguration = myManager.createConfiguration(name, factory).getConfiguration();
     }
 
@@ -126,7 +132,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
 
     element.setAttribute(TEMPLATE_FLAG_ATTRIBUTE, String.valueOf(myIsTemplate));
     if (!myIsTemplate) {
-      element.setAttribute("name", myConfiguration.getName());
+      element.setAttribute(NAME_ATTR, myConfiguration.getName());
     }
     element.setAttribute(CONFIGURATION_TYPE_ATTRIBUTE, factory.getType().getComponentName());
     element.setAttribute(FACTORY_NAME_ATTRIBUTE, factory.getName());
@@ -188,7 +194,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
         JavaProgramRunner runner = iterator.next();
         RunnerSettings data = new RunnerSettings(runner.createConfigurationData(new InfoProvider(runner)), myConfiguration);
         myRunnerSettings.put(runner, data);
-        Element temp = new Element("dummy");
+        Element temp = new Element(DUMMY_ELEMENT_NANE);
         template.myRunnerSettings.get(runner).writeExternal(temp);
         data.readExternal(temp);
       }
@@ -197,7 +203,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
         JavaProgramRunner runner = iterator.next();
         ConfigurationPerRunnerSettings data = new ConfigurationPerRunnerSettings(runner.getInfo(), myConfiguration.createRunnerSettings(new InfoProvider(runner)));
         myConfigurationPerRunnerSettings.put(runner, data);
-        Element temp = new Element("dummy");
+        Element temp = new Element(DUMMY_ELEMENT_NANE);
         template.myConfigurationPerRunnerSettings.get(runner).writeExternal(temp);
         data.readExternal(temp);
       }

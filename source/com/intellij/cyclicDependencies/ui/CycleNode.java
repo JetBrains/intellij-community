@@ -2,6 +2,7 @@ package com.intellij.cyclicDependencies.ui;
 
 import com.intellij.packageDependencies.ui.PackageDependenciesNode;
 import com.intellij.psi.PsiFile;
+import com.intellij.analysis.AnalysisScopeBundle;
 
 import javax.swing.*;
 import java.util.Set;
@@ -32,7 +33,7 @@ public class CycleNode extends PackageDependenciesNode{
   }
 
   public String toString() {
-    return "cycle";
+    return AnalysisScopeBundle.message("cyclic.dependencies.tree.cycle.node.text");
   }
 
 }

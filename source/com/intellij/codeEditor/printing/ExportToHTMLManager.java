@@ -12,14 +12,20 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 
 import java.io.File;
+import java.io.OutputStreamWriter;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.TreeMap;
 
 class ExportToHTMLManager {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeEditor.printing.ExportToHTMLManager");
+
   /**
    * Should be invoked in event dispatch thread
    */
@@ -56,6 +62,7 @@ class ExportToHTMLManager {
     if(exportToHTMLSettings.OUTPUT_DIRECTORY == null) {
       final VirtualFile projectFile = project.getProjectFile();
       if (projectFile != null) {
+        //noinspection HardCodedStringLiteral
         exportToHTMLSettings.OUTPUT_DIRECTORY = projectFile.getParent().getPresentableUrl() + File.separator + "exportToHTML";
       }
       else {
@@ -87,7 +94,8 @@ class ExportToHTMLManager {
     }
     else {
       ExportRunnable exportRunnable = new ExportRunnable(exportToHTMLSettings, psiDirectory, outputDirectoryName, project);
-      ApplicationManager.getApplication().runProcessWithProgressSynchronously(exportRunnable, "Export to HTML", true, project);
+      ApplicationManager.getApplication().runProcessWithProgressSynchronously(exportRunnable,
+                                                                              CodeEditorBundle.message("export.to.html.title"), true, project);
     }
   }
 
@@ -142,7 +150,11 @@ class ExportToHTMLManager {
   }
 
   private static String constructOutputDirectory(PsiFile psiFile, String outputDirectoryName) {
-    PsiPackage psiPackage = psiFile.getContainingDirectory().getPackage();
+    return constructOutputDirectory(psiFile.getContainingDirectory(), outputDirectoryName);
+  }
+
+  private static String constructOutputDirectory(final PsiDirectory directory, final String outputDirectoryName) {
+    PsiPackage psiPackage = directory.getPackage();
     String dirName = outputDirectoryName;
     if(psiPackage != null) {
       String packageName = psiPackage.getQualifiedName();
@@ -155,17 +167,49 @@ class ExportToHTMLManager {
     return dirName;
   }
 
-  private static void addToPsiFileList(PsiDirectory psiDirectory, ArrayList filesList, boolean isRecursive) {
+  private static void addToPsiFileList(PsiDirectory psiDirectory,
+                                       ArrayList filesList,
+                                       boolean isRecursive,
+                                       final String outputDirectoryName) {
     PsiFile[] files = psiDirectory.getFiles();
     for(int i = 0; i < files.length; i++) {
       Object obj = files[i];
       filesList.add(obj);
     }
+    generateIndexHtml(psiDirectory, isRecursive, outputDirectoryName);
     if(isRecursive) {
       PsiDirectory[] directories = psiDirectory.getSubdirectories();
       for(int i = 0; i < directories.length; i++) {
-        addToPsiFileList(directories[i], filesList, isRecursive);
+        addToPsiFileList(directories[i], filesList, isRecursive, outputDirectoryName);
       }
+    }
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  private static void generateIndexHtml(final PsiDirectory psiDirectory, final boolean recursive, final String outputDirectoryName) {
+    OutputStreamWriter writer;
+    try {
+      String indexHtmlName = constructOutputDirectory(psiDirectory, outputDirectoryName) + File.separator + "index.html";
+      writer = new OutputStreamWriter(new FileOutputStream(indexHtmlName), "UTF-8");
+      writer.write("<html><head><title>" + psiDirectory.getPackage().getQualifiedName() + "</title></head><body>");
+      if (recursive) {
+        PsiDirectory[] directories = psiDirectory.getSubdirectories();
+        for(PsiDirectory directory: directories) {
+          writer.write("<a href=\"" + directory.getName() + "/index.html\"><b>" + directory.getName() + "</b></a><br />");
+        }
+      }
+      PsiFile[] files = psiDirectory.getFiles();
+      for(PsiFile file: files) {
+        if (!(file instanceof PsiBinaryFile)) {
+          writer.write("<a href=\"" + getHTMLFileName(file) + "\">" + file.getVirtualFile().getName() + "</a><br />");
+        }
+      }
+      writer.write("</body></html>");
+      writer.close();
+    }
+    catch(IOException e) {
+      LOG.error(e.getMessage(), e);
+      return;
     }
   }
 
@@ -191,7 +235,7 @@ class ExportToHTMLManager {
       final ArrayList filesList = new ArrayList();
       final boolean isRecursive = myExportToHTMLSettings.isIncludeSubdirectories();
 
-      addToPsiFileList(myPsiDirectory, filesList, isRecursive);
+      addToPsiFileList(myPsiDirectory, filesList, isRecursive, myOutputDirectoryName);
       com.intellij.util.containers.HashMap filesMap = new com.intellij.util.containers.HashMap();
       for(int i = 0; i < filesList.size(); i++) {
         PsiFile psiFile = (PsiFile)filesList.get(i);
@@ -202,7 +246,7 @@ class ExportToHTMLManager {
         if(progressIndicator.isCanceled()) {
           return;
         }
-        progressIndicator.setText("Generating file: " + getHTMLFileName(psiFile));
+        progressIndicator.setText(CodeEditorBundle.message("export.to.html.generating.file.progress", getHTMLFileName(psiFile)));
         progressIndicator.setFraction(((double)i)/filesList.size());
         exportPsiFile(psiFile, myOutputDirectoryName, myProject, filesMap);
       }
@@ -221,6 +265,7 @@ class ExportToHTMLManager {
   }
 
   static String getHTMLFileName(PsiFile psiFile) {
+    //noinspection HardCodedStringLiteral
     return psiFile.getVirtualFile().getName() + ".html";
   }
 }

@@ -7,10 +7,13 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
+import org.jetbrains.annotations.NonNls;
+
 public class StringKeyProvider implements ByteBufferMap.KeyProvider<String>{
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.StringKeyProvider");
 
   public static final StringKeyProvider INSTANCE = new StringKeyProvider();
+  @NonNls public static final String UTF_8_CHARSET_NAME = "UTF-8";
 
   private StringKeyProvider() {
   }
@@ -21,7 +24,7 @@ public class StringKeyProvider implements ByteBufferMap.KeyProvider<String>{
 
   public void write(DataOutput out, String key) throws IOException {
     String keyString = (String)key;
-    byte[] keyBytes = keyString.getBytes("UTF-8");
+    byte[] keyBytes = keyString.getBytes(UTF_8_CHARSET_NAME);
     out.writeInt(keyBytes.length);
     out.write(keyBytes);
   }
@@ -29,7 +32,7 @@ public class StringKeyProvider implements ByteBufferMap.KeyProvider<String>{
   public int length(String key) {
     try{
       String keyString = (String)key;
-      byte[] keyBytes = keyString.getBytes("UTF-8");
+      byte[] keyBytes = keyString.getBytes(UTF_8_CHARSET_NAME);
       return 4 + keyBytes.length;
     }
     catch(UnsupportedEncodingException e){
@@ -43,7 +46,7 @@ public class StringKeyProvider implements ByteBufferMap.KeyProvider<String>{
     byte[] bytes = new byte[length];
     in.readFully(bytes);
     try {
-      return new String(bytes, "UTF-8");
+      return new String(bytes, UTF_8_CHARSET_NAME);
     }
     catch (UnsupportedEncodingException e) {
       LOG.error(e);
@@ -54,7 +57,7 @@ public class StringKeyProvider implements ByteBufferMap.KeyProvider<String>{
   public boolean equals(DataInput in, String key) throws IOException {
     try {
       String keyString = (String)key;
-      byte[] keyBytes = keyString.getBytes("UTF-8");
+      byte[] keyBytes = keyString.getBytes(UTF_8_CHARSET_NAME);
 
       int length = in.readInt();
       byte[] inputBytes = new byte[length];

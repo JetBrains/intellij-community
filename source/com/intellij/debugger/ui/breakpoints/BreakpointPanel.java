@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.EventListener;
 
 import gnu.trove.TIntArrayList;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Jeka
@@ -45,11 +46,11 @@ public class BreakpointPanel {
   private EventDispatcher<ChangesListener> myEventDispatcher = EventDispatcher.create(ChangesListener.class);
   private String myCurrentViewId = TABLE_VIEW;
 
-  private static final String PROPERTIES_STUB = "STUB";
-  private static final String PROPERTIES_DATA = "DATA";
+  private static final @NonNls String PROPERTIES_STUB = "STUB";
+  private static final @NonNls String PROPERTIES_DATA = "DATA";
 
-  public static final String TREE_VIEW = "TREE";
-  public static final String TABLE_VIEW = "TABLE";
+  public static final @NonNls String TREE_VIEW = "TREE";
+  public static final @NonNls String TABLE_VIEW = "TABLE";
 
   public BreakpointTable getTable() {
     return myTable;

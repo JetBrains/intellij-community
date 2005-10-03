@@ -42,12 +42,14 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.CvsBundle;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.admin.InvalidEntryFormatException;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.text.MessageFormat;
 
 /**
  * author: lesya
@@ -103,7 +105,7 @@ public class CommandCvsHandler extends AbstractCvsHandler {
       = CheckoutProjectOperation.create(environment, checkoutPath, target,
                                         useAltCheckoutDir, makeNewFilesReadOnly);
 
-    return new CommandCvsHandler("Check Out Project", checkoutOperation, FileSetToBeUpdated.allFiles()) {
+    return new CommandCvsHandler(CvsBundle.message("operation.name.check.out.project"), checkoutOperation, FileSetToBeUpdated.allFiles()) {
       public void runComplitingActivities() {
         CvsEntriesManager.getInstance().clearAll();
       }
@@ -111,7 +113,7 @@ public class CommandCvsHandler extends AbstractCvsHandler {
   }
 
   public static CvsHandler createImportHandler(ImportDetails details) {
-    return new CommandCvsHandler("Import", new ImportOperation(details), FileSetToBeUpdated.EMTPY);
+    return new CommandCvsHandler(com.intellij.CvsBundle.message("operation.name.import"), new ImportOperation(details), FileSetToBeUpdated.EMTPY);
   }
 
   public static UpdateHandler createUpdateHandler(final FilePath[] files,
@@ -128,8 +130,9 @@ public class CommandCvsHandler extends AbstractCvsHandler {
     if (switchToThisAction) {
       operation.addOperation(new UpdateOperation(selectedFiles, branchName, makeNewFilesReadOnly, project));
     }
-    return new CommandCvsHandler(isTag ? "Tag" : "Branch", operation,
-                                 FileSetToBeUpdated.selectedFiles(selectedFiles));
+    return new CommandCvsHandler(isTag ? com.intellij.CvsBundle.message("operation.name.create.tag")
+                                 : com.intellij.CvsBundle.message("operation.name.create.branch"), operation,
+                                                                                                   FileSetToBeUpdated.selectedFiles(selectedFiles));
   }
 
   public static CvsHandler createCommitHandler(FilePath[] selectedFiles,
@@ -176,7 +179,7 @@ public class CommandCvsHandler extends AbstractCvsHandler {
       addedFiles.add(info.getFile());
       operation.addFile(info.getFile(), info.getKeywordSubstitution());
     }
-    return new CommandCvsHandler("Add", operation,
+    return new CommandCvsHandler(com.intellij.CvsBundle.message("action.name.add"), operation,
                                  FileSetToBeUpdated.selectedFiles(addedFiles.toArray(new VirtualFile[addedFiles.size()])));
   }
 
@@ -185,7 +188,7 @@ public class CommandCvsHandler extends AbstractCvsHandler {
     for (final File file : files) {
       operation.addFile(file.getPath());
     }
-    return new CommandCvsHandler("Remove", operation, FileSetToBeUpdated.selectedFiles(getAdminDirectoriesFor(files)));
+    return new CommandCvsHandler(com.intellij.CvsBundle.message("action.name.remove"), operation, FileSetToBeUpdated.selectedFiles(getAdminDirectoriesFor(files)));
   }
 
   private static VirtualFile[] getAdminDirectoriesFor(Collection<File> files) {
@@ -227,7 +230,7 @@ public class CommandCvsHandler extends AbstractCvsHandler {
       }
     });
 
-    return new CommandCvsHandler("Restore",
+    return new CommandCvsHandler(com.intellij.CvsBundle.message("operation.name.restore"),
                                  operation,
                                  FileSetToBeUpdated.EMTPY);
   }
@@ -235,21 +238,21 @@ public class CommandCvsHandler extends AbstractCvsHandler {
   public static CvsHandler createEditHandler(VirtualFile[] selectedFiles, boolean isReservedEdit) {
     EditOperation operation = new EditOperation(isReservedEdit);
     operation.addFiles(selectedFiles);
-    return new CommandCvsHandler("Edit", operation, FileSetToBeUpdated.selectedFiles(selectedFiles));
+    return new CommandCvsHandler(com.intellij.CvsBundle.message("action.name.edit"), operation, FileSetToBeUpdated.selectedFiles(selectedFiles));
   }
 
   public static CvsHandler createUneditHandler(VirtualFile[] selectedFiles, boolean makeNewFilesReadOnly) {
     UneditOperation operation = new UneditOperation(makeNewFilesReadOnly);
     operation.addFiles(selectedFiles);
-    return new CommandCvsHandler("Unedit", operation, FileSetToBeUpdated.selectedFiles(selectedFiles));
+    return new CommandCvsHandler(com.intellij.CvsBundle.message("operation.name.unedit"), operation, FileSetToBeUpdated.selectedFiles(selectedFiles));
   }
 
   public static CvsHandler createAnnotateHandler(AnnotateOperation operation) {
-    return new CommandCvsHandler("Annotate", operation, FileSetToBeUpdated.EMTPY);
+    return new CommandCvsHandler(com.intellij.CvsBundle.message("operation.name.annotate"), operation, FileSetToBeUpdated.EMTPY);
   }
 
   public static CvsHandler createRemoveTagAction(VirtualFile[] selectedFiles, String tagName) {
-    return new CommandCvsHandler("Delete Tag", new TagOperation(selectedFiles, tagName, true, false),
+    return new CommandCvsHandler(com.intellij.CvsBundle.message("action.name.delete.tag"), new TagOperation(selectedFiles, tagName, true, false),
                                  FileSetToBeUpdated.EMTPY);
   }
 
@@ -297,7 +300,7 @@ public class CommandCvsHandler extends AbstractCvsHandler {
       myErrors.add(new CvsException(ex, ex.getCvsRoot()));
     }
     catch (InvalidEntryFormatException e) {
-      myErrors.add(new VcsException("Entries file " + e.getEntriesFile() + " is corrupted"));
+      myErrors.add(new VcsException(com.intellij.CvsBundle.message("exception.text.entries.file.is.corrupted", e.getEntriesFile())));
     }
     catch (CvsProcessException ex) {
       myErrors.add(new CvsException(ex, myCvsOperation.getLastProcessedCvsRoot()));
@@ -352,7 +355,7 @@ public class CommandCvsHandler extends AbstractCvsHandler {
       compositeOperaton.addOperation(checkoutFileOperation);
     }
 
-    return new CommandCvsHandler("Get File From Repository", compositeOperaton, FileSetToBeUpdated.allFiles(), true);
+    return new CommandCvsHandler(com.intellij.CvsBundle.message("action.name.get.file.from.repository"), compositeOperaton, FileSetToBeUpdated.allFiles(), true);
 
   }
 

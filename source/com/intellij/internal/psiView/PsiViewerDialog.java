@@ -26,6 +26,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.Tree;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 
 import javax.swing.*;
@@ -67,7 +68,7 @@ public class PsiViewerDialog extends DialogWrapper {
     setTitle("PSI Viewer");
     myProject = project;
     myTree = new Tree(new DefaultTreeModel(new DefaultMutableTreeNode()));
-    myTree.putClientProperty("JTree.lineStyle", "Angled");
+    UIUtil.setLineStyleAngled(myTree);
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
     myTree.updateUI();

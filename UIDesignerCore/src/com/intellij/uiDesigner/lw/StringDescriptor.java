@@ -37,6 +37,11 @@ public final class StringDescriptor {
    */
   private String myResolvedValue;
 
+  /**
+   * Marker for string values which do not need internationalization
+   */
+  private boolean myNoI18n;
+
   private StringDescriptor(final String value){
     if (value == null) {
       throw new IllegalArgumentException("value cannot be null");
@@ -102,6 +107,14 @@ public final class StringDescriptor {
     myResolvedValue = resolvedValue;
   }
 
+  public boolean isNoI18n() {
+    return myNoI18n;
+  }
+
+  public void setNoI18n(final boolean noI18n) {
+    myNoI18n = noI18n;
+  }
+
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (!(o instanceof StringDescriptor)) return false;
@@ -111,6 +124,7 @@ public final class StringDescriptor {
     if (myBundleName != null ? !myBundleName.equals(descriptor.myBundleName) : descriptor.myBundleName != null) return false;
     if (myKey != null ? !myKey.equals(descriptor.myKey) : descriptor.myKey != null) return false;
     if (myValue != null ? !myValue.equals(descriptor.myValue) : descriptor.myValue != null) return false;
+    if (myNoI18n != descriptor.myNoI18n) return false;
 
     return true;
   }

@@ -2,6 +2,7 @@ package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.project.ProjectBundle;
 
 import javax.swing.*;
 
@@ -16,7 +17,7 @@ class JavadocElementDescriptor extends NodeDescriptor<JavadocElement> {
     }
 
     public boolean update() {
-      myName = "JavaDocs";
+      myName = ProjectBundle.message("library.javadocs.node");
       return false;
     }
 

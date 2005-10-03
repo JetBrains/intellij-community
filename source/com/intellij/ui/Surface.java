@@ -1,5 +1,7 @@
 package com.intellij.ui;
 
+import org.jetbrains.annotations.NonNls;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.*;
@@ -40,6 +42,8 @@ public abstract class Surface extends JPanel implements Printable {
   ,
   bih;
   private boolean clearOnce;
+  @NonNls public static final String JAVADEMO_PERF_KEY = "java2demo.perf";
+  @NonNls public static final String INTERNAL_ERROR_MESSAGE = "Invalid # of bit per pixel";
 
   public Surface() {
     setDoubleBuffered(this instanceof AnimatingSurface);
@@ -51,7 +55,7 @@ public abstract class Surface extends JPanel implements Printable {
     // To launch an individual demo with the performance str output  :
     //    java -Djava2demo.perf= -cp Java2Demo.jar demos.Clipping.ClipAnim
     try{
-      if (System.getProperty("java2demo.perf") != null){
+      if (System.getProperty(JAVADEMO_PERF_KEY) != null){
         perfMonitor = outputPerf = true;
       }
     }
@@ -173,7 +177,7 @@ public abstract class Surface extends JPanel implements Printable {
         break;
       default:
         {
-          new Exception("Invalid # of bit per pixel").printStackTrace();
+          new Exception(INTERNAL_ERROR_MESSAGE).printStackTrace();
         }
     }
 
@@ -319,6 +323,7 @@ public abstract class Surface extends JPanel implements Printable {
 
   private static final int REPORTFRAMES = 30;
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private void LogPerformance() {
     if ((frame % REPORTFRAMES) == 0){
       long end = System.currentTimeMillis();

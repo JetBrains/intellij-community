@@ -97,6 +97,7 @@ public class DfaVariableState implements Cloneable {
     return newState;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     StringBuffer buf = new StringBuffer();
 

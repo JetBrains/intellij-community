@@ -14,10 +14,13 @@ import com.intellij.openapi.util.SystemInfo;
 import javax.swing.*;
 import java.awt.*;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author Vladimir Kondratyev
  */
 public final class ToggleFullScreenModeAction extends ToggleAction{
+  @NonNls
   private static final String PROP_BOUNDS_BEFORE_FULL_SCREEN="boundsBeforeFullScreen";
 
   private static IdeFrame getFrame(AnActionEvent e){

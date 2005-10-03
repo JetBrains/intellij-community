@@ -62,6 +62,7 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
     return type.equals(info.type) && dimCount == info.dimCount && kind == info.kind && defaultType.equals(info.defaultType) && tailType == info.tailType;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return "ExpectedTypeInfo[type='" + type + "' kind='" + kind + "' dims='" + dimCount+ "']";
   }

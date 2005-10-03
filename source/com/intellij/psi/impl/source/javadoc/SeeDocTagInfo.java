@@ -9,7 +9,7 @@ import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
-import com.intellij.lang.ASTNode;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,8 +20,9 @@ import java.util.List;
 class SeeDocTagInfo implements JavadocTagInfo {
   private String myName;
   private boolean myInline;
+  private static final @NonNls String LINKPLAIN_TAG = "linkplain";
 
-  public SeeDocTagInfo(String name, boolean isInline) {
+  public SeeDocTagInfo(@NonNls String name, boolean isInline) {
     myName = name;
     myInline = isInline;
   }
@@ -45,7 +46,7 @@ class SeeDocTagInfo implements JavadocTagInfo {
 
         PsiElement targetContext = getTargetContext(context, place);
 
-        List result = new ArrayList();
+        List<PsiMethod> result = new ArrayList<PsiMethod>();
         final PsiMethod[] methods = PsiDocMethodOrFieldRef.getAllMethods(targetContext, place);
         for (final PsiMethod method : methods) {
           if (method.getName().equals(methodName)) {
@@ -62,7 +63,7 @@ class SeeDocTagInfo implements JavadocTagInfo {
   }
 
   private Object[] getPossibleMethodsAndFields(PsiElement context, PsiElement place, String prefix) {
-    List result = new ArrayList();
+    List<PsiModifierListOwner> result = new ArrayList<PsiModifierListOwner>();
 
     PsiElement targetContext = getTargetContext(context, place);
 
@@ -98,7 +99,7 @@ class SeeDocTagInfo implements JavadocTagInfo {
   }
 
   public boolean isValidInContext(PsiElement element) {
-    if (myInline && myName.equals("linkplain"))
+    if (myInline && myName.equals(LINKPLAIN_TAG))
       return element.getManager().getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_4) >= 0;
 
     return true;

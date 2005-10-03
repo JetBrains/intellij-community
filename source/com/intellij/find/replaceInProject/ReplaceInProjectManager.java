@@ -16,7 +16,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.wm.WindowManager;
@@ -158,7 +157,8 @@ public class ReplaceInProjectManager implements ProjectComponent {
     final Set<Usage> _usages = replaceContext.getUsageView().getUsages();
 
     if (FindInProjectUtil.hasReadOnlyUsages(_usages)){
-      WindowManager.getInstance().getStatusBar(myProject).setInfo("Occurrences found in read-only files");
+      WindowManager.getInstance().getStatusBar(myProject).setInfo(
+        FindBundle.message("find.replace.occurrences.found.in.read.only.files.status"));
       return;
     }
 
@@ -194,8 +194,9 @@ public class ReplaceInProjectManager implements ProjectComponent {
         }
       };
 
-      CommandProcessor.getInstance().executeCommand(myProject, selectOnEditorRunnable, "Select on Editor", null);
-      String title = "Replace Usage " + (i+1) + " of " + usages.length + " Found";
+      CommandProcessor.getInstance().executeCommand(myProject, selectOnEditorRunnable,
+                                                    FindBundle.message("find.replace.select.on.editor.command"), null);
+      String title = FindBundle.message("find.replace.found.usage.title", (i + 1), usages.length);
       int result = FindManager.getInstance(myProject).showPromptDialog(replaceContext.getFindModel(), title);
 
       if (result == FindManager.PromptResult.CANCEL){
@@ -213,7 +214,7 @@ public class ReplaceInProjectManager implements ProjectComponent {
             replaceContext.getUsageView().removeUsage(usage);
           }
         };
-        CommandProcessor.getInstance().executeCommand(myProject, runnable, "Replace", null);
+        CommandProcessor.getInstance().executeCommand(myProject, runnable, FindBundle.message("find.replace.command"), null);
         if ((i + 1) == usages.length){
           replaceContext.getUsageView().close();
           return;
@@ -245,7 +246,7 @@ public class ReplaceInProjectManager implements ProjectComponent {
           }
         };
 
-        CommandProcessor.getInstance().executeCommand(myProject, runnable, "Replace", null);
+        CommandProcessor.getInstance().executeCommand(myProject, runnable, FindBundle.message("find.replace.command"), null);
         i = nextNumber[0] - 1;
       }
 
@@ -259,7 +260,7 @@ public class ReplaceInProjectManager implements ProjectComponent {
               replaceContext.getUsageView().close();
             }
           },
-          "Replace",
+            FindBundle.message("find.replace.command"),
           null
         );
         break;
@@ -273,7 +274,8 @@ public class ReplaceInProjectManager implements ProjectComponent {
         doReplace(replaceContext, replaceContext.getUsageView().getUsages());
       }
     };
-    replaceContext.getUsageView().addPerformOperationAction(replaceRunnable, "Replace All",null,"Do Replace All", SystemInfo.isMac ? 0 : 'D');
+    replaceContext.getUsageView().addPerformOperationAction(replaceRunnable, FindBundle.message("find.replace.all.action"),
+                                                            null, FindBundle.message("find.replace.all.action.description"));
 
     final Runnable replaceSelectedRunnable = new Runnable() {
       public void run() {
@@ -283,8 +285,7 @@ public class ReplaceInProjectManager implements ProjectComponent {
 
     replaceContext.getUsageView().addButtonToLowerPane(
       replaceSelectedRunnable,
-      "Replace Selected",
-      SystemInfo.isMac ? 0 : 'l'
+      FindBundle.message("find.replace.selected.action")
     );
   }
 
@@ -350,10 +351,8 @@ public class ReplaceInProjectManager implements ProjectComponent {
     if (FindInProjectUtil.hasReadOnlyUsages(selectedUsages)){
       int result = Messages.showOkCancelDialog(
         replaceContext.getUsageView().getComponent(),
-        "Occurrences found in read-only files.\n" +
-          "The operation will not affect them.\n" +
-          "Continue anyway?",
-        "Read-only Files Found",
+        FindBundle.message("find.replace.occurrences.in.read.only.files.prompt"),
+        FindBundle.message("find.replace.occurrences.in.read.only.files.title"),
         Messages.getWarningIcon()
       );
       if (result != 0){
@@ -376,7 +375,7 @@ public class ReplaceInProjectManager implements ProjectComponent {
           replaceContext.getUsageView().getComponent().requestFocus();
         }
       },
-      "Replace",
+        FindBundle.message("find.replace.command"),
       null
     );
   }

@@ -1,10 +1,10 @@
 <idea-plugin version="2">
   <name>CVS Integration</name>
   <id>CVS</id>
-  <description>Allows using CVS from within IntelliJ IDEA, making even refactoring consequences transparent for the user.</description>
   <version>0.1</version>
   <vendor logo="/general/ijLogo.png">JetBrains</vendor>
   <idea-version min="5.0" max="5.0"/>
+  <resource-bundle>com.intellij.cvsSupport2.CvsBundle</resource-bundle>
 
   <extensions xmlns="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
@@ -58,54 +58,54 @@
 
   <actions>
 
-    <group id="CvsFileGroup" text="CVS">
+    <group id="CvsFileGroup">
       <separator/>
       <add-to-group group-id="FileMenu" anchor="before" relative-to-action="ExportToHTML"/>
-      <action id="Cvs.Import" class="com.intellij.cvsSupport2.actions.ImportAction" text="Im_port into CVS..." description="Put files into a CVS repository"/>
-      <action id="Cvs.BrowseCVSRepository" class="com.intellij.cvsSupport2.actions.BrowseCvsRepositoryAction" text="_Browse CVS Repository..."
-        description="Browse a CVS repository"/>
+      <action id="Cvs.Import" class="com.intellij.cvsSupport2.actions.ImportAction"/>
+      <action id="Cvs.BrowseCVSRepository" class="com.intellij.cvsSupport2.actions.BrowseCvsRepositoryAction"
+        />
       <separator/>
     </group>
 
-    <group id="CvsGlobalGroup" class="com.intellij.cvsSupport2.actions.Cvs2Group" test="CVS" text="_CVS" popup="true">
+    <group id="CvsGlobalGroup" class="com.intellij.cvsSupport2.actions.Cvs2Group" test="CVS" popup="true">
       <add-to-group group-id="VcsGroups" anchor="last"/>
       <separator/>
-      <action id="GlobalSettings" class="com.intellij.cvsSupport2.actions.GlobalSettingsAction" text="_Global Settings" description="Configure global CVS settings"/>
-      <action id="ConfigureCvsRoots" class="com.intellij.cvsSupport2.actions.ConfigureCvsRootsAction" text="Configure CVS _Roots" description="Configure CVSroots"/>
+      <action id="GlobalSettings" class="com.intellij.cvsSupport2.actions.GlobalSettingsAction"/>
+      <action id="ConfigureCvsRoots" class="com.intellij.cvsSupport2.actions.ConfigureCvsRootsAction"/>
       <separator/>
     </group>
 
-    <group id="CvsFilePopupGroup" class="com.intellij.cvsSupport2.actions.Cvs2Group" test="CVS" text="_CVS" popup="true">
+    <group id="CvsFilePopupGroup" class="com.intellij.cvsSupport2.actions.Cvs2Group" test="CVS" popup="true">
       <add-to-group group-id="VcsGroup" anchor="last"/>
     </group>
 
 
     <group id="UpdateActionGroup">
       <reference id="$Delete"/>
-      <action id="Cvs.GetFromRepository" class="com.intellij.cvsSupport2.actions.GetFileFromRepositoryAction" text="Get" description="Get from cvs repository"/>
+      <action id="Cvs.GetFromRepository" class="com.intellij.cvsSupport2.actions.GetFileFromRepositoryAction"/>
       <separator/>
     </group>
     <group id="AddOptionDialogActionGroup" test=""
-      text="AddOptionDialogActionGroup">
-      <action id="Cvs.Ignore" class="com.intellij.cvsSupport2.actions.IgnoreFileAction" text="I_gnore" description="Add file/directory to CVS ignore list ('.cvsignore')">
+      >
+      <action id="Cvs.Ignore" class="com.intellij.cvsSupport2.actions.IgnoreFileAction">
         <add-to-group group-id="Vcs.CheckinProjectPopup" anchor="last"/>
       </action>
     </group>
 
     <group id="CvsActions">
       <reference id="CheckinFiles"/>
-      <action id="Cvs.Rollback" class="com.intellij.cvsSupport2.actions.CvsRollbackChangesAction" text="Ro_llback Changes" icon="/actions/rollback.png" description="Rollback local changes"/>
+      <action id="Cvs.Rollback" class="com.intellij.cvsSupport2.actions.CvsRollbackChangesAction" icon="/actions/rollback.png"/>
       <reference id="UpdateFiles"/>
       <reference id="CheckStatusForFiles"/>
-      <action id="Cvs.Checkout" class="com.intellij.cvsSupport2.actions.CheckoutFileAction" text="Chec_k Out" description="Check out file or directory (and overwrite local version)"/>
-      <action id="Cvs.MergeAction" class="com.intellij.cvsSupport2.actions.merge.MergeAction" text="_Merge" description="Merge file visually"/>
+      <action id="Cvs.Checkout" class="com.intellij.cvsSupport2.actions.CheckoutFileAction"/>
+      <action id="Cvs.MergeAction" class="com.intellij.cvsSupport2.actions.merge.MergeAction"/>
 
       <separator/>
 
 
-      <action id="Cvs.Add" class="com.intellij.cvsSupport2.actions.AddFileOrDirectoryAction" text="_Add" description="Add file/directory to CVS"/>
-      <action id="Cvs.UndoAdd" class="com.intellij.cvsSupport2.actions.UnmarkAddedAction" text="Undo 'Add'" description="Undo adding file to CVS"/>
-      <action id="Cvs.Remove" class="com.intellij.cvsSupport2.actions.RemoveLocallyDeletedFilesAction" text="Remove" description="Remove file from CVS"/>
+      <action id="Cvs.Add" class="com.intellij.cvsSupport2.actions.AddFileOrDirectoryAction"/>
+      <action id="Cvs.UndoAdd" class="com.intellij.cvsSupport2.actions.UnmarkAddedAction"/>
+      <action id="Cvs.Remove" class="com.intellij.cvsSupport2.actions.RemoveLocallyDeletedFilesAction"/>
       <reference id="Cvs.Ignore"/>
 
       <separator/>
@@ -119,30 +119,30 @@
       <reference id="Annotate"/>
 
       <separator/>
-      <action id="Cvs.CreateBranch" class="com.intellij.cvsSupport2.actions.BranchAction" text="Create _Branch..." description="Create branch in CVS repository for file/directory"/>
-      <action id="Cvs.CreateTag" class="com.intellij.cvsSupport2.actions.CreateTagAction" text="C_reate Tag..." description="Create tag in CVS repository for file/directory"/>
-      <action id="Cvs.DeleteTag" class="com.intellij.cvsSupport2.actions.DeleteTagAction" text="_Delete Tag..." description="Delete tag from CVS repository for file/directory"/>
+      <action id="Cvs.CreateBranch" class="com.intellij.cvsSupport2.actions.BranchAction"/>
+      <action id="Cvs.CreateTag" class="com.intellij.cvsSupport2.actions.CreateTagAction"/>
+      <action id="Cvs.DeleteTag" class="com.intellij.cvsSupport2.actions.DeleteTagAction"/>
       <separator/>
-      <group id="EditAndWatch" text="Ed_it and Watch" popup="true">
-        <action id="Cvs.Edit" class="com.intellij.cvsSupport2.actions.EditAction" text="_Edit" description="Start editing of file"/>
-        <action id="Cvs.Unedit" class="com.intellij.cvsSupport2.actions.UneditAction" text="_Unedit" description="Cancel editing of file and undo local changes"/>
-        <action id="Cvs.Editors" class="com.intellij.cvsSupport2.actions.ViewEditorsAction" text="_Show Editors" description="Show who is editing file/directory"/>
+      <group id="EditAndWatch" popup="true">
+        <action id="Cvs.Edit" class="com.intellij.cvsSupport2.actions.EditAction"/>
+        <action id="Cvs.Unedit" class="com.intellij.cvsSupport2.actions.UneditAction"/>
+        <action id="Cvs.Editors" class="com.intellij.cvsSupport2.actions.ViewEditorsAction"/>
         <separator/>
-        <action id="Cvs.WatchOn" class="com.intellij.cvsSupport2.actions.WatchOnAction" text="Watch O_n" description="Start watching file/directory"/>
-        <action id="Cvs.WatchOff" class="com.intellij.cvsSupport2.actions.WatchOffAction" text="Watch O_ff" description="Stop watching file/directory"/>
-        <action id="Cvs.WatchAdd" class="com.intellij.cvsSupport2.actions.WatchAddAction" text="_Add Watch..." description="Add watch for file/directory"/>
-        <action id="Cvs.WatchRemove" class="com.intellij.cvsSupport2.actions.WatchRemoveAction" text="_Remove Watch..." description="Remove watch for file/directory"/>
-        <action id="Cvs.Watchers" class="com.intellij.cvsSupport2.actions.ViewWatchersAction" text="Show Watc_hers" description="Show who is watching file/directory"/>
+        <action id="Cvs.WatchOn" class="com.intellij.cvsSupport2.actions.WatchOnAction"/>
+        <action id="Cvs.WatchOff" class="com.intellij.cvsSupport2.actions.WatchOffAction"/>
+        <action id="Cvs.WatchAdd" class="com.intellij.cvsSupport2.actions.WatchAddAction"/>
+        <action id="Cvs.WatchRemove" class="com.intellij.cvsSupport2.actions.WatchRemoveAction"/>
+        <action id="Cvs.Watchers" class="com.intellij.cvsSupport2.actions.ViewWatchersAction"/>
       </group>
       <add-to-group group-id="UpdateActionGroup" anchor="last"/>
 
       <action id="Cvs.CheckinProjectPanel.Add" class="com.intellij.cvsSupport2.checkinProject.AddUnknownFileToCvsAction"
-        text="Add to CVS..." description="Add to CVS (used in Commit Project dialog only)">
+        >
         <add-to-group group-id="Vcs.CheckinProjectPopup" anchor="last"/>
       </action>
 
       <action id="Cvs.CheckinProjectPanel.Delete" class="com.intellij.cvsSupport2.actions.RemoveLocallyDeletedFilesAction"
-        text="Remove from CVS..." description="Remove from CVS (used in Commit Project dialog only)">
+        >
         <add-to-group group-id="Vcs.CheckinProjectPopup" anchor="last"/>
       </action>
 

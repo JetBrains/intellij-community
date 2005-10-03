@@ -24,8 +24,8 @@ class FileLoader extends Loader {
 
   private File dir;
 
-  FileLoader(URL url)
-    throws IOException {
+  @SuppressWarnings({"HardCodedStringLiteral"})
+    FileLoader(URL url) throws IOException {
     super(url);
     if (!"file".equals(url.getProtocol())) {
       throw new IllegalArgumentException("url");

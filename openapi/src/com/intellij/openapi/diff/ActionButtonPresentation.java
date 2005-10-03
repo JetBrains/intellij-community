@@ -15,13 +15,15 @@
  */
 package com.intellij.openapi.diff;
 
+import com.intellij.CommonBundle;
+
 public class ActionButtonPresentation {
   private final boolean myIsEnabled;
   private final boolean myCloseDialog;
   private final String myName;
 
   public static ActionButtonPresentation createApplyButton(){
-    return new ActionButtonPresentation(true, "&Apply", true);
+    return new ActionButtonPresentation(true, CommonBundle.getApplyButtonText(), true);
   }
 
   public ActionButtonPresentation(final boolean isEnabled, final String name, final boolean closeDialog) {

@@ -7,6 +7,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.ide.IdeBundle;
 
 public class SearchBackAction extends AnAction {
   public SearchBackAction() {
@@ -28,7 +29,7 @@ public class SearchBackAction extends AnAction {
           FindUtil.searchBack(project, editor);
         }
       },
-      "Find Previous",
+      IdeBundle.message("command.find.previous"),
       null
     );
   }

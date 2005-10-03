@@ -23,6 +23,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.IntroduceHandlerBase;
 import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.FieldConflictsResolver;
@@ -37,7 +38,7 @@ import java.util.List;
 
 public abstract class IntroduceVariableBase extends IntroduceHandlerBase implements RefactoringActionHandler {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceVariable.IntroduceVariableBase");
-  protected static String REFACTORING_NAME = "Introduce Variable";
+  protected static String REFACTORING_NAME = RefactoringBundle.message("introduce.variable.title");
 
   public void invoke(Project project, Editor editor, PsiFile file, DataContext dataContext) {
     if (!editor.getSelectionModel().hasSelection()) {
@@ -64,7 +65,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
   }
 
   protected boolean invokeImpl(final Project project, final PsiExpression expr,
-                             final Editor editor) {
+                               final Editor editor) {
     if (expr != null && expr.getParent() instanceof PsiExpressionStatement) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed("refactoring.introduceVariable.incompleteStatement");
     }
@@ -73,9 +74,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     }
 
     if (expr == null) {
-      String message =
-              "Cannot perform the refactoring.\n" +
-              "Selected block should represent an expression.";
+      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("selected.block.should.represent.an.expression"));
       showErrorMessage(message, project);
       return false;
     }
@@ -86,17 +85,13 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
 
     PsiType originalType = RefactoringUtil.getTypeByExpressionWithExpectedType(expr);
     if (originalType == null) {
-      String message =
-              "Cannot perform the refactoring.\n" +
-              "Unknown expression type.";
+      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("unknown.expression.type"));
       showErrorMessage(message, project);
       return false;
     }
 
     if(originalType == PsiType.VOID) {
-      String message =
-              "Cannot perform the refactoring.\n" +
-              "Selected expression has void type.";
+      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("selected.expression.has.void.type"));
       showErrorMessage(message, project);
       return false;
     }
@@ -111,9 +106,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
         PsiMethod method = ((PsiMethodCallExpression)enclosingExpr).resolveMethod();
         if (method != null && method.isConstructor()) {
           //This is either 'this' or 'super', both must be the first in the respective contructor
-          String message =
-            "Cannot perform the refactoring.\n" +
-            "Invalid expression context.";
+          String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("invalid.expression.context"));
           showErrorMessage(message, project);
           return false;
         }
@@ -123,13 +116,13 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     PsiElement tempContainer = anchorStatement.getParent();
 
     if (invalidContainer(tempContainer)) {
-      String message = IntroduceVariableBase.REFACTORING_NAME + " refactoring is not supported in the current context";
+      String message = RefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", IntroduceVariableBase.REFACTORING_NAME);
       showErrorMessage(message, project);
       return false;
     }
 
     if(!NotInSuperCallOccurenceFilter.INSTANCE.isOK(expr)) {
-      String message = "Cannot introduce variable in super constructor call";
+      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("cannot.introduce.variable.in.super.constructor.call"));
       showErrorMessage(message, project);
       return false;
     }
@@ -150,7 +143,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     }
 
     ExpressionOccurenceManager occurenceManager = new ExpressionOccurenceManager(expr, lastScope,
-            NotInSuperCallOccurenceFilter.INSTANCE);
+                                                                                 NotInSuperCallOccurenceFilter.INSTANCE);
     final PsiExpression[] occurrences = occurenceManager.getOccurences();
     final PsiElement anchorStatementIfAll = occurenceManager.getAnchorStatementForAll();
     boolean declareFinalIfAll = occurenceManager.isInFinalContext();
@@ -166,9 +159,9 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
 
 
     IntroduceVariableSettings settings = getSettings(project, editor, expr, occurrences, anyAssignmentLHS, declareFinalIfAll,
-            originalType,
-            new TypeSelectorManagerImpl(project, originalType, expr, occurrences),
-            new InputValidator(this, project, anchorStatementIfAll, anchorStatement, occurenceManager));
+                                                     originalType,
+                                                     new TypeSelectorManagerImpl(project, originalType, expr, occurrences),
+                                                     new InputValidator(this, project, anchorStatementIfAll, anchorStatement, occurenceManager));
 
     if (!settings.isOK()) {
       return false;
@@ -200,7 +193,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
         PsiStatement statement = (PsiStatement) expr.getParent();
         PsiElement parent = statement.getParent();
         if (parent instanceof PsiCodeBlock ||
-          //fabrique
+            //fabrique
             parent instanceof PsiCodeFragment) {
           tempDeleteSelf = true;
         }
@@ -237,8 +230,9 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
             declaration = (PsiDeclarationStatement) container.addBefore(declaration, anchor);
             LOG.assertTrue(expr1.isValid());
             if (deleteSelf) { // never true
-              if (statement.getLastChild() instanceof PsiComment) { // keep trailing comment
-                declaration.addBefore(statement.getLastChild(), null);
+              final PsiElement lastChild = statement.getLastChild();
+              if (lastChild instanceof PsiComment) { // keep trailing comment
+                declaration.addBefore(lastChild, null);
               }
               statement.delete();
               if (editor != null) {
@@ -254,14 +248,13 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
           PsiExpression ref = factory.createExpressionFromText(variableName, null);
           if (replaceAll) {
             ArrayList<PsiElement> array = new ArrayList<PsiElement>();
-            for (int i = 0; i < occurrences.length; i++) {
-              PsiElement occurrence = occurrences[i];
+            for (PsiExpression occurrence : occurrences) {
               if (deleteSelf && occurrence.equals(expr)) continue;
               if (occurrence.equals(expr)) {
                 occurrence = expr1;
               }
               if (occurrence instanceof PsiExpression) {
-                occurrence = RefactoringUtil.outermostParenthesizedExpression((PsiExpression) occurrence);
+                occurrence = RefactoringUtil.outermostParenthesizedExpression((PsiExpression)occurrence);
               }
               if (replaceWrite || !RefactoringUtil.isAssignmentLHS(occurrence)) {
                 array.add(occurrence.replace(ref));
@@ -318,7 +311,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
   }
 
     protected boolean parentStatementNotFound(final Project project, PsiExpression expr, Editor editor, PsiFile file) {
-        String message = IntroduceVariableBase.REFACTORING_NAME + " refactoring is not supported in the current context";
+        String message = RefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", IntroduceVariableBase.REFACTORING_NAME);
         showErrorMessage(message, project);
         return false;
     }
@@ -326,7 +319,6 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     /**
      * @fabrique
      * @param tempContainer
-     * @return
      */
     protected boolean invalidContainer(PsiElement tempContainer) {
         return !(tempContainer instanceof PsiCodeBlock) && !IntroduceVariableBase.isLoopOrIf(tempContainer);
@@ -406,10 +398,10 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
 
     if (!modifiedInBody.isEmpty()) {
       for (PsiVariable variable : modifiedInBody) {
-        final String message = ConflictsUtil.getDescription(variable, false) + " is modified in loop body.\n";
+        final String message = RefactoringBundle.message("is.modified.in.loop.body", ConflictsUtil.getDescription(variable, false));
         conflicts.add(ConflictsUtil.capitalize(message));
       }
-      conflicts.add("Introducing variable may break code logic.");
+      conflicts.add(RefactoringBundle.message("introducing.variable.may.break.code.logic"));
     }
   }
 

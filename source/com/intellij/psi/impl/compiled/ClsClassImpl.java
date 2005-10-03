@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.PomMemberOwner;
 import com.intellij.psi.*;
+import com.intellij.psi.HierarchicalMethodSignature;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.cache.ClassView;
 import com.intellij.psi.impl.meta.MetaRegistry;
@@ -23,6 +24,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.cls.BytePointer;
 import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.cls.ClsUtil;
+import org.jetbrains.annotations.NonNls;
 
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
@@ -431,6 +433,10 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
     return parent instanceof PsiClass ? ((PsiClass)parent) : null;
   }
 
+  public Collection<HierarchicalMethodSignature> getVisibleSignatures() {
+    return PsiSuperMethodImplUtil.getVisibleSignatures(this);
+  }
+
   private PsiReferenceList buildSuperList(String type) throws ClsFormatException {
     ClassFileData classFileData = getClassFileData();
     int offset = classFileData.getConstantPoolEnd() + 4;
@@ -445,9 +451,9 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
       ref = null;
     }
     PsiReferenceList list = new ClsReferenceListImpl(this,
-                                                       ref != null
-                                                       ? new PsiJavaCodeReferenceElement[]{ref}
-                                                       : PsiJavaCodeReferenceElement.EMPTY_ARRAY,
+                                                     ref != null
+                                                     ? new PsiJavaCodeReferenceElement[]{ref}
+                                                     : PsiJavaCodeReferenceElement.EMPTY_ARRAY,
                                                      type);
     if (ref != null) {
       ref.setParent(list);
@@ -793,7 +799,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
   }
   }
 
-  private String obtainSourceFileNameFromClassFileName() {
+  private @NonNls String obtainSourceFileNameFromClassFileName() {
     final String name = getContainingFile().getName();
     int i = name.indexOf('$');
     if (i < 0) {
@@ -809,7 +815,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
     return getClassFileData().readUtf8Attribute(readClassAttribute("Signature"));
   }
 
-  private BytePointer readClassAttribute(String attributeName) throws ClsFormatException {
+  private BytePointer readClassAttribute(@NonNls String attributeName) throws ClsFormatException {
     ClassFileData classFileData = getClassFileData();
     BytePointer ptr = new BytePointer(classFileData.getData(), classFileData.getConstantPoolEnd() + 6);
     int count = ClsUtil.readU2(ptr);
@@ -940,7 +946,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
   }
 
   public String getMirrorText() {
-    StringBuffer buffer = new StringBuffer();
+    @NonNls StringBuffer buffer = new StringBuffer();
     ClsDocCommentImpl docComment = (ClsDocCommentImpl)getDocComment();
     if (docComment != null) {
       buffer.append(docComment.getMirrorText());

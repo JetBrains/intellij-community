@@ -16,6 +16,7 @@ import com.intellij.codeInspection.reference.RefMethod;
 import com.intellij.codeInspection.reference.RefParameter;
 import com.intellij.codeInspection.util.RefFilter;
 import com.intellij.codeInspection.util.XMLExportUtl;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.IconLoader;
@@ -25,11 +26,13 @@ import com.intellij.psi.search.PsiReferenceProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfo;
+import com.intellij.codeInsight.daemon.GroupNames;
 import org.jdom.Element;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.text.MessageFormat;
 
 public class UnusedParametersInspection extends FilteringInspectionTool {
   private UnusedParametersFilter myFilter;
@@ -96,11 +99,15 @@ public class UnusedParametersInspection extends FilteringInspectionTool {
     ApplicationManager.getApplication().runReadAction(action);
   }
 
-  public RefFilter getFilter() {
+  public UnusedParametersFilter getFilter() {
     if (myFilter == null) {
       myFilter = new UnusedParametersFilter();
     }
     return myFilter;
+  }
+
+  protected void resetFilter() {
+    myFilter = null;
   }
 
   public void exportResults(final Element parentNode) {
@@ -111,13 +118,13 @@ public class UnusedParametersInspection extends FilteringInspectionTool {
           ArrayList unusedParameters = filter.getUnusedParameters((RefMethod)refElement);
           for (int i = 0; i < unusedParameters.size(); i++) {
             Element element = XMLExportUtl.createElement(refElement, parentNode, -1);
-            Element problemClassElement = new Element("problem_class");
-            problemClassElement.addContent("parameter is not used");
+            Element problemClassElement = new Element(InspectionsBundle.message("inspection.export.results.problem.element.tag"));
+            problemClassElement.addContent(InspectionsBundle.message("inspection.unused.parameter.export.results"));
             element.addContent(problemClassElement);
 
             RefParameter refParameter = (RefParameter) unusedParameters.get(i);
-            Element descriptionElement = new Element("description");
-            descriptionElement.addContent("parameter " + refParameter.getName() + " is not used");
+            Element descriptionElement = new Element(InspectionsBundle.message("inspection.export.results.description.tag"));
+            descriptionElement.addContent(InspectionsBundle.message("inspection.unused.parameter.export.results.description", refParameter.getName()));
             element.addContent(descriptionElement);
           }
         }
@@ -135,7 +142,7 @@ public class UnusedParametersInspection extends FilteringInspectionTool {
 
   private class AcceptSuggested extends QuickFixAction {
     private AcceptSuggested() {
-      super("Delete Unused Parameter(s)",IconLoader.getIcon("/actions/cancel.png"), null, UnusedParametersInspection.this);
+      super(InspectionsBundle.message("inspection.unused.parameter.delete.quickfix"),IconLoader.getIcon("/actions/cancel.png"), null, UnusedParametersInspection.this);
     }
 
     protected boolean applyFix(RefElement[] refElements) {
@@ -162,11 +169,11 @@ public class UnusedParametersInspection extends FilteringInspectionTool {
   }
 
   public String getDisplayName() {
-    return "Unused method parameters";
+    return InspectionsBundle.message("inspection.unused.parameter.display.name");
   }
 
   public String getGroupDisplayName() {
-    return "Declaration Redundancy";
+    return GroupNames.DECLARATION_REDUNDANCY;
   }
 
   public String getShortName() {
@@ -175,7 +182,7 @@ public class UnusedParametersInspection extends FilteringInspectionTool {
 
   public HTMLComposer getComposer() {
     if (myComposer == null) {
-      myComposer = new UnusedParametersComposer(myFilter, this);
+      myComposer = new UnusedParametersComposer(getFilter(), this);
     }
     return myComposer;
   }
@@ -193,10 +200,10 @@ public class UnusedParametersInspection extends FilteringInspectionTool {
     ParameterInfo[] parameterInfos = (ParameterInfo[]) newParameters.toArray(new ParameterInfo[newParameters.size()]);
 
     ChangeSignatureProcessor csp = new ChangeSignatureProcessor(getManager().getProject(),
-      psiMethod,
-      false, null, psiMethod.getName(),
-      psiMethod.getReturnType(),
-      parameterInfos);
+                                                                psiMethod,
+                                                                false, null, psiMethod.getName(),
+                                                                psiMethod.getReturnType(),
+                                                                parameterInfos);
 
     csp.run();
   }

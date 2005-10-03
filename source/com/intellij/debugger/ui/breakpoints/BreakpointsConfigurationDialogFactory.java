@@ -1,6 +1,7 @@
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.ui.DebuggerExpressionComboBox;
 import com.intellij.debugger.ui.DebuggerExpressionTextField;
 import com.intellij.openapi.application.ApplicationManager;
@@ -9,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.TabbedPaneWrapper;
+import com.intellij.CommonBundle;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -19,12 +21,14 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * created Jun 18, 2001
  * @author Jeka
  */
 public class BreakpointsConfigurationDialogFactory {
-  private static final String BREAKPOINT_PANEL = "breakpoint_panel";
+  private static final @NonNls String BREAKPOINT_PANEL = "breakpoint_panel";
   private Project myProject;
 
   private int myLastSelectedTabIndex = 0;
@@ -53,8 +57,8 @@ public class BreakpointsConfigurationDialogFactory {
 
     public BreakpointsConfigurationDialog() {
       super(myProject, true);
-      setTitle("Breakpoints");
-      setOKButtonText("&Close");
+      setTitle(DebuggerBundle.message("breakpoints.configuration.dialog.title"));
+      setOKButtonText(CommonBundle.message("button.close"));
       init();
       reset();
     }
@@ -123,7 +127,7 @@ public class BreakpointsConfigurationDialogFactory {
       return myPanel;
     }
 
-    private void setupPanelUI(BreakpointPanel panel) {
+    @SuppressWarnings({"HardCodedStringLiteral"}) private void setupPanelUI(BreakpointPanel panel) {
       final BreakpointManager breakpointManager = getBreakpointManager();
       final String category = panel.getBreakpointCategory();
       final BreakpointTree tree = panel.getTree();
@@ -146,7 +150,7 @@ public class BreakpointsConfigurationDialogFactory {
       }
     }
 
-    private void savePanelSettings(BreakpointPanel panel, String category) {
+    @SuppressWarnings({"HardCodedStringLiteral"}) private void savePanelSettings(BreakpointPanel panel, String category) {
       final BreakpointManager breakpointManager = getBreakpointManager();
 
       final BreakpointTree tree = panel.getTree();

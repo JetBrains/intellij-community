@@ -10,6 +10,7 @@ package com.intellij.refactoring.ui;
 
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiClass;
+import com.intellij.refactoring.RefactoringBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -61,7 +62,7 @@ public class ClassCellRenderer extends DefaultListCellRenderer {
       if (name != null) {
         text = name;
       } else {
-        text = "Anonymous class";
+        text = RefactoringBundle.message("anonymous.class.text");
       }
     }
     return text;

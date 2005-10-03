@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.util.net.HTTPProxySettingsDialog;
+import com.intellij.CommonBundle;
 
 import javax.swing.*;
 import javax.swing.event.UndoableEditEvent;
@@ -68,7 +69,7 @@ public class EAPSendErrorDialog extends DialogWrapper {
   protected void init() {
     setTitle(ReportMessages.ERROR_REPORT);
     getContentPane().add(myMainPanel);
-    mySendAction = new AbstractAction("&Send") {
+    mySendAction = new AbstractAction(DiagnosticBundle.message("diagnostic.error.report.send")) {
       public void actionPerformed(ActionEvent e) {
         myShouldSend = true;
         storeInfo();
@@ -76,8 +77,8 @@ public class EAPSendErrorDialog extends DialogWrapper {
       }
     };
     mySendAction.putValue(Action.MNEMONIC_KEY, new Integer(KeyEvent.VK_S));
-    mySendAction.putValue(DialogWrapper.DEFAULT_ACTION, "true");
-    myCancelAction = new AbstractAction("&Cancel") {
+    mySendAction.putValue(DialogWrapper.DEFAULT_ACTION, Boolean.TRUE.toString());
+    myCancelAction = new AbstractAction(CommonBundle.getCancelButtonText()) {
       public void actionPerformed(ActionEvent e) {
         myShouldSend = false;
         dispose();
@@ -107,6 +108,7 @@ public class EAPSendErrorDialog extends DialogWrapper {
     Shortcut [] undoShortcuts = KeymapManagerEx.getInstanceEx().getActiveKeymap().getShortcuts("$Undo");
     Shortcut [] redoShortcuts = KeymapManagerEx.getInstanceEx().getActiveKeymap().getShortcuts("$Redo");
 
+    //noinspection HardCodedStringLiteral
     Action undoAction = new AbstractAction ("Undo") {
       public void actionPerformed(ActionEvent e) {
         if (undoManager.canUndo())
@@ -114,6 +116,7 @@ public class EAPSendErrorDialog extends DialogWrapper {
       }
     };
 
+    //noinspection HardCodedStringLiteral
     Action redoAction = new AbstractAction ("Redo") {
       public void actionPerformed(ActionEvent e) {
         if (undoManager.canRedo())

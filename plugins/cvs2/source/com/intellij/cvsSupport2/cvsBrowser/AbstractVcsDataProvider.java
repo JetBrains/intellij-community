@@ -11,6 +11,7 @@ import com.intellij.cvsSupport2.cvsoperations.cvsContent.DirectoryContentProvide
 import com.intellij.cvsSupport2.cvsoperations.cvsContent.GetDirectoriesListViaUpdateOperation;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
+import com.intellij.CvsBundle;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -64,7 +65,7 @@ public abstract class AbstractVcsDataProvider implements RemoteResourceDataProvi
     executor1.setIsQuietOperation(true);
 
     executor1.performActionSync(
-      new CommandCvsHandler("Browse Repository", (CvsOperation)command, false){
+      new CommandCvsHandler(CvsBundle.message("browse.repository.operation.name"), (CvsOperation)command, false){
         protected boolean runInReadThread() {
           return false;
         }

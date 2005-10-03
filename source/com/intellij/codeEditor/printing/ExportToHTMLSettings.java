@@ -7,6 +7,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 /**
  *
@@ -14,7 +15,7 @@ import org.jdom.Element;
 public class ExportToHTMLSettings implements NamedJDOMExternalizable, ProjectComponent {
   public boolean PRINT_LINE_NUMBERS;
   public boolean OPEN_IN_BROWSER;
-  public String OUTPUT_DIRECTORY;
+  @NonNls public String OUTPUT_DIRECTORY;
 
   private int myPrintScope;
 

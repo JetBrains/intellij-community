@@ -18,6 +18,7 @@ package com.intellij.execution.configurations;
 import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.process.DefaultJavaProcessHandler;
 import com.intellij.execution.process.OSProcessHandler;
@@ -111,7 +112,7 @@ public abstract class CommandLineState implements RunnableState {
     private final ProcessHandler myProcessHandler;
 
     public PauseOutputAction(final ConsoleView console, final ProcessHandler processHandler) {
-      super("Pause Output", null, IconLoader.getIcon("/actions/pause.png"));
+      super(ExecutionBundle.message("run.configuration.pause.output.action.name"), null, IconLoader.getIcon("/actions/pause.png"));
       myConsole = console;
       myProcessHandler = processHandler;
     }

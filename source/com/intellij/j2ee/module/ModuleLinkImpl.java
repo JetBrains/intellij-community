@@ -39,20 +39,24 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.j2ee.J2EEBundle;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 public class ModuleLinkImpl extends ModuleLink implements ResolvableElement {
 
   private Module myModule;
   private String myModuleName;
   private static final Logger LOG = Logger.getInstance("#com.intellij.j2ee.module.ModuleLink");
+  @NonNls protected static final String NAME_ELEMENT = "name";
+  @NonNls protected static final String TEMP_ELEMENT_NAME = "temp";
 
   static {
-    methodToDescription.put(J2EEPackagingMethod.DO_NOT_PACKAGE, "Do not package");
-    methodToDescription.put(J2EEPackagingMethod.COPY_FILES, "Copy module output to");
-    methodToDescription.put(J2EEPackagingMethod.JAR_AND_COPY_FILE, "JAR module output and copy file to");
-    methodToDescription.put(J2EEPackagingMethod.JAR_AND_COPY_FILE_AND_LINK_VIA_MANIFEST, "JAR module, link via manifest and copy to");
-    methodToDescription.put(J2EEPackagingMethod.INCLUDE_MODULE_IN_BUILD, "Include module in build");
+    methodToDescription.put(J2EEPackagingMethod.DO_NOT_PACKAGE, J2EEBundle.message("packaging.method.description.do.not.package"));
+    methodToDescription.put(J2EEPackagingMethod.COPY_FILES, J2EEBundle.message("packaging.method.description.copy.module.output"));
+    methodToDescription.put(J2EEPackagingMethod.JAR_AND_COPY_FILE, J2EEBundle.message("packaging.method.description.jar.module.and.copy"));
+    methodToDescription.put(J2EEPackagingMethod.JAR_AND_COPY_FILE_AND_LINK_VIA_MANIFEST, J2EEBundle.message("packaging.method.description.jar.module.link.via.manifest.and.copy"));
+    methodToDescription.put(J2EEPackagingMethod.INCLUDE_MODULE_IN_BUILD, J2EEBundle.message("packaging.method.description.include.module.in.build"));
   }
 
   public ModuleLinkImpl(Module module, Module parentModule) {
@@ -91,7 +95,7 @@ public class ModuleLinkImpl extends ModuleLink implements ResolvableElement {
   }
 
   public String toString() {
-    return "Module Link: " + getName() + "->" + getURI();
+    return J2EEBundle.message("module.link.string.representation", getName(), getURI());
   }
 
   public boolean equalsIgnoreAttributes(ContainerElement otherElement) {
@@ -133,7 +137,7 @@ public class ModuleLinkImpl extends ModuleLink implements ResolvableElement {
 
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
-    element.setAttribute("name", getName());
+    element.setAttribute(NAME_ELEMENT, getName());
   }
 
   public String getName() {
@@ -151,7 +155,7 @@ public class ModuleLinkImpl extends ModuleLink implements ResolvableElement {
 
   public ModuleLink clone() {
     ModuleLink moduleLink = new ModuleLinkImpl(getName(), getParentModule());
-    Element temp = new Element("temp");
+    Element temp = new Element(TEMP_ELEMENT_NAME);
     try {
       writeExternal(temp);
       moduleLink.readExternal(temp);

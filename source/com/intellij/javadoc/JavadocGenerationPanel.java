@@ -3,6 +3,8 @@ package com.intellij.javadoc;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.util.ui.UIUtil;
+import com.intellij.psi.PsiKeyword;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -30,7 +32,7 @@ final class JavadocGenerationPanel extends JPanel {
   JCheckBox myOpenInBrowserCheckBox;
 
     JavadocGenerationPanel() {
-    myTfOutputDir.addBrowseFolderListener("Browse Output directory", null, null, FileChooserDescriptorFactory.createSingleFolderDescriptor());
+    myTfOutputDir.addBrowseFolderListener(JavadocBundle.message("javadoc.generate.output.directory.browse"), null, null, FileChooserDescriptorFactory.createSingleFolderDescriptor());
 
 
     myIndex.addChangeListener(
@@ -50,16 +52,16 @@ final class JavadocGenerationPanel extends JPanel {
    );
 
     Hashtable labelTable = new Hashtable();
-    labelTable.put(new Integer(1), new JLabel("public"));
-    labelTable.put(new Integer(2), new JLabel("protected"));
-    labelTable.put(new Integer(3), new JLabel("package"));
-    labelTable.put(new Integer(4), new JLabel("private"));
+    labelTable.put(new Integer(1), new JLabel(PsiKeyword.PUBLIC));
+    labelTable.put(new Integer(2), new JLabel(PsiKeyword.PROTECTED));
+    labelTable.put(new Integer(3), new JLabel(PsiKeyword.PACKAGE));
+    labelTable.put(new Integer(4), new JLabel(PsiKeyword.PRIVATE));
 
     myScopeSlider.setMaximum(4);
     myScopeSlider.setMinimum(1);
     myScopeSlider.setValue(1);
     myScopeSlider.setLabelTable(labelTable);
-    myScopeSlider.putClientProperty("JSlider.isFilled", Boolean.TRUE);
+    myScopeSlider.putClientProperty(UIUtil.JSLIDER_ISFILLED, Boolean.TRUE);
     myScopeSlider.setPreferredSize(new Dimension(80, 50));
     myScopeSlider.setPaintLabels(true);
     myScopeSlider.setSnapToTicks(true);
@@ -82,13 +84,13 @@ final class JavadocGenerationPanel extends JPanel {
   }
 
   void setScope(String scope) {
-    if ("public".equals(scope)) {
+    if (PsiKeyword.PUBLIC.equals(scope)) {
       myScopeSlider.setValue(1);
     }
-    else if ("package".equals(scope)) {
+    else if (PsiKeyword.PROTECTED.equals(scope)) {
       myScopeSlider.setValue(3);
     }
-    else if ("private".equals(scope)) {
+    else if (PsiKeyword.PRIVATE.equals(scope)) {
       myScopeSlider.setValue(4);
     }
     else {
@@ -100,13 +102,13 @@ final class JavadocGenerationPanel extends JPanel {
   String getScope() {
     switch (myScopeSlider.getValue()) {
       case 1:
-        return "public";
+        return PsiKeyword.PUBLIC;
       case 2:
-        return "protected";
+        return PsiKeyword.PROTECTED;
       case 3:
-        return "package";
+        return PsiKeyword.PACKAGE;
       case 4:
-        return "private";
+        return PsiKeyword.PRIVATE;
       default:
         return null;
     }

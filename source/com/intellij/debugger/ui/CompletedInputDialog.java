@@ -1,6 +1,7 @@
 package com.intellij.debugger.ui;
 
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.PositionUtil;
@@ -40,7 +41,7 @@ public class CompletedInputDialog extends DialogWrapper {
 
   protected JComponent createCenterPanel() {
     myPanel = new JPanel(new GridBagLayout());
-    myLabel = new JLabel("Enter the expression");
+    myLabel = new JLabel(DebuggerBundle.message("label.complete.input.dialog.expression"));
     myPanel.add(myLabel, new GridBagConstraints(0, 0, GridBagConstraints.REMAINDER, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.NONE,
             new Insets(0, 1, 0, 1), 0, 0));
 

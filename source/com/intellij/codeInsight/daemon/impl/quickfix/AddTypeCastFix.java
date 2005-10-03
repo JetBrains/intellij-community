@@ -9,6 +9,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -17,8 +18,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
-
-import java.text.MessageFormat;
 
 public class AddTypeCastFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.AddTypeCastFix");
@@ -31,15 +30,11 @@ public class AddTypeCastFix implements IntentionAction {
   }
 
   public String getText() {
-    String text = MessageFormat.format("Cast to ''{0}''",
-        new Object[]{
-          myType.getCanonicalText()
-        });
-    return text;
+    return QuickFixBundle.message("add.typecast.text", myType.getCanonicalText());
   }
 
   public String getFamilyName() {
-    return "Add TypeCast";
+    return QuickFixBundle.message("add.typecast.family");
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {

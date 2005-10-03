@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -15,11 +16,12 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashMap;
 
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+
+import org.jetbrains.annotations.NonNls;
 
 public class VariableAccessFromInnerClassFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.VariableAccessFromInnerClassFix");
@@ -38,38 +40,36 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
 
 
   public String getText() {
-    String message;
+    @NonNls String message;
     switch (myFixType) {
       case MAKE_FINAL:
-        message = "Make ''{0}'' final";
+        message = "make.final.text";
         break;
       case COPY_TO_FINAL:
-        message = "Copy ''{0}'' to temp final variable";
+        message = "make.final.copy.to.temp";
         break;
       case MAKE_ARRAY:
-        message = "Transform ''{0}'' into final one element array";
+        message = "make.final.transform.to.one.element.array";
         break;
-        default: message = null;
+      default: message = null;
     }
-    return MessageFormat.format(message,
-            new Object[]{
-              myVariable.getName(),
-            });
+
+    return QuickFixBundle.message(message, myVariable.getName());
   }
 
   public String getFamilyName() {
-    return "Make Final";
+    return QuickFixBundle.message("make.final.family");
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
     return myClass != null
-        && myClass.isValid()
-        && myClass.getManager().isInProject(myClass)
-        && myVariable != null
-        && myVariable.isValid()
-        && myVariable.getType() != null
-        && myFixType != -1
-        && !inOwnInitializer (myVariable, myClass);
+           && myClass.isValid()
+           && myClass.getManager().isInProject(myClass)
+           && myVariable != null
+           && myVariable.isValid()
+           && myVariable.getType() != null
+           && myFixType != -1
+           && !inOwnInitializer (myVariable, myClass);
   }
 
   private static boolean inOwnInitializer(PsiVariable variable, PsiClass aClass) {
@@ -243,8 +243,8 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
     }
     else if (PsiUtil.isIncrementDecrementOperation(element)) {
       PsiElement operand = element instanceof PsiPostfixExpression ?
-          ((PsiPostfixExpression) element).getOperand() :
-          ((PsiPrefixExpression) element).getOperand();
+                           ((PsiPostfixExpression) element).getOperand() :
+                           ((PsiPrefixExpression) element).getOperand();
       if (operand instanceof PsiReferenceExpression
           && ((PsiReferenceExpression) operand).resolve() == variable)
         return true;

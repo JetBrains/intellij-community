@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.ui.UIBundle;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -76,7 +77,7 @@ public class TogglePopupHintsPanel extends JLabel {
       } else {
         setIcon(INSPECTIONS_OFF_ICON);
       }
-      setToolTipText("Click to configure highlighting for this file");
+      setToolTipText(UIBundle.message("popup.hints.panel.click.to.configure.highlighting.tooltip.text"));
     }
     else {
       setIcon(EMPTY_ICON);

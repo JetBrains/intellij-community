@@ -3,6 +3,7 @@ package com.intellij.compiler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
+import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -74,14 +75,16 @@ public final class CompilerMessageImpl implements CompilerMessage {
   }
 
   public String getExportTextPrefix() {
-    if (getLine() >= 0) return "line (" + getLine() + ")";
-
+    if (getLine() >= 0) {
+      return CompilerBundle.message("compiler.results.export.text.prefix", getLine());
+    }
     return "";
   }
 
   public String getRenderTextPrefix() {
-    if (getLine() >= 0) return "(" + getLine() + ", " + getColumn() + ")";
-
+    if (getLine() >= 0) {
+      return "(" + getLine() + ", " + getColumn() + ")";
+    }
     return "";
   }
 

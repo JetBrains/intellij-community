@@ -5,9 +5,11 @@
  */
 package com.intellij.debugger;
 
+import org.jetbrains.annotations.NonNls;
+
 public interface HelpID {
-  String LINE_BREAKPOINTS = "debugging.lineBreakpoint";
-  String METHOD_BREAKPOINTS = "debugging.methodBreakpoint";
-  String EXCEPTION_BREAKPOINTS = "debugging.exceptionBreakpoint";
-  String FIELD_WATCHPOINTS = "debugging.fieldWatchpoint";
+  @NonNls String LINE_BREAKPOINTS = "debugging.lineBreakpoint";
+  @NonNls String METHOD_BREAKPOINTS = "debugging.methodBreakpoint";
+  @NonNls String EXCEPTION_BREAKPOINTS = "debugging.exceptionBreakpoint";
+  @NonNls String FIELD_WATCHPOINTS = "debugging.fieldWatchpoint";
 }

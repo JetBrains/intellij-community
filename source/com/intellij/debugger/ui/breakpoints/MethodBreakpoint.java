@@ -11,8 +11,8 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -33,6 +33,8 @@ import javax.swing.*;
 import java.util.Iterator;
 import java.util.Set;
 
+import org.jetbrains.annotations.NonNls;
+
 public class MethodBreakpoint extends BreakpointWithHighlighter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.breakpoints.MethodBreakpoint");
   public boolean WATCH_ENTRY = true;
@@ -47,7 +49,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter {
   public static Icon DISABLED_DEP_ICON = IconLoader.getIcon("/debugger/db_dep_method_breakpoint.png");
   private static Icon ourInvalidIcon = IconLoader.getIcon("/debugger/db_invalid_method_breakpoint.png");
   private static Icon ourVerifiedIcon = IconLoader.getIcon("/debugger/db_verified_method_breakpoint.png");
-  public static final String CATEGORY = "method_breakpoints";
+  public static final @NonNls String CATEGORY = "method_breakpoints";
 
   protected MethodBreakpoint(Project project) {
     super(project);
@@ -83,7 +85,6 @@ public class MethodBreakpoint extends BreakpointWithHighlighter {
   }
 
   protected void reload(PsiFile psiFile) {
-//    super.reload(psiFile);
     myMethodName = null;
     mySignature = null;
     if(psiFile instanceof PsiJavaFile){
@@ -115,7 +116,9 @@ public class MethodBreakpoint extends BreakpointWithHighlighter {
       }
 
       if(!hasMethod) {
-        debugProcess.getRequestsManager().setInvalid(this, "Method not found in class " + classType.name());
+        debugProcess.getRequestsManager().setInvalid(
+          this, DebuggerBundle.message("error.invalid.breakpoint.method.not.found", classType.name())
+        );
         return;
       }
 
@@ -153,45 +156,38 @@ public class MethodBreakpoint extends BreakpointWithHighlighter {
 
 
   public String getEventMessage(LocatableEvent event) {
-    final StringBuffer text = new StringBuffer(64);
-    text.append("Method \"");
     if (event instanceof MethodEntryEvent) {
       MethodEntryEvent entryEvent = (MethodEntryEvent)event;
-      text.append(entryEvent.method().declaringType().name());
-      text.append(".");
-      text.append(entryEvent.method().name());
-      text.append("()\" entered");
+      final Method method = entryEvent.method();
+      return DebuggerBundle.message("status.method.entry.breakpoint.reached", method.declaringType().name() + "." + method.name() + "()");
     }
     else if (event instanceof MethodExitEvent) {
       MethodExitEvent exitEvent = (MethodExitEvent)event;
-      text.append(exitEvent.method().declaringType().name());
-      text.append(".");
-      text.append(exitEvent.method().name());
-      text.append("()\" is about to exit");
+      final Method method = exitEvent.method();
+      return DebuggerBundle.message("status.method.exit.breakpoint.reached", method.declaringType().name() + "." + method.name() + "()");
     }
-    text.append("\n");
-    return text.toString();
+    return "";
   }
 
   public PsiElement getEvaluationElement() {
     return getPsiClass();
   }
 
-  protected Icon getDisabledIcon() { 
+  protected Icon getDisabledIcon() {
     final Breakpoint master = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().findMasterBreakpoint(this);
     return master == null? DISABLED_ICON : DISABLED_DEP_ICON;
   }
-  
-  protected Icon getSetIcon() { 
-    return ICON; 
+
+  protected Icon getSetIcon() {
+    return ICON;
   }
-  
-  protected Icon getInvalidIcon() { 
-    return ourInvalidIcon; 
+
+  protected Icon getInvalidIcon() {
+    return ourInvalidIcon;
   }
-  
-  protected Icon getVerifiedIcon() { 
-    return ourVerifiedIcon; 
+
+  protected Icon getVerifiedIcon() {
+    return ourVerifiedIcon;
   }
 
   public String getDisplayName() {
@@ -208,9 +204,9 @@ public class MethodBreakpoint extends BreakpointWithHighlighter {
         }
         buffer.append(myMethodName);
       }
-    } 
+    }
     else {
-      buffer.append("INVALID");
+      buffer.append(DebuggerBundle.message("status.breakpoint.invalid"));
     }
     return buffer.toString();
   }
@@ -265,6 +261,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter {
 
           int methodNameOffset = method.getNameIdentifier().getTextOffset();
           descriptor[0] = new MethodDescriptor();
+          //noinspection HardCodedStringLiteral
           descriptor[0].methodName = method.isConstructor() ? "<init>" : method.getName();
           descriptor[0].methodSignature = JVMNameUtil.getJVMSignature(method);
           descriptor[0].isStatic = method.hasModifierProperty(PsiModifier.STATIC);

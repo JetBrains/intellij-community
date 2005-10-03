@@ -16,6 +16,7 @@
 package com.intellij.openapi.actionSystem;
 
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -30,8 +31,7 @@ public abstract class ActionGroup extends AnAction {
   /**
    * The actual value is a Boolean.
    */
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public static final String PROP_POPUP = "popup";
+  @NonNls public static final String PROP_POPUP = "popup";
 
   /**
    * Creates a new <code>ActionGroup</code> with shortName set to <code>null</code> and

@@ -37,6 +37,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -168,7 +169,7 @@ public final class PsiUtil {
   }
 
   // todo: move to PsiThrowsList?
-  public static void addException(PsiMethod method, String exceptionFQName) throws IncorrectOperationException {
+  public static void addException(PsiMethod method, @NonNls String exceptionFQName) throws IncorrectOperationException {
     PsiClass exceptionClass = method.getManager().findClass(exceptionFQName, method.getResolveScope());
     addException(method, exceptionClass, exceptionFQName);
   }
@@ -215,7 +216,7 @@ public final class PsiUtil {
   }
 
   // todo: move to PsiThrowsList?
-  public static void removeException(PsiMethod method, String exceptionClass) throws IncorrectOperationException {
+  public static void removeException(PsiMethod method, @NonNls String exceptionClass) throws IncorrectOperationException {
     PsiJavaCodeReferenceElement[] refs = method.getThrowsList().getReferenceElements();
     for (PsiJavaCodeReferenceElement ref : refs) {
       if (ref.getCanonicalText().equals(exceptionClass)) {

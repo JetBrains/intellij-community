@@ -11,18 +11,16 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.quickfix.SimplifyBooleanExpressionFix;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.ex.AddAssertStatementFix;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -35,8 +33,7 @@ import java.util.List;
 public class DataFlowInspection extends BaseLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.DataFlowInspection");
 
-  private static final String DISPLAY_NAME = "Constant conditions & exceptions";
-  public static final String SHORT_NAME = "ConstantConditions";
+  public static final @NonNls String SHORT_NAME = "ConstantConditions";
 
   public boolean SUGGEST_NULLABLE_ANNOTATIONS = false;
 
@@ -149,7 +146,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
           LocalQuickFix fix = createAssertNotNullFix(callExpression.getMethodExpression().getQualifierExpression());
 
           descriptions.add(manager.createProblemDescriptor(mcInstruction.getCallExpression(),
-                                                           "Method invocation <code>#ref</code> #loc may produce <code>java.lang.NullPointerException</code>.",
+                                                           InspectionsBundle.message("dataflow.message.npe.method.invocation"),
                                                            fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
         }
       }
@@ -159,13 +156,13 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
         if (expression instanceof PsiArrayAccessExpression) {
           LocalQuickFix fix = createAssertNotNullFix(((PsiArrayAccessExpression)expression).getArrayExpression());
           descriptions.add(manager.createProblemDescriptor(expression,
-                                                           "Array access <code>#ref</code> #loc may produce <code>java.lang.NullPointerException</code>.",
+                                                           InspectionsBundle.message("dataflow.message.npe.array.access"),
                                                            fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
         }
         else {
           LocalQuickFix fix = createAssertNotNullFix(((PsiReferenceExpression)expression).getQualifierExpression());
           descriptions.add(manager.createProblemDescriptor(expression,
-                                                           "Member variable access <code>#ref</code> #loc may produce <code>java.lang.NullPointerException</code>.",
+                                                           InspectionsBundle.message("dataflow.message.npe.field.access"),
                                                            fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
         }
       }
@@ -173,8 +170,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
         TypeCastInstruction tcInstruction = (TypeCastInstruction)instruction;
         PsiTypeCastExpression typeCast = tcInstruction.getCastExpression();
         descriptions.add(manager.createProblemDescriptor(typeCast.getCastType(),
-                                                         "Casting <code>" + typeCast.getOperand().getText() +
-                                                         "</code> to <code>#ref</code> #loc may produce <code>java.lang.ClassCastException</code>.",
+                                                         InspectionsBundle.message("dataflow.message.cce", typeCast.getOperand().getText()),
                                                          (LocalQuickFix [])null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
       }
       else if (instruction instanceof BranchingInstruction) {
@@ -182,39 +178,40 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
         if (instruction instanceof BinopInstruction && ((BinopInstruction)instruction).isInstanceofRedundant()) {
           if (((BinopInstruction)instruction).canBeNull()) {
             descriptions.add(manager.createProblemDescriptor(psiAnchor,
-                                                             "Condition <code>#ref</code> #loc is redundant and can be replaced with <code>!= null</code>",
+                                                             InspectionsBundle.message("dataflow.message.redundant.instanceof"),
                                                              new RedundantInstanceofFix(),
                                                              ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
           }
           else {
             final LocalQuickFix localQuickFix = createSimplifyBooleanExpressionFix(psiAnchor, true);
             descriptions.add(manager.createProblemDescriptor(psiAnchor,
-                                                             "Condition <code>#ref</code> #loc is always true</code>",
+                                                             InspectionsBundle.message("dataflow.message.constant.condition", Boolean.toString(true)),
                                                              localQuickFix,
                                                              ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
-
           }
         }
         else if (psiAnchor instanceof PsiSwitchLabelStatement) {
           if (falseSet.contains(instruction)) {
-            descriptions.add(manager.createProblemDescriptor(psiAnchor, "Switch label<code>#ref</code> #loc is unreachable.", (LocalQuickFix [])null,
+            descriptions.add(manager.createProblemDescriptor(psiAnchor,
+                                                             InspectionsBundle.message("dataflow.message.unreachable.switch.label"),
+                                                             (LocalQuickFix [])null,
                                                              ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
           }
         }
         else if (psiAnchor != null) {
           if (!reportedAnchors.contains(psiAnchor)) {
             if (onTheLeftSideOfConditionalAssignemnt(psiAnchor)) {
-              descriptions.add(manager.createProblemDescriptor(psiAnchor, "Condition <code>#ref</code> #loc at the left side of assignment expression is always <code>" +
-                                                                          (trueSet.contains(instruction) ? "true" : "false") +
-                                                                          "</code>. Can be simplified to normal assignment.", (LocalQuickFix)null,
-                                                                                      ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+              descriptions.add(manager.createProblemDescriptor(psiAnchor, InspectionsBundle.message("dataflow.message.pointless.assignment.expression", Boolean.toString(trueSet.contains(instruction))),
+                                                               (LocalQuickFix)null,
+                                                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
             }
             else {
               final LocalQuickFix localQuickFix = createSimplifyBooleanExpressionFix(psiAnchor, trueSet.contains(instruction));
-              descriptions.add(manager.createProblemDescriptor(psiAnchor, "Condition <code>#ref</code> #loc is always <code>" +
-                                                                          (trueSet.contains(instruction) ? "true" : "false") +
-                                                                          "</code>.", localQuickFix,
-                                                                                      ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+              descriptions.add(manager.createProblemDescriptor(psiAnchor,
+                                                               InspectionsBundle.message("dataflow.message.constant.condition",
+                                                                                         Boolean.toString(trueSet.contains(instruction))),
+                                                               localQuickFix,
+                                                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
             }
             reportedAnchors.add(psiAnchor);
           }
@@ -225,37 +222,34 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
     Set<PsiExpression> exprs = runner.getNullableArguments();
     for (PsiExpression expr : exprs) {
       final String text = isNullLiteralExpression(expr)
-                          ? "Passing <code>null</code> argument to parameter annotated as @NotNull"
-                          : "Argument <code>#ref</code> #loc might be null";
+                          ? InspectionsBundle.message("dataflow.message.passing.null.argument")
+                          : InspectionsBundle.message("dataflow.message.passing.nullable.argument");
+
       descriptions.add(manager.createProblemDescriptor(expr, text, (LocalQuickFix [])null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
     }
 
     exprs = runner.getNullableAssignments();
     for (PsiExpression expr : exprs) {
-      final String exprText = isNullLiteralExpression(expr)
-                              ? "<code>null</code>"
-                              : "Expression <code>#ref</code> might evaluate to null but";
-      descriptions.add(manager.createProblemDescriptor(expr,
-                                                       exprText + " is assigned to a variable that is annotated with @NotNull",
-                                                       (LocalQuickFix [])null,
-                                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+      final String text = isNullLiteralExpression(expr)
+                              ? InspectionsBundle.message("dataflow.message.assigning.null")
+                              : InspectionsBundle.message("dataflow.message.assigning.nullable");
+      descriptions.add(manager.createProblemDescriptor(expr, text, (LocalQuickFix [])null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
     }
 
     final HashSet<PsiReturnStatement> statements = runner.getNullableReturns();
     for (PsiReturnStatement statement : statements) {
       final PsiExpression expr = statement.getReturnValue();
-      final String exprText = isNullLiteralExpression(expr)
-                              ? "<code>null</code>"
-                              : "Expression <code>#ref</code> might evaluate to null but";
       if (runner.isInNotNullMethod()) {
-        descriptions.add(manager.createProblemDescriptor(expr,
-                                                         exprText + " is returned by the method declared as @NotNull",
-                                                         (LocalQuickFix [])null,
-                                                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+        final String text = isNullLiteralExpression(expr)
+                                ? InspectionsBundle.message("dataflow.message.return.null.from.notnull")
+                                : InspectionsBundle.message("dataflow.message.return.nullable.from.notnull");
+        descriptions.add(manager.createProblemDescriptor(expr, text, (LocalQuickFix [])null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
       }
       else if (AnnotationUtil.isAnnotatingApplicable(statement)) {
-        descriptions.add(manager.createProblemDescriptor(expr,
-                                                         exprText + " is returned by the method which isn't declared as @Nullable",
+        final String text = isNullLiteralExpression(expr)
+                                ? InspectionsBundle.message("dataflow.message.return.null.from.notnullable")
+                                : InspectionsBundle.message("dataflow.message.return.nullable.from.notnullable");
+        descriptions.add(manager.createProblemDescriptor(expr, text,
                                                          new AnnotateMethodFix(AnnotationUtil.NULLABLE),
                                                          ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
 
@@ -309,14 +303,14 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
       }
 
       public String getFamilyName() {
-        return "Simplify Boolean Expression";
+        return InspectionsBundle.message("inspection.data.flow.simplify.boolean.expression.quickfix");
       }
     };
   }
 
   private static class RedundantInstanceofFix implements LocalQuickFix {
     public String getName() {
-      return "Replace with != null";
+      return InspectionsBundle.message("inspection.data.flow.redundant.instanceof.quickfix");
     }
 
     public void applyFix(Project project, ProblemDescriptor descriptor) {
@@ -341,7 +335,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
 
 
   public String getDisplayName() {
-    return DISPLAY_NAME;
+    return InspectionsBundle.message("inspection.data.flow.display.name");
   }
 
   public String getGroupDisplayName() {
@@ -365,9 +359,8 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
       gc.anchor = GridBagConstraints.NORTHWEST;
 
       //mySuggestNullables = new JCheckBox("Suggest @Nullable annotation for method possibly return null.\n Requires JDK5.0 and annotations.jar from IDEA distribution");
-      mySuggestNullables = new JCheckBox("<html><body>Suggest @Nullable annotation for methods that may possibly return null.<br> Requires JDK5.0 and annotations.jar from " +
-                                         ApplicationNamesInfo.getInstance().getProductName() +
-                                         " distribution</body></html>");
+      mySuggestNullables = new JCheckBox(
+        InspectionsBundle.message("inspection.data.flow.nullable.quickfix.option", ApplicationNamesInfo.getInstance().getProductName()));
       mySuggestNullables.setSelected(SUGGEST_NULLABLE_ANNOTATIONS);
       mySuggestNullables.getModel().addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent e) {

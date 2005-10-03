@@ -1,12 +1,12 @@
 package com.intellij.psi.filters.getters;
 
-import com.intellij.psi.filters.ContextGetter;
-import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.codeInsight.completion.CompletionContext;
+import com.intellij.psi.*;
+import com.intellij.psi.filters.ContextGetter;
+import com.intellij.util.IncorrectOperationException;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -26,9 +26,9 @@ public class ThisGetter implements ContextGetter{
         final String expressionText;
         if(first){
           first = false;
-          expressionText = "this";
+          expressionText = PsiKeyword.THIS;
         }
-        else expressionText = ((PsiClass)context).getName() + ".this";
+        else expressionText = ((PsiClass)context).getName() + "." + PsiKeyword.THIS;
         try{
           expressions.add(factory.createExpressionFromText(expressionText, context));
         }

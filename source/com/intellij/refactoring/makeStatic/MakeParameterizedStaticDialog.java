@@ -14,6 +14,7 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.ParameterTablePanel;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
@@ -47,7 +48,7 @@ public class MakeParameterizedStaticDialog extends AbstractMakeStaticDialog {
     myNameSuggestions = nameSuggestions;
 
     String type = UsageViewUtil.getType(myMember);
-    setTitle("Make " + UsageViewUtil.capitalize(type) + " Static");
+    setTitle(RefactoringBundle.message("make.0.static", UsageViewUtil.capitalize(type)));
     myAnyNonFieldMembersUsed = buildVariableData(internalUsages);
     init();
   }
@@ -125,10 +126,9 @@ public class MakeParameterizedStaticDialog extends AbstractMakeStaticDialog {
     gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
     gbConstraints.fill = GridBagConstraints.NONE;
     gbConstraints.anchor = GridBagConstraints.WEST;
-    String text = myMember instanceof PsiMethod ? "Add object as a parameter with name:" : "Add object as a parameter to constructors with name:";
+    String text = myMember instanceof PsiMethod ? RefactoringBundle.message("add.object.as.a.parameter.with.name") : RefactoringBundle.message("add.object.as.a.parameter.to.constructors.with.name");
     myMakeClassParameter.setText(text);
     panel.add(myMakeClassParameter, gbConstraints);
-    myMakeClassParameter.setMnemonic('O');
     myMakeClassParameter.setSelected(myAnyNonFieldMembersUsed);
 
     gbConstraints.insets = new Insets(0, 8, 4, 8);
@@ -161,10 +161,9 @@ public class MakeParameterizedStaticDialog extends AbstractMakeStaticDialog {
       gbConstraints.gridheight = 1;
       gbConstraints.fill = GridBagConstraints.NONE;
       gbConstraints.anchor = GridBagConstraints.WEST;
-      text = myMember instanceof PsiMethod ? "Add parameters for fields:" : "Add parameters for fields to constructors:";
+      text = myMember instanceof PsiMethod ? RefactoringBundle.message("add.parameters.for.fields") : RefactoringBundle.message("add.parameters.for.fields.to.constructors");
       myMakeFieldParameters.setText(text);
       panel.add(myMakeFieldParameters, gbConstraints);
-      myMakeFieldParameters.setMnemonic('F');
       myMakeFieldParameters.setSelected(!myAnyNonFieldMembersUsed);
 
       myParameterPanel = new ParameterTablePanel(myProject, myVariableData) {
@@ -207,10 +206,9 @@ public class MakeParameterizedStaticDialog extends AbstractMakeStaticDialog {
     if (isMakeClassParameter()) {
       final PsiMethod methodWithParameter = checkParameterDoesNotExist();
       if (methodWithParameter != null) {
-        String who = methodWithParameter == myMember ? "This method" : UsageViewUtil.getDescriptiveName(methodWithParameter);
-        String message = who + " already has parameter named '" + getClassParameterName() + "'.\n" +
-                         "Use this name anyway?";
-        ret = Messages.showYesNoDialog(myProject, message, "Warning", Messages.getWarningIcon());
+        String who = methodWithParameter == myMember ? RefactoringBundle.message("this.method") : UsageViewUtil.getDescriptiveName(methodWithParameter);
+        String message = RefactoringBundle.message("0.already.has.parameter.named.1.use.this.name.anyway", who, getClassParameterName());
+        ret = Messages.showYesNoDialog(myProject, message, RefactoringBundle.message("warning.title"), Messages.getWarningIcon());
         myClassParameterNameInputField.requestFocusInWindow();
       }
     }

@@ -5,6 +5,7 @@
   <version>1.0</version>
   <vendor logo="/general/ijLogo.png">JetBrains</vendor>
   <idea-version since-build="3000"/>
+  <is-internal/>
 
   <application-components>
     <component>

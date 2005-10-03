@@ -5,6 +5,7 @@
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.DebuggerInvocationUtil;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -567,7 +568,9 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
       }
       catch (ObjectCollectedException e) {
         getNode().removeAllChildren();
-        getNode().add(getNodeFactory().createMessageNode(new MessageDescriptor("Cannot evaluate descendants, object was collected. " + e.getMessage())));
+        getNode().add(getNodeFactory().createMessageNode(new MessageDescriptor(
+          DebuggerBundle.message("error.cannot.build.node.children.object.collected", e.getMessage())))
+        );
         getNode().childrenChanged(false);
       }
     }

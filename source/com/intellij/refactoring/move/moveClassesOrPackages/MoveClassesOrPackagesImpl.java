@@ -8,6 +8,7 @@ import com.intellij.ide.util.DirectoryChooser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.localVcs.LvcsAction;
 import com.intellij.openapi.localVcs.impl.LvcsIntegration;
 import com.intellij.openapi.project.Project;
@@ -16,10 +17,10 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.PackageWrapper;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.rename.RenameUtil;
@@ -47,8 +48,9 @@ public class MoveClassesOrPackagesImpl {
         PsiPackage aPackage = ((PsiDirectory)element).getPackage();
         LOG.assertTrue(aPackage != null);
         if (aPackage.getQualifiedName().length() == 0) { //is default package
-          String message = "Move Package refactoring cannot be applied to default package";
-          RefactoringMessageUtil.showErrorMessage("Move", message, HelpID.getMoveHelpID(element), project);
+          String message = RefactoringBundle.message("move.package.refactoring.cannot.be.applied.to.default.package");
+          RefactoringMessageUtil.showErrorMessage(RefactoringBundle.message("move.tltle"),
+                                                  message, HelpID.getMoveHelpID(element), project);
           return;
         }
         element = checkMovePackage(project, aPackage, readOnly);
@@ -61,15 +63,14 @@ public class MoveClassesOrPackagesImpl {
       else if (element instanceof PsiClass) {
         PsiClass aClass = (PsiClass)element;
         if (aClass instanceof PsiAnonymousClass) {
-          String message = "Move Class refactoring cannot be applied to anonymous classes";
-          RefactoringMessageUtil.showErrorMessage("Move", message, HelpID.getMoveHelpID(element), project);
+          String message = RefactoringBundle.message("move.class.refactoring.cannot.be.applied.to.anonymous.classes");
+          RefactoringMessageUtil.showErrorMessage(RefactoringBundle.message("move.tltle"), message, HelpID.getMoveHelpID(element), project);
           return;
         }
         if (!(aClass.getParent() instanceof PsiFile)) {
-          String message =
-            "Cannot perform the refactoring.\n" +
-            "Moving local classes is not supported.";
-          RefactoringMessageUtil.showErrorMessage("Move", message, HelpID.getMoveHelpID(element), project);
+          String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("moving.local.classes.is.not.supported"));
+          RefactoringMessageUtil.showErrorMessage(RefactoringBundle.message("move.tltle"),
+                                                  message, HelpID.getMoveHelpID(element), project);
           return;
         }
 
@@ -78,10 +79,10 @@ public class MoveClassesOrPackagesImpl {
                       aClass.getName() + "." + StdFileTypes.JAVA.getDefaultExtension() :
                       file.getName();
         if (names.contains(name)) {
-           String message =
-            "Cannot perform the refactoring.\n" +
-            "There are going to be multiple destination files with the same name.";
-          RefactoringMessageUtil.showErrorMessage("Move", message, HelpID.getMoveHelpID(element), project);
+           String message = RefactoringBundle.getCannotRefactorMessage(
+             RefactoringBundle.message("there.are.going.to.be.multiple.destination.files.with.the.same.name"));
+          RefactoringMessageUtil.showErrorMessage(RefactoringBundle.message("move.tltle"),
+                                                  message, HelpID.getMoveHelpID(element), project);
           return;
         }
         names.add(name);
@@ -95,7 +96,8 @@ public class MoveClassesOrPackagesImpl {
 
     if (!readOnly.isEmpty()) {
       if (!successfullyCheckedOut(project, readOnly)) {
-        Messages.showErrorDialog(project, "Cannot perform refactorings.\n Some files or directories are read only.", "Move");
+        String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("some.files.or.directories.are.read.only"));
+        Messages.showErrorDialog(project, message, RefactoringBundle.message("move.tltle"));
         return;
       }
     }
@@ -141,12 +143,16 @@ public class MoveClassesOrPackagesImpl {
       RenameUtil.buildPackagePrefixChangedMessage(virtualFiles, message, aPackage.getQualifiedName());
       if (directories.length > 1) {
         RenameUtil.buildMultipleDirectoriesInPackageMessage(message, aPackage, directories);
-        message.append("\n\nAll these directories will be moved and all references to \n");
-        message.append(aPackage.getQualifiedName());
-        message.append("\nwill be changed.");
+        message.append("\n\n");
+        String report = RefactoringBundle.message("all.these.directories.will.be.moved.and.all.references.to.0.will.be.changed",
+                                                  aPackage.getQualifiedName());
+        message.append(report);
       }
-      message.append("\nDo you wish to continue?");
-      int ret = Messages.showYesNoDialog(project, message.toString(), "Warning", Messages.getWarningIcon());
+      message.append("\n");
+      message.append(RefactoringBundle.message("do.you.wish.to.continue"));
+      int ret = Messages.showYesNoDialog(project, message.toString(),
+                                         RefactoringBundle.message("warning.title"),
+                                         Messages.getWarningIcon());
       if (ret != 0) {
         return null;
       }
@@ -307,20 +313,21 @@ public class MoveClassesOrPackagesImpl {
     }
     if (!readOnly.isEmpty()) {
       if (!successfullyCheckedOut(project, readOnly)) {
-        Messages.showErrorDialog(project, "Cannot perform refactorings.\n Some files or directories are read only.", "Move");
+        String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("some.files.or.directories.are.read.only"));
+        Messages.showErrorDialog(project, message, RefactoringBundle.message("move.tltle"));
         return;
       }
     }
     List<PsiDirectory> sourceRootDirectories = buildRearrangeTargetsList(project, directories);
     DirectoryChooser chooser = new DirectoryChooser(project);
-    chooser.setTitle("Select source root");
+    chooser.setTitle(RefactoringBundle.message("select.source.root.chooser.title"));
     chooser.fillList(sourceRootDirectories.toArray(new PsiDirectory[sourceRootDirectories.size()]), null, project, "");
     chooser.show();
     if (!chooser.isOK()) return;
     final PsiDirectory selectedTarget = chooser.getSelectedDirectory();
     if (selectedTarget == null) return;
     final Ref<IncorrectOperationException> ex = Ref.create(null);
-    final String commandDescription = "Moving directories";
+    final String commandDescription = RefactoringBundle.message("moving.directories.command");
     Runnable runnable = new Runnable() {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {

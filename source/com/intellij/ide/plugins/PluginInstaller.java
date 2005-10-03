@@ -1,6 +1,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.startup.StartupActionScriptManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -17,6 +18,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.jetbrains.annotations.NonNls;
 
 /**
  * Created by IntelliJ IDEA.
@@ -94,7 +97,8 @@ public class PluginInstaller {
       if (file == null) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
-            Messages.showErrorDialog("Plugin " + pluginNode.getName() + " was not installed.", "Failed to download");
+            Messages.showErrorDialog(IdeBundle.message("error.plugin.was.not.installed", pluginNode.getName()),
+                                     IdeBundle.message("title.failed.to.download"));
           }
         });
         return false;
@@ -106,11 +110,12 @@ public class PluginInstaller {
         StartupActionScriptManager.addActionCommand(deleteOld);
       }
 
+      //noinspection HardCodedStringLiteral
       if (file.getName().endsWith(".jar")) {
         // add command to copy file to the IDEA/plugins path
         StartupActionScriptManager.ActionCommand copyPlugin = new StartupActionScriptManager.CopyCommand(file,
-                                                     new File (PathManager.getPluginsPath() +
-                                                     File.separator + file.getName()));
+                                                                                                         new File (PathManager.getPluginsPath() +
+                                                                                                                   File.separator + file.getName()));
         StartupActionScriptManager.addActionCommand(copyPlugin);
       } else {
         // add command to unzip file to the IDEA/plugins path
@@ -163,6 +168,7 @@ public class PluginInstaller {
     }
   }
 
+  @NonNls
   private static String getPluginClassesPath() {
     return PathManagerEx.getPluginTempPath() + File.separator + "plugin.classes";
   }

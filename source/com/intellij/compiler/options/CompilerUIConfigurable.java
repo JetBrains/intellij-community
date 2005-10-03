@@ -6,6 +6,7 @@ import com.intellij.compiler.RmicSettings;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.util.Options;
@@ -40,7 +41,7 @@ public class CompilerUIConfigurable implements Configurable {
 
     myExcludeFromCompilePanel = new ExcludeFromCompilePanel(project);
     myExcludeFromCompilePanel.setBorder(BorderFactory.createCompoundBorder(
-      IdeBorderFactory.createTitledBorder("Exclude from Compile"), BorderFactory.createEmptyBorder(2, 2, 2, 2))
+      IdeBorderFactory.createTitledBorder(CompilerBundle.message("label.group.exclude.from.compile")), BorderFactory.createEmptyBorder(2, 2, 2, 2))
     );
     myExcludeTablePanel.setLayout(new BorderLayout());
     myExcludeTablePanel.add(myExcludeFromCompilePanel, BorderLayout.CENTER);
@@ -48,15 +49,11 @@ public class CompilerUIConfigurable implements Configurable {
     myTabbedPanePanel.setLayout(new BorderLayout());
     final TabbedPaneWrapper tabbedPane = new TabbedPaneWrapper();
     myJavaCompilersTab = new JavaCompilersTab(project);
-    tabbedPane.addTab("Java Compiler", myJavaCompilersTab.createComponent());
+    tabbedPane.addTab(CompilerBundle.message("java.compiler.description"), myJavaCompilersTab.createComponent());
     myRmicConfigurable = new RmicConfigurable(RmicSettings.getInstance(project));
-    tabbedPane.addTab("RMI Compiler", myRmicConfigurable.createComponent());
+    tabbedPane.addTab(CompilerBundle.message("rmi.compiler.description"), myRmicConfigurable.createComponent());
     myTabbedPanePanel.add(tabbedPane.getComponent(), BorderLayout.CENTER);
 
-    myCbCompileInBackground.setMnemonic('o');
-    myCbClearOutputDirectory.setMnemonic('l');
-    myCbCloseMessageViewOnSuccess.setMnemonic('m');
-    myCbCompileDependent.setMnemonic('d');
 
     ButtonGroup deployGroup = new ButtonGroup();
     deployGroup.add(myShowDialog);
@@ -131,7 +128,7 @@ public class CompilerUIConfigurable implements Configurable {
   private static void applyResourcePatterns(String extensionString, final CompilerConfiguration configuration)
     throws ConfigurationException {
     StringTokenizer tokenizer = new StringTokenizer(extensionString, ";", false);
-    java.util.List errors = new ArrayList();
+    java.util.List<String[]> errors = new ArrayList<String[]>();
 
     while (tokenizer.hasMoreTokens()) {
       String namePattern = tokenizer.nextToken();
@@ -139,21 +136,23 @@ public class CompilerUIConfigurable implements Configurable {
         configuration.addResourceFilePattern(namePattern);
       }
       catch (PatternSyntaxException e) {
-        errors.add(new String[]{namePattern, e.getMessage()});
+        errors.add(new String[]{namePattern, e.getLocalizedMessage()});
       }
     }
 
     if (errors.size() > 0) {
-      StringBuffer message = new StringBuffer("The following resource patterns are malformed:");
-      for (Iterator it = errors.iterator(); it.hasNext();) {
-        String[] pair = (String[])it.next();
-        message.append("\n\n");
-        message.append(pair[0]);
-        message.append(": ");
-        message.append(pair[1]);
+      final StringBuffer pattersnsWithErrors = new StringBuffer();
+      for (final Object error : errors) {
+        String[] pair = (String[])error;
+        pattersnsWithErrors.append("\n");
+        pattersnsWithErrors.append(pair[0]);
+        pattersnsWithErrors.append(": ");
+        pattersnsWithErrors.append(pair[1]);
       }
 
-      throw new ConfigurationException(message.toString(), "Malformed Resource Patterns");
+      throw new ConfigurationException(
+        CompilerBundle.message("error.compiler.configurable.malformed.patterns", pattersnsWithErrors.toString()), CompilerBundle.message("bad.resource.patterns.dialog.title")
+      );
     }
   }
 

@@ -1,10 +1,12 @@
 
 package com.intellij.refactoring.actions;
 
+import com.intellij.lang.Language;
+import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
+import org.jetbrains.annotations.NonNls;
 
 /**
  *
@@ -13,7 +15,7 @@ public class IntroduceVariableAction extends BaseRefactoringAction {
   /**
    * @fabrique
    */
-  public static final String INTRODUCE_VARIABLE_ACTION_HANDLER = "IntroduceVariableActionHandler";
+  @NonNls public static final String INTRODUCE_VARIABLE_ACTION_HANDLER = "IntroduceVariableActionHandler";
 
   protected boolean isAvailableInEditorOnly() {
     return true;
@@ -29,6 +31,15 @@ public class IntroduceVariableAction extends BaseRefactoringAction {
       return handler;
     }
 
-    return new IntroduceVariableHandler();
+    final Language language = (Language)dataContext.getData(DataConstants.LANGUAGE);
+    if (language != null) {
+      return language.getRefactoringSupportProvider().getIntroduceVariableHandler();
+    }
+
+    return null;
+  }
+
+  protected boolean isAvailableForLanguage(Language language) {
+    return language.getRefactoringSupportProvider().getIntroduceVariableHandler() != null;
   }
 }

@@ -35,6 +35,9 @@ public abstract class ContainerElement implements JDOMExternalizable, Cloneable 
   private Module myParentModule;
   @NonNls private static final String URI_ATTR = "URI";
   @NonNls private static final String PACKAGING_METHOD_ATTR = "method";
+  @NonNls private static final String ELEMENT_ATTRIBUTE = "attribute";
+  @NonNls private static final String ATTRIBUTE_NAME = "name";
+  @NonNls private static final String ATTRIBUTE_VALUE = "value";
 
   protected ContainerElement(Module parentModule) {
     myParentModule = parentModule;
@@ -71,25 +74,23 @@ public abstract class ContainerElement implements JDOMExternalizable, Cloneable 
     myParentModule = module;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public void readExternal(Element element) throws InvalidDataException {
-    final List attrs = element.getChildren("attribute");
+    final List attrs = element.getChildren(ELEMENT_ATTRIBUTE);
     for (int i = 0; i < attrs.size(); i++) {
       Element attribute = (Element)attrs.get(i);
-      final String name = attribute.getAttributeValue("name");
-      final String value = attribute.getAttributeValue("value");
+      final String name = attribute.getAttributeValue(ATTRIBUTE_NAME);
+      final String value = attribute.getAttributeValue(ATTRIBUTE_VALUE);
       setAttribute(name, value);
     }
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public void writeExternal(Element element) throws WriteExternalException {
     for (Iterator iterator = myAttributes.keySet().iterator(); iterator.hasNext();) {
       String name = (String)iterator.next();
       String value = getAttribute(name);
-      final Element attr = new Element("attribute");
-      attr.setAttribute("name", name);
-      attr.setAttribute("value", value==null?"":value);
+      final Element attr = new Element(ELEMENT_ATTRIBUTE);
+      attr.setAttribute(ATTRIBUTE_NAME, name);
+      attr.setAttribute(ATTRIBUTE_VALUE, value==null?"":value);
       element.addContent(attr);
     }
   }

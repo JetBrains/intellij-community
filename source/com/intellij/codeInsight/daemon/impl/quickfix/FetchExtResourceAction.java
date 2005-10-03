@@ -1,11 +1,13 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.j2ee.openapi.impl.ExternalResourceManagerImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressWindow;
@@ -20,6 +22,7 @@ import com.intellij.psi.xml.*;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.IOExceptionDialog;
 import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.io.*;
@@ -37,6 +40,12 @@ import java.util.StringTokenizer;
  */
 public class FetchExtResourceAction extends BaseIntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.FetchDtdAction");
+  private static final @NonNls String HTML_MIME = "text/html";
+  private static final @NonNls String HTTP_PROTOCOL = "http://";
+  private static final @NonNls String FTP_PROTOCOL = "ftp://";
+  private static final @NonNls String FETCHING_THREAD_ID = "Fetching Thread";
+  private static final @NonNls String EXT_RESOURCES_FOLDER = "extResources";
+  private static final @NonNls String INCLUDE_TAG = "include";
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
     if (!(file instanceof XmlFile)) return false;
@@ -49,14 +58,14 @@ public class FetchExtResourceAction extends BaseIntentionAction {
     XmlFile xmlFile = XmlUtil.findXmlFile(file, uri);
     if (xmlFile != null) return false;
 
-    if (!uri.startsWith("http://") && !uri.startsWith("ftp://")) return false;
+    if (!uri.startsWith(HTTP_PROTOCOL) && !uri.startsWith(FTP_PROTOCOL)) return false;
 
-    setText("Fetch External Resource");
+    setText(QuickFixBundle.message("fetch.external.resource"));
     return true;
   }
 
   public String getFamilyName() {
-    return "Fetch External Resource";
+    return QuickFixBundle.message("fetch.external.resource");
   }
 
   static String findUri(PsiFile file, int offset) {
@@ -79,9 +88,9 @@ public class FetchExtResourceAction extends BaseIntentionAction {
     } else if (attribute.getNamespace().equals(XmlUtil.XML_SCHEMA_INSTANCE_URI)) {
       String location = attribute.getValue();
 
-      if (attribute.getLocalName().equals("noNamespaceSchemaLocation")) {
+      if (attribute.getLocalName().equals(XmlUtil.NO_NAMESPACE_SCHEMA_LOCATION_ATT)) {
         if (XmlUtil.findXmlFile(file,location) == null) return location;
-      } else if (attribute.getLocalName().equals("schemaLocation")) {
+      } else if (attribute.getLocalName().equals(XmlUtil.SCHEMA_LOCATION_ATT)) {
         StringTokenizer tokenizer = new StringTokenizer(location);
         int offsetInAttr = offset - attribute.getValueElement().getTextOffset();
 
@@ -118,7 +127,7 @@ public class FetchExtResourceAction extends BaseIntentionAction {
     if (uri == null) return;
 
     final ProgressWindow progressWindow = new ProgressWindow(true, project);
-    progressWindow.setTitle("Fetching resource");
+    progressWindow.setTitle(QuickFixBundle.message("fetching.resource.title"));
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       new Thread(new Runnable() {
         public void run() {
@@ -132,16 +141,16 @@ public class FetchExtResourceAction extends BaseIntentionAction {
                 }
                 catch (IOException ex) {
                   String uriWithProblems = uri;
-                  String message = "Error While Fetching";
+                  String message = QuickFixBundle.message("error.fetching.title");
                   IOException cause = ex;
 
                   if (ex instanceof FetchingResourceIOException) {
                     uriWithProblems = ((FetchingResourceIOException)ex).url;
                     cause = (IOException)ex.getCause();
-                    if (!uri.equals(uriWithProblems)) message += " Dependent Resource";
+                    if (!uri.equals(uriWithProblems)) message = QuickFixBundle.message("error.fetching.dependent.resource.title");
                   }
 
-                  if (!IOExceptionDialog.showErrorDialog(cause, message, "Error while fetching " + uriWithProblems)) {
+                  if (!IOExceptionDialog.showErrorDialog(cause, message, QuickFixBundle.message("error.fetching.resource", uriWithProblems))) {
                     break;
                   }
                   else {
@@ -153,7 +162,7 @@ public class FetchExtResourceAction extends BaseIntentionAction {
             }
           }, progressWindow);
         }
-      }, "Fetching Thread").start();
+      }, FETCHING_THREAD_ID).start();
     }
   }
 
@@ -161,7 +170,7 @@ public class FetchExtResourceAction extends BaseIntentionAction {
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
 
     String sep = File.separator;
-    final String extResourcesPath = PathManager.getSystemPath() + sep + "extResources";
+    final String extResourcesPath = PathManager.getSystemPath() + sep + EXT_RESOURCES_FOLDER;
     final File extResources = new File(extResourcesPath);
     extResources.mkdirs();
     LOG.assertTrue(extResources.exists());
@@ -203,7 +212,7 @@ public class FetchExtResourceAction extends BaseIntentionAction {
                 List<String> strings = extractEmbeddedFileReferences(virtualFile, psiManager);
                 for (Iterator<String> iterator = strings.iterator(); iterator.hasNext();) {
                   String s = iterator.next();
-                  if (s.startsWith("http://")) {
+                  if (s.startsWith(HTTP_PROTOCOL)) {
                     // do not support absolute references
                     continue;
                   }
@@ -277,7 +286,7 @@ public class FetchExtResourceAction extends BaseIntentionAction {
     SwingUtilities.invokeLater(
       new Runnable() {
         public void run() {
-          indicator.setText("Fetching " + resourceUrl);
+          indicator.setText(QuickFixBundle.message("fetching.progress.indicator", resourceUrl));
         }
       }
     );
@@ -286,11 +295,11 @@ public class FetchExtResourceAction extends BaseIntentionAction {
     if (bytes == null) return null;
     int slashIndex = resourceUrl.lastIndexOf("/");
     String resPath = extResourcesPath + File.separatorChar +
-                           Integer.toHexString(resourceUrl.hashCode()) + "_" +
-                           resourceUrl.substring(slashIndex + 1);
+                     Integer.toHexString(resourceUrl.hashCode()) + "_" +
+                     resourceUrl.substring(slashIndex + 1);
     if (resourceUrl.indexOf('.',slashIndex) == -1) {
       // remote url does not contain file with extension
-      resPath += ".xml";
+      resPath += "." + StdFileTypes.XML.getDefaultExtension();
     }
 
     File res = new File(resPath);
@@ -331,7 +340,7 @@ public class FetchExtResourceAction extends BaseIntentionAction {
           } else if (element instanceof XmlTag) {
             XmlTag tag = (XmlTag)element;
 
-            if(tag.getLocalName().equals("include")) {
+            if(tag.getLocalName().equals(INCLUDE_TAG)) {
               //String namespace = tag.getNamespace();
               // we do not check for namespace here since there are many schema defs like
               // http://www.w3.org/1999/XMLSchema, http://www.w3.org/2001/XMLSchema, add your own here 
@@ -346,9 +355,7 @@ public class FetchExtResourceAction extends BaseIntentionAction {
           return true;
         }
 
-      },
-        true
-      );
+      }, true);
     }
 
     return result;
@@ -367,10 +374,13 @@ public class FetchExtResourceAction extends BaseIntentionAction {
       InputStream in = urlConnection.getInputStream();
       String contentType = urlConnection.getContentType();
 
-      if (!ApplicationManager.getApplication().isUnitTestMode() && contentType.equals("text/html")) {
+      if (!ApplicationManager.getApplication().isUnitTestMode() && contentType.equals(HTML_MIME)) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
-            Messages.showMessageDialog(project, "No xml at the location: \n" + dtdUrl, "Invalid URL", Messages.getErrorIcon());
+            Messages.showMessageDialog(project,
+                                       QuickFixBundle.message("invalid.url.no.xml.file.at.location", dtdUrl),
+                                       QuickFixBundle.message("invalid.url.title"),
+                                       Messages.getErrorIcon());
           }
         }, indicator.getModalityState());
         return null;
@@ -396,7 +406,10 @@ public class FetchExtResourceAction extends BaseIntentionAction {
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
-            Messages.showMessageDialog(project, "Invalid URL: \n" + dtdUrl, "Invalid URL", Messages.getErrorIcon());
+            Messages.showMessageDialog(project,
+                                       QuickFixBundle.message("invalid.uril.message", dtdUrl),
+                                       QuickFixBundle.message("invalid.url.title"),
+                                       Messages.getErrorIcon());
           }
         }, indicator.getModalityState());
       }

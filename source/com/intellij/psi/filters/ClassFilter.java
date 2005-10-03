@@ -4,6 +4,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiElement;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * Created by IntelliJ IDEA.
@@ -61,7 +62,7 @@ public class ClassFilter implements ElementFilter{
     throw new WriteExternalException("Filter data could _not_ be written");
   }
 
-  public String toString(){
+  public @NonNls String toString(){
     return "class(" + myFilter.getName() + ")";
   }
 }

@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.ide.IdeBundle;
 
 /**
  * @author Vladimir Kondratyev
@@ -24,7 +25,7 @@ public final class ChangeSplitterOrientationAction extends AnAction{
       presentation.setEnabled(false);
       return;
     }
-    presentation.setText("Change Splitter O_rientations");
+    presentation.setText(IdeBundle.message("action.change.splitter.orientations"));
     final FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
     presentation.setEnabled (fileEditorManager.isInSplitter());
   }

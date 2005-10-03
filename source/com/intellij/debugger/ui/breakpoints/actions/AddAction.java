@@ -5,6 +5,9 @@
 package com.intellij.debugger.ui.breakpoints.actions;
 
 import com.intellij.debugger.ui.breakpoints.BreakpointPanel;
+import com.intellij.CommonBundle;
+import com.intellij.ide.IdeBundle;
+import com.intellij.idea.ActionsBundle;
 
 import javax.swing.*;
 import java.awt.event.KeyEvent;
@@ -14,12 +17,11 @@ import java.awt.event.KeyEvent;
  *         Date: May 25, 2005
  */public abstract class AddAction extends BreakpointPanelAction {
   protected AddAction() {
-    super("Add...");
+    super(IdeBundle.message("button.add"));
   }
 
   public void setButton(AbstractButton button) {
     super.setButton(button);
-    getButton().setMnemonic('A');
   }
 
   public void setPanel(BreakpointPanel panel) {

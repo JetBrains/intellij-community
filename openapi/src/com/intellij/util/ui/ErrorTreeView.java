@@ -20,9 +20,10 @@ import com.intellij.pom.Navigatable;
 
 import javax.swing.*;
 
+import org.jetbrains.annotations.NonNls;
+
 public interface ErrorTreeView {
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  String CURRENT_EXCEPTION_DATA = "CURRENT_EXCEPTION_DATA";
+  @NonNls String CURRENT_EXCEPTION_DATA = "CURRENT_EXCEPTION_DATA";
 
   /**
    * If file is not null, allows to navigate to this file, line, column

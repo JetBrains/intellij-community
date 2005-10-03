@@ -27,6 +27,7 @@ import org.netbeans.lib.cvsclient.progress.sending.DummyRequestsProgressHandler;
 import org.netbeans.lib.cvsclient.request.CommandRequest;
 import org.netbeans.lib.cvsclient.request.ExpandModulesRequest;
 import org.netbeans.lib.cvsclient.request.Requests;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.IOException;
@@ -42,7 +43,7 @@ public final class CheckoutCommand extends AbstractCommand
 
 	// Constants ==============================================================
 
-	public static final String EXAM_DIR = "server: Updating ";
+	@NonNls public static final String EXAM_DIR = "server: Updating ";
 
 	// Fields =================================================================
 
@@ -101,7 +102,7 @@ public final class CheckoutCommand extends AbstractCommand
 	 * @return <command's name> [<parameters>] files/dirs. Example: checkout -p CvsCommand.java
 	 */
 	public String getCvsCommandLine() {
-		final StringBuffer cvsCommandLine = new StringBuffer("checkout ");
+		@NonNls final StringBuffer cvsCommandLine = new StringBuffer("checkout ");
 		cvsCommandLine.append(getCvsArguments());
 		for (Iterator it = modules.iterator(); it.hasNext();) {
 			final String module = (String)it.next();
@@ -300,7 +301,7 @@ public final class CheckoutCommand extends AbstractCommand
 	}
 
 	private String getCvsArguments() {
-		final StringBuffer cvsArguments = new StringBuffer();
+		@NonNls final StringBuffer cvsArguments = new StringBuffer();
 		if (!isRecursive()) {
 			cvsArguments.append("-l ");
 		}

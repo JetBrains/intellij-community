@@ -7,10 +7,9 @@ package com.intellij.refactoring.changeSignature;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.usageView.FindUsagesCommand;
-import com.intellij.usageView.UsageInfo;
-import com.intellij.usageView.UsageViewDescriptor;
-import com.intellij.usageView.UsageViewUtil;
+import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.usageView.*;
+import com.intellij.usageView.UsageViewBundle;
 
 class ChangeSignatureViewDescriptor implements UsageViewDescriptor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.changeSignature.ChangeSignatureViewDescriptor");
@@ -24,7 +23,7 @@ class ChangeSignatureViewDescriptor implements UsageViewDescriptor {
     myMethod = method;
     myUsages = usages;
     myRefreshCommand = refreshCommand;
-    myProcessedElementsHeader = UsageViewUtil.capitalize(UsageViewUtil.getType(method) + " to change signature");
+    myProcessedElementsHeader = UsageViewUtil.capitalize(RefactoringBundle.message("0.to.change.signature", UsageViewUtil.getType(method)));
   }
 
   public PsiElement[] getElements() {
@@ -73,7 +72,8 @@ class ChangeSignatureViewDescriptor implements UsageViewDescriptor {
   }
 
   public String getCodeReferencesText(int usagesCount, int filesCount) {
-    return "References to be changed " + UsageViewUtil.getUsageCountInfo(usagesCount, filesCount, getCodeReferencesWord());
+    return RefactoringBundle.message("references.to.be.changed",
+                                     UsageViewBundle.getReferencesString(usagesCount, filesCount));
   }
 
   public String getCommentReferencesText(int usagesCount, int filesCount) {

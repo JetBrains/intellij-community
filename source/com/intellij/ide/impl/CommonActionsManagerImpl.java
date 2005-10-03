@@ -68,7 +68,7 @@ public class CommonActionsManagerImpl extends CommonActionsManager implements Ap
     private String myHelpId;
 
     private HelpAction(String helpId) {
-      super("Help", null, IconLoader.getIcon("/actions/help.png"));
+      super(IdeBundle.message("action.help"), null, IconLoader.getIcon("/actions/help.png"));
       myHelpId = helpId;
     }
 

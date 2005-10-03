@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.lang.java.JavaLanguage;
@@ -21,6 +22,7 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author ven
@@ -51,8 +53,12 @@ public class AddNoInspectionDocTagAction implements IntentionAction {
   public String getText() {
     PsiDocCommentOwner container = getContainer();
 
-    String subj = container instanceof PsiClass ? "class" : container instanceof PsiMethod ? "method" : "field";
-    return "Suppress '" + myDisplayName + "' for " + subj;
+    @NonNls String key = container instanceof PsiClass
+                         ? "suppress.inspection.class"
+                         : container instanceof PsiMethod
+                           ? "suppress.inspection.method"
+                           : "suppress.inspection.field";
+    return InspectionsBundle.message(key, myDisplayName);
   }
 
   @Nullable protected PsiDocCommentOwner getContainer() {
@@ -68,7 +74,7 @@ public class AddNoInspectionDocTagAction implements IntentionAction {
   }
 
   public String getFamilyName() {
-    return "Suppress inspection";
+    return InspectionsBundle.message("suppress.inspection.family");
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
@@ -77,8 +83,8 @@ public class AddNoInspectionDocTagAction implements IntentionAction {
     final ProjectJdk jdk = ModuleRootManager.getInstance(module).getJdk();
     if (jdk == null) return false;
     final boolean is_1_5 = jdk.getVersionString().indexOf("1.5") > 0;
-    return !(DaemonCodeAnalyzerSettings.getInstance().SUPPRESS_WARNINGS && is_1_5 && LanguageLevel.JDK_1_5.compareTo(myContext.getManager().getEffectiveLanguageLevel()) <= 0) && 
-            myContext.isValid() && myContext.getManager().isInProject(myContext) && getContainer() != null;
+    return !(DaemonCodeAnalyzerSettings.getInstance().SUPPRESS_WARNINGS && is_1_5 && LanguageLevel.JDK_1_5.compareTo(myContext.getManager().getEffectiveLanguageLevel()) <= 0) &&
+           myContext.isValid() && myContext.getManager().isInProject(myContext) && getContainer() != null;
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
@@ -103,7 +109,7 @@ public class AddNoInspectionDocTagAction implements IntentionAction {
     PsiDocTag noInspectionTag = docComment.findTagByName(InspectionManagerEx.SUPPRESS_INSPECTIONS_TAG_NAME);
     if (noInspectionTag != null) {
       String tagText = "@" + InspectionManagerEx.SUPPRESS_INSPECTIONS_TAG_NAME + " "
-                           + noInspectionTag.getValueElement().getText() + ","+ myID;
+                       + noInspectionTag.getValueElement().getText() + ","+ myID;
       noInspectionTag.replace(manager.getElementFactory().createDocTagFromText(tagText, null));
     } else {
       String tagText = "@" + InspectionManagerEx.SUPPRESS_INSPECTIONS_TAG_NAME + " " + myID;

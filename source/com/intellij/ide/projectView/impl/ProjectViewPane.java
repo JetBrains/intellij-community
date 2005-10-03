@@ -8,6 +8,7 @@ import com.intellij.ide.impl.ProjectViewSelectInTarget;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
 import com.intellij.ide.util.treeView.TreeViewUtil;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
@@ -17,8 +18,10 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 
+import org.jetbrains.annotations.NonNls;
+
 public final class ProjectViewPane extends AbstractProjectViewPSIPane implements ProjectComponent {
-  public static final String ID = "ProjectPane";
+  @NonNls public static final String ID = "ProjectPane";
   private static final Icon ICON = IconLoader.getIcon("/general/projectTab.png");
 
   public ProjectViewPane(Project project) {
@@ -26,7 +29,7 @@ public final class ProjectViewPane extends AbstractProjectViewPSIPane implements
   }
 
   public String getTitle() {
-    return "Project";
+    return IdeBundle.message("title.project");
   }
 
   public String getId() {

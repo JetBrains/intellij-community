@@ -5,6 +5,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScopeCache;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.StateRestoringCheckBox;
+import com.intellij.find.FindBundle;
 
 import javax.swing.*;
 
@@ -47,10 +48,10 @@ public class FindMethodUsagesDialog extends FindUsagesDialog {
 
   protected JPanel createFindWhatPanel() {
     JPanel findWhatPanel = new JPanel();
-    findWhatPanel.setBorder(IdeBorderFactory.createTitledBorder("Find"));
+    findWhatPanel.setBorder(IdeBorderFactory.createTitledBorder(FindBundle.message("find.what.group")));
     findWhatPanel.setLayout(new BoxLayout(findWhatPanel, BoxLayout.Y_AXIS));
 
-    myCbUsages = addCheckboxToPanel("Usages", myFindUsagesOptions.isUsages, findWhatPanel, true, 'U');
+    myCbUsages = addCheckboxToPanel(FindBundle.message("find.what.usages.checkbox"), myFindUsagesOptions.isUsages, findWhatPanel, true);
 
     PsiMethod method = (PsiMethod) getPsiElement();
     PsiClass aClass = method.getContainingClass();
@@ -62,9 +63,9 @@ public class FindMethodUsagesDialog extends FindUsagesDialog {
             !(aClass instanceof PsiAnonymousClass) &&
             !aClass.hasModifierProperty(PsiModifier.FINAL)) {
       if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        myCbImplementingMethods = addCheckboxToPanel("Implementing methods", myFindUsagesOptions.isImplementingMethods, findWhatPanel, true, 'I');
+        myCbImplementingMethods = addCheckboxToPanel(FindBundle.message("find.what.implementing.methods.checkbox"), myFindUsagesOptions.isImplementingMethods, findWhatPanel, true);
       } else {
-        myCbOverridingMethods = addCheckboxToPanel("Overriding methods", myFindUsagesOptions.isOverridingMethods, findWhatPanel, true, 'O');
+        myCbOverridingMethods = addCheckboxToPanel(FindBundle.message("find.what.overriding.methods.checkbox"), myFindUsagesOptions.isOverridingMethods, findWhatPanel, true);
       }
     } else {
       myHasFindWhatPanel = false;

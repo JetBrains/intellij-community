@@ -1,15 +1,17 @@
 package com.intellij.featureStatistics.ui;
 
-import com.intellij.featureStatistics.*;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.CommonBundle;
+import com.intellij.featureStatistics.FeatureDescriptor;
+import com.intellij.featureStatistics.FeatureStatisticsBundle;
+import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.featureStatistics.ProductivityFeaturesRegistry;
+import com.intellij.ide.util.TipUIUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.ide.util.TipUIUtil;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.io.IOException;
 
 public class AdaptiveTipDialog extends DialogWrapper {
   private static final int DEFAULT_WIDTH = 400;
@@ -23,8 +25,8 @@ public class AdaptiveTipDialog extends DialogWrapper {
     super(project, false);
     myFeatures = features;
     myCurrentFeature = 0;
-    setCancelButtonText("&Close");
-    setTitle("Adaptive Tip Of The Day");
+    setCancelButtonText(CommonBundle.getCloseButtonText());
+    setTitle(FeatureStatisticsBundle.message("feature.statistics.dialog.title"));
     setModal(false);
     init();
     selectCurrentFeature();
@@ -41,7 +43,10 @@ public class AdaptiveTipDialog extends DialogWrapper {
 
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new BorderLayout());
-    myBrowser = new JEditorPane("text/html", "Tip go here");
+
+    //noinspection HardCodedStringLiteral
+    myBrowser = new JEditorPane("text/html", "");
+
     panel.add(new JScrollPane(myBrowser));
     panel.setPreferredSize(new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT));
     return panel;
@@ -58,7 +63,7 @@ public class AdaptiveTipDialog extends DialogWrapper {
 
   private class NextAction extends AbstractAction{
     public NextAction() {
-      super("&Next Tip");
+      super(FeatureStatisticsBundle.message("feature.statistics.action.next.tip"));
     }
 
     public void actionPerformed(ActionEvent e) {
@@ -72,7 +77,7 @@ public class AdaptiveTipDialog extends DialogWrapper {
 
   private class PrevAction extends AbstractAction{
     public PrevAction() {
-      super("&Prev Tip");
+      super(FeatureStatisticsBundle.message("feature.statistics.action.prev.tip"));
     }
 
     public void actionPerformed(ActionEvent e) {

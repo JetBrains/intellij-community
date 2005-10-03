@@ -1,8 +1,10 @@
 package com.intellij.debugger.codeinsight;
 
 import com.intellij.codeInsight.generation.surroundWith.JavaExpressionSurrounder;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -36,7 +38,7 @@ public class JavaWithRuntimeCastSurrounder extends JavaExpressionSurrounder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.codeinsight.SurroundWithRuntimeCastHandler");
 
   public String getTemplateDescription() {
-    return "((RuntimeType)expr)";
+    return CodeInsightBundle.message("surround.with.runtime.type.template");
   }
 
   public JavaWithRuntimeCastSurrounder() {
@@ -53,7 +55,7 @@ public class JavaWithRuntimeCastSurrounder extends JavaExpressionSurrounder {
     DebuggerSession debuggerSession = debuggerContext.getDebuggerSession();
     if (debuggerSession != null) {
       SurroundWithCastWorker worker = new SurroundWithCastWorker(editor, expr, debuggerContext);
-      worker.getProgressWindow().setTitle("Evaluating expression...");
+      worker.getProgressWindow().setTitle(DebuggerBundle.message("title.evaluating"));
       debuggerContext.getDebugProcess().getManagerThread().startProgress(worker, worker.getProgressWindow());
     }
     return null;
@@ -69,7 +71,7 @@ public class JavaWithRuntimeCastSurrounder extends JavaExpressionSurrounder {
           public void run() {
             ApplicationManager.getApplication().runWriteAction(new Runnable() {
               public void run() {
-                CommandProcessor.getInstance().executeCommand(project, runnable, "Surround with runtime cast", null);
+                CommandProcessor.getInstance().executeCommand(project, runnable, CodeInsightBundle.message("command.name.surround.with.runtime.cast"), null);
               }
             });
           }
@@ -134,8 +136,9 @@ public class JavaWithRuntimeCastSurrounder extends JavaExpressionSurrounder {
             return DebuggerUtilsEx.getQualifiedClassName(value.type().name(), project);
           }
         });
-      } else {
-        throw EvaluateExceptionUtil.createEvaluateException("Surrounded expression is null");
+      }
+      else {
+        throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.surrounded.expression.null"));
       }
     }
   }

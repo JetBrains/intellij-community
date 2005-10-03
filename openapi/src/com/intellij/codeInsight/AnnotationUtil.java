@@ -17,15 +17,21 @@ package com.intellij.codeInsight;
 
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * @author max
  */
 public class AnnotationUtil {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.AnnotationUtil");
+
   /**
    * The full qualified name of the standard Nullable annotation.
    */
@@ -41,6 +47,8 @@ public class AnnotationUtil {
    * @since 5.0.1
    */
   public static final String NON_NLS = "org.jetbrains.annotations.NonNls";
+  public static final String PROPERTY_KEY = "org.jetbrains.annotations.PropertyKey";
+  @NonNls public static final String PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER = "resourceBundle";
 
   private final static Set<String> ALL_ANNOTATIONS;
 
@@ -80,17 +88,48 @@ public class AnnotationUtil {
 
     if (listOwner instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)listOwner;
-      final PsiMethod[] superMethods = method.findSuperMethods();
-      for (PsiMethod superMethod : superMethods) {
-        final PsiAnnotation derivedAnnotation = findAnnotationInHierarchy(superMethod, annotationNames);
-        if (derivedAnnotation != null) return derivedAnnotation;
+      Collection<HierarchicalMethodSignature> visibleSignatures = method.getContainingClass().getVisibleSignatures();
+      for (HierarchicalMethodSignature signature : visibleSignatures) {
+        if (signature.getMethod() == method) {
+          return findAnnotationInHierarchy(signature, annotationNames, method);
+        }
       }
     }
 
     return null;
   }
+
+  private static PsiAnnotation findAnnotationInHierarchy(HierarchicalMethodSignature signature, Set<String> annotationNames, PsiElement place) {
+    List<HierarchicalMethodSignature> superSignatures = signature.getSuperSignatures();
+    PsiResolveHelper resolveHelper = place.getManager().getResolveHelper();
+    for (HierarchicalMethodSignature superSignature : superSignatures) {
+      PsiMethod superMethod = superSignature.getMethod();
+      if (!resolveHelper.isAccessible(superMethod, place, null)) continue;
+      PsiAnnotation direct = findAnnotation(superMethod, annotationNames);
+      if (direct != null) return direct;
+      PsiAnnotation superResult = findAnnotationInHierarchy(superSignature, annotationNames, place);
+      if (superResult != null) return superResult;
+    }
+
+    return null;
+  }
+
   public static boolean isAnnotated(PsiModifierListOwner listOwner, String annotationFQN, boolean checkHierarchy) {
-    PsiAnnotation annotation = listOwner.getModifierList().findAnnotation(annotationFQN);
+    if (listOwner instanceof PsiParameter) {
+      // this is more efficient than getting the modifier list
+      PsiAnnotation[] paramAnnotations = (((PsiParameter) listOwner)).getAnnotations();
+      for(PsiAnnotation annotation: paramAnnotations) {
+        if (annotation.getQualifiedName().equals(annotationFQN)) {
+          return true;
+        }
+      }
+      return false;
+    }
+    final PsiModifierList modifierList = listOwner.getModifierList();
+    if (modifierList == null) {
+      return false;
+    }
+    PsiAnnotation annotation = modifierList.findAnnotation(annotationFQN);
     if (annotation != null) return true;
     if (checkHierarchy && listOwner instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)listOwner;

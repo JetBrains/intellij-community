@@ -27,6 +27,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo;
 import com.intellij.refactoring.ui.ConflictsDialog;
@@ -299,10 +300,45 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     myChangeInfo.updateMethod((PsiMethod) elements[0]);
   }
 
+  private void addMethodConflicts(Collection<String> conflicts) {
+    String newMethodName = myChangeInfo.newName;
+
+    PsiMethod prototype;
+    try {
+      PsiManager manager = PsiManager.getInstance(myProject);
+      PsiElementFactory factory = manager.getElementFactory();
+      final PsiMethod method = myChangeInfo.getMethod();
+      final CanonicalTypes.Type returnType = myChangeInfo.newReturnType;
+      if (returnType != null) {
+        prototype = factory.createMethod(newMethodName, returnType.getType(method, manager));
+      }
+      else {
+        prototype = factory.createConstructor();
+        prototype.setName(newMethodName);
+      }
+      ParameterInfo[] parameters = myChangeInfo.newParms;
+
+
+      for (ParameterInfo info : parameters) {
+        final PsiType parameterType = info.createType(method, manager);
+        PsiParameter param = factory.createParameter(info.getName(), parameterType);
+        prototype.getParameterList().add(param);
+      }
+
+      ConflictsUtil.checkMethodConflicts(
+        method.getContainingClass(),
+        method,
+        prototype, conflicts);
+    }
+    catch (IncorrectOperationException e) {}
+  }
+
+
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
     Set<String> conflictDescriptions = new HashSet<String>();
     UsageInfo[] usagesIn = refUsages.get();
-    conflictDescriptions.addAll(Arrays.asList(RenameUtil.getConflictDescriptions(usagesIn)));
+    addMethodConflicts(conflictDescriptions);
+    conflictDescriptions.addAll(RenameUtil.getConflictDescriptions(usagesIn));
     Set<UsageInfo> usagesSet = new HashSet<UsageInfo>(Arrays.asList(usagesIn));
     RenameUtil.removeConflictUsages(usagesSet);
     if (myChangeInfo.isVisibilityChanged) {
@@ -347,8 +383,10 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
 
           if (!element.getManager().getResolveHelper().isAccessible(method, modifierList, element, accessObjectClass, null)) {
             String message =
-              ConflictsUtil.getDescription(method, true) + " with " + myNewVisibility + " visibility is not accesible from " +
-              ConflictsUtil.getDescription(ConflictsUtil.getContainer(element), true);
+              RefactoringBundle.message("0.with.1.visibility.is.not.accesible.from.2",
+                                        ConflictsUtil.getDescription(method, true),
+                                        myNewVisibility,
+                                        ConflictsUtil.getDescription(ConflictsUtil.getContainer(element), true));
             conflictDescriptions.add(message);
             if (!needToChangeCalls()) {
               iterator.remove();
@@ -384,10 +422,9 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
 
       if (covariantOverriderInfos.size() > 0) {
         if (ApplicationManager.getApplication().isUnitTestMode() ||
-        Messages.showYesNoDialog(myProject, "Do you want to process overriding methods\n" +
-                                            "with covariant return type?",
-                                 "Change Method Signature", Messages.getQuestionIcon())
-        != DialogWrapper.OK_EXIT_CODE) {
+            Messages.showYesNoDialog(myProject, RefactoringBundle.message("do.you.want.to.process.overriding.methods.with.covariant.return.type"),
+                                     ChangeSignatureHandler.REFACTORING_NAME, Messages.getQuestionIcon())
+            != DialogWrapper.OK_EXIT_CODE) {
           for (UsageInfo usageInfo : covariantOverriderInfos) {
             usages.remove(usageInfo);
           }
@@ -589,7 +626,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
   }
 
   protected String getCommandName() {
-    return "Changing signature of " + UsageViewUtil.getDescriptiveName(myChangeInfo.getMethod());
+    return RefactoringBundle.message("changing.signature.of.0", UsageViewUtil.getDescriptiveName(myChangeInfo.getMethod()));
   }
 
   private void processMethodUsage(PsiElement ref,
@@ -849,8 +886,8 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
   }
 
   private void addParameterUsages(PsiParameter parameter,
-                                       ArrayList<UsageInfo> results,
-                                       ParameterInfo info) {
+                                  ArrayList<UsageInfo> results,
+                                  ParameterInfo info) {
     PsiManager manager = parameter.getManager();
     PsiSearchHelper helper = manager.getSearchHelper();
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(manager.getProject());
@@ -901,16 +938,16 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
   }
 
   private void processPrimaryMethod(PsiMethod method,
-                             PsiMethod baseMethod,
-                             boolean isOriginal) throws IncorrectOperationException {
+                                    PsiMethod baseMethod,
+                                    boolean isOriginal) throws IncorrectOperationException {
     PsiElementFactory factory = method.getManager().getElementFactory();
 
     if (myChangeInfo.isVisibilityChanged) {
       PsiModifierList modifierList = method.getModifierList();
       final String highestVisibility =
               (isOriginal ? myNewVisibility :
-              VisibilityUtil.getHighestVisibility(myNewVisibility,
-                      VisibilityUtil.getVisibilityModifier(modifierList)));
+               VisibilityUtil.getHighestVisibility(myNewVisibility,
+                                                   VisibilityUtil.getVisibilityModifier(modifierList)));
       RefactoringUtil.setVisibility(modifierList, highestVisibility);
     }
 
@@ -1062,13 +1099,9 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     }
 
     public String getDescription() {
-      StringBuffer buffer = new StringBuffer();
-      buffer.append("There is already a ");
-      buffer.append(ConflictsUtil.getDescription(myCollidingElement, true));
-      buffer.append(" in the ");
-      buffer.append(ConflictsUtil.getDescription(myMethod, true));
-      buffer.append(". It will conflict with the renamed parameter.");
-      return buffer.toString();
+      return RefactoringBundle.message("there.is.already.a.0.in.the.1.it.will.conflict.with.the.renamed.parameter",
+                                       ConflictsUtil.getDescription(myCollidingElement, true),
+                                       ConflictsUtil.getDescription(myMethod, true));
     }
   }
 

@@ -9,6 +9,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 
 public class ChangeContextUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.ChangeContextUtil");
@@ -193,7 +194,7 @@ public class ChangeContextUtil {
             }
 
             if (needQualifier){
-              final String text = "q." + refExpr.getText();
+              final @NonNls String text = "q." + refExpr.getText();
               final PsiReferenceExpression qualifiedExpr = (PsiReferenceExpression)factory.createExpressionFromText(text, null);
               qualifiedExpr.getQualifierExpression().replace(thisAccessExpr);
               refExpr = (PsiReferenceExpression)refExpr.replace(qualifiedExpr);

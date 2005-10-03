@@ -1,9 +1,10 @@
 package com.intellij.psi.impl.source;
 
+import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.OrFilter;
@@ -16,9 +17,9 @@ import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.processor.FilterScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
-import com.intellij.lang.ASTNode;
+import com.intellij.util.IncorrectOperationException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -125,7 +126,8 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
     else {
       final LeafElement dot = Factory.createSingleLeafElement(ElementType.DOT, new char[]{'.'}, 0, 1, SharedImplUtil.findCharTableByTree(newRef), getManager());
       TreeUtil.insertAfter(newRef, dot);
-      final CompositeElement errorElement = Factory.createErrorElement("Identifier or '*' expected");
+      final CompositeElement errorElement =
+        Factory.createErrorElement(JavaErrorMessages.message("import.statement.identifier.or.asterisk.expected."));
       TreeUtil.insertAfter(dot, errorElement);
       final CompositeElement parentComposite = ((CompositeElement)SourceTreeToPsiMap.psiElementToTree(getParent()));
       parentComposite.addInternal(newRef, errorElement, this, Boolean.TRUE);

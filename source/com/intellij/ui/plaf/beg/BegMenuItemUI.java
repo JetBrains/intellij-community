@@ -3,6 +3,7 @@ package com.intellij.ui.plaf.beg;
 
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.event.MenuDragMouseEvent;
@@ -17,6 +18,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.lang.reflect.Method;
+
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Eugene Belyaev
@@ -35,6 +38,9 @@ public class BegMenuItemUI extends BasicMenuItemUI {
   private static Rectangle h = new Rectangle();
   private static Rectangle l = new Rectangle();
   private static Rectangle f = new Rectangle(32767, 32767);
+  @NonNls public static final String PLAY_SOUND_METHOD = "playSound";
+  @NonNls public static final String AQUA_LOOK_AND_FEEL_CLASS_NAME = "apple.laf.AquaLookAndFeel";
+  @NonNls public static final String GET_KEY_MODIFIERS_TEXT = "getKeyModifiersText";
 
   /** invoked by reflection */
   public static ComponentUI createUI(JComponent component) {
@@ -47,7 +53,8 @@ public class BegMenuItemUI extends BasicMenuItemUI {
 
   protected void installDefaults() {
     super.installDefaults();
-    Integer integer = (Integer)UIManager.get(getPropertyPrefix() + ".maxGutterIconWidth");
+    final String propertyPrefix = getPropertyPrefix();
+    Integer integer = UIUtil.getPropertyMaxGutterIconWidth(propertyPrefix);
     if (integer != null){
       myMaxGutterIconWidth = integer.intValue();
     }
@@ -139,9 +146,10 @@ public class BegMenuItemUI extends BasicMenuItemUI {
         }
         BasicGraphicsUtils.drawString(g, s1, buttonmodel.getMnemonic(), j.x, j.y + fontmetrics.getAscent());
       }
-      else
-        if (UIManager.get("MenuItem.disabledForeground") instanceof Color){
-          g.setColor(UIManager.getColor("MenuItem.disabledForeground"));
+      else {
+        final Object disabledForeground = UIUtil.getMenuItemDisabledForegroundObject();
+        if (disabledForeground instanceof Color){
+          g.setColor((Color)disabledForeground);
           BasicGraphicsUtils.drawString(g, s1, buttonmodel.getMnemonic(), j.x, j.y + fontmetrics.getAscent());
         }
         else{
@@ -150,6 +158,7 @@ public class BegMenuItemUI extends BasicMenuItemUI {
           g.setColor(jmenuitem.getBackground().darker());
           BasicGraphicsUtils.drawString(g, s1, buttonmodel.getMnemonic(), j.x - 1, (j.y + fontmetrics.getAscent()) - 1);
         }
+      }
     }
     if (keyStrokeText != null && !keyStrokeText.equals("")){
       g.setFont(acceleratorFont);
@@ -193,8 +202,8 @@ public class BegMenuItemUI extends BasicMenuItemUI {
       if (j1 > 0){
         if (SystemInfo.isMac) {
           try {
-            Class appleLaf = Class.forName("apple.laf.AquaLookAndFeel");
-            Method getModifiers = appleLaf.getMethod("getKeyModifiersText", new Class[] {int.class, boolean.class});
+            Class appleLaf = Class.forName(AQUA_LOOK_AND_FEEL_CLASS_NAME);
+            Method getModifiers = appleLaf.getMethod(GET_KEY_MODIFIERS_TEXT, new Class[] {int.class, boolean.class});
             s1 = (String)getModifiers.invoke(appleLaf, new Object[] {new Integer(j1), Boolean.FALSE});
           }
           catch (Exception e) {
@@ -422,6 +431,7 @@ public class BegMenuItemUI extends BasicMenuItemUI {
   }
 
   /** Copied from BasicMenuItemUI */
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private boolean isInternalFrameSystemMenu(){
     String actionCommand=menuItem.getActionCommand();
     if(
@@ -440,7 +450,7 @@ public class BegMenuItemUI extends BasicMenuItemUI {
   private void doClick(MenuSelectionManager msm,MouseEvent e) {
     // Auditory cue
     if(!isInternalFrameSystemMenu()){
-      ActionMap map=menuItem.getActionMap();
+      @NonNls ActionMap map=menuItem.getActionMap();
       if(map!=null){
         Action audioAction=map.get(getPropertyPrefix()+".commandSound");
         if(audioAction!=null){
@@ -449,7 +459,7 @@ public class BegMenuItemUI extends BasicMenuItemUI {
           // It's a hack. The method BasicLookAndFeel.playSound has protected access, so
           // it's imposible to mormally invoke it.
           try {
-            Method playSoundMethod=BasicLookAndFeel.class.getDeclaredMethod("playSound",new Class[]{Action.class});
+            Method playSoundMethod=BasicLookAndFeel.class.getDeclaredMethod(PLAY_SOUND_METHOD,new Class[]{Action.class});
             playSoundMethod.setAccessible(true);
             playSoundMethod.invoke(lf,new Object[]{audioAction});
           } catch(Exception ignored) {}
@@ -507,7 +517,7 @@ public class BegMenuItemUI extends BasicMenuItemUI {
       MenuSelectionManager manager=e.getMenuSelectionManager();
       Point p=e.getPoint();
       if(p.x>=0&&p.x<menuItem.getWidth()&&
-        p.y>=0&&p.y<menuItem.getHeight()){
+         p.y>=0&&p.y<menuItem.getHeight()){
         doClick(manager,e);
       } else{
         manager.clearSelectedPath();

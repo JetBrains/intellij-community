@@ -9,12 +9,18 @@ import com.intellij.util.ArrayUtil;
 
 import java.util.HashSet;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author Mike
  */
 public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor {
   private XmlTag myTag;
   String myUse;
+  @NonNls
+  public static final String REQUIRED_ATTR_VALUE = "required";
+  @NonNls
+  public static final String QUALIFIED_ATTR_VALUE = "qualified";
 
   public XmlAttributeDescriptorImpl(XmlTag tag) {
     myTag = tag;
@@ -41,14 +47,14 @@ public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor {
   }
 
   public boolean isRequired() {
-    return "required".equals(myUse);
+    return REQUIRED_ATTR_VALUE.equals(myUse);
   }
 
   public boolean isFixed() {
     return myTag.getAttributeValue("fixed") != null;
   }
 
-  private boolean hasSimpleSchemaType(String type) {
+  private boolean hasSimpleSchemaType(@NonNls String type) {
     final String attributeValue = myTag.getAttributeValue("type");
 
     if (attributeValue != null) {
@@ -102,11 +108,11 @@ public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor {
     XmlTag type = myTag.findFirstSubTag(
       ((namespacePrefix.length() > 0)?namespacePrefix+":":"")+"simpleType"
     );
-    
+
     if (type != null) {
       return getEnumeratedValuesImpl(type);
     }
-    
+
     return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
@@ -119,7 +125,7 @@ public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor {
     }
     return ArrayUtil.EMPTY_STRING_ARRAY;
   }
-  
+
   private String[] getEnumeratedValues(final XmlElementDescriptorImpl elementDescriptor) {
     return getEnumeratedValuesImpl(((ComplexTypeDescriptor)elementDescriptor.getType()).getDeclaration());
   }
@@ -128,16 +134,16 @@ public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor {
     final XmlTag rootTag = (((XmlFile) myTag.getContainingFile())).getDocument().getRootTag();
     String attributeValue = rootTag.getAttributeValue("targetNamespace");
     XmlTag tag = (XmlTag)context;
-    
+
     String name = getName();
     if ((attributeValue != null && !attributeValue.equals(tag.getNamespace())) &&
-        "qualified".equals(rootTag.getAttributeValue("attributeFormDefault"))) {
+        QUALIFIED_ATTR_VALUE.equals(rootTag.getAttributeValue("attributeFormDefault"))) {
       final String prefixByNamespace = tag.getPrefixByNamespace(attributeValue);
       if (prefixByNamespace!= null && prefixByNamespace.length() > 0) {
         name = prefixByNamespace + ":" + name;
       }
     }
-    
+
     return name;
   }
 }

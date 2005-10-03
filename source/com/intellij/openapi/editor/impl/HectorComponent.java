@@ -11,6 +11,7 @@ import com.intellij.codeInspection.ex.InspectionToolsPanel;
 import com.intellij.codeInspection.ui.ApplyAction;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -28,6 +29,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.ui.*;
+import com.intellij.CommonBundle;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -45,9 +48,9 @@ import java.util.Hashtable;
  * Date: Jun 27, 2005
  */
 public class HectorComponent extends JPanel {
-  private JCheckBox myImportPopupCheckBox = new JCheckBox("Import popup");
+  private JCheckBox myImportPopupCheckBox = new JCheckBox(EditorBundle.message("hector.import.popup.checkbox"));
   private ComboboxWithBrowseButton myProfilesCombo = new ComboboxWithBrowseButton();
-  private JCheckBox myUsePerFileProfile = new JCheckBox("Use custom profile for this file:");
+  private JCheckBox myUsePerFileProfile = new JCheckBox(EditorBundle.message("hector.use.custom.profile.for.this.file.checkbox"));
 
   private static final Icon GC_ICON = IconLoader.getIcon("/actions/gc.png");
   private JButton myClearSettingsButton = new JButton(GC_ICON);
@@ -60,7 +63,7 @@ public class HectorComponent extends JPanel {
   private boolean myUseProfile;
   private LightweightHint myHint;
 
-  private final String myTitle = "Highlighting Level";
+  private final String myTitle = EditorBundle.message("hector.highlighting.level.title");
 
   public HectorComponent(PsiFile file) {
     super(new GridBagLayout());
@@ -76,15 +79,16 @@ public class HectorComponent extends JPanel {
     for (int i = 0; i < mySliders.length; i++) {
 
       final Hashtable<Integer, JLabel> sliderLabels = new Hashtable<Integer, JLabel>();
-      sliderLabels.put(new Integer(1), new JLabel("None"));
-      sliderLabels.put(new Integer(2), new JLabel("Syntax"));
+      sliderLabels.put(new Integer(1), new JLabel(EditorBundle.message("hector.none.slider.label")));
+      sliderLabels.put(new Integer(2), new JLabel(EditorBundle.message("hector.syntax.slider.label")));
       if (notInLibrary) {
-        sliderLabels.put(new Integer(3), new JLabel("Inspections"));
+        sliderLabels.put(new Integer(3), new JLabel(EditorBundle.message("hector.inspections.slider.label")));
       }
 
       final JSlider slider = new JSlider(JSlider.VERTICAL, 1, notInLibrary ? 3 : 2, 1);
       slider.setLabelTable(sliderLabels);
-      slider.putClientProperty("JSlider.isFilled", Boolean.TRUE);
+      final boolean value = Boolean.TRUE;
+      UIUtil.setSliderIsFilled(slider, value);
       slider.setPaintLabels(true);
       slider.setSnapToTicks(true);
       slider.addChangeListener(new ChangeListener() {
@@ -110,7 +114,6 @@ public class HectorComponent extends JPanel {
     });
     myImportPopupCheckBox.setSelected(myImportPopupOn);
     myImportPopupCheckBox.setEnabled(analyzer.isAutohintsAvailable(myFile));
-    myImportPopupCheckBox.setMnemonic('P');
     myImportPopupCheckBox.setVisible(notInLibrary);
 
     GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.NORTHWEST,
@@ -132,7 +135,7 @@ public class HectorComponent extends JPanel {
         }
       }
     });
-    myClearSettingsButton.setToolTipText("Reset all per file customizations");
+    myClearSettingsButton.setToolTipText(EditorBundle.message("hector.clear.settings.button.tooltip"));
     myClearSettingsButton.setPreferredSize(new Dimension(GC_ICON.getIconWidth() + 4, GC_ICON.getIconHeight() + 4));
     add(myClearSettingsButton,
         new GridBagConstraints(1, 0, 1, 1, 0, 0, GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(2, 2, 0, 2), 0, 0));
@@ -180,7 +183,6 @@ public class HectorComponent extends JPanel {
         myProfilesCombo.setEnabled(myUsePerFileProfile.isSelected());
       }
     });
-    myUsePerFileProfile.setMnemonic('C');
     final Pair<String, Boolean> inspectionProfile = HighlightingSettingsPerFile.getInstance(myFile.getProject()).getInspectionProfile(myFile);
     myUseProfile = inspectionProfile != null && inspectionProfile.second;
     myUsePerFileProfile.setSelected(myUseProfile);
@@ -324,7 +326,7 @@ public class HectorComponent extends JPanel {
       myPanel = new InspectionToolsPanel(initialProfileName, project) {
         //just panel
       };
-      setTitle("Inspection Profiles:");
+      setTitle(EditorBundle.message("hector.inspection.profiles.title"));
       init();
     }
 

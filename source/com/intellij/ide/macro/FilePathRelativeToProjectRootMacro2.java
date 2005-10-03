@@ -2,6 +2,7 @@
 package com.intellij.ide.macro;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.ide.IdeBundle;
 
 import java.io.File;
 
@@ -11,7 +12,7 @@ public final class FilePathRelativeToProjectRootMacro2 extends FilePathRelativeT
   }
 
   public String getDescription() {
-    return "File path relative to the module content root the file belongs to (with forward slashes)";
+    return IdeBundle.message("macro.file.path.relative.to.root.fwd.slash");
   }
 
   public String expand(DataContext dataContext) {

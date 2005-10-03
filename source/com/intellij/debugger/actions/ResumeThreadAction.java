@@ -7,6 +7,7 @@ import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.ThreadDescriptorImpl;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.sun.jdi.request.EventRequest;
@@ -44,7 +45,7 @@ public class ResumeThreadAction extends DebuggerAction{
 
     boolean visible = false;
     boolean enabled = false;
-    String text = "Resume";
+    String text = DebuggerBundle.message("action.resume.thread.text.resume");
 
     if(selectedNodes != null && selectedNodes.length > 0){
       visible = true;
@@ -65,7 +66,7 @@ public class ResumeThreadAction extends DebuggerAction{
           }
           else {
             if (threadDescriptor.isFrozen()) {
-              text = "Unfreeze";
+              text = DebuggerBundle.message("action.resume.thread.text.unfreeze");
             }
           }
         }

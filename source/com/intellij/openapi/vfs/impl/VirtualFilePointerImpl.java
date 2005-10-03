@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.util.PathUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 public class VirtualFilePointerImpl extends UserDataHolderBase implements VirtualFilePointer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.SmartVirtualFilePointerImpl");
@@ -20,6 +21,7 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
   private boolean myWasRecentlyValid = false;
   private boolean myIsDead = false;
   private VirtualFileManager myVirtualFileManager;
+  @NonNls private static final String ATTRIBUTE_URL = "url";
 
   VirtualFilePointerImpl(VirtualFile file, VirtualFilePointerListener listener, VirtualFileManager virtualFileManager) {
     LOG.assertTrue(file != null);
@@ -130,14 +132,14 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
   }
 
   public void readExternal(Element element) throws InvalidDataException {
-    myUrl = element.getAttributeValue("url");
+    myUrl = element.getAttributeValue(ATTRIBUTE_URL);
     myFile = null;
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
     if (!myInitialized) update();
 
-    element.setAttribute("url", getUrl());
+    element.setAttribute(ATTRIBUTE_URL, getUrl());
   }
 
   boolean willValidityChange() {

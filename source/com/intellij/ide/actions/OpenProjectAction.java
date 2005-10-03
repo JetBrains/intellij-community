@@ -1,6 +1,8 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.RecentProjectsManager;
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -21,7 +23,7 @@ public class OpenProjectAction extends AnAction {
     FileView fileView = new FileView() {
       public Icon getIcon(File f) {
         if (f.isDirectory()) return super.getIcon(f);
-        if (f.isFile() && f.getName().toLowerCase().endsWith(".ipr")) {
+        if (f.isFile() && f.getName().toLowerCase().endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) {
           return Icons.PROJECT_ICON;
         }
         return super.getIcon(f);
@@ -29,15 +31,15 @@ public class OpenProjectAction extends AnAction {
     };
     fileChooser.setFileView(fileView);
     fileChooser.setAcceptAllFileFilterUsed(false);
-    fileChooser.setDialogTitle("Open Project");
+    fileChooser.setDialogTitle(IdeBundle.message("title.open.project"));
     fileChooser.setFileFilter(
       new FileFilter() {
         public boolean accept(File f) {
-          return f.isDirectory() || f.getAbsolutePath().endsWith(".ipr");
+          return f.isDirectory() || f.getAbsolutePath().endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION);
         }
 
         public String getDescription() {
-          return "Project files (*.ipr)";
+          return IdeBundle.message("filter.project.files");
         }
       }
     );

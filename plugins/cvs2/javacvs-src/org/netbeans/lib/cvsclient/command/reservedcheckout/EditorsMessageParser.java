@@ -20,6 +20,7 @@ import org.netbeans.lib.cvsclient.event.IEventSender;
 import org.netbeans.lib.cvsclient.file.DirectoryObject;
 import org.netbeans.lib.cvsclient.file.FileObject;
 import org.netbeans.lib.cvsclient.file.ICvsFileSystem;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.text.DateFormat;
@@ -34,7 +35,8 @@ final class EditorsMessageParser extends AbstractMessageParser {
 
 	// Constants ==============================================================
 
-	private static final DateFormat DATE_FORMAT = new SimpleDateFormat("MMM dd hh:mm:ss yyyy", Locale.US);
+  @NonNls private static final String DATE_FORMAT_STR = "MMM dd hh:mm:ss yyyy";
+  private static final DateFormat DATE_FORMAT = new SimpleDateFormat(DATE_FORMAT_STR, Locale.US);
 
 	// Fields =================================================================
 

@@ -15,19 +15,20 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 
 public class InheritanceToDelegationHandler implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.inheritanceToDelegation.InheritanceToDelegationHandler");
-  public static final String REFACTORING_NAME = "Replace Inheritance With Delegation";
+  public static final String REFACTORING_NAME = RefactoringBundle.message("replace.inheritance.with.delegation.title");
 
-  private PsiClass myClass;
   private static final MemberInfo.Filter MEMBER_INFO_FILTER = new MemberInfo.Filter() {
     public boolean includeMember(PsiMember element) {
       if (element instanceof PsiMethod) {
@@ -49,9 +50,7 @@ public class InheritanceToDelegationHandler implements RefactoringActionHandler 
     PsiElement element = file.findElementAt(offset);
     while (true) {
       if (element == null || element instanceof PsiFile) {
-        String message =
-                "Cannot perform the refactoring.\n" +
-                "The caret should be positioned inside the class to be refactored.";
+        String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.class"));
         RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, null/*HelpID.INHERITANCE_TO_DELEGATION*/, project);
         return;
       }
@@ -67,39 +66,35 @@ public class InheritanceToDelegationHandler implements RefactoringActionHandler 
   public void invoke(Project project, PsiElement[] elements, DataContext dataContext) {
     if (elements.length != 1) return;
 
-    myClass = (PsiClass) elements[0];
+    final PsiClass aClass = (PsiClass)elements[0];
 
-    if (myClass.isInterface()) {
-      String message =
-              "Cannot perform the refactoring.\n" +
-              myClass.getQualifiedName() + " is an interface.";
+    if (aClass.isInterface()) {
+      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("class.is.interface", aClass.getQualifiedName()));
       RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, null/*HelpID.INHERITANCE_TO_DELEGATION*/, project);
       return;
     }
 
-    if (!myClass.isWritable()) {
-      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, myClass)) return;
+    if (!aClass.isWritable()) {
+      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, aClass)) return;
     }
 
-    final PsiClass[] bases = myClass.getSupers();
-    if (bases.length == 0 || bases.length == 1 && "java.lang.Object".equals(bases[0].getQualifiedName())) {
-      String message =
-              "Cannot perform the refactoring.\n" +
-              "Class " + myClass.getQualifiedName() + " does not have base classes or interfaces.";
+    final PsiClass[] bases = aClass.getSupers();
+    @NonNls final String javaLangObject = "java.lang.Object";
+    if (bases.length == 0 || bases.length == 1 && javaLangObject.equals(bases[0].getQualifiedName())) {
+      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("class.does.not.have.base.classes.or.interfaces", aClass.getQualifiedName()));
       RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, null/*HelpID.INHERITANCE_TO_DELEGATION*/, project);
       return;
     }
 
     final HashMap<PsiClass,MemberInfo[]> basesToMemberInfos = new HashMap<PsiClass, MemberInfo[]>();
 
-    for (int i = 0; i < bases.length; i++) {
-      PsiClass base = bases[i];
+    for (PsiClass base : bases) {
       basesToMemberInfos.put(base, createBaseClassMemberInfos(base));
     }
 
 
-    new InheritanceToDelegationDialog(project, myClass,
-            bases, basesToMemberInfos).show();
+    new InheritanceToDelegationDialog(project, aClass,
+                                      bases, basesToMemberInfos).show();
   }
 
   private MemberInfo[] createBaseClassMemberInfos(PsiClass baseClass) {
@@ -110,13 +105,10 @@ public class InheritanceToDelegationHandler implements RefactoringActionHandler 
 
     ArrayList<MemberInfo> memberInfoList = new ArrayList<MemberInfo>(memberInfoStorage.getClassMemberInfos(deepestBase));
     MemberInfo[] memberInfos = memberInfoStorage.getMemberInfosList(deepestBase);
-    for (int i = 0; i < memberInfos.length; i++) {
-      final MemberInfo memberInfo = memberInfos[i];
-
+    for (final MemberInfo memberInfo : memberInfos) {
       memberInfoList.add(memberInfo);
     }
 
-    final MemberInfo[] targetClassMemberInfos = memberInfoList.toArray(new MemberInfo[memberInfoList.size()]);
-    return targetClassMemberInfos;
+    return memberInfoList.toArray(new MemberInfo[memberInfoList.size()]);
   }
 }

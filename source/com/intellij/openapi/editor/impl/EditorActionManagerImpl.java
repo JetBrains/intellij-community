@@ -3,8 +3,10 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.editor.ReadOnlyFragmentModificationException;
+import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.editor.actionSystem.*;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.CommonBundle;
 
 public class EditorActionManagerImpl extends EditorActionManager implements ApplicationComponent {
   private TypedAction myTypedAction = new TypedAction();
@@ -50,7 +52,8 @@ public class EditorActionManagerImpl extends EditorActionManager implements Appl
 
   private static class DefaultReadOnlyFragmentModificationHandler implements ReadonlyFragmentModificationHandler {
     public void handle(ReadOnlyFragmentModificationException e) {
-      Messages.showErrorDialog("Unable to perform an action since it changes read-only fragments of the current document", "Guarded Block Modification Attempt");
+      Messages.showErrorDialog(EditorBundle.message("guarded.block.modification.attempt.error.message"),
+                               EditorBundle.message("guarded.block.modification.attempt.error.title"));
     }
   }
 }

@@ -9,6 +9,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
@@ -24,24 +25,25 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 
 public class RenameWrongRefAction implements IntentionAction {
-  PsiReferenceExpression myRefExpr;
-  private static final String INPUT_VARIABLE_NAME = "INPUTVAR";
-  private static final String OTHER_VARIABLE_NAME = "OTHERVAR";
+  private PsiReferenceExpression myRefExpr;
+  private static final @NonNls String INPUT_VARIABLE_NAME = "INPUTVAR";
+  private static final @NonNls String OTHER_VARIABLE_NAME = "OTHERVAR";
 
   public RenameWrongRefAction(PsiReferenceExpression refExpr) {
     myRefExpr = refExpr;
   }
 
   public String getText() {
-    return "Rename Reference";
+    return QuickFixBundle.message("rename.wrong.reference.text");
   }
 
   public String getFamilyName() {
-    return "Rename Wrong Reference";
+    return QuickFixBundle.message("rename.wrong.reference.family");
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
@@ -155,10 +157,9 @@ public class RenameWrongRefAction implements IntentionAction {
 
   public void invoke(Project project, final Editor editor, PsiFile file) {
     if (!CodeInsightUtil.prepareFileForWrite(file)) return;
-    Class[] scopes = new Class[]{PsiMethod.class, PsiClassInitializer.class, PsiClass.class, PsiField.class, PsiFile.class};
-    PsiReferenceExpression[] refs = CreateFromUsageUtils.collectExpressions(myRefExpr, scopes, true);
+    PsiReferenceExpression[] refs = CreateFromUsageUtils.collectExpressions(myRefExpr, true, PsiMember.class, PsiFile.class);
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      PsiElement element = PsiTreeUtil.getParentOfType(myRefExpr, scopes);
+      PsiElement element = PsiTreeUtil.getParentOfType(myRefExpr, PsiMember.class, PsiFile.class);
       LookupItem[] items = collectItems();
       ReferenceNameExpression refExpr = new ReferenceNameExpression(items, myRefExpr.getReferenceName());
 

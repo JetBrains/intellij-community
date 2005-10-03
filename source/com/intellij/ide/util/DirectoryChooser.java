@@ -43,6 +43,7 @@ public class DirectoryChooser extends DialogWrapper {
     myView.onSelectionChange(runnable);
     final JComponent component = myView.getComponent();
     final JScrollPane jScrollPane = new JScrollPane(component);
+    //noinspection HardCodedStringLiteral
     int prototypeWidth = component.getFontMetrics(component.getFont()).stringWidth("X:\\1234567890\\1234567890\\com\\company\\system\\subsystem");
     jScrollPane.setPreferredSize(new Dimension(Math.max(300, prototypeWidth),300));
 
@@ -57,7 +58,9 @@ public class DirectoryChooser extends DialogWrapper {
     final ActionMap actionMap = component.getActionMap();
     final Object oldActionKey = inputMap.get(enterKeyStroke);
     final Action oldAction = oldActionKey != null ? actionMap.get(oldActionKey) : null;
+    //noinspection HardCodedStringLiteral
     inputMap.put(enterKeyStroke, "clickButton");
+    //noinspection HardCodedStringLiteral
     actionMap.put("clickButton", new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
         if (isOKActionEnabled()) {

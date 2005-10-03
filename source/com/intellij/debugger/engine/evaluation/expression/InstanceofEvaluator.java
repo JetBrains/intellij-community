@@ -10,6 +10,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiType;
 import com.sun.jdi.*;
@@ -37,12 +38,13 @@ class InstanceofEvaluator implements Evaluator {
       return DebuggerUtilsEx.createValue(context.getDebugProcess().getVirtualMachineProxy(), PsiType.BOOLEAN.getPresentableText(), false);
     }
     if (!(value instanceof ObjectReference)) {
-      throw EvaluateExceptionUtil.createEvaluateException("Object reference expected");
+      throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.object.reference.expected"));
     }
     try {
       ReferenceType refType = (ReferenceType)myTypeEvaluator.evaluate(context);
       ClassObjectReference classObject = refType.classObject();
       ClassType classRefType = (ClassType)classObject.referenceType();
+      //noinspection HardCodedStringLiteral
       Method method = classRefType.concreteMethodByName("isAssignableFrom", "(Ljava/lang/Class;)Z");
       List args = new LinkedList();
       args.add(((ObjectReference)value).referenceType().classObject());

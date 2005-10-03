@@ -4,22 +4,28 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.psi.*;
+import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.move.MoveInstanceMembersUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.containers.HashMap;
-import com.intellij.refactoring.move.MoveInstanceMembersUtil;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.util.*;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
+
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author ven
  */
 public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
-  private static final String KEY = "#com.intellij.refactoring.move.moveInstanceMethod.MoveInstanceMethodDialog";
+  @NonNls private static final String KEY = "#com.intellij.refactoring.move.moveInstanceMethod.MoveInstanceMethodDialog";
 
   //Map from classes referenced by 'this' to sets of referenced members
   private Map<PsiClass, Set<PsiMember>> myThisClassesMap;
@@ -37,8 +43,7 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
 
   protected JComponent createCenterPanel() {
     JPanel mainPanel = new JPanel(new GridBagLayout());
-    final JLabel jLabel = new JLabel("Select an instance variable:");
-    jLabel.setDisplayedMnemonic('i');
+    final JLabel jLabel = new JLabel();
     mainPanel.add(jLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0,0,0,0), 0,0));
 
     myList = createTargetVariableChooser();
@@ -47,6 +52,8 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
         validateTextFields(e.getFirstIndex());
       }
     });
+
+    jLabel.setText(RefactoringBundle.message("moveInstanceMethod.select.an.instance.parameter"));
 
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myList);
     mainPanel.add(scrollPane, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.BOTH, new Insets(0,0,0,0), 0,0));
@@ -86,7 +93,7 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
     if (myThisClassesMap.size() == 0) return null;
     JPanel panel = new JPanel(new VerticalFlowLayout());
     for (PsiClass aClass : myThisClassesMap.keySet()) {
-      final String text = "Select a name for '" + aClass.getName() + ".this' parameter";
+      final String text = RefactoringBundle.message("move.method.this.parameter.label", aClass.getName());
       panel.add(new JLabel(text));
 
       String suggestedName = MoveInstanceMethodHandler.suggestParameterNameForThisClass(aClass);
@@ -106,7 +113,7 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
       if (field.isEnabled()) {
         String parameterName = field.getText().trim();
         if (!myMethod.getManager().getNameHelper().isIdentifier(parameterName)) {
-          Messages.showErrorDialog(getProject(), "Please Enter a Valid name for Parameter", myRefactoringName);
+          Messages.showErrorDialog(getProject(), RefactoringBundle.message("move.method.enter.a.valid.name.for.parameter"), myRefactoringName);
           return;
         }
         parameterNames.put(aClass, parameterName);

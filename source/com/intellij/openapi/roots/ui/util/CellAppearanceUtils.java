@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Icons;
@@ -35,7 +36,7 @@ public class CellAppearanceUtils {
   public static final Icon EXCLUDE_FOLDER_ICON = excludeIcon(FOLDER_ICON);
   public static final CellAppearance EMPTY = new EmptyAppearance();
   public static final Icon GENERIC_JDK_ICON = IconLoader.getIcon("/general/jdk.png");
-  public static final String NO_JDK = "<No JDK>";
+  public static final String NO_JDK = ProjectBundle.message("jdk.missing.item");
 
   public static final SimpleTextAttributes createSimpleCellAttributes(boolean isSelected){
     return isSelected ? SimpleTextAttributes.SELECTED_SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES;
@@ -115,7 +116,7 @@ public class CellAppearanceUtils {
     }
     String[] files = library.getUrls(OrderRootType.CLASSES);
     if (files.length == 0) {
-      return SimpleTextCellAppearance.invalid("Empty Library", Icons.LIBRARY_ICON);
+      return SimpleTextCellAppearance.invalid(ProjectBundle.message("library.empty.library.item"), Icons.LIBRARY_ICON);
     }
     if (files.length == 1) {
       return forVirtualFilePointer(new LightFilePointer(files[0]));

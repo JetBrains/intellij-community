@@ -4,6 +4,7 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.keymap.KeyMapBundle;
 
 import javax.swing.*;
 
@@ -21,7 +22,7 @@ public class KeymapConfigurable extends BaseConfigurable implements ApplicationC
   }
 
   public String getDisplayName() {
-    return "Keymap";
+    return KeyMapBundle.message("keymap.display.name");
   }
 
   public JComponent createComponent() {

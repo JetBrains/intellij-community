@@ -1,6 +1,7 @@
 package com.intellij.javadoc;
 
 import com.intellij.openapi.options.Configurable;
+import com.intellij.psi.PsiKeyword;
 
 import javax.swing.*;
 import java.io.File;
@@ -65,7 +66,7 @@ final class JavadocConfigurable implements Configurable {
     isModified |= !compareStrings(myPanel.myOtherOptionsField.getText(), configuration.OTHER_OPTIONS);
     isModified |= !compareStrings(myPanel.myHeapSizeField.getText(), configuration.HEAP_SIZE);
     isModified |= myPanel.myOpenInBrowserCheckBox.isSelected() != configuration.OPEN_IN_BROWSER;
-    isModified |= !compareStrings(myPanel.getScope(), (configuration.OPTION_SCOPE == null ? "protected" : configuration.OPTION_SCOPE));
+    isModified |= !compareStrings(myPanel.getScope(), (configuration.OPTION_SCOPE == null ? PsiKeyword.PROTECTED : configuration.OPTION_SCOPE));
     isModified |= myPanel.myHierarchy.isSelected() != configuration.OPTION_HIERARCHY;
     isModified |= myPanel.myNavigator.isSelected() != configuration.OPTION_NAVIGATOR;
     isModified |= myPanel.myIndex.isSelected() != configuration.OPTION_INDEX;

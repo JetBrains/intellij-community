@@ -20,7 +20,7 @@ public class RefParameter extends RefElement {
   private final short myIndex;
   private String myActualValueTemplate;
 
-  public RefParameter(PsiParameter parameter, int index, RefManager manager) {
+  RefParameter(PsiParameter parameter, int index, RefManager manager) {
     super(parameter, manager);
 
     myIndex = (short)index;
@@ -97,5 +97,9 @@ public class RefParameter extends RefElement {
 
   public void initializeFinalFlag() {
     setIsFinal(((PsiModifierListOwner)getElement()).hasModifierProperty(PsiModifier.FINAL));
+  }
+
+  protected void initialize() {
+
   }
 }

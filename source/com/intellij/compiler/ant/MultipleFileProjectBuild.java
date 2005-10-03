@@ -16,6 +16,7 @@ public class MultipleFileProjectBuild extends ProjectBuild{
   }
 
   protected Generator createModuleBuildGenerator(ModuleChunk chunk, GenerationOptions genOptions) {
+    //noinspection HardCodedStringLiteral
     final String chunkBuildFile = BuildProperties.getModuleChunkBaseDir(chunk).getPath() + File.separator + BuildProperties.getModuleChunkBuildFileName(chunk) + ".xml";
     final File projectBaseDir = BuildProperties.getProjectBaseDir(myProject);
     final String pathToFile = GenerationUtils.toRelativePath(

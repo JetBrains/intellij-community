@@ -2,6 +2,7 @@
 package com.intellij.find.findUsages;
 
 import com.intellij.find.FindSettings;
+import com.intellij.find.FindBundle;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
@@ -92,9 +93,9 @@ public abstract class FindUsagesDialog extends DialogWrapper{
 
     setButtonsMargin(null);
     init();
-    setOKButtonText("Find");
+    setOKButtonText(FindBundle.message("find.dialog.find.button"));
     setOKButtonIcon(IconLoader.getIcon("/actions/find.png"));
-    setTitle(isSingleFile ? "Find Usages in File" : "Find Usages");
+    setTitle(isSingleFile ? FindBundle.message("find.usages.in.file.dialog.title") : FindBundle.message("find.usages.dialog.title"));
     update();
   }
 
@@ -135,8 +136,7 @@ public abstract class FindUsagesDialog extends DialogWrapper{
     panel.add(_panel, new GridBagConstraints(0, 1, 1, 1, 1.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
 
     if (myIsShowInNewTabVisible){
-      myCbToOpenInNewTab = new JCheckBox("Open in new tab");
-      myCbToOpenInNewTab.setMnemonic('t');
+      myCbToOpenInNewTab = new JCheckBox(FindBundle.message("find.open.in.new.tab.checkbox"));
       myCbToOpenInNewTab.setSelected(myToShowInNewTab);
       myCbToOpenInNewTab.setEnabled(myIsShowInNewTabEnabled);
       _panel.add(myCbToOpenInNewTab, BorderLayout.EAST);
@@ -237,9 +237,8 @@ public abstract class FindUsagesDialog extends DialogWrapper{
     return cb.isSelected();
   }
 
-  protected StateRestoringCheckBox addCheckboxToPanel(String name, boolean toSelect, JPanel panel, boolean toUpdate, char mnemonic) {
+  protected StateRestoringCheckBox addCheckboxToPanel(String name, boolean toSelect, JPanel panel, boolean toUpdate) {
     StateRestoringCheckBox cb = new StateRestoringCheckBox(name);
-    cb.setMnemonic(mnemonic);
     cb.setSelected(toSelect);
     panel.add(cb);
     if (toUpdate){
@@ -285,23 +284,23 @@ public abstract class FindUsagesDialog extends DialogWrapper{
 
   protected JPanel createUsagesOptionsPanel() {
     JPanel optionsPanel = new JPanel();
-    optionsPanel.setBorder(IdeBorderFactory.createTitledBorder("Options"));
+    optionsPanel.setBorder(IdeBorderFactory.createTitledBorder(FindBundle.message("find.options.group")));
     optionsPanel.setLayout(new BoxLayout(optionsPanel, BoxLayout.Y_AXIS));
 
     boolean isEmpty = true;
 
     if(mySearchForTextOccurencesAvailable){
-      myCbToSearchForTextOccurences = addCheckboxToPanel("Search for text occurences", FindSettings.getInstance().isSearchForTextOccurences(), optionsPanel, false, 'o');
+      myCbToSearchForTextOccurences = addCheckboxToPanel(FindBundle.message("find.options.search.for.text.occurences.checkbox"), FindSettings.getInstance().isSearchForTextOccurences(), optionsPanel, false);
       isEmpty = false;
     }
 
     if (myIsShowInNewTabVisible){
-      myCbToSkipResultsWhenOneUsage = addCheckboxToPanel("Skip results tab with one usage", FindSettings.getInstance().isSkipResultsWithOneUsage(), optionsPanel, false, 'k');
+      myCbToSkipResultsWhenOneUsage = addCheckboxToPanel(FindBundle.message("find.options.skip.results.tab.with.one.usage.checkbox"), FindSettings.getInstance().isSkipResultsWithOneUsage(), optionsPanel, false);
       isEmpty = false;
     }
 
     if (myIncludeOverloadedMethodsAvailable){
-      myCbIncludeOverloadedMethods = addCheckboxToPanel("Include overloaded methods", FindSettings.getInstance().isSearchOverloadedMethods(), optionsPanel, false, 'v');
+      myCbIncludeOverloadedMethods = addCheckboxToPanel(FindBundle.message("find.options.include.overloaded.methods.checkbox"), FindSettings.getInstance().isSearchOverloadedMethods(), optionsPanel, false);
       isEmpty = false;
     }
 
@@ -317,8 +316,7 @@ public abstract class FindUsagesDialog extends DialogWrapper{
   protected JComponent createSearchScopePanel() {
     if (isInFileOnly()) return null;
     JPanel optionsPanel = new JPanel(new BorderLayout());
-    JLabel label = new JLabel("Scope: ");
-    label.setDisplayedMnemonic('s');
+    JLabel label = new JLabel(FindBundle.message("find.scope.label"));
     optionsPanel.add(label, BorderLayout.WEST);
     myScopeCombo = new ScopeChooserCombo(myProject, mySearchInLibrariesAvailable, true, FindSettings.getInstance().getDefaultScopeName());
     optionsPanel.add(myScopeCombo, BorderLayout.CENTER);

@@ -2,6 +2,7 @@ package com.intellij.openapi.options.ex;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
+import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurable;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -17,13 +18,15 @@ public class ProjectConfigurablesGroup implements ConfigurableGroup {
   }
 
   public String getDisplayName() {
-    if (isDefault()) return "Template Project Settings";
+    if (isDefault()) return OptionsBundle.message("template.project.settings.display.name");
     VirtualFile projectFile = myProject.getProjectFile();
-    return "Project Settings [" + (projectFile != null ? projectFile.getNameWithoutExtension() : "unknown") + "]";
+    final String projectName = (projectFile != null ? projectFile.getNameWithoutExtension() : OptionsBundle.message("unknown.project.display.name"));
+    return OptionsBundle.message("project.settings.display.name", projectName);
   }
 
   public String getShortName() {
-    return isDefault() ? "Template Project" : "Project";
+    return isDefault() ? OptionsBundle.message("template.project.settings.short.name") : OptionsBundle
+      .message("project.settings.short.name");
   }
 
   private boolean isDefault() {

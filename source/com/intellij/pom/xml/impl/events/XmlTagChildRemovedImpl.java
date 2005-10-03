@@ -37,6 +37,7 @@ public class XmlTagChildRemovedImpl implements XmlTagChildRemoved {
     event.registerChangeSet(source.getModelAspect(XmlAspect.class), xmlAspectChangeSet);
     return event;
   }
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return "child removed from " + getTag().getName() + " child: " + myChild.toString();
   }

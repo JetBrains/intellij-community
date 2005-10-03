@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.peer.PeerFactory;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.content.Content;
+import com.intellij.analysis.AnalysisScopeBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -52,7 +53,9 @@ public class ShowModuleDependenciesAction extends AnAction{
     }
 
     Content content = PeerFactory.getInstance().getContentFactory().createContent(panel,
-                                                                                  "Module Dependencies of " + project.getName(),
+                                                                                  AnalysisScopeBundle.message(
+                                                                                    "module.dependencies.toolwindow.title",
+                                                                                    project.getName()),
                                                                                   false);
     panel.setContent(content);
     DependenciesAnalyzeManager.getInstance(project).addContent(content);
@@ -69,12 +72,10 @@ public class ShowModuleDependenciesAction extends AnAction{
     private JRadioButton myModuleScope;
     protected MyModuleOrProjectScope(String moduleName) {
       super(false);
-      setTitle("Specify Analysis Scope");
+      setTitle(AnalysisScopeBundle.message("module.dependencies.scope.dialog.title"));
       ButtonGroup group = new ButtonGroup();
-      myProjectScope = new JRadioButton("Inspect the whole project");
-      myProjectScope.setMnemonic('p');
-      myModuleScope = new JRadioButton("Inspect module \'" + moduleName + "\'");
-      myModuleScope.setMnemonic('m');
+      myProjectScope = new JRadioButton(AnalysisScopeBundle.message("module.dependencies.scope.dialog.project.button"));
+      myModuleScope = new JRadioButton(AnalysisScopeBundle.message("module.dependencies.scope.dialog.module.button", moduleName));
       group.add(myProjectScope);
       group.add(myModuleScope);
       myProjectScope.setSelected(true);

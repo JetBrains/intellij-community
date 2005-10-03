@@ -18,6 +18,7 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.usageView.FindUsagesCommand;
@@ -108,14 +109,13 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
             PsiField field = (PsiField)referencedElement;
 
             if (mySettings.getNameForField(field) == null) {
-              String message = typeString + " uses non-static " + ConflictsUtil.getDescription(field, true)
-                               + ", which is not passed as a parameter";
+              String message = RefactoringBundle.message("0.uses.non.static.1.which.is.not.passed.as.a.parameter", typeString,
+                                                         ConflictsUtil.getDescription(field, true));
               conflicts.add(message);
             }
           }
           else {
-            String message = typeString + " uses " + ConflictsUtil.getDescription(referencedElement, true)
-                             + ", which needs class instance.";
+            String message = RefactoringBundle.message("0.uses.1.which.needs.class.instance", typeString, ConflictsUtil.getDescription(referencedElement, true));
             conflicts.add(message);
           }
         }
@@ -123,8 +123,8 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
       if (usageInfo instanceof OverridingMethodUsageInfo) {
         LOG.assertTrue(myMember instanceof PsiMethod);
         final PsiMethod overridingMethod = ((PsiMethod)usageInfo.getElement());
-        String message = "Method " + ConflictsUtil.getDescription(myMember, false) + " is overridden by " +
-          ConflictsUtil.getDescription(overridingMethod, true) + ".";
+        String message = RefactoringBundle.message("method.0.is.overridden.by.1", ConflictsUtil.getDescription(myMember, false),
+                                                   ConflictsUtil.getDescription(overridingMethod, true));
         conflicts.add(message);
       }
       else {
@@ -150,30 +150,26 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
   }
 
   private String createInaccessibleFieldsConflictDescription(ArrayList<PsiField> inaccessible, PsiElement container) {
-    StringBuffer buf = new StringBuffer("Field");
     if (inaccessible.size() == 1) {
-      buf.append(" ");
-    }
-    else {
-      buf.append("s ");
-    }
+      final PsiField field = inaccessible.get(0);
+      return RefactoringBundle.message("field.0.is.not.accessible",
+                                       ConflictsUtil.htmlEmphasize(field.getName()),
+                                        ConflictsUtil.getDescription(container, true));
+    } else {
+      StringBuffer fieldsBuffer = new StringBuffer();
+      for (int j = 0; j < inaccessible.size(); j++) {
+        PsiField field = inaccessible.get(j);
 
-    for (int j = 0; j < inaccessible.size(); j++) {
-      PsiField field = inaccessible.get(j);
-
-      if (j > 0) {
-        if (j + 1 < inaccessible.size()) {
-          buf.append(", ");
+        if (j > 0) {
+          fieldsBuffer.append(", ");
         }
-        else {
-          buf.append(" and ");
-        }
+        fieldsBuffer.append(ConflictsUtil.htmlEmphasize(field.getName()));
       }
-      buf.append(ConflictsUtil.htmlEmphasize(field.getName()));
+
+      return RefactoringBundle.message("fields.0.are.not.accessible",
+                                       fieldsBuffer.toString(),
+                                       ConflictsUtil.getDescription(container, true));
     }
-    buf.append(" is not accessible from ");
-    buf.append(ConflictsUtil.getDescription(container, true));
-    return buf.toString();
   }
 
   protected UsageInfo[] findUsages() {
@@ -302,7 +298,7 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
   }
 
   protected String getCommandName() {
-    return "Making " + UsageViewUtil.getDescriptiveName(myMember) + " static";
+    return RefactoringBundle.message("make.static.command", UsageViewUtil.getDescriptiveName(myMember));
   }
 
   public T getMember() {

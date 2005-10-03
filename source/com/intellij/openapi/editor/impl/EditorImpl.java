@@ -1,6 +1,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.Patches;
+import com.intellij.CommonBundle;
 import com.intellij.codeInsight.hint.DocumentFragmentTooltipRenderer;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.TooltipController;
@@ -41,6 +42,7 @@ import gnu.trove.TIntArrayList;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.plaf.ScrollBarUI;
@@ -2537,9 +2539,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     private EditorImpl myEditor = null;
     private boolean isStopped = false;
     private MyRepaintRunnable myRepaintRunnable;
+    @NonNls private static final String EDITOR_CARET_THREAD_NAME = "EditorCaretThread";
 
     public RepaintCursorThread() {
-      super("EditorCaretThread");
+      super(EDITOR_CARET_THREAD_NAME);
       myRepaintRunnable = new MyRepaintRunnable();
     }
 
@@ -2854,7 +2857,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
                                   }
                                 }
                               },
-                                                                "Move Cursor", null);
+                                                                EditorBundle.message("move.cursor.command.name"), null);
                             }
                           });
       myTimer.start();
@@ -2875,6 +2878,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
   }
 
   class MyScrollBar extends JScrollBar {
+    @NonNls private static final String DECR_BUTTON_FIELD = "decrButton";
+    @NonNls private static final String INCR_BUTTON_FIELD = "incrButton";
+    @NonNls private static final String APPLE_LAF_AQUA_SCROLL_BAR_UI_CLASS = "apple.laf.AquaScrollBarUI";
 
     public MyScrollBar(int orientation) {
       super(orientation);
@@ -2892,7 +2898,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
       Insets insets = getInsets();
       if (ui instanceof BasicScrollBarUI) {
         try {
-          Field decrButtonField = BasicScrollBarUI.class.getDeclaredField("decrButton");
+          Field decrButtonField = BasicScrollBarUI.class.getDeclaredField(DECR_BUTTON_FIELD);
           decrButtonField.setAccessible(true);
           JButton decrButtonValue = (JButton)decrButtonField.get(ui);
           LOG.assertTrue(decrButtonValue != null);
@@ -2919,7 +2925,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
       Insets insets = getInsets();
       if (ui instanceof BasicScrollBarUI) {
         try {
-          Field incrButtonField = BasicScrollBarUI.class.getDeclaredField("incrButton");
+          Field incrButtonField = BasicScrollBarUI.class.getDeclaredField(INCR_BUTTON_FIELD);
           incrButtonField.setAccessible(true);
           JButton incrButtonValue = (JButton)incrButtonField.get(ui);
           LOG.assertTrue(incrButtonValue != null);
@@ -2930,7 +2936,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
           throw new IllegalStateException(exc.getMessage());
         }
       }
-      else if ("apple.laf.AquaScrollBarUI".equals(ui.getClass().getName())) {
+      else if (APPLE_LAF_AQUA_SCROLL_BAR_UI_CLASS.equals(ui.getClass().getName())) {
         return insets.bottom + 30;
       }
       else {
@@ -3716,7 +3722,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
             }
           });
         }
-      }, "Paste", DND_COMMAND_KEY);
+      }, EditorBundle.message("paste.command.name"), DND_COMMAND_KEY);
 
       return true;
     }
@@ -3773,7 +3779,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
               }
             });
           }
-        }, "Move selection", DND_COMMAND_KEY);
+        }, EditorBundle.message("move.selection.command.name"), DND_COMMAND_KEY);
       }
 
       myDraggedRange = null;

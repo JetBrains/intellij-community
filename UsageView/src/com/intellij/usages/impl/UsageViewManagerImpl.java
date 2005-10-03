@@ -32,6 +32,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
 import com.intellij.usages.*;
 import com.intellij.util.Processor;
+import com.intellij.usageView.UsageViewBundle;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -49,7 +50,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public class UsageViewManagerImpl extends UsageViewManager implements ProjectComponent {
   private Project myProject;
-  @SuppressWarnings({"HardCodedStringLiteral"})
   private static final Key<UsageView> USAGE_VIEW_KEY = Key.create("USAGE_VIEW");
 
   public UsageViewManagerImpl(Project project) {
@@ -169,7 +169,6 @@ public class UsageViewManagerImpl extends UsageViewManager implements ProjectCom
 
 
   public String getComponentName() {
-    //noinspection HardCodedStringLiteral
     return "NewUsageViewManager";
   }
 

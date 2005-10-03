@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.ide.IdeBundle;
 
 public class ReloadFromDiskAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
@@ -24,8 +25,8 @@ public class ReloadFromDiskAction extends AnAction {
 
     int res = Messages.showOkCancelDialog(
       project,
-      "Reload \"" + psiFile.getVirtualFile().getPresentableUrl() + "\" from disk and lose all changes?",
-      "Reload File",
+      IdeBundle.message("prompt.reload.file.from.disk", psiFile.getVirtualFile().getPresentableUrl()),
+      IdeBundle.message("title.reload.file"),
       Messages.getWarningIcon()
     );
     if (res != 0) return;
@@ -43,8 +44,8 @@ public class ReloadFromDiskAction extends AnAction {
           );
         }
       },
-      "Reload from Disk",
-      null
+        IdeBundle.message("command.reload.from.disk"),
+        null
     );
   }
 

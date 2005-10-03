@@ -5,6 +5,7 @@ import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
@@ -56,6 +57,6 @@ public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> {
   }
 
   public String getToolTip() {
-    return "Module Group";
+    return IdeBundle.message("tooltip.module.group");
   }
 }

@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.navigation.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.navigation.NavigationUtil;
@@ -13,7 +14,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.ListPopup;
 import org.jetbrains.annotations.NotNull;
@@ -76,7 +76,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     }
     else if (candidates.size() > 1) {
       PsiElement[] elements = candidates.toArray(new PsiElement[candidates.size()]);
-      String title = " Go To Declaration Of " + ((PsiNamedElement)elements[0]).getName();
+      String title = CodeInsightBundle.message("declaration.navigation.title", ((PsiNamedElement)elements[0]).getName());
       ListPopup listPopup = NavigationUtil.getPsiElementPopup(elements, title, project);
       LogicalPosition caretPosition = editor.getCaretModel().getLogicalPosition();
       Point caretLocation = editor.logicalPositionToXY(caretPosition);
@@ -116,7 +116,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       for (PsiElement candidate1 : candidates) {
         PsiMethod candidate = (PsiMethod)candidate1;
         if (candidate.hasModifierProperty(PsiModifier.STATIC) && !allowStatics) continue;
-        List<PsiMethod> supers = Arrays.asList(PsiSuperMethodUtil.findSuperMethods(candidate));
+        List<PsiMethod> supers = Arrays.asList(candidate.findSuperMethods());
         if (supers.isEmpty()) {
           methods.add(candidate);
         }

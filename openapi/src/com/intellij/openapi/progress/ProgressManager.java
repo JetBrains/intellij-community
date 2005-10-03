@@ -20,6 +20,8 @@ import com.intellij.openapi.project.Project;
 
 import javax.swing.*;
 
+import org.jetbrains.annotations.NonNls;
+
 public abstract class ProgressManager {
   private static volatile ProgressManager ourCachedInstance = null;
   public static ProgressManager getInstance() {
@@ -40,7 +42,7 @@ public abstract class ProgressManager {
 
   public abstract void registerFunComponentProvider(ProgressFunComponentProvider provider);
   public abstract void removeFunComponentProvider(ProgressFunComponentProvider provider);
-  public abstract JComponent getProvidedFunComponent(Project project, String processId);
+  public abstract JComponent getProvidedFunComponent(Project project, @NonNls String processId);
 
   public abstract void setCancelButtonText(String cancelButtonText);
 }

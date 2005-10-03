@@ -10,12 +10,11 @@ package com.intellij.refactoring.makeStatic;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiMember;
-import com.intellij.usageView.FindUsagesCommand;
-import com.intellij.usageView.UsageInfo;
-import com.intellij.usageView.UsageViewDescriptor;
-import com.intellij.usageView.UsageViewUtil;
+import com.intellij.psi.PsiMethod;
+import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.usageView.*;
+import com.intellij.usageView.UsageViewBundle;
 
 public class MakeMethodOrClassStaticViewDescriptor implements UsageViewDescriptor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.makeMethodStatic.MakeMethodStaticViewDescriptor");
@@ -31,7 +30,7 @@ public class MakeMethodOrClassStaticViewDescriptor implements UsageViewDescripto
     myUsages = usages;
     myRefreshCommand = refreshCommand;
     String who = UsageViewUtil.capitalize(UsageViewUtil.getType(myMember));
-    myProcessedElementsHeader = who + " to be made static";
+    myProcessedElementsHeader = RefactoringBundle.message("make.static.elements.header", who);
   }
 
   public PsiElement[] getElements() {
@@ -81,7 +80,7 @@ public class MakeMethodOrClassStaticViewDescriptor implements UsageViewDescripto
   }
 
   public String getCodeReferencesText(int usagesCount, int filesCount) {
-    return "References to be changed " + UsageViewUtil.getUsageCountInfo(usagesCount, filesCount, "reference");
+    return RefactoringBundle.message("references.to.be.changed", UsageViewBundle.getReferencesString(usagesCount, filesCount));
   }
 
   public String getCommentReferencesText(int usagesCount, int filesCount) {

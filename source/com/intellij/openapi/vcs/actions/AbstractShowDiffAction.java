@@ -96,9 +96,9 @@ public abstract class AbstractShowDiffAction extends AbstractVcsAction{
 
         if (selectedFile.getFileType().isBinary()) {
           if (Arrays.equals(selectedFile.contentsToByteArray(), fileRevision.getContent())) {
-            Messages.showInfoMessage("Binary versions are identical", "Diff");
+            Messages.showInfoMessage(VcsBundle.message("message.text.binary.versions.are.identical"), VcsBundle.message("message.title.diff"));
           } else {
-            Messages.showInfoMessage("Binary versions are different", "Diff");
+            Messages.showInfoMessage(VcsBundle.message("message.text.binary.versions.are.different"), VcsBundle.message("message.title.diff"));
           }
           return;
         }
@@ -112,10 +112,10 @@ public abstract class AbstractShowDiffAction extends AbstractVcsAction{
 
         if (revisionNumber.compareTo(currentRevision) > 0) {
           request.setContents(content2, content1);
-          request.setContentTitles("Local", revisionNumber.asString());
+          request.setContentTitles(VcsBundle.message("diff.title.local"), revisionNumber.asString());
         } else {
           request.setContents(content1, content2);
-          request.setContentTitles(revisionNumber.asString(), "Local");
+          request.setContentTitles(revisionNumber.asString(), VcsBundle.message("diff.title.local"));
         }
 
         DiffManager.getInstance().getDiffTool().show(request);
@@ -125,10 +125,10 @@ public abstract class AbstractShowDiffAction extends AbstractVcsAction{
       //ignore
     }
     catch (VcsException e) {
-      AbstractVcsHelper.getInstance(project).showError(e, "Diff");
+      AbstractVcsHelper.getInstance(project).showError(e, VcsBundle.message("message.title.diff"));
     }
     catch (IOException e) {
-      AbstractVcsHelper.getInstance(project).showError(new VcsException(e), "Diff");
+      AbstractVcsHelper.getInstance(project).showError(new VcsException(e), VcsBundle.message("message.title.diff"));
     }
   }
 

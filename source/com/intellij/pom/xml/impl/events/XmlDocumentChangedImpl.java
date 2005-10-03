@@ -31,6 +31,7 @@ public class XmlDocumentChangedImpl implements XmlDocumentChanged {
     return event;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return "Xml document changed";
   }

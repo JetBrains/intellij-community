@@ -184,6 +184,7 @@ class InitialInfoBuilder {
     return myLastTokenBlock;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static void assertInvalidRanges(final int startOffset, final int newEndOffset, FormattingDocumentModel model) {
     final StringBuffer message = new StringBuffer();
     message.append("Invalid formatting blocks");

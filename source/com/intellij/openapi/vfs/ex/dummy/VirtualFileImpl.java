@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs.ex.dummy;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.vfs.VfsBundle;
 
 import java.io.IOException;
 
@@ -68,7 +69,7 @@ abstract class VirtualFileImpl extends VirtualFile {
 
   public void delete(Object requestor) throws IOException {
     if (myParent == null){
-      throw new IOException("Cannot delete root file " + getPresentableUrl() + ".");
+      throw new IOException(VfsBundle.message("file.delete.root.error", getPresentableUrl()));
     }
     myParent.removeChild(this);
     myIsValid = false;

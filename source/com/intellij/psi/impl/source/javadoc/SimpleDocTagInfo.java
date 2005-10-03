@@ -6,6 +6,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.javadoc.JavadocTagInfo;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author mike
@@ -16,7 +17,7 @@ class SimpleDocTagInfo implements JavadocTagInfo {
   private boolean myInline;
   private final LanguageLevel myLanguageLevel;
 
-  public SimpleDocTagInfo(String name, Class context, boolean isInline, LanguageLevel level) {
+  public SimpleDocTagInfo(@NonNls String name, Class context, boolean isInline, LanguageLevel level) {
     myName = name;
     myContext = context;
     myInline = isInline;

@@ -1,6 +1,7 @@
 package com.intellij.cvsSupport2.config;
 
 import com.intellij.cvsSupport2.keywordSubstitution.KeywordSubstitutionWrapper;
+import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -29,8 +30,8 @@ public class CvsConfiguration implements ProjectComponent, JDOMExternalizable {
   public boolean PRUNE_EMPTY_DIRECTORIES = true;
 
   public int MERGING_MODE = DO_NOT_MERGE;
-  public String MERGE_WITH_BRANCH1_NAME = "HEAD";
-  public String MERGE_WITH_BRANCH2_NAME = "HEAD";
+  public String MERGE_WITH_BRANCH1_NAME = CvsUtil.HEAD;
+  public String MERGE_WITH_BRANCH2_NAME = CvsUtil.HEAD;
   public boolean RESET_STICKY = false;
   public boolean CREATE_NEW_DIRECTORIES = true;
   public String DEFAULT_TEXT_FILE_SUBSTITUTION = KeywordSubstitutionWrapper.KEYWORD_EXPANSION.getSubstitution().toString();

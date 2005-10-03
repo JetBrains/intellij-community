@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.intention.impl;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
@@ -7,8 +8,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
-
-import java.text.MessageFormat;
 
 /**
  * @author ven
@@ -24,11 +23,11 @@ public class AddAnnotationAction implements IntentionAction {
 
   public String getText() {
     String name = myFQN.substring(myFQN.lastIndexOf('.') + 1);
-    return MessageFormat.format("Add ''@{0}'' Annotation", new Object[]{name,});
+    return CodeInsightBundle.message("intention.add.annotation.text", name);
   }
 
   public String getFamilyName() {
-    return getText();
+    return CodeInsightBundle.message("intention.add.annotation.family");
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {

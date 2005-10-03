@@ -9,25 +9,29 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.LightweightHint;
+import com.intellij.ide.structureView.StructureViewBuilder;
+import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
+import com.intellij.ide.structureView.StructureViewModel;
 
 import java.awt.*;
 import java.lang.ref.WeakReference;
 
 public class ShowContainerInfoHandler implements CodeInsightActionHandler {
-  private static final Key MY_LAST_HINT_KEY = Key.create("MY_LAST_HINT_KEY");
-  private static final Key CONTAINER_KEY = Key.create("CONTAINER_KEY");
+  private static final Key<WeakReference<LightweightHint>> MY_LAST_HINT_KEY = Key.create("MY_LAST_HINT_KEY");
+  private static final Key<PsiElement> CONTAINER_KEY = Key.create("CONTAINER_KEY");
 
   public void invoke(final Project project, final Editor editor, PsiFile file) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     PsiElement container = null;
-    WeakReference ref = (WeakReference)editor.getUserData(MY_LAST_HINT_KEY);
+    WeakReference<LightweightHint> ref = editor.getUserData(MY_LAST_HINT_KEY);
     if (ref != null){
-      LightweightHint hint = (LightweightHint)ref.get();
+      LightweightHint hint = ref.get();
       if (hint != null && hint.isVisible()){
         hint.hide();
-        container = (PsiElement)hint.getUserData(CONTAINER_KEY);
+        container = hint.getUserData(CONTAINER_KEY);
         if (!container.isValid()){
           container = null;
         }
@@ -40,10 +44,35 @@ public class ShowContainerInfoHandler implements CodeInsightActionHandler {
       if (container == null) return;
     }
 
-    while(true){
-      container = findContainer(container);
-      if (container == null) return;
-      if (!isDeclarationVisible(container, editor)) break;
+    if (file.canContainJavaCode() || file instanceof XmlFile) {
+      while(true){
+        container = findContainer(container);
+        if (container == null) return;
+        if (!isDeclarationVisible(container, editor)) break;
+      }
+    }
+    else {
+      container = null;
+      StructureViewBuilder builder = file.getLanguage().getStructureViewBuilder(file);
+      if (builder instanceof TreeBasedStructureViewBuilder) {
+        StructureViewModel model = ((TreeBasedStructureViewBuilder) builder).createStructureViewModel();
+        Object element = model.getCurrentEditorElement();
+        if (element instanceof PsiElement) {
+          container = (PsiElement) element;
+          while(true) {
+            if (container == null || container instanceof PsiFile) {
+              return;
+            }
+            if (!isDeclarationVisible(container, editor)) {
+              break;
+            }
+            container = container.getParent();
+          }
+        }
+      }
+      if (container == null) {
+        return;
+      }
     }
 
     final TextRange range = EditorFragmentComponent.getDeclarationRange(container);
@@ -52,7 +81,7 @@ public class ShowContainerInfoHandler implements CodeInsightActionHandler {
         public void run() {
           LightweightHint hint = EditorFragmentComponent.showEditorFragmentHint(editor, range, true);
           hint.putUserData(CONTAINER_KEY, _container);
-          editor.putUserData(MY_LAST_HINT_KEY, new WeakReference(hint));
+          editor.putUserData(MY_LAST_HINT_KEY, new WeakReference<LightweightHint>(hint));
         }
       });
   }

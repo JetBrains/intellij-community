@@ -1,14 +1,13 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
-
-import java.text.MessageFormat;
 
 public class GeneralizeCatchFix implements IntentionAction {
 //  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.DeleteCatchFix");
@@ -24,16 +23,13 @@ public class GeneralizeCatchFix implements IntentionAction {
   }
 
   public String getText() {
-    String text = MessageFormat.format("Generalize catch for ''{0}'' to ''{1}''",
-        new Object[]{
-          HighlightUtil.formatType(myCatchParameter.getType()),
-          HighlightUtil.formatType(myUnhandledException),
-        });
-    return text;
+    return QuickFixBundle.message("generalize.catch.text",
+                                  HighlightUtil.formatType(myCatchParameter.getType()),
+                                  HighlightUtil.formatType(myUnhandledException));
   }
 
   public String getFamilyName() {
-    return "Generalize Catch";
+    return QuickFixBundle.message("generalize.catch.family");
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {

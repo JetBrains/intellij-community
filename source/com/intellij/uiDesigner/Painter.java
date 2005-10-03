@@ -102,6 +102,7 @@ final class Painter {
    */
   private static void paintComponentBoundsImpl(final GuiEditor editor, final RadComponent component, final Graphics g){
     if (component == null) {
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("component cannot be null");
     }
     if (!(component instanceof RadContainer)){
@@ -132,6 +133,7 @@ final class Painter {
    */
   private static void paintGridOutlineImpl(final GuiEditor editor, final RadComponent component, final Graphics g){
     if (component == null) {
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("component cannot be null");
     }
     if (!(component instanceof RadContainer)){
@@ -192,6 +194,7 @@ final class Painter {
    */
   public static void paintSelectionDecoration(final RadComponent component, final Graphics g){
     if (component == null) {
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("component cannot be null");
     }
     if (component.isSelected()) {
@@ -210,6 +213,7 @@ final class Painter {
    */
   public static int getResizeMask(final RadComponent component, final int x, final int y) {
     if (component == null) {
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("component cannot be null");
     }
     if (component.getParent() == null || !component.isSelected()) {
@@ -285,6 +289,7 @@ final class Painter {
       return Cursor.SE_RESIZE_CURSOR;
     }
     else {
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("unknown resizeMask: " + resizeMask);
     }
   }

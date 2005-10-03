@@ -1,6 +1,7 @@
 package com.intellij.execution.junit2.configuration;
 
 import com.intellij.execution.ExecutionUtil;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.application.ApplicationConfigurationType;
 import com.intellij.execution.configurations.ConfigurationUtil;
 import com.intellij.ide.util.TreeClassChooser;
@@ -63,7 +64,7 @@ public abstract class ClassBrowser extends BrowseModuleValueActionListener {
         return ConfigurationUtil.MAIN_CLASS.value(aClass) && ApplicationConfigurationType.findMainMethod(aClass) != null;
       }
     };
-    return new MainClassBrowser(project, moduleSelector, "Choose Main Class"){
+    return new MainClassBrowser(project, moduleSelector, ExecutionBundle.message("choose.main.class.dialog.title")){
       protected TreeClassChooser.ClassFilter createFilter(final Module module) {
         return applicationClass;
       }
@@ -72,7 +73,7 @@ public abstract class ClassBrowser extends BrowseModuleValueActionListener {
 
   public static ClassBrowser createAppletClassBrowser(final Project project,
                                                       final ConfigurationModuleSelector moduleSelector) {
-    return new MainClassBrowser(project, moduleSelector, "Choose Applet Class") {
+    return new MainClassBrowser(project, moduleSelector, ExecutionBundle.message("choose.applet.class.dialog.title")) {
       protected TreeClassChooser.ClassFilter createFilter(final Module module) {
         final GlobalSearchScope scope = module != null ?
                                   GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module) :
@@ -135,16 +136,16 @@ public abstract class ClassBrowser extends BrowseModuleValueActionListener {
     public static NoFilterException noJUnitInModule(final Module module) {
       return new NoFilterException(new MessagesEx.MessageInfo(
         module.getProject(),
-        "JUnit not found in module \"" + module.getName() + "\"",
-        "Can't Browse TestCase Inheritors"));
+        ExecutionBundle.message("junit.not.found.in.module.error.message", module.getName()),
+        ExecutionBundle.message("cannot.browse.test.inheritors.dialog.title")));
     }
 
     public static NoFilterException moduleDoesntExist(final ConfigurationModuleSelector moduleSelector) {
       final Project project = moduleSelector.getProject();
       return new NoFilterException(new MessagesEx.MessageInfo(
         project,
-        "Module \"" + moduleSelector.getModuleName() + "\" does not exist in project \"" + project.getName() + "\"",
-        "Can't Browse TestCase Inheritors"));
+        ExecutionBundle.message("module.does.not.exists", moduleSelector.getModuleName(), project.getName()),
+        ExecutionBundle.message("cannot.browse.test.inheritors.dialog.title")));
     }
   }
 }

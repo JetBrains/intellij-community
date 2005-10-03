@@ -16,6 +16,7 @@ import com.intellij.openapi.roots.watcher.ModuleRootsWatcherFactory;
 import com.intellij.openapi.util.*;
 import com.intellij.util.ExternalizableString;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 
@@ -34,13 +35,18 @@ public class ModuleContainerImpl implements ModuleByNameProvider, ModuleContaine
    */
   private ModuleRootsWatcher<ExternalizableString> myModuleRootsWatcher;
   private Map<ExternalizableString, OrderEntryInfo> myOrderInfo;
-  private static final String NAME_ATTRIBUTE_NAME = "name";
-  private static final String LEVEL_ATTRIBUTE_NAME = "level";
-  private static final String TYPE_ATTRIBUTE_NAME = "type";
-  private static final String CONTAINER_ELEMENT_NAME = "containerElement";
-  private static final String MODULE_TYPE = "module";
-  private static final String LIBRARY_TYPE = "library";
-  private static final String URL_ELEMENT_NAME = "url";
+  @NonNls private static final String NAME_ATTRIBUTE_NAME = "name";
+  @NonNls private static final String LEVEL_ATTRIBUTE_NAME = "level";
+  @NonNls private static final String TYPE_ATTRIBUTE_NAME = "type";
+  @NonNls private static final String CONTAINER_ELEMENT_NAME = "containerElement";
+  @NonNls private static final String MODULE_TYPE = "module";
+  @NonNls private static final String LIBRARY_TYPE = "library";
+  @NonNls private static final String URL_ELEMENT_NAME = "url";
+  @NonNls protected static final String WATCHER_ELEMENT_NAME = "orderEntriesWatcher";
+  @NonNls protected static final String ENTRY_INFO_ELEMENT_NAME = "order-entry-info";
+  @NonNls protected static final String INFO_ELEMENT_NAME = "info";
+  @NonNls protected static final String KEY_ELEMENT_NAME = "key";
+  @NonNls protected static final String VALUE_ELEMENT_NAME = "value";
 
   public ModuleContainerImpl(Module module) {
     LOG.assertTrue(module != null);
@@ -170,7 +176,7 @@ public class ModuleContainerImpl implements ModuleByNameProvider, ModuleContaine
    * @deprecated
    */
   private void readPlainOldWatcherEntries(Element element) throws InvalidDataException {
-    final Element watcher = element.getChild("orderEntriesWatcher");
+    final Element watcher = element.getChild(WATCHER_ELEMENT_NAME);
     if (watcher == null) {
       return;
     }
@@ -178,15 +184,15 @@ public class ModuleContainerImpl implements ModuleByNameProvider, ModuleContaine
     myModuleRootsWatcher = ModuleRootsWatcherFactory.create(factory);
     myModuleRootsWatcher.readExternal(watcher);
     myOrderInfo = new HashMap<ExternalizableString, OrderEntryInfo>();
-    final Element infoRoot = element.getChild("order-entry-info");
+    final Element infoRoot = element.getChild(ENTRY_INFO_ELEMENT_NAME);
     if (infoRoot != null) {
-      final List infos = infoRoot.getChildren("info");
+      final List infos = infoRoot.getChildren(INFO_ELEMENT_NAME);
       for (Object info1 : infos) {
         Element info = (Element)info1;
-        final Element keyElement = info.getChild("key");
+        final Element keyElement = info.getChild(KEY_ELEMENT_NAME);
         final ExternalizableString key = new ExternalizableString("");
         key.readExternal(keyElement);
-        final Element valueElement = info.getChild("value");
+        final Element valueElement = info.getChild(VALUE_ELEMENT_NAME);
         final OrderEntryInfo value = new OrderEntryInfo();
         value.readExternal(valueElement);
         // the only situation we want to change seed

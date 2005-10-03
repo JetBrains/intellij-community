@@ -19,29 +19,38 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * An interface describing the current compilation scope
- * Only sources that belong to the scope are compiled
+ * Interface describing the current compilation scope.
+ * Only sources that belong to the scope are compiled.
+ *
+ * @see CompilerManager#compile(CompileScope, CompileStatusNotification, boolean)
  */
 public interface CompileScope extends UserDataHolder {
   /**
-   * @param fileType the type of the files. Null should be passed if all available files are needed
+   * Returns the list of files within the scope.
+   *
+   * @param fileType     the type of the files. Null should be passed if all available files are needed.
    * @param inSourceOnly if true, files are searched only in directories within the scope that are marked as "sources" or "test sources" in module settings.
-   * Otherwise files are searched in all directories that belong to the scope.
-   * @return a list of files of given type that belong to this scope
+   *                     Otherwise files are searched in all directories that belong to the scope.
+   * @return a list of files of given type that belong to this scope.
    */
-  VirtualFile[] getFiles(FileType fileType, boolean inSourceOnly);
+  VirtualFile[] getFiles(@Nullable FileType fileType, boolean inSourceOnly);
 
   /**
+   * Checks if the file with the specified URL belongs to the scope.
+   *
    * @param url an VFS url. Note that actual file may not exist on the disk.
-   * @return true if the url specified belongs to the scope, false otharwise.
-   * Note: the method may be time-consuming.
+   * @return true if the url specified belongs to the scope, false otherwise.
+   *         Note: the method may be time-consuming.
    */
   boolean belongs(String url);
 
   /**
-   * @return a list of modules this scope affects
+   * Returns the list of modules files in which belong to the scope.
+   *
+   * @return a list of modules this scope affects.
    */
   Module[] getAffectedModules();
 }

@@ -5,6 +5,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ide.IdeBundle;
 
 import java.util.*;
 
@@ -75,7 +76,7 @@ public class FileSystemSynchronizer {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
       indicator.pushState();
-      indicator.setText("Scanning files...");
+      indicator.setText(IdeBundle.message("progress.scanning.files"));
     }
 
     myUpdateSets = new Collection[myUpdaters.size()];
@@ -111,7 +112,7 @@ public class FileSystemSynchronizer {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
       indicator.pushState();
-      indicator.setText("Parsing files. Please wait...");
+      indicator.setText(IdeBundle.message("progress.parsing.files"));
     }
 
     int totalFiles = myFilesToUpdate.size();

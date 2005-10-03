@@ -24,14 +24,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * Service for validating and parsing Java identifiers.
  *
  * @see com.intellij.psi.PsiManager#getNameHelper()
  */
 public abstract class PsiNameHelper {
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private static final Pattern WHITESPACE_PATTERN = Pattern.compile("(?:\\s)|(?:/\\*.*\\*/)|(?://[^\\n]*)");
+  @NonNls private static final Pattern WHITESPACE_PATTERN = Pattern.compile("(?:\\s)|(?:/\\*.*\\*/)|(?://[^\\n]*)");
 
   /**
    * Checks if the specified text is a Java identifier, using the language level of the project

@@ -5,6 +5,8 @@ import com.intellij.openapi.util.Pair;
 import java.io.DataOutput;
 import java.io.IOException;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author Eugene Zhuravlev
  *         Date: Mar 19, 2004
@@ -13,7 +15,7 @@ public class Tag extends CompositeGenerator {
   private final String myTagName;
   private final Pair[] myTagOptions;
 
-  public Tag(String tagName, Pair[] tagOptions) {
+  public Tag(@NonNls String tagName, Pair[] tagOptions) {
     myTagName = tagName;
     myTagOptions = tagOptions;
   }
@@ -58,7 +60,7 @@ public class Tag extends CompositeGenerator {
     }
   }
 
-  protected static Pair<String, String> pair(String v1, String v2) {
+  protected static Pair<String, String> pair(@NonNls String v1, @NonNls String v2) {
     if (v2 == null) {
       return null;
     }

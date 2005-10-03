@@ -1,6 +1,7 @@
 package com.intellij.ide.bookmarks;
 
 import com.intellij.ide.commander.Commander;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -37,7 +38,7 @@ public class CommanderBookmarksDialog extends BookmarksDialog {
 
   public static void execute(BookmarkManager manager, Bookmark currentBookmark) {
     BookmarksDialog dialog = new CommanderBookmarksDialog(manager);
-    dialog.setTitle("Project Elements Bookmarks");
+    dialog.setTitle(IdeBundle.message("title.project.elements.bookmarks"));
     dialog.fillList(manager.getValidCommanderBookmarks(), currentBookmark);
     dialog.show();
   }

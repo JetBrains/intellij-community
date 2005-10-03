@@ -4,6 +4,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.util.*;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
@@ -13,7 +14,7 @@ import java.util.Map;
 public class UISettings implements NamedJDOMExternalizable, ApplicationComponent {
   private EventListenerList myListenerList;
 
-  public String FONT_FACE;
+  @NonNls public String FONT_FACE;
   public int FONT_SIZE;
   public int RECENT_FILES_LIMIT = 15;
   public int EDITOR_TAB_LIMIT = 10;
@@ -117,7 +118,7 @@ public class UISettings implements NamedJDOMExternalizable, ApplicationComponent
     // find any other suitable font withing "preferred" fonts first.
     boolean fontIsValid = isValidFont(new Font(FONT_FACE, Font.PLAIN, FONT_SIZE));
     if(!fontIsValid){
-      final String[] preferredFonts = new String[]{"dialog", "Arial", "Tahoma"};
+      @NonNls final String[] preferredFonts = new String[]{"dialog", "Arial", "Tahoma"};
       for(int i = 0; i < preferredFonts.length; i++){
         if(isValidFont(new Font(preferredFonts[i], Font.PLAIN, FONT_SIZE))){
           FONT_FACE = preferredFonts[i];
@@ -166,6 +167,7 @@ public class UISettings implements NamedJDOMExternalizable, ApplicationComponent
   private void setSystemFontFaceAndSize(){
     if(FONT_FACE == null || FONT_SIZE <= 0){
       if(SystemInfo.isWindows){
+        //noinspection HardCodedStringLiteral
         Font font=(Font)Toolkit.getDefaultToolkit().getDesktopProperty("win.messagebox.font");
         if(font != null){
           FONT_FACE = font.getName();
@@ -181,6 +183,7 @@ public class UISettings implements NamedJDOMExternalizable, ApplicationComponent
 
   public void writeExternal(Element element) throws WriteExternalException {
     // Don't save face and size of font if it they don't differ from system settings
+    //noinspection HardCodedStringLiteral
     Font font=(Font)Toolkit.getDefaultToolkit().getDesktopProperty("win.messagebox.font");
     if(SystemInfo.isWindows && font!=null && FONT_FACE.equals(font.getName()) && FONT_SIZE==font.getSize()){
       String oldFontFace=FONT_FACE;

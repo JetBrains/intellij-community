@@ -16,7 +16,8 @@ public class LocalConnectionSettingsPanel {
   private JTextField myServerCommand;
 
   public LocalConnectionSettingsPanel() {
-    myPathToCvsClient.addBrowseFolderListener("Select Path to CVS Client", "Select path to CVS client", null,
+    myPathToCvsClient.addBrowseFolderListener(com.intellij.CvsBundle.message("dialog.title.select.path.to.cvs.client"),
+                                              com.intellij.CvsBundle.message("dialog.description.select.path.to.cvs.client"), null,
                                               new FileChooserDescriptor(true, false, false, false, false, false));
   }
 

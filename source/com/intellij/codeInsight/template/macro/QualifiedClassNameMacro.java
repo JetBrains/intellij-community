@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.template.macro;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.project.Project;
@@ -12,7 +13,7 @@ public class QualifiedClassNameMacro implements Macro {
   }
 
   public String getDescription() {
-    return "qualifiedClassName()";
+    return CodeInsightBundle.message("macro.qualified.class.name");
   }
 
   public String getDefaultValue() {

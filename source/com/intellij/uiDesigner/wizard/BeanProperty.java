@@ -27,7 +27,9 @@ final class BeanProperty implements Comparable<BeanProperty>{
     LOG.assertTrue(name != null);
     LOG.assertTrue(type != null);
 
+    //noinspection HardCodedStringLiteral
     if(!"java.lang.String".equals(type) && !"boolean".equals(type)){
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("unknown type: " + type);
     }
 

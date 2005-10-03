@@ -4,8 +4,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.PomMemberOwner;
 import com.intellij.psi.*;
+import com.intellij.psi.HierarchicalMethodSignature;
 import com.intellij.psi.impl.InheritanceImplUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
+import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.impl.light.LightEmptyImplementsList;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -15,12 +17,10 @@ import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.cls.ClsFormatException;
+import org.jetbrains.annotations.NonNls;
 
 import java.text.CharacterIterator;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author max
@@ -233,6 +233,10 @@ public class ClsTypeParameterImpl extends ClsElementImpl implements PsiTypeParam
     return null;
   }
 
+  public Collection<HierarchicalMethodSignature> getVisibleSignatures() {
+    return PsiSuperMethodImplUtil.getVisibleSignatures(this);
+  }
+
   public PsiModifierList getModifierList() {
     return null;
   }
@@ -258,7 +262,7 @@ public class ClsTypeParameterImpl extends ClsElementImpl implements PsiTypeParam
   }
 
   public String getMirrorText() {
-    StringBuffer buf = new StringBuffer();
+    @NonNls StringBuffer buf = new StringBuffer();
     buf.append(myName);
     PsiJavaCodeReferenceElement[] bounds = myBoundsList.getReferenceElements();
     if (bounds.length > 0) {

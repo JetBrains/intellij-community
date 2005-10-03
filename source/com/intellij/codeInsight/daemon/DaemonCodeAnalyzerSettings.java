@@ -10,11 +10,16 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiElement;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 
 public class DaemonCodeAnalyzerSettings implements NamedJDOMExternalizable, Cloneable, ExportableApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings");
+  @NonNls private static final String ROOT_TAG = "root";
+  @NonNls private static final String PROFILE_ATT = "profile";
+  @NonNls public static final String DEFAULT_PROFILE_ATT = "Default";
+  @NonNls public static final String PROFILE_COPY_NAME = "copy";
 
 
   public DaemonCodeAnalyzerSettings() {
@@ -29,13 +34,13 @@ public class DaemonCodeAnalyzerSettings implements NamedJDOMExternalizable, Clon
   }
 
   public String getPresentableName() {
-    return "Error highlighting settings";
+    return DaemonBundle.message("error.highlighting.settings");
   }
 
   public boolean NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST = false;
   public int AUTOREPARSE_DELAY = 300;
   public boolean SHOW_ADD_IMPORT_HINTS = true;
-  public String NO_AUTO_IMPORT_PATTERN = "[a-z].?";
+  public @NonNls String NO_AUTO_IMPORT_PATTERN = "[a-z].?";
   public boolean SUPPRESS_WARNINGS = true;
   public boolean SHOW_METHOD_SEPARATORS = false;
   public int ERROR_STRIPE_MARK_MIN_HEIGHT = 3;
@@ -78,10 +83,10 @@ public class DaemonCodeAnalyzerSettings implements NamedJDOMExternalizable, Clon
 
   public boolean isCodeHighlightingChanged(DaemonCodeAnalyzerSettings oldSettings) {
     try {
-      Element rootNew = new Element("root");
+      Element rootNew = new Element(ROOT_TAG);
       writeExternal(rootNew);
 
-      Element rootOld = new Element("root");
+      Element rootOld = new Element(ROOT_TAG);
       oldSettings.writeExternal(rootOld);
 
       if (JDOMUtil.areElementsEqual(rootOld, rootNew)) {
@@ -115,7 +120,7 @@ public class DaemonCodeAnalyzerSettings implements NamedJDOMExternalizable, Clon
 
   public Object clone() {
     DaemonCodeAnalyzerSettings settings = new DaemonCodeAnalyzerSettings();
-    InspectionProfileImpl inspectionProfile = new InspectionProfileImpl("copy", InspectionProfileManager.getInstance());
+    InspectionProfileImpl inspectionProfile = new InspectionProfileImpl(PROFILE_COPY_NAME, InspectionProfileManager.getInstance());
     inspectionProfile.copyFrom(getInspectionProfile());
     settings.myInspectionProfile = inspectionProfile;
     settings.AUTOREPARSE_DELAY = AUTOREPARSE_DELAY;
@@ -128,7 +133,7 @@ public class DaemonCodeAnalyzerSettings implements NamedJDOMExternalizable, Clon
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
     InspectionProfileConvertor.getInstance().storeEditorHighlightingProfile(element);
-    String profileName = element.getAttributeValue("profile");
+    String profileName = element.getAttributeValue(PROFILE_ATT);
     final InspectionProfileManager inspectionProfileManager = InspectionProfileManager.getInstance();
     if (profileName != null) {
       myInspectionProfile = inspectionProfileManager.getProfile(profileName);
@@ -142,10 +147,10 @@ public class DaemonCodeAnalyzerSettings implements NamedJDOMExternalizable, Clon
     DefaultJDOMExternalizer.writeExternal(this, element);
     //clone
     if (myInspectionProfile != null) {
-      element.setAttribute("profile", myInspectionProfile.getName());
+      element.setAttribute(PROFILE_ATT, myInspectionProfile.getName());
     }
     else {
-      element.setAttribute("profile", "Default");
+      element.setAttribute(PROFILE_ATT, DEFAULT_PROFILE_ATT);
     }
   }
 

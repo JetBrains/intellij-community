@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -46,7 +47,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private JCheckBox myImmediatePopupCheckbox;
 
   private int myIndex = 0;
-  public static final String IMMEDIATE_POPUP_OPTION = "IMMEDIATE_FATAL_ERROR_POPUP";
+  @NonNls public static final String IMMEDIATE_POPUP_OPTION = "IMMEDIATE_FATAL_ERROR_POPUP";
 
   public IdeErrorsDialog(MessagePool messagePool) {
     super(JOptionPane.getRootFrame(), false);
@@ -112,29 +113,29 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     final AbstractMessage message = getMessageAt(myIndex);
     if (message != null) {
       StringBuffer txt = new StringBuffer();
-      txt.append(DateFormatUtil.formatDate(new Date(), message.getDate()));
-      txt.append(". Occured ");
-      int occ = myModel.get(myIndex).size();
-      txt.append(occ == 1 ? "once" : Integer.toString(occ) + " times");
-      txt.append(" since last reset. ");
+      txt.append(DiagnosticBundle.message("error.list.message.info",
+                 DateFormatUtil.formatDate(new Date(), message.getDate()), myModel.get(myIndex).size()));
+
       if (message.isSumbitted()) {
         final SubmittedReportInfo info = message.getSubmissionInfo();
         if (info.getStatus() == SubmittedReportInfo.SubmissionStatus.FAILED) {
-          txt.append("Submission failed");
+          txt.append(DiagnosticBundle.message("error.list.message.submission.failed"));
         }
         else {
-          txt.append("Submitted");
           if (info.getLinkText() != null) {
-            txt.append(" as " + info.getLinkText());
+            txt.append(DiagnosticBundle.message("error.list.message.submitted.as.link", info.getLinkText()));
             if (info.getStatus() == SubmittedReportInfo.SubmissionStatus.DUPLICATE) {
-              txt.append(" [Duplicate]");
+              txt.append(DiagnosticBundle.message("error.list.message.duplicate"));
             }
+          }
+          else {
+            txt.append(DiagnosticBundle.message("error.list.message.submitted"));
           }
         }
         txt.append(". ");
       }
       else if (!message.isRead()) {
-        txt.append("Unread. ");
+        txt.append(DiagnosticBundle.message("error.list.message.unread"));
       }
       myInfoLabel.setText(txt.toString());
     }
@@ -147,8 +148,13 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     final AbstractMessage message = getMessageAt(myIndex);
     if (message != null) {
       final PluginId pluginId = findPluginId(message.getThrowable());
-      myBlameLabel.setText("Blame " + (pluginId == null ? ApplicationNamesInfo.getInstance().getProductName() +
-                                                          " core" : PluginManager.getPlugin(pluginId).getName()));
+      if (pluginId == null) {
+        myBlameLabel.setText(DiagnosticBundle.message("error.list.message.blame.core",
+                                                      ApplicationNamesInfo.getInstance().getProductName()));
+      }
+      else {
+        myBlameLabel.setText(DiagnosticBundle.message("error.list.message.blame.plugin", PluginManager.getPlugin(pluginId).getName()));
+      }
     }
     else {
       myBlameLabel.setText("");
@@ -166,12 +172,12 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   }
 
   private void updateCountLabel() {
-    myCountLabel.setText(Integer.toString(myIndex + 1) + " of " + myModel.size());
+    myCountLabel.setText(DiagnosticBundle.message("error.list.message.index.count", Integer.toString(myIndex + 1), myModel.size()));
   }
 
   private class BackAction extends AnAction {
     public BackAction() {
-      super("Back", null, IconLoader.getIcon("/actions/back.png"));
+      super(DiagnosticBundle.message("error.list.back.action"), null, IconLoader.getIcon("/actions/back.png"));
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -187,7 +193,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   private class ForwardAction extends AnAction {
     public ForwardAction() {
-      super("Forward", null, IconLoader.getIcon("/actions/forward.png"));
+      super(DiagnosticBundle.message("error.list.forward.action"), null, IconLoader.getIcon("/actions/forward.png"));
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -201,14 +207,14 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   }
 
   protected JComponent createCenterPanel() {
-    setTitle("IDE Fatal Errors");
+    setTitle(DiagnosticBundle.message("error.list.title"));
 
     JPanel root = new JPanel(new BorderLayout());
     JPanel top = new JPanel(new BorderLayout());
     JPanel toolbar = new JPanel(new FlowLayout());
 
-    myImmediatePopupCheckbox = new JCheckBox("Popup this window immediately next time internal error occurs");
-    myImmediatePopupCheckbox.setSelected("true".equals(PropertiesComponent.getInstance().getValue(IMMEDIATE_POPUP_OPTION)));
+    myImmediatePopupCheckbox = new JCheckBox(DiagnosticBundle.message("error.list.popup.immediately.checkbox"));
+    myImmediatePopupCheckbox.setSelected(PropertiesComponent.getInstance().isTrueValue(IMMEDIATE_POPUP_OPTION));
 
     myCountLabel = new JLabel();
     myBlameLabel = new JLabel();
@@ -366,7 +372,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   private class ShutdownAction extends AbstractAction {
     public ShutdownAction() {
-      super("Shut_down");
+      super(DiagnosticBundle.message("error.list.shutdown.action"));
     }
 
     public void actionPerformed(ActionEvent e) {
@@ -377,7 +383,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   private class ClearFatalsAction extends AbstractAction {
     public ClearFatalsAction() {
-      super("_Clear And Close");
+      super(DiagnosticBundle.message("error.list.clear.action"));
     }
 
     public void actionPerformed(ActionEvent e) {
@@ -388,7 +394,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   private class BlameAction extends AnAction {
     public BlameAction() {
-      super("Submit", "Report to JetBrains", IconLoader.getIcon("/actions/startDebugger.png"));
+      super(DiagnosticBundle.message("error.list.submit.action"),
+            DiagnosticBundle.message("error.list.submit.action.description"), IconLoader.getIcon("/actions/startDebugger.png"));
     }
 
     public void update(AnActionEvent e) {
@@ -442,7 +449,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   private class ViewRequestAction extends AnAction {
     public ViewRequestAction() {
-      super("Open in Browser", "Open related request page in browser", IconLoader.getIcon("/debugger/watches.png"));
+      super(DiagnosticBundle.message("error.list.open.action"),
+            DiagnosticBundle.message("error.list.open.action.description"), IconLoader.getIcon("/debugger/watches.png"));
     }
 
     public void update(AnActionEvent e) {
@@ -507,7 +515,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   protected class CloseAction extends AbstractAction {
     public CloseAction() {
-      putValue(Action.NAME, "C_lose");
+      putValue(Action.NAME, DiagnosticBundle.message("error.list.close.action"));
     }
 
     public void actionPerformed(ActionEvent e) {

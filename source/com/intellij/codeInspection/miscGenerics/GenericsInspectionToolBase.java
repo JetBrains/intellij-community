@@ -17,8 +17,8 @@ abstract class GenericsInspectionToolBase extends BaseLocalInspectionTool {
     final PsiClassInitializer[] initializers = aClass.getInitializers();
     if (initializers == null || initializers.length == 0) return null;
     List<ProblemDescriptor> descriptors = new ArrayList<ProblemDescriptor>();
-    for (int i = 0; i < initializers.length; i++) {
-      final ProblemDescriptor[] localDescriptions = getDescriptions(initializers[i], manager);
+    for (PsiClassInitializer initializer : initializers) {
+      final ProblemDescriptor[] localDescriptions = getDescriptions(initializer, manager);
       if (localDescriptions != null) {
         descriptors.addAll(Arrays.asList(localDescriptions));
       }

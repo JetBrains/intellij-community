@@ -9,6 +9,7 @@ import com.intellij.ui.BooleanTableCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableUtil;
 import com.intellij.util.ui.Table;
+import com.intellij.refactoring.RefactoringBundle;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -20,6 +21,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+
+import org.jetbrains.annotations.NonNls;
 
 public abstract class ParameterTablePanel extends JPanel{
   private final Project myProject;
@@ -69,8 +72,10 @@ public abstract class ParameterTablePanel extends JPanel{
     myTable.setPreferredScrollableViewportSize(new Dimension(250, myTable.getRowHeight() * 5));
     myTable.setShowGrid(false);
     myTable.setIntercellSpacing(new Dimension(0, 0));
-    myTable.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), "enable_disable");
-    myTable.getActionMap().put("enable_disable", new AbstractAction() {
+    @NonNls final InputMap inputMap = myTable.getInputMap();
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), "enable_disable");
+    @NonNls final ActionMap actionMap = myTable.getActionMap();
+    actionMap.put("enable_disable", new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
         if (myTable.isEditing()) return;
         int[] rows = myTable.getSelectedRows();
@@ -91,8 +96,8 @@ public abstract class ParameterTablePanel extends JPanel{
       }
     });
     // F2 should edit the name
-    myTable.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0), "edit_parameter_name");
-    myTable.getActionMap().put("edit_parameter_name", new AbstractAction() {
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0), "edit_parameter_name");
+    actionMap.put("edit_parameter_name", new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
         if (!myTable.isEditing()){
           int row = myTable.getSelectedRow();
@@ -104,8 +109,8 @@ public abstract class ParameterTablePanel extends JPanel{
     });
 
     // make ENTER work when the table has focus
-    myTable.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "invokeImpl");
-    myTable.getActionMap().put("invokeImpl", new AbstractAction() {
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "invokeImpl");
+    actionMap.put("invokeImpl", new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
         TableCellEditor editor = myTable.getCellEditor();
         if (editor != null){
@@ -118,7 +123,7 @@ public abstract class ParameterTablePanel extends JPanel{
     });
 
     // make ESCAPE work when the table has focus
-    myTable.getActionMap().put("doCancel", new AbstractAction() {
+    actionMap.put("doCancel", new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
         TableCellEditor editor = myTable.getCellEditor();
         if (editor != null){
@@ -146,13 +151,13 @@ public abstract class ParameterTablePanel extends JPanel{
     gbConstraints.fill = GridBagConstraints.HORIZONTAL;
     gbConstraints.insets = new Insets(2, 4, 2, 4);
 
-    myUpButton = new JButton("Move Up");
-    myUpButton.setMnemonic('u');
+    myUpButton = new JButton();
+    myUpButton.setText(RefactoringBundle.message("row.move.up"));
     myUpButton.setDefaultCapable(false);
     buttonsPanel.add(myUpButton, gbConstraints);
 
-    myDownButton = new JButton("Move Down");
-    myDownButton.setMnemonic('d');
+    myDownButton = new JButton();
+    myDownButton.setText(RefactoringBundle.message("row.move.down"));
     myDownButton.setDefaultCapable(false);
     buttonsPanel.add(myDownButton, gbConstraints);
 

@@ -4,19 +4,19 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectRootType;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
-import java.util.StringTokenizer;
 import java.util.LinkedList;
-import java.util.Iterator;
+import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -24,10 +24,12 @@ import java.util.regex.PatternSyntaxException;
 public class JavaDocUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.javadoc.JavaDocUtil");
 
-  private static final Pattern ourTypePattern = Pattern.compile("[ ]+[^ ^\\[^\\]]");
-  private static final Pattern ourLtFixupPattern = Pattern.compile("<([^/^\\w^!])");
-  private static final Pattern ourToQuote = Pattern.compile("[\\\\\\.\\^\\$\\?\\*\\+\\|\\)\\}\\]\\{\\(\\[]");
+  private static final @NonNls Pattern ourTypePattern = Pattern.compile("[ ]+[^ ^\\[^\\]]");
+  private static final @NonNls Pattern ourLtFixupPattern = Pattern.compile("<([^/^\\w^!])");
+  private static final @NonNls Pattern ourToQuote = Pattern.compile("[\\\\\\.\\^\\$\\?\\*\\+\\|\\)\\}\\]\\{\\(\\[]");
+  private static final @NonNls String LT_ENTITY = "&lt;";
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static void createHyperlink(StringBuffer buffer, String refText,String label,boolean plainLink) {
     buffer.append("<a href=\"");
     buffer.append("psi_element://"); // :-)
@@ -368,7 +370,7 @@ public class JavaDocUtil {
       String pattern = "<" + quote(s);
 
       try {
-        docText = Pattern.compile(pattern).matcher(docText).replaceAll("&lt;" + pattern);
+        docText = Pattern.compile(pattern).matcher(docText).replaceAll(LT_ENTITY + pattern);
       }
       catch (PatternSyntaxException e) {
         LOG.error("Pattern syntax exception on " + pattern);
@@ -398,6 +400,7 @@ public class JavaDocUtil {
     return list == null ? PsiClassType.EMPTY_ARRAY : list.getReferencedTypes();
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static final void formatEntityName(String type, String name, StringBuffer destination) {
     destination.append(type).append(":&nbsp;<b>").append(name).append("</b><br>");
   }

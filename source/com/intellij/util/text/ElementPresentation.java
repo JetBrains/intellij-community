@@ -5,6 +5,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.CommonBundle;
 
 public abstract class ElementPresentation {
   private final Noun myKind;
@@ -52,48 +53,36 @@ public abstract class ElementPresentation {
   }
 
   public static class Noun {
-    private final String myPlural;
-    private final String mySingular;
+    private final int myTypeNum;
 
-    public static final Noun DIRECTORY = new Noun("directory", "directories");
-    public static final Noun PACKAGE = new Noun("package", "packages");
-    public static final Noun FILE = new Noun("file", "files");
-    public static final Noun CLASS = new Noun("class", "classes");
-    public static final Noun METHOD = new Noun("method", "methods");
-    public static final Noun FIELD = new Noun("field", "fields");
-    public static final Noun FRAGMENT = new Noun("fragment", "fragments");
-    public static final Noun XML_TAG = new Noun("tag", "tags");
+    public static final Noun DIRECTORY = new Noun(0);
+    public static final Noun PACKAGE = new Noun(1);
+    public static final Noun FILE = new Noun(2);
+    public static final Noun CLASS = new Noun(3);
+    public static final Noun METHOD = new Noun(4);
+    public static final Noun FIELD = new Noun(5);
+    public static final Noun FRAGMENT = new Noun(6);
+    public static final Noun XML_TAG = new Noun(7);
 
-    public Noun(String singular, String plural) {
-      mySingular = singular;
-      myPlural = plural;
+    public Noun(int typeNum) {
+      myTypeNum = typeNum;
     }
 
-    public String getPlural(boolean firstCapitalized) {
-      return firstCapitalized(myPlural, firstCapitalized);
-    }
-
-    public String getSingular(boolean firstCapitalized) {
-      return firstCapitalized(mySingular, firstCapitalized);
-    }
-
-    private static String firstCapitalized(String word, boolean firstCapitalized) {
-      if (!firstCapitalized) return word;
-      char[] chars = word.toCharArray();
-      chars[0] = Character.toUpperCase(chars[0]);
-      return new String(chars);
+    public int getTypeNum() {
+      return myTypeNum;
     }
   }
 
   private static class InvalidPresentation extends ElementPresentation {
     public InvalidPresentation() {
-      super(new Noun("INVALID", "INVALID"));
+      super(new Noun(-1));
     }
 
     public String getComment() {
       return "";
     }
 
+    @SuppressWarnings({"HardCodedStringLiteral"})
     public String getName() {
       return "INVALID";
     }
@@ -163,7 +152,7 @@ public abstract class ElementPresentation {
 
     public String getQualifiedName() {
       String qualifiedName = myPsiPackage.getQualifiedName();
-      if (qualifiedName.length() == 0) return "<default>";
+      if (qualifiedName.length() == 0) return PsiBundle.message("default.package.presentation");
       return qualifiedName;
     }
 
@@ -186,8 +175,8 @@ public abstract class ElementPresentation {
 
     public String getQualifiedName() {
       PsiClass psiClass = PsiTreeUtil.getParentOfType(myPsiAnonymousClass, PsiClass.class);
-      if (psiClass != null) return "Anonymous in " + forElement(psiClass).getQualifiedName();
-      return "Anonymous class";
+      if (psiClass != null) return PsiBundle.message("anonymous.class.context.display", forElement(psiClass).getQualifiedName());
+      return PsiBundle.message("anonymous.class.display");
     }
 
     public String getName() {
@@ -287,8 +276,8 @@ public abstract class ElementPresentation {
 
     public String getQualifiedName() {
       PsiFile containingFile = myPsiElement.getContainingFile();
-      if (containingFile != null) return "Code from " + forElement(containingFile).getQualifiedName();
-      return "Code";
+      if (containingFile != null) return PsiBundle.message("code.from.context.display", forElement(containingFile).getQualifiedName());
+      return PsiBundle.message("code.display");
     }
 
     public String getName() {

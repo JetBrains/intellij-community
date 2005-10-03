@@ -9,6 +9,7 @@
 package com.intellij.codeInspection.reference;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
@@ -174,6 +175,13 @@ public abstract class RefElement extends RefEntity {
       RefMethod refMethod = (RefMethod) refElement;
       for (RefMethod refSuper : refMethod.getSuperMethods()) {
         if (refSuper.getInReferences().size() > 0) return false;
+      }
+      if (refMethod.isConstructor()){
+        boolean unreachable = true;
+        for (RefElement refOut : refMethod.getOutReferences()){
+          unreachable &= !refOut.isReachable();
+        }
+        if (unreachable) return true;
       }
     }
 
@@ -345,11 +353,18 @@ public abstract class RefElement extends RefEntity {
 
   public URL getURL() {
     try {
-      return new URL(getElement().getContainingFile().getVirtualFile().getUrl() + "#" + getElement().getTextRange().getStartOffset());
+      final PsiFile containingFile = getElement().getContainingFile();
+      if (containingFile == null) return null;
+      final VirtualFile virtualFile = containingFile.getVirtualFile();
+      if (virtualFile == null) return null;
+      return new URL(virtualFile.getUrl() + "#" + getElement().getTextRange().getStartOffset());
     } catch (MalformedURLException e) {
       LOG.error(e);
     }
 
     return null;
   }
+
+  protected abstract void initialize();
+
 }

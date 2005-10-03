@@ -1,16 +1,18 @@
 
 package com.intellij.codeInsight.generation.surroundWith;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 
 class JavaWithWhileSurrounder extends JavaStatementsSurrounder{
   public String getTemplateDescription() {
-    return "while";
+    return CodeInsightBundle.message("surround.with.while.template");
   }
 
   public TextRange surroundStatements(Project project, Editor editor, PsiElement container, PsiElement[] statements) throws IncorrectOperationException{
@@ -23,7 +25,7 @@ class JavaWithWhileSurrounder extends JavaStatementsSurrounder{
       return null;
     }
 
-    String text = "while(true){\n}";
+    @NonNls String text = "while(true){\n}";
     PsiWhileStatement whileStatement = (PsiWhileStatement)factory.createStatementFromText(text, null);
     whileStatement = (PsiWhileStatement)codeStyleManager.reformat(whileStatement);
 

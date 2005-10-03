@@ -7,7 +7,9 @@ import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.ide.IdeBundle;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -20,7 +22,19 @@ public class ActionMacro implements JDOMExternalizable {
   private String myName;
 
   private ArrayList<ActionDescriptor> myActions = new ArrayList<ActionDescriptor>();
+  @NonNls
   public static final String MACRO_ACTION_PREFIX = "Macro.";
+  @NonNls
+  private static final String ATTRIBUTE_NAME = "name";
+  @NonNls
+  private static final String ELEMENT_TYPING = "typing";
+  @NonNls
+  private static final String ATTRIBUTE_TEXT = "text";
+  @NonNls
+  private static final String ELEMENT_ACTION = "action";
+  @NonNls
+  private static final String ATTRIBUTE_ID = "id";
+
 
   public ActionMacro() {
   }
@@ -42,32 +56,32 @@ public class ActionMacro implements JDOMExternalizable {
   }
 
   public void readExternal(Element macro) throws InvalidDataException {
-    setName(macro.getAttributeValue("name"));
+    setName(macro.getAttributeValue(ATTRIBUTE_NAME));
     List actions = macro.getChildren();
     for (Iterator iterator = actions.iterator(); iterator.hasNext();) {
       Element action = (Element)iterator.next();
-      if ("typing".equals(action.getName())) {
-        myActions.add(new TypedDescriptor(action.getAttributeValue("text")));
+      if (ELEMENT_TYPING.equals(action.getName())) {
+        myActions.add(new TypedDescriptor(action.getAttributeValue(ATTRIBUTE_TEXT)));
       }
-      else if ("action".equals(action.getName())) {
-        myActions.add(new IdActionDescriptor(action.getAttributeValue("id")));
+      else if (ELEMENT_ACTION.equals(action.getName())) {
+        myActions.add(new IdActionDescriptor(action.getAttributeValue(ATTRIBUTE_ID)));
       }
     }
   }
 
   public void writeExternal(Element macro) throws WriteExternalException {
-    macro.setAttribute("name", myName);
+    macro.setAttribute(ATTRIBUTE_NAME, myName);
     final ActionDescriptor[] actions = getActions();
     for (int i = 0; i < actions.length; i++) {
       ActionDescriptor action = actions[i];
       Element actionNode;
       if (action instanceof TypedDescriptor) {
-        actionNode = new Element("typing");
-        actionNode.setAttribute("text", ((TypedDescriptor)action).getText());
+        actionNode = new Element(ELEMENT_TYPING);
+        actionNode.setAttribute(ATTRIBUTE_TEXT, ((TypedDescriptor)action).getText());
       }
       else {
-        actionNode = new Element("action");
-        actionNode.setAttribute("id", ((IdActionDescriptor)action).getActionId());
+        actionNode = new Element(ELEMENT_ACTION);
+        actionNode.setAttribute(ATTRIBUTE_ID, ((IdActionDescriptor)action).getActionId());
       }
       macro.addContent(actionNode);
     }
@@ -168,7 +182,7 @@ public class ActionMacro implements JDOMExternalizable {
     }
 
     public String toString() {
-      return "Typing: \"" + myText + "\"";
+      return IdeBundle.message("action.descriptor.typing", myText);
     }
 
     public void playBack(DataContext context) {
@@ -193,7 +207,7 @@ public class ActionMacro implements JDOMExternalizable {
     }
 
     public String toString() {
-      return "Action: " + actionId;
+      return IdeBundle.message("action.descriptor.action", actionId);
     }
 
     public Object clone() {

@@ -30,6 +30,8 @@ public class PsiDocCommentImpl extends CompositePsiElement implements PsiDocComm
       return length != 0 ? new PsiDocTag[length] : PsiDocTag.EMPTY_ARRAY;
     }
   };
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static final Pattern WS_PATTERN = Pattern.compile("\\s*");
 
 

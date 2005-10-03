@@ -19,8 +19,6 @@ import com.intellij.aspects.psi.PsiAspect;
 import com.intellij.aspects.psi.PsiPointcutDef;
 import com.intellij.psi.*;
 
-import java.util.List;
-
 public class PsiSuperMethodUtil {
   public static PsiPointcutDef findSuperPointcut(PsiPointcutDef pointcut) {
     return findSuperPointcut(pointcut, pointcut.getContainingAspect());
@@ -48,26 +46,10 @@ public class PsiSuperMethodUtil {
     return prevSuperPointcut;
   }
 
-  public static PsiMethod[] findSuperMethods(PsiMethod method) {
-    return method.findSuperMethods();
-  }
-
-  public static PsiMethod[] findSuperMethods(PsiMethod method, boolean checkAccess) {
-    return method.findSuperMethods(checkAccess);
-  }
-
-  public static PsiMethod[] findSuperMethods(PsiMethod method, PsiClass parentClass) {
-    return method.findSuperMethods(parentClass);
-  }
-
-  public static List<MethodSignatureBackedByPsiMethod> findSuperMethodSignaturesIncludingStatic(PsiMethod method,
-                                                                                                boolean checkAccess) {
-    return method.findSuperMethodSignaturesIncludingStatic(checkAccess);
-  }
-
   public static PsiMethod findConstructorInSuper(PsiMethod constructor) {
-    if (constructor.getBody() != null) {
-      PsiStatement[] statements = constructor.getBody().getStatements();
+    final PsiCodeBlock body = constructor.getBody();
+    if (body != null) {
+      PsiStatement[] statements = body.getStatements();
       if (statements.length > 0) {
         PsiElement firstChild = statements[0].getFirstChild();
         if (firstChild instanceof PsiMethodCallExpression) {
@@ -93,50 +75,5 @@ public class PsiSuperMethodUtil {
       }
     }
     return null;
-  }
-
-  public static PsiMethod findDeepestSuperMethod(PsiMethod method) {
-    return method.findDeepestSuperMethod();
-
-  }
-
-  // remove from list all methods overridden by contextClass or its super classes
-  public static void removeOverriddenMethods(List<MethodSignatureBackedByPsiMethod> sameSignatureMethods,
-                                             PsiClass contextClass,
-                                             PsiClass place) {
-    for (int i = sameSignatureMethods.size() - 1; i >= 0; i--) {
-      final MethodSignatureBackedByPsiMethod methodBackedMethodSignature1 = sameSignatureMethods.get(i);
-      PsiMethod method1 = methodBackedMethodSignature1.getMethod();
-      final PsiClass class1 = method1.getContainingClass();
-      if (method1.hasModifierProperty(PsiModifier.STATIC) || method1.hasModifierProperty(PsiModifier.PRIVATE)) continue;
-      // check if method1 is overridden
-      boolean overridden = false;
-      for (int j = 0; j < sameSignatureMethods.size(); j++) {
-        if (i==j) continue;
-        final MethodSignatureBackedByPsiMethod methodBackedMethodSignature2 = sameSignatureMethods.get(j);
-        if (MethodSignatureUtil.isSubsignature(methodBackedMethodSignature1, methodBackedMethodSignature2)) {
-          PsiMethod method2 = methodBackedMethodSignature2.getMethod();
-          final PsiClass class2 = method2.getContainingClass();
-          if (InheritanceUtil.isInheritorOrSelf(class2, class1, true)
-              // method from interface cannot override method from Object
-              && !(!place.isInterface() && "java.lang.Object".equals(class1.getQualifiedName()) && class2.isInterface())
-              && !(method1.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) && !method1.getManager().arePackagesTheSame(class1, class2))) {
-            overridden = true;
-            break;
-          }
-          // check for sibling override: class Context extends Implementations implements Declarations {}
-          // see JLS 8.4.6.4
-          if (!method2.hasModifierProperty(PsiModifier.ABSTRACT)
-              && PsiUtil.isAccessible(method1, contextClass, contextClass)
-              && PsiUtil.isAccessible(method2, contextClass, contextClass)) {
-            overridden = true;
-            break;
-          }
-        }
-      }
-      if (overridden) {
-        sameSignatureMethods.remove(i);
-      }
-    }
   }
 }

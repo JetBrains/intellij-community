@@ -10,6 +10,7 @@ import com.intellij.util.Degenerator;
 import com.intellij.util.PathUtil;
 import com.intellij.util.io.ZipUtil;
 import com.intellij.j2ee.make.impl.MakeUtilImpl;
+import com.intellij.j2ee.J2EEBundle;
 import gnu.trove.THashSet;
 
 import java.io.*;
@@ -18,10 +19,13 @@ import java.util.Collection;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
+import org.jetbrains.annotations.NonNls;
+
 public class J2EEModuleBuildInstructionImpl extends BuildInstructionBase implements J2EEModuleBuildInstruction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.j2ee.make.J2EEModuleBuildInstructionImpl");
 
   private final ModuleBuildProperties myBuildProperties;
+  @NonNls protected static final String TMP_FILE_SUFFIX = ".tmp";
 
   public J2EEModuleBuildInstructionImpl(ModuleBuildProperties moduleToBuild, String outputRelativePath) {
     super(outputRelativePath, moduleToBuild.getModule());
@@ -102,7 +106,8 @@ public class J2EEModuleBuildInstructionImpl extends BuildInstructionBase impleme
     }
     else {
       String moduleName = ModuleUtil.getModuleNameInReadAction(getModule());
-      tempFile = createTempFile(moduleName,".tmp");
+      tempFile = File.createTempFile(moduleName+"___", TMP_FILE_SUFFIX);
+      tempFile.deleteOnExit();
       makeJar(context, tempFile, childDependencies, fileFilter);
       childDependencies.visitInstructions(new BuildInstructionVisitor() {
         public boolean visitFileCopyInstruction(FileCopyInstruction instruction) throws Exception {
@@ -125,7 +130,7 @@ public class J2EEModuleBuildInstructionImpl extends BuildInstructionBase impleme
 
         public boolean visitJarAndCopyBuildInstruction(JarAndCopyBuildInstruction instruction) throws Exception {
           if (instruction.getJarFile() == null) {
-            File tempJar = File.createTempFile("___",".tmp");
+            File tempJar = File.createTempFile("___",TMP_FILE_SUFFIX);
             addFileToDelete(tempJar);
             instruction.makeJar(context, tempJar, fileFilter);
           }
@@ -152,7 +157,7 @@ public class J2EEModuleBuildInstructionImpl extends BuildInstructionBase impleme
     final BuildRecipe buildRecipe = getChildInstructions(context);
     final Manifest manifest = MakeUtil.getInstance().createManifest(buildRecipe);
     if (manifest == null) {
-      context.addMessage(CompilerMessageCategory.WARNING, "Using user supplied manifest.mf",null,-1,-1);
+      context.addMessage(CompilerMessageCategory.WARNING, J2EEBundle.message("message.text.using.user.supplied.manifest"),null,-1,-1);
     }
     FileUtil.createParentDirs(jarFile);
     final JarOutputStream jarOutputStream = manifest == null ?
@@ -187,10 +192,8 @@ public class J2EEModuleBuildInstructionImpl extends BuildInstructionBase impleme
   }
 
   public String toString() {
-    String s = "J2EE build instruction: ";
-    s += ModuleUtil.getModuleNameInReadAction(getModule());
-    s += "->"+getOutputRelativePath();
-    return s;
+    return J2EEBundle
+      .message("j2ee.build.instruction.module.to.file.message", ModuleUtil.getModuleNameInReadAction(getModule()), getOutputRelativePath());
   }
 
   public File findFileByRelativePath(String relativePath) {

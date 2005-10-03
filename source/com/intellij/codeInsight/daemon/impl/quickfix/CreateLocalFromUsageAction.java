@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.TypeExpression;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilder;
@@ -11,7 +12,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 
 /**
@@ -26,7 +26,7 @@ public class CreateLocalFromUsageAction extends CreateVarFromUsageAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.CreateLocalFromUsageAction");
 
   public String getText(String varName) {
-    return "Create Local Variable '" + varName + "'";
+    return QuickFixBundle.message("create.local.from.usage.text", varName);
   }
 
   protected boolean isAvailableImpl(int offset) {
@@ -55,7 +55,8 @@ public class CreateLocalFromUsageAction extends CreateVarFromUsageAction {
       PsiDeclarationStatement decl;
       PsiExpression initializer = null;
       boolean isInline = false;
-      PsiStatement anchor = getAnchor(myReferenceExpression);
+      PsiExpression[] expressions = CreateFromUsageUtils.collectExpressions(myReferenceExpression, false, PsiMember.class, PsiFile.class);
+      PsiStatement anchor = getAnchor(expressions);
       if (anchor instanceof PsiExpressionStatement && ((PsiExpressionStatement) anchor).getExpression() instanceof PsiAssignmentExpression) {
         PsiAssignmentExpression assignment = (PsiAssignmentExpression) ((PsiExpressionStatement) anchor).getExpression();
         if (assignment.getLExpression().textMatches(myReferenceExpression)) {
@@ -76,7 +77,7 @@ public class CreateLocalFromUsageAction extends CreateVarFromUsageAction {
 
       PsiVariable var = (PsiVariable)decl.getDeclaredElements()[0];
       var.getModifierList().setModifierProperty(PsiModifier.FINAL, CodeStyleSettingsManager.getSettings(project).GENERATE_FINAL_LOCALS &&
-                                                                   !PsiUtil.isAccessedForWriting(myReferenceExpression));
+                                                                   !CreateFromUsageUtils.isAccessedForWriting(expressions));
 
       TemplateBuilder builder = new TemplateBuilder(var);
       builder.replaceElement(var.getTypeElement(), expression);
@@ -97,18 +98,17 @@ public class CreateLocalFromUsageAction extends CreateVarFromUsageAction {
     }
   }
 
-  private PsiStatement getAnchor(PsiExpression expression) {
-    Class[] scopes = new Class[] {PsiMethod.class, PsiClassInitializer.class, PsiClass.class, PsiField.class, PsiFile.class};
-    PsiExpression[] expressions = CreateFromUsageUtils.collectExpressions(expression, scopes, false);
-    PsiElement parent = expressions[0];
-    int minOffset = expressions[0].getTextRange().getStartOffset();
-    for (int i = 1; i < expressions.length; i++) {
-      parent = PsiTreeUtil.findCommonParent(parent, expressions[i]);
-      minOffset = Math.min(minOffset, expressions[i].getTextRange().getStartOffset());
+  private PsiStatement getAnchor(PsiExpression[] expressionOccurences) {
+    PsiElement parent = expressionOccurences[0];
+    int minOffset = expressionOccurences[0].getTextRange().getStartOffset();
+    for (int i = 1; i < expressionOccurences.length; i++) {
+      parent = PsiTreeUtil.findCommonParent(parent, expressionOccurences[i]);
+      LOG.assertTrue(parent != null);
+      minOffset = Math.min(minOffset, expressionOccurences[i].getTextRange().getStartOffset());
     }
 
     PsiCodeBlock block = (PsiCodeBlock) (parent instanceof PsiCodeBlock ? parent : PsiTreeUtil.getParentOfType(parent, PsiCodeBlock.class));
-    LOG.assertTrue(block.getStatements().length > 0);
+    LOG.assertTrue(block != null && block.getStatements().length > 0);
     PsiStatement[] statements = block.getStatements();
     for (int i = 1; i < statements.length; i++) {
       if (statements[i].getTextRange().getStartOffset() > minOffset) return statements[i-1];
@@ -117,7 +117,7 @@ public class CreateLocalFromUsageAction extends CreateVarFromUsageAction {
   }
 
   public String getFamilyName() {
-    return "Create Local from Usage";
+    return QuickFixBundle.message("create.local.from.usage.family");
   }
 
 }

@@ -4,10 +4,11 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.ui.RefactoringDialog;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.memberPullUp.JavaDocPanel;
 import com.intellij.refactoring.ui.MemberSelectionPanel;
+import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.JavaDocPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoChange;
@@ -21,7 +22,6 @@ import java.util.ArrayList;
 public class PushDownDialog extends RefactoringDialog {
   private MemberInfo[] myMemberInfos;
   private PsiClass myClass;
-  private MemberSelectionPanel myMemberSelectionPanel;
   private JavaDocPanel myJavaDocPanel;
   private MemberInfoModel myMemberInfoModel;
 
@@ -41,8 +41,7 @@ public class PushDownDialog extends RefactoringDialog {
 
   public MemberInfo[] getSelectedMemberInfos() {
     ArrayList<MemberInfo> list = new ArrayList<MemberInfo>(myMemberInfos.length);
-    for (int idx = 0; idx < myMemberInfos.length; idx++) {
-      MemberInfo info = myMemberInfos[idx];
+    for (MemberInfo info : myMemberInfos) {
       if (info.isChecked() && myMemberInfoModel.isMemberEnabled(info)) {
         list.add(info);
       }
@@ -70,22 +69,26 @@ public class PushDownDialog extends RefactoringDialog {
     gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
     gbConstraints.fill = GridBagConstraints.BOTH;
     gbConstraints.anchor = GridBagConstraints.WEST;
-    panel.add(new JLabel("Push members from " + myClass.getQualifiedName() + " down"), gbConstraints);
+    panel.add(new JLabel(RefactoringBundle.message("push.members.from.0.down.label",
+                                                   myClass.getQualifiedName())), gbConstraints);
     return panel;
   }
 
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new BorderLayout());
-    myMemberSelectionPanel = new MemberSelectionPanel("Members to be pushed down", myMemberInfos, "Keep abstract");
-    panel.add(myMemberSelectionPanel, BorderLayout.CENTER);
+    final MemberSelectionPanel memberSelectionPanel = new MemberSelectionPanel(
+      RefactoringBundle.message("members.to.be.pushed.down.panel.title"),
+      myMemberInfos,
+      RefactoringBundle.message("keep.abstract.column.header"));
+    panel.add(memberSelectionPanel, BorderLayout.CENTER);
 
     myMemberInfoModel = new MyMemberInfoModel();
     myMemberInfoModel.memberInfoChanged(new MemberInfoChange(myMemberInfos));
-    myMemberSelectionPanel.getTable().setMemberInfoModel(myMemberInfoModel);
-    myMemberSelectionPanel.getTable().addMemberInfoChangeListener(myMemberInfoModel);
+    memberSelectionPanel.getTable().setMemberInfoModel(myMemberInfoModel);
+    memberSelectionPanel.getTable().addMemberInfoChangeListener(myMemberInfoModel);
 
 
-    myJavaDocPanel = new JavaDocPanel("JavaDoc for abstracts");
+    myJavaDocPanel = new JavaDocPanel(RefactoringBundle.message("push.down.javadoc.panel.title"));
     myJavaDocPanel.setPolicy(RefactoringSettings.getInstance().PULL_UP_MEMBERS_JAVADOC);
     panel.add(myJavaDocPanel, BorderLayout.EAST);
     return panel;

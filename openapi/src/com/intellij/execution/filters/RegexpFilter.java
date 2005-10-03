@@ -26,20 +26,18 @@ import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author Yura Cangea
  * @version 1.0
  */
 public class RegexpFilter implements Filter {
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public static final String FILE_PATH_MACROS = "$FILE_PATH$";
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public static final String LINE_MACROS = "$LINE$";
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public static final String COLUMN_MACROS = "$COLUMN$";
+  @NonNls public static final String FILE_PATH_MACROS = "$FILE_PATH$";
+  @NonNls public static final String LINE_MACROS = "$LINE$";
+  @NonNls public static final String COLUMN_MACROS = "$COLUMN$";
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private static final String FILE_PATH_REGEXP = "((?:\\p{Alpha}\\:)?[0-9 a-z_A-Z\\-\\\\./]+)";
+  @NonNls private static final String FILE_PATH_REGEXP = "((?:\\p{Alpha}\\:)?[0-9 a-z_A-Z\\-\\\\./]+)";
   private static final String NUMBER_REGEXP = "([0-9]+)";
 
   private int myFileRegister;
@@ -48,8 +46,11 @@ public class RegexpFilter implements Filter {
 
   private Pattern myPattern;
   private Project myProject;
+  @NonNls protected static final String FILE_STR = "file";
+  @NonNls protected static final String LINE_STR = "line";
+  @NonNls protected static final String COLUMN_STR = "column";
 
-  public RegexpFilter(Project project, String expression) {
+  public RegexpFilter(Project project, @NonNls String expression) {
     myProject = project;
     validate(expression);
 
@@ -67,18 +68,18 @@ public class RegexpFilter implements Filter {
 
     final TreeMap<Integer,String> map = new TreeMap<Integer, String>();
 
-    map.put(new Integer(filePathIndex), "file");
+    map.put(new Integer(filePathIndex), FILE_STR);
 
     expression = StringUtil.replace(expression, FILE_PATH_MACROS, FILE_PATH_REGEXP);
 
     if (lineIndex != -1) {
       expression = StringUtil.replace(expression, LINE_MACROS, NUMBER_REGEXP);
-      map.put(new Integer(lineIndex), "line");
+      map.put(new Integer(lineIndex), LINE_STR);
     }
 
     if (columnIndex != -1) {
       expression = StringUtil.replace(expression, COLUMN_MACROS, NUMBER_REGEXP);
-      map.put(new Integer(columnIndex), "column");
+      map.put(new Integer(columnIndex), COLUMN_STR);
     }
 
     // The block below determines the registers based on the sorted map.
@@ -88,11 +89,11 @@ public class RegexpFilter implements Filter {
       count++;
       final String s = map.get(itr.next());
 
-      if ("file".equals(s)) {
+      if (FILE_STR.equals(s)) {
         filePathIndex = count;
-      } else if ("line".equals(s)) {
+      } else if (LINE_STR.equals(s)) {
         lineIndex = count;
-      } else if ("column".equals(s)) {
+      } else if (COLUMN_STR.equals(s)) {
         columnIndex = count;
       }
     }

@@ -16,6 +16,7 @@
 package com.intellij.openapi.options;
 
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 
@@ -50,5 +51,5 @@ public interface Configurable extends UnnamedConfigurable {
    * @return the help topic, or null if no help is available.
    */
   @Nullable
-  String getHelpTopic();
+  @NonNls String getHelpTopic();
 }

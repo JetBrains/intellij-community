@@ -15,15 +15,30 @@
  */
 package com.intellij.openapi.compiler;
 
+import org.jetbrains.annotations.NotNull;
+
+import java.lang.*;
+
+/**
+ * Base interface for a custom compiler which participates in the IDEA build process.
+ *
+ * @see CompilerManager#addCompiler(Compiler)
+ * @see CompilerManager#removeCompiler(Compiler)
+ */
 public interface Compiler {
   /**
-   * @return A non-null string. All registered compilers should have unique description
+   * Returns the description of the compiler. All registered compilers should have unique description.
+   *
+   * @return the description string.
    */
+  @NotNull
   String getDescription();
+
   /**
    * Called before compilation starts. If at least one of registered compilers returned false, compilation won't start.
+   * 
+   * @param scope the scope on which the compilation is started.
    * @return true if everything is ok, false otherwise
-   * @param scope
    */
   boolean validateConfiguration(CompileScope scope);
 }

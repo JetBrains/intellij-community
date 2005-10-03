@@ -10,8 +10,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.util.containers.HashSet;
 
@@ -22,15 +22,13 @@ import java.util.Set;
  * @author dsl
  */
 public class SafeDeleteHandler implements RefactoringActionHandler {
-  public static final String REFACTORING_NAME = "Safe Delete";
+  public static final String REFACTORING_NAME = RefactoringBundle.message("safe.delete.title");
 
   public void invoke(Project project, Editor editor, PsiFile file, DataContext dataContext) {
     PsiElement element = (PsiElement) dataContext.getData(DataConstants.PSI_ELEMENT);
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     if (element == null || !SafeDeleteProcessor.validElement(element)) {
-      String message =
-              "Cannot perform the refactoring.\n" +
-              "Safe delete is not supported in this context.";
+      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("is.not.supported.in.the.current.context", REFACTORING_NAME));
       RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, /*HelpID.SAFE_DELETE*/null, project);
       return;
     }
@@ -54,10 +52,10 @@ public class SafeDeleteHandler implements RefactoringActionHandler {
       for (int i = 0; i < elementsToDelete.length; i++) {
         PsiElement element = elementsToDelete[i];
         if (element instanceof PsiMethod) {
-          final PsiMethod deepestSuperMethod = PsiSuperMethodUtil.findDeepestSuperMethod((PsiMethod) element);
+          final PsiMethod deepestSuperMethod = ((PsiMethod) element).findDeepestSuperMethod();
           if (!elementsSet.contains(deepestSuperMethod)) {
             final PsiMethod method = SuperMethodWarningUtil.checkSuperMethod((PsiMethod)element,
-                                                                             "delete (with usage search)");
+                                                                             RefactoringBundle.message("to.delete.with.usage.search"));
             if (method == null) return;
             elementsToDelete[i] = method;
           }

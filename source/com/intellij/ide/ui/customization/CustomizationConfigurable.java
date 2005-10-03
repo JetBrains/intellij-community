@@ -4,6 +4,7 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.ide.IdeBundle;
 
 import javax.swing.*;
 
@@ -24,7 +25,7 @@ public class CustomizationConfigurable extends BaseConfigurable implements Appli
   }
 
   public String getDisplayName() {
-    return "Customizations";
+    return IdeBundle.message("title.customizations");
   }
 
   public Icon getIcon() {

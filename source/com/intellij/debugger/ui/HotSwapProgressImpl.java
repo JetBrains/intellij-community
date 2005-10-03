@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.debugger.DebuggerInvocationUtil;
+import com.intellij.debugger.DebuggerBundle;
 import gnu.trove.TIntObjectHashMap;
 
 import javax.swing.*;
@@ -28,7 +29,7 @@ public class HotSwapProgressImpl extends HotSwapProgress{
   TIntObjectHashMap<List<String>> myMessages = new TIntObjectHashMap<List<String>>();
   private final ProgressIndicator myProgressIndicator;
   private final ProgressWindow myProgressWindow;
-  private String myTitle = "Hot Swap";
+  private String myTitle = DebuggerBundle.message("progress.hot.swap.title");
 
   public HotSwapProgressImpl(Project project) {
     super(project);
@@ -52,11 +53,11 @@ public class HotSwapProgressImpl extends HotSwapProgress{
         final List<String> warnings = getMessages(MessageCategory.WARNING);
         if (errors.size() > 0) {
           Messages.showErrorDialog(getProject(), buildMessage(errors), myTitle);
-          WindowManager.getInstance().getStatusBar(getProject()).setInfo("Hot Swap completed with errors");
+          WindowManager.getInstance().getStatusBar(getProject()).setInfo(DebuggerBundle.message("status.hot.swap.completed.with.errors"));
         }
         else if (warnings.size() > 0){
           Messages.showWarningDialog(getProject(), buildMessage(warnings), myTitle);
-          WindowManager.getInstance().getStatusBar(getProject()).setInfo("Hot Swap completed with warnings");
+          WindowManager.getInstance().getStatusBar(getProject()).setInfo(DebuggerBundle.message("status.hot.swap.completed.with.warnings"));
         }
         else {
           final StringBuffer msg = new StringBuffer();
@@ -133,7 +134,7 @@ public class HotSwapProgressImpl extends HotSwapProgress{
   }
 
   public void setDebuggerSession(DebuggerSession session) {
-    myTitle = "Hot Swap : " + session.getSessionName();
+    myTitle = DebuggerBundle.message("progress.hot.swap.title") + " : " + session.getSessionName();
     myProgressWindow.setTitle(myTitle);
   }
 }

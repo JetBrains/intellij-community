@@ -48,6 +48,7 @@ public class FoldRegionImpl extends PersistentRangeMarker implements FoldRegion 
     return myPlaceholderText;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return "FoldRegion (" + getStartOffset() + ":" + getEndOffset() + ")";
   }

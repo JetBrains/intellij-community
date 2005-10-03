@@ -7,6 +7,7 @@ package com.intellij.debugger.ui.breakpoints;
 import com.intellij.debugger.ClassFilter;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.InstanceFilter;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
@@ -21,6 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.ui.FieldPanel;
 import com.intellij.ui.MultiLineTooltipUI;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -63,7 +65,7 @@ public abstract class BreakpointPropertiesPanel {
   private JRadioButton mySuspendAllRadio;
 
   ButtonGroup mySuspendPolicyGroup;
-  public static final String CONTROL_LOG_MESSAGE = "logMessage";
+  public static final @NonNls String CONTROL_LOG_MESSAGE = "logMessage";
   private BreakpointComboboxHandler myBreakpointComboboxHandler;
   private static final int MAX_COMBO_WIDTH = 300;
 
@@ -611,7 +613,7 @@ public abstract class BreakpointPropertiesPanel {
       super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
       setPreferredSize(new Dimension(MAX_COMBO_WIDTH, getPreferredSize().height));
       Breakpoint breakpoint = ((ComboboxItem)value).getBreakpoint();
-      final String text = breakpoint != null ? breakpoint.getDisplayName() : "<None>";
+      final String text = breakpoint != null ? breakpoint.getDisplayName() : DebuggerBundle.message("value.none");
       setText(text);
       final Icon icon;
       if (breakpoint != null) {

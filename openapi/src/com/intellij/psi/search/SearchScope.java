@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.search;
 
+import com.intellij.psi.PsiBundle;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,7 +25,7 @@ import java.util.List;
 
 public abstract class SearchScope {
   public String getDisplayName() {
-    return "<unknown scope>";
+    return PsiBundle.message("psi.search.scope.unknown");
   }
 
   @NotNull public SearchScope intersectWith(@NotNull SearchScope scope){

@@ -11,14 +11,16 @@ import com.intellij.ui.EditorTextField;
 import javax.swing.*;
 import java.awt.*;
 
+import org.jetbrains.annotations.NonNls;
+
 public class DebuggerExpressionTextField extends DebuggerEditorImpl {
   private final EditorTextField myEditor;
   private final JTextField myStubField = new JTextField();
   private final JPanel myMainPanel = new JPanel(new CardLayout());
-  private static final String EDITOR = "editor";
-  private static final String STUB = "stub";
+  private static final @NonNls String EDITOR = "editor";
+  private static final @NonNls String STUB = "stub";
 
-  public DebuggerExpressionTextField(Project project, PsiElement context, final String recentsId) {
+  public DebuggerExpressionTextField(Project project, PsiElement context, final @NonNls String recentsId) {
     super(project, context, recentsId);
     myStubField.setEnabled(false);
     myEditor = new EditorTextField("", project, StdFileTypes.JAVA);
@@ -37,7 +39,7 @@ public class DebuggerExpressionTextField extends DebuggerEditorImpl {
   public void selectAll() {
     myEditor.selectAll();
   }
-  
+
   public TextWithImports getText() {
     return createItem(myEditor.getDocument(), getProject());
   }

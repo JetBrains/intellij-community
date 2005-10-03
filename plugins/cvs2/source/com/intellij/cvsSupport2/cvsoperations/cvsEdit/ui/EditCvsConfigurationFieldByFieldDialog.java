@@ -19,7 +19,7 @@ public class EditCvsConfigurationFieldByFieldDialog extends DialogWrapper {
     super(true);
     myConfiguration = config;
     myCvsRootFieldByFieldConfigurationPanel.updateFrom(RootFormatter.createSettingsOn(myConfiguration, false));
-    setTitle("Configure CVS Root Field by Field");
+    setTitle(com.intellij.CvsBundle.message("dialog.title.configure.cvs.root.field.by.field"));
     init();
   }
 

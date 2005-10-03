@@ -1,11 +1,14 @@
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.util.projectWizard.j2ee.WebModuleBuilder;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.util.text.StringUtil;
 
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
+
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Eugene Zhuravlev
@@ -19,12 +22,12 @@ public class OutputPathsStep extends ModuleWizardStep{
   private JPanel myPanel;
   private NamePathComponent myNamePathComponent;
 
-  public OutputPathsStep(NameLocationStep nameLocationStep, JavaModuleBuilder descriptor, Icon icon, String helpId) {
+  public OutputPathsStep(NameLocationStep nameLocationStep, JavaModuleBuilder descriptor, Icon icon, @NonNls String helpId) {
     myDescriptor = descriptor;
     myIcon = icon;
     myHelpId = helpId;
     myNameLocationStep = nameLocationStep;
-    myNamePathComponent = new NamePathComponent("", "Select compiler output path:", 'q', 'o', "Select compiler output path", "", false);
+    myNamePathComponent = new NamePathComponent("", IdeBundle.message("label.select.compiler.output.path"), IdeBundle.message("title.select.compiler.output.path"), "", false);
     myNamePathComponent.setNameComponentVisible(false);
     myPanel = new JPanel(new GridBagLayout());
     myPanel.setBorder(BorderFactory.createEtchedBorder());
@@ -43,7 +46,7 @@ public class OutputPathsStep extends ModuleWizardStep{
     if (!myNamePathComponent.isPathChangedByUser()) {
       final String contentEntryPath = myDescriptor.getContentEntryPath();
       if (contentEntryPath != null) {
-        String path = null;
+        @NonNls String path = null;
         if (myDescriptor instanceof WebModuleBuilder) {
           final String explodedPath = ((WebModuleBuilder)myDescriptor).explodedDirPath;
           if (explodedPath != null) {

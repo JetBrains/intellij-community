@@ -18,6 +18,7 @@ import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.CharTable;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.LinkedHashMap;
 
@@ -31,6 +32,8 @@ public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
   private final LinkedHashMap<String, PsiClass> myPseudoImports = new LinkedHashMap<String, PsiClass>();
   private Boolean myExplicitlyValid = null;
   private Language myLanguage = StdLanguages.JAVA;
+  
+  @NonNls private static final String JAVA_LANG_PACKAGE = "java.lang";
 
   public DummyHolder(PsiManager manager, TreeElement contentElement, PsiElement context) {
     this(manager, contentElement, context, SharedImplUtil.findCharTableByTree(contentElement));

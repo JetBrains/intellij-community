@@ -2,6 +2,7 @@ package com.intellij.cvsSupport2.cvsoperations.dateOrRevision;
 
 import com.intellij.cvsSupport2.history.CvsRevisionNumber;
 import org.netbeans.lib.cvsclient.command.Command;
+import org.jetbrains.annotations.NonNls;
 
 
 /**
@@ -23,7 +24,7 @@ public interface RevisionOrDate {
 
   void setForCommand(Command command);
 
-  String getRevision();
+  @NonNls String getRevision();
 
   CvsRevisionNumber getCvsRevisionNumber();
 }

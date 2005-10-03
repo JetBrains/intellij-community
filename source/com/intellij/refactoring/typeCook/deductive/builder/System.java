@@ -12,6 +12,8 @@ import com.intellij.openapi.project.Project;
 
 import java.util.*;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * Created by IntelliJ IDEA.
  * User: db
@@ -62,8 +64,8 @@ public class System {
     }
 
     if ((Util.bindsTypeVariables(left) || Util.bindsTypeVariables(right)) &&
-                                                                          !(left instanceof PsiPrimitiveType ||
-                                                                             right instanceof PsiPrimitiveType)
+        !(left instanceof PsiPrimitiveType ||
+          right instanceof PsiPrimitiveType)
     ) {
       final Subtype c = new Subtype(left, right);
       if (!myConstraints.contains(c)) {
@@ -83,7 +85,7 @@ public class System {
   }
 
   public String toString() {
-    StringBuffer buffer = new StringBuffer();
+    @NonNls StringBuffer buffer = new StringBuffer();
 
     buffer.append("Victims:\n");
 
@@ -337,8 +339,8 @@ public class System {
     return myBoundVariables;
   }
 
-  public String dumpString() {
-    final String[] data = new String[myElements.size()];
+  public @NonNls String dumpString() {
+    final @NonNls String[] data = new String[myElements.size()];
 
     int i = 0;
 
@@ -348,24 +350,24 @@ public class System {
     }
 
     Arrays.sort(data,
-                new Comparator() {
-                  public int compare(Object x, Object y) {
-                    return ((String)x).compareTo((String)y);
+                new Comparator<String>() {
+                  public int compare(String x, String y) {
+                    return x.compareTo(y);
                   }
                 });
 
 
     final StringBuffer repr = new StringBuffer();
 
-    for (int j = 0; j < data.length; j++) {
-      repr.append(data[j]);
+    for (String aData : data) {
+      repr.append(aData);
       repr.append("\n");
     }
 
     return repr.toString();
   }
 
-  private String elementString(final PsiElement element) {
+  private @NonNls String elementString(final PsiElement element) {
     if (element instanceof PsiNewExpression) {
       return "new";
     }
@@ -386,7 +388,7 @@ public class System {
   }
 
   public String dumpResult(final Binding bestBinding) {
-    final String[] data = new String[myElements.size()];
+    final @NonNls String[] data = new String[myElements.size()];
 
     class Substitutor {
       PsiType substitute(final PsiType t) {
@@ -435,8 +437,7 @@ public class System {
 
           PsiSubstitutor theSubst = PsiSubstitutor.EMPTY;
 
-          for (final Iterator<PsiTypeParameter> p = aSubst.getSubstitutionMap().keySet().iterator(); p.hasNext();) {
-            final PsiTypeParameter parm = p.next();
+          for (final PsiTypeParameter parm : aSubst.getSubstitutionMap().keySet()) {
             final PsiType type = aSubst.substitute(parm);
 
             theSubst = theSubst.put(parm, substitute(type));
@@ -453,8 +454,7 @@ public class System {
     final Substitutor binding = new Substitutor();
     int i = 0;
 
-    for (final Iterator<PsiElement> e = myElements.iterator(); e.hasNext();) {
-      final PsiElement element = e.next();
+    for (final PsiElement element : myElements) {
       final PsiType t = myTypes.get(element);
       if (t != null) {
         data[i++] = binding.substitute(t).getCanonicalText() + "\\n" + elementString(element);
@@ -465,9 +465,9 @@ public class System {
     }
 
     Arrays.sort(data,
-                new Comparator() {
-                  public int compare(Object x, Object y) {
-                    return ((String)x).compareTo((String)y);
+                new Comparator<String>() {
+                  public int compare(String x, String y) {
+                    return x.compareTo(y);
                   }
                 });
 

@@ -11,16 +11,16 @@
     <children>
       <component id="25e48" class="javax.swing.JLabel">
         <constraints>
-          <xy x="0" y="75" width="132" height="14"/>
+          <xy x="0" y="75" width="136" height="14"/>
           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
         </constraints>
         <properties>
-          <text value="Error description (optional):"/>
+          <text resource-bundle="messages/DiagnosticBundle" key="diagnostic.error.report.prompt"/>
         </properties>
       </component>
       <scrollpane id="4a317">
         <constraints>
-          <xy x="0" y="97" width="340" height="98"/>
+          <xy x="0" y="97" width="340" height="100"/>
           <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3"/>
         </constraints>
         <properties/>
@@ -42,16 +42,16 @@
       <grid id="46178" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="2" left="4" bottom="0" right="4"/>
         <constraints>
-          <xy x="0" y="200" width="340" height="102"/>
+          <xy x="0" y="202" width="340" height="100"/>
           <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
         </constraints>
         <properties/>
-        <border type="etched" title="ITN tracker login (optional)"/>
+        <border type="etched" title-resource-bundle="messages/DiagnosticBundle" title-key="diagnostic.error.report.login.group"/>
         <children>
           <grid id="feb2" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="10" y="22" width="320" height="47"/>
+              <xy x="10" y="22" width="320" height="45"/>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
             </constraints>
             <properties/>
@@ -59,25 +59,25 @@
             <children>
               <component id="fbdcc" class="javax.swing.JLabel">
                 <constraints>
-                  <xy x="0" y="29" width="70" height="14"/>
+                  <xy x="0" y="28" width="74" height="14"/>
                   <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
-                  <text value="ITN password:"/>
+                  <text resource-bundle="messages/DiagnosticBundle" key="diagnostic.error.report.login.password"/>
                 </properties>
               </component>
               <component id="87071" class="javax.swing.JLabel">
                 <constraints>
-                  <xy x="0" y="3" width="46" height="14"/>
+                  <xy x="0" y="3" width="50" height="14"/>
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
-                  <text value="ITN login:"/>
+                  <text resource-bundle="messages/DiagnosticBundle" key="diagnostic.error.report.login.name"/>
                 </properties>
               </component>
               <component id="e3ed" class="javax.swing.JTextField" binding="myItnLoginTextField">
                 <constraints>
-                  <xy x="80" y="0" width="240" height="20"/>
+                  <xy x="84" y="0" width="236" height="20"/>
                   <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
                     <preferred-size width="150" height="-1"/>
                   </grid>
@@ -86,7 +86,7 @@
               </component>
               <component id="b3002" class="javax.swing.JPasswordField" binding="myItnPasswordTextField">
                 <constraints>
-                  <xy x="80" y="25" width="240" height="22"/>
+                  <xy x="84" y="25" width="236" height="20"/>
                   <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
                     <preferred-size width="150" height="-1"/>
                   </grid>
@@ -97,31 +97,31 @@
           </grid>
           <component id="4f69e" class="javax.swing.JCheckBox" binding="myRememberITNPasswordCheckBox">
             <constraints>
-              <xy x="10" y="74" width="145" height="22"/>
+              <xy x="10" y="72" width="146" height="22"/>
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
-              <text value="Remember ITN password"/>
+              <text resource-bundle="messages/DiagnosticBundle" key="diagnostic.error.report.login.remember.password.checkbox"/>
             </properties>
           </component>
         </children>
       </grid>
       <component id="115f0" class="javax.swing.JLabel" binding="mySendingSettingsLabel">
         <constraints>
-          <xy x="0" y="50" width="131" height="14"/>
+          <xy x="0" y="50" width="135" height="14"/>
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
         </constraints>
         <properties>
-          <text value="&lt;html&gt;&lt;a href=&quot;#&quot;&gt;Set up HTTP proxy settings&lt;/a&gt;&lt;/html&gt;"/>
+          <text resource-bundle="messages/DiagnosticBundle" key="diagnostic.error.report.proxy.setup"/>
         </properties>
       </component>
       <component id="cd549" class="javax.swing.JLabel">
         <constraints>
-          <xy x="0" y="0" width="307" height="42"/>
+          <xy x="0" y="0" width="311" height="42"/>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="8" fill="0"/>
         </constraints>
         <properties>
-          <text value="&lt;html&gt;Fill in a short description of the error, how can it be reproduced.&lt;br&gt;If you would like to get notified when the error is fixed,&lt;br&gt;please fill in your ITN login/password.&lt;/html&gt;"/>
+          <text resource-bundle="messages/DiagnosticBundle" key="diagnostic.error.report.description"/>
         </properties>
       </component>
     </children>

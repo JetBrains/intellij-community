@@ -22,6 +22,8 @@ import java.util.Iterator;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+import org.jetbrains.annotations.NonNls;
+
 public class PatternUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.PatternUtil");
   private static final HashMap ourEscapeRulls = new HashMap();
@@ -69,7 +71,7 @@ public class PatternUtil {
     return pattern.toString();
   }
 
-  public static Pattern fromMask(String mask) {
+  public static Pattern fromMask(@NonNls String mask) {
 //    String pattern = mask.replaceAll("\\.", "\\.").replaceAll("\\*", ".*").replaceAll("\\?", ".");
     try {
       return Pattern.compile(convertToRegex(mask));

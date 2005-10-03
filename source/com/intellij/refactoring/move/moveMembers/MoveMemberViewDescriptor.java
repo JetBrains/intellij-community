@@ -8,7 +8,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
-import com.intellij.usageView.UsageViewUtil;
+import com.intellij.usageView.UsageViewBundle;
+import com.intellij.refactoring.RefactoringBundle;
 
 class MoveMemberViewDescriptor implements UsageViewDescriptor {
   private PsiElement[] myElementsToMove;
@@ -39,7 +40,7 @@ class MoveMemberViewDescriptor implements UsageViewDescriptor {
   }
 
   public String getProcessedElementsHeader() {
-    return "Members to be moved";
+    return RefactoringBundle.message("move.members.elements.header");
   }
 
   public boolean isSearchInText() {
@@ -63,7 +64,7 @@ class MoveMemberViewDescriptor implements UsageViewDescriptor {
   }
 
   public String getCodeReferencesText(int usagesCount, int filesCount) {
-    return "References to be changed " + UsageViewUtil.getUsageCountInfo(usagesCount, filesCount, "reference");
+    return RefactoringBundle.message("references.to.be.changed", UsageViewBundle.getReferencesString(usagesCount, filesCount));
   }
 
   public String getCommentReferencesText(int usagesCount, int filesCount) {

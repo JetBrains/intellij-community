@@ -22,6 +22,8 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 
 import javax.swing.*;
 
+import org.jetbrains.annotations.NonNls;
+
 public abstract class ModuleType<T extends ModuleBuilder> {
   // predefined module types
   public static ModuleType JAVA;
@@ -31,7 +33,7 @@ public abstract class ModuleType<T extends ModuleBuilder> {
 
   private final String myId;
 
-  protected ModuleType(String id) {
+  protected ModuleType(@NonNls String id) {
     myId = id;
   }
 

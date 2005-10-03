@@ -18,6 +18,8 @@ import org.netbeans.lib.cvsclient.io.AsciiOutputStreamWriter;
 import org.netbeans.lib.cvsclient.io.IStreamLogger;
 import org.netbeans.lib.cvsclient.io.StreamUtilities;
 import org.netbeans.lib.cvsclient.util.BugLog;
+import org.netbeans.lib.cvsclient.JavaCvsSrcBundle;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.*;
 import java.net.ConnectException;
@@ -50,6 +52,9 @@ public final class PServerConnection
   private Socket socket;
   private InputStream socketInputStream;
   private OutputStream socketOutputStream;
+  @NonNls private static final String ENCODED_PASSWORD_OUTPUT_MESSAGE = "@encodedPassword@";
+  @NonNls private static final String SUCCESS_MESSAGE = "I LOVE YOU";
+  @NonNls private static final String FAILED_MESSAGE = "I HATE YOU";
   // Setup ==================================================================
 
   public PServerConnection(ConnectionSettings connectionSettings,
@@ -143,7 +148,7 @@ public final class PServerConnection
    *                                 Return the socket used to make the connection. The socket is
    *                                 guaranteed to be open if an exception has not been thrown
    */
-  private void openConnection(String preamble, String postamble, IStreamLogger streamLogger) throws AuthenticationException {
+  private void openConnection(@NonNls String preamble, @NonNls String postamble, IStreamLogger streamLogger) throws AuthenticationException {
     boolean error = true;
 
     try {
@@ -162,37 +167,37 @@ public final class PServerConnection
 
       final AsciiOutputStreamWriter writer = new AsciiOutputStreamWriter(socketOutputStream);
       println(writer, encodedPassword);
-      println(new AsciiOutputStreamWriter(streamLogger.getOutputLogStream()), "@encodedPassword@");
+      println(new AsciiOutputStreamWriter(streamLogger.getOutputLogStream()), ENCODED_PASSWORD_OUTPUT_MESSAGE);
 
       println(loggedWriter, postamble);
       loggedWriter.flush();
 
       String response = new StreamUtilities(null).readLine(loggingInputStream);
-      if (response.equals("I LOVE YOU")) {
+      if (response.equals(SUCCESS_MESSAGE)) {
         error = false;
         return;
       }
 
       if (response.length() == 0) {
-        throw new AuthenticationException("No response from server.");
+        throw new AuthenticationException(JavaCvsSrcBundle.message("no.response.from.server.error.message"));
       }
 
-      if (response.equals("I HATE YOU")) {
-        throw new UnknownUserException("Wrong password or unknown user.");
+      if (response.equals(FAILED_MESSAGE)) {
+        throw new UnknownUserException(JavaCvsSrcBundle.message("wrong.password.or.unknown.user.error.message"));
       }
 
       response = removePrefix(response, "error ");
       response = removePrefix(response, "E ");
-      throw new UnknownUserException(getMessage("Authentication failed. Response from server was:\n{0}.", response));
+      throw new UnknownUserException(getMessage(JavaCvsSrcBundle.message("authentication.failed.error.message"), response));
     }
     catch (ConnectException ex) {
-      throw new AuthenticationException(getMessage("Cannot connect to host {0}.", connectionSettings.getHostName()), ex);
+      throw new AuthenticationException(getMessage(JavaCvsSrcBundle.message("cannot.connect.to.host.error.message"), connectionSettings.getHostName()), ex);
     }
     catch (NoRouteToHostException ex) {
-      throw new AuthenticationException(getMessage("No route to host {0}.", connectionSettings.getHostName()), ex);
+      throw new AuthenticationException(getMessage(JavaCvsSrcBundle.message("no.route.to.host.error.message"), connectionSettings.getHostName()), ex);
     }
     catch (IOException ex) {
-      throw new AuthenticationException(getMessage("I/O error while connecting to host {0}.", connectionSettings.getHostName()), ex);
+      throw new AuthenticationException(getMessage(JavaCvsSrcBundle.message("i.o.error.while.connecting.to.host.error.mesage"), connectionSettings.getHostName()), ex);
     }
     finally {
       if (error) {
@@ -213,7 +218,7 @@ public final class PServerConnection
 
   // Utils ==================================================================
 
-  private static String removePrefix(String response, String prefix) {
+  private static String removePrefix(String response, @NonNls String prefix) {
     if (response.length() > prefix.length()
         && response.startsWith(prefix)) {
       return response.substring(prefix.length());

@@ -1,10 +1,14 @@
 
 package com.intellij.codeInsight.generation.surroundWith;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiParenthesizedExpression;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 
@@ -27,6 +31,6 @@ class JavaWithParenthesesSurrounder extends JavaExpressionSurrounder{
   }
 
   public String getTemplateDescription() {
-    return "(expr)";
+    return CodeInsightBundle.message("surround.with.parenthesis.template");
   }
 }

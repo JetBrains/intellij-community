@@ -2,6 +2,7 @@ package com.intellij.ide.todo;
 
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.ide.TreeExpander;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.*;
 import com.intellij.ide.todo.configurable.TodoConfigurable;
 import com.intellij.ide.todo.nodes.TodoDirNode;
@@ -33,6 +34,7 @@ import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.Icons;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.ui.Tree;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -95,7 +97,7 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
   protected abstract TodoTreeBuilder createTreeBuilder(JTree tree, DefaultTreeModel treeModel, Project project);
 
   private void initUI() {
-    myTree.putClientProperty("JTree.lineStyle", "Angled");
+    UIUtil.setLineStyleAngled(myTree);
     myTree.setShowsRootHandles(true);
     myTree.setRootVisible(false);
     myTree.setCellRenderer(new TodoCompositeRenderer());
@@ -307,6 +309,7 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
       }
     }
     else if (DataConstantsEx.HELP_ID.equals(dataId)) {
+      //noinspection HardCodedStringLiteral
       return "find.todoList";
     }
     return null;
@@ -423,11 +426,11 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
     }
 
     public String getNextOccurenceActionName() {
-      return "Next TODO";
+      return IdeBundle.message("action.next.todo");
     }
 
     public String getPreviousOccurenceActionName() {
-      return "Previous TODO";
+      return IdeBundle.message("action.previous.todo");
     }
 
     private OccurenceNavigator.OccurenceInfo goToPointer(TodoItemNode pointer) {
@@ -500,7 +503,7 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
 
   private final class MyShowPackagesAction extends ToggleAction {
     public MyShowPackagesAction() {
-      super("Group By Packages", null, Icons.GROUP_BY_PACKAGES);
+      super(IdeBundle.message("action.group.by.packages"), null, Icons.GROUP_BY_PACKAGES);
     }
 
     public boolean isSelected(AnActionEvent e) {
@@ -515,7 +518,7 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
 
   private final class MyShowModulesAction extends ToggleAction {
     public MyShowModulesAction() {
-      super("Group By Modules", null, IconLoader.getIcon("/objectBrowser/showModules.png"));
+      super(IdeBundle.message("action.group.by.modules"), null, IconLoader.getIcon("/objectBrowser/showModules.png"));
     }
 
     public boolean isSelected(AnActionEvent e) {
@@ -530,7 +533,7 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
 
   private final class MyFlattenPackagesAction extends ToggleAction {
     public MyFlattenPackagesAction() {
-      super("Flatten Packages", null, Icons.FLATTEN_PACKAGES_ICON);
+      super(IdeBundle.message("action.flatten.packages"), null, Icons.FLATTEN_PACKAGES_ICON);
     }
 
     public void update(AnActionEvent e) {
@@ -550,11 +553,12 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
 
   private final class MySetTodoFilterAction extends AnAction implements CustomComponentAction {
     public MySetTodoFilterAction() {
-      super("Filter TODO Items", null, IconLoader.getIcon("/ant/filter.png"));
+      super(IdeBundle.message("action.filter.todo.items"), null, IconLoader.getIcon("/ant/filter.png"));
     }
 
     public void actionPerformed(AnActionEvent e) {
       Presentation presentation = e.getPresentation();
+      //noinspection HardCodedStringLiteral
       JComponent button = (JComponent)presentation.getClientProperty("button");
       DefaultActionGroup group = createPopupActionGroup();
       ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.TODO_VIEW_TOOLBAR,
@@ -576,14 +580,16 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
     private DefaultActionGroup createPopupActionGroup() {
       TodoFilter[] filters = TodoConfiguration.getInstance().getTodoFilters();
       DefaultActionGroup group = new DefaultActionGroup();
-      group.add(new TodoFilterApplier("Show All", "Show All TODO Items", null));
+      group.add(new TodoFilterApplier(IdeBundle.message("action.todo.show.all"),
+                                      IdeBundle.message("action.description.todo.show.all"), null));
       for (int i = 0; i < filters.length; i++) {
         TodoFilter filter = filters[i];
         group.add(new TodoFilterApplier(filter.getName(), null, filter));
       }
       group.addSeparator();
       group.add(
-        new AnAction("Edit Filters", "Edit Filters", IconLoader.getIcon("/general/ideOptions.png")) {
+        new AnAction(IdeBundle.message("action.todo.edit.filters"),
+                     IdeBundle.message("action.todo.edit.filters"), IconLoader.getIcon("/general/ideOptions.png")) {
           public void actionPerformed(AnActionEvent e) {
             ShowSettingsUtil.getInstance().editConfigurable(myProject, TodoConfigurable.getInstance());
           }

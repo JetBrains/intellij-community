@@ -7,6 +7,8 @@ import com.intellij.psi.xml.XmlTokenType;
 
 import java.util.HashMap;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * Created by IntelliJ IDEA.
  * User: Maxim.Mossienko
@@ -40,6 +42,9 @@ abstract class BaseHtmlLexer extends LexerBase {
   }
 
   class XmlNameHandler implements TokenHandler {
+    @NonNls private static final String TOKEN_SCRIPT = "script";
+    @NonNls private static final String TOKEN_STYLE = "style";
+    @NonNls private static final String TOKEN_ON = "on";
 
     public void handleElement(Lexer lexer) {
       final char[] buffer = lexer.getBuffer();
@@ -48,7 +53,7 @@ abstract class BaseHtmlLexer extends LexerBase {
       //final int i = lexer.getTokenEnd() - "style".length();
       //final char ch = i > lexer.getTokenStart() ? buffer[i]:firstCh;
 
-      if ( /*ch !='s' &&*/ 
+      if ( /*ch !='s' &&*/
           firstCh !='o' && firstCh !='s' &&
           (!caseInsensitive || (/*ch !='S' &&*/ firstCh !='S' && firstCh !='O') )
           ) {
@@ -58,8 +63,9 @@ abstract class BaseHtmlLexer extends LexerBase {
       String name = ParseUtil.getTokenText(lexer);
       if (caseInsensitive) name = name.toLowerCase();
 
-      boolean style = name.equals("style"); //name.endsWith("style");
-      boolean script = name.equals("script") || name.startsWith("on");
+      boolean style = name.equals(TOKEN_STYLE); //name.endsWith("style");
+      boolean script = name.equals(TOKEN_SCRIPT) || 
+                       (name.startsWith(TOKEN_ON) && name.indexOf(':') == -1);
 
       if (style || script) {
         // encountered tag name in end of tag
@@ -166,13 +172,13 @@ abstract class BaseHtmlLexer extends LexerBase {
             // we should terminate on first occurence of </
             final char[] buf = baseLexer.getBuffer();
             final int end = baseLexer.getTokenEnd();
-  
+
             for(int i = baseLexer.getTokenStart(); i < end; ++i) {
               if (buf[i] == '<' && i + 1 < end && buf[i+1] == '/') {
                 myTokenEnd = i;
                 lastStart = i - 1;
                 lastState = 0;
-  
+
                 break FoundEndOfTag;
               }
             }
@@ -184,7 +190,7 @@ abstract class BaseHtmlLexer extends LexerBase {
           if (myTokenEnd == getBufferEnd()) break FoundEnd;
           baseLexer.advance();
         }
-        
+
         // check if next is script
         if (baseLexer.getTokenType() != XmlTokenType.XML_END_TAG_START) { // we are inside comment
           baseLexer.start(getBuffer(),lastStart+1,getBufferEnd(),lastState);
@@ -193,17 +199,17 @@ abstract class BaseHtmlLexer extends LexerBase {
         } else {
           baseLexer.advance();
         }
-        
+
         while(XmlTokenType.WHITESPACES.isInSet(baseLexer.getTokenType())) {
           baseLexer.advance();
         }
-        
+
         if (baseLexer.getTokenType() == XmlTokenType.XML_NAME) {
           String name = ParseUtil.getTokenText(baseLexer);
           if (caseInsensitive) name = name.toLowerCase();
-          
-          if((hasSeenScript() && "script".equals(name)) ||
-             (hasSeenStyle() && "style".equals(name))
+
+          if((hasSeenScript() && XmlNameHandler.TOKEN_SCRIPT.equals(name)) ||
+             (hasSeenStyle() && XmlNameHandler.TOKEN_STYLE.equals(name))
              ) {
             break; // really found end
           }

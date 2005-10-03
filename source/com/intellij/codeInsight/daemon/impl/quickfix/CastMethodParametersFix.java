@@ -8,6 +8,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -17,13 +18,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
-import com.intellij.psi.scope.processor.MethodResolverProcessor;
-import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
 
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -45,23 +43,14 @@ public class CastMethodParametersFix extends AddTypeCastFix implements Intention
 
   public String getText() {
     if (myArgList.getExpressions().length == 1) {
-      return "Cast parameter to '" + HighlightUtil.formatType(myToType) + "'";
+      return QuickFixBundle.message("cast.single.parameter.text", HighlightUtil.formatType(myToType));
     }
 
-    return MessageFormat.format("Cast {0} parameter to ''{1}''",
-        new Object[]{
-          getNumerical(),
-          HighlightUtil.formatType(myToType),
-        });
-  }
-
-  private String getNumerical() {
-    String[] nums = {"1st", "2nd", "3rd"};
-    return myIndex < nums.length ? nums[myIndex] : (myIndex + 1) + "th";
+    return QuickFixBundle.message("cast.parameter.text", myIndex + 1, HighlightUtil.formatType(myToType));
   }
 
   public String getFamilyName() {
-    return "Add TypeCast";
+    return QuickFixBundle.message("add.typecast.family");
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
@@ -69,7 +58,6 @@ public class CastMethodParametersFix extends AddTypeCastFix implements Intention
         myToType != null
         && myToType.isValid()
         && myArgList != null
-        && myArgList.getExpressions() != null
         && myArgList.getExpressions().length > myIndex
         && myArgList.getExpressions()[myIndex] != null
         && myArgList.getExpressions()[myIndex].isValid();
@@ -82,11 +70,12 @@ public class CastMethodParametersFix extends AddTypeCastFix implements Intention
     addTypeCast(project, expression, myToType);
   }
 
-  public static void registerCastActions(CandidateInfo[] candidates, PsiExpressionList list, PsiJavaCodeReferenceElement methodRef, HighlightInfo highlightInfo) {
+  public static void registerCastActions(CandidateInfo[] candidates, PsiCall call, PsiJavaCodeReferenceElement methodRef, HighlightInfo highlightInfo) {
     if (candidates.length == 0) return;
     List<CandidateInfo> methodCandidates = new ArrayList<CandidateInfo>(Arrays.asList(candidates));
+    PsiExpressionList list = call.getArgumentList();
     PsiExpression[] expressions = list.getExpressions();
-    if (expressions == null || expressions.length == 0) return;
+    if (expressions.length == 0) return;
     // filter out not castable candidates
     nextMethod:
     for (int i = methodCandidates.size() - 1; i >= 0; i--) {
@@ -131,22 +120,11 @@ public class CastMethodParametersFix extends AddTypeCastFix implements Intention
           if (suggestedCasts.contains(parameterType.getCanonicalText())) continue;
           // strict compare since even widening cast may help
           if (Comparing.equal(exprType, parameterType)) continue;
-          PsiExpressionList newList = (PsiExpressionList)list.copy();
+          PsiCall newCall = (PsiCall) call.copy();
           PsiTypeCastExpression castExpression = createCastExpression(expression, methodRef.getProject(), parameterType);
-          newList.getExpressions()[i].replace(castExpression);
-
-          MethodResolverProcessor processor;
-          if (method.isConstructor()) {
-            processor = new MethodResolverProcessor(method.getContainingClass(), newList, newList);
-            PsiScopesUtil.processScope(method.getContainingClass(), processor, /*PsiSubstitutor.UNKNOWN*/substitutor, null, newList);
-          }
-          else {
-            processor = new MethodResolverProcessor(method.getName(), method.getContainingClass(), newList, newList);
-            PsiScopesUtil.resolveAndWalk(processor, methodRef, null);
-          }
-
-          JavaResolveResult[] result = processor.getResult();
-          if (result.length == 1 && result[0].isValidResult()) {
+          newCall.getArgumentList().getExpressions()[i].replace(castExpression);
+          JavaResolveResult resolveResult = newCall.resolveMethodGenerics();
+          if (resolveResult.getElement() != null && resolveResult.isValidResult()) {
             suggestedCasts.add(parameterType.getCanonicalText());
             QuickFixAction.registerQuickFixAction(highlightInfo, new CastMethodParametersFix(list, i, parameterType), null);
           }

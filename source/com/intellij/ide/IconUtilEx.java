@@ -56,6 +56,7 @@ public class IconUtilEx {
       return Icons.EJB_CMR_FIELD_ICON;
     }
     else {
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("Wrong object type");
     }
   }

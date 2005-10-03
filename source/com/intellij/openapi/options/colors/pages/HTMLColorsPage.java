@@ -39,23 +39,24 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
+import com.intellij.openapi.options.OptionsBundle;
 
 import javax.swing.*;
 import java.util.Map;
 
 public class HTMLColorsPage implements ColorSettingsPage {
   private static final AttributesDescriptor[] ATTRS = new AttributesDescriptor[] {
-    new AttributesDescriptor("Comment", HighlighterColors.HTML_COMMENT),
-    new AttributesDescriptor("Tag", HighlighterColors.HTML_TAG),
-    new AttributesDescriptor("Tag name", HighlighterColors.HTML_TAG_NAME),
-    new AttributesDescriptor("Attribute name", HighlighterColors.HTML_ATTRIBUTE_NAME),
-    new AttributesDescriptor("Attribute value", HighlighterColors.HTML_ATTRIBUTE_VALUE)
+    new AttributesDescriptor(OptionsBundle.message("options.html.attribute.descriptor.comment"), HighlighterColors.HTML_COMMENT),
+    new AttributesDescriptor(OptionsBundle.message("options.html.attribute.descriptor.tag"), HighlighterColors.HTML_TAG),
+    new AttributesDescriptor(OptionsBundle.message("options.html.attribute.descriptor.tag.name"), HighlighterColors.HTML_TAG_NAME),
+    new AttributesDescriptor(OptionsBundle.message("options.html.attribute.descriptor.attribute.name"), HighlighterColors.HTML_ATTRIBUTE_NAME),
+    new AttributesDescriptor(OptionsBundle.message("options.html.attribute.descriptor.attribute.value"), HighlighterColors.HTML_ATTRIBUTE_VALUE)
   };
 
   private static final ColorDescriptor[] COLORS = new ColorDescriptor[0];
 
   public String getDisplayName() {
-    return "HTML";
+    return OptionsBundle.message("options.html.display.name");
   }
 
   public Icon getIcon() {

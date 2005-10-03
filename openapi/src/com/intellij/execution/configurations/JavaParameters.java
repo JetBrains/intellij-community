@@ -16,6 +16,7 @@
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.CantRunException;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -24,6 +25,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathsList;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.nio.charset.Charset;
@@ -59,12 +61,12 @@ public class JavaParameters {
   public String getJdkPath() throws CantRunException {
     final ProjectJdk jdk = getJdk();
     if(jdk == null) {
-      throw new CantRunException("No JDK specified");
+      throw new CantRunException(ExecutionBundle.message("no.jdk.specified..error.message"));
     }
 
     final String jdkHome = jdk.getHomeDirectory().getPresentableUrl();
     if(jdkHome == null || jdkHome.length() == 0) {
-      throw new CantRunException("Home directory is not specified for JDK");
+      throw new CantRunException(ExecutionBundle.message("home.directory.not.specified.for.jdk.error.message"));
     }
     return jdkHome;
   }
@@ -73,7 +75,7 @@ public class JavaParameters {
     myJdk = jdk;
   }
 
-  public void setMainClass(final String mainClass) {
+  public void setMainClass(@NonNls final String mainClass) {
     this.myMainClass = mainClass;
   }
 
@@ -81,7 +83,7 @@ public class JavaParameters {
     setWorkingDirectory(path.getPath());
   }
 
-  public void setWorkingDirectory(final String path) {
+  public void setWorkingDirectory(@NonNls final String path) {
     myWorkingDirectory = path;
   }
 

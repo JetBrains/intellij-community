@@ -219,7 +219,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
 
   private class MyGroupByPackagesAction extends ToggleAction {
     public MyGroupByPackagesAction() {
-      super("Group by Packages", null, Icons.GROUP_BY_PACKAGES);
+      super(VcsBundle.message("action.name.group.by.packages"), null, Icons.GROUP_BY_PACKAGES);
     }
 
     public boolean isSelected(AnActionEvent e) {

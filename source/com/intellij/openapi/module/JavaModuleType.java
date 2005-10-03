@@ -34,8 +34,11 @@ package com.intellij.openapi.module;
 import com.intellij.ide.util.projectWizard.*;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.project.ProjectBundle;
 
 import javax.swing.*;
+
+import org.jetbrains.annotations.NonNls;
 
 public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
   private static final Icon JAVA_MODULE_ICON = IconLoader.getIcon("/modules/javaModule.png");
@@ -48,7 +51,7 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
     this("JAVA_MODULE");
   }
 
-  protected JavaModuleType(String id) {
+  protected JavaModuleType(@NonNls String id) {
     super(id);
   }
 
@@ -57,11 +60,11 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
   }
 
   public String getName() {
-    return "Java Module";
+    return ProjectBundle.message("module.type.java.name");
   }
 
   public String getDescription() {
-    return "<b>Java module</b> is a part of a project describing a set of java sources, paths, libraries, etc.";
+    return ProjectBundle.message("module.type.java.description");
   }
 
   public Icon getBigIcon() {

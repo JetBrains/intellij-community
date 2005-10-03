@@ -4,6 +4,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.util.Icons;
 
 import javax.swing.*;
@@ -67,7 +68,7 @@ public class TagListDialog extends DialogWrapper{
   }
 
   private AnAction createDeleteAction() {
-    return new IconWithTextAction("Remove", null, Icons.DELETE_ICON) {
+    return new IconWithTextAction(ApplicationBundle.message("action.remove"), null, Icons.DELETE_ICON) {
       public void update(AnActionEvent e) {
         final int selectedIndex = myList.getSelectedIndex();
         if (selectedIndex >= 0) {
@@ -94,9 +95,10 @@ public class TagListDialog extends DialogWrapper{
   }
 
   private AnAction createAddAction() {
-    return new IconWithTextAction("Add", null, Icons.ADD_ICON){
+    return new IconWithTextAction(ApplicationBundle.message("action.add"), null, Icons.ADD_ICON){
       public void actionPerformed(AnActionEvent e) {
-        final String tagName = Messages.showInputDialog("Enter tag name:", "Tag Name", Messages.getQuestionIcon());
+        final String tagName = Messages.showInputDialog(ApplicationBundle.message("editbox.enter.tag.name"),
+                                                        ApplicationBundle.message("title.tag.name"), Messages.getQuestionIcon());
         if (tagName != null) {
           while (myData.contains(tagName)) {
             myData.remove(tagName);

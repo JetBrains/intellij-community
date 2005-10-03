@@ -6,6 +6,7 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.RefactoringBundle;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -33,9 +34,9 @@ public class MigrationDialog extends DialogWrapper{
     super(project, true);
     myProject = project;
     myMigrationMapSet = migrationMapSet;
-    setTitle("Package and Class Migration");
+    setTitle(RefactoringBundle.message("migration.dialog.title"));
     setHorizontalStretch(1.2f);
-    setOKButtonText("Run");
+    setOKButtonText(RefactoringBundle.message("migration.dialog.ok.button.text"));
     init();
   }
 

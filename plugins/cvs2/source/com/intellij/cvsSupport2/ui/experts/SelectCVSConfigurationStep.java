@@ -18,7 +18,7 @@ public class SelectCVSConfigurationStep extends WizardStep{
 
 
   public SelectCVSConfigurationStep(Project project, CvsWizard wizard) {
-    super("Select CVS Configuration", wizard);
+    super(com.intellij.CvsBundle.message("dialog.title.select.cvs.configuration"), wizard);
     mySelectCvsConfgurationPanel = new SelectCvsConfgurationPanel(project);
     myObserver = new Observer() {
           public void update(Observable o, Object arg) {

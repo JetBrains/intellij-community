@@ -18,8 +18,8 @@ package com.intellij.usages.impl.rules;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -91,6 +91,13 @@ public class MethodGroupingRule implements UsageGroupingRule {
     }
 
     public boolean equals(Object object) {
+      if (!(object instanceof MethodUsageGroup)) {
+        return false;
+      }
+      MethodUsageGroup group = (MethodUsageGroup) object;
+      if (isValid() && group.isValid()) {
+        return getMethod().getManager().areElementsEquivalent(getMethod(), group.getMethod());
+      }
       return Comparing.equal(myName, ((MethodUsageGroup)object).myName);
     }
 

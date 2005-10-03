@@ -7,6 +7,7 @@ import com.intellij.openapi.roots.UserDefinedExcludeFolder;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 /**
  *  @author dsl
@@ -14,7 +15,7 @@ import org.jdom.Element;
 public class ExcludeFolderImpl extends ContentFolderBaseImpl implements ClonableContentFolder,
                                                                         UserDefinedExcludeFolder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.SimpleExcludeFolderImpl");
-  static final String ELEMENT_NAME = "excludeFolder";
+  @NonNls static final String ELEMENT_NAME = "excludeFolder";
 
   ExcludeFolderImpl(VirtualFile file, ContentEntryImpl contentEntry) {
     super(file, contentEntry);

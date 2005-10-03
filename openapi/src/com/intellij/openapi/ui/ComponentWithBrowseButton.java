@@ -25,6 +25,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.UIBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -49,7 +50,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel {
       myBrowseButton.addActionListener(browseActionListener);
     add(myBrowseButton, BorderLayout.EAST);
 
-    myBrowseButton.setToolTipText("Click or press Alt-Enter");
+    myBrowseButton.setToolTipText(UIBundle.message("component.with.browse.button.browse.button.tooltip.text"));
 
     // FixedSizeButton isn't focusable but it should be selectable via keyboard.
     myDoClickAction = new MyDoClickAction(myBrowseButton);

@@ -1,5 +1,7 @@
 package com.intellij.psi.impl.source.parsing;
 
+import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.lang.ASTNode;
 import com.intellij.lexer.FilterLexer;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
@@ -10,7 +12,6 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
-import com.intellij.lang.ASTNode;
 
 /**
  *
@@ -64,7 +65,7 @@ public class FileTextParsing extends Parsing {
       }
 
       if (invalidElementsGroup == null){
-        invalidElementsGroup = Factory.createErrorElement("'class' or 'interface' expected");
+        invalidElementsGroup = Factory.createErrorElement(JavaErrorMessages.message("expected.class.or.interface"));
         TreeUtil.addChildren(dummyRoot, invalidElementsGroup);
       }
       TreeUtil.addChildren(invalidElementsGroup, ParseUtil.createTokenElement(filterLexer, context.getCharTable()));
@@ -90,8 +91,8 @@ public class FileTextParsing extends Parsing {
           prevImportKeyword = false;
         }
         else {
-          prevImportKeyword = WHITE_SPACE_OR_COMMENT_BIT_SET.isInSet(tokenType);
-          if (tokenType == null || IMPORT_LIST_STOPPER_BIT_SET.isInSet(tokenType) || MODIFIER_BIT_SET.isInSet(tokenType)) break;
+          prevImportKeyword = WHITE_SPACE_OR_COMMENT_BIT_SET.contains(tokenType);
+          if (tokenType == null || IMPORT_LIST_STOPPER_BIT_SET.contains(tokenType) || MODIFIER_BIT_SET.contains(tokenType)) break;
         }
         lastPos = lexer.getTokenEnd();
         lexer.advance();
@@ -128,7 +129,7 @@ public class FileTextParsing extends Parsing {
       TreeUtil.addChildren(packageStatement, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
       lexer.advance();
     } else {
-      TreeUtil.addChildren(packageStatement, Factory.createErrorElement("';' expected"));
+      TreeUtil.addChildren(packageStatement, Factory.createErrorElement(JavaErrorMessages.message("expected.semicolon")));
     }
     return packageStatement;
   }

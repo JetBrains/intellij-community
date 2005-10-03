@@ -17,6 +17,8 @@ import org.netbeans.lib.cvsclient.command.KeywordSubstitution;
 import org.netbeans.lib.cvsclient.event.IEventSender;
 import org.netbeans.lib.cvsclient.file.ICvsFileSystem;
 import org.netbeans.lib.cvsclient.util.BugLog;
+import org.netbeans.lib.cvsclient.JavaCvsSrcBundle;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.text.ParseException;
@@ -33,30 +35,36 @@ final class LogMessageParser extends AbstractMessageParser {
   // Constants ==============================================================
 
 
-  private static final String RCS_FILE = "RCS file: ";
-  private static final String WORKING_FILE = "Working file: ";
-  private static final String HEAD = "head: ";
-  private static final String BRANCH = "branch:";
-  private static final String LOCKS = "locks: ";
-  private static final String ACCESS_LIST = "access list:";
-  private static final String SYMBOLIC_NAMES = "symbolic names:";
-  private static final String KEYWORD_SUBST = "keyword substitution: ";
-  private static final String TOTAL_REVISIONS = "total revisions: ";
-  private static final String SELECTED_REVISIONS = ";\tselected revisions: ";
-  private static final String DESCRIPTION = "description:";
-  private static final String REVISION = "revision ";
-  private static final String DATE = "date: ";
-  private static final String BRANCHES = "branches: ";
-  private static final String AUTHOR = "  author: ";
-  private static final String STATE = "  state: ";
-  private static final String LINES = "  lines: ";
-  private static final String SPLITTER = "----------------------------";
-  private static final String FINAL_SPLIT = "=============";
-  private static final String FINAL_SPLIT_WITH_TAB = "\t=============";
+  @NonNls private static final String RCS_FILE = "RCS file: ";
+  @NonNls private static final String WORKING_FILE = "Working file: ";
+  @NonNls private static final String HEAD = "head: ";
+  @NonNls private static final String BRANCH = "branch:";
+  @NonNls private static final String LOCKS = "locks: ";
+  @NonNls private static final String ACCESS_LIST = "access list:";
+  @NonNls private static final String SYMBOLIC_NAMES = "symbolic names:";
+  @NonNls private static final String KEYWORD_SUBST = "keyword substitution: ";
+  @NonNls private static final String TOTAL_REVISIONS = "total revisions: ";
+  @NonNls private static final String SELECTED_REVISIONS = ";\tselected revisions: ";
+  @NonNls private static final String DESCRIPTION = "description:";
+  @NonNls private static final String REVISION = "revision ";
+  @NonNls private static final String DATE = "date: ";
+  @NonNls private static final String BRANCHES = "branches: ";
+  @NonNls private static final String AUTHOR = "  author: ";
+  @NonNls private static final String STATE = "  state: ";
+  @NonNls private static final String LINES = "  lines: ";
+  @NonNls private static final String SPLITTER = "----------------------------";
+  @NonNls private static final String FINAL_SPLIT = "=============";
+  @NonNls private static final String FINAL_SPLIT_WITH_TAB = "\t=============";
 
   private static final SimpleDateFormat[] EXPECTED_DATE_FORMATS = new SimpleDateFormat[3];
+  @NonNls private static final String NO_FILE_MESSAGE = "no file";
 
   static {
+    initDateFormats();
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  private static void initDateFormats() {
     EXPECTED_DATE_FORMATS[0] = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
     EXPECTED_DATE_FORMATS[0].setTimeZone(TimeZone.getTimeZone("GMT"));
 
@@ -250,7 +258,7 @@ final class LogMessageParser extends AbstractMessageParser {
 
   private void processWorkingFile(String line) {
     String fileName = line.trim();
-    if (fileName.startsWith("no file")) {
+    if (fileName.startsWith(NO_FILE_MESSAGE)) {
       fileName = fileName.substring(8);
     }
 
@@ -326,7 +334,7 @@ final class LogMessageParser extends AbstractMessageParser {
         revision.setDate(parsedDate);
       }
       else {
-        BugLog.getInstance().showException(new Exception("Line " + line + " could be be parsed."));
+        BugLog.getInstance().showException(new Exception(JavaCvsSrcBundle.message("line.could.be.be.parsed.error.message", line)));
       }
     }
     if (token.hasMoreTokens()) {

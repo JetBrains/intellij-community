@@ -17,6 +17,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.ListIterator;
 
+import org.jetbrains.annotations.NonNls;
+
 public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl implements ThreadReferenceProxy {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.jdi.ThreadReferenceProxyImpl");
   // cached data
@@ -25,7 +27,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
   // stackframes, 0 - bottom
   private List<StackFrameProxyImpl> myFramesFromBottom = new ArrayList<StackFrameProxyImpl>();
   //cache build on the base of myFramesFromBottom 0 - top, initially nothing is cached
-  private List<StackFrameProxyImpl> myFrames = null; 
+  private List<StackFrameProxyImpl> myFrames = null;
 
   private ThreadGroupReferenceProxyImpl myThreadGroupProxy;
 
@@ -70,7 +72,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     clearCaches();
   }
 
-  public String toString() {
+  public @NonNls String toString() {
     return "ThreadReferenceProxyImpl: " + getThreadReference().toString() + " " + super.toString();
   }
 
@@ -78,7 +80,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     DebuggerManagerThreadImpl.assertIsManagerThread();
     //JDI clears all caches on thread resume !!
     if(LOG.isDebugEnabled()) {
-      LOG.debug("before resume" + getThreadReference());      
+      LOG.debug("before resume" + getThreadReference());
     }
     getVirtualMachineProxy().clearCaches();
     getThreadReference().resume();
@@ -104,7 +106,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     DebuggerManagerThreadImpl.assertIsManagerThread();
     checkValid();
     if(myThreadGroupProxy == null) {
-      myThreadGroupProxy = getVirtualMachineProxy().getThreadGroupReferenceProxy(getThreadReference().threadGroup());      
+      myThreadGroupProxy = getVirtualMachineProxy().getThreadGroupReferenceProxy(getThreadReference().threadGroup());
     }
     return myThreadGroupProxy;
   }

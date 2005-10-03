@@ -25,7 +25,7 @@ public class SelectCvsConfigurationDialog extends DialogWrapper {
         setOKActionEnabled(myPanel.getSelectedConfiguration() != null);
       }
     });
-    setTitle("Select CVS Root Configuration");
+    setTitle(com.intellij.CvsBundle.message("dialog.title.select.cvs.root.configuration"));
 
     init();
   }

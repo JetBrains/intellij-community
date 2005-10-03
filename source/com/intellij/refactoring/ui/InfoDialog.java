@@ -8,6 +8,8 @@ import javax.swing.*;
 
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.ui.UIUtil;
+import com.intellij.refactoring.RefactoringBundle;
 
 public class InfoDialog extends DialogWrapper{
   private JCheckBox myShowInFutureCheckBox;
@@ -19,10 +21,10 @@ public class InfoDialog extends DialogWrapper{
     super(project, false);
     myText = text;
     setButtonsAlignment(SwingUtilities.CENTER);
-    setTitle("Information");
+    setTitle(RefactoringBundle.message("information.title"));
     setButtonsMargin(null);
     init();
-    setOKButtonText("OK");
+    setOKButtonText(RefactoringBundle.message("ok.button"));
   }
 
   protected Action[] createActions(){
@@ -36,8 +38,8 @@ public class InfoDialog extends DialogWrapper{
 
     JPanel cbPanel = new JPanel(new BorderLayout());
     cbPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 10, 10));
-    myShowInFutureCheckBox = new JCheckBox("Do not show this message in the future");
-    myShowInFutureCheckBox.setMnemonic('D');
+    myShowInFutureCheckBox = new JCheckBox();
+    myShowInFutureCheckBox.setText(RefactoringBundle.message("do.not.show.this.message.in.the.future"));
     panel.add(cbPanel, BorderLayout.SOUTH);
     cbPanel.add(myShowInFutureCheckBox, BorderLayout.WEST);
 
@@ -48,7 +50,7 @@ public class InfoDialog extends DialogWrapper{
     myTextArea = new JTextArea(myText);
     textPanel.add(myTextArea, BorderLayout.CENTER);
     myTextArea.setEditable(false);
-    myTextArea.setBackground(UIManager.getColor("Panel.background"));
+    myTextArea.setBackground(UIUtil.getPanelBackgound());
     Font font = myShowInFutureCheckBox.getFont();
     font = new Font(font.getName(), font.getStyle(), font.getSize() + 1);
     myTextArea.setFont(font);

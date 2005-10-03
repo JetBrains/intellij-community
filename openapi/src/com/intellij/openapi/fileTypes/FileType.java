@@ -18,6 +18,7 @@ package com.intellij.openapi.fileTypes;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,6 +33,7 @@ public interface FileType {
    */
 
   @NotNull
+  @NonNls
   String getName();
 
   /**
@@ -48,6 +50,7 @@ public interface FileType {
    */
 
   @NotNull
+  @NonNls
   String getDefaultExtension();
 
   /**
@@ -79,6 +82,7 @@ public interface FileType {
    */
 
   @Nullable
+  @NonNls
   String getCharset(@NotNull VirtualFile file);
 
   /**

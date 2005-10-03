@@ -1,11 +1,13 @@
 package com.intellij.codeInsight.template.impl;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.TemplateStateListener;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ProjectComponent;
@@ -22,9 +24,13 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class TemplateManagerImpl extends TemplateManager implements ProjectComponent {
   protected Project myProject;
   private EditorFactoryListener myEditorFactoryListener;
+  private final List<Disposable> myDisposables = new ArrayList<Disposable>();
 
   private static final Key<TemplateState> TEMPLATE_STATE_KEY = Key.create("TEMPLATE_STATE_KEY");
 
@@ -33,6 +39,10 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
   }
 
   public void disposeComponent() {
+    for (Disposable disposable : myDisposables) {
+      disposable.dispose();
+    }
+    myDisposables.clear();
   }
 
   public void initComponent() { }
@@ -47,12 +57,17 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
         Editor removedEditor = event.getEditor();
         TemplateState tState = getTemplateState(removedEditor);
         if (tState != null) {
-          tState.dispose();
+          disposeState(tState);
         }
         removedEditor.putUserData(TEMPLATE_STATE_KEY, null);
       }
     };
     EditorFactory.getInstance().addEditorFactoryListener(myEditorFactoryListener);
+  }
+
+  private void disposeState(final TemplateState tState) {
+    tState.dispose();
+    myDisposables.remove(tState);
   }
 
   public Template createTemplate(String key, String group) {
@@ -70,9 +85,10 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
   private TemplateState initTemplateState(final Editor editor) {
     TemplateState prevState = getTemplateState(editor);
     if (prevState != null) {
-      prevState.dispose();
+      disposeState(prevState);
     }
     TemplateState state = new TemplateState(myProject, editor);
+    myDisposables.add(state);
     editor.putUserData(TEMPLATE_STATE_KEY, state);
     return state;
   }
@@ -112,7 +128,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
           templateState.start((TemplateImpl) template);
         }
       },
-      "Insert Code Template", null
+      CodeInsightBundle.message("insert.code.template.command"), null
     );
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -193,7 +209,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
           templateState0.start(template0);
         }
       },
-      "Insert Code Template", null
+      CodeInsightBundle.message("insert.code.template.command"), null
     );
     return true;
   }

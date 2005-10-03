@@ -11,6 +11,7 @@ import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Mike
@@ -18,6 +19,8 @@ import com.intellij.xml.util.XmlUtil;
 public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritableMetaData {
   protected XmlTag myDescriptorTag;
   protected XmlNSDescriptor NSDescriptor;
+  @NonNls
+  public static final String QUALIFIED_ATTR_VALUE = "qualified";
 
   public XmlElementDescriptorImpl(XmlTag descriptorTag) {
     myDescriptorTag = descriptorTag;
@@ -109,8 +112,8 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
       if (substAttr != null) {
         final String namespacePrefix = XmlUtil.findPrefixByQualifiedName(substAttr);
         final String namespace = "".equals(namespacePrefix) ?
-          ((XmlNSDescriptorImpl)getNSDescriptor()).getDefaultNamespace() :
-          myDescriptorTag.getNamespaceByPrefix(namespacePrefix);
+                                 ((XmlNSDescriptorImpl)getNSDescriptor()).getDefaultNamespace() :
+                                 myDescriptorTag.getNamespaceByPrefix(namespacePrefix);
         final String local = XmlUtil.findLocalNameByQualifiedName(substAttr);
         final XmlElementDescriptorImpl originalElement = (XmlElementDescriptorImpl)((XmlNSDescriptorImpl)getNSDescriptor()).getElementDescriptor(local, namespace);
         if (originalElement != null) {
@@ -200,8 +203,8 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
       final String localName = XmlUtil.findLocalNameByQualifiedName(name);
       final String namespacePrefix = XmlUtil.findPrefixByQualifiedName(name);
       final String namespace = "".equals(namespacePrefix) ?
-        ((XmlNSDescriptorImpl)getNSDescriptor()).getDefaultNamespace() :
-        myDescriptorTag.getNamespaceByPrefix(namespacePrefix);
+                               ((XmlNSDescriptorImpl)getNSDescriptor()).getDefaultNamespace() :
+                               myDescriptorTag.getNamespaceByPrefix(namespacePrefix);
     return getElementDescriptor(localName, namespace, null);
   }
 
@@ -235,7 +238,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
 
   public XmlElementDescriptor getElementDescriptor(XmlTag element){
     XmlElementDescriptor elementDescriptor = getElementDescriptor(element.getLocalName(), element.getNamespace(), (XmlElement)element.getParent());
-    
+
     if(elementDescriptor == null || element.getAttributeValue("xsi:type") != null){
       final XmlElementDescriptor xmlDescriptorByType = XmlUtil.findXmlDescriptorByType(element);
       if (xmlDescriptorByType != null) elementDescriptor = xmlDescriptorByType;
@@ -258,7 +261,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
   public String getDefaultName() {
     XmlTag rootTag = ((XmlFile)myDescriptorTag.getContainingFile()).getDocument().getRootTag();
 
-    if ("qualified".equals(rootTag.getAttributeValue("elementFormDefault"))) {
+    if (rootTag != null && QUALIFIED_ATTR_VALUE.equals(rootTag.getAttributeValue("elementFormDefault"))) {
       return getQualifiedName();
     }
 
@@ -266,7 +269,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
   }
 
   public boolean isAbstract() {
-    return "true".equals(myDescriptorTag.getAttributeValue("abstract"));
+    return Boolean.valueOf(myDescriptorTag.getAttributeValue("abstract")).booleanValue();
   }
 
   public void setName(String name) throws IncorrectOperationException {

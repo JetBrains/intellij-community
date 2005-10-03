@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.template.Expression;
@@ -7,7 +8,6 @@ import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.MacroCallNode;
 import com.intellij.codeInsight.template.macro.MacroFactory;
-import com.intellij.codeInsight.TailType;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -18,8 +18,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.*;
-import com.intellij.psi.filters.getters.XmlAttributeValueGetter;
 import com.intellij.psi.filters.getters.AllWordsGetter;
+import com.intellij.psi.filters.getters.XmlAttributeValueGetter;
 import com.intellij.psi.filters.position.LeftNeighbour;
 import com.intellij.psi.filters.position.TokenTypeFilter;
 import com.intellij.psi.html.HtmlTag;
@@ -335,7 +335,7 @@ public class XmlCompletionData extends CompletionData {
           XmlUtil.processXmlElements(((ComplexTypeDescriptor)type).getDeclaration(),new PsiElementProcessor() {
             public boolean execute(final PsiElement element) {
               if (element instanceof XmlTag &&
-                ((XmlTag)element).getLocalName().equals("simpleContent") &&
+                ((XmlTag)element).getLocalName().equals(XmlUtil.XSD_SIMPLE_CONTENT_TAG) &&
                 ((XmlTag)element).getNamespace().equals(XmlUtil.XML_SCHEMA_URI)
                 ) {
                 simpleContent[0] = (XmlTag)element;

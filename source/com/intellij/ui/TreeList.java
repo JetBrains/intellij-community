@@ -139,6 +139,7 @@ public class TreeList extends JList implements TreeModelListener {
 
 
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static void main(String[] args) {
     JFrame frame = new JFrame("TreeList Showcase");
     frame.setLocation(0, 0);

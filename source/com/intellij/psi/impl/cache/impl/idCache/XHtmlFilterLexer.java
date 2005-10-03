@@ -4,6 +4,7 @@ import com.intellij.lexer.Lexer;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.IChameleonElementType;
 import gnu.trove.TIntIntHashMap;
 
 public class XHtmlFilterLexer extends BaseFilterLexer {
@@ -22,7 +23,10 @@ public class XHtmlFilterLexer extends BaseFilterLexer {
       advanceTodoItemCounts(buffer, tokenStart, tokenEnd);
     }
 
-    if (tokenType == ElementType.XML_ATTRIBUTE_VALUE_TOKEN || tokenType == ElementType.XML_NAME) {
+    if (tokenType == ElementType.XML_ATTRIBUTE_VALUE_TOKEN || 
+        tokenType == ElementType.XML_NAME ||
+        tokenType instanceof IChameleonElementType
+       ) {
       IdTableBuilding.scanWords(myTable, buffer, tokenStart, tokenEnd,
                                 UsageSearchContext.IN_PLAIN_TEXT | UsageSearchContext.IN_FOREIGN_LANGUAGES);
       IdCacheUtil.processPossibleComplexFileName(buffer, tokenStart, tokenEnd, myTable);

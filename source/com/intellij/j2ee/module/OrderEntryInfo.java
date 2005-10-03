@@ -6,6 +6,7 @@ import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Iterator;
 import java.util.List;
@@ -20,6 +21,10 @@ class OrderEntryInfo implements JDOMExternalizable {
   public boolean copy;
   public String URI="";
   private Map<String,String> attributes = new HashMap<String, String>();
+  @NonNls protected static final String ATTRIBUTE_ELEMENT_NAME = "attribute";
+  @NonNls protected static final String NAME_ATTR_NAME = "name";
+  @NonNls protected static final String VALUE_ATTR_NAME = "value";
+  @NonNls protected static final String ATTRIBUTES_ELEMENT_NAME = "attributes";
 
   public void writeExternal(Element element) throws WriteExternalException {
     JDOMExternalizer.write(element,"copy",copy);
@@ -29,26 +34,26 @@ class OrderEntryInfo implements JDOMExternalizable {
 
   private void writeAttributes(Element element) {
     if (attributes.size() == 0) return;
-    Element root = new Element("attributes");
+    Element root = new Element(ATTRIBUTES_ELEMENT_NAME);
     element.addContent(root);
     Set<String> names = attributes.keySet();
     for (String name : names) {
       String value = attributes.get(name);
-      Element attr = new Element("attribute");
-      attr.setAttribute("name", name);
-      attr.setAttribute("value", value);
+      Element attr = new Element(ATTRIBUTE_ELEMENT_NAME);
+      attr.setAttribute(NAME_ATTR_NAME, name);
+      attr.setAttribute(VALUE_ATTR_NAME, value);
       root.addContent(attr);
     }
   }
   private void readAttributes(Element element) {
-    Element attrs = element.getChild("attributes");
+    Element attrs = element.getChild(ATTRIBUTES_ELEMENT_NAME);
     if (attrs == null) return;
-    List roots = attrs.getChildren("attribute");
+    List roots = attrs.getChildren(ATTRIBUTE_ELEMENT_NAME);
     if (roots.size() == 0) return;
     for (Object root : roots) {
       Element attr = (Element)root;
-      String name = attr.getAttributeValue("name");
-      String value = attr.getAttributeValue("value");
+      String name = attr.getAttributeValue(NAME_ATTR_NAME);
+      String value = attr.getAttributeValue(VALUE_ATTR_NAME);
       attributes.put(name, value);
     }
   }

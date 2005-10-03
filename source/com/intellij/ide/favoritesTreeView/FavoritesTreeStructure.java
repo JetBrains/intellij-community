@@ -6,6 +6,7 @@ import com.intellij.ide.projectView.impl.*;
 import com.intellij.ide.projectView.impl.nodes.*;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.ide.IdeBundle;
 import com.intellij.j2ee.module.components.J2EEModuleUrl;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -24,6 +25,7 @@ import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 
@@ -58,8 +60,11 @@ public class FavoritesTreeStructure extends ProjectAbstractTreeStructureBase imp
   private Set<AbstractTreeNode> myFavorites = new HashSet<AbstractTreeNode>();
   private HashMap<AbstractUrl, String> myAbstractUrls = new HashMap<AbstractUrl, String>();
   private FavoritesTreeViewConfiguration myFavoritesConfiguration = new FavoritesTreeViewConfiguration();
-  private static final String CLASS_NAME = "klass";
-  private static final String FAVORITES_ROOT = "favorite_root";
+  @NonNls private static final String CLASS_NAME = "klass";
+  @NonNls private static final String FAVORITES_ROOT = "favorite_root";
+  @NonNls private static final String ATTRIBUTE_TYPE = "type";
+  @NonNls private static final String ATTRIBUTE_URL = "url";
+  @NonNls private static final String ATTRIBUTE_MODULE = "module";
 
   public FavoritesTreeStructure(Project project) {
     super(project);
@@ -148,12 +153,10 @@ public class FavoritesTreeStructure extends ProjectAbstractTreeStructureBase imp
   }
 
   private AbstractTreeNode<String> getEmptyScreen() {
-    return new AbstractTreeNode<String>(myProject,
-                                        "There is nothing to display. Add item to favorites list: Main Menu -> View -> Add To Favorites ") {
-      @NotNull
-      public Collection<AbstractTreeNode> getChildren() {
-        return Collections.EMPTY_LIST;
-      }
+    return new AbstractTreeNode<String>(myProject, IdeBundle.message("favorites.empty.screen")){
+                                public Collection<AbstractTreeNode> getChildren() {
+                                  return Collections.EMPTY_LIST;
+                                }
 
       public void update(final PresentationData presentation) {
         presentation.setPresentableText(getValue());
@@ -327,9 +330,9 @@ public class FavoritesTreeStructure extends ProjectAbstractTreeStructureBase imp
 
   @Nullable
   private static AbstractUrl readUrlFromElement(Element element) {
-    final String type = element.getAttributeValue("type");
-    final String urlValue = element.getAttributeValue("url");
-    final String moduleName = element.getAttributeValue("module");
+    final String type = element.getAttributeValue(ATTRIBUTE_TYPE);
+    final String urlValue = element.getAttributeValue(ATTRIBUTE_URL);
+    final String moduleName = element.getAttributeValue(ATTRIBUTE_MODULE);
     for (int i = 0; i < ourAbstractUrlProviders.size(); i++) {
       AbstractUrl urlProvider = ourAbstractUrlProviders.get(i);
       AbstractUrl url = urlProvider.checkMyUrl(type, moduleName, urlValue);

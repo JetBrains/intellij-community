@@ -18,6 +18,7 @@ import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.LwRootContainer;
+import com.intellij.uiDesigner.UIFormXmlConstants;
 import org.apache.tools.ant.filters.StringInputStream;
 import org.jdom.Attribute;
 import org.jdom.Document;
@@ -68,7 +69,7 @@ public class SaveFileAsTemplateAction extends AnAction{
         try {
           Document document = JDOMUtil.loadDocument(new StringInputStream(fileText));
 
-          Attribute attribute = document.getRootElement().getAttribute("bind-to-class");
+          Attribute attribute = document.getRootElement().getAttribute(UIFormXmlConstants.ATTRIBUTE_BIND_TO_CLASS);
           attribute.detach();
 
           CharArrayWriter writer = new CharArrayWriter();

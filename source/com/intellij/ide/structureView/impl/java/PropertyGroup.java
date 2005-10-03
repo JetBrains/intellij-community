@@ -17,6 +17,8 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.ArrayList;
 
+import org.jetbrains.annotations.NonNls;
+
 public class PropertyGroup implements Group, ItemPresentation, AccessLevelProvider {
   private final String myPropertyName;
   private final PsiType myPropertyType;
@@ -194,7 +196,7 @@ public class PropertyGroup implements Group, ItemPresentation, AccessLevelProvid
     myChildren.addAll(group.myChildren);
   }
 
-  private static Icon loadIcon(String resourceName) {
+  private static Icon loadIcon(@NonNls String resourceName) {
     Icon icon = IconLoader.findIcon(resourceName);
     Application application = ApplicationManager.getApplication();
     if (icon == null && application != null && application.isUnitTestMode()) {

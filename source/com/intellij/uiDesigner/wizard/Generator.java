@@ -19,6 +19,7 @@ import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.PsiPropertiesProvider;
+import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.compiler.AlienFormFileException;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.LwComponent;
@@ -55,19 +56,19 @@ public final class Generator {
       throw new MyException(e.getMessage());
     }
     catch (Exception e) {
-      throw new MyException("Cannot process form file. Reason: " + e);
+      throw new MyException(UIDesignerBundle.message("error.cannot.process.form.file", e));
     }
 
     rootContainer[0] = _rootContainer;
 
     final String classToBind = _rootContainer.getClassToBind();
     if (classToBind == null) {
-      throw new MyException("Form is not bound to a class");
+      throw new MyException(UIDesignerBundle.message("error.form.is.not.bound.to.a.class"));
     }
 
     final PsiClass boundClass = FormEditingUtil.findClassToBind(module, classToBind);
     if(boundClass == null){
-      throw new MyException("Bound class " + classToBind + " does not exist");
+      throw new MyException(UIDesignerBundle.message("error.bound.class.does.not.exist", classToBind));
     }
 
     final ArrayList<FormProperty> result = new ArrayList<FormProperty>();
@@ -91,13 +92,13 @@ public final class Generator {
             }
           }
           if(field == null){
-            exception[0] = new MyException("Field " + binding + " not found in class " + classToBind);
+            exception[0] = new MyException(UIDesignerBundle.message("error.field.not.found.in.class", binding, classToBind));
             return false;
           }
 
           final PsiClass fieldClass = getClassByType(field.getType());
           if (fieldClass == null) {
-            exception[0] = new MyException("Invalid binding field type: field " + binding + ", class " + classToBind);
+            exception[0] = new MyException(UIDesignerBundle.message("error.invalid.binding.field.type", binding, classToBind));
             return false;
           }
 
@@ -139,6 +140,7 @@ public final class Generator {
   /**
    * Should be invoked in command and write action
    */
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static void generateDataBindingMethods(final WizardData data) throws MyException {
     if (data.myBindToNewBean) {
       final PsiClass beanClass = createBeanClass(data);
@@ -387,7 +389,7 @@ public final class Generator {
     final ProjectFileIndex fileIndex = projectRootManager.getFileIndex();
     final VirtualFile sourceRoot = fileIndex.getSourceRootForFile(wizardData.myFormFile);
     if (sourceRoot == null) {
-      throw new MyException("Form file is not in source root");
+      throw new MyException(UIDesignerBundle.message("error.form.file.is.not.in.source.root"));
     }
 
     final PsiDirectory rootDirectory = psiManager.findDirectory(sourceRoot);
@@ -395,7 +397,7 @@ public final class Generator {
 
     final PsiPackage aPackage = psiManager.findPackage(wizardData.myPackageName);
     if (aPackage == null) {
-      throw new MyException("Package does not exist: " + wizardData.myPackageName);
+      throw new MyException(UIDesignerBundle.message("error.package.does.not.exist", wizardData.myPackageName));
     }
 
     PsiDirectory targetDir = null;
@@ -411,9 +413,10 @@ public final class Generator {
 
     if (targetDir == null) {
       // todo
-      throw new MyException("Cannot find package: " + wizardData.myPackageName);
+      throw new MyException(UIDesignerBundle.message("error.cannot.find.package", wizardData.myPackageName));
     }
 
+    //noinspection HardCodedStringLiteral
     final String body =
       "public class " + wizardData.myShortClassName + "{\n" +
       "public " + wizardData.myShortClassName + "(){}\n" +
@@ -500,6 +503,7 @@ public final class Generator {
     }
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static void generateProperty(final CodeStyleManager codeStyleManager,
                                        final String property,
                                        final String type,
@@ -540,6 +544,7 @@ public final class Generator {
     methodsBuffer.append(";}\n");
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static String suggestGetterName(final String propertyName, final String propertyType) {
     final StringBuffer name = new StringBuffer(StringUtil.capitalize(propertyName));
     if ("boolean".equals(propertyType)) {

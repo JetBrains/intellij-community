@@ -10,6 +10,7 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.usageView.FindUsagesCommand;
@@ -139,7 +140,7 @@ class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
   }
 
   protected String getCommandName() {
-    return "Inline field " + UsageViewUtil.getDescriptiveName(myField);
+    return RefactoringBundle.message("inline.field.command", UsageViewUtil.getDescriptiveName(myField));
   }
 
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
@@ -156,17 +157,15 @@ class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
     for (UsageInfo info : usagesIn) {
       PsiElement element = info.getElement();
       if (element instanceof PsiExpression && isAccessedForWriting((PsiExpression)element)) {
-        String message = ConflictsUtil.getDescription(myField, true) + " is used for writing in " +
-                         ConflictsUtil.getDescription(ConflictsUtil.getContainer(element), true);
+        String message = RefactoringBundle.message("0.is.used.for.writing.in.1", ConflictsUtil.getDescription(myField, true),
+                                              ConflictsUtil.getDescription(ConflictsUtil.getContainer(element), true));
         conflicts.add(message);
       }
 
       for (PsiMember member : referencedWithVisibility) {
         if (!resolveHelper.isAccessible(member, element, null)) {
-          String message = ConflictsUtil.getDescription(member, true) +
-                           " will not be accessible from " +
-                           ConflictsUtil.getDescription(ConflictsUtil.getContainer(element), true) +
-                           " after inlining";
+          String message = RefactoringBundle.message("0.will.not.be.accessible.from.1.after.inlining", ConflictsUtil.getDescription(member, true),
+                                                ConflictsUtil.getDescription(ConflictsUtil.getContainer(element), true));
           conflicts.add(message);
         }
       }

@@ -31,6 +31,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
+import com.intellij.CommonBundle;
 import com.sun.jdi.ReferenceType;
 import org.jdom.Element;
 
@@ -49,7 +50,6 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
   private RangeHighlighter myHighlighter;
 
   private SourcePosition mySourcePosition;
-  private long myTimeStamp;
 
   private boolean myVisible = true;
   private Icon myIcon = getSetIcon();
@@ -164,51 +164,69 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
 
   public String getDescription() {
     StringBuffer buf = new StringBuffer(64);
+    //noinspection HardCodedStringLiteral
     buf.append("<html><body>");
     buf.append(getDisplayName());
     if(!"".equals(myInvalidMessage)) {
-      buf.append("<br><font color='red'>Breakpoint is invalid : " + myInvalidMessage + ".</font>");      
+      //noinspection HardCodedStringLiteral
+      buf.append("<br><font color='red'>");
+      buf.append(DebuggerBundle.message("error.invalid.breakpoint", myInvalidMessage));
+      //noinspection HardCodedStringLiteral
+      buf.append("</font>");
     }
-    buf.append("&nbsp;<br>&nbsp;Suspend : ");
+    //noinspection HardCodedStringLiteral
+    buf.append("&nbsp;<br>&nbsp;");
+    buf.append(DebuggerBundle.message("breakpoint.property.name.suspend.policy")).append(" : ");
     if(DebuggerSettings.SUSPEND_ALL.equals(SUSPEND_POLICY)) {
-      buf.append("all");
+      buf.append(DebuggerBundle.message("breakpoint.properties.panel.option.suspend.all"));
     }
     else if(DebuggerSettings.SUSPEND_THREAD.equals(SUSPEND_POLICY)) {
-      buf.append("thread");
+      buf.append(DebuggerBundle.message("breakpoint.properties.panel.option.suspend.thread"));
     }
     else if (DebuggerSettings.SUSPEND_NONE.equals(SUSPEND_POLICY)) {
-      buf.append("none");
-    } 
-    buf.append("&nbsp;<br>&nbsp;Log message: ");
-    buf.append(LOG_ENABLED ? "yes" : "no");
+      buf.append(DebuggerBundle.message("breakpoint.properties.panel.option.suspend.none"));
+    }
+    //noinspection HardCodedStringLiteral
+    buf.append("&nbsp;<br>&nbsp;");
+    buf.append(DebuggerBundle.message("breakpoint.property.name.log.message")).append(": ");
+    buf.append(LOG_ENABLED ? CommonBundle.getYesButtonText() : CommonBundle.getNoButtonText());
     if (LOG_EXPRESSION_ENABLED) {
-      buf.append("&nbsp;<br>&nbsp;Log expression: ");
+      //noinspection HardCodedStringLiteral
+      buf.append("&nbsp;<br>&nbsp;");
+      buf.append(DebuggerBundle.message("breakpoint.property.name.log.expression")).append(": ");
       buf.append(getLogMessage());
     }
     if (CONDITION_ENABLED && (getCondition() != null && !"".equals(getCondition()))) {
-      buf.append("&nbsp;<br>&nbsp;Condition: ");
+      //noinspection HardCodedStringLiteral
+      buf.append("&nbsp;<br>&nbsp;");
+      buf.append(DebuggerBundle.message("breakpoint.property.name.condition")).append(": ");
       buf.append(getCondition());
     }
     if (COUNT_FILTER_ENABLED) {
-      buf.append("&nbsp;<br>&nbsp;Pass count: ");
+      //noinspection HardCodedStringLiteral
+      buf.append("&nbsp;<br>&nbsp;");
+      buf.append(DebuggerBundle.message("breakpoint.property.name.pass.count")).append(": ");
       buf.append(COUNT_FILTER);
     }
     if (CLASS_FILTERS_ENABLED) {
-      buf.append("&nbsp;<br>&nbsp;Class filters: ");
+      //noinspection HardCodedStringLiteral
+      buf.append("&nbsp;<br>&nbsp;");
+      buf.append(DebuggerBundle.message("breakpoint.property.name.class.filters")).append(": ");
       ClassFilter[] classFilters = getClassFilters();
-      for (int i = 0; i < classFilters.length; i++) {
-        ClassFilter classFilter = classFilters[i];
-        buf.append(classFilter.getPattern() + " ");
+      for (ClassFilter classFilter : classFilters) {
+        buf.append(classFilter.getPattern()).append(" ");
       }
     }
     if (INSTANCE_FILTERS_ENABLED) {
-      buf.append("&nbsp;<br>&nbsp;Instance filters: ");
+      //noinspection HardCodedStringLiteral
+      buf.append("&nbsp;<br>&nbsp;");
+      buf.append(DebuggerBundle.message("breakpoint.property.name.instance.filters"));
       InstanceFilter[] instanceFilters = getInstanceFilters();
-      for (int i = 0; i < instanceFilters.length; i++) {
-        InstanceFilter instanceFilter = instanceFilters[i];
-        buf.append(Long.toString(instanceFilter.getId()) + " ");
+      for (InstanceFilter instanceFilter : instanceFilters) {
+        buf.append(Long.toString(instanceFilter.getId())).append(" ");
       }
     }
+    //noinspection HardCodedStringLiteral
     buf.append("</body></html>");
     return buf.toString();
   }
@@ -273,7 +291,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
           updateCaches(null);
           updateGutter();
           afterUpdate.run();
-        } 
+        }
         else {
           final ModalityState modalityState = ModalityState.current();
 
@@ -301,7 +319,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
     if(myVisible) {
       if (getHighlighter() != null && getHighlighter().isValid() && isValid()) {
         setupGutterRenderer();
-      } 
+      }
       else {
         DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().removeBreakpoint(BreakpointWithHighlighter.this);
       }
@@ -340,10 +358,6 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
   }
 
   protected void reload(PsiFile psiFile) {
-    if (!(psiFile instanceof PsiJavaFile)) {
-      return;
-    }
-    myTimeStamp = getSourcePosition().getFile().getModificationStamp();
   }
 
   public PsiClass getPsiClass() {
@@ -412,7 +426,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
   public boolean canMoveTo(final SourcePosition position) {
     return isPositionValid(position);
   }
-  
+
   protected boolean moveTo(SourcePosition position) {
     if (!canMoveTo(position)) {
       return false;
@@ -472,19 +486,22 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
     if (!highlighter.isValid()) {
       return null;
     }
-    highlighter.setErrorStripeTooltip("Breakpoint at line "+lineIndex);
+    highlighter.setErrorStripeTooltip(DebuggerBundle.message("breakpoint.tooltip.text", lineIndex));
     return highlighter;
   }
 
   public void readExternal(Element breakpointNode) throws InvalidDataException {
     super.readExternal(breakpointNode);
+    //noinspection HardCodedStringLiteral
     final String url = breakpointNode.getAttributeValue("url");
 
+    //noinspection HardCodedStringLiteral
     final String className = breakpointNode.getAttributeValue("class");
     if (className != null) {
       myClassName = className;
     }
 
+    //noinspection HardCodedStringLiteral
     final String packageName = breakpointNode.getAttributeValue("package");
     if (packageName != null) {
       myPackageName = packageName;
@@ -492,23 +509,24 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
 
     VirtualFile vFile = VirtualFileManager.getInstance().findFileByUrl(url);
     if (vFile == null) {
-      throw new InvalidDataException("File number is invalid for breakpoint");
+      throw new InvalidDataException(DebuggerBundle.message("error.breakpoint.file.not.found", url));
     }
     final Document doc = FileDocumentManager.getInstance().getDocument(vFile);
     if (doc == null) {
-      throw new InvalidDataException("File number is invalid for breakpoint");
+      throw new InvalidDataException(DebuggerBundle.message("error.cannot.load.breakpoint.file", url));
     }
 
     // line number
     final int line;
     try {
+      //noinspection HardCodedStringLiteral
       line = Integer.parseInt(breakpointNode.getAttributeValue("line"));
     }
     catch (Exception e) {
-      throw new InvalidDataException("Line number is invalid forbreakpoint");
+      throw new InvalidDataException("Line number is invalid for breakpoint");
     }
     if (line < 0) {
-      throw new InvalidDataException("Line number is invalid forbreakpoint");
+      throw new InvalidDataException("Line number is invalid for breakpoint");
     }
 
     RangeHighlighter highlighter = createHighlighter(myProject, doc, line);
@@ -521,10 +539,11 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
     reload();
   }
 
-  public void writeExternal(Element parentNode) throws WriteExternalException {
+  @SuppressWarnings({"HardCodedStringLiteral"}) public void writeExternal(Element parentNode) throws WriteExternalException {
     super.writeExternal(parentNode);
     PsiFile psiFile = getSourcePosition().getFile();
-    String url = psiFile.getVirtualFile().getUrl();
+    final VirtualFile virtualFile = psiFile.getVirtualFile();
+    final String url = virtualFile != null? virtualFile.getUrl() : "";
     parentNode.setAttribute("url", url);
     parentNode.setAttribute("line", Integer.toString(getSourcePosition().getLine()));
     parentNode.setAttribute("class", myClassName);
@@ -540,7 +559,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
       private Breakpoint myBreakpoint;
 
       public RemoveAction(Breakpoint breakpoint) {
-        super("Remove");
+        super(DebuggerBundle.message("action.remove.text"));
         myBreakpoint = breakpoint;
       }
 
@@ -560,7 +579,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
       private Breakpoint myBreakpoint;
 
       public SetEnabledAction(Breakpoint breakpoint, boolean newValue) {
-        super(newValue ? "Enable" : "Disable");
+        super(newValue ? DebuggerBundle.message("action.enable.text") : DebuggerBundle.message("action.disable.text"));
         myBreakpoint = breakpoint;
         myNewValue = newValue;
       }
@@ -572,7 +591,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
       }
     }
 
-      ViewBreakpointsAction viewBreakpointsAction = new ViewBreakpointsAction("Properties");
+      ViewBreakpointsAction viewBreakpointsAction = new ViewBreakpointsAction(DebuggerBundle.message("breakpoint.manager.action.view.breakpoints.text"));
       viewBreakpointsAction.setInitialBreakpoint(this);
 
       DefaultActionGroup group = new DefaultActionGroup();

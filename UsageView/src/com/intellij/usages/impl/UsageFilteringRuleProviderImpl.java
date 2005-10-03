@@ -23,7 +23,7 @@ import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.usages.UsageView;
-import com.intellij.usages.UsageViewBundle;
+import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.impl.rules.ImportFilteringRule;
 import com.intellij.usages.impl.rules.ReadAccessFilteringRule;
 import com.intellij.usages.impl.rules.WriteAccessFilteringRule;
@@ -181,7 +181,6 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
   }
 
   public String getComponentName() {
-    //noinspection HardCodedStringLiteral
     return "UsageFilteringRuleProvider";
   }
 

@@ -1,13 +1,14 @@
 package com.intellij.psi.impl.source.parsing;
 
-import com.intellij.lexer.JavaLexer;
+import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.lang.ASTNode;
 import com.intellij.lexer.FilterLexer;
+import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.tree.*;
-import com.intellij.lang.ASTNode;
 
 /**
  *
@@ -42,7 +43,7 @@ public class ImportsTextParsing extends Parsing {
       }
 
       if (invalidElementsGroup == null){
-        invalidElementsGroup = Factory.createErrorElement("Unexpected token");
+        invalidElementsGroup = Factory.createErrorElement(JavaErrorMessages.message("unexpected.token"));
         TreeUtil.addChildren(dummyRoot, invalidElementsGroup);
       }
       TreeUtil.addChildren(invalidElementsGroup, ParseUtil.createTokenElement(filterLexer, myContext.getCharTable()));
@@ -74,7 +75,7 @@ public class ImportsTextParsing extends Parsing {
     }
 
     if (lexer.getTokenType() != IDENTIFIER){
-      TreeUtil.addChildren(statement, Factory.createErrorElement("Identifier expected"));
+      TreeUtil.addChildren(statement, Factory.createErrorElement(JavaErrorMessages.message("expected.identifier")));
       return statement;
     }
 
@@ -91,7 +92,8 @@ public class ImportsTextParsing extends Parsing {
         lexer.advance();
       }
       else{
-        TreeUtil.addChildren(statement, Factory.createErrorElement("Identifier or '*' expected"));
+        TreeUtil.addChildren(statement,
+                             Factory.createErrorElement(JavaErrorMessages.message("import.statement.identifier.or.asterisk.expected.")));
         return statement;
       }
     }
@@ -108,7 +110,7 @@ public class ImportsTextParsing extends Parsing {
       lexer.advance();
     }
     else{
-      TreeUtil.addChildren(statement, Factory.createErrorElement("';' expected"));
+      TreeUtil.addChildren(statement, Factory.createErrorElement(JavaErrorMessages.message("expected.semicolon")));
     }
 
     return statement;
@@ -123,7 +125,7 @@ public class ImportsTextParsing extends Parsing {
         TreeUtil.remove(referenceParameterList);
       }
       else {
-        final CompositeElement errorElement = Factory.createErrorElement("Unexpected token");
+        final CompositeElement errorElement = Factory.createErrorElement(JavaErrorMessages.message("unexpected.token"));
         TreeUtil.replaceWithList(referenceParameterList, errorElement);
         TreeUtil.addChildren(errorElement, referenceParameterList);
       }

@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.update;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.vcs.VcsBundle;
 import org.jdom.Element;
 
 import java.util.ArrayList;
@@ -75,20 +76,20 @@ public class UpdatedFiles implements JDOMExternalizable {
 
   public static UpdatedFiles create() {
     UpdatedFiles result = new UpdatedFiles();
-    FileGroup updatedFromServer = result.registerGroup(new FileGroup("Updated from server", "Changed on server", false, FileGroup.CHANGED_ON_SERVER_ID, false));
+    FileGroup updatedFromServer = result.registerGroup(new FileGroup(VcsBundle.message("update.group.name.updated.from.server"), VcsBundle.message("status.group.name.changed.on.server"), false, FileGroup.CHANGED_ON_SERVER_ID, false));
 
-    updatedFromServer.addChild(new FileGroup("Updated", "Changed", false, FileGroup.UPDATED_ID, false));
-    updatedFromServer.addChild(new FileGroup("Created", "Created", false, FileGroup.CREATED_ID, false));
-    updatedFromServer.addChild(new FileGroup("Deleted", "Deleted", false, FileGroup.REMOVED_FROM_REPOSITORY_ID, true));
-    updatedFromServer.addChild(new FileGroup("Restored", "Will be restored", false, FileGroup.RESTORED_ID, false));
+    updatedFromServer.addChild(new FileGroup(VcsBundle.message("update.group.name.updated"), VcsBundle.message("status.group.name.changed"), false, FileGroup.UPDATED_ID, false));
+    updatedFromServer.addChild(new FileGroup(VcsBundle.message("update.group.name.created"), VcsBundle.message("status.group.name.created"), false, FileGroup.CREATED_ID, false));
+    updatedFromServer.addChild(new FileGroup(VcsBundle.message("update.group.name.deleted"), VcsBundle.message("status.group.name.deleted"), false, FileGroup.REMOVED_FROM_REPOSITORY_ID, true));
+    updatedFromServer.addChild(new FileGroup(VcsBundle.message("update.group.name.restored"), VcsBundle.message("status.group.name.will.be.restored"), false, FileGroup.RESTORED_ID, false));
 
-    result.registerGroup(new FileGroup("Modified", "Modified", false, FileGroup.MODIFIED_ID, false));
+    result.registerGroup(new FileGroup(VcsBundle.message("update.group.name.modified"), VcsBundle.message("status.group.name.modified"), false, FileGroup.MODIFIED_ID, false));
 
-    result.registerGroup(new FileGroup("Merged with conflicts", "Will be merged with conflicts", false, FileGroup.MERGED_WITH_CONFLICT_ID, false));
-    result.registerGroup(new FileGroup("Merged", "Will be merged", false, FileGroup.MERGED_ID, false));
-    result.registerGroup(new FileGroup("Not in repository", "Not in repository", true, FileGroup.UNKNOWN_ID, false));
-    result.registerGroup(new FileGroup("Locally added", "Locally added", false, FileGroup.LOCALLY_ADDED_ID, false));
-    result.registerGroup(new FileGroup("Locally removed", "Locally removed", false, FileGroup.LOCALLY_REMOVED_ID, false));
+    result.registerGroup(new FileGroup(VcsBundle.message("update.group.name.merged.with.conflicts"), VcsBundle.message("status.group.name.will.be.merged.with.conflicts"), false, FileGroup.MERGED_WITH_CONFLICT_ID, false));
+    result.registerGroup(new FileGroup(VcsBundle.message("update.group.name.merged"), VcsBundle.message("status.group.name.will.be.merged"), false, FileGroup.MERGED_ID, false));
+    result.registerGroup(new FileGroup(VcsBundle.message("update.group.name.not.in.repository"), VcsBundle.message("status.group.name.not.in.repository"), true, FileGroup.UNKNOWN_ID, false));
+    result.registerGroup(new FileGroup(VcsBundle.message("update.group.name.locally.added"), VcsBundle.message("status.group.name.locally.added"), false, FileGroup.LOCALLY_ADDED_ID, false));
+    result.registerGroup(new FileGroup(VcsBundle.message("update.group.name.locally.removed"), VcsBundle.message("status.group.name.locally.removed"), false, FileGroup.LOCALLY_REMOVED_ID, false));
     return result;
   }
 }

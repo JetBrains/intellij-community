@@ -5,6 +5,7 @@
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.ClassFilter;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
@@ -28,6 +29,7 @@ import com.sun.jdi.*;
 import com.sun.jdi.event.Event;
 import org.jdom.Attribute;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 import java.util.regex.PatternSyntaxException;
@@ -147,6 +149,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
   private static Set myCharOrIntegers;
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static boolean isCharOrIntegerArray(Value value) {
     if (value == null) return false;
     if (myCharOrIntegers == null) {
@@ -214,7 +217,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return classFiltersList.toArray(new ClassFilter[classFiltersList.size()]);
   }
 
-  public static void writeFilters(Element parentNode, String tagName, ClassFilter[] filters) throws WriteExternalException {
+  public static void writeFilters(Element parentNode, @NonNls String tagName, ClassFilter[] filters) throws WriteExternalException {
     for (int idx = 0; idx < filters.length; idx++) {
       Element element = new Element(tagName);
       parentNode.addContent(element);
@@ -283,6 +286,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
            attributeListsEqual((List<Attribute>)e1.getAttributes(), (List<Attribute>)e2.getAttributes());
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static boolean externalizableEqual(JDOMExternalizable  e1, JDOMExternalizable e2) {
     Element root1 = new Element("root");
     Element root2 = new Element("root");
@@ -304,7 +308,9 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
   public static List<Pair<Breakpoint, Event>> getEventDescriptors(SuspendContextImpl suspendContext) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    if(suspendContext == null || suspendContext.getEventSet() == null) return Collections.EMPTY_LIST;
+    if(suspendContext == null || suspendContext.getEventSet() == null) {
+      return Collections.EMPTY_LIST;
+    }
     final List<Pair<Breakpoint, Event>> eventDescriptors = new ArrayList<Pair<Breakpoint, Event>>();
 
     for (Iterator iterator = suspendContext.getEventSet().iterator(); iterator.hasNext();) {
@@ -367,7 +373,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
   public abstract EvaluatorBuilder  getEvaluatorBuilder();
 
-  public abstract CompletionEditor createEditor(Project project, PsiElement context, String recentsId);
+  public abstract CompletionEditor createEditor(Project project, PsiElement context, @NonNls String recentsId);
 
   private static class SigReader {
     final String buffer;
@@ -389,7 +395,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       return buffer.length() <= pos;
     }
 
-    String getSignature() {
+    @NonNls String getSignature() {
       if (eof()) return "";
 
       switch (get()) {
@@ -537,21 +543,21 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   public static String getThreadStatusText(int statusId) {
     switch (statusId) {
       case ThreadReference.THREAD_STATUS_MONITOR:
-        return "MONITOR";
+        return DebuggerBundle.message("status.thread.monitor");
       case ThreadReference.THREAD_STATUS_NOT_STARTED:
-        return "NOT_STARTED";
+        return DebuggerBundle.message("status.thread.not.started");
       case ThreadReference.THREAD_STATUS_RUNNING:
-        return "RUNNING";
+        return DebuggerBundle.message("status.thread.running");
       case ThreadReference.THREAD_STATUS_SLEEPING:
-        return "SLEEPING";
+        return DebuggerBundle.message("status.thread.sleeping");
       case ThreadReference.THREAD_STATUS_UNKNOWN:
-        return "UNKNOWN";
+        return DebuggerBundle.message("status.thread.unknown");
       case ThreadReference.THREAD_STATUS_WAIT:
-        return "WAIT";
+        return DebuggerBundle.message("status.thread.wait");
       case ThreadReference.THREAD_STATUS_ZOMBIE:
-        return "ZOMBIE";
+        return DebuggerBundle.message("status.thread.zombie");
       default:
-        return "UNDEFINED";
+        return DebuggerBundle.message("status.thread.undefined");
     }
   }
 

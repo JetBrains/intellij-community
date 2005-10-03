@@ -1,5 +1,7 @@
 package com.intellij.ui.plaf.beg;
 
+import org.jetbrains.annotations.NonNls;
+
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.plaf.ComponentUI;
@@ -12,6 +14,10 @@ import java.beans.PropertyChangeListener;
  * @author Eugene Belyaev
  */
 public class BegScrollPaneUI extends MetalScrollPaneUI {
+  @NonNls public static final String VERTICAL_SCROLL_BAR_PROPERTY = "verticalScrollBar";
+  @NonNls public static final String HORIZONTAL_SCROLL_BAR_PROPERTY = "horizontalScrollBar";
+  @NonNls public static final String BORDER_PROPERTY = "border";
+
   public static ComponentUI createUI(JComponent x) {
     return new BegScrollPaneUI();
   }
@@ -37,14 +43,14 @@ public class BegScrollPaneUI extends MetalScrollPaneUI {
     return new PropertyChangeListener() {
       public void propertyChange(PropertyChangeEvent e) {
         String propertyName = e.getPropertyName();
-        if (propertyName.equals("verticalScrollBar") ||
-            propertyName.equals("horizontalScrollBar")) {
+        if (propertyName.equals(VERTICAL_SCROLL_BAR_PROPERTY) ||
+            propertyName.equals(HORIZONTAL_SCROLL_BAR_PROPERTY)) {
           ((JScrollBar) e.getOldValue()).putClientProperty(MetalScrollBarUI.FREE_STANDING_PROP,
               null);
           ((JScrollBar) e.getNewValue()).putClientProperty(MetalScrollBarUI.FREE_STANDING_PROP,
               Boolean.FALSE);
         }
-        else if ("border".equals(propertyName)) {
+        else if (BORDER_PROPERTY.equals(propertyName)) {
           updateScrollbarsFreeStanding();
         }
       }

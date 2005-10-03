@@ -22,6 +22,8 @@ import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.intellij.util.ui.UIUtil;
+
 /**
  * Created by IntelliJ IDEA.
  * User: max
@@ -45,13 +47,13 @@ public class UI {
 
     ourColors.put("bar.separator.foreground", UI.getColor("panel.separator.color"));
     ourColors.put("bar.selected.separator.foreground", new Color(232, 231, 228));
-    ourColors.put("bar.background", UIManager.getColor("Panel.background"));
-    ourColors.put("bar.hover.background", UIManager.getColor("Tree.selectionBackground"));
+    ourColors.put("bar.background", UIUtil.getPanelBackground());
+    ourColors.put("bar.hover.background", UIUtil.getTreeSelectionBackground());
     ourColors.put("bar.selected.background", UI.getColor("panel.custom.background"));
-    ourColors.put("bar.hover.frame.foreground", UIManager.getColor("Tree.selectionBackground").darker());
+    ourColors.put("bar.hover.frame.foreground", UIUtil.getTreeSelectionBackground().darker());
 
-    ourColors.put("popup.selected.background", UIManager.getColor("Tree.selectionBackground"));
-    ourColors.put("popup.selected.frame.foreground", UIManager.getColor("Tree.selectionBackground").darker());
+    ourColors.put("popup.selected.background", UIUtil.getTreeSelectionBackground());
+    ourColors.put("popup.selected.frame.foreground", UIUtil.getTreeSelectionBackground().darker());
     ourColors.put("popup.separator.foreground", Color.gray);
 
     ourColors.put("callout.background", Color.white);
@@ -63,10 +65,10 @@ public class UI {
     ourColors.put("tooltip.error", Color.red);
     ourColors.put("tooltip.warning", Color.yellow.darker());
 
-    ourColors.put("toolbar.background", UIManager.getColor("Panel.background"));
-    ourColors.put("toolbar.hover.background", UIManager.getColor("Tree.selectionBackground"));
+    ourColors.put("toolbar.background", UIUtil.getPanelBackgound());
+    ourColors.put("toolbar.hover.background", UIUtil.getTreeSelectionBackground());
     ourColors.put("toolbar.selected.background", UI.getColor("panel.custom.background"));
-    ourColors.put("toolbar.hover.frame.foreground", UIManager.getColor("Tree.selectionBackground").darker());
+    ourColors.put("toolbar.hover.frame.foreground", UIUtil.getTreeSelectionBackground().darker());
 
     ourColors.put("speedsearch.background", new Color(244, 249, 181));
     ourColors.put("speedsearch.foreground", Color.black);

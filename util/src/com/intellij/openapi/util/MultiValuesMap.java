@@ -22,7 +22,7 @@ public class MultiValuesMap<Key, Value>{
 
   public void put(Key key, Value value) {
     if (!myBaseMap.containsKey(key)) {
-      myBaseMap.put(key, new ArrayList<Value>());
+      myBaseMap.put(key, new HashSet<Value>());
     }
 
     myBaseMap.get(key).add(value);

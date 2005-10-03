@@ -31,6 +31,7 @@
  */
 package com.intellij.codeInsight.hint;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.javadoc.JavaDocInfoComponent;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.openapi.actionSystem.*;
@@ -52,10 +53,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
-import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.LightweightHint;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
@@ -78,6 +81,8 @@ public class ImplementationViewComponent extends JPanel {
   private FileEditor myNonTextEditor;
   private FileEditorProvider myCurrentNonTextEditorProvider;
   private LightweightHint myHint;
+  private static final @NonNls String TEXT_PAGE_KEY = "Text";
+  private static final @NonNls String BINARY_PAGE_KEY = "Binary";
 
   public void setHint(final LightweightHint hint) {
     myHint = hint;
@@ -120,10 +125,10 @@ public class ImplementationViewComponent extends JPanel {
 
     myBinarySwitch = new CardLayout();
     myViewingPanel = new JPanel(myBinarySwitch);
-    myViewingPanel.add(myEditor.getComponent(), "Text");
+    myViewingPanel.add(myEditor.getComponent(), TEXT_PAGE_KEY);
 
     myBinaryPanel = new JPanel(new BorderLayout());
-    myViewingPanel.add(myBinaryPanel, "Binary");
+    myViewingPanel.add(myBinaryPanel, BINARY_PAGE_KEY);
 
     add(myViewingPanel, BorderLayout.CENTER);
 
@@ -166,10 +171,12 @@ public class ImplementationViewComponent extends JPanel {
     else {
       final JLabel label = new JLabel();
       VirtualFile file = psiFile.getVirtualFile();
-      label.setIcon(file.getIcon());
-      label.setForeground(FileStatusManager.getInstance(project).getStatus(file).getColor());
-      label.setText(file.getPresentableName());
-      label.setBorder(new CompoundBorder(IdeBorderFactory.createBorder(), IdeBorderFactory.createEmptyBorder(0, 0, 0, 5)));
+      if (file != null) {
+        label.setIcon(file.getIcon());
+        label.setForeground(FileStatusManager.getInstance(project).getStatus(file).getColor());
+        label.setText(file.getPresentableName());
+        label.setBorder(new CompoundBorder(IdeBorderFactory.createBorder(), IdeBorderFactory.createEmptyBorder(0, 0, 0, 5)));
+      }
       toolbarPanel.add(label);
     }
 
@@ -217,7 +224,7 @@ public class ImplementationViewComponent extends JPanel {
     for (FileEditorProvider provider : providers) {
       if (provider instanceof TextEditorProvider) {
         updateTextElement(elt);
-        myBinarySwitch.show(myViewingPanel, "Text");
+        myBinarySwitch.show(myViewingPanel, TEXT_PAGE_KEY);
         break;
       }
       else if (provider.accept(project, vFile)) {
@@ -225,7 +232,7 @@ public class ImplementationViewComponent extends JPanel {
         myNonTextEditor = myCurrentNonTextEditorProvider.createEditor(project, vFile);
         myBinaryPanel.removeAll();
         myBinaryPanel.add(myNonTextEditor.getComponent());
-        myBinarySwitch.show(myViewingPanel, "Binary");
+        myBinarySwitch.show(myViewingPanel, BINARY_PAGE_KEY);
         break;
       }
     }
@@ -286,7 +293,8 @@ public class ImplementationViewComponent extends JPanel {
   private void updateLabels() {
     //TODO: Move from JavaDoc to somewhere more appropriate place.
     JavaDocInfoComponent.customizeElementLabel(myElements[myIndex], myLocationLabel);
-    myCountLabel.setText("" + (myIndex + 1) + " of " + myElements.length);
+    //noinspection AutoBoxing
+    myCountLabel.setText(CodeInsightBundle.message("n.of.m", (myIndex + 1), myElements.length));
   }
 
   private ActionToolbar createToolbar() {
@@ -324,7 +332,7 @@ public class ImplementationViewComponent extends JPanel {
 
   private class BackAction extends AnAction implements HintManager.ActionToIgnore {
     public BackAction() {
-      super("Back", null, IconLoader.getIcon("/actions/back.png"));
+      super(CodeInsightBundle.message("quick.definition.back"), null, IconLoader.getIcon("/actions/back.png"));
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -340,7 +348,7 @@ public class ImplementationViewComponent extends JPanel {
 
   private class ForwardAction extends AnAction implements HintManager.ActionToIgnore {
     public ForwardAction() {
-      super("Forward", null, IconLoader.getIcon("/actions/forward.png"));
+      super(CodeInsightBundle.message("quick.definition.forward"), null, IconLoader.getIcon("/actions/forward.png"));
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -355,7 +363,7 @@ public class ImplementationViewComponent extends JPanel {
 
   private class EditSourceAction extends EditSourceActionBase {
     public EditSourceAction() {
-      super(true, IconLoader.getIcon("/actions/editSource.png"), "Edit Source");
+      super(true, IconLoader.getIcon("/actions/editSource.png"), CodeInsightBundle.message("quick.definition.edit.source"));
     }
 
     @Override public void actionPerformed(AnActionEvent e) {
@@ -368,7 +376,7 @@ public class ImplementationViewComponent extends JPanel {
 
   private class ShowSourceAction extends EditSourceActionBase implements HintManager.ActionToIgnore {
     public ShowSourceAction() {
-      super(false, IconLoader.getIcon("/actions/showSource.png"), "Show Source");
+      super(false, IconLoader.getIcon("/actions/showSource.png"), CodeInsightBundle.message("quick.definition.show.source"));
     }
 
     @Override public void actionPerformed(AnActionEvent e) {

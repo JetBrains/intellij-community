@@ -1,6 +1,8 @@
 package com.intellij.cvsSupport2.cvsoperations.cvsContent;
 
 
+import org.jetbrains.annotations.NonNls;
+
 import java.io.File;
 import java.util.regex.Pattern;
 
@@ -8,9 +10,9 @@ import java.util.regex.Pattern;
 class DirectoryContentListener {
   private String myModulePath;
   private DirectoryContent myDirectoryContent = new DirectoryContent();
-  private static final String FILE_MESSAGE_PREFIX = "fname ";
-  private static final String MODULE_MESSAGE_PREFIX = "cvs server: ignoring module ";
-  private static final Pattern NEW_DIRECTORY_PATTERN = Pattern.compile("cvs .*: New directory.*-- ignored");
+  @NonNls private static final String FILE_MESSAGE_PREFIX = "fname ";
+  @NonNls private static final String MODULE_MESSAGE_PREFIX = "cvs server: ignoring module ";
+  @NonNls private static final Pattern NEW_DIRECTORY_PATTERN = Pattern.compile("cvs .*: New directory.*-- ignored");
 
   public void messageSent(String message) {
     if (directoryMessage(message)){

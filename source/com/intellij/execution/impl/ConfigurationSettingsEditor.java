@@ -2,6 +2,7 @@ package com.intellij.execution.impl;
 
 import com.intellij.execution.ExecutionRegistry;
 import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.runners.JavaProgramRunner;
 import com.intellij.execution.runners.RunnerInfo;
@@ -20,6 +21,8 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author dyoma
@@ -49,7 +52,7 @@ class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerAndConfi
         }
       }
       else {
-        myCompound.addEditor("Configuration", new ConfigToSettingsWrapper(myConfigurationEditor));
+        myCompound.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"), new ConfigToSettingsWrapper(myConfigurationEditor));
       }
 
 
@@ -64,7 +67,7 @@ class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerAndConfi
       }
 
       if (myRunnerEditors.size() > 0) {
-        myCompound.addEditor("Startup/Connection", new CompositeSettingsEditor<RunnerAndConfigurationSettingsImpl>(getFactory()) {
+        myCompound.addEditor(ExecutionBundle.message("run.configuration.startup.connection.rab.title"), new CompositeSettingsEditor<RunnerAndConfigurationSettingsImpl>(getFactory()) {
           public CompositeSettingsBuilder<RunnerAndConfigurationSettingsImpl> getBuilder() {
             return new CompositeSettingsBuilder<RunnerAndConfigurationSettingsImpl>() {
               public Collection<SettingsEditor<RunnerAndConfigurationSettingsImpl>> getEditors() {
@@ -144,13 +147,13 @@ class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerAndConfi
   }
 
   private static class RunnersEditorComponent {
-    private static final String NO_RUNNER_COMPONENT = "<NO RUNNER LABEL>";
+    @NonNls private static final String NO_RUNNER_COMPONENT = "<NO RUNNER LABEL>";
 
     private JList myRunnersList;
     private JPanel myRunnerPanel;
     private final CardLayout myLayout = new CardLayout();
     private final DefaultListModel myListModel = new DefaultListModel();
-    private final JLabel myNoRunner = new JLabel("No runner selected");
+    private final JLabel myNoRunner = new JLabel(ExecutionBundle.message("run.configuration.norunner.selected.label"));
     private JPanel myRunnersPanel;
 
     public RunnersEditorComponent() {

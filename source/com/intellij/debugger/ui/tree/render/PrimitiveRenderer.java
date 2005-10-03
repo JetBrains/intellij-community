@@ -1,6 +1,7 @@
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.DebuggerContext;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
@@ -10,6 +11,7 @@ import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiExpression;
 import com.sun.jdi.*;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * User: lex
@@ -17,10 +19,11 @@ import com.sun.jdi.*;
  * Time: 3:07:27 PM
  */
 public class PrimitiveRenderer extends NodeRendererImpl {
-  public static final String UNIQUE_ID = "PrimitiveRenderer";
+  public static final @NonNls String UNIQUE_ID = "PrimitiveRenderer";
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.tree.render.PrimitiveRenderer");
 
   public PrimitiveRenderer() {
+    //noinspection HardCodedStringLiteral
     myProperties.setName("Primitive");
   }
 
@@ -28,7 +31,7 @@ public class PrimitiveRenderer extends NodeRendererImpl {
     return UNIQUE_ID;
   }
 
-  public String getName() {
+  public @NonNls String getName() {
     return "Primitive";
   }
 
@@ -51,6 +54,7 @@ public class PrimitiveRenderer extends NodeRendererImpl {
   public String calcLabel(ValueDescriptor valueDescriptor, EvaluationContext evaluationContext, DescriptorLabelListener labelListener) {
     Value value = valueDescriptor.getValue();
     if(value == null) {
+      //noinspection HardCodedStringLiteral
       return "null";
     }
     else if (value instanceof PrimitiveValue) {
@@ -80,7 +84,7 @@ public class PrimitiveRenderer extends NodeRendererImpl {
       return buf.toString();
     }
     else {
-      return "undefined";
+      return DebuggerBundle.message("label.undefined");
     }
   }
 

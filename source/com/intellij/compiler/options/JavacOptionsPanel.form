@@ -7,41 +7,41 @@
       <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
     </constraints>
     <properties/>
-    <border type="etched" title="Javac Options"/>
+    <border type="etched" title-resource-bundle="messages/CompilerBundle" title-key="javac.options.group.title"/>
     <children>
       <component id="8538e" class="javax.swing.JCheckBox" binding="myCbDeprecation">
         <constraints>
-          <xy x="6" y="56" width="226" height="24"/>
+          <xy x="6" y="64" width="226" height="24"/>
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
         </constraints>
         <properties>
           <selected value="true"/>
-          <text value="Report use of deprecated features"/>
+          <text resource-bundle="messages/CompilerBundle" key="java.compiler.option.report.deprecated"/>
         </properties>
       </component>
       <component id="3d38f" class="javax.swing.JCheckBox" binding="myCbDebuggingInfo">
         <constraints>
-          <xy x="6" y="24" width="170" height="24"/>
+          <xy x="6" y="26" width="170" height="24"/>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
         </constraints>
         <properties>
           <selected value="true"/>
-          <text value="Generate debugging info"/>
+          <text resource-bundle="messages/CompilerBundle" key="java.compiler.option.generate.debugging.info"/>
         </properties>
       </component>
       <component id="90803" class="javax.swing.JCheckBox" binding="myCbGenerateNoWarnings">
         <constraints>
-          <xy x="6" y="88" width="153" height="24"/>
+          <xy x="6" y="101" width="153" height="24"/>
           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
         </constraints>
         <properties>
-          <text value="Generate no warnings"/>
+          <text resource-bundle="messages/CompilerBundle" key="java.compiler.option.generate.no.warnings"/>
         </properties>
       </component>
       <grid id="d7ddf" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="5" vgap="5">
         <margin top="10" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="6" y="139" width="517" height="60"/>
+          <xy x="6" y="134" width="517" height="65"/>
           <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="3"/>
         </constraints>
         <properties/>
@@ -49,16 +49,16 @@
         <children>
           <component id="f8a80" class="javax.swing.JLabel">
             <constraints>
-              <xy x="0" y="13" width="224" height="16"/>
+              <xy x="0" y="14" width="220" height="16"/>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0"/>
             </constraints>
             <properties>
-              <text value=" Additional command line parameters:"/>
+              <text resource-bundle="messages/CompilerBundle" key="java.compiler.option.additional.command.line.parameters"/>
             </properties>
           </component>
           <component id="479c2" class="com.intellij.ui.RawCommandLineEditor" binding="myAdditionalOptionsField">
             <constraints>
-              <xy x="229" y="11" width="288" height="20"/>
+              <xy x="225" y="12" width="292" height="20"/>
               <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
                 <preferred-size width="150" height="-1"/>
               </grid>
@@ -66,16 +66,16 @@
           </component>
           <component id="327dc" class="javax.swing.JLabel">
             <constraints>
-              <xy x="64" y="40" width="160" height="16"/>
+              <xy x="68" y="44" width="152" height="16"/>
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0"/>
             </constraints>
             <properties>
-              <text value="  Maximum heap size (Mb):"/>
+              <text resource-bundle="messages/CompilerBundle" key="javac.option.max.heap.size"/>
             </properties>
           </component>
           <component id="15c16" class="javax.swing.JTextField" binding="myJavacMaximumHeapField">
             <constraints>
-              <xy x="229" y="37" width="288" height="22"/>
+              <xy x="225" y="41" width="292" height="22"/>
               <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
                 <preferred-size width="150" height="-1"/>
               </grid>

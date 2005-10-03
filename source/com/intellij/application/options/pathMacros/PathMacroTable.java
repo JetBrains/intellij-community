@@ -4,6 +4,7 @@ import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.Table;
 
@@ -65,7 +66,7 @@ public class PathMacroTable extends Table {
   }
 
   public void addMacro() {
-    final String title = "Add Variable";
+    final String title = ApplicationBundle.message("title.add.variable");
     final PathMacroEditor macroEditor = new PathMacroEditor(title, "", "", new AddValidator(title));
     macroEditor.show();
     if (macroEditor.isOK()) {
@@ -187,7 +188,7 @@ public class PathMacroTable extends Table {
     }
     final int selectedRow = getSelectedRow();
     final Pair<String, String> pair = myMacros.get(selectedRow);
-    final String title = "Edit variable";
+    final String title = ApplicationBundle.message("title.edit.variable");
     final String macroName = pair.getFirst();
     final PathMacroEditor macroEditor = new PathMacroEditor(title, macroName, pair.getSecond(), new EditValidator());
     macroEditor.setMacroNameEditable(!myEditOnlyPaths);
@@ -234,8 +235,8 @@ public class PathMacroTable extends Table {
 
     public String getColumnName(int columnIndex) {
       switch (columnIndex) {
-        case NAME_COLUMN: return "Name";
-        case VALUE_COLUMN: return "Value";
+        case NAME_COLUMN: return ApplicationBundle.message("column.name");
+        case VALUE_COLUMN: return ApplicationBundle.message("column.value");
       }
       return null;
     }
@@ -259,7 +260,8 @@ public class PathMacroTable extends Table {
     public boolean isOK(String name, String value) {
       if(name.length() == 0) return false;
       if (hasMacroWithName(name)) {
-        Messages.showErrorDialog(PathMacroTable.this, "Variable with name " + name + " already exists", myTitle);
+        Messages.showErrorDialog(PathMacroTable.this,
+                                 ApplicationBundle.message("error.variable.already.exists", name), myTitle);
         return false;
       }
       return true;

@@ -9,13 +9,15 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 
+import org.jetbrains.annotations.NonNls;
+
 public class RefactoringMessageDialog extends DialogWrapper{
   private String myMessage;
   private String myHelpTopic;
   private Icon myIcon;
   private boolean myIsCancelButtonVisible;
 
-  public RefactoringMessageDialog(String title, String message, String helpTopic, String iconId, boolean showCancelButton, Project project) {
+  public RefactoringMessageDialog(String title, String message, String helpTopic, @NonNls String iconId, boolean showCancelButton, Project project) {
     super(project, false);
     constructor(title, message, helpTopic, showCancelButton, iconId);
   }
@@ -31,7 +33,7 @@ public class RefactoringMessageDialog extends DialogWrapper{
   }
 
   protected Action[] createActions(){
-    ArrayList actions=new ArrayList();
+    ArrayList<Action> actions=new ArrayList<Action>();
     actions.add(getOKAction());
     if(myIsCancelButtonVisible){
       actions.add(getCancelAction());
@@ -39,7 +41,7 @@ public class RefactoringMessageDialog extends DialogWrapper{
     if(myHelpTopic!=null){
       actions.add(getHelpAction());
     }
-    return (Action[])actions.toArray(new Action[actions.size()]);
+    return actions.toArray(new Action[actions.size()]);
   }
 
   protected JComponent createNorthPanel() {

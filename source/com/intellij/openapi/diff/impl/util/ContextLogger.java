@@ -3,6 +3,7 @@ package com.intellij.openapi.diff.impl.util;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NonNls;
 
 public class ContextLogger {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.util.ContextLogger");
@@ -33,7 +34,7 @@ public class ContextLogger {
     logError("Assertion: " + message);
   }
 
-  private void logError(String message) {
+  private void logError(@NonNls String message) {
     if (myFirstError) {
       myLogger.error(message, myInfo.getDetails());
       myFirstError = false;
@@ -49,7 +50,7 @@ public class ContextLogger {
     throwTestException("Not implemented");
   }
 
-  private void throwTestException(String message) {
+  private void throwTestException(@NonNls String message) {
     if (isTestMode()) throw new RuntimeException(message);
     else logError(message);
   }

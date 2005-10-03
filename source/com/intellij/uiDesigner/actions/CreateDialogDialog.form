@@ -11,16 +11,16 @@
     <children>
       <component id="6f602" class="javax.swing.JLabel">
         <constraints>
-          <xy x="0" y="3" width="151" height="14"/>
+          <xy x="0" y="3" width="322" height="14"/>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
         </constraints>
         <properties>
-          <text value="Enter a new dialog class name:"/>
+          <text resource-bundle="messages/UIDesignerBundle" key="edit.dialog.class.name"/>
         </properties>
       </component>
       <component id="7b480" class="javax.swing.JTextField" binding="myTfClassName">
         <constraints>
-          <xy x="0" y="25" width="474" height="19"/>
+          <xy x="0" y="25" width="474" height="20"/>
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
             <preferred-size width="150" height="-1"/>
           </grid>
@@ -29,37 +29,38 @@
       </component>
       <component id="ec88f" class="javax.swing.JCheckBox" binding="myChkGenerateMain">
         <constraints>
-          <xy x="0" y="50" width="291" height="23"/>
+          <xy x="0" y="50" width="356" height="22"/>
           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
         </constraints>
         <properties>
           <selected value="true"/>
-          <text value="Generate main() method that creates and shows dialog"/>
+          <text resource-bundle="messages/UIDesignerBundle" key="checkbox.generate.main"/>
         </properties>
       </component>
       <component id="b042c" class="javax.swing.JCheckBox" binding="myChkGenerateOK">
         <constraints>
-          <xy x="0" y="78" width="131" height="23"/>
+          <xy x="0" y="77" width="345" height="22"/>
           <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
         </constraints>
         <properties>
           <selected value="true"/>
-          <text value="Generate 'OK' handler"/>
+          <text resource-bundle="messages/UIDesignerBundle" key="checkbox.generate.ok"/>
         </properties>
       </component>
       <component id="33fcb" class="javax.swing.JCheckBox" binding="myChkGenerateCancel">
         <constraints>
-          <xy x="0" y="106" width="145" height="23"/>
+          <xy x="0" y="104" width="364" height="22"/>
           <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
         </constraints>
         <properties>
+          <focusTraversalPolicyProvider value="true"/>
           <selected value="true"/>
-          <text value="Generate 'Cancel' handler"/>
+          <text resource-bundle="messages/UIDesignerBundle" key="checkbox.generate.cancel"/>
         </properties>
       </component>
       <vspacer id="974d">
         <constraints>
-          <xy x="231" y="129" width="11" height="115"/>
+          <xy x="231" y="126" width="11" height="118"/>
           <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
         </constraints>
       </vspacer>

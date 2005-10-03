@@ -12,11 +12,13 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Map;
 
 public class PsiMethodCallExpressionImpl extends CompositePsiElement implements PsiMethodCallExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiMethodCallExpressionImpl");
+  @NonNls protected static final String GET_CLASS_METHOD = "getClass";
 
   public PsiMethodCallExpressionImpl() {
     super(METHOD_CALL_EXPRESSION);
@@ -31,7 +33,7 @@ public class PsiMethodCallExpressionImpl extends CompositePsiElement implements 
     PsiManager manager = getManager();
     if (manager.getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) >= 0) {
       //JLS3 15.8.2
-      if ("getClass".equals(method.getName()) && "java.lang.Object".equals(method.getContainingClass().getQualifiedName())) {
+      if (GET_CLASS_METHOD.equals(method.getName()) && "java.lang.Object".equals(method.getContainingClass().getQualifiedName())) {
         PsiExpression qualifier = methodExpression.getQualifierExpression();
         PsiType qualifierType = null;
         if (qualifier != null) {
@@ -112,7 +114,7 @@ public class PsiMethodCallExpressionImpl extends CompositePsiElement implements 
       return ChildRole.ARGUMENT_LIST;
     }
     else {
-      if (EXPRESSION_BIT_SET.isInSet(child.getElementType())) {
+      if (EXPRESSION_BIT_SET.contains(child.getElementType())) {
         return ChildRole.METHOD_EXPRESSION;
       }
       return ChildRole.NONE;

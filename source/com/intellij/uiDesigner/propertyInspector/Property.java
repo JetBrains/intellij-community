@@ -1,6 +1,7 @@
 package com.intellij.uiDesigner.propertyInspector;
 
 import com.intellij.uiDesigner.RadComponent;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Anton Katilin
@@ -21,8 +22,9 @@ public abstract class Property {
   /**
    * @exception java.lang.IllegalArgumentException if <code>name</code> is <code>null</code>
    */
-  public Property(final Property parent, final String name){
+  public Property(final Property parent, @NonNls final String name){
     if(name == null){
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("name cannot be null");
     }
     myParent = parent;

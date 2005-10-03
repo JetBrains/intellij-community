@@ -2,6 +2,7 @@ package com.intellij.openapi.vcs.update;
 
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vcs.VcsBundle;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -10,6 +11,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.io.File;
+
+import org.jetbrains.annotations.NonNls;
 
 /**
  * author: lesya
@@ -61,16 +64,14 @@ public abstract class AbstractTreeNode extends DefaultMutableTreeNode{
   }
 
   private String getStatistics(int itemsCount){
-    if(itemsCount == 0) return "no items";
-    if(itemsCount == 1) return "1 item";
-    return "" + itemsCount + " items";
+    return VcsBundle.message("update.tree.node.size.statistics", itemsCount);
   }
 
   protected abstract String getName();
   protected abstract int getItemsCount();
   protected abstract boolean showStatistics();
 
-  public abstract Icon getIcon(boolean expanded);
+  @NonNls public abstract Icon getIcon(boolean expanded);
   public abstract Collection<VirtualFile> getVirtualFiles();
   public abstract Collection<File> getFiles();
 

@@ -8,10 +8,7 @@ package com.intellij.compiler.impl.javaCompiler;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerException;
 import com.intellij.compiler.make.CacheCorruptedException;
-import com.intellij.openapi.compiler.CompileContext;
-import com.intellij.openapi.compiler.CompilerMessageCategory;
-import com.intellij.openapi.compiler.TranslatingCompiler;
-import com.intellij.openapi.compiler.CompileScope;
+import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.ex.CompileContextEx;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -32,7 +29,7 @@ public class JavaCompiler implements TranslatingCompiler {
   }
 
   public String getDescription() {
-    return "Java Compiler";
+    return CompilerBundle.message("java.compiler.description");
   }
 
   public boolean isCompilableFile(VirtualFile file, CompileContext context) {

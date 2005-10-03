@@ -1,15 +1,13 @@
 package com.intellij.refactoring.typeCook;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
-import com.intellij.usageView.UsageViewUtil;
+import com.intellij.usageView.UsageViewBundle;
 
 class TypeCookViewDescriptor implements UsageViewDescriptor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.typeCook.TypeCookViewDescriptor");
-
   private PsiElement[] myElements;
   private UsageInfo[] myUsages;
   private FindUsagesCommand myRefreshCommand;
@@ -35,7 +33,7 @@ class TypeCookViewDescriptor implements UsageViewDescriptor {
   }
 
   public String getProcessedElementsHeader() {
-    return "Scope(s) to generify";
+    return RefactoringBundle.message("type.cook.elements.header");
   }
 
   public boolean isSearchInText() {
@@ -59,7 +57,7 @@ class TypeCookViewDescriptor implements UsageViewDescriptor {
   }
 
   public String getCodeReferencesText(int usagesCount, int filesCount) {
-    return "Declaration(s) to be generified " + UsageViewUtil.getUsageCountInfo(usagesCount, filesCount, "reference");
+    return RefactoringBundle.message("declaration.s.to.be.generified", UsageViewBundle.getReferencesString(usagesCount, filesCount));
   }
 
   public String getCommentReferencesText(int usagesCount, int filesCount) {

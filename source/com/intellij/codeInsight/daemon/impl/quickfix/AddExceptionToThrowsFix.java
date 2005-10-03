@@ -2,6 +2,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -53,10 +54,10 @@ public class AddExceptionToThrowsFix extends BaseIntentionAction {
 
     final boolean processSuperMethods;
     if (hasSuperMethodsWithoutExceptions && superMethods.length > 0) {
-      int result = Messages.showYesNoCancelDialog("Method '" + targetMethod.getName() + "' is inherited.\n" +
-                                                  "Do you want to add exceptions to method signatures in the whole method hierarchy?",
-                                                  "Method Is Inherited",
-                                                  Messages.getQuestionIcon());
+      int result = Messages.showYesNoCancelDialog(
+        QuickFixBundle.message("add.exception.to.throws.inherited.method.warning.text", targetMethod.getName()),
+        QuickFixBundle.message("add.exception.to.throws.inherited.method.warning.title"),
+        Messages.getQuestionIcon());
 
       if (result == 0) processSuperMethods = true;
       else if (result == 1) processSuperMethods = false;
@@ -102,7 +103,7 @@ public class AddExceptionToThrowsFix extends BaseIntentionAction {
   }
 
   private static void _collectSuperMethods(PsiMethod method, List<PsiMethod> result) {
-    PsiMethod[] superMethods = PsiSuperMethodUtil.findSuperMethods(method);
+    PsiMethod[] superMethods = method.findSuperMethods();
     for (PsiMethod superMethod : superMethods) {
       result.add(superMethod);
       _collectSuperMethods(superMethod, result);
@@ -146,12 +147,12 @@ public class AddExceptionToThrowsFix extends BaseIntentionAction {
     PsiElement element = findElement(myWrongElement, method);
     if (element == null) return false;
 
-    setText("Add Exception(s) to Method Signature");
+    setText(QuickFixBundle.message("add.exception.to.throws.text"));
     return true;
   }
 
   public String getFamilyName() {
-    return "Add Exception to Method Signature";
+    return QuickFixBundle.message("add.exception.to.throws.family");
   }
 
   private PsiElement findElement(PsiElement element, PsiMethod topElement) {
@@ -180,7 +181,7 @@ public class AddExceptionToThrowsFix extends BaseIntentionAction {
       }
     }
     else {
-      PsiMethod[] superMethods = PsiSuperMethodUtil.findSuperMethods(targetMethod);
+      PsiMethod[] superMethods = targetMethod.findSuperMethods();
       for (PsiMethod superMethod : superMethods) {
         PsiClassType[] classTypes = filterInProjectExceptions(unhandledExceptions, superMethod);
         result.addAll(Arrays.asList(classTypes));

@@ -1,6 +1,7 @@
 package com.intellij.ide.todo.configurable;
 
 import com.intellij.psi.search.TodoPattern;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -26,12 +27,12 @@ final class TodoPatternTableCellRenderer extends DefaultTableCellRenderer{
     super.getTableCellRendererComponent(table,value,isSelected,hasFocus,row,column);
     TodoPattern pattern=myPatterns.get(row);
     if(isSelected){
-      setForeground(UIManager.getColor("Table.selectionForeground"));
+      setForeground(UIUtil.getTableSelectionForeground());
     }else{
       if(pattern.getPattern()==null){
         setForeground(Color.RED);
       }else{
-        setForeground(UIManager.getColor("Table.foreground"));
+        setForeground(UIUtil.getTableForeground());
       }
     }
     return this;

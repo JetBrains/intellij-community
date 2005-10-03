@@ -26,6 +26,7 @@ public class PluginClassLoader extends IdeaClassLoader{
     myParents = parents;
     myPluginId = pluginId;
 
+    //noinspection HardCodedStringLiteral
     final File file = new File(pluginRoot, "lib");
     myLibDirectory = file.exists()? file : null;
   }
@@ -96,6 +97,7 @@ public class PluginClassLoader extends IdeaClassLoader{
   private URL fetchResource(ClassLoader cl, String resourceName) {
     //protected URL findResource(String s)
     try {
+      //noinspection HardCodedStringLiteral
       final Method findResourceMethod = getFindResourceMethod(cl.getClass(), "findResource");
       return (URL)findResourceMethod.invoke(cl, new Object[] {resourceName});
     }
@@ -108,6 +110,7 @@ public class PluginClassLoader extends IdeaClassLoader{
   private Enumeration fetchResources(ClassLoader cl, String resourceName) {
     //protected Enumeration findResources(String s) throws IOException
     try {
+      //noinspection HardCodedStringLiteral
       final Method findResourceMethod = getFindResourceMethod(cl.getClass(), "findResources");
       if (findResourceMethod == null) {
         return null;

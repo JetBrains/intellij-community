@@ -51,10 +51,12 @@ public class SequenceIterator<T> implements Iterator<T> {
     if(hasNext()){
       return (T)myIterators[myCurrentIndex].next();
     }
+    //noinspection HardCodedStringLiteral
     throw new NoSuchElementException("Iterator has no more elements");
   }
 
   public void remove(){
+    //noinspection HardCodedStringLiteral
     throw new UnsupportedOperationException("Remove not supported");
   }
 

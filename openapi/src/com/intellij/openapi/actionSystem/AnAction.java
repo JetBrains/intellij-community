@@ -21,6 +21,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import javax.swing.*;
 import java.util.ArrayList;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * Represents an entity that has a state, a presentation and can be performed.
  *
@@ -56,8 +58,7 @@ import java.util.ArrayList;
  */
 public abstract class AnAction {
   public static final AnAction[] EMPTY_ARRAY = new AnAction[0];
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public static final String ourClientProperty = "AnAction.shortcutSet";
+  @NonNls public static final String ourClientProperty = "AnAction.shortcutSet";
 
   private Presentation myTemplatePresentation;
   private ShortcutSet myShortcutSet;

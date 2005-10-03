@@ -7,9 +7,12 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.ide.IdeBundle;
 
 import javax.swing.*;
 import java.awt.event.KeyEvent;
+
+import org.jetbrains.annotations.NonNls;
 
 public class ActivateToolWindowAction extends AnAction {
   private String myToolWindowId;
@@ -18,7 +21,7 @@ public class ActivateToolWindowAction extends AnAction {
    * Creates an action which activates tool window with specified <code>toolWindowId</code>.
    */
   protected ActivateToolWindowAction(final String toolWindowId, final String text, final Icon icon){
-    super(text, "Activate "+toolWindowId+" window", icon);
+    super(text, IdeBundle.message("action.activate.tool.window", toolWindowId), icon);
     myToolWindowId=toolWindowId;
   }
 
@@ -55,6 +58,7 @@ public class ActivateToolWindowAction extends AnAction {
    * with specified <code>ID</code>.
    * @param id <code>id</code> of tool window to be activated.
    */
+  @NonNls
   public static String getActionIdForToolWindow(String id){
     return "Activate"+id.replaceAll(" ","")+"ToolWindow";
   }

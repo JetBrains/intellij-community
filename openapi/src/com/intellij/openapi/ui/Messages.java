@@ -20,6 +20,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.CommonBundle;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -28,10 +30,16 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
+import org.jetbrains.annotations.NonNls;
+
 public class Messages {
   private static TestDialog ourTestImplementation = TestDialog.DEFAULT;
 
   private static Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.Messages");
+  protected static final String OK_BUTTON = CommonBundle.getOkButtonText();
+  protected static final String YES_BUTTON = CommonBundle.getYesButtonText();
+  protected static final String NO_BUTTON = CommonBundle.getNoButtonText();
+  protected static final String CANCEL_BUTTON = CommonBundle.getCancelButtonText();
 
   public static TestDialog setTestDialog(TestDialog newValue) {
     Application application = ApplicationManager.getApplication();
@@ -44,19 +52,19 @@ public class Messages {
   }
 
   public static Icon getErrorIcon() {
-    return UIManager.getIcon("OptionPane.errorIcon");
+    return UIUtil.getErrroIcon();
   }
 
   public static Icon getInformationIcon() {
-    return UIManager.getIcon("OptionPane.informationIcon");
+    return UIUtil.getInformationIcon();
   }
 
   public static Icon getWarningIcon() {
-    return UIManager.getIcon("OptionPane.warningIcon");
+    return UIUtil.getWarningIcon();
   }
 
   public static Icon getQuestionIcon() {
-    return UIManager.getIcon("OptionPane.questionIcon");
+    return UIUtil.getQuestionIcon();
   }
 
   public static int showDialog(Project project, String message, String title, String[] options, int defaultOptionIndex, Icon icon) {
@@ -106,11 +114,11 @@ public class Messages {
    * @see com.intellij.openapi.ui.DialogWrapper#DialogWrapper(Project,boolean)
    */
   public static void showMessageDialog(Project project, String message, String title, Icon icon) {
-    showDialog(project, message, title, new String[]{"OK"}, 0, icon);
+    showDialog(project, message, title, new String[]{OK_BUTTON}, 0, icon);
   }
 
   public static void showMessageDialog(Component parent, String message, String title, Icon icon) {
-    showDialog(parent, message, title, new String[]{"OK"}, 0, icon);
+    showDialog(parent, message, title, new String[]{OK_BUTTON}, 0, icon);
   }
 
   /**
@@ -120,21 +128,21 @@ public class Messages {
    * @see #showMessageDialog(Component, String, String, Icon)
    */
   public static void showMessageDialog(String message, String title, Icon icon) {
-    showDialog(message, title, new String[]{"OK"}, 0, icon);
+    showDialog(message, title, new String[]{OK_BUTTON}, 0, icon);
   }
 
   /**
    * @return <code>0</code> if user pressed "Yes" and returns <code>1</code> if user pressed "No" button.
    */
   public static int showYesNoDialog(Project project, String message, String title, Icon icon) {
-    return showDialog(project, message, title, new String[]{"&Yes", "&No"}, 0, icon);
+    return showDialog(project, message, title, new String[]{YES_BUTTON, NO_BUTTON}, 0, icon);
   }
 
   /**
    * @return <code>0</code> if user pressed "Yes" and returns <code>1</code> if user pressed "No" button.
    */
   public static int showYesNoDialog(Component parent, String message, String title, Icon icon) {
-    return showDialog(parent, message, title, new String[]{"&Yes", "&No"}, 0, icon);
+    return showDialog(parent, message, title, new String[]{YES_BUTTON, NO_BUTTON}, 0, icon);
   }
 
   /**
@@ -145,15 +153,15 @@ public class Messages {
    * @see #showYesNoDialog(Component, String, String, Icon)
    */
   public static int showYesNoDialog(String message, String title, Icon icon) {
-    return showDialog(message, title, new String[]{"&Yes", "&No"}, 0, icon);
+    return showDialog(message, title, new String[]{YES_BUTTON, NO_BUTTON}, 0, icon);
   }
 
   public static int showOkCancelDialog(Project project, String message, String title, Icon icon) {
-    return showDialog(project, message, title, new String[]{"OK", "Cancel"}, 0, icon);
+    return showDialog(project, message, title, new String[]{OK_BUTTON, CANCEL_BUTTON}, 0, icon);
   }
 
   public static int showOkCancelDialog(Component parent, String message, String title, Icon icon) {
-    return showDialog(parent, message, title, new String[]{"OK", "Cancel"}, 0, icon);
+    return showDialog(parent, message, title, new String[]{OK_BUTTON, CANCEL_BUTTON}, 0, icon);
   }
 
   /**
@@ -163,15 +171,19 @@ public class Messages {
    * @see #showOkCancelDialog(Component, String, String, Icon)
    */
   public static int showOkCancelDialog(String message, String title, Icon icon) {
-    return showDialog(message, title, new String[]{"OK", "Cancel"}, 0, icon);
+    return showDialog(message, title, new String[]{OK_BUTTON, CANCEL_BUTTON}, 0, icon);
   }
 
   public static void showErrorDialog(Project project, String message, String title) {
-    showDialog(project, message, title, new String[]{"OK"}, 0, getErrorIcon());
+    showDialog(project, message, title, new String[]{OK_BUTTON}, 0, getErrorIcon());
   }
 
   public static void showErrorDialog(Component component, String message, String title) {
-    showDialog(component, message, title, new String[]{"OK"}, 0, getErrorIcon());
+    showDialog(component, message, title, new String[]{OK_BUTTON}, 0, getErrorIcon());
+  }
+
+  public static void showErrorDialog(Component component, String message) {
+    showDialog(component, message, CommonBundle.getErrorTitle(), new String[]{OK_BUTTON}, 0, getErrorIcon());
   }
 
   /**
@@ -181,15 +193,15 @@ public class Messages {
    * @see #showErrorDialog(Component, String, String)
    */
   public static void showErrorDialog(String message, String title) {
-    showDialog(message, title, new String[]{"OK"}, 0, getErrorIcon());
+    showDialog(message, title, new String[]{OK_BUTTON}, 0, getErrorIcon());
   }
 
   public static void showWarningDialog(Project project, String message, String title) {
-    showDialog(project, message, title, new String[]{"OK"}, 0, getWarningIcon());
+    showDialog(project, message, title, new String[]{OK_BUTTON}, 0, getWarningIcon());
   }
 
   public static void showWarningDialog(Component component, String message, String title) {
-    showDialog(component, message, title, new String[]{"OK"}, 0, getWarningIcon());
+    showDialog(component, message, title, new String[]{OK_BUTTON}, 0, getWarningIcon());
   }
 
   /**
@@ -199,15 +211,15 @@ public class Messages {
    * @see #showWarningDialog(Component, String, String)
    */
   public static void showWarningDialog(String message, String title) {
-    showDialog(message, title, new String[]{"OK"}, 0, getWarningIcon());
+    showDialog(message, title, new String[]{OK_BUTTON}, 0, getWarningIcon());
   }
 
   public static int showYesNoCancelDialog(Project project, String message, String title, Icon icon) {
-    return showDialog(project, message, title, new String[]{"&Yes", "&No", "&Cancel"}, 0, icon);
+    return showDialog(project, message, title, new String[]{YES_BUTTON, NO_BUTTON, CANCEL_BUTTON}, 0, icon);
   }
 
   public static int showYesNoCancelDialog(Component parent, String message, String title, Icon icon) {
-    return showDialog(parent, message, title, new String[]{"&Yes", "&No", "&Cancel"}, 0, icon);
+    return showDialog(parent, message, title, new String[]{YES_BUTTON, NO_BUTTON, CANCEL_BUTTON}, 0, icon);
   }
 
   /**
@@ -217,7 +229,7 @@ public class Messages {
    * @see #showYesNoCancelDialog(Component, String, String, Icon)
    */
   public static int showYesNoCancelDialog(String message, String title, Icon icon) {
-    return showDialog(message, title, new String[]{"&Yes", "&No", "&Cancel"}, 0, icon);
+    return showDialog(message, title, new String[]{YES_BUTTON, NO_BUTTON, CANCEL_BUTTON}, 0, icon);
   }
 
   /**
@@ -440,17 +452,17 @@ public class Messages {
     }
 
     public InputDialog(Project project, String message, String title, Icon icon, String initialValue, InputValidator validator) {
-      this(project, message, title, icon, initialValue, validator, new String[]{"OK", "Cancel"}, 0);
+      this(project, message, title, icon, initialValue, validator, new String[]{OK_BUTTON, CANCEL_BUTTON}, 0);
     }
 
     public InputDialog(Component parent, String message, String title, Icon icon, String initialValue, InputValidator validator) {
-      super(parent, message, title, new String[]{"OK", "Cancel"}, 0, icon);
+      super(parent, message, title, new String[]{OK_BUTTON, CANCEL_BUTTON}, 0, icon);
       myValidator = validator;
       myField.setText(initialValue);
     }
 
     public InputDialog(String message, String title, Icon icon, String initialValue, InputValidator validator) {
-      super(message, title, new String[]{"OK", "Cancel"}, 0, icon);
+      super(message, title, new String[]{OK_BUTTON, CANCEL_BUTTON}, 0, icon);
       myValidator = validator;
       myField.setText(initialValue);
     }
@@ -552,17 +564,17 @@ public class Messages {
     }
 
     public ChooseDialog(Project project, String message, String title, Icon icon, String[] values, String initialValue) {
-      this(project, message, title, icon, values, initialValue, new String[]{"OK", "Cancel"}, 0);
+      this(project, message, title, icon, values, initialValue, new String[]{OK_BUTTON, CANCEL_BUTTON}, 0);
     }
 
     public ChooseDialog(Component parent, String message, String title, Icon icon, String[] values, String initialValue) {
-      super(parent, message, title, new String[]{"OK", "Cancel"}, 0, icon);
+      super(parent, message, title, new String[]{OK_BUTTON, CANCEL_BUTTON}, 0, icon);
       myComboBox.setModel(new DefaultComboBoxModel(values));
       myComboBox.setSelectedItem(initialValue);
     }
 
     public ChooseDialog(String message, String title, Icon icon, String[] values, String initialValue) {
-      super(message, title, new String[]{"OK", "Cancel"}, 0, icon);
+      super(message, title, new String[]{OK_BUTTON, CANCEL_BUTTON}, 0, icon);
       myComboBox.setModel(new DefaultComboBoxModel(values));
       myComboBox.setSelectedItem(initialValue);
     }

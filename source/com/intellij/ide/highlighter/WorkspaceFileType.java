@@ -32,6 +32,7 @@
 package com.intellij.ide.highlighter;
 
 import com.intellij.ide.structureView.StructureViewBuilder;
+import com.intellij.ide.IdeBundle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
@@ -49,7 +50,7 @@ public class WorkspaceFileType implements FileType {
   }
 
   public String getDescription() {
-    return "Idea Workspace";
+    return IdeBundle.message("filetype.description.idea.workspace");
   }
 
   public String getDefaultExtension() {

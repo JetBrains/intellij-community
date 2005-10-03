@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.intention.impl;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.EmptyIntentionAction;
 import com.intellij.codeInsight.hint.HintManager;
@@ -303,7 +304,7 @@ public class IntentionHintComponent extends JPanel {
     String acceleratorsText = KeymapUtil.getFirstKeyboardShortcutText(
       ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));
     if (acceleratorsText.length() > 0) {
-      myButton.setToolTipText("Click or press " + acceleratorsText);
+      myButton.setToolTipText(CodeInsightBundle.message("lightbulb.tooltip", acceleratorsText));
     }
   }
 
@@ -502,7 +503,7 @@ public class IntentionHintComponent extends JPanel {
     private final JList myCompositeActionsList;
     private final JPanel myPanel = new JPanel();
     private final JLabel myLabel = new JLabel();
-    private final JButton myBulbButton = new JButton();
+    private final JLabel myBulbLabel = new JLabel();
     private final JButton myArrowButton = new JButton();
     private Point myLastMousePoint = null;
     private int myLastItemIndex = -1;
@@ -512,18 +513,15 @@ public class IntentionHintComponent extends JPanel {
     public PopupCellRenderer(JList list) {
       myCompositeActionsList = list;
       myPanel.setLayout(new BorderLayout());
-      myPanel.add(myBulbButton, BorderLayout.WEST);
+      myPanel.add(myBulbLabel, BorderLayout.WEST);
       myPanel.add(myLabel, BorderLayout.CENTER);
       myPanel.add(myArrowButton, BorderLayout.EAST);
-      myBulbButton.setIcon(mySmartTagIcon);
-      myBulbButton.setMargin(new Insets(0, 0, 0, 0));
-      myBulbButton.setContentAreaFilled(false);
+      myBulbLabel.setIcon(mySmartTagIcon);
 
       myLabel.setOpaque(true);
 //      myButton.setOpaque(true);
       mySettings = IntentionManagerSettings.getInstance();
 
-      myBulbButton.setBorderPainted(false);
 
       myArrowButton.setMargin(new Insets(0,0,0,0));
       myArrowButton.setBorderPainted(false);
@@ -562,12 +560,7 @@ public class IntentionHintComponent extends JPanel {
           Point point = e.getPoint();
           int index = myCompositeActionsList.locationToIndex(point);
           IntentionActionWithTextCaching action = ((IntentionActionWithTextCaching)myCompositeActionsList.getModel().getElementAt(index));
-          if (isInBulbButton(point)) {
-            mySettings.setShowLightBulb(action.getAction(), !mySettings.isShowLightBulb(action.getAction()));
-            e.consume();
-            myCompositeActionsList.repaint();
-          }
-          else if (isInArrowButton(point) && action.getOptionIntentions().size() + action.getOptionFixes().size() > 0) {
+          if (isInArrowButton(point) && action.getOptionIntentions().size() + action.getOptionFixes().size() > 0) {
             openChildPopup(action);
             e.consume();
           }
@@ -584,7 +577,7 @@ public class IntentionHintComponent extends JPanel {
 
     public boolean isInBulbButton(Point point) {
       int x = point.x - myCompositeActionsList.getInsets().left;
-      boolean isInButton = x <= myBulbButton.getPreferredSize().width;
+      boolean isInButton = x <= myBulbLabel.getPreferredSize().width;
       return isInButton;
     }
 
@@ -625,32 +618,20 @@ public class IntentionHintComponent extends JPanel {
 
       if (mySettings.isShowLightBulb(action)) {
         if (myQuickFixes.contains(action)) {
-          myBulbButton.setIcon(ourQuickFixIcon);
+          myBulbLabel.setIcon(ourQuickFixIcon);
         }
         else {
-          myBulbButton.setIcon(ourIntentionIcon);
+          myBulbLabel.setIcon(ourIntentionIcon);
         }
       }
       else {
         if (myQuickFixes.contains(action)) {
-          myBulbButton.setIcon(ourQuickFixOffIcon);
+          myBulbLabel.setIcon(ourQuickFixOffIcon);
         }
         else {
-          myBulbButton.setIcon(ourIntentionOffIcon);
+          myBulbLabel.setIcon(ourIntentionOffIcon);
         }
       }
-
-      myBulbButton.setBorderPainted(false);
-      myBulbButton.getModel().setArmed(false);
-      myBulbButton.getModel().setPressed(false);
-      if (myLastItemIndex == index) {
-        if (isInBulbButton(myLastMousePoint)) {
-          myBulbButton.getModel().setArmed(myMousePressed);
-          myBulbButton.getModel().setPressed(myMousePressed);
-          myBulbButton.setBorderPainted(true);
-        }
-      }
-      myBulbButton.setBackground(list.getBackground());
 
       myArrowButton.setBorderPainted(false);
       myArrowButton.setIcon(EmptyIcon.create(ourArrowIcon.getIconWidth(), ourArrowIcon.getIconHeight()));
@@ -695,10 +676,10 @@ public class IntentionHintComponent extends JPanel {
         IntentionAction action = ((IntentionActionWithTextCaching)getModel().getElementAt(
           locationToIndex(event.getPoint()))).getAction();
         if (IntentionManagerSettings.getInstance().isShowLightBulb(action)) {
-          return "Don't show \"lightbulb\" for '" + action.getFamilyName() + "' action";
+          return CodeInsightBundle.message("lightbulb.disable.action.text", action.getFamilyName());
         }
         else {
-          return "Show \"lightbulb\" for '" + action.getFamilyName() + "' action";
+          return CodeInsightBundle.message("lightbulb.enable.action.text", action.getFamilyName());
         }
       }
       return null;
@@ -710,6 +691,37 @@ public class IntentionHintComponent extends JPanel {
         return new Point(event.getPoint().x + 5, event.getPoint().y - 20);
       }
       return super.getToolTipLocation(event);
+    }
+  }
+
+  public static class EnableDisableIntentionAction implements IntentionAction{
+    private String myActionFamilyName;
+    private IntentionManagerSettings mySettings = IntentionManagerSettings.getInstance();
+
+    public EnableDisableIntentionAction(IntentionAction action) {
+      myActionFamilyName = action.getFamilyName();
+    }
+
+    public String getText() {
+      return mySettings.isEnabled(myActionFamilyName) ?
+             CodeInsightBundle.message("disable.intention.action", myActionFamilyName) : 
+             CodeInsightBundle.message("enable.intention.action", myActionFamilyName);
+    }
+
+    public String getFamilyName() {
+      return getText();
+    }
+
+    public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+      return true;
+    }
+
+    public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+      mySettings.setEnabled(myActionFamilyName, !mySettings.isEnabled(myActionFamilyName));
+    }
+
+    public boolean startInWriteAction() {
+      return false;
     }
   }
 }

@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,13 +12,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfo;
 import com.intellij.util.IncorrectOperationException;
 
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,16 +36,13 @@ public class MethodParameterFix implements IntentionAction {
   }
 
   public String getText() {
-    String text = MessageFormat.format("Make ''{0}'' take parameter of type ''{1}'' here",
-        new Object[]{
-          myMethod.getName(),
-          myParameterType.getCanonicalText(),
-        });
-    return text;
+    return QuickFixBundle.message("fix.parameter.type.text",
+                                  myMethod.getName(),
+                                  myParameterType.getCanonicalText() );
   }
 
   public String getFamilyName() {
-    return "Fix Parameter Type";
+    return QuickFixBundle.message("fix.parameter.type.family");
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
@@ -64,7 +60,7 @@ public class MethodParameterFix implements IntentionAction {
     try {
       PsiMethod method = myMethod;
       if (myFixWholeHierarchy) {
-        method = PsiSuperMethodUtil.findDeepestSuperMethod(myMethod);
+        method = myMethod.findDeepestSuperMethod();
         if (method == null) method = myMethod;
       }
 

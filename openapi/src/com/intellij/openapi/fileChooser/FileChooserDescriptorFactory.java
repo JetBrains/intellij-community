@@ -18,6 +18,8 @@ package com.intellij.openapi.fileChooser;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.analysis.AnalysisScopeBundle;
+import com.intellij.ui.UIBundle;
 
 public class FileChooserDescriptorFactory {
 
@@ -64,13 +66,13 @@ public class FileChooserDescriptorFactory {
 
   public static FileChooserDescriptor getDirectoryChooserDescriptor(String aSearchedObjectName) {
     final FileChooserDescriptor singleFolderDescriptor = createSingleFolderDescriptor();
-    singleFolderDescriptor.setTitle("Select " + aSearchedObjectName);
+    singleFolderDescriptor.setTitle(UIBundle.message("file.chooser.select.object.title", aSearchedObjectName));
     return singleFolderDescriptor;
   }
 
   public static FileChooserDescriptor getFileChooserDescriptor(String aSearchedObjectName) {
     final FileChooserDescriptor fileChooserDescriptor = createSingleFileNoJarsDescriptor();
-    fileChooserDescriptor.setTitle("Select " + aSearchedObjectName);
+    fileChooserDescriptor.setTitle(UIBundle.message("file.chooser.select.object.title", aSearchedObjectName));
     return fileChooserDescriptor;
   }
 }

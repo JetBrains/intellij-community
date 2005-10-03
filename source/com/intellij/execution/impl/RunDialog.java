@@ -1,6 +1,7 @@
 package com.intellij.execution.impl;
 
 import com.intellij.execution.runners.RunnerInfo;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
@@ -55,7 +56,7 @@ public class RunDialog extends DialogWrapper {
       myConfigurable.apply();
     }
     catch(ConfigurationException e){
-      Messages.showMessageDialog(myProject, e.getMessage(), "Invalid Data", Messages.getErrorIcon());
+      Messages.showMessageDialog(myProject, e.getMessage(), ExecutionBundle.message("invalid.data.dialog.title"), Messages.getErrorIcon());
       return;
     }
     super.doOKAction();
@@ -79,7 +80,7 @@ public class RunDialog extends DialogWrapper {
 
   private class ApplyAction extends AbstractAction {
     public ApplyAction() {
-      super("&Apply");
+      super(ExecutionBundle.message("apply.action.name"));
     }
 
     public void actionPerformed(final ActionEvent event) {
@@ -87,7 +88,7 @@ public class RunDialog extends DialogWrapper {
         myConfigurable.apply();
       }
       catch(ConfigurationException e){
-        Messages.showMessageDialog(myProject, e.getMessage(), "Invalid Data", Messages.getErrorIcon());
+        Messages.showMessageDialog(myProject, e.getMessage(), ExecutionBundle.message("invalid.data.dialog.title"), Messages.getErrorIcon());
       }
     }
   }

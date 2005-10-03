@@ -1,6 +1,7 @@
 package com.intellij.errorreport;
 
 import com.intellij.diagnostic.ErrorReportConfigurable;
+import com.intellij.diagnostic.DiagnosticBundle;
 import com.intellij.errorreport.bean.BeanWrapper;
 import com.intellij.errorreport.bean.ErrorBean;
 import com.intellij.errorreport.bean.ExceptionBean;
@@ -14,6 +15,7 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.util.net.HttpConfigurable;
 import org.apache.xmlrpc.XmlRpcClient;
 import org.apache.xmlrpc.XmlRpcException;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
 import java.util.Date;
@@ -28,11 +30,13 @@ import java.util.Vector;
  * To change this template use Options | File Templates.
  */
 public class ErrorReportSender {
-  public static final String PREPARE_URL = "http://www.intellij.net/websupport/error/";
-  public static String REPORT_URL = "http://www.intellij.net/websupport/error/report?sender=i";
+  @NonNls public static final String PREPARE_URL = "http://www.intellij.net/websupport/error/";
+  @NonNls public static String REPORT_URL = "http://www.intellij.net/websupport/error/report?sender=i";
   //public static String REPORT_URL = "http://unit-038:8080/error/report?sender=i";
 
-  public static final String PRODUCT_CODE = "idea";
+  @NonNls public static final String PRODUCT_CODE = "idea";
+  @NonNls private static final String PARAM_EMAIL = "EMAIL";
+  @NonNls private static final String PARAM_EAP = "eap";
 
   public static ErrorReportSender getInstance () {
     return new ErrorReportSender();
@@ -44,7 +48,7 @@ public class ErrorReportSender {
   protected static String authorizeEmail (String email) throws IOException, XmlRpcException {
     XmlRpcClient client = new XmlRpcClient(REPORT_URL);
     Vector params = new Vector ();
-    params.add("EMAIL");
+    params.add(PARAM_EMAIL);
     params.add(email);
 
     String notifierId = (String) client.execute(RemoteMethods.ERROR_AUTHORIZE, params);
@@ -54,7 +58,7 @@ public class ErrorReportSender {
   protected static String authorizeEAP (String eapLogin) throws IOException, XmlRpcException {
     XmlRpcClient client = new XmlRpcClient(REPORT_URL);
     Vector params = new Vector ();
-    params.add("eap");
+    params.add(PARAM_EAP);
     params.add(eapLogin);
 
     String notifierId = (String) client.execute(RemoteMethods.ERROR_AUTHORIZE, params);
@@ -102,6 +106,9 @@ public class ErrorReportSender {
 
     private ITask [] prepareTasks = null;
     private ITask [] doTasks = null;
+    @NonNls private static final String STATUS_OPEN = "Open";
+    @NonNls private static final String STATUS_SUBMITTED = "Submitted";
+    @NonNls private static final String STATUS_MORE_INFO_NEEDED = "More info needed";
 
     public SendTask(Throwable throwable) {
       this.throwable = throwable;
@@ -128,7 +135,7 @@ public class ErrorReportSender {
             }
 
             public String getDescription() {
-              return "Check for a new EAP build... ";
+              return DiagnosticBundle.message("error.report.step.check.new.eap");
             }
 
             public void run() {
@@ -165,7 +172,7 @@ public class ErrorReportSender {
             private boolean checked = false;
 
             public String getDescription() {
-              return "Checking exception... ";
+              return DiagnosticBundle.message("error.report.step.check.exception");
             }
 
             public boolean isSuccessful() {
@@ -191,7 +198,7 @@ public class ErrorReportSender {
             private boolean checked = false;
 
             public String getDescription() {
-              return "Checking thread status...";
+              return DiagnosticBundle.message("error.report.step.check.thread.status");
             }
 
             public boolean isSuccessful() {
@@ -204,9 +211,9 @@ public class ErrorReportSender {
                   String threadStatus = ITNProxy.getThreadStatus(exceptionBean.getItnThreadId());
                   checked = true;
 
-                  if (! threadStatus.equals("Open") &&
-                      ! threadStatus.equals("Submitted") &&
-                      ! threadStatus.equals("More info needed")) {
+                  if (! threadStatus.equals(STATUS_OPEN) &&
+                      ! threadStatus.equals(STATUS_SUBMITTED) &&
+                      ! threadStatus.equals(STATUS_MORE_INFO_NEEDED)) {
                     ErrorReportConfigurable.getInstance().addClosed(exceptionBean.getHashCode(),
                                                                     Integer.toString(exceptionBean.getItnThreadId()));
                     throw new ThreadClosedException (threadStatus, exceptionBean.getItnThreadId());
@@ -232,7 +239,7 @@ public class ErrorReportSender {
             private boolean authorized = false;
 
             public String getDescription() {
-              return "Authorizing... ";
+              return DiagnosticBundle.message("error.report.step.authorize");
             }
 
             public boolean isSuccessful() {
@@ -282,7 +289,7 @@ public class ErrorReportSender {
             }
 
             public String getDescription() {
-              return "Sending... ";
+              return DiagnosticBundle.message("error.report.step.send");
             }
 
             public void run() {

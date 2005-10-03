@@ -1,6 +1,7 @@
 package com.intellij.ide.macro;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.ide.IdeBundle;
 
 import java.io.File;
 
@@ -10,7 +11,7 @@ public final class ProjectFileDirMacro extends Macro {
   }
 
   public String getDescription() {
-    return "The directory of the project file";
+    return IdeBundle.message("macro.project.file.directory");
   }
 
   public String expand(DataContext dataContext) {

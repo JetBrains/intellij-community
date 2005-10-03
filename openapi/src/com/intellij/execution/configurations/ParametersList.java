@@ -24,6 +24,8 @@ import com.intellij.util.EnvironmentUtil;
 
 import java.util.*;
 
+import org.jetbrains.annotations.NonNls;
+
 public class ParametersList implements Cloneable{
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.configurations.ParametersList");
   private List<String> myParameters = new ArrayList<String>();
@@ -33,7 +35,7 @@ public class ParametersList implements Cloneable{
 
   }
 
-  public boolean hasParameter(final String param) {
+  public boolean hasParameter(@NonNls final String param) {
     return myParameters.contains(param);
   }
 
@@ -84,7 +86,7 @@ public class ParametersList implements Cloneable{
     }
   }
 
-  public void add(final String parameter) {
+  public void add(@NonNls final String parameter) {
     myParameters.add(expandMacros(parameter));
   }
 
@@ -93,11 +95,11 @@ public class ParametersList implements Cloneable{
     myParameters.add(index, expandMacros(parameter));
   }
 
-  public void defineProperty(final String propertyName, final String propertyValue) {
+  public void defineProperty(@NonNls final String propertyName, @NonNls final String propertyValue) {
     //noinspection HardCodedStringLiteral
     myParameters.add("-D" + propertyName + "=" + propertyValue);
   }
-  
+
   public void replaceOrAppend(final String parameterPrefix, final String replacement) {
     replaceOrAdd(parameterPrefix, replacement, myParameters.size());
   }
@@ -128,11 +130,11 @@ public class ParametersList implements Cloneable{
     return Collections.unmodifiableList(myParameters);
   }
 
-  public void prepend(final String parameter) {
+  public void prepend(@NonNls final String parameter) {
     addAt(0, parameter);
   }
 
-  public void add(final String name, final String value) {
+  public void add(@NonNls final String name,@NonNls  final String value) {
     add(name);
     add(value);
   }

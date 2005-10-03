@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.packageDependencies.ui.UsagesPanel.MyProgressPanel">
-  <grid id="9fd03" binding="myPanel" row-count="1" column-count="3" hgap="-1" vgap="-1">
+  <grid id="9fd03" binding="myPanel" row-count="1" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
       <xy x="71" y="109" width="408" height="192"/>
@@ -9,7 +9,7 @@
     <properties/>
     <border type="none"/>
     <children>
-      <grid id="e3765" row-count="4" column-count="1" hgap="-1" vgap="-1">
+      <grid id="e3765" row-count="4" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
           <xy x="60" y="0" width="288" height="192"/>
@@ -20,11 +20,11 @@
         <children>
           <vspacer id="dfb0a">
             <constraints>
-              <xy x="138" y="0" width="11" height="69"/>
+              <xy x="138" y="0" width="11" height="74"/>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
             </constraints>
           </vspacer>
-          <grid id="894da" row-count="1" column-count="2" hgap="-1" vgap="-1">
+          <grid id="894da" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
               <xy x="0" y="74" width="288" height="20"/>
@@ -35,7 +35,7 @@
             <children>
               <component id="27181" class="com.intellij.openapi.progress.util.ColorProgressBar" binding="myFractionProgress">
                 <constraints>
-                  <xy x="0" y="1" width="258" height="17"/>
+                  <xy x="0" y="1" width="257" height="17"/>
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
                     <preferred-size width="150" height="-1"/>
                   </grid>
@@ -44,7 +44,7 @@
               </component>
               <component id="595fd" class="javax.swing.JLabel" binding="myFractionLabel">
                 <constraints>
-                  <xy x="268" y="2" width="17" height="16"/>
+                  <xy x="267" y="3" width="21" height="14"/>
                   <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
@@ -55,16 +55,16 @@
           </grid>
           <component id="edebe" class="javax.swing.JLabel" binding="myTextLabel">
             <constraints>
-              <xy x="0" y="101" width="84" height="16"/>
+              <xy x="0" y="102" width="69" height="14"/>
               <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
             </constraints>
             <properties>
-              <text value="progress text"/>
+              <text value=""/>
             </properties>
           </component>
           <vspacer id="c0a68">
             <constraints>
-              <xy x="138" y="124" width="11" height="68"/>
+              <xy x="138" y="119" width="11" height="73"/>
               <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
             </constraints>
           </vspacer>

@@ -1,5 +1,6 @@
 package com.intellij.cvsSupport2.history;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutor;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutorCallback;
 import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
@@ -37,7 +38,7 @@ public class ComparableVcsRevisionOnOperation implements VcsFileRevision {
   public void loadContent() throws VcsException {
     if (!myOperation.isLoaded()) {
       CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
-      executor.performActionSync(new CommandCvsHandler("Load File",
+      executor.performActionSync(new CommandCvsHandler(CvsBundle.message("operation.name.load.file"),
                                                        myOperation),
                                  CvsOperationExecutorCallback.EMPTY);
       CvsResult result = executor.getResult();
@@ -48,7 +49,7 @@ public class ComparableVcsRevisionOnOperation implements VcsFileRevision {
         throw result.composeError();
       }
       if (isDeleted()){
-        throw new VcsException("Revision " + myOperation.getRevisionString() + " does not exist in repository");
+throw new VcsException(CvsBundle.message("message.text.revision.was.deleted.from.repository", myOperation.getRevisionString()));
       }
     }
   }

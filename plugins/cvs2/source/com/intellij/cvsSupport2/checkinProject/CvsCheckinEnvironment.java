@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vcs.versions.AbstractRevisions;
 import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.SystemProperties;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -102,9 +103,9 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
     removeAction.getTemplatePresentation().setIcon(IconLoader.getIcon("/actions/submit2.png"));
     ignoreAction.getTemplatePresentation().setIcon(IconLoader.getIcon("/actions/ignore2.png"));
 
-    addAction.getTemplatePresentation().setDescription("Add to CVS...");
-    removeAction.getTemplatePresentation().setDescription("Remove from CVS...");
-    ignoreAction.getTemplatePresentation().setDescription("Ignore");
+    addAction.getTemplatePresentation().setDescription(com.intellij.CvsBundle.message("operation.description.add.to.cvs"));
+    removeAction.getTemplatePresentation().setDescription(com.intellij.CvsBundle.message("operation.description.remove.from.cvs"));
+    ignoreAction.getTemplatePresentation().setDescription(com.intellij.CvsBundle.message("operation.description.ignore"));
 
     if (index == 0) {
       return new AnAction[]{removeAction};
@@ -122,8 +123,9 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
     StringBuffer buffer = new StringBuffer();
     boolean firstLine = true;
     for (String line : lines) {
+      //noinspection HardCodedStringLiteral
       if (!line.startsWith("CVS:")) {
-        if (!firstLine) buffer.append(System.getProperty("line.separator"));
+        if (!firstLine) buffer.append(SystemProperties.getLineSeparator());
         buffer.append(line);
         firstLine = false;
       }
@@ -169,7 +171,7 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
           roots,
           new File[]{},
           preparedComment,
-          "Commit " + (roots.length > 1 ? "files" : "file"),
+          com.intellij.CvsBundle.message("operation.name.commit.file", roots.length),
           CvsConfiguration.getInstance(project).MAKE_NEW_FILES_READONLY,
           myProject,
           cvsConfiguration.TAG_AFTER_FILE_COMMIT,
@@ -206,7 +208,7 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
       return new CheckinProject(checkinOperations,
                                 CvsVcs2.getInstance(project),
                                 comment,
-                                "Commit",
+                                com.intellij.CvsBundle.message("operation.name.checkin.project"),
                                 cvsConfiguration.TAG_AFTER_PROJECT_COMMIT,
                                 cvsConfiguration.TAG_AFTER_PROJECT_COMMIT_NAME);
     }
@@ -216,7 +218,7 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
   }
 
   public String getCheckinOperationName() {
-    return "Commit";
+    return com.intellij.CvsBundle.message("operation.name.checkin.project");
   }
 
 }

@@ -1,81 +1,40 @@
 package com.intellij.compiler;
 
 import com.intellij.openapi.compiler.CompilerMessageCategory;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.util.text.StringUtil;
 
-import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 public abstract class OutputParser {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.OutputParser");
+  protected final List<ParserAction> myParserActions = new ArrayList<ParserAction>(10);
+
   public static interface Callback {
     String getNextLine();
+    String getCurrentLine();
     void setProgressText(String text);
     void fileProcessed(String path);
     void fileGenerated(String path);
     void message(CompilerMessageCategory category, String message, String url, int lineNum, int columnNum);
   }
 
-  public abstract boolean processMessageLine(Callback callback);
-
-  protected void processLoading(final String line, final Callback callback) {
-    //if (LOG.isDebugEnabled()) {
-    //  LOG.debug(line);
-    //}
-    if (line.startsWith("[parsing started")){ // javac
-      String filePath = line.substring("[parsing started".length(), line.length() - 1).trim();
-      filePath = filePath.replace(File.separatorChar, '/');
-      processParsingMessage(callback, filePath);
+  public boolean processMessageLine(Callback callback) {
+    final String line = callback.getNextLine();
+    if(line == null) {
+      return false;
     }
-    else if (line.startsWith("[parsed") && line.indexOf(".java") >= 0) { // javac version 1.2.2
-      int index = line.indexOf(".java");
-      String filePath = line.substring("[parsed".length(), index + ".java".length()).trim();
-      processParsingMessage(callback, filePath.replace(File.separatorChar, '/'));
-    }
-    else if (line.startsWith("[read") && line.endsWith(".java]")){ // jikes
-      String filePath = line.substring("[read".length(), line.length() - 1).trim();
-      processParsingMessage(callback, filePath.replace(File.separatorChar, '/'));
-    }
-    else if (line.startsWith("[parsing completed")){
-    }
-    else if (line.startsWith("[loading") || line.startsWith("[loaded") || line.startsWith("[read")){
-      if (LOG.isDebugEnabled()) {
-        LOG.debug(line);
-      }
-      callback.setProgressText("Loading classes...");
-    }
-    else if (line.startsWith("[checking")){
-      String className = line.substring("[checking".length(), line.length() - 1).trim();
-      callback.setProgressText("Compiling " + className + "...");
-    }
-    else if (line.startsWith("[wrote") || line.startsWith("[write")){
-      String filePath = line.substring("[wrote".length(), line.length() - 1).trim();
-      processParsingMessage(callback, filePath.replace(File.separatorChar, '/'));
-    }
-    else {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Failed to interpret: #" + line + "#");
+    // common statistics messages (javac & jikes)
+    for (ParserAction action : myParserActions) {
+      if (action.execute(line, callback)) {
+        return true;
       }
     }
-  }
-
-  private void processParsingMessage(final Callback callback, final String filePath) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Process parsing message: " + filePath);
+    if (StringUtil.startsWithChar(line, '[') && StringUtil.endsWithChar(line, ']')) {
+      // at this point any meaningful output surrounded with '[' and ']' characters is processed, so
+      // suppress messages like "[total 4657ms]" or "[search path for source files: []]"
+      return true;
     }
-    int index = filePath.lastIndexOf('/');
-    final String name = index >= 0 ? filePath.substring(index + 1) : filePath;
-
-    final FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(name);
-    if (StdFileTypes.JAVA.equals(fileType)) {
-      callback.fileProcessed(filePath);
-      callback.setProgressText("Parsing " + name + "...");
-    }
-    else if (StdFileTypes.CLASS.equals(fileType)) {
-      callback.fileGenerated(filePath);
-    }
+    return false;
   }
 
   protected void addMessage(Callback callback, CompilerMessageCategory type, String message) {
@@ -86,4 +45,5 @@ public abstract class OutputParser {
   protected void addMessage(Callback callback, CompilerMessageCategory type, String text, String url, int line, int column){
     callback.message(type, text, url, line, column);
   }
+
 }

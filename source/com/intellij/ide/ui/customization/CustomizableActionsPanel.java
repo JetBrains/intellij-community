@@ -5,6 +5,7 @@ import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.PackageViewPane;
 import com.intellij.ide.projectView.impl.ProjectViewPane;
+import com.intellij.ide.IdeBundle;
 import com.intellij.j2ee.module.view.J2EEProjectViewPane;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.QuickList;
@@ -31,6 +32,7 @@ import com.intellij.ui.*;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -41,6 +43,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.*;
+import java.util.List;
 
 /**
  * User: anna
@@ -72,6 +75,7 @@ public class CustomizableActionsPanel {
 
   public CustomizableActionsPanel() {
     myList.setModel(myCustomizationSchemas);
+    //noinspection HardCodedStringLiteral
     myList.setPrototypeCellValue(new CustomActionsSchema("xxxxxxxxxxxxx", ""));
     fillSchemaList();
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -92,6 +96,7 @@ public class CustomizableActionsPanel {
         }
       }
     });
+    //noinspection HardCodedStringLiteral
     Group rootGroup = new Group("root", null, null);
     DefaultMutableTreeNode root = new DefaultMutableTreeNode(rootGroup);
     DefaultTreeModel model = new DefaultTreeModel(root);
@@ -99,7 +104,7 @@ public class CustomizableActionsPanel {
 
     myActionsTree.setRootVisible(false);
     myActionsTree.setShowsRootHandles(true);
-    myActionsTree.putClientProperty("JTree.lineStyle", "Angled");
+    UIUtil.setLineStyleAngled(myActionsTree);
     myActionsTree.setCellRenderer(new MyTreeCellRenderer());
 
     setButtonsDisabled();
@@ -144,7 +149,7 @@ public class CustomizableActionsPanel {
     final CustomizableActionsSchemas schemas = CustomizableActionsSchemas.getInstance();
     myAddActionButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        final java.util.List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(myActionsTree);
+        final List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(myActionsTree);
         final TreePath selectionPath = myActionsTree.getLeadSelectionPath();
         if (selectionPath != null) {
           DefaultMutableTreeNode node = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
@@ -173,7 +178,7 @@ public class CustomizableActionsPanel {
 
     myEditIconButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        final java.util.List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(myActionsTree);
+        final List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(myActionsTree);
         final TreePath selectionPath = myActionsTree.getLeadSelectionPath();
         if (selectionPath != null) {
           EditIconDialog dlg = new EditIconDialog((DefaultMutableTreeNode)selectionPath.getLastPathComponent());
@@ -188,7 +193,7 @@ public class CustomizableActionsPanel {
 
     myAddSeparatorButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        final java.util.List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(myActionsTree);
+        final List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(myActionsTree);
         final TreePath selectionPath = myActionsTree.getLeadSelectionPath();
         if (selectionPath != null) {
           DefaultMutableTreeNode node = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
@@ -205,7 +210,7 @@ public class CustomizableActionsPanel {
 
     myRemoveActionButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        final java.util.List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(myActionsTree);
+        final List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(myActionsTree);
         final TreePath[] selectionPath = myActionsTree.getSelectionPaths();
         if (selectionPath != null) {
           for (int i = 0; i < selectionPath.length; i++) {
@@ -222,7 +227,7 @@ public class CustomizableActionsPanel {
 
     myMoveActionUpButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        final java.util.List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(myActionsTree);
+        final List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(myActionsTree);
         final TreePath[] selectionPath = myActionsTree.getSelectionPaths();
         if (selectionPath != null) {
           for (int i = 0; i < selectionPath.length; i++) {
@@ -246,7 +251,7 @@ public class CustomizableActionsPanel {
 
     myMoveActionDownButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        final java.util.List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(myActionsTree);
+        final List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(myActionsTree);
         final TreePath[] selectionPath = myActionsTree.getSelectionPaths();
         if (selectionPath != null) {
           for (int i = selectionPath.length - 1; i >= 0; i--) {
@@ -272,32 +277,34 @@ public class CustomizableActionsPanel {
 
     final DefaultActionGroup group = new DefaultActionGroup();
     ReorderableListController<CustomActionsSchema> controller = ReorderableListController.create(myList, group);
-    controller.addAddAction("Add customization schema", new Factory<CustomActionsSchema>() {
+    controller.addAddAction(IdeBundle.message("action.add.customization.schema"), new Factory<CustomActionsSchema>() {
       public CustomActionsSchema create() {
         return new CustomActionsSchema(createUniqueName(), "");
       }
     }, true);
 
-    final ReorderableListController<CustomActionsSchema>.RemoveActionDescription removeActionDescription = controller.addRemoveAction("Remove customization schema");
+    final ReorderableListController<CustomActionsSchema>.RemoveActionDescription removeActionDescription = controller
+      .addRemoveAction(IdeBundle.message("action.remove.customization.schema"));
     removeActionDescription.setEnableCondition(new Condition<CustomActionsSchema>() {
       public boolean value(final CustomActionsSchema schema) {
-        if (schema.getName().equals("default")) {
+        if (schema.getName().equals(IdeBundle.message("customizations.schema.default"))) {
           return false;
         }
         return true;
       }
     });
-    controller.addCopyAction("Copy schema", new Convertor<CustomActionsSchema, CustomActionsSchema>() {
-      public CustomActionsSchema convert(final CustomActionsSchema o) {
-        final CustomActionsSchema customActionsSchema = o.copyFrom();
-        customActionsSchema.setName(createUniqueName());
-        return customActionsSchema;
-      }
-    }, new Condition<CustomActionsSchema>() {
-      public boolean value(final CustomActionsSchema object) {
-        return true;
-      }
-    });
+    controller
+      .addCopyAction(IdeBundle.message("action.copy.customization.schema"), new Convertor<CustomActionsSchema, CustomActionsSchema>() {
+        public CustomActionsSchema convert(final CustomActionsSchema o) {
+          final CustomActionsSchema customActionsSchema = o.copyFrom();
+          customActionsSchema.setName(createUniqueName());
+          return customActionsSchema;
+        }
+      }, new Condition<CustomActionsSchema>() {
+        public boolean value(final CustomActionsSchema object) {
+          return true;
+        }
+      });
     myListPane.setLayout(new BorderLayout());
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
     myListPane.add(toolbar.getComponent(), BorderLayout.NORTH);
@@ -360,8 +367,8 @@ public class CustomizableActionsPanel {
     if (isToolbarAction(node) &&
         anAction.getTemplatePresentation() != null &&
         anAction.getTemplatePresentation().getIcon() == null) {
-      final int exitCode = Messages.showYesNoDialog("You are adding an action without icon to the toolbar. The default icon will be added to this action.",
-                                                    "Unable to add action without icon to the toolbar",
+      final int exitCode = Messages.showYesNoDialog(IdeBundle.message("error.adding.action.without.icon.to.toolbar"),
+                                                    IdeBundle.message("title.unable.to.add.action.without.icon.to.toolbar"),
                                                     Messages.getInformationIcon());
       if (exitCode == DialogWrapper.OK_EXIT_CODE) {
         schemas.addIconCustomization(actionId, null);
@@ -415,7 +422,7 @@ public class CustomizableActionsPanel {
   }
 
   private String createUniqueName() {
-    String str = "Unnamed";
+    String str = IdeBundle.message("template.unnamed");
     final ArrayList<String> currentNames = new ArrayList<String>();
     for (int i = 0; i < myCustomizationSchemas.getSize(); i++) {
       currentNames.add(((CustomActionsSchema)myCustomizationSchemas.elementAt(i)).getName());
@@ -509,7 +516,7 @@ public class CustomizableActionsPanel {
       final CustomActionsSchema schema = (CustomActionsSchema)myCustomizationSchemas.getElementAt(i);
       final String name = schema.getName();
       if (names.contains(name)) {
-        throw new ConfigurationException("Please, specify new name for schema \'" + name + "\'.");
+        throw new ConfigurationException(IdeBundle.message("error.please.specify.new.name.for.schema", name));
       }
       names.add(name);
       if (schema.isModified()) {
@@ -660,10 +667,10 @@ public class CustomizableActionsPanel {
         setIcon(layeredIcon);
 
         if (sel) {
-          setForeground(UIManager.getColor("Tree.selectionForeground"));
+          setForeground(UIUtil.getTreeSelectionForeground());
         }
         else {
-          setForeground(UIManager.getColor("Tree.foreground"));
+          setForeground(UIUtil.getTreeForeground());
         }
       }
       return this;
@@ -690,7 +697,7 @@ public class CustomizableActionsPanel {
     if (action != null && action.getTemplatePresentation() != null) {
       if (path != null && path.length() > 0) {
         final Image image = ImageLoader.loadFromURL(VfsUtil.convertToURL(VfsUtil.pathToUrl(path.replace(File.separatorChar,
-                                                                                                                         '/'))));
+                                                                                                        '/'))));
         Icon icon = new File(path).exists() ? IconLoader.getIcon(image) : null;
         if (icon != null) {
           node.setUserObject(Pair.create(actionId, icon));
@@ -715,11 +722,12 @@ public class CustomizableActionsPanel {
     textField.setMinimumSize(new Dimension(150, textField.getPreferredSize().height));
     final FileChooserDescriptor fileChooserDescriptor = new FileChooserDescriptor(true, false, false, false, false, false) {
       public boolean isFileSelectable(VirtualFile file) {
+        //noinspection HardCodedStringLiteral
         return file.getName().endsWith(".png");
       }
     };
-    textField.addBrowseFolderListener("Browse Icon", "Browse icon for selected action", null,
-                                        fileChooserDescriptor);
+    textField.addBrowseFolderListener(IdeBundle.message("title.browse.icon"), IdeBundle.message("prompt.browse.icon.for.selected.action"), null,
+                                      fileChooserDescriptor);
     InsertPathAction.addTo(textField.getTextField(), fileChooserDescriptor);
     return textField;
   }
@@ -730,7 +738,7 @@ public class CustomizableActionsPanel {
 
     protected EditIconDialog(DefaultMutableTreeNode node) {
       super(false);
-      setTitle("Choose Action Icon Path");
+      setTitle(IdeBundle.message("title.choose.action.icon.path"));
       init();
       myNode = node;
       final String actionId = getActionId(node);
@@ -785,7 +793,7 @@ public class CustomizableActionsPanel {
 
     FindAvailableActionsDialog() {
       super(false);
-      setTitle("Choose Actions To Add");
+      setTitle(IdeBundle.message("action.choose.actions.to.add"));
       init();
     }
 
@@ -800,8 +808,7 @@ public class CustomizableActionsPanel {
       final ActionManager actionManager = ActionManager.getInstance();
       JPanel panel = new JPanel(new BorderLayout());
 
-      mySetIconButton = new JButton("Set icon");
-      mySetIconButton.setMnemonic('S');
+      mySetIconButton = new JButton(IdeBundle.message("button.set.icon"));
       mySetIconButton.setEnabled(false);
       mySetIconButton.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
@@ -820,7 +827,7 @@ public class CustomizableActionsPanel {
       });
       JPanel northPanel = new JPanel(new BorderLayout());
       northPanel.add(myTextField, BorderLayout.CENTER);
-      northPanel.add(new JLabel("Icon Path:"), BorderLayout.WEST);
+      northPanel.add(new JLabel(IdeBundle.message("label.icon.path")), BorderLayout.WEST);
       northPanel.add(mySetIconButton, BorderLayout.EAST);
       northPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
       panel.add(northPanel, BorderLayout.NORTH);

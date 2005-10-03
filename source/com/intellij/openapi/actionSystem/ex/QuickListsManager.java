@@ -12,6 +12,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -25,7 +26,7 @@ public class QuickListsManager implements ExportableApplicationComponent, NamedJ
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.actionSystem.ex.QuickListsManager");
 
   private final List<QuickList> myQuickLists = new ArrayList<QuickList>();
-  private static final String LIST_TAG = "list";
+  @NonNls private static final String LIST_TAG = "list";
   private ActionManager myActionManager;
   private DataManager myDataManager;
 
@@ -49,7 +50,7 @@ public class QuickListsManager implements ExportableApplicationComponent, NamedJ
   }
 
   public String getPresentableName() {
-    return "Quick lists";
+    return ActionSystemBundle.message("quick.lists.presentable.name");
   }
 
   public void initComponent() {

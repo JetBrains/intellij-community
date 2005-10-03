@@ -2,6 +2,7 @@ package com.intellij.refactoring.changeSignature;
 
 import com.intellij.refactoring.ui.RowEditableTableModel;
 import com.intellij.refactoring.util.CanonicalTypes;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.psi.*;
 import com.intellij.openapi.diagnostic.Logger;
 
@@ -70,7 +71,7 @@ class ExceptionsTableModel extends AbstractTableModel implements RowEditableTabl
   public String getColumnName(int column) {
     switch (column) {
       case 0:
-        return "Type";
+        return RefactoringBundle.message("column.name.type");
       default:
         throw new IllegalArgumentException();
     }

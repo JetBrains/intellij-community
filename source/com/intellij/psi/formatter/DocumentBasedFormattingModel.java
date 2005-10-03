@@ -58,7 +58,10 @@ public class DocumentBasedFormattingModel implements FormattingModel {
     if (textRange.getLength() > 0) {
       final CharSequence current = myDocument.getCharsSequence().subSequence(textRange.getStartOffset(), textRange.getEndOffset());
       final String ws = current.toString();
-      LOG.assertTrue(ws.trim().length() == 0, ws);
+      if (ws.trim().length() > 0) {
+        LOG.assertTrue(false, "Document text:" + myDocument.getText() + "\nwsText:" + ws);
+      }
+
     }
     myDocument.replaceString(textRange.getStartOffset(),
                              textRange.getEndOffset(),

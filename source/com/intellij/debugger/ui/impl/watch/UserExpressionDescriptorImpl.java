@@ -11,6 +11,7 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.tree.UserExpressionDescriptor;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiCodeFragment;
@@ -51,13 +52,15 @@ public class UserExpressionDescriptorImpl extends EvaluationDescriptor implement
       final PsiClass psiClass = DebuggerUtilsEx.findClass(myTypeName, myProject);
 
       if (psiClass == null) {
-        throw EvaluateExceptionUtil.createEvaluateException("Invalid type name " + typeName);
+        throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.invalid.type.name", typeName));
       }
 
       return getEffectiveCodeFragmentFactory(psiClass).createCodeFragment(getEvaluationText(), psiClass, myProject);
     }
     else {
-      throw EvaluateExceptionUtil.createEvaluateException("Object reference expected instead of" + myParentDescriptor.getName());
+      throw EvaluateExceptionUtil.createEvaluateException(
+        DebuggerBundle.message("evaluation.error.objref.expected", myParentDescriptor.getName())
+      );
     }
   }
 

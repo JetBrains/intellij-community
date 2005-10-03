@@ -4,12 +4,12 @@ import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.sun.jdi.ObjectReference;
@@ -116,7 +116,7 @@ public class DebuggerTreeNodeExpression {
 //  }
 
   private static boolean isSuperMethod(PsiMethod superMethod, PsiMethod overridingMethod) {
-      PsiMethod[] superMethods = PsiSuperMethodUtil.findSuperMethods(overridingMethod);
+    PsiMethod[] superMethods = overridingMethod.findSuperMethods();
       for (int i = 0; i < superMethods.length; i++) {
         if (superMethods[i] == superMethod) {
           return true;
@@ -163,7 +163,8 @@ public class DebuggerTreeNodeExpression {
       psiExpression = (PsiExpression) ChangeContextUtil.decodeContextInfo(result, thisClass, howToEvaluateThis);
     }
     catch (IncorrectOperationException e) {
-      throw new EvaluateException("Cannot substitute '" + result.getText() + "' into '" + howToEvaluateThis.getText() + "' as 'this'", null);
+      throw new EvaluateException(
+        DebuggerBundle.message("evaluation.error.invalid.this.expression", result.getText(), howToEvaluateThis.getText()), null);
     }
 
     try {
@@ -201,7 +202,7 @@ public class DebuggerTreeNodeExpression {
         return parenthExpression;
       }
       catch (IncorrectOperationException e) {
-        throw new EvaluateException("Invalid type name '" + typeName + "'", e);
+        throw new EvaluateException(DebuggerBundle.message("error.invalid.type.name", typeName), e);
       }
     }
     else {

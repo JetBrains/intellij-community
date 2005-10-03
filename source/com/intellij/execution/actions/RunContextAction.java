@@ -2,6 +2,7 @@ package com.intellij.execution.actions;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunManagerEx;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.runners.JavaProgramRunner;
 import com.intellij.execution.runners.RunStrategy;
@@ -12,7 +13,7 @@ public class RunContextAction extends BaseRunConfigurationAction {
   private final JavaProgramRunner myRunner;
 
   public RunContextAction(final JavaProgramRunner runner) {
-    super(runner.getInfo().getStartActionText() + " context configuration", null, runner.getInfo().getIcon());
+    super(ExecutionBundle.message("perform.action.with.context.configuration.action.name", runner.getInfo().getStartActionText()), null, runner.getInfo().getIcon());
     myRunner = runner;
   }
 
@@ -30,7 +31,7 @@ public class RunContextAction extends BaseRunConfigurationAction {
                                         configuration.getRunnerSettings(myRunner), configuration.getConfigurationSettings(myRunner));
     }
     catch (ExecutionException e) {
-      Messages.showErrorDialog(context.getProject(), e.getMessage(), "Error");
+      Messages.showErrorDialog(context.getProject(), e.getMessage(), ExecutionBundle.message("error.common.title"));
     }
   }
 

@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.source.parsing.xml;
 
+import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.lang.ASTNode;
 import com.intellij.lexer.FilterLexer;
 import com.intellij.lexer.Lexer;
@@ -14,7 +15,6 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlText;
 import com.intellij.util.CharTable;
 
 import java.util.HashSet;
@@ -264,7 +264,7 @@ public class XmlParsing implements ElementType {
       final LexerPosition pos = lexer.getCurrentPosition();
 
       if (lexer.getTokenType() != XML_END_TAG_START) {
-        TreeUtil.insertAfter(tagEnd, Factory.createErrorElement("Element is not closed"));
+        TreeUtil.insertAfter(tagEnd, Factory.createErrorElement(XmlErrorMessages.message("element.is.not.closed")));
 
         return false;
       }
@@ -288,7 +288,7 @@ public class XmlParsing implements ElementType {
             TreeUtil.addChildren(parent, start);
           }
         }
-        TreeUtil.insertAfter(tagEnd, Factory.createErrorElement("Element is not closed"));
+        TreeUtil.insertAfter(tagEnd, Factory.createErrorElement(XmlErrorMessages.message("element.is.not.closed")));
         return true;
       }
 
@@ -305,7 +305,7 @@ public class XmlParsing implements ElementType {
       addToken(tag, lexer);
     }
     else {
-      TreeUtil.insertAfter((TreeElement)tag.getLastChildNode(), Factory.createErrorElement("Element is not closed"));
+      TreeUtil.insertAfter((TreeElement)tag.getLastChildNode(), Factory.createErrorElement(XmlErrorMessages.message("element.is.not.closed")));
     }
 
     return true;
@@ -603,7 +603,7 @@ public class XmlParsing implements ElementType {
       addToken(decl, lexer);
     }
     else {
-      TreeUtil.addChildren(decl, Factory.createErrorElement("'?>' expected"));
+      TreeUtil.addChildren(decl, Factory.createErrorElement(XmlErrorMessages.message("expected.prologue.tag.termination.expected")));
     }
 
     return decl;
@@ -624,7 +624,7 @@ public class XmlParsing implements ElementType {
 
       if (lastPosition != -1) {
         if (lastPosition == lexer.getTokenStart()) {
-          TreeUtil.addChildren(tag, Factory.createErrorElement("Whitespace expected"));
+          TreeUtil.addChildren(tag, Factory.createErrorElement(XmlErrorMessages.message("expected.whitespace")));
           lastPosition = -1;
         }
       }
@@ -638,7 +638,7 @@ public class XmlParsing implements ElementType {
       addToken(parent, lexer);
 
       if (lexer.getTokenType() != XML_EQ) {
-        TreeUtil.addChildren(parent, Factory.createErrorElement("'=' expected"));
+        TreeUtil.addChildren(parent, Factory.createErrorElement(XmlErrorMessages.message("expected.attribute.eq.sign")));
         continue;
       }
 
@@ -758,7 +758,7 @@ public class XmlParsing implements ElementType {
         TreeElement tokenElement;
 
         IElementType type = lexer.getTokenType();
-        if (!XML_WHITE_SPACE_OR_COMMENT_BIT_SET.isInSet(type)) {
+        if (!XML_WHITE_SPACE_OR_COMMENT_BIT_SET.contains(type)) {
           LOG.assertTrue(false, "Missed token should be white space or comment:" + type);
           throw new RuntimeException();
         }
@@ -784,13 +784,13 @@ public class XmlParsing implements ElementType {
     }
 
     public boolean isTokenValid(IElementType tokenType) {
-      return tokenType != null && XML_WHITE_SPACE_OR_COMMENT_BIT_SET.isInSet(tokenType);
+      return tokenType != null && XML_WHITE_SPACE_OR_COMMENT_BIT_SET.contains(tokenType);
     }
 
     private TreeElement parseComment(Lexer lexer, ParsingContext context) {
       final CompositeElement comment = Factory.createCompositeElement(ElementType.XML_COMMENT);
 
-      while (lexer.getTokenType() != null && XML_COMMENT_BIT_SET.isInSet(lexer.getTokenType())) {
+      while (lexer.getTokenType() != null && XML_COMMENT_BIT_SET.contains(lexer.getTokenType())) {
         final TreeElement tokenElement = ParseUtil.createTokenElement(lexer, context.getCharTable());
         lexer.advance();
         TreeUtil.addChildren(comment, tokenElement);

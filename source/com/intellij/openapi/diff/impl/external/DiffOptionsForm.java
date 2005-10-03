@@ -3,6 +3,7 @@ package com.intellij.openapi.diff.impl.external;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.util.config.AbstractProperty;
 import com.intellij.util.config.BooleanProperty;
 import com.intellij.util.config.StringProperty;
@@ -72,7 +73,7 @@ public class DiffOptionsForm {
           updateEnabledEffect();
         }
       });
-      myTextField.addBrowseFolderListener("Select External Diff Program", null, null,
+      myTextField.addBrowseFolderListener(DiffBundle.message("select.external.diff.program.dialog.title"), null, null,
                                           FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor(),
                                           TextComponentAccessor.TEXT_FIELD_SELECTED_TEXT);
     }

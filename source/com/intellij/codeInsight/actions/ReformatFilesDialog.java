@@ -1,8 +1,9 @@
 package com.intellij.codeInsight.actions;
 
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.project.Project;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 
 import javax.swing.*;
 
@@ -12,7 +13,7 @@ public class ReformatFilesDialog extends DialogWrapper {
 
   public ReformatFilesDialog(Project project) {
     super(project, true);
-    setTitle("Reformat Files");
+    setTitle(CodeInsightBundle.message("dialog.reformat.files.title"));
     myOptimizeImports.setSelected(isOptmizeImportsOptionOn());
     init();
   }
@@ -26,12 +27,12 @@ public class ReformatFilesDialog extends DialogWrapper {
   }
 
   protected void doOKAction() {
-    PropertiesComponent.getInstance().setValue(LayoutCodeDialog.OPTIMIZE_IMPORTS_KEY, myOptimizeImports.isSelected() ? "true" : "false");
+    PropertiesComponent.getInstance().setValue(LayoutCodeDialog.OPTIMIZE_IMPORTS_KEY, Boolean.toString(myOptimizeImports.isSelected()));
     super.doOKAction();
   }
 
   private boolean isOptmizeImportsOptionOn() {
-    return "true".equals(PropertiesComponent.getInstance().getValue(LayoutCodeDialog.OPTIMIZE_IMPORTS_KEY));
+    return Boolean.valueOf(PropertiesComponent.getInstance().getValue(LayoutCodeDialog.OPTIMIZE_IMPORTS_KEY));
   }
 
 }

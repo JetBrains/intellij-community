@@ -4,6 +4,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.vcs.checkin.DifferenceType;
 import com.intellij.openapi.vcs.checkin.ex.DifferenceTypeEx;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -46,7 +47,7 @@ public class DiffStatusBar extends JPanel {
   private void addComponent(final LegendTypeDescriptor diffType) {
     JComponent component = new JPanel() {
       public void paint(Graphics g) {
-        setBackground(UIManager.getColor("TableHeader.background"));
+        setBackground(UIUtil.getTableHeaderBackground());
         super.paint(g);
         FontMetrics metrics = getFontMetrics(getFont());
 
@@ -61,7 +62,7 @@ public class DiffStatusBar extends JPanel {
           font = font.deriveFont(Font.PLAIN);
         }
         g.setFont(font);
-        g.setColor(UIManager.getColor("Label.foreground"));
+        g.setColor(UIUtil.getLabelForeground());
         int textBaseline = (getHeight() - metrics.getHeight()) / 2 + metrics.getAscent();
         g.drawString(diffType.getDisplayName(), 67, textBaseline);
       }

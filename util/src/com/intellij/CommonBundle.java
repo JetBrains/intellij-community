@@ -1,8 +1,13 @@
 package com.intellij;
 
-import java.util.ResourceBundle;
-import java.util.MissingResourceException;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
+
 import java.text.MessageFormat;
+import java.util.MissingResourceException;
+import java.util.ResourceBundle;
 
 /**
  * Created by IntelliJ IDEA.
@@ -12,23 +17,26 @@ import java.text.MessageFormat;
  * To change this template use File | Settings | File Templates.
  */
 public class CommonBundle {
-  private static final ResourceBundle ourBundle = ResourceBundle.getBundle("com.intellij.CommonBundle");
+  @NonNls private static final ResourceBundle ourBundle = ResourceBundle.getBundle("messages.CommonBundle");
 
   private CommonBundle() {}
 
-  public static String message(String key, Object... params) {
+  public static String message(@PropertyKey(resourceBundle = "messages.CommonBundle") String key, Object... params) {
     return message(ourBundle, key, params);
   }
 
-  public static String message(final ResourceBundle bundle, final String key, final Object... params) {
+  public static String messageOrDefault(@Nullable final ResourceBundle bundle, final String key, String defaultValue, final Object... params) {
+    if (bundle == null) return defaultValue;
+
     String value;
     try {
-
       value = bundle.getString(key);
     }
     catch (MissingResourceException e) {
-      return "!" + key + "!";
+      return defaultValue;
     }
+
+    value = UIUtil.replaceMnemonicAmpersand(value);
 
     if (params.length > 0) {
       return MessageFormat.format(value, params);
@@ -36,13 +44,28 @@ public class CommonBundle {
 
     return value;
   }
+  public static String message(final ResourceBundle bundle, final String key, final Object... params) {
+    return messageOrDefault(bundle, key, "!" + key + "!", params);
+  }
 
   public static String getCancelButtonText() {
     return message("button.cancel");
   }
 
+  public static String getBackgroundButtonText() {
+    return message("button.background");
+  }
+
+  public static String getHelpButtonText() {
+    return message("button.help");
+  }
+
   public static String getErrorTitle() {
     return message("title.error");
+  }
+
+  public static String getWarningTitle() {
+    return message("title.warning");
   }
 
   public static String getLoadingTreeNodeText() {
@@ -71,6 +94,14 @@ public class CommonBundle {
   }
 
   public static String getCloseButtonText() {
-    return "Close";
+    return CommonBundle.message("button.close");
+  }
+
+  public static String getNoForAllButtonText() {
+    return CommonBundle.message("button.no.for.all");
+  }
+
+  public static String getApplyButtonText() {
+    return CommonBundle.message("button.apply");
   }
 }

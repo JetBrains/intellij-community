@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.text.StringTokenizer;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -31,6 +32,12 @@ public class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState
   private ArrayList<Boolean> myExpandedStates = new ArrayList<Boolean>();
   private Map<RangeMarker, String> myPlaceholderTexts = new HashMap<RangeMarker,String>();
   private static final String DEFAULT_PLACEHOLDER = "...";
+  @NonNls private static final String ELEMENT_TAG = "element";
+  @NonNls private static final String SIGNATURE_ATT = "signature";
+  @NonNls private static final String EXPANDED_ATT = "expanded";
+  @NonNls private static final String MARKER_TAG = "marker";
+  @NonNls private static final String DATE_ATT = "date";
+  @NonNls private static final String PLACEHOLDER_ATT = "placeholder";
 
   public DocumentFoldingInfo(Project project, Document document) {
     myProject = project;
@@ -130,24 +137,24 @@ public class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState
           LOG.assertTrue(false, "element:" + psiElement + ", signature:" + signature + ", file:" + psiElement.getContainingFile());
         }
 
-        Element e = new Element("element");
-        e.setAttribute("signature", signature);
-        e.setAttribute("expanded", state.toString());
+        Element e = new Element(ELEMENT_TAG);
+        e.setAttribute(SIGNATURE_ATT, signature);
+        e.setAttribute(EXPANDED_ATT, state.toString());
         element.addContent(e);
       } else {
         RangeMarker marker = (RangeMarker) o;
-        Element e = new Element("marker");
+        Element e = new Element(MARKER_TAG);
         if (date == null) {
           date = getTimeStamp();
         }
         if ("".equals(date)) continue;
 
-        e.setAttribute("date", date);
-        e.setAttribute("expanded", state.toString());
+        e.setAttribute(DATE_ATT, date);
+        e.setAttribute(EXPANDED_ATT, state.toString());
         String signature = new Integer (marker.getStartOffset()) + ":" + new Integer (marker.getEndOffset());
-        e.setAttribute("signature", signature);
+        e.setAttribute(SIGNATURE_ATT, signature);
         String placeHolderText = myPlaceholderTexts.get(marker);
-        e.setAttribute("placeholder", placeHolderText);
+        e.setAttribute(PLACEHOLDER_ATT, placeHolderText);
         element.addContent(e);
       }
     }
@@ -168,33 +175,33 @@ public class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState
     String date = null;
     for (final Object o : element.getChildren()) {
       Element e = (Element)o;
-      if ("element".equals(e.getName())) {
-        String signature = e.getAttributeValue("signature");
+      if (ELEMENT_TAG.equals(e.getName())) {
+        String signature = e.getAttributeValue(SIGNATURE_ATT);
         if (signature == null) {
           continue;
         }
         PsiElement restoredElement = FoldingPolicy.restoreBySignature(psiFile, signature);
         if (restoredElement != null) {
           mySmartPointersOrRangeMarkers.add(SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(restoredElement));
-          myExpandedStates.add(Boolean.valueOf(e.getAttributeValue("expanded")));
+          myExpandedStates.add(Boolean.valueOf(e.getAttributeValue(EXPANDED_ATT)));
         }
       }
-      else if ("marker".equals(e.getName())) {
+      else if (MARKER_TAG.equals(e.getName())) {
         if (date == null) {
           date = getTimeStamp();
         }
         if ("".equals(date)) continue;
 
-        if (!date.equals(e.getAttributeValue("date")) || FileDocumentManager.getInstance().isDocumentUnsaved(document)) continue;
-        StringTokenizer tokenizer = new StringTokenizer(e.getAttributeValue("signature"), ":");
+        if (!date.equals(e.getAttributeValue(DATE_ATT)) || FileDocumentManager.getInstance().isDocumentUnsaved(document)) continue;
+        StringTokenizer tokenizer = new StringTokenizer(e.getAttributeValue(SIGNATURE_ATT), ":");
         try {
           int start = Integer.valueOf(tokenizer.nextToken()).intValue();
           int end = Integer.valueOf(tokenizer.nextToken()).intValue();
           if (start < 0 || end >= document.getTextLength() || start > end) continue;
           RangeMarker marker = document.createRangeMarker(start, end);
           mySmartPointersOrRangeMarkers.add(marker);
-          myExpandedStates.add(Boolean.valueOf(e.getAttributeValue("expanded")));
-          String placeHolderText = e.getAttributeValue("placeholder");
+          myExpandedStates.add(Boolean.valueOf(e.getAttributeValue(EXPANDED_ATT)));
+          String placeHolderText = e.getAttributeValue(PLACEHOLDER_ATT);
           if (placeHolderText == null) placeHolderText = DEFAULT_PLACEHOLDER;
           myPlaceholderTexts.put(marker, placeHolderText);
         }

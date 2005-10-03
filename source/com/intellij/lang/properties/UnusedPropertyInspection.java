@@ -7,6 +7,9 @@ import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.ModuleUtil;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -26,41 +29,65 @@ public class UnusedPropertyInspection extends LocalInspectionTool {
   private static final RemovePropertyLocalFix QUICK_FIX = new RemovePropertyLocalFix();
 
   public String getGroupDisplayName() {
-    return "Properties Files";
+    return PropertiesBundle.message("properties.files.inspection.group.display.name");
   }
 
   public String getDisplayName() {
-    return "Unused Property";
+    return PropertiesBundle.message("properties.files.inspection.group.name");
   }
 
   public String getShortName() {
     return "UnusedProperty";
   }
 
-  public ProblemDescriptor[] checkFile(PsiFile file, InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor[] checkFile(PsiFile file, final InspectionManager manager, boolean isOnTheFly) {
     if (!(file instanceof PropertiesFile)) return null;
-    List<ProblemDescriptor> descriptors = new SmartList<ProblemDescriptor>();
-    PsiSearchHelper searchHelper = file.getManager().getSearchHelper();
-    List<Property> properties = ((PropertiesFile)file).getProperties();
+    final List<ProblemDescriptor> descriptors = new SmartList<ProblemDescriptor>();
+    final PsiSearchHelper searchHelper = file.getManager().getSearchHelper();
+    final List<Property> properties = ((PropertiesFile)file).getProperties();
     Module module = ModuleUtil.findModuleForPsiElement(file);
     if (module == null) return null;
+
     final GlobalSearchScope searchScope = GlobalSearchScope.moduleWithDependentsScope(module);
-    for (Property property : properties) {
-      PsiReferenceProcessor.FindElement processor = new PsiReferenceProcessor.FindElement();
-      searchHelper.processReferences(processor, property, searchScope, false);
-      if (!processor.isFound()) {
-        ASTNode[] nodes = property.getNode().getChildren(null);
-        PsiElement key = nodes.length == 0 ? property : nodes[0].getPsi();
-        ProblemDescriptor descriptor = manager.createProblemDescriptor(key, "Unused property", QUICK_FIX, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
-        descriptors.add(descriptor);
+    final ProgressIndicator original = ProgressManager.getInstance().getProgressIndicator();
+    final ProgressIndicator progress = original == null ? null : new ProgressWrapper(original);
+
+    ProgressManager.getInstance().runProcess(new Runnable() {
+      public void run() {
+        for (Property property : properties) {
+          PsiReferenceProcessor.FindElement processor = new PsiReferenceProcessor.FindElement();
+          if (original != null) {
+            original.setText(PropertiesBundle.message("searching.for.property.key.progress.text", property.getKey()));
+          }
+          searchHelper.processReferences(processor, property, searchScope, false);
+          if (!processor.isFound()) {
+            ASTNode[] nodes = property.getNode().getChildren(null);
+            PsiElement key = nodes.length == 0 ? property : nodes[0].getPsi();
+            ProblemDescriptor descriptor = manager.createProblemDescriptor(key, PropertiesBundle.message(
+              "unused.property.problem.descriptor.name"), QUICK_FIX, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+            descriptors.add(descriptor);
+          }
+        }
       }
-    }
+    }, progress);
     return descriptors.toArray(new ProblemDescriptor[descriptors.size()]);
+  }
+
+  private static class ProgressWrapper extends ProgressIndicatorBase {
+    private ProgressIndicator myOriginal;
+
+    public ProgressWrapper(final ProgressIndicator original) {
+      myOriginal = original;
+    }
+
+    public boolean isCanceled() {
+      return myOriginal.isCanceled();
+    }
   }
 
   private static class RemovePropertyLocalFix implements LocalQuickFix {
     public String getName() {
-      return "Remove Property";
+      return PropertiesBundle.message("remove.property.quick.fix.name");
     }
 
     public void applyFix(Project project, ProblemDescriptor descriptor) {

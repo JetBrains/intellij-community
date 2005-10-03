@@ -16,12 +16,15 @@
 package com.intellij.openapi.compiler;
 
 /**
- * A set of constants describing possible message categories
+ * A set of constants describing possible message categories.
+ *
+ * @see CompilerMessage#getCategory()
+ * @see CompileContext#addMessage(CompilerMessageCategory, String, String, int, int) 
  */
 public interface CompilerMessageCategory {
   CompilerMessageCategory ERROR = new CompilerMessageCategory() {
     public String toString() {
-      return "ERROR";
+      return CompilerBundle.message("message.category.error");
     }
 
     public String getPresentableText() {
@@ -30,7 +33,7 @@ public interface CompilerMessageCategory {
   };
   CompilerMessageCategory WARNING = new CompilerMessageCategory() {
     public String toString() {
-      return "WARNING";
+      return CompilerBundle.message("message.category.warning");
     }
     public String getPresentableText() {
       return toString();
@@ -38,7 +41,7 @@ public interface CompilerMessageCategory {
   };
   CompilerMessageCategory INFORMATION = new CompilerMessageCategory() {
     public String toString() {
-      return "INFORMATION";
+      return CompilerBundle.message("message.category.information");
     }
     public String getPresentableText() {
       return toString();
@@ -46,12 +49,12 @@ public interface CompilerMessageCategory {
   };
   CompilerMessageCategory STATISTICS = new CompilerMessageCategory() {
     public String toString() {
-      return "STATISTICS";
+      return CompilerBundle.message("message.category.statistics");
     }
     public String getPresentableText() {
       return toString();
     }
   };
 
-  public String getPresentableText();
+  String getPresentableText();
 }

@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 
 /**
@@ -15,7 +16,7 @@ import com.intellij.refactoring.util.RefactoringMessageUtil;
  */
 public class ReplaceConstructorWithFactoryHandler
         implements RefactoringActionHandler {
-  public static final String REFACTORING_NAME = "Replace Constructor With Factory Method";
+  public static final String REFACTORING_NAME = RefactoringBundle.message("replace.constructor.with.factory.method.title");
   private Project myProject;
 
   public void invoke(Project project, Editor editor, PsiFile file, DataContext dataContext) {
@@ -24,15 +25,13 @@ public class ReplaceConstructorWithFactoryHandler
     PsiElement element = file.findElementAt(offset);
     while (true) {
       if (element == null || element instanceof PsiFile) {
-        String message =
-                "Cannot perform the refactoring.\n" +
-                "The caret should be positioned inside the constructor to be refactored.";
+        String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.constructor"));
         RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, null/*HelpID.REPLACE_CONSTRUCTOR_WITH_FACTORY*/, project);
         return;
       }
 
       if (element instanceof PsiClass && !(element instanceof PsiAnonymousClass)
-              && ((PsiClass) element).getConstructors().length == 0) {
+          && ((PsiClass) element).getConstructors().length == 0) {
         invoke(project, new PsiElement[]{element}, dataContext);
         return;
       }
@@ -67,13 +66,13 @@ public class ReplaceConstructorWithFactoryHandler
     final PsiMethod[] constructors = aClass.getConstructors();
     if (constructors.length > 0) {
       String message =
-              "Class " + aClass.getQualifiedName() + " does not have implicit default consructor." ;
+              RefactoringBundle.message("class.does.not.have.implicit.default.consructor", aClass.getQualifiedName()) ;
       RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, null/*HelpID.REPLACE_CONSTRUCTOR_WITH_FACTORY*/, myProject);
       return;
     }
     final int answer = Messages.showYesNoCancelDialog(myProject,
-            "Would you like to replace default constructor of " + aClass.getQualifiedName() + " with factory method?",
-            REFACTORING_NAME, Messages.getQuestionIcon()
+                                                      RefactoringBundle.message("would.you.like.to.replace.default.constructor.of.0.with.factory.method", aClass.getQualifiedName()),
+                                                      REFACTORING_NAME, Messages.getQuestionIcon()
     );
     if (answer != 0) return;
     if (!aClass.isWritable()) {
@@ -83,26 +82,21 @@ public class ReplaceConstructorWithFactoryHandler
   }
 
   private void showJspOrLocalClassMessage() {
-    String message =
-            "Cannot perform the refactoring.\n" +
-            "Refactoring is not supported for local and JSP classes.";
+    String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("refactoring.is.not.supported.for.local.and.jsp.classes"));
     RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, null/*HelpID.REPLACE_CONSTRUCTOR_WITH_FACTORY*/, myProject);
   }
   private boolean checkAbstractClassOrInterfaceMessage(PsiClass aClass) {
     if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT)) return true;
-    final String reason = aClass.isInterface() ? "an interface" : "abstract";
-    String message =
-            "Cannot perform the refactoring.\n" +
-            aClass.getQualifiedName() + " is " + reason + ".";
+    String message = RefactoringBundle.getCannotRefactorMessage(aClass.isInterface() ?
+                                                                RefactoringBundle.message("class.is.interface", aClass.getQualifiedName()) :
+                                                                RefactoringBundle.message("class.is.abstract", aClass.getQualifiedName()));
     RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.REPLACE_CONSTRUCTOR_WITH_FACTORY, myProject);
     return false;
   }
 
   private void invoke(final PsiMethod method) {
     if (!method.isConstructor()) {
-      String message =
-              "Cannot perform the refactoring.\n" +
-              "Method is not a constructor.";
+      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("method.is.not.a.constructor"));
       RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.REPLACE_CONSTRUCTOR_WITH_FACTORY, myProject);
       return;
     }

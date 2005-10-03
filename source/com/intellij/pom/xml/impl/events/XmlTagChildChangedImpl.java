@@ -36,6 +36,7 @@ public class XmlTagChildChangedImpl implements XmlTagChildChanged {
     event.registerChangeSet(source.getModelAspect(XmlAspect.class), xmlAspectChangeSet);
     return event;
   }
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return "child changed in " + getTag().getName() + " child: " + myChild.toString();
   }

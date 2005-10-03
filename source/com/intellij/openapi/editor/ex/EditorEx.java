@@ -16,10 +16,12 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
 
+import org.jetbrains.annotations.NonNls;
+
 public interface EditorEx extends Editor {
-  String PROP_INSERT_MODE = "insertMode";
-  String PROP_COLUMN_MODE = "columnMode";
-  String PROP_FONT_SIZE = "fontSize";
+  @NonNls String PROP_INSERT_MODE = "insertMode";
+  @NonNls String PROP_COLUMN_MODE = "columnMode";
+  @NonNls String PROP_FONT_SIZE = "fontSize";
   Key<TextRange> LAST_PASTED_REGION = Key.create("LAST_PASTED_REGION");
 
   EditorGutterComponentEx getGutterComponentEx();
@@ -96,7 +98,7 @@ public interface EditorEx extends Editor {
   void resetBackgourndColor();
 
   Dimension getContentSize();
-  
+
   boolean isEmbeddedIntoDialogWrapper();
   void setEmbeddedIntoDialogWrapper(boolean b);
 }

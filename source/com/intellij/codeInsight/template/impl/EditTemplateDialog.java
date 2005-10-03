@@ -1,5 +1,7 @@
 package com.intellij.codeInsight.template.impl;
 
+import com.intellij.CommonBundle;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.DocumentReference;
@@ -55,18 +57,18 @@ public class EditTemplateDialog extends DialogWrapper {
 
   private JButton myEditVariablesButton;
 
-  private static final String SPACE = "Space";
-  private static final String TAB = "Tab";
-  private static final String ENTER = "Enter";
+  private static final String SPACE = CodeInsightBundle.message("template.shortcut.space");
+  private static final String TAB = CodeInsightBundle.message("template.shortcut.tab");
+  private static final String ENTER = CodeInsightBundle.message("template.shortcut.enter");
 
   public EditTemplateDialog(Component parent, String title, TemplateImpl template, TemplateImpl[] templates, String defaultShortcut) {
     super(parent, true);
-    setOKButtonText("OK");
+    setOKButtonText(CommonBundle.getOkButtonText());
     setTitle(title);
 
     myTemplate = template;
     myTemplates = templates;
-    myDefaultShortcutItem = "Default (" + defaultShortcut + ")";
+    myDefaultShortcutItem = CodeInsightBundle.message("dialog.edit.template.shortcut.default", defaultShortcut);
 
     myKeyField=new JTextField();
     myDescription=new JTextField();
@@ -108,7 +110,7 @@ public class EditTemplateDialog extends DialogWrapper {
     gbConstraints.gridx = 0;
 
     JPanel panel1 = new JPanel();
-    panel1.setBorder(IdeBorderFactory.createTitledBorder("Template text"));
+    panel1.setBorder(IdeBorderFactory.createTitledBorder(CodeInsightBundle.message("dialog.edit.template.template.text.title")));
     panel1.setPreferredSize(new Dimension(500, 160));
     panel1.setMinimumSize(new Dimension(500, 160));
     panel1.setLayout(new BorderLayout());
@@ -120,7 +122,7 @@ public class EditTemplateDialog extends DialogWrapper {
 
     gbConstraints.weighty = 0;
     gbConstraints.gridy++;
-    myEditVariablesButton = new JButton("Edit variables");
+    myEditVariablesButton = new JButton(CodeInsightBundle.message("dialog.edit.template.button.edit.variables"));
     myEditVariablesButton.setDefaultCapable(false);
     myEditVariablesButton.setMaximumSize(myEditVariablesButton.getPreferredSize());
     panel.add(myEditVariablesButton, gbConstraints);
@@ -168,8 +170,7 @@ public class EditTemplateDialog extends DialogWrapper {
     gbConstraints.gridy = 0;
     gbConstraints.gridwidth = 1;
     gbConstraints.fill = GridBagConstraints.BOTH;
-    JLabel keyPrompt = new JLabel("Abbreviation:");
-    keyPrompt.setDisplayedMnemonic('A');
+    JLabel keyPrompt = new JLabel(CodeInsightBundle.message("dialog.edit.template.label.abbreviation"));
     keyPrompt.setLabelFor(myKeyField);
     panel.add(keyPrompt, gbConstraints);
 
@@ -180,8 +181,7 @@ public class EditTemplateDialog extends DialogWrapper {
 
     gbConstraints.weightx = 0;
     gbConstraints.gridx = 2;
-    JLabel groupPrompt = new JLabel("Group:");
-    groupPrompt.setDisplayedMnemonic('G');
+    JLabel groupPrompt = new JLabel(CodeInsightBundle.message("dialog.edit.template.label.group"));
     groupPrompt.setLabelFor(myGroupCombo);
     panel.add(groupPrompt, gbConstraints);
 
@@ -193,8 +193,7 @@ public class EditTemplateDialog extends DialogWrapper {
     gbConstraints.weightx = 0;
     gbConstraints.gridx = 0;
     gbConstraints.gridy++;
-    JLabel descriptionPrompt = new JLabel("Description:");
-    descriptionPrompt.setDisplayedMnemonic('D');
+    JLabel descriptionPrompt = new JLabel(CodeInsightBundle.message("dialog.edit.template.label.description"));
     descriptionPrompt.setLabelFor(myDescription);
     panel.add(descriptionPrompt, gbConstraints);
 
@@ -208,7 +207,7 @@ public class EditTemplateDialog extends DialogWrapper {
 
   private JPanel createTemplateOptionsPanel() {
     JPanel panel = new JPanel();
-    panel.setBorder(IdeBorderFactory.createTitledBorder("Options"));
+    panel.setBorder(IdeBorderFactory.createTitledBorder(CodeInsightBundle.message("dialog.edit.template.options.title")));
     panel.setLayout(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
     gbConstraints.fill = GridBagConstraints.BOTH;
@@ -216,7 +215,7 @@ public class EditTemplateDialog extends DialogWrapper {
     gbConstraints.weighty = 0;
     gbConstraints.weightx = 0;
     gbConstraints.gridy = 0;
-    panel.add(new JLabel("Expand with       "), gbConstraints);
+    panel.add(new JLabel(CodeInsightBundle.message("dialog.edit.template.label.expand.with")), gbConstraints);
 
     gbConstraints.gridx = 1;
     myExpandByCombo = new JComboBox();
@@ -232,13 +231,11 @@ public class EditTemplateDialog extends DialogWrapper {
     gbConstraints.gridx = 0;
     gbConstraints.gridy++;
     gbConstraints.gridwidth = 3;
-    myCbReformat = new JCheckBox("Reformat according to style");
-    myCbReformat.setMnemonic('R');
+    myCbReformat = new JCheckBox(CodeInsightBundle.message("dialog.edit.template.checkbox.reformat.according.to.style"));
     panel.add(myCbReformat, gbConstraints);
 
     gbConstraints.gridy++;
-    myCbShortenFQNames = new JCheckBox("Shorten FQ names");
-    myCbShortenFQNames.setMnemonic('F');
+    myCbShortenFQNames = new JCheckBox(CodeInsightBundle.message("dialog.edit.template.checkbox.shorten.fq.names"));
     panel.add(myCbShortenFQNames, gbConstraints);
 
     gbConstraints.weighty = 1;
@@ -257,7 +254,7 @@ public class EditTemplateDialog extends DialogWrapper {
     };
 
     JPanel panel = new JPanel();
-    panel.setBorder(IdeBorderFactory.createTitledBorder("Context"));
+    panel.setBorder(IdeBorderFactory.createTitledBorder(CodeInsightBundle.message("dialog.edit.template.context.title")));
     panel.setLayout(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
     gbConstraints.fill = GridBagConstraints.BOTH;
@@ -266,53 +263,45 @@ public class EditTemplateDialog extends DialogWrapper {
     gbConstraints.gridy = 0;
     gbConstraints.weighty = 1;
     gbConstraints.gridx = 0;
-    myCbJavaCode = new JCheckBox("Java code");
-    myCbJavaCode.setMnemonic('J');
+    myCbJavaCode = new JCheckBox(CodeInsightBundle.message("dialog.edit.template.checkbox.java.code"));
     myCbJavaCode.getModel().addChangeListener(listener);
     panel.add(myCbJavaCode, gbConstraints);
 
     gbConstraints.gridx = 1;
-    myCbHTML = new JCheckBox("HTML");
-    myCbHTML.setMnemonic('H');
+    myCbHTML = new JCheckBox(CodeInsightBundle.message("dialog.edit.template.checkbox.html"));
     panel.add(myCbHTML, gbConstraints);
     myCbHTML.getModel().addChangeListener(listener);
 
     gbConstraints.gridy++;
     gbConstraints.gridx = 0;
-    myCbJavaComment = new JCheckBox("Java comment");
-    myCbJavaComment.setMnemonic('c');
+    myCbJavaComment = new JCheckBox(CodeInsightBundle.message("dialog.edit.template.checkbox.java.comment"));
     panel.add(myCbJavaComment, gbConstraints);
     myCbJavaComment.getModel().addChangeListener(listener);
 
     gbConstraints.gridx = 1;
-    myCbXML = new JCheckBox("XML");
-    myCbXML.setMnemonic('x');
+    myCbXML = new JCheckBox(CodeInsightBundle.message("dialog.edit.template.checkbox.xml"));
     panel.add(myCbXML, gbConstraints);
     myCbXML.getModel().addChangeListener(listener);
 
     gbConstraints.gridy++;
     gbConstraints.gridx = 0;
-    myCbJavaString = new JCheckBox("Java string");
-    myCbJavaString.setMnemonic('s');
+    myCbJavaString = new JCheckBox(CodeInsightBundle.message("dialog.edit.template.checkbox.java.string"));
     panel.add(myCbJavaString, gbConstraints);
     myCbJavaString.getModel().addChangeListener(listener);
 
     gbConstraints.gridx = 1;
-    myCbJSP = new JCheckBox("JSP");
-    myCbJSP.setMnemonic('P');
+    myCbJSP = new JCheckBox(CodeInsightBundle.message("dialog.edit.template.checkbox.jsp"));
     panel.add(myCbJSP, gbConstraints);
     myCbJSP.getModel().addChangeListener(listener);
 
     gbConstraints.gridy++;
     gbConstraints.gridx = 0;
-    myCbCompletion = new JCheckBox("Smart type completion");
-    myCbCompletion.setMnemonic('o');
+    myCbCompletion = new JCheckBox(CodeInsightBundle.message("dialog.edit.template.checkbox.smart.type.completion"));
     panel.add(myCbCompletion, gbConstraints);
     myCbCompletion.getModel().addChangeListener(listener);
 
     gbConstraints.gridx = 1;
-    myCbOther = new JCheckBox("Other");
-    myCbOther.setMnemonic('t');
+    myCbOther = new JCheckBox(CodeInsightBundle.message("dialog.edit.template.checkbox.other"));
     panel.add(myCbOther, gbConstraints);
     myCbOther.getModel().addChangeListener(listener);
 
@@ -584,9 +573,8 @@ public class EditTemplateDialog extends DialogWrapper {
     if (!isAllowedTemplateAbbreviation(key)) {
       Messages.showMessageDialog(
         getContentPane(),
-        "Cannot save the template.\n" +
-        "Template abbreviation should contain only letters, digits and dots.",
-        "Cannot Save",
+        CodeInsightBundle.message("dialog.edit.template.error.malformed.abbreviation"),
+        CodeInsightBundle.message("dialog.edit.template.error.title"),
         Messages.getErrorIcon()
       );
       return;
@@ -596,10 +584,8 @@ public class EditTemplateDialog extends DialogWrapper {
       if (template.getKey().equals(key) && myTemplate != template) {
         Messages.showMessageDialog(
           getContentPane(),
-          "Cannot save the template.\nTemplate with the abbreviation \"" + key + "\"\n" +
-          "already exists in group \"" + template.getGroupName() + "\".\n" +
-          "Try another abbreviation.",
-          "Cannot Save",
+          CodeInsightBundle.message("dialog.edit.template.error.already.exists", key, template.getGroupName()),
+          CodeInsightBundle.message("dialog.edit.template.error.title"),
           Messages.getErrorIcon()
         );
         return;
@@ -609,8 +595,8 @@ public class EditTemplateDialog extends DialogWrapper {
     if (!TemplateImplUtil.validateTemplateText(myTemplateEditor.getDocument().getText())) {
       Messages.showMessageDialog (
           getContentPane(),
-          "Error parsing the template",
-          "Cannot Save",
+          CodeInsightBundle.message("dialog.edit.template.error.malformed.template"),
+          CodeInsightBundle.message("dialog.edit.template.error.title"),
           Messages.getErrorIcon()
       );
       return;

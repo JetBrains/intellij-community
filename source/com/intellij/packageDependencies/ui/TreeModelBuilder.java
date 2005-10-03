@@ -20,6 +20,7 @@ import com.intellij.util.Icons;
 import com.intellij.util.containers.GenericHashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.analysis.AnalysisScopeBundle;
 import gnu.trove.TObjectHashingStrategy;
 
 import javax.swing.*;
@@ -65,9 +66,9 @@ public class TreeModelBuilder {
   private static final Icon LIB_ICON_OPEN = IconLoader.getIcon("/nodes/ppLibOpen.png");
   private static final Icon LIB_ICON_CLOSED = IconLoader.getIcon("/nodes/ppLibClosed.png");
   private static final Icon TEST_ICON = IconLoader.getIcon("/nodes/testSourceFolder.png");
-  public static final String PRODUCTION_NAME = "Production Classes";
-  public static final String TEST_NAME = "Test Classes";
-  public static final String LIBRARY_NAME = "Library Classes";
+  public static final String PRODUCTION_NAME = AnalysisScopeBundle.message("package.dependencies.production.node.text");
+  public static final String TEST_NAME = AnalysisScopeBundle.message("package.dependencies.test.node.text");
+  public static final String LIBRARY_NAME = AnalysisScopeBundle.message("package.dependencies.library.node.text");
 
   private TreeModelBuilder(Project project, boolean showIndividualLibs, Marker marker, DependenciesPanel.DependencyPanelSettings settings) {
     myProject = project;
@@ -216,7 +217,7 @@ public class TreeModelBuilder {
     };
 
     if (showProgress) {
-      ApplicationManager.getApplication().runProcessWithProgressSynchronously(buildingRunnable, "Scanning Packages", false, project);
+      ApplicationManager.getApplication().runProcessWithProgressSynchronously(buildingRunnable, AnalysisScopeBundle.message("package.dependencies.build.process.title"), false, project);
     }
     else {
       buildingRunnable.run();
@@ -257,7 +258,7 @@ public class TreeModelBuilder {
     myTotalFileCount++;
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
-      indicator.setText("Scanning packages");
+      indicator.setText(AnalysisScopeBundle.message("package.dependencies.build.progress.text"));
       indicator.setIndeterminate(true);
       indicator.setText2(file.getPresentableUrl());
     }
@@ -277,7 +278,7 @@ public class TreeModelBuilder {
     };
 
     if (showProgress) {
-      ApplicationManager.getApplication().runProcessWithProgressSynchronously(buildingRunnable, "Scanning Packages", false, myProject);
+      ApplicationManager.getApplication().runProcessWithProgressSynchronously(buildingRunnable, AnalysisScopeBundle.message("package.dependencies.build.process.title"), false, myProject);
     }
     else {
       buildingRunnable.run();
@@ -292,7 +293,7 @@ public class TreeModelBuilder {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
       indicator.setIndeterminate(false);
-      indicator.setText("Scanning packages");
+      indicator.setText(AnalysisScopeBundle.message("package.dependencies.build.progress.text"));
       indicator.setText2(file.getVirtualFile().getPresentableUrl());
       indicator.setFraction(((double)myScannedFileCount++) / myTotalFileCount);
     }
@@ -423,7 +424,7 @@ public class TreeModelBuilder {
     if (!myShowIndividualLibs) {
       if (myGroupByScopeType) return getScopeNode(ScopeType.LIB);
       if (myAllLibsNode == null) {
-        myAllLibsNode = new GeneralGroupNode("Libraries", LIB_ICON_OPEN, LIB_ICON_CLOSED);
+        myAllLibsNode = new GeneralGroupNode(AnalysisScopeBundle.message("dependencies.libraries.node.text"), LIB_ICON_OPEN, LIB_ICON_CLOSED);
         getScopeNode(ScopeType.LIB).add(myAllLibsNode);
       }
       return myAllLibsNode;

@@ -32,6 +32,7 @@
 package com.intellij.ide.highlighter;
 
 import com.intellij.ide.structureView.StructureViewBuilder;
+import com.intellij.ide.IdeBundle;
 import com.intellij.lang.dtd.DTDLanguage;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
@@ -52,7 +53,7 @@ public class DTDFileType extends LanguageFileType {
   }
 
   public String getDescription() {
-    return "XML Document Type Definition";
+    return IdeBundle.message("filetype.description.dtd");
   }
 
   public String getDefaultExtension() {

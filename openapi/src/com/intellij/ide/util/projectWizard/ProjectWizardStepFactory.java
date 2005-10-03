@@ -21,6 +21,8 @@ import com.intellij.openapi.util.Computable;
 
 import javax.swing.*;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * A factory for creating some commonly used project wizards steps
  */
@@ -30,11 +32,11 @@ public abstract class ProjectWizardStepFactory {
     return ApplicationManager.getApplication().getComponent(ProjectWizardStepFactory.class);
   }
 
-  public abstract ModuleWizardStep createNameAndLocationStep(WizardContext wizardContext, JavaModuleBuilder builder, ModulesProvider modulesProvider, Icon icon, String helpId);
+  public abstract ModuleWizardStep createNameAndLocationStep(WizardContext wizardContext, JavaModuleBuilder builder, ModulesProvider modulesProvider, Icon icon, @NonNls String helpId);
 
-  public abstract ModuleWizardStep createOutputPathPathsStep(ModuleWizardStep nameAndLocationStep, JavaModuleBuilder builder, Icon icon, String helpId);
+  public abstract ModuleWizardStep createOutputPathPathsStep(ModuleWizardStep nameAndLocationStep, JavaModuleBuilder builder, Icon icon, @NonNls String helpId);
 
-  public abstract ModuleWizardStep createSourcePathsStep(ModuleWizardStep nameAndLocationStep, JavaModuleBuilder builder, Icon icon, String helpId);
+  public abstract ModuleWizardStep createSourcePathsStep(ModuleWizardStep nameAndLocationStep, JavaModuleBuilder builder, Icon icon, @NonNls String helpId);
 
-  public abstract ModuleWizardStep createProjectJdkStep(WizardContext context, JavaModuleBuilder builder, Computable<Boolean> isVisibile, Icon icon, String helpId);
+  public abstract ModuleWizardStep createProjectJdkStep(WizardContext context, JavaModuleBuilder builder, Computable<Boolean> isVisibile, Icon icon, @NonNls String helpId);
 }

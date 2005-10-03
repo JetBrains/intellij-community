@@ -17,6 +17,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.debugger.DebuggerBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -30,7 +31,7 @@ class ClassFilterEditorAddDialog extends DialogWrapper {
   public ClassFilterEditorAddDialog(Project project) {
     super(project, true);
     myProject = project;
-    setTitle("New Filter");
+    setTitle(DebuggerBundle.message("class.filter.editor.add.dialog.title"));
     init();
   }
 
@@ -39,7 +40,7 @@ class ClassFilterEditorAddDialog extends DialogWrapper {
 
     JPanel _panel = new JPanel(new BorderLayout());
     myClassName = new TextFieldWithBrowseButton();
-    _panel.add(new JLabel("Enter the filter pattern:"), BorderLayout.NORTH);
+    _panel.add(new JLabel(DebuggerBundle.message("label.class.filter.editor.add.dialog.filter.pattern")), BorderLayout.NORTH);
     _panel.add(myClassName, BorderLayout.CENTER);
     box.add(_panel);
 
@@ -56,7 +57,8 @@ class ClassFilterEditorAddDialog extends DialogWrapper {
     myClassName.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         PsiClass currentClass = getSelectedClass();
-        TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject).createNoInnerClassesScopeChooser("Choose Class", GlobalSearchScope.allScope(myProject), null, null);
+        TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject).createNoInnerClassesScopeChooser(
+          DebuggerBundle.message("class.filter.editor.choose.class.title"), GlobalSearchScope.allScope(myProject), null, null);
         if (currentClass != null) {
           PsiFile containingFile = currentClass.getContainingFile();
           if (containingFile != null) {

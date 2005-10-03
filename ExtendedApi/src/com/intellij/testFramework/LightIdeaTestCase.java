@@ -41,6 +41,8 @@ import javax.swing.*;
 import java.io.IOException;
 import java.util.List;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * A testcase that provides IDEA application and project. Note both are reused for each test run in the session so
  * be careful to return all the modification made to application and project components (such as settings) after
@@ -50,7 +52,8 @@ import java.util.List;
  * idea installation home that is used for test running. Place src.zip under that folder. We'd suggest this is real mock
  * so it contains classes that is really needed in order to speed up tests startup.
  */
-public class LightIdeaTestCase extends TestCase implements DataProvider {
+@SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod", "HardCodedStringLiteral"})
+@NonNls public class LightIdeaTestCase extends TestCase implements DataProvider {
   private static IdeaTestApplication ourApplication;
   private static Project ourProject;
   private static Module ourModule;
@@ -60,7 +63,6 @@ public class LightIdeaTestCase extends TestCase implements DataProvider {
   private static VirtualFile ourSourceRoot;
   private static TestCase ourTestCase = null;
   public static Thread ourTestThread;
-  private String oldCodeStyleSettings;
 
   /**
    * @return Project to be used in tests for example for project components retrieval.
@@ -205,21 +207,20 @@ public class LightIdeaTestCase extends TestCase implements DataProvider {
   protected void tearDown() throws Exception {
     CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(null);
     assertNotNull("Application components damaged", ProjectManager.getInstance());
-    final IOException[] exception = new IOException[1];
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         try {
           final VirtualFile[] children = ourSourceRoot.getChildren();
-          for (int i = 0; i < children.length; i++) {
-            children[i].delete(this);
+          for (VirtualFile aChildren : children) {
+            aChildren.delete(this);
           }
         }
         catch (IOException e) {
+          //noinspection CallToPrintStackTrace
           e.printStackTrace();
         }
       }
     });
-    if (exception[0] != null) throw exception[0];
 //    final Project[] openProjects = ProjectManagerEx.getInstanceEx().getOpenProjects();
 //    assertTrue(Arrays.asList(openProjects).contains(ourProject));
     assertFalse(PsiManager.getInstance(getProject()).isDisposed());
@@ -237,8 +238,8 @@ public class LightIdeaTestCase extends TestCase implements DataProvider {
 
     final Editor[] allEditors = EditorFactory.getInstance().getAllEditors();
     if (allEditors.length > 0) {
-      for (int i = 0; i < allEditors.length; i++) {
-        EditorFactory.getInstance().releaseEditor(allEditors[i]);
+      for (Editor allEditor : allEditors) {
+        EditorFactory.getInstance().releaseEditor(allEditor);
       }
       fail("Unreleased editors: " + allEditors.length);
     }
@@ -286,6 +287,7 @@ public class LightIdeaTestCase extends TestCase implements DataProvider {
         tearDown();
       }
       catch(Throwable th){
+        //noinspection CallToPrintStackTrace
         th.printStackTrace();
       }
     }

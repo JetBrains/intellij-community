@@ -1,6 +1,5 @@
 package com.intellij.refactoring.introduceField;
 
-import static com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler.InitializationPlace.*;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -14,15 +13,19 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.RefactoringBundle;
+import static com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler.InitializationPlace.IN_CONSTRUCTOR;
+import static com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 
 public class LocalToFieldHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceField.LocalToFieldHandler");
 
-  public static final String REFACTORING_NAME = "Convert Local to Field";
+  public static final String REFACTORING_NAME = RefactoringBundle.message("convert.local.to.field.title");
   private final Project myProject;
   private final boolean myIsConstant;
   private final PsiManager myManager;
@@ -44,7 +47,7 @@ public class LocalToFieldHandler {
         break;
       }
       if (parent instanceof JspFile) {
-        String message = REFACTORING_NAME + " refactoring is not supported for JSP";
+        String message = RefactoringBundle.message("error.not.supported.for.jsp", REFACTORING_NAME);
         RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.LOCAL_TO_FIELD, myProject);
         return false;
       }
@@ -78,7 +81,7 @@ public class LocalToFieldHandler {
       PsiMethod method = PsiTreeUtil.getParentOfType(local, PsiMethod.class);
       IntroduceFieldDialog dialog = new IntroduceFieldDialog(myProject, aClass,
                                                              local.getInitializer(), local,
-                                                             method != null ? method.isConstructor() : false,
+                                                             method != null && method.isConstructor(),
                                                              true, isStatic,
                                                              occurences.length, method != null, method != null,
                                                              typeSelectorManager
@@ -172,8 +175,7 @@ public class LocalToFieldHandler {
           }
 
           if (rebindNeeded2) {
-            for (int i = 0; i < refs.length; i++) {
-              final PsiReference reference = refs[i];
+            for (final PsiReference reference : refs) {
               if (reference != null) {
                 //expr = RefactoringUtil.outermostParenthesizedExpression(expr);
                 RefactoringUtil.replaceOccurenceWithFieldRef((PsiExpression)reference, field, aaClass);
@@ -197,7 +199,7 @@ public class LocalToFieldHandler {
   }
 
   private PsiField createField(PsiLocalVariable local, String fieldName, boolean includeInitializer) {
-    StringBuffer pattern = new StringBuffer();
+    @NonNls StringBuffer pattern = new StringBuffer();
     pattern.append("private int ");
     pattern.append(fieldName);
     if (local.getInitializer() == null) {
@@ -277,7 +279,7 @@ public class LocalToFieldHandler {
         if (first instanceof PsiExpressionStatement) {
           PsiExpression expression = ((PsiExpressionStatement)first).getExpression();
           if (expression instanceof PsiMethodCallExpression) {
-            String text = ((PsiMethodCallExpression)expression).getMethodExpression().getText();
+            @NonNls String text = ((PsiMethodCallExpression)expression).getMethodExpression().getText();
             if ("this".equals(text)) {
               continue;
             }

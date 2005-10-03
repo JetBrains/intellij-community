@@ -10,6 +10,7 @@ import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.refactoring.turnRefsToSuper.TurnRefsToSuperProcessorBase;
 import com.intellij.refactoring.util.JavaDocPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
@@ -135,6 +136,6 @@ public abstract class ExtractSuperBaseProcessor extends TurnRefsToSuperProcessor
   }
 
   protected String getCommandName() {
-    return "Extract Subclass";
+    return RefactoringBundle.message("extract.subclass.command");
   }
 }

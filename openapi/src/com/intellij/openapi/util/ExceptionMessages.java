@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.util;
 
+import com.intellij.CommonBundle;
+
 import java.io.IOException;
 import java.util.HashMap;
 
@@ -26,33 +28,35 @@ public class ExceptionMessages {
   static {
     ourIOMessages = new HashMap<Integer,String>();
     if(SystemInfo.isWindows) {
-      ourIOMessages.put(new Integer(1), "Incorrect function.");
-      ourIOMessages.put(new Integer(2), "The system cannot find the file specified.");
-      ourIOMessages.put(new Integer(3), "The system cannot find the path specified.");
-      ourIOMessages.put(new Integer(4), "The system cannot open the file.");
-      ourIOMessages.put(new Integer(5), "Access is denied.");
-      ourIOMessages.put(new Integer(6), "The handle is invalid.");
-      ourIOMessages.put(new Integer(7), "The storage control blocks were destroyed.");
-      ourIOMessages.put(new Integer(8), "Not enough storage is available to process this command.");
-      ourIOMessages.put(new Integer(9), "The storage control block address is invalid.");
-      ourIOMessages.put(new Integer(10), "The environment is incorrect.");
-      ourIOMessages.put(new Integer(11), "An attempt was made to load a program with an incorrect format.");
-      ourIOMessages.put(new Integer(12), "The access code is invalid.");
-      ourIOMessages.put(new Integer(13), "The data is invalid.");
-      ourIOMessages.put(new Integer(14), "Not enough storage is available to complete this operation.");
-      ourIOMessages.put(new Integer(15), "The system cannot find the drive specified.");
-      ourIOMessages.put(new Integer(16), "The directory cannot be removed.");
-      ourIOMessages.put(new Integer(17), "The system cannot move the file to a different disk drive.");
-      ourIOMessages.put(new Integer(18), "There are no more files.");
-      ourIOMessages.put(new Integer(19), "The media is write protected.");
-      ourIOMessages.put(new Integer(20), "The system cannot find the device specified.");
-      ourIOMessages.put(new Integer(21), "The device is not ready.");
-      ourIOMessages.put(new Integer(22), "The device does not recognize the command.");
-      ourIOMessages.put(new Integer(23), "Data error (cyclic redundancy check).");
-      ourIOMessages.put(new Integer(24), "The program issued a command but the command length is incorrect.");
-      ourIOMessages.put(new Integer(25), "The drive cannot locate a specific area or track on the disk.");
-      ourIOMessages.put(new Integer(26), "The specified disk or diskette cannot be accessed.");
-      ourIOMessages.put(new Integer(27), "The drive cannot find the sector requested.");
+      ourIOMessages.put(new Integer(1), CommonBundle.message("incorrect.function.error.message"));
+      ourIOMessages.put(new Integer(2), CommonBundle.message("the.system.cannot.find.the.file.specified.error.message"));
+      ourIOMessages.put(new Integer(3), CommonBundle.message("the.system.cannot.find.the.path.specified.error.message"));
+      ourIOMessages.put(new Integer(4), CommonBundle.message("the.system.cannot.open.the.file.error.message"));
+      ourIOMessages.put(new Integer(5), CommonBundle.message("access.is.denied.error.message"));
+      ourIOMessages.put(new Integer(6), CommonBundle.message("the.handle.is.invalid.error.message"));
+      ourIOMessages.put(new Integer(7), CommonBundle.message("the.storage.control.blocks.were.destroyed.error.message"));
+      ourIOMessages.put(new Integer(8), CommonBundle.message("not.enough.storage.is.available.to.process.this.command.error.message"));
+      ourIOMessages.put(new Integer(9), CommonBundle.message("the.storage.control.block.address.is.invalid.error.message"));
+      ourIOMessages.put(new Integer(10), CommonBundle.message("the.environment.is.incorrect.error.message"));
+      ourIOMessages.put(new Integer(11),
+                        CommonBundle.message("an.attempt.was.made.to.load.a.program.with.an.incorrect.format.error.message"));
+      ourIOMessages.put(new Integer(12), CommonBundle.message("the.access.code.is.invalid.error.message"));
+      ourIOMessages.put(new Integer(13), CommonBundle.message("the.data.is.invalid.error.message"));
+      ourIOMessages.put(new Integer(14), CommonBundle.message("not.enough.storage.is.available.to.complete.this.operation.error.message"));
+      ourIOMessages.put(new Integer(15), CommonBundle.message("the.system.cannot.find.the.drive.specified.error.message"));
+      ourIOMessages.put(new Integer(16), CommonBundle.message("the.directory.cannot.be.removed.error.message"));
+      ourIOMessages.put(new Integer(17), CommonBundle.message("the.system.cannot.move.the.file.to.a.different.disk.drive.error.message"));
+      ourIOMessages.put(new Integer(18), CommonBundle.message("there.are.no.more.files.error.message"));
+      ourIOMessages.put(new Integer(19), CommonBundle.message("the.media.is.write.protected.error.message"));
+      ourIOMessages.put(new Integer(20), CommonBundle.message("the.system.cannot.find.the.device.specified.error.message"));
+      ourIOMessages.put(new Integer(21), CommonBundle.message("the.device.is.not.ready.error.message"));
+      ourIOMessages.put(new Integer(22), CommonBundle.message("the.device.does.not.recognize.the.command.error.message"));
+      ourIOMessages.put(new Integer(23), CommonBundle.message("data.error.cyclic.redundancy.check.error.message"));
+      ourIOMessages.put(new Integer(24),
+                        CommonBundle.message("the.program.issued.a.command.but.the.command.length.is.incorrect.error.message"));
+      ourIOMessages.put(new Integer(25), CommonBundle.message("the.drive.cannot.locate.a.specific.area.or.track.on.the.disk.error.message"));
+      ourIOMessages.put(new Integer(26), CommonBundle.message("the.specified.disk.or.diskette.cannot.be.accessed.error.message"));
+      ourIOMessages.put(new Integer(27), CommonBundle.message("the.drive.cannot.find.the.sector.requested.error.message"));
     }
   }
 

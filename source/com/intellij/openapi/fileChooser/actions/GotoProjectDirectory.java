@@ -9,6 +9,7 @@ import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl;
 import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.UIBundle;
 
 import javax.swing.*;
 import java.awt.event.KeyEvent;
@@ -17,7 +18,7 @@ import java.awt.event.InputEvent;
 public final class GotoProjectDirectory extends FileChooserDialogImpl.FileChooserAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileChooser.actions.GotoProjectDirectory");
   public GotoProjectDirectory(FileSystemTree fileSystemTree) {
-    super("Project", "Go to project directory", IconLoader.getIcon("/nodes/ideaProject.png"), fileSystemTree, KeyStroke.getKeyStroke(KeyEvent.VK_2, InputEvent.CTRL_MASK));
+    super(UIBundle.message("file.chooser.goto.project.action.name"), UIBundle.message("file.chooser.goto.project.action.description"), IconLoader.getIcon("/nodes/ideaProject.png"), fileSystemTree, KeyStroke.getKeyStroke(KeyEvent.VK_2, InputEvent.CTRL_MASK));
   }
 
   protected void actionPerformed(FileSystemTree fileSystemTree, AnActionEvent e) {

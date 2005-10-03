@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.netbeans.lib.cvsclient.file.*;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,6 +31,7 @@ public class StoringLineSeparatorsLocalFileWriter implements ILocalFileWriter {
   private final String myCvsRoot;
   private final ReceiveTextFilePreprocessor myReceiveTextFilePreprocessor;
   private final ProjectContentInfoProvider myProjectContentInfoProvider;
+  @NonNls private static final String COULD_NOT_DELETE_FILE_PREFIX = "Could not delete file ";
 
   public StoringLineSeparatorsLocalFileWriter(ReceiveTextFilePreprocessor preprocessor,
                                               ErrorProcessor errorProcessor,
@@ -137,7 +139,7 @@ public class StoringLineSeparatorsLocalFileWriter implements ILocalFileWriter {
     File file = fileSystem.getFile(fileObject);
     VcsException vcsEx = new CvsException(ex.getLocalizedMessage() + ": " + file.getAbsolutePath(), cvsRoot);
     try {
-      if (ex.getLocalizedMessage().startsWith("Could not delete file ")) {
+      if (ex.getLocalizedMessage().startsWith(COULD_NOT_DELETE_FILE_PREFIX)) {
         myUpdatedFilesManager.couldNotUpdateFile(file);
         vcsEx.setVirtualFile(CvsVfsUtil.findFileByIoFile(file));
       }

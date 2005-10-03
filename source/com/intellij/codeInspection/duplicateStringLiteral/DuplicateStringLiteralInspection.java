@@ -2,11 +2,7 @@ package com.intellij.codeInspection.duplicateStringLiteral;
 
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInsight.i18n.I18nInspection;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -20,7 +16,12 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.introduceField.IntroduceConstantHandler;
+import com.intellij.refactoring.util.occurences.BaseOccurenceManager;
+import com.intellij.refactoring.util.occurences.OccurenceFilter;
+import com.intellij.refactoring.util.occurences.OccurenceManager;
 import com.intellij.util.CommonProcessors;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.StringSearcher;
 import gnu.trove.THashSet;
@@ -70,7 +71,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
   }
 
   public String getDisplayName() {
-    return "Duplicate String Literal";
+    return InspectionsBundle.message("inspection.duplicates.display.name");
   }
 
   public String getGroupDisplayName() {
@@ -140,36 +141,39 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
       }
     }
     if (classes.size() == 0) return;
-    String msg;
-    if (isOnTheFly) {
-      msg = "<html><body>Duplicate string literal found in ";
-      int i = 0;
-      for (final PsiClass aClass : classes) {
-        if (i > 10) {
-          msg += "<br>... (" + (classes.size() - i) + " more)";
-          break;
-        }
-        msg += (i == 0 ? "" : ", ") + "<br>&nbsp;&nbsp;&nbsp;'<b>" + aClass.getQualifiedName() + "</b>'";
-        if (aClass.getContainingFile() == originalExpression.getContainingFile()) {
-          msg += " (in this file)";
-        }
-        i++;
-      }
-      msg += "</body></html>";
-    }
-    else {
-      msg = "Duplicate string literal found in ";
-      int i = 0;
-      for (final PsiClass aClass : classes) {
-        if (i > 10) {
-          msg += "... (" + (classes.size() - i) + " more)";
-          break;
-        }
-        msg += (i == 0 ? "" : ", ") + "'" + aClass.getQualifiedName() + "'";
-        i++;
-      }
+
+    List<PsiClass> tenClassesMost = Arrays.asList(classes.toArray(new PsiClass[classes.size()]));
+    if (tenClassesMost.size() > 10) {
+      tenClassesMost = tenClassesMost.subList(0, 10);
     }
 
+    String classList;
+    if (isOnTheFly) {
+      classList = StringUtil.join(tenClassesMost, new Function<PsiClass, String>() {
+        public String fun(final PsiClass aClass) {
+          final boolean thisFile = aClass.getContainingFile() == originalExpression.getContainingFile();
+          //noinspection HardCodedStringLiteral
+          return "&nbsp;&nbsp;&nbsp;'<b>" + aClass.getQualifiedName() + "</b>'" +
+                 (thisFile ? " " + InspectionsBundle.message("inspection.duplicates.message.in.this.file") : "");
+        }
+      }, ", <br>");
+
+    }
+    else {
+      classList = StringUtil.join(tenClassesMost, new Function<PsiClass, String>() {
+        public String fun(final PsiClass aClass) {
+          final boolean thisFile = aClass.getContainingFile() == originalExpression.getContainingFile();
+          return "'" + aClass.getQualifiedName() + "'";
+        }
+      }, ", ");
+    }
+
+    if (classes.size() > tenClassesMost.size()) {
+      //noinspection HardCodedStringLiteral
+      classList += "<br>" + InspectionsBundle.message("inspection.duplicates.message.more", (classes.size() - 10));
+    }
+
+    String msg = InspectionsBundle.message("inspection.duplicates.message", classList);
 
     Collection<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>();
     final LocalQuickFix introduceConstFix = createIntroduceConstFix(foundExpr, originalExpression);
@@ -181,7 +185,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
   }
 
   private static void createReplaceFixes(final List<PsiExpression> foundExpr, final PsiLiteralExpression originalExpression,
-                                                       final Collection<LocalQuickFix> fixes) {
+                                         final Collection<LocalQuickFix> fixes) {
     Set<PsiField> constants = new THashSet<PsiField>();
     for (Iterator<PsiExpression> iterator = foundExpr.iterator(); iterator.hasNext();) {
       PsiExpression expression1 = iterator.next();
@@ -203,9 +207,9 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
       }
       final LocalQuickFix replaceQuickFix = new LocalQuickFix() {
         public String getName() {
-          return "Replace with '" + PsiFormatUtil
+          return InspectionsBundle.message("inspection.duplicates.replace.quickfix", PsiFormatUtil
             .formatVariable(constant, PsiFormatUtil.SHOW_CONTAINING_CLASS | PsiFormatUtil.SHOW_FQ_NAME | PsiFormatUtil.SHOW_NAME,
-                            PsiSubstitutor.EMPTY) + "'";
+                            PsiSubstitutor.EMPTY));
         }
 
         public void applyFix(final Project project, ProblemDescriptor descriptor) {
@@ -220,7 +224,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
         }
 
         public String getFamilyName() {
-          return "Replace";
+          return InspectionsBundle.message("inspection.duplicates.replace.family.quickfix");
         }
       };
       fixes.add(replaceQuickFix);
@@ -228,14 +232,51 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
   }
 
   private static LocalQuickFix createIntroduceConstFix(final List<PsiExpression> foundExpr, final PsiLiteralExpression originalExpression) {
-    final PsiExpression[] expressions = foundExpr.toArray(new PsiExpression[foundExpr.size()+1]);
+    final PsiExpression[] expressions = foundExpr.toArray(new PsiExpression[foundExpr.size() + 1]);
     expressions[foundExpr.size()] = originalExpression;
-    return I18nInspection.createIntroduceConstantFix(expressions);
+
+    final LocalQuickFix introduceConstFix = new LocalQuickFix() {
+      public String getName() {
+        return IntroduceConstantHandler.REFACTORING_NAME;
+      }
+
+      public void applyFix(final Project project, ProblemDescriptor descriptor) {
+        final IntroduceConstantHandler handler = new IntroduceConstantHandler() {
+          protected OccurenceManager createOccurenceManager(PsiExpression selectedExpr, PsiClass parentClass) {
+            final OccurenceFilter filter = new OccurenceFilter() {
+              public boolean isOK(PsiExpression occurence) {
+                return true;
+              }
+            };
+            return new BaseOccurenceManager(filter) {
+              protected PsiExpression[] defaultOccurences() {
+                return expressions;
+              }
+
+              protected PsiExpression[] findOccurences() {
+                return expressions;
+              }
+            };
+          }
+        };
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            handler.invoke(project, expressions);
+          }
+        });
+      }
+
+      public String getFamilyName() {
+        return getName();
+      }
+    };
+    return introduceConstFix;
   }
 
   private static PsiReferenceExpression createReferenceTo(final PsiField constant, final PsiLiteralExpression context) throws IncorrectOperationException {
     PsiReferenceExpression reference = (PsiReferenceExpression)constant.getManager().getElementFactory().createExpressionFromText(constant.getName(), context);
     if (reference.isReferenceTo(constant)) return reference;
+    //noinspection HardCodedStringLiteral
     reference = (PsiReferenceExpression)constant.getManager().getElementFactory().createExpressionFromText("XXX."+constant.getName(), null);
     final PsiReferenceExpression classQualifier = (PsiReferenceExpression)reference.getQualifierExpression();
     classQualifier.bindToElement(constant.getContainingClass());

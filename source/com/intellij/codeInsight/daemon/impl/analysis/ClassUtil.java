@@ -5,15 +5,14 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
-import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.psi.util.PsiSuperMethodUtil;
+import com.intellij.psi.HierarchicalMethodSignature;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.Collection;
 
 public class ClassUtil {
-  public static PsiMethod getAnyAbstractMethod(PsiClass aClass, MethodSignatureUtil.MethodSignatureToMethods allMethodsCollection) {
+  public static PsiMethod getAnyAbstractMethod(PsiClass aClass, Collection<HierarchicalMethodSignature> allMethodsCollection) {
     PsiMethod methodToImplement = getAnyMethodToImplement(aClass, allMethodsCollection);
     if (methodToImplement != null) {
       return methodToImplement;
@@ -23,6 +22,9 @@ public class ClassUtil {
       if (method.hasModifierProperty(PsiModifier.ABSTRACT)) return method;
     }
 
+    return null;
+
+/*
     // the only remaining possiblity for class to have abstract method here is
     //  from package local abstract method defined in inherited class from other package
     PsiManager manager = aClass.getManager();
@@ -71,26 +73,32 @@ public class ClassUtil {
       }
     }
     return null;
+*/
   }
 
-  public static PsiMethod getAnyMethodToImplement(PsiClass aClass, MethodSignatureUtil.MethodSignatureToMethods allMethodsCollection) {
-    for (List<MethodSignatureBackedByPsiMethod> methodSignatureBackedByPsiMethods : allMethodsCollection.values()) {
-      List<MethodSignatureBackedByPsiMethod> overrideEquivalentSignatures = new ArrayList<MethodSignatureBackedByPsiMethod>(methodSignatureBackedByPsiMethods);
-      PsiSuperMethodUtil.removeOverriddenMethods(overrideEquivalentSignatures, aClass, aClass);
-      for (MethodSignatureBackedByPsiMethod signature : overrideEquivalentSignatures) {
-        PsiMethod method = signature.getMethod();
-        PsiClass containingClass = method.getContainingClass();
-        if (containingClass == null || aClass.equals(containingClass)) {
-          continue;
-        }
-        if (method.hasModifierProperty(PsiModifier.ABSTRACT)
-            && !method.hasModifierProperty(PsiModifier.STATIC)
-            && !method.hasModifierProperty(PsiModifier.PRIVATE)
-            && aClass.getManager().getResolveHelper().isAccessible(method, aClass, aClass)) {
-          return method;
+  public static PsiMethod getAnyMethodToImplement(PsiClass aClass, Collection<HierarchicalMethodSignature> allMethodsCollection) {
+    for (HierarchicalMethodSignature signatureHierarchical : allMethodsCollection) {
+      final PsiMethod method = signatureHierarchical.getMethod();
+      PsiClass containingClass = method.getContainingClass();
+      if (containingClass == null) {
+        continue;
+      }
+      final PsiResolveHelper resolveHelper = aClass.getManager().getResolveHelper();
+      if (!aClass.equals(containingClass) &&
+          method.hasModifierProperty(PsiModifier.ABSTRACT)
+          && !method.hasModifierProperty(PsiModifier.STATIC)
+          && !method.hasModifierProperty(PsiModifier.PRIVATE)) {
+        return method;
+      } else {
+        final List<HierarchicalMethodSignature> superSignatures = signatureHierarchical.getSuperSignatures();
+        for (HierarchicalMethodSignature superSignatureHierarchical : superSignatures) {
+          final PsiMethod superMethod = superSignatureHierarchical.getMethod();
+          if (superMethod.hasModifierProperty(PsiModifier.ABSTRACT) &&
+              !resolveHelper.isAccessible(superMethod, method, null)) return superMethod;
         }
       }
     }
+
     return null;
   }
 
@@ -105,8 +113,8 @@ public class ClassUtil {
     TextRange startTextRange = psiElement.getTextRange();
     int start = startTextRange == null ? 0 : startTextRange.getStartOffset();
     TextRange endTextRange = (aClass instanceof PsiAnonymousClass
-                   ? (PsiElement)((PsiAnonymousClass)aClass).getBaseClassReference()
-                   : aClass.getImplementsList()).getTextRange();
+                              ? (PsiElement)((PsiAnonymousClass)aClass).getBaseClassReference()
+                              : aClass.getImplementsList()).getTextRange();
     int end = endTextRange == null ? start : endTextRange.getEndOffset();
     return new TextRange(start, end);
   }

@@ -3,10 +3,9 @@ package com.intellij.refactoring.turnRefsToSuper;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.usageView.FindUsagesCommand;
-import com.intellij.usageView.UsageInfo;
-import com.intellij.usageView.UsageViewDescriptor;
-import com.intellij.usageView.UsageViewUtil;
+import com.intellij.usageView.*;
+import com.intellij.usageView.UsageViewBundle;
+import com.intellij.refactoring.RefactoringBundle;
 
 class RefsToSuperViewDescriptor implements UsageViewDescriptor{
   private final TurnRefsToSuperProcessor myProcessor;
@@ -66,14 +65,10 @@ class RefsToSuperViewDescriptor implements UsageViewDescriptor{
 
   public String getCodeReferencesText(int usagesCount, int filesCount) {
     StringBuffer buffer = new StringBuffer();
-    buffer.append("References to ");
-    buffer.append(myClass.isInterface() ? "interface " : "class ");
-    buffer.append(myClass.getName());
-    buffer.append(" to be replaced with references to ");
-    buffer.append(mySuper.isInterface() ? "interface " : "class ");
-    buffer.append(mySuper.getName());
+    buffer.append(RefactoringBundle.message("references.to.0.to.be.replaced.with.references.to.1",
+                                            myClass.getName(), mySuper.getName()));
     buffer.append(" ");
-    buffer.append(UsageViewUtil.getUsageCountInfo(usagesCount, filesCount, "reference"));
+    buffer.append(UsageViewBundle.getReferencesString(usagesCount, filesCount));
     return buffer.toString();
   }
 

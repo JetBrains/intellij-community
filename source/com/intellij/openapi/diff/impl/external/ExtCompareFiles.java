@@ -12,6 +12,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
+import org.jetbrains.annotations.NonNls;
+
 class ExtCompareFiles extends BaseExternalTool {
   public static final BaseExternalTool INSTANCE = new ExtCompareFiles();
   private ExtCompareFiles() {
@@ -46,7 +48,7 @@ class ExtCompareFiles extends BaseExternalTool {
   private static class MyContentExternalizer implements BaseExternalTool.ContentExternalizer {
     private final DiffRequest myRequest;
     private final int myIndex;
-    public static final String STD_PREFIX = "IJDiff";
+    @NonNls public static final String STD_PREFIX = "IJDiff";
 
     public MyContentExternalizer(DiffRequest request, int index) {
       myRequest = request;

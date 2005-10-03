@@ -13,6 +13,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -325,8 +326,8 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
   }
 
   private Color getBackgroundColor(boolean enabled){
-    return enabled ? UIManager.getColor("textActiveText")
-    : UIManager.getColor("textInactiveText");
+    return enabled ? UIUtil.getActiveTextColor()
+    : UIUtil.getInactiveTextColor();
   }
 
   public Dimension getPreferredSize() {

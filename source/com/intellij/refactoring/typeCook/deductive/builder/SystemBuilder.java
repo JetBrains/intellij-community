@@ -8,7 +8,6 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.typeCook.Settings;
@@ -78,7 +77,7 @@ public class SystemBuilder {
       return false;
     }
 
-    final PsiMethod superMethod = PsiSuperMethodUtil.findDeepestSuperMethod(method);
+    final PsiMethod superMethod = method.findDeepestSuperMethod();
     PsiMethod keyMethod;
     PsiParameter keyParameter = null;
 

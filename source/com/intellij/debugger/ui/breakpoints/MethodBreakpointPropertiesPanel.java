@@ -5,9 +5,8 @@
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.psi.PsiElement;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.debugger.DebuggerBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -25,10 +24,8 @@ public class MethodBreakpointPropertiesPanel extends BreakpointPropertiesPanel {
   protected JComponent createSpecialBox() {
     JPanel _panel, _panel0;
 
-    myWatchEntryCheckBox = new JCheckBox("Method entry");
-    myWatchEntryCheckBox.setMnemonic('y');
-    myWatchExitCheckBox = new JCheckBox("Method exit");
-    myWatchExitCheckBox.setMnemonic('x');
+    myWatchEntryCheckBox = new JCheckBox(DebuggerBundle.message("label.method.breakpoint.properties.panel.method.entry"));
+    myWatchExitCheckBox = new JCheckBox(DebuggerBundle.message("label.method.breakpoint.properties.panel.method.exit"));
 
     Box watchBox = Box.createVerticalBox();
     _panel = new JPanel(new BorderLayout());
@@ -44,7 +41,7 @@ public class MethodBreakpointPropertiesPanel extends BreakpointPropertiesPanel {
     _panel0.add(Box.createHorizontalStrut(3), BorderLayout.WEST);
     _panel0.add(Box.createHorizontalStrut(3), BorderLayout.EAST);
     _panel.add(_panel0, BorderLayout.NORTH);
-    _panel.setBorder(IdeBorderFactory.createTitledBorder("Watch"));
+    _panel.setBorder(IdeBorderFactory.createTitledBorder(DebuggerBundle.message("label.group.watch.events")));
 
     ActionListener listener = new ActionListener() {
       public void actionPerformed(ActionEvent e) {

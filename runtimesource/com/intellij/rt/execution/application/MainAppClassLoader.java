@@ -1,17 +1,20 @@
 package com.intellij.rt.execution.application;
 
-import java.net.URLClassLoader;
-import java.net.URL;
-import java.net.MalformedURLException;
-import java.util.StringTokenizer;
-import java.util.List;
-import java.util.ArrayList;
 import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.StringTokenizer;
 
 /**
  * @author ven
  */
 public class MainAppClassLoader  extends URLClassLoader {
+  /**
+   * @noinspection HardCodedStringLiteral
+   */
   private static final String USER_CLASSPATH = "idea.user.classpath";
   private Class myAppMainClass;
 

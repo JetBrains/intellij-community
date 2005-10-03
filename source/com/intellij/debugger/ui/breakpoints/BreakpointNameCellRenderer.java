@@ -1,5 +1,7 @@
 package com.intellij.debugger.ui.breakpoints;
 
+import com.intellij.util.ui.UIUtil;
+
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
@@ -25,7 +27,7 @@ public class BreakpointNameCellRenderer extends DefaultTableCellRenderer {
     setDisabledIcon(icon);
 
     if(isSelected){
-      setForeground(UIManager.getColor("Table.selectionForeground"));
+      setForeground(UIUtil.getTableSelectionForeground());
     }
     else{
       Color foreColor;
@@ -33,7 +35,7 @@ public class BreakpointNameCellRenderer extends DefaultTableCellRenderer {
         foreColor = myAnyExceptionForeground;
       }
       else{
-        foreColor = UIManager.getColor("Table.foreground");
+        foreColor = UIUtil.getTableForeground();
       }
       setForeground(foreColor);
     }

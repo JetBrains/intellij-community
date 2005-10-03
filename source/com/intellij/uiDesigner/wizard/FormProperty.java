@@ -2,6 +2,7 @@ package com.intellij.uiDesigner.wizard;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.uiDesigner.lw.LwComponent;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Anton Katilin
@@ -17,9 +18,9 @@ public final class FormProperty {
 
   public FormProperty(
     final LwComponent component,
-    final String componentPropertyGetterName,
-    final String componentPropertySetterName,
-    final String componentPropertyClassName
+    final @NonNls String componentPropertyGetterName,
+    final @NonNls String componentPropertySetterName,
+    final @NonNls String componentPropertyClassName
   ) {
     LOG.assertTrue(component != null);
     LOG.assertTrue(componentPropertyGetterName != null);
@@ -37,6 +38,7 @@ public final class FormProperty {
       !byte.class.getName().equals(componentPropertyClassName) &&
       !short.class.getName().equals(componentPropertyClassName)
     ){
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("unknown componentPropertyClassName: " +componentPropertyClassName);
     }
 

@@ -1,6 +1,7 @@
 package com.intellij.ide.fileTemplates.ui;
 
 import com.intellij.ide.fileTemplates.FileTemplate;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.ArrayUtil;
@@ -23,7 +24,7 @@ public class CreateFromTemplatePanel{
   private FileTemplate myTemplate;
   private JPanel myMainPanel;
   private JPanel myAttrPanel;
-  private JLabel myFilenameLabel = new JLabel("File name:");
+  private JLabel myFilenameLabel = new JLabel(IdeBundle.message("label.file.name"));
   private JTextField myFilenameField = new JTextField();
   private Properties myPredefinedProperties = new Properties();
   private ArrayList<Pair<String, JTextField>> myAttributes = new ArrayList<Pair<String,JTextField>>();

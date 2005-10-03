@@ -8,6 +8,7 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.refactoring.rename.naming.AutomaticRenamer;
 import com.intellij.refactoring.ui.EnableDisableAction;
 import com.intellij.refactoring.ui.StringTableCellEditor;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.BooleanTableCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableUtil;
@@ -115,10 +116,12 @@ public class AutomaticRenamingDialog extends DialogWrapper {
     box.add(jScrollPane2);
     final Box buttonBox = Box.createHorizontalBox();
     buttonBox.add(Box.createHorizontalGlue());
-    final JButton selectAllButton = new JButton("Select all");
+    final JButton selectAllButton = new JButton();
+    selectAllButton.setText(RefactoringBundle.message("select.all.button"));
     buttonBox.add(selectAllButton);
     buttonBox.add(Box.createHorizontalStrut(4));
-    final JButton deselectAllButton = new JButton("Unselect all");
+    final JButton deselectAllButton = new JButton();
+    deselectAllButton.setText(RefactoringBundle.message("unselect.all.button"));
     buttonBox.add(deselectAllButton);
     selectAllButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -128,7 +131,6 @@ public class AutomaticRenamingDialog extends DialogWrapper {
         myTableModel.fireTableDataChanged();
       }
     });
-    selectAllButton.setMnemonic('S');
 
     deselectAllButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -138,7 +140,6 @@ public class AutomaticRenamingDialog extends DialogWrapper {
         myTableModel.fireTableDataChanged();
       }
     });
-    deselectAllButton.setMnemonic('U');
     box.add(Box.createVerticalStrut(4));
     box.add(buttonBox);
     box.add(Box.createVerticalStrut(4));
@@ -225,9 +226,9 @@ public class AutomaticRenamingDialog extends DialogWrapper {
     public String getColumnName(int column) {
       switch(column) {
         case OLD_NAME_COLUMN:
-          return myRenamer.entityName() + " name";
+          return RefactoringBundle.message("automatic.renamer.enity.name.column", myRenamer.entityName());
         case NEW_NAME_COLUMN:
-          return "Rename To";
+          return RefactoringBundle.message("automatic.renamer.rename.to.column");
         default:
           return " ";
       }

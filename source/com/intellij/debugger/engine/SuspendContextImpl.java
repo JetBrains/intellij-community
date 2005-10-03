@@ -10,6 +10,7 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.HashSet;
 import com.sun.jdi.ObjectReference;
@@ -161,7 +162,7 @@ public abstract class SuspendContextImpl implements SuspendContext {
     if (myEventSet != null) {
       return myEventSet.toString();
     } else {
-      return myThread != null ? myThread.toString() : "null context";
+      return myThread != null ? myThread.toString() : DebuggerBundle.message("string.null.context");
     }
   }
 

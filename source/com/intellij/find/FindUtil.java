@@ -17,9 +17,9 @@ import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
@@ -27,18 +27,26 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.LightweightHint;
+import com.intellij.usageView.UsageInfo;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.usages.*;
+import com.intellij.find.impl.FindInProjectUtil;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  *
  */
 public class FindUtil {
   private static Key KEY = Key.create("FindUtil.KEY");
-  private static String UP = "UP";
-  private static String DOWN = "DOWN";
+  @NonNls private static String UP = "UP";
+  @NonNls private static String DOWN = "DOWN";
 
   public static void findWordAtCaret(Project project, Editor editor) {
     int caretOffset = editor.getCaretModel().getOffset();
@@ -105,6 +113,11 @@ public class FindUtil {
       return;
     }
 
+    if (model.isFindAll()) {
+      doFindAll(project, editor, model);
+      return;
+    }
+
     if (!model.isGlobal() && editor.getSelectionModel().hasSelection()) {
       int offset = model.isForward()
                    ? editor.getSelectionModel().getSelectionStart()
@@ -147,6 +160,36 @@ public class FindUtil {
     findManager.setFindNextModel(null);
     findManager.getFindInFileModel().copyFrom(model);
     doSearch(project, editor, offset, true, model, true);
+  }
+
+  private static void doFindAll(final Project project, final Editor editor, final FindModel findModel) {
+    final Document document = editor.getDocument();
+    final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    CharSequence text = document.getCharsSequence();
+    int textLength = document.getTextLength();
+    final List<Usage> usages = new ArrayList<Usage>();
+    if (text != null) {
+      int offset = 0;
+      FindManager findManager = FindManager.getInstance(project);
+      while (offset < textLength) {
+        FindResult result = findManager.findString(text, offset, findModel);
+        if (!result.isStringFound()) break;
+
+        usages.add(new UsageInfo2UsageAdapter(new UsageInfo(psiFile, result.getStartOffset(), result.getEndOffset())));
+
+        final int prevOffset = offset;
+        offset = result.getEndOffset();
+
+        if (prevOffset == offset) {
+          // for regular expr the size of the match could be zero -> could be infinite loop in finding usages!
+          ++offset;
+        }
+      }
+    }
+    final UsageTarget[] usageTargets = new UsageTarget[]{ new FindInProjectUtil.StringUsageTarget(findModel.getStringToFind()) };
+    final UsageViewPresentation usageViewPresentation = FindInProjectUtil.setupViewPresentation(false, findModel);
+    UsageViewManager.getInstance(project).showUsages(usageTargets, usages.toArray(new Usage[0]),
+                                                     usageViewPresentation);
   }
 
   public static void searchBack(Project project, FileEditor fileEditor) {
@@ -338,7 +381,7 @@ public class FindUtil {
         int startResultOffset = result.getStartOffset();
         model.setFromCursor(true);
         if (toPrompt) {
-          int promptResult = findManager.showPromptDialog(model, "Replace");
+          int promptResult = findManager.showPromptDialog(model, FindBundle.message("find.replace.dialog.title"));
           if (promptResult == FindManager.PromptResult.SKIP) {
             offset = model.isForward() ? result.getEndOffset() : startResultOffset;
             continue;
@@ -488,7 +531,7 @@ public class FindUtil {
   private static void processNotFound(final Editor editor, String stringToFind, FindModel model, Project project) {
     FindResult result;
 
-    String message = "\"" + stringToFind + "\" not found";
+    String message = FindBundle.message("find.search.string.not.found.message", stringToFind);
 
     if (model.isGlobal()) {
       final FindModel newModel = (FindModel)model.clone();
@@ -516,12 +559,11 @@ public class FindUtil {
             modelForNextSearch.isForward() ? IdeActions.ACTION_FIND_NEXT : IdeActions.ACTION_FIND_PREVIOUS);
           String shortcutsText = KeymapUtil.getFirstKeyboardShortcutText(action);
           if (shortcutsText.length() > 0) {
-            message += ", press " + shortcutsText;
+            message = FindBundle.message("find.search.again.from.top.hotkey.message", message, shortcutsText);
           }
           else {
-            message += ", perform \"Find Next\" again ";
+            message = FindBundle.message("find.search.again.from.top.action.message", message);
           }
-          message += " to search from the top";
           editor.putUserData(KEY, DOWN);
         }
         else {
@@ -529,12 +571,11 @@ public class FindUtil {
             modelForNextSearch.isForward() ? IdeActions.ACTION_FIND_PREVIOUS : IdeActions.ACTION_FIND_NEXT);
           String shortcutsText = KeymapUtil.getFirstKeyboardShortcutText(action);
           if (shortcutsText.length() > 0) {
-            message += ", press " + shortcutsText;
+            message = FindBundle.message("find.search.again.from.bottom.hotkey.message", message, shortcutsText);
           }
           else {
-            message += ", perform \"Find Previous\" again ";
+            message = FindBundle.message("find.search.again.from.bottom.action.message", message);
           }
-          message += " to search from the bottom";
           editor.putUserData(KEY, UP);
         }
       }

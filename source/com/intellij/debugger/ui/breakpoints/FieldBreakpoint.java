@@ -6,6 +6,7 @@ package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -33,6 +34,7 @@ import com.sun.jdi.event.ModificationWatchpointEvent;
 import com.sun.jdi.request.AccessWatchpointRequest;
 import com.sun.jdi.request.ModificationWatchpointRequest;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.util.List;
@@ -49,7 +51,7 @@ public class FieldBreakpoint extends BreakpointWithHighlighter {
   public static Icon DISABLED_DEP_ICON = IconLoader.getIcon("/debugger/db_dep_field_breakpoint.png");
   private static Icon ourInvalidIcon = IconLoader.getIcon("/debugger/db_invalid_field_breakpoint.png");
   private static Icon ourVerifiedIcon = IconLoader.getIcon("/debugger/db_verified_field_breakpoint.png");
-  public static final String CATEGORY = "field_breakpoints";
+  public static final @NonNls String CATEGORY = "field_breakpoints";
 
   protected FieldBreakpoint(Project project) {
     super(project);
@@ -166,7 +168,7 @@ public class FieldBreakpoint extends BreakpointWithHighlighter {
     try {
       Field field = refType.fieldByName(myFieldName);
       if (field == null) {
-        debugProcess.getRequestsManager().setInvalid(this, "Cannot find field " + myFieldName + " in  class " + refType.name());
+        debugProcess.getRequestsManager().setInvalid(this, DebuggerBundle.message("error.invalid.breakpoint.missing.field.in.class", myFieldName, refType.name()));
         return;
       }
       RequestManagerImpl manager = debugProcess.getRequestsManager();
@@ -194,51 +196,30 @@ public class FieldBreakpoint extends BreakpointWithHighlighter {
   }
 
   public String getEventMessage(final LocatableEvent event) {
-    StringBuffer message = null;
     if (event instanceof ModificationWatchpointEvent) {
-      ModificationWatchpointEvent modificationEvent = (ModificationWatchpointEvent)event;
-      message = new StringBuffer(64);
-      ObjectReference object = modificationEvent.object();
+      final ModificationWatchpointEvent modificationEvent = (ModificationWatchpointEvent)event;
+      final ObjectReference object = modificationEvent.object();
+      final Field field = modificationEvent.field();
       if (object != null) {
-        message.append("{");
+        return DebuggerBundle.message("status.field.watchpoint.reached.modification", field.declaringType().name(), field.name(), modificationEvent.valueCurrent(), modificationEvent.valueToBe(), object.uniqueID());
       }
-      message.append(modificationEvent.field().declaringType().name());
-      if (object != null) {
-        message.append('@');
-        message.append(object.uniqueID());
-        message.append("}");
-      }
-      message.append('.');
-      message.append(myFieldName);
-      message.append(" will be modified. Current value = '");
-      message.append(modificationEvent.valueCurrent());
-      message.append("'; New value = '");
-      message.append(modificationEvent.valueToBe());
-      message.append("'\n");
+      return DebuggerBundle.message("status.static.field.watchpoint.reached.modification", field.declaringType().name(), field.name(), modificationEvent.valueCurrent(), modificationEvent.valueToBe());
     }
     else if (event instanceof AccessWatchpointEvent) {
       AccessWatchpointEvent accessEvent = (AccessWatchpointEvent)event;
-      message = new StringBuffer(32);
-      ObjectReference object = accessEvent.object();
+      final ObjectReference object = accessEvent.object();
+      final Field field = accessEvent.field();
       if (object != null) {
-        message.append("{");
+        return DebuggerBundle.message("status.field.watchpoint.reached.access", field.declaringType().name(), field.name(), object.uniqueID());
       }
-      message.append(accessEvent.field().declaringType().name());
-      if (object != null) {
-        message.append('@');
-        message.append(object.uniqueID());
-        message.append("}");
-      }
-      message.append('.');
-      message.append(myFieldName);
-      message.append(" will be accessed\n");
+      return DebuggerBundle.message("status.static.field.watchpoint.reached.access", field.declaringType().name(), field.name());
     }
-    return message != null ? message.toString() : null;
+    return null;
   }
 
   public String getDisplayName() {
     if(!isValid()) {
-      return "INVALID";
+      return DebuggerBundle.message("status.breakpoint.invalid");
     }
     final String className = getClassName();
     return (className != null && className.length() > 0) ? (className + "." + myFieldName) : myFieldName;
@@ -324,12 +305,14 @@ public class FieldBreakpoint extends BreakpointWithHighlighter {
 
   public void readExternal(Element breakpointNode) throws InvalidDataException {
     super.readExternal(breakpointNode);
+    //noinspection HardCodedStringLiteral
     myFieldName = breakpointNode.getAttributeValue("field_name");
     if(myFieldName == null) {
       throw new InvalidDataException("No field name for field breakpoint");
     }
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public void writeExternal(Element parentNode) throws WriteExternalException {
     super.writeExternal(parentNode);
     parentNode.setAttribute("field_name", getFieldName());

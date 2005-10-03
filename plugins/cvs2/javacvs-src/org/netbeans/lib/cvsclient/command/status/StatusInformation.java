@@ -233,7 +233,8 @@ public final class StatusInformation {
 	/**
 	 * Return a string representation of this object. Useful for debugging.
 	 */
-	public String toString() {
+	@SuppressWarnings({"HardCodedStringLiteral"})
+        public String toString() {
 		final StringBuffer buf = new StringBuffer();
 		buf.append("\nFile: ");
 		buf.append((file != null) ? file.getAbsolutePath()

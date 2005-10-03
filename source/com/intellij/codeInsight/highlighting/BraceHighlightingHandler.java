@@ -30,11 +30,12 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.Alarm;
 
 import java.awt.*;
+import java.util.List;
 import java.util.ArrayList;
 
 public class BraceHighlightingHandler {
-  private static final Key BRACE_HIGHLIGHTERS_IN_EDITOR_VIEW_KEY = Key.create("BraceHighlighter.BRACE_HIGHLIGHTERS_IN_EDITOR_VIEW_KEY");
-  private static final Key LINE_MARKER_IN_EDITOR_KEY = Key.create("BraceHighlighter.LINE_MARKER_IN_EDITOR_KEY");
+  private static final Key<List<RangeHighlighter>> BRACE_HIGHLIGHTERS_IN_EDITOR_VIEW_KEY = Key.create("BraceHighlighter.BRACE_HIGHLIGHTERS_IN_EDITOR_VIEW_KEY");
+  private static final Key<RangeHighlighter> LINE_MARKER_IN_EDITOR_KEY = Key.create("BraceHighlighter.LINE_MARKER_IN_EDITOR_KEY");
 
   private final Project myProject;
   private final Editor myEditor;
@@ -279,9 +280,9 @@ public class BraceHighlightingHandler {
   }
 
   private void registerHighlighter(RangeHighlighter highlighter) {
-    java.util.List highlighters = (java.util.List)myEditor.getUserData(BRACE_HIGHLIGHTERS_IN_EDITOR_VIEW_KEY);
+    List<RangeHighlighter> highlighters = myEditor.getUserData(BRACE_HIGHLIGHTERS_IN_EDITOR_VIEW_KEY);
     if (highlighters == null) {
-      highlighters = new ArrayList();
+      highlighters = new ArrayList<RangeHighlighter>();
       myEditor.putUserData(BRACE_HIGHLIGHTERS_IN_EDITOR_VIEW_KEY, highlighters);
     }
 
@@ -316,7 +317,7 @@ public class BraceHighlightingHandler {
   }
 
   public void clearBraceHighlighters() {
-    java.util.List highlighters = (java.util.List)myEditor.getUserData(BRACE_HIGHLIGHTERS_IN_EDITOR_VIEW_KEY);
+    List<RangeHighlighter> highlighters = myEditor.getUserData(BRACE_HIGHLIGHTERS_IN_EDITOR_VIEW_KEY);
     if (highlighters == null) return;
     myEditor.putUserData(BRACE_HIGHLIGHTERS_IN_EDITOR_VIEW_KEY, null);
     for (final Object highlighter : highlighters) {
@@ -339,7 +340,7 @@ public class BraceHighlightingHandler {
   }
 
   private void removeLineMarkers() {
-    RangeHighlighter marker = (RangeHighlighter)myEditor.getUserData(LINE_MARKER_IN_EDITOR_KEY);
+    RangeHighlighter marker = myEditor.getUserData(LINE_MARKER_IN_EDITOR_KEY);
     if (marker != null) {
       myEditor.getMarkupModel().removeHighlighter(marker);
       myEditor.putUserData(LINE_MARKER_IN_EDITOR_KEY, null);

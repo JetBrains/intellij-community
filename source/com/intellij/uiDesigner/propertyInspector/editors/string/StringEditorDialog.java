@@ -1,20 +1,24 @@
 package com.intellij.uiDesigner.propertyInspector.editors.string;
 
+import com.intellij.CommonBundle;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.ide.util.TreeFileChooser;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.uiDesigner.ReferenceUtil;
+import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.lw.StringDescriptor;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -29,6 +33,11 @@ import java.awt.event.KeyEvent;
 final class StringEditorDialog extends DialogWrapper{
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.propertyInspector.editors.string.StringEditorDialog");
 
+  @NonNls
+  private static final String CARD_STRING = "string";
+  @NonNls
+  private static final String CARD_BUNDLE = "bundle";
+
   private final Module myModule;
   /** Descriptor to be edited */
   private StringDescriptor myValue;
@@ -42,13 +51,14 @@ final class StringEditorDialog extends DialogWrapper{
     super(parent, true);
 
     if (module == null) {
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("module cannot be null");
     }
 
     myModule = module;
 
     myForm = new MyForm();
-    setTitle("Edit Text");
+    setTitle(UIDesignerBundle.message("title.edit.text"));
     setValue(descriptor);
 
     init(); /* run initialization proc */
@@ -78,7 +88,9 @@ final class StringEditorDialog extends DialogWrapper{
         return null;
       }
       else{
-        return StringDescriptor.create(value);
+        final StringDescriptor stringDescriptor = StringDescriptor.create(value);
+        stringDescriptor.setNoI18n(myForm.myStringCard.myNoI18nCheckbox.isSelected());
+        return stringDescriptor;
       }
     }
     else{ // bundled value
@@ -97,12 +109,12 @@ final class StringEditorDialog extends DialogWrapper{
     if(descriptor == null || descriptor.getValue() != null){ // trivial descriptor
       myForm.myRbString.setSelected(true);
       myForm.myStringCard.setDescriptor(descriptor);
-      cardLayout.show(myForm.myCardHolder, "string");
+      cardLayout.show(myForm.myCardHolder, CARD_STRING);
     }
     else{ // bundled property
       myForm.myRbResourceBundle.setSelected(true);
       myForm.myResourceBundleCard.setDescriptor(descriptor);
-      cardLayout.show(myForm.myCardHolder, "bundle");
+      cardLayout.show(myForm.myCardHolder, CARD_BUNDLE);
     }
   }
 
@@ -130,13 +142,13 @@ final class StringEditorDialog extends DialogWrapper{
 
       final CardLayout cardLayout = new CardLayout();
       myCardHolder.setLayout(cardLayout);
-      myCardHolder.add(myStringCard.myPanel, "string");
-      myCardHolder.add(myResourceBundleCard.myPanel, "bundle");
+      myCardHolder.add(myStringCard.myPanel, CARD_STRING);
+      myCardHolder.add(myResourceBundleCard.myPanel, CARD_BUNDLE);
 
       myRbString.addActionListener(
         new ActionListener() {
           public void actionPerformed(final ActionEvent e) {
-            cardLayout.show(myCardHolder, "string");
+            cardLayout.show(myCardHolder, CARD_STRING);
           }
         }
       );
@@ -144,7 +156,7 @@ final class StringEditorDialog extends DialogWrapper{
       myRbResourceBundle.addActionListener(
         new ActionListener() {
           public void actionPerformed(final ActionEvent e) {
-            cardLayout.show(myCardHolder, "bundle");
+            cardLayout.show(myCardHolder, CARD_BUNDLE);
           }
         }
       );
@@ -155,13 +167,15 @@ final class StringEditorDialog extends DialogWrapper{
     private JTextField myTfValue;
     private JPanel myPanel;
     private JLabel myLblValue;
+    private JCheckBox myNoI18nCheckbox;
 
     public MyStringCard() {
       myLblValue.setLabelFor(myTfValue);
     }
 
-    public void setDescriptor(final StringDescriptor descriptor){
+    public void setDescriptor(@Nullable final StringDescriptor descriptor){
       myTfValue.setText(ReferenceUtil.resolve(myModule, descriptor));
+      myNoI18nCheckbox.setSelected(descriptor != null ? descriptor.isNoI18n() : false);
     }
   }
 
@@ -191,7 +205,7 @@ final class StringEditorDialog extends DialogWrapper{
             Project project = myModule.getProject();
             PsiFile initialPropertiesFile = ReferenceUtil.getPropertiesFile(MyResourceBundleCard.this.myTfBundleName.getText(), myModule);
             final GlobalSearchScope moduleScope = GlobalSearchScope.moduleWithDependenciesScope(myModule);
-            TreeFileChooser fileChooser = TreeClassChooserFactory.getInstance(project).createFileChooser("Choose Poperties File", initialPropertiesFile,
+            TreeFileChooser fileChooser = TreeClassChooserFactory.getInstance(project).createFileChooser(UIDesignerBundle.message("title.choose.properties.file"), initialPropertiesFile,
                                                                                                          StdFileTypes.PROPERTIES, new TreeFileChooser.PsiFileFilter() {
               public boolean accept(PsiFile file) {
                 final VirtualFile virtualFile = file.getVirtualFile();
@@ -230,16 +244,16 @@ final class StringEditorDialog extends DialogWrapper{
             final String bundleName = myTfBundleName.getText();
             if(bundleName.length() == 0){
               Messages.showErrorDialog(
-                "Please specify name of the resource bundle",
-                "Error"
+                UIDesignerBundle.message("error.specify.bundle.name"),
+                CommonBundle.getErrorTitle()
               );
               return;
             }
             final PropertiesFile bundle = ReferenceUtil.getPropertiesFile(bundleName, myModule);
             if(bundle == null){
               Messages.showErrorDialog(
-                "Bundle \"" + bundleName + "\" does not exist",
-                "Error"
+                UIDesignerBundle.message("error.bundle.does.not.exist", bundleName),
+                CommonBundle.getErrorTitle()
               );
               return;
             }

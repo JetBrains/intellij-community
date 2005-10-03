@@ -179,6 +179,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     StringBuffer result = new StringBuffer();
     result.append('<');

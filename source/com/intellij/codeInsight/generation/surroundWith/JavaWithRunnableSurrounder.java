@@ -1,16 +1,18 @@
 
 package com.intellij.codeInsight.generation.surroundWith;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 
 class JavaWithRunnableSurrounder extends JavaStatementsSurrounder{
   public String getTemplateDescription() {
-    return "Runnable";
+    return CodeInsightBundle.message("surround.with.runnable.template");
   }
 
   public TextRange surroundStatements(Project project, Editor editor, PsiElement container, PsiElement[] statements) throws IncorrectOperationException{
@@ -18,7 +20,7 @@ class JavaWithRunnableSurrounder extends JavaStatementsSurrounder{
     PsiElementFactory factory = manager.getElementFactory();
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
 
-    String text = "Runnable runnable = new Runnable(){\npublic void run(){\n}};";
+    @NonNls String text = "Runnable runnable = new Runnable(){\npublic void run(){\n}};";
     PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)factory.createStatementFromText(text, null);
     declarationStatement = (PsiDeclarationStatement)codeStyleManager.reformat(declarationStatement);
 

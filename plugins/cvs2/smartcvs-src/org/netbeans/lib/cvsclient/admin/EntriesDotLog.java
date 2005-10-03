@@ -13,6 +13,7 @@
 package org.netbeans.lib.cvsclient.admin;
 
 import org.netbeans.lib.cvsclient.util.BugLog;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -26,8 +27,8 @@ final class EntriesDotLog {
 
 	// Constants ==============================================================
 
-	private static final String ENTRY_ADDED = "A ";
-	private static final String ENTRY_REMOVED = "R ";
+	@NonNls private static final String ENTRY_ADDED = "A ";
+	@NonNls private static final String ENTRY_REMOVED = "R ";
 
 	// Actions ================================================================
 

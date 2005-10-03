@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
 
@@ -51,6 +52,6 @@ class IntroduceParameterViewDescriptor extends UsageViewDescriptorAdapter {
   }
 
   public String getProcessedElementsHeader() {
-    return "Adding parameter to a method";
+    return RefactoringBundle.message("introduce.parameter.elements.header");
   }
 }

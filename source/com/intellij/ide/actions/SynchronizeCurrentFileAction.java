@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ide.IdeBundle;
 
 
 public class SynchronizeCurrentFileAction extends AnAction {
@@ -21,9 +22,9 @@ public class SynchronizeCurrentFileAction extends AnAction {
     if (files != null && files.length > 0) {
       e.getPresentation().setEnabled(true);
       if (files.length == 1) {
-        e.getPresentation().setText("Synchronize '" + files[0].getName() + "'");
+        e.getPresentation().setText(IdeBundle.message("action.synchronize.file", files[0].getName()));
       } else {
-        e.getPresentation().setText("Synchronize selected files");
+        e.getPresentation().setText(IdeBundle.message("action.synchronize.selected.files"));
       }
     } else {
       e.getPresentation().setEnabled(false);
@@ -36,9 +37,8 @@ public class SynchronizeCurrentFileAction extends AnAction {
     for (VirtualFile file : files) {
       if (file.isDirectory()) {
         final int response = Messages.showYesNoDialog(getProject(e),
-                                                      "You are trying to recursively synchronize a directory. This may take some time." +
-                                                      "\n Are you sure to continue?",
-                                                      "Synchronize files",
+                                                      IdeBundle.message("prompt.recursively.synchronize.directory"),
+                                                      IdeBundle.message("title.synchronize.files"),
                                                       Messages.getQuestionIcon());
         if (response == 1) {
           return;

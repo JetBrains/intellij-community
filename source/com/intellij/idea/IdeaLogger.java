@@ -8,6 +8,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.ApplicationInfoProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import org.apache.log4j.Level;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -17,6 +18,7 @@ import java.io.LineNumberReader;
 /**
  * @author Mike
  */
+@SuppressWarnings({"HardCodedStringLiteral"})
 public class IdeaLogger extends Logger {
   private static ApplicationInfoProvider ourApplicationInfoProvider = getIdeaInfoProvider();
 
@@ -32,8 +34,10 @@ public class IdeaLogger extends Logger {
 
   private static String ourCompilationTimestamp;
 
+  @NonNls private static final String COMPILATION_TIMESTAMP_RESOURCE_NAME = "/.compilation-timestamp";
+
   static {
-    InputStream stream = Logger.class.getResourceAsStream("/.compilation-timestamp");
+    InputStream stream = Logger.class.getResourceAsStream(COMPILATION_TIMESTAMP_RESOURCE_NAME);
     if (stream != null) {
       LineNumberReader reader = new LineNumberReader(new InputStreamReader(stream));
       try {

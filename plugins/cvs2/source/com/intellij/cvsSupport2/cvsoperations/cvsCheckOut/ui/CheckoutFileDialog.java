@@ -24,7 +24,7 @@ public class CheckoutFileDialog extends OptionsDialog {
     myDateOrRevisionOrTagSettings = new DateOrRevisionOrTagSettings(
       new TagsProviderOnVirtualFiles(files), project, false);
     myDateOrRevisionOrTagSettings.updateFrom(getCvsConfiguration().CHECKOUT_DATE_OR_REVISION_SETTINGS);
-    setTitle("Checkout Options");
+    setTitle(com.intellij.CvsBundle.message("dialog.title.checkout.options"));
     init();
   }
 

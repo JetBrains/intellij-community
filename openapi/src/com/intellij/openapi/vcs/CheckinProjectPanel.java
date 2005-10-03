@@ -25,11 +25,12 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.List;
 
+import org.jetbrains.annotations.NonNls;
+
 
 public interface CheckinProjectPanel extends Refreshable {
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  String REVISIONS = "Revisions";
+  @NonNls String REVISIONS = "Revisions";
 
   JComponent getComponent();
 

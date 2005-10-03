@@ -14,6 +14,8 @@
  *****************************************************************************/
 package org.netbeans.lib.cvsclient.admin;
 
+import org.jetbrains.annotations.NonNls;
+
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -31,36 +33,40 @@ public final class Entry implements Cloneable {
 
 	// Constants ==============================================================
 
-	public static final String DUMMY_TIMESTAMP = "dummy timestamp";
-	private static final String DUMMY_TIMESTAMP_NEW_ENTRY = "dummy timestamp from new-entry";
-	private static final String MERGE_TIMESTAMP = "Result of merge";
+	@NonNls public static final String DUMMY_TIMESTAMP = "dummy timestamp";
+	@NonNls private static final String DUMMY_TIMESTAMP_NEW_ENTRY = "dummy timestamp from new-entry";
+	@NonNls private static final String MERGE_TIMESTAMP = "Result of merge";
 
-	private static final String STICKY_TAG_REVISION_PREFIX = "T";
-	private static final String STICKY_DATE_PREFIX = "D";
+	@NonNls private static final String STICKY_TAG_REVISION_PREFIX = "T";
+	@NonNls private static final String STICKY_DATE_PREFIX = "D";
 
-	private static final String BINARY_FILE = "-kb";
+	@NonNls private static final String BINARY_FILE = "-kb";
 
-	private static final String HAD_CONFLICTS = "+";
-	private static final char TIMESTAMP_MATCHES_FILE = '=';
+	@NonNls private static final String HAD_CONFLICTS = "+";
+	@NonNls private static final char TIMESTAMP_MATCHES_FILE = '=';
 
-	private static final String DIRECTORY_PREFIX = "D/";
+	@NonNls private static final String DIRECTORY_PREFIX = "D/";
 
 	// Static =================================================================
 
-	private static final SimpleDateFormat STICKY_DATE_FORMAT = new SimpleDateFormat("yyyy.MM.dd.hh.mm.ss");
+        @NonNls private static final String DATE_FORMAT_STR = "yyyy.MM.dd.hh.mm.ss";
+        private static final SimpleDateFormat STICKY_DATE_FORMAT = new SimpleDateFormat(DATE_FORMAT_STR);
 
 	private static SimpleDateFormat lastModifiedDateFormatter;
 	private boolean isAddedFile = false;
 	private boolean isRemoved = false;
 	private boolean isResultOfMerge = false;
+        @NonNls private static final String LAST_MODIFIED_DATE_FORMAT_ATR = "EEE MMM dd HH:mm:ss yyyy";
+        @NonNls private static final String TIME_ZONE_FORMAT_STR = "GMT+0000";
+  @NonNls private static final String INITIAL_PREFIX = "Initial ";
 
-	public static SimpleDateFormat getLastModifiedDateFormatter() {
-		if (lastModifiedDateFormatter == null) {
-			lastModifiedDateFormatter = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyy", Locale.US);
-			lastModifiedDateFormatter.setTimeZone(TimeZone.getTimeZone("GMT+0000"));
-		}
-		return lastModifiedDateFormatter;
-	}
+  public static SimpleDateFormat getLastModifiedDateFormatter() {
+    if (lastModifiedDateFormatter == null) {
+        lastModifiedDateFormatter = new SimpleDateFormat(LAST_MODIFIED_DATE_FORMAT_ATR, Locale.US);
+        lastModifiedDateFormatter.setTimeZone(TimeZone.getTimeZone(TIME_ZONE_FORMAT_STR));
+    }
+    return lastModifiedDateFormatter;
+  }
 
 	public static String formatLastModifiedDate(Date date) {
 		final SimpleDateFormat formatter = getLastModifiedDateFormatter();
@@ -238,7 +244,7 @@ public final class Entry implements Cloneable {
 			return;
 		}
 
-		if (conflictStringWithoutConflictMarker.startsWith("Initial ")) {
+		if (conflictStringWithoutConflictMarker.startsWith(INITIAL_PREFIX)) {
 			return;
 		}
 
@@ -247,7 +253,8 @@ public final class Entry implements Cloneable {
 		}
 		catch (ParseException ex) {
 			lastModified = null;
-			System.err.println("[Entry] can't parse conflict '" + conflictStringWithoutConflictMarker + "'");
+                  //noinspection HardCodedStringLiteral
+                  System.err.println("[Entry] can't parse conflict '" + conflictStringWithoutConflictMarker + "'");
 		}
 	}
 

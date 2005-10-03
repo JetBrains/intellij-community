@@ -14,6 +14,7 @@ import com.intellij.util.IncorrectOperationException;
  * Time: 3:35:49 PM
  * To change this template use Options | File Templates.
  */
+@SuppressWarnings({"HardCodedStringLiteral"})
 public class SemicolonFixer implements Fixer {
   public void apply(Editor editor, SmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
     if (psiElement instanceof PsiReturnStatement) {

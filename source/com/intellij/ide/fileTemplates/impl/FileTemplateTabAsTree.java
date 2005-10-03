@@ -3,6 +3,7 @@ package com.intellij.ide.fileTemplates.impl;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.util.ui.UIUtil;
 
 import java.awt.Component;
 import java.awt.Font;
@@ -28,7 +29,7 @@ abstract class FileTemplateTabAsTree extends FileTemplateTab {
     myTree = new JTree(myTreeModel);
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
-    myTree.putClientProperty("JTree.lineStyle", "Angled");
+    UIUtil.setLineStyleAngled(myTree);
 
     myTree.expandPath(TreeUtil.getPathFromRoot(myRoot));
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);

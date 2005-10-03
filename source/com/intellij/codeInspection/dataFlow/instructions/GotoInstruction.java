@@ -25,6 +25,7 @@ public class GotoInstruction extends Instruction {
     return new DfaInstructionState[]{new DfaInstructionState(nextInstruction, memState)};
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return "GOTO: " + myOffset;
   }

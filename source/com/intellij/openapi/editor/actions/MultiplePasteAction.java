@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.UIBundle;
 
 import javax.swing.*;
 import javax.swing.text.DefaultEditorKit;
@@ -36,7 +37,8 @@ public class MultiplePasteAction extends AnAction {
 
     if (!(focusedComponent instanceof JComponent)) return;
 
-    final ContentChooser<Transferable> chooser = new ContentChooser<Transferable>(project, "Choose Content to Paste", true){
+    final ContentChooser<Transferable> chooser = new ContentChooser<Transferable>(project, UIBundle.message(
+      "choose.content.to.paste.dialog.title"), true){
       protected String getStringRepresentationFor(final Transferable content) {
         try {
           return (String)content.getTransferData(DataFlavor.stringFlavor);

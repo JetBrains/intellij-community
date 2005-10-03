@@ -34,7 +34,7 @@ public class DefaultColorsScheme extends AbstractColorsScheme {
 
   public void readExternal(Element parentNode) throws InvalidDataException {
     super.readExternal(parentNode);
-    myName = parentNode.getAttributeValue("name");
+    myName = parentNode.getAttributeValue(NAME_ATTR);
   }
 
   public String getName() {
@@ -53,7 +53,7 @@ public class DefaultColorsScheme extends AbstractColorsScheme {
   public Object clone() {
     EditorColorsSchemeImpl newScheme = new EditorColorsSchemeImpl(this, myDefaultColorSchemesManager);
     copyTo(newScheme);
-    newScheme.setName("Default");
+    newScheme.setName(DEFAULT_SCHEME_NAME);
     return newScheme;
   }
 

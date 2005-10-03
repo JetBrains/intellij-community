@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.actions;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
@@ -11,11 +12,12 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlFile;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 
 public class ReformatCodeAction extends AnAction {
-  private static final String HELP_ID = "editing.codeReformatting";
+  private static final @NonNls String HELP_ID = "editing.codeReformatting";
 
   public void actionPerformed(AnActionEvent event) {
     DataContext dataContext = event.getDataContext();
@@ -56,13 +58,13 @@ public class ReformatCodeAction extends AnAction {
       if (projectContext != null || moduleContext != null) {
         final String text;
         if (moduleContext != null) {
-          text = "Module '" + moduleContext.getModuleFilePath() + "'";
+          text = CodeInsightBundle.message("process.scope.module", moduleContext.getModuleFilePath());
         }
         else {
-          text = "Project '" + projectContext.getProjectFilePath() + "'";
+          text = CodeInsightBundle.message("process.scope.project", projectContext.getProjectFilePath());
         }
 
-        LayoutProjectCodeDialog dialog = new LayoutProjectCodeDialog(project, "Reformat Code", text, true);
+        LayoutProjectCodeDialog dialog = new LayoutProjectCodeDialog(project, CodeInsightBundle.message("process.reformat.code"), text, true);
         dialog.show();
         if (!dialog.isOK()) return;
         if (dialog.isOptimizeImports()) {
@@ -99,7 +101,8 @@ public class ReformatCodeAction extends AnAction {
       }
     }
 
-    final LayoutCodeDialog dialog = new LayoutCodeDialog(project, "Reformat Code", file, dir, hasSelection ? Boolean.TRUE : Boolean.FALSE, HELP_ID);
+    final LayoutCodeDialog dialog = new LayoutCodeDialog(project, CodeInsightBundle.message("process.reformat.code"), file, dir,
+                                                         hasSelection ? Boolean.TRUE : Boolean.FALSE, HELP_ID);
     dialog.show();
     if (!dialog.isOK()) return;
 

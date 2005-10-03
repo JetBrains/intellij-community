@@ -21,6 +21,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil;
@@ -33,6 +34,7 @@ import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -65,7 +67,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
   }
 
   protected String getCommandName() {
-    return "Moving inner class " + myDescriptiveName;
+    return RefactoringBundle.message("move.inner.class.command", myDescriptiveName);
   }
 
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages, FindUsagesCommand refreshCommand) {
@@ -293,8 +295,9 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
           }
           if (!containerSet.contains(container)) {
             containerSet.add(container);
-            String message = ConflictsUtil.getDescription(resolved, true) + " will become inaccessible from " +
-                             ConflictsUtil.getDescription(container, true) + ".";
+            String message = RefactoringBundle.message("0.will.become.inaccessible.from.1",
+                                                       ConflictsUtil.getDescription(resolved, true),
+                                                       ConflictsUtil.getDescription(container, true));
             conflicts.add(message);
           }
         }
@@ -408,7 +411,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
           if (first instanceof PsiExpressionStatement) {
             PsiExpression expression = ((PsiExpressionStatement)first).getExpression();
             if (expression instanceof PsiMethodCallExpression) {
-              String text = ((PsiMethodCallExpression)expression).getMethodExpression().getText();
+              @NonNls String text = ((PsiMethodCallExpression)expression).getMethodExpression().getText();
               if ("this".equals(text)) {
                 continue;
               }
@@ -434,7 +437,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
     throws IncorrectOperationException {
 
     PsiElementFactory factory = PsiManager.getInstance(myProject).getElementFactory();
-    String pattern = fieldname + "=a;";
+    @NonNls String pattern = fieldname + "=a;";
     if (fieldname.equals(parameterName)) {
       pattern = "this." + pattern;
     }
@@ -461,7 +464,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
         PsiExpression expression = ((PsiExpressionStatement)first).getExpression();
         if (expression instanceof PsiMethodCallExpression) {
           PsiReferenceExpression methodCall = ((PsiMethodCallExpression)expression).getMethodExpression();
-          String text = methodCall.getText();
+          @NonNls String text = methodCall.getText();
           if ("super".equals(text)) {
             return first;
           }

@@ -3,6 +3,7 @@ package com.intellij.application.options;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
@@ -26,7 +27,10 @@ import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
 
+import org.jetbrains.annotations.NonNls;
+
 public class CodeStyleSchemesConfigurable implements Configurable, ApplicationComponent {
+  @NonNls
   private static final String WAIT_CARD = "CodeStyleSchemesConfigurable.$$$.Wait.placeholder.$$$";
   private JPanel myPanel;
   private JComboBox myCombo;
@@ -53,7 +57,7 @@ public class CodeStyleSchemesConfigurable implements Configurable, ApplicationCo
 
     private void addWaitCard() {
       JPanel waitPanel = new JPanel(new BorderLayout());
-      JLabel label = new JLabel("Loading page. Please wait.");
+      JLabel label = new JLabel(ApplicationBundle.message("label.loading.page.please.wait"));
       label.setHorizontalAlignment(SwingConstants.CENTER);
       waitPanel.add(label, BorderLayout.CENTER);
       label.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
@@ -142,6 +146,7 @@ public class CodeStyleSchemesConfigurable implements Configurable, ApplicationCo
       }
     }
 
+    @NonNls
     public String getHelpTopic() {
       CodeStyleSettingsPanel selectedPanel = mySchemes.get(mySelectedScheme);
       if (selectedPanel == null) {
@@ -191,12 +196,12 @@ public class CodeStyleSchemesConfigurable implements Configurable, ApplicationCo
     Insets stdInsets = new Insets(2, 2, 2, 2);
 
     myCombo = new JComboBox();
-    mySaveAsButton = new JButton("Save As...");
-    myDeleteButton = new JButton("Delete");
+    mySaveAsButton = new JButton(ApplicationBundle.message("button.save.as"));
+    myDeleteButton = new JButton(ApplicationBundle.message("button.delete"));
 
     int row = 0;
     // 1st row
-    myPanel.add(new JLabel("Scheme name:"),
+    myPanel.add(new JLabel(ApplicationBundle.message("editbox.scheme.name")),
                 new GridBagConstraints(0, row, 1, 1, 0, 0, GridBagConstraints.EAST, GridBagConstraints.NONE, stdInsets,
                                        0, 0));
     myPanel.add(myCombo,
@@ -248,19 +253,15 @@ public class CodeStyleSchemesConfigurable implements Configurable, ApplicationCo
     final CardLayout cards = new CardLayout();
     final JPanel rootPanel = new JPanel(cards);
 
-    rootPanel.add("Settings", myPanel);
+    rootPanel.add(ApplicationBundle.message("title.settings"), myPanel);
 
     final JPanel warningPanel =  new JPanel(new VerticalFlowLayout(VerticalFlowLayout.CENTER));
-    final JLabel label = new JLabel("<html><body>The current project is configured to use its own code style.<br>" +
-                                    "Changes made to global code style settings will not affect formatting in the current project.<br>" +
-                                    "See Project Settings | Code Style.<br>" +
-                                    "Press &quot;Edit Global Settings&quot; button below if you still want to edit global settings.</body></html>");
+    final JLabel label = new JLabel(ApplicationBundle.message("html.project.uses.own.code.style"));
     label.setIcon(IconLoader.getIcon("/general/tip.png"));
     label.setHorizontalAlignment(SwingConstants.CENTER);
     warningPanel.add(label);
 
-    JButton editGlobal = new JButton("Edit Global Settings");
-    editGlobal.setMnemonic('G');
+    JButton editGlobal = new JButton(ApplicationBundle.message("title.edit.global.settings"));
 
     JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
     buttonPanel.add(editGlobal);
@@ -268,18 +269,18 @@ public class CodeStyleSchemesConfigurable implements Configurable, ApplicationCo
 
     editGlobal.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        cards.show(rootPanel, "Settings");
+        cards.show(rootPanel, ApplicationBundle.message("title.settings"));
       }
     });
 
-    rootPanel.add("Warning", warningPanel);
-    cards.show(rootPanel, "Warning");
+    rootPanel.add(ApplicationBundle.message("title.warning"), warningPanel);
+    cards.show(rootPanel, ApplicationBundle.message("title.warning"));
 
     return rootPanel;
   }
 
   public String getDisplayName() {
-    return "Global\nCode Style";
+    return ApplicationBundle.message("title.global.code.style");
   }
 
   public Icon getIcon() {
@@ -374,7 +375,7 @@ public class CodeStyleSchemesConfigurable implements Configurable, ApplicationCo
       CodeStyleScheme scheme = schemes[i];
       names.add(scheme.getName());
     }
-    SaveSchemeDialog saveDialog = new SaveSchemeDialog(myPanel, "Save Code Style Scheme As", names);
+    SaveSchemeDialog saveDialog = new SaveSchemeDialog(myPanel, ApplicationBundle.message("title.save.code.style.scheme.as"), names);
     saveDialog.show();
     if (saveDialog.isOK()) {
       CodeStyleScheme selectedScheme = getSelectedScheme();

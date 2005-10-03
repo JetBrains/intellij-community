@@ -13,6 +13,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.psi.*;
 import com.intellij.util.containers.CollectUtil;
 import com.intellij.util.containers.Convertor;
+import com.intellij.ide.IdeBundle;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
@@ -169,7 +170,7 @@ public abstract class DataAccessor<T> {
 
   public static class NoDataException extends Exception {
     public NoDataException(String missingData) {
-      super("No data: " +  missingData);
+      super(IdeBundle.message("exception.missing.data", missingData));
     }
   }
 }

@@ -3,6 +3,7 @@ package com.intellij.application.options;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.application.ApplicationBundle;
 
 import javax.swing.*;
 
@@ -24,7 +25,7 @@ public class EditorOptions implements Configurable, ApplicationComponent {
   }
 
   public String getDisplayName() {
-    return "Editor";
+    return ApplicationBundle.message("title.editor");
   }
 
   public Icon getIcon() {

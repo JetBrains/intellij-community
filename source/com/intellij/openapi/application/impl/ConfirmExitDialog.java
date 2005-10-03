@@ -7,7 +7,9 @@ package com.intellij.openapi.application.impl;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.util.ui.OptionsDialog;
+import com.intellij.CommonBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -19,13 +21,13 @@ import java.awt.*;
 public class ConfirmExitDialog extends OptionsDialog {
   public ConfirmExitDialog() {
     super(false);
-    setTitle("Confirm Exit");
+    setTitle(ApplicationBundle.message("exit.confirm.title"));
     init();
   }
 
   protected Action[] createActions() {
-    setOKButtonText("Yes");
-    setCancelButtonText("No");
+    setOKButtonText(CommonBundle.getYesButtonText());
+    setCancelButtonText(CommonBundle.getNoButtonText());
     return new Action[] {getOKAction(), getCancelAction()};
   }
 
@@ -43,8 +45,8 @@ public class ConfirmExitDialog extends OptionsDialog {
 
   protected JComponent createCenterPanel() {
     final JPanel panel = new JPanel(new BorderLayout());
-    final JLabel label = new JLabel("Are you sure you want to exit " +
-                                    ApplicationNamesInfo.getInstance().getFullProductName() + "?");
+    final JLabel label = new JLabel(ApplicationBundle.message("exit.confirm.prompt",
+                                                              ApplicationNamesInfo.getInstance().getFullProductName()));
     label.setIconTextGap(10);
     label.setIcon(Messages.getQuestionIcon());
     panel.add(label, BorderLayout.CENTER);

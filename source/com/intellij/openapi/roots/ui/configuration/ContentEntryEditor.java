@@ -5,6 +5,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.util.EventDispatcher;
 
 import javax.swing.*;
@@ -66,7 +67,9 @@ public final class ContentEntryEditor implements ContentRootPanel.ActionCallback
 
 
   public void deleteContentEntry() {
-    final int answer = Messages.showYesNoDialog("Remove content root \"" + VirtualFileManager.extractPath(myContentEntry.getUrl()).replace('/', File.separatorChar) +"\"?", "Remove Content Root", Messages.getQuestionIcon());
+    final int answer = Messages.showYesNoDialog(ProjectBundle.message("module.paths.remove.content.prompt",
+                                                                      VirtualFileManager.extractPath(myContentEntry.getUrl()).replace('/', File.separatorChar)),
+                                                ProjectBundle.message("module.paths.remove.content.title"), Messages.getQuestionIcon());
     if (answer != 0) { // no
       return;
     }

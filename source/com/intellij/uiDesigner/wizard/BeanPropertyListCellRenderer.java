@@ -2,6 +2,7 @@ package com.intellij.uiDesigner.wizard;
 
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.uiDesigner.UIDesignerBundle;
 
 import javax.swing.*;
 
@@ -27,7 +28,7 @@ final class BeanPropertyListCellRenderer extends ColoredListCellRenderer{
   ) {
     final BeanProperty property = (BeanProperty)value;
     if(property == null){
-      append("<not defined>", myAttrs2);
+      append(UIDesignerBundle.message("property.not.defined"), myAttrs2);
     }
     else{
       append(property.myName, myAttrs1);

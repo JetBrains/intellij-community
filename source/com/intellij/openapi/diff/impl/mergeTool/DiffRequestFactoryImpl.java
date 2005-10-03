@@ -37,6 +37,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffRequestFactory;
 import com.intellij.openapi.diff.MergeRequest;
 import com.intellij.openapi.diff.ActionButtonPresentation;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -107,7 +108,7 @@ public class DiffRequestFactoryImpl implements DiffRequestFactory {
               storeChangedContent(text);
             }
 
-          }, "Writing to File", null);
+          }, DiffBundle.message("merge.dialog.writing.to.file.command.name"), null);
         }
       });
     }

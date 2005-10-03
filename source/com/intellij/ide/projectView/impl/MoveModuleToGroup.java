@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.ide.IdeBundle;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,7 +40,7 @@ public class MoveModuleToGroup extends ActionGroup {
     final Project project = (Project)dataContext.getData(DataConstantsEx.PROJECT);
 
     List<AnAction> result = new ArrayList<AnAction>();
-    result.add(new MoveModulesToGroupAction(myModuleGroup, "To this group"));
+    result.add(new MoveModulesToGroupAction(myModuleGroup, IdeBundle.message("action.move.module.to.this.group")));
     result.add(new MoveModulesToSubGroupAction(myModuleGroup));
     final Collection<ModuleGroup> children = myModuleGroup.childGroups(project);
     if (children.size() != 0) {

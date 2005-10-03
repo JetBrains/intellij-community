@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.ex.QuickListsManager;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.impl.KeymapImpl;
 import com.intellij.openapi.keymap.impl.KeymapManagerImpl;
@@ -20,6 +21,7 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ListUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.containers.HashMap;
 
 import javax.swing.*;
@@ -30,6 +32,8 @@ import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
+
+import org.jetbrains.annotations.NonNls;
 
 public class KeymapPanel extends JPanel {
 
@@ -55,6 +59,7 @@ public class KeymapPanel extends JPanel {
 
   private JCheckBox myDisableMnemonicsCheckbox;
   private ActionsTree myActionsTree;
+
   private final DocumentListener myKeymapNameListener = new DocumentAdapter() {
     public void textChanged(DocumentEvent event) {
       mySelectedKeymap.setName(myKeymapNameField.getText());
@@ -73,7 +78,7 @@ public class KeymapPanel extends JPanel {
 
   private JPanel createQuickListsPanel() {
     JPanel panel = new JPanel();
-    panel.setBorder(IdeBorderFactory.createTitledBorder("Quick lists"));
+    panel.setBorder(IdeBorderFactory.createTitledBorder(KeyMapBundle.message("quick.lists.ide.border.factory.title")));
     panel.setLayout(new BorderLayout());
     myQuickListsList = new JList(myQuickListsModel);
     myQuickListsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -93,7 +98,7 @@ public class KeymapPanel extends JPanel {
 
   private JPanel createKeymapListPanel() {
     JPanel panel1 = new JPanel();
-    panel1.setBorder(IdeBorderFactory.createTitledBorder("Keymaps"));
+    panel1.setBorder(IdeBorderFactory.createTitledBorder(KeyMapBundle.message("keymaps.border.factory.title")));
     JPanel panel = panel1;
     panel.setLayout(new BorderLayout());
     myKeymapList = new JList(myKeymapListModel);
@@ -149,7 +154,7 @@ public class KeymapPanel extends JPanel {
 
     Keymap parent = mySelectedKeymap.getParent();
     if (parent != null) {
-      myBaseKeymapLabel.setText("Based on keymap: " + parent.getPresentableName());
+      myBaseKeymapLabel.setText(KeyMapBundle.message("based.on.keymap.label", parent.getPresentableName()));
     }
     myDisableMnemonicsCheckbox.setSelected(!mySelectedKeymap.areMnemonicsEnabled());
     myDisableMnemonicsCheckbox.setEnabled(mySelectedKeymap.canModify());
@@ -192,8 +197,7 @@ public class KeymapPanel extends JPanel {
   private JPanel createShortcutsPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
 
-    JLabel currentKeysLabel = new JLabel("Shortcuts:");
-    currentKeysLabel.setDisplayedMnemonic('u');
+    JLabel currentKeysLabel = new JLabel(KeyMapBundle.message("shortcuts.keymap.label"));
     panel.add(currentKeysLabel, new GridBagConstraints(1,0,1,1,0,0,GridBagConstraints.WEST,GridBagConstraints.NONE, new Insets(0, 0, 0, 8), 0, 0));
 
     myShortcutsList = new JList(new DefaultListModel());
@@ -222,17 +226,13 @@ public class KeymapPanel extends JPanel {
 
   private JPanel createQuickListButtonsPanel() {
     JPanel panel = new JPanel(new VerticalFlowLayout());
-    final JButton newList = new JButton("Add");
-    final JButton editList = new JButton("Edit");
-    final JButton removeList = new JButton("Remove");
-
-    newList.setMnemonic('d');
-    editList.setMnemonic('E');
-    removeList.setMnemonic('v');
+    final JButton newList = new JButton(KeyMapBundle.message("add.keymap.label"));
+    final JButton editList = new JButton(KeyMapBundle.message("edit.keymap.label"));
+    final JButton removeList = new JButton(KeyMapBundle.message("remove.keymap.label"));
 
     newList.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        QuickList newGroup = new QuickList("unnamed", "", ArrayUtil.EMPTY_STRING_ARRAY, false);
+        QuickList newGroup = new QuickList(KeyMapBundle.message("unnamed.list.display.name"), "", ArrayUtil.EMPTY_STRING_ARRAY, false);
         QuickList edited = editList(newGroup);
         if (edited != null) {
           myQuickListsModel.addElement(edited);
@@ -321,16 +321,13 @@ public class KeymapPanel extends JPanel {
     JPanel panel = new JPanel();
     panel.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 0));
     panel.setLayout(new GridLayout(3, 1, 8, 4));
-    mySetActiveButton = new JButton("Set Active");
-    mySetActiveButton.setMnemonic('A');
+    mySetActiveButton = new JButton(KeyMapBundle.message("set.active.keymap.button"));
     mySetActiveButton.setMargin(new Insets(2,2,2,2));
     panel.add(mySetActiveButton);
-    myCopyButton = new JButton("Copy");
-    myCopyButton.setMnemonic('C');
+    myCopyButton = new JButton(KeyMapBundle.message("copy.keymap.button"));
     myCopyButton.setMargin(new Insets(2,2,2,2));
     panel.add(myCopyButton);
-    myDeleteButton = new JButton("Delete");
-    myDeleteButton.setMnemonic('l');
+    myDeleteButton = new JButton(KeyMapBundle.message("delete.keymap.button"));
     myDeleteButton.setMargin(new Insets(2,2,2,2));
     panel.add(myDeleteButton);
 
@@ -363,7 +360,7 @@ public class KeymapPanel extends JPanel {
 
   private JPanel createKeymapSettingsPanel() {
     JPanel panel1 = new JPanel();
-    panel1.setBorder(IdeBorderFactory.createTitledBorder("Keymap Settings"));
+    panel1.setBorder(IdeBorderFactory.createTitledBorder(KeyMapBundle.message("keymap.settings.ide.border.factory.title")));
     JPanel panel = panel1;
     panel.setLayout(new GridBagLayout());
 
@@ -393,7 +390,7 @@ public class KeymapPanel extends JPanel {
 
   private JPanel createDescriptionPanel() {
     JPanel panel1 = new JPanel();
-    panel1.setBorder(IdeBorderFactory.createTitledBorder("Action Description"));
+    panel1.setBorder(IdeBorderFactory.createTitledBorder(KeyMapBundle.message("action.description.ide.border.factory.title")));
     JPanel panel = panel1;
     panel.setLayout(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
@@ -408,7 +405,7 @@ public class KeymapPanel extends JPanel {
   private JPanel createKeymapNamePanel() {
     JPanel panel = new JPanel(new GridBagLayout());
 
-    panel.add(new JLabel("Keymap name:"), new GridBagConstraints(0,0,1,1,0,0,GridBagConstraints.WEST,GridBagConstraints.HORIZONTAL,new Insets(0, 0, 0, 8),0,0));
+    panel.add(new JLabel(KeyMapBundle.message("key.map.name.label")), new GridBagConstraints(0,0,1,1,0,0,GridBagConstraints.WEST,GridBagConstraints.HORIZONTAL,new Insets(0, 0, 0, 8),0,0));
 
     myKeymapNameField = new JTextField();
     Dimension dimension = new Dimension(150, myKeymapNameField.getPreferredSize().height);
@@ -416,16 +413,17 @@ public class KeymapPanel extends JPanel {
     myKeymapNameField.setMinimumSize(dimension);
     panel.add(myKeymapNameField, new GridBagConstraints(1,0,1,1,0,0,GridBagConstraints.WEST,GridBagConstraints.NONE,new Insets(0, 8, 0, 0),0,0));
 
-    myBaseKeymapLabel = new JLabel("Parent keymap:");
+    myBaseKeymapLabel = new JLabel(KeyMapBundle.message("parent.keymap.label"));
     Dimension preferredSize = myBaseKeymapLabel.getPreferredSize();
     myBaseKeymapLabel.setPreferredSize(new Dimension(preferredSize.width*2,preferredSize.height));
     panel.add(myBaseKeymapLabel, new GridBagConstraints(2,0,1,1,1,0,GridBagConstraints.WEST,GridBagConstraints.HORIZONTAL,new Insets(0, 16, 0, 8),0,0));
 
-    myDisableMnemonicsCheckbox = new JCheckBox("Disable mnemonics in menu");
-    myDisableMnemonicsCheckbox.setMnemonic('M');
+    myDisableMnemonicsCheckbox = new JCheckBox(KeyMapBundle.message("disable.mnemonic.in.menu.check.box"));
     myDisableMnemonicsCheckbox.addChangeListener(new ChangeListener() {
       public void stateChanged(ChangeEvent e) {
-        mySelectedKeymap.setDisableMnemonics(myDisableMnemonicsCheckbox.isSelected());
+        if (mySelectedKeymap != null) {
+          mySelectedKeymap.setDisableMnemonics(myDisableMnemonicsCheckbox.isSelected());
+        }
       }
     });
     panel.add(myDisableMnemonicsCheckbox, new GridBagConstraints(3,0,1,1,0,0,GridBagConstraints.WEST,GridBagConstraints.NONE,new Insets(0, 0, 0, 0),0,0));
@@ -436,16 +434,13 @@ public class KeymapPanel extends JPanel {
   private JPanel createShortcutsButtonsPanel() {
     JPanel panel = new JPanel(new GridLayout(3, 1, 0, 4));
     panel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
-    myAddKeyboardShortcutButton = new JButton("Add Keyboard Shortcut...");
-    myAddKeyboardShortcutButton.setMnemonic('K');
+    myAddKeyboardShortcutButton = new JButton(KeyMapBundle.message("add.keyboard.shortcut.button"));
     panel.add(myAddKeyboardShortcutButton);
 
-    myAddMouseShortcutButton=new JButton("Add Mouse Shortcut...");
-    myAddMouseShortcutButton.setMnemonic('M');
+    myAddMouseShortcutButton=new JButton(KeyMapBundle.message("add.mouse.shortcut.button"));
     panel.add(myAddMouseShortcutButton);
 
-    myRemoveShortcutButton = new JButton("Remove");
-    myRemoveShortcutButton.setMnemonic('R');
+    myRemoveShortcutButton = new JButton(KeyMapBundle.message("remove.shortcut.button"));
     panel.add(myRemoveShortcutButton);
 
     myAddKeyboardShortcutButton.addActionListener(
@@ -503,9 +498,11 @@ public class KeymapPanel extends JPanel {
     if(conflicts.size() > 0) {
       int result = Messages.showDialog(
         this,
-        "The shortcut is already assigned to other actions.\nDo you want to remove other assignments?",
-        "Warning",
-        new String[]{"Remove", "Leave", "Cancel"},
+        KeyMapBundle.message("conflict.shortcut.dialog.message"),
+        KeyMapBundle.message("conflict.shortcut.dialog.title"),
+        new String[]{KeyMapBundle.message("conflict.shortcut.dialog.remove.button"),
+          KeyMapBundle.message("conflict.shortcut.dialog.leave.button"),
+          KeyMapBundle.message("conflict.shortcut.dialog.cancel.button"),},
         0,
         Messages.getWarningIcon());
 
@@ -537,7 +534,7 @@ public class KeymapPanel extends JPanel {
 
     mySelectedKeymap.addShortcut(actionId, keyboardShortcut);
     if (StringUtil.startsWithChar(actionId, '$')) {
-      mySelectedKeymap.addShortcut("Editor" + actionId.substring(1), keyboardShortcut);
+      mySelectedKeymap.addShortcut(KeyMapBundle.message("editor.shortcut", actionId.substring(1)), keyboardShortcut);
     }
     updateShortcutsList();
     myShortcutsList.setSelectedIndex(myShortcutsList.getModel().getSize()-1);
@@ -576,9 +573,11 @@ public class KeymapPanel extends JPanel {
     if(actionIds.length > 1 || (actionIds.length == 1 && !actionId.equals(actionIds[0]))) {
       int result = Messages.showDialog(
         this,
-        "The shortcut is already assigned to other actions.\nDo you want to remove other assignments?",
-        "Warning",
-        new String[]{"Remove", "Leave", "Cancel"},
+        KeyMapBundle.message("conflict.shortcut.dialog.message"),
+        KeyMapBundle.message("conflict.shortcut.dialog.title"),
+        new String[]{KeyMapBundle.message("conflict.shortcut.dialog.remove.button"),
+          KeyMapBundle.message("conflict.shortcut.dialog.leave.button"),
+          KeyMapBundle.message("conflict.shortcut.dialog.cancel.button"),},
         0,
         Messages.getWarningIcon());
 
@@ -605,7 +604,7 @@ public class KeymapPanel extends JPanel {
 
     mySelectedKeymap.addShortcut(actionId, mouseShortcut);
     if (StringUtil.startsWithChar(actionId, '$')) {
-      mySelectedKeymap.addShortcut("Editor" + actionId.substring(1), mouseShortcut);
+      mySelectedKeymap.addShortcut(KeyMapBundle.message("editor.shortcut", actionId.substring(1)), mouseShortcut);
     }
     updateShortcutsList();
     myShortcutsList.setSelectedIndex(myShortcutsList.getModel().getSize()-1);
@@ -630,7 +629,7 @@ public class KeymapPanel extends JPanel {
     int selectedIndex = myShortcutsList.getSelectedIndex();
     mySelectedKeymap.removeShortcut(actionId, shortcut);
     if (StringUtil.startsWithChar(actionId, '$')) {
-      mySelectedKeymap.removeShortcut("Editor" + actionId.substring(1), shortcut);
+      mySelectedKeymap.removeShortcut(KeyMapBundle.message("editor.shortcut", actionId.substring(1)), shortcut);
     }
 
     updateShortcutsList();
@@ -662,10 +661,10 @@ public class KeymapPanel extends JPanel {
     }
     KeymapImpl newKeymap = keymap.deriveKeymap();
 
-    String newKeymapName = "unnamed";
+    String newKeymapName = KeyMapBundle.message("new.keymap.name");
     if(!tryNewKeymapName(newKeymapName)) {
       for(int i=0; ; i++) {
-        newKeymapName = "unnamed"+i;
+        newKeymapName = KeyMapBundle.message("new.indexed.keymap.name", i);
         if(tryNewKeymapName(newKeymapName)) {
           break;
         }
@@ -677,7 +676,7 @@ public class KeymapPanel extends JPanel {
     myKeymapList.setSelectedValue(newKeymap, true);
     processCurrentKeymapChanged();
 
-    int result = Messages.showYesNoDialog(this, "Make the new keymap active?", "New Keymap", Messages.getQuestionIcon());
+    int result = Messages.showYesNoDialog(this, KeyMapBundle.message("is.new.keymap.active.dialog.message"), KeyMapBundle.message("is.new.keymap.active.dialog.title"), Messages.getQuestionIcon());
     if(result == 0) {
       myActiveKeymap = newKeymap;
       myKeymapList.repaint();
@@ -707,7 +706,7 @@ public class KeymapPanel extends JPanel {
     if(keymap == null) {
       return;
     }
-    int result = Messages.showYesNoDialog(this, "Do you want to delete the keymap?", "Warning", Messages.getWarningIcon());
+    int result = Messages.showYesNoDialog(this, KeyMapBundle.message("delete.keymap.dialog.message"), KeyMapBundle.message("delete.keymap.dialog.title"), Messages.getWarningIcon());
     if (result != 0) {
       return;
     }
@@ -781,10 +780,10 @@ public class KeymapPanel extends JPanel {
       }
       setFont(font);
       if(selected){
-        setForeground(UIManager.getColor("List.selectionForeground"));
+        setForeground(UIUtil.getListSelectionForeground());
       }else{
         if(keymap.canModify()){
-          setForeground(UIManager.getColor("List.foreground"));
+          setForeground(UIUtil.getListForeground());
         }else{
           setForeground(Color.GRAY);
         }
@@ -794,10 +793,10 @@ public class KeymapPanel extends JPanel {
 
       String name = keymap.getPresentableName();
       if(name == null) {
-        name = "<unnamed>";
+        name = KeyMapBundle.message("keymap.noname.presentable.name");
       }
       if(keymap == myActiveKeymap) {
-        name += " (active)";
+        name = KeyMapBundle.message("keymap.active.presentable.name", name);
       }
       setText(name);
       return this;
@@ -831,11 +830,11 @@ public class KeymapPanel extends JPanel {
 
     if(myKeymapListModel.getSize() == 0) {
       KeymapImpl keymap = new KeymapImpl();
-      keymap.setName("<No name>");
+      keymap.setName(KeyMapBundle.message("keymap.no.name"));
       myKeymapListModel.addElement(keymap);
     }
 
-    
+
     myQuickListsModel.removeAllElements();
     QuickList[] allQuickLists = QuickListsManager.getInstance().getAllQuickLists();
     for (int i = 0; i < allQuickLists.length; i++) {
@@ -887,7 +886,7 @@ public class KeymapPanel extends JPanel {
       final Keymap modelKeymap = (Keymap)myKeymapListModel.elementAt(i);
       String name = modelKeymap.getName();
       if (keymapNames.contains(name)) {
-        throw new ConfigurationException("All keymaps should have unique names");
+        throw new ConfigurationException(KeyMapBundle.message("configuration.all.keymaps.should.have.unique.names.error.message"));
       }
       keymapNames.add(name);
     }

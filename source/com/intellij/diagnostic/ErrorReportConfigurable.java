@@ -8,6 +8,7 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.apache.xmlrpc.Base64;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 
@@ -19,10 +20,10 @@ import java.util.*;
  * To change this template use Options | File Templates.
  */
 public class ErrorReportConfigurable implements JDOMExternalizable, ApplicationComponent {
-  private static final String CLOSED = "closed";
-  private static final String HASH = "hash";
-  private static final String ID = "id";
-  private static final String THREAD = "thread";
+  @NonNls private static final String CLOSED = "closed";
+  @NonNls private static final String HASH = "hash";
+  @NonNls private static final String ID = "id";
+  @NonNls private static final String THREAD = "thread";
 
   public String ITN_LOGIN = "";
   public String ITN_PASSWORD_CRYPT = "";

@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.GuiEditor;
 import com.intellij.uiDesigner.RadComponent;
+import com.intellij.uiDesigner.UIDesignerBundle;
 
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
@@ -30,6 +31,7 @@ public final class UIFormEditor extends UserDataHolderBase implements FileEditor
   public UIFormEditor(final Project project, final VirtualFile file){
     final Module module = ModuleUtil.getModuleForFile(project, file);
     if (module == null) {
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("no module for file " + file + " in project " + project);
     }
     myFile = file;
@@ -49,7 +51,7 @@ public final class UIFormEditor extends UserDataHolderBase implements FileEditor
   }
 
   public String getName(){
-    return "GUI Designer";
+    return UIDesignerBundle.message("title.gui.designer");
   }
 
   public GuiEditor getEditor() {
@@ -103,6 +105,7 @@ public final class UIFormEditor extends UserDataHolderBase implements FileEditor
 
   public void setState(final FileEditorState state){
     if (state == null){
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("state cannot be null");
     }
 
@@ -119,6 +122,7 @@ public final class UIFormEditor extends UserDataHolderBase implements FileEditor
 
   public void selectComponent(final String binding){
     if (binding == null){
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("binding cannot be null");
     }
 

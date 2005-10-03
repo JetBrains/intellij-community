@@ -4,6 +4,7 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.util.Icons;
 
 import javax.swing.*;
@@ -38,7 +39,7 @@ class LibraryElementDescriptor extends NodeDescriptor<LibraryElement> {
           icon = LibraryTableEditor.getIconForUrl(url, false);
         }
         else {
-          name = "<empty library>"; // the library is anonymous, library.getName() == null
+          name = ProjectBundle.message("library.empty.item"); // the library is anonymous, library.getName() == null
           icon = Icons.LIBRARY_ICON;
         }
       }

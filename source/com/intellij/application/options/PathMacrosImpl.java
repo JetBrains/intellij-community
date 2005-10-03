@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 
@@ -16,12 +17,18 @@ import java.util.*;
 public class PathMacrosImpl extends PathMacros implements ApplicationComponent, NamedJDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.PathMacrosImpl");
   private final Map<String,String> myMacros = new HashMap<String, String>();
+  @NonNls
   public static final String MACRO_ELEMENT = "macro";
+  @NonNls
   public static final String NAME_ATTR = "name";
+  @NonNls
   public static final String VALUE_ATTR = "value";
   // predefined macros
+  @NonNls
   public static final String APPLICATION_HOME_MACRO_NAME = "APPLICATION_HOME_DIR";
+  @NonNls
   public static final String PROJECT_DIR_MACRO_NAME = "PROJECT_DIR";
+  @NonNls
   public static final String MODULE_DIR_MACRO_NAME = "MODULE_DIR";
 
   private static final Set<String> ourSystemMacroNames = new HashSet<String>();

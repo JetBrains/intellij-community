@@ -4,6 +4,7 @@ import com.intellij.diagnostic.ReportMessages;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.CommonBundle;
 
 import javax.swing.*;
 import java.io.DataInputStream;
@@ -16,6 +17,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author mike
  */
@@ -27,6 +30,8 @@ public class SocketLock {
   private ServerSocket mySocket;
   private List myLockedPaths = new ArrayList();
   private boolean myIsDialogShown = false;
+  @NonNls private static final String LOCALHOST = "localhost";
+  @NonNls private static final String LOCK_THREAD_NAME = "Lock thread";
 
   public SocketLock() {
   }
@@ -53,16 +58,11 @@ public class SocketLock {
     if (mySocket == null) {
       if (!myIsDialogShown) {
         final String productName = ApplicationNamesInfo.getInstance().getProductName();
+        @NonNls final String pathToLogFile = PathManager.getSystemPath() + "/log/idea.log file".replace('/', File.separatorChar);
         JOptionPane.showMessageDialog(
           JOptionPane.getRootFrame(),
-          productName + " was unable to create a local connection in order to check whether\n" +
-          "other instance of " + productName + " is currently running on the same machine.\n" +
-          "Running multiple instances of " + productName + " on the same machine may cause unpredictable\n" +
-          "results because of sharing system folders.\n" +
-          "Please troubleshoot your TCP/IP configuration and/or local firewall settings.\n" +
-          ReportMessages.getReportAddress() + "\n" +
-          "and attach the " + PathManager.getSystemPath() + "/log/idea.log file".replace('/', File.separatorChar),
-          "Warning",
+          CommonBundle.message("cannot.start.other.instance.is.running.error.message", productName, pathToLogFile),
+          CommonBundle.message("title.warning"),
           JOptionPane.WARNING_MESSAGE
         );
         myIsDialogShown = true;
@@ -97,7 +97,7 @@ public class SocketLock {
       catch (IOException e) {
       }
 
-      Socket socket = new Socket("localhost", i);
+      Socket socket = new Socket(LOCALHOST, i);
       DataInputStream in = new DataInputStream(socket.getInputStream());
 
       while (true) {
@@ -132,7 +132,7 @@ public class SocketLock {
       }
     }
 
-    new Thread(new MyRunnable(), "Lock thread").start();
+    new Thread(new MyRunnable(), LOCK_THREAD_NAME).start();
 
     return;
   }

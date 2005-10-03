@@ -78,6 +78,7 @@ import com.intellij.util.Icons;
 import com.intellij.util.ui.EditorAdapter;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.io.File;
@@ -103,10 +104,11 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   private EditorAdapter myEditorAdapter;
 
   private boolean myIsBeforeProjectStarted = true;
-  private static final String OPTIONS_SETTING = "OptionsSetting";
-  private static final String CONFIRMATIONS_SETTING = "ConfirmationsSetting";
-  private static final String VALUE_ATTTIBUTE = "value";
-  private static final String ID_ATTRIBUTE = "id";
+  @NonNls private static final String OPTIONS_SETTING = "OptionsSetting";
+  @NonNls private static final String CONFIRMATIONS_SETTING = "ConfirmationsSetting";
+  @NonNls private static final String VALUE_ATTTIBUTE = "value";
+  @NonNls private static final String ID_ATTRIBUTE = "id";
+  @NonNls protected static final String IGNORE_CHANGEMARKERS_KEY = "idea.ignore.changemarkers";
 
   public ProjectLevelVcsManagerImpl(Project project) {
     this(project, new AbstractVcs[0]);
@@ -132,19 +134,19 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     myConfirmations.put(VcsConfiguration.StandardConfirmation.ADD.getId(),
                         new VcsShowConfirmationOptionImpl(
                           VcsConfiguration.StandardConfirmation.ADD.getId(),
-                          "When files are created with " + ApplicationNamesInfo.getInstance().getProductName() +
-                          ":",
-                          "Do not add",
-                          "Show options before adding to version control",
-                          "Add silently"));
+                          VcsBundle.message("label.text.when.files.created.with.idea", ApplicationNamesInfo.getInstance().getProductName()),
+                          VcsBundle.message("radio.after.creation.do.not.add"),
+                          VcsBundle.message("radio.after.creation.show.options"),
+                          VcsBundle.message("radio.after.creation.add.silently")));
 
     myConfirmations.put(VcsConfiguration.StandardConfirmation.REMOVE.getId(),
                         new VcsShowConfirmationOptionImpl(
                           VcsConfiguration.StandardConfirmation.REMOVE.getId(),
-                          "Show options before removing from version control",
-                          "Do not remove",
-                          "Show options before removing from version control",
-                          "Remove silently"));
+                          VcsBundle.message("label.text.when.files.are.deleted.with.idea",
+                                            ApplicationNamesInfo.getInstance().getProductName()),
+                          VcsBundle.message("radio.after.deletion.do.not.remove"),
+                          VcsBundle.message("radio.after.deletion.show.options"),
+                          VcsBundle.message("radio.after.deletion.remove.silently")));
 
     restoreReadConfirm(VcsConfiguration.StandardConfirmation.ADD);
     restoreReadConfirm(VcsConfiguration.StandardConfirmation.REMOVE);
@@ -345,7 +347,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   private synchronized void resetTracker(final VirtualFile virtualFile) {
-    if (System.getProperty("idea.ignore.changemarkers") != null) return;
+    if (System.getProperty(IGNORE_CHANGEMARKERS_KEY) != null) return;
     final LvcsFile lvcsFile = LocalVcs.getInstance(getProject()).findFile(virtualFile.getPath());
     if (lvcsFile == null) return;
 
@@ -452,7 +454,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
     final UpToDateRevisionProvider upToDateRevisionProvider = activeVcs.getUpToDateRevisionProvider();
     if (upToDateRevisionProvider == null) return;
-    if (System.getProperty("idea.ignore.changemarkers") != null) return;
+    if (System.getProperty(IGNORE_CHANGEMARKERS_KEY) != null) return;
 
     final Alarm alarm;
 
@@ -572,7 +574,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   private Content getOrCreateConsoleContent(final ContentManager contentManager) {
-    final String displayName = "Console";
+    final String displayName = VcsBundle.message("vcs.console.toolwindow.display.name");
     Content content = contentManager.findContent(displayName);
     if (content == null) {
       final EditorFactory editorFactory = EditorFactory.getInstance();

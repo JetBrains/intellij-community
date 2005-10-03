@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.openapi.editor.Editor;
@@ -43,7 +44,7 @@ public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
       }
     }
     if (array.isEmpty()) {
-      HintManager.getInstance().showErrorHint(editor, "No templates defined in this context");
+      HintManager.getInstance().showErrorHint(editor, CodeInsightBundle.message("templates.no.defined"));
       return;
     }
     Collections.sort(array, new Comparator<TemplateImpl>() {
@@ -55,7 +56,7 @@ public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
     final JList list = new JList(listData);
     list.setCellRenderer(new MyListCellRenderer(listData));
     ListPopup listPopup = new ListPopup(
-      " Select Template ",
+      CodeInsightBundle.message("templates.select.template.chooser.title"),
       list,
       new Runnable() {
         public void run() {

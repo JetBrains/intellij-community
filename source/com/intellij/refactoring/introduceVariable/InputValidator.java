@@ -2,12 +2,13 @@ package com.intellij.refactoring.introduceVariable;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiVariable;
-import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiExpression;
-import com.intellij.refactoring.util.occurences.ExpressionOccurenceManager;
-import com.intellij.refactoring.util.ConflictsUtil;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiVariable;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.RenameUtil;
+import com.intellij.refactoring.util.ConflictsUtil;
+import com.intellij.refactoring.util.occurences.ExpressionOccurenceManager;
 import com.intellij.util.containers.HashSet;
 
 import java.util.ArrayList;
@@ -37,7 +38,7 @@ public class InputValidator implements IntroduceVariableBase.Validator {
         if (collidingVariable instanceof PsiField) return;
         if (!reportedVariables.contains(collidingVariable)) {
           reportedVariables.add(collidingVariable);
-          String message = "Introduced variable will conflict with " + ConflictsUtil.getDescription(collidingVariable, true);
+          String message = RefactoringBundle.message("introduced.variable.will.conflict.with.0", ConflictsUtil.getDescription(collidingVariable, true));
           conflicts.add(message);
         }
       }
@@ -45,8 +46,7 @@ public class InputValidator implements IntroduceVariableBase.Validator {
     RenameUtil.visitLocalsCollisions(anchor, name, scope, anchor, visitor);
     if (replaceAllOccurrences) {
       final PsiExpression[] occurences = myOccurenceManager.getOccurences();
-      for (int i = 0; i < occurences.length; i++) {
-        PsiExpression occurence = occurences[i];
+      for (PsiExpression occurence : occurences) {
         IntroduceVariableBase.checkInLoopCondition(occurence, conflicts);
       }
     } else {

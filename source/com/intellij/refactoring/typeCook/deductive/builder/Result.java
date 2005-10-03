@@ -1,20 +1,16 @@
 package com.intellij.refactoring.typeCook.deductive.builder;
 
-import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.PsiTypeVariable;
-import com.intellij.refactoring.typeCook.deductive.PsiTypeVariableFactory;
-import com.intellij.refactoring.typeCook.deductive.resolver.Binding;
-import com.intellij.psi.Bottom;
-import com.intellij.refactoring.typeCook.Util;
-import com.intellij.refactoring.typeCook.Settings;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.*;
+import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.typeCook.Settings;
+import com.intellij.refactoring.typeCook.Util;
+import com.intellij.refactoring.typeCook.deductive.resolver.Binding;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 
-import java.util.HashSet;
 import java.util.HashMap;
-import java.util.Iterator;
+import java.util.HashSet;
 
 /**
  * Created by IntelliJ IDEA.
@@ -60,7 +56,8 @@ public class Result {
     if (myBinding != null) {
       final PsiType type = myBinding.substitute(myTypes.get(element));
 
-      if (originalType.getCanonicalText().equals("java.lang.Object")) {
+      @NonNls final String objectFQName = "java.lang.Object";
+      if (originalType.getCanonicalText().equals(objectFQName)) {
         if (type == null) {
           return originalType;
         }
@@ -87,8 +84,7 @@ public class Result {
 
     final HashSet<PsiElement> set = new HashSet<PsiElement>();
 
-    for (final Iterator<PsiElement> e = myVictims.iterator(); e.hasNext();) {
-      final PsiElement element = e.next();
+    for (final PsiElement element : myVictims) {
       final PsiType originalType = Util.getType(element);
 
       final PsiType cookedType = getCookedType(element);
@@ -102,9 +98,7 @@ public class Result {
   }
 
   public void apply(final HashSet<PsiElement> victims) {
-    for (final Iterator<PsiElement> e = victims.iterator(); e.hasNext();) {
-      final PsiElement element = e.next();
-
+    for (final PsiElement element : victims) {
       Util.changeType(element, getCookedType(element));
     }
 
@@ -138,11 +132,12 @@ public class Result {
   }
 
   private String getRatio(final int x, final int y) {
-    return x != -1 ? x + " of " + y + (y != 0 ? " (" + (x * 100 / y) + "%)" : "") : "not calculated";
+    final String ratio = RefactoringBundle.message("type.cook.ratio.generified", x, y);
+    return ratio + (y != 0 ? " (" + (x * 100 / y) + "%)" : "");
   }
 
   public String getReport() {
-    return "Items generified: " + getRatio(myCookedNumber, myVictims.size()) +
-           ", casts removed: " + getRatio(myCastsRemoved, myCastsNumber);
+    return RefactoringBundle.message("type.cook.report", getRatio(myCookedNumber, myVictims.size()),
+                                     getRatio(myCastsRemoved, myCastsNumber));
   }
 }

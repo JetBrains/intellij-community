@@ -2,6 +2,7 @@ package com.intellij.ide.structureView.impl.java;
 
 import com.intellij.ide.util.treeView.smartTree.*;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.IdeBundle;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Icons;
 import gnu.trove.THashMap;
@@ -11,8 +12,10 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Collections;
 
+import org.jetbrains.annotations.NonNls;
+
 public class PropertiesGrouper implements Grouper{
-  public static final String ID = "SHOW_PROPERTIES";
+  @NonNls public static final String ID = "SHOW_PROPERTIES";
 
   public Collection<Group> group(final AbstractTreeNode parent, Collection<TreeElement> children) {
     if (parent.getValue() instanceof PropertyGroup) return Collections.EMPTY_LIST;
@@ -42,7 +45,7 @@ public class PropertiesGrouper implements Grouper{
   }
 
   public ActionPresentation getPresentation() {
-    return new ActionPresentationData("Show Properties", null, Icons.PROPERTY_ICON);
+    return new ActionPresentationData(IdeBundle.message("action.structureview.show.properties"), null, Icons.PROPERTY_ICON);
   }
 
   public String getName() {

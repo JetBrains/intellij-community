@@ -7,10 +7,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.ui.ReferenceEditorWithBrowseButton;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -34,7 +36,7 @@ public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
     myContainingClass = containingClass;
     myConstructor = constructor;
     myIsInner = myContainingClass.getContainingClass() != null
-      && !myContainingClass.hasModifierProperty(PsiModifier.STATIC);
+                && !myContainingClass.hasModifierProperty(PsiModifier.STATIC);
 
     setTitle(ReplaceConstructorWithFactoryHandler.REFACTORING_NAME);
 
@@ -76,11 +78,11 @@ public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
     gbc.gridwidth = 1;
     gbc.gridx = 0;
     gbc.gridy = 0;
-    panel.add(new JLabel("Factory method name:"), gbc);
+    panel.add(new JLabel(RefactoringBundle.message("factory.method.name.label")), gbc);
 
     gbc.gridx++;
     gbc.weightx = 1.0;
-    final String[] nameSuggestions = new String[]{
+    @NonNls final String[] nameSuggestions = new String[]{
       "create" + myContainingClass.getName(),
       "new" + myContainingClass.getName(),
         "getInstance"
@@ -108,7 +110,7 @@ public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
   private JPanel createTargetPanel() {
     JPanel targetClassPanel = new JPanel(new BorderLayout());
     if (!myIsInner) {
-      JLabel label = new JLabel("In (fully qualified name):");
+      JLabel label = new JLabel(RefactoringBundle.message("replace.constructor.with.factory.target.fq.name"));
       label.setLabelFor(myTfTargetClassName);
       targetClassPanel.add(label, BorderLayout.NORTH);
       targetClassPanel.add(myTfTargetClassName, BorderLayout.CENTER);
@@ -123,7 +125,7 @@ public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
       }
 
       myTargetClassNameCombo = new JComboBox(list.toArray(new String[list.size()]));
-      JLabel label = new JLabel("In (fully qualified name):");
+      JLabel label = new JLabel(RefactoringBundle.message("replace.constructor.with.factory.target.fq.name"));
       label.setLabelFor(myTargetClassNameCombo.getEditor().getEditorComponent());
       targetClassPanel.add(label, BorderLayout.NORTH);
       targetClassPanel.add(myTargetClassNameCombo, BorderLayout.CENTER);
@@ -137,7 +139,8 @@ public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
 
   private class ChooseClassAction implements ActionListener {
     public void actionPerformed(ActionEvent e) {
-      TreeClassChooser chooser = TreeClassChooserFactory.getInstance(getProject()).createProjectScopeChooser("Choose Destination Class");
+      TreeClassChooser chooser = TreeClassChooserFactory.getInstance(getProject()).createProjectScopeChooser(
+        RefactoringBundle.message("choose.destination.class"));
       chooser.selectDirectory(myContainingClass.getContainingFile().getContainingDirectory());
       chooser.showDialog();
       PsiClass aClass = chooser.getSelectedClass();
@@ -158,9 +161,7 @@ public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
     final String targetClassName = getTargetClassName();
     final PsiClass targetClass = manager.findClass(targetClassName, GlobalSearchScope.allScope(project));
     if (targetClass == null) {
-      String message =
-        "Cannot perform the refactoring.\n" +
-        "Class " + targetClassName + " not found.";
+      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("class.0.not.found", targetClassName));
       RefactoringMessageUtil.showErrorMessage(ReplaceConstructorWithFactoryHandler.REFACTORING_NAME,
                                               message, null, project);
       return;

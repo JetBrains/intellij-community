@@ -17,6 +17,7 @@ package com.intellij.openapi.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.UIBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -406,7 +407,8 @@ public class ThreeComponentsSplitter extends JPanel {
           new GridBagConstraints(0, 0, 1, 1, 0, 0, isVerticalSplit ? GridBagConstraints.EAST : GridBagConstraints.NORTH, glueFill, new Insets(0, 0, 0, 0), 0, 0));
       JLabel splitDownlabel = new JLabel(IconLoader.getIcon(isVerticalSplit ? "/general/splitDown.png" : "/general/splitRight.png"));
       splitDownlabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-      splitDownlabel.setToolTipText(isVerticalSplit ? "Down" : "Right");
+      splitDownlabel.setToolTipText(isVerticalSplit ? UIBundle.message("splitter.down.tooltip.text") : UIBundle
+        .message("splitter.right.tooltip.text"));
       splitDownlabel.addMouseListener(new MouseAdapter() {
         public void mouseClicked(MouseEvent e) {
           if (myInnerComponent != null) {
@@ -429,7 +431,7 @@ public class ThreeComponentsSplitter extends JPanel {
           new GridBagConstraints(2 * xMask, 2 * yMask, 1, 1, 0, 0, GridBagConstraints.CENTER, glueFill, new Insets(0, 0, 0, 0), 0, 0));
       JLabel splitCenterlabel = new JLabel(IconLoader.getIcon(isVerticalSplit ? "/general/splitCenterV.png" : "/general/splitCenterH.png"));
       splitCenterlabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-      splitCenterlabel.setToolTipText("Center");
+      splitCenterlabel.setToolTipText(UIBundle.message("splitter.center.tooltip.text"));
       splitCenterlabel.addMouseListener(new MouseAdapter() {
         public void mouseClicked(MouseEvent e) {
           center();
@@ -442,7 +444,8 @@ public class ThreeComponentsSplitter extends JPanel {
       //
       JLabel splitUpLabel = new JLabel(IconLoader.getIcon(isVerticalSplit ? "/general/splitUp.png" : "/general/splitLeft.png"));
       splitUpLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-      splitUpLabel.setToolTipText(isVerticalSplit ? "Up" : "Left");
+      splitUpLabel.setToolTipText(isVerticalSplit ? UIBundle.message("splitter.up.tooltip.text") : UIBundle
+        .message("splitter.left.tooltip.text"));
       splitUpLabel.addMouseListener(new MouseAdapter() {
         public void mouseClicked(MouseEvent e) {
           if (myInnerComponent != null) {

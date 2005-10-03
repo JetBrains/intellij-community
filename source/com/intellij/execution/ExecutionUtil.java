@@ -19,6 +19,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ConvertingIterator;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -94,7 +95,8 @@ public class ExecutionUtil {
   }
 
   public static boolean isNewName(final String name) {
-    return name == null || name.startsWith("Unnamed");
+
+    return name == null || name.startsWith(ExecutionBundle.message("run.configuration.unnamed.name.prefix"));
   }
 
   public static Location stepIntoSingleClass(final Location location) {
@@ -136,9 +138,9 @@ public class ExecutionUtil {
     builder.setTitle(title);
     final JTextArea textArea = new JTextArea();
     textArea.setEditable(false);
-    textArea.setForeground(UIManager.getColor("Label.foreground"));
-    textArea.setBackground(UIManager.getColor("Label.background"));
-    textArea.setFont(UIManager.getFont("Label.font"));
+    textArea.setForeground(UIUtil.getLabelForeground());
+    textArea.setBackground(UIUtil.getLabelBackground());
+    textArea.setFont(UIUtil.getLabelFont());
     textArea.setText(message);
     textArea.setWrapStyleWord(false);
     textArea.setLineWrap(true);

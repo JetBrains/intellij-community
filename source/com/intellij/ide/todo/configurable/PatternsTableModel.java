@@ -2,13 +2,18 @@ package com.intellij.ide.todo.configurable;
 
 import com.intellij.psi.search.TodoPattern;
 import com.intellij.util.ui.ItemRemovable;
+import com.intellij.ide.IdeBundle;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import java.util.List;
 
 final class PatternsTableModel extends AbstractTableModel implements ItemRemovable{
-  private final String[] ourColumnNames=new String[]{"Icon","Case Sensitive","Pattern",};
+  private final String[] ourColumnNames=new String[]{
+    IdeBundle.message("column.todo.patterns.icon"),
+    IdeBundle.message("column.todo.patterns.case.sensitive"),
+    IdeBundle.message("column.todo.patterns.pattern")
+  };
   private final Class[] ourColumnClasses=new Class[]{Icon.class,Boolean.class,String.class};
 
   private List<TodoPattern> myPatterns;

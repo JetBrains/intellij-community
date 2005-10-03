@@ -5,6 +5,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.psi.PsiBundle;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -22,7 +23,7 @@ public class VfsIndexer {
 
     ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
     if (progress != null){
-      progress.setText2("Scanning files in " + root.getPresentableUrl() + "...");
+      progress.setText2(PsiBundle.message("psi.scanning.files.in.folder.progress", root.getPresentableUrl()));
     }
 
     DataOutputStream out = stream == null ? null : new DataOutputStream(stream);

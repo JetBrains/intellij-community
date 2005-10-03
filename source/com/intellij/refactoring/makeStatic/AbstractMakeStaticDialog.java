@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiTypeParameterListOwner;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.ParameterTablePanel;
 import com.intellij.usageView.UsageViewUtil;
@@ -57,6 +58,6 @@ public abstract class AbstractMakeStaticDialog extends RefactoringDialog {
 
   protected JLabel createDescriptionLabel() {
     String type = UsageViewUtil.getType(myMember);
-    return new JLabel("Make " + type + " " + myMemberName + " static");
+    return new JLabel(RefactoringBundle.message("make.static.description.label", type, myMemberName));
   }
 }

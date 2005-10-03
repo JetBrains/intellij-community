@@ -8,6 +8,7 @@ import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil;
 import com.intellij.openapi.keymap.impl.ui.Group;
 import com.intellij.openapi.util.*;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -34,13 +35,13 @@ public class ActionUrl implements JDOMExternalizable {
 
   public int myInitialPosition = -1;
 
-  private static final String IS_GROUP = "is_group";
-  private static final String SEPERATOR = "seperator";
-  private static final String IS_ACTION = "is_action";
-  private static final String VALUE = "value";
-  private static final String PATH = "path";
-  private static final String ACTION_TYPE = "action_type";
-  private static final String POSITION = "position";
+  @NonNls private static final String IS_GROUP = "is_group";
+  @NonNls private static final String SEPERATOR = "seperator";
+  @NonNls private static final String IS_ACTION = "is_action";
+  @NonNls private static final String VALUE = "value";
+  @NonNls private static final String PATH = "path";
+  @NonNls private static final String ACTION_TYPE = "action_type";
+  @NonNls private static final String POSITION = "position";
 
 
   public ActionUrl() {
@@ -141,15 +142,15 @@ public class ActionUrl implements JDOMExternalizable {
     }
     if (myComponent instanceof String) {
       element.setAttribute(VALUE, (String)myComponent);
-      element.setAttribute(IS_ACTION, "true");
+      element.setAttribute(IS_ACTION, Boolean.TRUE.toString());
     }
     else if (myComponent instanceof Separator) {
-      element.setAttribute(SEPERATOR, "true");
+      element.setAttribute(SEPERATOR, Boolean.TRUE.toString());
     }
     else if (myComponent instanceof Group) {
       final String groupId = ((Group)myComponent).getId() != null && !((Group)myComponent).getId().equals("") ? ((Group)myComponent).getId() : ((Group)myComponent).getName();
       element.setAttribute(VALUE, groupId != null ? groupId : "");
-      element.setAttribute(IS_GROUP, "true");
+      element.setAttribute(IS_GROUP, Boolean.TRUE.toString());
     }
     element.setAttribute(ACTION_TYPE, Integer.toString(myActionType));
     element.setAttribute(POSITION, Integer.toString(myAbsolutePosition));

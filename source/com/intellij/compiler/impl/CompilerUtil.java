@@ -39,6 +39,7 @@ public class CompilerUtil {
       final int dotIndex = pathname.getName().lastIndexOf('.');
       if (dotIndex > 0) {
         String extension = pathname.getName().substring(dotIndex);
+        //noinspection HardCodedStringLiteral
         if (extension.equalsIgnoreCase(".class")) {
           return true;
         }

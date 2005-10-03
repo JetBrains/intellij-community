@@ -1,5 +1,7 @@
 package com.intellij.psi.impl.source.codeStyle.javadoc;
 
+import org.jetbrains.annotations.NonNls;
+
 import java.util.ArrayList;
 
 /**
@@ -13,18 +15,18 @@ public class JDMethodComment extends JDComment {
   }
 
   private String returnTag;
-  private ArrayList parmsList;
-  private ArrayList throwsList;
+  private ArrayList<NameDesc> parmsList;
+  private ArrayList<NameDesc> throwsList;
 
-  private static final String PARAM_TAG = "@param ";
-  private static final String THROWS_TAG = "@throws ";
-  private static final String EXCEPTION_TAG = "@exception ";
+  private static final @NonNls String PARAM_TAG = "@param ";
+  private static final @NonNls String THROWS_TAG = "@throws ";
+  private static final @NonNls String EXCEPTION_TAG = "@exception ";
 
   /**
    * Generates parameters or exceptions
    *
    */
-  private void generateList(String prefix, StringBuffer sb, ArrayList list, String tag,
+  private void generateList(String prefix, StringBuffer sb, ArrayList<NameDesc> list, String tag,
                             boolean align_comments,
                             int min_name_length,
                             int max_name_length,
@@ -74,7 +76,7 @@ public class JDMethodComment extends JDComment {
     }
   }
 
-  protected void generateSpecial(String prefix, StringBuffer sb) {
+  protected void generateSpecial(String prefix, @NonNls StringBuffer sb) {
 
     if (parmsList != null) {
       int before = sb.length();
@@ -137,7 +139,7 @@ public class JDMethodComment extends JDComment {
     throwsList.remove(nd);
   }
 
-  private static NameDesc getNameDesc(String name, ArrayList list) {
+  private static NameDesc getNameDesc(String name, ArrayList<NameDesc> list) {
     if (list == null) return null;
     for (Object aList : list) {
       NameDesc parameter = (NameDesc)aList;
@@ -146,24 +148,24 @@ public class JDMethodComment extends JDComment {
     return null;
   }
 
-  public ArrayList getParmsList() {
+  public ArrayList<NameDesc> getParmsList() {
     return parmsList;
   }
 
   public void addParameter(String name, String description) {
     if (parmsList == null) {
-      parmsList = new ArrayList();
+      parmsList = new ArrayList<NameDesc>();
     }
     parmsList.add(new NameDesc(name, description));
   }
 
-  public ArrayList getThrowsList() {
+  public ArrayList<NameDesc> getThrowsList() {
     return throwsList;
   }
 
   public void addThrow(String className, String description) {
     if (throwsList == null) {
-      throwsList = new ArrayList();
+      throwsList = new ArrayList<NameDesc>();
     }
     throwsList.add(new NameDesc(className, description));
   }
@@ -172,11 +174,11 @@ public class JDMethodComment extends JDComment {
     return getNameDesc(name, throwsList);
   }
 
-  public void setParmsList(ArrayList parmsList) {
+  public void setParmsList(ArrayList<NameDesc> parmsList) {
     this.parmsList = parmsList;
   }
 
-  public void setThrowsList(ArrayList throwsList) {
+  public void setThrowsList(ArrayList<NameDesc> throwsList) {
     this.throwsList = throwsList;
   }
 

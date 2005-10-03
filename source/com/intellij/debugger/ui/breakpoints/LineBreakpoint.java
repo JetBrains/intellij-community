@@ -7,6 +7,7 @@ package com.intellij.debugger.ui.breakpoints;
 import com.intellij.debugger.ClassFilter;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -30,6 +31,7 @@ import javax.swing.*;
 import java.util.List;
 
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 public class LineBreakpoint extends BreakpointWithHighlighter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.breakpoints.LineBreakpoint");
@@ -42,7 +44,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
   private static Icon ourVerifiedIcon = IconLoader.getIcon("/debugger/db_verified_breakpoint.png");
 
   private String myMethodName;
-  public static final String CATEGORY = "line_breakpoints";
+  public static final @NonNls String CATEGORY = "line_breakpoints";
 
   protected LineBreakpoint(Project project) {
     super(project);
@@ -96,7 +98,9 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
           }
           else {
             // there's no executable code in this class
-            debugProcess.getRequestsManager().setInvalid(LineBreakpoint.this, "No executable code found at line " + (getLineIndex()  + 1) + " in class " + classType.name());
+            debugProcess.getRequestsManager().setInvalid(LineBreakpoint.this, DebuggerBundle.message(
+              "error.invalid.breakpoint.no.executable.code", (getLineIndex() + 1), classType.name())
+            );
             if (LOG.isDebugEnabled()) {
               LOG.debug("No locations of type " + classType.name() + " found at line " + getLineIndex());
             }
@@ -118,7 +122,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
           if (LOG.isDebugEnabled()) {
             LOG.debug("InvalidLineNumberException: " + ex.getMessage());
           }
-          debugProcess.getRequestsManager().setInvalid(LineBreakpoint.this, "Line number is invalid");
+          debugProcess.getRequestsManager().setInvalid(LineBreakpoint.this, DebuggerBundle.message("error.invalid.breakpoint.bad.line.number"));
         }
         catch (InternalException ex) {
           LOG.info(ex);
@@ -172,24 +176,27 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
 
 
   public String getDisplayName() {
-    StringBuffer buffer = new StringBuffer();
     final int lineNumber = (getHighlighter().getDocument().getLineNumber(getHighlighter().getStartOffset()) + 1);
     if(isValid()) {
-      buffer.append("Line ").append(lineNumber);
       final String className = getClassName();
-      if (className != null && className.length() > 0) {
-        buffer.append(", in ");
-        buffer.append(className);
+      final boolean hasClassInfo = className != null && className.length() > 0;
+      final boolean hasMethodInfo = myMethodName != null && myMethodName.length() > 0;
+      if (hasClassInfo || hasMethodInfo) {
+        final StringBuffer info = new StringBuffer();
+        if (hasClassInfo) {
+          info.append(className);
+        }
+        if(hasMethodInfo) {
+          if (hasClassInfo) {
+            info.append(".");
+          }
+          info.append(myMethodName);
+        }
+        return DebuggerBundle.message("line.breakpoint.display.name.with.class.or.method", lineNumber, info.toString());
       }
-      if(myMethodName != null && myMethodName.length() > 0) {
-        buffer.append(".");
-        buffer.append(myMethodName);
-      }
+      return DebuggerBundle.message("line.breakpoint.display.name", lineNumber);
     }
-    else {
-      buffer.append("INVALID");
-    }
-    return buffer.toString();
+    return DebuggerBundle.message("status.breakpoint.invalid");
   }
 
   private static String findMethodName(final PsiFile file, final int offset) {
@@ -210,15 +217,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
   }
 
   public String getEventMessage(LocatableEvent event) {
-    final StringBuffer buf = new StringBuffer(64);
-    buf.append("Reached breakpoint");
-    String name = event.location().declaringType().name();
-    buf.append(" in class ");
-    buf.append(name);
-    buf.append(",");
-    buf.append(" at line ");
-    buf.append(getLineIndex() + 1);
-    return buf.toString();
+    return DebuggerBundle.message("status.line.breakpoint.reached", event.location().declaringType().name(), getLineIndex() + 1);
   }
 
   public PsiElement getEvaluationElement() {

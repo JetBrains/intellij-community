@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.SearchScopeCache;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.StateRestoringCheckBox;
+import com.intellij.find.FindBundle;
 
 import javax.swing.*;
 
@@ -48,11 +49,11 @@ public class FindPackageUsagesDialog extends FindUsagesDialog {
 
   protected JPanel createFindWhatPanel() {
     JPanel findWhatPanel = new JPanel();
-    findWhatPanel.setBorder(IdeBorderFactory.createTitledBorder("Find"));
+    findWhatPanel.setBorder(IdeBorderFactory.createTitledBorder(FindBundle.message("find.what.group")));
     findWhatPanel.setLayout(new BoxLayout(findWhatPanel, BoxLayout.Y_AXIS));
 
-    myCbUsages = addCheckboxToPanel("Usages", myFindUsagesOptions.isUsages, findWhatPanel, true, 'U');
-    myCbClassesUsages = addCheckboxToPanel("Usages of classes and interfaces", myFindUsagesOptions.isClassesUsages, findWhatPanel, true, 'c');
+    myCbUsages = addCheckboxToPanel(FindBundle.message("find.what.usages.checkbox"), myFindUsagesOptions.isUsages, findWhatPanel, true);
+    myCbClassesUsages = addCheckboxToPanel(FindBundle.message("find.what.usages.of.classes.and.interfaces"), myFindUsagesOptions.isClassesUsages, findWhatPanel, true);
 
     return findWhatPanel;
   }

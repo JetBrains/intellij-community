@@ -1,10 +1,10 @@
 package com.intellij.ide.util;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.help.HelpManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
@@ -59,7 +59,7 @@ public class DeleteDialog extends DialogWrapper {
     final JPanel panel = new JPanel(new GridBagLayout());
     final GridBagConstraints gbc = new GridBagConstraints();
 
-    final String warningMessage = DeleteUtil.generateWarningMessage("Delete", myElements);
+    final String warningMessage = DeleteUtil.generateWarningMessage(IdeBundle.message("prompt.delete.elements"), myElements);
 
     gbc.insets = new Insets(4, 8, 4, 8);
     gbc.weighty = 1;
@@ -76,8 +76,7 @@ public class DeleteDialog extends DialogWrapper {
     gbc.weightx = 0.0;
     gbc.gridwidth = 1;
     gbc.insets = new Insets(4, 8, 0, 8);
-    myCbSafeDelete = new JCheckBox("Safe delete (with usage search)");
-    myCbSafeDelete.setMnemonic('F');
+    myCbSafeDelete = new JCheckBox(IdeBundle.message("checkbox.safe.delete.with.usage.search"));
     panel.add(myCbSafeDelete, gbc);
 
     gbc.gridy++;
@@ -85,13 +84,11 @@ public class DeleteDialog extends DialogWrapper {
     gbc.weightx = 0.0;
     gbc.gridwidth = 1;
     gbc.insets = new Insets(0, 8, 4, 8);
-    myCbSearchInComments = new StateRestoringCheckBox("Search in comments and strings");
-    myCbSearchInComments.setMnemonic('S');
+    myCbSearchInComments = new StateRestoringCheckBox(IdeBundle.message("checkbox.search.in.comments.and.strings"));
     panel.add(myCbSearchInComments, gbc);
 
     gbc.gridx++;
-    myCbSearchInNonJava = new StateRestoringCheckBox("Search in non-java files");
-    myCbSearchInNonJava.setMnemonic('e');
+    myCbSearchInNonJava = new StateRestoringCheckBox(IdeBundle.message("checkbox.search.in.non.java.files"));
     panel.add(myCbSearchInNonJava, gbc);
 
     final RefactoringSettings refactoringSettings = RefactoringSettings.getInstance();

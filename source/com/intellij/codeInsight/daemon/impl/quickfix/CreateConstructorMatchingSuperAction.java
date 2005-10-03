@@ -1,8 +1,9 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,16 +11,16 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.infos.CandidateInfo;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.List;
-
 
 
 /**
@@ -34,12 +35,12 @@ public class CreateConstructorMatchingSuperAction extends BaseIntentionAction {
   private Logger LOG = Logger.getInstance("com.intellij.codeInsight.daemon.impl.quickfix.CreateConstructorMatchingSuperAction");
 
   public String getFamilyName() {
-    return "Create constructor matching super";
+    return QuickFixBundle.message("create.constructor.matching.super");
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
     if (!myClass.isValid() || !myClass.getManager().isInProject(myClass)) return false;
-    setText("Create constructor matching super");
+    setText(QuickFixBundle.message("create.constructor.matching.super"));
     return true;
   }
 
@@ -66,7 +67,7 @@ public class CreateConstructorMatchingSuperAction extends BaseIntentionAction {
     boolean isCopyJavadoc = true;
     if (constructors.length > 1) {
       MemberChooser chooser = new MemberChooser(constructors, false, true, project);
-      chooser.setTitle("Choose Super Class Constructors");
+      chooser.setTitle(QuickFixBundle.message("super.class.constructors.chooser.title"));
       chooser.show();
       if (chooser.getExitCode() != MemberChooser.OK_EXIT_CODE) return;
       constructors = (CandidateInfo[]) chooser.getSelectedElements(new CandidateInfo[0]);
@@ -95,7 +96,7 @@ public class CreateConstructorMatchingSuperAction extends BaseIntentionAction {
               }
 
               derived.getNameIdentifier().replace(myClass.getNameIdentifier());
-              StringBuffer buffer = new StringBuffer();
+              @NonNls StringBuffer buffer = new StringBuffer();
               buffer.append("void foo () {\nsuper(");
 
               PsiParameter[] params = derived.getParameterList().getParameters();

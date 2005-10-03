@@ -1,6 +1,7 @@
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.util.BrowseFilesListener;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
@@ -20,6 +21,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author Eugene Zhuravlev
  *         Date: Dec 29, 2003
@@ -33,7 +36,7 @@ public class NameLocationStep extends ModuleWizardStep {
   private final ModulesProvider myModulesProvider;
   private final Icon myIcon;
   private final String myHelpId;
-  private static final String MODULE_FILE_EXTENSION = ".iml";
+  @NonNls private static final String MODULE_FILE_EXTENSION = ".iml";
   private boolean myModuleFileDirectoryChangedByUser = false;
   private JTextField myTfModuleFilePath;
   private boolean myFirstTimeInitializationDone = false;
@@ -41,7 +44,7 @@ public class NameLocationStep extends ModuleWizardStep {
   public NameLocationStep(WizardContext wizardContext, JavaModuleBuilder builder,
                           ModulesProvider modulesProvider,
                           Icon icon,
-                          String helpId) {
+                          @NonNls String helpId) {
     myWizardContext = wizardContext;
     myBuilder = builder;
     myModulesProvider = modulesProvider;
@@ -53,23 +56,24 @@ public class NameLocationStep extends ModuleWizardStep {
     final String text;
     final ModuleType moduleType = builder.getModuleType();
     if (ModuleType.J2EE_APPLICATION.equals(moduleType)) {
-      text = "Please specify module name";
+      text = IdeBundle.message("prompt.please.specify.module.name");
     }
     else {
-      text = "Please specify module name and module content root.\nA module content root is a directory where the files that belong to the module are stored.";
+      text = IdeBundle.message("prompt.please.specify.module.name.and.content.root");
     }
     final JLabel textLabel = new JLabel(text);
     textLabel.setUI(new MultiLineLabelUI());
     myPanel.add(textLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(8, 10, 8, 10), 0, 0));
 
-    myNamePathComponent = new NamePathComponent("Module name:", "Module content root:", 'M', 'r', "Select Module Content Root", "");
+    myNamePathComponent = new NamePathComponent(IdeBundle.message("label.module.name"), IdeBundle.message("label.module.content.root"), 'M', 'r',
+                                                IdeBundle.message("title.select.module.content.root"), "");
     if (ModuleType.J2EE_APPLICATION.equals(moduleType)) {
       myNamePathComponent.setPathComponentVisible(false);
     }
 
     myPanel.add(myNamePathComponent, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(8, 10, 0, 10), 0, 0));
 
-    final JLabel label = new JLabel("Module file will be saved in:");
+    final JLabel label = new JLabel(IdeBundle.message("label.module.file.will.be.saved.in"));
     //label.setFont(UIManager.getFont("Label.font").deriveFont(Font.BOLD));
     myPanel.add(label, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 1.0, GridBagConstraints.SOUTHWEST, GridBagConstraints.HORIZONTAL, new Insets(30, 10, 0, 10), 0, 0));
 
@@ -80,7 +84,7 @@ public class NameLocationStep extends ModuleWizardStep {
     final FieldPanel fieldPanel = createFieldPanel(myTfModuleFilePath, null, null);
     myPanel.add(fieldPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 10, 10, 0), 0, 0));
 
-    JButton browseButton = new JButton("Change Directory...");
+    JButton browseButton = new JButton(IdeBundle.message("button.change.directory"));
     browseButton.addActionListener(new BrowseModuleFileDirectoryListener(myTfModuleFilePath));
     myPanel.add(browseButton, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 0, 10, 10), 0, 0));
 
@@ -98,6 +102,7 @@ public class NameLocationStep extends ModuleWizardStep {
     });
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private String suggestModuleName(ModuleType moduleType) {
     if (moduleType.equals(ModuleType.J2EE_APPLICATION)) {
       return "MyApplication";
@@ -186,16 +191,18 @@ public class NameLocationStep extends ModuleWizardStep {
   public boolean validate() {
     final String moduleName = getModuleName();
     if (moduleName.length() == 0) {
-      Messages.showErrorDialog(myNamePathComponent.getNameComponent(), "Please specify module name", "Module Name Not Specified");
+      Messages.showErrorDialog(myNamePathComponent.getNameComponent(), IdeBundle.message("prompt.please.specify.module.name"),
+                               IdeBundle.message("title.module.name.not.specified"));
       return false;
     }
     if (isAlreadyExists(moduleName)) {
-      Messages.showErrorDialog("Module with name \"" + moduleName + "\" already exists in the project", "Module Already Exists");
+      Messages.showErrorDialog(IdeBundle.message("error.module.with.name.already.exists", moduleName), IdeBundle.message("title.module.already.exists"));
       return false;
     }
     final String moduleLocation = getModuleFileDirectory();
     if (moduleLocation.length() == 0) {
-      Messages.showErrorDialog(myNamePathComponent.getPathComponent(), "Please specify module file location", "Module File Location Not Specified");
+      Messages.showErrorDialog(myNamePathComponent.getPathComponent(), IdeBundle.message("error.please.specify.module.file.location"),
+                               IdeBundle.message("title.module.file.location.not.specified"));
       return false;
     }
 
@@ -213,18 +220,20 @@ public class NameLocationStep extends ModuleWizardStep {
           for (int k = 0; k < moduleContentRoots.length; k++) {
             final VirtualFile root = moduleContentRoots[k];
             if (moduleContentRoot.equals(root.getPath())) {
-              Messages.showErrorDialog(myNamePathComponent.getPathComponent(), "Content root \"" + contentEntryPath + "\" already defined for module \"" + module.getName() + "\".\nTwo modules in a project cannot share the same content root.", "Module Content Root Already Exists");
+              Messages.showErrorDialog(myNamePathComponent.getPathComponent(),
+                                       IdeBundle.message("error.content.root.already.defined.for.module", contentEntryPath, module.getName()),
+                                       IdeBundle.message("title.module.content.root.already.exists"));
               return false;
             }
           }
         }
-        if (!ProjectWizardUtil.createDirectoryIfNotExists("The module content root\n", contentEntryPath, myNamePathComponent.isPathChangedByUser())) {
+        if (!ProjectWizardUtil.createDirectoryIfNotExists(IdeBundle.message("directory.module.content.root"), contentEntryPath, myNamePathComponent.isPathChangedByUser())) {
           return false;
         }
       }
     }
     final String moduleFileDirectory = getModuleFileDirectory();
-    if (!ProjectWizardUtil.createDirectoryIfNotExists("The module file directory\n", moduleFileDirectory, myModuleFileDirectoryChangedByUser)) {
+    if (!ProjectWizardUtil.createDirectoryIfNotExists(IdeBundle.message("directory.module.file"), moduleFileDirectory, myModuleFileDirectoryChangedByUser)) {
       return false;
     }
     return true;
@@ -268,7 +277,8 @@ public class NameLocationStep extends ModuleWizardStep {
 
   private class BrowseModuleFileDirectoryListener extends BrowseFilesListener {
     public BrowseModuleFileDirectoryListener(final JTextField textField) {
-      super(textField, "Select Module File Location", "The module file will be saved in selected directory", BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR);
+      super(textField, IdeBundle.message("title.select.module.file.location"),
+            IdeBundle.message("description.select.module.file.location"), BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR);
     }
 
     public void actionPerformed(ActionEvent e) {

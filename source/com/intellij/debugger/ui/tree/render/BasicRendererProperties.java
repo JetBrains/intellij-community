@@ -9,6 +9,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Iterator;
 import java.util.List;
@@ -21,13 +22,13 @@ public final class BasicRendererProperties implements Cloneable, JDOMExternaliza
   // todo: add class filters here
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.tree.render.BasicRendererProperties");
 
-  private static final String NAME_OPTION = "NAME";
+  private static final @NonNls String NAME_OPTION = "NAME";
   private String myName;
 
-  private static final String ENABLED_OPTION = "ENABLED";
+  private static final @NonNls String ENABLED_OPTION = "ENABLED";
   private Boolean myEnabled;
 
-  private static final String CLASSNAME_OPTION = "QUALIFIED_NAME";
+  private static final @NonNls String CLASSNAME_OPTION = "QUALIFIED_NAME";
   private String myClassName;
 
   public String getName() {
@@ -54,7 +55,7 @@ public final class BasicRendererProperties implements Cloneable, JDOMExternaliza
     myClassName = className;
   }
 
-  public void readExternal(Element element) throws InvalidDataException {
+  @SuppressWarnings({"HardCodedStringLiteral"}) public void readExternal(Element element) throws InvalidDataException {
     final List options = element.getChildren("option");
     myName = null;
     myEnabled = null;
@@ -75,7 +76,7 @@ public final class BasicRendererProperties implements Cloneable, JDOMExternaliza
     }
   }
 
-  public void writeExternal(Element element) throws WriteExternalException {
+  @SuppressWarnings({"HardCodedStringLiteral"}) public void writeExternal(Element element) throws WriteExternalException {
     if (myName != null) {
       addOption(element, NAME_OPTION, myName);
     }
@@ -87,6 +88,7 @@ public final class BasicRendererProperties implements Cloneable, JDOMExternaliza
     }
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private void addOption(final Element element, final String optionName, final String optionValue) {
     final Element option = new Element("option");
     element.addContent(option);

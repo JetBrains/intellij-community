@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.TypeExpression;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilder;
@@ -11,7 +12,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 
 /**
@@ -32,7 +32,7 @@ public class CreateParameterFromUsageAction extends CreateVarFromUsageAction {
   }
 
     public String getText(String varName) {
-    return "Create Parameter '" + varName + "'";
+    return QuickFixBundle.message("create.parameter.from.usage.text", varName);
   }
 
   protected void invokeImpl(PsiClass targetClass) {
@@ -50,11 +50,13 @@ public class CreateParameterFromUsageAction extends CreateVarFromUsageAction {
 
     String varName = myReferenceExpression.getReferenceName();
     PsiMethod method = PsiTreeUtil.getParentOfType(myReferenceExpression, PsiMethod.class);
+    LOG.assertTrue(method != null);
     PsiParameter param;
     try {
       param = factory.createParameter(varName, type);
+      final PsiReferenceExpression[] expressionOccurences = CreateFromUsageUtils.collectExpressions(myReferenceExpression, true, PsiMethod.class);
       param.getModifierList().setModifierProperty(PsiModifier.FINAL, CodeStyleSettingsManager.getSettings(project).GENERATE_FINAL_PARAMETERS &&
-                                                                   !PsiUtil.isAccessedForWriting(myReferenceExpression));
+                                                                     !CreateFromUsageUtils.isAccessedForWriting(expressionOccurences));
 
       PsiParameter[] parameters = method.getParameterList().getParameters();
       if (parameters.length > 0 && parameters[parameters.length - 1].isVarArgs()) {
@@ -79,7 +81,7 @@ public class CreateParameterFromUsageAction extends CreateVarFromUsageAction {
   }
 
   public String getFamilyName() {
-    return "Create Parameter from Usage";
+    return QuickFixBundle.message("create.parameter.from.usage.family");
   }
 
 }

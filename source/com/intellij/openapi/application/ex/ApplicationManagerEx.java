@@ -4,6 +4,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author max
@@ -15,7 +16,7 @@ public class ApplicationManagerEx extends ApplicationManager {
     return (ApplicationEx) ourApplication;
   }
 
-  public static void createApplication(String componentsDescriptor, boolean internal, boolean isUnitTestMode, String appName) {
+  public static void createApplication(@NonNls String componentsDescriptor, boolean internal, boolean isUnitTestMode, @NonNls String appName) {
     new ApplicationImpl(componentsDescriptor, internal, isUnitTestMode, appName);
   }
 

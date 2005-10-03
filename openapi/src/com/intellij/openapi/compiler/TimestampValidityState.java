@@ -26,6 +26,11 @@ import java.io.DataInputStream;
 public final class TimestampValidityState implements ValidityState {
   private final long myTimestamp;
 
+  /**
+   * Creates a validity state with the specified timestamp.
+   *
+   * @param timestamp the timestamp for the validity state.
+   */
   public TimestampValidityState(long timestamp) {
     myTimestamp = timestamp;
   }

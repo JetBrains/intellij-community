@@ -12,6 +12,7 @@ import com.intellij.ide.util.gotoByName.ChooseByNamePopupComponent;
 import com.intellij.ide.util.gotoByName.GotoFileCellRenderer;
 import com.intellij.ide.util.treeView.AlphaComparator;
 import com.intellij.ide.util.treeView.NodeRenderer;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileTypes.FileType;
@@ -24,6 +25,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.ui.Tree;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 
 import javax.swing.*;
@@ -124,7 +126,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
     myTree.expandRow(0);
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
     myTree.setCellRenderer(new NodeRenderer());
-    myTree.putClientProperty("JTree.lineStyle", "Angled");
+    UIUtil.setLineStyleAngled(myTree);
 
     final JScrollPane scrollPane = new JScrollPane(myTree);
     scrollPane.setPreferredSize(new Dimension(500, 300));
@@ -177,7 +179,9 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
         }
       }
 
-      protected void initUI(final ChooseByNamePopupComponent.Callback callback, final ModalityState modalityState, boolean allowMultipleSelection) {
+      protected void initUI(final ChooseByNamePopupComponent.Callback callback,
+                            final ModalityState modalityState,
+                            boolean allowMultipleSelection) {
         super.initUI(callback, modalityState, allowMultipleSelection);
         dummyPanel.add(myGotoByNamePanel.getPanel(), BorderLayout.CENTER);
         //IdeFocusTraversalPolicy.getPreferredFocusedComponent(myGotoByNamePanel.getPanel()).requestFocus();
@@ -188,10 +192,10 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
       }
     };
 
-    myTabbedPane.addTab("Project", scrollPane);
-    myTabbedPane.addTab("Search by Name", dummyPanel);
+    myTabbedPane.addTab(IdeBundle.message("tab.chooser.project"), scrollPane);
+    myTabbedPane.addTab(IdeBundle.message("tab.chooser.search.by.name"), dummyPanel);
 
-    SwingUtilities.invokeLater(new Runnable(){
+    SwingUtilities.invokeLater(new Runnable() {
       public void run() {
         myGotoByNamePanel.invoke(new MyCallback(), ModalityState.stateForComponent(getRootPane()), false);
       }
@@ -286,7 +290,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
     }
 
     public String getPromptText() {
-      return "Enter file name:";
+      return IdeBundle.message("prompt.filechooser.enter.file.name");
     }
 
     public String getCheckBoxName() {

@@ -7,16 +7,23 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.meta.PsiMetaOwner;
-import com.intellij.psi.meta.PsiMetaData;
-import com.intellij.psi.meta.PsiWritableMetaData;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.meta.PsiMetaOwner;
+import com.intellij.psi.meta.PsiWritableMetaData;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.psi.util.*;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.refactoring.util.NonCodeUsageInfo;
@@ -24,8 +31,8 @@ import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.Queue;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 import java.util.regex.Pattern;
@@ -135,11 +142,11 @@ public class RenameUtil {
 
   public static void buildPackagePrefixChangedMessage(final VirtualFile[] virtualFiles, StringBuffer message, final String qualifiedName) {
     if (virtualFiles.length > 0) {
-      message.append("Package " + qualifiedName + " occurs in package prefixes of the following source folders:\n");
+      message.append(RefactoringBundle.message("package.occurs.in.package.prefixes.of.the.following.source.folders.n", qualifiedName));
       for (final VirtualFile virtualFile : virtualFiles) {
         message.append(virtualFile.getPresentableUrl() + "\n");
       }
-      message.append("These package prefixes will be changed.");
+      message.append(RefactoringBundle.message("these.package.prefixes.will.be.changed"));
     }
   }
 
@@ -188,7 +195,7 @@ public class RenameUtil {
     }
   }
 
-  private static final Pattern WHITE_SPACE_PATTERN = Pattern.compile("\\s");
+  @NonNls private static final Pattern WHITE_SPACE_PATTERN = Pattern.compile("\\s");
 
   private static String removeSpaces(String s) {
     return WHITE_SPACE_PATTERN.matcher(s).replaceAll("");
@@ -211,11 +218,6 @@ public class RenameUtil {
                                                                                oldSignature.getTypeParameters(),
                                                                                oldSignature.getSubstitutor());
 
-      final PsiMethod existingMethod = MethodSignatureUtil.findMethodBySignature(containingClass, newSignature, true);
-      if (existingMethod != null && manager.getResolveHelper().isAccessible(existingMethod, containingClass, null)) {
-        result.add(new MemberExistsUsageInfo(existingMethod, method));
-      }
-
       for (PsiClass inheritor : inheritors) {
         PsiSubstitutor superSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(containingClass, inheritor, PsiSubstitutor.EMPTY);
         final PsiMethod[] methodsByName = inheritor.findMethodsByName(newName, false);
@@ -233,10 +235,6 @@ public class RenameUtil {
       if (field.getContainingClass() == null) return;
       if (field.hasModifierProperty(PsiModifier.PRIVATE)) return;
       final PsiClass containingClass = field.getContainingClass();
-      final PsiField existingField = containingClass.findFieldByName(newName, true);
-      if (existingField != null && manager.getResolveHelper().isAccessible(existingField, containingClass, null)) {
-        result.add(new MemberExistsUsageInfo(existingField, field));
-      }
       PsiClass[] inheritors = helper.findInheritors(containingClass, projectScope, true);
       for (PsiClass inheritor : inheritors) {
         PsiField conflictingField = inheritor.findFieldByName(newName, false);
@@ -336,7 +334,7 @@ public class RenameUtil {
   }
 
   private static void visitDownstreamCollisions(PsiElement scope, PsiElement place, final String newName,
-                                               final CollidingVariableVisitor collidingNameVisitor
+                                                final CollidingVariableVisitor collidingNameVisitor
                                                ) {
     ConflictingLocalVariablesVisitor collector =
       new ConflictingLocalVariablesVisitor(newName, collidingNameVisitor);
@@ -524,7 +522,7 @@ public class RenameUtil {
       }
       ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
-            RefactoringMessageUtil.showErrorMessage("Rename", e.getMessage(), HelpID.getRenameHelpID(element), project);
+            RefactoringMessageUtil.showErrorMessage(RefactoringBundle.message("rename.title"), e.getMessage(), HelpID.getRenameHelpID(element), project);
           }
         });
     }
@@ -596,7 +594,6 @@ public class RenameUtil {
     PsiManager psiManager = value.getManager();
     LOG.assertTrue(psiManager != null);
     PsiElementFactory elementFactory = psiManager.getElementFactory();
-    LOG.assertTrue(elementFactory != null);
 
     XmlFile file = (XmlFile)elementFactory.createFileFromText("dummy.xml", "<a attr=\"" + newName + "\"/>");
     final PsiElement element = value.replace(file.getDocument().getRootTag().getAttributes()[0].getValueElement());
@@ -615,7 +612,7 @@ public class RenameUtil {
       infos = tmp.toArray(new UsageInfo[tmp.size()]);
     }
     for (UsageInfo info : infos) {
-      if (info.getElement() == null || !info.getElement().isValid()) continue;
+      if (info.getElement() == null) continue;
       PsiReference ref = ((MoveRenameUsageInfo)info).reference;
       if (ref == null) continue;
       queue.addLast(ref);
@@ -689,8 +686,8 @@ public class RenameUtil {
     aClass.setName(newName);
 
     // resolve collisions
-    for (int i = 0; i < postponedCollisions.size(); i++) {
-      ClassHidesImportedClassUsageInfo collision = (ClassHidesImportedClassUsageInfo)postponedCollisions.get(i);
+    for (UsageInfo postponedCollision : postponedCollisions) {
+      ClassHidesImportedClassUsageInfo collision = (ClassHidesImportedClassUsageInfo) postponedCollision;
       collision.resolveCollision();
     }
     listener.elementRenamed(aClass);
@@ -702,14 +699,14 @@ public class RenameUtil {
                                      RefactoringElementListener listener) throws IncorrectOperationException {
     // do actual rename of overriding/implementing methods and of references to all them
     for (UsageInfo usage : usages) {
-      final PsiElement element = usage.getElement();
+      PsiElement element = usage.getElement();
       if (element == null) continue;
+
       if (!(element instanceof PsiMethod)) {
         final PsiReference ref;
         if (usage instanceof MoveRenameUsageInfo) {
-          ref = ((MoveRenameUsageInfo)usage).reference;
-        }
-        else {
+          ref = ((MoveRenameUsageInfo) usage).reference;
+        } else {
           ref = element.getReference();
         }
         if (ref != null) {
@@ -717,11 +714,11 @@ public class RenameUtil {
         }
       }
     }
-    
+
     // do actual rename of method
     method.setName(newName);
     for (UsageInfo usage : usages) {
-      final PsiElement element = usage.getElement();
+      PsiElement element = usage.getElement();
       if (element instanceof PsiMethod) {
         ((PsiMethod)element).setName(newName);
       }
@@ -845,22 +842,21 @@ public class RenameUtil {
     }
   }
 
-  public static String[] getConflictDescriptions(UsageInfo[] usages) {
+  public static Collection<String> getConflictDescriptions(UsageInfo[] usages) {
     ArrayList<String> descriptions = new ArrayList<String>();
 
     for (UsageInfo usage : usages) {
       if (usage instanceof UnresolvableCollisionUsageInfo) {
         descriptions.add(((UnresolvableCollisionUsageInfo)usage).getDescription());
       }
-
     }
-    return descriptions.toArray(ArrayUtil.EMPTY_STRING_ARRAY);
+    return descriptions;
   }
 
   public static void buildMultipleDirectoriesInPackageMessage(StringBuffer message,
-                                                        PsiPackage aPackage,
-                                                        PsiDirectory[] directories) {
-    message.append("Multiple directories correspond to package\n");
+                                                              PsiPackage aPackage,
+                                                              PsiDirectory[] directories) {
+    message.append(RefactoringBundle.message("multiple.directories.correspond.to.package"));
     message.append(aPackage.getQualifiedName());
     message.append(" :\n\n");
     for (int i = 0; i < directories.length; i++) {

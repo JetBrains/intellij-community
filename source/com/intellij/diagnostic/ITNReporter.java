@@ -1,5 +1,6 @@
 package com.intellij.diagnostic;
 
+import com.intellij.CommonBundle;
 import com.intellij.errorreport.ErrorReportSender;
 import com.intellij.errorreport.bean.ErrorBean;
 import com.intellij.errorreport.bean.NotifierBean;
@@ -15,6 +16,7 @@ import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.diagnostic.SubmittedReportInfo;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.util.net.IOExceptionDialog;
+import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
 import java.io.IOException;
@@ -29,10 +31,10 @@ import java.io.IOException;
 public class ITNReporter extends ErrorReportSubmitter {
   private static int previousExceptionThreadId = 0;
   private static boolean wasException = false;
-  private static final String URL_HEADER = "http://www.intellij.net/tracker/idea/viewSCR?publicId=";
+  @NonNls private static final String URL_HEADER = "http://www.intellij.net/tracker/idea/viewSCR?publicId=";
 
   public String getReportActionText() {
-    return "Report to JetBrains";
+    return DiagnosticBundle.message("error.report.to.jetbrains.action");
   }
 
   public SubmittedReportInfo submit(IdeaLoggingEvent[] events, Component parentComponent) {
@@ -62,8 +64,8 @@ public class ITNReporter extends ErrorReportSubmitter {
         dlg.show();
 
         boolean anonymousLogin = false;
-        String itnLogin = ErrorReportConfigurable.getInstance().ITN_LOGIN;
-        String itnPassword = ErrorReportConfigurable.getInstance().getPlainItnPassword();
+        @NonNls String itnLogin = ErrorReportConfigurable.getInstance().ITN_LOGIN;
+        @NonNls String itnPassword = ErrorReportConfigurable.getInstance().getPlainItnPassword();
         if (itnLogin.trim().length() == 0 && itnPassword.trim().length() == 0) {
           anonymousLogin = true;
           itnLogin = "idea_anonymous";
@@ -101,13 +103,12 @@ public class ITNReporter extends ErrorReportSubmitter {
 
           if (anonymousLogin) {
             Messages.showInfoMessage(parentComponent,
-                                     "Error report successfully sent. Thank you for your feedback!",
+                                     DiagnosticBundle.message("error.report.confirmation"),
                                      ReportMessages.ERROR_REPORT);
           }
           else {
             if (Messages.showYesNoDialog(parentComponent,
-                                         "Error report successfully sent. \nRequest #" + threadId +
-                                         " created. Do you want to open the related request in ITN?",
+                                         DiagnosticBundle.message("error.report.open.request.prompt", threadId),
                                          ReportMessages.ERROR_REPORT, Messages.getQuestionIcon()) == 0) {
               try {
                 BrowserUtil.launchBrowser(URL_HEADER + threadId);
@@ -126,39 +127,34 @@ public class ITNReporter extends ErrorReportSubmitter {
 
       }
       catch (NoSuchEAPUserException e) {
-        if (ReportMessages.isEAP) e.printStackTrace();
-        if (Messages.showYesNoDialog(parentComponent, "ITN authorization failed. Do you want to try again?",
+        if (Messages.showYesNoDialog(parentComponent, DiagnosticBundle.message("error.report.authentication.failed"),
                                      ReportMessages.ERROR_REPORT, Messages.getErrorIcon()) != 0) {
           break;
         }
       }
       catch (InternalEAPException e) {
-        if (ReportMessages.isEAP) e.printStackTrace();
-        if (Messages.showYesNoDialog(parentComponent, "ITN posting failed. Do you want to try again?",
+        if (Messages.showYesNoDialog(parentComponent, DiagnosticBundle.message("error.report.posting.failed"),
                                      ReportMessages.ERROR_REPORT, Messages.getErrorIcon()) != 0) {
           break;
         }
       }
       catch (IOException e) {
-        if (ReportMessages.isEAP) e.printStackTrace();
-        if (!IOExceptionDialog.showErrorDialog(e, "Error Report", "Error report sending failed.")) {
+        if (!IOExceptionDialog.showErrorDialog(e, DiagnosticBundle.message("error.report.exception.title"),
+                                               DiagnosticBundle.message("error.report.failure.message"))) {
           break;
         }
       }
       catch (NewBuildException e) {
-        if (ReportMessages.isEAP) e.printStackTrace();
         Messages.showMessageDialog(parentComponent,
-                                   "New EAP build " + e.getMessage() + " is available.", "Warning",
+                                   DiagnosticBundle.message("error.report.new.eap.build.message", e.getMessage()), CommonBundle.getWarningTitle(),
                                    Messages.getWarningIcon());
         break;
       }
       catch (ThreadClosedException e) {
         submissionStatus = SubmittedReportInfo.SubmissionStatus.DUPLICATE;
         threadId = e.getThreadId();
-        if (ReportMessages.isEAP) e.printStackTrace();
         if (Messages.showYesNoDialog(parentComponent,
-                                     "This error already closed with status: " + e.getMessage() + "." +
-                                     " You don't need to post it, thank you. Do you want to open it in tracker?",
+                                     DiagnosticBundle.message("error.report.already.closed.message", e.getMessage()),
                                      ReportMessages.ERROR_REPORT, Messages.getQuestionIcon()) == 0) {
           try {
             BrowserUtil.launchBrowser(URL_HEADER + threadId);
@@ -171,8 +167,7 @@ public class ITNReporter extends ErrorReportSubmitter {
         break;
       }
       catch (Exception e) {
-        if (ReportMessages.isEAP) e.printStackTrace();
-        if (Messages.showYesNoDialog(parentComponent, "Sending failed. Do you want to try again?",
+        if (Messages.showYesNoDialog(parentComponent, DiagnosticBundle.message("error.report.sending.failure"),
                                      ReportMessages.ERROR_REPORT, Messages.getErrorIcon()) != 0) {
           break;
         }
@@ -182,7 +177,7 @@ public class ITNReporter extends ErrorReportSubmitter {
     while (true);
 
     return new SubmittedReportInfo(submissionStatus != SubmittedReportInfo.SubmissionStatus.FAILED ? URL_HEADER + threadId : null,
-      String.valueOf(threadId),
-      submissionStatus);
+                                   String.valueOf(threadId),
+                                   submissionStatus);
   }
 }

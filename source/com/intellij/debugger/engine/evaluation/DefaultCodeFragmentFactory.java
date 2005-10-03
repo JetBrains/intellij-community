@@ -25,6 +25,7 @@ public class DefaultCodeFragmentFactory implements CodeFragmentFactory {
   }
 
   public String getDisplayName() {
+    //noinspection HardCodedStringLiteral
     return "Java";
   }
 
@@ -49,6 +50,7 @@ public class DefaultCodeFragmentFactory implements CodeFragmentFactory {
         fragment.addImportsFromString(item.getImports());
       }
       fragment.setEverythingAcessible(true);
+      //noinspection HardCodedStringLiteral
       fragment.putUserData(DebuggerExpressionComboBox.KEY, "DebuggerComboBoxEditor.IS_DEBUGGER_EDITOR");
     }
 

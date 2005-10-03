@@ -36,6 +36,7 @@ import com.intellij.openapi.vcs.fileView.FileViewEnvironment;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.CvsBundle;
 
 import java.io.File;
 
@@ -131,7 +132,7 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent,
   }
 
   public String getDisplayName() {
-    return "CVS";
+    return CvsBundle.getCvsDisplayName();
   }
 
   public Configurable getConfigurable() {
@@ -231,7 +232,7 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent,
   }
 
   public String getRequestText() {
-    return "Would you like to invoke 'CVS Edit' command?";
+    return CvsBundle.message("message.text.edit.file.request");
   }
 
   public UpToDateRevisionProvider getUpToDateRevisionProvider() {
@@ -295,7 +296,7 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent,
   }
 
   public String getMenuItemText() {
-    return "&CVS";
+    return CvsBundle.message("menu.text.cvsGroup");
   }
 
   public UpdateEnvironment getUpdateEnvironment() {
@@ -322,7 +323,7 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent,
                                          String revision, CvsEnvironment environment) throws VcsException {
     final AnnotateOperation annotateOperation = new AnnotateOperation(cvsLightweightFile, revision, environment);
     CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
-    executor.performActionSync(new CommandCvsHandler("Annotate", annotateOperation),
+    executor.performActionSync(new CommandCvsHandler(CvsBundle.getAnnotateOperationName(), annotateOperation),
                                CvsOperationExecutorCallback.EMPTY);
 
     if (executor.getResult().hasNoErrors()) {

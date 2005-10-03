@@ -2,6 +2,7 @@ package com.intellij.compiler.ant.taskdefs;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.compiler.ant.Tag;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Eugene Zhuravlev
@@ -9,7 +10,7 @@ import com.intellij.compiler.ant.Tag;
  */
 public class PathRef extends Tag{
 
-  public PathRef(final String refid) {
+  public PathRef(@NonNls final String refid) {
     super("path", new Pair[] {pair("refid", refid)});
   }
 

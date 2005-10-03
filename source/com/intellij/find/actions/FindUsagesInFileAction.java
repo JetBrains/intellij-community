@@ -10,6 +10,8 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageView;
+import com.intellij.find.FindBundle;
+import com.intellij.CommonBundle;
 
 public class FindUsagesInFileAction extends AnAction {
 
@@ -28,8 +30,8 @@ public class FindUsagesInFileAction extends AnAction {
     else {
       Messages.showMessageDialog(
         project,
-        "Cannot search for usages.\nPosition to an element which usages you wish to find and try again.",
-        "Error",
+        FindBundle.message("find.no.usages.at.cursor.error"),
+        CommonBundle.getErrorTitle(),
         Messages.getErrorIcon()
       );
     }

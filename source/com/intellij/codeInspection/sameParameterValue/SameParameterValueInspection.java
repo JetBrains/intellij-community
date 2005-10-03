@@ -1,6 +1,8 @@
 package com.intellij.codeInspection.sameParameterValue;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
@@ -9,6 +11,7 @@ import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.JobDescriptor;
 import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
 import com.intellij.codeInspection.reference.*;
+import com.intellij.psi.PsiDocCommentOwner;
 import com.intellij.psi.PsiReference;
 
 import java.util.ArrayList;
@@ -27,6 +30,7 @@ public class SameParameterValueInspection extends DescriptorProviderInspection {
       public void accept(RefElement refElement) {
         if (refElement instanceof RefMethod) {
           RefMethod refMethod = (RefMethod) refElement;
+          if (!InspectionManagerEx.isToCheckMember((PsiDocCommentOwner) refMethod.getElement(), SameParameterValueInspection.this.getShortName())) return;
           ProblemDescriptor[] descriptors = checkMethod(refMethod);
           if (descriptors != null) {
             addProblemElement(refElement, descriptors);
@@ -48,8 +52,9 @@ public class SameParameterValueInspection extends DescriptorProviderInspection {
       if (value != null) {
         if (problems == null) problems = new ArrayList(1);
         problems.add(getManager().createProblemDescriptor(refMethod.getElement(),
-                                                          "Actual value of parameter '<code>" + refParameter.getName() +
-                                                          "</code>' value is always '<code>" + value + "</code>'.",
+                                                          InspectionsBundle.message("inspection.same.parameter.problem.descriptor",
+                                                                                    "<code>" + refParameter.getName() + "</code>",
+                                                                                    "<code>" + value + "</code>"),
                                                           (LocalQuickFix [])null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
       }
     }
@@ -83,11 +88,11 @@ public class SameParameterValueInspection extends DescriptorProviderInspection {
   }
 
   public String getDisplayName() {
-    return "Actual method parameter is the same constant";
+    return InspectionsBundle.message("inspection.same.parameter.display.name");
   }
 
   public String getGroupDisplayName() {
-    return "Declaration Redundancy";
+    return GroupNames.DECLARATION_REDUNDANCY;
   }
 
   public String getShortName() {

@@ -17,6 +17,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.Reference;
@@ -33,7 +34,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   protected PsiClass[] myCachedClasses = null;
   private final Map<PsiJavaFile,Map<String, SoftReference<JavaResolveResult[]>>> myGuessCache = ResolveCache.getOrCreateWeakMap(myManager, CACHED_CLASSES_MAP_KEY, false);
 
-  private static final String[] IMPLICIT_IMPORTS = new String[]{ "java.lang" };
+  private static final @NonNls String[] IMPLICIT_IMPORTS = new String[]{ "java.lang" };
 
   protected PsiJavaFileBaseImpl(Project project,
                                 IElementType elementType,

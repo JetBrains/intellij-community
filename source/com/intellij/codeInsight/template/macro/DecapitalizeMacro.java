@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.template.macro;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.template.*;
 
@@ -10,7 +11,7 @@ public class DecapitalizeMacro implements Macro {
   }
 
   public String getDescription() {
-    return "decapitalize()";
+    return CodeInsightBundle.message("macro.decapitalize.string");
   }
 
   public String getDefaultValue() {

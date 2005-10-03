@@ -127,7 +127,7 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
     final ProgressIndicator progressIndicator = context.getProgressIndicator();
     progressIndicator.pushState();
     try {
-      progressIndicator.setText("Generating RMI stubs...");
+      progressIndicator.setText(CompilerBundle.message("progress.generating.rmi.stubs"));
       final List<ProcessingItem> processed = new ArrayList<ProcessingItem>();
       final Map<Pair<Module, File>, List<RmicProcessingItem>> sortedByModuleAndOutputPath = new HashMap<Pair<Module,File>, List<RmicProcessingItem>>();
       for (int idx = 0; idx < items.length; idx++) {
@@ -246,35 +246,39 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
 
     final VirtualFile homeDirectory = jdk.getHomeDirectory();
     if (homeDirectory == null) {
-      throw new IllegalArgumentException("Cannot determine home directory for JDK " + jdk.getName() + ".\nUpdate JDK configuration.\n");
+      throw new IllegalArgumentException(CompilerBundle.message("javac.error.jdk.home.missing", jdk.getName()));
     }
     final String jdkPath = homeDirectory.getPath().replace('/', File.separatorChar);
 
+    //noinspection HardCodedStringLiteral
     final String compilerPath = jdkPath + File.separator + "bin" + File.separator + "rmic";
 
     commandLine.add(compilerPath);
 
+    //noinspection HardCodedStringLiteral
     commandLine.add("-verbose");
 
     commandLine.addAll(Arrays.asList(RmicSettings.getInstance(myProject).getOptions()));
 
+    //noinspection HardCodedStringLiteral
     commandLine.add("-classpath");
 
     commandLine.add(CompilerPathsEx.getCompilationClasspath(module));
 
+    //noinspection HardCodedStringLiteral
     commandLine.add("-d");
 
     commandLine.add(outputPath);
 
-    for (int idx = 0; idx < items.length; idx++) {
-      commandLine.add(items[idx].getClassQName());
+    for (RmicProcessingItem item : items) {
+      commandLine.add(item.getClassQName());
     }
     return commandLine.toArray(new String[commandLine.size()]);
   }
 
 
   public String getDescription() {
-    return "RMI Compiler";
+    return CompilerBundle.message("rmi.compiler.description");
   }
 
   public boolean validateConfiguration(CompileScope scope) {
@@ -408,8 +412,11 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
         baseName = qName;
       }
       final String path = outputDir.getPath().replace(File.separatorChar, '/') + "/" + relativePath;
+      //noinspection HardCodedStringLiteral
       myStub = new File(path + "/" + baseName + "_Stub.class");
+      //noinspection HardCodedStringLiteral
       mySkel = new File(path + "/" + baseName + "_Skel.class");
+      //noinspection HardCodedStringLiteral
       myTie = new File(path + "/_" + baseName + "_Tie.class");
       updateState();
     }

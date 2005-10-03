@@ -65,6 +65,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Semaphore;
 import gnu.trove.THashSet;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -132,6 +133,12 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   private boolean myInitialized;
 
   private boolean myIsFrameFocused = true;
+  @NonNls
+  private static final String DISABLE_HINTS_TAG = "disable_hints";
+  @NonNls
+  private static final String FILE_TAG = "file";
+  @NonNls
+  private static final String URL_ATT = "url";
 
   protected DaemonCodeAnalyzerImpl(Project project, DaemonCodeAnalyzerSettings daemonCodeAnalyzerSettings) {
     myProject = project;
@@ -619,7 +626,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
 
 
   public void writeExternal(Element parentNode) throws WriteExternalException {
-    Element disableHintsElement = new Element("disable_hints");
+    Element disableHintsElement = new Element(DISABLE_HINTS_TAG);
     parentNode.addContent(disableHintsElement);
 
     ArrayList<String> array = new ArrayList<String>();
@@ -631,8 +638,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     Collections.sort(array);
 
     for (String url : array) {
-      Element fileElement = new Element("file");
-      fileElement.setAttribute("url", url);
+      Element fileElement = new Element(FILE_TAG);
+      fileElement.setAttribute(URL_ATT, url);
       disableHintsElement.addContent(fileElement);
     }
   }
@@ -640,12 +647,12 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   public void readExternal(Element parentNode) throws InvalidDataException {
     myDisabledHintsFiles.clear();
 
-    Element element = parentNode.getChild("disable_hints");
+    Element element = parentNode.getChild(DISABLE_HINTS_TAG);
     if (element != null) {
-      for (Object o : element.getChildren("file")) {
+      for (Object o : element.getChildren(FILE_TAG)) {
         Element e = (Element)o;
 
-        String url = e.getAttributeValue("url");
+        String url = e.getAttributeValue(URL_ATT);
         if (url != null) {
           VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
           if (file != null) {

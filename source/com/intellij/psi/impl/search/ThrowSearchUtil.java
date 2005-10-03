@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
@@ -64,7 +63,7 @@ public class ThrowSearchUtil {
     while (elem != null) {
       final PsiElement parent = elem.getParent();
       if (elem instanceof PsiMethod) {
-        final PsiMethod deepestSuperMethod = PsiSuperMethodUtil.findDeepestSuperMethod((PsiMethod)elem);
+        final PsiMethod deepestSuperMethod = ((PsiMethod) elem).findDeepestSuperMethod();
         final PsiMethod method = deepestSuperMethod != null ? deepestSuperMethod : ((PsiMethod)elem);
         if (!processed.contains(method)) {
           processed.add(method);

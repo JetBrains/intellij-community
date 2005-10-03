@@ -2,6 +2,7 @@
 package com.intellij.ide.macro;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.ide.IdeBundle;
 
 import java.io.File;
 
@@ -11,7 +12,7 @@ public final class FileRelativePathMacro2 extends FileRelativePathMacro {
   }
 
   public String getDescription() {
-    return "File path relative to the project file (with forward slashes)";
+    return IdeBundle.message("macro.file.path.relative.fwd.slash");
   }
 
   public String expand(DataContext dataContext) {

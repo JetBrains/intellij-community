@@ -17,12 +17,11 @@ package com.intellij.openapi.roots.libraries;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NonNls;
 
 public abstract class LibraryTablesRegistrar {
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public static final String PROJECT_LEVEL = "project";
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public static final String APPLICATION_LEVEL = "application";
+  @NonNls public static final String PROJECT_LEVEL = "project";
+  @NonNls public static final String APPLICATION_LEVEL = "application";
 
   public static LibraryTablesRegistrar getInstance() {
     return ApplicationManager.getApplication().getComponent(LibraryTablesRegistrar.class);

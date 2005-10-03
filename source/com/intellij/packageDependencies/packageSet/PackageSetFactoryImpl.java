@@ -8,6 +8,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.TokenTypeEx;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.search.scope.packageSet.*;
+import com.intellij.analysis.AnalysisScopeBundle;
 
 public class PackageSetFactoryImpl extends PackageSetFactory {
   private static final Logger LOG = Logger.getInstance("#com.intellij.packageDependencies.packageSet.PackageSetFactoryImpl");
@@ -30,7 +31,7 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
 
     public PackageSet parse() throws ParsingException {
       PackageSet set = parseUnion();
-      if (myLexer.getTokenType() != null) error("Unexpected '" + getTokenText() + "'");
+      if (myLexer.getTokenType() != null) error(AnalysisScopeBundle.message("error.packageset.token.expectations", getTokenText()));
       return set;
     }
 
@@ -75,7 +76,7 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
 
       if (myLexer.getTokenType() == TokenTypeEx.COLON) {
         if (scope == PatternPackageSet.SCOPE_ANY && modulePattern == null) {
-          error("(test|lib|src)[modulename] expected before :");
+          error(AnalysisScopeBundle.message("error.packageset.common.expectations"));
         }
         myLexer.advance();
       }
@@ -125,7 +126,7 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
           wasIdentifier = false;
         }
         else if (myLexer.getTokenType() == TokenTypeEx.IDENTIFIER) {
-          if (wasIdentifier) error("Unexpected " + getTokenText());
+          if (wasIdentifier) error(AnalysisScopeBundle.message("error.packageset.token.expectations", getTokenText()));
           wasIdentifier = true;
           pattern.append(getTokenText());
         }
@@ -136,7 +137,7 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
       }
 
       if (pattern.length() == 0) {
-        error("Package pattern expected");
+        error(AnalysisScopeBundle.message("error.packageset.pattern.expectations"));
       }
 
       return pattern.toString();
@@ -163,7 +164,7 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
           myLexer.advance();
         }
         else {
-          error("identifier or whildcard expected as module name pattern");
+          error(AnalysisScopeBundle.message("error.packageset.module.pattern.expectations"));
         }
       }
       return pattern.toString();
@@ -174,14 +175,15 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
       myLexer.advance();
 
       PackageSet result = parseUnion();
-      if (myLexer.getTokenType() != TokenTypeEx.RPARENTH) error("')' expected");
+      if (myLexer.getTokenType() != TokenTypeEx.RPARENTH) error(AnalysisScopeBundle.message("error.packageset.).expectations"));
       myLexer.advance();
 
       return result;
     }
 
     private void error(String message) throws ParsingException {
-      throw new ParsingException(message + " at position " + (myLexer.getTokenStart() + 1));
+      throw new ParsingException(
+        AnalysisScopeBundle.message("error.packageset.position.parsing.error", message, (myLexer.getTokenStart() + 1)));
     }
   }
 }

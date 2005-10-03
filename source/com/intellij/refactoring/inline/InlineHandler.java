@@ -14,12 +14,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.lang.jsp.inlineInclude.InlineIncludeFileHandler;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.ide.DataManager;
 
 public class InlineHandler implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.inline.InlineHandler");
+  private static final String REFACTORING_NAME = RefactoringBundle.message("inline.title");
 
   public void invoke(Project project, PsiElement[] elements, DataContext dataContext) {
     LOG.assertTrue(elements.length == 1);
@@ -54,11 +56,8 @@ public class InlineHandler implements RefactoringActionHandler {
     } else if (file instanceof JspFile) {
       new InlineIncludeFileHandler().invoke(project, editor, (JspFile)file);;
     } else {
-      String message =
-              "Cannot perform the refactoring.\n" +
-              "The caret should be positioned at the name of\n" +
-              "the method or local variable to be refactored.";
-      RefactoringMessageUtil.showErrorMessage("Inline", message, null, project);
+      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.method.or.local.name"));
+      RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, null, project);
     }
   }
 }

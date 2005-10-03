@@ -8,8 +8,8 @@ import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.diff.DiffRequest;
 import com.intellij.openapi.diff.SimpleDiffRequest;
 import com.intellij.openapi.diff.DiffManager;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.ex.DiffContentFactory;
-import com.intellij.openapi.diff.impl.external.DiffManagerImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.text.ElementPresentation;
@@ -35,8 +35,9 @@ public class CompareFiles extends BaseDiffAction {
     ElementPresentation.Noun firstKind = presentation1.getKind();
     ElementPresentation.Noun secondKind = presentation2.getKind();
     if (firstKind.equals(secondKind)) {
-      presentation.setText("Co_mpare Two " + firstKind.getPlural(true));
-    } else presentation.setText("Co_mpare " + firstKind.getSingular(true) + " with " + secondKind.getSingular(true));
+      presentation.setText(DiffBundle.message("compare.two.element.type.acton.name", firstKind.getTypeNum()));
+    } else presentation.setText(
+      DiffBundle.message("compare.element.type.with.element.type.action.name", firstKind.getTypeNum(), secondKind.getTypeNum()));
     presentation.setVisible(true);
     presentation.setEnabled(DiffManager.getInstance().getDiffTool().canShow(diffRequest));
   }
@@ -48,7 +49,8 @@ public class CompareFiles extends BaseDiffAction {
   private DiffRequest getDiffRequest(PsiElement[] elements) {
     ElementPresentation presentation1 = ElementPresentation.forElement(elements[0]);
     ElementPresentation presentation2 = ElementPresentation.forElement(elements[1]);
-    String title = presentation1.getQualifiedName() + " vs " + presentation2.getQualifiedName();
+    String title = DiffBundle.message("diff.element.qualified.name.vs.element.qualified.name.dialog.title",
+                                      presentation1.getQualifiedName(), presentation2.getQualifiedName());
     SimpleDiffRequest diffRequest = DiffContentFactory.comparePsiElements(elements[0], elements[1], title);
     if (diffRequest == null) return null;
     diffRequest.setContentTitles(presentation1.getNameWithFQComment(), presentation2.getNameWithFQComment());

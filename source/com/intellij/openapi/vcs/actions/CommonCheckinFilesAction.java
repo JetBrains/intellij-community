@@ -34,6 +34,7 @@ package com.intellij.openapi.vcs.actions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 
@@ -44,28 +45,28 @@ public class CommonCheckinFilesAction extends AbstractCommonCheckinAction {
     FilePath first = roots[0];
     if (roots.length == 1) {
       if (first.isDirectory()) {
-        return getCheckinActionName(dataContext) + " Directory";
+        return VcsBundle.message("action.name.checkin.directory", getCheckinActionName(dataContext));
       }
       else {
-        return getCheckinActionName(dataContext) + " File";
+        return VcsBundle.message("action.name.checkin.file", getCheckinActionName(dataContext));
       }
     }
     else {
       if (first.isDirectory()) {
-        return getCheckinActionName(dataContext) + " Directories";
+        return VcsBundle.message("action.name.checkin.directories", getCheckinActionName(dataContext));
       }
       else {
-        return getCheckinActionName(dataContext) + " Files";
+        return VcsBundle.message("action.name.checkin.files", getCheckinActionName(dataContext));
       }
     }
   }
 
   private String getCheckinActionName(VcsContext dataContext) {
     Project project = dataContext.getProject();
-    if (project == null) return "Checkin";
+    if (project == null) return VcsBundle.message("vcs.command.name.checkin");
     CheckinEnvironment env = getCommonEnvironmentFor(getRoots(dataContext), project);
     if (env == null) {
-      return "Checkin";
+      return VcsBundle.message("vcs.command.name.checkin");
     }
     else {
       return env.getCheckinOperationName();

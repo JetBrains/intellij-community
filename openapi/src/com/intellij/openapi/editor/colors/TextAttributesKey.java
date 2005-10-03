@@ -45,7 +45,7 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
     }
   }
 
-  @NotNull public static TextAttributesKey find(String externalName) {
+  @NotNull public static TextAttributesKey find(@NonNls String externalName) {
     TextAttributesKey key = ourRegistry.get(externalName);
     return key != null ? key : new TextAttributesKey(externalName);
   }

@@ -15,23 +15,25 @@
  */
 package com.intellij.openapi.wm;
 
+import com.intellij.ui.UIBundle;
+
 public interface ToolWindowId {
-  String COMMANDER = "Commander";
-  String MESSAGES_WINDOW = "Messages";
-  String PROJECT_VIEW = "Project";
-  String STRUCTURE_VIEW = "Structure";
-  String FAVORITES_VIEW = "Favorites";
-  String ANT_BUILD = "Ant Build";
-  String DEBUG = "Debug";
-  String RUN = "Run";
-  String FIND = "Find";
-  String CVS = "CVS";
-  String HIERARCHY = "Hierarchy";
-  String INSPECTION = "Inspection";
-  String TODO_VIEW = "TODO";
-  String ASPECTS_VIEW = "Aspects";
-  String HOT_SWAP_VIEW = "Hot Swap";
-  String DEPENDENCIES = "Dependency Viewer";
-  String VCS = "Version Control";
-  String MODULES_DEPENDENCIES = "Module Dependencies";
+  String COMMANDER = UIBundle.message("tool.window.name.commander");
+  String MESSAGES_WINDOW = UIBundle.message("tool.window.name.messages");
+  String PROJECT_VIEW = UIBundle.message("tool.window.name.project");
+  String STRUCTURE_VIEW = UIBundle.message("tool.window.name.structure");
+  String FAVORITES_VIEW = UIBundle.message("tool.window.name.favorites");
+  String ANT_BUILD = UIBundle.message("tool.window.name.ant.build");
+  String DEBUG = UIBundle.message("tool.window.name.debug");
+  String RUN = UIBundle.message("tool.window.name.run");
+  String FIND = UIBundle.message("tool.window.name.find");
+  String CVS = UIBundle.message("tool.window.name.cvs");
+  String HIERARCHY = UIBundle.message("tool.window.name.hierarchy");
+  String INSPECTION = UIBundle.message("tool.window.name.inspection");
+  String TODO_VIEW = UIBundle.message("tool.window.name.todo");
+  String ASPECTS_VIEW = UIBundle.message("tool.window.name.aspects");
+  String HOT_SWAP_VIEW = UIBundle.message("tool.window.name.hot.swap");
+  String DEPENDENCIES = UIBundle.message("tool.window.name.dependency.viewer");
+  String VCS = UIBundle.message("tool.window.name.version.control");
+  String MODULES_DEPENDENCIES = UIBundle.message("tool.window.name.module.dependencies");
 }

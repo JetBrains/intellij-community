@@ -1,18 +1,22 @@
 package com.intellij.codeInspection.ui;
 
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ex.DescriptorProviderInspection;
-import com.intellij.codeInspection.ex.HTMLComposer;
-import com.intellij.codeInspection.ex.InspectionTool;
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeInspection.deadCode.DeadCodeInspection;
+import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefImplicitConstructor;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.ResourceUtil;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -29,19 +33,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Browser extends JPanel {
-  private static final String UNDER_CONSTRUCTION = "Under construction";
+  private static final String UNDER_CONSTRUCTION = InspectionsBundle.message("inspection.tool.description.under.construction.text");
   private final List<ClickListener> myClickListeners;
   private RefEntity myCurrentEntity;
   private JEditorPane myHTMLViewer;
   private InspectionResultsView myView;
   private HyperlinkListener myHyperLinkListener;
-
-  public void dispose() {
-    removeAll();
-    myHTMLViewer.removeHyperlinkListener(myHyperLinkListener);
-    myClickListeners.clear();
-    myHTMLViewer = null;
-  }
 
   public static class ClickEvent {
     public static final int REF_ELEMENT = 1;
@@ -82,18 +79,38 @@ public class Browser extends JPanel {
 
   }
 
+  public void dispose(){
+    removeAll();
+    myHTMLViewer.removeHyperlinkListener(myHyperLinkListener);
+    myClickListeners.clear();
+    myHTMLViewer = null;
+  }
+
   public interface ClickListener {
     void referenceClicked(ClickEvent e);
   }
 
   private void showPageFromHistory(RefEntity newEntity) {
+    final InspectionTool tool = getTool();
     try {
-      String html = generateHTML(newEntity);
-      myHTMLViewer.read(new StringReader(html), null);
-      myHTMLViewer.setCaretPosition(0);
-    }
-    catch (Exception e) {
-      showEmpty();
+      if (!(newEntity instanceof RefElement) || tool instanceof DescriptorProviderInspection){
+        showEmpty();
+        return;
+      }
+      if (tool instanceof FilteringInspectionTool){
+        if (tool instanceof DeadCodeInspection || ((FilteringInspectionTool)tool).getFilter().accepts((RefElement)newEntity)) {
+          try {
+            String html = generateHTML(newEntity);
+            myHTMLViewer.read(new StringReader(html), null);
+            myHTMLViewer.setCaretPosition(0);
+          }
+          catch (Exception e) {
+            showEmpty();
+          }
+        } else {
+          showEmpty();
+        }
+      }
     }
     finally {
       myCurrentEntity = newEntity;
@@ -130,7 +147,7 @@ public class Browser extends JPanel {
     myClickListeners = new ArrayList<ClickListener>();
     myCurrentEntity = null;
 
-    myHTMLViewer = new JEditorPane("text/html", "<HTML><BODY>Select tree node for detailed information</BODY></HTML>");
+    myHTMLViewer = new JEditorPane(UIUtil.HTML_MIME, InspectionsBundle.message("inspection.offline.view.empty.browser.text"));
     myHTMLViewer.setEditable(false);
     myHyperLinkListener = new HyperlinkListener() {
       public void hyperlinkUpdate(HyperlinkEvent e) {
@@ -144,7 +161,7 @@ public class Browser extends JPanel {
           else {
             try {
               URL url = e.getURL();
-              String ref = url.getRef();
+              @NonNls String ref = url.getRef();
               if (ref.startsWith("pos:")) {
                 int delimeterPos = ref.indexOf(':', "pos:".length() + 1);
                 String startPosition = ref.substring("pos:".length(), delimeterPos);
@@ -180,6 +197,8 @@ public class Browser extends JPanel {
                 if (actionNumber > -1) {
                   myView.invokeLocalFix(actionNumber);
                 }
+              } else if (ref.startsWith("suppress:")){
+                myView.getSuppressAction((RefElement)myCurrentEntity, getTool()).actionPerformed(null);
               }
               else {
                 int offset = Integer.parseInt(ref);
@@ -231,11 +250,16 @@ public class Browser extends JPanel {
 
     uppercaseFirstLetter(buf);
 
+    if (refEntity instanceof RefElement){
+      appendSuppressSection((RefElement)refEntity, buf);
+    }
+
     insertHeaderFooter(buf);
 
     return buf.toString();
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static void insertHeaderFooter(final StringBuffer buf) {
     buf.insert(0, "<HTML><BODY><font style=\"font-family:verdana;\" size = \"3\">");
     buf.append("</font></BODY></HTML>");
@@ -252,9 +276,33 @@ public class Browser extends JPanel {
 
     uppercaseFirstLetter(buf);
 
-    insertHeaderFooter(buf);
+    appendSuppressSection(refElement, buf);
 
+    insertHeaderFooter(buf);
     return buf.toString();
+  }
+
+  private void appendSuppressSection(final RefElement refElement, final StringBuffer buf) {
+    final InspectionTool tool = getTool();
+    if (tool != null) {
+      final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
+      if (key != null){//dummy entry points
+        final AnAction suppressAction = myView.getSuppressAction(refElement, tool);
+        if (suppressAction != null){
+          @NonNls String font = "<font style=\"font-family:verdana;\" size = \"3\">";
+          buf.append(font);
+          @NonNls final String br = "<br>";
+          buf.append(br).append(br);
+          HTMLComposer.appendHeading(buf, InspectionsBundle.message("inspection.export.results.suppress"));
+          buf.append(br);
+          HTMLComposer.appendAfterHeaderIndention(buf);
+          @NonNls final String href = "<a HREF=\"file://bred.txt#suppress:\">" + suppressAction.getTemplatePresentation().getText() + "</a>";
+          buf.append(href);
+          @NonNls String closeFont = "</font>";
+          buf.append(closeFont);
+        }
+      }
+    }
   }
 
   private static void uppercaseFirstLetter(final StringBuffer buf) {
@@ -265,6 +313,7 @@ public class Browser extends JPanel {
     }
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public void showEmpty() {
     myCurrentEntity = null;
     try {
@@ -279,18 +328,27 @@ public class Browser extends JPanel {
       showEmpty();
       return;
     }
-    StringBuffer page = new StringBuffer("<html><title>");
-    HTMLComposer.appendHeading(page, "ID");
-    page.append("</title>&nbsp;&nbsp;<br>");
+    @NonNls StringBuffer page = new StringBuffer("<html>");
+    page.append("<table border='0' cellspacing='0' cellpadding='0' width='100%'>");
+    page.append("<tr><td colspan='2'>");
+    HTMLComposer.appendHeading(page, InspectionsBundle.message("inspection.tool.in.browser.id.title"));
+    page.append("</td></tr>");
+    page.append("<tr><td width='37'></td>" +
+                "<td>");
     page.append(tool.getShortName());
-    page.append("<br>");
-    page.append("<title><br><font style=\"font-family:verdana; font-weight:bold; color:#005555\"; size = \"3\">Description:</font></title><br>");
+    page.append("</td></tr>");
+    page.append("<tr height='10'></tr>");
+    page.append("<tr><td colspan='2'>");
+    HTMLComposer.appendHeading(page, InspectionsBundle.message("inspection.tool.in.browser.description.title"));
+    page.append("</td></tr>");
+    page.append("<tr><td width='37'></td>" +
+                "<td>");
     final URL descriptionUrl = getDescriptionUrl(tool);
-    final String underConstruction = "<b>" + UNDER_CONSTRUCTION + "</b></html>";
+    @NonNls final String underConstruction = "<b>" + UNDER_CONSTRUCTION + "</b></html>";
     try {
       if (descriptionUrl != null){
-        final StringBuffer description = readInputStream(descriptionUrl.openStream());
-        if (description != null && description.toString().startsWith("<html>")) {
+        @NonNls final String description = readInputStream(descriptionUrl.openStream());
+        if (description != null && description.startsWith("<html>")) {
           page.append(description.substring(description.indexOf("<html>") + 6));
         } else {
           page.append(underConstruction);
@@ -298,6 +356,7 @@ public class Browser extends JPanel {
       } else {
         page.append(underConstruction);
       }
+      page.append("</td></tr></table>");
       myHTMLViewer.setText(page.toString());
     }
     catch (IOException e) {
@@ -313,7 +372,7 @@ public class Browser extends JPanel {
   }
 
   @Nullable
-  private static StringBuffer readInputStream(InputStream in) {
+  private static String readInputStream(InputStream in) {
     try {
       StringBuffer str = new StringBuffer();
       int c = in.read();
@@ -321,7 +380,7 @@ public class Browser extends JPanel {
         str.append((char)c);
         c = in.read();
       }
-      return str;
+      return str.toString();
     }
     catch (IOException e) {
       return null;
@@ -330,13 +389,13 @@ public class Browser extends JPanel {
 
   private URL getDescriptionUrl(InspectionTool tool) {
     Class aClass = tool instanceof LocalInspectionToolWrapper ? ((LocalInspectionToolWrapper)tool).getTool().getClass() : tool.getClass();
-    return aClass.getResource("/inspectionDescriptions/" + tool.getDescriptionFileName());
+    return ResourceUtil.getResource(aClass, "/inspectionDescriptions", tool.getDescriptionFileName());
   }
 
   @Nullable
   private InspectionTool getTool() {
     if (myView != null){
-      return myView.getSelectedTool();
+      return myView.getTree().getSelectedTool();
     }
     return null;
   }

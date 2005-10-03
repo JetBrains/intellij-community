@@ -8,6 +8,7 @@ import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.editors.BooleanEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.BooleanRenderer;
 import com.intellij.uiDesigner.propertyInspector.renderers.SizePolicyRenderer;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Anton Katilin
@@ -17,7 +18,7 @@ public abstract class SizePolicyProperty extends Property{
   private final Property[] myChildren;
   private final SizePolicyRenderer myRenderer;
 
-  public SizePolicyProperty(final String name){
+  public SizePolicyProperty(@NonNls final String name){
     super(null, name);
     myChildren=new Property[]{
       new MyCanShrinkProperty(),
@@ -59,7 +60,7 @@ public abstract class SizePolicyProperty extends Property{
     private final BooleanRenderer myRenderer;
     private final BooleanEditor myEditor;
 
-    public MyBooleanProperty(final String name){
+    public MyBooleanProperty(@NonNls final String name){
       super(SizePolicyProperty.this, name);
       myRenderer=new BooleanRenderer();
       myEditor=new BooleanEditor();

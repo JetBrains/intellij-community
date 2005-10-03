@@ -1,10 +1,11 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.TemplateStateListener;
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
@@ -106,7 +107,6 @@ public abstract class CreateFromUsageBaseAction extends BaseIntentionAction {
   protected void chooseTargetClass(PsiClass[] classes, final Editor editor, final PsiFile file) {
     final Project project = classes[0].getProject();
 
-    String title = " Choose Target Class ";
     final JList list = new JList(classes);
     PsiElementListCellRenderer renderer = new PsiClassListCellRenderer();
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -125,7 +125,7 @@ public abstract class CreateFromUsageBaseAction extends BaseIntentionAction {
         });
       }
     };
-    ListPopup listPopup = new ListPopup(title, list, runnable, project);
+    ListPopup listPopup = new ListPopup(QuickFixBundle.message("target.class.chooser.title"), list, runnable, project);
     LogicalPosition caretPosition = editor.getCaretModel().getLogicalPosition();
     Point caretLocation = editor.logicalPositionToXY(caretPosition);
     int x = caretLocation.x;
@@ -187,7 +187,7 @@ public abstract class CreateFromUsageBaseAction extends BaseIntentionAction {
           callExpression = PsiTreeUtil.getParentOfType(ref, PsiMethodCallExpression.class);
         }
 
-        if (callExpression != null && callExpression.getMethodExpression().getText().equals("super")) {
+        if (callExpression != null && callExpression.getMethodExpression().getText().equals(PsiKeyword.SUPER)) {
           return true;
         }
 
@@ -286,11 +286,6 @@ public abstract class CreateFromUsageBaseAction extends BaseIntentionAction {
     else {
       return psiClass != null && psiClass.getManager().isInProject(psiClass)? new PsiClass[]{psiClass} : null;
     }
-  }
-
-  protected static boolean isNonqualifiedReference(PsiElement result) {
-    return result instanceof PsiJavaCodeReferenceElement &&
-        !((PsiJavaCodeReferenceElement) result).isQualified();
   }
 
   protected static void startTemplate (final Editor editor, final Template template, final Project project) {

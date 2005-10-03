@@ -22,28 +22,28 @@ import com.intellij.openapi.util.UserDataHolder;
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
 public interface FileEditor extends UserDataHolder {
   /**
-   * @see #isModified() 
-   */ 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  String PROP_MODIFIED = "modified";
+   * @see #isModified()
+   */
+  @NonNls String PROP_MODIFIED = "modified";
   /**
-   * @see #isValid()  
-   */ 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  String PROP_VALID = "valid";
+   * @see #isValid()
+   */
+  @NonNls String PROP_VALID = "valid";
 
   /**
    * @return component which represents editor in the UI.
    * The method should never return <code>null</code>.
    */
   JComponent getComponent();
-  
+
   /**
    * Returns component to be focused when editor is opened. Method should never return null.
    */
@@ -55,7 +55,7 @@ public interface FileEditor extends UserDataHolder {
    * and "Text". So "GUI Designer" can be a name of one editor and "Text"
    * can be a name of other editor. The method should never return <code>null</code>.
    */
-  String getName();
+  @NonNls String getName();
 
   /**
    * @return editor's internal state. Method should never return <code>null</code>.
@@ -67,12 +67,12 @@ public interface FileEditor extends UserDataHolder {
    * @param state cannot be null
    */
   void setState(FileEditorState state);
-  
+
   /**
    * @return whether the editor's content is modified in comparision with its file. 
    */
   boolean isModified();
-  
+
   /**
    * @return whether the editor is valid or not. For some reasons
    * editor can become invalid. For example, text editor becomes invalid when its file is deleted.

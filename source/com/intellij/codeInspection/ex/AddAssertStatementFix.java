@@ -2,11 +2,16 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+
+import java.text.MessageFormat;
+
+import org.jetbrains.annotations.NonNls;
 
 
 /**
@@ -17,7 +22,7 @@ public class AddAssertStatementFix implements LocalQuickFix {
   private PsiExpression myExpressionToAssert;
 
   public String getName() {
-    return "Assert '" + myExpressionToAssert.getText() + "'";
+    return InspectionsBundle.message("inspection.assert.quickfix", myExpressionToAssert.getText());
   }
 
   public AddAssertStatementFix(PsiExpression expressionToAssert) {
@@ -30,7 +35,7 @@ public class AddAssertStatementFix implements LocalQuickFix {
     PsiStatement anchorStatement = PsiTreeUtil.getParentOfType(element, PsiStatement.class);
     LOG.assertTrue(anchorStatement != null);
 
-    String text = "assert c;";
+    @NonNls String text = "assert c;";
     PsiAssertStatement assertStatement;
     try {
       assertStatement = (PsiAssertStatement)element.getManager().getElementFactory().createStatementFromText(text, null);
@@ -43,6 +48,6 @@ public class AddAssertStatementFix implements LocalQuickFix {
   }
 
   public String getFamilyName() {
-    return "Assert";
+    return InspectionsBundle.message("inspection.quickfix.assert.family");
   }
 }

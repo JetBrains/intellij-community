@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.IdeBorderFactory;
@@ -17,6 +18,7 @@ import com.intellij.ui.RecentsManager;
 import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -24,11 +26,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 class CopyClassDialog extends DialogWrapper{
-  private static final String RECENTS_KEY = "CopyClassDialog.RECENTS_KEY";
-  private JLabel myInformationLabel = new JLabel("X");
-  private JLabel myNameLabel = new JLabel("Name:");
+  @NonNls private static final String RECENTS_KEY = "CopyClassDialog.RECENTS_KEY";
+  private JLabel myInformationLabel = new JLabel();
+  private JLabel myNameLabel = new JLabel();
   private EditorTextField myNameField;
-  private JLabel myPackageLabel = new JLabel("Destination package:");
+  private JLabel myPackageLabel = new JLabel();
   private ReferenceEditorComboWithBrowseButton myTfPackage;
   private Project myProject;
   private PsiDirectory myTargetDirectory;
@@ -40,8 +42,11 @@ class CopyClassDialog extends DialogWrapper{
     myProject = project;
     init();
     myDoClone = doClone;
-    myInformationLabel.setText((myDoClone ? "Clone " : "Copy ") + UsageViewUtil.getType(aClass) + " " + UsageViewUtil.getLongName(aClass));
+    String text = myDoClone ? RefactoringBundle.message("copy.class.clone.0.1", UsageViewUtil.getType(aClass), UsageViewUtil.getLongName(aClass)) :
+                       RefactoringBundle.message("copy.class.copy.0.1", UsageViewUtil.getType(aClass), UsageViewUtil.getLongName(aClass));
+    myInformationLabel.setText(text);
     myNameField.setText(UsageViewUtil.getShortName(aClass));
+    myNameLabel.setText(RefactoringBundle.message("name.prompt"));
     myDefaultTargetDirectory = defaultTargetDirectory;
     if (defaultTargetPackage != null) {
       myTfPackage.prependItem(defaultTargetPackage.getQualifiedName());
@@ -67,8 +72,7 @@ class CopyClassDialog extends DialogWrapper{
   }
 
   protected JComponent createCenterPanel() {
-    JPanel panel = new JPanel(new BorderLayout());
-    return panel;
+    return new JPanel(new BorderLayout());
   }
 
   protected JComponent createNorthPanel() {
@@ -89,8 +93,6 @@ class CopyClassDialog extends DialogWrapper{
     gbConstraints.weighty = 1;
     gbConstraints.weightx = 0;
     panel.add(myNameLabel, gbConstraints);
-    myNameLabel.setLabelFor(myNameField);
-    myNameLabel.setDisplayedMnemonic('N');
 
     gbConstraints.gridx = 1;
     gbConstraints.weightx = 1;
@@ -106,7 +108,7 @@ class CopyClassDialog extends DialogWrapper{
     gbConstraints.weightx = 1;
     myTfPackage = new ReferenceEditorComboWithBrowseButton(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        PackageChooserDialog chooser=new PackageChooserDialog("Choose Destination Package",myProject);
+        PackageChooserDialog chooser=new PackageChooserDialog(RefactoringBundle.message("choose.destination.package"),myProject);
         chooser.selectPackage(myTfPackage.getText());
         chooser.show();
         PsiPackage aPackage = chooser.getSelectedPackage();
@@ -115,8 +117,8 @@ class CopyClassDialog extends DialogWrapper{
         }
       }
     }, "", PsiManager.getInstance(myProject), false, RECENTS_KEY);
-    myPackageLabel.setLabelFor(myTfPackage.getChildComponent());
-    myPackageLabel.setDisplayedMnemonic('D');
+
+    myPackageLabel.setText(RefactoringBundle.message("destination.package"));
 
     panel.add(myTfPackage, gbConstraints);
 
@@ -139,9 +141,9 @@ class CopyClassDialog extends DialogWrapper{
     final PsiManager manager = PsiManager.getInstance(myProject);
     final PsiNameHelper nameHelper = manager.getNameHelper();
     if (packageName.length() > 0 && !nameHelper.isQualifiedName(packageName)) {
-      errorString[0] = "Invalid target package name specified";
+      errorString[0] = RefactoringBundle.message("invalid.target.package.name.specified");
     } else if ("".equals(className)) {
-      errorString[0] = "No class name specified";
+      errorString[0] = RefactoringBundle.message("no.class.name.specified");
     } else {
       if (!nameHelper.isIdentifier(className)) {
         errorString[0] = RefactoringMessageUtil.getIncorrectIdentifierMessage(className);
@@ -160,7 +162,7 @@ class CopyClassDialog extends DialogWrapper{
                   }
                 });
               }
-            }, "Create directory", null);
+            }, RefactoringBundle.message("create.directory"), null);
           }
         }
         catch (IncorrectOperationException e) {
@@ -172,7 +174,7 @@ class CopyClassDialog extends DialogWrapper{
 
     if (errorString[0] != null) {
       if (errorString[0].length() > 0) {
-        Messages.showMessageDialog(myProject, errorString[0], "Error", Messages.getErrorIcon());
+        Messages.showMessageDialog(myProject, errorString[0], RefactoringBundle.message("error.title"), Messages.getErrorIcon());
       }
       myNameField.requestFocusInWindow();
       return;

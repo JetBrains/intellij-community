@@ -1,6 +1,7 @@
 package com.intellij.ui;
 
 import com.intellij.util.text.StringTokenizer;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -53,7 +54,7 @@ public class LabeledIcon implements Icon {
 
   private int getTextHeight() {
     if (myStrings != null) {
-      Font font = UIManager.getFont("Label.font");
+      Font font = UIUtil.getLabelFont();
       FontMetrics fontMetrics = Toolkit.getDefaultToolkit().getFontMetrics(font);
       return fontMetrics.getHeight() * myStrings.length;
     }
@@ -65,7 +66,7 @@ public class LabeledIcon implements Icon {
   private int getTextWidth() {
     if (myStrings != null) {
       int width = 0;
-      Font font = UIManager.getFont("Label.font");
+      Font font = UIUtil.getLabelFont();
       FontMetrics fontMetrics = Toolkit.getDefaultToolkit().getFontMetrics(font);
       for (String string : myStrings) {
         width = fontMetrics.stringWidth(string);
@@ -93,13 +94,13 @@ public class LabeledIcon implements Icon {
     }
     // Draw text
     if (myStrings != null) {
-      Font font = UIManager.getFont("Label.font");
+      Font font = UIUtil.getLabelFont();
       FontMetrics fontMetrics = Toolkit.getDefaultToolkit().getFontMetrics(font);
       g.setFont(fontMetrics.getFont());
       if (myMnemonic != null) {
         width -= fontMetrics.stringWidth(myMnemonic);
       }
-      g.setColor(UIManager.getColor("Label.foreground"));
+      g.setColor(UIUtil.getLabelForeground());
       y += myIcon.getIconHeight() + fontMetrics.getMaxAscent() + myIconTextGap;
       for (String string : myStrings) {
         g.drawString(string, x + (width - fontMetrics.stringWidth(string)) / 2, y);
@@ -108,7 +109,7 @@ public class LabeledIcon implements Icon {
 
       if (myMnemonic != null) {
         y -= fontMetrics.getHeight();
-        g.setColor(UIManager.getColor("textInactiveText"));
+        g.setColor(UIUtil.getTextInactiveTextColor());
         int offset = getTextWidth() - fontMetrics.stringWidth(myMnemonic);
         g.drawString(myMnemonic, x + offset, y);
       }

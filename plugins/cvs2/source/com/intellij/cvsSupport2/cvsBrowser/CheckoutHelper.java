@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 import java.awt.*;
 import java.io.File;
+import java.text.MessageFormat;
 
 /**
  * author: lesya
@@ -44,8 +45,8 @@ public class CheckoutHelper {
   private boolean creatingConfirmation() {
     File checkoutDirectory = new File(myCheckoutLocation, myElement.getCheckoutPath());
     if (checkoutDirectory.isDirectory()) return true;
-    String message = "Directory " + checkoutDirectory + " will be created. Continue?";
-    return Messages.showYesNoDialog(message, "Check Out Project", Messages.getQuestionIcon()) == 0;
+    String message = com.intellij.CvsBundle.message("confirmation.text.directory.will.be.created", checkoutDirectory);
+    return Messages.showYesNoDialog(message, com.intellij.CvsBundle.message("operation.name.check.out.project"), Messages.getQuestionIcon()) == 0;
   }
 
   private boolean shouldCreateDirectoryOfTheSameName() {
@@ -56,7 +57,7 @@ public class CheckoutHelper {
 
   public VirtualFile chooseCheckoutLocation(String pathToSuggestedFolder) {
     FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-    descriptor.setTitle("Select a directory to check out the files to");
+    descriptor.setTitle(com.intellij.CvsBundle.message("dialog.description.select.a.directory.to.check.out.the.files.to"));
     VirtualFile suggestedCheckoutFolder = LocalFileSystem.getInstance().findFileByPath(pathToSuggestedFolder.replace(File.separatorChar, '/'));
     VirtualFile[] files = FileChooser.chooseFiles(myPanel, descriptor, suggestedCheckoutFolder);
     if (files.length == 0) return null;

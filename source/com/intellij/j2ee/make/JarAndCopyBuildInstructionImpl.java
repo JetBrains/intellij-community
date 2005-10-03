@@ -5,12 +5,15 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.ZipUtil;
+import com.intellij.j2ee.J2EEBundle;
 import gnu.trove.THashSet;
 
 import java.io.*;
 import java.util.Set;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
+
+import org.jetbrains.annotations.NonNls;
 
 /**
  * Created by IntelliJ IDEA.
@@ -21,6 +24,7 @@ import java.util.jar.Manifest;
  */
 public class JarAndCopyBuildInstructionImpl extends FileCopyInstructionImpl implements JarAndCopyBuildInstruction {
   private File myJarFile;
+  @NonNls protected static final String TMP_FILE_SUFFIX = ".tmp";
 
   public JarAndCopyBuildInstructionImpl(Module module,
                                         File directoryToJar,
@@ -47,8 +51,8 @@ public class JarAndCopyBuildInstructionImpl extends FileCopyInstructionImpl impl
                             FileFilter fileFilter) throws IOException {
     // create temp jars, and add these into upper level jar
     // todo optimization: cache created jars
-    final String moduleName = getModule() == null ? "jar" : ModuleUtil.getModuleNameInReadAction(getModule());
-    final File tempFile = createTempFile(moduleName, ".tmp");
+    @NonNls final String moduleName = getModule() == null ? "jar" : ModuleUtil.getModuleNameInReadAction(getModule());
+    final File tempFile = File.createTempFile(moduleName+"___",TMP_FILE_SUFFIX);
     makeJar(context, tempFile, fileFilter);
 
     final String outputRelativePath = getOutputRelativePath();
@@ -82,7 +86,7 @@ public class JarAndCopyBuildInstructionImpl extends FileCopyInstructionImpl impl
         if (!ok) {
           String dirPath = getFile().getPath();
           MakeUtil.reportRecursiveCopying(context, dirPath, jarFile.getPath(), "",
-                                          "Please setup jar file location outside directory '" + dirPath + "'.");
+                                          J2EEBundle.message("message.text.setup.jar.outside.directory.path", dirPath));
         }
       }
       finally {
@@ -97,11 +101,8 @@ public class JarAndCopyBuildInstructionImpl extends FileCopyInstructionImpl impl
     return visitor.visitJarAndCopyBuildInstruction(this);
   }
 
-  public String toString() {
-    String s = "JAR and copy: ";
-    s += getFile();
-    s += "->"+getOutputRelativePath();
-    return s;
+  @NonNls public String toString() {
+    return "JAR and copy: " + getFile() + "->"+getOutputRelativePath();
   }
 
   public File getJarFile() {

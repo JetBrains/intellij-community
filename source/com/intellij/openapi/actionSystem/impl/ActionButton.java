@@ -14,6 +14,8 @@ import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
+import org.jetbrains.annotations.NonNls;
+
 public class ActionButton extends JComponent implements ActionButtonComponent {
   private static final Insets ICON_INSETS = new Insets(2, 2, 2, 2);
 
@@ -38,6 +40,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent {
     final Dimension minimumSize
     ) {
     if (minimumSize == null) {
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("minimumSize cannot be null");
     }
     setMinimumButtonSize(minimumSize);
@@ -53,6 +56,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent {
 
   public void setMinimumButtonSize(Dimension size) {
     if (size == null) {
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("size cannot be null");
     }
     myMinimumButtonSize = size;
@@ -254,6 +258,8 @@ public class ActionButton extends JComponent implements ActionButtonComponent {
   }
 
   private class ActionButtonSynchronizer implements PropertyChangeListener {
+    @NonNls protected static final String SELECTED_PROPERTY_NAME = "selected";
+
     public void propertyChange(PropertyChangeEvent e) {
       String propertyName = e.getPropertyName();
       if (Presentation.PROP_TEXT.equals(propertyName)) {
@@ -272,7 +278,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent {
       }
       else if (Presentation.PROP_VISIBLE.equals(propertyName)) {
       }
-      else if ("selected".equals(propertyName)) {
+      else if (SELECTED_PROPERTY_NAME.equals(propertyName)) {
         repaint();
       }
     }

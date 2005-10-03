@@ -4,6 +4,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -26,11 +27,11 @@ public class RenameFileFix implements IntentionAction {
   }
 
   public String getText() {
-    return "Rename File";
+    return QuickFixBundle.message("rename.file.fix");
   }
 
   public String getFamilyName() {
-    return "Rename File";
+    return QuickFixBundle.message("rename.file.fix");
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {

@@ -9,6 +9,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ide.IdeBundle;
 
 public class CloseEditorAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
@@ -31,7 +32,7 @@ public class CloseEditorAction extends AnAction {
             }
           }
         }
-      }, "Close Active Editor", null
+      }, IdeBundle.message("command.close.active.editor"), null
     );
   }
 
@@ -50,7 +51,7 @@ public class CloseEditorAction extends AnAction {
       return;
     }
     if (ActionPlaces.EDITOR_POPUP.equals(event.getPlace()) || ActionPlaces.EDITOR_TAB_POPUP.equals(event.getPlace())) {
-      presentation.setText("_Close");
+      presentation.setText(IdeBundle.message("action.close"));
     }
     EditorWindow window = (EditorWindow)dataContext.getData(DataConstantsEx.EDITOR_WINDOW);
     if (window == null) {

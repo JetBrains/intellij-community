@@ -166,6 +166,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         this.yEnd = yEnd;
       }
 
+      @SuppressWarnings({"HardCodedStringLiteral"})
       public String toString() {
         return "PR[" + yStart + "-" + yEnd + ")";
       }
@@ -492,7 +493,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       PopupHandler popupHandler = new PopupHandler() {
         public void invokePopup(final Component comp, final int x, final int y) {
           if (ApplicationManager.getApplication() == null) return;
-          final JRadioButtonMenuItem errorsFirst = new JRadioButtonMenuItem("Go to errors first");
+          final JRadioButtonMenuItem errorsFirst = new JRadioButtonMenuItem(EditorBundle.message("errors.panel.go.to.errors.first.radio"));
           errorsFirst.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
               DaemonCodeAnalyzerSettings.getInstance().NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST = errorsFirst.isSelected();
@@ -501,7 +502,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
           final JPopupMenu popupMenu = new JPopupMenu();
           popupMenu.add(errorsFirst);
 
-          final JRadioButtonMenuItem next = new JRadioButtonMenuItem("Go to next error/warning");
+          final JRadioButtonMenuItem next = new JRadioButtonMenuItem(EditorBundle.message("errors.panel.go.to.next.error.warning.radio"));
           next.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
               DaemonCodeAnalyzerSettings.getInstance().NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST = !next.isSelected();
@@ -514,7 +515,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
           group.add(next);
 
           popupMenu.addSeparator();
-          final JMenuItem hLevel = new JMenuItem("Customize Highlighting Level");
+          final JMenuItem hLevel = new JMenuItem(EditorBundle.message("customize.highlighting.level.menu.item"));
           popupMenu.add(hLevel);
 
           final boolean isErrorsFirst = DaemonCodeAnalyzerSettings.getInstance().NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST;
@@ -578,7 +579,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
             doMouseClicked(e);
           }
         },
-        "Move caret", null
+        EditorBundle.message("move.caret.command.name"), null
       );
     }
 

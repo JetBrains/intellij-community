@@ -54,7 +54,7 @@ public class UIUtil {
       super.setEnabled(isEnabled);
 
       if (!isEnabled) {
-        Color halftone = UIManager.getColor("textInactiveText");
+        Color halftone = com.intellij.util.ui.UIUtil.getTextInactiveTextColor();
         myTitleBorder.setTitleColor(halftone);
       } else {
         Color foregrnd = getForeground();

@@ -1,10 +1,7 @@
 package com.intellij.codeInspection.miscGenerics;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -13,7 +10,6 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -97,8 +93,7 @@ public class SuspiciousCollectionsMethodCallsInspection extends GenericsInspecti
         if (psiMethod == null) return;
 
         Iterator<Integer> indicesIterator = indices.iterator();
-        for (Iterator<PsiMethod> methodsIterator = patternMethods.iterator(); methodsIterator.hasNext();) {
-          PsiMethod patternMethod = methodsIterator.next();
+        for (PsiMethod patternMethod : patternMethods) {
           Integer index = indicesIterator.next();
           if (!patternMethod.getName().equals(methodExpression.getReferenceName())) continue;
           if (isInheritorOrSelf(psiMethod, patternMethod)) {
@@ -111,25 +106,27 @@ public class SuspiciousCollectionsMethodCallsInspection extends GenericsInspecti
               String message = null;
               if (!typeParamMapping.isAssignableFrom(argType)) {
                 if (!typeParamMapping.isConvertibleFrom(argType)) {
-                  message = MessageFormat.format("Calling ''{1}'' may not succeed for non-null objects of type ''{0}''",
-                                                 PsiFormatUtil.formatType(argType, 0, PsiSubstitutor.EMPTY),
-                                                 PsiFormatUtil.formatMethod(psiMethod, resolveResult.getSubstitutor(),
-                                                                            PsiFormatUtil.SHOW_NAME |
-                                                                            PsiFormatUtil.SHOW_CONTAINING_CLASS,
-                                                                            PsiFormatUtil.SHOW_TYPE));
-                }
-                else {
-                  message = MessageFormat.format("Suspicious call to ''{0}''",
-                                                 PsiFormatUtil.formatMethod(psiMethod, resolveResult.getSubstitutor(),
-                                                                            PsiFormatUtil.SHOW_NAME |
-                                                                            PsiFormatUtil.SHOW_CONTAINING_CLASS,
-                                                                            PsiFormatUtil.SHOW_TYPE));
+                  PsiExpression qualifier = methodExpression.getQualifierExpression();
+                  LOG.assertTrue(qualifier != null);
+                  PsiType qualifierType = qualifier.getType();
+                  LOG.assertTrue(qualifierType != null);
+
+                  message = InspectionsBundle.message("inspection.suspicious.collections.method.calls.problem.descriptor",
+                      PsiFormatUtil.formatType(qualifierType, 0, PsiSubstitutor.EMPTY),
+                      PsiFormatUtil.formatType(argType, 0, PsiSubstitutor.EMPTY)
+                      );
+                } else {
+                  message = InspectionsBundle.message("inspection.suspicious.collections.method.calls.problem.descriptor1",
+                      PsiFormatUtil.formatMethod(psiMethod, resolveResult.getSubstitutor(),
+                          PsiFormatUtil.SHOW_NAME |
+                              PsiFormatUtil.SHOW_CONTAINING_CLASS,
+                          PsiFormatUtil.SHOW_TYPE));
                 }
               }
               if (message != null) {
                 problems.add(manager.createProblemDescriptor(args[0], message,
-                                                             (LocalQuickFix [])null,
-                                                             ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+                    (LocalQuickFix []) null,
+                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
               }
             }
             return;
@@ -152,7 +149,7 @@ public class SuspiciousCollectionsMethodCallsInspection extends GenericsInspecti
   }
 
   public String getDisplayName() {
-    return "Suspicious collections method calls";
+    return InspectionsBundle.message("inspection.suspicious.collections.method.calls.display.name");
   }
 
   public String getGroupDisplayName() {

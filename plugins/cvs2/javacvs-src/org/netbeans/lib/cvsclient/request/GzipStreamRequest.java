@@ -12,19 +12,21 @@
  */
 package org.netbeans.lib.cvsclient.request;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author  Thomas Singer
  */
 public final class GzipStreamRequest extends AbstractRequest {
 
-	// Constants ==============================================================
+        // Constants ==============================================================
 
-	public static final String REQUEST = "Gzip-stream";
-	private static final int COMPRESSION_LEVEL = 6;
+        @NonNls public static final String REQUEST = "Gzip-stream";
+        private static final int COMPRESSION_LEVEL = 6;
 
-	// Implemented ============================================================
+        // Implemented ============================================================
 
-	public String getRequestString() {
-		return REQUEST + ' ' + COMPRESSION_LEVEL + '\n';
-	}
+        public String getRequestString() {
+                return REQUEST + ' ' + COMPRESSION_LEVEL + '\n';
+        }
 }

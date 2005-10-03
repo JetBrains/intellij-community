@@ -19,6 +19,8 @@ import com.intellij.util.Alarm;
 import com.intellij.util.Icons;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.Tree;
+import com.intellij.util.ui.UIUtil;
+import com.intellij.ide.IdeBundle;
 
 import javax.swing.*;
 import javax.swing.event.CaretEvent;
@@ -103,7 +105,7 @@ public class ScopeEditorPanel {
 
   private void updateCaretPositionText() {
     if (myErrorMessage != null) {
-      myCaretPositionLabel.setText("pos:" + (myCaretPosition + 1));
+      myCaretPositionLabel.setText(IdeBundle.message("label.scope.editor.caret.position", (myCaretPosition + 1)));
     }
     else {
       myCaretPositionLabel.setText("");
@@ -139,10 +141,10 @@ public class ScopeEditorPanel {
   }
 
   private JComponent createActionsPanel() {
-    JButton include = new JButton("Include");
-    JButton includeRec = new JButton("Include Recursively");
-    JButton exclude = new JButton("Exclude");
-    JButton excludeRec = new JButton("Exclude Recursively");
+    JButton include = new JButton(IdeBundle.message("button.include"));
+    JButton includeRec = new JButton(IdeBundle.message("button.include.recursively"));
+    JButton exclude = new JButton(IdeBundle.message("button.exclude"));
+    JButton excludeRec = new JButton(IdeBundle.message("button.exclude.recursively"));
 
     JPanel buttonsPanel = new JPanel(new VerticalFlowLayout());
     buttonsPanel.add(include);
@@ -313,7 +315,7 @@ public class ScopeEditorPanel {
     tree.setCellRenderer(new MyTreeCellRenderer());
     tree.setRootVisible(false);
     tree.setShowsRootHandles(true);
-    tree.putClientProperty("JTree.lineStyle", "Angled");
+    tree.setLineStyleAngled();
 
     TreeToolTipHandler.install(tree);
     TreeUtil.installActions(tree);
@@ -327,7 +329,7 @@ public class ScopeEditorPanel {
     myIsFirstUpdate = false;
 
     if (myErrorMessage == null) {
-      myMatchingCountLabel.setText("Scope contains " + model.getMarkedFileCount() + " of total " + model.getTotalFileCount() + " java files");
+      myMatchingCountLabel.setText(IdeBundle.message("label.scope.contains.files", model.getMarkedFileCount(), model.getTotalFileCount()));
       myMatchingCountLabel.setForeground(new JLabel().getForeground());
     }
     else {
@@ -341,7 +343,8 @@ public class ScopeEditorPanel {
   public boolean checkCurrentScopeValid(boolean showMessage) {
     if (myCurrentScope == null) {
       if (showMessage) {
-        Messages.showErrorDialog(myPanel, "Correct pattern syntax errors first", "Syntax Error");
+        Messages.showErrorDialog(myPanel, IdeBundle.message("error.correct.pattern.syntax.errors.first"),
+                                 IdeBundle.message("title.syntax.error"));
       }
       return false;
     }
@@ -395,7 +398,8 @@ public class ScopeEditorPanel {
 
   private final class FlattenPackagesAction extends ToggleAction {
     FlattenPackagesAction() {
-      super("Flatten Packages", "Flatten Packages", Icons.FLATTEN_PACKAGES_ICON);
+      super(IdeBundle.message("action.flatten.packages"),
+            IdeBundle.message("action.flatten.packages"), Icons.FLATTEN_PACKAGES_ICON);
     }
 
     public boolean isSelected(AnActionEvent event) {
@@ -410,7 +414,8 @@ public class ScopeEditorPanel {
 
   private final class ShowFilesAction extends ToggleAction {
     ShowFilesAction() {
-      super("Show Files", "Show/Hide Files", IconLoader.getIcon("/fileTypes/java.png"));
+      super(IdeBundle.message("action.show.files"),
+            IdeBundle.message("action.description.show.files"), IconLoader.getIcon("/fileTypes/java.png"));
     }
 
     public boolean isSelected(AnActionEvent event) {
@@ -425,7 +430,8 @@ public class ScopeEditorPanel {
 
   private final class GroupByScopeTypeAction extends ToggleAction {
     GroupByScopeTypeAction() {
-      super("Group by Scope Type", "Group by Scope Type (production, test, libraries)", IconLoader.getIcon("/nodes/testSourceFolder.png"));
+      super(IdeBundle.message("action.group.by.scope.type"),
+            IdeBundle.message("action.description.group.by.scope"), IconLoader.getIcon("/nodes/testSourceFolder.png"));
     }
 
     public boolean isSelected(AnActionEvent event) {
@@ -440,7 +446,8 @@ public class ScopeEditorPanel {
 
   private final class ShowModulesAction extends ToggleAction {
     ShowModulesAction() {
-      super("Show Modules", "Show/Hide Modules", IconLoader.getIcon("/objectBrowser/showModules.png"));
+      super(IdeBundle.message("action.show.modules"),
+            IdeBundle.message("action.description.show.modules"), IconLoader.getIcon("/objectBrowser/showModules.png"));
     }
 
     public boolean isSelected(AnActionEvent event) {
@@ -455,7 +462,8 @@ public class ScopeEditorPanel {
 
   private final class FilterLegalsAction extends ToggleAction {
     FilterLegalsAction() {
-      super("Show Included Only", "Show only files included to the current scope selected", IconLoader.getIcon("/ant/filter.png"));
+      super(IdeBundle.message("action.show.included.only"),
+            IdeBundle.message("action.description.show.included.only"), IconLoader.getIcon("/ant/filter.png"));
     }
 
     public boolean isSelected(AnActionEvent event) {

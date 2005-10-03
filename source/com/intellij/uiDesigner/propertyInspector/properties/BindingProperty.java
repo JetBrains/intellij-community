@@ -11,11 +11,14 @@ import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.uiDesigner.GuiEditor;
 import com.intellij.uiDesigner.GuiEditorUtil;
 import com.intellij.uiDesigner.RadComponent;
+import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.editors.BindingEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.BindingRenderer;
+
+import java.text.MessageFormat;
 
 /**
  * @author Anton Katilin
@@ -65,6 +68,7 @@ public final class BindingProperty extends Property {
     if (
       !GuiEditorUtil.isBindingUnique(component, newBinding, myGuiEditor.getRootContainer())
     ) {
+      //noinspection HardCodedStringLiteral
       throw new Exception("binding is not unique");
     }
 
@@ -104,8 +108,8 @@ public final class BindingProperty extends Property {
 
     final int option = Messages.showYesNoDialog(
       myGuiEditor,
-      "Do you want to rename field \"" + oldBinding + "\" to \"" + newBinding + "\" as well?",
-      "Rename",
+      MessageFormat.format(UIDesignerBundle.message("message.rename.field"), oldBinding, newBinding),
+      UIDesignerBundle.message("title.rename"),
       Messages.getQuestionIcon()
     );
 

@@ -24,6 +24,7 @@ import com.intellij.openapi.util.UserDataHolder;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.io.*;
@@ -97,7 +98,7 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
    * @see VirtualFileListener#propertyChanged
    * @see VirtualFilePropertyEvent#getPropertyName
    */
-  public static final String PROP_NAME = "name";
+  @NonNls public static final String PROP_NAME = "name";
 
   /**
    * Used as a property name in the {@link VirtualFilePropertyEvent} fired when the write permission of a
@@ -106,8 +107,7 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
    * @see VirtualFileListener#propertyChanged
    * @see VirtualFilePropertyEvent#getPropertyName
    */
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public static final String PROP_WRITABLE = "writable";
+  @NonNls public static final String PROP_WRITABLE = "writable";
 
   /**
    * Gets the name of this file.

@@ -1,6 +1,7 @@
 package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.DebuggerBundle;
 
 /**
  * Created by IntelliJ IDEA.
@@ -13,7 +14,7 @@ public class ContinueException extends EvaluateException{
   private final String myLabelName;
 
   public ContinueException(String labelName) {
-    super("No loop statements labeled with '" + labelName + "'", null);
+    super(DebuggerBundle.message("evaluation.error.lebeled.loops.not.found", labelName), null);
     myLabelName = labelName;
   }
 

@@ -25,6 +25,7 @@ public class BreakpointTable extends Table {
     ActionMap actionMap = getActionMap();
     Object o = inputMap.get(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0));
     if (o == null) {
+      //noinspection HardCodedStringLiteral
       o = "enable_disable";
       inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), o);
     }

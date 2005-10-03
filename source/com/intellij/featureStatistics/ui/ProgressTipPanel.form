@@ -11,14 +11,14 @@
     <children>
       <hspacer id="ed1bb">
         <constraints>
-          <xy x="388" y="166" width="20" height="11"/>
+          <xy x="302" y="168" width="133" height="11"/>
           <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1"/>
         </constraints>
       </hspacer>
       <grid id="5be07" row-count="1" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="408" y="157" width="282" height="29"/>
+          <xy x="435" y="161" width="255" height="25"/>
           <grid row="2" column="2" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
         </constraints>
         <properties/>
@@ -26,46 +26,46 @@
         <children>
           <component id="412f3" class="javax.swing.JButton" binding="myPrevHintButton">
             <constraints>
-              <xy x="0" y="0" width="105" height="29"/>
+              <xy x="0" y="0" width="95" height="25"/>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1"/>
             </constraints>
             <properties>
-              <text value="&amp;Previous Tip"/>
+              <text resource-bundle="messages/FeatureStatisticsBundle" key="feature.statistics.action.prev.tip"/>
             </properties>
           </component>
           <component id="e2ae7" class="javax.swing.JButton" binding="myNextHintButton">
             <constraints>
-              <xy x="115" y="0" width="82" height="29"/>
+              <xy x="105" y="0" width="77" height="25"/>
               <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1"/>
             </constraints>
             <properties>
-              <text value="&amp;Next Tip"/>
+              <text resource-bundle="messages/FeatureStatisticsBundle" key="feature.statistics.action.next.tip"/>
             </properties>
           </component>
           <component id="4c404" class="javax.swing.JButton" binding="myCloseButton">
             <constraints>
-              <xy x="207" y="0" width="75" height="29"/>
+              <xy x="192" y="0" width="63" height="25"/>
               <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1"/>
             </constraints>
             <properties>
-              <text value="&amp;Close"/>
+              <text resource-bundle="messages/FeatureStatisticsBundle" key="feature.statistics.action.close"/>
             </properties>
           </component>
         </children>
       </grid>
       <component id="d92a1" class="javax.swing.JLabel" binding="myLabel">
         <constraints>
-          <xy x="0" y="2" width="111" height="16"/>
+          <xy x="0" y="3" width="93" height="14"/>
           <grid row="0" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
         </constraints>
         <properties>
           <iconTextGap value="10"/>
-          <text value="Productivity hints"/>
+          <text resource-bundle="messages/FeatureStatisticsBundle" key="feature.statistics.floating.window.title"/>
         </properties>
       </component>
       <scrollpane id="69039">
         <constraints>
-          <xy x="0" y="25" width="690" height="127"/>
+          <xy x="0" y="25" width="690" height="131"/>
           <grid row="1" column="0" row-span="1" col-span="3" vsize-policy="7" hsize-policy="7" anchor="0" fill="3"/>
         </constraints>
         <properties/>
@@ -79,11 +79,11 @@
       </scrollpane>
       <component id="407f8" class="javax.swing.JCheckBox" binding="myKeepOpen">
         <constraints>
-          <xy x="0" y="160" width="378" height="22"/>
+          <xy x="0" y="162" width="292" height="22"/>
           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
         </constraints>
         <properties>
-          <text value="Keep hints window opened when the process is finished"/>
+          <text resource-bundle="messages/FeatureStatisticsBundle" key="features.statistics.keep.hints.window"/>
         </properties>
       </component>
     </children>

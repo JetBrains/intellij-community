@@ -32,6 +32,7 @@
 package com.intellij.ide.highlighter;
 
 import com.intellij.ide.structureView.StructureViewBuilder;
+import com.intellij.ide.IdeBundle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
@@ -49,7 +50,7 @@ public class ArchiveFileType implements FileType {
   }
 
   public String getDescription() {
-    return "Archive files";
+    return IdeBundle.message("filetype.description.archive.files");
   }
 
   public String getDefaultExtension() {

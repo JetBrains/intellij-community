@@ -1,10 +1,12 @@
 package com.intellij.tools;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableUtil;
 import com.intellij.util.ui.ItemRemovable;
 import com.intellij.util.ui.Table;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -22,12 +24,12 @@ import java.util.Arrays;
 class ToolsPanel extends JPanel {
   private final MyModel myModel;
   private final JTable myTable;
-  private final JButton myAddButton = new JButton("Add...");
-  private final JButton myCopyButton = new JButton("Copy...");
-  private final JButton myEditButton = new JButton("Edit...");
-  private final JButton myMoveUpButton = new JButton("Move Up");
-  private final JButton myMoveDownButton = new JButton("Move Down");
-  private final JButton myRemoveButton = new JButton("Remove");
+  private final JButton myAddButton = new JButton(ToolsBundle.message("tools.add.button"));
+  private final JButton myCopyButton = new JButton(ToolsBundle.message("tools.copy.button"));
+  private final JButton myEditButton = new JButton(ToolsBundle.message("tools.edit.button"));
+  private final JButton myMoveUpButton = new JButton(ToolsBundle.message("tools.move.up.button"));
+  private final JButton myMoveDownButton = new JButton(ToolsBundle.message("tools.move.down.button"));
+  private final JButton myRemoveButton = new JButton(ToolsBundle.message("tools.remove.button"));
 
   ToolsPanel() {
     myModel = new MyModel();
@@ -60,7 +62,7 @@ class ToolsPanel extends JPanel {
     constr.gridy = 0;
     constr.anchor = GridBagConstraints.WEST;
     constr.insets = new Insets(5, 5, 0, 0);
-    add(new JLabel("Tools:"), constr);
+    add(new JLabel(ToolsBundle.message("tools.caption")), constr);
 
     // tools list
     constr = new GridBagConstraints();
@@ -100,22 +102,16 @@ class ToolsPanel extends JPanel {
     constr.fill = GridBagConstraints.HORIZONTAL;
     constr.weightx = 1.0;
     constr.gridy = 0;
-    myAddButton.setMnemonic('A');
     pane.add(myAddButton, constr);
     constr.gridy = 1;
-    myCopyButton.setMnemonic('C');
     pane.add(myCopyButton, constr);
     constr.gridy = 2;
-    myEditButton.setMnemonic('E');
     pane.add(myEditButton, constr);
     constr.gridy = 3;
-    myRemoveButton.setMnemonic('R');
     pane.add(myRemoveButton, constr);
     constr.gridy = 4;
-    myMoveUpButton.setMnemonic('U');
     pane.add(myMoveUpButton, constr);
     constr.gridy = 5;
-    myMoveDownButton.setMnemonic('D');
     pane.add(myMoveDownButton, constr);
     return pane;
   }
@@ -287,7 +283,7 @@ class ToolsPanel extends JPanel {
 
 
     InputMap inputMap = myTable.getInputMap();
-    Object o = inputMap.get(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0));
+    @NonNls Object o = inputMap.get(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0));
     if (o == null) {
       o = "enable_disable";
       inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), o);
@@ -354,8 +350,8 @@ class ToolsPanel extends JPanel {
   private void removeSelected() {
     int result = Messages.showYesNoDialog(
       this,
-      "Do you want to delete the external tool(s)?",
-      "Warning",
+      ToolsBundle.message("tools.delete.confirmation"),
+      CommonBundle.getWarningTitle(),
       Messages.getWarningIcon()
     );
     if (result != 0) {
@@ -385,7 +381,11 @@ class ToolsPanel extends JPanel {
     private boolean myDoSynchronize = true;
 
     public MyModel() {
-      super(new Object[0][], new Object[]{" ", "Name", "Group", "Description"});
+      super(new Object[0][], new Object[]{" ",
+        ToolsBundle.message("tools.name.column"),
+        ToolsBundle.message("tools.group.column"),
+        ToolsBundle.message("tools.description.column")
+      });
     }
 
     public Class getColumnClass(int columnIndex) {

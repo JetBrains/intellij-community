@@ -19,6 +19,7 @@ import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.LinkedHashMap;
 import java.util.StringTokenizer;
@@ -33,11 +34,13 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment,
   private LinkedHashMap<String, String> myPseudoImports = new LinkedHashMap<String, String>();
   private VisibilityChecker myVisibilityChecker;
   private ExceptionHandler myExceptionHandler;
+  @NonNls
+  private static final String JAVA_LANG_PACKAGE = "java.lang";
 
   public PsiCodeFragmentImpl(Project project,
                              IElementType contentElementType,
                              boolean isPhysical,
-                             String name,
+                             @NonNls String name,
                              CharSequence text) {
     super(project, CODE_FRAGMENT, contentElementType, name, text);
     myPhysical = isPhysical;

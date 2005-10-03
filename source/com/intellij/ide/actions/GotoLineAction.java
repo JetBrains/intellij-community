@@ -1,6 +1,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.util.GotoLineNumberDialog;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
@@ -21,7 +22,7 @@ public class GotoLineAction extends AnAction {
           IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation();
         }
       },
-      "Go to Line",
+      IdeBundle.message("command.go.to.line"),
       null
     );
   }

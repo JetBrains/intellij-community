@@ -17,10 +17,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 
 import java.awt.*;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.Writer;
+import java.io.*;
 import java.util.*;
 
 class HTMLTextPainter {
@@ -40,6 +37,7 @@ class HTMLTextPainter {
   private LineMarkerInfo[] myMethodSeparators;
   private int myCurrentMethodSeparator;
   private Project myProject;
+  private Map<TextAttributes, String> myStyleMap = new HashMap<TextAttributes, String>();
 
   public HTMLTextPainter(PsiFile psiFile, Project project, String dirName, boolean printLineNumbers) {
     myProject = project;
@@ -88,12 +86,14 @@ class HTMLTextPainter {
     myFirstLineNumber = firstLineNumber;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public void paint(TreeMap refMap, FileType fileType) {
     HighlighterIterator hIterator = myHighlighter.createIterator(myOffset);
     if(hIterator.atEnd()) return;
-    FileWriter writer;
+    OutputStreamWriter writer;
     try {
-      writer = new FileWriter(myHTMLFileName);
+      //noinspection HardCodedStringLiteral
+      writer = new OutputStreamWriter(new FileOutputStream(myHTMLFileName), "UTF-8");
     }
     catch(IOException e) {
       LOG.error(e.getMessage(), e);
@@ -116,7 +116,7 @@ class HTMLTextPainter {
 
     int referenceEnd = -1;
     try {
-      writeHeader(writer, myFileName);
+      writeHeader(writer, new File(myFileName).getName());
       if (myFirstLineNumber == 0) {
         writeLineNumber(writer);
       }
@@ -133,11 +133,27 @@ class HTMLTextPainter {
         int hStart = hIterator.getStart();
         int hEnd = hIterator.getEnd();
         if (hEnd > mySegmentEnd) break;
+
+        boolean haveNonWhiteSpace = false;
+        for(int offset = hStart; offset < hEnd; offset++) {
+          char c = myText.charAt(offset);
+          if (c != ' ' && c != '\t') {
+            haveNonWhiteSpace = true;
+            break;
+          }
+        }
+        if (!haveNonWhiteSpace) {
+          // don't write separate spans for whitespace-only text fragments
+          writeString(writer, myText, hStart, hEnd - hStart, fileType);
+          hIterator.advance();
+          continue;
+        }
+
         if(refOffset > 0 && hStart <= refOffset && hEnd > refOffset) {
           referenceEnd = writeReferenceTag(writer, ref);
         }
 //        if(myForceFonts || !equals(prevAttributes, textAttributes)) {
-        if(!equals(prevAttributes, textAttributes)) {
+        if(!equals(prevAttributes, textAttributes) && referenceEnd < 0 ) {
           if(closeTag != null) {
             writer.write(closeTag);
           }
@@ -158,7 +174,7 @@ class HTMLTextPainter {
 //          writer.write(closeTag);
 //        }
         if(referenceEnd > 0 && hEnd >= referenceEnd) {
-          writer.write("</A>");
+          writer.write("</a>");
           referenceEnd = -1;
           if(refKeys.hasNext()) {
             Integer key = (Integer)refKeys.next();
@@ -203,49 +219,36 @@ class HTMLTextPainter {
     }
 
     StringBuffer fileName = new StringBuffer();
-    StringTokenizer tokens = new StringTokenizer(psiPackageName, ".");
-    while(tokens.hasMoreTokens()) {
-      tokens.nextToken();
-      fileName.append("../");
-    }
+    if (!psiPackageName.equals(refPackageName)) {
+      StringTokenizer tokens = new StringTokenizer(psiPackageName, ".");
+      while(tokens.hasMoreTokens()) {
+        tokens.nextToken();
+        fileName.append("../");
+      }
 
-    StringTokenizer refTokens = new StringTokenizer(refPackageName, ".");
-    while(refTokens.hasMoreTokens()) {
-      String token = refTokens.nextToken();
-      fileName.append(token);
-      fileName.append('/');
+      StringTokenizer refTokens = new StringTokenizer(refPackageName, ".");
+      while(refTokens.hasMoreTokens()) {
+        String token = refTokens.nextToken();
+        fileName.append(token);
+        fileName.append('/');
+      }
     }
     fileName.append(ExportToHTMLManager.getHTMLFileName(refFile));
-    writer.write("<A href=\""+fileName+"\">");
+    //noinspection HardCodedStringLiteral
+    writer.write("<a href=\""+fileName+"\">");
     return ref.getElement().getTextRange().getEndOffset();
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private String writeFontTag(Writer writer, TextAttributes textAttributes) throws IOException {
 //    "<FONT COLOR=\"#000000\">"
     StringBuffer openTag = new StringBuffer();
     StringBuffer closeTag = new StringBuffer();
-    createFontTags(textAttributes, openTag, closeTag);
-    writer.write(openTag.toString());
-    return closeTag.toString();
+    writer.write("<span class=\"" + myStyleMap.get(textAttributes) + "\">");
+    return "</span>";
   }
 
-  private void createFontTags(TextAttributes textAttributes, StringBuffer openTag, StringBuffer closeTag) {
-    if(textAttributes.getForegroundColor() != null) {
-      openTag.append("<FONT style=\"font-family:monospaced;\" COLOR=");
-      appendColor(openTag, textAttributes.getForegroundColor());
-      openTag.append(">");
-      closeTag.insert(0, "</FONT>");
-    }
-    if((textAttributes.getFontType() & Font.BOLD) != 0) {
-      openTag.append("<B>");
-      closeTag.insert(0, "</B>");
-    }
-    if((textAttributes.getFontType() & Font.ITALIC) != 0) {
-      openTag.append("<I>");
-      closeTag.insert(0, "</I>");
-    }
-  }
-
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private void writeString(Writer writer, CharSequence charArray, int start, int length, FileType fileType) throws IOException {
     for(int i=start; i<start+length; i++) {
       char c = charArray.charAt(i);
@@ -290,24 +293,24 @@ class HTMLTextPainter {
     myColumn++;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private void writeLineNumber(Writer writer) throws IOException {
     writer.write('\n');
     myColumn = 0;
+    lineCount++;
+    writer.write("<a name=\"l" + lineCount + "\">");
     if (myPrintLineNumbers) {
-      lineCount++;
-
-      writer.write("<FONT COLOR=0 STYLE=\"font-style:normal\">");
 
 //      String numberCloseTag = writeFontTag(writer, ourLineNumberAttributes);
 
+      writer.write("<span class=\"ln\">");
       String s = Integer.toString(lineCount);
       writer.write(s);
       int extraSpaces = 4 - s.length();
       do {
         writer.write(' ');
       } while (extraSpaces-- > 0);
-
-      writer.write("</FONT>");
+      writer.write("</span></a>");
 
 //      if (numberCloseTag != null) {
 //        writer.write(numberCloseTag);
@@ -315,14 +318,15 @@ class HTMLTextPainter {
     }
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private void writeHeader(Writer writer, String title) throws IOException {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-    writer.write("<HTML>\r\n");
-    writer.write("<HEAD>\r\n");
-    writer.write("<TITLE>" + title + "</TITLE>\r\n");
-    writer.write("<META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; charset=windows-1252\">\r\n");
-    writer.write("<META NAME=\"KEYWORDS\" CONTENT=\"IntelliJ_IDEA_Html\">\r\n");
-    writer.write("</HEAD>\r\n");
+    writer.write("<html>\r\n");
+    writer.write("<head>\r\n");
+    writer.write("<title>" + title + "</title>\r\n");
+    writer.write("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">\r\n");
+    writeStyles(writer);
+    writer.write("</head>\r\n");
     Color color = scheme.getDefaultBackground();
     if (color==null) color = Color.gray;
     writer.write("<BODY BGCOLOR=\"#" + Integer.toString(color.getRGB() & 0xFFFFFF, 16) + "\">\r\n");
@@ -331,30 +335,42 @@ class HTMLTextPainter {
     writer.write("<FONT FACE=\"Arial, Helvetica\" COLOR=\"#000000\">\r\n");
     writer.write(title + "</FONT>\r\n");
     writer.write("</center></TD></TR></TABLE>\r\n");
-    writer.write("<PRE>\r\n");
+    writer.write("<pre>\r\n");
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  private void writeStyles(final Writer writer) throws IOException {
+    writer.write("<style type=\"text/css\">\n");
+    writer.write(".ln { color: rgb(0,0,0); font-weight: normal; font-style: normal; }\n");
+    HighlighterIterator hIterator = myHighlighter.createIterator(myOffset);
+    while(!hIterator.atEnd()) {
+      TextAttributes textAttributes = hIterator.getTextAttributes();
+      if (!myStyleMap.containsKey(textAttributes)) {
+        String styleName = "s" + myStyleMap.size();
+        myStyleMap.put(textAttributes, styleName);
+        writer.write("." + styleName + " { ");
+        final Color foreColor = textAttributes.getForegroundColor();
+        if (foreColor != null) {
+          writer.write("color: rgb(" + foreColor.getRed() + "," + foreColor.getGreen() + "," + foreColor.getBlue() + "); ");
+        }
+        if ((textAttributes.getFontType() & Font.BOLD) != 0) {
+          writer.write("font-weight: bold; ");
+        }
+        if ((textAttributes.getFontType() & Font.ITALIC) != 0) {
+          writer.write("font-style: italic; ");
+        }
+        writer.write("}\n");
+      }
+      hIterator.advance();
+    }
+    writer.write("</style>\n");
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private void writeFooter(Writer writer) throws IOException {
-    writer.write("</PRE>\r\n");
-    writer.write("</BODY>\r\n");
-    writer.write("</HTML>");
-  }
-
-  private void appendColor(StringBuffer buffer, Color color) {
-    int red1 = color.getRed()/16;
-    int red2 = color.getRed()%16;
-    int green1 = color.getGreen()/16;
-    int green2 = color.getGreen()%16;
-    int blue1 = color.getBlue()/16;
-    int blue2 = color.getBlue()%16;
-    buffer.append("\"#");
-    buffer.append(Integer.toHexString(red1));
-    buffer.append(Integer.toHexString(red2));
-    buffer.append(Integer.toHexString(green1));
-    buffer.append(Integer.toHexString(green2));
-    buffer.append(Integer.toHexString(blue1));
-    buffer.append(Integer.toHexString(blue2));
-    buffer.append("\"");
+    writer.write("</pre>\r\n");
+    writer.write("</body>\r\n");
+    writer.write("</html>");
   }
 
   private boolean equals(TextAttributes attributes1, TextAttributes attributes2) {

@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.PluginId;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * A manager for actions. Used to register and unregister actions, also
@@ -61,7 +62,7 @@ public abstract class ActionManager {
    *
    * @return An instance of <code>ActionToolbar</code>
    */
-  public abstract ActionToolbar createActionToolbar(String place, ActionGroup group, boolean horizontal);
+  public abstract ActionToolbar createActionToolbar(@NonNls String place, ActionGroup group, boolean horizontal);
 
   /**
    * Returns action associated with the specified actionId.
@@ -73,7 +74,7 @@ public abstract class ActionManager {
    *
    * @exception java.lang.IllegalArgumentException if <code>actionId</code> is <code>null</code>
    */
-  public abstract AnAction getAction(@NotNull String actionId);
+  public abstract AnAction getAction(@NonNls @NotNull String actionId);
 
   /**
    * Returns actionId associated with the specified action.

@@ -12,6 +12,7 @@ import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.ui.impl.watch.LocalVariableDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.sun.jdi.ClassNotLoadedException;
@@ -35,7 +36,7 @@ class LocalVariableEvaluator implements Evaluator {
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
     StackFrameProxyImpl frameProxy = context.getFrameProxy();
     if (frameProxy == null) {
-      throw EvaluateExceptionUtil.createEvaluateException("Cannot evaluate: stack frame unavaulable");
+      throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.no.stackframe"));
     }
 
     try {
@@ -57,7 +58,7 @@ class LocalVariableEvaluator implements Evaluator {
 
         break;
       }
-      throw EvaluateExceptionUtil.createEvaluateException("Cannot find local variable '" + myLocalVariableName + "'");
+      throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.local.variable.missing", myLocalVariableName));
     }
     catch (EvaluateException e) {
       myEvaluatedVariable = null;

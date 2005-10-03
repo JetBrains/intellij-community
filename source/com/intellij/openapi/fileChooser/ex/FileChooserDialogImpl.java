@@ -18,6 +18,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.LabeledIcon;
+import com.intellij.ui.UIBundle;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
@@ -53,13 +54,13 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     super(project, true);
     myProject = project;
     myChooserDescriptor = chooserDescriptor;
-    setTitle("Select Path");
+    setTitle(UIBundle.message("file.chooser.default.title"));
   }
 
   public FileChooserDialogImpl(FileChooserDescriptor chooserDescriptor, Component parent) {
     super(parent, true);
     myChooserDescriptor = chooserDescriptor;
-    setTitle("Select Path");
+    setTitle(UIBundle.message("file.chooser.default.title"));
   }
 
   public VirtualFile[] choose(VirtualFile toSelect, Project project) {
@@ -182,7 +183,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
       myChooserDescriptor.validateSelectedFiles(selectedFiles);
     }
     catch (Exception e) {
-      Messages.showErrorDialog(getContentPane(), e.getMessage(), "Select Path");
+      Messages.showErrorDialog(getContentPane(), e.getMessage(), UIBundle.message("file.chooser.default.title"));
       return;
     }
 
@@ -358,7 +359,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
    */
   private final class MyShowHiddensAction extends ToggleAction{
     public MyShowHiddensAction() {
-      super("Show Hidden Files and Directories", "Show hidden files and directories", IconLoader.getIcon("/actions/showHiddens.png"));
+      super(UIBundle.message("file.chooser.show.hidden.action.name"), UIBundle.message("file.chooser.show.hidden.action.description"), IconLoader.getIcon("/actions/showHiddens.png"));
     }
 
     public boolean isSelected(AnActionEvent e) {

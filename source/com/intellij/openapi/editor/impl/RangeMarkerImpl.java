@@ -171,6 +171,7 @@ public class RangeMarkerImpl extends DocumentAdapter implements RangeMarker {
     }
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return "RangeMarker[" + (isValid ? "valid" : "invalid") + "," + myStart + "," + myEnd + "]";
   }

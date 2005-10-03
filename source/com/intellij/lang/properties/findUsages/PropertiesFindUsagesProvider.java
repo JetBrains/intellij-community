@@ -4,6 +4,7 @@ import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.parsing.PropertiesWordsScanner;
 import com.intellij.lang.cacheBuilder.WordsScanner;
+import com.intellij.lang.LangBundle;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.tree.IElementType;
@@ -25,7 +26,7 @@ public class PropertiesFindUsagesProvider implements FindUsagesProvider {
   }
 
   public String getType(PsiElement element) {
-    if (element instanceof Property) return "property";
+    if (element instanceof Property) return LangBundle.message("terms.property");
     return "";
   }
 

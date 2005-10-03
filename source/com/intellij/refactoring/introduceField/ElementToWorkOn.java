@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.refactoring.RefactoringBundle;
 
 /**
  * @author dsl
@@ -38,9 +39,9 @@ public class ElementToWorkOn {
     if (!editor.getSelectionModel().hasSelection()) {
       PsiElement element =
               TargetElementUtil.findTargetElement(editor,
-                      TargetElementUtil.ELEMENT_NAME_ACCEPTED
-              | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED
-              | TargetElementUtil.LOOKUP_ITEM_ACCEPTED);
+                                                  TargetElementUtil.ELEMENT_NAME_ACCEPTED
+                                                  | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED
+                                                  | TargetElementUtil.LOOKUP_ITEM_ACCEPTED);
       if (element instanceof PsiLocalVariable) {
         localVar = (PsiLocalVariable) element;
         final PsiElement elementAt = file.findElementAt(editor.getCaretModel().getOffset());
@@ -75,9 +76,7 @@ public class ElementToWorkOn {
     }
 
     if (localVar == null && expr == null) {
-      String message =
-              "Cannot perform the refactoring.\n" +
-              "Select expression or position the caret on a name of local variable.";
+      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.local.name"));
       RefactoringMessageUtil.showErrorMessage(refactoringName, message, helpId, project);
       return null;
     }

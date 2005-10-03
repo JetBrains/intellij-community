@@ -1,15 +1,18 @@
 package com.intellij.psi.impl.source.tree.java;
 
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NonNls;
 
 public class PsiLiteralExpressionImpl extends CompositePsiElement implements PsiLiteralExpression {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl");
-  private static final String QUOT = "&quot;";
+  private static final @NonNls String QUOT = "&quot;";
+  private static final @NonNls String HEXPREFIX = "0x";
+  private static final @NonNls String HEXPREFIX2 = "0X";
+  private static final @NonNls String LHEX_PREFIX = "0xl";
 
 
   public PsiLiteralExpressionImpl() {
@@ -47,9 +50,9 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
     }
   }
 
-  private static final String _2_IN_63 = Long.toString(-1L << 63).substring(1);
-  private static final String _2_IN_31 = Long.toString(-1L << 31).substring(1);
-  private static final String _2_IN_63_L = _2_IN_63 + "l";
+  private static final @NonNls String _2_IN_63 = Long.toString(-1L << 63).substring(1);
+  private static final @NonNls String _2_IN_31 = Long.toString(-1L << 31).substring(1);
+  private static final @NonNls String _2_IN_63_L = _2_IN_63 + "l";
 
   public Object getValue() {
     String text = getFirstChildNode().getText();
@@ -57,7 +60,7 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
     IElementType i = getFirstChildNode().getElementType();
     if (i == INTEGER_LITERAL) {
       try {
-        if (text.startsWith("0x") || text.startsWith("0X")) {
+        if (text.startsWith(HEXPREFIX) || text.startsWith(HEXPREFIX2)) {
           // should fit in 32 bits
           if (textLength <= 9) return Integer.valueOf(text.substring(2), 16);
           final Long value = parseDigits(text.substring(2), 4, 32);
@@ -86,7 +89,7 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
         textLength = text.length();
       }
       try {
-        if (text.startsWith("0x") || text.startsWith("0X")) {
+        if (text.startsWith(HEXPREFIX) || text.startsWith(HEXPREFIX2)) {
           if (textLength <= 17) return Long.valueOf(text.substring(2), 16);
           return parseDigits(text.substring(2), 4, 64);
         }
@@ -185,9 +188,9 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
       if (!(text.equals(_2_IN_31)
             && getParent() instanceof PsiPrefixExpression
             && ((PsiPrefixExpression)getParent()).getOperationSign().getTokenType() == JavaTokenType.MINUS)) {
-        if (text.equals("0x")) return "Hexadecimal numbers must contain at least one hexadecimal digit";
+        if (text.equals(HEXPREFIX)) return JavaErrorMessages.message("hexadecimal.numbers.must.contain.at.least.one.hexadecimal.digit");
         if (value == null || text.equals(_2_IN_31)) {
-          return "Integer number too large";
+          return JavaErrorMessages.message("integer.number.too.large");
         }
       }
     }
@@ -197,15 +200,15 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
       if (!(text.equals(_2_IN_63_L)
             && getParent() instanceof PsiPrefixExpression
             && ((PsiPrefixExpression)getParent()).getOperationSign().getTokenType() == JavaTokenType.MINUS)) {
-        if (text.equals("0x") || text.equals("0xl")) return "Hexadecimal numbers must contain at least one hexadecimal digit";
+        if (text.equals(HEXPREFIX) || text.equals(LHEX_PREFIX)) return JavaErrorMessages.message("hexadecimal.numbers.must.contain.at.least.one.hexadecimal.digit");
         if (value == null || text.equals(_2_IN_63_L)) {
-          return "Long number too large";
+          return JavaErrorMessages.message("long.number.too.large");
         }
       }
     }
     else if (i == FLOAT_LITERAL || i == DOUBLE_LITERAL) {
       if (value == null) {
-        return "Malformed floating point literal";
+        return JavaErrorMessages.message("malformed.floating.point.literal");
       }
     }
     else if (i == TRUE_KEYWORD || i == FALSE_KEYWORD || i == NULL_KEYWORD) {
@@ -214,42 +217,42 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
     else if (i == CHARACTER_LITERAL) {
       if (value == null) {
         if (StringUtil.endsWithChar(text, '\'')) {
-          if (text.length() == 1) return "Illegal line end in character literal";
+          if (text.length() == 1) return JavaErrorMessages.message("illegal.line.end.in.character.literal");
           text = text.substring(1, text.length() - 1);
         }
         else {
-          return "Illegal line end in character literal";
+          return JavaErrorMessages.message("illegal.line.end.in.character.literal");
         }
         String s = parseStringCharacters(text);
-        if (s == null) return "Illegal escape character in character literal";
+        if (s == null) return JavaErrorMessages.message("illegal.escape.character.in.character.literal");
         if (s.length() > 1) {
-          return "Too many characters in character literal";
+          return JavaErrorMessages.message("too.many.characters.in.character.literal");
         }
-        else if (s.length() == 0) return "Empty character literal";
+        else if (s.length() == 0) return JavaErrorMessages.message("empty.character.literal");
       }
     }
     else if (i == STRING_LITERAL) {
       if (value == null) {
         if (StringUtil.endsWithChar(text, '\"')) {
-          if (text.length() == 1) return "Illegal line end in string literal";
+          if (text.length() == 1) return JavaErrorMessages.message("illegal.line.end.in.string.literal");
           text = text.substring(1, text.length() - 1);
         }
         else {
-          return "Illegal line end in string literal";
+          return JavaErrorMessages.message("illegal.line.end.in.string.literal");
         }
-        if (parseStringCharacters(text) == null) return "Illegal escape character in string literal";
+        if (parseStringCharacters(text) == null) return JavaErrorMessages.message("illegal.escape.character.in.string.literal");
       }
     }
 
     if (value instanceof Float) {
       final Float number = (Float)value;
-      if (number.isInfinite()) return "Floating point number too large";
-      if (number.floatValue() == 0 && !isFPZero()) return "Floating point number too small";
+      if (number.isInfinite()) return JavaErrorMessages.message("floating.point.number.too.large");
+      if (number.floatValue() == 0 && !isFPZero()) return JavaErrorMessages.message("floating.point.number.too.small");
     }
     if (value instanceof Double) {
       final Double number = (Double)value;
-      if (number.isInfinite()) return "Floating point number too large";
-      if (number.doubleValue() == 0 && !isFPZero()) return "Floating point number too small";
+      if (number.isInfinite()) return JavaErrorMessages.message("floating.point.number.too.large");
+      if (number.doubleValue() == 0 && !isFPZero()) return JavaErrorMessages.message("floating.point.number.too.small");
     }
     return null;
   }
@@ -381,6 +384,7 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
     visitor.visitLiteralExpression(this);
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return "PsiLiteralExpression:" + getText();
   }

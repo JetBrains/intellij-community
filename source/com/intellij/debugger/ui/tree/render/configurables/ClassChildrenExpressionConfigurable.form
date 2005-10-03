@@ -11,29 +11,29 @@
     <children>
       <component id="cb46f" class="com.intellij.openapi.ui.LabeledComponent" binding="myChildrenPanel">
         <constraints>
-          <xy x="0" y="0" width="450" height="29"/>
+          <xy x="0" y="0" width="450" height="31"/>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="1"/>
         </constraints>
         <properties>
           <componentClass value="javax.swing.JPanel"/>
           <labelInsets top="0" left="0" bottom="5" right="0"/>
-          <text value="Node &amp;descendands expression:"/>
+          <text resource-bundle="messages/DebuggerBundle" key="label.node.descendands.expression"/>
         </properties>
       </component>
       <component id="5dbf7" class="com.intellij.openapi.ui.LabeledComponent" binding="myExpandablePanel">
         <constraints>
-          <xy x="0" y="54" width="450" height="29"/>
+          <xy x="0" y="36" width="450" height="31"/>
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="1"/>
         </constraints>
         <properties>
           <componentClass value="javax.swing.JPanel"/>
           <labelInsets top="0" left="0" bottom="5" right="0"/>
-          <text value="Node &amp;has descendands expression (optional):"/>
+          <text resource-bundle="messages/DebuggerBundle" key="node.has.descendands.expression.optional"/>
         </properties>
       </component>
       <vspacer id="2950c">
         <constraints>
-          <xy x="219" y="83" width="11" height="55"/>
+          <xy x="219" y="67" width="11" height="71"/>
           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
         </constraints>
       </vspacer>

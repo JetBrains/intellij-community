@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.actionSystem;
 
+import org.jetbrains.annotations.NonNls;
+
 import java.awt.event.InputEvent;
 
 /**
@@ -39,7 +41,7 @@ public final class AnActionEvent {
   public AnActionEvent(
     InputEvent inputEvent,
     DataContext dataContext,
-    String place,
+    @NonNls String place,
     Presentation presentation,
     ActionManager actionManager,
     int modifiers

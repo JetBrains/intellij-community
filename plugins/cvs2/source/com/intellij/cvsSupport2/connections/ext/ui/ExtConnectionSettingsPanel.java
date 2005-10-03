@@ -20,8 +20,8 @@ public class ExtConnectionSettingsPanel {
   private JLabel myPathToPPKLabel;
 
   public ExtConnectionSettingsPanel() {
-    CvsConfigurationPanel.addBrowseHandler(myPathToRsh, "Select Path to External Rsh");
-    CvsConfigurationPanel.addBrowseHandler(myPathToPrivateKeyFile, "Select Path to Ssh Private Key");
+    CvsConfigurationPanel.addBrowseHandler(myPathToRsh, com.intellij.CvsBundle.message("dialog.title.select.path.to.external.rsh"));
+    CvsConfigurationPanel.addBrowseHandler(myPathToPrivateKeyFile, com.intellij.CvsBundle.message("dialog.title.select.path.to.ssh.private.key"));
     myRshLabel.setLabelFor(myPathToRsh.getTextField());
     myAdditionalParametersLabel.setLabelFor(myAdditionalParameters);
     myPathToPPKLabel.setLabelFor(myPathToPrivateKeyFile.getTextField());

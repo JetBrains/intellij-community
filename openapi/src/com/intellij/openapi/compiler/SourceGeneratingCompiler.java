@@ -16,10 +16,10 @@
 package com.intellij.openapi.compiler;
 
 /**
- * A tag interface indicating that generating compiler will actually generate java sources.
- * This affects the order of compiler calls
+ * A tag interface indicating that the compiler will generate Java sources.
+ * This affects the order of compiler calls.
  * The sequence in which compilers are called:
- * SourceGeneratingCompiler -> SourceInstrumentingCompiler -> TranslatingCompiler ->  ClassInstrumentingCompiler -> ClassPostProcessingCompiler -> Validator
+ * SourceGeneratingCompiler -> SourceInstrumentingCompiler -> TranslatingCompiler ->  ClassInstrumentingCompiler -> ClassPostProcessingCompiler -> PackagingCompiler -> Validator
  */
 public interface SourceGeneratingCompiler extends GeneratingCompiler {
 }

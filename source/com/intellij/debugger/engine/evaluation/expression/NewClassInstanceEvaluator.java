@@ -11,6 +11,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.DebuggerBundle;
 import com.sun.jdi.ClassType;
 import com.sun.jdi.Method;
 import com.sun.jdi.ObjectReference;
@@ -34,20 +35,20 @@ class NewClassInstanceEvaluator implements Evaluator {
     DebugProcessImpl debugProcess = context.getDebugProcess();
     Object obj = myClassTypeEvaluator.evaluate(context);
     if (!(obj instanceof ClassType)) {
-      throw EvaluateExceptionUtil.createEvaluateException("Cannot evaluate class type");
+      throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.cannot.evaluate.class.type"));
     }
     ClassType classType = (ClassType)obj;
     // find constructor
     Method method = DebuggerUtilsEx.findMethod(classType, "<init>", myConstructorSignature.getName(debugProcess));
     if (method == null) {
-      throw EvaluateExceptionUtil.createEvaluateException("Cannot find constructor for class " + classType.name());
+      throw EvaluateExceptionUtil.createEvaluateException(
+        DebuggerBundle.message("evaluation.error.cannot.resolve.constructor", myConstructorSignature.getDisplayName(debugProcess)));
     }
     // evaluate arguments
     List arguments;
     if (myParamsEvaluators != null) {
       arguments = new ArrayList(myParamsEvaluators.length);
-      for (int idx = 0; idx < myParamsEvaluators.length; idx++) {
-        Evaluator evaluator = myParamsEvaluators[idx];
+      for (Evaluator evaluator : myParamsEvaluators) {
         arguments.add(evaluator.evaluate(context));
       }
     }

@@ -19,6 +19,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * Representation of Java type (primitive type, array or class type).
@@ -80,7 +81,7 @@ public abstract class PsiType {
    * @param text the text to compare with.
    * @return true if the string is equivalent to the type, false otherwise
    */
-  public abstract boolean equalsToText(String text);
+  public abstract boolean equalsToText(@NonNls String text);
 
   /**
    * Returns the class type for the java.lang.Object class.

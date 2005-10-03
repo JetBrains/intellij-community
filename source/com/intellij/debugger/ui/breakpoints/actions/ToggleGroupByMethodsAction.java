@@ -5,6 +5,7 @@
 package com.intellij.debugger.ui.breakpoints.actions;
 
 import com.intellij.debugger.ui.breakpoints.BreakpointPanel;
+import com.intellij.debugger.DebuggerBundle;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -15,7 +16,7 @@ import java.awt.event.ActionEvent;
  */
 public class ToggleGroupByMethodsAction extends BreakpointPanelAction {
   public ToggleGroupByMethodsAction() {
-    super("Group by methods");
+    super(DebuggerBundle.message("button.group.by.methods"));
   }
 
   public boolean isStateAction() {
@@ -24,7 +25,6 @@ public class ToggleGroupByMethodsAction extends BreakpointPanelAction {
 
   public void setButton(AbstractButton button) {
     super.setButton(button);
-    getButton().setMnemonic('t');
     getButton().setSelected(getPanel().getTree().isGroupByMethods());
   }
 

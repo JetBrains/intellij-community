@@ -61,7 +61,7 @@ public class CvsTabbedWindowComponent extends JPanel implements DataProvider {
 
   private class CloseAction extends AnAction {
     public CloseAction() {
-      super("Close", "", IconLoader.getIcon("/actions/cancel.png"));
+      super(com.intellij.CvsBundle.message("close.tab.action.name"), "", IconLoader.getIcon("/actions/cancel.png"));
     }
 
     public void actionPerformed(AnActionEvent e) {

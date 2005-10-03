@@ -9,7 +9,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.impl.source.html.ScriptSupportUtil;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.parsing.xml.XmlPsiLexer;
 import com.intellij.psi.impl.source.tree.ChildRole;
@@ -87,5 +90,26 @@ public class XmlFileImpl extends PsiFileImpl implements XmlFile {
 
   public Lexer createLexer() {
     return new XmlPsiLexer();
+  }
+  
+  public void subtreeChanged() {
+    super.subtreeChanged();
+    
+    if (isWebFileType()) {
+      ScriptSupportUtil.clearCaches(this);
+    }
+  }
+
+  private boolean isWebFileType() {
+    return getFileType() == StdFileTypes.XHTML || getFileType() == StdFileTypes.HTML;
+  }
+
+  public boolean processDeclarations(PsiScopeProcessor processor, PsiSubstitutor substitutor, PsiElement lastParent, PsiElement place) {
+    if (!super.processDeclarations(processor, substitutor, lastParent, place)) return false;
+
+    if (isWebFileType())
+      return ScriptSupportUtil.processDeclarations(this, processor, substitutor, lastParent, place);
+    
+    return true;
   }
 }

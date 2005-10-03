@@ -1,12 +1,14 @@
 package com.intellij.ide.highlighter.custom.impl;
 
 import com.intellij.ide.highlighter.custom.SyntaxTable;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.ui.DialogButtonGroup;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.TabbedPaneWrapper;
+import com.intellij.CommonBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -22,11 +24,10 @@ import java.util.Iterator;
 public class CustomFileTypeEditor extends SettingsEditor<CustomFileType> {
   private JTextField myFileTypeName = new JTextField(26);
   private JTextField myFileTypeDescr = new JTextField(26);
-  private JCheckBox myIgnoreCase = new JCheckBox("Ignore case");
-
-  private JCheckBox mySupportBraces = new JCheckBox("Support paired braces");
-  private JCheckBox mySupportBrackets = new JCheckBox("Support paired brackets");
-  private JCheckBox mySupportParens = new JCheckBox("Support paired parens");
+  private JCheckBox myIgnoreCase = new JCheckBox(IdeBundle.message("checkbox.customfiletype.ignore.case"));
+  private JCheckBox mySupportBraces = new JCheckBox(IdeBundle.message("checkbox.customfiletype.support.paired.braces"));
+  private JCheckBox mySupportBrackets = new JCheckBox(IdeBundle.message("checkbox.customfiletype.support.paired.brackets"));
+  private JCheckBox mySupportParens = new JCheckBox(IdeBundle.message("checkbox.customfiletype.support.paired.parens"));
 
   private JTextField myLineComment = new JTextField(20);
   private JTextField myBlockCommentStart = new JTextField(20);
@@ -77,7 +78,8 @@ public class CustomFileTypeEditor extends SettingsEditor<CustomFileType> {
 
   public void applyEditorTo(CustomFileType type) throws ConfigurationException {
     if (myFileTypeName.getText().trim().length() == 0) {
-      throw new ConfigurationException("Name cannot be empty", "Error");
+      throw new ConfigurationException(IdeBundle.message("error.name.cannot.be.empty"),
+                                       CommonBundle.getErrorTitle());
     } else if (myFileTypeDescr.getText().trim().length() == 0) {
       myFileTypeDescr.setText(myFileTypeName.getText());
     }
@@ -88,7 +90,6 @@ public class CustomFileTypeEditor extends SettingsEditor<CustomFileType> {
 
   public JComponent createEditor() {
     JComponent panel = createCenterPanel();
-    initGui();
     for (int i = 0; i < myKeywordsLists.length; i++) {
       myKeywordsLists[i].setModel(myKeywordModels[i]);
     }
@@ -110,13 +111,13 @@ public class CustomFileTypeEditor extends SettingsEditor<CustomFileType> {
     gc.gridy = 0;
     gc.anchor = GridBagConstraints.WEST;
     gc.fill = GridBagConstraints.HORIZONTAL;
-    info.add(new JLabel("Name: "), gc);
+    info.add(new JLabel(IdeBundle.message("editbox.customfiletype.name")), gc);
     gc.gridx = 1;
     gc.gridy = 0;
     info.add(myFileTypeName);
     gc.gridx = 0;
     gc.gridy = 2;
-    info.add(new JLabel("Description: "), gc);
+    info.add(new JLabel(IdeBundle.message("editbox.customfiletype.description")), gc);
     gc.gridx = 1;
     gc.gridy = 2;
     info.add(myFileTypeDescr, gc);
@@ -127,11 +128,11 @@ public class CustomFileTypeEditor extends SettingsEditor<CustomFileType> {
     fileTypePanel.add(_panel0, BorderLayout.NORTH);
 
     JPanel panel1 = new JPanel();
-    panel1.setBorder(IdeBorderFactory.createTitledBorder("Syntax Highlighting"));
+    panel1.setBorder(IdeBorderFactory.createTitledBorder(IdeBundle.message("group.customfiletype.syntax.highlighting")));
     JPanel highlighterPanel = panel1;
     highlighterPanel.setLayout(new BorderLayout());
     JPanel panel2 = new JPanel();
-    panel2.setBorder(IdeBorderFactory.createTitledBorder("Options"));
+    panel2.setBorder(IdeBorderFactory.createTitledBorder(IdeBundle.message("group.customfiletype.options")));
     JPanel commentsAndNumbersPanel = panel2;
     commentsAndNumbersPanel.setLayout(new GridBagLayout());
 
@@ -141,27 +142,27 @@ public class CustomFileTypeEditor extends SettingsEditor<CustomFileType> {
     gc.anchor = GridBagConstraints.WEST;
     gc.gridx = 0;
     gc.gridy = 0;
-    commentsAndNumbersPanel.add(new JLabel("Line comment: "), gc);
+    commentsAndNumbersPanel.add(new JLabel(IdeBundle.message("editbox.customfiletype.line.comment")), gc);
     gc.gridx = 1;
     commentsAndNumbersPanel.add(myLineComment, gc);
     gc.gridx = 0;
     gc.gridy++;
-    commentsAndNumbersPanel.add(new JLabel("Block comment start: "), gc);
+    commentsAndNumbersPanel.add(new JLabel(IdeBundle.message("editbox.customfiletype.block.comment.start")), gc);
     gc.gridx = 1;
     commentsAndNumbersPanel.add(myBlockCommentStart, gc);
     gc.gridx = 0;
     gc.gridy++;
-    commentsAndNumbersPanel.add(new JLabel("Block comment end: "), gc);
+    commentsAndNumbersPanel.add(new JLabel(IdeBundle.message("editbox.customfiletype.block.comment.end")), gc);
     gc.gridx = 1;
     commentsAndNumbersPanel.add(myBlockCommentEnd, gc);
     gc.gridx = 0;
     gc.gridy++;
-    commentsAndNumbersPanel.add(new JLabel("Hex prefix: "), gc);
+    commentsAndNumbersPanel.add(new JLabel(IdeBundle.message("editbox.customfiletype.hex.prefix")), gc);
     gc.gridx = 1;
     commentsAndNumbersPanel.add(myHexPrefix, gc);
     gc.gridx = 0;
     gc.gridy++;
-    commentsAndNumbersPanel.add(new JLabel("Number postfixes: "), gc);
+    commentsAndNumbersPanel.add(new JLabel(IdeBundle.message("editbox.customfiletype.number.postfixes")), gc);
     gc.gridx = 1;
     commentsAndNumbersPanel.add(myNumPostfixes, gc);
 
@@ -210,7 +211,7 @@ public class CustomFileTypeEditor extends SettingsEditor<CustomFileType> {
 
   private JPanel createKeywordsPanel(final int index) {
     JPanel panel = new JPanel();
-    panel.setBorder(IdeBorderFactory.createTitledBorder("Keywords"));
+    panel.setBorder(IdeBorderFactory.createTitledBorder(IdeBundle.message("listbox.customfiletype.keywords")));
     JPanel keywordsPanel = panel;
     keywordsPanel.setLayout(new BorderLayout());
 
@@ -219,8 +220,7 @@ public class CustomFileTypeEditor extends SettingsEditor<CustomFileType> {
     DialogButtonGroup buttonGroup = new DialogButtonGroup();
     buttonGroup.setBorder(BorderFactory.createEmptyBorder(0, 10, 5, 0));
 
-    myAddKeywordButtons[index] = new JButton("Add...");
-    myAddKeywordButtons[index].setMnemonic('A');
+    myAddKeywordButtons[index] = new JButton(IdeBundle.message("button.add"));
     myAddKeywordButtons[index].addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         ModifyKeywordDialog dialog = new ModifyKeywordDialog(myAddKeywordButtons[index], "");
@@ -233,8 +233,7 @@ public class CustomFileTypeEditor extends SettingsEditor<CustomFileType> {
     });
     buttonGroup.addButton(myAddKeywordButtons[index]);
 
-    myRemoveKeywordButtons[index] = new JButton("Remove");
-    myRemoveKeywordButtons[index].setMnemonic('R');
+    myRemoveKeywordButtons[index] = new JButton(IdeBundle.message("button.remove"));
     myRemoveKeywordButtons[index].addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         ListUtil.removeSelectedItems(myKeywordsLists[index]);
@@ -300,16 +299,5 @@ public class CustomFileTypeEditor extends SettingsEditor<CustomFileType> {
       }
     }
     return syntaxTable;
-  }
-
-  // -------------------------------------------------------------------------
-  // Helper methods
-  // -------------------------------------------------------------------------
-
-  private void initGui() {
-    myIgnoreCase.setMnemonic('I');
-    mySupportBraces.setMnemonic('r');
-    mySupportBrackets.setMnemonic('c');
-    mySupportParens.setMnemonic('p');
   }
 }

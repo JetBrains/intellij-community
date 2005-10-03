@@ -1,16 +1,18 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.codeInsight.template.*;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actions.EnterAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -19,7 +21,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.ide.DataManager;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -41,7 +42,7 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
       PsiType type = checkType.getType();
       if (type == null) return false;
       String castTo = type.getPresentableText();
-      setText("Insert '("+castTo+")"+instanceOfExpression.getOperand().getText()+"' declaration");
+      setText(QuickFixBundle.message("create.local.from.instanceof.usage.text", castTo, instanceOfExpression.getOperand().getText()));
 
       PsiStatement statement = PsiTreeUtil.getParentOfType(instanceOfExpression, PsiStatement.class);
       boolean insideIf = statement instanceof PsiIfStatement
@@ -322,6 +323,6 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
   }
 
   public String getFamilyName() {
-    return "Create Local Var from instanceof Usage";
+    return QuickFixBundle.message("create.local.from.instanceof.usage.family");
   }
 }

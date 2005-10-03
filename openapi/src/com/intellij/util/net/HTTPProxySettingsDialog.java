@@ -16,6 +16,7 @@
 package com.intellij.util.net;
 
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.CommonBundle;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -34,17 +35,17 @@ public class HTTPProxySettingsDialog extends DialogWrapper {
 
   public HTTPProxySettingsDialog() {
     super(false);
-    setTitle("HTTP Proxy Settings");
+    setTitle(CommonBundle.message("title.http.proxy.settings"));
     panel = new HTTPProxySettingsPanel();
 
-    okAction = new AbstractAction ("OK") {
+    okAction = new AbstractAction (CommonBundle.getOkButtonText()) {
       public void actionPerformed(ActionEvent e) {
         panel.apply();
         dispose();
       }
     };
-    okAction.putValue(DEFAULT_ACTION, "true");
-    cancelAction = new AbstractAction("Cancel") {
+    okAction.putValue(DEFAULT_ACTION, Boolean.TRUE.toString());
+    cancelAction = new AbstractAction(CommonBundle.getCancelButtonText()) {
       public void actionPerformed(ActionEvent e) {
         dispose();
       }

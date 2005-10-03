@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.actions;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
@@ -10,8 +11,8 @@ import com.intellij.util.IncorrectOperationException;
  * @author max
  */
 public class ReformatAndOptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
-  private static final String PROGRESS_TEXT = "Reformatting code...";
-  private static final String COMMAND_NAME = "Reformat Code";
+  private static final String PROGRESS_TEXT = CodeInsightBundle.message("progress.text.reformatting.code");
+  private static final String COMMAND_NAME = CodeInsightBundle.message("process.reformat.code");
 
   private OptimizeImportsProcessor myOptimizeImportsProcessor;
   private ReformatCodeProcessor myReformatCodeProcessor;

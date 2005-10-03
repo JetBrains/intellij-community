@@ -5,6 +5,7 @@ package com.intellij.j2ee.make;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.util.Degenerator;
+import com.intellij.j2ee.J2EEBundle;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -67,7 +68,7 @@ public class BuildRecipeImpl implements BuildRecipe {
   }
 
   public String toString() {
-    String s = "Build recipe:";
+    String s = J2EEBundle.message("message.text.build.recipe");
     for (BuildInstruction buildInstruction : myInstructions) {
       s += "\n" + buildInstruction + "; ";
     }

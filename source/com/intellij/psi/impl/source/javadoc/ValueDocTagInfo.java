@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.source.javadoc;
 
+import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
@@ -36,7 +37,7 @@ public class ValueDocTagInfo implements JavadocTagInfo {
     boolean hasReference = (value != null && value.getFirstChild() != null);
     if (hasReference) {
       if (!value.getManager().getEffectiveLanguageLevel().hasEnumKeywordAndAutoboxing()) {
-        return "@value tag may not have any arguments when JDK 1.4 or earlier is used";
+        return JavaErrorMessages.message("javadoc.value.tag.jdk15.required");
       }
     }
 
@@ -46,15 +47,15 @@ public class ValueDocTagInfo implements JavadocTagInfo {
         PsiElement target = reference.resolve();
         if (target != null) {
           if (!(target instanceof PsiField)) {
-            return "@value tag must reference a field";
+            return JavaErrorMessages.message("javadoc.value.field.required");
           }
           PsiField field = (PsiField) target;
           if (!field.getModifierList().hasModifierProperty(PsiModifier.STATIC)) {
-            return "@value tag must reference a static field";
+            return JavaErrorMessages.message("javadoc.value.static.field.required");
           }
           if (field.getInitializer() == null ||
               ConstantExpressionEvaluator.computeConstantExpression(field.getInitializer(), null, false) == null) {
-            return "@value tag must reference a field with a constant initializer";
+            return JavaErrorMessages.message("javadoc.value.field.with.initializer.required");
           }
         }
       }

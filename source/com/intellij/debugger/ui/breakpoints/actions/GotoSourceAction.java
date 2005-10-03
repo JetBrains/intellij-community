@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.ide.IdeBundle;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -21,7 +22,7 @@ public class GotoSourceAction extends BreakpointPanelAction {
   private final Project myProject;
 
   protected GotoSourceAction(final Project project) {
-    super("Go to");
+    super(IdeBundle.message("button.go.to"));
     myProject = project;
   }
 
@@ -37,7 +38,6 @@ public class GotoSourceAction extends BreakpointPanelAction {
   }
   public void setButton(AbstractButton button) {
     super.setButton(button);
-    getButton().setMnemonic('G');
   }
 
   public void setPanel(BreakpointPanel panel) {

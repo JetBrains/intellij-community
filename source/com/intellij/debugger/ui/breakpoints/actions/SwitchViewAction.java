@@ -5,6 +5,7 @@
 package com.intellij.debugger.ui.breakpoints.actions;
 
 import com.intellij.debugger.ui.breakpoints.BreakpointPanel;
+import com.intellij.debugger.DebuggerBundle;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -15,12 +16,11 @@ import java.awt.event.ActionEvent;
  */
 public class SwitchViewAction extends BreakpointPanelAction {
   public SwitchViewAction() {
-    super("Switch View");
+    super(DebuggerBundle.message("button.switch.view"));
   }
 
   public void setButton(AbstractButton button) {
     super.setButton(button);
-    getButton().setMnemonic('w');
   }
 
   public void actionPerformed(ActionEvent e) {
@@ -31,7 +31,7 @@ public class SwitchViewAction extends BreakpointPanelAction {
   public void update() {
     final AbstractButton button = getButton();
     final BreakpointPanel panel = getPanel();
-    button.setText(panel.isTreeShowing()? "List View" : "Tree View");
+    button.setText(panel.isTreeShowing()? DebuggerBundle.message("button.list.view") : DebuggerBundle.message("button.tree.view"));
     button.setEnabled(panel.getBreakpointCount() > 0);
   }
 }

@@ -12,11 +12,14 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.UniqueFileNamesProvider;
+import com.intellij.CommonBundle;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -33,12 +36,14 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
 
   private EditorColorsScheme myGlobalScheme;
 
-  private static final String NODE_NAME = "global_color_scheme";
-  private static final String SCHEME_NODE_NAME = "scheme";
+  @NonNls private static final String NODE_NAME = "global_color_scheme";
+  @NonNls private static final String SCHEME_NODE_NAME = "scheme";
 
   private String myGlobalSchemeName;
   public boolean USE_ONLY_MONOSPACED_FONTS = true;
   private DefaultColorSchemesManager myDefaultColorSchemesManager;
+  @NonNls private static final String XML_EXT = ".xml";
+  @NonNls private static final String NAME_ATTR = "name";
 
   public EditorColorsManagerImpl(DefaultColorSchemesManager defaultColorSchemesManager) {
     myDefaultColorSchemesManager = defaultColorSchemesManager;
@@ -74,8 +79,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
 
   private void addDefaultSchemes() {
     DefaultColorsScheme[] allDefaultSchemes = myDefaultColorSchemesManager.getAllSchemes();
-    for (int i = 0; i < allDefaultSchemes.length; i++) {
-      DefaultColorsScheme defaultScheme = allDefaultSchemes[i];
+    for (DefaultColorsScheme defaultScheme : allDefaultSchemes) {
       mySchemesMap.put(defaultScheme.getName(), defaultScheme);
     }
   }
@@ -116,8 +120,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
 
   private void fireChanges(EditorColorsScheme scheme) {
     EditorColorsListener[] colorsListeners = myListeners.toArray(new EditorColorsListener[myListeners.size()]);
-    for (int i = 0; i < colorsListeners.length; i++) {
-      EditorColorsListener colorsListener = colorsListeners[i];
+    for (EditorColorsListener colorsListener : colorsListeners) {
       colorsListener.globalSchemeChange(scheme);
     }
   }
@@ -128,13 +131,14 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
 
   private void loadAllSchemes() {
     File[] files = getSchemeFiles();
-    for (int i = 0; i < files.length; i++) {
+    for (File file : files) {
       try {
-        addColorsScheme(loadScheme(files[i]));
+        addColorsScheme(loadScheme(file));
       }
       catch (Exception e) {
         e.printStackTrace();
-        Messages.showErrorDialog("Error reading color scheme from " + files[i].getName(), "Corrupted File");
+        Messages.showErrorDialog(CommonBundle.message("error.reading.color.scheme.from.file.error.message", file.getName()),
+                                 CommonBundle.message("corrupted.scheme.file.message.title"));
       }
     }
   }
@@ -164,7 +168,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
         return;
       }
 
-      String filePath = dir.getAbsolutePath() + File.separator + namesProvider.suggestName(scheme.getName()) + ".xml";
+      @NonNls String filePath = dir.getAbsolutePath() + File.separator + namesProvider.suggestName(scheme.getName()) + XML_EXT;
 
       documents.add(new Document(root));
       filePaths.add(filePath);
@@ -199,7 +203,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
 
     File[] files = colorsDir.listFiles(new FileFilter() {
       public boolean accept(File file) {
-        return !file.isDirectory() && file.getName().toLowerCase().endsWith(".xml");
+        return !file.isDirectory() && file.getName().toLowerCase().endsWith(XML_EXT);
       }
     });
     if (files == null) {
@@ -210,7 +214,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
   }
 
   private static File getColorsDir(boolean create) {
-    String directoryPath = PathManager.getConfigPath() + File.separator + "colors";
+    @NonNls String directoryPath = PathManager.getConfigPath() + File.separator + "colors";
     File directory = new File(directoryPath);
     if (!directory.exists()) {
       if (!create) return null;
@@ -248,14 +252,14 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
   }
 
   public String getPresentableName() {
-    return "Color schemes";
+    return OptionsBundle.message("options.color.schemes.presentable.name");
   }
 
   public void readExternal(Element parentNode) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, parentNode);
     Element element = parentNode.getChild(NODE_NAME);
     if (element != null) {
-      String name = element.getAttributeValue("name");
+      String name = element.getAttributeValue(NAME_ATTR);
       if (name != null && !"".equals(name.trim())) {
         myGlobalSchemeName = name;
       }
@@ -281,7 +285,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
     DefaultJDOMExternalizer.writeExternal(this, parentNode);
     if (myGlobalScheme != null) {
       Element element = new Element(NODE_NAME);
-      element.setAttribute("name", myGlobalScheme.getName());
+      element.setAttribute(NAME_ATTR, myGlobalScheme.getName());
       parentNode.addContent(element);
     }
   }

@@ -5,10 +5,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
-import com.intellij.usageView.UsageViewUtil;
+import com.intellij.usageView.UsageViewBundle;
 
 class InlineViewDescriptor implements UsageViewDescriptor{
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.inline.InlineViewDescriptor");
@@ -51,7 +52,9 @@ class InlineViewDescriptor implements UsageViewDescriptor{
   }
 
   public String getProcessedElementsHeader() {
-    return myElement instanceof PsiMethod ? "Method" : "Field" + " to inline";
+    return myElement instanceof PsiMethod ?
+           RefactoringBundle.message("inline.method.elements.header") :
+           RefactoringBundle.message("inline.field.elements.header");
   }
 
   public boolean isSearchInText() {
@@ -75,7 +78,7 @@ class InlineViewDescriptor implements UsageViewDescriptor{
   }
 
   public String getCodeReferencesText(int usagesCount, int filesCount) {
-    return "Invocations to be inlined " + UsageViewUtil.getUsageCountInfo(usagesCount, filesCount, "invocation");
+    return RefactoringBundle.message("invocations.to.be.inlined", UsageViewBundle.getReferencesString(usagesCount, filesCount));
   }
 
   public String getCommentReferencesText(int usagesCount, int filesCount) {

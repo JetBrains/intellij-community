@@ -29,6 +29,8 @@
     <orderEntry type="module" module-name="extensions" exported="" />
     <orderEntry type="library" name="XmlRPC" level="project" />
     <orderEntry type="module" module-name="Annotations" exported="" />
+    <orderEntry type="module" module-name="icons" />
+    <orderEntry type="module" module-name="resources_eng" />
     <orderEntryProperties />
   </component>
   <component name="copyright">

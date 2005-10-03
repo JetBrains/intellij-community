@@ -6,6 +6,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 
@@ -13,7 +14,7 @@ import java.io.File;
  * @author dyoma
  */
 public class ExternalizablePath implements JDOMExternalizable {
-  private static final String VALUE_ATTRIBUTE = "value";
+  @NonNls private static final String VALUE_ATTRIBUTE = "value";
 
   private String myUrl;
 

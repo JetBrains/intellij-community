@@ -8,6 +8,7 @@ import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.checkout.CheckoutAction;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.ListPopup;
+import com.intellij.ui.UIBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -27,14 +28,16 @@ public class GetFromVcsAction{
     fillActions(null, group);
 
     if (group.getChildrenCount() == 0) {
-      group.add(new AnAction("No VCS plugins with Check-out action installed.") {
+      group.add(new AnAction(
+        UIBundle.message("welcome.screen.get.from.vcs.action.no.vcs.plugins.with.check.out.action.installed.action.name")) {
         public void actionPerformed(AnActionEvent e) {
           group.setPopup(false);
         }
       } );
     }
 
-    final ListPopup popup = ActionListPopup.createListPopup("Checkout from", group, createDataContext(contextComponent), true, true);
+    final ListPopup popup = ActionListPopup.createListPopup(
+      UIBundle.message("welcome.screen.get.from.vcs.action.checkout.from.list.popup.title"), group, createDataContext(contextComponent), true, true);
 
     Rectangle r;
     int x;

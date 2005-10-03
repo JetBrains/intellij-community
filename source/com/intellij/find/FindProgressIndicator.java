@@ -22,8 +22,8 @@ public class FindProgressIndicator extends ProgressWindow {
   private boolean myIsBackground;
 
   public FindProgressIndicator(Project project, String scopeString) {
-    super (true, true, project, "Stop");
-    setTitle("Searching in "+scopeString+" ...");
+    super (true, true, project, FindBundle.message("find.progress.stop.title"));
+    setTitle(FindBundle.message("find.progress.searching.message", scopeString));
     myStatusBar = (StatusBarEx)WindowManager.getInstance().getStatusBar(project);
   }
 
@@ -37,7 +37,7 @@ public class FindProgressIndicator extends ProgressWindow {
           cancel();
         }
       },
-      "Stop background search"
+      FindBundle.message("find.progress.stop.background.button")
     );
     super.background();
   }

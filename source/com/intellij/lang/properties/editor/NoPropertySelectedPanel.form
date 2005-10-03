@@ -11,11 +11,11 @@
     <children>
       <component id="a707f" class="javax.swing.JLabel">
         <constraints>
-          <xy x="0" y="3" width="327" height="14"/>
+          <xy x="1" y="3" width="324" height="14"/>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0"/>
         </constraints>
         <properties>
-          <text value="&lt;html&gt;&lt;body&gt;&lt;center&gt;&lt;b&gt;Please select property name on the left to edit its values&lt;/body&gt;&lt;/html&gt;"/>
+          <text resource-bundle="messages/PropertiesBundle" key="no.property.selected.panel.label"/>
         </properties>
       </component>
     </children>

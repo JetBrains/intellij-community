@@ -2,13 +2,14 @@ package com.intellij.execution.actions;
 
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.impl.RunDialog;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.actionSystem.Presentation;
 
 public class CreateAction extends BaseRunConfigurationAction {
   public CreateAction() {
-    super("Create Run Configuration", null, null);
+    super(ExecutionBundle.message("create.run.configuration.action.name"), null, null);
   }
 
   protected void perform(final ConfigurationContext context) {
@@ -28,11 +29,18 @@ public class CreateAction extends BaseRunConfigurationAction {
     return SELECTED_STABLE;
   }
 
-  private static abstract class BaseCreatePolicy {
-    private final String myName;
 
-    public BaseCreatePolicy(final String name) {
-      myName = name;
+
+  private static abstract class BaseCreatePolicy {
+
+    public enum ActionType {
+      CREATE, SAVE, SELECT
+    }
+
+    private final ActionType myType;
+
+    public BaseCreatePolicy(final ActionType type) {
+      myType = type;
     }
 
     public void update(final Presentation presentation, final ConfigurationContext context, final String actionText) {
@@ -41,7 +49,15 @@ public class CreateAction extends BaseRunConfigurationAction {
     }
 
     protected void updateText(final Presentation presentation, final String actionText) {
-      presentation.setText(myName + " " + actionText, false);
+      presentation.setText(generateName(actionText), false);
+    }
+
+    private String generateName(final String actionText) {
+      switch(myType) {
+        case CREATE: return ExecutionBundle.message("create.run.configuration.for.item.action.name", actionText);
+        case SELECT: return ExecutionBundle.message("select.run.configuration.for.item.action.name", actionText);
+        default:  return ExecutionBundle.message("save.run.configuration.for.item.action.name", actionText);
+      }
     }
 
     public abstract void perform(ConfigurationContext context);
@@ -49,7 +65,7 @@ public class CreateAction extends BaseRunConfigurationAction {
 
   private static class SelectPolicy extends BaseCreatePolicy {
     public SelectPolicy() {
-      super("Select");
+      super(ActionType.SELECT);
     }
 
     public void perform(final ConfigurationContext context) {
@@ -61,7 +77,7 @@ public class CreateAction extends BaseRunConfigurationAction {
 
   private static class CreatePolicy extends BaseCreatePolicy {
     public CreatePolicy() {
-      super("Create");
+      super(ActionType.CREATE);
     }
 
     public void perform(final ConfigurationContext context) {
@@ -74,19 +90,19 @@ public class CreateAction extends BaseRunConfigurationAction {
 
   private static class CreateAndEditPolicy extends CreatePolicy {
     protected void updateText(final Presentation presentation, final String actionText) {
-      presentation.setText("Create " + actionText + "...", false);
+      presentation.setText(ExecutionBundle.message("create.run.configuration.for.item.action.name", actionText) + "...", false);
     }
 
     public void perform(final ConfigurationContext context) {
       final RunnerAndConfigurationSettingsImpl configuration = context.getConfiguration();
-      if (RunDialog.editConfiguration(context.getProject(), configuration, "Create " + configuration.getName()))
+      if (RunDialog.editConfiguration(context.getProject(), configuration, ExecutionBundle.message("create.run.configuration.for.item.dialog.title", configuration.getName())))
         super.perform(context);
     }
   }
 
   private static class SavePolicy extends BaseCreatePolicy {
     public SavePolicy() {
-      super("Save");
+      super(ActionType.SAVE);
     }
 
     public void perform(final ConfigurationContext context) {
@@ -98,7 +114,7 @@ public class CreateAction extends BaseRunConfigurationAction {
   private static final BaseCreatePolicy CREATE_AND_EDIT = new CreateAndEditPolicy();
   private static final BaseCreatePolicy SELECT = new SelectPolicy();
   private static final BaseCreatePolicy SAVE = new SavePolicy();
-  private static final BaseCreatePolicy SELECTED_STABLE = new BaseCreatePolicy("Select") {
+  private static final BaseCreatePolicy SELECTED_STABLE = new BaseCreatePolicy(BaseCreatePolicy.ActionType.SELECT) {
     public void perform(final ConfigurationContext context) {}
 
     public void update(final Presentation presentation, final ConfigurationContext context, final String actionText) {

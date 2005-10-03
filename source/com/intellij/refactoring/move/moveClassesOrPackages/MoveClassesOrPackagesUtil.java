@@ -12,6 +12,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.PackageWrapper;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.refactoring.util.NonCodeUsageInfo;
 import com.intellij.refactoring.util.RefactoringUtil;
@@ -348,7 +349,7 @@ public class MoveClassesOrPackagesUtil {
     Map<PsiDirectory, String> relativePathsToCreate = new HashMap<PsiDirectory,String>();
     buildDirectoryList(targetPackage, contentSourceRoots, targetDirectories, relativePathsToCreate);
     final DirectoryChooser chooser = new DirectoryChooser(project, new DirectoryChooserModuleTreeView(project));
-    chooser.setTitle("Choose Destination Directory");
+    chooser.setTitle(RefactoringBundle.message("choose.destination.directory"));
     chooser.fillList(
       targetDirectories.toArray(new PsiDirectory[targetDirectories.size()]),
       initialDirectory,

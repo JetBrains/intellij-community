@@ -8,11 +8,9 @@ import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import org.apache.log4j.Category;
 import org.apache.log4j.Priority;
 import org.apache.log4j.spi.LoggingEvent;
+import org.jetbrains.annotations.NonNls;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class MessagePool {
 
@@ -51,7 +49,7 @@ public class MessagePool {
     if (myIdeFatals.size() < MAX_POOL_SIZE_FOR_FATALS) {
       myFatalsGrouper.add(message);
     } else if (myIdeFatals.size() == MAX_POOL_SIZE_FOR_FATALS) {
-      myFatalsGrouper.add(new LogMessage(new LoggingEvent("Too many IDE fatal errors. Monitoring stoppped.", Category.getRoot(), Priority.ERROR, null, new Exception())));
+      myFatalsGrouper.add(new LogMessage(new LoggingEvent(DiagnosticBundle.message("error.monitor.too.many.errors"), Category.getRoot(), Priority.ERROR, null, new Exception())));
     }
   }
 
@@ -95,6 +93,7 @@ public class MessagePool {
 
   private void notifyListenersAdd() {
     if (ourJvmIsShuttingDown) return;
+
     final MessagePoolListener[] messagePoolListeners = myListeners.toArray(new MessagePoolListener[myListeners.size()]);
     for (int i = 0; i < messagePoolListeners.length; i++) {
       messagePoolListeners[i].newEntryAdded();
@@ -120,7 +119,7 @@ public class MessagePool {
     private final List<AbstractMessage> myMessages = new ArrayList<AbstractMessage>();
     private int myAccumulatedTime;
 
-    public MessageGrouper(String name, int timeout, int maxGroupSize) {
+    public MessageGrouper(@NonNls String name, int timeout, int maxGroupSize) {
       setName(name);
       myTimeOut = timeout;
       myMaxGroupSize = maxGroupSize;

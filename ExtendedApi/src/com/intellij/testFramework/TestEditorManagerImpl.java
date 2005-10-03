@@ -23,13 +23,14 @@ import com.intellij.psi.PsiManager;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-public class TestEditorManagerImpl extends FileEditorManagerEx implements ApplicationComponent, ProjectComponent {
+@NonNls public class TestEditorManagerImpl extends FileEditorManagerEx implements ApplicationComponent, ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.idea.test.TestEditorManagerImpl");
 
   private final Project myProject;

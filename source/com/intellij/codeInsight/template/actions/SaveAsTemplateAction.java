@@ -8,6 +8,7 @@
  */
 package com.intellij.codeInsight.template.actions;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.impl.EditTemplateDialog;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
@@ -30,12 +31,15 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
 public class SaveAsTemplateAction extends AnAction {
+  public static final @NonNls String JAVA_LANG_PACKAGE_PREFIX = "java.lang";
+
   public SaveAsTemplateAction() {
   }
 
@@ -67,7 +71,7 @@ public class SaveAsTemplateAction extends AnAction {
         PsiClass psiClass = (PsiClass)ref;
         if (!(psiClass.getParent() instanceof PsiJavaFile)) return false;
         PsiDirectory directory = PsiTreeUtil.getParentOfType(psiClass, PsiDirectory.class);
-        if (directory.getPackage().getQualifiedName().equals("java.lang")) return false;
+        if (directory.getPackage().getQualifiedName().equals(JAVA_LANG_PACKAGE_PREFIX)) return false;
         return true;
       }
     });
@@ -125,13 +129,19 @@ public class SaveAsTemplateAction extends AnAction {
     }
 
     String defaultShortcut = "";
-    if (templateSettings.getDefaultShortcutChar() == TemplateSettings.ENTER_CHAR) defaultShortcut = "Enter";
-    if (templateSettings.getDefaultShortcutChar() == TemplateSettings.TAB_CHAR) defaultShortcut = "Tab";
-    if (templateSettings.getDefaultShortcutChar() == TemplateSettings.SPACE_CHAR) defaultShortcut = "Space";
+    if (templateSettings.getDefaultShortcutChar() == TemplateSettings.ENTER_CHAR) {
+      defaultShortcut = CodeInsightBundle.message("template.shortcut.enter");
+    }
+    if (templateSettings.getDefaultShortcutChar() == TemplateSettings.TAB_CHAR) {
+      defaultShortcut = CodeInsightBundle.message("template.shortcut.tab");
+    }
+    if (templateSettings.getDefaultShortcutChar() == TemplateSettings.SPACE_CHAR) {
+      defaultShortcut = CodeInsightBundle.message("template.shortcut.space");
+    }
 
     EditTemplateDialog dialog = new EditTemplateDialog(
       editor.getComponent(),
-      "Edit Live Template",
+      CodeInsightBundle.message("dialog.edit.live.template.title"),
       template,
       templateSettings.getTemplates(),
       defaultShortcut);

@@ -1,10 +1,11 @@
 package com.intellij.refactoring.safeDelete;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
 import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.usageView.UsageViewUtil;
+import com.intellij.usageView.UsageViewBundle;
 
 /**
  * @author dsl
@@ -34,7 +35,7 @@ public class SafeDeleteUsageViewDescriptor extends UsageViewDescriptorAdapter {
   }
 
   public String getProcessedElementsHeader() {
-    return "Items to be deleted";
+    return RefactoringBundle.message("items.to.be.deleted");
   }
 
   public boolean isSearchInText() {
@@ -46,11 +47,11 @@ public class SafeDeleteUsageViewDescriptor extends UsageViewDescriptorAdapter {
   }
 
   public String getCodeReferencesWord() {
-    return "occurences";
+    return RefactoringBundle.message("usageView.occurences.string");
   }
 
   public String getCommentReferencesWord() {
-    return "occurences";
+    return RefactoringBundle.message("usageView.occurences.string");
   }
 
   public boolean isCancelInCommonGroup() {
@@ -66,12 +67,11 @@ public class SafeDeleteUsageViewDescriptor extends UsageViewDescriptorAdapter {
   }
 
   public String getCodeReferencesText(int usagesCount, int filesCount) {
-    return "References in code " + UsageViewUtil.getUsageCountInfo(usagesCount, filesCount, "reference");
+    return RefactoringBundle.message("references.in.code", UsageViewBundle.getReferencesString(usagesCount, filesCount));
   }
 
   public String getCommentReferencesText(int usagesCount, int filesCount) {
-    return "Occurrences found in comments, strings and non-java files "
-            + UsageViewUtil.getUsageCountInfo(usagesCount, filesCount, "occurrence") +
-            ". Those occurrences will not be changed";
+    return RefactoringBundle.message("safe.delete.comment.occurences.header",
+                                     UsageViewBundle.getOccurencesString(usagesCount, filesCount));
   }
 }

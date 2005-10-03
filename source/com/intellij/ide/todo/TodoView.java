@@ -22,7 +22,9 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.TabbedPaneContentUI;
+import com.intellij.ide.IdeBundle;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
@@ -45,6 +47,11 @@ public class TodoView implements ProjectComponent,JDOMExternalizable{
   private int mySelectedIndex;
   private TodoPanelSettings myCurrentPanelSettings;
   private TodoPanelSettings myAllPanelSettings;
+  @NonNls private static final String ATTRIBUTE_SELECTED_INDEX = "selected-index";
+  @NonNls private static final String ELEMENT_TODO_PANEL = "todo-panel";
+  @NonNls private static final String ATTRIBUTE_ID = "id";
+  @NonNls private static final String VALUE_SELECTED_FILE = "selected-file";
+  @NonNls private static final String VALUE_ALL = "all";
 
   /* Invoked by reflection */
   TodoView(Project project){
@@ -56,18 +63,20 @@ public class TodoView implements ProjectComponent,JDOMExternalizable{
   public void readExternal(Element element) throws InvalidDataException{
     mySelectedIndex=0;
     try{
-      mySelectedIndex=Integer.parseInt(element.getAttributeValue("selected-index"));
+      mySelectedIndex=Integer.parseInt(element.getAttributeValue(ATTRIBUTE_SELECTED_INDEX));
     }catch(NumberFormatException ignored){}
 
     for(Iterator i=element.getChildren().iterator();i.hasNext();){
       Element child=(Element)i.next();
-      if("todo-panel".equals(child.getName())){
-        String id=child.getAttributeValue("id");
-        if("selected-file".equals(id)){
+      if(ELEMENT_TODO_PANEL.equals(child.getName())){
+        String id=child.getAttributeValue(ATTRIBUTE_ID);
+        if(VALUE_SELECTED_FILE.equals(id)){
           myCurrentPanelSettings.readExternal(child);
-        }else if("all".equals(id)){
+        }
+        else if(VALUE_ALL.equals(id)){
           myAllPanelSettings.readExternal(child);
-        }else{
+        }
+        else{
           throw new IllegalArgumentException("unknown id: "+id);
         }
       }
@@ -77,16 +86,16 @@ public class TodoView implements ProjectComponent,JDOMExternalizable{
   public void writeExternal(Element element) throws WriteExternalException{
     if(myContentManager!=null){ // all panel were constructed
       Content content=myContentManager.getSelectedContent();
-      element.setAttribute("selected-index",Integer.toString(myContentManager.getIndexOfContent(content)));
+      element.setAttribute(ATTRIBUTE_SELECTED_INDEX,Integer.toString(myContentManager.getIndexOfContent(content)));
     }
 
-    Element selectedFileElement=new Element("todo-panel");
-    selectedFileElement.setAttribute("id","selected-file");
+    Element selectedFileElement=new Element(ELEMENT_TODO_PANEL);
+    selectedFileElement.setAttribute(ATTRIBUTE_ID,VALUE_SELECTED_FILE);
     myCurrentPanelSettings.writeExternal(selectedFileElement);
     element.addContent(selectedFileElement);
 
-    Element allElement=new Element("todo-panel");
-    allElement.setAttribute("id","all");
+    Element allElement=new Element(ELEMENT_TODO_PANEL);
+    allElement.setAttribute(ATTRIBUTE_ID,VALUE_ALL);
     myAllPanelSettings.writeExternal(allElement);
     element.addContent(allElement);
   }
@@ -124,7 +133,7 @@ public class TodoView implements ProjectComponent,JDOMExternalizable{
         public void run(){
           // Create panels
 
-          Content allTodosContent=PeerFactory.getInstance().getContentFactory().createContent(null,"Project",false);
+          Content allTodosContent=PeerFactory.getInstance().getContentFactory().createContent(null, IdeBundle.message("title.project"),false);
           myAllTodos=new TodoPanel(myProject,myAllPanelSettings,false,allTodosContent){
             protected TodoTreeBuilder createTreeBuilder(JTree tree,DefaultTreeModel treeModel,Project project){
               AllTodosTreeBuilder builder=new AllTodosTreeBuilder(tree,treeModel,project);
@@ -134,7 +143,7 @@ public class TodoView implements ProjectComponent,JDOMExternalizable{
           };
           allTodosContent.setComponent(myAllTodos);
 
-          Content currentFileTodosContent=PeerFactory.getInstance().getContentFactory().createContent(null,"Current File",false);
+          Content currentFileTodosContent=PeerFactory.getInstance().getContentFactory().createContent(null,IdeBundle.message("title.todo.current.file"),false);
           myCurrentFileTodos=new CurrentFileTodosPanel(myProject,myCurrentPanelSettings,currentFileTodosContent){
             protected TodoTreeBuilder createTreeBuilder(JTree tree,DefaultTreeModel treeModel,Project project){
               CurrentFileTodosTreeBuilder builder=new CurrentFileTodosTreeBuilder(tree,treeModel,project);
@@ -198,7 +207,7 @@ public class TodoView implements ProjectComponent,JDOMExternalizable{
                   }
                 }, ModalityState.NON_MMODAL);
               }
-            }, "Looking for TODOs...", false, myProject);
+            }, IdeBundle.message("progress.looking.for.todos"), false, myProject);
         }}, ModalityState.NON_MMODAL);
       }
       else if (TodoConfiguration.PROP_TODO_FILTERS.equals(e.getPropertyName())) {
@@ -242,7 +251,7 @@ public class TodoView implements ProjectComponent,JDOMExternalizable{
                 }
               }, ModalityState.NON_MMODAL);
             }
-          }, "Looking for TODOs...", false, myProject);
+          }, IdeBundle.message("progress.looking.for.todos"), false, myProject);
         }
       });
     }

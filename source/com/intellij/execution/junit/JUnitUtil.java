@@ -22,11 +22,13 @@ import com.intellij.util.graph.GraphGenerator;
 
 import java.util.*;
 
+import org.jetbrains.annotations.NonNls;
+
 public class JUnitUtil {
-  private static final String TESTCASE_CLASS = "junit.framework.TestCase";
-  private static final String TEST_INTERFACE = "junit.framework.Test";
-  private static final String TESTSUITE_CLASS = "junit.framework.TestSuite";
-  private static final String SUITE_METHOD = "suite";
+  @NonNls private static final String TESTCASE_CLASS = "junit.framework.TestCase";
+  @NonNls private static final String TEST_INTERFACE = "junit.framework.Test";
+  @NonNls private static final String TESTSUITE_CLASS = "junit.framework.TestSuite";
+  @NonNls private static final String SUITE_METHOD = "suite";
 
   public static boolean isSuiteMethod(final PsiMethod psiMethod) {
     if (psiMethod == null) return false;
@@ -59,7 +61,7 @@ public class JUnitUtil {
           result[0] = ConfigurationUtil.getAllTestClasses(classFilter);
         }
       },
-      "Searching For Tests...",
+      ExecutionBundle.message("seaching.test.progress.title"),
       true,
       classFilter.getProject()
     );
@@ -293,11 +295,11 @@ public class JUnitUtil {
 
   public static class NoJUnitException extends CantRunException {
     public NoJUnitException() {
-      super("No junit.jar");
+      super(ExecutionBundle.message("no.junit.error.message"));
     }
 
     public NoJUnitException(final String message) {
-      super("No junit.jar: " + message);
+      super(ExecutionBundle.message("no.junit.in.scope.error.message", message));
     }
   }
 }

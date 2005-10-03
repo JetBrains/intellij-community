@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ide.IdeBundle;
 
 /**
  * @author Eugene Belyaev
@@ -15,7 +16,7 @@ public final class ClasspathEntryMacro extends Macro {
   }
 
   public String getDescription() {
-    return "Entry in the classpath the element belongs to";
+    return IdeBundle.message("macro.classpath.entry");
   }
 
   public String expand(final DataContext dataContext) {

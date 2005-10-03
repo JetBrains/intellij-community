@@ -7,6 +7,7 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryTableEditor;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.project.ProjectBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -60,9 +61,9 @@ public class NamedLibrariesPanel extends JPanel {
     };
     myLibrariesChooser.addElementsMarkListener(myMarkListener);
 
-    final JButton editButton = new JButton("Edit...");
-    myIncludeAllButton = new JButton("Include All");
-    myExcludeAllButton = new JButton("Exclude All");
+    final JButton editButton = new JButton(ProjectBundle.message("module.libraries.edit.button"));
+    myIncludeAllButton = new JButton(ProjectBundle.message("module.libraries.include.all.button"));
+    myExcludeAllButton = new JButton(ProjectBundle.message("module.libraries.exclude.all.button"));
     editButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         removeLibraryTableListener();

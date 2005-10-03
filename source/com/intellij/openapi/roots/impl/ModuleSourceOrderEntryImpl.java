@@ -7,7 +7,9 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.openapi.project.ProjectBundle;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,7 +23,8 @@ public class ModuleSourceOrderEntryImpl extends OrderEntryBaseImpl implements Mo
                                                                                   ClonableOrderEntry {
   private final RootModelImpl myRootModel;
 
-  static final String ENTRY_TYPE = "sourceFolder";
+  @NonNls static final String ENTRY_TYPE = "sourceFolder";
+  @NonNls private static final String ATTRIBUTE_FOR_TESTS = "forTests";
 
   ModuleSourceOrderEntryImpl(RootModelImpl rootModel) {
     super(rootModel);
@@ -39,7 +42,7 @@ public class ModuleSourceOrderEntryImpl extends OrderEntryBaseImpl implements Mo
   public void writeExternal(Element rootElement) throws WriteExternalException {
     Element element = OrderEntryFactory.createOrderEntryElement(ENTRY_TYPE);
     element.setAttribute(OrderEntryFactory.ORDER_ENTRY_TYPE_ATTR, ENTRY_TYPE);
-    element.setAttribute("forTests", "false"); // compatibility with prev builds
+    element.setAttribute(ATTRIBUTE_FOR_TESTS, Boolean.FALSE.toString()); // compatibility with prev builds
     rootElement.addContent(element);
   }
 
@@ -56,7 +59,7 @@ public class ModuleSourceOrderEntryImpl extends OrderEntryBaseImpl implements Mo
   }
 
   public String getPresentableName() {
-    return "<Module source>";
+    return ProjectBundle.message("project.root.module.source");
   }
 
   void addExportedFiles(OrderRootType type, List<VirtualFile> result) {

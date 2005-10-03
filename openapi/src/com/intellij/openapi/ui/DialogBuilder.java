@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.CommonBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -26,11 +27,12 @@ import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import org.jetbrains.annotations.NonNls;
+
 public class DialogBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.DialogBuilder");
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public static final String REQUEST_FOCUS_ENABLED = "requestFocusEnabled";
+  @NonNls public static final String REQUEST_FOCUS_ENABLED = "requestFocusEnabled";
 
   private JComponent myCenterPanel;
   private String myTitle;
@@ -70,7 +72,7 @@ public class DialogBuilder {
   public void setCenterPanel(JComponent centerPanel) { myCenterPanel = centerPanel; }
   public void setTitle(String title) { myTitle = title; }
   public void setPreferedFocusComponent(JComponent component) { myPreferedFocusComponent = component; }
-  public void setDimensionServiceKey(String dimensionServiceKey) { myDimensionServiceKey = dimensionServiceKey; }
+  public void setDimensionServiceKey(@NonNls String dimensionServiceKey) { myDimensionServiceKey = dimensionServiceKey; }
 
   public void addAction(Action action) {
     addActionDescriptor(new CustomActionDescriptor(action));
@@ -112,7 +114,7 @@ public class DialogBuilder {
 
   public CustomizableAction addCloseButton() {
     CustomizableAction closeAction = addOkAction();
-    closeAction.setText("&Close");
+    closeAction.setText(CommonBundle.getCloseButtonText());
     return closeAction;
   }
 
@@ -137,7 +139,7 @@ public class DialogBuilder {
     }
   }
 
-  public void setHelpId(String helpId) {
+  public void setHelpId(@NonNls String helpId) {
     myDialogWrapper.setHelpId(helpId);
   }
 

@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.ZipUtil;
+import com.intellij.j2ee.J2EEBundle;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -97,22 +98,22 @@ public class FileCopyInstructionImpl extends BuildInstructionBase implements Fil
       boolean ok = ZipUtil.addFileOrDirRecursively(outputStream, jarFile, file, outputRelativePath, fileFilter, writtenRelativePaths);
       if (!ok) {
         MakeUtil.reportRecursiveCopying(context, file.getPath(), jarFile.getPath(), "",
-                                        "Please setup jar file location outside directory '" + file.getPath() + "'.");
+                                        J2EEBundle.message("message.text.setup.jar.outside.directory.path", file.getPath()));
       }
     }
   }
 
   public String toString() {
     if (myChangedSet == null) {
-      String s = "Copy "+getFile();
       if (getModule() != null) {
-        s += "(from '"+ModuleUtil.getModuleNameInReadAction(getModule())+"')";
+        return J2EEBundle.message("file.copy.instraction.file.from.module.to.file.message.text", getFile(),
+                                  ModuleUtil.getModuleNameInReadAction(getModule()), getOutputRelativePath());
+      } else {
+        return J2EEBundle.message("file.copy.instruction.file.to.file.message.text", getFile(), getOutputRelativePath());
       }
-      s += "->"+getOutputRelativePath();
-      return s;
     }
     else {
-      String s = "Copy (Incr "+myFile+")";
+      String s = J2EEBundle.message("file.copy.instruction.message.text", myFile);
       for (FileCopyInstructionImpl fileCopyInstruction : myChangedSet) {
         s += fileCopyInstruction + ", ";
       }

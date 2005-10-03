@@ -1,6 +1,7 @@
 package com.intellij.diagnostic;
 
 import com.intellij.ide.plugins.PluginDescriptor;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * Created by IntelliJ IDEA.
@@ -22,7 +23,7 @@ public class PluginException extends RuntimeException {
   }
 
   public String getMessage() {
-    String message = super.getMessage();
+    @NonNls String message = super.getMessage();
 
     if (message == null)
       message = "";

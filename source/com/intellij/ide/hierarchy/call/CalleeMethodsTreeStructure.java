@@ -1,5 +1,6 @@
 package com.intellij.ide.hierarchy.call;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.HierarchyTreeStructure;
 import com.intellij.openapi.project.Project;
@@ -7,13 +8,13 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.HashMap;
 
 import java.util.ArrayList;
 
 public final class CalleeMethodsTreeStructure extends HierarchyTreeStructure {
-  public static final String TYPE = "Callees Of ";
+  public static final String TYPE = IdeBundle.message("title.hierarchy.callees.of");
   private final String myScopeType;
 
   /**
@@ -31,7 +32,7 @@ public final class CalleeMethodsTreeStructure extends HierarchyTreeStructure {
     }
     final PsiMethod method = (PsiMethod)enclosingElement;
 
-    final ArrayList methods = new ArrayList();
+    final ArrayList<PsiMethod> methods = new ArrayList<PsiMethod>();
 
     final PsiCodeBlock body = method.getBody();
     if (body != null) {
@@ -41,13 +42,11 @@ public final class CalleeMethodsTreeStructure extends HierarchyTreeStructure {
     final PsiMethod baseMethod = (PsiMethod)((CallHierarchyNodeDescriptor)getBaseDescriptor()).getTargetElement();
     final PsiClass baseClass = baseMethod.getContainingClass();
 
-    final HashMap methodToDescriptorMap = new HashMap();
+    final HashMap<PsiMethod,CallHierarchyNodeDescriptor> methodToDescriptorMap = new HashMap<PsiMethod, CallHierarchyNodeDescriptor>();
 
-    final ArrayList result = new ArrayList();
+    final ArrayList<CallHierarchyNodeDescriptor> result = new ArrayList<CallHierarchyNodeDescriptor>();
 
-    for (int i = 0; i < methods.size(); i++) {
-      final PsiMethod calledMethod = (PsiMethod)methods.get(i);
-
+    for (final PsiMethod calledMethod : methods) {
       if (CallHierarchyBrowser.SCOPE_CLASS.equals(myScopeType)) {
         if (!PsiTreeUtil.isAncestor(baseClass, calledMethod, true)) {
           continue;
@@ -59,7 +58,7 @@ public final class CalleeMethodsTreeStructure extends HierarchyTreeStructure {
         }
       }
 
-      CallHierarchyNodeDescriptor d = (CallHierarchyNodeDescriptor)methodToDescriptorMap.get(calledMethod);
+      CallHierarchyNodeDescriptor d = methodToDescriptorMap.get(calledMethod);
       if (d == null) {
         d = new CallHierarchyNodeDescriptor(myProject, descriptor, calledMethod, false, false);
         methodToDescriptorMap.put(calledMethod, d);
@@ -73,8 +72,7 @@ public final class CalleeMethodsTreeStructure extends HierarchyTreeStructure {
     // also add overriding methods as children
     final PsiSearchHelper searchHelper = method.getManager().getSearchHelper();
     final PsiMethod[] overridingMethods = searchHelper.findOverridingMethods(method, GlobalSearchScope.projectScope(myProject), true);
-    for (int i = 0; i < overridingMethods.length; i++) {
-      final PsiMethod overridingMethod = overridingMethods[i];
+    for (final PsiMethod overridingMethod : overridingMethods) {
       final CallHierarchyNodeDescriptor node = new CallHierarchyNodeDescriptor(myProject, descriptor, overridingMethod, false, false);
       if (!result.contains(node)) result.add(node);
     }
@@ -91,10 +89,9 @@ public final class CalleeMethodsTreeStructure extends HierarchyTreeStructure {
   }
 
 
-  private void visitor(final PsiElement element, final ArrayList methods) {
+  private void visitor(final PsiElement element, final ArrayList<PsiMethod> methods) {
     final PsiElement[] children = element.getChildren();
-    for (int i = 0; i < children.length; i++) {
-      final PsiElement child = children[i];
+    for (final PsiElement child : children) {
       visitor(child, methods);
       if (child instanceof PsiMethodCallExpression) {
         final PsiMethodCallExpression callExpression = (PsiMethodCallExpression)child;

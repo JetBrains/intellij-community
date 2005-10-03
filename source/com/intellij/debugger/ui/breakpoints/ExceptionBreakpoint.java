@@ -7,6 +7,7 @@ package com.intellij.debugger.ui.breakpoints;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
@@ -27,6 +28,7 @@ import com.sun.jdi.event.ExceptionEvent;
 import com.sun.jdi.event.LocatableEvent;
 import com.sun.jdi.request.ExceptionRequest;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 
@@ -41,8 +43,8 @@ public class ExceptionBreakpoint extends Breakpoint {
   public static Icon ICON = IconLoader.getIcon("/debugger/db_exception_breakpoint.png");
   public static Icon DISABLED_ICON = IconLoader.getIcon("/debugger/db_disabled_exception_breakpoint.png");
   public static Icon DISABLED_DEP_ICON = IconLoader.getIcon("/debugger/db_dep_exception_breakpoint.png");
-  protected final static String READ_NO_CLASS_NAME = "No class_name for exception breakpoint";
-  public static final String CATEGORY = "exception_breakpoints";
+  protected final static String READ_NO_CLASS_NAME = DebuggerBundle.message("error.absent.exception.breakpoint.class.name");
+  public static final @NonNls String CATEGORY = "exception_breakpoints";
 
   public ExceptionBreakpoint(Project project) {
     super(project);
@@ -88,7 +90,7 @@ public class ExceptionBreakpoint extends Breakpoint {
   }
 
   public String getDisplayName() {
-    return "Exception breakpoint, class '" + myQualifiedName + "'";
+    return DebuggerBundle.message("breakpoint.exception.breakpoint.display.name", myQualifiedName);
   }
 
   public Icon getIcon() {
@@ -162,28 +164,19 @@ public class ExceptionBreakpoint extends Breakpoint {
       }
     }
 
-    final StringBuffer message = new StringBuffer(64);
-    message.append("Exception '");
-    message.append(exceptionName);
     if (threadName != null) {
-      message.append("' occurred in thread '");
-      message.append(threadName);
-      message.append('\'');
+      return DebuggerBundle.message("exception.breakpoint.console.message.with.thread.info", exceptionName, threadName);
     }
     else {
-      message.append("' occurred");
+      return DebuggerBundle.message("exception.breakpoint.console.message", exceptionName);
     }
-    message.append("\n");
-    message.append(message.toString());
-
-    return message.toString();
   }
 
   public boolean isValid() {
     return true;
   }
 
-  public void writeExternal(Element parentNode) throws WriteExternalException {
+  @SuppressWarnings({"HardCodedStringLiteral"}) public void writeExternal(Element parentNode) throws WriteExternalException {
     super.writeExternal(parentNode);
     if(myQualifiedName != null) {
       parentNode.setAttribute("class_name", myQualifiedName);
@@ -202,12 +195,14 @@ public class ExceptionBreakpoint extends Breakpoint {
 
   public void readExternal(Element parentNode) throws InvalidDataException {
     super.readExternal(parentNode);
+    //noinspection HardCodedStringLiteral
     String className = parentNode.getAttributeValue("class_name");
     myQualifiedName = className;
     if(className == null) {
       throw new InvalidDataException(READ_NO_CLASS_NAME);
     }
 
+    //noinspection HardCodedStringLiteral
     String packageName = parentNode.getAttributeValue("package_name");
     myPackageName = packageName != null? packageName : calcPackageName(packageName);
   }

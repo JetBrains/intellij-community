@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -34,10 +35,14 @@ public class NamePathComponent extends JPanel{
   private JLabel myNameLabel;
 
   public NamePathComponent(String nameLabelText, String pathLabelText, char nameMnemonic, char locationMnemonic, final String pathChooserTitle, final String pathChooserDescription) {
-    this(nameLabelText, pathLabelText, nameMnemonic, locationMnemonic, pathChooserTitle, pathChooserDescription, true);
+    this(nameLabelText, pathLabelText, pathChooserTitle, pathChooserDescription, true);
   }
 
-  public NamePathComponent(String nameLabelText, String pathLabelText, char nameMnemonic, char locationMnemonic, final String pathChooserTitle, final String pathChooserDescription, boolean hideIgnored) {
+  public NamePathComponent(String nameLabelText,
+                           String pathLabelText,
+                           final String pathChooserTitle,
+                           final String pathChooserDescription,
+                           boolean hideIgnored) {
     super(new GridBagLayout());
 
     myTfName = new JTextField();
@@ -49,8 +54,8 @@ public class NamePathComponent extends JPanel{
     myTfPath.setPreferredSize(new Dimension(200, myTfPath.getPreferredSize().height));
 
     myNameLabel = new JLabel(nameLabelText);
-    myNameLabel.setFont(UIManager.getFont("Label.font").deriveFont(Font.BOLD));
-    myNameLabel.setDisplayedMnemonic(nameMnemonic);
+    //noinspection HardCodedStringLiteral
+    myNameLabel.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
     myNameLabel.setLabelFor(myTfName);
     this.add(myNameLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
 
@@ -66,9 +71,8 @@ public class NamePathComponent extends JPanel{
     };
     myPathPanel = new FieldPanel(myTfPath, pathLabelText, null, browseButtonActionListener, null);
     final JLabel locationLabel = myPathPanel.getFieldLabel();
-    locationLabel.setDisplayedMnemonic(locationMnemonic);
     locationLabel.setLabelFor(myTfPath);
-    locationLabel.setFont(UIManager.getFont("Label.font").deriveFont(Font.BOLD));
+    locationLabel.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
     this.add(myPathPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(8, 0, 0, 0), 0, 0));
   }
 

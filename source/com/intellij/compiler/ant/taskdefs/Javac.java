@@ -35,6 +35,7 @@ public class Javac extends Tag{
     if (moduleName == null) {
       return null;
     }
+    //noinspection HardCodedStringLiteral
     return BuildProperties.propertyRef(BuildProperties.getModuleChunkJdkHomeProperty(moduleName)) + "/bin/javac";
   }
 }

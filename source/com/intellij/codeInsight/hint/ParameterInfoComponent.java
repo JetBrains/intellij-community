@@ -1,21 +1,27 @@
 
 package com.intellij.codeInsight.hint;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.SplittingUtil;
 import com.intellij.ui.StrikeoutLabel;
+import com.intellij.util.Function;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 import java.awt.*;
+import java.util.Arrays;
 
 class ParameterInfoComponent extends JPanel{
   private Object[] myObjects;
@@ -34,10 +40,11 @@ class ParameterInfoComponent extends JPanel{
   private static final Color HIGHLIGHTED_BORDER_COLOR = new Color(231, 254, 234);
   private final Font NORMAL_FONT;
   private final Font BOLD_FONT;
-  private static final String NO_PARAMETERS_TEXT = "<no parameters>";
-  private static final String NO_ATTRIBUTES_TEXT = "<no attributes>";
+  private static final String NO_PARAMETERS_TEXT = CodeInsightBundle.message("parameter.info.no.parameters");
+  private static final String NO_ATTRIBUTES_TEXT = CodeInsightBundle.message("xml.tag.info.no.attributes");
   private static final Border BOTTOM_BORDER = new SideBorder(Color.lightGray, SideBorder.BOTTOM);
   private static final Border BACKGROUND_BORDER = BorderFactory.createLineBorder(BACKGROUND_COLOR);
+
   protected int myWidthLimit;
 
   public ParameterInfoComponent(Object[] objects, Editor editor) {
@@ -47,8 +54,8 @@ class ParameterInfoComponent extends JPanel{
     JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
     myWidthLimit = layeredPane.getWidth();
 
-    NORMAL_FONT = UIManager.getFont("Label.font");
-    BOLD_FONT = UIManager.getFont("Label.font").deriveFont(Font.BOLD);
+    NORMAL_FONT = UIUtil.getLabelFont();
+    BOLD_FONT = NORMAL_FONT.deriveFont(Font.BOLD);
 
     myObjects = objects;
     myEnabledFlags = new boolean[myObjects.length];
@@ -97,15 +104,17 @@ class ParameterInfoComponent extends JPanel{
   }
 
   private void updateTypeParameter(PsiTypeParameter typeParameter, int i) {
-    StringBuffer buffer = new StringBuffer();
+    @NonNls StringBuffer buffer = new StringBuffer();
     buffer.append(typeParameter.getName());
     int highlightEndOffset = buffer.length();
     buffer.append(" extends ");
-    final PsiClassType[] superTypes = typeParameter.getSuperTypes();
-    for (int j = 0; j < superTypes.length; j++) {
-      buffer.append(superTypes[j].getPresentableText());
-      if (j < superTypes.length - 1) buffer.append(", ");
-    }
+    buffer.append(StringUtil.join(
+      Arrays.asList(typeParameter.getSuperTypes()),
+      new Function<PsiClassType, String>() {
+        public String fun(final PsiClassType t) {
+          return t.getPresentableText();
+        }
+      }, ", "));
 
     Color background = i == myCurrentParameter ? HIGHLIGHTED_BORDER_COLOR : BACKGROUND_COLOR;
     myPanels[i].setup(buffer.toString(), 0, highlightEndOffset, false, false, false, background);
@@ -113,7 +122,7 @@ class ParameterInfoComponent extends JPanel{
   }
 
   private void updateAnnotationMethod(PsiAnnotationMethod method, int i) {
-    StringBuffer buffer = new StringBuffer();
+    @NonNls StringBuffer buffer = new StringBuffer();
     int highlightStartOffset;
     int highlightEndOffset;
     buffer.append(method.getReturnType().getPresentableText());

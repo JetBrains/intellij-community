@@ -5,6 +5,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiFile;
+import com.intellij.analysis.AnalysisScopeBundle;
 
 import javax.swing.*;
 import java.util.Set;
@@ -34,7 +35,7 @@ public class ModuleNode extends PackageDependenciesNode {
   }
 
   public String toString() {
-    return myModule == null ? "<unknown>" : myModule.getName();
+    return myModule == null ? AnalysisScopeBundle.message("unknown.node.text") : myModule.getName();
   }
 
   public String getModuleName() {

@@ -9,6 +9,7 @@ import com.intellij.ide.todo.TodoFileDirAndModuleComparator;
 import com.intellij.ide.todo.TodoTreeBuilder;
 import com.intellij.ide.todo.TodoTreeStructure;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -97,20 +98,9 @@ public final class TodoPackageNode extends PackageElementNode implements Highlig
       newName = myPresentationName != null ? myPresentationName : "";
     }
 
-
-    StringBuffer sb = new StringBuffer(newName);
     int nameEndOffset = newName.length();
     int todoItemCount = getStructure().getTodoItemCount(packageElement);
-    sb.append(" ( ").append(todoItemCount).append(" item");
-    if (todoItemCount > 1) {
-      sb.append('s');
-    }
-    sb.append(" in " + fileCount).append(" file");
-    if (fileCount > 1) {
-      sb.append('s');
-    }
-    sb.append(" )");
-    newName = sb.toString();
+    newName = IdeBundle.message("node.todo.group", newName, todoItemCount, fileCount);
 
     myHighlightedRegions.clear();
 

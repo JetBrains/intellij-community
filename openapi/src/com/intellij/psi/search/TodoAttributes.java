@@ -21,6 +21,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -35,6 +36,11 @@ public class TodoAttributes implements JDOMExternalizable, Cloneable {
 
   private Icon myIcon;
   private TextAttributes myTextAttributes = new TextAttributes();
+  @NonNls private static final String ATTRIBUTE_ICON = "icon";
+  @NonNls private static final String ICON_DEFAULT = "default";
+  @NonNls private static final String ICON_QUESTION = "question";
+  @NonNls private static final String ICON_IMPORTANT = "important";
+  @NonNls private static final String ELEMENT_OPTION = "option";
 
   public TodoAttributes() {
   }
@@ -67,44 +73,42 @@ public class TodoAttributes implements JDOMExternalizable, Cloneable {
     return textAttributes;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public void readExternal(Element element) throws InvalidDataException {
-    String icon = element.getAttributeValue("icon","default");
+    String icon = element.getAttributeValue(ATTRIBUTE_ICON,ICON_DEFAULT);
 
-    if ("default".equals(icon)){
+    if (ICON_DEFAULT.equals(icon)){
       myIcon = DEFAULT_ICON;
     }
-    else if ("question".equals(icon)){
+    else if (ICON_QUESTION.equals(icon)){
       myIcon = QUESTION_ICON;
     }
-    else if ("important".equals(icon)){
+    else if (ICON_IMPORTANT.equals(icon)){
       myIcon = IMPORTANT_ICON;
     }
     else{
       throw new InvalidDataException(icon);
     }
     myTextAttributes.readExternal(element);
-    if (element.getChild("option") == null) {
+    if (element.getChild(ELEMENT_OPTION) == null) {
       myTextAttributes = createDefaultTextAttributes();
     }
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public void writeExternal(Element element) throws WriteExternalException {
     String icon;
     if (myIcon == DEFAULT_ICON){
-      icon = "default";
+      icon = ICON_DEFAULT;
     }
     else if (myIcon == QUESTION_ICON){
-      icon = "question";
+      icon = ICON_QUESTION;
     }
     else if (myIcon == IMPORTANT_ICON){
-      icon = "important";
+      icon = ICON_IMPORTANT;
     }
     else{
       throw new WriteExternalException("");
     }
-    element.setAttribute("icon", icon);
+    element.setAttribute(ATTRIBUTE_ICON, icon);
     myTextAttributes.writeExternal(element);
   }
 

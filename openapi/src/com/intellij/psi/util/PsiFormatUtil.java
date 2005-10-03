@@ -293,8 +293,7 @@ public class PsiFormatUtil {
         final PsiClassType baseClassReference = ((PsiAnonymousClass) aClass).getBaseClassType();
         PsiClass baseClass = baseClassReference.resolve();
         String name = baseClass == null ? baseClassReference.getPresentableText() : formatClass(baseClass, options);
-        buffer.append("Anonymous class derived from ");
-        buffer.append(name);
+        buffer.append(PsiBundle.message("anonymous.class.derived.display", name));
       }
       else {
         String name = aClass.getName();
@@ -373,65 +372,70 @@ public class PsiFormatUtil {
     StringBuffer buffer = new StringBuffer();
     if (list.hasModifierProperty(PsiModifier.PUBLIC)){
       if ((options & SHOW_REDUNDANT_MODIFIERS) != 0 || parentClass == null || !parentClass.isInterface()){
-        buffer.append("public ");
+        appendModifier(buffer, PsiModifier.PUBLIC);
       }
     }
     if (list.hasModifierProperty(PsiModifier.PROTECTED)){
-      buffer.append("protected ");
+      appendModifier(buffer, PsiModifier.PROTECTED);
     }
     if (list.hasModifierProperty(PsiModifier.PRIVATE)){
-      buffer.append("private ");
+      appendModifier(buffer, PsiModifier.PRIVATE);
     }
     if (list.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) && (options & SHOW_PACKAGE_LOCAL) != 0){
       if (element instanceof PsiClass || element instanceof PsiMethod || element instanceof PsiField){
         if (element instanceof PsiClass && element.getParent() instanceof PsiDeclarationStatement){// local class
-          buffer.append("local ");
+          appendModifier(buffer, PsiBundle.message("local.class.preposition"));
         }
         else{
-          buffer.append("package local ");
+          appendModifier(buffer, PsiBundle.message("package.local.visibility"));
         }
       }
     }
     if (list.hasModifierProperty(PsiModifier.STATIC)){
       if ((options & SHOW_REDUNDANT_MODIFIERS) != 0 ||
         !(element instanceof PsiField && parentClass != null && parentClass.isInterface())){
-        buffer.append("static ");
+        appendModifier(buffer, PsiModifier.STATIC);
       }
     }
     if (list.hasModifierProperty(PsiModifier.ABSTRACT)){
       if ((options & SHOW_REDUNDANT_MODIFIERS) != 0 ||
         !(element instanceof PsiClass && ((PsiClass)element).isInterface()
           || element instanceof PsiMethod && parentClass != null && parentClass.isInterface())){
-        buffer.append("abstract ");
+        appendModifier(buffer, PsiModifier.ABSTRACT);
       }
     }
     if (list.hasModifierProperty(PsiModifier.FINAL)){
       if ((options & SHOW_REDUNDANT_MODIFIERS) != 0 ||
         !(element instanceof PsiField && parentClass != null && parentClass.isInterface())){
-        buffer.append("final ");
+        appendModifier(buffer, PsiModifier.FINAL);
       }
     }
     if (list.hasModifierProperty(PsiModifier.NATIVE) && (options & JAVADOC_MODIFIERS_ONLY) == 0){
-      buffer.append("native ");
+      appendModifier(buffer, PsiModifier.NATIVE);
     }
     if (list.hasModifierProperty(PsiModifier.SYNCHRONIZED) && (options & JAVADOC_MODIFIERS_ONLY) == 0){
-      buffer.append("synchronized ");
+      appendModifier(buffer, PsiModifier.SYNCHRONIZED);
     }
     if (list.hasModifierProperty(PsiModifier.STRICTFP) && (options & JAVADOC_MODIFIERS_ONLY) == 0){
-      buffer.append("strictfp ");
+      appendModifier(buffer, PsiModifier.STRICTFP);
     }
     if (list.hasModifierProperty(PsiModifier.TRANSIENT) &&
         element instanceof PsiVariable // javac 5 puts transient attr for methods
        ){
-      buffer.append("transient ");
+      appendModifier(buffer, PsiModifier.TRANSIENT);
     }
     if (list.hasModifierProperty(PsiModifier.VOLATILE)){
-      buffer.append("volatile ");
+      appendModifier(buffer, PsiModifier.VOLATILE);
     }
     if (buffer.length() > 0){
       buffer.setLength(buffer.length() - 1);
     }
     return buffer.toString();
+  }
+
+  private static void appendModifier(final StringBuffer buffer, final String modifier) {
+    buffer.append(modifier);
+    buffer.append(' ');
   }
 
   public static String formatReferenceList(PsiReferenceList list, int options){

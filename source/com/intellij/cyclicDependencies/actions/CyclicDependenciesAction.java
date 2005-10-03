@@ -1,6 +1,7 @@
 package com.intellij.cyclicDependencies.actions;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -14,6 +15,7 @@ import com.intellij.ui.IdeBorderFactory;
 
 import javax.swing.*;
 import java.awt.event.KeyEvent;
+import java.text.MessageFormat;
 
 /**
  * User: anna
@@ -25,9 +27,9 @@ public class CyclicDependenciesAction extends AnAction{
   private final String myTitle;
 
   public CyclicDependenciesAction() {
-    myAnalysisVerb = "Analyze";
-    myAnalysisNoon = "Analysis";
-    myTitle = "Cyclic Dependency Analysis";
+    myAnalysisVerb = AnalysisScopeBundle.message("action.analyze.verb");
+    myAnalysisNoon = AnalysisScopeBundle.message("action.analysis.noun");
+    myTitle = AnalysisScopeBundle.message("action.cyclic.dependency.title");
   }
 
   public void update(AnActionEvent event) {
@@ -133,7 +135,7 @@ public class CyclicDependenciesAction extends AnAction{
       super(true);
       myModuleName = moduleName;
       init();
-      setTitle("Specify " + myTitle + " Scope");
+      setTitle(AnalysisScopeBundle.message("cyclic.dependencies.scope.dialog.title", myTitle));
       setHorizontalStretch(1.75f);
       if (moduleName == null){
         myModuleButton.setVisible(false);
@@ -144,14 +146,12 @@ public class CyclicDependenciesAction extends AnAction{
     }
 
     protected JComponent createCenterPanel() {
-      myScopePanel.setBorder(IdeBorderFactory.createTitledBorder(myAnalysisNoon + " scope"));
-      myProjectButton.setText(myAnalysisVerb + " the whole project");
-      myProjectButton.setMnemonic(KeyEvent.VK_P);
+      myScopePanel.setBorder(IdeBorderFactory.createTitledBorder(AnalysisScopeBundle.message("analysis.scope.title", myAnalysisNoon)));
+      myProjectButton.setText(AnalysisScopeBundle.message("cyclic.dependencies.scope.dialog.project.button", myAnalysisVerb));
       ButtonGroup group = new ButtonGroup();
       group.add(myProjectButton);
       if (myModuleName != null) {
-        myModuleButton.setText(myAnalysisVerb + " module \'" + myModuleName + "\'");
-        myModuleButton.setMnemonic(KeyEvent.VK_M);
+        myModuleButton.setText(AnalysisScopeBundle.message("cyclic.dependencies.scope.dialog.module.button", myAnalysisVerb, myModuleName));
         group.add(myModuleButton);
       }
       return myWholePanel;

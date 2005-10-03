@@ -19,8 +19,11 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 
 import java.util.jar.Attributes;
 
+import org.jetbrains.annotations.NonNls;
+
 public class ManifestBuilder {
-  private static final Attributes.Name CREATED_BY = new Attributes.Name("Created-By");
+  @NonNls protected static final String NAME = "Created-By";
+  private static final Attributes.Name CREATED_BY = new Attributes.Name(NAME);
 
   public static void setGlobalAttributes(Attributes mainAttributes) {
     setIfNone(mainAttributes, Attributes.Name.MANIFEST_VERSION, "1.0");

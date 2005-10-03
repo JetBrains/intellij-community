@@ -15,6 +15,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.debugger.DebuggerBundle;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -30,7 +31,7 @@ abstract class AddFieldBreakpointDialog extends DialogWrapper {
   public AddFieldBreakpointDialog(Project project) {
     super(project, true);
     myProject = project;
-    setTitle("Add Field Watchpoint");
+    setTitle(DebuggerBundle.message("add.field.breakpoint.dialog.title"));
     init();
   }
 
@@ -44,7 +45,7 @@ abstract class AddFieldBreakpointDialog extends DialogWrapper {
     myClassChooser.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         PsiClass currentClass = getSelectedClass();
-        TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject).createAllProjectScopeChooser("Choose Field's class");
+        TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject).createAllProjectScopeChooser(DebuggerBundle.message("add.field.breakpoint.dialog.classchooser.title"));
         if (currentClass != null) {
           PsiFile containingFile = currentClass.getContainingFile();
           if (containingFile != null) {
@@ -68,7 +69,7 @@ abstract class AddFieldBreakpointDialog extends DialogWrapper {
         if (selectedClass != null) {
           PsiField[] fields = selectedClass.getFields();
           MemberChooser chooser = new MemberChooser(fields, false, false, myProject);
-          chooser.setTitle(fields.length > 0 ?  "Select Field" : "Class has no fields");
+          chooser.setTitle(DebuggerBundle.message("add.field.breakpoint.dialog.field.chooser.title", fields.length));
           chooser.setCopyJavadocVisible(false);
           chooser.show();
           Object[] selectedElements = chooser.getSelectedElements();

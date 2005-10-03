@@ -7,6 +7,7 @@ package com.intellij.execution.remote;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
@@ -33,11 +34,11 @@ public class RemoteConfigurationType implements ConfigurationType {
   }
 
   public String getDisplayName() {
-    return "Remote";
+    return ExecutionBundle.message("remote.debug.configuration.display.name");
   }
 
   public String getConfigurationTypeDescription() {
-    return "Remote debug configuration";
+    return ExecutionBundle.message("remote.debug.configuration.description");
   }
 
   public Icon getIcon() {
@@ -49,7 +50,7 @@ public class RemoteConfigurationType implements ConfigurationType {
   }
 
   public String getComponentName() {
-    return "Remote";
+    return ExecutionBundle.message("remote.debug.configuration.display.name");
   }
 
   public static RemoteConfigurationType getInstance() {

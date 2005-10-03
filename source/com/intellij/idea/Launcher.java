@@ -10,6 +10,7 @@ import java.io.*;
  * To change this template use File | Settings | File Templates.
  */
 public class Launcher {
+    @SuppressWarnings({"HardCodedStringLiteral"})
     public static void main(String[] args) throws InterruptedException {
         String javaVmExecutablePath = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";
         String classpath = System.getProperty("java.class.path");

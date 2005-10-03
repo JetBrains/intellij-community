@@ -6,6 +6,7 @@ package com.intellij.compiler.classParsing;
 
 import com.intellij.compiler.SymbolTable;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.util.cls.BytePointer;
 import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.cls.ClsUtil;
@@ -14,6 +15,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.jetbrains.annotations.NonNls;
 
 public class ClassFileReader {
   private File myFile;
@@ -31,6 +34,7 @@ public class ClassFileReader {
   private final SymbolTable mySymbolTable;
   private AnnotationConstantValue[] myRuntimeVisibleAnnotations;
   private AnnotationConstantValue[] myRuntimeInvisibleAnnotations;
+  @NonNls private static final String CONSTRUCTOR_NAME = "<init>";
 
   public ClassFileReader(File file, SymbolTable symbolTable) throws ClsFormatException {
     mySymbolTable = symbolTable;
@@ -91,9 +95,10 @@ public class ClassFileReader {
       if (name.indexOf('$') < 0 && name.indexOf('<') < 0) { // skip synthetic methods
         myMethods.add(method);
       }
-      else if ("<init>".equals(name)) { // store constructors
-        myMethods.add(method);
-      }
+      else //noinspection HardCodedStringLiteral
+        if (CONSTRUCTOR_NAME.equals(name)) { // store constructors
+          myMethods.add(method);
+        }
     }
 
     final ClsAttributeTable attributeTable = readAttributes(ptr);
@@ -140,7 +145,7 @@ public class ClassFileReader {
         attributeTable.genericSignature != null? mySymbolTable.getId(attributeTable.genericSignature) : -1,
         flags,
         intExceptions,
-        "<init>".equals(name),
+        CONSTRUCTOR_NAME.equals(name),
         attributeTable.runtimeVisibleAnnotations,
         attributeTable.runtimeInvisibleAnnotations,
         attributeTable.runtimeVisibleParameterAnnotations,
@@ -325,14 +330,14 @@ public class ClassFileReader {
     ptr.offset = getOffsetInConstantPool(memberNameIndex);
     String memberName = ClsUtil.readUtf8Info(ptr);
 
-    if ((memberName.indexOf('$') >= 0 || memberName.indexOf('<') >= 0) && !"<init>".equals(memberName)) { // skip refs to synthetic members
+    if ((memberName.indexOf('$') >= 0 || memberName.indexOf('<') >= 0) && !CONSTRUCTOR_NAME.equals(memberName)) { // skip refs to synthetic members
       return null;
     }
 
     ptr.offset = getOffsetInConstantPool(descriptorIndex);
     String descriptor = ClsUtil.readUtf8Info(ptr);
 
-    MemberInfo info = ClsUtil.CONSTANT_Fieldref == tag? (MemberInfo)new FieldInfo(mySymbolTable.getId(memberName), mySymbolTable.getId(descriptor)) : (MemberInfo)new MethodInfo(mySymbolTable.getId(memberName), mySymbolTable.getId(descriptor), "<init>".equals(memberName));
+    MemberInfo info = ClsUtil.CONSTANT_Fieldref == tag? (MemberInfo)new FieldInfo(mySymbolTable.getId(memberName), mySymbolTable.getId(descriptor)) : (MemberInfo)new MethodInfo(mySymbolTable.getId(memberName), mySymbolTable.getId(descriptor), CONSTRUCTOR_NAME.equals(memberName));
     return new MemberReferenceInfo(mySymbolTable.getId(className), info);
   }
 
@@ -356,7 +361,7 @@ public class ClassFileReader {
     if (myData == null) {
       try{
         if (myFile.isDirectory()) {
-          throw new IOException("Cannot read from file " + myFile.getPath() + ".");
+          throw new IOException(CompilerBundle.message("class.parsing.error.cannot.read.file", myFile.getPath()));
         }
         myData = FileUtil.loadFileBytes(myFile);
       }
@@ -401,12 +406,13 @@ public class ClassFileReader {
   private String readClassInfo(BytePointer ptr) throws ClsFormatException{
     final int tag = ClsUtil.readU1(ptr);
     if (tag != ClsUtil.CONSTANT_Class){
-      throw new ClsFormatException("Wrong record tag: " + tag + "; expected: " + ClsUtil.CONSTANT_Class);
+      throw new ClsFormatException(CompilerBundle.message("class.parsing.error.wrong.record.tag.expected.another", tag, ClsUtil.CONSTANT_Class));
     }
     int index = ClsUtil.readU2(ptr);
     return ClsUtil.readUtf8Info(new BytePointer(ptr.bytes, getOffsetInConstantPool(index)), '/', '.');
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private ClsAttributeTable readAttributes(BytePointer ptr) throws ClsFormatException {
     int count = ClsUtil.readU2(ptr); // attributeCount
     final ClsAttributeTable attributes = new ClsAttributeTable();
@@ -602,7 +608,8 @@ public class ClassFileReader {
       ptr.offset -= 1; // rollback
       return readClassInfo(ptr);
     }
-    throw new ClsFormatException("Incorrect tag: " + tag + " expected either ClsUtil.CONSTANT_Utf8(" + ClsUtil.CONSTANT_Utf8 + ") or ClsUtil.CONSTANT_Class(" + ClsUtil.CONSTANT_Class + ")");
+    //noinspection HardCodedStringLiteral
+    throw new ClsFormatException(CompilerBundle.message("class.parsing.error.wrong.record.tag.expected.another", tag, "CONSTANT_Utf8(" + ClsUtil.CONSTANT_Utf8 + ") / CONSTANT_Class(" + ClsUtil.CONSTANT_Class + ")"));
   }
 
   private ConstantValue readAnnotationMemberValue(BytePointer ptr) throws ClsFormatException {
@@ -635,7 +642,7 @@ public class ClassFileReader {
         BytePointer p = new BytePointer(ptr.bytes, getOffsetInConstantPool(classInfoIndex));
         final int recordTag = ClsUtil.readU1(p);
         if (recordTag != ClsUtil.CONSTANT_Utf8) {
-          throw new ClsFormatException("Wrong record tag: " + recordTag + "; expected: " + ClsUtil.CONSTANT_Utf8);
+          throw new ClsFormatException(CompilerBundle.message("class.parsing.error.wrong.record.tag.expected.another", recordTag, ClsUtil.CONSTANT_Utf8));
         }
         p.offset += 2; //Skip length
         final String className = ClsUtil.getTypeText(p.bytes, p.offset);
@@ -652,7 +659,7 @@ public class ClassFileReader {
         }
         return new ConstantValueArray(values);
       }
-      default : throw new ClsFormatException("Wrong tag for annotation member value: " + tag);
+      default : throw new ClsFormatException(CompilerBundle.message("class.parsing.error.wrong.tag.annotation.member.value", tag));
     }
   }
 

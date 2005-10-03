@@ -13,9 +13,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 
 public class CastConstructorParametersFix {
-  public static void registerCastActions(PsiJavaCodeReferenceElement ctrRef, PsiExpressionList list, HighlightInfo highlightInfo) {
+  public static void registerCastActions(PsiJavaCodeReferenceElement ctrRef, PsiConstructorCall constructorCall, HighlightInfo highlightInfo) {
     if (ctrRef == null) return;
-    JavaResolveResult resolved = ((PsiJavaReference) ctrRef.getReference()).advancedResolve(false);
+    JavaResolveResult resolved = ctrRef.advancedResolve(false);
     PsiClass aClass = (PsiClass) resolved.getElement();
     if (aClass == null) return;
     PsiMethod[] methods = aClass.getConstructors();
@@ -23,6 +23,6 @@ public class CastConstructorParametersFix {
     for (int i = 0; i < candidates.length; i++) {
       candidates[i] = new CandidateInfo(methods[i], resolved.getSubstitutor());
     }
-    CastMethodParametersFix.registerCastActions(candidates, list, ctrRef, highlightInfo);
+    CastMethodParametersFix.registerCastActions(candidates, constructorCall, ctrRef, highlightInfo);
   }
 }

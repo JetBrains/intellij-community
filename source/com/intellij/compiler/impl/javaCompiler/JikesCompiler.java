@@ -6,6 +6,7 @@ import com.intellij.compiler.OutputParser;
 import com.intellij.compiler.options.CompilerConfigurable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
@@ -36,13 +37,11 @@ class JikesCompiler implements BackendCompiler {
     if (compilerPath == null) {
       Messages.showMessageDialog(
         myProject,
-        "Cannot start Jikes compiler.\n" +
-        "The path to compiler executable is not configured",
-        "Error",
+        CompilerBundle.message("jikes.error.path.to.compiler.unspecified"), CompilerBundle.message("compiler.jikes.name"),
         Messages.getErrorIcon()
       );
       openConfigurationDialog();
-      compilerPath = this.getCompilerPath(); // update path
+      compilerPath = getCompilerPath(); // update path
       if (compilerPath == null) {
         return false;
       }
@@ -52,13 +51,12 @@ class JikesCompiler implements BackendCompiler {
     if (!file.exists()) {
       Messages.showMessageDialog(
         myProject,
-        "Cannot start Jikes compiler.\n" +
-        "The file " + compilerPath + " not found.",
-        "Error",
+        CompilerBundle.message("jikes.error.path.to.compiler.missing", compilerPath),
+        CompilerBundle.message("compiler.jikes.name"),
         Messages.getErrorIcon()
       );
       openConfigurationDialog();
-      compilerPath = this.getCompilerPath(); // update path
+      compilerPath = getCompilerPath(); // update path
       if (compilerPath == null) {
         return false;
       }
@@ -100,34 +98,41 @@ class JikesCompiler implements BackendCompiler {
     if (ex[0] != null) {
       throw ex[0];
     }
-    String[] commands = (String[])commandLine.toArray(new String[commandLine.size()]);
-    return commands;
+    return (String[])commandLine.toArray(new String[commandLine.size()]);
   }
 
   private void _createStartupCommand(final ModuleChunk chunk, final ArrayList commandLine, final String outputPath) throws IOException {
 
+    //noinspection HardCodedStringLiteral
     myTempFile = File.createTempFile("jikes", ".tmp");
     myTempFile.deleteOnExit();
 
     final VirtualFile[] files = chunk.getFilesToCompile();
     PrintWriter writer = new PrintWriter(new FileWriter(myTempFile));
-    for (int i = 0; i < files.length; i++) {
-      writer.println(files[i].getPath());
+    try {
+      for (int i = 0; i < files.length; i++) {
+        writer.println(files[i].getPath());
+      }
     }
-    writer.close();
+    finally {
+      writer.close();
+    }
 
     String compilerPath = getCompilerPath();
     LOG.assertTrue(compilerPath != null, "No path to compiler configured");
 
     commandLine.add(compilerPath);
 
+    //noinspection HardCodedStringLiteral
     commandLine.add("-verbose");
+    //noinspection HardCodedStringLiteral
     commandLine.add("-classpath");
 
     // must include output path to classpath, otherwise javac will compile all dependent files no matter were they compiled before or not
     commandLine.add(chunk.getCompilationBootClasspath() + File.pathSeparator + chunk.getCompilationClasspath());
 
     setupSourceVersion(chunk, commandLine);
+    //noinspection HardCodedStringLiteral
     commandLine.add("-sourcepath");
     String sourcePath = chunk.getSourcePath();
     if (sourcePath.length() > 0) {
@@ -137,6 +142,7 @@ class JikesCompiler implements BackendCompiler {
       commandLine.add("\"\"");
     }
 
+    //noinspection HardCodedStringLiteral
     commandLine.add("-d");
     LOG.assertTrue(outputPath != null);
     commandLine.add(outputPath.replace('/', File.separatorChar));
@@ -149,6 +155,7 @@ class JikesCompiler implements BackendCompiler {
     commandLine.add("@" + myTempFile.getAbsolutePath());
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private void setupSourceVersion(final ModuleChunk chunk, final ArrayList commandLine) {
     final ProjectJdk jdk = chunk.getJdk();
     final String versionString = jdk.getVersionString();

@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.template.TemplateManager;
@@ -38,8 +39,8 @@ public class ListTemplatesHandler implements CodeInsightActionHandler{
 
     if (items.length == 0){
       String text = prefix.length() == 0
-        ? "No templates defined in this context"
-        : "No templates starting with '" + prefix + "' defined in this context";
+        ? CodeInsightBundle.message("templates.no.defined")
+        : CodeInsightBundle.message("templates.no.defined.with.prefix", prefix);
       HintManager.getInstance().showErrorHint(editor, text);
       return;
     }

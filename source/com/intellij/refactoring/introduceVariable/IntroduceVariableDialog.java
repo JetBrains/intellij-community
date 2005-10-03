@@ -16,6 +16,7 @@ import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringSettings;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.*;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.StateRestoringCheckBox;
@@ -43,6 +44,7 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
   private boolean myCbFinalState;
   private TypeSelector myTypeSelector;
   private NameSuggestionsManager myNameSuggestionsManager;
+  private static final String REFACTORING_NAME = RefactoringBundle.message("introduce.variable.title");
 
   public IntroduceVariableDialog(Project project,
                                  PsiExpression expression, int occurrencesCount, boolean anyLValueOccurences,
@@ -57,7 +59,7 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
     myTypeSelectorManager = typeSelectorManager;
     myValidator = validator;
 
-    setTitle("Introduce Variable");
+    setTitle(REFACTORING_NAME);
     init();
   }
 
@@ -118,7 +120,7 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
     gbConstraints.weighty = 0;
     gbConstraints.gridx = 0;
     gbConstraints.gridy = 0;
-    JLabel type = new JLabel("Variable of type: ");
+    JLabel type = new JLabel(RefactoringBundle.message("variable.of.type"));
     panel.add(type, gbConstraints);
 
     gbConstraints.gridx++;
@@ -130,7 +132,8 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
     gbConstraints.weighty = 0;
     gbConstraints.gridx = 0;
     gbConstraints.gridy = 1;
-    JLabel namePrompt = new JLabel("Name: ");
+    JLabel namePrompt = new JLabel(RefactoringBundle.message("name.prompt"));
+    namePrompt.setLabelFor(myNameField.getComponent());
     panel.add(namePrompt, gbConstraints);
 
     gbConstraints.gridwidth = 1;
@@ -151,7 +154,7 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
                 return new Pair<LookupItemPreferencePolicy, Set<LookupItem>> (policy, set);
               }
             }, myProject);
-    myNameSuggestionsManager.setMnemonics(type, namePrompt);
+    myNameSuggestionsManager.setLabelsFor(type, namePrompt);
 
     return panel;
   }
@@ -168,9 +171,8 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
     gbConstraints.insets = new Insets(0, 0, 0, 0);
 
     if (myOccurrencesCount > 1) {
-      myCbReplaceAll = new NonFocusableCheckBox("Replace all occurrences of expression (" + myOccurrencesCount + " occurrences)");
-      myCbReplaceAll.setMnemonic('A');
-      myCbReplaceAll.setDisplayedMnemonicIndex("Replace ".length());
+      myCbReplaceAll = new NonFocusableCheckBox();
+      myCbReplaceAll.setText(RefactoringBundle.message("replace.all.occurences", myOccurrencesCount));
 
       panel.add(myCbReplaceAll, gbConstraints);
       myCbReplaceAll.addItemListener(
@@ -182,16 +184,16 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
       );
 
       if (myAnyLValueOccurences) {
-        myCbReplaceWrite = new StateRestoringCheckBox("Replace write access occurrences");
-        myCbReplaceWrite.setMnemonic('l');
+        myCbReplaceWrite = new StateRestoringCheckBox();
+        myCbReplaceWrite.setText(RefactoringBundle.message("replace.write.access.occurrences"));
         gbConstraints.insets = new Insets(0, 8, 0, 0);
         gbConstraints.gridy++;
         panel.add(myCbReplaceWrite, gbConstraints);
       }
     }
 
-    myCbFinal = new NonFocusableCheckBox("Declare final");
-    myCbFinal.setMnemonic('f');
+    myCbFinal = new NonFocusableCheckBox();
+    myCbFinal.setText(RefactoringBundle.message("declare.final"));
     final Boolean createFinals = RefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS;
     myCbFinalState = createFinals == null ?
                      CodeStyleSettingsManager.getSettings(myProject).GENERATE_FINAL_LOCALS :

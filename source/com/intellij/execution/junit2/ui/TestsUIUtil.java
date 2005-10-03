@@ -18,11 +18,13 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 
+import org.jetbrains.annotations.NonNls;
+
 public class TestsUIUtil {
   public static final Color PASSED_COLOR = new Color(0, 128, 0);
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit2.ui.TestsUIUtil");
 
-  private static final String ICONS_ROOT = "/runConfigurations/";
+  @NonNls private static final String ICONS_ROOT = "/runConfigurations/";
 
   public static Object getData(final TestProxy testProxy, final String dataId, final JUnitRunningModel model) {
     final Project project = model.getProject();
@@ -54,8 +56,8 @@ public class TestsUIUtil {
     return null;
   }
 
-  public static Icon loadIcon(final String iconName) {
-    final String fullIconName = ICONS_ROOT + iconName +".png";
+  public static Icon loadIcon(@NonNls final String iconName) {
+    @NonNls final String fullIconName = ICONS_ROOT + iconName +".png";
     final Icon icon = IconLoader.getIcon(fullIconName);
     final Application application = ApplicationManager.getApplication();
     if (application == null || application.isUnitTestMode()) return new ImageIcon(new BufferedImage(1, 1, BufferedImage.TYPE_3BYTE_BGR));

@@ -11,6 +11,7 @@ import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.DebuggerExpressionTextField;
 import com.intellij.debugger.ui.tree.render.*;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
@@ -20,6 +21,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.ui.TableUtil;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.Table;
+import com.intellij.CommonBundle;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -32,6 +34,8 @@ import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Eugene Zhuravlev
@@ -55,8 +59,8 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable{
   private JLabel myExpandedLabel;
   private JPanel myMainPanel;
   private Table myTable;
-  private static final String EMPTY_PANEL_ID = "EMPTY";
-  private static final String DATA_PANEL_ID = "DATA";
+  private static final @NonNls String EMPTY_PANEL_ID = "EMPTY";
+  private static final @NonNls String DATA_PANEL_ID = "DATA";
   private JButton myAddButton;
   private JButton myRemoveButton;
   private JButton myUpButton;
@@ -87,7 +91,8 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable{
     final JPanel panel = new JPanel(new GridBagLayout());
     myClassNameField = new TextFieldWithBrowseButton(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        PsiClass psiClass = DebuggerUtils.getInstance().chooseClassDialog("Renderer reference type", myProject);
+        PsiClass psiClass = DebuggerUtils.getInstance().chooseClassDialog(
+          DebuggerBundle.message("title.compound.renderer.configurable.choose.renderer.reference.type"), myProject);
         if(psiClass != null) {
           myClassNameField.setText(psiClass.getQualifiedName());
         }
@@ -100,15 +105,15 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable{
       }
     });
 
-    myRbDefaultLabel = new JRadioButton("Use default renderer");
-    myRbExpressionLabel = new JRadioButton("Use following expression:");
+    myRbDefaultLabel = new JRadioButton(DebuggerBundle.message("label.compound.renderer.configurable.use.default.renderer"));
+    myRbExpressionLabel = new JRadioButton(DebuggerBundle.message("label.compound.renderer.configurable.use.expression"));
     final ButtonGroup labelButtonsGroup = new ButtonGroup();
     labelButtonsGroup.add(myRbDefaultLabel);
     labelButtonsGroup.add(myRbExpressionLabel);
 
-    myRbDefaultChildrenRenderer = new JRadioButton("Use default renderer");
-    myRbExpressionChildrenRenderer = new JRadioButton("Use following expression:");
-    myRbListChildrenRenderer = new JRadioButton("Use list of expressions:");
+    myRbDefaultChildrenRenderer = new JRadioButton(DebuggerBundle.message("label.compound.renderer.configurable.use.default.renderer"));
+    myRbExpressionChildrenRenderer = new JRadioButton(DebuggerBundle.message("label.compound.renderer.configurable.use.expression"));
+    myRbListChildrenRenderer = new JRadioButton(DebuggerBundle.message("label.compound.renderer.configurable.use.expression.list"));
     final ButtonGroup childrenButtonGroup = new ButtonGroup();
     childrenButtonGroup.add(myRbDefaultChildrenRenderer);
     childrenButtonGroup.add(myRbExpressionChildrenRenderer);
@@ -128,19 +133,19 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable{
     myRbListChildrenRenderer.addItemListener(updateListener);
     myRbExpressionChildrenRenderer.addItemListener(updateListener);
 
-    panel.add(new JLabel("Apply renderer to objects of type (fully-qualified name):"), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+    panel.add(new JLabel(DebuggerBundle.message("label.compound.renderer.configurable.apply.to")), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     panel.add(myClassNameField, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(4, 0, 0, 0), 0, 0));
 
-    panel.add(new JLabel("When rendering the node"), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(20, 0, 0, 0), 0, 0));
+    panel.add(new JLabel(DebuggerBundle.message("label.compound.renderer.configurable.when.rendering")), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(20, 0, 0, 0), 0, 0));
     panel.add(myRbDefaultLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 10, 0, 0), 0, 0));
     panel.add(myRbExpressionLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 10, 0, 0), 0, 0));
     panel.add(myLabelEditor, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 30, 0, 0), 0, 0));
 
-    panel.add(new JLabel("When expanding the node"), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(20, 0, 0, 0), 0, 0));
+    panel.add(new JLabel(DebuggerBundle.message("label.compound.renderer.configurable.when.expanding")), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(20, 0, 0, 0), 0, 0));
     panel.add(myRbDefaultChildrenRenderer, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 10, 0, 0), 0, 0));
     panel.add(myRbExpressionChildrenRenderer, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 10, 0, 0), 0, 0));
     panel.add(myChildrenEditor, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 30, 0, 0), 0, 0));
-    myExpandedLabel = new JLabel("Test if the node can be expanded (optional):");
+    myExpandedLabel = new JLabel(DebuggerBundle.message("label.compound.renderer.configurable.test.can.expand"));
     panel.add(myExpandedLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(4, 30, 0, 0), 0, 0));
     panel.add(myChildrenExpandedEditor, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 30, 0, 0), 0, 0));
     panel.add(myRbListChildrenRenderer, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 10, 0, 0), 0, 0));
@@ -194,14 +199,10 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable{
       }
     });
 
-    myAddButton = new JButton("Add");
-    myAddButton.setMnemonic('A');
-    myRemoveButton = new JButton("Remove");
-    myRemoveButton.setMnemonic('R');
-    myUpButton = new JButton("Move Up");
-    myUpButton.setMnemonic('U');
-    myDownButton = new JButton("Move Down");
-    myDownButton.setMnemonic('D');
+    myAddButton = new JButton(DebuggerBundle.message("button.add"));
+    myRemoveButton = new JButton(DebuggerBundle.message("button.remove"));
+    myUpButton = new JButton(DebuggerBundle.message("button.move.up"));
+    myDownButton = new JButton(DebuggerBundle.message("button.move.down"));
 
     myAddButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -427,8 +428,8 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable{
 
     public String getColumnName(int columnIndex) {
       switch (columnIndex) {
-          case NAME_TABLE_COLUMN: return "Name";
-          case EXPRESSION_TABLE_COLUMN: return "Expression";
+          case NAME_TABLE_COLUMN: return DebuggerBundle.message("label.compound.renderer.configurable.table.header.name");
+          case EXPRESSION_TABLE_COLUMN: return DebuggerBundle.message("label.compound.renderer.configurable.table.header.expression");
           default: return "";
       }
     }

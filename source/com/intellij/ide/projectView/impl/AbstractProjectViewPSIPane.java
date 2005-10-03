@@ -31,6 +31,7 @@ import com.intellij.ui.TreeToolTipHandler;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.ui.Tree;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 
 import javax.swing.*;
@@ -62,7 +63,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
 
   protected final void initPSITree() {
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
-    myTree.putClientProperty("JTree.lineStyle", "Angled");
+    UIUtil.setLineStyleAngled(myTree);
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
     myTree.expandPath(new TreePath(myTree.getModel().getRoot()));
@@ -293,9 +294,10 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     DataFlavor[] flavors;
     try {
       final Class<AbstractTreeNode> aClass = AbstractTreeNode.class;
+      //noinspection HardCodedStringLiteral
       flavors = new DataFlavor[]{new DataFlavor(
                       DataFlavor.javaJVMLocalObjectMimeType + ";class=" + aClass.getName(), FavoritesTreeViewPanel.ABSTRACT_TREE_NODE_TRANSFERABLE,
-                                                                                            aClass.getClassLoader()
+                      aClass.getClassLoader()
                     )};
     }
     catch (ClassNotFoundException e) {

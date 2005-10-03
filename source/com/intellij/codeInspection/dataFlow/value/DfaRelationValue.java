@@ -10,6 +10,7 @@ package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 
@@ -31,7 +32,7 @@ public class DfaRelationValue extends DfaValue {
     }
 
     @Nullable
-    public DfaRelationValue create(DfaValue dfaLeft, DfaValue dfaRight, String relation, boolean negated) {
+    public DfaRelationValue create(DfaValue dfaLeft, DfaValue dfaRight, @NonNls String relation, boolean negated) {
       if (dfaRight instanceof DfaTypeValue && !"instanceof".equals(relation)) return null;
 
       if (dfaLeft instanceof DfaVariableValue || dfaRight instanceof DfaVariableValue) {
@@ -146,7 +147,7 @@ public class DfaRelationValue extends DfaValue {
            rel.myIsNegated == myIsNegated;
   }
 
-  public String toString() {
+  @NonNls public String toString() {
     return (isNegated() ? "not " : "") + myLeftOperand + myRelation + myRightOperand;
   }
 }

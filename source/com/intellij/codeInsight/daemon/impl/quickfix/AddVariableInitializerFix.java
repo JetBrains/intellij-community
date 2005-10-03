@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -19,11 +20,11 @@ public class AddVariableInitializerFix implements IntentionAction {
   }
 
   public String getText() {
-    return "Initialize variable '"+myVariable.getName()+"'";
+    return CodeInsightBundle.message("quickfix.add.variable.text", myVariable.getName());
   }
 
   public String getFamilyName() {
-    return "Initialize variable";
+    return CodeInsightBundle.message("quickfix.add.variable.family.name");
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {

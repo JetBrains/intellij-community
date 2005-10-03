@@ -1,6 +1,8 @@
 package com.intellij.codeInspection.emptyMethod;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
@@ -11,9 +13,11 @@ import com.intellij.codeInspection.reference.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiDocCommentOwner;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -24,9 +28,9 @@ import java.util.List;
  * @author max
  */
 public class EmptyMethodInspection extends DescriptorProviderInspection {
-  public static final String DISPLAY_NAME = "Empty method";
+  public static final String DISPLAY_NAME = InspectionsBundle.message("inspection.empty.method.display.name");
   private QuickFix myQuickFix;
-  public static final String SHORT_NAME = "EmptyMethod";
+  @NonNls public static final String SHORT_NAME = "EmptyMethod";
 
   public void runInspection(AnalysisScope scope) {
     getRefManager().findAllDeclarations();
@@ -35,6 +39,7 @@ public class EmptyMethodInspection extends DescriptorProviderInspection {
       public void accept(RefElement refElement) {
         if (refElement instanceof RefMethod) {
           RefMethod refMethod = (RefMethod)refElement;
+          if (!InspectionManagerEx.isToCheckMember((PsiDocCommentOwner) refMethod.getElement(), EmptyMethodInspection.this.getShortName())) return;
           ProblemDescriptor[] descriptors = checkMethod(refMethod);
           if (descriptors != null) {
             addProblemElement(refElement, descriptors);
@@ -58,26 +63,26 @@ public class EmptyMethodInspection extends DescriptorProviderInspection {
     if (refMethod.isOnlyCallsSuper()) {
       RefMethod refSuper = findSuperWithBody(refMethod);
       if (refSuper == null || RefUtil.compareAccess(refMethod.getAccessModifier(), refSuper.getAccessModifier()) <= 0) {
-        message = "Method only calls its super.";
+        message = InspectionsBundle.message("inspection.empty.method.problem.descriptor");
       }
     }
     else if (refMethod.hasBody() && hasEmptySuperImplementation(refMethod)) {
-      message = "Empty method overrides empty method.";
+      message = InspectionsBundle.message("inspection.empty.method.problem.descriptor1");
     }
     else if (areAllImplementationsEmpty(refMethod)) {
       if (refMethod.hasBody()) {
         if (refMethod.getDerivedMethods().size() == 0) {
           if (refMethod.getSuperMethods().size() == 0) {
-            message = "The method is empty.";
+            message = InspectionsBundle.message("inspection.empty.method.problem.descriptor2");
           }
         }
         else {
-          message = "The method and all it's deriveables are empty.";
+          message = InspectionsBundle.message("inspection.empty.method.problem.descriptor3");
         }
       }
       else {
         if (refMethod.getDerivedMethods().size() > 0) {
-          message = "All implementations of this method are empty.";
+          message = InspectionsBundle.message("inspection.empty.method.problem.descriptor4");
         }
       }
     }
@@ -150,7 +155,7 @@ public class EmptyMethodInspection extends DescriptorProviderInspection {
   }
 
   public String getGroupDisplayName() {
-    return "Declaration Redundancy";
+    return GroupNames.DECLARATION_REDUNDANCY;
   }
 
   public String getShortName() {
@@ -169,7 +174,7 @@ public class EmptyMethodInspection extends DescriptorProviderInspection {
 
   private class QuickFix implements LocalQuickFix {
     public String getName() {
-      return "Delete Unnecessary Method(s)";
+      return InspectionsBundle.message("inspection.empty.method.delete.quickfix");
     }
 
     public void applyFix(Project project, ProblemDescriptor descriptor) {

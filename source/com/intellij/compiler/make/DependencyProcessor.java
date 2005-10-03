@@ -20,6 +20,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.cls.ClsUtil;
 import gnu.trove.TIntHashSet;
 import org.apache.bcel.classfile.Utility;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 
@@ -147,27 +148,27 @@ public class DependencyProcessor {
 
     if (myIsAnnotation) {
       if (hasMembersWithoutDefaults(myAddedMembers)) {
-        markAll(myBackDependencies, "; reason: added annotation type member without default " + myDependencyCache.resolve(myQName));
+        markAll(myBackDependencies, LOG.isDebugEnabled()? "; reason: added annotation type member without default " + myDependencyCache.resolve(myQName) : "");
         return;
       }
       if (myRemovedMembers.size() > 0) {
-        markAll(myBackDependencies, "; reason: removed annotation type member " + myDependencyCache.resolve(myQName));
+        markAll(myBackDependencies, LOG.isDebugEnabled()? "; reason: removed annotation type member " + myDependencyCache.resolve(myQName) : "");
         return;
       }
       if (myChangedMembers.size() > 0) { // for annotations "changed" means return type changed
-        markAll(myBackDependencies, "; reason: changed annotation member's type " + myDependencyCache.resolve(myQName));
+        markAll(myBackDependencies, LOG.isDebugEnabled()? "; reason: changed annotation member's type " + myDependencyCache.resolve(myQName) : "");
         return;
       }
       if (wereAnnotationDefaultsRemoved()) {
-        markAll(myBackDependencies, "; reason: removed annotation member's default value " + myDependencyCache.resolve(myQName));
+        markAll(myBackDependencies, LOG.isDebugEnabled()? "; reason: removed annotation member's default value " + myDependencyCache.resolve(myQName): "");
         return;
       }
       if (myWereAnnotationTargetsRemoved) {
-        markAll(myBackDependencies, "; reason: removed annotation's targets " + myDependencyCache.resolve(myQName));
+        markAll(myBackDependencies, LOG.isDebugEnabled()? "; reason: removed annotation's targets " + myDependencyCache.resolve(myQName) : "");
         return;
       }
       if (myRetentionPolicyChanged) {
-        markAll(myBackDependencies, "; reason: retention policy changed for " + myDependencyCache.resolve(myQName));
+        markAll(myBackDependencies, LOG.isDebugEnabled()? "; reason: retention policy changed for " + myDependencyCache.resolve(myQName) : "");
         return;
       }
     }
@@ -178,10 +179,10 @@ public class DependencyProcessor {
       // superclass changed == old removed and possibly new added
       // if anything (class or interface) in the superlist was removed, should recompile all subclasses (both direct and indirect)
       // and all back-dependencies of this class and its subclasses
-      markAll(myBackDependencies, "; reason: deleted items from the superlist or changed superlist generic signature of " + myDependencyCache.resolve(myQName));
+      markAll(myBackDependencies, LOG.isDebugEnabled()? "; reason: deleted items from the superlist or changed superlist generic signature of " + myDependencyCache.resolve(myQName) : "");
       cacheNavigator.walkSubClasses(myQName, new ClassInfoProcessor() {
         public boolean process(int classQName) throws CacheCorruptedException {
-          markAll(oldCache.getBackDependencies(classQName), "; reason: deleted items from the superlist or changed superlist generic signature of " + myDependencyCache.resolve(myQName));
+          markAll(oldCache.getBackDependencies(classQName), LOG.isDebugEnabled()? "; reason: deleted items from the superlist or changed superlist generic signature of " + myDependencyCache.resolve(myQName) : "");
           return true;
         }
       });
@@ -192,10 +193,10 @@ public class DependencyProcessor {
       (CacheUtils.isInterface(oldCache, myQName) && !CacheUtils.isInterface(newCache, myQName)) ||
       (!CacheUtils.isInterface(oldCache, myQName) && CacheUtils.isInterface(newCache, myQName));
     if (isKindChanged) {
-      markAll(myBackDependencies, "; reason: class kind changed (class/interface) " + myDependencyCache.resolve(myQName));
+      markAll(myBackDependencies, LOG.isDebugEnabled()? "; reason: class kind changed (class/interface) " + myDependencyCache.resolve(myQName) : "");
       cacheNavigator.walkSubClasses(myQName, new ClassInfoProcessor() {
         public boolean process(int classQName) throws CacheCorruptedException {
-          markAll(oldCache.getBackDependencies(classQName), "; reason: class kind changed (class/interface) " + myDependencyCache.resolve(myQName));
+          markAll(oldCache.getBackDependencies(classQName), LOG.isDebugEnabled()? "; reason: class kind changed (class/interface) " + myDependencyCache.resolve(myQName) : "");
           return true;
         }
       });
@@ -204,7 +205,7 @@ public class DependencyProcessor {
 
     boolean becameFinal = !CacheUtils.isFinal(oldCache, myQName) && CacheUtils.isFinal(newCache, myQName);
     if (becameFinal) {
-      markAll(myBackDependencies, "; reason: class became final: " + myDependencyCache.resolve(myQName));
+      markAll(myBackDependencies, LOG.isDebugEnabled()? "; reason: class became final: " + myDependencyCache.resolve(myQName) : "");
     }
     else {
       boolean becameAbstract = !CacheUtils.isAbstract(oldCache, myQName) && CacheUtils.isAbstract(newCache, myQName);
@@ -338,8 +339,7 @@ public class DependencyProcessor {
     if (oldAnnotationTargets == newAnnotationTargets) {
       return false;
     }
-    for (int idx = 0; idx < ALL_TARGETS.length; idx++) {
-      final int target = ALL_TARGETS[idx];
+    for (final int target : ALL_TARGETS) {
       if ((oldAnnotationTargets & target) != 0 && (newAnnotationTargets & target) == 0) {
         return true;
       }
@@ -360,12 +360,11 @@ public class DependencyProcessor {
     return false;
   }
 
-  private void markAll(Dependency[] backDependencies, String reason) throws CacheCorruptedException {
-    for (int idx = 0; idx < backDependencies.length; idx++) {
-      Dependency backDependency = backDependencies[idx];
+  private void markAll(Dependency[] backDependencies, @NonNls String reason) throws CacheCorruptedException {
+    for (Dependency backDependency : backDependencies) {
       if (myDependencyCache.markTargetClassInfo(backDependency)) {
         if (LOG.isDebugEnabled()) {
-          LOG.debug("Mark dependent class "+myDependencyCache.resolve(backDependency.getClassQualifiedName()) + reason);
+          LOG.debug("Mark dependent class " + myDependencyCache.resolve(backDependency.getClassQualifiedName()) + reason);
         }
       }
     }
@@ -787,7 +786,8 @@ public class DependencyProcessor {
     return found[0];
   }
 
-  private String getMethodText(MethodInfo methodInfo) throws CacheCorruptedException {
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  private @NonNls String getMethodText(MethodInfo methodInfo) throws CacheCorruptedException {
     final SymbolTable symbolTable = myDependencyCache.getSymbolTable();
     StringBuffer text = new StringBuffer(16);
     final String returnType = Utility.signatureToString(methodInfo.getReturnTypeDescriptor(symbolTable));
@@ -810,11 +810,9 @@ public class DependencyProcessor {
   }
 
   private static boolean wereInterfacesRemoved(int[] oldInterfaces, int[] newInterfaces) {
-    for (int idx = 0; idx < oldInterfaces.length; idx++) {
-      int oldInterface = oldInterfaces[idx];
+    for (int oldInterface : oldInterfaces) {
       boolean found = false;
-      for (int jdx = 0; jdx < newInterfaces.length; jdx++) {
-        int newInterface = newInterfaces[jdx];
+      for (int newInterface : newInterfaces) {
         found = (oldInterface == newInterface);
         if (found) {
           break;
@@ -829,14 +827,13 @@ public class DependencyProcessor {
 
   private void addAddedMembers(int qName, Cache oldCache, Cache newCache, Collection members) throws CacheCorruptedException {
     int[] newFields = newCache.getFieldIds(newCache.getClassDeclarationId(qName));
-    for (int idx = 0; idx < newFields.length; idx++) {
-      int newField = newFields[idx];
+    for (int newField : newFields) {
       if (CacheUtils.findFieldByName(oldCache, oldCache.getClassDeclarationId(qName), newCache.getFieldName(newField)) == Cache.UNKNOWN) {
         members.add(newCache.createFieldInfo(newField));
       }
     }
     int[] newMethods = newCache.getMethodIds(newCache.getClassDeclarationId(qName));
-    SymbolTable symbolTable = myDependencyCache.getSymbolTable();
+    final SymbolTable symbolTable = myDependencyCache.getSymbolTable();
     for (int idx = 0; idx < newMethods.length; idx++) {
       int newMethod = newMethods[idx];
       final int name = newCache.getMethodName(newMethod);
@@ -886,7 +883,7 @@ public class DependencyProcessor {
   }
 
   private boolean hasEquivalentMethod(Collection members, MethodInfo modelMethod) throws CacheCorruptedException {
-    String[] modelSignature = modelMethod.getParameterDescriptors(myDependencyCache.getSymbolTable());
+    final String[] modelSignature = modelMethod.getParameterDescriptors(myDependencyCache.getSymbolTable());
     for (Iterator it = members.iterator(); it.hasNext();) {
       MemberInfo member = (MemberInfo)it.next();
 

@@ -1,10 +1,12 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiCodeBlock;
 import com.intellij.util.IncorrectOperationException;
 
 /**
@@ -18,11 +20,11 @@ public class DeleteMethodBodyFix implements IntentionAction {
   }
 
   public String getText() {
-    return "Delete Body";
+    return QuickFixBundle.message("delete.body.text");
   }
 
   public String getFamilyName() {
-    return "Delete Body";
+    return QuickFixBundle.message("delete.body.family");
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
@@ -30,7 +32,9 @@ public class DeleteMethodBodyFix implements IntentionAction {
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    myMethod.getBody().delete();
+    final PsiCodeBlock body = myMethod.getBody();
+    assert body != null;
+    body.delete();
   }
 
   public boolean startInWriteAction() {

@@ -44,7 +44,10 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.Tree;
+import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.usageView.UsageViewBundle;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -134,7 +137,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
         public void run() {
           close();
         }
-      }, UsageViewBundle.message("action.cancel"), 'C');
+      }, UsageViewBundle.message("usage.view.cancel.button"));
     }
   }
 
@@ -320,7 +323,15 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   public void rulesChanged() {
     final ArrayList<UsageState> states = new ArrayList<UsageState>();
     captureUsagesExpandState(new TreePath(myTree.getModel().getRoot()), states);
-    final Collection<Usage> allUsages = myUsageNodes.keySet();
+    final List<Usage> allUsages = new ArrayList<Usage>(myUsageNodes.keySet());
+    Collections.sort(allUsages, new Comparator<Usage>() {
+      public int compare(final Usage o1, final Usage o2) {
+        if (o1 instanceof Comparable && o2 instanceof Comparable) {
+          return ((Comparable) o1).compareTo((Comparable) o2);
+        }
+        return 0;
+      }
+    });
     reset();
     myBuilder.setGroupingRules(getActiveGroupingRules(myProject));
     myBuilder.setFilteringRules(getActiveFilteringRules(myProject));
@@ -668,17 +679,21 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     myTree.setSelectionPath(usagePath);
   }
 
+  public void addButtonToLowerPane(Runnable runnable, String text) {
+    int index = myButtonPanel.getComponentCount();
+
+    if (index > 0 && myPresentation.isShowCancelButton()) index--;
+
+    myButtonPanel.add(index, runnable, text);
+  }
+
   public void addButtonToLowerPane(final Runnable runnable, String text, char mnemonic) {
     int index = myButtonPanel.getComponentCount();
 
     if (index > 0 && myPresentation.isShowCancelButton()) index--;
 
-    myButtonPanel.add(
-      index,
-      runnable,
-      text,
-      mnemonic
-    );
+    JButton button = myButtonPanel.add(index, runnable, text);
+    button.setMnemonic(mnemonic);
   }
 
   public void addPerformOperationAction(final Runnable processRunnable,
@@ -687,51 +702,17 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
                                         String shortDescription,
                                         char mnemonic) {
 
-    addButtonToLowerPane(
-      new Runnable() {
-        public void run() {
-          checkReadonlyUsages();
-          PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-          if (cannotMakeString != null && myChangesDetected) {
-            if (canPerformReRun() && allTargetsAreValid()) {
-              int answer = Messages.showYesNoDialog(
-                myProject,
-                cannotMakeString + "\n" + UsageViewBundle.message("dialog.rerun.search"),
-                UsageViewBundle.message("dialog.title.error"),
-                Messages.getErrorIcon()
-              );
-              if (answer == 0) {
-                refreshUsages();
-              }
-            }
-            else {
-              Messages.showMessageDialog(
-                myProject,
-                cannotMakeString,
-                UsageViewBundle.message("dialog.title.error"),
-                Messages.getErrorIcon()
-              );
-              //todo[myakovlev] request focus to tree
-              //myUsageView.getTree().requestFocus();
-            }
-            return;
-          }
+    addButtonToLowerPane(new MyPerformOperationRunnable(cannotMakeString, processRunnable, commandName),
+                         shortDescription, mnemonic);
+  }
 
-          close();
+  public void addPerformOperationAction(final Runnable processRunnable,
+                                        final String commandName,
+                                        final String cannotMakeString,
+                                        String shortDescription) {
 
-          CommandProcessor.getInstance().executeCommand(
-              myProject, new Runnable() {
-              public void run() {
-                processRunnable.run();
-              }
-            },
-            commandName,
-            null
-          );
-
-        }
-
-      }, shortDescription, mnemonic);
+    addButtonToLowerPane(new MyPerformOperationRunnable(cannotMakeString, processRunnable, commandName),
+                         shortDescription);
   }
 
   private boolean allTargetsAreValid() {
@@ -1060,8 +1041,9 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       setLayout(new FlowLayout(FlowLayout.LEFT, 8, 0));
     }
 
-    public void add(int index, final Runnable runnable, String text, char mnemonic) {
-      final JButton button = new JButton(text);
+    public JButton add(int index, final Runnable runnable, String text) {
+      final JButton button = new JButton(UIUtil.replaceMnemonicAmpersand(text));
+      DialogUtil.registerMnemonic(button);
 
       button.setFocusable(false);
       button.addActionListener(new ActionListener() {
@@ -1070,7 +1052,6 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
                                      }
                                    });
 
-      button.setMnemonic(mnemonic);
 
       add(button, index);
 
@@ -1078,6 +1059,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       if (getParent() != null) {
         getParent().validate();
       }
+      return button;
     }
 
     void update(AnActionEvent e) {
@@ -1122,5 +1104,60 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
   public void setProgressIndicatorFactory(final Factory<ProgressIndicator> indicatorFactory) {
     myIndicatorFactory = indicatorFactory;
+  }
+
+  private class MyPerformOperationRunnable implements Runnable {
+    private final String myCannotMakeString;
+    private final Runnable myProcessRunnable;
+    private final String myCommandName;
+
+    public MyPerformOperationRunnable(final String cannotMakeString, final Runnable processRunnable, final String commandName) {
+      myCannotMakeString = cannotMakeString;
+      myProcessRunnable = processRunnable;
+      myCommandName = commandName;
+    }
+
+    public void run() {
+      checkReadonlyUsages();
+      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+      if (myCannotMakeString != null && myChangesDetected) {
+        if (canPerformReRun() && allTargetsAreValid()) {
+          int answer = Messages.showYesNoDialog(
+            myProject,
+            myCannotMakeString + "\n" + UsageViewBundle.message("dialog.rerun.search"),
+            UsageViewBundle.message("error.common.title"),
+            Messages.getErrorIcon()
+          );
+          if (answer == 0) {
+            refreshUsages();
+          }
+        }
+        else {
+          Messages.showMessageDialog(
+            myProject,
+            myCannotMakeString,
+            UsageViewBundle.message("error.common.title"),
+            Messages.getErrorIcon()
+          );
+          //todo[myakovlev] request focus to tree
+          //myUsageView.getTree().requestFocus();
+        }
+        return;
+      }
+
+      close();
+
+      CommandProcessor.getInstance().executeCommand(
+          myProject, new Runnable() {
+          public void run() {
+            myProcessRunnable.run();
+          }
+        },
+          myCommandName,
+          null
+      );
+
+    }
+
   }
 }

@@ -1,12 +1,12 @@
 package com.intellij.codeInsight.intention.impl;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.psi.JavaTokenType;
 
 /**
  *  @author dsl
@@ -16,11 +16,11 @@ public class MakeTypeGeneric implements IntentionAction {
   private PsiType myNewVariableType;
 
   public String getFamilyName() {
-    return "Make Type Generic";
+    return CodeInsightBundle.message("intention.make.type.generic.family");
   }
 
   public String getText() {
-    return "Change type of " + myVariable.getName() + " to " + myNewVariableType.getPresentableText();
+    return CodeInsightBundle.message("intention.make.type.generic.text", myVariable.getName(), myNewVariableType.getPresentableText());
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {

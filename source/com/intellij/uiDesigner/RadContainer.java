@@ -13,6 +13,7 @@ import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.editors.string.StringEditor;
 import com.intellij.uiDesigner.shared.BorderType;
 import com.intellij.uiDesigner.shared.XYLayoutManager;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -28,6 +29,7 @@ public class RadContainer extends RadComponent implements IContainer {
   /**
    * value: RadComponent[]
    */
+  @NonNls
   public static final String PROP_CHILDREN = "children";
   /**
    * Children components
@@ -126,9 +128,11 @@ public class RadContainer extends RadComponent implements IContainer {
    */
   public final void addComponent(final RadComponent component){
     if (component == null) {
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("component cannot be null");
     }
     if (myComponents.contains(component)) {
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("component is already added: " + component);
     }
 
@@ -144,7 +148,7 @@ public class RadContainer extends RadComponent implements IContainer {
     myComponents.add(component);
     component.setParent(this);
     addToDelegee(component);
-    
+
     component.addPropertyChangeListener(myChangeListener);
 
     final RadComponent[] newChildren = myComponents.toArray(new RadComponent[myComponents.size()]);
@@ -170,9 +174,11 @@ public class RadContainer extends RadComponent implements IContainer {
    */
   public final void removeComponent(final RadComponent component){
     if (component == null) {
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("component cannot be null");
     }
     if(!myComponents.contains(component)){
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("component is not added: " + component);
     }
 
@@ -194,10 +200,10 @@ public class RadContainer extends RadComponent implements IContainer {
   public final int getComponentCount() {
     return myComponents.size();
   }
-  
+
   /**
    * @return new array with all children
-   */ 
+   */
   public final RadComponent[] getComponents() {
     return myComponents.toArray(new RadComponent[myComponents.size()]);
   }
@@ -231,10 +237,11 @@ public class RadContainer extends RadComponent implements IContainer {
           return false;
         }
       }
-      
+
       return true;
     }
     else {
+      //noinspection HardCodedStringLiteral
       throw new IllegalStateException("unknown layout:" + getLayout());
     }
   }
@@ -300,10 +307,11 @@ public class RadContainer extends RadComponent implements IContainer {
 
       // Fill DropInfo
       final RevalidateInfo info = c.revalidate();
-      
+
       return new DropInfo(this, info.myContainer, info.myPreviousContainerSize);
     }
     else {
+      //noinspection HardCodedStringLiteral
       throw new IllegalStateException("unknown layout: " + getLayout());
     }
   }
@@ -325,6 +333,7 @@ public class RadContainer extends RadComponent implements IContainer {
    */
   public final void setBorderType(final BorderType type){
     if(type==null){
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("type cannot be null");
     }
     if(myBorderType==type){
@@ -371,14 +380,9 @@ public class RadContainer extends RadComponent implements IContainer {
       writer.addAttribute("type", getBorderType().getId());
       if (getBorderTitle() != null) {
         final StringDescriptor descriptor = getBorderTitle();
-        if(descriptor.getValue() != null){ // direct value
-          writer.addAttribute("title", descriptor.getValue());
-        }
-        else{ // via resource bundle
-          writer.addAttribute("title-resource-bundle", descriptor.getBundleName());
-          writer.addAttribute("title-key", descriptor.getKey());
-        }
-
+        writer.writeStringDescriptor(descriptor, UIFormXmlConstants.ATTRIBUTE_TITLE,
+                                     UIFormXmlConstants.ATTRIBUTE_TITLE_RESOURCE_BUNDLE,
+                                     UIFormXmlConstants.ATTRIBUTE_TITLE_KEY);
       }
     }finally{
       writer.endElement(); // border
@@ -412,6 +416,7 @@ public class RadContainer extends RadComponent implements IContainer {
       writer.startElement("grid");
     }
     else {
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("unknown layout: " + getLayout());
     }
     try{
@@ -465,9 +470,11 @@ public class RadContainer extends RadComponent implements IContainer {
    */
   public void writeConstraints(final XmlWriter writer, final RadComponent child){
     if (child == null) {
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("child cannot be null");
     }
     if(child.getParent() != this){
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("parent mismatch: "+child.getParent());
     }
     // Constraints of XY layout

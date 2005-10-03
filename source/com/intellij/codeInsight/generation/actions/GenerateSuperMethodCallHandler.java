@@ -10,7 +10,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.util.IncorrectOperationException;
 
 public class GenerateSuperMethodCallHandler implements CodeInsightActionHandler {
@@ -46,7 +45,7 @@ public class GenerateSuperMethodCallHandler implements CodeInsightActionHandler 
     if (codeBlock == null) return null;
     if (!(codeBlock.getParent() instanceof PsiMethod)) return null;
     PsiMethod method = (PsiMethod)codeBlock.getParent();
-    PsiMethod[] superMethods = PsiSuperMethodUtil.findSuperMethods(method);
+    PsiMethod[] superMethods = method.findSuperMethods();
     if (superMethods.length == 0) return null;
     //PsiStatement[] statements = codeBlock.getStatements();
     //if (statements.length == 0) return method;

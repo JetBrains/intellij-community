@@ -62,6 +62,7 @@ public final class Properties implements ApplicationComponent, JDOMExternalizabl
 
   public void disposeComponent() { }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public void readExternal(final Element element) {
     final Iterator i = element.getChildren("class").iterator();
     while (i.hasNext()) {

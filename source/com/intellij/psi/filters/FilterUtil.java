@@ -1,11 +1,8 @@
 package com.intellij.psi.filters;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.TreeUtil;
-import com.intellij.psi.impl.source.tree.ChameleonElement;
-import com.intellij.psi.impl.source.tree.LeafElement;
-import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.filters.classes.AnyInnerFilter;
 import com.intellij.psi.filters.classes.InheritorFilter;
 import com.intellij.psi.filters.classes.InterfaceFilter;
@@ -15,12 +12,19 @@ import com.intellij.psi.filters.element.ModifierFilter;
 import com.intellij.psi.filters.element.PackageEqualsFilter;
 import com.intellij.psi.filters.position.PreviousElementFilter;
 import com.intellij.psi.filters.position.StartElementFilter;
+import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
+import com.intellij.psi.impl.source.tree.ChameleonElement;
+import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.lang.ASTNode;
 import org.jdom.Element;
 import org.jdom.Namespace;
+import org.jetbrains.annotations.NonNls;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by IntelliJ IDEA.
@@ -31,10 +35,15 @@ import java.util.*;
  */
 public class FilterUtil{
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CompletionData");
-  public static final Namespace FILTER_NS = Namespace.getNamespace("http://www.intellij.net/data/filter");
+  public static final @NonNls Namespace FILTER_NS = Namespace.getNamespace("http://www.intellij.net/data/filter");
 
   private static final Map<String,Class> ourRegisteredFilters = new HashMap<String, Class>();
   static{
+    registerFilters();
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  private static void registerFilters() {
     registerFilter("and", AndFilter.class);
     registerFilter("or", OrFilter.class);
     registerFilter("any-inner", AnyInnerFilter.class);
@@ -98,6 +107,7 @@ public class FilterUtil{
     return list;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static final Class getClassByName(String shortName){
     final String[] packs = {
       "",
@@ -140,13 +150,13 @@ public class FilterUtil{
       return ((PsiVariable)element).getType();
     }
     else if(element instanceof PsiKeyword){
-      if("class".equals(element.getText())){
+      if(PsiKeyword.CLASS.equals(element.getText())){
         return PsiType.getJavaLangClass(element.getManager(), element.getResolveScope());
       }
-      else if("true".equals(element.getText()) || "false".equals(element.getText())){
+      else if(PsiKeyword.TRUE.equals(element.getText()) || PsiKeyword.FALSE.equals(element.getText())){
         return PsiType.BOOLEAN;
       }
-      else if("this".equals(element.getText())){
+      else if(PsiKeyword.THIS.equals(element.getText())){
         PsiElement previousElement = getPreviousElement(context, false);
         if(".".equals(previousElement.getText())){
           previousElement = getPreviousElement(previousElement, false);

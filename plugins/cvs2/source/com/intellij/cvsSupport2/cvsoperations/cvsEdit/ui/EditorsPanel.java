@@ -5,6 +5,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
+import com.intellij.CvsBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -24,7 +25,7 @@ public class EditorsPanel extends JPanel{
   private final ListTableModel myModel = new ListTableModel(COLUMNS);
   private final TableView myTable = new TableView(myModel);
 
-  private final static ColumnInfo USER = new ColumnInfo("User"){
+  private final static ColumnInfo USER = new ColumnInfo(CvsBundle.message("view.editors.user.column.name")){
     public Object valueOf(Object object) {
       return ((EditorInfo)object).getUserName();
     }
@@ -39,7 +40,7 @@ public class EditorsPanel extends JPanel{
     }
   };
 
-  private final static ColumnInfo HOST = new ColumnInfo("Host"){
+  private final static ColumnInfo HOST = new ColumnInfo(CvsBundle.message("view.editors.host.column.name")){
     public Object valueOf(Object object) {
       return ((EditorInfo)object).getHostHame();
     }
@@ -54,7 +55,7 @@ public class EditorsPanel extends JPanel{
     }
   };
 
-  private final static ColumnInfo DATE = new ColumnInfo("Date"){
+  private final static ColumnInfo DATE = new ColumnInfo(CvsBundle.message("view.editors.date.column.name")){
     public Object valueOf(Object object) {
       return DATE_FORMAT.format(((EditorInfo)object).getEditDate());
     }
@@ -69,7 +70,7 @@ public class EditorsPanel extends JPanel{
     }
   };
 
-  private final static ColumnInfo DIR = new ColumnInfo("Directory"){
+  private final static ColumnInfo DIR = new ColumnInfo(CvsBundle.message("view.editors.directory.column.name")){
     public Object valueOf(Object object) {
       return ((EditorInfo)object).getPath();
     }
@@ -84,7 +85,7 @@ public class EditorsPanel extends JPanel{
     }
   };
 
-  private final static ColumnInfo FILE = new ColumnInfo("File"){
+  private final static ColumnInfo FILE = new ColumnInfo(CvsBundle.message("view.editors.file.column.name")){
     public Object valueOf(Object object) {
       return ((EditorInfo)object).getFilePath();
     }

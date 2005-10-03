@@ -1,13 +1,20 @@
 package com.intellij.codeInsight.daemon.quickFix;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.LocalInspectionsPass;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.mock.MockProgressInidicator;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 
@@ -19,6 +26,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.jetbrains.annotations.NonNls;
 
 public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase {
   protected boolean shouldBeAvailableAfterExecution() {
@@ -55,7 +64,9 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     String comment = file instanceof XmlFile ? "<!--" : "//";
     // "quick fix action text to perform" "should be available"
     Pattern pattern = Pattern.compile("^" + comment + " \"([^\"]*)\" \"(\\S*)\".*", Pattern.DOTALL);
-    Matcher matcher = pattern.matcher(new String(file.getVirtualFile().contentsToCharArray()));
+    final VirtualFile virtualFile = file.getVirtualFile();
+    assertNotNull(virtualFile);
+    Matcher matcher = pattern.matcher(new String(virtualFile.contentsToCharArray()));
     assertTrue(matcher.matches());
     final String text = matcher.group(1);
     final Boolean actionShouldBeAvailable = Boolean.valueOf(matcher.group(2));
@@ -92,8 +103,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
   }
 
   public static IntentionAction findActionWithText(final List<IntentionAction> actions, final String text) {
-    for (int j = 0; j < actions.size(); j++) {
-      IntentionAction action = actions.get(j);
+    for (IntentionAction action : actions) {
       if (text.equals(action.getText())) {
         return action;
       }
@@ -105,14 +115,14 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     final String testDirPath = getTestDataPath().replace(File.separatorChar, '/') + getBasePath();
     File testDir = new File(testDirPath);
     final File[] files = testDir.listFiles(new FilenameFilter() {
-      public boolean accept(File dir, String name) {
+      public boolean accept(File dir, @NonNls String name) {
         return name.startsWith("before");
       }
     });
-    for (int i = 0; i < files.length; i++) {
-      File file = files[i];
+    for (File file : files) {
       final String testName = file.getName().substring("before".length());
       doTestFor(testName);
+      //noinspection UseOfSystemOutOrSystemErr
       System.out.print(testName + " ");
     }
     assertTrue("Test files not found in "+testDirPath,files.length != 0);
@@ -133,16 +143,15 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
         if (startOffset <= offset && offset <= endOffset
             && info.quickFixActionRanges != null
         ) {
-          for (int j = 0; j < info.quickFixActionRanges.size(); j++) {
-            Pair<Pair<IntentionAction, List<IntentionAction>>,TextRange> pair = info.quickFixActionRanges.get(j);
+          for (Pair<Pair<IntentionAction, List<IntentionAction>>, TextRange> pair : info.quickFixActionRanges) {
             IntentionAction action = pair.first.first;
             TextRange range = pair.second;
             if (range.getStartOffset() <= offset && offset <= range.getEndOffset() &&
                 action.isAvailable(getProject(), editor, file)) {
               availableActions.add(action);
-              if (pair.first.second != null){
+              if (pair.first.second != null) {
                 for (IntentionAction intentionAction : pair.first.second) {
-                  if (intentionAction.isAvailable(getProject(), editor, file)){
+                  if (intentionAction.isAvailable(getProject(), editor, file)) {
                     availableActions.add(intentionAction);
                   }
                 }
@@ -156,4 +165,21 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
   }
 
   protected abstract String getBasePath();
+
+  protected void initializeInspection(LocalInspectionTool tool){
+    final DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
+    final InspectionProfileImpl localProfile = new InspectionProfileImpl("TestProfile");
+    localProfile.addInspectionTool(new LocalInspectionToolWrapper(tool));
+    localProfile.enableTool(tool.getShortName());
+    settings.setInspectionProfile(localProfile);
+  }
+
+   protected Collection<HighlightInfo> doHighlighting() {
+    final Collection<HighlightInfo> highlights1 = super.doHighlighting();
+    LocalInspectionsPass action2 = new LocalInspectionsPass(getProject(), getFile(), getEditor().getDocument(), 0, getFile().getTextLength());
+    action2.doCollectInformation(new MockProgressInidicator());
+    Collection<HighlightInfo> highlights2 = action2.getHighlights();
+    highlights1.addAll(highlights2);
+    return highlights1;
+  }
 }

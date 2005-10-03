@@ -25,6 +25,7 @@ public final class HGapProperty extends Property{
 
   public Object getValue(final RadComponent component){
     if(!(component instanceof RadContainer)){
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("component must be an instance of RadContainer: "+component);
     }
     final RadContainer container=(RadContainer)component;
@@ -34,6 +35,7 @@ public final class HGapProperty extends Property{
 
   protected void setValueImpl(final RadComponent component,final Object value) throws Exception{
     if(!(component instanceof RadContainer)){
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("component must be an instance of RadContainer: "+component);
     }
     final RadContainer container=(RadContainer)component;

@@ -3,6 +3,8 @@
  */
 package com.intellij.compiler.classParsing;
 
+import org.jetbrains.annotations.NonNls;
+
 import java.io.DataInput;
 import java.io.IOException;
 
@@ -18,7 +20,7 @@ public class ReferenceInfo extends ItemInfo {
     super(in);
   }
 
-  public String toString() {
+  public @NonNls String toString() { // for debug purposes
     return "Class reference[class name=" + String.valueOf(getClassName()) + "]";
   }
 }

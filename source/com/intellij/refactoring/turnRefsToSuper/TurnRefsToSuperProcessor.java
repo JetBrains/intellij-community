@@ -13,24 +13,27 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.refactoring.RefactoringBundle;
 
 import java.util.ArrayList;
+import java.text.MessageFormat;
 
 public class TurnRefsToSuperProcessor extends TurnRefsToSuperProcessorBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.turnRefsToSuper.TurnRefsToSuperProcessor");
 
   private PsiClass mySuper;
   public TurnRefsToSuperProcessor(Project project,
-                                PsiClass aClass,
-                                PsiClass aSuper,
-                                boolean replaceInstanceOf) {
+                                  PsiClass aClass,
+                                  PsiClass aSuper,
+                                  boolean replaceInstanceOf) {
     super(project, replaceInstanceOf, aSuper.getName());
     myClass = aClass;
     mySuper = aSuper;
   }
 
   protected String getCommandName() {
-    return "Replacing usages of " + UsageViewUtil.getDescriptiveName(myClass) + " with " + UsageViewUtil.getDescriptiveName(mySuper);
+    return RefactoringBundle.message("turn.refs.to.super.command",
+                                     UsageViewUtil.getDescriptiveName(myClass), UsageViewUtil.getDescriptiveName(mySuper));
   }
 
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages, FindUsagesCommand refreshCommand) {
@@ -58,8 +61,7 @@ public class TurnRefsToSuperProcessor extends TurnRefsToSuperProcessorBase {
 
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
     if (!ApplicationManager.getApplication().isUnitTestMode() && refUsages.get().length == 0) {
-      String message = "No usages of " + myClass.getQualifiedName() + "\n" +
-              "can be replaced with usages of " + mySuper.getQualifiedName();
+      String message = RefactoringBundle.message("no.usages.can.be.replaced", myClass.getQualifiedName(), mySuper.getQualifiedName());
       Messages.showInfoMessage(myProject, message, TurnRefsToSuperHandler.REFACTORING_NAME);
       return false;
     }
@@ -87,7 +89,7 @@ public class TurnRefsToSuperProcessor extends TurnRefsToSuperProcessorBase {
         return true;
       }
       return manager.areElementsEquivalent(containingClass, mySuper)
-              || mySuper.isInheritor(containingClass, true);
+             || mySuper.isInheritor(containingClass, true);
     } else if (member instanceof PsiMethod) {
       if (member.getParent().equals(mySuper)) return true;
       PsiMethod methodInSuper2 = mySuper.findMethodBySignature((PsiMethod) member, true);

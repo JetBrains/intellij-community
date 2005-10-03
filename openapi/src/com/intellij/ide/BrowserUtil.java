@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.CommonBundle;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -29,6 +30,8 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.jetbrains.annotations.NonNls;
 
 public class BrowserUtil {
 
@@ -38,8 +41,7 @@ public class BrowserUtil {
   // with RFC is that we do not allow schemes with length=1 (in other case
   // local paths like "C:/temp/index.html" whould be erroneously interpreted as
   // external URLs.)
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private static Pattern ourExternalPrefix = Pattern.compile("^[\\w\\+\\.\\-]{2,}:");
+  @NonNls private static Pattern ourExternalPrefix = Pattern.compile("^[\\w\\+\\.\\-]{2,}:");
   private static Pattern ourAnchorsuffix = Pattern.compile("#(.*)$");
 
   private BrowserUtil() {
@@ -94,11 +96,12 @@ public class BrowserUtil {
         Runtime.getRuntime().exec(commandLine);
       }
       else {
-        showErrorMessage("Malformed url: " + url, "Error");
+        showErrorMessage(IdeBundle.message("error.malformed.url", url), CommonBundle.getErrorTitle());
       }
     }
     catch (final IOException e) {
-      showErrorMessage("Cannot start browser: " + e.getMessage(), "Error");
+      showErrorMessage(IdeBundle.message("error.cannot.start.browser", e.getMessage()),
+                       CommonBundle.getErrorTitle());
     }
   }
 
@@ -140,7 +143,7 @@ public class BrowserUtil {
                                    Messages.getErrorIcon());
       }
     };
-    
+
     if (app.isDispatchThread()) {
       runnable.run();
     }
@@ -154,7 +157,8 @@ public class BrowserUtil {
     try {
       String browserPath = GeneralSettings.getInstance().getBrowserPath();
       if (browserPath == null || browserPath.trim().length() == 0) {
-        showErrorMessage("Please specify a path to web browser in File | Settings | General", "Browser Not Found");
+        showErrorMessage(IdeBundle.message("error.please.specify.path.to.web.browser"),
+                         IdeBundle.message("title.browser.not.found"));
         return;
       }
 
@@ -164,9 +168,8 @@ public class BrowserUtil {
       // todo: fix the possible problem on startup, see SCR #35066
       command = getDefaultBrowserCommand(null);
       if (command == null) {
-        showErrorMessage("Please open URL (" + url + ") manualy. " +
-                         ApplicationNamesInfo.getInstance().getProductName() +
-                         " can't open it in browser", "Browser Path Not Found");
+        showErrorMessage(IdeBundle.message("error.please.open.url.manually", url, ApplicationNamesInfo.getInstance().getProductName()),
+                         IdeBundle.message("title.browser.path.not.found"));
         return;
       }
 
@@ -180,7 +183,8 @@ public class BrowserUtil {
   public static void launchBrowser(final String url, String name) {
     //noinspection HardCodedStringLiteral
     if (url.startsWith("jar:")) {
-      showErrorMessage("Cannot show \"" + url + "\" in external browser", "Cannot start browser");
+      showErrorMessage(IdeBundle.message("error.cannot.show.in.external.browser", url),
+                       IdeBundle.message("title.cannot.start.browser"));
       return;
     }
     if (canStartDefaultBrowser() && isUseDefaultBrowser()) {
@@ -191,12 +195,11 @@ public class BrowserUtil {
     }
   }
 
-  public static void launchBrowser(final String url) {
+  public static void launchBrowser(@NonNls final String url) {
     launchBrowser(url, (String)null);
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private static String[] getDefaultBrowserCommand(String name) {
+  @NonNls private static String[] getDefaultBrowserCommand(String name) {
     if (SystemInfo.isWindows9x) {
       return new String[]{"command.com", "/c", "start"};
     }

@@ -9,23 +9,19 @@ import com.intellij.psi.PsiElement;
 import javax.swing.*;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author max
  */
 public class RefElementNode extends InspectionTreeNode {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ui.RefElementNode");
-  private boolean myShouldLoadCallees;
   private boolean myHasDescriptorsUnder = false;
   private ProblemDescriptor mySingleDescriptor = null;
 
-  public RefElementNode(RefElement element, boolean shouldLoadCallees) {
+  public RefElementNode(RefElement element) {
     super(element);
     LOG.assertTrue(element != null);
-    myShouldLoadCallees = shouldLoadCallees;
   }
 
   public boolean hasDescriptorsUnder() { return myHasDescriptorsUnder; }
@@ -41,14 +37,11 @@ public class RefElementNode extends InspectionTreeNode {
 
   public boolean isWritable() {
     final PsiElement element = getElement().getElement();
-    return element != null ? element.isWritable() : true;
+    return element == null || element.isWritable();
   }
 
   public int getProblemCount() {
-    if (myShouldLoadCallees) {
-      return getParent() instanceof RefElementNode ? 0 : 1;
-    }
-    return myHasDescriptorsUnder ? super.getProblemCount() : 1;
+    return Math.max(1, super.getProblemCount());
   }
 
   public String toString() {
@@ -61,16 +54,6 @@ public class RefElementNode extends InspectionTreeNode {
 
   public boolean isValid() {
     return getElement().isValid();
-  }
-
-  public void loadChildren() {
-    if (myShouldLoadCallees) {
-      Set newChildren = getPossibleChildren(getElement());
-      for (Iterator iterator = newChildren.iterator(); iterator.hasNext();) {
-        RefElement refChild = (RefElement) iterator.next();
-        add(new RefElementNode(refChild, true));
-      }
-    }
   }
 
   public void add(MutableTreeNode newChild) {
@@ -88,14 +71,7 @@ public class RefElementNode extends InspectionTreeNode {
     return mySingleDescriptor;
   }
 
-  public boolean isLeaf() {
-    if (myShouldLoadCallees) {
-      return getPossibleChildren(getElement()).size() == 0;
-    }
-    return super.isLeaf();
-  }
-
-  private Set<RefElement> getPossibleChildren(RefElement refElement) {
+  public Set<RefElement> getPossibleChildren(RefElement refElement) {
     final TreeNode[] pathToRoot = getPath();
 
     final HashSet<RefElement> newChildren = new HashSet<RefElement>();

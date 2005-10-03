@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.template.macro;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.codeInsight.template.*;
@@ -9,8 +10,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 public class VariableOfTypeMacro implements Macro {
@@ -20,7 +21,7 @@ public class VariableOfTypeMacro implements Macro {
   }
 
   public String getDescription() {
-    return "variableOfType(Type)";
+    return CodeInsightBundle.message("macro.variable.of.type");
   }
 
   public String getDefaultValue() {

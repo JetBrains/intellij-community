@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.Keymap;
+import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.tools.Tool;
@@ -20,12 +21,14 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.*;
 
+import org.jetbrains.annotations.NonNls;
+
 public class ActionsTreeUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil");
 
-  public static final String MAIN_MENU_TITLE = "Main menu";
-  public static final String MAIN_TOOLBAR = "Main Toolbar";
-  public static final String EDITOR_POPUP = "Editor Popup Menu";
+  public static final String MAIN_MENU_TITLE = KeyMapBundle.message("main.menu.action.title");
+  public static final String MAIN_TOOLBAR = KeyMapBundle.message("main.toolbar.title");
+  public static final String EDITOR_POPUP = KeyMapBundle.message("editor.popup.menu.title");
 
   private static final Icon MAIN_MENU_ICON = IconLoader.getIcon("/nodes/keymapMainMenu.png");
   private static final Icon EDITOR_ICON = IconLoader.getIcon("/nodes/keymapEditor.png");
@@ -35,17 +38,22 @@ public class ActionsTreeUtil {
   private static final Icon TOOLS_ICON = IconLoader.getIcon("/nodes/keymapTools.png");
   private static final Icon TOOLS_OPEN_ICON = IconLoader.getIcon("/nodes/keymapToolsOpen.png");
   private static final Icon OTHER_ICON = IconLoader.getIcon("/nodes/keymapOther.png");
-  public static final String EDITOR_TAB_POPUP = "Editor Tab Popup Menu";
-  public static final String FAVORITES_POPUP = "Favorites View Popup Menu";
-  public static final String PROJECT_VIEW_POPUP = "Project View Popup Menu";
-  public static final String COMMANDER_POPUP = "Commander View Popup Menu";
-  public static final String STRUCTURE_VIEW_POPUP = "Structure View Popup Menu";
-  public static final String J2EE_POPUP = "J2EE View Popup Menu";
+  public static final String EDITOR_TAB_POPUP = KeyMapBundle.message("editor.tab.popup.menu.title");
+  public static final String FAVORITES_POPUP = KeyMapBundle.message("favorites.popup.title");
+  public static final String PROJECT_VIEW_POPUP = KeyMapBundle.message("project.view.popup.menu.title");
+  public static final String COMMANDER_POPUP = KeyMapBundle.message("commender.view.popup.menu.title");
+  public static final String STRUCTURE_VIEW_POPUP = KeyMapBundle.message("structure.view.popup.menu.title");
+  public static final String J2EE_POPUP = KeyMapBundle.message("j2ee.view.popup.menu.title");
+
+  @NonNls
+  private static final String VCS_GROUP_ID = "VcsGroup";
+  @NonNls
+  private static final String EDITOR_PREFIX = "Editor";
 
   private ActionsTreeUtil() {}
 
   public static Group createMainGroup(final Project project, final Keymap keymap, final QuickList[] quickLists) {
-    Group mainGroup = new Group("All Actions", null, null);
+    Group mainGroup = new Group(KeyMapBundle.message("all.actions.group.title"), null, null);
     mainGroup.addGroup(createEditorActionsGroup());
     mainGroup.addGroup(createMainMenuGroup(false));
     mainGroup.addGroup(createVcsGroup());
@@ -65,7 +73,7 @@ public class ActionsTreeUtil {
   }
 
   private static Group createPluginsActionsGroup() {
-    Group pluginsGroup = new Group("Plug-ins", null, null);
+    Group pluginsGroup = new Group(KeyMapBundle.message("plugins.group.title"), null, null);
     ActionManagerEx managerEx = ActionManagerEx.getInstanceEx();
     final PluginDescriptor[] plugins = PluginManager.getPlugins();
     for (int i = 0; i < plugins.length; i++) {
@@ -90,7 +98,7 @@ public class ActionsTreeUtil {
 
   private static Group createGuiDesignerActionsGroup(Group mainGroup) {
     mainGroup.initIds();
-    Group group = new Group("GUI Designer", IdeActions.GROUP_GUI_DESIGNER_EDITOR_POPUP, null, null);
+    Group group = new Group(KeyMapBundle.message("gui.designer.group.title"), IdeActions.GROUP_GUI_DESIGNER_EDITOR_POPUP, null, null);
     ActionManager actionManager = ActionManager.getInstance();
     ActionGroup uiGroup = (ActionGroup)actionManager.getAction(IdeActions.GROUP_GUI_DESIGNER_EDITOR_POPUP);
     AnAction[] actions = uiGroup.getChildren(null);
@@ -104,8 +112,8 @@ public class ActionsTreeUtil {
   }
 
   private static Group createVcsGroup() {
-    Group group = new Group("Version Control Systems", "VcsGroup", null, null);
-    ActionGroup versionControls = (ActionGroup)ActionManager.getInstance().getAction("VcsGroup");
+    Group group = new Group(KeyMapBundle.message("version.control.group.title"), VCS_GROUP_ID, null, null);
+    ActionGroup versionControls = (ActionGroup)ActionManager.getInstance().getAction(VCS_GROUP_ID);
     fillGroupIgnorePopupFlag(versionControls, group, false);
     return group;
   }
@@ -186,7 +194,7 @@ public class ActionsTreeUtil {
     }
 
     Collections.sort(ids);
-    Group group = new Group("Debugger Actions", IdeActions.GROUP_DEBUGGER, null, null);
+    Group group = new Group(KeyMapBundle.message("debugger.actions.group.title"), IdeActions.GROUP_DEBUGGER, null, null);
     for (Iterator<String> iterator = ids.iterator(); iterator.hasNext();) {
       String id = iterator.next();
       group.addActionId(id);
@@ -205,15 +213,15 @@ public class ActionsTreeUtil {
       AnAction editorAction = editorActions[i];
       String actionId = actionManager.getId(editorAction);
       if (actionId == null) continue;
-      if (actionId.startsWith("Editor")) {
-        AnAction action = actionManager.getAction("$" + actionId.substring(6));
+      if (actionId.startsWith(EDITOR_PREFIX)) {
+        AnAction action = actionManager.getAction('$' + actionId.substring(6));
         if (action != null) continue;
       }
       ids.add(actionId);
     }
 
     Collections.sort(ids);
-    Group group = new Group("Editor Actions", IdeActions.GROUP_EDITOR, EDITOR_ICON, EDITOR_OPEN_ICON);
+    Group group = new Group(KeyMapBundle.message("editor.actions.group.title"), IdeActions.GROUP_EDITOR, EDITOR_ICON, EDITOR_OPEN_ICON);
     for (Iterator<String> iterator = ids.iterator(); iterator.hasNext();) {
       String id = iterator.next();
       group.addActionId(id);
@@ -225,7 +233,7 @@ public class ActionsTreeUtil {
   private static Group createAntGroup(final Project project) {
     String[] ids = ActionManagerEx.getInstanceEx().getActionIds(TargetAction.ACTION_ID_PREFIX);
     Arrays.sort(ids);
-    Group group = new Group("Ant Targets", ANT_ICON, ANT_OPEN_ICON);
+    Group group = new Group(KeyMapBundle.message("ant.targets.group.title"), ANT_ICON, ANT_OPEN_ICON);
 
     if (project != null) {
       AntConfiguration antConfiguration = AntConfiguration.getInstance(project);
@@ -256,7 +264,7 @@ public class ActionsTreeUtil {
   private static Group createMacrosGroup() {
     String[] ids = ActionManagerEx.getInstanceEx().getActionIds(ActionMacro.MACRO_ACTION_PREFIX);
     Arrays.sort(ids);
-    Group group = new Group("Macros", null, null);
+    Group group = new Group(KeyMapBundle.message("macros.group.title"), null, null);
     for (int i = 0; i < ids.length; i++) {
       String id = ids[i];
       group.addActionId(id);
@@ -270,8 +278,8 @@ public class ActionsTreeUtil {
         return l1.getActionId().compareTo(l2.getActionId());
       }
     });
-    
-    Group group = new Group("Quick Lists", null, null);
+
+    Group group = new Group(KeyMapBundle.message("quick.lists.group.title"), null, null);
     for (int i = 0; i < quickLists.length; i++) {
       group.addQuickList(quickLists[i]);
     }
@@ -282,7 +290,7 @@ public class ActionsTreeUtil {
   private static Group createExternalToolsGroup() {
     String[] ids = ActionManagerEx.getInstanceEx().getActionIds(Tool.ACTION_ID_PREFIX);
     Arrays.sort(ids);
-    Group group = new Group("External Tools", TOOLS_ICON, TOOLS_OPEN_ICON);
+    Group group = new Group(KeyMapBundle.message("actions.tree.external.tools.group"), TOOLS_ICON, TOOLS_OPEN_ICON);
 
     ToolManager toolManager = ToolManager.getInstance();
 
@@ -326,7 +334,7 @@ public class ActionsTreeUtil {
       for(int i = 0; i < actionIds.length; i++){
         String id = actionIds[i];
 
-        if (id.startsWith("Editor")) {
+        if (id.startsWith(EDITOR_PREFIX)) {
           AnAction action = ActionManager.getInstance().getAction("$" + id.substring(6));
           if (action != null) continue;
         }
@@ -368,7 +376,7 @@ public class ActionsTreeUtil {
         }
       });
 
-    Group group = new Group("Other", OTHER_ICON, OTHER_ICON);
+    Group group = new Group(KeyMapBundle.message("other.group.title"), OTHER_ICON, OTHER_ICON);
     for (int i = 0; i < result.size(); i++) {
       group.addActionId(result.get(i));
     }

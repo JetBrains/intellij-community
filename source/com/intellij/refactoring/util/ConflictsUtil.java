@@ -6,7 +6,11 @@ package com.intellij.refactoring.util;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageViewUtil;
+import org.jetbrains.annotations.NonNls;
+
+import java.util.Collection;
 
 public class ConflictsUtil {
   public static PsiMember getContainer(PsiElement place) {
@@ -25,7 +29,7 @@ public class ConflictsUtil {
       if (includeParent) {
         options |= PsiFormatUtil.SHOW_CONTAINING_CLASS;
       }
-      return "field " + htmlEmphasize(PsiFormatUtil.formatVariable((PsiVariable) element, options, PsiSubstitutor.EMPTY));
+      return RefactoringBundle.message("field.description", htmlEmphasize(PsiFormatUtil.formatVariable((PsiVariable)element, options, PsiSubstitutor.EMPTY)));
     }
 
     if (element instanceof PsiMethod) {
@@ -34,43 +38,36 @@ public class ConflictsUtil {
         options |= PsiFormatUtil.SHOW_CONTAINING_CLASS;
       }
       final PsiMethod method = (PsiMethod) element;
-      final String descr = method.isConstructor() ? "constructor" : "method";
-      return descr + " " + htmlEmphasize(PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, options, PsiFormatUtil.SHOW_TYPE));
+      return method.isConstructor() ?
+             RefactoringBundle.message("constructor.description", htmlEmphasize(PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, options, PsiFormatUtil.SHOW_TYPE))) :
+             RefactoringBundle.message("method.description", htmlEmphasize( PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, options, PsiFormatUtil.SHOW_TYPE)));
     }
 
     if (element instanceof PsiClassInitializer) {
       PsiClassInitializer initializer = (PsiClassInitializer) element;
       boolean isStatic = initializer.hasModifierProperty(PsiModifier.STATIC);
-      String s = isStatic ? "static initializer" : "instance initializer";
-      if (includeParent) {
-        s += " of class " + getDescription(initializer.getContainingClass(), false);
-      }
+      String s = isStatic ?
+                 RefactoringBundle.message("static.initializer.description", getDescription(initializer.getContainingClass(), false)) :
+                 RefactoringBundle.message("instance.initializer.description", getDescription(initializer.getContainingClass(), false));;
       return s;
     }
 
     if (element instanceof PsiParameter) {
-      return "parameter " + htmlEmphasize(((PsiParameter) element).getName());
+      return RefactoringBundle.message("parameter.description", htmlEmphasize(((PsiParameter)element).getName()));
     }
 
     if (element instanceof PsiLocalVariable) {
-      return "local variable " + htmlEmphasize(((PsiVariable) element).getName());
+      return RefactoringBundle.message("local.variable.description", htmlEmphasize(((PsiVariable)element).getName()));
     }
 
     if (element instanceof PsiPackage) {
-      return "package " + htmlEmphasize(((PsiPackage) element).getName());
+      return RefactoringBundle.message("package.description", htmlEmphasize(((PsiPackage)element).getName()));
     }
 
     if ((element instanceof PsiClass)) {
       //TODO : local & anonymous
       PsiClass psiClass = (PsiClass) element;
-      String qualifiedName = psiClass.getQualifiedName();
-      if (qualifiedName != null) {
-        return htmlEmphasize(qualifiedName);
-      } else if(psiClass.getName() == null) {
-        return htmlEmphasize("anonymous class");
-      } else {
-        return htmlEmphasize(psiClass.getName());
-      }
+      return RefactoringBundle.message("class.description", htmlEmphasize(UsageViewUtil.getDescriptiveName(psiClass)));
     }
 
     final String typeString = UsageViewUtil.getType(element);
@@ -79,10 +76,81 @@ public class ConflictsUtil {
   }
 
   public static String htmlEmphasize(String text) {
-    return "<b><code>" + text + "</code></b>";
+    @NonNls final String header = "<b><code>";
+    @NonNls final String footer = "</code></b>";
+    return new StringBuilder().append(header).append(text).append(footer).toString();
   }
 
   public static String capitalize(String text) {
     return Character.toUpperCase(text.charAt(0)) + text.substring(1);
+  }
+
+  public static void checkMethodConflicts(PsiClass aClass,
+                                          PsiMethod refactoredMethod,
+                                          PsiMethod prototype,
+                                          final Collection<String> conflicts) {
+    if (prototype == null) return;
+
+    PsiMethod method = aClass.findMethodBySignature(prototype, true);
+
+    if (method != null && method != refactoredMethod) {
+      if (method.getContainingClass().equals(aClass)) {
+        final String classDescr = aClass instanceof PsiAnonymousClass ?
+                                  RefactoringBundle.message("current.class") :
+                                  getDescription(aClass, false);
+        conflicts.add(RefactoringBundle.message("method.0.is.already.defined.in.the.1",
+                                                getMethodPrototypeString(prototype),
+                                                classDescr));
+      }
+      else { // method somewhere in base class
+        if (!method.hasModifierProperty(PsiModifier.PRIVATE)) {
+          String protoMethodInfo = getMethodPrototypeString(prototype);
+          String className = getDescription(method.getContainingClass(), false);
+          if (!prototype.hasModifierProperty(PsiModifier.PRIVATE)) {
+            boolean isMethodAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
+            boolean isMyMethodAbstract = refactoredMethod != null && refactoredMethod.hasModifierProperty(PsiModifier.ABSTRACT);
+            final String conflict = isMethodAbstract != isMyMethodAbstract ?
+                                    RefactoringBundle.message("method.0.will.implement.method.of.the.base.class", protoMethodInfo, className) :
+                                    RefactoringBundle.message("method.0.will.override.a.method.of.the.base.class", protoMethodInfo, className);
+            conflicts.add(conflict);
+          }
+          else { // prototype is private, will be compile-error
+            conflicts.add(RefactoringBundle.message("method.0.will.hide.method.of.the.base.class",
+                                                    protoMethodInfo, className));
+          }
+        }
+      }
+    }
+  }
+
+  private static String getMethodPrototypeString(final PsiMethod prototype) {
+    return PsiFormatUtil.formatMethod(
+      prototype,
+      PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS,
+      PsiFormatUtil.SHOW_TYPE
+    );
+  }
+
+  public static void checkFieldConflicts(PsiClass aClass, String newName, final Collection<String> conflicts) {
+    PsiField existingField = aClass.findFieldByName(newName, true);
+    if (existingField != null) {
+      if (existingField.getContainingClass().equals(aClass)) {
+        String className = aClass instanceof PsiAnonymousClass ?
+                           RefactoringBundle.message("current.class") :
+                           getDescription(aClass, false);
+        final String conflict = RefactoringBundle.message("field.0.is.already.defined.in.the.1",
+                                                          existingField.getName(), className);
+        conflicts.add(conflict);
+      }
+      else { // method somewhere in base class
+        if (!existingField.hasModifierProperty(PsiModifier.PRIVATE)) {
+          String fieldInfo = PsiFormatUtil.formatVariable(existingField, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.TYPE_AFTER, PsiSubstitutor.EMPTY);
+          String className = getDescription(existingField.getContainingClass(), false);
+          final String descr = RefactoringBundle.message("field.0.will.hide.field.1.of.the.base.class",
+                                                         newName, fieldInfo, className);
+          conflicts.add(descr);
+        }
+      }
+    }
   }
 }

@@ -6,6 +6,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
@@ -18,9 +19,9 @@ import java.util.*;
  */
 public class VisibleTreeState implements JDOMExternalizable {
 
-  private static final String EXPANDED = "expanded_node";
-  private static final String SELECTED = "selected_node";
-  private static final String NAME = "name";
+  @NonNls private static final String EXPANDED = "expanded_node";
+  @NonNls private static final String SELECTED = "selected_node";
+  @NonNls private static final String NAME = "name";
 
   private HashSet<String> myExpandedNodes = new HashSet<String>();
   private HashSet<String> mySelectedNodes = new HashSet<String>();

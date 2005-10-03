@@ -8,6 +8,7 @@
  */
 package com.intellij.codeInsight.template.impl.actions;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -25,7 +26,7 @@ public class PreviousVariableAction extends EditorAction {
   private static class Handler extends EditorWriteActionHandler {
     public void executeWriteAction(Editor editor, DataContext dataContext) {
       final TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
-      CommandProcessor.getInstance().setCurrentCommandName("Go to Previous Code Template Tab");
+      CommandProcessor.getInstance().setCurrentCommandName(CodeInsightBundle.message("template.previous.variable.command"));
       templateState.previousTab();
     }
   }

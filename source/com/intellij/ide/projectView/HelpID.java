@@ -1,5 +1,7 @@
 package com.intellij.ide.projectView;
 
+import org.jetbrains.annotations.NonNls;
+
 public interface HelpID {
-  String PROJECT_VIEWS = "viewingStructure.projectViews";
+  @NonNls String PROJECT_VIEWS = "viewingStructure.projectViews";
 }

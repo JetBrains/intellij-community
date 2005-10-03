@@ -1,6 +1,7 @@
 package com.intellij.ide.util;
 
 import com.intellij.ide.GeneralSettings;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,6 +11,7 @@ import com.intellij.featureStatistics.ProductivityFeaturesProvider;
 import com.intellij.featureStatistics.FeatureDescriptor;
 import org.jdom.Document;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -30,11 +32,16 @@ public class TipPanel extends JPanel {
   private JEditorPane browser;
   private ArrayList<String> myTipPaths = new ArrayList<String>();
   private HashMap<String, Class< ? extends ProductivityFeaturesProvider>> myPathsToProviderMap = new HashMap<String, Class<? extends ProductivityFeaturesProvider>>();
+  @NonNls
+  private static final String ELEMENT_TIP = "tip";
+  @NonNls
+  private static final String ATTRIBUTE_FILE = "file";
+
   public TipPanel() {
     setLayout(new BorderLayout());
     JLabel jlabel = new JLabel(IconLoader.getIcon("/general/tip.png"));
     jlabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
-    JLabel jlabel1 = new JLabel("Did you know ... ?");
+    JLabel jlabel1 = new JLabel(IdeBundle.message("label.did.you.know"));
     Font font = jlabel1.getFont();
     jlabel1.setFont(font.deriveFont(Font.PLAIN, font.getSize() + 4));
     JPanel jpanel = new JPanel();
@@ -58,7 +65,7 @@ public class TipPanel extends JPanel {
     );
     JScrollPane scrollPane = new JScrollPane(browser);
     add(scrollPane, BorderLayout.CENTER);
-    myCheckBox = new JCheckBox("Show Tips on Startup", true);
+    myCheckBox = new JCheckBox(IdeBundle.message("checkbox.show.tips.on.startup"), true);
     myCheckBox.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
     final GeneralSettings settings = GeneralSettings.getInstance();
     myCheckBox.setSelected(settings.showTipsOnStartup());
@@ -82,8 +89,7 @@ public class TipPanel extends JPanel {
 
   public void prevTip() {
     if (myTipPaths.size() == 0) {
-      browser.setText("Tips not found.  Make sure you installed " + ApplicationNamesInfo.getInstance().getFullProductName() +
-                      " correctly.");
+      browser.setText(IdeBundle.message("error.tips.not.found", ApplicationNamesInfo.getInstance().getFullProductName()));
       return;
     }
     GeneralSettings settings = GeneralSettings.getInstance();
@@ -110,8 +116,7 @@ public class TipPanel extends JPanel {
 
   public void nextTip() {
     if (myTipPaths.size() == 0) {
-      browser.setText("Tips not found.  Make sure you installed " + ApplicationNamesInfo.getInstance().getFullProductName() +
-                      " correctly.");
+      browser.setText(IdeBundle.message("error.tips.not.found", ApplicationNamesInfo.getInstance().getFullProductName()));
       return;
     }
     GeneralSettings settings = GeneralSettings.getInstance();
@@ -154,12 +159,12 @@ public class TipPanel extends JPanel {
   }
 
   private void readTips() throws Exception {
-    String tipsURL = "/tips/" + "tips.xml";
+    @NonNls String tipsURL = "/tips/" + "tips.xml";
     Document document = JDOMUtil.loadDocument(getClass().getResource(tipsURL).openStream());
     if (document == null) return;
-    for (Iterator iterator = document.getRootElement().getChildren("tip").iterator(); iterator.hasNext();) {
+    for (Iterator iterator = document.getRootElement().getChildren(ELEMENT_TIP).iterator(); iterator.hasNext();) {
       Element element = (Element)iterator.next();
-      myTipPaths.add(element.getAttributeValue("file"));
+      myTipPaths.add(element.getAttributeValue(ATTRIBUTE_FILE));
     }
     final ProductivityFeaturesProvider[] providers = ApplicationManager.getApplication().getComponents(ProductivityFeaturesProvider.class);
     for (int i = 0; i < providers.length; i++) {
@@ -170,10 +175,6 @@ public class TipPanel extends JPanel {
         myPathsToProviderMap.put(featureDescriptor.getTipFileName(), featureDescriptor.getProvider());
       }
     }
-  }
-
-  public String getComponentName() {
-    return "TipPanel";
   }
 
   public void initComponent() {

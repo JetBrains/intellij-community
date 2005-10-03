@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.template.macro;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.template.*;
 import com.intellij.psi.*;
@@ -10,7 +11,7 @@ public class ComponentTypeOfMacro implements Macro {
   }
 
   public String getDescription() {
-    return "componentTypeOf(Array)";
+    return CodeInsightBundle.message("macro.component.type.of.array");
   }
 
   public String getDefaultValue() {

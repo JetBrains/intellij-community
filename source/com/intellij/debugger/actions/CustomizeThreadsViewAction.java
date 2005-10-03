@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
+import com.intellij.idea.ActionsBundle;
 
 /**
  * User: lex
@@ -22,6 +23,6 @@ public class CustomizeThreadsViewAction extends DebuggerAction {
 
   public void update(AnActionEvent e) {
     e.getPresentation().setVisible(getTree(e.getDataContext()) instanceof ThreadsDebuggerTree);
-    e.getPresentation().setText("Customize View...");
+    e.getPresentation().setText(ActionsBundle.actionText(DebuggerActions.CUSTOMIZE_THREADS_VIEW));
   }
 }

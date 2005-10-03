@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.DiffManager;
 import com.intellij.openapi.diff.DiffRequest;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.external.DiffManagerImpl;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -87,9 +88,21 @@ abstract class BaseDiffAction extends AnAction {
     return FileDocumentManager.getInstance().getFile(document);
   }
 
+  protected static boolean isEditorContent(Document document) {
+    VirtualFile editorFile = getDocumentFile(document);
+    if (editorFile == null || !editorFile.isValid())
+      return true;
+    return false;
+  }
+
+  protected static String getDocumentFileUrl(Document document) {
+    return getDocumentFile(document).getPresentableUrl();
+  }
+
   protected static String getContentTitle(Document document) {
     VirtualFile editorFile = getDocumentFile(document);
-    if (editorFile == null || !editorFile.isValid()) return "Editor";
+    if (editorFile == null || !editorFile.isValid())
+      return DiffBundle.message("diff.content.editor.content.title");
     return editorFile.getPresentableUrl();
   }
 }

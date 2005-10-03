@@ -7,6 +7,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,7 +31,8 @@ public class RmicSettings implements JDOMExternalizable, ProjectComponent {
   public void projectOpened() {
   }
 
-  public String[] getOptions() {
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  public @NonNls String[] getOptions() {
     List<String> options = new ArrayList<String>();
     if(DEBUGGING_INFO) {
       options.add("-g");

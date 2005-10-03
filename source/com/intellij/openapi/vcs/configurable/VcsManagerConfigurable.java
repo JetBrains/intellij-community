@@ -6,6 +6,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.configurable.VcsManagerConfigurablePanel;
+import com.intellij.openapi.vcs.VcsBundle;
 
 import javax.swing.*;
 
@@ -36,7 +37,7 @@ public class VcsManagerConfigurable implements ProjectComponent, Configurable {
 
 
   public String getDisplayName() {
-    return "Version Control";
+    return VcsBundle.message("version.control.main.configurable.name");
   }
 
   public String getHelpTopic() {

@@ -15,6 +15,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.LinkedList;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * Created by IntelliJ IDEA.
  * User: lex
@@ -29,7 +31,7 @@ public class DebuggerStatementEditor extends DebuggerEditorImpl {
 
   private int    myRecentIdx;
 
-  public DebuggerStatementEditor(Project project, PsiElement context, String recentsId) {
+  public DebuggerStatementEditor(Project project, PsiElement context, @NonNls String recentsId) {
     super(project, context, recentsId);
     myRecentIdx = DebuggerRecents.getInstance(getProject()).getRecents(getRecentsId()).size();
     myEditor = new EditorTextField("", project, StdFileTypes.JAVA) {

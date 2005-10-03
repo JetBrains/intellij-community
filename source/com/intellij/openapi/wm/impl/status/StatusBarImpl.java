@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.impl.EmptyIcon;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.ui.EdgeBorder;
+import com.intellij.ui.UIBundle;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -19,11 +20,12 @@ import java.awt.event.ActionListener;
 public class StatusBarImpl extends JPanel implements StatusBarEx {
 
 // Made protected for Fabrique
-  protected final TextPanel myInfoPanel = new TextPanel(new String[]{"X"},true);
+  protected final TextPanel myInfoPanel = new TextPanel(new String[]{"#"},true);
   protected final PositionPanel myPositionPanel = new PositionPanel();
   protected final ToggleReadOnlyAttributePanel myToggleReadOnlyAttributePanel = new ToggleReadOnlyAttributePanel();
   protected final MemoryUsagePanel myMemoryUsagePanel = new MemoryUsagePanel();
-  protected final TextPanel myStatusPanel = new TextPanel(new String[]{"Insert", "Overwrite"},false);
+  protected final TextPanel myStatusPanel = new TextPanel(new String[]{UIBundle.message("status.bar.insert.status.text"),
+    UIBundle.message("status.bar.overwrite.status.text")},false);
   protected final TogglePopupHintsPanel myEditorHighlightingPanel;
   protected final IdeMessagePanel myMessagePanel = new IdeMessagePanel(MessagePool.getInstance());
   protected String myInfo = "";
@@ -59,7 +61,7 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
     gbConstraints.weightx = 1;
     myInfoPanel.setBorder(emptyBorder);
     myInfoPanel.setOpaque(false);
-    percentageLabel = new TextPanel(new String[]{"XXX"},false);
+    percentageLabel = new TextPanel(new String[]{"###"},false);
     percentageLabel.setBorder(emptyBorder);
 
     myInfoAndButtonPanel = new JPanel(new BorderLayout());

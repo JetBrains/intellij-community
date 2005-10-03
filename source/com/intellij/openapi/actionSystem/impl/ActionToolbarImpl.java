@@ -99,6 +99,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbarEx {
     return myLayoutPolicy;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public void setLayoutPolicy(final int layoutPolicy) {
     if (layoutPolicy != NOWRAP_LAYOUT_POLICY && layoutPolicy != WRAP_LAYOUT_POLICY) {
       throw new IllegalArgumentException("wrong layoutPolicy: " + layoutPolicy);
@@ -118,9 +119,9 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbarEx {
     // TODO[vova,anton] implement painting when tool bar has vertical orientation
     // BTW it's a bit strange :) Toolbar has 4 sides fo border :)
     if (myBorderVisible) {
-      g.setColor(UIManager.getColor("Separator.highlight"));
+      g.setColor(UIUtil.getSeparatorHighlight());
       UIUtil.drawLine(g, 0, 0, getWidth() - 1, 0);
-      g.setColor(UIManager.getColor("Separator.shadow"));
+      g.setColor(UIUtil.getSeparatorShadow());
       UIUtil.drawLine(g, 0, getHeight() - 1, getWidth() - 1, getHeight() - 1);
     }
   }
@@ -150,7 +151,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbarEx {
       return new ActionButtonWithText(action, myPresentationFactory.getPresentation(action), myPlace,
                                       ActionToolbarEx.DEFAULT_MINIMUM_BUTTON_SIZE);
     }
-    
+
     final ActionButton actionButton = new ActionButton(action,
                                                        myPresentationFactory.getPresentation(action),
                                                        myPlace,
@@ -383,6 +384,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbarEx {
   /**
    * Calculates bounds of all the components in the toolbar
    */
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private void calculateBounds() {
     // Ensure that myComponentBounds has enoungh elements
     final int componentCount = getComponentCount();
@@ -446,7 +448,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbarEx {
     }
 
     protected void paintComponent(final Graphics g) {
-      g.setColor(UIManager.getColor("Separator.shadow"));
+      g.setColor(UIUtil.getSeparatorShadow());
       if (getParent() != null) {
         if (myOrientation == SwingConstants.HORIZONTAL) {
           UIUtil.drawLine(g, 3, 2, 3, getParent().getSize().height - 2);
@@ -509,6 +511,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbarEx {
     revalidate();
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public void setMinimumButtonSize(final Dimension size) {
     if (size == null) {
       throw new IllegalArgumentException("size cannot be null");
@@ -524,6 +527,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbarEx {
     revalidate();
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public void setOrientation(final int orientation) {
     if (SwingConstants.HORIZONTAL != orientation && SwingConstants.VERTICAL != orientation) {
       throw new IllegalArgumentException("wrong orientation: " + orientation);

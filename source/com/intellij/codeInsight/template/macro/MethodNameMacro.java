@@ -1,9 +1,12 @@
 package com.intellij.codeInsight.template.macro;
 
+import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.lang.LangBundle;
 
 public class MethodNameMacro implements Macro {
 
@@ -12,7 +15,7 @@ public class MethodNameMacro implements Macro {
   }
 
   public String getDescription() {
-    return "methodName()";
+    return CodeInsightBundle.message("macro.methodname");
   }
 
   public String getDefaultValue() {
@@ -33,8 +36,8 @@ public class MethodNameMacro implements Macro {
         return new TextResult(((PsiMethod)place).getName());
       } else if (place instanceof PsiClassInitializer) {
         return ((PsiClassInitializer) place).hasModifierProperty(PsiModifier.STATIC) ?
-               new TextResult("'static initializer'") :
-               new TextResult("'instance initializer'");
+               new TextResult(LangBundle.message("java.terms.static.initializer")) :
+               new TextResult(LangBundle.message("java.terms.instance.initializer"));
       }
       place = place.getParent();
     }

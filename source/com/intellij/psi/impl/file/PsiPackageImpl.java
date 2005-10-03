@@ -17,6 +17,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -28,8 +29,14 @@ import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -40,6 +47,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
 
   private final PsiManagerImpl myManager;
   private final String myQualifiedName;
+  private CachedValue<Ref<PsiModifierList>> myAnnotationList;
 
   public PsiPackageImpl(PsiManagerImpl manager, String qualifiedName) {
     myManager = manager;
@@ -79,6 +87,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
   }
 
   public String getName() {
+    //noinspection ConstantConditions
     if (DebugUtil.CHECK_INSIDE_ATOMIC_ACTION_ENABLED) {
       ApplicationManager.getApplication().assertReadAccessAllowed();
     }
@@ -199,6 +208,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
     }
   }
 
+  @NotNull
   public Language getLanguage() {
     return StdFileTypes.JAVA.getLanguage();
   }
@@ -207,6 +217,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
     return myManager;
   }
 
+  @NotNull
   public PsiElement[] getChildren() {
     LOG.error("method not implemented");
     return PsiElement.EMPTY_ARRAY;
@@ -333,6 +344,14 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
     return myManager.getClasses(this, scope);
   }
 
+  @Nullable
+  public PsiModifierList getAnnotationList() {
+    if (myAnnotationList == null) {
+      myAnnotationList = myManager.getCachedValuesManager().createCachedValue(new PackageAnnotationValueProvider());
+    }
+    return myAnnotationList.getValue().get();
+  }
+
   public PsiPackage[] getSubPackages() {
     return getSubPackages(GlobalSearchScope.allScope(myManager.getProject()));
   }
@@ -366,18 +385,22 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
     ElementClassHint classHint = processor.getHint(ElementClassHint.class);
 
     if (classHint == null || classHint.shouldProcess(PsiClass.class)) {
+      boolean isPlacePhysical = place.isPhysical();
       NameHint nameHint = processor.getHint(NameHint.class);
       if (nameHint != null) {
         final PsiClass aClass = findClassByName(nameHint.getName(), scope);
-        if (aClass != null) {
+        if (aClass != null &&
+            (!isPlacePhysical || getManager().getResolveHelper().isAccessible(aClass, place, null))) {
           if (!processor.execute(aClass, substitutor)) return false;
         }
       }
       else {
         PsiClass[] classes = getClasses(scope);
         for (PsiClass aClass : classes) {
-          if (!processor.execute(aClass, substitutor)) {
-            return false;
+          if (!isPlacePhysical || getManager().getResolveHelper().isAccessible(aClass, place, null)) {
+            if (!processor.execute(aClass, substitutor)) {
+              return false;
+            }
           }
         }
         if (myManager.getCurrentMigration() != null) {
@@ -445,5 +468,23 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
 
   public ASTNode getNode() {
     return null;
+  }
+
+  private class PackageAnnotationValueProvider implements CachedValueProvider<Ref<PsiModifierList> > {
+    @NonNls private static final String PACKAGE_INFO_FILE = "package-info.java";
+    private final Object[] OOCB_DEPENDENCY = new Object[] { PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT };
+
+    public Result<Ref<PsiModifierList> > compute() {
+      for(PsiDirectory directory: getDirectories()) {
+        PsiFile file = directory.findFile(PACKAGE_INFO_FILE);
+        if (file != null) {
+          PsiPackageStatement stmt = PsiTreeUtil.getChildOfType(file, PsiPackageStatement.class);
+          if (stmt != null) {
+            return new Result<Ref<PsiModifierList>>(Ref.create(stmt.getAnnotationList()), OOCB_DEPENDENCY );
+          }
+        }
+      }
+      return new Result<Ref<PsiModifierList> >(new Ref<PsiModifierList>(), OOCB_DEPENDENCY );
+    }
   }
 }

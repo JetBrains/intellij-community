@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.template.macro;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.openapi.project.Project;
@@ -13,7 +14,7 @@ public class ArrayVariableMacro extends VariableTypeMacroBase {
   }
 
   public String getDescription() {
-    return "arrayVariable()";
+    return CodeInsightBundle.message("macro.array.variable");
   }
 
   protected PsiVariable[] getVariables(Expression[] params, final ExpressionContext context) {

@@ -3,6 +3,7 @@ package com.intellij.ide.impl;
 import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewWrapper;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
@@ -20,6 +21,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -50,7 +52,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper {
   public StructureViewWrapperImpl(Project project) {
     myProject = project;
     myPanel = new JPanel(new BorderLayout());
-    myPanel.setBackground(UIManager.getColor("Tree.textBackground"));
+    myPanel.setBackground(UIUtil.getTreeTextBackground());
 
     myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 
@@ -183,7 +185,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper {
       }
     }
     if (myStructureView == null) {
-      myPanel.add(new JLabel("Nothing to show in the Structure View", JLabel.CENTER), BorderLayout.CENTER);
+      myPanel.add(new JLabel(IdeBundle.message("message.nothing.to.show.in.structure.view"), JLabel.CENTER), BorderLayout.CENTER);
     }
 
     myPanel.validate();

@@ -8,6 +8,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.DebuggerBundle;
 import com.sun.jdi.Field;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
@@ -39,10 +40,11 @@ public class ThisEvaluator implements Evaluator {
       }
       objRef = thisRef;
     }
-    if(objRef == null) throw EvaluateExceptionUtil.createEvaluateException("'this' is not avalilable");
+    if(objRef == null) throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.this.not.avalilable"));
     return objRef;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static ObjectReference getOuterObject(ObjectReference objRef) {
     if (objRef == null) return null;
     List list = objRef.referenceType().fields();

@@ -15,8 +15,10 @@
  */
 package com.intellij.psi.tree.xml;
 
+import org.jetbrains.annotations.NonNls;
+
 public class IXmlLeafElementType extends IXmlElementType {
-  public IXmlLeafElementType(String debugName) {
+  public IXmlLeafElementType(@NonNls String debugName) {
     super(debugName);
   }
 }

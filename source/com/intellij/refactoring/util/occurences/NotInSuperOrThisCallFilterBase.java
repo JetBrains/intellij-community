@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiExpressionList;
 import com.intellij.psi.PsiMethodCallExpression;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author dsl
@@ -25,5 +26,5 @@ public abstract class NotInSuperOrThisCallFilterBase implements OccurenceFilter 
     return !getKeywordText().equals(text);
   }
 
-  protected abstract String getKeywordText();
+  protected abstract @NonNls String getKeywordText();
 }

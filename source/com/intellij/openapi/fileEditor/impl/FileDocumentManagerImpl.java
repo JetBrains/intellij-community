@@ -45,6 +45,8 @@ import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayCharSequence;
+import com.intellij.CommonBundle;
+import com.intellij.ui.UIBundle;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -439,27 +441,28 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
 
 // Made protected for Fabrique
   protected boolean askReloadFromDisk(final VirtualFile file, final Document document) {
-    String message = "Changes have been made to \"" + file.getPresentableUrl() + "\"\nin memory and on disk.";
+    String message = UIBundle.message("file.cache.conflict.message.text", file.getPresentableUrl());
     if (ApplicationManager.getApplication().isUnitTestMode()) throw new RuntimeException(message);
     final DialogBuilder builder = new DialogBuilder((Project)null);
     builder.setCenterPanel(new JLabel(message, Messages.getQuestionIcon(), SwingUtilities.TRAILING));
-    builder.addOkAction().setText("&Load FS Changes");
-    builder.addCancelAction().setText("&Keep Memory Changes");
-    builder.addAction(new AbstractAction("&Show difference"){
+    builder.addOkAction().setText(UIBundle.message("file.cache.conflict.load.fs.changes.button"));
+    builder.addCancelAction().setText(UIBundle.message("file.cache.conflict.keep.memory.changes.button"));
+    builder.addAction(new AbstractAction(UIBundle.message("file.cache.conflict.show.difference.button")){
       public void actionPerformed(ActionEvent e) {
-        String windowtitle = "File Cache Conflict " + file.getPresentableUrl();
+        String windowtitle = UIBundle.message("file.cache.conflict.for.file.dialog.title", file.getPresentableUrl());
         SimpleDiffRequest request = new SimpleDiffRequest(getDummyProject(), windowtitle);
         FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(file);
         String fsContent = loadText(file).toString();
         request.setContents(new SimpleContent(fsContent, fileType),
                             new DocumentContent(myDummyProject, document, fileType));
-        request.setContentTitles("File system content", "Memory content");
+        request.setContentTitles(UIBundle.message("file.cache.conflict.diff.content.file.system.content"),
+                                 UIBundle.message("file.cache.conflict.diff.content.memory.content"));
         DialogBuilder diffBuidler = new DialogBuilder(getDummyProject());
         DiffPanelImpl diffPanel = (DiffPanelImpl)DiffManager.getInstance().createDiffPanel(diffBuidler.getWindow(), getDummyProject());
         diffPanel.getOptions().setShowSourcePolicy(DiffPanelOptions.ShowSourcePolicy.DONT_SHOW);
         diffBuidler.setCenterPanel(diffPanel.getComponent());
         diffPanel.setDiffRequest(request);
-        diffBuidler.addOkAction().setText("Save changes");
+        diffBuidler.addOkAction().setText(UIBundle.message("file.cache.conflict.save.changes.button"));
         diffBuidler.addCancelAction();
         diffBuidler.setTitle(windowtitle);
         if (diffBuidler.show() == DialogWrapper.OK_EXIT_CODE)
@@ -467,7 +470,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
       }
     });
     //int option = Messages.showYesNoDialog(message, "File Cache Conflict", Messages.getQuestionIcon());
-    builder.setTitle("File Cache Conflict");
+    builder.setTitle(UIBundle.message("file.cache.conflict.dialog.title"));
     builder.setButtonsAlignment(SwingUtilities.CENTER);
     return builder.show() == 0;
     //return option == 0;
@@ -478,8 +481,8 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         Messages.showMessageDialog(
-          "Cannot save file:\n" + e.getMessage(),
-          "Cannot Save File",
+          UIBundle.message("cannot.save.file.with.error.error.message", e.getMessage()),
+          UIBundle.message("cannot.save.file.dialog.title"),
           Messages.getErrorIcon()
         );
       }

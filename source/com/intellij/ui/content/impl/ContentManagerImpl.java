@@ -6,6 +6,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.content.*;
+import com.intellij.ui.UIBundle;
 
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
@@ -187,7 +188,12 @@ public class ContentManagerImpl implements ContentManager {
   }
 
   public String getCloseActionName() {
-    return "Close Tab";
+    return UIBundle.message("tabbed.pane.close.tab.action.name");
+  }
+
+
+  public String getCloseAllButThisActionName() {
+    return UIBundle.message("tabbed.pane.close.all.tabs.but.this.action.name");
   }
 
   public boolean canCloseAllContents() {

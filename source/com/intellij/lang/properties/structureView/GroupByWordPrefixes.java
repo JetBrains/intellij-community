@@ -4,11 +4,13 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.smartTree.*;
 import com.intellij.lang.properties.editor.ResourceBundlePropertyStructureViewElement;
 import com.intellij.lang.properties.psi.Property;
+import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 
@@ -17,7 +19,7 @@ import java.util.*;
  */
 public class GroupByWordPrefixes implements Grouper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.properties.structureView.GroupByWordPrefixes");
-  public static final String ID = "GROUP_BY_PREFIXES";
+  @NonNls public static final String ID = "GROUP_BY_PREFIXES";
   private String mySeparator;
 
   public GroupByWordPrefixes(String separator) {
@@ -131,8 +133,8 @@ public class GroupByWordPrefixes implements Grouper {
 
   @NotNull
   public ActionPresentation getPresentation() {
-    return new ActionPresentationData("Group By Prefixes",
-                                      "Groups properties by common key prefixes",
+    return new ActionPresentationData(PropertiesBundle.message("structure.view.group.by.prefixes.action.name"),
+                                      PropertiesBundle.message("structure.view.group.by.prefixes.action.description"),
                                       IconLoader.getIcon("/actions/fileStatus.png"));
   }
 

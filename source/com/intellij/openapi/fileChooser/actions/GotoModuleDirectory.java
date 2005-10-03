@@ -9,6 +9,7 @@ import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.module.Module;
+import com.intellij.ui.UIBundle;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -20,7 +21,7 @@ public final class GotoModuleDirectory extends FileChooserDialogImpl.FileChooser
   private final Module myModuleToGo;
 
   public GotoModuleDirectory(FileSystemTree fileSystemTree, @Nullable Module moduleToGo) {
-    super("Module", "Go to module directory", IconLoader.getIcon("/nodes/ModuleClosed.png"), fileSystemTree, KeyStroke.getKeyStroke(KeyEvent.VK_3, InputEvent.CTRL_MASK));
+    super(UIBundle.message("file.chooser.goto.module.action.name"), UIBundle.message("file.chooser.goto.module.action.description"), IconLoader.getIcon("/nodes/ModuleClosed.png"), fileSystemTree, KeyStroke.getKeyStroke(KeyEvent.VK_3, InputEvent.CTRL_MASK));
     myModuleToGo = moduleToGo;
   }
 

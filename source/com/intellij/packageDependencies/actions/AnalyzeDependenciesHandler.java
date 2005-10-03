@@ -1,6 +1,7 @@
 package com.intellij.packageDependencies.actions;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.packageDependencies.DependenciesBuilder;
@@ -26,10 +27,12 @@ public class AnalyzeDependenciesHandler {
       public void run() {
         forwardBuilder.analyze();
       }
-    }, "Analyzing Dependencies", true, myProject)) {
+    }, AnalysisScopeBundle.message("package.dependencies.progress.title"), true, myProject)) {
       DependenciesPanel panel = new DependenciesPanel(myProject, forwardBuilder);
       Content content = PeerFactory.getInstance().getContentFactory().createContent(panel,
-                                                                                  "Dependencies of " + forwardBuilder.getScope().getDisplayName(),
+                                                                                    AnalysisScopeBundle.message(
+                                                                                      "package.dependencies.toolwindow.title",
+                                                                                      forwardBuilder.getScope().getDisplayName()),
                                                                                   false);
       panel.setContent(content);
       ((DependencyValidationManagerImpl)DependencyValidationManager.getInstance(myProject)).addContent(content);

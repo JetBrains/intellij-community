@@ -15,6 +15,8 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.zip.ZipFile;
 
+import org.jetbrains.annotations.NonNls;
+
 public class JarFileSystemImpl extends JarFileSystem implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl");
 
@@ -25,6 +27,9 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
   private HashSet<String> myContentChangingJars = new HashSet<String>();
 
   private VirtualFileManagerEx myManager;
+  @NonNls private static final String JARS_FOLDER = "jars";
+  @NonNls private static final String IDEA_JARS_NOCOPY = "idea.jars.nocopy";
+  @NonNls private static final String IDEA_JAR = "idea.jar";
 
   public JarFileSystemImpl(LocalFileSystem localFileSystem) {
 
@@ -256,7 +261,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
   public File getMirrorFile(File originalFile) {
     if (!isMakeCopyOfJar(originalFile)) return originalFile;
 
-    String folderPath = PathManager.getSystemPath() + File.separatorChar + "jars";
+    String folderPath = PathManager.getSystemPath() + File.separatorChar + JARS_FOLDER;
     if (!new File(folderPath).exists()) {
       if (!new File(folderPath).mkdirs()) {
         return originalFile;
@@ -268,8 +273,8 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
   }
 
   private boolean isMakeCopyOfJar(File originalJar) {
-    String property = System.getProperty("idea.jars.nocopy");
-    if ("true".equalsIgnoreCase(property)) return false;
+    String property = System.getProperty(IDEA_JARS_NOCOPY);
+    if (Boolean.TRUE.toString().equalsIgnoreCase(property)) return false;
 
     String path = originalJar.getPath();
     if (!SystemInfo.isFileSystemCaseSensitive) {
@@ -278,7 +283,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
     if (myNoCopyJarPaths.contains(path)) return false;
 
     String name = originalJar.getName();
-    if (name.equalsIgnoreCase("idea.jar")) {
+    if (name.equalsIgnoreCase(IDEA_JAR)) {
       if (originalJar.getParent().equalsIgnoreCase(PathManager.getLibPath())) {
         return false;
       }

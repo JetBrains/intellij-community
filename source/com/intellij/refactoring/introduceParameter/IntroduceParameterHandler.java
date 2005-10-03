@@ -25,16 +25,14 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.IntroduceHandlerBase;
-import com.intellij.refactoring.IntroduceParameterRefactoring;
-import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.*;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.ui.NameSuggestionsGenerator;
 import com.intellij.refactoring.ui.TypeSelectorManager;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -44,12 +42,7 @@ import java.util.Set;
 
 public class IntroduceParameterHandler extends IntroduceHandlerBase implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceParameter.IntroduceParameterHandler");
-  private static final String REFACTORING_NAME = "Introduce Parameter";
-  private PsiExpression myParameterInitializer;
-  private PsiExpression myExpressionToSearchFor;
-  private PsiLocalVariable myLocalVar;
-  private PsiMethod myMethod;
-  private PsiMethod myMethodToSearchFor;
+  private static final String REFACTORING_NAME = RefactoringBundle.message("introduce.parameter.title");
   private Project myProject;
 
   public void invoke(Project project, Editor editor, PsiFile file, DataContext dataContext) {
@@ -79,7 +72,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
   private boolean invoke(Editor editor, Project project, final PsiExpression expr,
                          PsiLocalVariable localVar, boolean invokedOnDeclaration) {
     LOG.assertTrue(!PsiDocumentManager.getInstance(project).hasUncommitedDocuments());
-    final PsiMethod method;
+    PsiMethod method;
     if (expr != null) {
       method = Util.getContainingMethod(expr);
     } else {
@@ -90,69 +83,59 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
       LOG.debug("expression:" + expr);
     }
 
-    myLocalVar = localVar;
     myProject = project;
-    if (expr == null && myLocalVar == null) {
-      String message =
-              "Cannot perform the refactoring.\n" +
-              "Selected block should represent an expression.";
+    if (expr == null && localVar == null) {
+      String message =  RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("selected.block.should.represent.an.expression"));
       RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INTRODUCE_PARAMETER, myProject);
       return false;
     }
 
 
-    myMethod = method;
-    if (myMethod == null) {
-      String message =
-              "Cannot perform the refactoring.\n" +
-              REFACTORING_NAME + " is not supported in the current context.";
+    if (method == null) {
+      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("is.not.supported.in.the.current.context", REFACTORING_NAME));
       RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INTRODUCE_PARAMETER, myProject);
       return false;
     }
 
-    if (!myMethod.isWritable()) {
-      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, myMethod)) return false;
+    if (!method.isWritable()) {
+      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, method)) return false;
     }
 
     final PsiType typeByExpression = !invokedOnDeclaration ? RefactoringUtil.getTypeByExpressionWithExpectedType(expr) : null;
     if (!invokedOnDeclaration && typeByExpression == null) {
-      String message =
-              "Cannot perform the refactoring.\n" +
-              "Type of the selected expression cannot be determined.";
+      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("type.of.the.selected.expression.cannot.be.determined"));
       RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INTRODUCE_PARAMETER, myProject);
       return false;
     }
 
     if (!invokedOnDeclaration && typeByExpression == PsiType.VOID) {
-      String message =
-              "Cannot perform the refactoring.\n" +
-              "Selected expression has void type.";
+      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("selected.expression.has.void.type"));
       RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INTRODUCE_PARAMETER, project);
       return false;
     }
 
-    final List<PsiMethod> validEnclosingMethods = getEnclosingMethods(myMethod);
+    final List<PsiMethod> validEnclosingMethods = getEnclosingMethods(method);
     if (validEnclosingMethods.size() > 1 && !ApplicationManager.getApplication().isUnitTestMode()) {
       final EnclosingMethodSelectionDialog dialog = new EnclosingMethodSelectionDialog(project, validEnclosingMethods);
       dialog.show();
       if (!dialog.isOK()) return false;
-      myMethod = dialog.getSelectedMethod();
+      method = dialog.getSelectedMethod();
     }
 
-    myMethodToSearchFor = SuperMethodWarningUtil.checkSuperMethod(myMethod, "refactor");
+    final PsiMethod methodToSearchFor = SuperMethodWarningUtil.checkSuperMethod(method, RefactoringBundle.message("to.refactor"));
 
-    if (myMethodToSearchFor == null) {
+    if (methodToSearchFor == null) {
       return false;
     }
-    if (!myMethodToSearchFor.isWritable()) {
-      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, myMethodToSearchFor)) return false;
+    if (!methodToSearchFor.isWritable()) {
+      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, methodToSearchFor)) return false;
     }
 
     PsiExpression[] occurences;
     if (expr != null) {
-      occurences = CodeInsightUtil.findExpressionOccurrences(myMethod, expr);
+      occurences = CodeInsightUtil.findExpressionOccurrences(method, expr);
     } else { // local variable
-      occurences = CodeInsightUtil.findReferenceExpressions(myMethod, myLocalVar);
+      occurences = CodeInsightUtil.findReferenceExpressions(method, localVar);
     }
     if (editor != null) {
       RefactoringUtil.highlightOccurences(myProject, occurences, editor);
@@ -167,33 +150,31 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
       Util.analyzeExpression(expr, localVars, classMemberRefs, params);
     }
 
-    String parameterName = "anObject";
+    @NonNls String parameterName = "anObject";
     boolean replaceAllOccurences = true;
     boolean isDeleteLocalVariable = true;
-    myParameterInitializer = expr;
-    myExpressionToSearchFor = expr;
 
     if (expr instanceof PsiReferenceExpression) {
       PsiElement resolved = ((PsiReferenceExpression) expr).resolve();
       if (resolved instanceof PsiLocalVariable) {
-        myLocalVar = (PsiLocalVariable) resolved;
+        localVar = (PsiLocalVariable) resolved;
       }
     }
 
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      final String propName = myLocalVar != null ? CodeStyleManager.getInstance(myProject).variableNameToPropertyName(myLocalVar.getName(), VariableKind.LOCAL_VARIABLE) : null;
-      final PsiType initializerType = IntroduceParameterProcessor.getInitializerType(null, expr, myLocalVar);
+      final String propName = localVar != null ? CodeStyleManager.getInstance(myProject).variableNameToPropertyName(localVar.getName(), VariableKind.LOCAL_VARIABLE) : null;
+      final PsiType initializerType = IntroduceParameterProcessor.getInitializerType(null, expr, localVar);
 
       TypeSelectorManager typeSelectorManager =
               (expr != null ?
-              new TypeSelectorManagerImpl(project, initializerType, expr, occurences) :
-              new TypeSelectorManagerImpl(project, initializerType, occurences));
+               new TypeSelectorManagerImpl(project, initializerType, expr, occurences) :
+               new TypeSelectorManagerImpl(project, initializerType, occurences));
 
       new IntroduceParameterDialog(
               myProject, classMemberRefs,
               occurences.length,
-              myLocalVar, expr,
+              localVar, expr,
               new NameSuggestionsGenerator() {
                 public SuggestedNameInfo getSuggestedNameInfo(PsiType type) {
                   return CodeStyleManager.getInstance(myProject).suggestVariableName(VariableKind.PARAMETER, propName, expr, type);
@@ -206,12 +187,12 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
                   return new Pair<LookupItemPreferencePolicy, Set<LookupItem>> (policy, set);
                 }
               },
-              typeSelectorManager, myMethodToSearchFor, myMethod).show();
+              typeSelectorManager, methodToSearchFor, method).show();
     } else {
       new IntroduceParameterProcessor(
-        myProject, myMethod, myMethodToSearchFor,
-        myParameterInitializer, myExpressionToSearchFor,
-        myLocalVar, isDeleteLocalVariable,
+        myProject, method, methodToSearchFor,
+        expr, expr,
+        localVar, isDeleteLocalVariable,
         parameterName, replaceAllOccurences,
         IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, null).run();
     }

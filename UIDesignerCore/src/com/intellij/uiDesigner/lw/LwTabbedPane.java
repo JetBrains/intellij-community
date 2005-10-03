@@ -16,6 +16,7 @@
 package com.intellij.uiDesigner.lw;
 
 import com.intellij.uiDesigner.core.AbstractLayout;
+import com.intellij.uiDesigner.UIFormXmlConstants;
 import org.jdom.Element;
 
 import javax.swing.*;
@@ -50,18 +51,15 @@ public final class LwTabbedPane extends LwContainer{
   protected void readConstraintsForChild(final Element element, final LwComponent component) {
     final Element constraintsElement = LwXmlReader.getRequiredChild(element, "constraints");
     final Element tabbedPaneChild = LwXmlReader.getRequiredChild(constraintsElement, "tabbedpane");
-    final String tabName = LwXmlReader.getString(tabbedPaneChild, "title");
-    if (tabName == null) {
-      final String resBundle = LwXmlReader.getString(tabbedPaneChild, "title-resource-bundle");
-      final String key = LwXmlReader.getString(tabbedPaneChild, "title-key");
-      if (resBundle == null || key == null) {
-        throw new IllegalArgumentException("either attribute 'title' or 'title-resource-bundle' and 'title-key' are required: "+tabbedPaneChild);
-      }
-      component.setCustomLayoutConstraints(new Constraints(new StringDescriptor(resBundle, key)));
+
+    final StringDescriptor descriptor = LwXmlReader.getStringDescriptor(tabbedPaneChild,
+                                                                        UIFormXmlConstants.ATTRIBUTE_TITLE,
+                                                                        UIFormXmlConstants.ATTRIBUTE_TITLE_RESOURCE_BUNDLE,
+                                                                        UIFormXmlConstants.ATTRIBUTE_TITLE_KEY);
+    if (descriptor == null) {
+      throw new IllegalArgumentException("String descriptor value required");
     }
-    else {
-      component.setCustomLayoutConstraints(new Constraints(StringDescriptor.create(tabName)));
-    }
+    component.setCustomLayoutConstraints(new Constraints(descriptor));
   }
 
   public static final class Constraints {

@@ -146,6 +146,7 @@ public final class GridChangeUtil {
   private static void deleteCell(final RadContainer grid, final int cellIndex, final boolean isRow) {
     check(grid, isRow, cellIndex);
     if (!canDeleteCell(grid, cellIndex, isRow)) {
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("cell cannot be deleted");
     }
     
@@ -181,9 +182,11 @@ public final class GridChangeUtil {
    */ 
   private static void check(final RadContainer grid, final boolean isRow, final int cellIndex){
     if (grid == null){
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("grid cannot be null");
     }
     if (!grid.isGrid()){
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("container must be grid");
     }
 
@@ -191,6 +194,7 @@ public final class GridChangeUtil {
 
     final int cellCount = isRow ? layout.getRowCount() : layout.getColumnCount();
     if (cellIndex < 0 || cellIndex >= cellCount) {
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("invalid index: " + cellIndex);
     }
   }

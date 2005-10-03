@@ -16,6 +16,7 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.CommonBundle;
 
 public abstract class ReadonlyStatusHandler {
 
@@ -54,19 +55,17 @@ public abstract class ReadonlyStatusHandler {
       if (hasReadonlyFiles()) {
         StringBuffer buf = new StringBuffer();
         if (myReadonlyFiles.length > 1) {
-          buf.append("Failed to make the following files writable:");
           for (int i = 0; i < myReadonlyFiles.length; i++) {
             VirtualFile file = myReadonlyFiles[i];
             buf.append('\n');
             buf.append(file.getPresentableUrl());
           }
+
+          return CommonBundle.message("failed.to.make.the.following.files.writable.error.message", buf.toString());
         }
         else {
-          buf.append("Failed to make ");
-          buf.append(myReadonlyFiles[0].getPresentableUrl());
-          buf.append(" writeable.");
+          return CommonBundle.message("failed.to.make.file.writeable.error.message", myReadonlyFiles[0].getPresentableUrl());
         }
-        return buf.toString();
       }
       return null;
     }

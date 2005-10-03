@@ -12,9 +12,16 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.text.MessageFormat;
+import java.util.ResourceBundle;
 import java.util.Vector;
 
 public class TestRunnerUtil {
+  /**
+   * @noinspection HardCodedStringLiteral
+   */
+  private static ResourceBundle ourBundle = ResourceBundle.getBundle("RuntimeBundle");
+
   public static Test getTestImpl(IdeaTestRunner runner, String suiteClassName){
     if (suiteClassName.length() <= 0) {
       runner.clearStatus();
@@ -44,7 +51,8 @@ public class TestRunnerUtil {
         return testPackage;
       }
       catch (Exception e) {
-        runner.runFailed("Error: " + e.toString());
+        //noinspection HardCodedStringLiteral
+        runner.runFailed(MessageFormat.format(ourBundle.getString("junit.runner.error"), new Object[] {e.toString()}));
         return null;
       }
     }
@@ -65,11 +73,13 @@ public class TestRunnerUtil {
       if (clazz == null) {
         clazz = suiteClassName;
       }
-      runner.runFailed("Class not found \"" + clazz + "\"");
+      //noinspection HardCodedStringLiteral
+      runner.runFailed(MessageFormat.format(ourBundle.getString("junit.class.not.found"), new Object[] {clazz}));
       return null;
     }
     catch (Exception e) {
-      runner.runFailed("Cannot instantiate test(s): " + e.toString());
+      //noinspection HardCodedStringLiteral
+      runner.runFailed(MessageFormat.format(ourBundle.getString("junit.cannot.instantiate.tests"), new Object[] {e.toString()}));
       return null;
     }
 
@@ -93,16 +103,19 @@ public class TestRunnerUtil {
           return testSuite;
         }
         catch(ClassCastException e1) {
-          runner.runFailed(testClass.getName() + " is not derived from TestCase. Do not provide method name.");
+          //noinspection HardCodedStringLiteral
+          runner.runFailed(MessageFormat.format(ourBundle.getString("junit.class.not.derived"), new Object[] {testClass.getName()}));
           return null;
         }
         catch (Exception e1) {
-          runner.runFailed("Cannot instantiate test(s): " + e1.toString());
+          //noinspection HardCodedStringLiteral
+          runner.runFailed(MessageFormat.format(ourBundle.getString("junit.cannot.instantiate.tests"), new Object[] {e1.toString()}));
           return null;
         }
       }
       catch (Exception e) {
-        runner.runFailed("Cannot instantiate test(s): " + e.toString());
+        //noinspection HardCodedStringLiteral
+        runner.runFailed(MessageFormat.format(ourBundle.getString("junit.cannot.instantiate.tests"), new Object[] {e.toString()}));
         return null;
       }
     }
@@ -117,7 +130,8 @@ public class TestRunnerUtil {
       return new TestSuite(testClass);
     }
     if (! Modifier.isStatic(suiteMethod.getModifiers())) {
-      runFailed("Suite() method must be static");
+      //noinspection HardCodedStringLiteral
+      runFailed(ourBundle.getString("junit.suite.must.be.static"));
       return null;
     }
     Test test;
@@ -127,11 +141,15 @@ public class TestRunnerUtil {
         return test;
     }
     catch (InvocationTargetException e) {
-      runner.runFailed("Failed to invoke suite():" + e.getTargetException().toString());
+      //noinspection HardCodedStringLiteral
+      runner.runFailed(MessageFormat.format(ourBundle.getString("junit.failed.to.invoke.suite"),
+                                            new Object[] {e.getTargetException().toString()}));
       return null;
     }
     catch (IllegalAccessException e) {
-      runner.runFailed("Failed to invoke suite():" + e.toString());
+      //noinspection HardCodedStringLiteral
+      runner.runFailed(MessageFormat.format(ourBundle.getString("junit.failed.to.invoke.suite"),
+                                            new Object[] {e.toString()}));
       return null;
     }
 

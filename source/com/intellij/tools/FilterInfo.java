@@ -3,6 +3,7 @@ package com.intellij.tools;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMExternalizable;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Iterator;
 
@@ -10,13 +11,16 @@ import java.util.Iterator;
  * @author dyoma
  */
 class FilterInfo implements JDOMExternalizable {
-  private static final String FILTER_NAME="NAME";
-  private static final String FILTER_DESCRIPTION="DESCRIPTION";
-  private static final String FILTER_REGEXP="REGEXP";
+  @NonNls private static final String FILTER_NAME="NAME";
+  @NonNls private static final String FILTER_DESCRIPTION="DESCRIPTION";
+  @NonNls private static final String FILTER_REGEXP="REGEXP";
 
-  private String myName = "No name";
+  private String myName = ToolsBundle.message("tools.filters.name.default");
   private String myDescription;
   private String myRegExp;
+  @NonNls private static final String ELEMENT_OPTION = "option";
+  @NonNls private static final String ATTRIBUTE_VALUE = "value";
+  @NonNls private static final String ATTRIBUTE_NAME = "name";
 
   public FilterInfo() {}
 
@@ -69,10 +73,10 @@ class FilterInfo implements JDOMExternalizable {
   }
 
   public void readExternal(Element element) {
-    for (Iterator i2 = element.getChildren("option").iterator(); i2.hasNext(); ) {
+    for (Iterator i2 = element.getChildren(ELEMENT_OPTION).iterator(); i2.hasNext(); ) {
       Element optionElement = (Element)i2.next();
-      String value = optionElement.getAttributeValue("value");
-      String name = optionElement.getAttributeValue("name");
+      String value = optionElement.getAttributeValue(ATTRIBUTE_VALUE);
+      String name = optionElement.getAttributeValue(ATTRIBUTE_NAME);
 
       if (FILTER_NAME.equals(name)) {
         if (value != null) {
@@ -89,25 +93,25 @@ class FilterInfo implements JDOMExternalizable {
   }
 
   public void writeExternal(Element filterElement) {
-    Element option = new Element("option");
+    Element option = new Element(ELEMENT_OPTION);
     filterElement.addContent(option);
-    option.setAttribute("name", FILTER_NAME);
+    option.setAttribute(ATTRIBUTE_NAME, FILTER_NAME);
     if (myName != null ) {
-      option.setAttribute("value", myName);
+      option.setAttribute(ATTRIBUTE_VALUE, myName);
     }
 
-    option = new Element("option");
+    option = new Element(ELEMENT_OPTION);
     filterElement.addContent(option);
-    option.setAttribute("name", FILTER_DESCRIPTION);
+    option.setAttribute(ATTRIBUTE_NAME, FILTER_DESCRIPTION);
     if (myDescription != null ) {
-      option.setAttribute("value", myDescription);
+      option.setAttribute(ATTRIBUTE_VALUE, myDescription);
     }
 
-    option = new Element("option");
+    option = new Element(ELEMENT_OPTION);
     filterElement.addContent(option);
-    option.setAttribute("name", FILTER_REGEXP);
+    option.setAttribute(ATTRIBUTE_NAME, FILTER_REGEXP);
     if (myRegExp != null ) {
-      option.setAttribute("value", myRegExp);
+      option.setAttribute(ATTRIBUTE_VALUE, myRegExp);
     }
   }
 

@@ -28,6 +28,8 @@ import com.intellij.util.containers.HashSet;
 import java.io.File;
 import java.util.*;
 
+import org.jetbrains.annotations.NonNls;
+
 public class PathsList  {
   private final List<String>  myPath = new ArrayList<String>();
   private final List<String> myPathTail = new ArrayList<String>();
@@ -67,7 +69,7 @@ public class PathsList  {
     add(LOCAL_PATH.convert(file));
   }
 
-  public void addFirst(String path) {
+  public void addFirst(@NonNls String path) {
     final Iterator<String> elements = chooseFirstTimeItems(path);
     int index = 0;
     while (elements.hasNext()) {

@@ -5,6 +5,7 @@
 package com.intellij.execution.runners;
 
 import com.intellij.diagnostic.logging.LogConsole;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunConfigurationBase;
@@ -20,14 +21,11 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Pair;
 
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.Map;
 
 /**
  * @author dyoma
@@ -94,21 +92,21 @@ public class RunContentBuilder {
           } else {
             if (myRunProfile instanceof RunConfigurationBase){
               RunConfigurationBase base = (RunConfigurationBase)myRunProfile;
-              final Map<Pair<String,String>,Boolean> logFiles = base.getLogFiles();
+              final ArrayList<RunConfigurationBase.LogFileOptions> logFiles = base.getLogFiles();
               if (!logFiles.isEmpty()){
                 final ProcessHandler processHandler = myExecutionResult.getProcessHandler();
                 myComponent = new JTabbedPane();
-                ((JTabbedPane)myComponent).addTab("Console", console.getComponent());
-                for (Pair<String, String> pair : logFiles.keySet()) {
-                  if (logFiles.get(pair).booleanValue()) {
-                    final LogConsole log = new LogConsole(myProject, new File(pair.first)){
+                ((JTabbedPane)myComponent).addTab(ExecutionBundle.message("run.configuration.console.tab"), console.getComponent());
+                for (RunConfigurationBase.LogFileOptions logFile : logFiles) {
+                  if (logFile.isEnabled()) {
+                    final LogConsole log = new LogConsole(myProject, new File(logFile.getPath()), logFile.isSkipContent()){
                       public boolean isActive() {
                         return ((JTabbedPane)myComponent).getSelectedComponent() == this;  
                       }
                     };
                     myDisposeables.add(log);
                     log.attachStopLogConsoleTrackingListener(processHandler);
-                    ((JTabbedPane)myComponent).addTab("Log: " + pair.second, log);
+                    ((JTabbedPane)myComponent).addTab(ExecutionBundle.message("run.configuration.log.tab", logFile.getName()), log);
                   }
                 }
               }
@@ -137,13 +135,11 @@ public class RunContentBuilder {
     actionGroup.add(action);
 
     final AnAction[] profileActions = myExecutionResult.getActions();
-    for (int i = 0; i < profileActions.length; i++) {
-      final AnAction profileAction = profileActions[i];
+    for (final AnAction profileAction : profileActions) {
       actionGroup.add(profileAction);
     }
 
-    for (Iterator<AnAction> iterator = myRunnerActions.iterator(); iterator.hasNext();) {
-      final AnAction anAction = iterator.next();
+    for (final AnAction anAction : myRunnerActions) {
       if (anAction != null) {
         actionGroup.add(anAction);
       }

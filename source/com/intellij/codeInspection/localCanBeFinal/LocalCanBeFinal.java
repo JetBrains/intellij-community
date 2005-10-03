@@ -1,10 +1,7 @@
 package com.intellij.codeInspection.localCanBeFinal;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -22,6 +19,8 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author max
  */
@@ -32,7 +31,7 @@ public class LocalCanBeFinal extends BaseLocalInspectionTool {
   public boolean REPORT_PARAMETERS = true;
 
   private LocalQuickFix myQuickFix;
-  public static final String SHORT_NAME = "LocalCanBeFinal";
+  @NonNls public static final String SHORT_NAME = "LocalCanBeFinal";
 
   public LocalCanBeFinal() {
     myQuickFix = new AcceptSuggested();
@@ -182,19 +181,22 @@ public class LocalCanBeFinal extends BaseLocalInspectionTool {
     ProblemDescriptor[] problems = new ProblemDescriptor[result.size()];
     for (int i = 0; i < problems.length; i++) {
       PsiVariable problemVariable = result.get(i);
-      problems[i] = manager.
-        createProblemDescriptor(problemVariable.getNameIdentifier(),
-                                (problemVariable instanceof PsiParameter
-                                 ? "Parameter"
-                                 : "Variable") + " <code>#ref</code> can have <code>final</code> modifier.",
+      if (problemVariable instanceof PsiParameter){
+      problems[i] = manager.createProblemDescriptor(problemVariable.getNameIdentifier(),
+                                 InspectionsBundle.message("inspection.can.be.local.parameter.problem.descriptor"),
                                 myQuickFix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+      } else {
+        problems[i] = manager.createProblemDescriptor(problemVariable.getNameIdentifier(),
+                                 InspectionsBundle.message("inspection.can.be.local.variable.problem.descriptor"),
+                                myQuickFix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+      }
     }
 
     return problems;
   }
 
   public String getDisplayName() {
-    return "Local variable or parameter can be final";
+    return InspectionsBundle.message("inspection.local.can.be.final.display.name");
   }
 
   public String getGroupDisplayName() {
@@ -207,7 +209,7 @@ public class LocalCanBeFinal extends BaseLocalInspectionTool {
 
   private static class AcceptSuggested implements LocalQuickFix {
     public String getName() {
-      return "Accept Suggested Final Modifier";
+      return InspectionsBundle.message("inspection.can.be.final.accept.quickfix");
     }
 
     public void applyFix(Project project, ProblemDescriptor problem) {
@@ -255,7 +257,7 @@ public class LocalCanBeFinal extends BaseLocalInspectionTool {
       gc.anchor = GridBagConstraints.NORTHWEST;
 
 
-      myReportVariablesCheckbox = new JCheckBox("Report local variables");
+      myReportVariablesCheckbox = new JCheckBox(InspectionsBundle.message("inspection.local.can.be.final.option"));
       myReportVariablesCheckbox.setSelected(REPORT_VARIABLES);
       myReportVariablesCheckbox.getModel().addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent e) {
@@ -266,7 +268,7 @@ public class LocalCanBeFinal extends BaseLocalInspectionTool {
       gc.gridy = 0;
       add(myReportVariablesCheckbox, gc);
 
-      myReportParametersCheckbox = new JCheckBox("Report method parameters");
+      myReportParametersCheckbox = new JCheckBox(InspectionsBundle.message("inspection.local.can.be.final.option1"));
       myReportParametersCheckbox.setSelected(REPORT_PARAMETERS);
       myReportParametersCheckbox.getModel().addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent e) {

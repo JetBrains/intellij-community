@@ -17,6 +17,7 @@ import org.netbeans.lib.cvsclient.file.IReaderFactory;
 import org.netbeans.lib.cvsclient.file.IWriterFactory;
 import org.netbeans.lib.cvsclient.io.IStreamLogger;
 import org.netbeans.lib.cvsclient.util.BugLog;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.*;
 import java.util.zip.Deflater;
@@ -42,8 +43,10 @@ public final class ConnectionStreams
 	private OutputStream outputStream;
 	private DeflaterOutputStream deflaterOutputStream;
 	private String myCharset;
+  @NonNls private static final String UNTIL_HERE_THE_CONTENT_IS_GZIPPED_MESSAGE = "@until here the content is gzipped@";
+  @NonNls private static final String FROM_NOW_ON_THE_CONTENT_IS_GZIPPED_MESSAGE = "@from now on the content is gzipped@";
 
-	// Setup ==================================================================
+  // Setup ==================================================================
 
 	public ConnectionStreams(IConnection connection, IStreamLogger streamLogger, String charset) {
 		BugLog.getInstance().assertNotNull(connection);
@@ -109,7 +112,7 @@ public final class ConnectionStreams
     if (deflaterOutputStream != null) {
       deflaterOutputStream.finish();
 
-      println("@until here the content is gzipped@", streamLogger.getOutputLogStream());
+      println(UNTIL_HERE_THE_CONTENT_IS_GZIPPED_MESSAGE, streamLogger.getOutputLogStream());
     }
     loggedOutputStream.flush();
   }
@@ -152,8 +155,8 @@ public final class ConnectionStreams
 		loggedWriter.flush();
 		loggedOutputStream.flush();
 
-		println("@from now on the content is gzipped@", streamLogger.getInputLogStream());
-		println("@from now on the content is gzipped@", streamLogger.getOutputLogStream());
+		println(FROM_NOW_ON_THE_CONTENT_IS_GZIPPED_MESSAGE, streamLogger.getInputLogStream());
+		println(FROM_NOW_ON_THE_CONTENT_IS_GZIPPED_MESSAGE, streamLogger.getOutputLogStream());
 
 		deflaterOutputStream = new DeflaterOutputStream(connection.getOutputStream(), new Deflater(6));
 		setOutputStream(deflaterOutputStream);

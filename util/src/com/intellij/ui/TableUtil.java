@@ -65,6 +65,7 @@ public class TableUtil {
     }
     TableModel model = table.getModel();
     if (!(model instanceof ItemRemovable)) {
+      //noinspection HardCodedStringLiteral
       throw new RuntimeException("model must be instance of ItemRemovable");
     }
 

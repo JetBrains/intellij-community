@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 
@@ -19,6 +20,7 @@ public class SimpleProjectRoot implements ProjectRoot, JDOMExternalizable {
   private VirtualFile myFile;
   private VirtualFile[] myFileArrray = new VirtualFile[1];
   private boolean myInitialized = false;
+  @NonNls private static final String ATTRIBUTE_URL = "url";
 
   SimpleProjectRoot(VirtualFile file) {
     myFile = file;
@@ -90,7 +92,7 @@ public class SimpleProjectRoot implements ProjectRoot, JDOMExternalizable {
   }
 
   public void readExternal(Element element) throws InvalidDataException {
-    myUrl = element.getAttributeValue("url");
+    myUrl = element.getAttributeValue(ATTRIBUTE_URL);
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
@@ -98,7 +100,7 @@ public class SimpleProjectRoot implements ProjectRoot, JDOMExternalizable {
       initialize();
     }
 
-    element.setAttribute("url", myUrl);
+    element.setAttribute(ATTRIBUTE_URL, myUrl);
   }
 
 }

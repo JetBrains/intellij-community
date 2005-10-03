@@ -6,9 +6,10 @@ import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.util.CharTable;
 import com.intellij.pom.tree.events.ChangeInfo;
 import com.intellij.pom.tree.events.TreeChange;
+import org.jetbrains.annotations.NonNls;
 
 public class ChangeInfoImpl implements ChangeInfo {
-  private static final String[] TO_STRING = {"add", "remove", "replace", "changed"};
+  @NonNls private static final String[] TO_STRING = {"add", "remove", "replace", "changed"};
 
   public static ChangeInfoImpl create(short type, ASTNode changed){
     switch(type){

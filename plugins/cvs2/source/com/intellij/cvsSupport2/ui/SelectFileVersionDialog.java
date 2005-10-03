@@ -26,7 +26,7 @@ public class SelectFileVersionDialog extends DialogWrapper {
                                     myProject, false);
 
     myDateOrRevisionOrTagSettings.updateFrom(CvsConfiguration.getInstance(project).SHOW_CHANGES_REVISION_SETTINGS);
-    setTitle("Select Tag or Date");
+    setTitle(com.intellij.CvsBundle.message("dialog.title.select.tag.or.date"));
     init();
   }
 

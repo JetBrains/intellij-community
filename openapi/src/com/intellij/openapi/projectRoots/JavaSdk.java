@@ -17,9 +17,10 @@ package com.intellij.openapi.projectRoots;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
+import org.jetbrains.annotations.NonNls;
 
 public abstract class JavaSdk extends SdkType implements ApplicationComponent {
-  public JavaSdk(String name) {
+  public JavaSdk(@NonNls String name) {
     super(name);
   }
 

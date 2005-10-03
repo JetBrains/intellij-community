@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.cvsSupport2.connections.ext.ui.ExtConnectionSettingsPanel">
-  <grid id="609b4" binding="myPanel" row-count="1" column-count="1" hgap="-1" vgap="-1">
+  <grid id="609b4" binding="myPanel" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="13" y="20" width="502" height="113"/>
+      <xy x="13" y="20" width="616" height="113"/>
       <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
     </constraints>
     <properties/>
-    <border type="etched" title="Ext Protocol Settings"/>
+    <border type="etched" title-resource-bundle="com/intellij/cvsSupport2/CvsBundle" title-key="border.title.ext.protocol.settings"/>
     <children>
-      <grid id="3574d" row-count="3" column-count="2" hgap="-1" vgap="5">
+      <grid id="3574d" row-count="3" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="5">
         <margin top="5" left="5" bottom="5" right="5"/>
         <constraints>
-          <xy x="6" y="21" width="490" height="86"/>
+          <xy x="6" y="20" width="604" height="87"/>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
         </constraints>
         <properties/>
@@ -20,16 +20,16 @@
         <children>
           <component id="29fd2" class="javax.swing.JLabel" binding="myRshLabel">
             <constraints>
-              <xy x="5" y="8" width="97" height="15"/>
+              <xy x="5" y="9" width="104" height="14"/>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
             </constraints>
             <properties>
-              <text value="Path to e&amp;xternal rsh:"/>
+              <text resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="label.configure.ext.path.to.e&amp;xternal.rsh"/>
             </properties>
           </component>
           <component id="a9d7" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myPathToRsh">
             <constraints>
-              <xy x="124" y="5" width="361" height="22"/>
+              <xy x="132" y="5" width="467" height="23"/>
               <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="0" fill="3">
                 <preferred-size width="250" height="-1"/>
               </grid>
@@ -38,16 +38,16 @@
           </component>
           <component id="8754" class="javax.swing.JLabel" binding="myPathToPPKLabel">
             <constraints>
-              <xy x="5" y="35" width="109" height="15"/>
+              <xy x="5" y="37" width="117" height="14"/>
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
             </constraints>
             <properties>
-              <text value="Path to &amp;private key file:"/>
+              <text resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="label.configure.ext.path.to.private.key.file"/>
             </properties>
           </component>
           <component id="30529" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myPathToPrivateKeyFile">
             <constraints>
-              <xy x="124" y="32" width="361" height="22"/>
+              <xy x="132" y="33" width="467" height="22"/>
               <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="0" fill="3">
                 <preferred-size width="250" height="-1"/>
               </grid>
@@ -56,16 +56,16 @@
           </component>
           <component id="ce30a" class="javax.swing.JLabel" binding="myAdditionalParametersLabel">
             <constraints>
-              <xy x="5" y="62" width="108" height="15"/>
+              <xy x="5" y="64" width="113" height="14"/>
               <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
             </constraints>
             <properties>
-              <text value="&amp;Additional parameters:"/>
+              <text resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="label.configure.ext.additional.parameters"/>
             </properties>
           </component>
           <component id="f5125" class="javax.swing.JTextField" binding="myAdditionalParameters">
             <constraints>
-              <xy x="124" y="59" width="361" height="22"/>
+              <xy x="132" y="61" width="467" height="20"/>
               <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
                 <preferred-size width="150" height="-1"/>
               </grid>

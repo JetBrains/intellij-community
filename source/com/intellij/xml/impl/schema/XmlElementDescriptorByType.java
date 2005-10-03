@@ -8,12 +8,15 @@ import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author ik
  */
 public class XmlElementDescriptorByType extends XmlElementDescriptorImpl {
   private ComplexTypeDescriptor myType;
+  @NonNls
+  public static final String QUALIFIED_ATTR_VALUE = "qualified";
 
   public XmlElementDescriptorByType(XmlTag instanceTag, ComplexTypeDescriptor descriptor) {
     myDescriptorTag = instanceTag;
@@ -53,7 +56,7 @@ public class XmlElementDescriptorByType extends XmlElementDescriptorImpl {
   public String getDefaultName() {
     XmlTag rootTag = ((XmlFile)getType().getDeclaration().getContainingFile()).getDocument().getRootTag();
 
-    if ("qualified".equals(rootTag.getAttributeValue("elementFormDefault"))) {
+    if (QUALIFIED_ATTR_VALUE.equals(rootTag.getAttributeValue("elementFormDefault"))) {
       return getQualifiedName();
     }
 
@@ -61,7 +64,7 @@ public class XmlElementDescriptorByType extends XmlElementDescriptorImpl {
   }
 
   public boolean isAbstract() {
-    return "true".equals(myDescriptorTag.getAttributeValue("abstract"));
+    return Boolean.valueOf(myDescriptorTag.getAttributeValue("abstract"));
   }
 
 }

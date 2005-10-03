@@ -1,21 +1,24 @@
 package com.intellij.codeInsight.hint;
 
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.SideBorder2;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiDocCommentOwner;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.PsiDocCommentOwner;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Map;
+
+import org.jetbrains.annotations.NotNull;
 
 public class HintUtil {
   public static final Color INFORMATION_COLOR = new Color(253, 254, 226);
@@ -28,11 +31,13 @@ public class HintUtil {
 
   public static final Color QUESTION_UNDERSCORE_COLOR = Color.black;
 
+  private HintUtil() {
+  }
+
   public static JLabel createInformationLabel(String text) {
     JLabel label = new HintLabel();
     label.setText(text);
     label.setIcon(INFORMATION_ICON);
-//    label.setBorder(BorderFactory.createLineBorder(Color.black));
     label.setBorder(
       BorderFactory.createCompoundBorder(
         new SideBorder2(Color.white, Color.white, Color.gray, Color.gray, 1),
@@ -98,32 +103,46 @@ public class HintUtil {
   }
 
   public interface ImplementationTextSelectioner {
-    int getTextStartOffset(PsiElement element);
-    int getTextEndOffset(PsiElement element);
+    int getTextStartOffset(@NotNull PsiElement element);
+    int getTextEndOffset(@NotNull PsiElement element);
   }
 
   // TODO: Move to Language OpeanAPI
   private static final Map<FileType,ImplementationTextSelectioner> ourTextSelectionsMap
     = new HashMap<FileType, ImplementationTextSelectioner>(2);
-  
+
   static class DefaultImplementationTextSelectioner implements ImplementationTextSelectioner {
 
-    public int getTextStartOffset(PsiElement element) {
+    private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.hint.HintUtil.DefaultImplementationTextSelectioner");
+
+    public int getTextStartOffset(@NotNull final PsiElement parent) {
+      PsiElement element = parent;
+
       if (element instanceof PsiDocCommentOwner) {
         PsiDocComment comment = ((PsiDocCommentOwner)element).getDocComment();
         if (comment != null) {
           element = comment.getNextSibling();
-          while (element instanceof PsiWhiteSpace) element = element.getNextSibling();
+          while (element instanceof PsiWhiteSpace) {
+            element = element.getNextSibling();
+          }
         }
       }
-      return element.getTextRange().getStartOffset();
+
+      if (element != null) {
+        return element.getTextRange().getStartOffset();
+      } else {
+        LOG.assertTrue(false, "Element should not be null: " + parent.getText());
+        return parent.getTextRange().getStartOffset();
+      }
+
+
     }
 
     public int getTextEndOffset(PsiElement element) {
       return element.getTextRange().getEndOffset();
     }
   }
-  
+
   static {
     ourTextSelectionsMap.put(StdFileTypes.JAVA, new DefaultImplementationTextSelectioner());
   }
@@ -147,7 +166,7 @@ public class HintUtil {
   }
 
   private static Font getBoldFont() {
-    return UIManager.getFont("Label.font").deriveFont(Font.BOLD);
+    return UIUtil.getLabelFont().deriveFont(Font.BOLD);
   }
 
   private static class HintLabel extends JLabel {

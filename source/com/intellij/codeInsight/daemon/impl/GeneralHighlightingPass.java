@@ -10,6 +10,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.j2ee.J2EERolesUtil;
 import com.intellij.j2ee.ejb.EjbUtil;
@@ -38,7 +39,6 @@ import com.intellij.packageDependencies.ui.DependencyConfigurable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.TodoItem;
-import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
 
@@ -288,12 +288,12 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
             if (rules.length > 0) {
               if (InspectionManagerEx.inspectionResultSuppressed(place, HighlightDisplayKey.ILLEGAL_DEPENDENCY.getID())) return;
               HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ILLEGAL_DEPENDENCY, place,
-                                                                     "Illegal dependency. Violated rules: \"" + rules[0].getDisplayText() +
-                                                                     "\"");
+                                                                     InspectionsBundle.message("illegal.dependency.violated.rule.message",
+                                                                                               rules[0].getDisplayText()));
               if (info != null) {
                 list.add(info);
                 List<IntentionAction> options = new ArrayList<IntentionAction>();
-                options.add(new SwitchOffToolAction(HighlightDisplayKey.ILLEGAL_DEPENDENCY));
+                options.add(new EditInspectionToolsSettingsAction(HighlightDisplayKey.ILLEGAL_DEPENDENCY));
                 options.add(new AddNoInspectionCommentAction(HighlightDisplayKey.ILLEGAL_DEPENDENCY, place));
                 options.add(new AddNoInspectionDocTagAction(HighlightDisplayKey.ILLEGAL_DEPENDENCY, place));
                 options.add(new AddNoInspectionForClassAction(HighlightDisplayKey.ILLEGAL_DEPENDENCY, place));
@@ -336,7 +336,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
         return info;
       }
 
-      PsiMethod[] methods = PsiSuperMethodUtil.findSuperMethods(method, false);
+      PsiMethod[] methods = method.findSuperMethods(false);
       if (methods.length > 0) {
         boolean overrides = false;
         if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
@@ -410,11 +410,11 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
     }
 
     public String getText() {
-      return "Edit dependency rule \"" + myRule.getDisplayText() + " \"";
+      return InspectionsBundle.message("edit.dependency.rules.text", myRule.getDisplayText());
     }
 
     public String getFamilyName() {
-      return "Edit dependency rules";
+      return InspectionsBundle.message("edit.dependency.rules.family");
     }
 
     public boolean isAvailable(Project project, Editor editor, PsiFile file) {

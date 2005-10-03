@@ -5,6 +5,8 @@ import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.ide.IdeBundle;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -28,7 +30,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Applicat
   public void initComponent() { }
 
   public String getDisplayName() {
-    return "Appearance";
+    return IdeBundle.message("title.appearance");
   }
 //----------------------------------------------------
   public JComponent createComponent() {
@@ -83,7 +85,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Applicat
     dictionary.put(new Integer(50), new JLabel("50%"));
     dictionary.put(new Integer(100), new JLabel("100%"));
     myComponent.myAlphaModeRatioSlider.setLabelTable(dictionary);
-    myComponent.myAlphaModeRatioSlider.putClientProperty("JSlider.isFilled", Boolean.TRUE);
+    UIUtil.setSliderIsFilled(myComponent.myAlphaModeRatioSlider, Boolean.TRUE);
     myComponent.myAlphaModeRatioSlider.setPaintLabels(true);
     myComponent.myAlphaModeRatioSlider.setPaintTicks(true);
     myComponent.myAlphaModeRatioSlider.setPaintTrack(true);
@@ -360,6 +362,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Applicat
 
     public void updateCombo() {
       UIManager.LookAndFeelInfo selectedLAF = (UIManager.LookAndFeelInfo)myLafComboBox.getSelectedItem();
+      //noinspection HardCodedStringLiteral
       boolean isIdeaLAFSelected = selectedLAF.getName().startsWith("IDEA");
 
       myIDEALafFont.setVisible(isIdeaLAFSelected);

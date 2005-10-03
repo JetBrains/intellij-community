@@ -23,6 +23,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.SystemProperties;
 
 import java.io.*;
 
@@ -141,7 +142,7 @@ public class SimpleContent extends DiffContent {
       String[] lines = lineTokenizer.execute();
       mySeparator = lineTokenizer.getLineSeparator();
       LOG.assertTrue(mySeparator == null || mySeparator.length() > 0);
-      if (mySeparator == null) mySeparator = System.getProperty("line.separator");
+      if (mySeparator == null) mySeparator = SystemProperties.getLineSeparator();
       return LineTokenizer.concatLines(lines);
     }
 

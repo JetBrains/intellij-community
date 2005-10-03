@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.intention.impl;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -13,7 +14,7 @@ import com.intellij.util.IncorrectOperationException;
  */
 public class SplitDeclarationAction extends BaseIntentionAction {
   public String getFamilyName() {
-    return "Split Declaration";
+    return CodeInsightBundle.message("intention.split.declaration.family");
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
@@ -35,7 +36,7 @@ public class SplitDeclarationAction extends BaseIntentionAction {
 
     PsiField field = PsiTreeUtil.getParentOfType(element, PsiField.class);
     if (field != null && isAvaliableOnField(field)) {
-      setText("Split into separate declarations");
+      setText(CodeInsightBundle.message("intention.split.declaration.text"));
       return true;
     }
     return false;
@@ -63,7 +64,7 @@ public class SplitDeclarationAction extends BaseIntentionAction {
       PsiTypeElement type = var.getTypeElement();
       if (PsiTreeUtil.isAncestor(type, element, false) ||
           element.getParent() == var && ((PsiJavaToken)element).getTokenType() != JavaTokenType.SEMICOLON) {
-        setText("Split into declaration and assignment");
+        setText(CodeInsightBundle.message("intention.split.declaration.assignment.text"));
         return true;
       }
     } else if (declaredElements.length > 1) {
@@ -74,7 +75,7 @@ public class SplitDeclarationAction extends BaseIntentionAction {
         PsiLocalVariable var = (PsiLocalVariable)declaredElement;
         PsiTypeElement type = var.getTypeElement();
         if (PsiTreeUtil.isAncestor(type, element, false) || element == var.getNameIdentifier()) {
-          setText("Split into separate declarations");
+          setText(CodeInsightBundle.message("intention.split.declaration.text"));
           return true;
         }
       }

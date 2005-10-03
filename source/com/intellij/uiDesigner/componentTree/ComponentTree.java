@@ -17,6 +17,7 @@ import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.quickFixes.QuickFixManager;
 import com.intellij.util.ui.Tree;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 
 import javax.swing.*;
@@ -50,6 +51,7 @@ public final class ComponentTree extends Tree implements DataProvider {
   public ComponentTree(final GuiEditor editor) {
     super(new DefaultTreeModel(new DefaultMutableTreeNode()));
     if (editor == null) {
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("editor cannot be null");
     }
     myEditor = editor;
@@ -201,6 +203,7 @@ public final class ComponentTree extends Tree implements DataProvider {
 
   private SimpleTextAttributes getAttribute(final SimpleTextAttributes attrs, final boolean error) {
     if (attrs == null) {
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("attrs cannot be null");
     }
     if (!error) {
@@ -223,8 +226,8 @@ public final class ComponentTree extends Tree implements DataProvider {
     // problem is that setUI is invoked by constructor of superclass.
     myAttr2errAttr = new HashMap<SimpleTextAttributes, SimpleTextAttributes>();
 
-    myBindingAttributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, UIManager.getColor("Tree.foreground"));
-    myClassAttributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, UIManager.getColor("Tree.foreground"));
+    myBindingAttributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, UIUtil.getTreeForeground());
+    myClassAttributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, UIUtil.getTreeForeground());
     myPackageAttributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, Color.GRAY);
     myUnknownAttributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN | SimpleTextAttributes.STYLE_WAVED, Color.RED);
   }
@@ -259,24 +262,24 @@ public final class ComponentTree extends Tree implements DataProvider {
         final String componentClassName = componentClass.getName();
 
         if (component instanceof RadVSpacer) {
-          append("Vertical Spacer", getAttribute(myClassAttributes, error));
+          append(UIDesignerBundle.message("component.vertical.spacer"), getAttribute(myClassAttributes, error));
         }
         else if (component instanceof RadHSpacer) {
-          append("Horizontal Spacer", getAttribute(myClassAttributes, error));
+          append(UIDesignerBundle.message("component.horizontal.spacer"), getAttribute(myClassAttributes, error));
         }
         else if (component instanceof RadErrorComponent) {
           final RadErrorComponent c = (RadErrorComponent)component;
           append(c.getErrorDescription(), getAttribute(myUnknownAttributes, error));
         }
         else if (component instanceof RadRootContainer) {
-          append("Form ", getAttribute(myClassAttributes, error));
+          append(UIDesignerBundle.message("component.form"), getAttribute(myClassAttributes, error));
           append("(", getAttribute(myPackageAttributes, error));
           final String classToBind = ((RadRootContainer)component).getClassToBind();
           if (classToBind != null) {
             append(classToBind, getAttribute(myPackageAttributes, error));
           }
           else {
-            append("no binding", getAttribute(myPackageAttributes, error));
+            append(UIDesignerBundle.message("component.no.binding"), getAttribute(myPackageAttributes, error));
           }
           append(")", getAttribute(myPackageAttributes, error));
         }

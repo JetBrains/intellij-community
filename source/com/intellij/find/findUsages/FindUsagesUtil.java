@@ -15,6 +15,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Processor;
+import com.intellij.find.FindBundle;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -275,8 +276,8 @@ public class FindUsagesUtil {
                   PsiExpression expr = ((PsiExpressionStatement)firstStatement).getExpression();
                   if (expr instanceof PsiMethodCallExpression){
                     PsiReferenceExpression methodExpr = ((PsiMethodCallExpression)expr).getMethodExpression();
-                    if (methodExpr.getText().equals("super") ||
-                        methodExpr.getText().equals("this")) continue;
+                    if (methodExpr.getText().equals(PsiKeyword.SUPER) ||
+                        methodExpr.getText().equals(PsiKeyword.THIS)) continue;
                   }
                 }
               }
@@ -314,11 +315,7 @@ public class FindUsagesUtil {
     for(int i = 0; i < classes.size(); i++){
       PsiClass aClass = classes.get(i);
       if (progress != null){
-        StringBuffer buffer = new StringBuffer(100);
-        buffer.append("Searching for references to class ");
-        buffer.append(aClass.getName());
-        buffer.append("...");
-        progress.setText(buffer.toString());
+        progress.setText(FindBundle.message("find.searching.for.references.to.class.progress", aClass.getName()));
       }
       for(int j = 0; j < files.size(); j++){
         ProgressManager.getInstance().checkCanceled();
@@ -475,7 +472,7 @@ public class FindUsagesUtil {
     return null;
   }
 
-  private static void addInheritors(PsiClass aClass, final Processor<UsageInfo> results, final FindUsagesOptions options) {
+  private static void addInheritors(final PsiClass aClass, final Processor<UsageInfo> results, final FindUsagesOptions options) {
     PsiSearchHelper helper = aClass.getManager().getSearchHelper();
     helper.processInheritors(new PsiElementProcessor<PsiClass>() {
       public boolean execute(PsiClass element) {

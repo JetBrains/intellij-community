@@ -20,6 +20,7 @@ public class EmptyStackInstruction extends Instruction {
     return new DfaInstructionState[] {new DfaInstructionState(nextInstruction, dfaMemoryState)};
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return "EMTY_STACK";
   }

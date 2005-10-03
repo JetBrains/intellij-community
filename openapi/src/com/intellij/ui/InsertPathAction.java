@@ -26,6 +26,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.application.ApplicationManager;
 
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
@@ -47,7 +48,7 @@ public class InsertPathAction extends AnAction {
   }
 
   private InsertPathAction(JTextComponent textField, FileChooserDescriptor descriptor) {
-    super("Insert Path");
+    super(UIBundle.message("insert.file.path.to.text.action.name"));
     myTextField = textField;
     registerCustomShortcutSet(CTRL_F, myTextField);
     myDescriptor = descriptor;
@@ -95,14 +96,16 @@ public class InsertPathAction extends AnAction {
   }
 
   public static void addTo(JTextComponent textField, FileChooserDescriptor descriptor) {
-    removeFrom(textField);
-    if (textField.getClientProperty(INSERT_PATH_ACTION) != null) return;
-    DefaultActionGroup actionGroup = new DefaultActionGroup();
-    InsertPathAction action = descriptor != null? new InsertPathAction(textField, descriptor) : new InsertPathAction(textField);
-    actionGroup.add(action);
-    MouseListener popupHandler = PopupHandler.installUnknownPopupHandler(textField, actionGroup, ActionManager.getInstance());
-    action.savePopupHandler(popupHandler);
-    textField.putClientProperty(INSERT_PATH_ACTION, action);
+    if (ApplicationManager.getApplication() != null) { //NPE fixed when another class loader works
+      removeFrom(textField);
+      if (textField.getClientProperty(INSERT_PATH_ACTION) != null) return;
+      DefaultActionGroup actionGroup = new DefaultActionGroup();
+      InsertPathAction action = descriptor != null? new InsertPathAction(textField, descriptor) : new InsertPathAction(textField);
+      actionGroup.add(action);
+      MouseListener popupHandler = PopupHandler.installUnknownPopupHandler(textField, actionGroup, ActionManager.getInstance());
+      action.savePopupHandler(popupHandler);
+      textField.putClientProperty(INSERT_PATH_ACTION, action);
+    }
   }
 
   public static void removeFrom(JTextComponent textComponent) {

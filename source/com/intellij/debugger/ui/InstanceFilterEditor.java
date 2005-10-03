@@ -3,6 +3,7 @@ package com.intellij.debugger.ui;
 import com.intellij.debugger.ClassFilter;
 import com.intellij.debugger.ClassFilter;
 import com.intellij.debugger.ClassFilter;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 
@@ -18,7 +19,7 @@ public class InstanceFilterEditor extends ClassFilterEditor {
   }
 
   protected void addClassFilter() {
-    String idString = Messages.showInputDialog(myProject, "Enter instance ID:", "Add Instance Filter", Messages.getQuestionIcon());
+    String idString = Messages.showInputDialog(myProject, DebuggerBundle.message("add.instance.filter.dialog.prompt"), DebuggerBundle.message("add.instance.filter.dialog.title"), Messages.getQuestionIcon());
     if (idString != null) {
       ClassFilter filter = createFilter(idString);
       if(filter != null){
@@ -37,7 +38,7 @@ public class InstanceFilterEditor extends ClassFilterEditor {
       Long.parseLong(pattern);
       return super.createFilter(pattern);
     } catch (NumberFormatException e) {
-      Messages.showMessageDialog(this, "Instance ID should be a numeric value of long type.", "Invalid Number Format", Messages.getErrorIcon());
+      Messages.showMessageDialog(this, DebuggerBundle.message("add.instance.filter.dialog.error.numeric.value.expected"), DebuggerBundle.message("add.instance.filter.dialog.title"), Messages.getErrorIcon());
       return null;
     }
   }

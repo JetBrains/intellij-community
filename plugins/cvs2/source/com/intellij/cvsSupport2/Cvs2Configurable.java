@@ -9,6 +9,8 @@ import com.intellij.openapi.project.Project;
 
 import javax.swing.*;
 
+import org.jetbrains.annotations.NonNls;
+
 class Cvs2Configurable implements Configurable {
   private CvsConfigurationPanel  myComponent = null;
   private final Project myProject;
@@ -17,7 +19,7 @@ class Cvs2Configurable implements Configurable {
     myProject = project;
   }
 
-  public String getDisplayName() {
+  @NonNls public String getDisplayName() {
     return "CVS2";
   }
 

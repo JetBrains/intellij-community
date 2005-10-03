@@ -15,7 +15,10 @@
  */
 package com.intellij.openapi.util.text;
 
+import com.intellij.util.Function;
 import com.intellij.util.SmartList;
+import com.intellij.CommonBundle;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,9 +28,9 @@ import java.io.StringWriter;
 import java.util.*;
 
 public class StringUtil {
-  private static final String VOWELS = "aeiouy";
+  @NonNls private static final String VOWELS = "aeiouy";
 
-  public static String replace(@NotNull String text, @NotNull String oldS, @Nullable String newS) {
+  public static String replace(@NonNls @NotNull String text,@NonNls @NotNull String oldS,@NonNls @Nullable String newS) {
     return replace(text, oldS, newS, false);
   }
 
@@ -232,7 +235,7 @@ public class StringUtil {
     }
   }
 
-  private static final String[] ourPrepositions = new String[]{
+  @NonNls private static final String[] ourPrepositions = new String[]{
     "at", "the", "and", "not", "if", "a", "or", "to", "in", "on", "into"
   };
 
@@ -255,6 +258,7 @@ public class StringUtil {
     return false;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static void escapeStringCharacters(int length, final String str, StringBuffer buffer) {
     for (int idx = 0; idx < length; idx++) {
       char ch = str.charAt(idx);
@@ -384,6 +388,7 @@ public class StringUtil {
     if (escaped) buffer.append('\\');
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static String pluralize(@NotNull String suggestion) {
     if (StringUtil.endsWithChar(suggestion, 's') || StringUtil.endsWithChar(suggestion, 'x') ||
         suggestion.endsWith("ch")) {
@@ -522,6 +527,7 @@ public class StringUtil {
     return stringWriter.getBuffer().toString();
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static String getMessage(Throwable e) {
     String result = e.getMessage();
     final String exceptionPattern = "Exception: ";
@@ -592,7 +598,7 @@ public class StringUtil {
     return result;
   }
 
-  public static String join(@NotNull final String[] strings, final String separator) {
+  public static String join(@NotNull final String[] strings, @NotNull final String separator) {
     final StringBuffer result = new StringBuffer();
     for (int i = 0; i < strings.length; i++) {
       if (i > 0) result.append(separator);
@@ -601,7 +607,19 @@ public class StringUtil {
     return result.toString();
   }
 
-  public static String join(@NotNull Collection<String> strings, final String separator) {
+  public static <T> String join(@NotNull Collection<T> items, @NotNull Function<T, String> f, @NotNull @NonNls String separator) {
+    final StringBuffer result = new StringBuffer();
+    for (T item : items) {
+      String string = f.fun(item);
+      if (string != null && string.length() != 0) {
+        if (result.length() != 0) result.append(separator);
+        result.append(string);
+      }
+    }
+    return result.toString();
+  }
+
+  public static String join(@NotNull Collection<String> strings, final @NotNull String separator) {
     final StringBuffer result = new StringBuffer();
     for (String string : strings) {
       if (string != null && string.length() != 0) {
@@ -612,7 +630,7 @@ public class StringUtil {
     return result.toString();
   }
 
-  public static String join(@NotNull final int[] strings, final String separator) {
+  public static String join(@NotNull final int[] strings, final @NotNull String separator) {
     final StringBuffer result = new StringBuffer();
     for (int i = 0; i < strings.length; i++) {
       if (i > 0) result.append(separator);
@@ -621,7 +639,7 @@ public class StringUtil {
     return result.toString();
   }
 
-  public static String stripQuotesAroundValue(String text) {
+  public static String stripQuotesAroundValue(@NotNull String text) {
     if (startsWithChar(text, '\"') || startsWithChar(text, '\'')) text = text.substring(1);
     if (endsWithChar(text, '\"') || endsWithChar(text, '\'')) text = text.substring(0, text.length() - 1);
     return text;
@@ -637,13 +655,39 @@ public class StringUtil {
 
   public static String formatFileSize(final long fileSize) {
     if (fileSize < 0x400) {
-        return fileSize + "b";
+        return CommonBundle.message("file.size.format.bytes", fileSize);
     }
     if (fileSize < 0x100000) {
         long kbytes = fileSize * 100 / 1024;
-        return kbytes / 100 + "." + kbytes % 100 + "Kb";
+      final String kbs = kbytes / 100 + "." + kbytes % 100;
+      return CommonBundle.message("file.size.format.kbytes", kbs);
     }
     long mbytes = fileSize * 100 / 1024;
-    return mbytes / 100 + "." + mbytes % 100 + "Mb";
+    final String size = mbytes / 100 + "." + mbytes % 100;
+    return CommonBundle.message("file.size.format.mbytes", size);
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  public static String unpluralize(final String name) {
+    String res = null;
+    if (name.endsWith("ses") || name.endsWith("xes")) { //?
+      res = name.substring(0, name.length() - 2);
+    }
+    else {
+      if (name.endsWith("ies")) {
+        res = name.substring(0, name.length() - 3) + "y";
+      }
+      else {
+        if (endsWithChar(name, 's')) {
+          res = name.substring(0, name.length() - 1);
+        }
+        else {
+          if ("children".equals(name)) {
+            res = "child";
+          }
+        }
+      }
+    }
+    return res;
   }
 }

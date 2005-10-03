@@ -8,6 +8,7 @@ import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.filters.FilterUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -22,6 +23,10 @@ import java.util.List;
  */
 public class ModifierFilter extends ClassFilter{
   public List myModifierRestrictions = new ArrayList();
+  @NonNls
+  private static final String MODIFIER_TAG = "modifier";
+  @NonNls
+  private static final String IS_SET_ATT = "is-set";
 
   public ModifierFilter(){
     super(PsiModifierListOwner.class);
@@ -69,15 +74,13 @@ public class ModifierFilter extends ClassFilter{
     }
   }
 
-  public void readExternal(Element element)
-    throws InvalidDataException{
-
-    for (final Object o : element.getChildren("modifier", FilterUtil.FILTER_NS)) {
+  public void readExternal(Element element) throws InvalidDataException{
+    for (final Object o : element.getChildren(MODIFIER_TAG, FilterUtil.FILTER_NS)) {
       final Element modifierElement = (Element)o;
-      final String attribute = modifierElement.getAttribute("is-set").getValue();
+      final String attribute = modifierElement.getAttribute(IS_SET_ATT).getValue();
       myModifierRestrictions.add(
         new ModifierRestriction(modifierElement.getTextTrim(),
-                                attribute.equalsIgnoreCase("true")));
+                                Boolean.valueOf(attribute)));
     }
   }
 
@@ -87,7 +90,7 @@ public class ModifierFilter extends ClassFilter{
   }
 
   public String toString(){
-    String ret = "modifiers(";
+    @NonNls String ret = "modifiers(";
     Iterator iter = myModifierRestrictions.iterator();
     while(iter.hasNext()){
       final ModifierRestriction rest = (ModifierRestriction) iter.next();

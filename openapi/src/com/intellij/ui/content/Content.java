@@ -21,13 +21,15 @@ import com.intellij.openapi.util.UserDataHolder;
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
 
+import org.jetbrains.annotations.NonNls;
+
 public interface Content extends UserDataHolder {
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @NonNls
   String PROP_DISPLAY_NAME = "displayName";
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @NonNls
   String PROP_ICON = "icon";
-  String PROP_DESCRIPTION = "description";
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @NonNls String PROP_DESCRIPTION = "description";
+  @NonNls 
   String PROP_COMPONENT = "component";
 
   JComponent getComponent();

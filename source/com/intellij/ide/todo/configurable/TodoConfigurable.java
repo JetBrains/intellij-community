@@ -2,6 +2,7 @@ package com.intellij.ide.todo.configurable;
 
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.ide.todo.TodoFilter;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.options.BaseConfigurable;
@@ -14,6 +15,7 @@ import com.intellij.ui.PanelWithButtons;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableUtil;
 import com.intellij.util.ui.Table;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -144,7 +146,7 @@ public class TodoConfigurable extends BaseConfigurable implements ApplicationCom
       }
 
       protected String getLabelText() {
-        return "Patterns:";
+        return IdeBundle.message("label.todo.patterns");
       }
 
       protected JComponent createMainComponent() {
@@ -198,15 +200,14 @@ public class TodoConfigurable extends BaseConfigurable implements ApplicationCom
       }
 
       protected JButton[] createButtons() {
-        myAddPatternButton = new JButton("Add...");
-        myAddPatternButton.setMnemonic('A');
+        myAddPatternButton = new JButton(IdeBundle.message("button.add"));
         myAddPatternButton.addActionListener(
           new ActionListener() {
             public void actionPerformed(ActionEvent e) {
               stopEditing();
               TodoPattern pattern = new TodoPattern();
               PatternDialog dialog = new PatternDialog(myPanel, pattern);
-              dialog.setTitle("Add Pattern");
+              dialog.setTitle(IdeBundle.message("title.add.todo.pattern"));
               dialog.show();
               if (!dialog.isOK()) {
                 return;
@@ -220,8 +221,7 @@ public class TodoConfigurable extends BaseConfigurable implements ApplicationCom
           }
         );
 
-        myEditPatternButton = new JButton("Edit...");
-        myEditPatternButton.setMnemonic('e');
+        myEditPatternButton = new JButton(IdeBundle.message("button.edit"));
         myEditPatternButton.addActionListener(
           new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -230,8 +230,7 @@ public class TodoConfigurable extends BaseConfigurable implements ApplicationCom
           }
         );
 
-        myRemovePatternButton = new JButton("Remove");
-        myRemovePatternButton.setMnemonic('R');
+        myRemovePatternButton = new JButton(IdeBundle.message("button.remove"));
         myRemovePatternButton.addActionListener(
           new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -291,7 +290,7 @@ public class TodoConfigurable extends BaseConfigurable implements ApplicationCom
       }
 
       protected String getLabelText() {
-        return "Filters:";
+        return IdeBundle.message("label.todo.filters");
       }
 
       protected JComponent createMainComponent() {
@@ -316,15 +315,14 @@ public class TodoConfigurable extends BaseConfigurable implements ApplicationCom
       }
 
       protected JButton[] createButtons() {
-        myAddFilterButton = new JButton("Add...");
-        myAddFilterButton.setMnemonic('d');
+        myAddFilterButton = new JButton(IdeBundle.message("button.add.d"));
         myAddFilterButton.addActionListener(
           new ActionListener() {
             public void actionPerformed(ActionEvent e) {
               stopEditing();
               TodoFilter filter = new TodoFilter();
               FilterDialog dialog = new FilterDialog(myPanel, filter, -1, myFilters, myPatterns);
-              dialog.setTitle("Add Filter");
+              dialog.setTitle(IdeBundle.message("title.add.todo.filter"));
               dialog.show();
               int exitCode = dialog.getExitCode();
               if (DialogWrapper.OK_EXIT_CODE == exitCode) {
@@ -338,8 +336,7 @@ public class TodoConfigurable extends BaseConfigurable implements ApplicationCom
           }
         );
 
-        myEditFilterButton = new JButton("Edit...");
-        myEditFilterButton.setMnemonic('t');
+        myEditFilterButton = new JButton(IdeBundle.message("button.edit.t"));
         myEditFilterButton.addActionListener(
           new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -348,8 +345,7 @@ public class TodoConfigurable extends BaseConfigurable implements ApplicationCom
           }
         );
 
-        myRemoveFilterButton = new JButton("Remove");
-        myRemoveFilterButton.setMnemonic('m');
+        myRemoveFilterButton = new JButton(IdeBundle.message("button.remove.m"));
         myRemoveFilterButton.addActionListener(
           new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -416,7 +412,7 @@ public class TodoConfigurable extends BaseConfigurable implements ApplicationCom
     TodoPattern sourcePattern = myPatterns.get(selectedIndex);
     TodoPattern pattern = sourcePattern.clone();
     PatternDialog dialog = new PatternDialog(TodoConfigurable.this.myPanel, pattern);
-    dialog.setTitle("Edit Pattern");
+    dialog.setTitle(IdeBundle.message("title.edit.todo.pattern"));
     dialog.show();
     if (!dialog.isOK()) {
       return;
@@ -444,7 +440,7 @@ public class TodoConfigurable extends BaseConfigurable implements ApplicationCom
     TodoFilter sourceFilter = myFilters.get(selectedIndex);
     TodoFilter filter = sourceFilter.clone();
     FilterDialog dialog = new FilterDialog(TodoConfigurable.this.myPanel, filter, selectedIndex, myFilters, myPatterns);
-    dialog.setTitle("Edit Filter");
+    dialog.setTitle(IdeBundle.message("title.edit.todo.filter"));
     dialog.show();
     int exitCode = dialog.getExitCode();
     if (DialogWrapper.OK_EXIT_CODE == exitCode) {
@@ -480,7 +476,7 @@ public class TodoConfigurable extends BaseConfigurable implements ApplicationCom
   }
 
   public String getDisplayName() {
-    return "TODO";
+    return IdeBundle.message("title.todo");
   }
 
   public String getHelpTopic() {
@@ -527,14 +523,14 @@ public class TodoConfigurable extends BaseConfigurable implements ApplicationCom
       super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
       TodoFilter filter = myFilters.get(row);
       if (isSelected) {
-        setForeground(UIManager.getColor("Table.selectionForeground"));
+        setForeground(UIUtil.getTableSelectionForeground());
       }
       else {
         if (filter.isEmpty()) {
           setForeground(Color.RED);
         }
         else {
-          setForeground(UIManager.getColor("Table.foreground"));
+          setForeground(UIUtil.getTableForeground());
         }
       }
       return this;

@@ -113,4 +113,9 @@ public interface DataConstants {
    * Returns {@link com.intellij.psi.PsiFile}
    */
   String PSI_FILE = "psi.File";
+
+  /**
+   * Returns {@link com.intellij.lang.Language}
+   */
+  String LANGUAGE = "Language";
 }

@@ -34,6 +34,7 @@ import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.Icons;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.ui.Tree;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 
 import javax.swing.*;
@@ -47,7 +48,10 @@ import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 
+import org.jetbrains.annotations.NonNls;
+
 public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
+  @NonNls
   public static final String ABSTRACT_TREE_NODE_TRANSFERABLE = "AbstractTransferable";
   private static final Icon COMPACT_EMPTY_MIDDLE_PACKAGES_ICON = IconLoader.getIcon("/objectBrowser/compactEmptyPackages.png");
   private static final Icon HIDE_EMPTY_MIDDLE_PACKAGES_ICON = IconLoader.getIcon("/objectBrowser/hideEmptyPackages.png");
@@ -111,7 +115,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
 
     myAutoScrollToSourceHandler.install(myTree);
     TreeUtil.installActions(myTree);
-    myTree.putClientProperty("JTree.lineStyle", "Angled");
+    UIUtil.setLineStyleAngled(myTree);
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
     myTree.setLargeModel(true);
@@ -121,7 +125,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
     final TreeExpander treeExpander = new TreeExpander() {
       public void expandAll() {
         TreeUtil.expandAll(myTree);
-        if (myTree.getLeadSelectionPath() == null){
+        if (myTree.getLeadSelectionPath() == null) {
           TreeUtil.selectFirstNode(myTree);
         }
       }
@@ -132,7 +136,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
 
       public void collapseAll() {
         TreeUtil.collapseAll(myTree, 1);
-        if (myTree.getLeadSelectionPath() == null){
+        if (myTree.getLeadSelectionPath() == null) {
           TreeUtil.selectFirstNode(myTree);
         }
       }
@@ -433,7 +437,8 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
   private JComponent createActionsToolbar() {
     final DefaultActionGroup group = new DefaultActionGroup();
     group.removeAll();
-    group.add(new ToggleAction("Flatten Packages", "Flatten Packages", Icons.FLATTEN_PACKAGES_ICON) {
+    group.add(new ToggleAction(IdeBundle.message("action.flatten.packages"),
+                               IdeBundle.message("action.flatten.packages"), Icons.FLATTEN_PACKAGES_ICON) {
       public boolean isSelected(AnActionEvent e) {
         return myFavoritesConfiguration.IS_FLATTEN_PACKAGES;
       }
@@ -462,18 +467,19 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
         super.update(e);
         final Presentation presentation = e.getPresentation();
         if (myFavoritesConfiguration.IS_FLATTEN_PACKAGES) {
-          presentation.setText("Hide Empty Middle Packages");
-          presentation.setDescription("Show/Hide Empty Middle Packages");
+          presentation.setText(IdeBundle.message("action.hide.empty.middle.packages"));
+          presentation.setDescription(IdeBundle.message("action.show.hide.empty.middle.packages"));
           presentation.setIcon(HIDE_EMPTY_MIDDLE_PACKAGES_ICON);
         }
         else {
-          presentation.setText("Compact Empty Middle Packages");
-          presentation.setDescription("Show/Compact Empty Middle Packages");
+          presentation.setText(IdeBundle.message("action.compact.empty.middle.packages"));
+          presentation.setDescription(IdeBundle.message("action.show.compact.empty.middle.packages"));
           presentation.setIcon(COMPACT_EMPTY_MIDDLE_PACKAGES_ICON);
         }
       }
     });
-    group.add(new ToggleAction("Abbreviate Qualified Package Names", "Abbreviate Qualified Package Names",
+    group.add(new ToggleAction(IdeBundle.message("action.abbreviate.qualified.package.names"),
+                               IdeBundle.message("action.abbreviate.qualified.package.names"),
                                IconLoader.getIcon("/objectBrowser/abbreviatePackageNames.png")) {
       public boolean isSelected(AnActionEvent e) {
         return myFavoritesConfiguration.IS_ABBREVIATION_PACKAGE_NAMES;
@@ -489,7 +495,8 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
         e.getPresentation().setEnabled(myFavoritesConfiguration.IS_FLATTEN_PACKAGES);
       }
     });
-    group.add(new ToggleAction("Show Members", "Show/Hide Members", IconLoader.getIcon("/objectBrowser/showMembers.png")) {
+    group.add(new ToggleAction(IdeBundle.message("action.show.members"),
+                               IdeBundle.message("action.show.hide.members"), IconLoader.getIcon("/objectBrowser/showMembers.png")) {
       public boolean isSelected(AnActionEvent e) {
         return myFavoritesConfiguration.IS_SHOW_MEMBERS;
       }
@@ -637,7 +644,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
       }
       final PsiElement[] elements = validElements.toArray(new PsiElement[validElements.size()]);
 
-      LvcsAction action = LvcsIntegration.checkinFilesBeforeRefactoring(myProject, "Deleting");
+      LvcsAction action = LvcsIntegration.checkinFilesBeforeRefactoring(myProject, IdeBundle.message("progress.deleting"));
       try {
         DeleteHandler.deletePsiElement(elements, myProject);
       }

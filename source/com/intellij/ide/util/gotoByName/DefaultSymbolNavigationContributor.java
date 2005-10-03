@@ -38,7 +38,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
-import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.HashSet;
 
@@ -95,7 +94,7 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
     ArrayList<PsiMethod> list = new ArrayList<PsiMethod>();
     for (PsiMethod method : methods) {
       if (method.isConstructor()) continue;
-      PsiMethod[] supers = PsiSuperMethodUtil.findSuperMethods(method);
+      PsiMethod[] supers = method.findSuperMethods();
       if (supers.length > 0) continue;
       list.add(method);
     }

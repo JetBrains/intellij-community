@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.template.Macro;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Collection;
 import java.util.Hashtable;
@@ -8,7 +9,7 @@ import java.util.Hashtable;
 public class MacroFactory {
   private static Hashtable<String,Macro> myMacroTable = null;
 
-  public static Macro createMacro(String name) {
+  public static Macro createMacro(@NonNls String name) {
     if(myMacroTable == null) {
       init();
     }
@@ -59,7 +60,7 @@ public class MacroFactory {
   }
 
   private static void register(Macro macro) {
-    myMacroTable.put(macro.getName(), macro);    
+    myMacroTable.put(macro.getName(), macro);
   }
 }
 

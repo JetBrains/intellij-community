@@ -16,31 +16,29 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.rename.naming.AutomaticRenamer;
 import com.intellij.refactoring.rename.naming.AutomaticVariableRenamer;
 import com.intellij.refactoring.rename.naming.FormsRenamer;
 import com.intellij.refactoring.rename.naming.InheritorRenamer;
 import com.intellij.refactoring.ui.ConflictsDialog;
-import com.intellij.refactoring.util.MoveRenameUsageInfo;
-import com.intellij.refactoring.util.RefactoringHierarchyUtil;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.*;
 import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-
-import org.jetbrains.annotations.NotNull;
 
 public class RenameProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.RenameProcessor");
@@ -112,7 +110,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     }
 
     if (message != null) {
-      RefactoringMessageUtil.showErrorMessage("Rename", message, getHelpID(), myProject);
+      RefactoringMessageUtil.showErrorMessage(RefactoringBundle.message("rename.title"), message, getHelpID(), myProject);
       return;
     }
 
@@ -163,11 +161,66 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     return HelpID.getRenameHelpID(myPrimaryElement);
   }
 
+  private void addExistingNameConflicts(final Collection<String> conflicts) {
+    final PsiManager manager = PsiManager.getInstance(myProject);
+    try {
+      PsiElementFactory factory = manager.getElementFactory();
+      if (myPrimaryElement instanceof PsiMethod) {
+        PsiMethod refactoredMethod = (PsiMethod)myPrimaryElement;
+        if (myNewName.equals(refactoredMethod.getName())) return;
+        PsiMethod prototype = (PsiMethod)refactoredMethod.copy();
+        prototype.getNameIdentifier().replace(factory.createIdentifier(myNewName));
+        ConflictsUtil.checkMethodConflicts(
+          refactoredMethod.getContainingClass(),
+          refactoredMethod,
+          prototype,
+          conflicts);
+      }
+      else if (myPrimaryElement instanceof PsiField) {
+        PsiField refactoredField = (PsiField)myPrimaryElement;
+        if (myNewName.equals(refactoredField.getName())) return;
+        ConflictsUtil.checkFieldConflicts(
+          refactoredField.getContainingClass(),
+          myNewName,
+          conflicts
+        );
+      }
+      else if (myPrimaryElement instanceof PsiClass) {
+        final PsiClass aClass = ((PsiClass)myPrimaryElement);
+        if (myNewName.equals(aClass.getName())) return;
+        final PsiClass containingClass = aClass.getContainingClass();
+        if (containingClass != null) { // innerClass
+          PsiClass[] innerClasses = containingClass.getInnerClasses();
+          for (PsiClass innerClass : innerClasses) {
+            if (myNewName.equals(innerClass.getName())) {
+              conflicts.add(RefactoringBundle.message("inner.class.0.is.already.defined.in.class.1", myNewName, containingClass.getQualifiedName()));
+              break;
+            }
+          }
+        }
+        else {
+          final String qualifiedNameAfterRename = RenameUtil.getQualifiedNameAfterRename(aClass, myNewName);
+          final PsiClass conflictingClass = PsiManager.getInstance(myProject).findClass(qualifiedNameAfterRename, GlobalSearchScope.allScope(myProject));
+          if (conflictingClass != null) {
+            conflicts.add(RefactoringBundle.message("class.0.already.exists", qualifiedNameAfterRename));
+          }
+        }
+      }
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+    }
+  }
+
+
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usagesIn = refUsages.get();
-    String[] conflicts = RenameUtil.getConflictDescriptions(usagesIn);
-    if (conflicts.length > 0) {
-      ConflictsDialog conflictsDialog = new ConflictsDialog(conflicts, myProject);
+    Set<String> conflicts = new HashSet<String>();
+
+    conflicts.addAll(RenameUtil.getConflictDescriptions(usagesIn));
+    addExistingNameConflicts(conflicts);
+    if (conflicts.size() > 0) {
+      ConflictsDialog conflictsDialog = new ConflictsDialog(conflicts.toArray(new String[conflicts.size()]), myProject);
       conflictsDialog.show();
       if (!conflictsDialog.isOK()) {
         return false;
@@ -217,7 +270,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     };
 
     return ApplicationManager.getApplication().runProcessWithProgressSynchronously(
-          runnable, "Searching for variables", true, myProject
+          runnable, RefactoringBundle.message("searching.for.variables"), true, myProject
         );
   }
 
@@ -227,13 +280,15 @@ public class RenameProcessor extends BaseRefactoringProcessor {
 
   private void setNewName(String newName) {
     if (myPrimaryElement == null) {
-      myCommandName = "Renaming something";
+      myCommandName = RefactoringBundle.message("renaming.something");
       return;
     }
 
     myNewName = newName;
     myAllRenames.put(myPrimaryElement, newName);
-    myCommandName = "Renaming " + UsageViewUtil.getType(myPrimaryElement) + " " + UsageViewUtil.getDescriptiveName(myPrimaryElement) + " to " + newName;
+    myCommandName = RefactoringBundle.message("renaming.0.1.to.2",
+                                              UsageViewUtil.getType(myPrimaryElement), UsageViewUtil.getDescriptiveName(myPrimaryElement),
+                                              newName);
   }
 
   protected void prepareFieldRenaming(PsiField field, String newName) {
@@ -306,8 +361,8 @@ public class RenameProcessor extends BaseRefactoringProcessor {
 
   protected boolean askToRenameAccesors(PsiMethod getter, PsiMethod setter, String newName) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return false;
-    String text = RefactoringMessageUtil.getGetterSetterMessage(newName, "Rename", getter, setter);
-    return Messages.showYesNoDialog(myProject, text, "Rename", Messages.getQuestionIcon()) != 0;
+    String text = RefactoringMessageUtil.getGetterSetterMessage(newName, RefactoringBundle.message("rename.title"), getter, setter);
+    return Messages.showYesNoDialog(myProject, text, RefactoringBundle.message("rename.title"), Messages.getQuestionIcon()) != 0;
   }
 
   private void addOverriddenAndImplemented(PsiClass aClass, PsiMethod methodPrototype, String newName) {
@@ -374,10 +429,11 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   protected boolean isPreviewUsages(UsageInfo[] usages) {
     if (super.isPreviewUsages(usages)) return true;
     if (UsageViewUtil.hasNonCodeUsages(usages)) {
-      WindowManager.getInstance().getStatusBar(myProject).setInfo("Occurrences found in comments, strings and non-java files");
+      WindowManager.getInstance().getStatusBar(myProject).setInfo(
+        RefactoringBundle.message("occurrences.found.in.comments.strings.and.non.java.files"));
       return true;
     } else if (UsageViewUtil.hasReadOnlyUsages(usages)) {
-      WindowManager.getInstance().getStatusBar(myProject).setInfo("Occurrences found in read-only files");
+      WindowManager.getInstance().getStatusBar(myProject).setInfo(RefactoringBundle.message("readonly.occurences.found"));
       return true;
     }
     return false;

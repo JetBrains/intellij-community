@@ -14,8 +14,11 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.SuggestedNameInfo;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.uiDesigner.UIDesignerBundle;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -31,7 +34,8 @@ public final class CreateDialogAction extends CreateElementActionBase {
   private boolean myRecentGenerateMain;
 
   public CreateDialogAction() {
-    super("Create Dialog Class", "Create new class implementing javax.swing.JDialog", Icons.UI_FORM_ICON);
+    super(UIDesignerBundle.message("action.create.dialog"),
+          UIDesignerBundle.message("action.description.create.dialog"), Icons.UI_FORM_ICON);
   }
 
   protected PsiElement[] invokeDialog(final Project project, final PsiDirectory directory) {
@@ -42,7 +46,7 @@ public final class CreateDialogAction extends CreateElementActionBase {
     final DialogWrapper dialog = new DialogWrapper(project, true) {
       {
         init();
-        setTitle("New Dialog");
+        setTitle(UIDesignerBundle.message("title.new.dialog"));
       }
       protected JComponent createCenterPanel() {
         return contentPane.getPanel();
@@ -73,7 +77,7 @@ public final class CreateDialogAction extends CreateElementActionBase {
   }
 
   protected String getCommandName() {
-    return "Create class";
+    return UIDesignerBundle.message("command.create.class");
   }
 
   protected void checkBeforeCreate(final String newName, final PsiDirectory directory) throws IncorrectOperationException {
@@ -81,7 +85,7 @@ public final class CreateDialogAction extends CreateElementActionBase {
   }
 
   protected String getErrorTitle() {
-    return "Cannot Create Dialog";
+    return UIDesignerBundle.message("error.cannot.create.dialog");
   }
 
   public void update(final AnActionEvent e) {
@@ -106,10 +110,11 @@ public final class CreateDialogAction extends CreateElementActionBase {
   }
 
   protected String getActionName(final PsiDirectory directory, final String newName) {
-    return "Creating class " + directory.getPackage().getQualifiedName() + "." + newName;
+    return UIDesignerBundle.message("progress.creating.class", directory.getPackage().getQualifiedName(), newName);
   }
 
-  private final static String createClassBody(
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  private static String createClassBody(
     final String className,
     final boolean generateOK,
     final boolean generateCancel,
@@ -144,7 +149,7 @@ public final class CreateDialogAction extends CreateElementActionBase {
       result.append("onCancel();");
       result.append("}});\n");
       result.append("\n");
-      result.append(" // call onCancel() when cross is clicked\n");
+      result.append(UIDesignerBundle.message("comment.call.onCancel.cross"));
       result.append("setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);\n");
       result.append("addWindowListener(new java.awt.event.WindowAdapter() {\n");
       result.append("  public void windowClosing(java.awt.event.WindowEvent e) {\n");
@@ -152,7 +157,7 @@ public final class CreateDialogAction extends CreateElementActionBase {
       result.append("  }\n");
       result.append("});\n");
       result.append("\n");
-      result.append(" // call onCancel() on ESCAPE\n");
+      result.append(UIDesignerBundle.message("comment.call.onCancel.escape"));
       result.append("contentPane.registerKeyboardAction(");
       result.append("  new java.awt.event.ActionListener() {");
       result.append("    public void actionPerformed(java.awt.event.ActionEvent e) {");
@@ -169,7 +174,7 @@ public final class CreateDialogAction extends CreateElementActionBase {
     if (generateOK) {
       result.append("\n");
       result.append("private void onOK(){\n");
-      result.append(" // add your code here\n");
+      result.append(UIDesignerBundle.message("comment.onok"));
       result.append("dispose();\n");
       result.append("}\n");
     }
@@ -177,7 +182,7 @@ public final class CreateDialogAction extends CreateElementActionBase {
     if (generateCancel) {
       result.append("\n");
       result.append("private void onCancel(){\n");
-      result.append(" // add your code here if necessary\n");
+      result.append(UIDesignerBundle.message("comment.oncancel"));
       result.append("dispose();\n");
       result.append("}\n");
     }
@@ -197,8 +202,9 @@ public final class CreateDialogAction extends CreateElementActionBase {
     return result.toString();
   }
 
-  private final String createFormBody(final String fullQualifiedClassName) throws IncorrectOperationException {
+  private String createFormBody(final String fullQualifiedClassName) throws IncorrectOperationException {
 
+    //noinspection HardCodedStringLiteral
     final String resource = "/com/intellij/uiDesigner/NewDialog.xml";
     final InputStream inputStream = getClass().getResourceAsStream(resource);
 
@@ -209,7 +215,7 @@ public final class CreateDialogAction extends CreateElementActionBase {
       }
     }
     catch (IOException e) {
-      throw new IncorrectOperationException("Cannot read " + resource);
+      throw new IncorrectOperationException(UIDesignerBundle.message("error.cannot.read", resource));
     }
 
     String s = buffer.toString();

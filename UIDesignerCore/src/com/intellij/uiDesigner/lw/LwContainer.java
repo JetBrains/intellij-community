@@ -20,6 +20,7 @@ import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.shared.BorderType;
 import com.intellij.uiDesigner.shared.XYLayoutManager;
+import com.intellij.uiDesigner.UIFormXmlConstants;
 import org.jdom.Element;
 
 import javax.swing.*;
@@ -216,16 +217,12 @@ public class LwContainer extends LwComponent implements IContainer{
     final Element borderElement = LwXmlReader.getRequiredChild(element, "border");
     setBorderType(BorderType.valueOf(LwXmlReader.getRequiredString(borderElement, "type")));
 
-    final String title = borderElement.getAttributeValue("title");
-    if (title != null) {
-      setBorderTitle(StringDescriptor.create(title));
-    }
-    else {
-      final String bundle = borderElement.getAttributeValue("title-resource-bundle");
-      if (bundle != null) {
-        final String key = borderElement.getAttributeValue("title-key");
-        setBorderTitle(new StringDescriptor(bundle, key));
-      }
+    StringDescriptor descriptor = LwXmlReader.getStringDescriptor(borderElement,
+                                                                  UIFormXmlConstants.ATTRIBUTE_TITLE,
+                                                                  UIFormXmlConstants.ATTRIBUTE_TITLE_RESOURCE_BUNDLE,
+                                                                  UIFormXmlConstants.ATTRIBUTE_TITLE_KEY);
+    if (descriptor != null) {
+      setBorderTitle(descriptor);
     }
   }
 

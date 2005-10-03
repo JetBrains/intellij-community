@@ -3,6 +3,7 @@ package com.intellij.debugger.ui;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.SourcePosition;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.actions.ViewBreakpointsAction;
 import com.intellij.debugger.engine.DebugProcessEvents;
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -102,7 +103,7 @@ public class PositionHighlighter {
         HighlighterLayer.SELECTION - 1,
         scheme.getAttributes(DebuggerColors.EXECUTIONPOINT_ATTRIBUTES)
       );
-      myHighlighter.setErrorStripeTooltip("Execution line");
+      myHighlighter.setErrorStripeTooltip(DebuggerBundle.message("position.highlighter.stripe.tooltip"));
       myHighlighter.putUserData(HIGHLIGHTER_USERDATA_KEY, Boolean.TRUE);
     }
 
@@ -208,15 +209,18 @@ public class PositionHighlighter {
             DebugProcessImpl debugProcess = DebuggerManagerEx.getInstanceEx(myProject).getContext().getDebugProcess();
             if(debugProcess != null) {
               StringBuffer buf = new StringBuffer();
-              buf.append("<html><body>");
+                //noinspection HardCodedStringLiteral
+                buf.append("<html><body>");
               for (Iterator<Pair<Breakpoint, Event>> iterator = eventsOutOfLine.iterator(); iterator.hasNext();) {
                 Pair<Breakpoint, Event> eventDescriptor = iterator.next();
-                buf.append(DebugProcessEvents.getEventText(eventDescriptor));
+                buf.append(((DebugProcessEvents)debugProcess).getEventText(eventDescriptor));
                 if(iterator.hasNext()) {
-                  buf.append("<br>");
+                    //noinspection HardCodedStringLiteral
+                    buf.append("<br>");
                 }
               }
-              buf.append("</body></html>");
+                //noinspection HardCodedStringLiteral
+                buf.append("</body></html>");
               return buf.toString();
             } else {
               return null;

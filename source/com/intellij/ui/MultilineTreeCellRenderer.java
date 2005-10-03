@@ -2,6 +2,7 @@ package com.intellij.ui;
 
 import com.intellij.ui.plaf.beg.BegTreeHandleUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.plaf.TreeUI;
@@ -13,6 +14,8 @@ import java.awt.event.ComponentEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+
+import org.jetbrains.annotations.NonNls;
 
 public abstract class MultilineTreeCellRenderer extends JComponent implements javax.swing.tree.TreeCellRenderer {
 
@@ -35,6 +38,7 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements ja
   private String myPrefix;
   private int myTextLength;
   private int myPrefixWidth;
+  @NonNls protected static final String FONT_PROPERTY_NAME = "font";
 
 
   public MultilineTreeCellRenderer() {
@@ -48,7 +52,7 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements ja
 
     addPropertyChangeListener(new PropertyChangeListener() {
       public void propertyChange(PropertyChangeEvent evt) {
-        if ("font".equalsIgnoreCase(evt.getPropertyName())) {
+        if (FONT_PROPERTY_NAME.equalsIgnoreCase(evt.getPropertyName())) {
           onFontChanged();
         }
       }
@@ -101,11 +105,11 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements ja
     Color bgColor;
     Color fgColor;
     if (mySelected && myHasFocus){
-      bgColor = UIManager.getColor("Tree.selectionBackground");
-      fgColor = UIManager.getColor("Tree.selectionForeground");
+      bgColor = UIUtil.getTreeSelectionBackground();
+      fgColor = UIUtil.getTreeSelectonForeground();
     }
     else{
-      bgColor = UIManager.getColor("Tree.textBackground");
+      bgColor = UIUtil.getTreeTextBackground();
       fgColor = getForeground();
     }
 
@@ -115,7 +119,7 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements ja
 
     // draw border
     if (mySelected) {
-      g.setColor(UIManager.getColor("Tree.selectionBorderColor"));
+      g.setColor(UIUtil.getTreeSelectionBorderColor());
       BegTreeHandleUtil.drawDottedRectangle(g, borderX, borderY, borderX + borderW - 1, borderY + borderH - 1);
     }
 
@@ -305,7 +309,7 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements ja
       return btreeui.getLeftChildIndent() + btreeui.getRightChildIndent();
     }
     else {
-      return ((Integer)UIManager.get("Tree.leftChildIndent")).intValue() + ((Integer)UIManager.get("Tree.rightChildIndent")).intValue();
+      return ((Integer)UIUtil.getTreeLeftChildIndent()).intValue() + ((Integer)UIUtil.getTreeRightChildIndent()).intValue();
     }
   }
 
@@ -318,7 +322,7 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements ja
   protected abstract void initComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus);
 
   public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-    setFont(UIManager.getFont("Tree.font"));
+    setFont(UIUtil.getTreeFont());
 
     initComponent(tree, value, selected, expanded, leaf, row, hasFocus);
 
@@ -411,8 +415,8 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements ja
   }
 
   private static void resetHeightCache(final JTree tree,
-                                                       final TreeCellRenderer defaultRenderer,
-                                                       final MultilineTreeCellRenderer renderer) {
+                                       final TreeCellRenderer defaultRenderer,
+                                       final MultilineTreeCellRenderer renderer) {
     tree.setCellRenderer(defaultRenderer);
     tree.setCellRenderer(renderer);
   }

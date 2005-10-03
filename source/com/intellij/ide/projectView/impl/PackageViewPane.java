@@ -11,6 +11,7 @@ import com.intellij.ide.projectView.impl.nodes.PackageUtil;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -32,8 +33,10 @@ import javax.swing.tree.DefaultTreeModel;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.jetbrains.annotations.NonNls;
+
 public final class PackageViewPane extends AbstractProjectViewPSIPane implements ProjectComponent {
-  public static final String ID = "PackagesPane";
+  @NonNls public static final String ID = "PackagesPane";
   private static final Icon ICON = IconLoader.getIcon("/general/packagesTab.png");
 
   public PackageViewPane(Project project) {
@@ -41,7 +44,7 @@ public final class PackageViewPane extends AbstractProjectViewPSIPane implements
   }
 
   public String getTitle() {
-    return "Packages";
+    return IdeBundle.message("title.packages");
   }
 
   public Icon getIcon() {
@@ -53,12 +56,12 @@ public final class PackageViewPane extends AbstractProjectViewPSIPane implements
   }
 
   public AbstractTreeStructure getTreeStructure() {
-    return myTreeStructure; 
+    return myTreeStructure;
   }
 
   private final class ShowModulesAction extends ToggleAction {
     private ShowModulesAction() {
-      super("Show Modules", "Show/Hide Modules", IconLoader.getIcon("/objectBrowser/showModules.png"));
+      super(IdeBundle.message("action.show.modules"), IdeBundle.message("action.description.show.modules"), IconLoader.getIcon("/objectBrowser/showModules.png"));
     }
 
     public boolean isSelected(AnActionEvent event) {
@@ -80,7 +83,7 @@ public final class PackageViewPane extends AbstractProjectViewPSIPane implements
 
   private final class ShowLibraryContentsAction extends ToggleAction {
     private ShowLibraryContentsAction() {
-      super("Show Libraries Contents", "Show/Hide Library Contents", IconLoader.getIcon("/objectBrowser/showLibraryContents.png"));
+      super(IdeBundle.message("action.show.libraries.contents"), IdeBundle.message("action.show.hide.library.contents"), IconLoader.getIcon("/objectBrowser/showLibraryContents.png"));
     }
 
     public boolean isSelected(AnActionEvent event) {

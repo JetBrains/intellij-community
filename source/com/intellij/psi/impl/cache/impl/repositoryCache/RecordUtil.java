@@ -283,6 +283,14 @@ public class RecordUtil {
 
   static {
     ourModifierNameToFlagMap = new TObjectIntHashMap<String>();
+    ourFrequentTypeIndex = new TObjectIntHashMap<String>();
+    ourIndexFrequentType = new TIntObjectHashMap<String>();
+
+    initMaps();
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  private static void initMaps() {
     ourModifierNameToFlagMap.put(PsiModifier.PUBLIC, ModifierFlags.PUBLIC_MASK);
     ourModifierNameToFlagMap.put(PsiModifier.PROTECTED, ModifierFlags.PROTECTED_MASK);
     ourModifierNameToFlagMap.put(PsiModifier.PRIVATE, ModifierFlags.PRIVATE_MASK);
@@ -301,8 +309,6 @@ public class RecordUtil {
     ourModifierNameToFlagMap.put("enum", ModifierFlags.ENUM_MASK);
     ourModifierNameToFlagMap.put("@", ModifierFlags.ANNOTATION_TYPE_MASK);
 
-    ourFrequentTypeIndex = new TObjectIntHashMap<String>();
-    ourIndexFrequentType = new TIntObjectHashMap<String>();
 
     ourFrequentTypeIndex.put("boolean", 1);
     ourIndexFrequentType.put(1, "boolean");

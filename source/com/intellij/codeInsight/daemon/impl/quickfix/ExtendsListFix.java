@@ -1,14 +1,14 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
-
-import java.text.MessageFormat;
+import org.jetbrains.annotations.NonNls;
 
 public class ExtendsListFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.ExtendsListFix");
@@ -26,18 +26,19 @@ public class ExtendsListFix implements IntentionAction {
   }
 
   public String getText() {
-    String text = MessageFormat.format("Make ''{0}'' {1}{2} ''{3}''",
-        new Object[]{
-          myClass.getName(),
-          (myToAdd ? "" : "not "),
-          (myClass.isInterface() == myClassToExtendFrom.isInterface() ? "extend" : "implement"),
-          myClassToExtendFrom.getQualifiedName(),
-        });
-    return text;
+    @NonNls final String messageKey;
+    if (myClass.isInterface() == myClassToExtendFrom.isInterface()) {
+      messageKey = myToAdd ? "add.class.to.extends.list" : "remove.class.from.extends.list";
+    }
+    else {
+      messageKey = myToAdd ? "add.interface.to.implements.list" : "remove.interface.from.implements.list";
+    }
+
+    return QuickFixBundle.message(messageKey, myClass.getName(), myClassToExtendFrom.getQualifiedName());
   }
 
   public String getFamilyName() {
-    return "Extend Class from ";
+    return QuickFixBundle.message("change.extends.list.family");
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
@@ -49,10 +50,9 @@ public class ExtendsListFix implements IntentionAction {
         && myClassToExtendFrom.isValid()
         && !myClassToExtendFrom.hasModifierProperty(PsiModifier.FINAL)
         && (myClassToExtendFrom.isInterface()
-        || (!myClass.isInterface()
-        && myClass.getExtendsList() != null
-        && myClass.getExtendsList().getReferencedTypes() != null
-        && myClass.getExtendsList().getReferencedTypes().length == 0))
+            || (!myClass.isInterface()
+                && myClass.getExtendsList() != null
+                && myClass.getExtendsList().getReferencedTypes().length == 0))
         ;
 
   }
@@ -60,9 +60,9 @@ public class ExtendsListFix implements IntentionAction {
   protected void invokeImpl () {
     if (!CodeInsightUtil.prepareFileForWrite(myClass.getContainingFile())) return;
     PsiReferenceList extendsList = myClass.isInterface() != myClassToExtendFrom.isInterface() ?
-        myClass.getImplementsList() : myClass.getExtendsList();
+                                   myClass.getImplementsList() : myClass.getExtendsList();
     PsiReferenceList otherList = myClass.isInterface() != myClassToExtendFrom.isInterface() ?
-        myClass.getExtendsList() : myClass.getImplementsList();
+                                 myClass.getExtendsList() : myClass.getImplementsList();
     try {
       modifyList(extendsList, myToAdd, -1);
       modifyList(otherList, !myToAdd, -1);

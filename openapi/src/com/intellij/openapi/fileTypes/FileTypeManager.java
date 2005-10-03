@@ -97,6 +97,7 @@ public abstract class FileTypeManager implements SettingsSavingComponent {
    * @param type The file type for which the extensions are requested.
    * @return The array of extensions associated with the file type.
    */
+  @NotNull
   public abstract String[] getAssociatedExtensions(FileType type);
 
   /**

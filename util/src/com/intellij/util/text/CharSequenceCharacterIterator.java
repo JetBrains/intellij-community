@@ -76,7 +76,10 @@ public class CharSequenceCharacterIterator implements CharacterIterator {
   }
 
   public char setIndex(int position) {
-    if (position < 0 || position > myChars.length()) throw new IllegalArgumentException("Wrong index: " + position);
+    if (position < 0 || position > myChars.length()) {
+      //noinspection HardCodedStringLiteral
+      throw new IllegalArgumentException("Wrong index: " + position);
+    }
     myCurPosition = position;
     return current();
   }
