@@ -55,6 +55,7 @@
       <action id="Subversion.Add" class="org.jetbrains.idea.svn.actions.AddAction"/>
       <reference id="CheckinFiles"/>
       <reference id="UpdateFiles"/>
+      <reference id="IntegrateFiles"/>
       <reference id="CheckStatusForFiles"/>
       <reference id="Vcs.ShowTabbedFileHistory"/>
       <separator/>

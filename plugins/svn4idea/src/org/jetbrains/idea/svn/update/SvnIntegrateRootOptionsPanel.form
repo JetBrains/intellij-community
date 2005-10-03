@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="org.jetbrains.idea.svn.update.SvnIntegrateRootOptionsPanel">
+  <grid id="37dcf" binding="myPanel" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+    <margin top="0" left="0" bottom="0" right="0"/>
+    <constraints>
+      <xy x="62" y="17" width="460" height="184"/>
+      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+    </constraints>
+    <properties/>
+    <border type="none"/>
+    <children>
+      <grid id="f9f06" row-count="4" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
+        <constraints>
+          <xy x="0" y="0" width="440" height="95"/>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3">
+            <preferred-size width="500" height="-1"/>
+          </grid>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="677d" class="javax.swing.JLabel" binding="myMergeURLLabel1">
+            <constraints>
+              <xy x="0" y="3" width="36" height="14"/>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+            </constraints>
+            <properties>
+              <text resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="label.update.switch.configurable.url1"/>
+            </properties>
+          </component>
+          <component id="93f39" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myMergeText1">
+            <constraints>
+              <xy x="58" y="0" width="382" height="20"/>
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="0" fill="1"/>
+            </constraints>
+            <properties/>
+          </component>
+          <component id="ba751" class="javax.swing.JLabel" binding="myMergeRevisionLabel1">
+            <constraints>
+              <xy x="0" y="28" width="48" height="14"/>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+            </constraints>
+            <properties>
+              <text resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="label.update.switch.configurable.revision1"/>
+            </properties>
+          </component>
+          <component id="5f236" class="javax.swing.JTextField" binding="myMergeRevisionText1">
+            <constraints>
+              <xy x="58" y="25" width="50" height="20"/>
+              <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="0">
+                <preferred-size width="50" height="-1"/>
+              </grid>
+            </constraints>
+            <properties/>
+          </component>
+          <component id="23b9c" class="javax.swing.JLabel" binding="myMergeURLLabel2">
+            <constraints>
+              <xy x="0" y="53" width="36" height="14"/>
+              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+            </constraints>
+            <properties>
+              <text resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="lable.update.switch.configurable.url2"/>
+            </properties>
+          </component>
+          <component id="a6192" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myMergeText2">
+            <constraints>
+              <xy x="58" y="50" width="382" height="20"/>
+              <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="0" fill="1"/>
+            </constraints>
+            <properties/>
+          </component>
+          <component id="87d78" class="javax.swing.JLabel" binding="myMergeRevisionLabel2">
+            <constraints>
+              <xy x="0" y="78" width="48" height="14"/>
+              <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+            </constraints>
+            <properties>
+              <text resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="update.switch.configurable.revision2"/>
+            </properties>
+          </component>
+          <component id="8958c" class="javax.swing.JTextField" binding="myMergeRevisionText2">
+            <constraints>
+              <xy x="58" y="75" width="50" height="20"/>
+              <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="0">
+                <preferred-size width="50" height="-1"/>
+              </grid>
+            </constraints>
+            <properties/>
+          </component>
+        </children>
+      </grid>
+      <hspacer id="934df">
+        <constraints>
+          <xy x="440" y="42" width="20" height="11"/>
+          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1"/>
+        </constraints>
+      </hspacer>
+      <vspacer id="ef9ba">
+        <constraints>
+          <xy x="214" y="95" width="11" height="89"/>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
+        </constraints>
+      </vspacer>
+    </children>
+  </grid>
+</form>

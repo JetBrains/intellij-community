@@ -37,20 +37,22 @@ public class SvnUtil {
   @NonNls public static final String PATH_TO_LOCK_FILE = ".svn/lock";
   @NonNls public static final String LOCK_FILE_NAME = "lock";
 
-  public static Collection crawlWCRoots(SvnVcs vcs, File path, SvnWCRootCrawler callback, ProgressIndicator progress) {
-    final Collection result = new HashSet();
+  private SvnUtil() {
+  }
+
+  public static Collection<File> crawlWCRoots(File path, SvnWCRootCrawler callback, ProgressIndicator progress) {
+    final Collection<File> result = new HashSet<File>();
     File parent = path.isFile() || !path.exists() ? path.getParentFile() : path;
     if (SVNWCUtil.isVersionedDirectory(parent)) {
       if (progress != null && progress.isCanceled()) {
         throw new ProcessCanceledException();
       }
-      final Collection pending = callback.handleWorkingCopyRoot(path, progress);
+      final Collection<File> pending = callback.handleWorkingCopyRoot(path, progress);
       if (progress != null && progress.isCanceled()) {
         throw new ProcessCanceledException();
       }
-      for (Iterator pendingFiles = pending.iterator(); pendingFiles.hasNext();) {
-        File file = (File)pendingFiles.next();
-        result.addAll(crawlWCRoots(vcs, file, callback, progress));
+      for (final File aPending : pending) {
+        result.addAll(crawlWCRoots(aPending, callback, progress));
       }
       result.add(path);
     }
@@ -65,7 +67,7 @@ public class SvnUtil {
         }
         File child = children[i];
         if (child.isDirectory()) {
-          result.addAll(crawlWCRoots(vcs, child, callback, progress));
+          result.addAll(crawlWCRoots(child, callback, progress));
         }
       }
     }
@@ -74,7 +76,7 @@ public class SvnUtil {
 
   public static String[] getLocationsForModule(final SvnVcs vcs, File path, ProgressIndicator progress) {
     LocationsCrawler crawler = new LocationsCrawler(vcs);
-    crawlWCRoots(vcs, path, crawler, progress);
+    crawlWCRoots(path, crawler, progress);
     return crawler.getLocations();
   }
 
@@ -89,7 +91,7 @@ public class SvnUtil {
     final String lockMessage = dialog.getComment();
     final boolean force = dialog.isForce();
     final SVNException[] exception = new SVNException[1];
-    final Collection failedLocks = new ArrayList();
+    final Collection<String> failedLocks = new ArrayList<String>();
     final int[] count = new int[]{ioFiles.length};
     final ISVNEventHandler eventHandler = new ISVNEventHandler() {
       public void handleEvent(SVNEvent event, double progress) {
@@ -116,11 +118,11 @@ public class SvnUtil {
           if (progress != null) {
             progress.setText(SvnBundle.message("progress.text.locking.files"));
           }
-          for (int i = 0; i < ioFiles.length; i++) {
+          for (File ioFile : ioFiles) {
             if (progress != null) {
               progress.checkCanceled();
             }
-            File file = ioFiles[i];
+            File file = ioFile;
             if (progress != null) {
               progress.setText2(SvnBundle.message("progress.text2.processing.file", file.getName()));
             }
@@ -136,11 +138,10 @@ public class SvnUtil {
     ApplicationManager.getApplication().runProcessWithProgressSynchronously(command,
                                                                             SvnBundle.message("progress.title.lock.files"), false, project);
     if (!failedLocks.isEmpty() && helper != null) {
-      String[] failedFiles = (String[])failedLocks.toArray(new String[failedLocks.size()]);
-      List exceptions = new ArrayList();
+      String[] failedFiles = failedLocks.toArray(new String[failedLocks.size()]);
+      List<VcsException> exceptions = new ArrayList<VcsException>();
 
-      for (int i = 0; i < failedFiles.length; i++) {
-        String file = failedFiles[i];
+      for (String file : failedFiles) {
         exceptions.add(new VcsException(SvnBundle.message("exception.text.locking.file.failed", file)));
       }
       helper.showErrors(exceptions, SvnBundle.message("message.title.lock.failures"));
@@ -156,7 +157,7 @@ public class SvnUtil {
                                    AbstractVcsHelper helper) throws VcsException {
     final boolean force = true;
     final SVNException[] exception = new SVNException[1];
-    final Collection failedUnlocks = new ArrayList();
+    final Collection<String> failedUnlocks = new ArrayList<String>();
     final int[] count = new int[]{ioFiles.length};
     final ISVNEventHandler eventHandler = new ISVNEventHandler() {
       public void handleEvent(SVNEvent event, double progress) {
@@ -183,11 +184,11 @@ public class SvnUtil {
           if (progress != null) {
             progress.setText(SvnBundle.message("progress.text.unlocking.files"));
           }
-          for (int i = 0; i < ioFiles.length; i++) {
+          for (File ioFile : ioFiles) {
             if (progress != null) {
               progress.checkCanceled();
             }
-            File file = ioFiles[i];
+            File file = ioFile;
             if (progress != null) {
               progress.setText2(SvnBundle.message("progress.text2.processing.file", file.getName()));
             }
@@ -203,11 +204,10 @@ public class SvnUtil {
     ApplicationManager.getApplication().runProcessWithProgressSynchronously(command,
                                                                             SvnBundle.message("progress.title.unlock.files"), false, project);
     if (!failedUnlocks.isEmpty() && helper != null) {
-      String[] failedFiles = (String[])failedUnlocks.toArray(new String[failedUnlocks.size()]);
-      List exceptions = new ArrayList();
+      String[] failedFiles = failedUnlocks.toArray(new String[failedUnlocks.size()]);
+      List<VcsException> exceptions = new ArrayList<VcsException>();
 
-      for (int i = 0; i < failedFiles.length; i++) {
-        String file = failedFiles[i];
+      for (String file : failedFiles) {
         exceptions.add(new VcsException(SvnBundle.message("exception.text.failed.to.unlock.file", file)));
       }
       helper.showErrors(exceptions, SvnBundle.message("message.title.unlock.failures"));
@@ -221,19 +221,19 @@ public class SvnUtil {
 
   private static class LocationsCrawler implements SvnWCRootCrawler {
     private SvnVcs myVcs;
-    private Collection myLocations;
+    private Collection<String> myLocations;
 
     public LocationsCrawler(SvnVcs vcs) {
       myVcs = vcs;
-      myLocations = new ArrayList();
+      myLocations = new ArrayList<String>();
     }
 
     public String[] getLocations() {
-      return (String[])myLocations.toArray(new String[myLocations.size()]);
+      return myLocations.toArray(new String[myLocations.size()]);
     }
 
-    public Collection handleWorkingCopyRoot(File root, ProgressIndicator progress) {
-      final Collection result = new HashSet();
+    public Collection<File> handleWorkingCopyRoot(File root, ProgressIndicator progress) {
+      final Collection<File> result = new HashSet<File>();
       progress.setText(SvnBundle.message("progress.text.discovering.location", root.getAbsolutePath()));
       try {
         SVNWCClient wcClient = myVcs.createWCClient();

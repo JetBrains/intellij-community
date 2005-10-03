@@ -43,6 +43,8 @@ import org.jdom.Attribute;
 import org.jdom.DataConversionException;
 import org.jdom.Element;
 import org.jetbrains.idea.svn.dialogs.SvnAuthenticationProvider;
+import org.jetbrains.idea.svn.update.MergeRootInfo;
+import org.jetbrains.idea.svn.update.UpdateRootInfo;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationStorage;
 import org.tmatesoft.svn.core.internal.wc.SVNConfigFile;
@@ -52,7 +54,7 @@ import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import java.io.File;
 import java.util.*;
 
-public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
+public class SvnConfiguration implements ProjectComponent, JDOMExternalizable{
   private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.svn.SvnConfiguration");
 
   public String USER = "";
@@ -62,7 +64,7 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
   private String myConfigurationDirectory;
   private boolean myIsUseDefaultConfiguration;
   private ISVNOptions myOptions;
-  private List myCheckoutURLs;
+  private List<String> myCheckoutURLs;
   private boolean myIsKeepLocks;
   private String myLastSelectedCheckoutURL;
   private boolean myRemoteStatus;
@@ -70,6 +72,14 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
 
   public static final AuthStorage RUNTIME_AUTH_CACHE = new AuthStorage();
   public boolean PROCESS_UNRESOLVED = false;
+  public String LAST_MERGED_REVISION = null;
+  public boolean UPDATE_RUN_STATUS = false;
+  public boolean UPDATE_RECURSIVELY = true;
+  public boolean MERGE_DRY_RUN = false;
+
+  private final Map<File, MergeRootInfo> myMergeRootInfos = new HashMap<File, MergeRootInfo>();
+  private final Map<File, UpdateRootInfo> myUpdateRootInfos = new HashMap<File, UpdateRootInfo>();
+
 
   public static SvnConfiguration getInstance(Project project) {
     return project.getComponent(SvnConfiguration.class);
@@ -122,7 +132,7 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  public void readExternal(org.jdom.Element element) throws InvalidDataException {
+  public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
     List elems = element.getChildren("addpath");
     LOG.debug(elems.toString());
@@ -146,9 +156,9 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
       myIsUseDefaultConfiguration = true;
     }
     List urls = element.getChildren("checkoutURL");
-    myCheckoutURLs = new LinkedList();
-    for (int i = 0; i < urls.size(); i++) {
-      Element child = (Element)urls.get(i);
+    myCheckoutURLs = new LinkedList<String>();
+    for (Object url1 : urls) {
+      Element child = (Element)url1;
       String url = child.getText();
       if (url != null) {
         if ("true".equals(child.getAttributeValue("active"))) {
@@ -162,12 +172,12 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  public void writeExternal(org.jdom.Element element) throws WriteExternalException {
+  public void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, element);
     if (ADD_PATHS != null) {
-      for (int i = 0; i < ADD_PATHS.length; i++) {
+      for (String aADD_PATHS : ADD_PATHS) {
         Element elem = new Element("addpath");
-        elem.setAttribute("path", ADD_PATHS[i]);
+        elem.setAttribute("path", aADD_PATHS);
         element.addContent(elem);
       }
     }
@@ -178,8 +188,7 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
       element.addContent(configurationDirectory);
     }
     if (myCheckoutURLs != null) {
-      for (Iterator iterator = myCheckoutURLs.iterator(); iterator.hasNext();) {
-        String url = (String)iterator.next();
+      for (final String url : myCheckoutURLs) {
         Element urlElement = new Element("checkoutURL");
         urlElement.setText(url);
         if (url.equals(myLastSelectedCheckoutURL)) {
@@ -198,14 +207,14 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
 
   public Collection getCheckoutURLs() {
     if (myCheckoutURLs == null) {
-      myCheckoutURLs = new LinkedList();
+      myCheckoutURLs = new LinkedList<String>();
     }
     return myCheckoutURLs;
   }
 
   public void addCheckoutURL(String url) {
     if (myCheckoutURLs == null) {
-      myCheckoutURLs = new LinkedList();
+      myCheckoutURLs = new LinkedList<String>();
     }
     if (myCheckoutURLs.contains(url)) {
       return;
@@ -259,7 +268,7 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
 
   public static class AuthStorage implements ISVNAuthenticationStorage {
 
-    private Map myStorage = new Hashtable();
+    private Map<String, Object> myStorage = new Hashtable<String, Object>();
 
     public void clear() {
       myStorage.clear();
@@ -277,4 +286,19 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
       return myStorage.get(kind + "$" + realm);
     }
   }
+
+  public MergeRootInfo getMergeRootInfo(final File file, final SvnVcs svnVcs) {
+    if (!myMergeRootInfos.containsKey(file)) {
+      myMergeRootInfos.put(file, new MergeRootInfo(file, svnVcs));
+    }
+    return myMergeRootInfos.get(file);
+  }
+
+  public UpdateRootInfo getUpdateRootInfo(File file, final SvnVcs svnVcs) {
+    if (!myUpdateRootInfos.containsKey(file)) {
+      myUpdateRootInfos.put(file, new UpdateRootInfo(file, svnVcs));
+    }
+    return myUpdateRootInfos.get(file);
+  }
+
 }

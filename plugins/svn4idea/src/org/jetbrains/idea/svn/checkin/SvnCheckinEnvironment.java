@@ -22,6 +22,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vcs.checkin.*;
@@ -30,16 +32,11 @@ import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vcs.versions.AbstractRevisions;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.peer.PeerFactory;
 import com.intellij.util.ui.ColumnInfo;
-import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
-import org.jetbrains.idea.svn.actions.MarkResolvedAction;
-import com.intellij.util.ui.DialogUtil;
-import com.intellij.util.Icons;
-import com.intellij.peer.PeerFactory;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.*;
@@ -47,14 +44,15 @@ import org.tmatesoft.svn.core.wc.*;
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
-import java.awt.event.ItemListener;
 import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.io.File;
 import java.util.*;
 import java.util.List;
 
 public class SvnCheckinEnvironment implements CheckinEnvironment {
   private final SvnVcs mySvnVcs;
+  //TODO lesya
   private KeepLocksComponent myKeepLocksComponent;
 
   public boolean showCheckinDialogInAnyCase() {
@@ -124,9 +122,8 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
 
       try {
         SVNWCClient wcClient = mySvnVcs.createWCClient();
-        for (int i = 0; i < pathsArray.length; i++) {
-          File ioFile = pathsArray[i].getIOFile();
-          wcClient.doResolve(ioFile, false);
+        for (FilePath aPathsArray : pathsArray) {
+          wcClient.doResolve(aPathsArray.getIOFile(), false);
         }
       }
       catch (SVNException svnEx) {
@@ -159,8 +156,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
       presentation.setEnabled(true);
       presentation.setVisible(true);
 
-      for (int i = 0; i < presentableElements.length; i++) {
-        DiffTreeNode presentableElement = presentableElements[i];
+      for (DiffTreeNode presentableElement : presentableElements) {
         if (presentableElement.getDifference() != SvnRevisions.CONFLICTED_DIFF_TYPE) {
           presentation.setEnabled(false);
           presentation.setVisible(false);
@@ -190,8 +186,8 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
 
 
   private List<VcsException> commitInt(List<String> paths, final String comment, final boolean force, final boolean recursive) {
-    final List exception = new ArrayList<VcsException>();
-    final Map committables = getCommitables(paths);
+    final List<VcsException> exception = new ArrayList<VcsException>();
+    final Map<File, Collection<File>> committables = getCommitables(paths);
 
     final SVNCommitClient committer;
     try {
@@ -249,16 +245,15 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     return exception;
   }
 
-  private void doCommit(Map committables,
+  private void doCommit(Map<File, Collection<File>> committables,
                         ProgressIndicator progress,
                         SVNCommitClient committer,
                         String comment,
                         boolean force,
                         boolean recursive,
-                        List exception) {
-    for (Iterator roots = committables.keySet().iterator(); roots.hasNext();) {
-      File root = (File)roots.next();
-      Collection files = (Collection)committables.get(root);
+                        List<VcsException> exception) {
+    for (final File root : committables.keySet()) {
+      Collection<File> files = committables.get(root);
       if (files.isEmpty()) {
         continue;
       }
@@ -266,11 +261,32 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
         progress.setText(SvnBundle.message("progress.text.committing.changes.below", root.getAbsolutePath()));
       }
 
-      File[] filesArray = (File[])files.toArray(new File[files.size()]);
+      File[] filesArray = files.toArray(new File[files.size()]);
       boolean keepLocks = myKeepLocksComponent != null && myKeepLocksComponent.isKeepLocks();
       try {
         SVNCommitInfo result = committer.doCommit(filesArray, keepLocks, comment, force, recursive);
         if (result != SVNCommitInfo.NULL && result.getNewRevision() >= 0) {
+
+          /*
+          final String lastMergedRevision = SvnConfiguration.getInstance(mySvnVcs.getProject()).LAST_MERGED_REVISION;
+          if (force && lastMergedRevision != null) {
+            try {
+              mySvnVcs.createWCClient().doSetRevisionProperty(root, SVNRevision.parse(lastMergedRevision),
+                                                              "idea.last.integrated.revision", "true", true,
+                                                              ISVNPropertyHandler.NULL);
+
+              final SVNWCClient wcClient = mySvnVcs.createWCClient();
+              final SVNPropertyData svnPropertyData =
+                wcClient.doGetProperty(root, "idea.last.integrated.revision", SVNRevision.HEAD, SVNRevision.HEAD, true);
+            }
+            catch (SVNException e) {
+              //ignore
+            }
+          }
+          */
+
+          SvnConfiguration.getInstance(mySvnVcs.getProject()).LAST_MERGED_REVISION = null;
+
           WindowManager.getInstance().getStatusBar(mySvnVcs.getProject()).setInfo(
             SvnBundle.message("status.text.committed.revision", result.getNewRevision()));
         }
@@ -281,10 +297,9 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     }
   }
 
-  private Map getCommitables(List<String> paths) {
-    Map result = new HashMap();
-    for (Iterator<String> p = paths.iterator(); p.hasNext();) {
-      String path = p.next();
+  private Map<File, Collection<File>> getCommitables(List<String> paths) {
+    Map<File, Collection<File>> result = new HashMap<File, Collection<File>>();
+    for (String path : paths) {
       File file = new File(path).getAbsoluteFile();
       File parent = file;
       if (file.isFile()) {
@@ -292,17 +307,16 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
       }
       File wcRoot = SVNWCUtil.getWorkingCopyRoot(parent, true);
       if (!result.containsKey(wcRoot)) {
-        result.put(wcRoot, new ArrayList());
+        result.put(wcRoot, new ArrayList<File>());
       }
-      ((Collection)result.get(wcRoot)).add(file);
+      result.get(wcRoot).add(file);
     }
     return result;
   }
 
   private List<String> collectPaths(FilePath[] roots) {
     ArrayList<String> result = new ArrayList<String>();
-    for (int i = 0; i < roots.length; i++) {
-      FilePath file = roots[i];
+    for (FilePath file : roots) {
       result.add(file.getPath());
     }
     return result;
@@ -310,8 +324,8 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
 
   private List<String> collectFilePaths(List<VcsOperation> checkinOperations) {
     ArrayList<String> result = new ArrayList<String>();
-    for (Iterator<VcsOperation> iterator = checkinOperations.iterator(); iterator.hasNext();) {
-      CommitChangeOperation<SVNStatus> operation = (CommitChangeOperation<SVNStatus>)iterator.next();
+    for (final VcsOperation checkinOperation : checkinOperations) {
+      CommitChangeOperation<SVNStatus> operation = (CommitChangeOperation<SVNStatus>)checkinOperation;
       result.add(operation.getFile().getAbsolutePath());
     }
     return result;

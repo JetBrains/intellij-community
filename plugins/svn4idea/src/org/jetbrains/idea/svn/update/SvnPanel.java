@@ -13,20 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn;
+package org.jetbrains.idea.svn.update;
 
-import com.intellij.openapi.progress.ProgressIndicator;
+import org.jetbrains.idea.svn.SvnConfiguration;
 
-import java.io.File;
-import java.util.Collection;
+import javax.swing.*;
 
-/**
- * Created by IntelliJ IDEA.
- * User: alex
- * Date: 28.06.2005
- * Time: 19:14:57
- * To change this template use File | Settings | File Templates.
- */
-public interface SvnWCRootCrawler {
-  Collection<File> handleWorkingCopyRoot(File root, ProgressIndicator progress);
+import com.intellij.openapi.options.ConfigurationException;
+
+public interface SvnPanel {
+  void reset(SvnConfiguration conf);
+  void apply(SvnConfiguration conf) throws ConfigurationException;
+  JPanel getPanel();
 }

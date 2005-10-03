@@ -50,6 +50,8 @@ import org.jetbrains.idea.svn.checkin.SvnCheckinEnvironment;
 import org.jetbrains.idea.svn.history.SvnHistoryProvider;
 import org.jetbrains.idea.svn.status.SvnStatusEnvironment;
 import org.jetbrains.idea.svn.update.SvnUpdateEnvironment;
+import org.jetbrains.idea.svn.update.AbstractSvnUpdateIntegrateEnvironment;
+import org.jetbrains.idea.svn.update.SvnIntegrateEnvironment;
 import org.jetbrains.annotations.NonNls;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
@@ -71,8 +73,8 @@ import java.io.OutputStream;
 public class SvnVcs extends AbstractVcs implements ProjectComponent {
 
   private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.svn.SvnVcs");
-  private static final Key STATUS_KEY = Key.create("svn.status");
-  private static final Key INFO_KEY = Key.create("svn.info");
+  private static final Key<SVNStatusHolder> STATUS_KEY = Key.create("svn.status");
+  private static final Key<SVNInfoHolder> INFO_KEY = Key.create("svn.info");
 
   private SvnConfiguration myConfiguration;
   private SvnEntriesFileListener myEntriesFileListener;
@@ -80,7 +82,8 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
 
   private final SvnFileStatusProvider myFileStatusProvider;
   private final SvnCheckinEnvironment myCheckinEnvironment;
-  private final SvnUpdateEnvironment mySvnUpdateEnvironment;
+  private final AbstractSvnUpdateIntegrateEnvironment mySvnUpdateEnvironment;
+  private final AbstractSvnUpdateIntegrateEnvironment mySvnIntegrateEnvironment;
   private final SvnHistoryProvider mySvnHistoryProvider;
   private final SvnStatusEnvironment mySvnStatusEnvironment;
   private final SvnUpToDateRevisionProvider mySvnUpToDateRevisionProvider;
@@ -92,11 +95,16 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
   @NonNls public static final String LOG_PARAMETER_NAME = "javasvn.log";
   public static final String pathToEntries = SvnUtil.SVN_ADMIN_DIR_NAME + File.separatorChar + SvnUtil.ENTRIES_FILE_NAME;
 
+
   static {
-    SVNDebugLog.setLogger(new JavaSVNDebugLogger(Boolean.getBoolean(LOG_PARAMETER_NAME), LOG));
+    SVNDebugLog.setLogger(new JavaSVNDebugLogger(booleanProperty(LOG_PARAMETER_NAME).booleanValue(), LOG));
 
     DAVRepositoryFactory.setup();
     SVNRepositoryFactoryImpl.setup();
+  }
+
+  private static Boolean booleanProperty(final String systemParameterName) {
+    return Boolean.valueOf(System.getProperty(systemParameterName));
   }
 
   public SvnVcs(Project project, SvnConfiguration svnConfiguration) {
@@ -122,6 +130,7 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
     myCheckinEnvironment = new SvnCheckinEnvironment(this);
 
     mySvnUpdateEnvironment = new SvnUpdateEnvironment(this);
+    mySvnIntegrateEnvironment = new SvnIntegrateEnvironment(this);
     mySvnHistoryProvider = new SvnHistoryProvider(this);
     mySvnStatusEnvironment = new SvnStatusEnvironment(this);
     mySvnUpToDateRevisionProvider = new SvnUpToDateRevisionProvider();
@@ -186,6 +195,10 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
     if (LOG.isDebugEnabled()) {
       LOG.debug("FileStatus:" + fs.getText() + " " + fs.getColor() + " " + " " + fs.getClass().getName());
     }
+  }
+
+  public UpdateEnvironment getIntegrateEnvironment() {
+    return mySvnIntegrateEnvironment;
   }
 
   public UpdateEnvironment getUpdateEnvironment() {
@@ -276,7 +289,7 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
     if (vFile == null) {
       return null;
     }
-    SVNStatusHolder value = (SVNStatusHolder) vFile.getUserData(STATUS_KEY);
+    SVNStatusHolder value = vFile.getUserData(STATUS_KEY);
     File file = new File(vFile.getPath());
     File entriesFile = getEntriesFile(file);
     File lockFile = new File(entriesFile.getParentFile(), SvnUtil.LOCK_FILE_NAME);
@@ -300,7 +313,7 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
     if (vFile == null) {
       return null;
     }
-    SVNInfoHolder value = (SVNInfoHolder) vFile.getUserData(INFO_KEY);
+    SVNInfoHolder value = vFile.getUserData(INFO_KEY);
     File file = new File(vFile.getPath());
     File entriesFile = getEntriesFile(file);
     if (value != null && value.getEntriesTimestamp() == entriesFile.lastModified() &&
@@ -463,14 +476,16 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
     }
 
     public InputStream createLogStream(InputStream is) {
-      if (myLoggingEnabled && Boolean.getBoolean(TRACE_LOG_PARAMETER_NAME)) {
+      if (myLoggingEnabled && booleanProperty(TRACE_LOG_PARAMETER_NAME)) {
+        //noinspection IOResourceOpenedButNotSafelyClosed
         return new SVNLogInputStream(is, this);
       }
       return is;
     }
 
     public OutputStream createLogStream(OutputStream os) {
-      if (myLoggingEnabled && Boolean.getBoolean(TRACE_LOG_PARAMETER_NAME)) {
+      if (myLoggingEnabled && booleanProperty(TRACE_LOG_PARAMETER_NAME)) {
+        //noinspection IOResourceOpenedButNotSafelyClosed
         return new SVNLogOutputStream(os, this);
       }
       return os;

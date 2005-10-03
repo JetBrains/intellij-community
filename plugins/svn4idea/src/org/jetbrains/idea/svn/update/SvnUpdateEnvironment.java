@@ -16,351 +16,101 @@
 package org.jetbrains.idea.svn.update;
 
 import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.update.*;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.wm.WindowManager;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.openapi.vcs.update.UpdatedFiles;
 import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.SvnWCRootCrawler;
-import org.jetbrains.idea.svn.actions.SvnMergeProvider;
-import org.jetbrains.idea.svn.status.SvnStatusEnvironment;
-import org.tmatesoft.svn.core.SVNCancelException;
+import org.jetbrains.idea.svn.SvnConfiguration;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.*;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
 
-public class SvnUpdateEnvironment implements UpdateEnvironment {
-  private final SvnVcs myVcs;
-  private Configurable myConfigurable;
+public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment {
 
   public SvnUpdateEnvironment(SvnVcs vcs) {
-    myVcs = vcs;
+    super(vcs);
   }
 
-  public void fillGroups(UpdatedFiles updatedFiles) {
+  protected AbstractUpdateIntegrateCrawler createCrawler(final ISVNEventHandler eventHandler,
+                                        final boolean totalUpdate,
+                                        final ArrayList<VcsException> exceptions, final UpdatedFiles updatedFiles) {
+    return new UpdateCrawler(myVcs, eventHandler, totalUpdate, exceptions, updatedFiles);
   }
 
-  public UpdateSession updateDirectories(FilePath[] contentRoots,
-                                         final UpdatedFiles updatedFiles,
-                                         final ProgressIndicator progressIndicator)
-    throws ProcessCanceledException {
+  public Configurable createConfigurable(final Collection<FilePath> collection) {
 
-    final ArrayList<VcsException> exceptions = new ArrayList<VcsException>();
-    ISVNEventHandler eventHandler = new UpdateEventHandler(myVcs, progressIndicator, updatedFiles);
+    return new SvnUpdateConfigurable(myVcs.getProject()){
 
-    boolean totalUpdate = true;
-    UpdateCrawler crawler = new UpdateCrawler(myVcs, eventHandler, totalUpdate, exceptions, updatedFiles);
-
-    Collection updatedRoots = new HashSet();
-    for (int i = 0; i < contentRoots.length; i++) {
-      if (progressIndicator != null && progressIndicator.isCanceled()) {
-        throw new ProcessCanceledException();
-      }
-      if (contentRoots[i].getIOFile() != null) {
-        Collection roots = SvnUtil.crawlWCRoots(myVcs, contentRoots[i].getIOFile(), crawler, progressIndicator);
-        updatedRoots.addAll(roots);
-
-      }
-    }
-    if (updatedRoots.isEmpty()) {
-      Messages.showErrorDialog(myVcs.getProject(), SvnBundle.message("message.text.update.no.directories.found"), SvnBundle.message("messate.text.update.error"));
-    }
-
-    SvnUpdateConfigurable config = (SvnUpdateConfigurable)(myConfigurable instanceof SvnUpdateConfigurable ? myConfigurable : null);
-    if (config != null && config.isDryRun() && config.isMerge()) {
-      return new UpdateSessionAdapter(exceptions, false);
-    }
-
-    final Collection conflictedFiles = updatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID).getFiles();
-    return new UpdateSessionAdapter(exceptions, false) {
-      public void onRefreshFilesCompleted() {
-        if (conflictedFiles != null && !conflictedFiles.isEmpty()) {
-          List<VirtualFile> vfFiles = new ArrayList<VirtualFile>();
-          for (Iterator paths = conflictedFiles.iterator(); paths.hasNext();) {
-            @NonNls String path = (String)paths.next();
-            path = "file://" + path.replace(File.separatorChar, '/');
-            VirtualFile vf = VirtualFileManager.getInstance().findFileByUrl(path);
-            if (vf != null) {
-              vfFiles.add(vf);
-            }
-          }
-          if (!vfFiles.isEmpty()) {
-            AbstractVcsHelper.getInstance(myVcs.getProject()).showMergeDialog(vfFiles,
-                                                                              new SvnMergeProvider(myVcs.getProject()),
-                                                                              null);
-          }
-        }
+      public String getDisplayName() {
+        return SvnBundle.message("update.switch.configurable.name");
       }
 
+      protected AbstractSvnUpdatePanel createPanel() {
+
+        return new SvnUpdatePanel(myVcs, collection);
+      }
     };
   }
 
-  public Configurable createConfigurable(Collection<FilePath> collection) {
+  protected static class UpdateCrawler extends AbstractUpdateIntegrateCrawler {
+    public UpdateCrawler(SvnVcs vcs, ISVNEventHandler handler, boolean totalUpdate,
+                         Collection<VcsException> exceptions, UpdatedFiles postUpdateFiles) {
+      super(totalUpdate, postUpdateFiles, exceptions, handler, vcs);
+    }
 
-    SVNInfo info = null;
-    if (collection != null && collection.size() == 1) {
-      FilePath path = collection.iterator().next();
-      File ioFile = path.getIOFile();
+    protected void showProgressMessage(final ProgressIndicator progress, final File root) {
+      progress.setText(SvnBundle.message("progress.text.updating", root.getAbsolutePath()));
+    }
+
+    protected long doUpdate(
+      final File root,
+      final SVNUpdateClient client) throws
+                                    SVNException {
+      final long rev;
+
+      final SvnConfiguration configuration = SvnConfiguration.getInstance(myVcs.getProject());
+      final UpdateRootInfo rootInfo = configuration.getUpdateRootInfo(root, myVcs);
+
+      if (rootInfo != null) {
+        final SVNURL url = rootInfo.getUrl();
+        if (url != null && url.equals(getSourceUrl(root))) {
+          if (rootInfo.isUpdateToRevision()) {
+            rev = client.doUpdate(root, rootInfo.getRevision(), configuration.UPDATE_RECURSIVELY);
+          } else {
+            rev = client.doUpdate(root, SVNRevision.HEAD, configuration.UPDATE_RECURSIVELY);
+          }
+
+        } else {
+          rev = client.doSwitch(root, url,
+                                rootInfo.getRevision(), configuration.UPDATE_RECURSIVELY);
+        }
+      } else {
+        rev = client.doUpdate(root, SVNRevision.HEAD, configuration.UPDATE_RECURSIVELY);
+      }
+
+      return rev;
+    }
+
+    private SVNURL getSourceUrl(final File root) {
       try {
         SVNWCClient wcClient = myVcs.createWCClient();
-        info = wcClient.doInfo(ioFile, SVNRevision.WORKING);
+        final SVNInfo svnInfo = wcClient.doInfo(root, SVNRevision.WORKING);
+        if (svnInfo != null) {
+          return svnInfo.getURL();
+        } else {
+          return null;
+        }
       }
       catch (SVNException e) {
-        //
-      }
-    }
-    if (info != null && info.getURL() != null) {
-      myConfigurable = new SvnUpdateConfigurable(myVcs, info.getURL().toString());
-    } else {
-      myConfigurable = new SvnSimpleUpdateConfigurable();
-    }
-    return myConfigurable;
-  }
-
-  private static class UpdateEventHandler implements ISVNEventHandler {
-    private final ProgressIndicator myProgressIndicator;
-    private final UpdatedFiles myUpdatedFiles;
-    private int myExternalsCount;
-    private SvnVcs myVCS;
-    @NonNls public static final String SKIP_ID = "skip";
-
-    public UpdateEventHandler(SvnVcs vcs, ProgressIndicator progressIndicator, UpdatedFiles updatedFiles) {
-      myProgressIndicator = progressIndicator;
-      myUpdatedFiles = updatedFiles;
-      myVCS = vcs;
-      myExternalsCount = 1;
-    }
-
-    public void handleEvent(SVNEvent event, double progress) {
-      if (event == null || event.getFile() == null) {
-        return;
-      }
-      String path = event.getFile().getAbsolutePath();
-      String displayPath = event.getFile().getName();
-      if (event.getAction() == SVNEventAction.UPDATE_ADD ||
-          event.getAction() == SVNEventAction.ADD) {
-        myProgressIndicator.setText2(SvnBundle.message("progress.text2.added", displayPath));
-        myUpdatedFiles.getGroupById(FileGroup.CREATED_ID).add(path);
-      }
-      else if (event.getAction() == SVNEventAction.UPDATE_DELETE) {
-        myProgressIndicator.setText2(SvnBundle.message("progress.text2.deleted", displayPath));
-        myUpdatedFiles.getGroupById(FileGroup.REMOVED_FROM_REPOSITORY_ID).add(path);
-      }
-      else if (event.getAction() == SVNEventAction.UPDATE_UPDATE) {
-        if (event.getContentsStatus() == SVNStatusType.CONFLICTED || event.getPropertiesStatus() == SVNStatusType.CONFLICTED) {
-          myUpdatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID).add(path);
-          myProgressIndicator.setText2(SvnBundle.message("progress.text2.conflicted", displayPath));
-        }
-        else if (event.getContentsStatus() == SVNStatusType.MERGED || event.getPropertiesStatus() == SVNStatusType.MERGED) {
-          myProgressIndicator.setText2(SvnBundle.message("progres.text2.merged", displayPath));
-          myUpdatedFiles.getGroupById(FileGroup.MERGED_ID).add(path);
-        }
-        else if (event.getContentsStatus() == SVNStatusType.CHANGED || event.getPropertiesStatus() == SVNStatusType.CHANGED) {
-          myProgressIndicator.setText2(SvnBundle.message("progres.text2.updated", displayPath));
-          myUpdatedFiles.getGroupById(FileGroup.UPDATED_ID).add(path);
-        }
-        else {
-          myProgressIndicator.setText2("");
-          myUpdatedFiles.getGroupById(FileGroup.UNKNOWN_ID).add(path);
-        }
-      }
-      else if (event.getAction() == SVNEventAction.UPDATE_EXTERNAL) {
-        myExternalsCount++;
-        if (myUpdatedFiles.getGroupById(SvnStatusEnvironment.EXTERNAL_ID) == null) {
-          myUpdatedFiles.registerGroup(new FileGroup(SvnBundle.message("status.group.name.externals"),
-                                                     SvnBundle.message("status.group.name.externals"),
-                                                     false, SvnStatusEnvironment.EXTERNAL_ID, true));
-        }
-        myUpdatedFiles.getGroupById(SvnStatusEnvironment.EXTERNAL_ID).add(path);
-        myProgressIndicator.setText(SvnBundle.message("progress.text.updating.external.location", event.getFile().getAbsolutePath()));
-      }
-      else if (event.getAction() == SVNEventAction.RESTORE) {
-        myProgressIndicator.setText2(SvnBundle.message("progress.text2.restored.file", displayPath));
-        myUpdatedFiles.getGroupById(FileGroup.RESTORED_ID).add(path);
-      }
-      else if (event.getAction() == SVNEventAction.UPDATE_COMPLETED && event.getRevision() >= 0) {
-        myExternalsCount--;
-        myProgressIndicator.setText2(SvnBundle.message("progres.text2.updated.to.revision", event.getRevision()));
-        if (myExternalsCount == 0) {
-          myExternalsCount = 1;
-          WindowManager.getInstance().getStatusBar(myVCS.getProject()).setInfo(
-            SvnBundle.message("status.text.updated.to.revision", event.getRevision()));
-        }
-      }
-      else if (event.getAction() == SVNEventAction.SKIP) {
-        myProgressIndicator.setText2(SvnBundle.message("progress.text2.skipped.file", displayPath));
-        if (myUpdatedFiles.getGroupById(SKIP_ID) == null) {
-          myUpdatedFiles.registerGroup(new FileGroup(SvnBundle.message("update.group.name.skipped"),
-                                                     SvnBundle.message("update.group.name.skipped"), false, SKIP_ID, true));
-        }
-        myUpdatedFiles.getGroupById(SKIP_ID).add(path);
-      }
-    }
-
-    public void checkCancelled() throws SVNCancelException {
-      myProgressIndicator.checkCanceled();
-      if (myProgressIndicator.isCanceled()) {
-        throw new SVNCancelException(SvnBundle.message("exception.text.update.operation.cancelled"));
+        return null;
       }
     }
   }
 
-  private class UpdateCrawler implements SvnWCRootCrawler {
-    private SvnVcs myVcs;
-    private ISVNEventHandler myHandler;
-    private Collection myExceptions;
-    private UpdatedFiles myPostUpdateFiles;
-    private boolean myIsTotalUpdate;
-
-    public UpdateCrawler(SvnVcs vcs, ISVNEventHandler handler, boolean totalUpdate, Collection exceptions, UpdatedFiles postUpdateFiles) {
-      myVcs = vcs;
-      myHandler = handler;
-      myExceptions = exceptions;
-      myPostUpdateFiles = postUpdateFiles;
-      myIsTotalUpdate = totalUpdate;
-
-    }
-
-    public Collection handleWorkingCopyRoot(File root, ProgressIndicator progress) {
-      final Collection result = new HashSet();
-
-      SvnSimpleUpdateConfigurable simpleConfig = (SvnSimpleUpdateConfigurable)(myConfigurable instanceof SvnSimpleUpdateConfigurable ? myConfigurable : null);
-      SvnUpdateConfigurable config = (SvnUpdateConfigurable)(myConfigurable instanceof SvnUpdateConfigurable ? myConfigurable : null);
-
-      SVNRevision revision = config != null ? config.getTargetRevision() : SVNRevision.HEAD;
-      String url = config != null ? config.getTargetURL() : null;
-
-      long rev;
-      boolean recursive = config != null ? config.isRecursive() : (simpleConfig == null || simpleConfig.isRecursive());
-      boolean merge = config != null && config.isMerge();
-      boolean dryRun = config != null && config.isDryRun();
-
-      if (progress != null) {
-        if (merge) {
-          if (dryRun) {
-            progress.setText(SvnBundle.message("progress.text.merging.dry.run..changes", root.getAbsolutePath()));
-          }
-          else {
-            progress.setText(SvnBundle.message("progress.text.merging.changes", root.getAbsolutePath()));
-          }
-        }
-        else {
-          progress.setText(SvnBundle.message("progress.text.updating", root.getAbsolutePath()));
-        }
-      }
-      try {
-        SVNUpdateClient client = myVcs.createUpdateClient();
-        client.setEventHandler(myHandler);
-
-        if (merge) {
-          String url1 = config.getMergeURL1();
-          String url2 = config.getMergeURL2();
-          SVNRevision rev1 = config.getMergeRevision1();
-          SVNRevision rev2 = config.getMergeRevision2();
-
-          rev1 = rev1 == null ? SVNRevision.HEAD : rev1;
-          rev2 = rev2 == null ? SVNRevision.HEAD : rev2;
-          rev = 0;
-
-          SVNDiffClient diffClient = myVcs.createDiffClient();
-          diffClient.setEventHandler(myHandler);
-          SVNURL svnURL1 = SVNURL.parseURIEncoded(url1);
-          SVNURL svnURL2 = SVNURL.parseURIEncoded(url2);
-          diffClient.doMerge(svnURL1, rev1, svnURL2, rev2, root, recursive, true, false, dryRun);
-        }
-        else if (config != null && !config.isUpdate() && url != null) {
-          rev = client.doSwitch(root, SVNURL.parseURIEncoded(url), revision, recursive);
-        }
-        else {
-          rev = client.doUpdate(root, revision, recursive);
-        }
-        if (rev < 0) {
-          throw new SVNException(
-            SvnBundle.message("exception.text.root.was.not.properly.updated", root));
-        }
-      }
-      catch (SVNException e) {
-        myExceptions.add(new VcsException(e));
-      }
-      boolean runStatus = config != null ? config.isRunStatus() :
-                          (simpleConfig != null && simpleConfig.isRunStatus());
-      if (!runStatus) {
-        return result;
-      }
-
-      try {
-        SVNStatusClient statusClient = myVcs.createStatusClient();
-        statusClient.setIgnoreExternals(false);
-
-        if (progress != null) {
-          progress.setText(SvnBundle.message("progress.text.update.computing.post.update.status", root.getAbsolutePath()));
-        }
-        statusClient.doStatus(root, true, false, false, false, new ISVNStatusHandler() {
-          public void handleStatus(SVNStatus status) {
-            if (status.getFile() == null) {
-              return;
-            }
-            if (myIsTotalUpdate &&
-                status.getContentsStatus() == SVNStatusType.STATUS_UNVERSIONED &&
-                status.getFile().isDirectory()) {
-              result.add(status.getFile());
-            }
-            if (status.getContentsStatus() == SVNStatusType.STATUS_EXTERNAL ||
-                status.getContentsStatus() == SVNStatusType.STATUS_IGNORED ||
-                status.getContentsStatus() == SVNStatusType.STATUS_MISSING ||
-                status.getContentsStatus() == SVNStatusType.STATUS_INCOMPLETE ||
-                status.getContentsStatus() == SVNStatusType.STATUS_MISSING) {
-              // not interesting in post-update.
-            }
-            else if (status.getContentsStatus() != SVNStatusType.STATUS_NONE || status.getPropertiesStatus() == SVNStatusType.STATUS_NONE) {
-              String path = status.getFile().getAbsolutePath();
-
-              if (status.getContentsStatus() == SVNStatusType.STATUS_ADDED) {
-                myPostUpdateFiles.getGroupById(FileGroup.LOCALLY_ADDED_ID).add(path);
-              }
-              else if (status.getContentsStatus() == SVNStatusType.STATUS_CONFLICTED) {
-                  // may conflict with update status.
-                FileGroup group = myPostUpdateFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID);
-                if (group != null && (group.getFiles() == null || !group.getFiles().contains(path))) {
-                  group.add(path);
-                }
-              }
-              else if (status.getContentsStatus() == SVNStatusType.STATUS_DELETED) {
-                myPostUpdateFiles.getGroupById(FileGroup.LOCALLY_REMOVED_ID).add(path);
-              }
-              else if (status.getContentsStatus() == SVNStatusType.STATUS_REPLACED) {
-                myPostUpdateFiles.getGroupById(FileGroup.LOCALLY_ADDED_ID).add(path);
-              }
-              else if (status.getContentsStatus() == SVNStatusType.STATUS_MODIFIED ||
-                       status.getPropertiesStatus() == SVNStatusType.STATUS_MODIFIED) {
-                myPostUpdateFiles.getGroupById(FileGroup.MODIFIED_ID).add(path);
-              }
-              else if (status.getContentsStatus() == SVNStatusType.STATUS_UNVERSIONED ||
-                       status.getContentsStatus() == SVNStatusType.STATUS_OBSTRUCTED) {
-                if (status.getFile().isFile() || !SVNWCUtil.isVersionedDirectory(status.getFile())) {
-                  myPostUpdateFiles.getGroupById(FileGroup.UNKNOWN_ID).add(path);
-                }
-              }
-            }
-          }
-        });
-      }
-      catch (SVNException e) {
-        myExceptions.add(new VcsException(e));
-      }
-      return result;
-    }
-  }
 }
