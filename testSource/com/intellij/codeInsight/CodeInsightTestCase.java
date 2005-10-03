@@ -20,13 +20,15 @@ import com.intellij.testFramework.PsiTestData;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.Writer;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Mike
  */
+@SuppressWarnings({"ALL"})
 public abstract class CodeInsightTestCase extends PsiTestCase {
   protected Editor myEditor;
 
@@ -35,14 +37,20 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
   }
 
   protected Editor createEditor(VirtualFile file) {
-    return FileEditorManager.getInstance(myProject).openTextEditor(new OpenFileDescriptor(myProject, file, 0), false);
+    final FileEditorManager instance = FileEditorManager.getInstance(myProject);
+    
+    if (file.getFileType() != null && file.getFileType().isBinary()) {
+      return null;
+    }
+    
+    return instance.openTextEditor(new OpenFileDescriptor(myProject, file, 0), false);
   }
 
   protected void tearDown() throws Exception {
     FileEditorManager editorManager = FileEditorManager.getInstance(myProject);
     VirtualFile[] openFiles = editorManager.getOpenFiles();
-    for (int i = 0; i < openFiles.length; i++) {
-      editorManager.closeFile(openFiles[i]);
+    for (VirtualFile openFile : openFiles) {
+      editorManager.closeFile(openFile);
     }
     myEditor = null;
     super.tearDown();
@@ -99,33 +107,43 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     boolean projectCopied = false;
 
     List<Writer> writersToClose = new ArrayList<Writer>(vFiles.length);
+    List<OutputStream> streamsToClose = new ArrayList<OutputStream>(0);
+    
     for (int i = 0; i < vFiles.length; i++) {
       VirtualFile vFile = vFiles[i];
 
       assertNotNull(vFile);
-      String fileText = new String(vFile.contentsToCharArray());
-      fileText = StringUtil.convertLineSeparators(fileText, "\n");
-      Document document = EditorFactory.getInstance().createDocument(fileText);
-
-      int caretIndex = fileText.indexOf(CARET_MARKER);
-      int selStartIndex = fileText.indexOf(SELECTION_START_MARKER);
-      int selEndIndex = fileText.indexOf(SELECTION_END_MARKER);
-
-      final RangeMarker caretMarker = caretIndex >= 0 ? document.createRangeMarker(caretIndex, caretIndex) : null;
-      final RangeMarker selStartMarker = selStartIndex >= 0 ? document.createRangeMarker(selStartIndex, selStartIndex) : null;
-      final RangeMarker selEndMarker = selEndIndex >= 0 ? document.createRangeMarker(selEndIndex, selEndIndex) : null;
-
-      if (caretMarker != null) {
-        document.deleteString(caretMarker.getStartOffset(), caretMarker.getStartOffset() + CARET_MARKER.length());
+      byte[] content = vFile.getFileType().isBinary() ? vFile.contentsToByteArray(): null;
+      final String fileText =  vFile.getFileType().isBinary() ? null: StringUtil.convertLineSeparators(new String(vFile.contentsToCharArray()), "\n");
+      
+      String newFileText = null;
+      RangeMarker caretMarker = null;
+      RangeMarker selStartMarker = null;
+      RangeMarker selEndMarker = null;
+      
+      if (fileText != null) {
+        Document document = EditorFactory.getInstance().createDocument(fileText);
+  
+        int caretIndex = fileText.indexOf(CARET_MARKER);
+        int selStartIndex = fileText.indexOf(SELECTION_START_MARKER);
+        int selEndIndex = fileText.indexOf(SELECTION_END_MARKER);
+  
+        caretMarker = caretIndex >= 0 ? document.createRangeMarker(caretIndex, caretIndex) : null;
+        selStartMarker = selStartIndex >= 0 ? document.createRangeMarker(selStartIndex, selStartIndex) : null;
+        selEndMarker = selEndIndex >= 0 ? document.createRangeMarker(selEndIndex, selEndIndex) : null;
+  
+        if (caretMarker != null) {
+          document.deleteString(caretMarker.getStartOffset(), caretMarker.getStartOffset() + CARET_MARKER.length());
+        }
+        if (selStartMarker != null) {
+          document.deleteString(selStartMarker.getStartOffset(), selStartMarker.getStartOffset() + SELECTION_START_MARKER.length());
+        }
+        if (selEndMarker != null) {
+          document.deleteString(selEndMarker.getStartOffset(), selEndMarker.getStartOffset() + SELECTION_END_MARKER.length());
+        }
+  
+        newFileText = document.getText();
       }
-      if (selStartMarker != null) {
-        document.deleteString(selStartMarker.getStartOffset(), selStartMarker.getStartOffset() + SELECTION_START_MARKER.length());
-      }
-      if (selEndMarker != null) {
-        document.deleteString(selEndMarker.getStartOffset(), selEndMarker.getStartOffset() + SELECTION_END_MARKER.length());
-      }
-
-      String newFileText = document.getText();
 
       VirtualFile newVFile;
       if (projectRoot != null) {
@@ -135,15 +153,12 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
         }
         String path = vDir.getPath() + vFile.getPath().substring(projectRoot.getPath().length());
         newVFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
-        Writer writer = newVFile.getWriter(this);
-        writer.write(newFileText);
-        writersToClose.add(writer);
+
+        doWrite(newFileText, newVFile, writersToClose, content, streamsToClose);
       }
       else {
         newVFile = vDir.createChildData(this, vFile.getName());
-        Writer writer = newVFile.getWriter(this);
-        writer.write(newFileText);
-        writersToClose.add(writer);
+        doWrite(newFileText, newVFile, writersToClose, content, streamsToClose);
       }
 
       newVFiles[i]=newVFile;
@@ -155,6 +170,10 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
 
     for(int i = writersToClose.size() -1; i >= 0 ; --i) {
       writersToClose.get(i).close();
+    }
+    
+    for(int i = streamsToClose.size() -1; i >= 0 ; --i) {
+      streamsToClose.get(i).close();
     }
     
     final ContentEntry contentEntry = rootModel.addContentEntry(vDir);
@@ -183,6 +202,22 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     }
 
     return vDir;
+  }
+
+  private void doWrite(final String newFileText,
+                       final VirtualFile newVFile,
+                       final List<Writer> writersToClose,
+                       final byte[] content,
+                       final List<OutputStream> streamsToClose) throws IOException {
+    if (newFileText != null) {
+      Writer writer = newVFile.getWriter(this);
+      writer.write(newFileText);
+      writersToClose.add(writer);
+    } else {
+      final OutputStream outputStream = newVFile.getOutputStream(this);
+      outputStream.write(content);
+      streamsToClose.add(outputStream);
+    }
   }
 
   protected File createTempDirectory() throws IOException {

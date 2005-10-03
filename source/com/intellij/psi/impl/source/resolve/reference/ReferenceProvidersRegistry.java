@@ -20,8 +20,8 @@ import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.*;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
-import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.xml.util.HtmlReferenceProvider;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
@@ -402,7 +402,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
 
     //registerReferenceProvider(PsiPlainTextFile.class, new JavaClassListReferenceProvider());
 
-    HtmlUtil.HtmlReferenceProvider provider = new HtmlUtil.HtmlReferenceProvider();
+    HtmlReferenceProvider provider = new HtmlReferenceProvider();
     registerXmlAttributeValueReferenceProvider(
       null,
       provider.getFilter(),
