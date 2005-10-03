@@ -70,10 +70,10 @@ public class Java15CompletionData extends JavaCompletionData {
       };
 
       final CompletionVariant variant = new CompletionVariant(PsiJavaFile.class, position);
-      //variant.includeScopeClass(PsiReferenceExpression.class);
       variant.includeScopeClass(PsiNameValuePair.class);
 
       variant.addCompletion(new AnnotationMethodsGetter(), TailType.NONE);
+      variant.addCompletionFilter(TrueFilter.INSTANCE, TailType.NONE);
       registerVariant(variant);
     }
 
