@@ -700,7 +700,9 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     XmlAttributeDescriptor attributeDescriptor = elementDescriptor.getAttributeDescriptor(attribute);
     if (attributeDescriptor == null) return null;
 
-    if (attributeDescriptor.hasIdRefType()) {
+    if (attributeDescriptor.hasIdRefType() &&
+        tag.getParent().getUserData(DO_NOT_VALIDATE_KEY) == null
+       ) {
       String unquotedValue = getUnquotedValue(value, tag);
       if (XmlUtil.isSimpleXmlAttributeValue(unquotedValue)) {
         XmlTag xmlTag = holder.getTagById(unquotedValue);
