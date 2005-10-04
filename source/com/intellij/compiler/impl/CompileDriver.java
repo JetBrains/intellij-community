@@ -144,7 +144,7 @@ public class CompileDriver {
   public void make(CompileScope scope, CompileStatusNotification callback) {
     scope = addAdditionalRoots(scope);
     if (validateCompilerConfiguration(scope, false)) {
-      startup(scope, false, false, callback, null, true);
+      startup(scope, false, false, callback, null, true, false);
     }
   }
 
@@ -153,7 +153,7 @@ public class CompileDriver {
       scope = new TrackDependenciesScope(scope);
     }
     if (validateCompilerConfiguration(scope, false)) {
-      startup(scope, false, true, callback, null, true);
+      startup(scope, false, true, callback, null, true, trackDependencies);
     }
   }
 
@@ -217,7 +217,7 @@ public class CompileDriver {
 
   private void doRebuild(CompileStatusNotification callback, CompilerMessage message, final boolean checkCachesVersion, final CompileScope compileScope) {
     if (validateCompilerConfiguration(compileScope, true)) {
-      startup(compileScope, true, false, callback, message, checkCachesVersion);
+      startup(compileScope, true, false, callback, message, checkCachesVersion, false);
     }
   }
 
@@ -234,7 +234,13 @@ public class CompileDriver {
     return scope;
   }
 
-  private void startup(final CompileScope scope, final boolean isRebuild, final boolean forceCompile, final CompileStatusNotification callback, CompilerMessage message, final boolean checkCachesVersion) {
+  private void startup(final CompileScope scope,
+                       final boolean isRebuild,
+                       final boolean forceCompile,
+                       final CompileStatusNotification callback,
+                       CompilerMessage message,
+                       final boolean checkCachesVersion,
+                       final boolean trackDependencies) {
     final CompilerProgressIndicator indicator = new CompilerProgressIndicator(
       myProject,
       CompilerWorkspaceConfiguration.getInstance(myProject).COMPILE_IN_BACKGROUND,
@@ -263,7 +269,7 @@ public class CompileDriver {
                 if (LOG.isDebugEnabled()) {
                   LOG.debug("COMPILATION STARTED");
                 }
-                doCompile(compileContext, isRebuild, forceCompile, callback, checkCachesVersion);
+                doCompile(compileContext, isRebuild, forceCompile, callback, checkCachesVersion, trackDependencies);
               }
               finally {
                 if (LOG.isDebugEnabled()) {
@@ -282,7 +288,7 @@ public class CompileDriver {
   private void doCompile(final CompileContextImpl compileContext,
                          final boolean isRebuild,
                          final boolean forceCompile,
-                         final CompileStatusNotification callback, final boolean checkCachesVersion) {
+                         final CompileStatusNotification callback, final boolean checkCachesVersion, final boolean trackDependencies) {
     ExitStatus status = ExitStatus.ERRORS;
     boolean wereExceptions = false;
     try {
@@ -306,7 +312,7 @@ public class CompileDriver {
       if (compileContext.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
         return;
       }
-      status = doCompile(compileContext, isRebuild, forceCompile);
+      status = doCompile(compileContext, isRebuild, forceCompile, trackDependencies);
     }
     catch (Throwable ex) {
       wereExceptions = true;
@@ -383,7 +389,7 @@ public class CompileDriver {
     public static final ExitStatus UP_TO_DATE = new ExitStatus("UP_TO_DATE");
   }
 
-  private ExitStatus doCompile(CompileContextImpl context, boolean isRebuild, final boolean forceCompile) {
+  private ExitStatus doCompile(CompileContextImpl context, boolean isRebuild, final boolean forceCompile, final boolean trackDependencies) {
     try {
       if (isRebuild) {
         deleteAll(context);
@@ -427,7 +433,7 @@ public class CompileDriver {
       }
 
       try {
-        didSomething |= translate(context, compilerManager, forceCompile, isRebuild);
+        didSomething |= translate(context, compilerManager, forceCompile, isRebuild, trackDependencies);
         if (myExitStatus != null) {
           return myExitStatus;
         }
@@ -441,7 +447,7 @@ public class CompileDriver {
         }
 
         // explicitly passing forceCompile = false because in scopes that is narrower than ProjectScope it is impossible
-        // to understand whether the class to be processed is in scope or not. Otherwise compiler may process its items even if 
+        // to understand whether the class to be processed is in scope or not. Otherwise compiler may process its items even if
         // there were changes in completely independent files.
         didSomething |= invokeFileProcessingCompilers(compilerManager, context, ClassPostProcessingCompiler.class, myProcessingCompilerAdapterFactory, isRebuild);
         if (myExitStatus != null) {
@@ -516,7 +522,11 @@ public class CompileDriver {
     return didSomething;
   }
 
-  private boolean translate(final CompileContextImpl context, final CompilerManager compilerManager, final boolean forceCompile, boolean isRebuild) {
+  private boolean translate(final CompileContextImpl context,
+                            final CompilerManager compilerManager,
+                            final boolean forceCompile,
+                            boolean isRebuild,
+                            final boolean trackDependencies) {
 
     boolean didSomething = false;
 
@@ -533,8 +543,8 @@ public class CompileDriver {
         return false;
       }
 
-      final boolean compiledSomething;
-      compiledSomething = compileSources(context, snapshot, (TranslatingCompiler)translator, forceCompile, isRebuild);
+      final boolean compiledSomething = compileSources(context, snapshot, (TranslatingCompiler)translator, forceCompile, isRebuild, trackDependencies);
+
       if (context.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
         myExitStatus = ExitStatus.ERRORS;
         return false;
@@ -744,6 +754,8 @@ public class CompileDriver {
     });
 
     final List<File> filesToRefresh = new ArrayList<File>();
+    final List<File> generatedFiles = new ArrayList<File>();
+    final List<Module> affectedModules = new ArrayList<Module>();
     try {
       if (pathsToRemove.size() > 0) {
         context.getProgressIndicator().pushState();
@@ -776,10 +788,17 @@ public class CompileDriver {
             final GeneratingCompiler.GenerationItem[] successfullyGenerated =
               compiler.generate(context, items.toArray(new GeneratingCompiler.GenerationItem[items.size()]), outputDir);
             context.getProgressIndicator().setText(CompilerBundle.message("progress.updating.caches"));
+
+            if (successfullyGenerated.length > 0) {
+              affectedModules.add(module);
+            }
+
             for (final GeneratingCompiler.GenerationItem item : successfullyGenerated) {
               final String fullOutputPath = itemToOutputPathMap.get(item);
               cache.update(fullOutputPath, item.getValidityState());
-              filesToRefresh.add(new File(fullOutputPath));
+              final File file = new File(fullOutputPath);
+              filesToRefresh.add(file);
+              generatedFiles.add(file);
             }
           }
         }
@@ -791,6 +810,24 @@ public class CompileDriver {
     finally {
       context.getProgressIndicator().pushState();
       CompilerUtil.refreshIOFiles(filesToRefresh.toArray(new File[filesToRefresh.size()]));
+      if (forceGenerate && generatedFiles.size() > 0) {
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          public void run() {
+            List<VirtualFile> vFiles = new ArrayList<VirtualFile>(generatedFiles.size());
+            for (File generatedFile : generatedFiles) {
+              final VirtualFile vFile = LocalFileSystem.getInstance().findFileByIoFile(generatedFile);
+              if (vFile != null) {
+                vFiles.add(vFile);
+              }
+            }
+            final FileSetCompileScope additionalScope = new FileSetCompileScope(
+              vFiles.toArray(new VirtualFile[vFiles.size()]),
+              affectedModules.toArray(new Module[affectedModules.size()])
+            );
+            context.addScope(additionalScope);
+          }
+        });
+      }
       if (cache.isDirty()) {
         context.getProgressIndicator().setText(CompilerBundle.message("progress.saving.caches"));
         cache.save();
@@ -800,7 +837,12 @@ public class CompileDriver {
     return toGenerate.size() > 0 || filesToRefresh.size() > 0;
   }
 
-  private boolean compileSources(final CompileContextImpl context, final VfsSnapshot snapshot, final TranslatingCompiler compiler, final boolean forceCompile, final boolean isRebuild) {
+  private boolean compileSources(final CompileContextImpl context,
+                                 final VfsSnapshot snapshot,
+                                 final TranslatingCompiler compiler,
+                                 final boolean forceCompile,
+                                 final boolean isRebuild,
+                                 final boolean trackDependencies) {
     final TranslatingCompilerStateCache cache = getTranslatingCompilerCache(compiler);
     final Set<VirtualFile> toCompile = new HashSet<VirtualFile>();
     final Set<String> toDelete = new HashSet<String>();
@@ -816,7 +858,7 @@ public class CompileDriver {
         public void run() {
           findOutOfDateFiles(compiler, snapshot, forceCompile, cache, toCompile, context);
 
-          if (context.getCompileScope() instanceof TrackDependenciesScope && toCompile.size() > 0) { // should add dependent files
+          if (trackDependencies && toCompile.size() > 0) { // should add dependent files
             final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
             final PsiManager psiManager = PsiManager.getInstance(myProject);
             final VirtualFile[] filesToCompile = toCompile.toArray(new VirtualFile[toCompile.size()]);
@@ -836,7 +878,7 @@ public class CompileDriver {
             progressIndicator.pushState();
             progressIndicator.setText(CompilerBundle.message("progress.searching.for.files.to.delete"));
 
-            findFilesToDelete(context.getCompileScope(), snapshot, urlsWithSourceRemoved, cache, toCompile, context, toDelete, compilerConfiguration);
+            findFilesToDelete(snapshot, urlsWithSourceRemoved, cache, toCompile, context, toDelete, compilerConfiguration);
 
             progressIndicator.popState();
           }
@@ -893,14 +935,14 @@ public class CompileDriver {
     return set;
   }
 
-  private void findFilesToDelete(final CompileScope scope,
-                                 VfsSnapshot snapshot, final Set<String> urlsWithSourceRemoved,
+  private void findFilesToDelete(VfsSnapshot snapshot, final Set<String> urlsWithSourceRemoved,
                                  final TranslatingCompilerStateCache cache,
                                  final Set<VirtualFile> toCompile,
                                  final CompileContextImpl context,
                                  final Set<String> toDelete,
                                  final CompilerConfiguration compilerConfiguration) {
     final List<String> toRemove = new ArrayList<String>();
+    final CompileScope scope = context.getCompileScope();
     for (Iterator<String> it = cache.getOutputUrlsIterator(); it.hasNext();) {
       final String outputPath = it.next();
       final String sourceUrl = cache.getSourceUrl(outputPath);

@@ -36,7 +36,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   private final Project myProject;
   private final CompilerProgressIndicator myProgressIndicator;
   private final Map<CompilerMessageCategory, Collection<CompilerMessage>> myMessages = new HashMap<CompilerMessageCategory, Collection<CompilerMessage>>();
-  private final CompileScope myCompileScope;
+  private CompileScope myCompileScope;
   private final DependencyCache myDependencyCache;
   private final CompileDriver myCompileDriver;
   private final boolean myMake;
@@ -240,4 +240,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     return myMake;
   }
 
+  public void addScope(final CompileScope additionalScope) {
+    myCompileScope = new CompositeScope(myCompileScope, additionalScope);
+  }
 }
