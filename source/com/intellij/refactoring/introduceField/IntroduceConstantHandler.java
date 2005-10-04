@@ -10,6 +10,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor;
 import com.intellij.refactoring.util.occurences.ExpressionOccurenceManager;
 import com.intellij.refactoring.util.occurences.OccurenceManager;
@@ -74,19 +75,19 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
     if (localVariable == null) {
       if (!isStaticFinalInitializer(expr)) {
         String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("selected.expression.cannot.be.a.constant.initializer"));
-        RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, getHelpID(), project);
+        CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, getHelpID(), project);
         return null;
       }
     } else {
       final PsiExpression initializer = localVariable.getInitializer();
       if (initializer == null) {
         String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("variable.does.not.have.an.initializer", localVariable.getName()));
-        RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, getHelpID(), project);
+        CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, getHelpID(), project);
         return null;
       }
       if (!isStaticFinalInitializer(initializer)) {
         String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("initializer.for.variable.cannot.be.a.constant.initializer", localVariable.getName()));
-        RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, getHelpID(), project);
+        CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, getHelpID(), project);
         return null;
       }
     }

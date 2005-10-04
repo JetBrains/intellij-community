@@ -24,8 +24,8 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.rename.RenameUtil;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.ArrayList;
@@ -49,7 +49,7 @@ public class MoveClassesOrPackagesImpl {
         LOG.assertTrue(aPackage != null);
         if (aPackage.getQualifiedName().length() == 0) { //is default package
           String message = RefactoringBundle.message("move.package.refactoring.cannot.be.applied.to.default.package");
-          RefactoringMessageUtil.showErrorMessage(RefactoringBundle.message("move.tltle"),
+          CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("move.tltle"),
                                                   message, HelpID.getMoveHelpID(element), project);
           return;
         }
@@ -64,12 +64,12 @@ public class MoveClassesOrPackagesImpl {
         PsiClass aClass = (PsiClass)element;
         if (aClass instanceof PsiAnonymousClass) {
           String message = RefactoringBundle.message("move.class.refactoring.cannot.be.applied.to.anonymous.classes");
-          RefactoringMessageUtil.showErrorMessage(RefactoringBundle.message("move.tltle"), message, HelpID.getMoveHelpID(element), project);
+          CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("move.tltle"), message, HelpID.getMoveHelpID(element), project);
           return;
         }
         if (!(aClass.getParent() instanceof PsiFile)) {
           String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("moving.local.classes.is.not.supported"));
-          RefactoringMessageUtil.showErrorMessage(RefactoringBundle.message("move.tltle"),
+          CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("move.tltle"),
                                                   message, HelpID.getMoveHelpID(element), project);
           return;
         }
@@ -81,7 +81,7 @@ public class MoveClassesOrPackagesImpl {
         if (names.contains(name)) {
            String message = RefactoringBundle.getCannotRefactorMessage(
              RefactoringBundle.message("there.are.going.to.be.multiple.destination.files.with.the.same.name"));
-          RefactoringMessageUtil.showErrorMessage(RefactoringBundle.message("move.tltle"),
+          CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("move.tltle"),
                                                   message, HelpID.getMoveHelpID(element), project);
           return;
         }

@@ -11,6 +11,7 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.occurences.*;
 
 public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
@@ -25,7 +26,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
   protected boolean validClass(PsiClass parentClass) {
     if (parentClass.isInterface()) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("cannot.introduce.field.in.interface"));
-      RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, getHelpID(),
+      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, getHelpID(),
                                               parentClass.getProject());
       return false;
     }

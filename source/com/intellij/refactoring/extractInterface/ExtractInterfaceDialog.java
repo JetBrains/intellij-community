@@ -15,6 +15,7 @@ import com.intellij.refactoring.memberPullUp.JavaDocPanel;
 import com.intellij.refactoring.ui.MemberSelectionPanel;
 import com.intellij.refactoring.util.JavaDocPolicy;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.classMembers.DelegatingMemberInfoModel;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.ui.ReferenceEditorWithBrowseButton;
@@ -258,7 +259,7 @@ class ExtractInterfaceDialog extends ExtractSuperBaseDialog {
     }
     if (errorString[0] != null) {
       if (errorString[0].length() > 0) {
-        RefactoringMessageUtil.showErrorMessage(ExtractInterfaceHandler.REFACTORING_NAME, errorString[0],
+        CommonRefactoringUtil.showErrorMessage(ExtractInterfaceHandler.REFACTORING_NAME, errorString[0],
                                                 HelpID.EXTRACT_INTERFACE, myProject);
       }
       return;

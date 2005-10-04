@@ -22,6 +22,7 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.duplicates.DuplicatesImpl;
 import com.intellij.util.IncorrectOperationException;
 
@@ -54,7 +55,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler {
   private void invokeOnElements(final PsiElement[] elements, final Project project, final PsiFile file, final Editor editor) {
     if (elements == null || elements.length == 0) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("selected.block.should.represent.a.set.of.statements.or.an.expression"));
-      RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.EXTRACT_METHOD, project);
+      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.EXTRACT_METHOD, project);
       return;
     }
 
@@ -66,7 +67,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler {
     for (PsiElement element : elements) {
       if (element instanceof PsiStatement && RefactoringUtil.isSuperOrThisCall((PsiStatement)element, true, true)) {
         String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("selected.block.contains.invocation.of.another.class.constructor"));
-        RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.EXTRACT_METHOD, project);
+        CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.EXTRACT_METHOD, project);
         return;
       }
     }
@@ -101,7 +102,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler {
       }
     }
     catch (PrepareFailedException e) {
-      RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, e.getMessage(), HelpID.EXTRACT_METHOD, project);
+      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, e.getMessage(), HelpID.EXTRACT_METHOD, project);
       highlightPrepareError(e, file, editor, project);
     }
   }

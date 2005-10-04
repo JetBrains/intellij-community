@@ -15,7 +15,7 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 
 import java.util.ArrayList;
 
@@ -58,7 +58,7 @@ public class IntroduceVariableHandler extends IntroduceVariableBase {
   }
 
   protected void showErrorMessage(String message, final Project project) {
-    RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INTRODUCE_VARIABLE, project);
+    CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INTRODUCE_VARIABLE, project);
   }
 
   protected void highlightReplacedOccurences(final Project project, Editor editor, final PsiElement[] replacedOccurences) {

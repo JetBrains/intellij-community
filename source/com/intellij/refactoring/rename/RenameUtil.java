@@ -25,10 +25,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
-import com.intellij.refactoring.util.MoveRenameUsageInfo;
-import com.intellij.refactoring.util.NonCodeUsageInfo;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.Queue;
@@ -522,7 +519,7 @@ public class RenameUtil {
       }
       ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
-            RefactoringMessageUtil.showErrorMessage(RefactoringBundle.message("rename.title"), e.getMessage(), HelpID.getRenameHelpID(element), project);
+            CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("rename.title"), e.getMessage(), HelpID.getRenameHelpID(element), project);
           }
         });
     }

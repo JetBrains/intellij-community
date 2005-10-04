@@ -21,6 +21,7 @@ import com.intellij.refactoring.ui.MemberSelectionTable;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.ui.VisibilityPanel;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoChange;
 import com.intellij.refactoring.util.classMembers.UsesAndInterfacesDependencyMemberInfoModel;
@@ -200,7 +201,7 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
 
     if (message != null) {
       if (message.length() != 0) {
-        RefactoringMessageUtil.showErrorMessage(
+        CommonRefactoringUtil.showErrorMessage(
                 MoveMembersImpl.REFACTORING_NAME,
                 message,
                 HelpID.MOVE_MEMBERS,
@@ -248,7 +249,7 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
             targetClass[0] = findOrCreateTargetClass(manager, fqName);
           }
           catch (IncorrectOperationException e) {
-            RefactoringMessageUtil.showErrorMessage(
+            CommonRefactoringUtil.showErrorMessage(
               MoveMembersImpl.REFACTORING_NAME,
               e.getMessage(),
               HelpID.MOVE_MEMBERS,

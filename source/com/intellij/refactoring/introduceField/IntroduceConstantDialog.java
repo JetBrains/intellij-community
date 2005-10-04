@@ -26,6 +26,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.ui.*;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.*;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
@@ -384,7 +385,7 @@ class IntroduceConstantDialog extends DialogWrapper {
       final PsiManager manager = PsiManager.getInstance(myProject);
       final PsiClass  newClass = manager.findClass(targetClassName, GlobalSearchScope.projectScope(myProject));
       if (newClass == null) {
-        RefactoringMessageUtil.showErrorMessage(
+        CommonRefactoringUtil.showErrorMessage(
                 IntroduceConstantHandler.REFACTORING_NAME,
                 RefactoringBundle.message("class.does.not.exist.in.the.project"),
                 HelpID.INTRODUCE_FIELD,
@@ -402,7 +403,7 @@ class IntroduceConstantDialog extends DialogWrapper {
       errorString = RefactoringMessageUtil.getIncorrectIdentifierMessage(fieldName);
     }
     if (errorString != null) {
-      RefactoringMessageUtil.showErrorMessage(
+      CommonRefactoringUtil.showErrorMessage(
               IntroduceFieldHandler.REFACTORING_NAME,
               errorString,
               HelpID.INTRODUCE_FIELD,

@@ -13,7 +13,7 @@ import com.intellij.refactoring.*;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.refactoring.ui.RefactoringDialog;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.RecentsManager;
@@ -246,7 +246,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
       String message = verifyDestinationForElement(element, destination);
       if (message != null) {
         String helpId = HelpID.getMoveHelpID(myElementsToMove[0]);
-        RefactoringMessageUtil.showErrorMessage(RefactoringBundle.message("error.title"), message, helpId, getProject());
+        CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("error.title"), message, helpId, getProject());
         return;
       }
     }
@@ -278,7 +278,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     }
     catch (IncorrectOperationException e) {
       String helpId = HelpID.getMoveHelpID(myElementsToMove[0]);
-      RefactoringMessageUtil.showErrorMessage(RefactoringBundle.message("error.title"), e.getMessage(), helpId, getProject());
+      CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("error.title"), e.getMessage(), helpId, getProject());
       return;
     }
   }

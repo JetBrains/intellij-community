@@ -14,6 +14,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.HashSet;
@@ -83,7 +84,7 @@ public class MoveFilesOrDirectoriesUtil {
         }
         catch (IncorrectOperationException e) {
           String helpId = HelpID.getMoveHelpID(elements[0]);
-          RefactoringMessageUtil.showErrorMessage(RefactoringBundle.message("error.title"), e.getMessage(), helpId, project);
+          CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("error.title"), e.getMessage(), helpId, project);
           return;
         }
       }

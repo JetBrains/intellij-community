@@ -9,6 +9,7 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 
 /**
  * @author ven
@@ -23,13 +24,13 @@ public class InlineConstantFieldHandler {
 
     if (!field.hasModifierProperty(PsiModifier.FINAL)) {
       String message = RefactoringBundle.message("0.refactoring.is.supported.only.for.final.fields", REFACTORING_NAME);
-      RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_FIELD, project);
+      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_FIELD, project);
       return;
     }
 
     if (!field.hasInitializer()) {
       String message = RefactoringBundle.message("no.initializer.present.for.the.field");
-      RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_FIELD, project);
+      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_FIELD, project);
       return;
     }
 
@@ -38,7 +39,7 @@ public class InlineConstantFieldHandler {
 
     if (refs.length == 0){
       String message = RefactoringBundle.message("field.0.is.never.used", field.getName());
-      RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_VARIABLE, project);
+      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_VARIABLE, project);
       return;
     }
 

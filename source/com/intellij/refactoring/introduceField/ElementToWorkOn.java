@@ -5,7 +5,7 @@ import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.RefactoringBundle;
 
 /**
@@ -77,7 +77,7 @@ public class ElementToWorkOn {
 
     if (localVar == null && expr == null) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.local.name"));
-      RefactoringMessageUtil.showErrorMessage(refactoringName, message, helpId, project);
+      CommonRefactoringUtil.showErrorMessage(refactoringName, message, helpId, project);
       return null;
     }
     return new ElementToWorkOn(localVar, expr);

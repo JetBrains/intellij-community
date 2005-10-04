@@ -11,6 +11,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.ReferenceEditorWithBrowseButton;
 import org.jetbrains.annotations.NonNls;
 
@@ -162,7 +163,7 @@ public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
     final PsiClass targetClass = manager.findClass(targetClassName, GlobalSearchScope.allScope(project));
     if (targetClass == null) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("class.0.not.found", targetClassName));
-      RefactoringMessageUtil.showErrorMessage(ReplaceConstructorWithFactoryHandler.REFACTORING_NAME,
+      CommonRefactoringUtil.showErrorMessage(ReplaceConstructorWithFactoryHandler.REFACTORING_NAME,
                                               message, null, project);
       return;
     }

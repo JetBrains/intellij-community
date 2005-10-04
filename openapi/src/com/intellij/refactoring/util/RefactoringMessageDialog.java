@@ -19,14 +19,10 @@ public class RefactoringMessageDialog extends DialogWrapper{
 
   public RefactoringMessageDialog(String title, String message, String helpTopic, @NonNls String iconId, boolean showCancelButton, Project project) {
     super(project, false);
-    constructor(title, message, helpTopic, showCancelButton, iconId);
-  }
-
-  private void constructor(String title, String message, String helpTopic, boolean isCancelButtonVisible, String iconId) {
     setTitle(title);
     myMessage = message;
     myHelpTopic = helpTopic;
-    myIsCancelButtonVisible=isCancelButtonVisible;
+    myIsCancelButtonVisible =showCancelButton;
     setButtonsAlignment(SwingUtilities.CENTER);
     myIcon = UIManager.getIcon(iconId);
     init();

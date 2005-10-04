@@ -15,6 +15,7 @@ import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.Table;
@@ -433,7 +434,7 @@ public class EncapsulateFieldsDialog extends RefactoringDialog {
     }
     String errorString = validateData();
     if (errorString != null) { // were errors
-      RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, errorString, HelpID.ENCAPSULATE_FIELDS, myProject);
+      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, errorString, HelpID.ENCAPSULATE_FIELDS, myProject);
       return;
     }
 

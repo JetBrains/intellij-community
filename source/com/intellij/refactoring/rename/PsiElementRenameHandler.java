@@ -22,6 +22,7 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.xml.util.XmlUtil;
 
@@ -99,13 +100,13 @@ public class PsiElementRenameHandler implements RenameHandler {
           element instanceof PsiDirectory || element instanceof PsiClass || element instanceof PsiVariable ||
           element instanceof PsiMethod || element instanceof PsiNamedElement || element instanceof XmlAttributeValue)) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.symbol"));
-      RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, null, project);
+      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, null, project);
       return false;
     }
 
     if (!PsiManager.getInstance(project).isInProject(element)) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.out.of.project.element", UsageViewUtil.getType(element)));
-      RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, null, project);
+      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, null, project);
       return false;
     }
 
@@ -113,7 +114,7 @@ public class PsiElementRenameHandler implements RenameHandler {
       String message =
         "Cannot perform the refactoring.\n" +
         "Selected " + UsageViewUtil.getType(element) + " is not located inside the project.";
-      RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, null, project);
+      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, null, project);
       return false;
     }
 

@@ -23,7 +23,7 @@ import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectori
 import com.intellij.refactoring.move.moveInner.MoveInnerImpl;
 import com.intellij.refactoring.move.moveInstanceMethod.MoveInstanceMethodHandler;
 import com.intellij.refactoring.move.moveMembers.MoveMembersImpl;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.containers.HashSet;
 
 import javax.swing.*;
@@ -74,7 +74,7 @@ public class MoveHandler implements RefactoringActionHandler {
         }
 
         String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("the.caret.should.be.positioned.at.the.class.method.or.field.to.be.refactored"));
-        RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, null, project);
+        CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, null, project);
         return;
       }
 

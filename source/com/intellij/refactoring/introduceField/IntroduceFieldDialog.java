@@ -20,6 +20,7 @@ import com.intellij.refactoring.RefactoringSettings;
 import static com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler.InitializationPlace.*;
 import com.intellij.refactoring.ui.*;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.StateRestoringCheckBox;
@@ -508,7 +509,7 @@ class IntroduceFieldDialog extends DialogWrapper {
       errorString = RefactoringMessageUtil.getIncorrectIdentifierMessage(fieldName);
     }
     if (errorString != null) {
-      RefactoringMessageUtil.showErrorMessage(
+      CommonRefactoringUtil.showErrorMessage(
               IntroduceFieldHandler.REFACTORING_NAME,
               errorString,
               HelpID.INTRODUCE_FIELD,

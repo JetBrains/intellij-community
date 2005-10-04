@@ -12,6 +12,7 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.ParameterTablePanel;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.NonFocusableCheckBox;
@@ -137,7 +138,7 @@ class AnonymousToInnerDialog extends DialogWrapper{
     }
 
     if (errorString != null) {
-      RefactoringMessageUtil.showErrorMessage(
+      CommonRefactoringUtil.showErrorMessage(
         AnonymousToInnerHandler.REFACTORING_NAME,
         errorString,
         HelpID.ANONYMOUS_TO_INNER,

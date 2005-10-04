@@ -16,6 +16,7 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeClassSignature.ChangeClassSignatureDialog;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 
 public class ChangeSignatureHandler implements RefactoringActionHandler {
   public static final String REFACTORING_NAME = RefactoringBundle.message("changeSignature.refactoring.name");
@@ -34,7 +35,7 @@ public class ChangeSignatureHandler implements RefactoringActionHandler {
     }
     else {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.method"));
-      RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.CHANGE_SIGNATURE, project);
+      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.CHANGE_SIGNATURE, project);
     }
   }
 

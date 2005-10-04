@@ -10,6 +10,7 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 
 /**
  * @author dsl
@@ -26,7 +27,7 @@ public class ReplaceConstructorWithFactoryHandler
     while (true) {
       if (element == null || element instanceof PsiFile) {
         String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.constructor"));
-        RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, null/*HelpID.REPLACE_CONSTRUCTOR_WITH_FACTORY*/, project);
+        CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, null/*HelpID.REPLACE_CONSTRUCTOR_WITH_FACTORY*/, project);
         return;
       }
 
@@ -67,7 +68,7 @@ public class ReplaceConstructorWithFactoryHandler
     if (constructors.length > 0) {
       String message =
               RefactoringBundle.message("class.does.not.have.implicit.default.consructor", aClass.getQualifiedName()) ;
-      RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, null/*HelpID.REPLACE_CONSTRUCTOR_WITH_FACTORY*/, myProject);
+      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, null/*HelpID.REPLACE_CONSTRUCTOR_WITH_FACTORY*/, myProject);
       return;
     }
     final int answer = Messages.showYesNoCancelDialog(myProject,
@@ -83,21 +84,21 @@ public class ReplaceConstructorWithFactoryHandler
 
   private void showJspOrLocalClassMessage() {
     String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("refactoring.is.not.supported.for.local.and.jsp.classes"));
-    RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, null/*HelpID.REPLACE_CONSTRUCTOR_WITH_FACTORY*/, myProject);
+    CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, null/*HelpID.REPLACE_CONSTRUCTOR_WITH_FACTORY*/, myProject);
   }
   private boolean checkAbstractClassOrInterfaceMessage(PsiClass aClass) {
     if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT)) return true;
     String message = RefactoringBundle.getCannotRefactorMessage(aClass.isInterface() ?
                                                                 RefactoringBundle.message("class.is.interface", aClass.getQualifiedName()) :
                                                                 RefactoringBundle.message("class.is.abstract", aClass.getQualifiedName()));
-    RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.REPLACE_CONSTRUCTOR_WITH_FACTORY, myProject);
+    CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.REPLACE_CONSTRUCTOR_WITH_FACTORY, myProject);
     return false;
   }
 
   private void invoke(final PsiMethod method) {
     if (!method.isConstructor()) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("method.is.not.a.constructor"));
-      RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.REPLACE_CONSTRUCTOR_WITH_FACTORY, myProject);
+      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.REPLACE_CONSTRUCTOR_WITH_FACTORY, myProject);
       return;
     }
 

@@ -11,6 +11,7 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -39,7 +40,7 @@ public class MoveMembersImpl {
       if (!sourceClass.equals(element.getParent())) {
         String message = RefactoringBundle.getCannotRefactorMessage(
           RefactoringBundle.message("members.to.be.moved.should.belong.to.the.same.class"));
-        RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.MOVE_MEMBERS, project);
+        CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.MOVE_MEMBERS, project);
         return;
       }
       if (element instanceof PsiField) {
@@ -51,7 +52,7 @@ public class MoveMembersImpl {
             PsiSubstitutor.EMPTY);
           String message = RefactoringBundle.message("field.0.is.not.static", fieldName,
                                                           REFACTORING_NAME);
-          RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.MOVE_MEMBERS, project);
+          CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.MOVE_MEMBERS, project);
           return;
         }
         preselectMembers.add(field);
@@ -65,13 +66,13 @@ public class MoveMembersImpl {
         );
         if (method.isConstructor()) {
           String message = RefactoringBundle.message("0.refactoring.cannot.be.applied.to.constructors", REFACTORING_NAME);
-          RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.MOVE_MEMBERS, project);
+          CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.MOVE_MEMBERS, project);
           return;
         }
         if (!method.hasModifierProperty(PsiModifier.STATIC)) {
           String message = RefactoringBundle.message("method.0.is.not.static", methodName,
                                                 REFACTORING_NAME);
-          RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.MOVE_MEMBERS, project);
+          CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.MOVE_MEMBERS, project);
           return;
         }
         preselectMembers.add(method);
@@ -81,7 +82,7 @@ public class MoveMembersImpl {
         if (!aClass.hasModifierProperty(PsiModifier.STATIC)) {
           String message = RefactoringBundle.message("inner.class.0.is.not.static", aClass.getQualifiedName(),
                                                 REFACTORING_NAME);
-          RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.MOVE_MEMBERS, project);
+          CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.MOVE_MEMBERS, project);
           return;
         }
         preselectMembers.add(aClass);

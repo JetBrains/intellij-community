@@ -21,6 +21,7 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.classMembers.ElementNeedsThis;
 import com.intellij.util.IncorrectOperationException;
 
@@ -60,7 +61,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     final PsiAnonymousClass anonymousClass = findAnonymousClass(file, offset);
     if (anonymousClass == null) {
-      RefactoringMessageUtil.showErrorMessage(
+      CommonRefactoringUtil.showErrorMessage(
               REFACTORING_NAME,
               RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.anonymous")),
               HelpID.ANONYMOUS_TO_INNER,
@@ -80,13 +81,13 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
 
     if (baseRef.resolve() == null) {
       String message = RefactoringBundle.message("error.cannot.resolve", baseRef.getCanonicalText());
-      RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.ANONYMOUS_TO_INNER, project);
+      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.ANONYMOUS_TO_INNER, project);
       return;
     }
     PsiElement targetContainer = findTargetContainer(myAnonClass);
     if (targetContainer instanceof JspFile) {
       String message = RefactoringBundle.message("error.not.supported.for.jsp", REFACTORING_NAME);
-      RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.ANONYMOUS_TO_INNER, project);
+      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.ANONYMOUS_TO_INNER, project);
       return;
     }
     LOG.assertTrue(targetContainer instanceof PsiClass);

@@ -110,7 +110,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     }
 
     if (message != null) {
-      RefactoringMessageUtil.showErrorMessage(RefactoringBundle.message("rename.title"), message, getHelpID(), myProject);
+      CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("rename.title"), message, getHelpID(), myProject);
       return;
     }
 

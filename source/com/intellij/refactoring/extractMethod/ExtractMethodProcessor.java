@@ -23,17 +23,12 @@ import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.ui.ConflictsDialog;
-import com.intellij.refactoring.util.ConflictsUtil;
-import com.intellij.refactoring.util.ParameterTablePanel;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.*;
 import com.intellij.refactoring.util.classMembers.ElementNeedsThis;
 import com.intellij.refactoring.util.duplicates.DuplicatesFinder;
 import com.intellij.refactoring.util.duplicates.Match;
 import com.intellij.refactoring.util.duplicates.MatchProvider;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.IntArrayList;
 import org.jetbrains.annotations.NonNls;
 
@@ -814,7 +809,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       highlightManager.addOccurrenceHighlights(myEditor, exitStatementsArray, attributes, true, null);
       String message = RefactoringBundle.getCannotRefactorMessage(
         RefactoringBundle.message("there.are.multiple.exit.points.in.the.selected.code.fragment"));
-      RefactoringMessageUtil.showErrorMessage(myRefactoringName, message, myHelpId, myProject);
+      CommonRefactoringUtil.showErrorMessage(myRefactoringName, message, myHelpId, myProject);
       WindowManager.getInstance().getStatusBar(myProject).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
     }
   }
@@ -843,7 +838,7 @@ public class ExtractMethodProcessor implements MatchProvider {
           buffer.append(".");
         }
       }
-      RefactoringMessageUtil.showErrorMessage(myRefactoringName, buffer.toString(), myHelpId, myProject);
+      CommonRefactoringUtil.showErrorMessage(myRefactoringName, buffer.toString(), myHelpId, myProject);
     }
   }
 

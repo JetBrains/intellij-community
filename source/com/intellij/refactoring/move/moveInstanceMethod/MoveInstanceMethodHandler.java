@@ -16,7 +16,7 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.MoveInstanceMembersUtil;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 
 import java.util.*;
 
@@ -39,7 +39,7 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
 
     if (!(element instanceof PsiMethod)) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.method"));
-      RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.CONVERT_TO_INSTANCE_METHOD, project);
+      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.CONVERT_TO_INSTANCE_METHOD, project);
       return;
     }
     if (LOG.isDebugEnabled()) {
@@ -67,7 +67,7 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
       for (PsiClass aClass : classes) {
         if (aClass instanceof JspClass) {
           message = RefactoringBundle.message("synthetic.jsp.class.is.referenced.in.the.method");
-          RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.MOVE_INSTANCE_METHOD, project);
+          CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.MOVE_INSTANCE_METHOD, project);
           break;
         }
       }
@@ -111,7 +111,7 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
     }
 
     if (message != null) {
-      RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME,
+      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME,
                                               RefactoringBundle.getCannotRefactorMessage(message),
                                               HelpID.CONVERT_TO_INSTANCE_METHOD, project);
       return;

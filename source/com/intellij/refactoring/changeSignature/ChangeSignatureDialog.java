@@ -514,7 +514,7 @@ public class ChangeSignatureDialog extends RefactoringDialog {
     stopEditing();
     String message = validateAndCommitData();
     if (message != null) {
-      RefactoringMessageUtil.showErrorMessage(RefactoringBundle.message("error.incorrect.data"), message, HelpID.CHANGE_SIGNATURE, myProject);
+      CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("error.incorrect.data"), message, HelpID.CHANGE_SIGNATURE, myProject);
       return;
     }
     if (!checkMethodConflicts()) {

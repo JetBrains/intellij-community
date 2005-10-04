@@ -31,6 +31,7 @@ import static com.intellij.refactoring.introduceField.BaseExpressionToFieldHandl
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.occurences.OccurenceManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -62,7 +63,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     myParentClass = getParentClass(selectedExpr);
     if (myParentClass == null) {
       if (file instanceof JspFile) {
-        RefactoringMessageUtil.showErrorMessage(getRefactoringName(),
+        CommonRefactoringUtil.showErrorMessage(getRefactoringName(),
                                                 RefactoringBundle.message("error.not.supported.for.jsp", getRefactoringName()), getHelpID(), project
         );
         return false;
@@ -80,13 +81,13 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     PsiType tempType = getTypeByExpression(selectedExpr);
     if (tempType == null) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("unknown.expression.type"));
-      RefactoringMessageUtil.showErrorMessage(getRefactoringName(), message, getHelpID(), project);
+      CommonRefactoringUtil.showErrorMessage(getRefactoringName(), message, getHelpID(), project);
       return false;
     }
 
     if (tempType == PsiType.VOID) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("selected.expression.has.void.type"));
-      RefactoringMessageUtil.showErrorMessage(getRefactoringName(), message, getHelpID(), project);
+      CommonRefactoringUtil.showErrorMessage(getRefactoringName(), message, getHelpID(), project);
       return false;
     }
 
@@ -94,7 +95,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     if (tempAnchorElement == null) {
       //TODO : work outside code block (e.g. field initializer)
       String message = RefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", getRefactoringName());
-      RefactoringMessageUtil.showErrorMessage(getRefactoringName(), message, getHelpID(), project);
+      CommonRefactoringUtil.showErrorMessage(getRefactoringName(), message, getHelpID(), project);
       return false;
     }
 

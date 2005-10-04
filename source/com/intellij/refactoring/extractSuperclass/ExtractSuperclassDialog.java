@@ -14,6 +14,7 @@ import com.intellij.refactoring.memberPullUp.PullUpHelper;
 import com.intellij.refactoring.ui.MemberSelectionPanel;
 import com.intellij.refactoring.util.JavaDocPolicy;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.classMembers.*;
 import com.intellij.ui.ReferenceEditorWithBrowseButton;
 import com.intellij.util.IncorrectOperationException;
@@ -225,7 +226,7 @@ class ExtractSuperclassDialog extends ExtractSuperBaseDialog {
     }
     if (errorString[0] != null) {
       if (errorString[0].length() > 0) {
-        RefactoringMessageUtil.showErrorMessage(ExtractSuperclassHandler.REFACTORING_NAME, errorString[0], HelpID.EXTRACT_SUPERCLASS,
+        CommonRefactoringUtil.showErrorMessage(ExtractSuperclassHandler.REFACTORING_NAME, errorString[0], HelpID.EXTRACT_SUPERCLASS,
                                                 myProject);
       }
       return;

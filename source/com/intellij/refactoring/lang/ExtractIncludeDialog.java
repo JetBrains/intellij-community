@@ -11,7 +11,7 @@ import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.lang.jsp.extractInclude.ExtractJspIncludeFileHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.DocumentAdapter;
@@ -117,7 +117,7 @@ public class ExtractIncludeDialog extends DialogWrapper {
               myTargetDirectory = webPath == null ? null : targetDirectory;
             }
             catch (IncorrectOperationException e) {
-              RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, e.getMessage(), null, project);
+              CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, e.getMessage(), null, project);
             }
           }
         };

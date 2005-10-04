@@ -17,6 +17,7 @@ import com.intellij.refactoring.move.MoveInstanceMembersUtil;
 import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.NonFocusableCheckBox;
 
@@ -217,7 +218,7 @@ public class MoveInnerDialog extends RefactoringDialog {
     }
 
     if (message != null) {
-      RefactoringMessageUtil.showErrorMessage(
+      CommonRefactoringUtil.showErrorMessage(
         MoveInnerImpl.REFACTORING_NAME,
         message,
         HelpID.MOVE_INNER_UPPER,

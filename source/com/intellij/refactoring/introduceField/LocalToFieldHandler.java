@@ -17,8 +17,8 @@ import com.intellij.refactoring.RefactoringBundle;
 import static com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler.InitializationPlace.IN_CONSTRUCTOR;
 import static com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
@@ -48,7 +48,7 @@ public class LocalToFieldHandler {
       }
       if (parent instanceof JspFile) {
         String message = RefactoringBundle.message("error.not.supported.for.jsp", REFACTORING_NAME);
-        RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.LOCAL_TO_FIELD, myProject);
+        CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.LOCAL_TO_FIELD, myProject);
         return false;
       }
       if (parent instanceof PsiModifierListOwner &&((PsiModifierListOwner)parent).hasModifierProperty(PsiModifier.STATIC)) {

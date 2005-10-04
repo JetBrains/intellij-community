@@ -323,7 +323,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
   public void doRun() {
     if (myMembersToMove.size() == 0){
       String message = RefactoringBundle.message("no.members.selected");
-      RefactoringMessageUtil.showErrorMessage(MoveMembersImpl.REFACTORING_NAME, message, HelpID.MOVE_MEMBERS, myProject);
+      CommonRefactoringUtil.showErrorMessage(MoveMembersImpl.REFACTORING_NAME, message, HelpID.MOVE_MEMBERS, myProject);
       return;
     }
     if (canRefactor()) {

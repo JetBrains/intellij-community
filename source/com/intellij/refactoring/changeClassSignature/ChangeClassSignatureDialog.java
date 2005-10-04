@@ -7,7 +7,7 @@ import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.*;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.*;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -104,7 +104,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     TableUtil.stopEditing(myTable);
     String message = validateAndCommitData();
     if (message != null) {
-      RefactoringMessageUtil.showErrorMessage(RefactoringBundle.message("error.incorrect.data"), message, HelpID.CHANGE_SIGNATURE, myClass.getProject());
+      CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("error.incorrect.data"), message, HelpID.CHANGE_SIGNATURE, myClass.getProject());
       return;
     }
     ChangeClassSignatureProcessor processor =

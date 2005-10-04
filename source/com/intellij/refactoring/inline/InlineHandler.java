@@ -16,7 +16,7 @@ import com.intellij.psi.jsp.JspFile;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.lang.jsp.inlineInclude.InlineIncludeFileHandler;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ide.DataManager;
 
 public class InlineHandler implements RefactoringActionHandler {
@@ -57,7 +57,7 @@ public class InlineHandler implements RefactoringActionHandler {
       new InlineIncludeFileHandler().invoke(project, editor, (JspFile)file);;
     } else {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.method.or.local.name"));
-      RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, null, project);
+      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, null, project);
     }
   }
 }

@@ -19,6 +19,7 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
@@ -105,7 +106,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
   }
 
   private static void showErrorMessage(String message, Project project) {
-    RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.METHOD_DUPLICATES, project);
+    CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.METHOD_DUPLICATES, project);
   }
 
   public void invoke(Project project, PsiElement[] elements, DataContext dataContext) {

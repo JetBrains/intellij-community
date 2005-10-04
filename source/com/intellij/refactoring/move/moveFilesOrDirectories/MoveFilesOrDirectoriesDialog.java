@@ -14,7 +14,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.IncorrectOperationException;
@@ -133,7 +133,7 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper{
       }
     }, RefactoringBundle.message("create.directory"), null);
     if (myTargetDirectory == null){
-      RefactoringMessageUtil.showErrorMessage(MoveFilesOrDirectoriesDialog.this.getTitle(),
+      CommonRefactoringUtil.showErrorMessage(MoveFilesOrDirectoriesDialog.this.getTitle(),
                                               RefactoringBundle.message("cannot.create.directory"), myHelpID, myProject);
       return;
     }

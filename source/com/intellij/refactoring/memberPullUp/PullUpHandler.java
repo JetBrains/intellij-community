@@ -24,6 +24,7 @@ import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.JavaDocPolicy;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
 import com.intellij.usageView.UsageViewUtil;
@@ -46,7 +47,7 @@ public class PullUpHandler implements RefactoringActionHandler, PullUpDialog.Cal
     while (true) {
       if (element == null || element instanceof PsiFile) {
         String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("the.caret.should.be.positioned.inside.a.class.to.pull.members.from"));
-        RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, null/*HelpID.MEMBERS_PULL_UP*/, project);
+        CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, null/*HelpID.MEMBERS_PULL_UP*/, project);
         return;
       }
 
@@ -82,7 +83,7 @@ public class PullUpHandler implements RefactoringActionHandler, PullUpDialog.Cal
 
     if(aClass == null) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("is.not.supported.in.the.current.context", REFACTORING_NAME));
-      RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, null/*HelpID.MEMBERS_PULL_UP*/, project);
+      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, null/*HelpID.MEMBERS_PULL_UP*/, project);
       return;
     }
 
@@ -91,7 +92,7 @@ public class PullUpHandler implements RefactoringActionHandler, PullUpDialog.Cal
     if (bases.isEmpty()) {
       String message = RefactoringBundle.getCannotRefactorMessage(
         RefactoringBundle.message("class.does.not.have.base.classes.interfaces.in.current.project", aClass.getQualifiedName()));
-      RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, null/*HelpID.MEMBERS_PULL_UP*/, project);
+      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, null/*HelpID.MEMBERS_PULL_UP*/, project);
       return;
     }
 

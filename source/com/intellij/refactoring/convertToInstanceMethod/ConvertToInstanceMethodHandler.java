@@ -10,7 +10,7 @@ import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +34,7 @@ public class ConvertToInstanceMethodHandler implements RefactoringActionHandler 
 
     if(!(element instanceof PsiMethod)) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.method"));
-      RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.CONVERT_TO_INSTANCE_METHOD, project);
+      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.CONVERT_TO_INSTANCE_METHOD, project);
       return;
     }
     if(LOG.isDebugEnabled()) {
@@ -48,7 +48,7 @@ public class ConvertToInstanceMethodHandler implements RefactoringActionHandler 
     final PsiMethod method = ((PsiMethod)elements[0]);
     if (!method.hasModifierProperty(PsiModifier.STATIC)) {
       String message = RefactoringBundle.message("convertToInstanceMethod.method.is.not.static", method.getName());
-      RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.CONVERT_TO_INSTANCE_METHOD, project);
+      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.CONVERT_TO_INSTANCE_METHOD, project);
       return;
     }
     final PsiParameter[] parameters = method.getParameterList().getParameters();
@@ -83,7 +83,7 @@ public class ConvertToInstanceMethodHandler implements RefactoringActionHandler 
         message = RefactoringBundle.message("convertToInstanceMethod.all.reference.type.parameters.are.not.in.project");
       }
       LOG.assertTrue(message != null);
-      RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME,
+      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME,
                                               RefactoringBundle.getCannotRefactorMessage(message),
                                               HelpID.CONVERT_TO_INSTANCE_METHOD, project);
       return;

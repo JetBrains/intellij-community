@@ -13,10 +13,6 @@ import org.jetbrains.annotations.NonNls;
 import java.util.*;
 
 public class RefactoringMessageUtil {
-  public static void showErrorMessage(String title, String message, String helpId, Project project) {
-    RefactoringMessageDialog dialog=new RefactoringMessageDialog(title,message,helpId,"OptionPane.errorIcon",false, project);
-    dialog.show();
-  }
 
   public static boolean checkReadOnlyStatus(Project project, PsiElement element) {
     return checkReadOnlyStatus(element, project, RefactoringBundle.message("refactoring.cannot.be.performed"));
