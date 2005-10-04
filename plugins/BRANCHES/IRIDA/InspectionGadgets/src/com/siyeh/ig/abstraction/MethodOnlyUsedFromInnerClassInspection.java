@@ -25,13 +25,13 @@ import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.Nullable;
 
-public class MethodOnlyUsedFromNestedClassInspection extends MethodInspection {
+public class MethodOnlyUsedFromInnerClassInspection extends MethodInspection {
 
     String text = null;
     boolean anonymousClass = false;
 
     public String getDisplayName() {
-        return "private method only used from nested class";
+        return "private method only used from inner class";
     }
 
     public String getGroupDisplayName() {
@@ -44,8 +44,8 @@ public class MethodOnlyUsedFromNestedClassInspection extends MethodInspection {
             return "Method <code>#ref()</code>#loc is only used from an "
                     + "anonymous class" + text;
         }
-        return "Method <code>#ref()</code>#loc is only used from nested"
-                + " class '" + text + '\'';
+        return "Method <code>#ref()</code>#loc is only used from inner"
+                + " class <code>" + text + "</code>";
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -98,13 +98,15 @@ public class MethodOnlyUsedFromNestedClassInspection extends MethodInspection {
                 final PsiClass superClass;
                 if (interfaces.length == 1) {
                     superClass = interfaces[0];
-                    text = " implementing '" + superClass.getName() + '\'';
+                    text = " implementing <code>" + superClass.getName() +
+		                    "</code>";
                 } else {
                     superClass = firstReferenceClass.getSuperClass();
                     if (superClass == null) {
                         return;
                     }
-                    text = " extending '" + superClass.getName() + '\'';
+                    text = " extending <code>" + superClass.getName() +
+		                    "</code>";
                 }
 
                 anonymousClass = true;
