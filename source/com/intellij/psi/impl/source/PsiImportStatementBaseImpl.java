@@ -3,7 +3,6 @@ package com.intellij.psi.impl.source;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiImportStatementBase;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
-import com.intellij.psi.PsiLock;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
@@ -51,9 +50,7 @@ public abstract class PsiImportStatementBaseImpl extends IndexedRepositoryPsiEle
         onDemand = calcTreeElement().findChildByRoleAsPsiElement(ChildRole.IMPORT_ON_DEMAND_DOT) != null;
       }
       else{
-        synchronized (PsiLock.LOCK) {
-          onDemand = getRepositoryManager().getFileView().isImportOnDemand(getRepositoryId(), getIndex());
-        }
+        onDemand = getRepositoryManager().getFileView().isImportOnDemand(getRepositoryId(), getIndex());
       }
       myCachedIsOnDemand = onDemand ? Boolean.TRUE : Boolean.FALSE;
     }

@@ -105,47 +105,45 @@ public class ClsAnnotationsUtil {
 
   public static ClsAnnotationImpl[] getAnnotationsImpl(ClsRepositoryPsiElement element, AttributeReader reader,
                                                        ClsModifierListImpl modifierList) {
-    synchronized (PsiLock.LOCK) {
-      long id = element.getRepositoryId();
-      if (id < 0) {
-        ClassFileData data = reader.getClassFileData();
-        BytePointer pointer1 = reader.readAttribute(RUNTIME_VISIBLE_ANNOTATIONS_ATT);
-        if (pointer1 != null) {
-          pointer1.offset += 4;
-          ClsAnnotationImpl[] ann1 = data.readAnnotations(modifierList, pointer1);
-          BytePointer pointer2 = reader.readAttribute(RUNTIME_INVISIBLE_ANNOTATIONS_ATT);
-          if (pointer2 != null) {
-            pointer2.offset += 4;
-            ClsAnnotationImpl[] ann2 = data.readAnnotations(modifierList, pointer2);
-            ClsAnnotationImpl[] result = ArrayUtil.mergeArrays(ann1, ann2, ClsAnnotationImpl.class);
-            return result;
-          }
-          else {
-            return ann1;
-          }
+    long id = element.getRepositoryId();
+    if (id < 0) {
+      ClassFileData data = reader.getClassFileData();
+      BytePointer pointer1 = reader.readAttribute(RUNTIME_VISIBLE_ANNOTATIONS_ATT);
+      if (pointer1 != null) {
+        pointer1.offset += 4;
+        ClsAnnotationImpl[] ann1 = data.readAnnotations(modifierList, pointer1);
+        BytePointer pointer2 = reader.readAttribute(RUNTIME_INVISIBLE_ANNOTATIONS_ATT);
+        if (pointer2 != null) {
+          pointer2.offset += 4;
+          ClsAnnotationImpl[] ann2 = data.readAnnotations(modifierList, pointer2);
+          ClsAnnotationImpl[] result = ArrayUtil.mergeArrays(ann1, ann2, ClsAnnotationImpl.class);
+          return result;
         }
         else {
-          BytePointer pointer2 = reader.readAttribute(RUNTIME_INVISIBLE_ANNOTATIONS_ATT);
-          if (pointer2 != null) {
-            pointer2.offset += 4;
-            return data.readAnnotations(modifierList, pointer2);
-          }
-          else {
-            return ClsAnnotationImpl.EMPTY_ARRAY;
-          }
+          return ann1;
         }
       }
       else {
-        DeclarationView view = (DeclarationView)element.getRepositoryManager().getItemView(id);
-        String[] annotationTexts = view.getAnnotations(id);
-        ClsAnnotationImpl[] result = new ClsAnnotationImpl[annotationTexts.length];
-        for (int i = 0; i < annotationTexts.length; i++) {
-          result[i] =
-            (ClsAnnotationImpl)ClsAnnotationsUtil.createMemberValueFromText(annotationTexts[i], element.getManager(), modifierList);
+        BytePointer pointer2 = reader.readAttribute(RUNTIME_INVISIBLE_ANNOTATIONS_ATT);
+        if (pointer2 != null) {
+          pointer2.offset += 4;
+          return data.readAnnotations(modifierList, pointer2);
         }
-
-        return result;
+        else {
+          return ClsAnnotationImpl.EMPTY_ARRAY;
+        }
       }
+    }
+    else {
+      DeclarationView view = (DeclarationView)element.getRepositoryManager().getItemView(id);
+      String[] annotationTexts = view.getAnnotations(id);
+      ClsAnnotationImpl[] result = new ClsAnnotationImpl[annotationTexts.length];
+      for (int i = 0; i < annotationTexts.length; i++) {
+        result[i] =
+          (ClsAnnotationImpl)ClsAnnotationsUtil.createMemberValueFromText(annotationTexts[i], element.getManager(), modifierList);
+      }
+
+      return result;
     }
   }
 

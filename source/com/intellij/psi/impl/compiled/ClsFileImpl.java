@@ -107,20 +107,18 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
   }
 
   public PsiClass[] getClasses() {
-    synchronized (PsiLock.LOCK) {
-      long id = getRepositoryId();
-      if (myClass == null) {
-        if (id >= 0) {
-          long[] classIds = getRepositoryManager().getFileView().getClasses(id);
-          LOG.assertTrue(classIds.length == 1);
-          myClass = (ClsClassImpl)getRepositoryElementsManager().findOrCreatePsiElementById(classIds[0]);
-        }
-        else {
-          myClass = new ClsClassImpl(myManager, this, myFile);
-        }
+    long id = getRepositoryId();
+    if (myClass == null) {
+      if (id >= 0) {
+        long[] classIds = getRepositoryManager().getFileView().getClasses(id);
+        LOG.assertTrue(classIds.length == 1);
+        myClass = (ClsClassImpl)getRepositoryElementsManager().findOrCreatePsiElementById(classIds[0]);
       }
-      return new PsiClass[]{myClass};
+      else {
+        myClass = new ClsClassImpl(myManager, this, myFile);
+      }
     }
+    return new PsiClass[]{myClass};
   }
 
   public PsiPackageStatement getPackageStatement() {

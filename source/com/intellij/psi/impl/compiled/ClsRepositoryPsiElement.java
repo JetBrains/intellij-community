@@ -1,7 +1,6 @@
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiLock;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.RepositoryElementsManager;
@@ -35,13 +34,11 @@ public abstract class ClsRepositoryPsiElement extends ClsElementImpl implements 
   private long myCachedParentId = -1;
 
   protected long getParentId(){
-    synchronized (PsiLock.LOCK) {
-      if(myCachedParentId > 0) return myCachedParentId;
-      long repositoryId = getRepositoryId();
-      if (repositoryId < 0) return -1;
-      myCachedParentId = getRepositoryManager().getItemView(repositoryId).getParent(repositoryId);
-      return myCachedParentId;
-    }
+    if(myCachedParentId > 0) return myCachedParentId;
+    long repositoryId = getRepositoryId();
+    if (repositoryId < 0) return -1;
+    myCachedParentId = getRepositoryManager().getItemView(repositoryId).getParent(repositoryId);
+    return myCachedParentId;
   }
 
 

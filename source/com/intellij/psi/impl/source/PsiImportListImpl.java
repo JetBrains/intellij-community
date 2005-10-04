@@ -149,7 +149,6 @@ public class PsiImportListImpl extends SlaveRepositoryPsiElement implements PsiI
       }
     }
     else {
-      synchronized (PsiLock.LOCK) {
         final FileView fileView = getRepositoryManager().getFileView();
         final long repositoryId = getRepositoryId();
         int count = fileView.getImportStatementsCount(repositoryId);
@@ -164,7 +163,6 @@ public class PsiImportListImpl extends SlaveRepositoryPsiElement implements PsiI
         }
       }
     }
-  }
 
   public PsiImportStatement findSingleClassImportStatement(String qName) {
     initializeMaps();

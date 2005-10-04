@@ -19,12 +19,11 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.cls.BytePointer;
 import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.cls.ClsUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 
 import java.text.StringCharacterIterator;
 import java.util.Set;
-
-import gnu.trove.THashSet;
 
 public class ClsFieldImpl extends ClsRepositoryPsiElement implements PsiField, PsiVariableEx, ClsModifierListOwner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsFieldImpl");
@@ -92,11 +91,9 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement implements PsiField, P
   }
 
   public PsiElement getParent() {
-    synchronized (PsiLock.LOCK) {
-      final long parentId = getParentId();
-      if (parentId < 0) return myParent;
-      return getRepositoryElementsManager().findOrCreatePsiElementById(parentId);
-    }
+    final long parentId = getParentId();
+    if (parentId < 0) return myParent;
+    return getRepositoryElementsManager().findOrCreatePsiElementById(parentId);
   }
 
   public PsiClass getContainingClass() {
@@ -408,10 +405,8 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement implements PsiField, P
   private PsiExpression createInitializerFromRepository() {
     String initializerText;
     try {
-      synchronized (PsiLock.LOCK) {
         initializerText = getRepositoryManager().getFieldView().getInitializerText(getRepositoryId());
       }
-    }
     catch (InitializerTooLongException e) {
       return null; //??
     }

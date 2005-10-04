@@ -135,17 +135,15 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
   }
 
   public String getName() {
-    synchronized (PsiLock.LOCK) {
-      if (myCachedName == null){
-        if (getTreeElement() != null){
-          myCachedName = getNameIdentifier().getText();
-        }
-        else{
-          myCachedName = getRepositoryManager().getMethodView().getName(getRepositoryId());
-        }
+    if (myCachedName == null){
+      if (getTreeElement() != null){
+        myCachedName = getNameIdentifier().getText();
       }
-      return myCachedName;
+      else{
+        myCachedName = getRepositoryManager().getMethodView().getName(getRepositoryId());
+      }
     }
+    return myCachedName;
   }
 
   public PsiElement setName(String name) throws IncorrectOperationException{
@@ -181,60 +179,58 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
   public PsiType getReturnType() {
     if (myCachedIsConstructor == Boolean.TRUE) return null;
 
-    synchronized (PsiLock.LOCK) {
-      if (getTreeElement() != null) {
-        myCachedType = null;
+    if (getTreeElement() != null) {
+      myCachedType = null;
 
-        PsiTypeElement typeElement = getReturnTypeElement();
-        if (typeElement == null) return null;
+      PsiTypeElement typeElement = getReturnTypeElement();
+      if (typeElement == null) return null;
 
-        int arrayCount = 0;
-        ASTNode parameterList = SourceTreeToPsiMap.psiElementToTree(getParameterList());
-        for (ASTNode child = parameterList.getTreeNext(); child != null; child = child.getTreeNext()) {
-          IElementType i = child.getElementType();
-          if (i == LBRACKET) {
-            arrayCount++;
-          }
-          else if (i == RBRACKET || i == WHITE_SPACE || i == C_STYLE_COMMENT || i == JavaDocElementType.DOC_COMMENT ||
-                   i == END_OF_LINE_COMMENT) {
-          }
-          else {
-            break;
-          }
+      int arrayCount = 0;
+      ASTNode parameterList = SourceTreeToPsiMap.psiElementToTree(getParameterList());
+      for (ASTNode child = parameterList.getTreeNext(); child != null; child = child.getTreeNext()) {
+        IElementType i = child.getElementType();
+        if (i == LBRACKET) {
+          arrayCount++;
         }
-
-        PsiType type;
-        if (!(typeElement instanceof PsiTypeElementImpl)) {
-          type = typeElement.getType();
+        else if (i == RBRACKET || i == WHITE_SPACE || i == C_STYLE_COMMENT || i == JavaDocElementType.DOC_COMMENT ||
+                 i == END_OF_LINE_COMMENT) {
         }
         else {
-          type = ((PsiTypeElementImpl)typeElement).getDetachedType(this);
+          break;
         }
+      }
 
-        for (int i = 0; i < arrayCount; i++) {
-          type = type.createArrayType();
-        }
+      PsiType type;
+      if (!(typeElement instanceof PsiTypeElementImpl)) {
+        type = typeElement.getType();
+      }
+      else {
+        type = ((PsiTypeElementImpl)typeElement).getDetachedType(this);
+      }
 
+      for (int i = 0; i < arrayCount; i++) {
+        type = type.createArrayType();
+      }
+
+      return type;
+    }
+    else{
+      if (myCachedType != null) {
+        PsiType type = myCachedType.get();
+        if (type != null) return type;
+      }
+
+      String typeText = getRepositoryManager().getMethodView().getReturnTypeText(getRepositoryId());
+      if (typeText == null) return null;
+
+      try{
+        final PsiType type = getManager().getElementFactory().createTypeFromText(typeText, this);
+        myCachedType = new PatchedSoftReference<PsiType>(type);
         return type;
       }
-      else{
-        if (myCachedType != null) {
-          PsiType type = myCachedType.get();
-          if (type != null) return type;
-        }
-
-        String typeText = getRepositoryManager().getMethodView().getReturnTypeText(getRepositoryId());
-        if (typeText == null) return null;
-
-        try{
-          final PsiType type = getManager().getElementFactory().createTypeFromText(typeText, this);
-          myCachedType = new PatchedSoftReference<PsiType>(type);
-          return type;
-        }
-        catch(IncorrectOperationException e){
-          LOG.error(e);
-          return null;
-        }
+      catch(IncorrectOperationException e){
+        LOG.error(e);
+        return null;
       }
     }
   }
@@ -285,27 +281,25 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
   }
 
   public boolean isDeprecated() {
-    synchronized (PsiLock.LOCK) {
-      if (myCachedIsDeprecated == null){
-        boolean deprecated;
-        if (getTreeElement() != null){
-          PsiDocComment docComment = getDocComment();
-          deprecated = docComment != null && getDocComment().findTagByName("deprecated") != null;
-          if (!deprecated) {
-            deprecated = getModifierList().findAnnotation("java.lang.Deprecated") != null;
-          }
+    if (myCachedIsDeprecated == null){
+      boolean deprecated;
+      if (getTreeElement() != null){
+        PsiDocComment docComment = getDocComment();
+        deprecated = docComment != null && getDocComment().findTagByName("deprecated") != null;
+        if (!deprecated) {
+          deprecated = getModifierList().findAnnotation("java.lang.Deprecated") != null;
         }
-        else{
-          MethodView methodView = getRepositoryManager().getMethodView();
-          deprecated = methodView.isDeprecated(getRepositoryId());
-          if (!deprecated && methodView.mayBeDeprecatedByAnnotation(getRepositoryId())) {
-            deprecated = getModifierList().findAnnotation("java.lang.Deprecated") != null;
-          }
-        }
-        myCachedIsDeprecated = deprecated ? Boolean.TRUE : Boolean.FALSE;
       }
-      return myCachedIsDeprecated.booleanValue();
+      else{
+        MethodView methodView = getRepositoryManager().getMethodView();
+        deprecated = methodView.isDeprecated(getRepositoryId());
+        if (!deprecated && methodView.mayBeDeprecatedByAnnotation(getRepositoryId())) {
+          deprecated = getModifierList().findAnnotation("java.lang.Deprecated") != null;
+        }
+      }
+      myCachedIsDeprecated = deprecated ? Boolean.TRUE : Boolean.FALSE;
     }
+    return myCachedIsDeprecated.booleanValue();
   }
 
   public PsiDocComment getDocComment() {
@@ -313,43 +307,39 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
   }
 
   public boolean isConstructor() {
-    synchronized (PsiLock.LOCK) {
-      if (myCachedIsConstructor == null){
-        boolean isConstructor;
-        if (getTreeElement() != null){
-          isConstructor = calcTreeElement().findChildByRole(ChildRole.TYPE) == null;
-        }
-        else{
-          isConstructor = getRepositoryManager().getMethodView().isConstructor(getRepositoryId());
-        }
-        myCachedIsConstructor = isConstructor ? Boolean.TRUE : Boolean.FALSE;
+    if (myCachedIsConstructor == null){
+      boolean isConstructor;
+      if (getTreeElement() != null){
+        isConstructor = calcTreeElement().findChildByRole(ChildRole.TYPE) == null;
       }
-      return myCachedIsConstructor.booleanValue();
+      else{
+        isConstructor = getRepositoryManager().getMethodView().isConstructor(getRepositoryId());
+      }
+      myCachedIsConstructor = isConstructor ? Boolean.TRUE : Boolean.FALSE;
     }
+    return myCachedIsConstructor.booleanValue();
   }
 
   public boolean isVarArgs() {
-    synchronized (PsiLock.LOCK) {
-      if (myCachedIsVarargs == null) {
-        boolean isVarArgs = false;
-        if (getTreeElement() != null) {
-          PsiParameter[] parameters = getParameterList().getParameters();
-          for (int i = parameters.length - 1; i >= 0; i--) {
-            if (parameters[i].isVarArgs()) {
-              isVarArgs = true;
-              break;
-            }
+    if (myCachedIsVarargs == null) {
+      boolean isVarArgs = false;
+      if (getTreeElement() != null) {
+        PsiParameter[] parameters = getParameterList().getParameters();
+        for (int i = parameters.length - 1; i >= 0; i--) {
+          if (parameters[i].isVarArgs()) {
+            isVarArgs = true;
+            break;
           }
         }
-        else {
-          isVarArgs = getRepositoryManager().getMethodView().isVarArgs(getRepositoryId());
-        }
-
-        myCachedIsVarargs = isVarArgs ? Boolean.TRUE : Boolean.FALSE;
+      }
+      else {
+        isVarArgs = getRepositoryManager().getMethodView().isVarArgs(getRepositoryId());
       }
 
-      return myCachedIsVarargs.booleanValue();
+      myCachedIsVarargs = isVarArgs ? Boolean.TRUE : Boolean.FALSE;
     }
+
+    return myCachedIsVarargs.booleanValue();
   }
 
   public void accept(PsiElementVisitor visitor) {

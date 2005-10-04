@@ -10,7 +10,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.PomMemberOwner;
 import com.intellij.psi.*;
-import com.intellij.psi.HierarchicalMethodSignature;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.cache.ClassView;
 import com.intellij.psi.impl.meta.MetaRegistry;
@@ -102,14 +101,12 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
 
   public PsiElement getParent() {
     if (myParent == null) {
-      synchronized (PsiLock.LOCK) {
         long repositoryId = getRepositoryId();
         if (repositoryId >= 0) {
           long parentId = getRepositoryManager().getClassView().getParent(repositoryId);
           myParent = getRepositoryElementsManager().findOrCreatePsiElementById(parentId);
         }
       }
-    }
     return myParent;
   }
 
@@ -856,7 +853,6 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
   }
 
   public boolean isInterface() {
-    synchronized (PsiLock.LOCK) {
       long repositoryId = getRepositoryId();
       if (repositoryId < 0) {
         return (getAccessFlags() & ClsUtil.ACC_INTERFACE) != 0;
@@ -865,10 +861,8 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
         return getRepositoryManager().getClassView().isInterface(repositoryId);
       }
     }
-  }
 
   public boolean isAnnotationType() {
-    synchronized (PsiLock.LOCK) {
       long repositoryId = getRepositoryId();
       if (repositoryId < 0) {
         return (getAccessFlags() & ClsUtil.ACC_ANNOTATION) != 0;
@@ -877,7 +871,6 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
         return getRepositoryManager().getClassView().isAnnotationType(repositoryId);
       }
     }
-  }
 
   public boolean isEnum() {
     PsiField[] fields = getFields();

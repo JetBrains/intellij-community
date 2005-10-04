@@ -11,7 +11,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.PomMemberOwner;
 import com.intellij.psi.*;
-import com.intellij.psi.HierarchicalMethodSignature;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.cache.ClassView;
 import com.intellij.psi.impl.cache.RepositoryElementType;
@@ -197,14 +196,11 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
       }
     }
     else{
-      synchronized (PsiLock.LOCK) {
         return getRepositoryElementsManager().findOrCreatePsiElementById(getParentId());
       }
     }
-  }
 
   public String getName() {
-    synchronized (PsiLock.LOCK) {
       if (myCachedName == null){
         if (getTreeElement() != null){
           PsiIdentifier identifier = getNameIdentifier();
@@ -216,10 +212,8 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
       }
       return myCachedName;
     }
-  }
 
   public String getQualifiedName() {
-    synchronized (PsiLock.LOCK) {
       if (myCachedQName != null) return myCachedQName;
 
       String qName = null;
@@ -250,7 +244,6 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
 
       return qName;
     }
-  }
 
   public PsiModifierList getModifierList(){
     long repositoryId = getRepositoryId();
@@ -333,7 +326,6 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
   }
 
   public PsiField[] getFields() {
-    synchronized (PsiLock.LOCK) {
       if (myCachedFields == null){
         if (getTreeElement() != null){
           myCachedFields = calcTreeElement().getChildrenAsPsiElements(FIELD_BIT_SET, PSI_FIELD_ARRAY_CONSTRUCTOR);
@@ -350,10 +342,8 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
       }
       return myCachedFields;
     }
-  }
 
   public PsiMethod[] getMethods() {
-    synchronized (PsiLock.LOCK) {
       if (myCachedMethods == null){
         if (getTreeElement() != null){
           myCachedMethods = calcTreeElement().getChildrenAsPsiElements(METHOD_BIT_SET, PSI_METHOD_ARRAY_CONSTRUCTOR);
@@ -370,19 +360,15 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
       }
       return myCachedMethods;
     }
-  }
 
   public PsiMethod[] getConstructors() {
-    synchronized (PsiLock.LOCK) {
       if (myCachedConstructors == null){
         myCachedConstructors = PsiImplUtil.getConstructors(this);
       }
       return myCachedConstructors;
     }
-  }
 
   public PsiClass[] getInnerClasses() {
-    synchronized (PsiLock.LOCK) {
       if (myCachedInners == null){
         if (getTreeElement() != null){
           myCachedInners = calcTreeElement().getChildrenAsPsiElements(CLASS_BIT_SET, PSI_CLASS_ARRAY_CONSTRUCTOR);
@@ -399,10 +385,8 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
       }
       return myCachedInners;
     }
-  }
 
   public PsiClassInitializer[] getInitializers(){
-    synchronized (PsiLock.LOCK) {
       if (getTreeElement() != null){
         return calcTreeElement().getChildrenAsPsiElements(CLASS_INITIALIZER_BIT_SET, PSI_CLASS_INITIALIZER_ARRAY_CONSTRUCTOR);
       }
@@ -416,7 +400,6 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
         return initializers;
       }
     }
-  }
 
   @NotNull
   public PsiTypeParameter[] getTypeParameters() {
@@ -529,7 +512,6 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
   }
 
   public boolean isDeprecated() {
-    synchronized (PsiLock.LOCK) {
       if (myCachedIsDeprecated == null){
         boolean deprecated;
         if (getTreeElement() != null){
@@ -553,7 +535,6 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
       }
       return myCachedIsDeprecated.booleanValue();
     }
-  }
 
   public PsiDocComment getDocComment(){
     return (PsiDocComment)calcTreeElement().findChildByRoleAsPsiElement(ChildRole.DOC_COMMENT);
@@ -568,7 +549,6 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
   }
 
   public boolean isInterface(){
-    synchronized (PsiLock.LOCK) {
       if (myCachedIsInterface == null){
         boolean isInterface;
         if (getTreeElement() != null){
@@ -594,10 +574,8 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
       }
       return myCachedIsInterface.booleanValue();
     }
-  }
 
   public boolean isAnnotationType() {
-    synchronized (PsiLock.LOCK) {
       if (myCachedIsAnnotationType == null){
         boolean isAnnotationType = false;
         if (isInterface()) {
@@ -612,10 +590,8 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
       }
       return myCachedIsAnnotationType.booleanValue();
     }
-  }
 
   public boolean isEnum() {
-    synchronized (PsiLock.LOCK) {
       if (myCachedIsEnum == null) {
         final boolean isEnum;
         if (getTreeElement() != null) {
@@ -628,7 +604,6 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
       }
       return myCachedIsEnum.booleanValue();
     }
-  }
 
   public void accept(PsiElementVisitor visitor){
     visitor.visitClass(this);
@@ -722,7 +697,6 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
 
   @Nullable
   private PsiElement calcBasesResolveContext(PsiClass aClass, String className, boolean isInitialClass) {
-    synchronized (PsiLock.LOCK) {
       boolean isAnonOrLocal = false;
       if (aClass instanceof PsiAnonymousClass){
         isAnonOrLocal = true;
@@ -782,7 +756,6 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
         }
       }
     }
-  }
 
   public boolean isInheritor(PsiClass baseClass, boolean checkDeep) {
     return InheritanceImplUtil.isInheritor(this, baseClass, checkDeep);

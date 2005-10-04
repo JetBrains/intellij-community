@@ -1,7 +1,10 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.tree.CompositeElement;
@@ -50,28 +53,26 @@ public class PsiParameterListImpl extends SlaveRepositoryPsiElement implements P
   }
 
   public PsiParameter[] getParameters(){
-    synchronized (PsiLock.LOCK) {
-      long repositoryId = getRepositoryId();
-      if (repositoryId >= 0) {
-        if (myRepositoryParameters == null) {
-          int count;
-          CompositeElement treeElement = getTreeElement();
-          if (treeElement != null) {
-            count = treeElement.countChildren(PARAMETER_BIT_SET);
-          }
-          else {
-            count = getRepositoryManager().getMethodView().getParameterCount(repositoryId);
-          }
-          myRepositoryParameters = new PsiParameterImpl[count];
-          for (int i = 0; i < myRepositoryParameters.length; i++) {
-            myRepositoryParameters[i] = new PsiParameterImpl(myManager, this, i);
-          }
+    long repositoryId = getRepositoryId();
+    if (repositoryId >= 0) {
+      if (myRepositoryParameters == null) {
+        int count;
+        CompositeElement treeElement = getTreeElement();
+        if (treeElement != null) {
+          count = treeElement.countChildren(PARAMETER_BIT_SET);
         }
-        return myRepositoryParameters;
+        else {
+          count = getRepositoryManager().getMethodView().getParameterCount(repositoryId);
+        }
+        myRepositoryParameters = new PsiParameterImpl[count];
+        for (int i = 0; i < myRepositoryParameters.length; i++) {
+          myRepositoryParameters[i] = new PsiParameterImpl(myManager, this, i);
+        }
       }
-      else{
-        return calcTreeElement().getChildrenAsPsiElements(PARAMETER_BIT_SET, PSI_PARAMETER_ARRAY_CONSTRUCTOR);
-      }
+      return myRepositoryParameters;
+    }
+    else{
+      return calcTreeElement().getChildrenAsPsiElements(PARAMETER_BIT_SET, PSI_PARAMETER_ARRAY_CONSTRUCTOR);
     }
   }
 

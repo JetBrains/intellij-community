@@ -86,10 +86,7 @@ public class PsiImportStaticStatementImpl extends PsiImportStatementBaseImpl imp
         else{
           final FileElement holderElement = new DummyHolder(myManager, this).getTreeElement();
           final JavaParsingContext context = new JavaParsingContext(holderElement.getCharTable(), myManager.getEffectiveLanguageLevel());
-          final String refText;
-          synchronized (PsiLock.LOCK) {
-            refText = getRepositoryManager().getFileView().getImportQualifiedName(getRepositoryId(), getIndex());
-          }
+          final String refText = getRepositoryManager().getFileView().getImportQualifiedName(getRepositoryId(), getIndex());
           if (refText == null) return null;
           CompositeElement parsedRef = Parsing.parseJavaCodeReferenceText(myManager, refText.toCharArray(), context.getCharTable());
           refElement = (PsiJavaCodeReferenceElement)parsedRef;

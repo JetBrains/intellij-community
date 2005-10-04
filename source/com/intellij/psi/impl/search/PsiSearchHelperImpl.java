@@ -815,12 +815,10 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     }
 
     PsiClass[] candidates;
-    synchronized (PsiLock.LOCK) {
-      long[] candidateIds = repositoryIndex.getNameOccurrencesInExtendsLists(name, rootFilter);
-      candidates = new PsiClass[candidateIds.length];
-      for (int i = 0; i < candidateIds.length; i++) {
-        candidates[i] = (PsiClass)repositoryElementsManager.findOrCreatePsiElementById(candidateIds[i]);
-      }
+    long[] candidateIds = repositoryIndex.getNameOccurrencesInExtendsLists(name, rootFilter);
+    candidates = new PsiClass[candidateIds.length];
+    for (int i = 0; i < candidateIds.length; i++) {
+      candidates[i] = (PsiClass)repositoryElementsManager.findOrCreatePsiElementById(candidateIds[i]);
     }
 
     for (PsiClass candidate : candidates) {
@@ -1174,18 +1172,16 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         if (!searchScope.contains(file.getVirtualFile())) continue;
         if (!(file instanceof PsiJavaFile)) continue;
 
-        synchronized (PsiLock.LOCK) {
-          long fileId = myManager.getRepositoryManager().getFileId(file.getVirtualFile());
-          if (fileId >= 0) {
-            long[] allClasses = myManager.getRepositoryManager().getFileView().getAllClasses(fileId);
-            for (long allClass : allClasses) {
-              PsiClass psiClass = (PsiClass)myManager.getRepositoryElementsManager().findOrCreatePsiElementById(allClass);
-              if (!processor.execute(psiClass)) return false;
-            }
+        long fileId = myManager.getRepositoryManager().getFileId(file.getVirtualFile());
+        if (fileId >= 0) {
+          long[] allClasses = myManager.getRepositoryManager().getFileView().getAllClasses(fileId);
+          for (long allClass : allClasses) {
+            PsiClass psiClass = (PsiClass)myManager.getRepositoryElementsManager().findOrCreatePsiElementById(allClass);
+            if (!processor.execute(psiClass)) return false;
           }
-          else {
-            if (!processAllClasses(processor, new LocalSearchScope(file))) return false;
-          }
+        }
+        else {
+          if (!processAllClasses(processor, new LocalSearchScope(file))) return false;
         }
       }
     }

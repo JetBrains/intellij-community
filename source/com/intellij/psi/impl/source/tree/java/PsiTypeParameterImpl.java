@@ -4,7 +4,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.PomMemberOwner;
 import com.intellij.psi.*;
-import com.intellij.psi.HierarchicalMethodSignature;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.light.LightEmptyImplementsList;
 import com.intellij.psi.impl.meta.MetaRegistry;
@@ -20,9 +19,9 @@ import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.IncorrectOperationException;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Collection;
 
 /**
  *  @author dsl
@@ -121,41 +120,39 @@ public class PsiTypeParameterImpl extends IndexedRepositoryPsiElement implements
   }
 
   CompositeElement getMirrorTreeElement() {
-    synchronized (PsiLock.LOCK) {
-      CompositeElement actualTree = getTreeElement();
-      if (actualTree != null) {
-        myParsedFromRepository = null;
-        return actualTree;
-      }
-
-      if (myParsedFromRepository != null) return myParsedFromRepository;
-      long repositoryId = getRepositoryId();
-      if (repositoryId >= 0) {
-        String text;
-        PsiElement owner = myOwner.getParent();
-        if (owner instanceof PsiClass) {
-          text = getRepositoryManager().getClassView().getParameterText(repositoryId, getIndex());
-        }
-        else if (owner instanceof PsiMethod) {
-          text = getRepositoryManager().getMethodView().getTypeParameterText(repositoryId, getIndex());
-        }
-        else {
-          LOG.error("Wrong owner");
-          text = "";
-        }
-        try{
-          PsiTypeParameter typeParameter = myManager.getElementFactory().createTypeParameterFromText(text, this);
-          myParsedFromRepository = (CompositeElement)SourceTreeToPsiMap.psiElementToTree(typeParameter);
-          new DummyHolder(myManager, myParsedFromRepository, this);
-        }
-        catch(IncorrectOperationException e){
-          LOG.error(e);
-        }
-        return myParsedFromRepository;
-      }
-
-      return calcTreeElement();
+    CompositeElement actualTree = getTreeElement();
+    if (actualTree != null) {
+      myParsedFromRepository = null;
+      return actualTree;
     }
+
+    if (myParsedFromRepository != null) return myParsedFromRepository;
+    long repositoryId = getRepositoryId();
+    if (repositoryId >= 0) {
+      String text;
+      PsiElement owner = myOwner.getParent();
+      if (owner instanceof PsiClass) {
+        text = getRepositoryManager().getClassView().getParameterText(repositoryId, getIndex());
+      }
+      else if (owner instanceof PsiMethod) {
+        text = getRepositoryManager().getMethodView().getTypeParameterText(repositoryId, getIndex());
+      }
+      else {
+        LOG.error("Wrong owner");
+        text = "";
+      }
+      try{
+        PsiTypeParameter typeParameter = myManager.getElementFactory().createTypeParameterFromText(text, this);
+        myParsedFromRepository = (CompositeElement)SourceTreeToPsiMap.psiElementToTree(typeParameter);
+        new DummyHolder(myManager, myParsedFromRepository, this);
+      }
+      catch(IncorrectOperationException e){
+        LOG.error(e);
+      }
+      return myParsedFromRepository;
+    }
+
+    return calcTreeElement();
   }
 
   public PsiTypeParameterListOwner getOwner() {

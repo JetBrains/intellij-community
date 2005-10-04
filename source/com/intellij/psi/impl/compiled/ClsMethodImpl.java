@@ -54,6 +54,7 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
   private ClsAnnotationImpl[][] myParameterAnnotations = null;
   private static final @NonNls String SYNTHETIC_INIT_METHOD = "<init>";
 
+
   public ClsMethodImpl(ClsClassImpl parent, int startOffset) {
     super(parent.myManager, -1);
     myParent = parent;
@@ -115,12 +116,10 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
   }
 
   public PsiElement getParent() {
-    synchronized (PsiLock.LOCK) {
       final long parentId = getParentId();
       if (parentId < 0) return myParent;
       return getRepositoryElementsManager().findOrCreatePsiElementById(parentId);
     }
-  }
 
   public PsiClass getContainingClass() {
     return (PsiClass)getParent();
@@ -320,7 +319,6 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
   }
 
   private ClsAnnotationImpl[][] calcParameterAnnotations() {
-    synchronized (PsiLock.LOCK) {
       long repositoryId = getRepositoryId();
       if (repositoryId < 0) {
         ClassFileData classFileData = myParent.getClassFileData();
@@ -371,7 +369,6 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
         return result;
       }
     }
-  }
 
   private ClsAnnotationImpl[][] readParameterAnnotations(BytePointer pointer, ClsParameterImpl[] parameters) throws ClsFormatException {
     pointer.offset += 4;
@@ -385,7 +382,6 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
   }
 
   private ArrayList<String> calcParameterTypes() {
-    synchronized (PsiLock.LOCK) {
       long repositoryId = getRepositoryId();
       if (repositoryId < 0) {
         try {
@@ -452,7 +448,6 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
         return types;
       }
     }
-  }
 
   private void patchVarargs(ArrayList<String> types) {
     if (isVarArgs()) {
@@ -551,7 +546,6 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
   }
 
   public PsiAnnotationMemberValue getDefaultValue() {
-    synchronized (PsiLock.LOCK) {
       if (myDefaultValue == null) {
         myDefaultValue = new PsiAnnotationMemberValue[1];
 
@@ -581,7 +575,6 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
 
       return myDefaultValue[0];
     }
-  }
 
   private boolean parseViaGenericSignature() {
     if (getRepositoryId() >= 0) return false;
@@ -646,7 +639,6 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
   }
 
   public boolean isVarArgs() {
-    synchronized (PsiLock.LOCK) {
       if (myIsVarArgs == null) {
         boolean isVarArgs;
         if (getRepositoryId() < 0) {
@@ -662,7 +654,6 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
 
       return myIsVarArgs.booleanValue();
     }
-  }
 
   public MethodSignature getSignature(PsiSubstitutor substitutor) {
     return MethodSignatureBackedByPsiMethod.create(this, substitutor);
