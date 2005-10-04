@@ -3,6 +3,7 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lexer.StringLiteralLexer;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineTokenizer;
@@ -908,14 +909,13 @@ public class SelectWordUtil {
   
   static class CaseStatementsSelectioner extends BasicSelectioner {
       public boolean canSelect(PsiElement e) {
-        return e instanceof PsiStatement && 
-               e.getParent() instanceof PsiCodeBlock && 
+        return  e.getParent() instanceof PsiCodeBlock && 
                e.getParent().getParent() instanceof PsiSwitchStatement;
       }
 
       public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
         List<TextRange> result = new ArrayList<TextRange>();
-        final PsiStatement statement = (PsiStatement)e;
+        final PsiElement statement = e;
         PsiElement caseStart = statement;
         PsiElement caseEnd = statement;
         
@@ -934,11 +934,19 @@ public class SelectWordUtil {
         
         sibling = statement.getNextSibling();
         while(sibling != null && !(sibling instanceof PsiSwitchLabelStatement)) {
-          if (!(sibling instanceof PsiWhiteSpace)) caseEnd = sibling;
+          if (!(sibling instanceof PsiWhiteSpace) &&
+              !(sibling instanceof PsiJavaToken) // end of switch
+             ) {
+            caseEnd = sibling;
+          }
           sibling = sibling.getNextSibling();
         }
+
+        final Document document = editor.getDocument();
+        final int startOffset = document.getLineStartOffset(document.getLineNumber(caseStart.getTextOffset()));
+        final int endOffset = document.getLineEndOffset(document.getLineNumber(caseEnd.getTextOffset() + caseEnd.getTextLength())) + 1;
         
-        result.add(new TextRange(caseStart.getTextOffset(),caseEnd.getTextOffset() + caseEnd.getTextLength()));
+        result.add(new TextRange(startOffset,endOffset));
         return result;
       }
     }
