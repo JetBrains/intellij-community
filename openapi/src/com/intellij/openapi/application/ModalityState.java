@@ -17,6 +17,9 @@ package com.intellij.openapi.application;
 
 import java.awt.*;
 
+/**
+ * Represents the stack of active modal dialogs.
+ */
 public abstract class ModalityState {
   public static final ModalityState NON_MMODAL = ApplicationManager.getApplication().getNoneModalityState();
 
