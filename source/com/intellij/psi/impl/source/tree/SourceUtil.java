@@ -76,7 +76,7 @@ public class SourceUtil implements Constants {
 
     newChild = parenthExpr;
     // TODO remove explicit caches drop since this should be ok iff we will use ChangeUtil for the modification 
-    TreeUtil.clearCaches(newChild);
+    TreeUtil.clearCaches(TreeUtil.getFileElement(newChild));
     return newChild;
   }
 
