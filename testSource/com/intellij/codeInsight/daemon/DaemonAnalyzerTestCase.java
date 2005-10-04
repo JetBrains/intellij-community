@@ -1,10 +1,7 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeInsight.CodeInsightTestCase;
-import com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.PostHighlightingPass;
-import com.intellij.codeInsight.daemon.impl.ExternalToolPass;
+import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.mock.MockProgressInidicator;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
@@ -72,6 +69,14 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     PostHighlightingPass action2 = new PostHighlightingPass(myProject, myFile, myEditor, 0, myFile.getTextLength(), false);
     action2.doCollectInformation(new MockProgressInidicator());
     Collection<HighlightInfo> highlights2 = action2.getHighlights();
+    
+    Collection<HighlightInfo> highlights3 = null;
+    
+    if (doInspections()) {
+      LocalInspectionsPass inspectionsPass = new LocalInspectionsPass(myProject, myFile, myEditor.getDocument(), 0, myFile.getTextLength());
+      inspectionsPass.doCollectInformation(new MockProgressInidicator());
+      highlights3 = inspectionsPass.getHighlights();
+    }
 
     ArrayList<HighlightInfo> list = new ArrayList<HighlightInfo>();
     for (HighlightInfo info : highlights1) {
@@ -80,6 +85,12 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
 
     for (HighlightInfo info : highlights2) {
       list.add(info);
+    }
+    
+    if (highlights3 != null) {
+      for (HighlightInfo info : highlights3) {
+        list.add(info);
+      }
     }
 
     boolean isToLaunchExternal = true;
@@ -91,7 +102,6 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     }
 
     if (isToLaunchExternal) {
-      Collection<HighlightInfo> highlights3 = null;
       ExternalToolPass action3 = new ExternalToolPass(myFile, myEditor);
       action3.doCollectInformation(new MockProgressInidicator());
 
@@ -103,6 +113,10 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
 
 
     return list;
+  }
+
+  protected boolean doInspections() {
+    return false;
   }
 
 }

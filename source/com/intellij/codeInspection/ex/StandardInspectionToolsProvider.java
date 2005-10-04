@@ -11,6 +11,7 @@ import com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspecti
 import com.intellij.lang.properties.UnusedMessageFormatParameterInspection;
 import com.intellij.lang.properties.UnusedPropertyInspection;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.xml.util.CheckImageSizeInspection;
 
 /**
  * @author max
@@ -64,7 +65,8 @@ public class StandardInspectionToolsProvider implements InspectionToolProvider, 
 
       DuplicateStringLiteralInspection.class,
       DuplicatePropertyInspection.class,
-      UnusedMessageFormatParameterInspection.class
+      UnusedMessageFormatParameterInspection.class,
+      CheckImageSizeInspection.class
       };
   }
 }
