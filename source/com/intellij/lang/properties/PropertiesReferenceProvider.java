@@ -5,8 +5,12 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.jsp.el.ELExpressionHolder;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
+import com.intellij.psi.impl.source.jsp.jspJava.JspText;
+import com.intellij.psi.impl.source.jsp.jspJava.JspXmlTagBase;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.xml.XmlAttributeValue;
 
@@ -35,7 +39,13 @@ public class PropertiesReferenceProvider implements PsiReferenceProvider {
       }
 
     } else if (element instanceof XmlAttributeValue) {
-      value = ((XmlAttributeValue)element).getValue();
+      if(PsiTreeUtil.getChildOfType(element, ELExpressionHolder.class) == null &&
+         PsiTreeUtil.getChildOfType(element, JspXmlTagBase.class) == null
+        ) {
+        value = ((XmlAttributeValue)element).getValue();
+      } else {
+        value = null;
+      }
     } else {
       value = null;
     }
