@@ -161,15 +161,16 @@ public class PsiTreeUtil {
 
   @Nullable
   public static <T extends PsiElement> T getParentOfType(@NotNull PsiElement element, @NotNull Class<? extends T>[] classes, boolean strict) {
+    PsiElement run = element;
     if (strict) {
-      element = element.getParent();
+      run = run.getParent();
     }
 
-    while (element != null) {
+    while (run != null) {
       for (Class<? extends T> aClass : classes) {
-        if (aClass.isInstance(element)) return (T)element;
+        if (aClass.isInstance(run)) return (T)run;
       }
-      element = element.getParent();
+      run = run.getParent();
     }
 
     return null;
