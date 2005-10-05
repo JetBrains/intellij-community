@@ -20,6 +20,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.List;
@@ -60,7 +61,7 @@ public class HighlightInfo {
     return attributes == null ? null : attributes.getErrorStripeColor();
   }
 
-  public static HighlightInfo createHighlightInfo(HighlightInfoType type, PsiElement element, String description) {
+  public static HighlightInfo createHighlightInfo(HighlightInfoType type, @NotNull PsiElement element, String description) {
     return createHighlightInfo(type, element, description, htmlEscapeToolTip(description));
   }
 
@@ -69,7 +70,7 @@ public class HighlightInfo {
     return description == null ? null : "<html><body>"+XmlUtil.escapeString(description)+"</body></html>";
   }
 
-  public static HighlightInfo createHighlightInfo(HighlightInfoType type, PsiElement element, String description, String toolTip) {
+  public static HighlightInfo createHighlightInfo(HighlightInfoType type, @NotNull PsiElement element, String description, String toolTip) {
     TextRange range = element.getTextRange();
     int start = range.getStartOffset();
     int end = range.getEndOffset();
@@ -116,7 +117,7 @@ public class HighlightInfo {
 
   public boolean needUpdateOnTyping() {
     if (myNeedsUpdateOnTyping != null) return myNeedsUpdateOnTyping.booleanValue();
-    
+
     if (type == HighlightInfoType.TODO) return false;
     if (type == HighlightInfoType.LOCAL_VARIABLE) return false;
     if (type == HighlightInfoType.INSTANCE_FIELD) return false;
@@ -190,14 +191,14 @@ public class HighlightInfo {
 
   public boolean equals(Object obj) {
     return obj == this ||
-      (obj instanceof HighlightInfo &&
-      ((HighlightInfo)obj).getSeverity() == getSeverity() &&
-      ((HighlightInfo)obj).startOffset == startOffset &&
-      ((HighlightInfo)obj).endOffset == endOffset &&
-      ((HighlightInfo)obj).type == type &&
-      //Do not include fix offsets!!!
-      Comparing.strEqual(((HighlightInfo)obj).description, description)
-      );
+           (obj instanceof HighlightInfo &&
+            ((HighlightInfo)obj).getSeverity() == getSeverity() &&
+            ((HighlightInfo)obj).startOffset == startOffset &&
+            ((HighlightInfo)obj).endOffset == endOffset &&
+            ((HighlightInfo)obj).type == type &&
+            //Do not include fix offsets!!!
+            Comparing.strEqual(((HighlightInfo)obj).description, description)
+           );
   }
 
   public int hashCode() {

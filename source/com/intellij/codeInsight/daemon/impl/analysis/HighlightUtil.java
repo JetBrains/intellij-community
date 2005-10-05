@@ -1000,7 +1000,7 @@ public class HighlightUtil {
 
 
   @Nullable
-  public static HighlightInfo checkThisOrSuperExpressionInIllegalContext(PsiExpression expr, PsiJavaCodeReferenceElement qualifier) {
+  public static HighlightInfo checkThisOrSuperExpressionInIllegalContext(PsiExpression expr, @Nullable PsiJavaCodeReferenceElement qualifier) {
     if (expr instanceof PsiSuperExpression && !(expr.getParent() instanceof PsiReferenceExpression)) {
       // like in 'Object o = super;'
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
@@ -1010,7 +1010,7 @@ public class HighlightUtil {
     }
     PsiClass aClass = qualifier == null ? PsiTreeUtil.getParentOfType(expr, PsiClass.class) : (PsiClass)qualifier.resolve();
     if (aClass == null) return null;
-    if (aClass.isInterface()) {
+    if (qualifier != null && aClass.isInterface()) {
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, qualifier, HighlightClassUtil.CLASS_EXPECTED);
     }
     if (HighlightClassUtil.hasEnclosingInstanceInScope(aClass, expr, false)) return null;
@@ -1549,14 +1549,12 @@ public class HighlightUtil {
   @Nullable
   public static HighlightInfo checkLabelAlreadyInUse(PsiLabeledStatement statement) {
     PsiIdentifier identifier = statement.getLabelIdentifier();
-    if (identifier == null) return null;
     String text = identifier.getText();
     PsiElement element = statement;
     while (element != null) {
       if (element instanceof PsiMethod || element instanceof PsiClass) break;
       if (element instanceof PsiLabeledStatement
           && element != statement
-          && ((PsiLabeledStatement)element).getLabelIdentifier() != null
           && Comparing.equal(((PsiLabeledStatement)element).getLabelIdentifier().getText(), text)) {
         String description = JavaErrorMessages.message("duplicate.label", text);
         return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
