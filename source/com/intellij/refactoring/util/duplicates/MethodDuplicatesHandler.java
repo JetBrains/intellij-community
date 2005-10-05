@@ -18,7 +18,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -43,7 +42,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
       return;
     }
     if (!file.isWritable()) {
-      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, file)) return;
+      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return;
     }
     if (method.isConstructor()) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("replace.with.method.call.does.not.work.for.constructors"));

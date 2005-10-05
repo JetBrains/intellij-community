@@ -20,7 +20,6 @@ import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.ui.MemberSelectionTable;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.ui.VisibilityPanel;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoChange;
@@ -275,7 +274,7 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
         }
 
         if (!targetClass[0].isWritable()) {
-          if (!RefactoringMessageUtil.checkReadOnlyStatus(myProject, targetClass[0])) return "";
+          if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, targetClass[0])) return "";
           return "";
 //          return "Cannot perform the refactoring.\nDestination class " + targetClass[0].getQualifiedName() + " is read-only.";
         }

@@ -9,7 +9,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor;
 import com.intellij.refactoring.util.occurences.ExpressionOccurenceManager;
@@ -25,7 +24,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
   public void invoke(Project project, PsiExpression[] expressions) {
     for (PsiExpression expression : expressions) {
       final PsiFile file = expression.getContainingFile();
-      if (!file.isWritable() && !RefactoringMessageUtil.checkReadOnlyStatus(project, file)) return;
+      if (!file.isWritable() && !CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return;
     }
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     super.invoke(project, expressions, null);
@@ -33,7 +32,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
 
   public void invoke(Project project, Editor editor, PsiFile file, DataContext dataContext) {
     if (!file.isWritable()) {
-      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, file)) return;
+      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return;
     }
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     final ElementToWorkOn elementToWorkOn = ElementToWorkOn.getElementToWorkOn(editor, file,

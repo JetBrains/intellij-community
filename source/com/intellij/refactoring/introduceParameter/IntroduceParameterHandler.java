@@ -30,7 +30,6 @@ import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.ui.NameSuggestionsGenerator;
 import com.intellij.refactoring.ui.TypeSelectorManager;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.NonNls;
@@ -99,7 +98,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
     }
 
     if (!method.isWritable()) {
-      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, method)) return false;
+      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, method)) return false;
     }
 
     final PsiType typeByExpression = !invokedOnDeclaration ? RefactoringUtil.getTypeByExpressionWithExpectedType(expr) : null;
@@ -129,7 +128,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
       return false;
     }
     if (!methodToSearchFor.isWritable()) {
-      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, methodToSearchFor)) return false;
+      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, methodToSearchFor)) return false;
     }
 
     PsiExpression[] occurences;

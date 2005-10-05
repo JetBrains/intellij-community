@@ -12,7 +12,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.containers.HashSet;
 
@@ -64,7 +63,7 @@ public class SafeDeleteHandler implements RefactoringActionHandler {
       }
     }
 
-    if (!RefactoringMessageUtil.checkReadOnlyStatusRecursively(project, Arrays.asList(elementsToDelete))) return;
+    if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, Arrays.asList(elementsToDelete))) return;
 
     SafeDeleteDialog dialog = new SafeDeleteDialog(project, elementsToDelete, new SafeDeleteDialog.Callback() {
       public void run(final SafeDeleteDialog dialog) {

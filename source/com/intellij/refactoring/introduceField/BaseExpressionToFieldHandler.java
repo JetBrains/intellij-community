@@ -29,7 +29,6 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import static com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler.InitializationPlace.*;
 import com.intellij.refactoring.rename.RenameUtil;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.occurences.OccurenceManager;
@@ -100,7 +99,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     }
 
     if (!file.isWritable()) {
-      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, file)) return false;
+      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return false;
     }
 
     final PsiClass parentClass = myParentClass;
@@ -177,7 +176,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
           final PsiClass destClass = settings.getDestinationClass() == null ? myParentClass : settings.getDestinationClass();
 
           if (!destClass.getContainingFile().isWritable()) {
-            if (!RefactoringMessageUtil.checkReadOnlyStatus(project, destClass.getContainingFile())) return;
+            if (!CommonRefactoringUtil.checkReadOnlyStatus(project, destClass.getContainingFile())) return;
           }
 
           PsiField field = createField(fieldName, type, initializer,

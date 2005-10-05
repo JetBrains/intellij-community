@@ -12,7 +12,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 
 import java.util.HashSet;
@@ -97,7 +96,7 @@ public class EncapsulateFieldsHandler implements RefactoringActionHandler {
     }
 
     if (!aClass.isWritable()) {
-      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, aClass)) return;
+      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, aClass)) return;
     }
 
     EncapsulateFieldsDialog dialog = new EncapsulateFieldsDialog(

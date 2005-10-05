@@ -21,7 +21,6 @@ import com.intellij.refactoring.extractInterface.ExtractClassUtil;
 import com.intellij.refactoring.memberPullUp.PullUpConflictsUtil;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.JavaDocPolicy;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.usageView.UsageViewUtil;
@@ -61,7 +60,7 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
     mySubclass = (PsiClass) elements[0];
 
     if (!mySubclass.isWritable()) {
-      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, mySubclass)) return;
+      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, mySubclass)) return;
     }
 
     if (mySubclass.isInterface()) {

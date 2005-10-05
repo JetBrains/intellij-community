@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
@@ -34,7 +33,7 @@ public class PushDownHandler implements RefactoringActionHandler {
       }
 
       if (!element.isWritable()) {
-        if (!RefactoringMessageUtil.checkReadOnlyStatus(project, element)) return;
+        if (!CommonRefactoringUtil.checkReadOnlyStatus(project, element)) return;
       }
 
       if (element instanceof PsiClass || element instanceof PsiField || element instanceof PsiMethod) {
@@ -64,7 +63,7 @@ public class PushDownHandler implements RefactoringActionHandler {
       return;
 
     if (!aClass.isWritable()) {
-      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, aClass)) return;
+      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, aClass)) return;
     }
     MemberInfoStorage memberInfoStorage = new MemberInfoStorage(aClass, new MemberInfo.Filter() {
       public boolean includeMember(PsiMember element) {

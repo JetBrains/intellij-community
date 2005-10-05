@@ -10,7 +10,6 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.refactoring.ui.RefactoringDialog;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.ReferenceEditorWithBrowseButton;
 import org.jetbrains.annotations.NonNls;
@@ -168,7 +167,7 @@ public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
       return;
     }
     if (!targetClass.isWritable()) {
-      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, targetClass)) return;
+      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, targetClass)) return;
     }
 
     invokeRefactoring(new ReplaceConstructorWithFactoryProcessor(project, myConstructor, myContainingClass,

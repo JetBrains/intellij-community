@@ -21,7 +21,6 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.xml.util.XmlUtil;
@@ -88,7 +87,7 @@ public class PsiElementRenameHandler implements RenameHandler {
       XmlAttribute value = (XmlAttribute)element.getParent();
       if (XmlUtil.isAntTargetDefinition(value) || XmlUtil.isAntPropertyDefinition(value)) {
         if (!element.isWritable()) {
-          if (!RefactoringMessageUtil.checkReadOnlyStatus(project, element)) return false;
+          if (!CommonRefactoringUtil.checkReadOnlyStatus(project, element)) return false;
         }
         return true;
       }
@@ -119,7 +118,7 @@ public class PsiElementRenameHandler implements RenameHandler {
     }
 
     if (!element.isWritable()) {
-      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, element)) return false;
+      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, element)) return false;
     }
     return true;
   }
@@ -157,7 +156,7 @@ public class PsiElementRenameHandler implements RenameHandler {
         if (elementToRename == null) return;
 
         if (!elementToRename.isWritable()) {
-          if (!RefactoringMessageUtil.checkReadOnlyStatus(project, elementToRename)) return;
+          if (!CommonRefactoringUtil.checkReadOnlyStatus(project, elementToRename)) return;
         }
       }
       String helpID = HelpID.getRenameHelpID(elementToRename);

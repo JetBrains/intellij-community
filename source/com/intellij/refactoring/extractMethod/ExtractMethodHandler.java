@@ -20,7 +20,6 @@ import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.duplicates.DuplicatesImpl;
@@ -60,7 +59,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler {
     }
 
     if (!file.isWritable()) {
-      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, file)) return;
+      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return;
     }
 
 

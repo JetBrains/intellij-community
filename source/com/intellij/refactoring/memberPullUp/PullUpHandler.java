@@ -23,7 +23,6 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.JavaDocPolicy;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
@@ -52,7 +51,7 @@ public class PullUpHandler implements RefactoringActionHandler, PullUpDialog.Cal
       }
 
       if (!element.isWritable()) {
-        if (!RefactoringMessageUtil.checkReadOnlyStatus(project, element)) return;
+        if (!CommonRefactoringUtil.checkReadOnlyStatus(project, element)) return;
       }
 
       if (element instanceof PsiClass || element instanceof PsiField || element instanceof PsiMethod) {
@@ -176,12 +175,12 @@ public class PullUpHandler implements RefactoringActionHandler, PullUpDialog.Cal
 
   private boolean checkWritable(PsiClass superClass, MemberInfo[] infos) {
     if (!superClass.isWritable()) {
-      if (!RefactoringMessageUtil.checkReadOnlyStatus(myProject, superClass)) return false;
+      if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, superClass)) return false;
     }
     for (MemberInfo info : infos) {
       if (info.getMember() instanceof PsiClass && info.getOverrides() != null) continue;
       if (!info.getMember().isWritable()) {
-        if (!RefactoringMessageUtil.checkReadOnlyStatus(myProject, info.getMember())) return false;
+        if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, info.getMember())) return false;
       }
     }
     return true;

@@ -20,7 +20,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.RefactoringMessageDialog;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -37,7 +36,7 @@ class InlineLocalHandler {
    */
   public void invoke(final Project project, final Editor editor, final PsiLocalVariable local) {
     if (!local.isWritable()) {
-      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, local)) return;
+      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, local)) return;
     }
 
     final HighlightManager highlightManager = HighlightManager.getInstance(project);

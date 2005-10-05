@@ -18,7 +18,7 @@ import com.intellij.psi.PsiPackage;
 import com.intellij.refactoring.copy.CopyHandler;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandler;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.Patches;
 
 import javax.swing.*;
@@ -252,7 +252,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
         if (elements == null) {
           return;
         }
-        if (!RefactoringMessageUtil.checkReadOnlyStatusRecursively(myProject, Arrays.asList(elements))) return;        ((CopyPasteManagerEx)CopyPasteManager.getInstance()).setElements(elements, false);
+        if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(myProject, Arrays.asList(elements))) return;        ((CopyPasteManagerEx)CopyPasteManager.getInstance()).setElements(elements, false);
         updateView();
       }
 

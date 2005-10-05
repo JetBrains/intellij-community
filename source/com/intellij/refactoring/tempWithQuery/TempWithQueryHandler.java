@@ -24,7 +24,6 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler;
 import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.duplicates.DuplicatesImpl;
 import com.intellij.util.IncorrectOperationException;
@@ -52,7 +51,7 @@ public class TempWithQueryHandler implements RefactoringActionHandler {
 
   private void invokeOnVariable(final PsiFile file, final Project project, final PsiLocalVariable local, final Editor editor) {
     if (!file.isWritable()) {
-      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, file)) return;
+      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return;
     }
 
     String localName = local.getName();

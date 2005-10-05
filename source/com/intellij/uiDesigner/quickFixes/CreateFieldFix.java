@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.uiDesigner.GuiEditor;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.util.IncorrectOperationException;
@@ -75,7 +75,7 @@ public final class CreateFieldFix extends QuickFix{
 
     if(!boundClass.isWritable()){
       if(showErrors) {
-        if (!RefactoringMessageUtil.checkReadOnlyStatus(boundClass, project,
+        if (!CommonRefactoringUtil.checkReadOnlyStatus(boundClass, project,
                                                         UIDesignerBundle.message("error.cannot.create.field", fieldClassName))) {
           return;
         }

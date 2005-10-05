@@ -9,7 +9,6 @@ import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 
 /**
@@ -77,7 +76,7 @@ public class ReplaceConstructorWithFactoryHandler
     );
     if (answer != 0) return;
     if (!aClass.isWritable()) {
-      if (!RefactoringMessageUtil.checkReadOnlyStatus(myProject, aClass)) return;
+      if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, aClass)) return;
     }
     new ReplaceConstructorWithFactoryDialog(myProject, null, aClass).show();
   }
@@ -111,7 +110,7 @@ public class ReplaceConstructorWithFactoryHandler
     if (!checkAbstractClassOrInterfaceMessage(aClass)) return;
 
     if (!method.isWritable()) {
-      if (!RefactoringMessageUtil.checkReadOnlyStatus(myProject, method)) return;
+      if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, method)) return;
     }
     new ReplaceConstructorWithFactoryDialog(myProject, method, method.getContainingClass()).show();
   }

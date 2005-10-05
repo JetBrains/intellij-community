@@ -201,7 +201,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
   }
 
   protected void performRefactoring(UsageInfo[] usages) {
-    if (!RefactoringMessageUtil.checkReadOnlyStatus(myProject, myTargetClass)) return;
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, myTargetClass)) return;
 
     PsiMethod patternMethod = createMethodToAdd();
     final List<PsiReference> docRefs = new ArrayList<PsiReference>();

@@ -10,7 +10,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.occurences.*;
 
@@ -41,7 +40,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
 
   public void invoke(Project project, Editor editor, PsiFile file, DataContext dataContext) {
     if (!file.isWritable()) {
-      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, file)) return;
+      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return;
     }
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 

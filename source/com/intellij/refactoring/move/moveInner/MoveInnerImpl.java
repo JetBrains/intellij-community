@@ -11,7 +11,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.move.MoveCallback;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.RefactoringBundle;
 
 public class MoveInnerImpl {
@@ -26,7 +26,7 @@ public class MoveInnerImpl {
     LOG.assertTrue(condition);
 
     if (!aClass.isWritable()) {
-      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, aClass)) return;
+      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, aClass)) return;
     }
 
 

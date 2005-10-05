@@ -10,7 +10,6 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.MoveCallback;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 
 import java.util.HashSet;
@@ -90,7 +89,7 @@ public class MoveMembersImpl {
     }
 
     if (!sourceClass.isWritable()) {
-      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, sourceClass)) return;
+      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, sourceClass)) return;
     }
 
     final PsiClass initialTargerClass = targetContainer instanceof PsiClass? (PsiClass) targetContainer : (PsiClass) null;

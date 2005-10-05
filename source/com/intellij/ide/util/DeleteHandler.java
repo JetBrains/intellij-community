@@ -20,7 +20,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.safeDelete.SafeDeleteProcessor;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
 import com.intellij.CommonBundle;
@@ -86,7 +86,7 @@ public class DeleteHandler {
     if (safeDeleteApplicable) {
       DeleteDialog dialog = new DeleteDialog(project, elements, new DeleteDialog.Callback() {
         public void run(final DeleteDialog dialog) {
-          if (!RefactoringMessageUtil.checkReadOnlyStatusRecursively(project, Arrays.asList(elements))) return;
+          if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, Arrays.asList(elements))) return;
           SafeDeleteProcessor.createInstance(project, new Runnable() {
             public void run() {
               dialog.close(DeleteDialog.CANCEL_EXIT_CODE);

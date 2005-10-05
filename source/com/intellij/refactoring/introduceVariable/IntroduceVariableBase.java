@@ -25,10 +25,7 @@ import com.intellij.refactoring.IntroduceHandlerBase;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
-import com.intellij.refactoring.util.ConflictsUtil;
-import com.intellij.refactoring.util.FieldConflictsResolver;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.*;
 import com.intellij.refactoring.util.occurences.ExpressionOccurenceManager;
 import com.intellij.refactoring.util.occurences.NotInSuperCallOccurenceFilter;
 import com.intellij.util.IncorrectOperationException;
@@ -128,7 +125,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     }
 
     if (!file.isWritable()) {
-      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, file)) return false;
+      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return false;
     }
 
     PsiElement containerParent = tempContainer;

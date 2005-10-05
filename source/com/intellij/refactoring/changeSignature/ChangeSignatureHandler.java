@@ -15,7 +15,6 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeClassSignature.ChangeClassSignatureDialog;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 
 public class ChangeSignatureHandler implements RefactoringActionHandler {
@@ -53,7 +52,7 @@ public class ChangeSignatureHandler implements RefactoringActionHandler {
 
   private void invoke(final PsiMethod method, final Project project) {
     if (!method.isWritable()) {
-      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, method)) return;
+      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, method)) return;
     }
 
     final String actionString = RefactoringBundle.message("to.refactor");
@@ -69,7 +68,7 @@ public class ChangeSignatureHandler implements RefactoringActionHandler {
     }
 
     if (!method.isWritable()) {
-      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, method)) return;
+      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, method)) return;
     }
 
     final PsiClass containingClass = method.getContainingClass();
@@ -80,7 +79,7 @@ public class ChangeSignatureHandler implements RefactoringActionHandler {
   private void invoke(final PsiClass aClass) {
     Project project = aClass.getProject();
     if (!aClass.isWritable()) {
-      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, aClass)) return;
+      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, aClass)) return;
     }
 
     ChangeClassSignatureDialog dialog = new ChangeClassSignatureDialog(aClass);

@@ -15,7 +15,6 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.memberPullUp.PullUpHelper;
 import com.intellij.refactoring.util.JavaDocPolicy;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.usageView.UsageViewUtil;
@@ -61,7 +60,7 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler {
 
 
     if (!myClass.isWritable()) {
-      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, myClass)) return;
+      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, myClass)) return;
     }
 
     final ExtractInterfaceDialog dialog = new ExtractInterfaceDialog(

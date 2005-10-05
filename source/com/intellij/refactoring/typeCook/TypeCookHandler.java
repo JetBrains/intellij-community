@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 
 public class TypeCookHandler implements RefactoringActionHandler {
 
@@ -31,7 +31,7 @@ public class TypeCookHandler implements RefactoringActionHandler {
   private boolean canCook(PsiElement element, Project project) {
 
     if (!element.isWritable()) {
-      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, element)) return false;
+      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, element)) return false;
     }
 
     return true;

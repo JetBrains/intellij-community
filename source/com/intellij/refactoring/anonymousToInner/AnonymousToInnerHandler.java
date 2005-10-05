@@ -20,7 +20,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.classMembers.ElementNeedsThis;
 import com.intellij.util.IncorrectOperationException;
@@ -54,7 +53,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
 
   public void invoke(final Project project, Editor editor, final PsiFile file, DataContext dataContext) {
     if (!file.isWritable()) {
-      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, file)) return;
+      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return;
     }
 
     final int offset = editor.getCaretModel().getOffset();
@@ -93,7 +92,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
     LOG.assertTrue(targetContainer instanceof PsiClass);
     myTargetClass = (PsiClass) targetContainer;
 
-    if (!RefactoringMessageUtil.checkReadOnlyStatus(project, myTargetClass)) return;
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, myTargetClass)) return;
 
     Map<PsiVariable,VariableInfo> variableInfoMap = new LinkedHashMap<PsiVariable, VariableInfo>();
     collectUsedVariables(variableInfoMap, myAnonClass);

@@ -17,7 +17,6 @@ import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
@@ -76,7 +75,7 @@ public class InheritanceToDelegationHandler implements RefactoringActionHandler 
     }
 
     if (!aClass.isWritable()) {
-      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, aClass)) return;
+      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, aClass)) return;
     }
 
     final PsiClass[] bases = aClass.getSupers();

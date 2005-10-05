@@ -22,7 +22,6 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 /*import com.intellij.refactoring.util.ParameterTablePanel;*/
-import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 
 public class MakeStaticHandler implements RefactoringActionHandler {
@@ -55,7 +54,7 @@ public class MakeStaticHandler implements RefactoringActionHandler {
 
     final PsiTypeParameterListOwner member = (PsiTypeParameterListOwner)elements[0];
     if (!member.isWritable()) {
-      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, member)) return;
+      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, member)) return;
     }
 
     final PsiClass containingClass;

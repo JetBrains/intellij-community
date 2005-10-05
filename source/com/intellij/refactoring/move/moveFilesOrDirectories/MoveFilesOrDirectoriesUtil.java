@@ -12,7 +12,6 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.MoveCallback;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -52,7 +51,7 @@ public class MoveFilesOrDirectoriesUtil {
       }
     }
 
-    if (!RefactoringMessageUtil.checkReadOnlyStatusRecursively(project, Arrays.asList(elements))) return;
+    if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, Arrays.asList(elements))) return;
 
     final PsiDirectory initialTargetDirectory = getInitialTargetDirectory(initialTargetElement, elements);
 

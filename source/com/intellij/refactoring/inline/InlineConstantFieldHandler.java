@@ -8,7 +8,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 
 /**
@@ -19,7 +18,7 @@ public class InlineConstantFieldHandler {
 
   public void invoke(Project project, Editor editor, PsiField field) {
     if (!field.isWritable()) {
-      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, field)) return;
+      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, field)) return;
     }
 
     if (!field.hasModifierProperty(PsiModifier.FINAL)) {
@@ -50,7 +49,7 @@ public class InlineConstantFieldHandler {
 
     final boolean invokedOnReference = (reference != null);
     if (!invokedOnReference && !field.isWritable()) {
-      if (!RefactoringMessageUtil.checkReadOnlyStatus(project, field)) return;
+      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, field)) return;
     }
     PsiReferenceExpression refExpression = reference != null ? (PsiReferenceExpression)reference.getElement() : null;
     InlineFieldDialog dialog = new InlineFieldDialog(project, field, refExpression);
