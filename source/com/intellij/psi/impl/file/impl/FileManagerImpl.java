@@ -1041,7 +1041,9 @@ public class FileManagerImpl implements FileManager {
                     treeEvent.setChild(psiFile);
                     myManager.childRemoved(treeEvent);
                   }
-                  else if (!psiFile1.getClass().equals(psiFile.getClass())) {
+                  else if (!psiFile1.getClass().equals(psiFile.getClass()) ||
+                           psiFile1.getFileType() != myFileTypeManager.getFileTypeByFileName((String)event.getOldValue())
+                          ) {
                     myVFileToPsiFileMap.remove(vFile);
 
                     treeEvent.setOldChild(psiFile);
