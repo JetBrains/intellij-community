@@ -7,6 +7,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.lang.ASTNode;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,7 +19,10 @@ public class PsiEquivalenceUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.PsiEquivalenceUtil");
 
   public static boolean areElementsEquivalent(PsiElement element1, PsiElement element2) {
-    if (element1.getNode().getElementType() != element2.getNode().getElementType()) return false;
+    ASTNode node1 = element1.getNode();
+    ASTNode node2 = element2.getNode();
+    if (node1 == null || node2 == null) return false;
+    if (node1.getElementType() != node2.getElementType()) return false;
 
     PsiElement[] children1 = getFilteredChildren(element1);
     PsiElement[] children2 = getFilteredChildren(element2);
