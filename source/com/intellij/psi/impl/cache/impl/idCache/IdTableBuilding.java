@@ -258,10 +258,11 @@ public class IdTableBuilding {
     if (fileType instanceof LanguageFileType) {
       final Language lang = ((LanguageFileType)fileType).getLanguage();
       final FindUsagesProvider findUsagesProvider = lang.getFindUsagesProvider();
-      final WordsScanner scanner = findUsagesProvider.getWordsScanner();
-      final ParserDefinition parserDef = lang.getParserDefinition();
-      final TokenSet commentTokens = parserDef != null ? parserDef.getCommentTokens() : null;
+      //noinspection ConstantConditions
+      final WordsScanner scanner = findUsagesProvider == null ? null : findUsagesProvider.getWordsScanner();
       if (scanner != null) {
+        final ParserDefinition parserDef = lang.getParserDefinition();
+        final TokenSet commentTokens = parserDef != null ? parserDef.getCommentTokens() : null;
         return new WordsScannerIdCacheBuilderAdapter(scanner, highlightingLexer, commentTokens);
       }
     }
