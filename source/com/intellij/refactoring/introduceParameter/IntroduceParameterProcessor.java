@@ -23,10 +23,7 @@ import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.IntroduceParameterRefactoring;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.ConflictsDialog;
-import com.intellij.refactoring.util.ConflictsUtil;
-import com.intellij.refactoring.util.FieldConflictsResolver;
-import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.refactoring.util.VisibilityUtil;
+import com.intellij.refactoring.util.*;
 import com.intellij.refactoring.util.javadoc.MethodJavaDocHelper;
 import com.intellij.refactoring.util.occurences.ExpressionOccurenceManager;
 import com.intellij.refactoring.util.occurences.LocalVariableOccurenceManager;
@@ -215,7 +212,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
             final PsiElement element = usageInfo.getElement();
             if (!PsiTreeUtil.isAncestor(myMethodToReplaceIn.getContainingClass(), element, false)) {
               conflicts.add(RefactoringBundle.message("parameter.initializer.contains.0.but.not.all.calls.to.method.are.in.its.class",
-                                                      ConflictsUtil.htmlEmphasize(PsiKeyword.SUPER)));
+                                                      CommonRefactoringUtil.htmlEmphasize(PsiKeyword.SUPER)));
               break;
             }
           }
@@ -223,7 +220,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
       }
     }
     if(conflicts.size() > 0 && myPrepareSuccessfulSwingThreadCallback!= null) {
-      ConflictsDialog dialog = new ConflictsDialog(conflicts.toArray(new String[conflicts.size()]), myProject);
+      ConflictsDialog dialog = new ConflictsDialog(myProject);
       dialog.show();
       if(!dialog.isOK()) return false;
     }

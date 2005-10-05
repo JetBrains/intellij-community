@@ -253,7 +253,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
                 if (aPackage != null && usagePackage != null && !aPackage.equalToPackage(usagePackage)) {
 
                   final String message = RefactoringBundle.message("a.package.local.class.0.will.no.longer.be.accessible.from.1",
-                                                                   ConflictsUtil.htmlEmphasize(aClass.getName()),
+                                                                   CommonRefactoringUtil.htmlEmphasize(aClass.getName()),
                                                                    ConflictsUtil.getDescription(
                                                                    container, true));
                   conflicts.add(message);

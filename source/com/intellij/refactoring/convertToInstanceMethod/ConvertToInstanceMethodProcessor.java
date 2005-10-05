@@ -20,10 +20,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.moveInstanceMethod.MoveInstanceMethodViewDescriptor;
 import com.intellij.refactoring.move.moveMembers.MoveMembersProcessor;
 import com.intellij.refactoring.ui.ConflictsDialog;
-import com.intellij.refactoring.util.ConflictsUtil;
-import com.intellij.refactoring.util.RefactoringHierarchyUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.refactoring.util.VisibilityUtil;
+import com.intellij.refactoring.util.*;
 import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
@@ -148,7 +145,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
             String message =
               RefactoringBundle.message("0.contains.call.with.null.argument.for.parameter.1",
                                         ConflictsUtil.getDescription(ConflictsUtil.getContainer(methodCall), true),
-                                        ConflictsUtil.htmlEmphasize(myTargetParameter.getName()));
+                                        CommonRefactoringUtil.htmlEmphasize(myTargetParameter.getName()));
             conflicts.add(message);
           }
         }
@@ -163,7 +160,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
     }
 
     if (conflicts.size() != 0) {
-      final ConflictsDialog conflictsDialog = new ConflictsDialog(conflicts.toArray(new String[conflicts.size()]), myProject);
+      final ConflictsDialog conflictsDialog = new ConflictsDialog(myProject);
       conflictsDialog.show();
       if (!conflictsDialog.isOK()) return false;
     }

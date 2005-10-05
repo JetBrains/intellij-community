@@ -8,7 +8,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageViewUtil;
-import org.jetbrains.annotations.NonNls;
 
 import java.util.Collection;
 
@@ -29,7 +28,7 @@ public class ConflictsUtil {
       if (includeParent) {
         options |= PsiFormatUtil.SHOW_CONTAINING_CLASS;
       }
-      return RefactoringBundle.message("field.description", htmlEmphasize(PsiFormatUtil.formatVariable((PsiVariable)element, options, PsiSubstitutor.EMPTY)));
+      return RefactoringBundle.message("field.description", CommonRefactoringUtil.htmlEmphasize(PsiFormatUtil.formatVariable((PsiVariable)element, options, PsiSubstitutor.EMPTY)));
     }
 
     if (element instanceof PsiMethod) {
@@ -39,8 +38,8 @@ public class ConflictsUtil {
       }
       final PsiMethod method = (PsiMethod) element;
       return method.isConstructor() ?
-             RefactoringBundle.message("constructor.description", htmlEmphasize(PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, options, PsiFormatUtil.SHOW_TYPE))) :
-             RefactoringBundle.message("method.description", htmlEmphasize( PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, options, PsiFormatUtil.SHOW_TYPE)));
+             RefactoringBundle.message("constructor.description", CommonRefactoringUtil.htmlEmphasize(PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, options, PsiFormatUtil.SHOW_TYPE))) :
+             RefactoringBundle.message("method.description", CommonRefactoringUtil.htmlEmphasize( PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, options, PsiFormatUtil.SHOW_TYPE)));
     }
 
     if (element instanceof PsiClassInitializer) {
@@ -53,32 +52,26 @@ public class ConflictsUtil {
     }
 
     if (element instanceof PsiParameter) {
-      return RefactoringBundle.message("parameter.description", htmlEmphasize(((PsiParameter)element).getName()));
+      return RefactoringBundle.message("parameter.description", CommonRefactoringUtil.htmlEmphasize(((PsiParameter)element).getName()));
     }
 
     if (element instanceof PsiLocalVariable) {
-      return RefactoringBundle.message("local.variable.description", htmlEmphasize(((PsiVariable)element).getName()));
+      return RefactoringBundle.message("local.variable.description", CommonRefactoringUtil.htmlEmphasize(((PsiVariable)element).getName()));
     }
 
     if (element instanceof PsiPackage) {
-      return RefactoringBundle.message("package.description", htmlEmphasize(((PsiPackage)element).getName()));
+      return RefactoringBundle.message("package.description", CommonRefactoringUtil.htmlEmphasize(((PsiPackage)element).getName()));
     }
 
     if ((element instanceof PsiClass)) {
       //TODO : local & anonymous
       PsiClass psiClass = (PsiClass) element;
-      return RefactoringBundle.message("class.description", htmlEmphasize(UsageViewUtil.getDescriptiveName(psiClass)));
+      return RefactoringBundle.message("class.description", CommonRefactoringUtil.htmlEmphasize(UsageViewUtil.getDescriptiveName(psiClass)));
     }
 
     final String typeString = UsageViewUtil.getType(element);
     final String name = UsageViewUtil.getDescriptiveName(element);
-    return typeString + " " + htmlEmphasize(name);
-  }
-
-  public static String htmlEmphasize(String text) {
-    @NonNls final String header = "<b><code>";
-    @NonNls final String footer = "</code></b>";
-    return new StringBuilder().append(header).append(text).append(footer).toString();
+    return typeString + " " + CommonRefactoringUtil.htmlEmphasize(name);
   }
 
   public static String capitalize(String text) {

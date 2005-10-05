@@ -3,6 +3,7 @@ package com.intellij.refactoring.memberPushDown;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.ConflictsUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 
@@ -59,7 +60,7 @@ public class PushDownConflicts {
       if (movedMember instanceof PsiField) {
         String name = movedMember.getName();
         if (targetClass.findFieldByName(name, false) != null) {
-          String message = RefactoringBundle.message("0.already.contains.field.1", ConflictsUtil.getDescription(targetClass, false), ConflictsUtil.htmlEmphasize(name));
+          String message = RefactoringBundle.message("0.already.contains.field.1", ConflictsUtil.getDescription(targetClass, false), CommonRefactoringUtil.htmlEmphasize(name));
           myConflicts.add(ConflictsUtil.capitalize(message));
         }
       }
@@ -80,7 +81,7 @@ public class PushDownConflicts {
 
           if (name.equals(innerClass.getName())) {
             String message = RefactoringBundle.message("0.already.contains.inner.class.named.1", ConflictsUtil.getDescription(targetClass, false),
-                                                  ConflictsUtil.htmlEmphasize(name));
+                                                  CommonRefactoringUtil.htmlEmphasize(name));
             myConflicts.add(message);
           }
         }

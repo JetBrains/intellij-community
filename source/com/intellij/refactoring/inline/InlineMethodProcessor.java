@@ -34,7 +34,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 
 import java.util.*;
-import java.text.MessageFormat;
 
 public class InlineMethodProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.inline.InlineMethodProcessor");
@@ -120,14 +119,14 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       Set<PsiMember> referencedInaccessible = containersToReferenced.get(container);
       for (PsiMember referenced : referencedInaccessible) {
         String message = RefactoringBundle.message("0.that.is.used.in.inlined.method.is.not.accessible.from.call.site.s.in.1",
-                                              ConflictsUtil.getDescription(referenced, true), ConflictsUtil.getDescription(container, true));
+                                                   ConflictsUtil.getDescription(referenced, true), ConflictsUtil.getDescription(container, true));
         conflicts.add(ConflictsUtil.capitalize(message));
       }
     }
 
     if (conflicts.size() > 0) {
-      ConflictsDialog dialog = new ConflictsDialog(conflicts.toArray(new String[conflicts.size()]),
-                                                   myProject);
+      ConflictsDialog dialog = new ConflictsDialog(myProject
+      );
       dialog.show();
       if (!dialog.isOK()) {
         return false;

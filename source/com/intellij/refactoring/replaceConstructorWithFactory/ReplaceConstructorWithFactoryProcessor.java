@@ -160,8 +160,8 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
 
 
     if (myPrepareSuccessfulSwingThreadCallback != null && conflicts.size() > 0) {
-      ConflictsDialog dialog = new ConflictsDialog(conflicts.toArray(new String[conflicts.size()]),
-                                                   myProject);
+      ConflictsDialog dialog = new ConflictsDialog(myProject
+      );
       dialog.show();
       if (!dialog.isOK()) return false;
     }

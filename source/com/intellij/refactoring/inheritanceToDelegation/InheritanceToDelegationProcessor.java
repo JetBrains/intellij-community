@@ -15,10 +15,7 @@ import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.inheritanceToDelegation.usageInfo.*;
 import com.intellij.refactoring.ui.ConflictsDialog;
-import com.intellij.refactoring.util.ConflictsUtil;
-import com.intellij.refactoring.util.RefactoringHierarchyUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.refactoring.util.VisibilityUtil;
+import com.intellij.refactoring.util.*;
 import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor;
 import com.intellij.refactoring.util.classRefs.ClassInstanceScanner;
 import com.intellij.refactoring.util.classRefs.ClassReferenceScanner;
@@ -36,7 +33,6 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 
 import java.util.*;
-import java.text.MessageFormat;
 
 import org.jetbrains.annotations.NonNls;
 
@@ -178,7 +174,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
       ArrayList<String> conflicts = new ArrayList<String>();
       if (objectUpcastedUsageInfos.length > 0) {
         final String message = RefactoringBundle.message("instances.of.0.upcasted.to.1.were.found",
-                                                         ConflictsUtil.getDescription(myClass, true), ConflictsUtil.htmlEmphasize("java.lang.Object"));
+                                                         ConflictsUtil.getDescription(myClass, true), CommonRefactoringUtil.htmlEmphasize("java.lang.Object"));
 
         conflicts.add(message);
       }
@@ -186,7 +182,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
       analyzeConflicts(usagesIn, conflicts);
       if (!conflicts.isEmpty()) {
         ConflictsDialog conflictsDialog =
-                new ConflictsDialog(conflicts.toArray(new String[conflicts.size()]), myProject);
+                new ConflictsDialog(myProject);
         conflictsDialog.show();
         if (!conflictsDialog.isOK()) return false;
       }

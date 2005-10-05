@@ -220,7 +220,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     conflicts.addAll(RenameUtil.getConflictDescriptions(usagesIn));
     addExistingNameConflicts(conflicts);
     if (conflicts.size() > 0) {
-      ConflictsDialog conflictsDialog = new ConflictsDialog(conflicts.toArray(new String[conflicts.size()]), myProject);
+      ConflictsDialog conflictsDialog = new ConflictsDialog(myProject);
       conflictsDialog.show();
       if (!conflictsDialog.isOK()) {
         return false;

@@ -1445,12 +1445,12 @@ public class RefactoringUtil {
           if (resolved != null && !reported.contains(resolved)
               && !isAncestor(resolved, scopes)
               && !PsiSearchScopeUtil.isInScope(resolveScope, resolved)) {
-            final String scopeDescription = ConflictsUtil.htmlEmphasize(ConflictsUtil.getDescription(ConflictsUtil.getContainer(reference),
+            final String scopeDescription = CommonRefactoringUtil.htmlEmphasize(ConflictsUtil.getDescription(ConflictsUtil.getContainer(reference),
                                                                                                      true));
             final String message =
               RefactoringBundle.message("0.referenced.in.1.will.not.be.accessible.in.module.2",
-                                        ConflictsUtil.capitalize(ConflictsUtil.htmlEmphasize(ConflictsUtil.getDescription(resolved, true))),
-                                        scopeDescription, ConflictsUtil.htmlEmphasize(targetModule.getName()));
+                                        ConflictsUtil.capitalize(CommonRefactoringUtil.htmlEmphasize(ConflictsUtil.getDescription(resolved, true))),
+                                        scopeDescription, CommonRefactoringUtil.htmlEmphasize(targetModule.getName()));
             conflicts.add(message);
             reported.add(resolved);
           }
@@ -1474,14 +1474,14 @@ public class RefactoringUtil {
           if (!resolveScope1.isSearchInModuleContent(targetModule)) {
             final PsiMember container = ConflictsUtil.getContainer(element);
             LOG.assertTrue(container != null);
-            final String scopeDescription = ConflictsUtil.htmlEmphasize(ConflictsUtil.getDescription(container,
+            final String scopeDescription = CommonRefactoringUtil.htmlEmphasize(ConflictsUtil.getDescription(container,
                                                                                                      true));
             Module module = ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(element.getContainingFile().getVirtualFile());
             final String message =
               RefactoringBundle.message("0.referenced.in.1.will.not.be.accessible.from.module.2", ConflictsUtil.capitalize(
-                ConflictsUtil.htmlEmphasize(ConflictsUtil.getDescription(moveRenameUsageInfo.referencedElement, true))),
+                CommonRefactoringUtil.htmlEmphasize(ConflictsUtil.getDescription(moveRenameUsageInfo.referencedElement, true))),
                                    scopeDescription,
-                                   ConflictsUtil.htmlEmphasize(module.getName()));
+                                   CommonRefactoringUtil.htmlEmphasize(module.getName()));
             conflicts.add(message);
           }
         }

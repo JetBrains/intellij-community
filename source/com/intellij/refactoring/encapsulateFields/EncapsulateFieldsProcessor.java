@@ -77,7 +77,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
       checkExistingMethods(myDialog.getSetterPrototypes(), conflicts, false);
 
       if(conflicts.size() > 0) {
-        ConflictsDialog dialog = new ConflictsDialog(conflicts.toArray(new String[conflicts.size()]), myProject);
+        ConflictsDialog dialog = new ConflictsDialog(myProject);
         dialog.show();
         if(!dialog.isOK()) return false;
       }
@@ -101,10 +101,10 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
                                                           PsiFormatUtil.SHOW_TYPE
           );
           String message = isGetter ?
-                           RefactoringBundle.message("encapsulate.fields.getter.exists", ConflictsUtil.htmlEmphasize(descr),
-                                                ConflictsUtil.htmlEmphasize(prototype.getName())) :
-                           RefactoringBundle.message("encapsulate.fields.setter.exists", ConflictsUtil.htmlEmphasize(descr),
-                                                ConflictsUtil.htmlEmphasize(prototype.getName()));
+                           RefactoringBundle.message("encapsulate.fields.getter.exists", CommonRefactoringUtil.htmlEmphasize(descr),
+                                                CommonRefactoringUtil.htmlEmphasize(prototype.getName())) :
+                           RefactoringBundle.message("encapsulate.fields.setter.exists", CommonRefactoringUtil.htmlEmphasize(descr),
+                                                CommonRefactoringUtil.htmlEmphasize(prototype.getName()));
           conflicts.add(message);
         }
       }

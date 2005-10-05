@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NonNls;
 public class ConflictsDialog extends DialogWrapper{
   private String[] myConflictDescriptions;
 
-  public ConflictsDialog(String[] conflictDescriptions, Project project) {
+  public ConflictsDialog(Project project, String... conflictDescriptions) {
     super(project, true);
     myConflictDescriptions = conflictDescriptions;
     setTitle(RefactoringBundle.message("problems.detected.title"));

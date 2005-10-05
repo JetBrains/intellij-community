@@ -79,7 +79,7 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
     }
     if(pushDownConflicts.isAnyConflicts()) {
       final String[] conflicts = pushDownConflicts.getConflicts();
-      ConflictsDialog dialog = new ConflictsDialog(conflicts, myProject);
+      ConflictsDialog dialog = new ConflictsDialog(myProject);
       dialog.show();
       if(!dialog.isOK()) return false;
     }

@@ -351,7 +351,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     }
 
     if (myPrepareSuccessfulSwingThreadCallback != null && conflictDescriptions.size() > 0) {
-      ConflictsDialog dialog = new ConflictsDialog(conflictDescriptions.toArray(new String[conflictDescriptions.size()]), myProject);
+      ConflictsDialog dialog = new ConflictsDialog(myProject);
       dialog.show();
       if (!dialog.isOK()) return false;
     }

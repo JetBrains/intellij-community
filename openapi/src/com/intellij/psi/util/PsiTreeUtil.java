@@ -38,6 +38,18 @@ public class PsiTreeUtil {
     }
   }
 
+  public static PsiElement findCommonParent (PsiElement... elements) {
+    if (elements.length == 0)  return null;
+    if (elements.length == 1)  return elements[0];
+    PsiElement toReturn = elements[0];
+    for (int i = 1; i < elements.length; i++) {
+      toReturn = findCommonParent(toReturn, elements[i]);
+      if (toReturn == null) return null;
+    }
+
+    return toReturn;
+  }
+
   public static @Nullable PsiElement findCommonParent(@NotNull PsiElement element1, @NotNull PsiElement element2) {
     // optimization
     if(element1 == element2) return element1;

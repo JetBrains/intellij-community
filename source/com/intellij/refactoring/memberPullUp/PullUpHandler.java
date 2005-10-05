@@ -167,7 +167,7 @@ public class PullUpHandler implements RefactoringActionHandler, PullUpDialog.Cal
     if (!checkWritable(superClass, infos)) return false;
     String[] conflicts = PullUpConflictsUtil.checkConflicts(infos, mySubclass, superClass, null, null, dialog.getContainmentVerifier());
     if (conflicts.length > 0) {
-      ConflictsDialog conflictsDialog = new ConflictsDialog(conflicts, myProject);
+      ConflictsDialog conflictsDialog = new ConflictsDialog(myProject);
       conflictsDialog.show();
       return conflictsDialog.isOK();
     }

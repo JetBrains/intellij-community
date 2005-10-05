@@ -4,7 +4,7 @@
  */
 package com.intellij.refactoring.util.duplicates;
 
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
@@ -25,7 +25,7 @@ public class ExpressionReturnValue implements ReturnValue {
 
   public boolean isEquivalent(ReturnValue other) {
     if (!(other instanceof ExpressionReturnValue)) return false;
-    return CodeInsightUtil.areElementsEquivalent(myExpression, ((ExpressionReturnValue)other).myExpression);
+    return PsiEquivalenceUtil.areElementsEquivalent(myExpression, ((ExpressionReturnValue)other).myExpression);
   }
 
   public PsiStatement createReplacement(final PsiMethodCallExpression methodCallExpression)

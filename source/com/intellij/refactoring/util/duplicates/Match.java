@@ -1,6 +1,6 @@
 package com.intellij.refactoring.util.duplicates;
 
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Ref;
@@ -82,7 +82,7 @@ public final class Match {
       return true;
     }
     else {
-      if (!CodeInsightUtil.areElementsEquivalent(currentValue, value)) {
+      if (!PsiEquivalenceUtil.areElementsEquivalent(currentValue, value)) {
         return false;
       }
       myParameterOccurences.get(parameter).add(value);
@@ -124,7 +124,7 @@ public final class Match {
       }
       else {
         if (instanceExpression != null) {
-          return CodeInsightUtil.areElementsEquivalent(instanceExpression, myInstanceExpression.get());
+          return PsiEquivalenceUtil.areElementsEquivalent(instanceExpression, myInstanceExpression.get());
         }
         else {
           return myInstanceExpression.get() == null || myInstanceExpression.get() instanceof PsiThisExpression;

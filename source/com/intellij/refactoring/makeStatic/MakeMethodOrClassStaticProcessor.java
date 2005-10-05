@@ -21,6 +21,7 @@ import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.ConflictsUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
@@ -53,7 +54,7 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
     if (myPrepareSuccessfulSwingThreadCallback != null) {
       List<String> conflicts = getConflictDescriptions(usagesIn);
       if (conflicts.size() > 0) {
-        ConflictsDialog conflictsDialog = new ConflictsDialog(conflicts.toArray(new String[conflicts.size()]), myProject);
+        ConflictsDialog conflictsDialog = new ConflictsDialog(myProject);
         conflictsDialog.show();
         if (!conflictsDialog.isOK()) {
           return false;
@@ -153,7 +154,7 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
     if (inaccessible.size() == 1) {
       final PsiField field = inaccessible.get(0);
       return RefactoringBundle.message("field.0.is.not.accessible",
-                                       ConflictsUtil.htmlEmphasize(field.getName()),
+                                       CommonRefactoringUtil.htmlEmphasize(field.getName()),
                                         ConflictsUtil.getDescription(container, true));
     } else {
       StringBuffer fieldsBuffer = new StringBuffer();
@@ -163,7 +164,7 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
         if (j > 0) {
           fieldsBuffer.append(", ");
         }
-        fieldsBuffer.append(ConflictsUtil.htmlEmphasize(field.getName()));
+        fieldsBuffer.append(CommonRefactoringUtil.htmlEmphasize(field.getName()));
       }
 
       return RefactoringBundle.message("fields.0.are.not.accessible",

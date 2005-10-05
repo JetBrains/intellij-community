@@ -1,6 +1,6 @@
 package com.intellij.refactoring.lang;
 
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -177,7 +177,7 @@ public abstract class ExtractIncludeFileBase implements RefactoringActionHandler
                 final List<Pair<PsiElement, PsiElement>> duplicates = new ArrayList<Pair<PsiElement, PsiElement>>();
                 final XmlTagChild first = children.getFirst();
                 final XmlTagChild second = children.getSecond();
-                CodeInsightUtil.findChildRangeDuplicates(first, second, duplicates, file);
+                PsiEquivalenceUtil.findChildRangeDuplicates(first, second, duplicates, file);
                 final String includePath = doExtract(targetDirectory, targetfileName, first, second,
                                                      file.getLanguage());
 

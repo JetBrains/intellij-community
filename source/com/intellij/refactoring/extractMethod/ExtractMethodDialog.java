@@ -138,7 +138,7 @@ class ExtractMethodDialog extends DialogWrapper {
     Set<String> conflicts = new HashSet<String>();
     checkMethodConflicts(conflicts);
     if (conflicts.size() > 0) {
-      final ConflictsDialog conflictsDialog = new ConflictsDialog(conflicts.toArray(new String[conflicts.size()]), myProject);
+      final ConflictsDialog conflictsDialog = new ConflictsDialog(myProject);
       conflictsDialog.show();
       if (!conflictsDialog.isOK()) return;
     }
