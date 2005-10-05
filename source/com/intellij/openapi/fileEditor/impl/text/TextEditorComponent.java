@@ -59,7 +59,7 @@ final class TextEditorComponent extends JPanel implements DataProvider{
   private final MyEditorPropertyChangeListener myEditorPropertyChangeListener;
   private final MyFileTypeListener myFileTypeListener;
   private final MyVirtualFileListener myVirtualFileListener;
-  private Editor myEditor;
+  private final Editor myEditor;
 
   /**
    * Whether the editor's document is modified or not
