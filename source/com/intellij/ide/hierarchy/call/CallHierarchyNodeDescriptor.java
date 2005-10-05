@@ -32,7 +32,6 @@ import java.util.ArrayList;
 
 public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor implements Navigatable {
   private int myUsageCount = 1;
-  private final static Class<? extends PsiMember>[] ourEnclosingElementClasses = new Class[]{PsiMethod.class, PsiClass.class};
   private ArrayList<PsiReference> myReferences = new ArrayList<PsiReference>();
   private boolean myNavigateToReference;
 
@@ -54,7 +53,7 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
   }
 
   static PsiMember getEnclosingElement(final PsiElement element){
-    return PsiTreeUtil.getParentOfType(element, ourEnclosingElementClasses, false);
+    return PsiTreeUtil.getNonStrictParentOfType(element, PsiMethod.class, PsiClass.class);
   }
 
   public final void incrementUsageCount(){

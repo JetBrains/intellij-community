@@ -156,16 +156,16 @@ public class PsiTreeUtil {
   }
 
   public static @Nullable <T extends PsiElement> T getParentOfType(PsiElement element, Class<? extends T>... classes) {
-    return getParentOfType(element, classes, true);
+    if (element == null) return null;
+    PsiElement parent = element.getParent();
+    if (parent == null) return null;
+    return getNonStrictParentOfType(parent, classes);
   }
 
   @Nullable
-  public static <T extends PsiElement> T getParentOfType(@NotNull PsiElement element, @NotNull Class<? extends T>[] classes, boolean strict) {
+  public static <T extends PsiElement> T getNonStrictParentOfType(@NotNull PsiElement element, @NotNull Class<? extends T>... classes
+  ) {
     PsiElement run = element;
-    if (strict) {
-      run = run.getParent();
-    }
-
     while (run != null) {
       for (Class<? extends T> aClass : classes) {
         if (aClass.isInstance(run)) return (T)run;

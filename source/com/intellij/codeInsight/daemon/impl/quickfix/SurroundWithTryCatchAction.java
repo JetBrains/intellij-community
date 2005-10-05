@@ -27,7 +27,7 @@ public class SurroundWithTryCatchAction implements IntentionAction {
   private PsiStatement myStatement;
 
   public SurroundWithTryCatchAction(PsiElement element) {
-    myStatement = (PsiStatement)PsiTreeUtil.getParentOfType(element, new Class[]{PsiStatement.class}, false);
+    myStatement = PsiTreeUtil.getNonStrictParentOfType(element, PsiStatement.class);
   }
 
   public String getText() {

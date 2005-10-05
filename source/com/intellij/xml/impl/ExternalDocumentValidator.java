@@ -204,22 +204,17 @@ public class ExternalDocumentValidator {
     addAllInfos(host,results);
   }
 
-  private static final Class<? extends XmlElement>[] parentClasses = new Class[]{
-    XmlTag.class,
-    XmlProcessingInstruction.class,
-    XmlElementDecl.class,
-    XmlMarkupDecl.class,
-    XmlEntityRef.class,
-    XmlDoctype.class
-  };
-
   private static PsiElement getNodeForMessage(final PsiElement currentElement) {
-    PsiElement parentOfType = PsiTreeUtil.getParentOfType(
-        currentElement,
-        parentClasses,
-        false
+    PsiElement parentOfType = PsiTreeUtil.getNonStrictParentOfType(
+      currentElement,
+      XmlTag.class,
+      XmlProcessingInstruction.class,
+      XmlElementDecl.class,
+      XmlMarkupDecl.class,
+      XmlEntityRef.class,
+      XmlDoctype.class
     );
-    
+
     if (parentOfType == null) {
       if (currentElement instanceof XmlToken) {
         parentOfType = currentElement.getParent();

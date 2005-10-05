@@ -51,8 +51,6 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
   private ChangeInfo myChangeInfo;
   private PsiManager myManager;
   private PsiElementFactory myFactory;
-  private static final Class[] NORMALIZED_RESOLUTION_CONTEXT_CLASSES =
-          new Class[]{PsiStatement.class, PsiClass.class, PsiFile.class};
   private final boolean myGenerateDelegate;
   private final Set<PsiMethod> myPropagateParametersMethods;
   private final Set<PsiMethod> myPropagateExceptionsMethods;
@@ -1082,7 +1080,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
   }
 
   public static PsiElement normalizeResolutionContext(PsiElement resolutionContext) {
-    PsiElement result = PsiTreeUtil.getParentOfType(resolutionContext, NORMALIZED_RESOLUTION_CONTEXT_CLASSES, false);
+    PsiElement result = PsiTreeUtil.getNonStrictParentOfType(resolutionContext, PsiStatement.class, PsiClass.class, PsiFile.class);
     if (result != null) return result;
 
     return resolutionContext;

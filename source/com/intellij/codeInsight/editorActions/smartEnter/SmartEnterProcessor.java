@@ -235,11 +235,10 @@ public class SmartEnterProcessor {
     if (atCaret instanceof PsiWhiteSpace) return null;
     if (atCaret instanceof PsiJavaToken && "}".equals(atCaret.getText())) return null;
 
-    PsiElement statementAtCaret = PsiTreeUtil.getParentOfType(atCaret,
-                                                              new Class[]{PsiStatement.class, PsiCodeBlock.class,
-                                                                          PsiMember.class,
-                                                                          PsiComment.class},
-                                                              false);
+    PsiElement statementAtCaret = PsiTreeUtil.getNonStrictParentOfType(atCaret,
+                                                                       PsiStatement.class, PsiCodeBlock.class,
+                                                                       PsiMember.class,
+                                                                       PsiComment.class);
 
     if (statementAtCaret instanceof PsiBlockStatement) return null;
 

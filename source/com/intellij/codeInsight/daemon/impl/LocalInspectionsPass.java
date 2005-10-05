@@ -47,7 +47,6 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
   private List<ProblemDescriptor> myDescriptors = Collections.EMPTY_LIST;
   private List<HighlightInfoType> myLevels = Collections.EMPTY_LIST;
   private List<LocalInspectionTool> myTools = Collections.EMPTY_LIST;
-  private static final Class<PsiMember>[] CHECKABLE = new Class[]{PsiMethod.class, PsiField.class, PsiClass.class};
 
   public LocalInspectionsPass(Project project,
                               PsiFile file,
@@ -73,10 +72,10 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       for (PsiElement element1 : elements) {
         ProgressManager.getInstance().checkCanceled();
 
-        PsiElement element = PsiTreeUtil.getParentOfType(element1, CHECKABLE, false);
+        PsiElement element = PsiTreeUtil.getNonStrictParentOfType(element1, PsiMethod.class, PsiField.class, PsiClass.class);
         while (element != null) {
           if (!workSet.add(element)) break;
-          element = PsiTreeUtil.getParentOfType(element, CHECKABLE, true);
+          element = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiField.class, PsiClass.class);
         }
       }
       workSet.add(myFile);

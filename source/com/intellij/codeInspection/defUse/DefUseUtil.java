@@ -206,7 +206,8 @@ public class DefUseUtil {
         WriteVariableInstruction writeInstruction = (WriteVariableInstruction)instruction;
         if (!defsArmed[i]) {
           PsiElement context = flow.getElement(i);
-          context = PsiTreeUtil.getParentOfType(context, new Class[] {PsiStatement.class, PsiAssignmentExpression.class, PsiPostfixExpression.class, PsiPrefixExpression.class}, false);
+          context = PsiTreeUtil.getNonStrictParentOfType(context, PsiStatement.class, PsiAssignmentExpression.class,
+                                                         PsiPostfixExpression.class, PsiPrefixExpression.class);
           PsiVariable psiVariable = writeInstruction.variable;
           if (context != null && !(context instanceof PsiTryStatement)) {
             if (context instanceof PsiDeclarationStatement && psiVariable.getInitializer() == null) {
@@ -469,11 +470,9 @@ public class DefUseUtil {
         }
         method = (PsiMethod)p;
         final PsiCodeBlock body = method.getBody();
-        final PsiElement[] elems = defs
-                                   ? DefUseUtil.getDefs(body, var, refElem)
-                                   : DefUseUtil.getRefs(body, var, refElem)
-          ;
-        return elems;
+        return defs
+               ? DefUseUtil.getDefs(body, var, refElem)
+               : DefUseUtil.getRefs(body, var, refElem);
       }
     }
     return null;
