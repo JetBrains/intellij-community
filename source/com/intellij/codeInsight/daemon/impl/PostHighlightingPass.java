@@ -177,6 +177,8 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
     if (timeToOptimizeImports() && myEditor != null) {
       optimizeImportsOnTheFly();
+
+
     }
     //Q: here?
     ErrorStripeRenderer renderer = new RefreshStatusRenderer(myProject, daemonCodeAnalyzer, myDocument, myFile);
@@ -289,8 +291,8 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
       return highlightInfo;
     }
 
-    int count = myRefCountHolder.getReadRefCount(variable);
-    if (count == 0) {
+    boolean referenced = myRefCountHolder.isReferencedForRead(variable);
+    if (!referenced) {
       String message = MessageFormat.format(LOCAL_VARIABLE_IS_NOT_USED_FOR_READING, identifier.getText());
       HighlightInfo highlightInfo = createUnusedSymbolInfo(identifier, message);
       QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveUnusedVariableFix(variable), options);
@@ -298,8 +300,8 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     }
 
     if (!variable.hasInitializer()) {
-      count = myRefCountHolder.getWriteRefCount(variable);
-      if (count == 0) {
+      referenced = myRefCountHolder.isReferencedForWrite(variable);
+      if (!referenced) {
         String message = MessageFormat.format(LOCAL_VARIABLE_IS_NOT_ASSIGNED, identifier.getText());
         final HighlightInfo unusedSymbolInfo = createUnusedSymbolInfo(identifier, message);
         QuickFixAction.registerQuickFixAction(unusedSymbolInfo, new EmptyIntentionAction(HighlightDisplayKey.getDisplayNameByKey(HighlightDisplayKey.UNUSED_SYMBOL), options), options);
@@ -356,8 +358,8 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
         return highlightInfo;
       }
 
-      final int readRefCount = myRefCountHolder.getReadRefCount(field);
-      if (readRefCount == 0) {
+      final boolean readReferenced = myRefCountHolder.isReferencedForRead(field);
+      if (!readReferenced) {
         String message = MessageFormat.format(PRIVATE_FIELD_IS_NOT_USED_FOR_READING, identifier.getText());
         HighlightInfo highlightInfo = createUnusedSymbolInfo(identifier, message);
         QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveUnusedVariableFix(field), options);
@@ -366,8 +368,8 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
       }
 
       if (!field.hasInitializer()) {
-        final int writeRefCount = myRefCountHolder.getWriteRefCount(field);
-        if (writeRefCount == 0 && !isBoundToForm) {
+        final boolean writeReferenced = myRefCountHolder.isReferencedForWrite(field);
+        if (!writeReferenced && !isBoundToForm) {
           String message = MessageFormat.format(PRIVATE_FIELD_IS_NOT_ASSIGNED, identifier.getText());
           HighlightInfo info = createUnusedSymbolInfo(identifier, message);
           QuickFixAction.registerQuickFixAction(info, new CreateGetterOrSetterAction(false, true, field), options);

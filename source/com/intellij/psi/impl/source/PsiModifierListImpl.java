@@ -11,7 +11,7 @@ import com.intellij.psi.impl.cache.ModifierFlags;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashMap;
+import gnu.trove.THashMap;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,7 +20,7 @@ import java.util.Map;
 public class PsiModifierListImpl extends SlaveRepositoryPsiElement implements PsiModifierList {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiModifierListImpl");
 
-  private static Map<String, IElementType> NAME_TO_KEYWORD_TYPE_MAP = new HashMap<String, IElementType>();
+  private static Map<String, IElementType> NAME_TO_KEYWORD_TYPE_MAP = new THashMap<String, IElementType>();
 
   static{
     NAME_TO_KEYWORD_TYPE_MAP.put(PsiModifier.PUBLIC, PUBLIC_KEYWORD);

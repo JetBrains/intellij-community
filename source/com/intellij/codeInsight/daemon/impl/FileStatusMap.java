@@ -11,7 +11,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.WeakHashMap;
 
-import java.util.Iterator;
 import java.util.Map;
 
 public class FileStatusMap {
@@ -19,10 +18,10 @@ public class FileStatusMap {
 
   private final Project myProject;
 
-  private Map myDocumentToStatusMap = new WeakHashMap(); // Document --> FileStatus, all dirty if absent
+  private Map<Document,FileStatus> myDocumentToStatusMap = new WeakHashMap<Document, FileStatus>(); // all dirty if absent
 
   private final Key<RefCountHolder> REF_COUND_HOLDER_IN_EDITOR_DOCUMENT_KEY = Key.create("DaemonCodeAnalyzerImpl.REF_COUND_HOLDER_IN_EDITOR_DOCUMENT_KEY");
-  private Map myDocumentsWithRefCountHolders = new WeakHashMap(); // Document --> null
+  private Map<Document,Object> myDocumentsWithRefCountHolders = new WeakHashMap<Document, Object>(); // Document --> null
   private final Object myRefCountHolderLock = new Object();
 
   private static class FileStatus {
@@ -33,7 +32,7 @@ public class FileStatusMap {
     FileStatus(PsiElement dirtyScope, PsiElement overridenDirtyScope, PsiElement inspectionDirtyScope) {
       this.dirtyScope = dirtyScope;
       this.overridenDirtyScope = overridenDirtyScope;
-      this.localInspectionsDirtyScope = inspectionDirtyScope;
+      localInspectionsDirtyScope = inspectionDirtyScope;
     }
   }
 
@@ -51,8 +50,7 @@ public class FileStatusMap {
     }
 
     synchronized(myRefCountHolderLock){
-      for (Object o : myDocumentsWithRefCountHolders.keySet()) {
-        Document document = (Document)o;
+      for (Document document : myDocumentsWithRefCountHolders.keySet()) {
         document.putUserData(REF_COUND_HOLDER_IN_EDITOR_DOCUMENT_KEY, null);
       }
       myDocumentsWithRefCountHolders.clear();
@@ -72,7 +70,7 @@ public class FileStatusMap {
 
   public void markFileUpToDate(Document document, int part) {
     synchronized(myDocumentToStatusMap){
-      FileStatus status = (FileStatus)myDocumentToStatusMap.get(document);
+      FileStatus status = myDocumentToStatusMap.get(document);
       if (status == null){
         PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
         status = new FileStatus(file, file, file);
@@ -96,7 +94,7 @@ public class FileStatusMap {
 
   public PsiElement getFileDirtyScope(Document document, int part) {
     synchronized(myDocumentToStatusMap){
-      FileStatus status = (FileStatus)myDocumentToStatusMap.get(document);
+      FileStatus status = myDocumentToStatusMap.get(document);
       if (status == null){
         return PsiDocumentManager.getInstance(myProject).getPsiFile(document);
       }
@@ -118,7 +116,7 @@ public class FileStatusMap {
 
   public void markFileScopeDirty(Document document, PsiElement scope) {
     synchronized(myDocumentToStatusMap){
-      FileStatus status = (FileStatus)myDocumentToStatusMap.get(document);
+      FileStatus status = myDocumentToStatusMap.get(document);
       if (status == null) return; // all dirty already
       status.dirtyScope = combineScopes(status.dirtyScope, scope);
       status.localInspectionsDirtyScope = combineScopes(status.localInspectionsDirtyScope, scope);
@@ -126,7 +124,7 @@ public class FileStatusMap {
     }
   }
 
-  private PsiElement combineScopes(PsiElement scope1, PsiElement scope2) {
+  private static PsiElement combineScopes(PsiElement scope1, PsiElement scope2) {
     if (scope1 == null) return scope2;
     if (scope2 == null) return scope1;
     return PsiTreeUtil.findCommonParent(scope1, scope2);
@@ -135,7 +133,7 @@ public class FileStatusMap {
   public RefCountHolder getRefCountHolder(Document document, PsiFile file) {
     RefCountHolder refCountHolder;
     synchronized (myRefCountHolderLock) {
-      refCountHolder = (RefCountHolder)document.getUserData(REF_COUND_HOLDER_IN_EDITOR_DOCUMENT_KEY);
+      refCountHolder = document.getUserData(REF_COUND_HOLDER_IN_EDITOR_DOCUMENT_KEY);
       if (refCountHolder == null) {
         refCountHolder = new RefCountHolder(file);
         document.putUserData(REF_COUND_HOLDER_IN_EDITOR_DOCUMENT_KEY, refCountHolder);

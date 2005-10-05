@@ -22,7 +22,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.UniqueFileNamesProvider;
-import com.intellij.util.containers.HashSet;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jdom.Document;
@@ -50,14 +49,14 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   private final ArrayList<FakeFileType> mySpecialFileTypes = new ArrayList<FakeFileType>();
   private final ArrayList<Pattern> myIgnorePatterns = new ArrayList<Pattern>();
 
-  private Map<String, FileType> myExtToFileTypeMap = new HashMap<String, FileType>();
+  private Map<String, FileType> myExtToFileTypeMap = new THashMap<String, FileType>();
   private final Set<String> myIgnoredFileMasksSet = new LinkedHashSet<String>();
   private final Set<String> myNotIgnoredFiles = Collections.synchronizedSet(new THashSet<String>());
   private final Set<String> myIgnoredFiles = Collections.synchronizedSet(new THashSet<String>());
   private final EventDispatcher<FileTypeListener> myDispatcher = EventDispatcher.create(FileTypeListener.class);
-  private final THashMap<FileType, SyntaxTable> myDefaultTables = new THashMap<FileType, SyntaxTable>();
-  private final Map<String, FileType> myInitialAssociations = new HashMap<String, FileType>();
-  private Map<String, String> myUnresolvedMappings = new HashMap<String, String>();
+  private final Map<FileType, SyntaxTable> myDefaultTables = new THashMap<FileType, SyntaxTable>();
+  private final Map<String, FileType> myInitialAssociations = new THashMap<String, FileType>();
+  private Map<String, String> myUnresolvedMappings = new THashMap<String, String>();
   @NonNls private static final String ELEMENT_FILETYPE = "filetype";
   @NonNls private static final String ELEMENT_FILETYPES = "filetypes";
   @NonNls private static final String ELEMENT_IGNOREFILES = "ignoreFiles";
@@ -234,7 +233,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   }
 
   public boolean isIgnoredFilesListEqualToCurrent(String list) {
-    HashSet<String> tempSet = new HashSet<String>();
+    Set<String> tempSet = new THashSet<String>();
     StringTokenizer tokenizer = new StringTokenizer(list, ";");
     while (tokenizer.hasMoreTokens()) {
       tempSet.add(tokenizer.nextToken());
@@ -462,7 +461,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     Element map = new Element(ELEMENT_EXTENSIONMAP);
     parentNode.addContent(map);
 
-    Map<String, FileType> defaultMappings = new HashMap<String, FileType>(myInitialAssociations);
+    Map<String, FileType> defaultMappings = new THashMap<String, FileType>(myInitialAssociations);
 
     for (String ext : myExtToFileTypeMap.keySet()) {
       FileType type = myExtToFileTypeMap.get(ext);
@@ -557,7 +556,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     }
 
     // Resolve unresolved mappings initialized before certain plugin initialized.
-    for (String ext : new HashSet<String>(myUnresolvedMappings.keySet())) {
+    for (String ext : new THashSet<String>(myUnresolvedMappings.keySet())) {
       String name = myUnresolvedMappings.get(ext);
       if (Comparing.equal(name, fileType.getName())) {
         myExtToFileTypeMap.put(ext, fileType);
@@ -868,7 +867,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   public void setExtensionMap(Set<FileType> fileTypes, Map<String, FileType> extension2TypeMap) {
     fireBeforeFileTypesChanged();
     myFileTypes = new SetWithArray(fileTypes);
-    myExtToFileTypeMap = new HashMap<String, FileType>(extension2TypeMap.size());
+    myExtToFileTypeMap = new THashMap<String, FileType>(extension2TypeMap.size());
     for (final String ext : extension2TypeMap.keySet()) {
       associateExtension(extension2TypeMap.get(ext), ext, false);
     }

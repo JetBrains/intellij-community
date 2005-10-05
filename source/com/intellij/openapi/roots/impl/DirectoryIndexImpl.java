@@ -18,10 +18,10 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.impl.PsiManagerConfiguration;
-import com.intellij.util.EventDispatcher;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.EventDispatcher;
+import gnu.trove.THashMap;
 import junit.framework.Assert;
-import com.intellij.util.containers.HashMap;
 
 import java.util.*;
 
@@ -35,8 +35,8 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
   private boolean myInitialized = false;
   private boolean myDisposed = false;
 
-  private Map<VirtualFile, DirectoryInfo> myDirToInfoMap = new HashMap<VirtualFile, DirectoryInfo>();
-  private Map<String, VirtualFile[]> myPackageNameToDirsMap = new HashMap<String, VirtualFile[]>();
+  private Map<VirtualFile, DirectoryInfo> myDirToInfoMap = new THashMap<VirtualFile, DirectoryInfo>();
+  private Map<String, VirtualFile[]> myPackageNameToDirsMap = new THashMap<String, VirtualFile[]>();
 
   private VirtualFileListener myVirtualFileListener;
   private FileTypeListener myFileTypeListener;
@@ -90,10 +90,10 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     Assert.assertTrue(!myDisposed);
 
     Map<VirtualFile, DirectoryInfo> oldDirToInfoMap = myDirToInfoMap;
-    myDirToInfoMap = new HashMap<VirtualFile, DirectoryInfo>();
+    myDirToInfoMap = new THashMap<VirtualFile, DirectoryInfo>();
 
     Map<String, VirtualFile[]> oldPackageNameToDirsMap = myPackageNameToDirsMap;
-    myPackageNameToDirsMap = new HashMap<String, VirtualFile[]>();
+    myPackageNameToDirsMap = new THashMap<String, VirtualFile[]>();
 
     _initialize(reverseAllSets, null);
 
@@ -218,7 +218,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     if (progress != null) {
       progress.setText2(ProjectBundle.message("project.index.building.exclude.roots.progress"));
     }
-    Map<VirtualFile, Set<VirtualFile>> excludeRootsMap = new HashMap<VirtualFile, Set<VirtualFile>>();
+    Map<VirtualFile, Set<VirtualFile>> excludeRootsMap = new THashMap<VirtualFile, Set<VirtualFile>>();
     for (Module module1 : modules) {
       ModuleRootManager rootManager = ModuleRootManager.getInstance(module1);
       ContentEntry[] contentEntries = rootManager.getContentEntries();
@@ -514,10 +514,10 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
   }
 
   private void fillMapWithModuleContent(VirtualFile dir,
-                                      Module module,
-                                      VirtualFile contentRoot,
-                                      Set<VirtualFile> excludeRoots,
-                                      VirtualFile forDir) {
+                                        Module module,
+                                        VirtualFile contentRoot,
+                                        Set<VirtualFile> excludeRoots,
+                                        VirtualFile forDir) {
     if (excludeRoots != null && excludeRoots.contains(dir)) return;
     if (FileTypeManager.getInstance().isFileIgnored(dir.getName())) return;
 
@@ -545,11 +545,11 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
   }
 
   private void fillMapWithModuleSource(VirtualFile dir,
-                                     Module module,
-                                     String packageName,
-                                     VirtualFile sourceRoot,
-                                     boolean isTestSource,
-                                     VirtualFile forDir) {
+                                       Module module,
+                                       String packageName,
+                                       VirtualFile sourceRoot,
+                                       boolean isTestSource,
+                                       VirtualFile forDir) {
     DirectoryInfo info = myDirToInfoMap.get(dir);
     if (info == null) return;
     if (!module.equals(info.module)) return;
@@ -693,9 +693,8 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
         VirtualFile[] oldPackageDirs = myPackageNameToDirsMap.get(oldPackageName);
         LOG.assertTrue(oldPackageDirs != null);
         LOG.assertTrue(oldPackageDirs.length > 0);
-        VirtualFile[] dirs;
         if (oldPackageDirs.length != 1) {
-          dirs = new VirtualFile[oldPackageDirs.length - 1];
+          VirtualFile[] dirs = new VirtualFile[oldPackageDirs.length - 1];
 
           boolean found = false;
           for (int i = 0; i < oldPackageDirs.length; i++) {
