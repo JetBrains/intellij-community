@@ -113,14 +113,14 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     }
 
     Set<VirtualFile> keySet = myDirToInfoMap.keySet();
-    Assert.assertEquals(keySet, oldDirToInfoMap.keySet());
+    Assert.assertEquals(keySet.size(), oldDirToInfoMap.keySet().size());
     for (VirtualFile file : keySet) {
       DirectoryInfo info1 = myDirToInfoMap.get(file);
       DirectoryInfo info2 = oldDirToInfoMap.get(file);
       Assert.assertEquals(info1, info2);
     }
 
-    Assert.assertEquals(myPackageNameToDirsMap.keySet(), oldPackageNameToDirsMap.keySet());
+    Assert.assertEquals(myPackageNameToDirsMap.keySet().size(), oldPackageNameToDirsMap.keySet().size());
     for (Map.Entry<String, VirtualFile[]> entry : myPackageNameToDirsMap.entrySet()) {
       String packageName = entry.getKey();
       VirtualFile[] dirs = entry.getValue();
