@@ -40,7 +40,6 @@ public class PsiTreeUtil {
 
   public static PsiElement findCommonParent (PsiElement... elements) {
     if (elements.length == 0)  return null;
-    if (elements.length == 1)  return elements[0];
     PsiElement toReturn = elements[0];
     for (int i = 1; i < elements.length; i++) {
       toReturn = findCommonParent(toReturn, elements[i]);
