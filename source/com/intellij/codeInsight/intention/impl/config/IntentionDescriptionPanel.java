@@ -7,15 +7,15 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ResourceUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.net.URL;
-import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,7 +33,7 @@ public class IntentionDescriptionPanel {
 
   public void reset(IntentionActionMetaData actionMetaData)  {
     try {
-      myDescriptionBrowser.setText(loadText(actionMetaData.getDescription()));
+      myDescriptionBrowser.setText(ResourceUtil.loadText(actionMetaData.getDescription()));
       myDescriptionBrowser.setPreferredSize(new Dimension(20, 20));
 
       showUsages(myBeforePanel, myBeforeUsagePanels, actionMetaData.getExampleUsagesBefore());
@@ -109,7 +109,7 @@ public class IntentionDescriptionPanel {
         usagePanel = new IntentionUsagePanel();
         usagePanels.add(usagePanel);
       }
-      usagePanel.reset(loadText(exampleUsage), fileType);
+      usagePanel.reset(ResourceUtil.loadText(exampleUsage), fileType);
 
       String title = StringUtil.trimEnd(new File(exampleUsage.getFile()).getName(), IntentionActionMetaData.EXAMPLE_USAGE_URL_SUFFIX);
       usagePanel.setBorderText(title);
@@ -121,23 +121,6 @@ public class IntentionDescriptionPanel {
         gb.gridx++;
       }
     }
-  }
-
-  private static String loadText(URL url) throws IOException {
-    URLConnection connection = url.openConnection();
-    InputStream inputStream = connection.getInputStream();
-
-    final StringBuffer targetText = new StringBuffer();
-    final DataOutputStream dataOutput = new DataOutputStream(new OutputStream(){
-      public void write(int b) {
-        targetText.append((char)b);
-      }
-    });
-
-    FileUtil.copy(inputStream, dataOutput);
-    inputStream.close();
-
-    return targetText.toString();
   }
 
   public JPanel getComponent() {

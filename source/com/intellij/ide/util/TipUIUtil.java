@@ -4,7 +4,6 @@
  */
 package com.intellij.ide.util;
 
-import com.intellij.featureStatistics.ProductivityFeaturesProvider;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
@@ -12,17 +11,15 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.ResourceUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.text.html.HTMLDocument;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.net.URL;
 import java.text.MessageFormat;
-import java.util.Locale;
 
 /**
  * @author dsl
@@ -33,9 +30,7 @@ public class TipUIUtil {
   private TipUIUtil() {
   }
 
-  public static void openTipInBrowser(String tipPath, JEditorPane browser, Class<? extends ProductivityFeaturesProvider> provider) {
-    @NonNls String fileURL = "/tips/" + tipPath;
-
+  public static void openTipInBrowser(String tipPath, JEditorPane browser, Class providerClass) {
     /* TODO: detect that file is not present
     if (!file.exists()) {
       browser.read(new StringReader("Tips for '" + feature.getDisplayName() + "' not found.  Make sure you installed IntelliJ IDEA correctly."), null);
@@ -43,28 +38,15 @@ public class TipUIUtil {
     }
     */
     try {
-      URL url;
-      if (provider != null){
-        url = provider.getResource(fileURL);
-      } else {
-        url = getLocalizedResource(fileURL);
-      }
+      if (providerClass == null) providerClass = TipUIUtil.class;
+      URL url = ResourceUtil.getResource(providerClass, "/tips/", tipPath);
 
       if (url == null) {
         setCantReadText(browser);
         return;
       }
 
-      final InputStream inputStream = url.openStream();
-      final InputStreamReader reader = new InputStreamReader(inputStream);
-      StringBuffer text = new StringBuffer();
-      char[] buf = new char[5000];
-      while (reader.ready()) {
-        final int length = reader.read(buf);
-        if (length == -1) break;
-        text.append(buf, 0, length);
-      }
-      reader.close();
+      StringBuffer text = new StringBuffer(ResourceUtil.loadText(url));
       updateShortcuts(text);
       browser.read(new StringReader(text.toString()), null);
       ((HTMLDocument)browser.getDocument()).setBase(url);
@@ -72,28 +54,6 @@ public class TipUIUtil {
     catch (IOException e) {
       setCantReadText(browser);
     }
-  }
-
-  private static URL getLocalizedResource(final String fileURL) {
-    int pos = fileURL.lastIndexOf('.');
-    final String fileName = fileURL.substring(0, pos);
-    final String ext = fileURL.substring(pos+1);
-
-    final Locale locale= Locale.getDefault();
-    String name = MessageFormat.format("{0}_{1}_{2}.{3}",
-                                       fileName, locale.getLanguage(), locale.getCountry(), ext);
-    URL resource = TipUIUtil.class.getResource(name);
-    if (resource != null) {
-      return resource;
-    }
-
-    name = MessageFormat.format("{0}_{1}.{2}", fileName, locale.getLanguage(), ext);
-    resource = TipUIUtil.class.getResource(name);
-    if (resource != null) {
-      return resource;
-    }
-
-    return TipUIUtil.class.getResource(fileURL);
   }
 
   private static void setCantReadText(JEditorPane browser) {
@@ -132,7 +92,7 @@ public class TipUIUtil {
           break;
         }
       }
-      final String replacement = MessageFormat.format(SHORTCUT_HTML_TEMPLATE, new Object[]{shortcutText});
+      final String replacement = MessageFormat.format(SHORTCUT_HTML_TEMPLATE, shortcutText);
       text.replace(lastIndex, actionIdEnd + 1, replacement);
       lastIndex += replacement.length();
     }

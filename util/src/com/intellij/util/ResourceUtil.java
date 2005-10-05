@@ -19,6 +19,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
@@ -29,15 +31,21 @@ import java.util.Locale;
  * @author max
  */
 public class ResourceUtil {
+  @NonNls private static final String ENCODING_UTF_8 = "UTF-8";
+
+  private ResourceUtil() {
+  }
+
   public static URL getResource(@NotNull Class loaderClass, @NonNls @NotNull String basePath, @NonNls @NotNull String fileName) {
     if (basePath.endsWith("/")) basePath = basePath.substring(0, basePath.length() - 1);
 
     final List<String> bundles = calculateBundleNames(basePath, Locale.getDefault());
     for (String bundle : bundles) {
-      URL url = loaderClass.getResource(basePath + "/" + fileName);
+      URL url = loaderClass.getResource(bundle + "/" + fileName);
       if (url == null) continue;
 
       try {
+        //noinspection UNUSED_SYMBOL
         final URLConnection connection = url.openConnection();
       }
       catch (IOException e) {
@@ -94,5 +102,28 @@ public class ResourceUtil {
     result.add(0, temp.toString());
 
     return result;
+  }
+
+  public static @NotNull String loadText(@NotNull URL url) throws IOException {
+    URLConnection connection = url.openConnection();
+    InputStream inputStream = connection.getInputStream();
+
+    InputStreamReader reader = null;
+    try {
+      reader = new InputStreamReader(inputStream, ENCODING_UTF_8);
+      StringBuffer text = new StringBuffer();
+      char[] buf = new char[5000];
+      while (reader.ready()) {
+        final int length = reader.read(buf);
+        if (length == -1) break;
+        text.append(buf, 0, length);
+      }
+      return text.toString();
+    }
+    finally {
+      if (reader != null) {
+        reader.close();
+      }
+    }
   }
 }
