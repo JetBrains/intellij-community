@@ -187,7 +187,9 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     catch (IncompatibleThreadStateException e) {
       throw EvaluateExceptionUtil.createEvaluateException(e);
     }
-    clearCaches();
+    finally {
+      getVirtualMachineProxy().clearCaches();
+    }
   }
 
   public boolean isSuspended() {

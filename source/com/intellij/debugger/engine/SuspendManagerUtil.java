@@ -45,43 +45,6 @@ public class SuspendManagerUtil {
     context.myPostponedCommands.add(command);
   }
 
-  public static void runCommand(SuspendManager suspendManager, SuspendContextCommandImpl action) throws Exception {
-    SuspendContextImpl suspendContext = action.getSuspendContext();
-
-    if(suspendContext.myInProgress) {
-      postponeCommand(suspendContext, action);
-    }
-    else {
-      if(LOG.isDebugEnabled()) {
-        LOG.debug("running " + suspendManager);
-      }
-
-      try {
-        if(!suspendContext.isResumed()) {
-          suspendContext.myInProgress = true;
-          action.contextAction();
-        }
-        else {
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("Context is invalid for SuspendContextCommand" + suspendManager);
-          }
-          action.notifyCancelled();
-        }
-      }
-      finally{
-        if(LOG.isDebugEnabled()) {
-          LOG.debug("end processing " + suspendManager);
-        }
-        suspendContext.myInProgress = false;
-        if(!suspendContext.isResumed() && suspendContext.myPostponedCommands.size() > 0) {
-          suspendContext.getDebugProcess().getManagerThread().invokeLater(
-                  suspendContext.myPostponedCommands.remove(0));
-
-        }
-      }
-    }
-  }
-
   public static Set<SuspendContextImpl> getSuspendingContexts(SuspendManager suspendManager, ThreadReferenceProxyImpl thread) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     Set<ThreadReferenceProxyImpl> contextThreads = new HashSet<ThreadReferenceProxyImpl>();
@@ -99,23 +62,6 @@ public class SuspendManagerUtil {
     }
 
     return result;
-  }
-
-  /**
-   * @param suspendManager
-   * @param thread
-   * @return true if there are SuspendContexts suspending the thread
-   */
-  public static boolean hasSuspendingContexts(SuspendManager suspendManager, ThreadReferenceProxyImpl thread) {
-    DebuggerManagerThreadImpl.assertIsManagerThread();
-    for (Iterator<SuspendContextImpl> iterator = suspendManager.getEventContexts().iterator(); iterator.hasNext();) {
-      final SuspendContextImpl suspendContext = iterator.next();
-      if(suspendContext.suspends(thread)) {
-        return true;
-      }
-    }
-
-    return false;
   }
 
   public static void restoreAfterResume(SuspendContextImpl context, Object resumeData) {

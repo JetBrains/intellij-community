@@ -203,12 +203,15 @@ public class SuspendManagerImpl implements SuspendManager {
 
     boolean suspended = false;
 
-    for (Iterator<SuspendContextImpl> iterator = myEventContexts.iterator(); iterator.hasNext();) {
-      SuspendContextImpl suspendContext = iterator.next();
-
-      if(suspendContext.suspends(thread) || isFrozen(thread)) {
-        suspended = true;
-        break;
+    if (isFrozen(thread)) {
+      suspended = true;
+    }
+    else {
+      for (SuspendContextImpl suspendContext : myEventContexts) {
+        if (suspendContext.suspends(thread)) {
+          suspended = true;
+          break;
+        }
       }
     }
 
@@ -216,7 +219,7 @@ public class SuspendManagerImpl implements SuspendManager {
     //if(LOG.isDebugEnabled() && suspended) {
     //  LOG.assertTrue(thread.suspends(), thread.name());
     //}
-    return suspended && thread.isSuspended();
+    return suspended && (thread == null || thread.isSuspended());
   }
 
   public void suspendThread(SuspendContextImpl context, ThreadReferenceProxyImpl thread) {

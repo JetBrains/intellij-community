@@ -1438,16 +1438,26 @@ public abstract class DebugProcessImpl implements DebugProcess {
     }
   }
 
-  private class PopFrameCommand extends DebuggerContextCommandImpl {
+  private class PopFrameCommand extends SuspendContextCommandImpl {
     private final StackFrameProxyImpl myStackFrame;
 
-    public PopFrameCommand(DebuggerContextImpl context, StackFrameProxyImpl frameProxy) {
+    public PopFrameCommand(SuspendContextImpl context, StackFrameProxyImpl frameProxy) {
       super(context);
       myStackFrame = frameProxy;
     }
 
-    public void threadAction() {
-      ThreadReferenceProxyImpl thread = myStackFrame.threadProxy();
+    public void contextAction() {
+      final ThreadReferenceProxyImpl thread = myStackFrame.threadProxy();
+      if (!getSuspendManager().isSuspended(thread)) {
+        notifyCancelled();
+        return;
+      }
+
+      final SuspendContextImpl suspendContext = getSuspendContext();
+      if (!suspendContext.suspends(thread)) {
+        SuspendManagerUtil.postponeCommand(suspendContext, this);
+        return;
+      }
 
       if (myStackFrame.isBottom()) {
         DebuggerInvocationUtil.invokeLater(myProject, new Runnable() {
@@ -1464,7 +1474,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
       catch (EvaluateException e) {
         LOG.error(e);
       }
-      getSuspendManager().popFrame(getSuspendContext());
+      getSuspendManager().popFrame(suspendContext);
     }
   }
 
@@ -1680,7 +1690,9 @@ public abstract class DebugProcessImpl implements DebugProcess {
   }
 
   public SuspendContextCommandImpl createPopFrameCommand(DebuggerContextImpl context, StackFrameProxyImpl stackFrame) {
-    return new PopFrameCommand(context, stackFrame);
+    final SuspendContextImpl contextByThread =
+      SuspendManagerUtil.findContextByThread(context.getDebugProcess().getSuspendManager(), stackFrame.threadProxy());
+    return new PopFrameCommand(contextByThread, stackFrame);
   }
 
   public void setBreakpointsMuted(final boolean muted) {

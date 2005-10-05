@@ -154,10 +154,6 @@ public abstract class SuspendContextImpl implements SuspendContext {
     myEvaluationContext = evaluationContext;
   }
 
-  public SuspendManager getSuspendManager() {
-    return myDebugProcess.getSuspendManager();
-  }
-
   public String toString() {
     if (myEventSet != null) {
       return myEventSet.toString();

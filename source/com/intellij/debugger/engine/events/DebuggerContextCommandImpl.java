@@ -4,6 +4,7 @@ import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.SuspendManager;
 import com.intellij.debugger.engine.SuspendManagerUtil;
 import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
 
 /*
@@ -28,21 +29,19 @@ public abstract class DebuggerContextCommandImpl extends SuspendContextCommandIm
   public final void contextAction() throws Exception {
     final SuspendManager suspendManager = myDebuggerContext.getDebugProcess().getSuspendManager();
 
-    if (SuspendManagerUtil.hasSuspendingContexts(suspendManager, myDebuggerContext.getThreadProxy())) {
-      final SuspendContextImpl suspendContext = getSuspendContext();
-      if (!suspendContext.isResumed()) {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Context thread " + suspendContext.getThread());
-          LOG.debug("Debug thread" + myDebuggerContext.getThreadProxy());
-        }
-        threadAction();
+    final ThreadReferenceProxyImpl debuggerContextThread = myDebuggerContext.getThreadProxy();
+    if (suspendManager.isSuspended(debuggerContextThread)) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Context thread " + getSuspendContext().getThread());
+        LOG.debug("Debug thread" + debuggerContextThread);
       }
+      threadAction();
     }
     else {
       // there are no suspend context currently registered
-      SuspendContextImpl threadContext = SuspendManagerUtil.findContextByThread(suspendManager, myDebuggerContext.getThreadProxy());
-      if(threadContext != null) {
-        SuspendManagerUtil.postponeCommand(threadContext, this);
+      SuspendContextImpl suspendContextForThread = SuspendManagerUtil.findContextByThread(suspendManager, debuggerContextThread);
+      if(suspendContextForThread != null) {
+        SuspendManagerUtil.postponeCommand(suspendContextForThread, this);
       }
       else {
         notifyCancelled();
