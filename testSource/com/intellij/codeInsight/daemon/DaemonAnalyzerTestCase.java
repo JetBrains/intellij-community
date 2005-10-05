@@ -36,7 +36,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     doDoTest(checkWarnings, checkInfos);
   }
 
-  protected void doDoTest(boolean checkWarnings, boolean checkInfos) {
+  protected Collection<HighlightInfo> doDoTest(boolean checkWarnings, boolean checkInfos) {
     ExpectedHighlightingData data = new ExpectedHighlightingData(myEditor.getDocument(),checkWarnings, checkInfos);
 
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
@@ -56,6 +56,8 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     myPsiManager.setAssertOnFileLoadingFilter(VirtualFileFilter.NONE);
 
     data.checkResult(infos, myEditor.getDocument().getText());
+    
+    return infos;
   }
 
   protected Collection<HighlightInfo> doHighlighting() {
