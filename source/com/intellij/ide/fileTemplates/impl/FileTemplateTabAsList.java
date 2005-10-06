@@ -2,14 +2,13 @@ package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Font;
-import java.util.ArrayList;
-import java.util.List;
+
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Alexey Kudravtsev
@@ -36,8 +35,16 @@ abstract class FileTemplateTabAsList extends FileTemplateTab {
       if (value instanceof FileTemplate) {
         FileTemplate template = (FileTemplate) value;
         icon = FileTypeManager.getInstance().getFileTypeByExtension(template.getExtension()).getIcon();
-        setText(template.getName());
-        setFont(getFont().deriveFont(AllFileTemplatesConfigurable.isInternalTemplate(template.getName(), getTitle()) ? Font.BOLD : Font.PLAIN));
+        final boolean internalTemplate = AllFileTemplatesConfigurable.isInternalTemplate(template.getName(), getTitle());
+        if (internalTemplate) {
+          setFont(getFont().deriveFont(Font.BOLD));
+          setText(FileTemplateManagerImpl.getInstance().localizeInternalTemplateName(template));
+        }
+        else {
+          setFont(getFont().deriveFont(Font.PLAIN));
+          setText(template.getName());
+        }
+
         if (!template.isDefault()) {
           Color foreground = new Color(0, 0, 210);
           if (!isSelected) {

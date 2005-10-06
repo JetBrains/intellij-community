@@ -65,6 +65,8 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
   @NonNls private static final String ATTRIBUTE_NAME = "name";
   @NonNls private static final String ATTRIBUTE_REFORMAT = "reformat";
 
+  private Map<String, String> myLocalizedTemplateNames = new HashMap<String, String>();
+
   public FileTemplateManagerImpl(VirtualFileManager virtualFileManager, FileTypeManagerEx fileTypeManagerEx) {
     myVirtualFileManager = virtualFileManager;
     myTypeManager = fileTypeManagerEx;
@@ -85,6 +87,18 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
         });
       }
     });
+
+    myLocalizedTemplateNames.put(TEMPLATE_CATCH_BODY, IdeBundle.message("template.catch.statement.body"));
+    myLocalizedTemplateNames.put(TEMPLATE_IMPLEMENTED_METHOD_BODY, IdeBundle.message("template.implemented.method.body"));
+    myLocalizedTemplateNames.put(TEMPLATE_OVERRIDDEN_METHOD_BODY, IdeBundle.message("template.overridden.method.body"));
+    myLocalizedTemplateNames.put(TEMPLATE_FROM_USAGE_METHOD_BODY, IdeBundle.message("template.new.method.body"));
+    myLocalizedTemplateNames.put(TEMPLATE_I18NIZED_EXPRESSION, IdeBundle.message("template.i18nized.expression"));
+    myLocalizedTemplateNames.put(TEMPLATE_I18NIZED_CONCATENATION, IdeBundle.message("template.i18nized.concatenation"));
+    myLocalizedTemplateNames.put(INTERNAL_CLASS_TEMPLATE_NAME, IdeBundle.message("template.class"));
+    myLocalizedTemplateNames.put(INTERNAL_INTERFACE_TEMPLATE_NAME, IdeBundle.message("template.interface"));
+    myLocalizedTemplateNames.put(INTERNAL_ANNOTATION_TYPE_TEMPLATE_NAME, IdeBundle.message("template.annotationtype"));
+    myLocalizedTemplateNames.put(INTERNAL_ENUM_TEMPLATE_NAME, IdeBundle.message("template.enum"));
+    myLocalizedTemplateNames.put(FILE_HEADER_TEMPLATE_NAME, IdeBundle.message("template.file.header"));
   }
 
   private FileTemplateManagerImpl(String defaultTemplatesDir,
@@ -150,9 +164,8 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
     myInternalTemplatesManager.removeTemplate(template, true);
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public Properties getDefaultProperties() {
-    Properties props = new Properties();
+    @NonNls Properties props = new Properties();
 
     Date date = new Date();
     props.setProperty("DATE", DateFormat.getDateInstance().format(date));
@@ -358,8 +371,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
       for (Iterator iterator = children.iterator(); iterator.hasNext();) {
         Element child = (Element) iterator.next();
         String name = child.getAttributeValue(ATTRIBUTE_NAME);
-        //noinspection HardCodedStringLiteral
-        boolean reformat = "true".equals(child.getAttributeValue(ATTRIBUTE_REFORMAT));
+        boolean reformat = Boolean.TRUE.toString().equals(child.getAttributeValue(ATTRIBUTE_REFORMAT));
         if (child.getName().equals(ELEMENT_INTERNAL_TEMPLATE)) {
           for (FileTemplate internal : internals) {
             if (name.equals(internal.getName())) internal.setAdjust(reformat);
@@ -484,6 +496,14 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
   public String internalTemplateToSubject(String templateName) {
     //noinspection HardCodedStringLiteral
     return INTERNAL_ANNOTATION_TYPE_TEMPLATE_NAME.equals(templateName) ? "@interface" : templateName.toLowerCase();
+  }
+
+  public String localizeInternalTemplateName(final FileTemplate template) {
+    String localizedName = myLocalizedTemplateNames.get(template.getName());
+    if (localizedName == null) {
+      localizedName = myLocalizedTemplateNames.get(template.getName() + "." + template.getExtension());
+    }
+    return localizedName != null ? localizedName : template.getName();
   }
 
   private String getDefaultClassTemplateText(String templateName) {
