@@ -460,7 +460,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
     final JspReferencesProvider jspReferencesProvider = new JspReferencesProvider();
 
     registerXmlAttributeValueReferenceProvider(
-      new String[] {"fragment","name","property","id","name-given"},
+      new String[] {"fragment","name","property","id","name-given","dynamic-attributes"},
       new ScopeFilter(
         new ParentElementFilter(
           new AndFilter(
