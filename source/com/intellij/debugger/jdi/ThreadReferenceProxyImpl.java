@@ -188,6 +188,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
       throw EvaluateExceptionUtil.createEvaluateException(e);
     }
     finally {
+      clearCaches();
       getVirtualMachineProxy().clearCaches();
     }
   }
