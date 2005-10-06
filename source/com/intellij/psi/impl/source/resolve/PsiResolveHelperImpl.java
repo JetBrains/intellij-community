@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.source.resolve;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.DummyHolder;
@@ -17,11 +18,10 @@ import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
-
-import org.jetbrains.annotations.Nullable;
 
 public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
   private final PsiManager myManager;
@@ -30,12 +30,14 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
     myManager = manager;
   }
 
+  @NotNull
   public JavaResolveResult resolveConstructor(PsiClassType classType, PsiExpressionList argumentList, PsiElement place) {
     JavaResolveResult[] result = multiResolveConstructor(classType, argumentList, place);
     if (result.length != 1) return JavaResolveResult.EMPTY;
     return result[0];
   }
 
+  @NotNull
   public JavaResolveResult[] multiResolveConstructor(PsiClassType type, PsiExpressionList argumentList, PsiElement place) {
     final MethodResolverProcessor processor;
     PsiClassType.ClassResolveResult classResolveResult = type.resolveGenerics();
@@ -90,6 +92,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
     return ResolveUtil.isAccessible(member, member.getContainingClass(), modifierList, place, accessObjectClass, currentFileResolveScope);
   }
 
+  @NotNull
   public CandidateInfo[] getReferencedMethodCandidates(PsiCallExpression expr, boolean dummyImplicitConstructor) {
     final MethodCandidatesProcessor processor = new MethodCandidatesProcessor(expr);
     try {
@@ -414,6 +417,8 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
       else {
         return superType;
       }
+    } else {
+       if (forCompletion) guess = PsiWildcardType.createExtends(manager, guess);
     }
 
     //The following code is the result of deep thought, do not shit it out before discussing with [ven]
