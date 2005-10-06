@@ -17,10 +17,29 @@ package com.intellij.openapi.module;
 
 import com.intellij.openapi.components.BaseComponent;
 
+/**
+ * Base interface for module-level components. The constructor of the classes
+ * implementing this interface can accept as parameters the module instance and
+ * any application-, project- or module-level components this component depends on.
+ */
 public interface ModuleComponent extends BaseComponent {
+  /**
+   * Invoked when the project corresponding to this component instance is opened.<p>
+   * Note that components may be created for even unopened projects and this method can be never
+   * invoked for a particular component instance (for example for default project).
+   */
   void projectOpened();
 
+  /**
+   * Invoked when the project corresponding to this component instance is closed.<p>
+   * Note that components may be created for even unopened projects and this method can be never
+   * invoked for a particular component instance (for example for default project).
+   */
   void projectClosed();
 
+  /**
+   * Invoked when the module corresponding to this component instance has been completely
+   * loaded and added to the project.
+   */
   void moduleAdded();
 }

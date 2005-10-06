@@ -23,28 +23,96 @@ import com.intellij.pom.PomModule;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Represents a module in an IDEA project.
+ *
+ * @see ModuleManager#getModules()
+ * @see ModuleComponent 
+ */
 public interface Module extends ComponentManager, AreaInstance {
+  /**
+   * The empty array of modules which cab be reused to avoid unnecessary allocations.
+   */
   Module[] EMPTY_ARRAY = new Module[0];
 
+  /**
+   * Returns the <code>VirtualFile</code> for the module .iml file.
+   *
+   * @return the virtual file instance.
+   */
   VirtualFile getModuleFile();
 
+  /**
+   * Returns the path to the module .iml file.
+   *
+   * @return the path to the .iml file.
+   */
   @NotNull String getModuleFilePath();
 
+  /**
+   * Returns the type of this module.
+   *
+   * @return the module type.
+   */
   @NotNull ModuleType getModuleType();
 
+  /**
+   * Returns the project to which this module belongs.
+   *
+   * @return the project instance.
+   */
   @NotNull Project getProject();
 
+  /**
+   * Returns the name of this module.
+   *
+   * @return the module name.
+   */
   @NotNull String getName();
 
+  /**
+   * Checks if the module instance has been disposed and unloaded.
+   *
+   * @return true if the module has been disposed, false otherwise
+   */
   boolean isDisposed();
 
+  /**
+   * Returns the value of the option "Use absolute/relative paths for files outside
+   * the module file directory" for this module.
+   *
+   * @return true if relative paths are used, false if absolute paths are used.
+   */
   boolean isSavePathsRelative();
 
+  /**
+   * Sets the value of the option "Use absolute/relative paths for files outside
+   * the module file directory" for this module.
+   *
+   * @param b true if relative paths are used, false if absolute paths are used.
+   */
   void setSavePathsRelative(boolean b);
 
+  /**
+   * Sets a custom option for this module.
+   *
+   * @param optionName the name of the custom option.
+   * @param optionValue the value of the custom option.
+   */
   void setOption(@NotNull String optionName, @NotNull String optionValue);
 
+  /**
+   * Gets the value of a custom option for this module.
+   *
+   * @param optionName the name of the custom option.
+   * @return the value of the custom option, or null if no value has been set.
+   */
   @Nullable String getOptionValue(@NotNull String optionName);
 
+  /**
+   * Returns the {@link com.intellij.pom POM} representation of this module.
+   *
+   * @return the POM module instance.
+   */
   @NotNull PomModule getPom();
 }

@@ -26,14 +26,14 @@ public interface ProjectComponent extends BaseComponent {
   /**
    * Invoked when the project corresponding to this component instance is opened.<p>
    * Note that components may be created for even unopened projects and this method can be never
-   * invoked for a particular component intance (for example for default project).
+   * invoked for a particular component instance (for example for default project).
    */
   void projectOpened();
 
   /**
    * Invoked when the project corresponding to this component instance is closed.<p>
    * Note that components may be created for even unopened projects and this method can be never
-   * invoked for a particular component intance (for example for default project).
+   * invoked for a particular component instance (for example for default project).
    */
   void projectClosed();
 }
