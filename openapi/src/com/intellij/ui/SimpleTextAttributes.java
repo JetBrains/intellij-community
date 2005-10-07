@@ -127,7 +127,7 @@ public final class SimpleTextAttributes {
       effectColor = myWaveColor;
       effectType = EffectType.WAVE_UNDERSCORE;
     } else if (isStrikeout()) {
-      effectColor = myFgColor;
+      effectColor = myWaveColor;
       effectType = EffectType.STRIKEOUT;
     } else{
       effectColor = null;
