@@ -34,9 +34,10 @@ public class SynchronizeCurrentFileAction extends AnAction {
   public void actionPerformed(final AnActionEvent e) {
     final VirtualFile[] files = getFiles(e);
 
+    final Project project = getProject(e);
     for (VirtualFile file : files) {
       if (file.isDirectory()) {
-        final int response = Messages.showYesNoDialog(getProject(e),
+        final int response = Messages.showYesNoDialog(project,
                                                       IdeBundle.message("prompt.recursively.synchronize.directory"),
                                                       IdeBundle.message("title.synchronize.files"),
                                                       Messages.getQuestionIcon());
@@ -48,14 +49,13 @@ public class SynchronizeCurrentFileAction extends AnAction {
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        for (int i = 0; i < files.length; i++) {
-          final VirtualFile file = files[i];
+        for (final VirtualFile file : files) {
           file.refresh(false, true);
         }
       }
     });
 
-    final FileStatusManager statusManager = FileStatusManager.getInstance(getProject(e));
+    final FileStatusManager statusManager = FileStatusManager.getInstance(project);
     for (VirtualFile file : files) {
       statusManager.fileStatusChanged(file);
     }
