@@ -63,8 +63,7 @@ public class ReplaceConcatenationWithStringBufferIntention extends Intention {
       final PsiManager manager = exp.getManager();
       final LanguageLevel languageLevel =
         manager.getEffectiveLanguageLevel();
-      if (languageLevel.equals(LanguageLevel.JDK_1_3) ||
-          languageLevel.equals(LanguageLevel.JDK_1_4)) {
+      if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
         expString.append("new StringBuffer()");
       }
       else {
