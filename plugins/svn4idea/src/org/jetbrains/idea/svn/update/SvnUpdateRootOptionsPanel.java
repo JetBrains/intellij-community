@@ -34,13 +34,13 @@ import java.awt.event.ActionListener;
 
 public class SvnUpdateRootOptionsPanel implements SvnPanel{
   private TextFieldWithBrowseButton myURLText;
-  private JLabel myURLLabel;
   private JCheckBox myRevisionBox;
   private TextFieldWithBrowseButton myRevisionText;
 
   private final SvnVcs myVcs;
   private JPanel myPanel;
   private FilePath myRoot;
+  private JCheckBox myUpdateToSpecificUrl;
 
   public SvnUpdateRootOptionsPanel(FilePath root, final SvnVcs vcs) {
 
@@ -48,8 +48,24 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
     myVcs = vcs;
 
     myURLText.setEditable(false);
-    myURLLabel.setLabelFor(myURLText);
 
+
+    myURLText.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        chooseUrl();
+      }
+    });
+
+    myUpdateToSpecificUrl.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        if (myUpdateToSpecificUrl.isSelected()) {
+          myURLText.setEnabled(true);
+          chooseUrl();
+        } else {
+          myURLText.setEnabled(false);
+        }
+      }
+    });
 
     myRevisionBox.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -58,16 +74,6 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
           if (myRevisionBox.isSelected()) {
             myRevisionText.getTextField().selectAll();
             myRevisionText.requestFocus();
-          }
-        }
-        else {
-          SelectLocationDialog dialog = new SelectLocationDialog(myVcs.getProject(), myURLText.getText());
-          dialog.show();
-          if (dialog.isOK()) {
-            String selected = dialog.getSelectedURL();
-            if (selected != null) {
-              myURLText.setText(selected);
-            }
           }
         }
       }
@@ -88,6 +94,17 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
     myRevisionText.getTextField().selectAll();
   }
 
+  private void chooseUrl() {
+    SelectLocationDialog dialog = new SelectLocationDialog(myVcs.getProject(), myURLText.getText());
+    dialog.show();
+    if (dialog.isOK()) {
+      String selected = dialog.getSelectedURL();
+      if (selected != null) {
+        myURLText.setText(selected);
+      }
+    }
+  }
+
   public JPanel getPanel() {
     return myPanel;
   }
@@ -97,6 +114,8 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
     myURLText.setText(rootInfo.getUrl().toString());
     myRevisionBox.setSelected(rootInfo.isUpdateToRevision());
     myRevisionText.setText(rootInfo.getRevision().getName());
+    myUpdateToSpecificUrl.setSelected(false);
+    myURLText.setEnabled(false);
   }
 
   public void apply(final SvnConfiguration configuration) throws ConfigurationException {

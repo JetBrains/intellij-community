@@ -47,7 +47,7 @@
               </component>
               <component id="a6192" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myMergeText1">
                 <constraints>
-                  <xy x="60" y="0" width="338" height="20"/>
+                  <xy x="60" y="0" width="398" height="20"/>
                   <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="0" fill="1">
                     <minimum-size width="250" height="-1"/>
                   </grid>
@@ -56,22 +56,18 @@
               </component>
               <component id="15a84" class="javax.swing.JLabel">
                 <constraints>
-                  <xy x="408" y="3" width="41" height="14"/>
+                  <xy x="468" y="3" width="41" height="14"/>
                   <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
                   <text resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="integrate.configuration.revision1.label"/>
                 </properties>
               </component>
-              <component id="c7630" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myRevision1">
+              <component id="ee183" class="org.jetbrains.idea.svn.update.SvnRevisionPanel" binding="myRevision1">
                 <constraints>
-                  <xy x="459" y="0" width="80" height="20"/>
-                  <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="1">
-                    <minimum-size width="80" height="-1"/>
-                    <preferred-size width="30" height="-1"/>
-                  </grid>
+                  <xy x="519" y="0" width="20" height="20"/>
+                  <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="0"/>
                 </constraints>
-                <properties/>
               </component>
             </children>
           </grid>
@@ -95,7 +91,7 @@
               </component>
               <component id="93f39" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myMergeText2">
                 <constraints>
-                  <xy x="60" y="0" width="338" height="20"/>
+                  <xy x="60" y="0" width="398" height="20"/>
                   <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="0" fill="1">
                     <minimum-size width="250" height="-1"/>
                   </grid>
@@ -104,22 +100,18 @@
               </component>
               <component id="42903" class="javax.swing.JLabel">
                 <constraints>
-                  <xy x="408" y="3" width="41" height="14"/>
+                  <xy x="468" y="3" width="41" height="14"/>
                   <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
                   <text resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="integrate.configuration.revision2.label"/>
                 </properties>
               </component>
-              <component id="83c64" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myRevision2">
+              <component id="bcee4" class="org.jetbrains.idea.svn.update.SvnRevisionPanel" binding="myRevision2">
                 <constraints>
-                  <xy x="459" y="0" width="80" height="20"/>
-                  <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="1">
-                    <minimum-size width="80" height="-1"/>
-                    <preferred-size width="30" height="-1"/>
-                  </grid>
+                  <xy x="519" y="0" width="20" height="20"/>
+                  <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="0"/>
                 </constraints>
-                <properties/>
               </component>
             </children>
           </grid>

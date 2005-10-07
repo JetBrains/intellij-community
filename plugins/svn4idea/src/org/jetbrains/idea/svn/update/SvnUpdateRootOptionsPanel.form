@@ -1,82 +1,66 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="org.jetbrains.idea.svn.update.SvnUpdateRootOptionsPanel">
-  <grid id="3479b" binding="myPanel" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+  <grid id="f589c" binding="myPanel" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="29" y="34" width="274" height="134"/>
+      <xy x="29" y="50" width="455" height="118"/>
       <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
     </constraints>
     <properties/>
     <border type="none"/>
     <children>
-      <grid id="c3b29" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+      <grid id="3b3aa" row-count="2" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="0" y="0" width="274" height="67"/>
+          <xy x="0" y="0" width="455" height="49"/>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
         </constraints>
         <properties/>
         <border type="none"/>
         <children>
-          <grid id="2cefa" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-            <margin top="0" left="0" bottom="0" right="0"/>
+          <component id="ac746" class="javax.swing.JCheckBox" binding="myRevisionBox">
             <constraints>
-              <xy x="0" y="20" width="274" height="20"/>
-              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+              <xy x="0" y="27" width="191" height="22"/>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+            </constraints>
+            <properties>
+              <text resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="checkbox.update.switch.configurable.to.specific.revision"/>
+            </properties>
+          </component>
+          <component id="ef5e7" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myRevisionText">
+            <constraints>
+              <xy x="201" y="28" width="131" height="20"/>
+              <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="0" fill="1"/>
             </constraints>
             <properties/>
-            <border type="none"/>
-            <children>
-              <component id="d7c3f" class="javax.swing.JLabel" binding="myURLLabel">
-                <constraints>
-                  <xy x="0" y="3" width="27" height="14"/>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
-                </constraints>
-                <properties>
-                  <text resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="label.update.switch.configurable.url"/>
-                </properties>
-              </component>
-              <component id="a1f16" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myURLText">
-                <constraints>
-                  <xy x="37" y="0" width="237" height="20"/>
-                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="0" fill="1"/>
-                </constraints>
-                <properties/>
-              </component>
-            </children>
-          </grid>
-          <grid id="c6768" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-            <margin top="0" left="0" bottom="0" right="0"/>
+          </component>
+          <component id="a1f16" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myURLText">
             <constraints>
-              <xy x="0" y="45" width="274" height="22"/>
-              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+              <xy x="201" y="1" width="254" height="20"/>
+              <grid row="0" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="7" anchor="0" fill="1"/>
             </constraints>
             <properties/>
-            <border type="none"/>
-            <children>
-              <component id="ac746" class="javax.swing.JCheckBox" binding="myRevisionBox">
-                <constraints>
-                  <xy x="0" y="0" width="191" height="22"/>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
-                </constraints>
-                <properties>
-                  <text resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="checkbox.update.switch.configurable.to.specific.revision"/>
-                </properties>
-              </component>
-              <component id="ef5e7" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myRevisionText">
-                <constraints>
-                  <xy x="201" y="1" width="73" height="20"/>
-                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="0" fill="1"/>
-                </constraints>
-                <properties/>
-              </component>
-            </children>
-          </grid>
+          </component>
+          <component id="9dc1a" class="javax.swing.JCheckBox" binding="myUpdateToSpecificUrl">
+            <constraints>
+              <xy x="0" y="0" width="166" height="22"/>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+            </constraints>
+            <properties>
+              <text resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="update.configuration.specific.url"/>
+            </properties>
+          </component>
+          <hspacer id="144a8">
+            <constraints>
+              <xy x="332" y="32" width="123" height="11"/>
+              <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1"/>
+            </constraints>
+          </hspacer>
         </children>
       </grid>
       <vspacer id="120cd">
         <constraints>
-          <xy x="131" y="67" width="11" height="67"/>
+          <xy x="222" y="49" width="11" height="69"/>
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
         </constraints>
       </vspacer>
