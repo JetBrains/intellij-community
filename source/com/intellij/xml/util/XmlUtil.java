@@ -304,6 +304,13 @@ public class XmlUtil {
 
       e = e.getParent();
     }
+
+    final PsiElement element = ref.getUserData(XmlElement.DEPENDING_ELEMENT);
+    if (element instanceof XmlFile) {
+      final XmlEntityDecl entityDecl = ref.resolve((PsiFile)element);
+      if (entityDecl != null) return parseEntityDecl(entityDecl, targetFile, type, cacheValue, ref); 
+    }
+    
     return null;
   }
 
