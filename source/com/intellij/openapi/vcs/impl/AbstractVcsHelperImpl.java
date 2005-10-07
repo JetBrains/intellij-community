@@ -1,10 +1,10 @@
 package com.intellij.openapi.vcs.impl;
 
+import com.intellij.codeInsight.CodeSmellInfo;
 import com.intellij.codeInsight.actions.OptimizeImportsProcessor;
 import com.intellij.codeInsight.actions.ReformatCodeProcessor;
-import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.CodeSmellInfo;
+import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -23,9 +23,9 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.localVcs.*;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
@@ -44,6 +44,7 @@ import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vcs.ui.impl.CheckinProjectPanelImpl;
 import com.intellij.openapi.vcs.versionBrowser.ChangesBrowser;
+import com.intellij.openapi.vcs.versionBrowser.RepositoryVersion;
 import com.intellij.openapi.vcs.versionBrowser.ShowRevisionChangesAction;
 import com.intellij.openapi.vcs.versionBrowser.VersionsProvider;
 import com.intellij.openapi.vcs.versions.AbstractRevisions;
@@ -83,7 +84,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
     myProject = project;
   }
 
-  private static final Key KEY = Key.create("AbstractVcsHelper.KEY");
+  private static final Key<NewErrorTreeViewPanel> KEY = Key.create("AbstractVcsHelper.KEY");
 
   public void showCodeSmellErrors(final List<CodeSmellInfo> smellList) {
 
@@ -118,13 +119,13 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
         FileDocumentManager fileManager = FileDocumentManager.getInstance();
 
 
-        for (Iterator<CodeSmellInfo> iterator = smellList.iterator(); iterator.hasNext();) {
-          CodeSmellInfo smellInfo = iterator.next();
+        for (CodeSmellInfo smellInfo : smellList) {
           VirtualFile file = fileManager.getFile(smellInfo.getDocument());
           if (smellInfo.getSeverity() == HighlightSeverity.ERROR) {
             errorTreeView.addMessage(MessageCategory.ERROR, new String[]{smellInfo.getDescription()}, file, smellInfo.getStartLine(),
                                      smellInfo.getStartColumn(), null);
-          } else if (smellInfo.getSeverity() == HighlightSeverity.WARNING) {
+          }
+          else if (smellInfo.getSeverity() == HighlightSeverity.WARNING) {
             errorTreeView.addMessage(MessageCategory.WARNING, new String[]{smellInfo.getDescription()}, file, smellInfo.getStartLine(),
                                      smellInfo.getStartColumn(), null);
           }
@@ -138,7 +139,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
 
   }
 
-  public void showErrors(final List abstractVcsExceptions, final String tabDisplayName) {
+  public void showErrors(final List<VcsException> abstractVcsExceptions, final String tabDisplayName) {
     LOG.assertTrue(tabDisplayName != null, "tabDisplayName should not be null");
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
@@ -168,8 +169,8 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
                                         VcsBundle.message("command.name.open.error.message.view"),
                                         null);
 
-        for (Iterator i = abstractVcsExceptions.iterator(); i.hasNext();) {
-          VcsException exception = (VcsException)i.next();
+        for (final VcsException abstractVcsException : abstractVcsExceptions) {
+          VcsException exception = abstractVcsException;
           String[] messages = exception.getMessages();
           if (messages.length == 0) messages = new String[]{VcsBundle.message("exception.text.unknown.error")};
           errorTreeView.addMessage(getErrorCategory(exception), messages, exception.getVirtualFile(), -1, -1, null);
@@ -191,8 +192,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
   protected void removeContents(Content notToRemove, final String tabDisplayName) {
     MessageView messageView = myProject.getComponent(MessageView.class);
     Content[] contents = messageView.getContents();
-    for (int i = 0; i < contents.length; i++) {
-      Content content = contents[i];
+    for (Content content : contents) {
       LOG.assertTrue(content != null);
       if (content.isPinned()) continue;
       if (tabDisplayName.equals(content.getDisplayName()) && content != notToRemove) {
@@ -229,7 +229,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
   }
 
   public List<VcsException> runTransactionRunnable(AbstractVcs vcs, TransactionRunnable runnable, Object vcsParameters) {
-    List exceptions = new ArrayList();
+    List<VcsException> exceptions = new ArrayList<VcsException>();
 
     TransactionProvider transactionProvider = vcs.getTransactionProvider();
     boolean transactionSupported = transactionProvider != null;
@@ -305,7 +305,12 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
                   public void run() {
                     try {
                       final PsiFile psiFile = psiManager.findFile(file);
-                      ((PsiJavaFile)psiFile).getImportList().replace(resultList[0]);
+                      if (psiFile != null) {
+                        final PsiImportList importList = ((PsiJavaFile)psiFile).getImportList();
+                        if (importList != null) {
+                          importList.replace(resultList[0]);
+                        }
+                      }
                       final Document document = FileDocumentManager.getInstance().getDocument(file);
                       if (document != null) {
                         FileDocumentManager.getInstance().saveDocument(document);
@@ -362,15 +367,6 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
                                  final AbstractVcs abstractVcs,
                                  final Object checkinParameters,
                                  final ArrayList<VcsException> exceptions) {
-    Collection<VirtualFile> roots = (checkinProjectPanel).getRoots();
-    Collection<VirtualFile> correspondingRoots = new ArrayList<VirtualFile>();
-    for (Iterator<VirtualFile> iterator = roots.iterator(); iterator.hasNext();) {
-      VirtualFile virtualFile = iterator.next();
-      AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(virtualFile);
-      CheckinEnvironment env = vcs.getCheckinEnvironment();
-      if (env == abstractVcs.getCheckinEnvironment()) correspondingRoots.add(virtualFile);
-    }
-
     final Map<CheckinEnvironment, List<VcsOperation>> checkinOperations = ((CheckinProjectPanelImpl)checkinProjectPanel).getCheckinOperations();
 
     final CheckinHandler checkinHandler = new CheckinHandler(myProject,
@@ -387,16 +383,14 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
 
     Map<AbstractVcs, List<VirtualFile>> vcsToFileMap = new HashMap<AbstractVcs, List<VirtualFile>>();
 
-    for (int i = 0; i < files.length; i++) {
-      VirtualFile file = files[i];
+    for (VirtualFile file : files) {
       AbstractVcs activeVcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(file);
       if (activeVcs == null) continue;
       if (!vcsToFileMap.containsKey(activeVcs)) vcsToFileMap.put(activeVcs, new ArrayList<VirtualFile>());
       vcsToFileMap.get(activeVcs).add(file);
     }
 
-    for (Iterator<AbstractVcs> iterator = vcsToFileMap.keySet().iterator(); iterator.hasNext();) {
-      AbstractVcs abstractVcs = iterator.next();
+    for (AbstractVcs abstractVcs : vcsToFileMap.keySet()) {
       doCheckinFiles(abstractVcs, vcsToFileMap.get(abstractVcs), checkinParameters);
     }
   }
@@ -404,9 +398,8 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
   private void doCheckinFiles(AbstractVcs abstractVcs, List<VirtualFile> virtualFiles, Object checkinParameters) {
     final LocalVcs lvcs = LocalVcs.getInstance(myProject);
 
-    List objects = new ArrayList();
-    for (Iterator<VirtualFile> iterator = virtualFiles.iterator(); iterator.hasNext();) {
-      VirtualFile file = iterator.next();
+    List<LvcsObject> objects = new ArrayList<LvcsObject>();
+    for (VirtualFile file : virtualFiles) {
       LvcsFile lvcsFile = lvcs.findFile(file.getPath());
       if (lvcsFile != null) {
         objects.add(lvcsFile);
@@ -416,7 +409,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
     if (objects.isEmpty()) return;
 
     final CheckinHandler checkinHandler = new CheckinHandler(myProject, abstractVcs);
-    List exceptions = checkinHandler.checkin((LvcsObject[])objects.toArray(new LvcsObject[objects.size()]),
+    List<VcsException> exceptions = checkinHandler.checkin(objects.toArray(new LvcsObject[objects.size()]),
                                              checkinParameters);
     showErrors(exceptions, VcsBundle.message("message.title.check.in"));
 
@@ -508,8 +501,18 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
 
   }
 
+  public RepositoryVersion chooseRepositoryVersion(VersionsProvider versionsProvider) {
+    final ChangesBrowser changesBrowser = new ChangesBrowser(myProject, versionsProvider, false);
+    changesBrowser.show();
+    if (changesBrowser.isOK()) {
+      return changesBrowser.getSelectedRepositoryVersion();
+    } else {
+      return null;
+    }
+  }
+
   public void showChangesBrowser(VersionsProvider versionsProvider) {
-    new ChangesBrowser(myProject, versionsProvider).show();
+    new ChangesBrowser(myProject, versionsProvider, true).show();
   }
 
   public void showRevisions(List<AbstractRevisions> revisions, final String title) {
@@ -617,24 +620,26 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
   private void collectErrorsAndWarnings(final Collection<HighlightInfo> highlights,
                                         final List<CodeSmellInfo> result,
                                         final Document document) {
-    for (Iterator<HighlightInfo> iterator = highlights.iterator(); iterator.hasNext();) {
-      HighlightInfo highlightInfo = iterator.next();
+    for (HighlightInfo highlightInfo : highlights) {
       final HighlightSeverity severity = highlightInfo.getSeverity();
-      String description = highlightInfo.description;
       if (severity == HighlightSeverity.ERROR || severity == HighlightSeverity.WARNING) {
-        final HighlightInfoType type = highlightInfo.type;
-        if (type instanceof HighlightInfoType.HighlightInfoTypeSeverityByKey) {
-          final HighlightDisplayKey severityKey = ((HighlightInfoType.HighlightInfoTypeSeverityByKey)type).getSeverityKey();
-          final String id = severityKey.getID();
-          if (id != null) {
-            description = "[" + id + "] " + description;
-          }
-        } else {
-        }
-        result.add(new CodeSmellInfo(document, description, new TextRange(highlightInfo.startOffset, highlightInfo.endOffset),
+        result.add(new CodeSmellInfo(document, getDescription(highlightInfo), new TextRange(highlightInfo.startOffset, highlightInfo.endOffset),
                                      severity));
       }
     }
+  }
+
+  private String getDescription(final HighlightInfo highlightInfo) {
+    final String description = highlightInfo.description;
+    final HighlightInfoType type = highlightInfo.type;
+    if (type instanceof HighlightInfoType.HighlightInfoTypeSeverityByKey) {
+      final HighlightDisplayKey severityKey = ((HighlightInfoType.HighlightInfoTypeSeverityByKey)type).getSeverityKey();
+      final String id = severityKey.getID();
+      if (id != null) {
+        return "[" + id + "] " + description;
+      }
+    }
+    return description;
   }
 
   private DiffContent getContentForVersion(final VcsFileRevision version, final File file) throws IOException {
@@ -660,8 +665,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
     ArrayList<PsiFile> result = new ArrayList<PsiFile>();
     PsiManager psiManager = PsiManager.getInstance(myProject);
 
-    for (Iterator<VirtualFile> each = selectedFiles.iterator(); each.hasNext();) {
-      VirtualFile file = each.next();
+    for (VirtualFile file : selectedFiles) {
       if (file.isValid()) {
         PsiFile psiFile = psiManager.findFile(file);
         if (psiFile != null) result.add(psiFile);
@@ -673,10 +677,9 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
   public List<VcsException> doCheckinFiles(AbstractVcs vcs, FilePath[] roots, String preparedComment) {
     final LocalVcs lvcs = LocalVcs.getInstance(myProject);
 
-    List objects = new ArrayList();
+    List<LvcsObject> objects = new ArrayList<LvcsObject>();
 
-    for (int i = 0; i < roots.length; i++) {
-      FilePath file = roots[i];
+    for (FilePath file : roots) {
       LvcsFile lvcsFile = lvcs.findFile(file.getPath());
       if (lvcsFile != null) {
         objects.add(lvcsFile);
@@ -687,7 +690,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
     if (objects.isEmpty()) return new ArrayList<VcsException>();
 
     final CheckinHandler checkinHandler = new CheckinHandler(myProject, vcs);
-    return checkinHandler.checkin((LvcsObject[])objects.toArray(new LvcsObject[objects.size()]),
+    return checkinHandler.checkin(objects.toArray(new LvcsObject[objects.size()]),
                                   preparedComment);
 
   }
@@ -707,7 +710,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
         return;
       }
       myMessageView.removeContentManagerListener(this);
-      NewErrorTreeViewPanel errorTreeView = (NewErrorTreeViewPanel)eventContent.getUserData(KEY);
+      NewErrorTreeViewPanel errorTreeView = eventContent.getUserData(KEY);
       if (errorTreeView != null) {
         errorTreeView.dispose();
       }

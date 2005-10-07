@@ -15,38 +15,38 @@
  */
 package com.intellij.openapi.vcs;
 
+import com.intellij.codeInsight.CodeSmellInfo;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.localVcs.LvcsAction;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
+import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.ui.Refreshable;
+import com.intellij.openapi.vcs.versionBrowser.RepositoryVersion;
 import com.intellij.openapi.vcs.versionBrowser.VersionsProvider;
 import com.intellij.openapi.vcs.versions.AbstractRevisions;
-import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.codeInsight.CodeSmellInfo;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 public abstract class AbstractVcsHelper {
   public static AbstractVcsHelper getInstance(Project project) {
     return project.getComponent(AbstractVcsHelper.class);
   }
 
-  public abstract void showErrors(List abstractVcsExceptions, String tabDisplayName);
+  public abstract void showErrors(List<VcsException> abstractVcsExceptions, String tabDisplayName);
 
   public abstract void markFileAsUpToDate(VirtualFile file);
 
   public abstract LvcsAction startVcsAction(String actionName);
 
-  public abstract void finishVcsAction(com.intellij.openapi.localVcs.LvcsAction action);
+  public abstract void finishVcsAction(LvcsAction action);
 
   /**
    * Runs the runnable inside the vcs transaction (if needed), collects all exceptions, commits/rollbacks transaction
@@ -88,6 +88,7 @@ public abstract class AbstractVcsHelper {
                                        final File file);
 
   public abstract void showChangesBrowser(VersionsProvider versionsProvider);
+  @Nullable public abstract RepositoryVersion chooseRepositoryVersion(VersionsProvider versionsProvider);
 
   public abstract void showRevisions(List<AbstractRevisions> revisions, final String title);
 
