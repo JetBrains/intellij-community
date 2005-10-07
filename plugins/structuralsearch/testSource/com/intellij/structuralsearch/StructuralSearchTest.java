@@ -2199,4 +2199,18 @@ public class StructuralSearchTest extends IdeaTestCase {
     assertEquals("Find field by dcl with comment",2,findMatchesCount(s1,s2));
     assertEquals("Find field by dcl with comment 2",2,findMatchesCount(s1_2,s2_2));
   }
+  
+  public void testPackageLocalAccessModifier() {
+    String s1 = "class A {\n" +
+                "  int a;\n" +
+                "  private char b;\n" +
+                "  private char b2;\n" +
+                "  public int c;\n" +
+                "  public int c2;\n" +
+                "}";
+    String s2 = "@Modifier(\"PackageLocal\") '_Type '_Variable = '_Value?;";
+    String s2_2 = "@Modifier({\"PackageLocal\",\"private\"}) '_Type '_Variable = '_Value?;";
+    assertEquals("Finding package local dcls",1,findMatchesCount(s1,s2));
+    assertEquals("Finding package local dcls",3,findMatchesCount(s1,s2_2));
+  }
 }
