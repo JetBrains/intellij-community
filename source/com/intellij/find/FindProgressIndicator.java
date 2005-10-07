@@ -9,6 +9,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ex.StatusBarEx;
+import com.intellij.ide.GeneralSettings;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -25,9 +26,17 @@ public class FindProgressIndicator extends ProgressWindow {
     super (true, true, project, FindBundle.message("find.progress.stop.title"));
     setTitle(FindBundle.message("find.progress.searching.message", scopeString));
     myStatusBar = (StatusBarEx)WindowManager.getInstance().getStatusBar(project);
+    if (GeneralSettings.getInstance().isSearchInBackground()) {
+      doBackground();
+    }
   }
 
   public void background() {
+    doBackground();
+    super.background();
+  }
+
+  private void doBackground() {
     myIsBackground = true;
     myStatusBar.addProgress();
     myStatusBar.showCancelButton(
@@ -39,7 +48,6 @@ public class FindProgressIndicator extends ProgressWindow {
       },
       FindBundle.message("find.progress.stop.background.button")
     );
-    super.background();
   }
 
   public void setText(String text) {

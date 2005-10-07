@@ -47,6 +47,8 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements App
     settings.setUseDefaultBrowser(myComponent.myUseSystemDefaultBrowser.isSelected());
     settings.setUseCyclicBuffer(myComponent.myUseCyclicBuffer.isSelected());
     settings.setConfirmExit(myComponent.myConfirmExit.isSelected());
+    settings.setSearchInBackground(myComponent.mySearchInBackground.isSelected());
+    
     try {
       settings.setCyclicBufferSize(Integer.parseInt(myComponent.myCyclicBufferSize.getText()) * 1024);
     }
@@ -118,6 +120,7 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements App
     EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
     isModified |= isModified(myComponent.myCbNative2Ascii, editorSettings.isNative2AsciiForPropertiesFiles());
     isModified |= !Comparing.strEqual(editorSettings.getDefaultPropertiesCharsetName(), (String)myComponent.myDefaultPropertiesFilesCharset.getSelectedItem());
+    isModified |= settings.isSearchInBackground() != myComponent.mySearchInBackground.isSelected();
 
     return isModified || getDiffOptions().isModified();
   }
@@ -214,6 +217,8 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements App
     if (myComponent.myDefaultPropertiesFilesCharset.getSelectedIndex() == -1) {
       myComponent.myDefaultPropertiesFilesCharset.setSelectedIndex(0);
     }
+    
+    myComponent.mySearchInBackground.setSelected( settings.isSearchInBackground() );
   }
 
   public void disposeUIResources() {
@@ -254,6 +259,8 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements App
     private JComboBox myDefaultPropertiesFilesCharset;
 
     private final HTTPProxySettingsPanel myHTTPProxySettingsEditor;
+    private JCheckBox mySearchInBackground;
+    private JCheckBox myCheckBox1;
 
     public MyComponent() {
       ButtonGroup buttonGroup = new ButtonGroup();

@@ -6,6 +6,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.util.Alarm;
+import com.intellij.ide.GeneralSettings;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -65,7 +66,10 @@ public class ProgressWindow extends BlockingProgressIndicator {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
           if (myDialog == null && isRunning()) {
-            showDialog();
+            if (!myShouldShowBackground || 
+                !GeneralSettings.getInstance().isSearchInBackground()) {
+              showDialog();
+            }
           }
         }
       }, getModalityState());
@@ -151,6 +155,7 @@ public class ProgressWindow extends BlockingProgressIndicator {
       new Runnable() {
         public void run() {
           if (myDialog != null) {
+            GeneralSettings.getInstance().setSearchInBackground(true);
             myDialog.background();
             myDialog = null;
           }

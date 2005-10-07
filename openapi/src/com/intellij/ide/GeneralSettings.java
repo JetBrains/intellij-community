@@ -48,6 +48,7 @@ public class GeneralSettings implements NamedJDOMExternalizable, ApplicationComp
   private boolean myUseDefaultBrowser = true;
   private String myLastProjectLocation;
   private boolean myUseCyclicBuffer;
+  private boolean mySearchInBackground;
   private int myCyclicBufferSize = 1024*1024; //1Mb
   private boolean myConfirmExit = true;
   @NonNls private static final String ELEMENT_OPTION = "option";
@@ -66,6 +67,7 @@ public class GeneralSettings implements NamedJDOMExternalizable, ApplicationComp
   @NonNls private static final String CHARSET_DEFAULT = "Default";
   @NonNls private static final String OPTION_USE_DEFAULT_BROWSER = "useDefaultBrowser";
   @NonNls private static final String OPTION_USE_CYCLIC_BUFFER = "useCyclicBuffer";
+  @NonNls private static final String OPTION_SEARCH_IN_BACKGROUND = "searchInBackground";
   @NonNls private static final String OPTION_CONFIRM_EXIT = "confirmExit";
   @NonNls private static final String OPTION_CYCLIC_BUFFER_SIZE = "cyclicBufferSize";
   @NonNls private static final String OPTION_LAST_PROJECT_LOCATION = "lastProjectLocation";
@@ -324,16 +326,7 @@ public class GeneralSettings implements NamedJDOMExternalizable, ApplicationComp
           myUseCyclicBuffer = false;
         }
       }
-
-      if (OPTION_CONFIRM_EXIT.equals(name)){
-        try {
-          myConfirmExit = Boolean.valueOf(value).booleanValue();
-        }
-        catch (Exception ex) {
-          myConfirmExit = false;
-        }
-      }
-
+      
       if (OPTION_CYCLIC_BUFFER_SIZE.equals(name)){
         try {
           myCyclicBufferSize = Integer.parseInt(value);
@@ -343,6 +336,24 @@ public class GeneralSettings implements NamedJDOMExternalizable, ApplicationComp
         }
       }
 
+      if (OPTION_SEARCH_IN_BACKGROUND.equals(name)){
+        try {
+          mySearchInBackground = Boolean.valueOf(value).booleanValue();
+        }
+        catch (Exception ex) {
+          mySearchInBackground = false;
+        }
+      }
+
+      if (OPTION_CONFIRM_EXIT.equals(name)){
+        try {
+          myConfirmExit = Boolean.valueOf(value).booleanValue();
+        }
+        catch (Exception ex) {
+          myConfirmExit = false;
+        }
+      }
+      
       if (OPTION_LAST_PROJECT_LOCATION.equals(name)){
         try {
           myLastProjectLocation = value;
@@ -430,6 +441,11 @@ public class GeneralSettings implements NamedJDOMExternalizable, ApplicationComp
     optionElement.setAttribute(ATTRIBUTE_NAME, OPTION_CYCLIC_BUFFER_SIZE);
     optionElement.setAttribute(ATTRIBUTE_VALUE, Integer.toString(myCyclicBufferSize));
     parentNode.addContent(optionElement);
+    
+    optionElement = new Element(ELEMENT_OPTION);
+    optionElement.setAttribute(ATTRIBUTE_NAME, OPTION_SEARCH_IN_BACKGROUND);
+    optionElement.setAttribute(ATTRIBUTE_VALUE, Boolean.toString(mySearchInBackground));
+    parentNode.addContent(optionElement);
 
     optionElement = new Element(ELEMENT_OPTION);
     optionElement.setAttribute(ATTRIBUTE_NAME, OPTION_CONFIRM_EXIT);
@@ -482,5 +498,13 @@ public class GeneralSettings implements NamedJDOMExternalizable, ApplicationComp
 
   public void setCyclicBufferSize(final int cyclicBufferSize) {
     myCyclicBufferSize = cyclicBufferSize;
+  }
+
+  public boolean isSearchInBackground() {
+    return mySearchInBackground;
+  }
+
+  public void setSearchInBackground(final boolean searchInBackground) {
+    mySearchInBackground = searchInBackground;
   }
 }
