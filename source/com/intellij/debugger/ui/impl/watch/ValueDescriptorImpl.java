@@ -68,10 +68,6 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     return myValue instanceof PrimitiveValue; 
   }
   
-  public boolean isIsNew() { 
-    return myIsNew; 
-  }
-
   public boolean isValueValid() {
     return myValueException == null;
   }
@@ -81,7 +77,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     // to keep temporary objects
     if (Patches.IBM_JDK_DISABLE_COLLECTION_BUG && myStoredEvaluationContext != null && !myStoredEvaluationContext.getSuspendContext().isResumed() &&
         myValue instanceof ObjectReference && VirtualMachineProxyImpl.isCollected((ObjectReference)myValue)) {
-      
+
       final Semaphore semaphore = new Semaphore();
       semaphore.down();
       myStoredEvaluationContext.getDebugProcess().getManagerThread().invoke(new SuspendContextCommandImpl(myStoredEvaluationContext.getSuspendContext()) {

@@ -71,9 +71,13 @@ public abstract class SuspendContextImpl implements SuspendContext {
     assertNotResumed();
     DebuggerManagerThreadImpl.assertIsManagerThread();
     if (!Patches.IBM_JDK_DISABLE_COLLECTION_BUG) {
-      for (Iterator<ObjectReference> iterator = myKeptReferences.iterator(); iterator.hasNext();) {
-        ObjectReference objectReference = iterator.next();
-        objectReference.enableCollection();
+      for (ObjectReference objectReference : myKeptReferences) {
+        try {
+          objectReference.enableCollection();
+        }
+        catch (UnsupportedOperationException e) {
+          // ignore: some J2ME implementations does not provide this operation
+        }
       }
       myKeptReferences.clear();
     }
@@ -166,7 +170,12 @@ public abstract class SuspendContextImpl implements SuspendContext {
     if (!Patches.IBM_JDK_DISABLE_COLLECTION_BUG) {
       final boolean added = myKeptReferences.add(reference);
       if (added) {
-        reference.disableCollection();
+        try {
+          reference.disableCollection();
+        }
+        catch (UnsupportedOperationException e) {
+          // ignore: some J2ME implementations does not provide this operation
+        }
       }
     }
   }
