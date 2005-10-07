@@ -379,7 +379,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     return result;
   }
 
-  private static boolean ourSupportDifferentFileTypes = false;
+  private static boolean ourSupportDifferentFileTypes = true;
   
   protected int getRowsCount() {
     return (ourSupportDifferentFileTypes)?4:3;
