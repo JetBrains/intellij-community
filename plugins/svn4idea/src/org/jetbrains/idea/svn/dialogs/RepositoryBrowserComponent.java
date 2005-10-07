@@ -15,20 +15,16 @@
  */
 package org.jetbrains.idea.svn.dialogs;
 
-import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNDirEntry;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
-import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.*;
 import java.awt.*;
-
-import com.intellij.CommonBundle;
-import com.intellij.util.ui.DialogUtil;
 
 /**
  * Created by IntelliJ IDEA.
@@ -37,13 +33,12 @@ import com.intellij.util.ui.DialogUtil;
  * Time: 19:13:10
  * To change this template use File | Settings | File Templates.
  */
-public class RepositoryBrowserComponent extends JPanel implements TreeCellRenderer {
+public class RepositoryBrowserComponent extends JPanel {
   private JTree myRepositoryTree;
-  private DefaultTreeCellRenderer myRedener;
+
   private SvnVcs myVCS;
 
   public RepositoryBrowserComponent(SvnVcs vcs) {
-    myRedener = new DefaultTreeCellRenderer();
     myVCS = vcs;
     createComponent();
   }
@@ -169,50 +164,9 @@ public class RepositoryBrowserComponent extends JPanel implements TreeCellRender
     add(scrollPane, gc);
     topLabel.setLabelFor(myRepositoryTree);
 
-    myRepositoryTree.setCellRenderer(this);
+    myRepositoryTree.setCellRenderer(new SvnRepositoryTreeCellRenderer());
   }
 
-  public Component getTreeCellRendererComponent(JTree tree,
-                                                Object value,
-                                                boolean sel,
-                                                boolean expanded,
-                                                boolean leaf,
-                                                int row,
-                                                boolean hasFocus) {
-    boolean noIcon = false;
-    boolean error = false;
-    if (value instanceof DefaultMutableTreeNode) {
-      value = ((DefaultMutableTreeNode)value).getUserObject();
-    }
-    if (value instanceof SVNRepository) {
-      value = "/";
-    }
-    else if (value instanceof SVNDirEntry) {
-      value = ((SVNDirEntry)value).getName();
-    }
-    else if (value == RepositoryTreeModel.LOADING_NODE) {
-      noIcon = true;
-      value = CommonBundle.getLoadingTreeNodeText();
-    }
-    else if (value instanceof RepositoryTreeModel.ErrorNode) {
-      noIcon = true;
-      RepositoryTreeModel.ErrorNode node = (RepositoryTreeModel.ErrorNode)value;
-      value = node.getMessage();
-      error = node.isError();
-    }
-    else {
-      noIcon = true;
-      value = value.toString();
-    }
-    Component result = myRedener.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
-    if (noIcon) {
-      myRedener.setIcon(null);
-      if (error) {
-        myRedener.setForeground(Color.red);
-      }
-    }
-    return result;
-  }
 
   public String getRootURL() {
     if (!(myRepositoryTree.getModel() instanceof RepositoryTreeModel)) {

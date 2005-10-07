@@ -18,9 +18,13 @@ package org.jetbrains.idea.svn.update;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.vcs.versionBrowser.RepositoryVersion;
+import com.intellij.openapi.project.Project;
+import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.history.SvnVersionsProvider;
 import org.jetbrains.idea.svn.dialogs.SelectLocationDialog;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
@@ -32,13 +36,13 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
   private TextFieldWithBrowseButton myURLText;
   private JLabel myURLLabel;
   private JCheckBox myRevisionBox;
-  private JTextField myRevisionText;
+  private TextFieldWithBrowseButton myRevisionText;
 
   private final SvnVcs myVcs;
   private JPanel myPanel;
   private FilePath myRoot;
 
-  public SvnUpdateRootOptionsPanel(FilePath root, SvnVcs vcs) {
+  public SvnUpdateRootOptionsPanel(FilePath root, final SvnVcs vcs) {
 
     myRoot = root;
     myVcs = vcs;
@@ -52,7 +56,7 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
         if (e.getSource() == myRevisionBox) {
           myRevisionText.setEnabled(myRevisionBox.isSelected());
           if (myRevisionBox.isSelected()) {
-            myRevisionText.selectAll();
+            myRevisionText.getTextField().selectAll();
             myRevisionText.requestFocus();
           }
         }
@@ -69,8 +73,19 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
       }
     });
 
+    myRevisionText.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        final Project project = vcs.getProject();
+        final RepositoryVersion repositoryVersion =
+          AbstractVcsHelper.getInstance(project).chooseRepositoryVersion(new SvnVersionsProvider(project, myURLText.getText()));
+        if (repositoryVersion != null) {
+          myRevisionText.setText(String.valueOf(repositoryVersion.getNumber()));
+        }
+      }
+    });
+
     myRevisionText.setText(SVNRevision.HEAD.toString());
-    myRevisionText.selectAll();
+    myRevisionText.getTextField().selectAll();
   }
 
   public JPanel getPanel() {

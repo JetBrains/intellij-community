@@ -115,6 +115,21 @@ public class SvnIntegrateRootOptionsPanel implements SvnPanel{
   }
 
   public void apply(SvnConfiguration conf) throws ConfigurationException {
+
+    if (myMergeText1.getText().trim().length() == 0) {
+      myMergeText1.getTextField().requestFocus();
+      throw new ConfigurationException(SvnBundle.message("source.url.could.not.be.empty.error.message"));
+    }
+
+    if (myMergeText2.getText().trim().length() == 0) {
+      myMergeText2.getTextField().requestFocus();
+      throw new ConfigurationException(SvnBundle.message("source.url.could.not.be.empty.error.message"));
+    }
+
+    if (myMergeText1.getText().equals(myMergeText2.getText()) && myRevision1.getText().equals(myRevision2.getText())) {
+      throw new ConfigurationException(SvnBundle.message("no.differences.between.sources.error.message"));
+    }
+
     final MergeRootInfo rootInfo = conf.getMergeRootInfo(myRoot.getIOFile(), myVcs);
     rootInfo.setUrl1(myMergeText1.getText());
     rootInfo.setUrl2(myMergeText2.getText());
@@ -142,9 +157,5 @@ public class SvnIntegrateRootOptionsPanel implements SvnPanel{
     myRevision2.setText(rootInfo.getRevision2().toString());
     myMergeText1.setText(rootInfo.getUrlString1());
     myMergeText2.setText(rootInfo.getUrlString2());
-
-    if (myMergeText1.getText().equals(myMergeText2.getText())) {
-      myMergeText2.setEnabled(false);
-    }
   }
 }
