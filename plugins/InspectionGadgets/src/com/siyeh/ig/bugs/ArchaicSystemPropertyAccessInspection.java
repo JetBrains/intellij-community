@@ -123,8 +123,7 @@ public class ArchaicSystemPropertyAccessInspection extends ExpressionInspection{
                 final PsiManager manager = call.getManager();
                 final LanguageLevel languageLevel =
                         manager.getEffectiveLanguageLevel();
-                if(languageLevel.equals(LanguageLevel.JDK_1_3) ||
-                   languageLevel.equals(LanguageLevel.JDK_1_4)){
+                if(languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0){
                     parseMethodCall = "Boolean.valueOf(System.getProperty("
                                       + argText + ")).booleanValue()";
                 } else{

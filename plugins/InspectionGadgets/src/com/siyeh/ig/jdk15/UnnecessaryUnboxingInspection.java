@@ -106,8 +106,7 @@ public class UnnecessaryUnboxingInspection extends ExpressionInspection {
       super.visitMethodCallExpression(expression);
       final PsiManager manager = expression.getManager();
       final LanguageLevel languageLevel = manager.getEffectiveLanguageLevel();
-      if (languageLevel.equals(LanguageLevel.JDK_1_3) ||
-          languageLevel.equals(LanguageLevel.JDK_1_4)) {
+      if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
         return;
       }
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();

@@ -101,8 +101,7 @@ public class UnnecessaryBoxingInspection extends ExpressionInspection {
       super.visitNewExpression(expression);
       final PsiManager manager = expression.getManager();
       final LanguageLevel languageLevel = manager.getEffectiveLanguageLevel();
-      if (languageLevel.equals(LanguageLevel.JDK_1_3) ||
-          languageLevel.equals(LanguageLevel.JDK_1_4)) {
+      if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
         return;
       }
       final PsiType constructorType = expression.getType();

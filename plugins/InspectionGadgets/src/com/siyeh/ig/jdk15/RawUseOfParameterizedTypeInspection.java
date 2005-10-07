@@ -37,8 +37,7 @@ public class RawUseOfParameterizedTypeInspection extends VariableInspection {
       super.visitVariable(variable);
       final PsiManager manager = variable.getManager();
       final LanguageLevel languageLevel = manager.getEffectiveLanguageLevel();
-      if (languageLevel.equals(LanguageLevel.JDK_1_3) ||
-          languageLevel.equals(LanguageLevel.JDK_1_4)) {
+      if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
         return;
       }
       final PsiTypeElement typeElement = variable.getTypeElement();
@@ -49,8 +48,7 @@ public class RawUseOfParameterizedTypeInspection extends VariableInspection {
       super.visitTypeCastExpression(cast);
       final PsiManager manager = cast.getManager();
       final LanguageLevel languageLevel = manager.getEffectiveLanguageLevel();
-      if (languageLevel.equals(LanguageLevel.JDK_1_3) ||
-          languageLevel.equals(LanguageLevel.JDK_1_4)) {
+      if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
         return;
       }
       final PsiTypeElement typeElement = cast.getCastType();
@@ -60,8 +58,7 @@ public class RawUseOfParameterizedTypeInspection extends VariableInspection {
     public void visitInstanceOfExpression(@NotNull PsiInstanceOfExpression expression) {
       final PsiManager manager = expression.getManager();
       final LanguageLevel languageLevel = manager.getEffectiveLanguageLevel();
-      if (languageLevel.equals(LanguageLevel.JDK_1_3) ||
-          languageLevel.equals(LanguageLevel.JDK_1_4)) {
+      if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
         return;
       }
       super.visitInstanceOfExpression(expression);
@@ -72,8 +69,7 @@ public class RawUseOfParameterizedTypeInspection extends VariableInspection {
     public void visitNewExpression(@NotNull PsiNewExpression newExpression) {
       final PsiManager manager = newExpression.getManager();
       final LanguageLevel languageLevel = manager.getEffectiveLanguageLevel();
-      if (languageLevel.equals(LanguageLevel.JDK_1_3) ||
-          languageLevel.equals(LanguageLevel.JDK_1_4)) {
+      if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
         return;
       }
       super.visitNewExpression(newExpression);

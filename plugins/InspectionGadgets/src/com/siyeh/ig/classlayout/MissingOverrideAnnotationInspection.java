@@ -85,8 +85,7 @@ public class MissingOverrideAnnotationInspection extends MethodInspection {
           final PsiManager manager = method.getManager();
           final LanguageLevel languageLevel =
                   manager.getEffectiveLanguageLevel();
-          if(languageLevel.equals(LanguageLevel.JDK_1_3) ||
-                  languageLevel.equals(LanguageLevel.JDK_1_4)){
+          if(languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0){
               return;
           }
           if(!isOverride(method)){
