@@ -1,7 +1,7 @@
 package com.intellij.refactoring.encapsulateFields;
 
 import com.intellij.ide.IconUtilEx;
-import com.intellij.openapi.actionSystem.impl.EmptyIcon;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
@@ -588,7 +588,7 @@ public class EncapsulateFieldsDialog extends RefactoringDialog {
 
   private static final Icon OVERRIDING_METHOD_ICON = IconLoader.getIcon("/general/overridingMethod.png");
   private static final Icon IMPLEMENTING_METHOD_ICON = IconLoader.getIcon("/general/implementingMethod.png");
-  private static final Icon EMPTY_OVERRIDE_ICON = EmptyIcon.create(16, 16);
+  private static final Icon EMPTY_OVERRIDE_ICON = new EmptyIcon(16, 16);
 
   private class MyTableRenderer extends DefaultTableCellRenderer {
     public Component getTableCellRendererComponent(JTable table, final Object value,

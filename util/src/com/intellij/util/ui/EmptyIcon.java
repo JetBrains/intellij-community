@@ -1,5 +1,4 @@
-
-package com.intellij.openapi.actionSystem.impl;
+package com.intellij.util.ui;
 
 import javax.swing.*;
 import java.awt.*;
@@ -8,11 +7,15 @@ public class EmptyIcon implements Icon {
   private final int myWidth;
   private final int myHeight;
 
-  private EmptyIcon(int width, int height) {
+  public EmptyIcon(int size) {
+    this(size, size);
+  }
+
+  public EmptyIcon(int width, int height) {
     myWidth = width;
     myHeight = height;
   }
-  
+
   public int getIconWidth() {
     return myWidth;
   }
@@ -38,9 +41,5 @@ public class EmptyIcon implements Icon {
 
   public int hashCode() {
     return myWidth + myHeight;
-  }
-
-  public static EmptyIcon create(int width, int height) {
-    return new EmptyIcon(width, height);
   }
 }

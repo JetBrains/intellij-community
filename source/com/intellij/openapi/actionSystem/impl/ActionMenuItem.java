@@ -9,6 +9,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.impl.IdeFrame;
 import com.intellij.ui.plaf.beg.BegMenuItemUI;
+import com.intellij.util.ui.EmptyIcon;
 
 import javax.swing.*;
 import java.awt.*;
@@ -22,7 +23,7 @@ import org.jetbrains.annotations.NonNls;
 
 public class ActionMenuItem extends JMenuItem{
   private static final Icon ourCheckedIcon = IconLoader.getIcon("/actions/check.png");
-  private static final Icon ourUncheckedIcon = EmptyIcon.create(18, 18);
+  private static final Icon ourUncheckedIcon = new EmptyIcon(18, 18);
 
   private final AnAction myAction;
   private final Presentation myPresentation;

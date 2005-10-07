@@ -1,6 +1,6 @@
 package com.intellij.openapi.fileTypes.impl;
 
-import com.intellij.openapi.actionSystem.impl.EmptyIcon;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.ui.LayeredIcon;
 
@@ -8,7 +8,7 @@ import javax.swing.*;
 import java.awt.*;
 
 public class FileTypeRenderer extends DefaultListCellRenderer {
-  private static final Icon EMPTY_ICON = EmptyIcon.create(18, 18);
+  private static final Icon EMPTY_ICON = new EmptyIcon(18, 18);
 
   public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
     super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);

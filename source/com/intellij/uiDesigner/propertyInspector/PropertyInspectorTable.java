@@ -3,7 +3,7 @@ package com.intellij.uiDesigner.propertyInspector;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.EmptyIcon;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.ui.Messages;
@@ -728,8 +728,8 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       };
       myExpandIcon=IconLoader.getIcon("/com/intellij/uiDesigner/icons/expandNode.png");
       myCollapseIcon=IconLoader.getIcon("/com/intellij/uiDesigner/icons/collapseNode.png");
-      myLevel1ShiftIcon=EmptyIcon.create(9,9);
-      myLevel2ShiftIcon=EmptyIcon.create(20,9);
+      myLevel1ShiftIcon=new EmptyIcon(9, 9);
+      myLevel2ShiftIcon= new EmptyIcon(20, 9);
     }
 
     public Component getTableCellRendererComponent(

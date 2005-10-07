@@ -4,7 +4,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
-import com.intellij.openapi.actionSystem.impl.EmptyIcon;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.ui.Splitter;
@@ -33,7 +33,8 @@ public class EditorWindow {
   public int myInsideTabChange;
   protected final EditorsSplitters myOwner;
   private static final Icon MODIFIED_ICON = IconLoader.getIcon("/general/modified.png");
-  private static final Icon GAP_ICON = EmptyIcon.create(MODIFIED_ICON.getIconWidth(), MODIFIED_ICON.getIconHeight());
+  private static final Icon GAP_ICON = new EmptyIcon(MODIFIED_ICON.getIconWidth(), MODIFIED_ICON.getIconHeight());
+
   private boolean myIsDisposed = false;
 
   protected EditorWindow(final EditorsSplitters owner) {

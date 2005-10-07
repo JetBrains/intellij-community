@@ -3,7 +3,7 @@ package com.intellij.ide;
 import com.intellij.j2ee.j2eeDom.ejb.CmpField;
 import com.intellij.j2ee.j2eeDom.ejb.CmrField;
 import com.intellij.j2ee.j2eeDom.ejb.Ejb;
-import com.intellij.openapi.actionSystem.impl.EmptyIcon;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
@@ -24,11 +24,11 @@ public class IconUtilEx {
   public static Icon getEmptyIcon(boolean showVisibility) {
     RowIcon baseIcon = new RowIcon(2);
     EmptyIcon emptyIcon = Icons.CLASS_ICON != null
-                          ? EmptyIcon.create(Icons.CLASS_ICON.getIconWidth(), Icons.CLASS_ICON.getIconHeight())
+                          ? new EmptyIcon(Icons.CLASS_ICON.getIconWidth(), Icons.CLASS_ICON.getIconHeight())
                           : null;
     baseIcon.setIcon(emptyIcon, 0);
     if (showVisibility) {
-      emptyIcon = Icons.PUBLIC_ICON != null ? EmptyIcon.create(Icons.PUBLIC_ICON.getIconWidth(), Icons.PUBLIC_ICON.getIconHeight()) : null;
+      emptyIcon = Icons.PUBLIC_ICON != null ? new EmptyIcon(Icons.PUBLIC_ICON.getIconWidth(), Icons.PUBLIC_ICON.getIconHeight()) : null;
       baseIcon.setIcon(emptyIcon, 1);
     }
     return baseIcon;
@@ -76,13 +76,13 @@ public class IconUtilEx {
         setVisibilityIcon(PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL, baseIcon);
       }
       else {
-        Icon emptyIcon = EmptyIcon.create(Icons.PUBLIC_ICON.getIconWidth(), Icons.PUBLIC_ICON.getIconHeight());
+        Icon emptyIcon = new EmptyIcon(Icons.PUBLIC_ICON.getIconWidth(), Icons.PUBLIC_ICON.getIconHeight());
         baseIcon.setIcon(emptyIcon, 1);
       }
     }
     else {
       if (Icons.PUBLIC_ICON != null) {
-        Icon emptyIcon = EmptyIcon.create(Icons.PUBLIC_ICON.getIconWidth(), Icons.PUBLIC_ICON.getIconHeight());
+        Icon emptyIcon = new EmptyIcon(Icons.PUBLIC_ICON.getIconWidth(), Icons.PUBLIC_ICON.getIconHeight());
         baseIcon.setIcon(emptyIcon, 1);
       }
     }
@@ -105,7 +105,7 @@ public class IconUtilEx {
         break;
       default:
         if (Icons.PUBLIC_ICON != null) {
-          icon = EmptyIcon.create(Icons.PUBLIC_ICON.getIconWidth(), Icons.PUBLIC_ICON.getIconHeight());
+          icon = new EmptyIcon(Icons.PUBLIC_ICON.getIconWidth(), Icons.PUBLIC_ICON.getIconHeight());
         }
         else {
           return;

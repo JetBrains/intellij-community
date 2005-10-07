@@ -10,7 +10,7 @@ import com.intellij.j2ee.module.view.J2EEProjectViewPane;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.ex.QuickListsManager;
-import com.intellij.openapi.actionSystem.impl.EmptyIcon;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil;
 import com.intellij.openapi.keymap.impl.ui.Group;
@@ -50,7 +50,8 @@ import java.util.List;
  * Date: Mar 17, 2005
  */
 public class CustomizableActionsPanel {
-  private static final Icon EMPTY_ICON = EmptyIcon.create(18, 18);
+  private static final Icon EMPTY_ICON = new EmptyIcon(18, 18);
+
   private static final Icon QUICK_LIST_ICON = IconLoader.getIcon("/actions/quickList.png");
 
   private JButton myEditIconButton;

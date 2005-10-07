@@ -9,7 +9,7 @@
 package com.intellij.refactoring.ui;
 
 import com.intellij.ide.IconUtilEx;
-import com.intellij.openapi.actionSystem.impl.EmptyIcon;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.*;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
@@ -35,7 +35,8 @@ public class MemberSelectionTable extends Table {
   private static final int ABSTRACT_COLUMN = 2;
   private static final Icon OVERRIDING_METHOD_ICON = IconLoader.getIcon("/general/overridingMethod.png");
   private static final Icon IMPLEMENTING_METHOD_ICON = IconLoader.getIcon("/general/implementingMethod.png");
-  private static final Icon EMPTY_OVERRIDE_ICON = EmptyIcon.create(16, 16);
+  private static final Icon EMPTY_OVERRIDE_ICON = new EmptyIcon(16, 16);
+
   private final String myAbstractColumnHeader;
   private static final String DISPLAY_NAME_COLUMN_HEADER = RefactoringBundle.message("member.column");
 

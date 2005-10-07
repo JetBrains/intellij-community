@@ -1,7 +1,7 @@
 package com.intellij.packageDependencies.ui;
 
 import com.intellij.ide.IconUtilEx;
-import com.intellij.openapi.actionSystem.impl.EmptyIcon;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -21,7 +21,8 @@ import java.util.Set;
 import org.jetbrains.annotations.Nullable;
 
 public class PackageDependenciesNode extends DefaultMutableTreeNode implements Navigatable{
-  private static final EmptyIcon EMPTY_ICON = EmptyIcon.create(0, IconUtilEx.getEmptyIcon(false).getIconHeight());
+  private static final EmptyIcon EMPTY_ICON = new EmptyIcon(0, IconUtilEx.getEmptyIcon(false).getIconHeight());
+
   private Set<PsiFile> myRegisteredFiles = new HashSet<PsiFile>();
   private boolean myHasUnmarked = false;
   private boolean myHasMarked = false;

@@ -5,7 +5,7 @@ import com.intellij.diagnostic.MessagePool;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.impl.EmptyIcon;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.ui.EdgeBorder;
@@ -30,7 +30,7 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
   protected final IdeMessagePanel myMessagePanel = new IdeMessagePanel(MessagePool.getInstance());
   protected String myInfo = "";
   private final Icon myLockedIcon = IconLoader.getIcon("/nodes/lockedSingle.png");
-  private final Icon myUnlockedIcon = myLockedIcon != null ? EmptyIcon.create(myLockedIcon.getIconWidth(), myLockedIcon.getIconHeight()) : null;
+  private final Icon myUnlockedIcon = myLockedIcon != null ? new EmptyIcon(myLockedIcon.getIconWidth(), myLockedIcon.getIconHeight()) : null;
 
   protected final MyUISettingsListener myUISettingsListener;
   protected JPanel myInfoAndButtonPanel;

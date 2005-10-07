@@ -3,7 +3,7 @@ package com.intellij.openapi.keymap.impl.ui;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.QuickList;
-import com.intellij.openapi.actionSystem.impl.EmptyIcon;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.KeyMapBundle;
@@ -30,7 +30,8 @@ import java.util.Iterator;
 import org.jetbrains.annotations.NonNls;
 
 public class ActionsTree {
-  private static final Icon EMPTY_ICON = EmptyIcon.create(18, 18);
+  private static final Icon EMPTY_ICON = new EmptyIcon(18, 18);
+
   private static final Icon QUICK_LIST_ICON = IconLoader.getIcon("/actions/quickList.png");
   private TreeTable myTreeTable;
   private DefaultMutableTreeNode myRoot;

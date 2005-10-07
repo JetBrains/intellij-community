@@ -10,7 +10,7 @@ import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
-import com.intellij.openapi.actionSystem.impl.EmptyIcon;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -569,11 +569,11 @@ public class WelcomeScreen {
 
     // Check the iconPath and insert empty icon in case of empty or invalid value
     if (StringUtil.isEmptyOrSpaces(iconPath)) {
-      logoImage = EmptyIcon.create(PLUGIN_LOGO_SIZE.width, PLUGIN_LOGO_SIZE.height);
+      logoImage = new EmptyIcon(PLUGIN_LOGO_SIZE.width, PLUGIN_LOGO_SIZE.height);
     }
     else {
       logoImage = IconLoader.findIcon(iconPath, pluginClassLoader);
-      if (logoImage == null) logoImage = EmptyIcon.create(PLUGIN_LOGO_SIZE.width, PLUGIN_LOGO_SIZE.height);
+      if (logoImage == null) logoImage = new EmptyIcon(PLUGIN_LOGO_SIZE.width, PLUGIN_LOGO_SIZE.height);
     }
     JLabel imageLabel = new JLabel(logoImage);
     GridBagConstraints gBC = new GridBagConstraints(0, y, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,

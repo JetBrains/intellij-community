@@ -10,7 +10,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.actionSystem.impl.EmptyIcon;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -634,7 +634,7 @@ public class IntentionHintComponent extends JPanel {
       }
 
       myArrowButton.setBorderPainted(false);
-      myArrowButton.setIcon(EmptyIcon.create(ourArrowIcon.getIconWidth(), ourArrowIcon.getIconHeight()));
+      myArrowButton.setIcon(new EmptyIcon(ourArrowIcon.getIconWidth(), ourArrowIcon.getIconHeight()));
       if (wrapped.getOptionIntentions().size() + wrapped.getOptionFixes().size() > 0) {
         myArrowButton.setIcon(ourArrowIcon);
         myArrowButton.getModel().setArmed(false);

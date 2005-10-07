@@ -4,11 +4,9 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.actionSystem.ex.QuickList;
-import com.intellij.openapi.actionSystem.ex.QuickListsManager;
-import com.intellij.openapi.actionSystem.impl.EmptyIcon;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
@@ -26,10 +24,9 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 
-import org.jetbrains.annotations.NonNls;
-
 public class QuickListPanel {
-  private static final Icon EMPTY_ICON = EmptyIcon.create(18, 18);
+  private static final Icon EMPTY_ICON = new EmptyIcon(18, 18);
+
   private static final Icon QUICK_LIST_ICON = IconLoader.getIcon("/actions/quickList.png");
   private JButton myRemoveActionButton;
   private JButton myIncludeActionButton;

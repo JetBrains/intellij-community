@@ -2,7 +2,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionListPopup;
-import com.intellij.openapi.actionSystem.impl.EmptyIcon;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -16,7 +16,7 @@ import java.awt.*;
  */
 public abstract class QuickSwitchSchemeAction extends AnAction {
   protected static final Icon ourCurrentAction = IconLoader.getIcon("/diff/currentLine.png");
-  protected static final Icon ourNotCurrentAction = EmptyIcon.create(ourCurrentAction.getIconWidth(), ourCurrentAction.getIconHeight());
+  protected static final Icon ourNotCurrentAction = new EmptyIcon(ourCurrentAction.getIconWidth(), ourCurrentAction.getIconHeight());
 
   public void actionPerformed(AnActionEvent e) {
     Project project = (Project) e.getDataContext().getData(DataConstants.PROJECT);

@@ -4,7 +4,7 @@ import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.ide.IconUtilEx;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.actionSystem.impl.EmptyIcon;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
 import com.intellij.openapi.project.Project;
@@ -24,7 +24,7 @@ public class RefreshStatusRenderer implements ErrorStripeRenderer {
   private static final Icon NO_ANALYSIS_ICON = IconLoader.getIcon("/general/noAnalysis.png");
   private static final Icon WARNINGS_FOUND_ICON = IconLoader.getIcon("/general/warningsFound.png");
   private static final Icon INSPECTION_ICON = IconLoader.getIcon("/general/inspectionInProgress.png");
-  private static final Icon NO_ICON = EmptyIcon.create(IN_PROGRESS_ICON.getIconWidth(), IN_PROGRESS_ICON.getIconHeight());
+  private static final Icon NO_ICON = new EmptyIcon(IN_PROGRESS_ICON.getIconWidth(), IN_PROGRESS_ICON.getIconHeight());
 
   private Project myProject;
   private Document myDocument;
