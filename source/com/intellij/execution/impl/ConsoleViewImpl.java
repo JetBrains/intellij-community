@@ -238,8 +238,9 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
       s = StringUtil.convertLineSeparators(s,  "\n");
       myContentSize += s.length();
       myDeferredOutput.append(s);
-      if (USE_CYCLIC_BUFFER && myDeferredOutput.length() > CYCLIC_BUFFER_SIZE) {
-        myDeferredOutput.delete(0, myDeferredOutput.length() - CYCLIC_BUFFER_SIZE);
+      final int length = myDeferredOutput.length();
+      if (USE_CYCLIC_BUFFER && length > CYCLIC_BUFFER_SIZE) {
+        myDeferredOutput.delete(0, length - CYCLIC_BUFFER_SIZE);
       }
       if (contentType == ConsoleViewContentType.USER_INPUT){
         myDeferredUserInput.append(s);
@@ -304,11 +305,13 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
 
     if (myEditor != null) {
       final String text = myDeferredOutput.substring(0, myDeferredOutput.length());
-      if (USE_CYCLIC_BUFFER) {
-        myDeferredOutput = new StringBuffer(Math.min(myDeferredOutput.length(), CYCLIC_BUFFER_SIZE));
-      }
-      else {
-        myDeferredOutput.setLength(0);
+      synchronized (LOCK) {
+        if (USE_CYCLIC_BUFFER) {
+          myDeferredOutput = new StringBuffer(Math.min(myDeferredOutput.length(), CYCLIC_BUFFER_SIZE));
+        }
+        else {
+          myDeferredOutput.setLength(0);
+        }
       }
       final Document document = myEditor.getDocument();
       final int oldLineCount = document.getLineCount();
@@ -753,7 +756,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
       });
     }
 
-    private EditorActionHandler getDefaultActionHandler() {
+    private static EditorActionHandler getDefaultActionHandler() {
       return EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_BACKSPACE);
     }
   }
