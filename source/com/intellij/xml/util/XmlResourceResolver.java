@@ -1,30 +1,30 @@
 package com.intellij.xml.util;
 
+import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
+import org.apache.xerces.xni.XMLResourceIdentifier;
+import org.apache.xerces.xni.XNIException;
+import org.apache.xerces.xni.parser.XMLEntityResolver;
+import org.apache.xerces.xni.parser.XMLInputSource;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
-import java.net.URL;
 import java.net.MalformedURLException;
-import java.util.Map;
+import java.net.URL;
 import java.util.HashMap;
-
-import org.apache.xerces.xni.parser.XMLInputSource;
-import org.apache.xerces.xni.parser.XMLEntityResolver;
-import org.apache.xerces.xni.XMLResourceIdentifier;
-import org.apache.xerces.xni.XNIException;
-import org.jetbrains.annotations.NonNls;
+import java.util.Map;
 
 /**
  * Created by IntelliJ IDEA.
@@ -34,7 +34,7 @@ import org.jetbrains.annotations.NonNls;
  * To change this template use File | Settings | File Templates.
  */
 public class XmlResourceResolver implements XMLEntityResolver {
-  private static Logger LOG = Logger.getInstance("#com.intellij.xml.util.XmlResourceResolver");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.xml.util.XmlResourceResolver");
   private XmlFile myFile;
   private Project myProject;
   private Map<String,String> myExternalResourcesMap = new HashMap<String, String>(1);
@@ -71,7 +71,7 @@ public class XmlResourceResolver implements XMLEntityResolver {
         VirtualFile vFile = null;
 
         if (baseSystemId != null) {
-          baseFile = (XmlFile)resolve(null,baseSystemId);
+          baseFile = resolve(null,baseSystemId);
 
           if (baseFile == null) {
             if (myFile != null) {
@@ -87,9 +87,7 @@ public class XmlResourceResolver implements XMLEntityResolver {
               if (vFile == null) {
                 try {
                   vFile = VfsUtil.findFileByURL(new URL(baseSystemId));
-                } catch(MalformedURLException ex) {
-
-                }
+                } catch(MalformedURLException ex) {}
               }
             }
           }
@@ -111,15 +109,17 @@ public class XmlResourceResolver implements XMLEntityResolver {
 
         if (psiFile == null && systemId != null && baseSystemId == null) { // entity file
           File workingFile = new File("");
-          String workingDir = workingFile.getAbsoluteFile().getAbsolutePath().replace(File.separatorChar, '/');
-
+          String workingDir = workingFile.getAbsoluteFile().getAbsolutePath().replace(File.separatorChar, '/') + "/";
+          
+          String relativePath = StringUtil.replace(
+            systemId,
+            workingDir,
+            ""
+          );
+          
           for(String path:myExternalResourcesMap.values()) {
-            String id = StringUtil.replace(
-              systemId,
-              workingDir,
-              path.substring(path.startsWith(FILE_PREFIX)?FILE_PREFIX.length():0,path.lastIndexOf('/'))
-            );
-            final VirtualFile relativeFile = VfsUtil.findRelativeFile(id, null);
+            VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(path);
+            final VirtualFile relativeFile = VfsUtil.findRelativeFile(relativePath, file);
 
             if (relativeFile != null) {
               psiFile = PsiManager.getInstance(myProject).findFile(relativeFile);
