@@ -256,7 +256,7 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
       while(matcher.find()) {
         if(handlers==null) handlers = new LinkedList<SubstitutionHandler>();
         handler = (SubstitutionHandler)context.pattern.getHandler(matcher.group(1));
-        handlers.add( handler );
+        if (handler != null) handlers.add( handler );
 
         word = content.substring(start,matcher.start());
 
