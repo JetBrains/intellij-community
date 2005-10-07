@@ -15,33 +15,33 @@
  */
 package org.jetbrains.idea.svn.update;
 
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.options.ConfigurationException;
-
-import javax.swing.*;
-import java.awt.event.ActionListener;
-import java.awt.event.ActionEvent;
-
-import org.jetbrains.idea.svn.dialogs.SelectLocationDialog;
-import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.SvnConfiguration;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.versionBrowser.RepositoryVersion;
 import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnConfiguration;
+import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.dialogs.SelectLocationDialog;
+import org.jetbrains.idea.svn.history.SvnVersionsProvider;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
+import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
 public class SvnIntegrateRootOptionsPanel implements SvnPanel{
-  private JLabel myMergeURLLabel1;
-  private JLabel myMergeURLLabel2;
   private TextFieldWithBrowseButton myMergeText1;
   private TextFieldWithBrowseButton myMergeText2;
-  private JLabel myMergeRevisionLabel1;
-  private JTextField myMergeRevisionText1;
-  private JLabel myMergeRevisionLabel2;
-  private JTextField myMergeRevisionText2;
 
   private JPanel myPanel;
   private final FilePath myRoot;
   private final SvnVcs myVcs;
+  private TextFieldWithBrowseButton myRevision2;
+  private TextFieldWithBrowseButton myRevision1;
+  private JLabel myUrlLabel1;
 
   public SvnIntegrateRootOptionsPanel(final SvnVcs vcs, FilePath root) {
     myRoot = root;
@@ -49,51 +49,77 @@ public class SvnIntegrateRootOptionsPanel implements SvnPanel{
 
     myMergeText1.setEditable(false);
 
-
-    myMergeRevisionLabel1.setLabelFor(myMergeRevisionText1);
+    myUrlLabel1.setLabelFor(myMergeText1);
 
     myMergeText2.setEditable(false);
 
-    myMergeRevisionLabel2.setLabelFor(myMergeRevisionText2);
-
-    myMergeURLLabel1.setLabelFor(myMergeText1);
-    myMergeURLLabel2.setLabelFor(myMergeText2);
-
     myMergeText1.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        String url = myMergeText1.getText();
-        SelectLocationDialog dialog = new SelectLocationDialog(vcs.getProject(), url, null, null, true);
-        dialog.show();
-        if (dialog.isOK()) {
-          url = dialog.getSelectedURL();
-          if (url != null) {
-            myMergeText1.setText(url);
-          }
-        }
+        chooseUrl(myMergeText1, vcs);
       }
     });
     myMergeText2.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        String url = myMergeText2.getText();
-        SelectLocationDialog dialog = new SelectLocationDialog(vcs.getProject(), url, null, null, true);
-        dialog.show();
-        if (dialog.isOK()) {
-          url = dialog.getSelectedURL();
-          if (url != null) {
-            myMergeText2.setText(url);
-          }
-        }
+        chooseUrl2(vcs);
       }
+    });
+
+    myRevision1.setEditable(false);
+    myRevision2.setEditable(false);
+
+
+    myRevision1.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        chooseRevision(myRevision1, myMergeText1.getText(), vcs.getProject());
+      }
+
+    });
+
+
+    myRevision2.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        chooseRevision(myRevision2, myMergeText2.getText(), vcs.getProject());
+      }
+
     });
 
   }
 
+  private void chooseRevision(final TextFieldWithBrowseButton revisionField, String url, final Project project) {
+    final RepositoryVersion revision = AbstractVcsHelper.getInstance(project).chooseRepositoryVersion(new SvnVersionsProvider(project, url));
+    if (revision != null) {
+      revisionField.setText(String.valueOf(revision.getNumber()));
+    }
+  }
+
+
+  private boolean chooseUrl2(final SvnVcs vcs) {
+    return chooseUrl(myMergeText2, vcs);
+  }
+
+  private boolean chooseUrl(final TextFieldWithBrowseButton textField, final SvnVcs vcs) {
+    String url = textField.getText();
+    SelectLocationDialog dialog = new SelectLocationDialog(vcs.getProject(), url, null, null, true);
+    dialog.show();
+    if (dialog.isOK()) {
+      url = dialog.getSelectedURL();
+      if (url != null) {
+        textField.setText(url);
+        return true;
+      } else {
+        return false;
+      }
+    } else {
+      return false;
+    }
+  }
+
   public void apply(SvnConfiguration conf) throws ConfigurationException {
     final MergeRootInfo rootInfo = conf.getMergeRootInfo(myRoot.getIOFile(), myVcs);
-    rootInfo.setUrl1(myMergeRevisionText1.getText());
-    rootInfo.setUrl2(myMergeRevisionText2.getText());
-    rootInfo.setRevision1(createRevision(myMergeRevisionText1.getText()));
-    rootInfo.setRevision2(createRevision(myMergeRevisionText2.getText()));
+    rootInfo.setUrl1(myMergeText1.getText());
+    rootInfo.setUrl2(myMergeText2.getText());
+    rootInfo.setRevision1(createRevision(myRevision1.getText()));
+    rootInfo.setRevision2(createRevision(myRevision1.getText()));
 
   }
 
@@ -111,14 +137,14 @@ public class SvnIntegrateRootOptionsPanel implements SvnPanel{
   }
 
   public void reset(SvnConfiguration config) {
-
     final MergeRootInfo rootInfo = config.getMergeRootInfo(myRoot.getIOFile(), myVcs);
+    myRevision1.setText(rootInfo.getRevision1().toString());
+    myRevision2.setText(rootInfo.getRevision2().toString());
+    myMergeText1.setText(rootInfo.getUrlString1());
+    myMergeText2.setText(rootInfo.getUrlString2());
 
-    myMergeRevisionText1.setText(rootInfo.getRevision1().toString());
-    myMergeRevisionText1.selectAll();
-    myMergeRevisionText2.setText(rootInfo.getRevision2().toString());
-    myMergeRevisionText2.selectAll();
-    myMergeText1.setText(rootInfo.getUrl1().toString());
-    myMergeText2.setText(rootInfo.getUrl2().toString());
+    if (myMergeText1.getText().equals(myMergeText2.getText())) {
+      myMergeText2.setEnabled(false);
+    }
   }
 }

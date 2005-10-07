@@ -91,4 +91,13 @@ public class MergeRootInfo {
   public void setRevision2(final SVNRevision rev) {
     myRevision2 = rev;
   }
+
+  public String getUrlString1() {
+    return myUrl1;
+  }
+
+  public String getUrlString2() {
+    return myUrl2;
+  }
+
 }

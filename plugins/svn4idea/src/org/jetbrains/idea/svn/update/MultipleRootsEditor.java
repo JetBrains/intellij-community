@@ -84,6 +84,8 @@ public class MultipleRootsEditor {
 
     myList.setSelectedIndex(0);
 
+    myList.requestFocus();
+
   }
 
   public JPanel getPanel() {

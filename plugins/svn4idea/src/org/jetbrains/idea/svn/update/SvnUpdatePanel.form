@@ -11,7 +11,7 @@
     <children>
       <component id="70d50" class="javax.swing.JCheckBox" binding="myRecursiveBox">
         <constraints>
-          <xy x="0" y="25" width="364" height="22"/>
+          <xy x="0" y="25" width="165" height="22"/>
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
         </constraints>
         <properties>
@@ -33,7 +33,7 @@
           <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
         </constraints>
       </vspacer>
-      <xy id="9013a" binding="myConfigureRootsPanel" hgap="-1" vgap="-1">
+      <xy id="9013a" binding="myConfigureRootsPanel" hgap="4" vgap="4">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
           <xy x="0" y="0" width="392" height="20"/>
