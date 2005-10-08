@@ -169,6 +169,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
   private CachedFontContent myLastCache;
   private boolean mySpacesHaveSameWidth;
 
+  private Point myLastBackgroundPosition = null;
+  private Color myLastBackgroundColor = null;
+  private int myLastBackgroundWidth;
+
   static {
     ourCaretThread = new RepaintCursorThread();
     ourCaretThread.start();
@@ -1017,10 +1021,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
       return;
     }
 
-    Color background = getBackroundColor();
-    g.setColor(background);
-    g.fillRect(clip.x, clip.y, clip.width, clip.height);
-
     paintBackgrounds(g, clip);
     paintRectangularSelection(g);
     paintRightMargin(g, clip);
@@ -1039,7 +1039,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     borderEffect.paintHighlighters((getMarkupModel()).getAllHighlighters());
     paintCaretCursor(g);
 
-    paintComposedTextDecoration((Graphics2D)g);
+    //paintComposedTextDecoration((Graphics2D)g);
   }
 
   public void setBackgroundColor(Color color) {
@@ -1183,6 +1183,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
   }
 
   private void paintBackgrounds(Graphics g, Rectangle clip) {
+    Color defaultBackground = getBackroundColor();
+    g.setColor(defaultBackground);
+    g.fillRect(clip.x, clip.y, clip.width, clip.height);
+
     int lineHeight = getLineHeight();
 
     int visibleLineNumber = clip.y / lineHeight;
@@ -1203,6 +1207,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
       return;
     }
 
+    myLastBackgroundPosition = null;
+    myLastBackgroundColor = null;
+
     TextAttributes attributes = iterationState.getMergedAttributes();
     Color backColor = getBackgroundColor(attributes);
     Point position = new Point(0, visibleLineNumber * lineHeight);
@@ -1217,18 +1224,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
         FoldRegion collapsedFolderAt = myFoldingModel.getCollapsedRegionAtOffset(start);
         if (collapsedFolderAt == null) {
           position.x = drawBackground(g, backColor, text.subSequence(start, lEnd - lIterator.getSeparatorLength()),
-                                      position, fontType);
+                                      position, fontType, defaultBackground, clip);
 
           if (lIterator.getLineNumber() < lastLineIndex) {
-            if (backColor != null) {
-              Color saved = g.getColor();
+            if (backColor != null && !backColor.equals(defaultBackground)) {
               g.setColor(backColor);
               g.fillRect(position.x, position.y, clip.x + clip.width - position.x, lineHeight);
-              g.setColor(saved);
             }
           }
           else {
-            paintAfterFileEndBackground(iterationState, g, position, clip, lineHeight);
+            paintAfterFileEndBackground(iterationState, g, position, clip, lineHeight, defaultBackground);
             break;
           }
 
@@ -1244,15 +1249,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
         FoldRegion collapsedFolderAt = iterationState.getCurrentFold();
         if (collapsedFolderAt != null) {
           position.x = drawBackground(g, backColor, collapsedFolderAt.getPlaceholderText(),
-                                      position, fontType);
+                                      position, fontType, defaultBackground, clip);
         }
         else {
           if (hEnd > lEnd - lIterator.getSeparatorLength()) {
             position.x = drawBackground(g, backColor, text.subSequence(start, lEnd - lIterator.getSeparatorLength()),
-                                        position, fontType);
+                                        position, fontType, defaultBackground, clip);
           }
           else {
-            position.x = drawBackground(g, backColor, text.subSequence(start, hEnd), position, fontType);
+            position.x = drawBackground(g, backColor, text.subSequence(start, hEnd), position, fontType, defaultBackground, clip);
           }
         }
 
@@ -1264,8 +1269,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
       }
     }
 
+    flushBackground(g, clip);
+
     if (lIterator.getLineNumber() >= lastLineIndex && position.y <= clip.y + clip.height) {
-      paintAfterFileEndBackground(iterationState, g, position, clip, lineHeight);
+      paintAfterFileEndBackground(iterationState, g, position, clip, lineHeight, defaultBackground);
     }
   }
 
@@ -1291,13 +1298,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
   }
 
   private static void paintAfterFileEndBackground(IterationState iterationState, Graphics g, Point position,
-                                                  Rectangle clip, int lineHeight) {
+                                                  Rectangle clip, int lineHeight, final Color defaultBackground) {
     Color backColor = iterationState.getPastFileEndBackground();
-    if (backColor != null) {
-      Color saved = g.getColor();
+    if (backColor != null && !backColor.equals(defaultBackground)) {
       g.setColor(backColor);
       g.fillRect(position.x, position.y, clip.x + clip.width - position.x, lineHeight);
-      g.setColor(saved);
     }
   }
 
@@ -1305,17 +1310,41 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
                              Color backColor,
                              CharSequence text,
                              Point position,
-                             int fontType) {
+                             int fontType,
+                             Color defaultBackground,
+                             Rectangle clip) {
     int w = getTextSegmentWidth(text, position.x, fontType);
 
-    if (backColor != null) {
-      Color savedColor = g.getColor();
-      g.setColor(backColor);
-      g.fillRect(position.x, position.y, w, getLineHeight());
-      g.setColor(savedColor);
+    if (backColor != null && !backColor.equals(defaultBackground) &&
+        clip.intersects(position.x, position.y, w, getLineHeight())) {
+      if (backColor.equals(myLastBackgroundColor) &&
+          myLastBackgroundPosition.y == position.y &&
+          myLastBackgroundPosition.x + myLastBackgroundWidth == position.x
+        ) {
+        myLastBackgroundWidth += w;
+      }
+      else {
+        flushBackground(g, clip);
+        myLastBackgroundColor = backColor;
+        myLastBackgroundPosition = new Point(position);
+        myLastBackgroundWidth = w;
+      }
     }
 
     return position.x + w;
+  }
+
+  private void flushBackground(Graphics g, final Rectangle clip) {
+    if (myLastBackgroundColor != null) {
+      final Point position = myLastBackgroundPosition;
+      final int w = myLastBackgroundWidth;
+      final int height = getLineHeight();
+      if (clip.intersects(position.x, position.y, w, height)) {
+        g.setColor(myLastBackgroundColor);
+        g.fillRect(position.x, position.y, w, height);
+      }
+      myLastBackgroundColor = null;
+    }
   }
 
   private LineIterator createLineIterator() {
@@ -1401,14 +1430,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
 
         iterationState.advance();
         attributes = iterationState.getMergedAttributes();
-        Color color = attributes.getForegroundColor();
-        if (color == null) {
-          color = getForegroundColor();
+
+        currentColor = attributes.getForegroundColor();
+        if (currentColor == null) {
+          currentColor = getForegroundColor();
         }
-        if (color != currentColor) {
-          g.setColor(color);
-          currentColor = color;
-        }
+
         effectColor = attributes.getEffectColor();
         effectType = attributes.getEffectType();
         fontType = attributes.getFontType();
@@ -1558,7 +1585,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
 
     int y = getLineHeight() - getDescent() + position.y;
     int x = position.x;
-    return drawTabbedString(g, text, start, end, x, y, effectColor, effectType, fontType, fontColor);
+    return drawTabbedString(g, text, start, end, x, y, effectColor, effectType, fontType, fontColor, clip);
   }
 
   private int drawString(Graphics g, String text, Point position, Rectangle clip, Color effectColor,
@@ -1571,18 +1598,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     int x = position.x;
 
     return drawTabbedString(g, text.toCharArray(), 0, text.length(), x, y, effectColor, effectType, fontType,
-                            fontColor);
+                            fontColor, clip);
   }
 
   private int drawTabbedString(Graphics g, char[] text, int start, int end, int x, int y, Color effectColor,
-                               EffectType effectType, int fontType, Color fontColor) {
+                               EffectType effectType, int fontType, Color fontColor, final Rectangle clip) {
     int xStart = x;
     CharSequence original = new CharArrayCharSequence(text, start, end); // TODO optimize getTextSegmentWidth parameter type to char[].
 
     for (int i = start; i < end; i++) {
       if (text[i] != '\t') continue;
 
-      x = drawTablessString(text, start, i, g, x, y, fontType, fontColor);
+      x = drawTablessString(text, start, i, g, x, y, fontType, fontColor, clip);
 
       int x1 = nextTabStop(x);
       drawTabPlacer(g, y, x, x1);
@@ -1590,7 +1617,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
       start = i + 1;
     }
 
-    x = drawTablessString(text, start, end, g, x, y, fontType, fontColor);
+    x = drawTablessString(text, start, end, g, x, y, fontType, fontColor, clip);
 
     if (effectColor != null) {
       Color savedColor = g.getColor();
@@ -1629,7 +1656,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
                                 final int x,
                                 final int y,
                                 final int fontType,
-                                final Color fontColor) {
+                                final Color fontColor,
+                                final Rectangle clip) {
     int endX = x;
     if (start < end) {
       final FontInfo font = fontForChar(text[start], fontType);
@@ -1637,13 +1665,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
         final char c = text[j];
         FontInfo newFont = fontForChar(c, fontType);
         if (font != newFont) {
-          int x1 = drawTablessString(text, start, j, g, x, y, fontType, fontColor);
-          return drawTablessString(text, j, end, g, x1, y, fontType, fontColor);
+          int x1 = drawTablessString(text, start, j, g, x, y, fontType, fontColor, clip);
+          return drawTablessString(text, j, end, g, x1, y, fontType, fontColor, clip);
         }
         endX += font.charWidth(c, myEditorComponent);
       }
 
-      drawCharsCached(g, text, start, end, x, y, fontType, fontColor);
+      if (!(x < clip.x && endX < clip.x || x > clip.x + clip.width && endX > clip.x + clip.width)) {
+        drawCharsCached(g, text, start, end, x, y, fontType, fontColor);
+      }
     }
 
     return endX;
