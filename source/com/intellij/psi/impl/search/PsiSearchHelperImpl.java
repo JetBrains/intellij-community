@@ -814,20 +814,16 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       rootFilter = null;
     }
 
-    PsiClass[] candidates;
     long[] candidateIds = repositoryIndex.getNameOccurrencesInExtendsLists(name, rootFilter);
-    candidates = new PsiClass[candidateIds.length];
     for (int i = 0; i < candidateIds.length; i++) {
-      candidates[i] = (PsiClass)repositoryElementsManager.findOrCreatePsiElementById(candidateIds[i]);
-    }
-
-    for (PsiClass candidate : candidates) {
+      PsiClass candidate = (PsiClass)repositoryElementsManager.findOrCreatePsiElementById(candidateIds[i]);
       LOG.assertTrue(candidate.isValid());
       if (!processInheritorCandidate(processor, candidate, aClass, searchScope, checkDeep, processed,
                                      checkInheritance)) {
         return false;
       }
     }
+
 
     final EjbClassRole classRole = J2EERolesUtil.getEjbRole(aClass);
     if (classRole != null && classRole.isDeclarationRole()) {
