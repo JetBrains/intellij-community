@@ -149,9 +149,11 @@ public class ExternalDocumentValidator {
                 currentElement = PsiTreeUtil.getParentOfType(currentElement,XmlAttribute.class,false);
                 final int messagePrefixLength = ATTRIBUTE_ERROR_PREFIX.length();
 
-                if (currentElement==null && localizedMessage.charAt(messagePrefixLength) == '"') {
+                if ( localizedMessage.charAt(messagePrefixLength) == '"' ||
+                     localizedMessage.charAt(messagePrefixLength) == '\''
+                   ) {
                   // extract the attribute name from message and get it from tag!
-                  final int nextQuoteIndex = localizedMessage.indexOf('"', messagePrefixLength + 1);
+                  final int nextQuoteIndex = localizedMessage.indexOf(localizedMessage.charAt(messagePrefixLength), messagePrefixLength + 1);
                   String attrName = nextQuoteIndex == -1 ? null : localizedMessage.substring(messagePrefixLength + 1, nextQuoteIndex);
 
                   XmlTag parent = PsiTreeUtil.getParentOfType(originalElement,XmlTag.class);
