@@ -64,14 +64,14 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
   private ErrorReporter myErrorReporter;
   private Object myParser;
   private XmlResourceResolver myXmlResourceResolver;
-  private boolean forceChecking;
+  private boolean myForceChecking;
   @NonNls
   private static final String ENTITY_RESOLVER_PROPERTY_NAME = "http://apache.org/xml/properties/internal/entity-resolver";
   @NonNls
   public static final String XMLNS_PREFIX = "xmlns";
 
   public ValidateXmlActionHandler(boolean _forceChecking) {
-    forceChecking = _forceChecking;
+    myForceChecking = _forceChecking;
   }
 
   public void setErrorReporter(ErrorReporter errorReporter) {
@@ -361,7 +361,7 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
             }
             
             myFile.putUserData(DEPENDENT_FILES_KEY, files);
-            myFile.putUserData(GRAMMAR_POOL_TIME_STAMP_KEY, new Long(calculateTimeStamp(files)));
+            myFile.putUserData(GRAMMAR_POOL_TIME_STAMP_KEY, new Long(calculateTimeStamp(files,myProject)));
           }
         }
         catch (SAXException e) {
@@ -382,7 +382,7 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
 
   private Object createParser() {
     try {
-      if (!needsDtdChecking() && !needsSchemaChecking() && !forceChecking) {
+      if (!needsDtdChecking() && !needsSchemaChecking() && !myForceChecking) {
         return null;
       }
 
@@ -407,22 +407,12 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
       XMLGrammarPoolImpl grammarPool = null;
       
       // check if the pool is valid
-      final VirtualFile[] files = myFile.getUserData(DEPENDENT_FILES_KEY);
-      final Long grammarPoolTimeStamp = myFile.getUserData(GRAMMAR_POOL_TIME_STAMP_KEY);
-      
-      if (grammarPoolTimeStamp != null && 
-          files != null &&
-          !forceChecking
+      if (!myForceChecking && 
+          !isValidationDependentFilesOutOfDate(myFile)
          ) {
-        long dependentFilesTimestamp = calculateTimeStamp(files);
-
-        if (dependentFilesTimestamp == grammarPoolTimeStamp.longValue() &&
-            dependentFilesTimestamp != 0
-          ) {
-          grammarPool = previousGrammarPool;
-        }
+        grammarPool = previousGrammarPool;
       }
-      
+
       if (grammarPool == null) {
         grammarPool = new XMLGrammarPoolImpl();
         myFile.putUserData(GRAMMAR_POOL_KEY,grammarPool);
@@ -447,7 +437,26 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
     return null;
   }
 
-  private long calculateTimeStamp(final VirtualFile[] files) {
+  public static boolean isValidationDependentFilesOutOfDate(XmlFile myFile) {
+    final VirtualFile[] files = myFile.getUserData(DEPENDENT_FILES_KEY);
+    final Long grammarPoolTimeStamp = myFile.getUserData(GRAMMAR_POOL_TIME_STAMP_KEY);
+
+    if (grammarPoolTimeStamp != null &&
+        files != null
+       ) {
+      long dependentFilesTimestamp = calculateTimeStamp(files,myFile.getProject());
+
+      if (dependentFilesTimestamp == grammarPoolTimeStamp.longValue() &&
+          dependentFilesTimestamp != 0
+        ) {
+        return false;
+      }
+    }
+    
+    return true;
+  }
+
+  private static long calculateTimeStamp(final VirtualFile[] files, Project myProject) {
     long timestamp = 0;
 
     for(VirtualFile file:files) {

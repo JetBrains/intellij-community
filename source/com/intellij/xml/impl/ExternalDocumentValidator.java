@@ -47,11 +47,13 @@ public class ExternalDocumentValidator {
   @NonNls
   public static final String CONTENT_OF_ELEMENT_TYPE_ERROR_PREFIX = "The content of element type";
   @NonNls
-  public static final String VALUR_ERROR_PREFIX = "Value ";
+  public static final String VALUE_ERROR_PREFIX = "Value ";
   @NonNls
   public static final String ATTRIBUTE_ERROR_PREFIX = "Attribute ";
   @NonNls
   public static final String STRING_ERROR_PREFIX = "The string";
+  @NonNls
+  private static final String ATTRIBUTE_MESSAGE_PREFIX = "cvc-attribute.";
 
   private static class ValidationInfo {
     PsiElement element;
@@ -67,6 +69,7 @@ public class ExternalDocumentValidator {
     if (myFile == file &&
         file != null &&
         myModificationStamp == file.getModificationStamp() &&
+        !ValidateXmlActionHandler.isValidationDependentFilesOutOfDate((XmlFile)file) &&
         myInfos!=null &&
         myInfos.get()!=null // we have validated before
         ) {
@@ -134,7 +137,11 @@ public class ExternalDocumentValidator {
 
               // Cannot find the declaration of element
               String localizedMessage = e.getLocalizedMessage();
-              localizedMessage = localizedMessage.substring(localizedMessage.indexOf(':') + 1).trim();
+              
+              // Ideally would be to switch one messageIds
+              final int endIndex = localizedMessage.indexOf(':');
+              String messageId = endIndex != -1 ? localizedMessage.substring(0, endIndex ):"";
+              localizedMessage = localizedMessage.substring(endIndex + 1).trim();
 
               if (localizedMessage.startsWith(CANNOT_FIND_DECLARATION_ERROR_PREFIX) ||
                   localizedMessage.startsWith(ELEMENT_ERROR_PREFIX) ||
@@ -143,10 +150,33 @@ public class ExternalDocumentValidator {
                   ) {
                 addProblemToTagName(currentElement, originalElement, localizedMessage, warning);
                 //return;
-              } else if (localizedMessage.startsWith(VALUR_ERROR_PREFIX)) {
+              } else if (localizedMessage.startsWith(VALUE_ERROR_PREFIX)) {
                 addProblemToTagName(currentElement, originalElement, localizedMessage, warning);
-              } else if (localizedMessage.startsWith(ATTRIBUTE_ERROR_PREFIX)) {
-                currentElement = PsiTreeUtil.getParentOfType(currentElement,XmlAttribute.class,false);
+              } else if (messageId.startsWith(ATTRIBUTE_MESSAGE_PREFIX)) {
+                @NonNls String prefix = "of attribute ";
+                final int i = localizedMessage.indexOf(prefix);
+                
+                if (i != -1) {
+                  int messagePrefixLength = prefix.length() + i;
+                  final int nextQuoteIndex = localizedMessage.indexOf(localizedMessage.charAt(messagePrefixLength), messagePrefixLength + 1);
+                  String attrName = nextQuoteIndex == -1 ? null : localizedMessage.substring(messagePrefixLength + 1, nextQuoteIndex);
+                  
+                  XmlTag parent = PsiTreeUtil.getParentOfType(originalElement,XmlTag.class);
+                  currentElement = parent.getAttribute(attrName,null);
+
+                  if (currentElement != null) {
+                    currentElement = ((XmlAttribute)currentElement).getValueElement();
+                  }
+                }
+                
+                if (currentElement!=null) {
+                  assertValidElement(currentElement, originalElement,localizedMessage);
+                  myHost.addMessage(currentElement,localizedMessage,warning ? Validator.ValidationHost.WARNING:Validator.ValidationHost.ERROR);
+                } else {
+                  addProblemToTagName(originalElement, originalElement, localizedMessage, warning);
+                }
+              }
+              else if (localizedMessage.startsWith(ATTRIBUTE_ERROR_PREFIX)) {
                 final int messagePrefixLength = ATTRIBUTE_ERROR_PREFIX.length();
 
                 if ( localizedMessage.charAt(messagePrefixLength) == '"' ||
