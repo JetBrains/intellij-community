@@ -77,7 +77,13 @@ public class XmlUtil {
   public static final String STRUTS_BEAN_URI = "http://struts.apache.org/tags-bean";
   public static final String STRUTS_LOGIC_URI = "http://struts.apache.org/tags-logic";
   public static final String STRUTS_HTML_URI = "http://struts.apache.org/tags-html";
+  
   public static final String SPRING_CORE_URI = "http://www.springframework.org/dtd/spring-beans.dtd";
+  public static final String HIBERNATE_URIS[] = { 
+    "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd",
+    "http://hibernate.sourceforge.net/hibernate-mapping-2.0.dtd"
+  };
+  
   public static final String XSD_SIMPLE_CONTENT_TAG = "simpleContent";
   public static final @NonNls String NO_NAMESPACE_SCHEMA_LOCATION_ATT = "noNamespaceSchemaLocation";
   public static final @NonNls String SCHEMA_LOCATION_ATT = "schemaLocation";
