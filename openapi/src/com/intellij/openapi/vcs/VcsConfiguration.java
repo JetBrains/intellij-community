@@ -32,7 +32,7 @@ import java.util.List;
  */
 
 public final class VcsConfiguration implements JDOMExternalizable, ProjectComponent {
-  @NonNls protected static final String VALUE_ATTR = "value";
+  @NonNls private static final String VALUE_ATTR = "value";
   public boolean CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT = true;
   public boolean CHECK_CODE_SMELLS_BEFORE_FILE_COMMIT = true;
 
@@ -75,6 +75,7 @@ public final class VcsConfiguration implements JDOMExternalizable, ProjectCompon
   public boolean FORCE_NON_EMPTY_COMMENT = false;
 
   private ArrayList<String> myLastCommitMessages = new ArrayList<String>();
+  public String LAST_COMMIT_MESSAGE = null;
 
   public boolean SAVE_LAST_COMMIT_MESSAGE = true;
   public float CHECKIN_DIALOG_SPLITTER_PROPORTION = 0.8f;
@@ -87,21 +88,6 @@ public final class VcsConfiguration implements JDOMExternalizable, ProjectCompon
 
   public float FILE_HISTORY_DIALOG_COMMENTS_SPLITTER_PROPORTION = 0.8f;
   public float FILE_HISTORY_DIALOG_SPLITTER_PROPORTION = 0.5f;
-
-  /*
-  public int ON_FILE_ADDING = Options.SHOW_DIALOG;
-  public int ON_FILE_REMOVING = Options.SHOW_DIALOG;
-  */
-
-  /*
-  public boolean SHOW_CHECKIN_OPTIONS = true;
-  public boolean SHOW_ADD_OPTIONS = true;
-  public boolean SHOW_REMOVE_OPTIONS = true;
-  public boolean SHOW_EDIT_DIALOG = true;
-  public boolean SHOW_CHECKOUT_OPTIONS = true;
-  public boolean SHOW_STATUS_OPTIONS = true;
-  public boolean SHOW_UPDATE_OPTIONS = true;
-  */
 
   public boolean ERROR_OCCURED = false;
 
@@ -175,6 +161,9 @@ public final class VcsConfiguration implements JDOMExternalizable, ProjectCompon
   }
 
   public void saveCommitMessage(final String comment) {
+
+    LAST_COMMIT_MESSAGE = comment;
+
     if (comment == null || comment.length() == 0) return;
 
     myLastCommitMessages.remove(comment);
@@ -186,7 +175,7 @@ public final class VcsConfiguration implements JDOMExternalizable, ProjectCompon
     myLastCommitMessages.add(comment);
   }
 
-  public String getLastCommitMessage() {
+  public String getLastNonEmptyCommitMessage() {
     if (myLastCommitMessages.isEmpty()) {
       return null;
     }
