@@ -92,6 +92,7 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
 
     myRevisionText.setText(SVNRevision.HEAD.toString());
     myRevisionText.getTextField().selectAll();
+    myURLText.setEnabled(false);
   }
 
   private void chooseUrl() {
