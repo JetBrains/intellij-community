@@ -515,6 +515,13 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
     new ChangesBrowser(myProject, versionsProvider, true).show();
   }
 
+  public void showChangesBrowser(VersionsProvider versionsProvider, String browserTitle) {
+    final ChangesBrowser changesBrowser = new ChangesBrowser(myProject, versionsProvider, true);
+    changesBrowser.setTitle(browserTitle);
+    changesBrowser.show();
+
+  }
+
   public void showRevisions(List<AbstractRevisions> revisions, final String title) {
     showRevisions(revisions, title, null, null);
   }

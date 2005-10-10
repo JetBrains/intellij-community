@@ -88,6 +88,9 @@ public abstract class AbstractVcsHelper {
                                        final File file);
 
   public abstract void showChangesBrowser(VersionsProvider versionsProvider);
+
+  public abstract void showChangesBrowser(VersionsProvider versionsProvider, String browserTitle);
+
   @Nullable public abstract RepositoryVersion chooseRepositoryVersion(VersionsProvider versionsProvider);
 
   public abstract void showRevisions(List<AbstractRevisions> revisions, final String title);
