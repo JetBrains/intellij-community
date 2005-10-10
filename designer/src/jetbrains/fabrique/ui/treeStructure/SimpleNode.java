@@ -8,6 +8,7 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.project.Project;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Icons;
@@ -26,7 +27,6 @@ public abstract class SimpleNode extends NodeDescriptor implements ComparableObj
   protected static final SimpleNode[] NO_CHILDREN = new SimpleNode[0];
 
   protected List<ColoredFragment> myColoredText = new ArrayList<ColoredFragment>();
-  protected FProject myFabriqueProject;
   private int myWeight = 10;
   private Font myFont;
 
@@ -34,14 +34,13 @@ public abstract class SimpleNode extends NodeDescriptor implements ComparableObj
     this(project, null);
   }
 
-  protected SimpleNode(FProject project, NodeDescriptor parentDescriptor) {
-    super(project != null ? project.getIdeaProject() : null, parentDescriptor);
+  protected SimpleNode(Project project, NodeDescriptor parentDescriptor) {
+    super(project, parentDescriptor);
     myName = "";
-    myFabriqueProject = project;
   }
 
   protected SimpleNode(SimpleNode parent) {
-    this(parent == null ? null : parent.myFabriqueProject, parent);
+    this(parent == null ? null : parent.myProject, parent);
   }
 
   protected SimpleNode() {
@@ -227,10 +226,6 @@ public abstract class SimpleNode extends NodeDescriptor implements ComparableObj
     public SimpleTextAttributes getAttributes() {
       return myAttributes;
     }
-  }
-
-  public FProject getProject() {
-    return myFabriqueProject;
   }
 
   public boolean isAncestorOrSelf(SimpleNode selectedNode) {

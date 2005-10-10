@@ -4,9 +4,9 @@
  */
 package jetbrains.fabrique.ui.treeStructure;
 
-import jetbrains.fabrique.model.FProject;
-import jetbrains.fabrique.model.FProject;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.openapi.project.Project;
+import jetbrains.fabrique.model.FProject;
 
 public abstract class CachingSimpleNode extends SimpleNode {
 
@@ -23,7 +23,7 @@ public abstract class CachingSimpleNode extends SimpleNode {
     super(aParent);
   }
 
-  protected CachingSimpleNode(FProject aProject, NodeDescriptor aParentDescriptor) {
+  protected CachingSimpleNode(Project aProject, NodeDescriptor aParentDescriptor) {
     super(aProject, aParentDescriptor);
   }
 
