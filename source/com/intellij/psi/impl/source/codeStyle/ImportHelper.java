@@ -13,6 +13,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings.ImportLayoutTable.PackageEnt
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.resolve.ResolveClassUtil;
+import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
@@ -551,6 +552,9 @@ public class ImportHelper{
         if (!(references instanceof PsiJavaReference)) continue;
         final PsiJavaReference reference = (PsiJavaReference)references;
         PsiJavaCodeReferenceElement referenceElement = null;
+        if (reference instanceof GenericReference){
+          if(((GenericReference)reference).getContextReference() != null) continue;
+        }
         if (references instanceof PsiJavaCodeReferenceElement) {
           referenceElement = (PsiJavaCodeReferenceElement)child;
           if (referenceElement.getQualifier() != null) {
