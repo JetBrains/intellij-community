@@ -17,12 +17,31 @@ package com.intellij.openapi.roots;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
- *  @author dsl
+ * Provides information about files contained in a module.
+ *
+ * @author dsl
  */
 public interface ModuleFileIndex extends FileIndex {
+  /**
+   * Returns the order entry to which the specified file or directory
+   * belongs.
+   *
+   * @param fileOrDir the file or drirectory to check.
+   * @return the order entry to which the file or directory belongs, or null if
+   * it does not belong to any order entry.
+   */
+  @Nullable
   OrderEntry getOrderEntryForFile(VirtualFile fileOrDir);
 
+  /**
+   * Returns the list of all order entries to which the specified file or directory
+   * belongs.
+   *
+   * @param fileOrDir the file or drirectory to check.
+   * @return the list of order entries to which the file or directory belongs.
+   */
   @NotNull OrderEntry[] getOrderEntriesForFile(VirtualFile fileOrDir);
 }

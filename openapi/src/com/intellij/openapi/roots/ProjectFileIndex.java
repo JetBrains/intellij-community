@@ -17,58 +17,117 @@ package com.intellij.openapi.roots;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
+/**
+ * Provides information about files contained in a project.
+ *
+ * @see ProjectRootManager#getFileIndex()
+ */
 public interface ProjectFileIndex extends FileIndex {
   /**
-   * Returns module which content this file belongs to or null if it does not belong to content of any module.
+   * Returns module to which the specified file belongs.
+   *
+   * @return the module instance or null if the file does not belong to content of any module.
    */
+  @Nullable
   Module getModuleForFile(VirtualFile file);
 
   /**
-   * Returns order entries which contain a file (either in CLASSES or SOURCES)
+   * Returns the order entries which contain the specified file (either in CLASSES or SOURCES).
+   *
+   * @return the array of order entries containing the file.
    */
+  @NotNull
   OrderEntry[] getOrderEntriesForFile(VirtualFile file);
 
   /**
-   * Returns a class root for a given file
+   * Returns a classpath entry to which the specified file or directory belongs.
+   *
+   * @param file the file or directory for which the information is requested.
+   * @return the file for the classpath entry, or null if the file is not a compiled
+   *         class file or directory belonging to a library.
    */
+  @Nullable
   VirtualFile getClassRootForFile(VirtualFile file);
 
+  /**
+   * Returns the module source root or library source root to which the specified file
+   * or directory belongs.
+   *
+   * @param file the file or directory for which the information is requested.
+   * @return the file for the source root, or null if the file is not located under any
+   *         of the source roots for the module.
+   */
+  @Nullable
   VirtualFile getSourceRootForFile(VirtualFile file);
 
+  /**
+   * Returns the module content root to which the specified file or directory belongs.
+   *
+   * @param file the file or directory for which the information is requested.
+   * @return the file for the content root, or null if the file does not belong to this project.
+   */
+  @Nullable
   VirtualFile getContentRootForFile(VirtualFile file);
 
+  /**
+   * Returns the name of the package corresponding to the specified directory.
+   *
+   * @param dir the directory for which the package name is requested.
+   * @return the package name, or null if the directory does not correspond to any package.
+   */
+  @Nullable
   String getPackageNameByDirectory(VirtualFile dir); //Q: move to FileIndex?
 
   /**
-   * Returns true if <code>file</code> is a java source file which is treated as source (that is either project's source or library source)
+   * Returns true if <code>file</code> is a Java source file which is treated as source
+   * (that is either project source or library source)
+   *
+   * @param file the file to check.
+   * @return true if the file is a Java source file belonging to project or library sources, false otherwise.
    */
   boolean isJavaSourceFile(VirtualFile file);
 
   /**
-   * Returns true if <code>file</code> is a compiled class file which belongs to some library
+   * Returns true if <code>file</code> is a compiled class file which belongs to some library.
+   *
+   * @param file the file to check.
+   * @return true if the file belongs to library classes, false otherwise.
    */
   boolean isLibraryClassFile(VirtualFile file);
 
   /**
-   * Returns true if <code>fileOrDir</code> is a file or directory from the content source or library sources
+   * Returns true if <code>fileOrDir</code> is a file or directory from the content source or library sources.
+   *
+   * @param fileOrDir the file or directory to check.
+   * @return true if the file or directory belongs to project or library sources, false otherwise.
    */
   boolean isInSource(VirtualFile fileOrDir);
 
   /**
-   * Returns true if <code>fileOrDir</code> is a file or directory from library classes
+   * Returns true if <code>fileOrDir</code> is a file or directory from library classes.
+   *
+   * @param fileOrDir the file or directory to check.
+   * @return true if the file belongs to library classes, false otherwise.
    */
   boolean isInLibraryClasses(VirtualFile fileOrDir);
 
   /**
-   * Returns true if <code>fileOrDir</code> is a file or directory from library source
+   * Returns true if <code>fileOrDir</code> is a file or directory from library source.
+   *
+   * @param fileOrDir the file or directory to check.
+   * @return true if the file belongs to library sources, false otherwise.
    */
   boolean isInLibrarySource(VirtualFile fileOrDir);
 
   /**
-   * Returns true if <code>file</code> is file or directory which is ignored. That is, it is either excluded by exclude roots
-   * or ignored by {@link com.intellij.openapi.fileTypes.FileTypeManager#isFileIgnored(String)}
+   * Checks if the specified file or directory is ignored (either excluded by exclude roots
+   * or ignored by {@link com.intellij.openapi.fileTypes.FileTypeManager#isFileIgnored(String)}).
+   *
+   * @param file the file to check.
+   * @return true if <code>file</code> is ignored, false otherwise.
    */
   boolean isIgnored(VirtualFile file);
-
 }

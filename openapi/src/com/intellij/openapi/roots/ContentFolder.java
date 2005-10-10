@@ -16,21 +16,38 @@
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
- *  @author dsl
+ * Represents a source or exclude root under the content root of a module.
+ *
+ * @see ContentEntry#getSourceFolders()
+ * @see ContentEntry#getExcludeFolders()
+ * @author dsl
  */
 public interface ContentFolder extends Synthetic {
   /**
-   * Returns virtual file for this source path's root.
-   * @return null if source path is invalid
+   * Returns the root directory for this root.
+   *
+   * @return the directory, or null if the source path is invalid.
    */
+  @Nullable
   VirtualFile getFile();
 
   /**
+   * Returns the content entry to which this root belongs.
+   *
    * @return this <code>ContentFolder</code>s {@link com.intellij.openapi.roots.ContentEntry}.
    */
+  @NotNull
   ContentEntry getContentEntry();
 
+  /**
+   * Returns the URL of the root directory for this root.
+   *
+   * @return the root directory URL.
+   */
+  @NotNull
   String getUrl();
 }

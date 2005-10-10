@@ -17,11 +17,18 @@ package com.intellij.openapi.roots;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 /**
- *  @author dsl
+ * Represents an entry in the classpath of a module (as shown in the "Order/Export" page
+ * of the module configuration dialog).
+ *
+ * @author dsl
  */
 public interface OrderEntry extends Synthetic, Comparable<OrderEntry> {
+  /**
+   * The empty array of order entries which can be reused to avoid unnecessary allocations.
+   */
   OrderEntry[] EMPTY_ARRAY = new OrderEntry[0];
 
   /**
@@ -36,6 +43,7 @@ public interface OrderEntry extends Synthetic, Comparable<OrderEntry> {
    * @return list of virtual files.
    * @see #getUrls(OrderRootType)
    */
+  @NotNull
   VirtualFile[] getFiles(OrderRootType type);
 
   /**
@@ -44,11 +52,15 @@ public interface OrderEntry extends Synthetic, Comparable<OrderEntry> {
    *
    * Note that list of roots is project-dependent.
    *
-   * @return
+   * @param rootType the type of roots which should be returned.
+   * @return the list of roots of the specified type.
    */
+  @NotNull
   String[] getUrls(OrderRootType rootType);
 
   /**
+   * Returns the user-visible name of this OrderEntry.
+   *
    * @return name of this OrderEntry to be shown to user.
    */
   String getPresentableName();
@@ -56,11 +68,24 @@ public interface OrderEntry extends Synthetic, Comparable<OrderEntry> {
   /**
    * Checks whether this order entry is invalid for some reason. Note that entry being valid
    * does not necessarily mean that all its roots are valid.
+   *
    * @return true if entry is valid, false otherwise.
    */
   boolean isValid();
 
+  /**
+   * Returns the module to which the entry belongs.
+   *
+   * @return the module instance.
+   */
   Module getOwnerModule();
 
+  /**
+   * Accepts the specified order entries visitor.
+   *
+   * @param policy       the visitor to accept.
+   * @param initialValue the default value to be returned by the visit process.
+   * @return the value returned by the visitor.
+   */
   <R> R accept(RootPolicy<R> policy, R initialValue);
 }

@@ -21,57 +21,134 @@ import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.ProjectRootType;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+/**
+ * Allows to query and modify the list of root directories belonging to a project.
+ */
 public abstract class ProjectRootManager implements ModificationTracker {
-  public static ProjectRootManager getInstance(Project project){
+  /**
+   * Returns the project root manager instance for the specified project.
+   *
+   * @param project the project for which the instance is requested.
+   * @return the instance.
+   */
+  public static ProjectRootManager getInstance(Project project) {
     return project.getComponent(ProjectRootManager.class);
   }
 
+  /**
+   * Returns the file index for the project.
+   *
+   * @return the file index instance.
+   */
+  @NotNull
   public abstract ProjectFileIndex getFileIndex();
 
+  /**
+   * Adds a listener for receiving notifications about changes in project roots.
+   *
+   * @param listener the listener instance.
+   */
   public abstract void addModuleRootListener(ModuleRootListener listener);
+
+  /**
+   * Removes a listener for receiving notifications about changes in project roots.
+   *
+   * @param listener the listener instance.
+   */
   public abstract void removeModuleRootListener(ModuleRootListener listener);
+
+  /**
+   * @deprecated for IDEA internal use.
+   */
   public abstract void dispatchPendingEvent(ModuleRootListener listener);
 
   /**
-   * This method is not needed anymore. Remove it!!
-   *
    * @deprecated
-   * @param type
-   * @return
    */
   public abstract VirtualFile[] getRootFiles(ProjectRootType type);
 
-
+  /**
+   * Returns the list of content roots for all modules in the project.
+   *
+   * @return the list of content roots.
+   */
+  @NotNull
   public abstract VirtualFile[] getContentRoots();
 
-  //Q: do we need this method at all? Now is used in tree views only (they should probably be changed to include modules)
+  /**
+   * Returns the list of source roots under the content roots for all modules in the project.
+   *
+   * @return the list of content source roots.
+   */
   public abstract VirtualFile[] getContentSourceRoots();
 
   /**
    * @deprecated
-   * @return the class path with substituted output paths
    */
   public abstract VirtualFile[] getFullClassPath();
 
   /**
    * @deprecated
-   * @return
    */
   public abstract ProjectJdk getJdk();
 
+  /**
+   * Returns the instance of the JDK selected for the project.
+   *
+   * @return the JDK instance, or null if the name of the selected JDK does not correspond
+   * to any existing JDK instance.
+   */
+  @Nullable
   public abstract ProjectJdk getProjectJdk();
 
+  /**
+   * Returns the name of the JDK selected for the project.
+   *
+   * @return the JDK name.
+   */
   public abstract String getProjectJdkName();
 
-  public abstract void setProjectJdk(ProjectJdk jdk);
+  /**
+   * Sets the JDK to be used for the project.
+   *
+   * @param jdk the JDK instance.
+   */
+  public abstract void setProjectJdk(@Nullable ProjectJdk jdk);
 
+  /**
+   * Sets the name of the JDK to be used for the project.
+   *
+   * @param name the name of the JDK.
+   */
   public abstract void setProjectJdkName(String name);
 
+  /**
+   * Commits the change to the lists of roots for the specified modules.
+   *
+   * @param rootModels the root models ro commit.
+   */
   public abstract void multiCommit(ModifiableRootModel[] rootModels);
 
+  /**
+   * Commits the change to the list of modules and the lists of roots for the specified modules.
+   *
+   * @param moduleModel the module model to commit.
+   * @param rootModels the root models to commit.
+   */
   public abstract void multiCommit(ModifiableModuleModel moduleModel, ModifiableRootModel[] rootModels);
 
-  public abstract void checkCircularDependency(ModifiableRootModel[] rootModels, ModifiableModuleModel moduleModel) throws ModuleCircularDependencyException;
+  /**
+   * Checks if the specified project structure contains a circular dependency between modules,
+   * and throws an exception if it does.
+   *
+   * @param rootModels  the list of root models for the modules in the project.
+   * @param moduleModel the list of modules in the project.
+   * @throws ModuleCircularDependencyException if there is a circular dependency between some of the modules.
+   */
+  public abstract void checkCircularDependency(ModifiableRootModel[] rootModels, ModifiableModuleModel moduleModel)
+    throws ModuleCircularDependencyException;
 
 }

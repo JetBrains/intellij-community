@@ -15,10 +15,11 @@
  */
 package com.intellij.openapi.roots;
 
-
-
 /**
- *  @author dsl
+ * Represents an exclude root under the content root of a module.
+ *
+ * @see ContentEntry#getExcludeFolders()  
+ * @author dsl
  */
 public interface ExcludeFolder extends ContentFolder {
 }

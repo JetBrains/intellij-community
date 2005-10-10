@@ -15,18 +15,31 @@
  */
 package com.intellij.openapi.roots;
 
-
-
-
 /**
- *  @author dsl
+ * Represents a source or test source root under the content root of a module.
+ *
+ * @author dsl
+ * @see ContentEntry#getSourceFolders()
  */
-public interface SourceFolder extends ContentFolder{
-
+public interface SourceFolder extends ContentFolder {
   /**
-   * @return true if this <code>SourcePath</code> is a test source.
+   * Checks if this root is a production or test source root.
+   *
+   * @return true if this source root is a test source root, false otherwise.
    */
   boolean isTestSource();
+
+  /**
+   * Returns the package prefix for this source root.
+   *
+   * @return the package prefix, or an empty string if the root has no package prefix.
+   */
   String getPackagePrefix();
+
+  /**
+   * Sets the package prefix for this source root.
+   *
+   * @param packagePrefix the package prefix, or an empty string if the root has no package prefix.
+   */
   void setPackagePrefix(String packagePrefix);
 }

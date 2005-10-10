@@ -76,6 +76,7 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
    * @see VirtualFile#getPath
    * @see VirtualFileSystem#getProtocol
    */
+  @NotNull
   public String getUrl(){
     return VirtualFileManager.constructUrl(getFileSystem().getProtocol(), getPath());
   }

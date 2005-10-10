@@ -20,45 +20,52 @@ import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 /**
- * Model of roots that should be used by clients to modify
- * module rooots. The model can be obtained from <code>{@link ModuleRootManager}</code>
- *  @author dsl
+ * Model of roots that should be used by clients to modify module roots.
+ *
+ * @author dsl
+ * @see ModuleRootManager#getModifiableModel()
  */
 public interface ModifiableRootModel extends ModuleRootModel {
   /**
-   * Adds a content with a given virtual file.
+   * Adds the specified directory as a content root.
+   *
    * @param root root of a content
    * @return new content entry
    */
+  @NotNull
   ContentEntry addContentEntry(VirtualFile root);
 
   /**
-   * Remove given content entry.
-   * @param entry
+   * Remove the specified content root.
+   *
+   * @param entry the content root to remove.
    */
   void removeContentEntry(ContentEntry entry);
 
   /**
-   * Append an order entry to order.
-   * @param orderEntry
+   * Appends an order entry to the classpath.
+   *
+   * @param orderEntry the order entry to add.
    */
   void addOrderEntry(OrderEntry orderEntry);
 
   /**
    * Creates an entry for a given library and adds it to order
-   * @param library
+   *
+   * @param library the library for which the entry is created.
    * @return newly created order entry for the library
    */
   LibraryOrderEntry addLibraryEntry(Library library);
 
   /**
    * Adds an entry for invalid library.
+   *
    * @param name
    * @param level
    * @return
-   * @see com.intellij.openapi.roots.libraries.LibraryTableUtil
    */
   LibraryOrderEntry addInvalidLibrary(String name, String level);
 
@@ -70,6 +77,7 @@ public interface ModifiableRootModel extends ModuleRootModel {
 
   /**
    * Removes order entry from an order.
+   *
    * @param orderEntry
    */
   void removeOrderEntry(OrderEntry orderEntry);
@@ -96,12 +104,14 @@ public interface ModifiableRootModel extends ModuleRootModel {
   /**
    * Returns library table with module libraries.<br>
    * <b>Note:</b> returned library table does not support listeners.
+   *
    * @return library table to be modified
    */
   LibraryTable getModuleLibraryTable();
 
   /**
    * Sets JDK for this module to a specific value
+   *
    * @param jdk
    */
   void setJdk(ProjectJdk jdk);
