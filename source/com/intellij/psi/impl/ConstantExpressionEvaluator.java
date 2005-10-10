@@ -230,10 +230,16 @@ public class ConstantExpressionEvaluator extends PsiElementVisitor {
           checkRealNumberOverflow(value, lOperandValue, rOperandValue, expression);
         }
         else if (lOperandValue instanceof Long || rOperandValue instanceof Long) {
-          value = new Long(((Number)lOperandValue).longValue() % ((Number)rOperandValue).longValue());
+          final long l = ((Number)lOperandValue).longValue();
+          final long r = ((Number)rOperandValue).longValue();
+          checkDivisionOverflow(l, r, Long.MIN_VALUE, expression);
+          value = r == 0 ? null : new Long(l % r);
         }
         else {
-          value = new Integer(((Number)lOperandValue).intValue() % ((Number)rOperandValue).intValue());
+          final int l = ((Number)lOperandValue).intValue();
+          final int r = ((Number)rOperandValue).intValue();
+          checkDivisionOverflow(l, r, Integer.MIN_VALUE, expression);
+          value = r == 0 ? null : new Integer(l % r);
         }
       }
     }
@@ -386,14 +392,13 @@ public class ConstantExpressionEvaluator extends PsiElementVisitor {
   }
 
   public void visitTypeCastExpression(PsiTypeCastExpression expression) {
-    Object operand;
     PsiType castType = expression.getCastType().getType();
     if(expression.getOperand() == null) {
       myValue = null;
       return;
     }
 
-    operand = accept(expression.getOperand());
+    Object operand = accept(expression.getOperand());
 
     myValue = ConstantExpressionUtil.computeCastTo(operand, castType);
   }
@@ -417,13 +422,12 @@ public class ConstantExpressionEvaluator extends PsiElementVisitor {
   }
 
   public void visitPrefixExpression(PsiPrefixExpression expression) {
-    Object operand;
     if (expression.getOperand() == null) {
       myValue = null;
       return;
     }
-    operand = accept(expression.getOperand());
-    if (operand == null || expression.getOperationSign() == null) {
+    Object operand = accept(expression.getOperand());
+    if (operand == null) {
       myValue = null;
       return;
     }
