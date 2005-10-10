@@ -203,7 +203,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
   private void refreshInfo(final JarFileInfo info, boolean asynchronous, final boolean forceRefresh) {
     ModalityState modalityState = EventQueue.isDispatchThread() ? ModalityState.current() : ModalityState.NON_MMODAL;
 
-    getManager().beforeRefreshStart(asynchronous, null);
+    getManager().beforeRefreshStart(asynchronous, modalityState, null);
 
     if (!info.getFile().exists()) {
       LOG.info("file deleted");
@@ -219,7 +219,9 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
             info.close();
             fireFileDeleted(null, rootFile, rootFile.getName(), true, null);
           }
-        }
+        },
+        asynchronous,
+        modalityState
       );
     }
     else if (info.getTimeStamp() != info.getFile().lastModified() || forceRefresh) {
@@ -243,7 +245,9 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
             }
             fireFileCreated(null, findFileByPath(path + JAR_SEPARATOR));
           }
-        }
+        },
+        asynchronous,
+        modalityState
       );
     }
 
@@ -294,7 +298,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
     }
     return myManager;
   }
-  
+
   public void forceRefreshFile(VirtualFile file) {
     forceRefreshFiles(false, file);
   }

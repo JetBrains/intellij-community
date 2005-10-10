@@ -38,7 +38,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
   private EventDispatcher<VirtualFileListener> myContentProvidersDispatcher = EventDispatcher.create(VirtualFileListener.class);
   private ArrayList<CacheUpdater> myRefreshParticipants = new ArrayList<CacheUpdater>();
 
-  private volatile int myRefreshCount = 0;
+  private int myRefreshCount = 0;
   private ArrayList<Runnable> myRefreshEventsToFire = null;
   private Stack<Runnable> myPostRefreshRunnables = new Stack<Runnable>();
   private final ProgressManager myProgressManager;
@@ -105,7 +105,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
       modalityState = (progressIndicator != null)? progressIndicator.getModalityState() : ModalityState.NON_MMODAL;
     }
 
-    beforeRefreshStart(asynchronous, postAction);
+    beforeRefreshStart(asynchronous, modalityState, postAction);
 
     try {
       if (!asynchronous) {
@@ -173,12 +173,23 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
     myVirtualFileManagerListenerMulticaster.removeListener(listener);
   }
 
-  public void beforeRefreshStart(final boolean asynchronous, final Runnable postAction) {
-    myRefreshCount++;
-    myPostRefreshRunnables.push(postAction);
-    if (myRefreshCount == 1) {
-      myRefreshEventsToFire = new ArrayList<Runnable>();
-      myRefreshEventsToFire.add(new FireBeforeRefresh(asynchronous));
+  public void beforeRefreshStart(final boolean asynchronous, ModalityState modalityState, final Runnable postAction) {
+    Runnable action = new Runnable() {
+      public void run() {
+        myRefreshCount++;
+        myPostRefreshRunnables.push(postAction);
+        if (myRefreshCount == 1) {
+          myRefreshEventsToFire = new ArrayList<Runnable>();
+          myRefreshEventsToFire.add(new FireBeforeRefresh(asynchronous));
+        }
+      }
+    };
+    if (asynchronous) {
+      ApplicationManager.getApplication().invokeLater(action, modalityState);
+    }
+    else {
+      ApplicationManager.getApplication().assertIsDispatchThread();
+      action.run();
     }
   }
 
@@ -204,7 +215,9 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
         ApplicationManager.getApplication().runWriteAction(
           new Runnable() {
             public void run() {
-              for (Runnable runnable : myRefreshEventsToFire) {
+              //noinspection ForLoopReplaceableByForEach
+              for (int i = 0; i < myRefreshEventsToFire.size(); i++) {
+                Runnable runnable = myRefreshEventsToFire.get(i);
                 try {
                   runnable.run();
                 }
@@ -222,7 +235,9 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
                 final FileSystemSynchronizer synchronizer;
                 if (asynchronous) {
                   synchronizer = new FileSystemSynchronizer();
-                  for (CacheUpdater participant : myRefreshParticipants) {
+                  //noinspection ForLoopReplaceableByForEach
+                  for (int i = 0; i < myRefreshParticipants.size(); i++) {
+                    CacheUpdater participant = myRefreshParticipants.get(i);
                     synchronizer.registerCacheUpdater(participant);
                   }
                 }
@@ -272,8 +287,18 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
     }
   }
 
-  public void addEventToFireByRefresh(final Runnable action) {
-    myRefreshEventsToFire.add(action);
+  public void addEventToFireByRefresh(final Runnable action, boolean asynchronous, ModalityState modalityState) {
+    if (asynchronous) {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+            public void run() {
+              myRefreshEventsToFire.add(action);
+            }
+          }, modalityState);
+    }
+    else {
+      ApplicationManager.getApplication().assertIsDispatchThread();
+      myRefreshEventsToFire.add(action);
+    }
   }
 
   public void registerFileContentProvider(FileContentProvider provider) {
