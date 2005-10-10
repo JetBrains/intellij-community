@@ -25,7 +25,6 @@ import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -42,7 +41,7 @@ public class LinkLabel extends JLabel {
   private LinkListener myLinkListener;
   private Object myLinkData;
 
-  private static Set ourVisitedLinks = new HashSet();
+  private static final Set ourVisitedLinks = new HashSet();
 
   private boolean myIsLinkActive;
 
@@ -52,8 +51,8 @@ public class LinkLabel extends JLabel {
   private Icon myInactiveIcon;
 
   private boolean myClickIsBeingProcessed;
-  private boolean myPaintDefaultIcon = false;
-  protected final int DEFAULT_ICON_GAP = 2;
+  private boolean myPaintDefaultIcon;
+  protected static final int DEFAULT_ICON_GAP = 2;
   private static final Icon LINK = IconLoader.getIcon("/ide/link.png");
 
   public LinkLabel() {
@@ -113,20 +112,21 @@ public class LinkLabel extends JLabel {
 
   protected void paintComponent(Graphics g) {
     final Border border = getBorder();
-    int shiftX = 0, shiftY = 0;
+    int shiftX = 0;
+    int shiftY = 0;
 
     if (border != null) {
       shiftX = border.getBorderInsets(this).left;
       shiftY = border.getBorderInsets(this).top;
     }
 
-    setForeground(myIsLinkActive ? getActive() : isVisited() ? getVisited() : getNormal());
+    setForeground(getActiveColor());
 
     super.paintComponent(g);
 
 
     if (getText() != null) {
-      g.setColor(myIsLinkActive ? getActive() : isVisited() ? getVisited() : getNormal());
+      g.setColor(getActiveColor());
       int x = myIconWidth;
       int y = getTextBaseLine();
 
@@ -156,6 +156,10 @@ public class LinkLabel extends JLabel {
         LINK.paintIcon(this, g, endX + shiftX + DEFAULT_ICON_GAP, endY);
       }
     }
+  }
+
+  private Color getActiveColor() {
+    return myIsLinkActive ? getActive() : isVisited() ? getVisited() : getNormal();
   }
 
   public Dimension getPreferredSize() {
@@ -227,8 +231,8 @@ public class LinkLabel extends JLabel {
   private void setStatusBarText(String statusBarText) {
     if (ApplicationManager.getApplication() == null) return; // makes this component work in UIDesigner preview.
     final Project[] projects = ProjectManager.getInstance().getOpenProjects();
-    for (int i = 0; i < projects.length; i++) {
-      WindowManager.getInstance().getStatusBar(projects[i]).setInfo(statusBarText);
+    for (Project project : projects) {
+      WindowManager.getInstance().getStatusBar(project).setInfo(statusBarText);
     }
   }
 
