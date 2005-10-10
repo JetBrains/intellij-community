@@ -9,14 +9,13 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.util.Alarm;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
-
-import org.jetbrains.annotations.NonNls;
 
 public class MergingUpdateQueue implements Runnable, Disposable {
 
@@ -127,9 +126,7 @@ public class MergingUpdateQueue implements Runnable, Disposable {
           }
 
           for (Update each : all) {
-            if (!isExpired(each)) {
-              toUpdate.add(each);
-            }
+            toUpdate.add(each);
             each.setProcessed();
           }
 
@@ -161,6 +158,8 @@ public class MergingUpdateQueue implements Runnable, Disposable {
 
   protected void execute(final Update[] update) {
     for (final Update each : update) {
+      if (isExpired(each)) continue;
+
       if (each.executeInWriteAction()) {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
