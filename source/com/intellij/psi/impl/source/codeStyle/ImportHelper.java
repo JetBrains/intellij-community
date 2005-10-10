@@ -547,20 +547,24 @@ public class ImportHelper{
     final PsiElement[] children = scope.getChildren();
     for (PsiElement child : children) {
       addNamesToImport(names, child, thisPackageName, namesToImportStaticly);
-
-      if (child instanceof PsiJavaCodeReferenceElement) {
-        final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)child;
-        if (referenceElement.getQualifier() != null) {
-          continue;
+      for(final PsiReference references : child.getReferences()){
+        if (!(references instanceof PsiJavaReference)) continue;
+        final PsiJavaReference reference = (PsiJavaReference)references;
+        PsiJavaCodeReferenceElement referenceElement = null;
+        if (references instanceof PsiJavaCodeReferenceElement) {
+          referenceElement = (PsiJavaCodeReferenceElement)child;
+          if (referenceElement.getQualifier() != null) {
+            continue;
+          }
+          if (references instanceof PsiJavaCodeReferenceElementImpl
+              && ((PsiJavaCodeReferenceElementImpl)references).getKind() == PsiJavaCodeReferenceElementImpl.CLASS_IN_QUALIFIED_NEW_KIND) {
+            continue;
+          }
         }
-        if (child instanceof PsiJavaCodeReferenceElementImpl
-            && ((PsiJavaCodeReferenceElementImpl)child).getKind() == PsiJavaCodeReferenceElementImpl.CLASS_IN_QUALIFIED_NEW_KIND) {
-          continue;
-        }
 
-        JavaResolveResult resolveResult = referenceElement.advancedResolve(true);
+        final JavaResolveResult resolveResult = reference.advancedResolve(true);
         PsiElement refElement = resolveResult.getElement();
-        if (refElement == null) {
+        if (refElement == null && referenceElement != null) {
           refElement = ResolveClassUtil.resolveClass(referenceElement); // might be uncomplete code
         }
 
@@ -568,7 +572,7 @@ public class ImportHelper{
           if (refElement instanceof PsiClass) {
             PsiClass refClass = (PsiClass)refElement;
             PsiElement parent = refClass.getParent();
-            if (parent instanceof PsiClass) {
+            if (parent instanceof PsiClass && referenceElement != null) {
               if (isInnerVisibleByShortName(refClass, referenceElement)) continue;
             }
             else if (!(parent instanceof PsiFile)) continue;
@@ -577,7 +581,7 @@ public class ImportHelper{
             if (hasPackage(qName, thisPackageName)) continue;
             names.add(qName);
           }
-          else {
+          else if(referenceElement != null) {
             PsiElement currentFileResolveScope = resolveResult.getCurrentFileResolveScope();
             if (currentFileResolveScope instanceof PsiImportStaticStatement) {
               PsiImportStaticStatement importStaticStatement = (PsiImportStaticStatement)currentFileResolveScope;
