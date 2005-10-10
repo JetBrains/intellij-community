@@ -21,6 +21,10 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
   protected XmlNSDescriptor NSDescriptor;
   @NonNls
   public static final String QUALIFIED_ATTR_VALUE = "qualified";
+  @NonNls
+  public static final String NONQUALIFIED_ATTR_VALUE = "unqualified";
+  @NonNls
+  private static final String ELEMENT_FORM_DEFAULT = "elementFormDefault";
 
   public XmlElementDescriptorImpl(XmlTag descriptorTag) {
     myDescriptorTag = descriptorTag;
@@ -213,15 +217,18 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
 
     for (XmlElementDescriptor element1 : elements) {
       final XmlElementDescriptorImpl element = (XmlElementDescriptorImpl)element1;
-
       final String namespaceByContext = element.getNamespaceByContext(context);
-      if (element.getName().equals(localName) &&
-          (namespace == null ||
-           namespace.equals(namespaceByContext) ||
-           namespaceByContext.equals(XmlUtil.EMPTY_URI)
-          )
-        ) {
-        return element;
+      
+      if (element.getName().equals(localName)) {
+        if ( namespace == null ||
+             namespace.equals(namespaceByContext) ||
+             namespaceByContext.equals(XmlUtil.EMPTY_URI)
+           ) {
+          return element;
+        } else if ((namespace == null || namespace.length() == 0) && 
+                   element.getDefaultName().equals(localName)) {
+          return element;
+        }
       }
     }
 
@@ -261,7 +268,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
   public String getDefaultName() {
     XmlTag rootTag = ((XmlFile)myDescriptorTag.getContainingFile()).getDocument().getRootTag();
 
-    if (rootTag != null && QUALIFIED_ATTR_VALUE.equals(rootTag.getAttributeValue("elementFormDefault"))) {
+    if (rootTag != null && QUALIFIED_ATTR_VALUE.equals(rootTag.getAttributeValue(ELEMENT_FORM_DEFAULT))) {
       return getQualifiedName();
     }
 
