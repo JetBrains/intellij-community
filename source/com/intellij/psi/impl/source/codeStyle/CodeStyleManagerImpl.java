@@ -323,8 +323,11 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     }
   }
 
-  public void indentLinesInsideFormatSpacesAround(final ASTNode block, final ASTNode addedElement) throws IncorrectOperationException {
-    final PsiElement psiElement = block.getPsi();
+  public void reformatNewlyAddedElement(final ASTNode parent, final ASTNode addedElement) throws IncorrectOperationException {
+
+    LOG.assertTrue(addedElement.getTreeParent() == parent, "addedElement must be added to parent");
+
+    final PsiElement psiElement = parent.getPsi();
 
     final FormattingModelBuilder builder = psiElement.getContainingFile().getLanguage()
       .getFormattingModelBuilder();

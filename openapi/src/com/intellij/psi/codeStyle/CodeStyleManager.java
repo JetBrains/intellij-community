@@ -326,5 +326,12 @@ public abstract class CodeStyleManager {
    */
   public abstract void removeRedundantImports(PsiJavaFile file) throws IncorrectOperationException;
 
-  public abstract void indentLinesInsideFormatSpacesAround(final ASTNode block, final ASTNode addedElement) throws IncorrectOperationException;
+  /**
+   * Reformats line indents inside new element and reformats white spaces around it
+   * @param block - added element parent
+   * @param addedElement - new element
+   * @throws IncorrectOperationException if the operation fails for some reason (for example,
+   *                                     the file is read-only).
+   */
+  public abstract void reformatNewlyAddedElement(final ASTNode block, final ASTNode addedElement) throws IncorrectOperationException;
 }
