@@ -108,7 +108,7 @@ public class BuildJarAction extends AnAction {
     }
 
     // write temp file and rename it to the jar to avoid deployment of incomplete jar. SCR #30303
-    final File tempFile = File.createTempFile("_"+ FileUtil.getNameWithoutExtension(jarFile), JAR_EXTENSION, jarFile.getParentFile());
+    final File tempFile = File.createTempFile("___"+ FileUtil.getNameWithoutExtension(jarFile), JAR_EXTENSION, jarFile.getParentFile());
     final JarOutputStream jarOutputStream = manifest == null ?
                                             new JarOutputStream(new BufferedOutputStream(new FileOutputStream(tempFile))) :
                                             new JarOutputStream(new BufferedOutputStream(new FileOutputStream(tempFile)), manifest);
