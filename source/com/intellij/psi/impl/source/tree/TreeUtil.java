@@ -391,4 +391,18 @@ public class TreeUtil {
   public static ASTNode prevLeaf(final ASTNode node) {
     return ParseUtil.prevLeaf((TreeElement)node, null);
   }
+
+  public static boolean containsErrors(final TreeElement treeNext) {
+    if(treeNext.getElementType() == ElementType.ERROR_ELEMENT) return true;
+    if(treeNext instanceof CompositeElement){
+      final CompositeElement composite = (CompositeElement)treeNext;
+      ASTNode firstChildNode = composite.getFirstChildNode();
+      while(firstChildNode != null){
+        if(containsErrors((TreeElement)firstChildNode)) return true;
+        firstChildNode = firstChildNode.getTreeNext();
+      }
+      return false;
+    }
+    else return false;
+  }
 }
