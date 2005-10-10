@@ -274,6 +274,7 @@ public class HighlightControlFlowUtil {
         }
         // access to final fields from inner classes always allowed
         if (inInnerClass(expression, ((PsiField)variable).getContainingClass())) return null;
+        if (topBlock == null) return null;
         final PsiElement parent = topBlock.getParent();
         final PsiCodeBlock block;
         final PsiClass aClass;
