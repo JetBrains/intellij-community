@@ -195,7 +195,8 @@
         </action>
         <action id="Vcs.ProjectStatus" class="com.intellij.openapi.vcs.update.CommonStatusProjectAction">
         </action>
-        <action id="Vcs.IntegrateProject" class="com.intellij.openapi.vcs.update.CommonIntegrateProjectAction"/>        
+        <action id="Vcs.IntegrateProject" class="com.intellij.openapi.vcs.update.CommonIntegrateProjectAction"/>
+        <action id="Vcs.RefreshStatuses" class="com.intellij.openapi.vcs.actions.RefreshStatuses"/>
       </group>
 
       <separator/>
