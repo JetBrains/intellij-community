@@ -209,53 +209,54 @@ public class FormatterImpl extends FormatterEx
       }
 
       if (blockAfterOffset != null) {
-        final WhiteSpace whiteSpace = blockAfterOffset.getWhiteSpace();
-        boolean wsContainsCaret = whiteSpace.getTextRange().getStartOffset() <= offset && whiteSpace.getTextRange().getEndOffset() > offset;
-
-        final CharSequence text = getCharSequence(documentModel);
-        int lineStartOffset = getLineStartOffset(offset, whiteSpace, text, documentModel);
-
-        processor.setAllWhiteSpacesAreReadOnly();
-        whiteSpace.setLineFeedsAreReadOnly(true);
-        final IndentInfo indent;
-        if (documentModel.getLineNumber(offset) == documentModel.getLineNumber(whiteSpace.getTextRange().getEndOffset())) {
-          whiteSpace.setReadOnly(false);
-          processor.formatWithoutRealModifications();
-          indent = new IndentInfo(0, whiteSpace.getIndentOffset(), whiteSpace.getSpaces());
-        }
-        else {
-          indent = processor.getIndentAt(offset);
-        }
-
-        final String newWS = whiteSpace.generateWhiteSpace(indentOptions, lineStartOffset, indent);
-        try {
-          model.replaceWhiteSpace(blockAfterOffset.getWhiteSpace().getTextRange(), newWS);
-        }
-        finally {
-          model.commitChanges();
-        }
-
-
-        if (wsContainsCaret) {
-          return whiteSpace.getTextRange().getStartOffset()
-                 + CharArrayUtil.shiftForward(newWS.toCharArray(), lineStartOffset - whiteSpace.getTextRange().getStartOffset(), " \t");
-        } else {
-          return offset - whiteSpace.getTextRange().getLength() + newWS.length();
-        }
+        return adjustLineIndent(offset, documentModel, processor, indentOptions, model, blockAfterOffset.getWhiteSpace());
       } else {
-        WhiteSpace lastWS = processor.getLastWhiteSpace();
-        int lineStartOffset = getLineStartOffset(offset, lastWS, getText(documentModel), documentModel);
-
-        final IndentInfo indent = new IndentInfo(0, 0, 0);
-        final String newWS = lastWS.generateWhiteSpace(indentOptions, lineStartOffset, indent);
-        model.replaceWhiteSpace(lastWS.getTextRange(), newWS);
-
-
-        return lastWS.getTextRange().getStartOffset()
-               + CharArrayUtil.shiftForward(newWS.toCharArray(), lineStartOffset - lastWS.getTextRange().getStartOffset(), " \t");
+        return adjustLineIndent(offset, documentModel, processor, indentOptions, model, processor.getLastWhiteSpace());
       }
     } finally {
       enableFormatting();
+    }
+  }
+
+  private int adjustLineIndent(
+    final int offset,
+    final FormattingDocumentModel documentModel,
+    final FormatProcessor processor,
+    final CodeStyleSettings.IndentOptions indentOptions,
+    final FormattingModel model,
+    final WhiteSpace whiteSpace)
+  {
+    boolean wsContainsCaret = whiteSpace.getTextRange().getStartOffset() <= offset && whiteSpace.getTextRange().getEndOffset() > offset;
+
+    final CharSequence text = getCharSequence(documentModel);
+    int lineStartOffset = getLineStartOffset(offset, whiteSpace, text, documentModel);
+
+    processor.setAllWhiteSpacesAreReadOnly();
+    whiteSpace.setLineFeedsAreReadOnly(true);
+    final IndentInfo indent;
+    if (documentModel.getLineNumber(offset) == documentModel.getLineNumber(whiteSpace.getTextRange().getEndOffset())) {
+      whiteSpace.setReadOnly(false);
+      processor.formatWithoutRealModifications();
+      indent = new IndentInfo(0, whiteSpace.getIndentOffset(), whiteSpace.getSpaces());
+    }
+    else {
+      indent = processor.getIndentAt(offset);
+    }
+
+    final String newWS = whiteSpace.generateWhiteSpace(indentOptions, lineStartOffset, indent);
+    try {
+      model.replaceWhiteSpace(whiteSpace.getTextRange(), newWS);
+    }
+    finally {
+      model.commitChanges();
+    }
+
+
+    if (wsContainsCaret) {
+      return whiteSpace.getTextRange().getStartOffset()
+             + CharArrayUtil.shiftForward(newWS.toCharArray(), lineStartOffset - whiteSpace.getTextRange().getStartOffset(), " \t");
+    } else {
+      return offset - whiteSpace.getTextRange().getLength() + newWS.length();
     }
   }
 

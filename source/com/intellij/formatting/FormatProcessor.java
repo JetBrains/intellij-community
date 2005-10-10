@@ -211,7 +211,7 @@ class FormatProcessor {
       final WhiteSpace whiteSpace = block.getWhiteSpace();
       if (!whiteSpace.isReadOnly()) {
         final String newWhiteSpace = whiteSpace.generateWhiteSpace(myIndentOption);
-        if (!whiteSpace.equals(newWhiteSpace)) {
+        if (!whiteSpace.equalsToString(newWhiteSpace)) {
           blocksToModify.add(block);
         }
       }
@@ -279,7 +279,7 @@ class FormatProcessor {
   private boolean shouldReformatBecauseOfBackwardDependance(TextRange changed) {
     for (TextRange textRange : myPreviousDependancies.keySet()) {
       final Pair<AbstractBlockWrapper, Boolean> pair = myPreviousDependancies.get(textRange);
-      final boolean containedLineFeeds = pair.getSecond();
+      final boolean containedLineFeeds = pair.getSecond().booleanValue();
       if (textRange.getStartOffset() <= changed.getStartOffset() && textRange.getEndOffset() >= changed.getEndOffset()) {
         boolean containsLineFeeds = containsLineFeeds(textRange);
         if (containedLineFeeds != containsLineFeeds) {
@@ -680,7 +680,14 @@ class FormatProcessor {
   }
 
   private Block getPreviousIncompletedBlock(final LeafBlockWrapper block, final int offset) {
-    if (block == null) return null;
+    if (block == null) {
+      if (myLastTokenBlock.getBlock().isIncomplete()) {
+        return myLastTokenBlock.getBlock();
+      } else {
+        return null;
+      }
+    }
+
     AbstractBlockWrapper current = block;
     while (current.getParent() != null && current.getParent().getStartOffset() > offset) {
       current = current.getParent();

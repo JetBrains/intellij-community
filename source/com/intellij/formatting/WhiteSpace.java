@@ -238,7 +238,7 @@ class WhiteSpace {
     return isIsReadOnly() || (isIsSafe() && doesNotContainAnySpaces());
   }
 
-  public boolean equals(String ws) {
+  public boolean equalsToString(String ws) {
     if (myInitial == null) return ws.length() == 0;
     return myInitial.toString().equals(ws);
   }
