@@ -5,6 +5,7 @@ import com.intellij.lexer.StringLiteralLexer;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.psi.*;
@@ -44,6 +45,7 @@ public class SelectWordUtil {
     new CaseStatementsSelectioner(),
     new HtmlSelectioner(),
     new XmlTagSelectioner(),
+    new DtdSelectioner(),
     new XmlElementSelectioner(),
     new XmlTokenSelectioner(),
     new ScriptletSelectioner(),
@@ -872,6 +874,43 @@ public class SelectWordUtil {
     }
   }
 
+  static class DtdSelectioner implements Selectioner {
+    public boolean canSelect(PsiElement e) {
+      return e instanceof XmlAttlistDecl || e instanceof XmlElementDecl;
+    }
+
+    public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
+      List<TextRange> result = new ArrayList<TextRange>(1);
+      PsiElement[] children = e.getChildren();
+
+      PsiElement first = null;
+      PsiElement last = null;
+      for (PsiElement child : children) {
+        if (child instanceof XmlToken) {
+          XmlToken token = (XmlToken)child;
+          if (token.getTokenType() == XmlTokenType.XML_TAG_END) {
+            last = token;
+            break;
+          }
+          if (token.getTokenType() == XmlTokenType.XML_ELEMENT_DECL_START ||
+              token.getTokenType() == XmlTokenType.XML_ATTLIST_DECL_START
+             ) {
+            first = token;
+          }
+        }
+      }
+
+      if (first != null && last != null) {
+        result.addAll(expandToWholeLine(editorText,
+                                        new TextRange(first.getTextRange().getStartOffset(),
+                                                      last.getTextRange().getEndOffset() + 1),
+                                        false));
+      }
+
+      return result;
+    }
+  }
+  
   static class XmlTagSelectioner extends BasicSelectioner {
     public boolean canSelect(PsiElement e) {
       return e instanceof XmlTag;
@@ -959,7 +998,11 @@ public class SelectWordUtil {
 
   static class XmlTokenSelectioner extends BasicSelectioner {
     public boolean canSelect(PsiElement e) {
-      return e instanceof XmlToken && e.getContainingFile().getFileType() == StdFileTypes.XML;
+      final FileType fileType = e.getContainingFile().getFileType();
+      return e instanceof XmlToken && 
+             (fileType == StdFileTypes.XML ||
+              fileType == StdFileTypes.DTD
+             );
     }
 
     public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
