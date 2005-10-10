@@ -7,7 +7,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -21,7 +20,6 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.io.*;
 import java.util.ArrayList;
-import java.util.Set;
 import java.util.Map;
 import java.util.HashMap;
 
@@ -601,7 +599,7 @@ public class VirtualFileImpl extends VirtualFile {
 
     final Runnable runnable = new Runnable() {
       public void run() {
-        myFileSystem.getManager().beforeRefreshStart(asynchronous, modalityState, postRunnable);
+        myFileSystem.getManager().beforeRefreshStart(asynchronous, postRunnable);
 
         PhysicalFile physicalFile = getPhysicalFile();
         if (!physicalFile.exists()) {
@@ -616,7 +614,7 @@ public class VirtualFileImpl extends VirtualFile {
               }
             }
           };
-          myFileSystem.getManager().addEventToFireByRefresh(runnable, asynchronous, modalityState);
+          myFileSystem.getManager().addEventToFireByRefresh(runnable);
         }
         else {
           myFileSystem.refresh(VirtualFileImpl.this, recursive, true, worker, modalityState, asynchronous, false);
@@ -712,62 +710,37 @@ public class VirtualFileImpl extends VirtualFile {
             parent.addChild(newChild);
             myFileSystem.fireFileCreated(null, newChild);
           }
-        },
-        worker != null,
-        modalityState
+        }
       );
       return;
     }
 
     if (isDirectory) {
       if (myChildren == null) return;
+
+      final Map<String, VirtualFileImpl> childrenMap = new HashMap<String, VirtualFileImpl>(myChildren.length, (float)0.6);
+      for (final VirtualFileImpl child : myChildren) {
+        childrenMap.put(child.getName(), child);
+      }
+
       PhysicalFile[] files = physicalFile.listFiles();
-      if (files == null) {
-        files = new PhysicalFile[0]; //?
-      }
-
-      final boolean[] found = new boolean[myChildren.length];
-      final Map<String, Pair<VirtualFile, Integer>> childrenMap = new HashMap<String, Pair<VirtualFile, Integer>>((int)((double)myChildren.length * 1.5), (float)0.6);
-      {
-        for (int i = 0; i < myChildren.length; i++) {
-          final VirtualFileImpl child = myChildren[i];
-          childrenMap.put(child.getName(), new Pair<VirtualFile, Integer>(child, i));
-        }
-      }
-
-      VirtualFileImpl[] children = myChildren;
-      for (int i = 0; i < files.length; i++) {
-        final PhysicalFile file = files[i];
+      for (final PhysicalFile file : files) {
         final String name = file.getName();
-        final Pair<VirtualFile, Integer> pair = childrenMap.get(name);
-        if (pair == null) {
+        final VirtualFileImpl vFile = childrenMap.get(name);
+        if (vFile == null) {
           myFileSystem.getManager().addEventToFireByRefresh(
             new Runnable() {
               public void run() {
                 if (VirtualFileImpl.this.isValid()) {
                   if (findChild(file.getName()) != null) return; // was already created
-                  VirtualFileImpl newChild = new VirtualFileImpl(
-                    myFileSystem,
-                    VirtualFileImpl.this,
-                    file,
-                    file.isDirectory()
-                  );
-                  addChild(newChild);
-                  myFileSystem.fireFileCreated(null, newChild);
+                  final VirtualFileImpl newFile = new VirtualFileImpl(myFileSystem, VirtualFileImpl.this, file, file.isDirectory());
+                  addChild(newFile);
+                  myFileSystem.fireFileCreated(null, newFile);
                 }
               }
-            },
-            worker != null,
-            modalityState
+            }
           );
-        }
-        else {
-          found[pair.getSecond()] = true;
-        }
-      }
-      for (int i = 0; i < children.length; i++) {
-        final VirtualFileImpl child = children[i];
-        if (found[i]) {
+        } else {
           if (recursive) {
             if (worker != null) {
               worker.addTask(
@@ -775,7 +748,7 @@ public class VirtualFileImpl extends VirtualFile {
                   public void run() {
                     Runnable action = new Runnable() {
                       public void run() {
-                        child.refreshInternal(recursive, worker, modalityState, false);
+                        vFile.refreshInternal(recursive, worker, modalityState, false);
                       }
                     };
                     ApplicationManager.getApplication().runReadAction(action);
@@ -784,26 +757,26 @@ public class VirtualFileImpl extends VirtualFile {
               );
             }
             else {
-              child.refreshInternal(recursive, null, modalityState, false);
+              vFile.refreshInternal(recursive, null, modalityState, false);
             }
           }
+
         }
-        else {
-          myFileSystem.getManager().addEventToFireByRefresh(
-            new Runnable() {
-              public void run() {
-                if (child.isValid()) {
-                  myFileSystem.fireBeforeFileDeletion(null, child);
-                  removeChild(child);
-                  myFileSystem.fireFileDeleted(null, child, child.myName, child.myDirectoryFlag, VirtualFileImpl.this);
-                }
-              }
-            },
-            worker != null,
-            modalityState
-          );
-        }
+
+        childrenMap.remove(name);
       }
+
+      myFileSystem.getManager().addEventToFireByRefresh(new Runnable() {
+        public void run() {
+          for (VirtualFileImpl toRemove : childrenMap.values()) {
+            if (toRemove.isValid()) {
+                      myFileSystem.fireBeforeFileDeletion(null, toRemove);
+                      removeChild(toRemove);
+                      myFileSystem.fireFileDeleted(null, toRemove, toRemove.myName, toRemove.myDirectoryFlag, VirtualFileImpl.this);
+                    }
+          }
+        }
+      });
     }
     else {
       if (myTimeStamp > 0) {
@@ -820,9 +793,7 @@ public class VirtualFileImpl extends VirtualFile {
                 myModificationStamp = LocalTimeCounter.currentTime();
                 myFileSystem.fireContentsChanged(null, VirtualFileImpl.this, oldModificationStamp);
               }
-            },
-            worker != null,
-            modalityState
+            }
           );
         }
       }
@@ -846,9 +817,7 @@ public class VirtualFileImpl extends VirtualFile {
                 isWritable ? Boolean.FALSE : Boolean.TRUE, myWritableFlag
               );
             }
-          },
-          worker != null,
-          modalityState
+          }
         );
       }
     }

@@ -105,7 +105,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
       modalityState = (progressIndicator != null)? progressIndicator.getModalityState() : ModalityState.NON_MMODAL;
     }
 
-    beforeRefreshStart(asynchronous, modalityState, postAction);
+    beforeRefreshStart(asynchronous, postAction);
 
     try {
       if (!asynchronous) {
@@ -173,23 +173,12 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
     myVirtualFileManagerListenerMulticaster.removeListener(listener);
   }
 
-  public void beforeRefreshStart(final boolean asynchronous, ModalityState modalityState, final Runnable postAction) {
-    Runnable action = new Runnable() {
-      public void run() {
-        myRefreshCount++;
-        myPostRefreshRunnables.push(postAction);
-        if (myRefreshCount == 1) {
-          myRefreshEventsToFire = new ArrayList<Runnable>();
-          myRefreshEventsToFire.add(new FireBeforeRefresh(asynchronous));
-        }
-      }
-    };
-    if (asynchronous) {
-      ApplicationManager.getApplication().invokeLater(action, modalityState);
-    }
-    else {
-      ApplicationManager.getApplication().assertIsDispatchThread();
-      action.run();
+  public void beforeRefreshStart(final boolean asynchronous, final Runnable postAction) {
+    myRefreshCount++;
+    myPostRefreshRunnables.push(postAction);
+    if (myRefreshCount == 1) {
+      myRefreshEventsToFire = new ArrayList<Runnable>();
+      myRefreshEventsToFire.add(new FireBeforeRefresh(asynchronous));
     }
   }
 
@@ -215,9 +204,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
         ApplicationManager.getApplication().runWriteAction(
           new Runnable() {
             public void run() {
-              //noinspection ForLoopReplaceableByForEach
-              for (int i = 0; i < myRefreshEventsToFire.size(); i++) {
-                Runnable runnable = myRefreshEventsToFire.get(i);
+              for (Runnable runnable : myRefreshEventsToFire) {
                 try {
                   runnable.run();
                 }
@@ -235,9 +222,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
                 final FileSystemSynchronizer synchronizer;
                 if (asynchronous) {
                   synchronizer = new FileSystemSynchronizer();
-                  //noinspection ForLoopReplaceableByForEach
-                  for (int i = 0; i < myRefreshParticipants.size(); i++) {
-                    CacheUpdater participant = myRefreshParticipants.get(i);
+                  for (CacheUpdater participant : myRefreshParticipants) {
                     synchronizer.registerCacheUpdater(participant);
                   }
                 }
@@ -287,18 +272,8 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
     }
   }
 
-  public void addEventToFireByRefresh(final Runnable action, boolean asynchronous, ModalityState modalityState) {
-    if (asynchronous) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              myRefreshEventsToFire.add(action);
-            }
-          }, modalityState);
-    }
-    else {
-      ApplicationManager.getApplication().assertIsDispatchThread();
-      myRefreshEventsToFire.add(action);
-    }
+  public void addEventToFireByRefresh(final Runnable action) {
+    myRefreshEventsToFire.add(action);
   }
 
   public void registerFileContentProvider(FileContentProvider provider) {

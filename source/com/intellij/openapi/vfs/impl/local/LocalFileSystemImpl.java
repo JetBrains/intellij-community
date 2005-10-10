@@ -364,7 +364,7 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
 
     final Runnable runnable = new Runnable() {
       public void run() {
-        getManager().beforeRefreshStart(asynchronous, modalityState, null);
+        getManager().beforeRefreshStart(asynchronous, null);
 
         final ProgressIndicator indicator = getManager().getRefreshIndicator();
         if (indicator != null) {
@@ -402,7 +402,7 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
                 fireFileDeleted(null, rootFile, rootFile.getName(), isDirectory, null);
               }
             };
-            getManager().addEventToFireByRefresh(action, asynchronous, modalityState);
+            getManager().addEventToFireByRefresh(action);
           }
           else {
             refresh(rootFile, recursively, false, worker, modalityState, asynchronous, true);
@@ -476,7 +476,7 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
     final Runnable runnable = new Runnable() {
       public void run() {
         final ModalityState modalityState = EventQueue.isDispatchThread() ? ModalityState.current() : ModalityState.NON_MMODAL;
-        getManager().beforeRefreshStart(asynchronous, modalityState, EmptyRunnable.getInstance());
+        getManager().beforeRefreshStart(asynchronous, EmptyRunnable.getInstance());
 
         for (VirtualFile file : files) {
           LOG.assertTrue(!file.isDirectory());

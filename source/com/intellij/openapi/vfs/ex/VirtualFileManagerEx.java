@@ -16,9 +16,9 @@ public abstract class VirtualFileManagerEx extends VirtualFileManager {
   public abstract void addVirtualFileManagerListener(VirtualFileManagerListener listener);
   public abstract void removeVirtualFileManagerListener(VirtualFileManagerListener listener);
 
-  public abstract void beforeRefreshStart(boolean asynchronous, ModalityState modalityState, Runnable postAction);
+  public abstract void beforeRefreshStart(boolean asynchronous, Runnable postAction);
   public abstract void afterRefreshFinish(boolean asynchronous, ModalityState modalityState);
-  public abstract void addEventToFireByRefresh(Runnable action, boolean asynchronous, ModalityState modalityState);
+  public abstract void addEventToFireByRefresh(Runnable action);
 
   public abstract void registerFileContentProvider(FileContentProvider provider);
   public abstract void unregisterFileContentProvider(FileContentProvider provider);
