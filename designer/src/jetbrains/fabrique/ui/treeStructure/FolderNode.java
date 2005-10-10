@@ -5,8 +5,8 @@
 package jetbrains.fabrique.ui.treeStructure;
 
 import com.intellij.ide.util.treeView.NodeDescriptor;
-import jetbrains.fabrique.model.FProject;
-import jetbrains.fabrique.util.ui.IdeaIcons;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.IconLoader;
 
 /**
  * @author kir
@@ -25,11 +25,11 @@ public class FolderNode extends SimpleNode {
     init();
   }
 
-  public FolderNode(FProject aProject) {
+  public FolderNode(Project aProject) {
     this(aProject, null);
   }
 
-  public FolderNode(FProject aProject, NodeDescriptor parent) {
+  public FolderNode(Project aProject, NodeDescriptor parent) {
     super(aProject, parent);
     myName = "";
     myFQName = "";
@@ -38,7 +38,7 @@ public class FolderNode extends SimpleNode {
 
   private void init() {
     setPlainText(myName);
-    setIcons(IdeaIcons.FOLDER_ICON, IdeaIcons.FOLDER_OPEN_ICON);
+    setIcons(IconLoader.getIcon("/nodes/folder.png"), IconLoader.getIcon("/nodes/folderOpen.png"));
   }
 
   public final SimpleNode[] getChildren() {

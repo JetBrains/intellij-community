@@ -4,12 +4,11 @@
  */
 package jetbrains.fabrique.ui.treeStructure;
 
-import jetbrains.fabrique.model.FProject;
-import jetbrains.fabrique.model.FProject;
+import com.intellij.openapi.project.Project;
 
 public abstract class SimpleRoot extends SimpleNode {
 
-  public SimpleRoot(FProject aProject) {
+  public SimpleRoot(Project aProject) {
     super(aProject, null);
   }
 }

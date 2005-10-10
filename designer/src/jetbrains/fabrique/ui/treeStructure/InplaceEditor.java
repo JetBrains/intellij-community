@@ -5,9 +5,7 @@
 package jetbrains.fabrique.ui.treeStructure;
 
 import com.intellij.ide.util.treeView.NodeRenderer;
-import jetbrains.fabrique.ide.util.LayoutHelper;
-import jetbrains.fabrique.util.ui.components.panels.NonOpaquePanel;
-import jetbrains.fabrique.util.StringUtil;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -34,7 +32,7 @@ public abstract class InplaceEditor extends AbstractCellEditor implements TreeCe
         Dimension prefSize = super.getPreferredSize();
         Dimension minSize = new Dimension(getColumnWidth() * 3, prefSize.height - 1);
         prefSize.width = prefSize.width + 15;
-        return LayoutHelper.computeNotSmallerDimension(prefSize, minSize);
+        return computeNotSmallerDimension(prefSize, minSize);
       }
     };
 
@@ -72,7 +70,7 @@ public abstract class InplaceEditor extends AbstractCellEditor implements TreeCe
     myComponent.addFocusListener(new FocusAdapter() {
       public void focusGained(FocusEvent e) {
         myTextField.requestFocus();
-        StringUtil.selectLastFragment(myTextField);
+        myTextField.selectAll();
       }
 
       public void focusLost(FocusEvent e) {
@@ -81,6 +79,13 @@ public abstract class InplaceEditor extends AbstractCellEditor implements TreeCe
         }
       }
     });
+  }
+
+  private Dimension computeNotSmallerDimension(final Dimension prefSize, final Dimension minSize) {
+    int resultWidth = (prefSize.width < minSize.width) ? minSize.width : prefSize.width;
+    int resultHeight = (prefSize.height < minSize.height) ? minSize.height : prefSize.height;
+
+    return new Dimension(resultWidth, resultHeight);
   }
 
   public Component getTreeCellEditorComponent(JTree tree, Object value, boolean isSelected, boolean expanded, boolean leaf, int row) {
@@ -96,7 +101,7 @@ public abstract class InplaceEditor extends AbstractCellEditor implements TreeCe
 
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        StringUtil.selectLastFragment(myTextField);
+        myTextField.selectAll();
       }
     });
 

@@ -4,22 +4,17 @@
  */
 package jetbrains.fabrique.ui.treeStructure;
 
-import jetbrains.fabrique.model.FProject;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 public abstract class SimpleMutableNode extends CachingSimpleNode {
 
   private List myChildren = new ArrayList();
 
   public SimpleMutableNode() {
-  }
-
-  protected SimpleMutableNode(FProject project) {
-    super(project);
   }
 
   public SimpleMutableNode(SimpleNode aParent) {

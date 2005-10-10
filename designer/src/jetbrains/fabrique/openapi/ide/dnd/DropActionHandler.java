@@ -4,8 +4,7 @@
  */
 package jetbrains.fabrique.openapi.ide.dnd;
 
-import jetbrains.fabrique.util.ComparableObject;
-import jetbrains.fabrique.openapi.ide.dnd.DnDEvent;
+import com.intellij.util.ui.update.ComparableObject;
 
 public abstract class DropActionHandler extends ComparableObject.Impl {
 

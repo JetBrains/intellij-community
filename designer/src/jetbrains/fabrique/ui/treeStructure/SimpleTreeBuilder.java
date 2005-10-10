@@ -7,11 +7,12 @@ package jetbrains.fabrique.ui.treeStructure;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
-import jetbrains.fabrique.util.SwingUtilities2;
+import com.intellij.openapi.application.ApplicationManager;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import java.awt.*;
 import java.util.Comparator;
 
 public class SimpleTreeBuilder extends AbstractTreeBuilder {
@@ -37,11 +38,15 @@ public class SimpleTreeBuilder extends AbstractTreeBuilder {
       cleanUpStructureCaches();
     }
 
-    SwingUtilities2.invokeLaterIfNotDispatch(null, new Runnable() {
-      public void run() {
-        SimpleTreeBuilder.super.updateFromRoot();
-      }
-    });
+    if (EventQueue.isDispatchThread()) {
+      updateFromRoot();
+    } else {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          SimpleTreeBuilder.super.updateFromRoot();
+        }
+      });
+    }
   }
 
   protected final DefaultMutableTreeNode createChildNode(final NodeDescriptor childDescr) {

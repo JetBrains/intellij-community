@@ -6,6 +6,7 @@ package jetbrains.fabrique.ui.treeStructure.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.util.IconLoader;
 
 import javax.swing.*;
 
@@ -14,7 +15,7 @@ public class CollapseAllAction extends AnAction {
   private JTree myTree;
 
   public CollapseAllAction(JTree tree) {
-    super("Collapse All", "", icons.inspector.collapseall.png.getIcon());
+    super("Collapse All", "", IconLoader.getIcon("/actions/collapseall.png"));
     myTree = tree;
   }
 

@@ -5,16 +5,15 @@
 package jetbrains.fabrique.ui.treeStructure;
 
 import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Icons;
-import jetbrains.fabrique.model.FProject;
-import jetbrains.fabrique.util.ComparableObject;
-import jetbrains.fabrique.util.ComparableObjectCheck;
+import com.intellij.util.ui.update.ComparableObject;
+import com.intellij.util.ui.update.ComparableObjectCheck;
 
 import javax.swing.*;
 import java.awt.*;
@@ -30,7 +29,7 @@ public abstract class SimpleNode extends NodeDescriptor implements ComparableObj
   private int myWeight = 10;
   private Font myFont;
 
-  protected SimpleNode(FProject project) {
+  protected SimpleNode(Project project) {
     this(project, null);
   }
 

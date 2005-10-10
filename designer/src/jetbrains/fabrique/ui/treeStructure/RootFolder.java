@@ -4,14 +4,14 @@
  */
 package jetbrains.fabrique.ui.treeStructure;
 
-import jetbrains.fabrique.model.FProject;
+import com.intellij.openapi.project.Project;
 
 /**
  * @author kir
  */
 public class RootFolder extends FolderNode {
 
-  public RootFolder(FProject aProject) {
+  public RootFolder(Project aProject) {
     super(aProject, null);
   }
 

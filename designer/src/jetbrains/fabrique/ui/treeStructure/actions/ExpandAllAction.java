@@ -6,6 +6,7 @@ package jetbrains.fabrique.ui.treeStructure.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.util.IconLoader;
 
 import javax.swing.*;
 
@@ -14,7 +15,7 @@ public class ExpandAllAction extends AnAction {
   private JTree myTree;
 
   public ExpandAllAction(JTree tree) {
-    super("Expand All", "", icons.inspector.expandall.png.getIcon());
+    super("Expand All", "", IconLoader.getIcon("/actions/expandall.png"));
     myTree = tree;
   }
 

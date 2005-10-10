@@ -13,7 +13,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.TreeToolTipHandler;
 import com.intellij.util.ui.tree.TreeUtil;
-import jetbrains.fabrique.util.SwingUtilities2;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -398,12 +397,17 @@ public class SimpleTree extends JTree implements CellEditorListener {
     ApplicationManager.getApplication().invokeLater(runnable, ModalityState.stateForComponent(this));
   }
 
+  public static boolean isDoubleClick(MouseEvent e) {
+    return e != null && e.getClickCount() > 0 && e.getClickCount() % 2 == 0;
+  }
+
   private class MyMouseListener extends MouseAdapter {
     public void mousePressed(MouseEvent e) {
       if (e.isPopupTrigger()) {
         invokePopup(e);
       }
-      else if (SwingUtilities2.isDoubleClick(e)) {
+      else if (isDoubleClick(e)) {
+        handleDoubleClickOrEnter(getClosestPathForLocation(e.getX(), e.getY()), e);
         /*
         if (!TreeWizardPopupImpl.isLocationInExpandControl(SimpleTree.this, getSelectionPath(), e.getX(), e.getY())) {
           TreePath treePath = getClosestPathForLocation(e.getX(), e.getY());

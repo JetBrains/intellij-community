@@ -6,17 +6,12 @@ package jetbrains.fabrique.ui.treeStructure;
 
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
-import jetbrains.fabrique.model.FProject;
 
 public abstract class CachingSimpleNode extends SimpleNode {
 
   SimpleNode[] myChildren;
 
   protected CachingSimpleNode() {
-  }
-
-  protected CachingSimpleNode(FProject project) {
-    super(project);
   }
 
   protected CachingSimpleNode(SimpleNode aParent) {
