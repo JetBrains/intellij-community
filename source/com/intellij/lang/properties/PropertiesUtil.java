@@ -8,8 +8,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -19,7 +17,10 @@ import com.intellij.util.SmartList;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Locale;
 
 /**
  * @author cdr
@@ -128,6 +129,19 @@ public class PropertiesUtil {
     List<PropertiesFile> propertiesFiles = resourceBundle.getPropertiesFiles(project);
     for (PropertiesFile propertiesFile : propertiesFiles) {
       result.addAll(propertiesFile.findPropertiesByKey(key));
+    }
+    return result;
+  }
+
+  public static boolean isUnescapedBackSlashAtTheEnd (String text) {
+    boolean result = false;
+    for (int i = text.length()-1; i>=0; i--) {
+      if (text.charAt(i) == '\\') {
+        result = !result;
+      }
+      else {
+        break;
+      }
     }
     return result;
   }

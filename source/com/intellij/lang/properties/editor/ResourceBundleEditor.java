@@ -12,6 +12,7 @@ import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.lang.properties.PropertiesFilesManager;
 import com.intellij.lang.properties.ResourceBundle;
+import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.psi.PropertiesElementFactory;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
@@ -155,7 +156,6 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
       gc.gridwidth = GridBagConstraints.REMAINDER;
       gc.weightx = 1;
       gc.weighty = 0;
-      JPanel panel = new JPanel(new BorderLayout());
 
       Locale locale = propertiesFile.getLocale();
       ArrayList<String> names = new ArrayList<String>();
@@ -173,6 +173,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
       if (names.size() != 0) {
         title += " ("+StringUtil.join(names, "/")+")";
       }
+      JPanel panel = new JPanel(new BorderLayout());
       panel.setBorder(IdeBorderFactory.createTitledBorder(title));
       panel.setMinimumSize(new Dimension(-1, 100));
       JPanel comp = new JPanel(new BorderLayout());
@@ -302,24 +303,11 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     document.replaceString(0, document.getTextLength(), text);
   }
 
-  private static boolean isUnescapedBackSlashAtTheEnd (String text) {
-    boolean result = false;
-    for (int i = text.length()-1; i>=0; i--) {
-      if (text.charAt(i) == '\\') {
-        result = !result;
-      }
-      else {
-        break;
-      }
-    }
-    return result;
-  }
-
   private void updatePropertyValueFromDocument(final String propertyName,
                                                final Project project,
                                                final PropertiesFile propertiesFile,
                                                final String text) {
-    if (isUnescapedBackSlashAtTheEnd(text)) {
+    if (PropertiesUtil.isUnescapedBackSlashAtTheEnd(text)) {
       myBackSlashPressed.add(propertiesFile);
     }
     else {
@@ -346,7 +334,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     for (int i=0; i<text.length();i++) {
       char c = text.charAt(i);
       if (c == '\n') {
-        if (!isUnescapedBackSlashAtTheEnd(value.toString())) {
+        if (!PropertiesUtil.isUnescapedBackSlashAtTheEnd(value.toString())) {
           value.append("\\");
         }
         value.append("\n");

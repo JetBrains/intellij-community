@@ -22,6 +22,7 @@ public class PropertiesEnterTest extends LightDaemonAnalyzerTestCase{
   public void testComment() throws Exception { doTest(); }
   public void testKey() throws Exception { doTest(); }
   public void testValue() throws Exception { doTest(); }
+  public void testBackslash() throws Exception { doTest(); }
 
   private void doTest() throws Exception {
     configureByFile(BASE_PATH + getTestName(false)+".properties");

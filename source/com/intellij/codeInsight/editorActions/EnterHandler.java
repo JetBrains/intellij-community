@@ -8,6 +8,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.properties.parsing.PropertiesTokenTypes;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.StringLiteralLexer;
@@ -73,8 +74,6 @@ public class EnterHandler extends EditorWriteActionHandler {
       return;
     }
 
-    int caretAdvance = 0;
-
     CommandProcessor.getInstance().setCurrentCommandName(CodeInsightBundle.message("command.name.typing"));
 
     EditorModificationUtil.deleteSelectedText(editor);
@@ -94,14 +93,14 @@ public class EnterHandler extends EditorWriteActionHandler {
       }
     }
 
-    boolean forceIndent = false;
-
     PsiDocumentManager.getInstance(project).commitDocument(document);
     PsiElement psiAtOffset = file.findElementAt(caretOffset);
     if (file instanceof PropertiesFile) {
       handleEnterInPropertiesFile(editor, document, psiAtOffset, caretOffset);
       return;
     }
+    boolean forceIndent = false;
+    int caretAdvance = 0;
     if (psiAtOffset instanceof PsiJavaToken && psiAtOffset.getTextOffset() < caretOffset) {
       PsiJavaToken token = (PsiJavaToken)psiAtOffset;
       if (token.getTokenType() == JavaTokenType.STRING_LITERAL) {
@@ -224,16 +223,28 @@ public class EnterHandler extends EditorWriteActionHandler {
                                                   final Document document,
                                                   final PsiElement psiAtOffset,
                                                   int caretOffset) {
-    final IElementType elementType = psiAtOffset == null ? null : psiAtOffset.getNode().getElementType();
-    final String toInsert;
-    if (elementType == PropertiesTokenTypes.VALUE_CHARACTERS) {
-      toInsert = "\\\n  ";
+    String text = document.getText();
+    String line = text.substring(0, caretOffset);
+    int i = line.lastIndexOf('\n');
+    if (i > 0) {
+      line = line.substring(i);
     }
-    else if (elementType == PropertiesTokenTypes.END_OF_LINE_COMMENT) {
-      toInsert = "\n#";
+    final String toInsert;
+    if (PropertiesUtil.isUnescapedBackSlashAtTheEnd(line)) {
+      toInsert = "\n  ";
     }
     else {
-      toInsert = "\n";
+      final IElementType elementType = psiAtOffset == null ? null : psiAtOffset.getNode().getElementType();
+
+      if (elementType == PropertiesTokenTypes.VALUE_CHARACTERS) {
+        toInsert = "\\\n  ";
+      }
+      else if (elementType == PropertiesTokenTypes.END_OF_LINE_COMMENT) {
+        toInsert = "\n#";
+      }
+      else {
+        toInsert = "\n";
+      }
     }
     document.insertString(caretOffset, toInsert);
     caretOffset+=toInsert.length();
@@ -530,13 +541,12 @@ public class EnterHandler extends EditorWriteActionHandler {
                                             final PsiDocComment comment,
                                             final Project project) {
       final PsiElement context = comment.getParent();
-      final StringBuffer buffer;
       if (settings.JAVADOC_STUB_ON_ENTER) {
         if (context instanceof PsiMethod) {
           PsiMethod psiMethod = (PsiMethod)context;
           if (psiMethod.getDocComment() != comment) return comment;
 
-          buffer = new StringBuffer();
+          final StringBuffer buffer = new StringBuffer();
 
           final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
           for (PsiParameter parameter : parameters) {
@@ -574,7 +584,7 @@ public class EnterHandler extends EditorWriteActionHandler {
       return myFile.getProject();
     }
 
-    private void removeTrailingSpaces(final Document document, final int offset) {
+    private static void removeTrailingSpaces(final Document document, final int offset) {
       int startOffset = offset;
       int endOffset = offset;
 
