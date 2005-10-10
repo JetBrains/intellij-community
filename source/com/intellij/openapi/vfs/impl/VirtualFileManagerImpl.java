@@ -38,7 +38,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
   private EventDispatcher<VirtualFileListener> myContentProvidersDispatcher = EventDispatcher.create(VirtualFileListener.class);
   private ArrayList<CacheUpdater> myRefreshParticipants = new ArrayList<CacheUpdater>();
 
-  private int myRefreshCount = 0;
+  private volatile int myRefreshCount = 0;
   private ArrayList<Runnable> myRefreshEventsToFire = null;
   private Stack<Runnable> myPostRefreshRunnables = new Stack<Runnable>();
   private final ProgressManager myProgressManager;
