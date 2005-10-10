@@ -15,14 +15,15 @@
  */
 package com.intellij.psi.codeStyle;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Service for reformatting code fragments, getting names for elements
@@ -324,4 +325,6 @@ public abstract class CodeStyleManager {
    *                                     the file is read-only).
    */
   public abstract void removeRedundantImports(PsiJavaFile file) throws IncorrectOperationException;
+
+  public abstract void indentLinesInsideFormatSpacesAround(final ASTNode block, final ASTNode addedElement) throws IncorrectOperationException;
 }

@@ -3,6 +3,7 @@ package com.intellij.formatting;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
@@ -80,6 +81,9 @@ public abstract class FormatterEx{
                                                  final CodeStyleSettings settings,
                                                  final CodeStyleSettings.IndentOptions indentOptions,
                                                  final TextRange rangeToAdjust);
+
+  public abstract void formatAroundRange(final FormattingModel model, final CodeStyleSettings settings,
+                                         final TextRange textRange, final FileType fileType);
 
   public interface IndentInfoStorage {
     void saveIndentInfo(IndentInfo info, int startOffset);

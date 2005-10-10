@@ -127,8 +127,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
 
   private PsiElement postProcessElement(final PsiElement formatted) {
     PsiElement result = formatted;
-    for (Iterator<PostFormatProcessor> iterator = myPostFormatProcessors.iterator(); iterator.hasNext();) {
-      PostFormatProcessor postFormatProcessor = iterator.next();
+    for (PostFormatProcessor postFormatProcessor : myPostFormatProcessors) {
       result = postFormatProcessor.processElement(result, getSettings());
     }
     return result;
@@ -136,8 +135,8 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
 
   private void postProcessText(final PsiFile file, final TextRange textRange) {
     TextRange currentRange = textRange;
-    for (Iterator<PostFormatProcessor> iterator = myPostFormatProcessors.iterator(); iterator.hasNext();) {
-      currentRange = iterator.next().processText(file, currentRange, getSettings());
+    for (final PostFormatProcessor myPostFormatProcessor : myPostFormatProcessors) {
+      currentRange = myPostFormatProcessor.processText(file, currentRange, getSettings());
     }
   }
 
@@ -262,7 +261,10 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     if (file instanceof PsiJavaFile) {
       PsiImportList newList = prepareOptimizeImportsResult(file);
       if (newList != null) {
-        ((PsiJavaFile)file).getImportList().replace(newList);
+        final PsiImportList importList = ((PsiJavaFile)file).getImportList();
+        if (importList != null) {
+          importList.replace(newList);
+        }
       }
     }
   }
@@ -281,7 +283,11 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
 
   public void removeRedundantImports(PsiJavaFile file) throws IncorrectOperationException {
     if(file instanceof JspFile) return;
-    final PsiImportStatementBase[] imports = file.getImportList().getAllImportStatements();
+    final PsiImportList importList = file.getImportList();
+    if (importList == null) {
+      return;
+    }
+    final PsiImportStatementBase[] imports = importList.getAllImportStatements();
     if( imports.length == 0 )
     {
       return;
@@ -315,6 +321,21 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
 
       importStatement.delete();
     }
+  }
+
+  public void indentLinesInsideFormatSpacesAround(final ASTNode block, final ASTNode addedElement) throws IncorrectOperationException {
+    final PsiElement psiElement = block.getPsi();
+
+    final FormattingModelBuilder builder = psiElement.getContainingFile().getLanguage()
+      .getFormattingModelBuilder();
+
+    if (builder != null) {
+      final PsiFile containingFile = psiElement.getContainingFile();
+      final FormattingModel model = builder.createModel(containingFile, getSettings());
+      FormatterEx.getInstanceEx().formatAroundRange(model, getSettings(), addedElement.getTextRange(), containingFile.getFileType());
+    }
+
+    adjustLineIndent(psiElement.getContainingFile(), addedElement.getTextRange());
   }
 
   public int findEntryIndex(PsiImportStatementBase statement) {
@@ -735,21 +756,22 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     }
     PsiClassType classType = (PsiClassType)type;
     PsiClassType.ClassResolveResult resolved = classType.resolveGenerics();
-    if( resolved.getElement() == null )
+    final PsiClass element = resolved.getElement();
+    if( element == null )
     {
       return;
     }
     final PsiManager manager = PsiManager.getInstance(myProject);
-    final PsiClass collectionClass = manager.findClass("java.util.Collection", resolved.getElement().getResolveScope());
+    final PsiClass collectionClass = manager.findClass("java.util.Collection", element.getResolveScope());
     if( collectionClass == null )
     {
       return;
     }
 
-    if (InheritanceUtil.isInheritorOrSelf(resolved.getElement(), collectionClass, true)) {
+    if (InheritanceUtil.isInheritorOrSelf(element, collectionClass, true)) {
       final PsiSubstitutor substitutor;
-      if (!manager.areElementsEquivalent(resolved.getElement(), collectionClass)) {
-        substitutor = TypeConversionUtil.getClassSubstitutor(collectionClass, resolved.getElement(),
+      if (!manager.areElementsEquivalent(element, collectionClass)) {
+        substitutor = TypeConversionUtil.getClassSubstitutor(collectionClass, element,
                                                              PsiSubstitutor.EMPTY);
       }
       else {
@@ -772,7 +794,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
         PsiClass componentClass = ((PsiClassType)componentTypeParameter).resolve();
         if (componentClass instanceof PsiTypeParameter) {
           if (collectionClass.getManager().areElementsEquivalent(((PsiTypeParameter)componentClass).getOwner(),
-                                                                                                   resolved.getElement())) {
+                                                                                                   element)) {
             PsiType componentType = resolved.getSubstitutor().substitute((PsiTypeParameter)componentClass);
             if( componentType == null )
             {
@@ -1083,13 +1105,11 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
         PsiParameter[] parms = method.getParameterList().getParameters();
         if (index < parms.length) {
           PsiIdentifier identifier = parms[index].getNameIdentifier();
-          if (identifier != null) {
-            String name = identifier.getText();
-            if (name != null) {
-              name = variableNameToPropertyName(name, VariableKind.PARAMETER);
-              String[] names = getSuggestionsByName(name, variableKind, false);
-              return new NamesByExprInfo(names, name);
-            }
+          String name = identifier.getText();
+          if (name != null) {
+            name = variableNameToPropertyName(name, VariableKind.PARAMETER);
+            String[] names = getSuggestionsByName(name, variableKind, false);
+            return new NamesByExprInfo(names, name);
           }
         }
       }

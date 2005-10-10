@@ -3,6 +3,7 @@ package com.intellij.formatting;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.PsiBasedFormattingModel;
@@ -147,6 +148,44 @@ public class FormatterImpl extends FormatterEx
       enableFormatting();
     }
 
+  }
+
+  public void formatAroundRange(final FormattingModel model,
+                                final CodeStyleSettings settings,
+                                final TextRange textRange,
+                                final FileType fileType) {
+    disableFormatting();
+    try {
+      final FormattingDocumentModel documentModel = model.getDocumentModel();
+      final Block block = model.getRootBlock();
+      final FormatProcessor processor = new FormatProcessor(documentModel, block, settings,
+                                                            settings.getIndentOptions(fileType), null);
+      LeafBlockWrapper tokenBlock = processor.getFirstTokenBlock();
+      while (tokenBlock != null) {
+        final WhiteSpace whiteSpace = tokenBlock.getWhiteSpace();
+
+        final TextRange whiteSpaceRange = whiteSpace.getTextRange();
+        if (whiteSpaceRange.getEndOffset() < textRange.getStartOffset()) {
+          whiteSpace.setIsReadOnly(true);
+        } else if (whiteSpaceRange.getStartOffset() > textRange.getStartOffset() &&
+                   whiteSpaceRange.getEndOffset() < textRange.getEndOffset()){
+          if (whiteSpace.containsLineFeeds()) {
+            whiteSpace.setLineFeedsAreReadOnly(true);
+          } else {
+            whiteSpace.setIsReadOnly(true);
+          }
+        } else if (whiteSpaceRange.getEndOffset() > textRange.getEndOffset() + 1) {
+          whiteSpace.setIsReadOnly(true);
+        }
+
+        tokenBlock = tokenBlock.getNextBlock();
+      }
+      processor.formatWithoutRealModifications();
+      processor.performModifications(model);
+
+    } finally{
+      enableFormatting();
+    }
   }
 
   public int adjustLineIndent(final FormattingModel model,
