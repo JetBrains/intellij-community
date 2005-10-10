@@ -45,6 +45,7 @@ public interface IdeActions {
   String ACTION_EDITOR_COMPLETE_STATEMENT = "EditorCompleteStatement";
 
   String ACTION_COMMENT_LINE = "CommentByLineComment";
+  String ACTION_REMOVE_ENCLOSING_TAG = "RemoveEnclosingTag";
   String ACTION_COMMENT_BLOCK = "CommentByBlockComment";
   
   String ACTION_COPY = "$Copy";

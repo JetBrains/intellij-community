@@ -755,6 +755,9 @@
     <action id="SafeDelete">
       <keyboard-shortcut first-keystroke="alt DELETE"/>
     </action>
+    <action id="RemoveEnclosingTag">
+      <keyboard-shortcut first-keystroke="control shift DELETE"/>
+    </action>
     <action id="EditorCopy">
       <keyboard-shortcut first-keystroke="control INSERT"/>
       <keyboard-shortcut first-keystroke="control C"/>

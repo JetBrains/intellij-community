@@ -419,6 +419,7 @@
         <separator/>
         <action id="MoveStatementDown" class="com.intellij.openapi.editor.actions.moveUpDown.MoveStatementDownAction"/>
         <action id="MoveStatementUp" class="com.intellij.openapi.editor.actions.moveUpDown.MoveStatementUpAction"/>
+        <action id="RemoveEnclosingTag" class="com.intellij.xml.util.actions.RemoveEnclosingTagAction"/>
       </group>
 
       <group id="AnalyzeMenu" popup="true">
