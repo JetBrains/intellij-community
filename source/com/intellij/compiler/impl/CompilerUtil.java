@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -159,4 +160,28 @@ public class CompilerUtil {
     }
   }
 
+  public static void addLocaleOptions(final java.util.List<String> commandLine, final boolean launcherUsed) {
+    // need to specify default encoding so that javac outputs messages in 'correct' language
+    //noinspection HardCodedStringLiteral
+    commandLine.add((launcherUsed? "-J" : "") + "-D" + CharsetToolkit.FILE_ENCODING_PROPERTY + "=" + CharsetToolkit.getDefaultSystemCharset().name());
+    // javac's VM should use the same default locale that IDEA uses in order for javac to print messages in 'correct' language
+    //noinspection HardCodedStringLiteral
+    final String lang = System.getProperty("user.language");
+    if (lang != null) {
+      //noinspection HardCodedStringLiteral
+      commandLine.add((launcherUsed? "-J" : "") + "-Duser.language=" + lang);
+    }
+    //noinspection HardCodedStringLiteral
+    final String country = System.getProperty("user.country");
+    if (country != null) {
+      //noinspection HardCodedStringLiteral
+      commandLine.add((launcherUsed? "-J" : "") + "-Duser.country" + country);
+    }
+    //noinspection HardCodedStringLiteral
+    final String region = System.getProperty("user.region");
+    if (region != null) {
+      //noinspection HardCodedStringLiteral
+      commandLine.add((launcherUsed? "-J" : "") + "-Duser.region" + region);
+    }
+  }
 }

@@ -20,12 +20,10 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.pom.java.LanguageLevel;
 
 import java.io.*;
 import java.util.*;
-import java.nio.charset.Charset;
 
 class JavacCompiler implements BackendCompiler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.javaCompiler.JavacCompiler");
@@ -146,28 +144,9 @@ class JavacCompiler implements BackendCompiler {
       //noinspection HardCodedStringLiteral
       commandLine.add("-Xmx" + javacSettings.MAXIMUM_HEAP_SIZE + "m");
     }
-    // need to specify default encoding so that javac outputs messages in 'correct' language
-    //noinspection HardCodedStringLiteral
-    commandLine.add("-D" + CharsetToolkit.FILE_ENCODING_PROPERTY + "=" + CharsetToolkit.getDefaultSystemCharset().name());
-    // javac's VM should use the same default locale that IDEA uses in order for javac to print messages in 'correct' language
-    //noinspection HardCodedStringLiteral
-    final String lang = System.getProperty("user.language");
-    if (lang != null) {
-      //noinspection HardCodedStringLiteral
-      commandLine.add("-Duser.language=" + lang);
-    }
-    //noinspection HardCodedStringLiteral
-    final String country = System.getProperty("user.country");
-    if (country != null) {
-      //noinspection HardCodedStringLiteral
-      commandLine.add("-Duser.country" + country);
-    }
-    //noinspection HardCodedStringLiteral
-    final String region = System.getProperty("user.region");
-    if (region != null) {
-      //noinspection HardCodedStringLiteral
-      commandLine.add("-Duser.region" + region);
-    }
+
+    CompilerUtil.addLocaleOptions(commandLine, false);
+
     //noinspection HardCodedStringLiteral
     commandLine.add("-classpath");
 

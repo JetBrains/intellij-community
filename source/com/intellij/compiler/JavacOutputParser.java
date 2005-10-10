@@ -10,7 +10,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.rt.compiler.JavacRunner;
+import com.intellij.rt.compiler.JavacResourcesReader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,15 +29,15 @@ public class JavacOutputParser extends OutputParser {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       // emulate patterns setup if 'embedded' javac is used (javac is started not via JavacRunner)
       //noinspection HardCodedStringLiteral
-      addJavacPattern(JavacRunner.MSG_PARSING_STARTED + JavacRunner.CATEGORY_VALUE_DIVIDER + "[parsing started {0}]");
+      addJavacPattern(JavacResourcesReader.MSG_PARSING_STARTED + JavacResourcesReader.CATEGORY_VALUE_DIVIDER + "[parsing started {0}]");
       //noinspection HardCodedStringLiteral
-      addJavacPattern(JavacRunner.MSG_PARSING_COMPLETED + JavacRunner.CATEGORY_VALUE_DIVIDER + "[parsing completed {0}ms]");
+      addJavacPattern(JavacResourcesReader.MSG_PARSING_COMPLETED + JavacResourcesReader.CATEGORY_VALUE_DIVIDER + "[parsing completed {0}ms]");
       //noinspection HardCodedStringLiteral
-      addJavacPattern(JavacRunner.MSG_LOADING + JavacRunner.CATEGORY_VALUE_DIVIDER + "[loading {0}]");
+      addJavacPattern(JavacResourcesReader.MSG_LOADING + JavacResourcesReader.CATEGORY_VALUE_DIVIDER + "[loading {0}]");
       //noinspection HardCodedStringLiteral
-      addJavacPattern(JavacRunner.MSG_CHECKING + JavacRunner.CATEGORY_VALUE_DIVIDER + "[checking {0}]");
+      addJavacPattern(JavacResourcesReader.MSG_CHECKING + JavacResourcesReader.CATEGORY_VALUE_DIVIDER + "[checking {0}]");
       //noinspection HardCodedStringLiteral
-      addJavacPattern(JavacRunner.MSG_WROTE + JavacRunner.CATEGORY_VALUE_DIVIDER + "[wrote {0}]");
+      addJavacPattern(JavacResourcesReader.MSG_WROTE + JavacResourcesReader.CATEGORY_VALUE_DIVIDER + "[wrote {0}]");
     }
   }
 
@@ -49,11 +49,11 @@ public class JavacOutputParser extends OutputParser {
     if (line == null) {
       return false;
     }
-    if (JavacRunner.MSG_PATTERNS_START.equals(line)) {
+    if (JavacResourcesReader.MSG_PATTERNS_START.equals(line)) {
       myParserActions.clear();
       while (true) {
         final String patternLine = callback.getNextLine();
-        if (JavacRunner.MSG_PATTERNS_END.equals(patternLine)) {
+        if (JavacResourcesReader.MSG_PATTERNS_END.equals(patternLine)) {
           break;
         }
         addJavacPattern(patternLine);
@@ -180,33 +180,33 @@ public class JavacOutputParser extends OutputParser {
   }
 
   private void addJavacPattern(final String line) {
-    final int dividerIndex = line.indexOf(JavacRunner.CATEGORY_VALUE_DIVIDER);
+    final int dividerIndex = line.indexOf(JavacResourcesReader.CATEGORY_VALUE_DIVIDER);
     final String category = line.substring(0, dividerIndex);
     final String resourceBundleValue = line.substring(dividerIndex + 1);
-    if (JavacRunner.MSG_PARSING_COMPLETED.equals(category) ||
-        JavacRunner.MSG_PARSING_STARTED.equals(category) ||
-        JavacRunner.MSG_WROTE.equals(category)
+    if (JavacResourcesReader.MSG_PARSING_COMPLETED.equals(category) ||
+        JavacResourcesReader.MSG_PARSING_STARTED.equals(category) ||
+        JavacResourcesReader.MSG_WROTE.equals(category)
       ) {
       myParserActions.add(new FilePathActionJavac(createMatcher(resourceBundleValue)));
     }
-    else if (JavacRunner.MSG_CHECKING.equals(category)) {
+    else if (JavacResourcesReader.MSG_CHECKING.equals(category)) {
       myParserActions.add(new JavacParserAction(createMatcher(resourceBundleValue)) {
         protected void doExecute(String parsedData, final Callback callback) {
           callback.setProgressText(CompilerBundle.message("progress.compiling.class", parsedData));
         }
       });
     }
-    else if (JavacRunner.MSG_LOADING.equals(category)) {
+    else if (JavacResourcesReader.MSG_LOADING.equals(category)) {
       myParserActions.add(new JavacParserAction(createMatcher(resourceBundleValue)) {
         protected void doExecute(@Nullable String parsedData, final Callback callback) {
           callback.setProgressText(CompilerBundle.message("progress.loading.classes"));
         }
       });
     }
-    else if (JavacRunner.MSG_WARNING.equals(category)) {
+    else if (JavacResourcesReader.MSG_WARNING.equals(category)) {
       WARNING_PREFIX = resourceBundleValue;
     }
-    else if (JavacRunner.MSG_STATISTICS.equals(category)) {
+    else if (JavacResourcesReader.MSG_STATISTICS.equals(category)) {
       myParserActions.add(new JavacParserAction(createMatcher(resourceBundleValue)) {
         protected void doExecute(@Nullable String parsedData, final Callback callback) {
           // empty
