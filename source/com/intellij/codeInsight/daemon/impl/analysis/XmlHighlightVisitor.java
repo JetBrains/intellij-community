@@ -290,7 +290,9 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
               IntentionAction intentionAction2 = new RenameTagBeginOrEndIntentionAction(tag, text, true);
 
               QuickFixAction.registerQuickFixAction(highlightInfo, intentionAction, null);
+              QuickFixAction.registerQuickFixAction(highlightInfo, intentionAction2, null);
               QuickFixAction.registerQuickFixAction(highlightInfo, startTagNameToken.getTextRange(), intentionAction2, null);
+              QuickFixAction.registerQuickFixAction(highlightInfo, startTagNameToken.getTextRange(), intentionAction, null);
             }
 
             return false;
@@ -610,6 +612,12 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
         QuickFixAction.registerQuickFixAction(highlightInfo, intentionAction, null);
       }
+    }
+  }
+
+  public void visitXmlElement(XmlElement element) {
+    if (element instanceof XmlEntityRef) {
+      checkReferences(element, QuickFixProvider.NULL);
     }
   }
 

@@ -10,6 +10,7 @@ import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.xml.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
@@ -127,7 +128,7 @@ public class DtdReferencesProvider implements PsiReferenceProvider {
     }
 
     public String getCanonicalText() {
-      return myElement.getText();
+      return StringUtil.stripQuotesAroundValue(myElement.getText());
     }
 
     public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
@@ -147,7 +148,7 @@ public class DtdReferencesProvider implements PsiReferenceProvider {
     }
 
     public boolean isSoft() {
-      return true;
+      return false;
     }
   }
 

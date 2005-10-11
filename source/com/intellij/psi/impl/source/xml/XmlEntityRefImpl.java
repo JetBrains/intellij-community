@@ -4,6 +4,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.CachedValue;
@@ -121,5 +122,9 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
 
   public PsiReference[] getReferences() {
     return ResolveUtil.getReferencesFromProviders(this);
+  }
+
+  public void accept(PsiElementVisitor visitor) {
+    visitor.visitXmlElement(this);
   }
 }
