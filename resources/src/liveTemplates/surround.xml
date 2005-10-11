@@ -29,9 +29,10 @@
     </context>
   </template>
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.surround.tag"
-    name="T" toReformat="true" toShortenFQNames="true" value="&lt;$TAGNAME$&gt;$SELECTION$&lt;/$TAGNAME$&gt;">
-    <variable alwaysStopAt="true" defaultValue="" expression="" name="TAGNAME" />
-    <variable alwaysStopAt="false" defaultValue="" expression="" name="SELECTION" />
+    name="T" toReformat="true" toShortenFQNames="true" value="&lt;$TAG$&gt;$SELECTION$&lt;/$TAGNAME$&gt;">
+    <variable name="TAG" expression="" defaultValue="" alwaysStopAt="true" />
+    <variable name="SELECTION" expression="" defaultValue="" alwaysStopAt="false" />
+    <variable name="TAGNAME" expression="firstWord(TAG)" defaultValue="&quot;&quot;" alwaysStopAt="false" />
     <context>
       <option name="JAVA_CODE" value="false" />
       <option name="JAVA_COMMENT" value="false" />

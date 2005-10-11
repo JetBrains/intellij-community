@@ -46,6 +46,7 @@ public class MacroFactory {
 
     register(new CapitalizeMacro());
     register(new DecapitalizeMacro());
+    register(new FirstWordMacro());
     register(new CompleteMacro());
     register(new CompleteSmartMacro());
 
