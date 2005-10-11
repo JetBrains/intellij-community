@@ -145,7 +145,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
   private final ArrayList<CachedFontContent> myFontCache = new ArrayList<CachedFontContent>();
   private FontInfo myCurrentFontType = null;
 
-  private boolean myIsBlockSelectionMode;
   private EditorSizeContainer mySizeContainer = new EditorSizeContainer();
 
   private Runnable myCursorUpdater;
@@ -190,7 +189,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     myMarkupModel = new EditorMarkupModelImpl(this);
     myFoldingModel = new FoldingModelImpl(this);
     myCaretModel = new CaretModelImpl(this);
-    myIsBlockSelectionMode = false;
     mySizeContainer.reset();
 
     myCommandProcessor = CommandProcessor.getInstance();
@@ -584,14 +582,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
 
   public boolean isColumnMode() {
     return myIsColumnMode;
-  }
-
-  public void setBlockSelectionMode(boolean isBlockSelectionMode) {
-    myIsBlockSelectionMode = isBlockSelectionMode;
-  }
-
-  public boolean isBlockSelectionMode() {
-    return myIsBlockSelectionMode;
   }
 
   private int yPositionToVisibleLineNumber(int y) {

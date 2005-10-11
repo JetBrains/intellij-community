@@ -18,6 +18,16 @@ package com.intellij.openapi.editor;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NonNls;
 
+/**
+ * Represents a visual position in the editor. Visual positions take folding into account -
+ * for example, if the top 10 lines of the document are folded, the 10th line in the document
+ * will have the line number 1 in its visual position.
+ *
+ * @see LogicalPosition
+ * @see Editor#logicalToVisualPosition(LogicalPosition)
+ * @see Editor#offsetToVisualPosition(int)
+ * @see Editor#xyToVisualPosition(java.awt.Point)  
+ */
 public class VisualPosition {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.VisualPosition");
   public final int line;

@@ -17,6 +17,16 @@ package com.intellij.openapi.editor;
 
 import org.jetbrains.annotations.NonNls;
 
+/**
+ * Represents a logical position in the editor. Logical positions ignore folding -
+ * for example, if the top 10 lines of the document are folded, the 10th line in the document
+ * will have the line number 10 in its logical position.
+ *
+ * @see VisualPosition
+ * @see Editor#visualToLogicalPosition(VisualPosition)
+ * @see Editor#offsetToLogicalPosition(int)
+ * @see Editor#xyToLogicalPosition(java.awt.Point)   
+ */
 public class LogicalPosition implements Comparable<LogicalPosition> {
   public final int line;
   public final int column;

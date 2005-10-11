@@ -36,8 +36,6 @@ public interface EditorEx extends Editor {
 
   void setColumnMode(boolean val);
 
-  void setBlockSelectionMode(boolean isBlockSelectionMode);
-
   void setLastColumnNumber(int val);
 
   int getLastColumnNumber();
