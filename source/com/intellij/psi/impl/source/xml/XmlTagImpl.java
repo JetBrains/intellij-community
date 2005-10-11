@@ -33,6 +33,7 @@ import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.CollectionUtil;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
+import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.util.XmlTagTextUtil;
 import com.intellij.xml.util.XmlUtil;
 
@@ -214,7 +215,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
         if (descriptor != null) {
           elementDescriptor = descriptor.getElementDescriptor(this);
           
-          if (elementDescriptor != null) {
+          if (elementDescriptor != null && !(elementDescriptor instanceof AnyXmlElementDescriptor)) {
             return elementDescriptor;
           }
         }
