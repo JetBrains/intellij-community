@@ -3,15 +3,8 @@ package com.intellij.codeInspection.java15api;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.javadoc.PsiDocTag;
-import com.intellij.psi.javadoc.PsiDocTagValue;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 
@@ -199,79 +192,6 @@ public class Java15APIUsageInspection extends LocalInspectionTool {
     }
     assert false;
     return null;
-  }
-
-  public static void generateList(Project project) {
-    final VirtualFile srcroot = VirtualFileManager.getInstance()
-      .findFileByUrl(ProjectRootManager.getInstance(project).getProjectJdk().getRootProvider().getUrls(OrderRootType.SOURCES)[0]);
-
-    PsiDirectory dir = PsiManager.getInstance(project).findDirectory(srcroot);
-
-    assert dir != null;
-    dir.accept(new PsiRecursiveElementVisitor() {
-      public void visitFile(PsiFile file) {
-        if (file instanceof PsiJavaFile) {
-          final PsiJavaFile javaFile = (PsiJavaFile)file;
-          final PsiClass[] classes = javaFile.getClasses();
-          for (int i = 0; i < classes.length; i++) {
-            generateMember(classes[i]);
-          }
-        }
-      }
-
-      @SuppressWarnings({"UseOfSystemOutOrSystemErr"})
-      private void generateMember(final PsiDocCommentOwner member) {
-        if (member == null) return;
-
-        if (member instanceof PsiClass && "java.lang.Enum".equals(((PsiClass)member).getQualifiedName())) {
-          return;
-        }
-
-        if (isMarked(member)) {
-          if (member instanceof PsiMethod) {
-            final PsiMethod method = (PsiMethod)member;
-            final PsiMethod[] supers = method.findSuperMethods();
-            for (PsiMethod spr : supers) {
-              if (spr != method) {
-                final PsiClass klass = spr.getContainingClass();
-                if (klass != null && !klass.isInterface() && !isMarked(spr) && !isMarked(klass)) return;
-              }
-            }
-          }
-          System.out.println(getSignature(member));
-        }
-
-        if (member instanceof PsiClass) {
-          final PsiClass psiClass = (PsiClass)member;
-          for (PsiMethod method : psiClass.getMethods()) {
-            generateMember(method);
-          }
-          for (PsiClass inner : psiClass.getInnerClasses()) {
-            generateMember(inner);
-          }
-          for (PsiField field : psiClass.getFields()) {
-            generateMember(field);
-          }
-        }
-      }
-    });
-  }
-
-  private static boolean isMarked(PsiDocCommentOwner member) {
-    member = (PsiDocCommentOwner)member.getNavigationElement();
-    final PsiDocComment comm = member.getDocComment();
-    if (comm != null) {
-      final PsiDocTag tag = comm.findTagByName("since");
-      if (tag != null) {
-        final PsiDocTagValue value = tag.getValueElement();
-        if (value != null) {
-          if (value.getText().trim().equals("1.5")) {
-            return true;
-          }
-        }
-      }
-    }
-    return false;
   }
 
 }
