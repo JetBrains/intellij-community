@@ -202,8 +202,27 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
   }
 
   public XmlElementDescriptor getDescriptor() {
-    final XmlNSDescriptor nsDescriptor = getNSDescriptor(getNamespace(), false);
-    XmlElementDescriptor elementDescriptor = (nsDescriptor != null) ? nsDescriptor.getElementDescriptor(this) : null;
+    final String namespace = getNamespace();
+    XmlElementDescriptor elementDescriptor;
+    
+    if (XmlUtil.EMPTY_URI.equals(namespace)) { //nonqualified items
+      final PsiElement parent = getParent();
+      
+      if (parent instanceof XmlTag) {
+        final XmlElementDescriptor descriptor = ((XmlTag)parent).getDescriptor();
+        
+        if (descriptor != null) {
+          elementDescriptor = descriptor.getElementDescriptor(this);
+          
+          if (elementDescriptor != null) {
+            return elementDescriptor;
+          }
+        }
+      }
+    }
+    
+    final XmlNSDescriptor nsDescriptor = getNSDescriptor(namespace, false);
+    elementDescriptor = (nsDescriptor != null) ? nsDescriptor.getElementDescriptor(this) : null;
 
     if(elementDescriptor == null){
       elementDescriptor = XmlUtil.findXmlDescriptorByType(this);
