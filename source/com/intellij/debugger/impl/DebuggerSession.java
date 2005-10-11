@@ -38,6 +38,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
+import org.jetbrains.annotations.Nullable;
+
 public class DebuggerSession {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.DebuggerSession");
   // flags
@@ -487,7 +489,7 @@ public class DebuggerSession {
     return getContextManager().getContext().getSuspendContext();
   }
 
-  protected ExecutionResult attach(final RunProfileState state, final RemoteConnection remoteConnection, final boolean pollConnection) throws ExecutionException {
+  protected @Nullable ExecutionResult attach(final RunProfileState state, final RemoteConnection remoteConnection, final boolean pollConnection) throws ExecutionException {
     final ExecutionResult executionResult = myDebugProcess.attachVirtualMachine(state, remoteConnection, pollConnection);
     final String addressDisplayName = DebuggerBundle.getAddressDisplayName(remoteConnection);
     final String transportName = DebuggerBundle.getTransportName(remoteConnection);

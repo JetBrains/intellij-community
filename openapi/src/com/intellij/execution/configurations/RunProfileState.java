@@ -18,9 +18,10 @@ package com.intellij.execution.configurations;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.openapi.module.Module;
+import org.jetbrains.annotations.Nullable;
 
 public interface RunProfileState {
-  ExecutionResult execute() throws ExecutionException;
+  @Nullable ExecutionResult execute() throws ExecutionException;
   RunnerSettings getRunnerSettings();
   ConfigurationPerRunnerSettings getConfigurationSettings();
   Module[] getModulesToCompile();

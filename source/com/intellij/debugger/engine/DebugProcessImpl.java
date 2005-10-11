@@ -63,6 +63,8 @@ import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.*;
 
+import org.jetbrains.annotations.Nullable;
+
 public abstract class DebugProcessImpl implements DebugProcess {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.DebugProcessImpl");
 
@@ -419,6 +421,9 @@ public abstract class DebugProcessImpl implements DebugProcess {
               connector.stopListening(myArguments);
             }
             catch (IllegalArgumentException e) {
+              // ignored
+            }
+            catch (IllegalConnectorArgumentsException e) {
               // ignored
             }
           }
@@ -1479,7 +1484,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
   }
 
 
-  public ExecutionResult attachVirtualMachine(final RunProfileState state, final RemoteConnection remoteConnection, boolean pollConnection)
+  public @Nullable ExecutionResult attachVirtualMachine(final RunProfileState state, final RemoteConnection remoteConnection, boolean pollConnection)
     throws ExecutionException {
     myWaitFor.down();
 
@@ -1493,8 +1498,11 @@ public abstract class DebugProcessImpl implements DebugProcess {
     try {
       synchronized (myProcessListeners) {
         myExecutionResult = state.execute();
-        for (Iterator<ProcessListener> iterator = myProcessListeners.iterator(); iterator.hasNext();) {
-          ProcessListener processListener = iterator.next();
+        if (myExecutionResult == null) {
+          fail();
+          return null;
+        }
+        for (ProcessListener processListener : myProcessListeners) {
           myExecutionResult.getProcessHandler().addProcessListener(processListener);
         }
         myProcessListeners.clear();
@@ -1582,11 +1590,16 @@ public abstract class DebugProcessImpl implements DebugProcess {
               }
               else {
                 fail();
-                SwingUtilities.invokeLater(new Runnable() {
-                  public void run() {
-                    RunStrategy.handleExecutionError(myProject, state.getRunnerSettings().getRunProfile(), e);
-                  }
-                });
+                if (myExecutionResult != null) {
+                  // propagate exception only in case we succeded to obtain execution result,
+                  // otherwise it the error is induced by the fact that there is nothing to debug, and there is no need to show
+                  // this problem to the user
+                  SwingUtilities.invokeLater(new Runnable() {
+                    public void run() {
+                      RunStrategy.handleExecutionError(myProject, state.getRunnerSettings().getRunProfile(), e);
+                    }
+                  });
+                }
                 break;
               }
             }

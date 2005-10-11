@@ -21,6 +21,7 @@ import com.intellij.openapi.wm.ToolWindowId;
 import javax.swing.*;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 public class GenericDebuggerRunner implements JavaProgramRunner<GenericDebuggerRunnerSettings> {
   private static final Icon ICON = IconLoader.getIcon("/actions/startDebugger.png");
@@ -50,10 +51,10 @@ public class GenericDebuggerRunner implements JavaProgramRunner<GenericDebuggerR
     return DEBUGGER_INFO;
   }
 
-  public RunContentDescriptor doExecute(final RunProfileState state,
-                                        final RunProfile runProfile,
-                                        RunContentDescriptor reuseContent,
-                                        final Project project) throws ExecutionException {
+  public @Nullable RunContentDescriptor doExecute(final RunProfileState state,
+                                                                            final RunProfile runProfile,
+                                                                            RunContentDescriptor reuseContent,
+                                                                            final Project project) throws ExecutionException {
     final boolean addLvcsLabel = LvcsConfiguration.getInstance().ADD_LABEL_ON_RUNNING;
     final LocalVcs localVcs = LocalVcs.getInstance(project);
     RunContentDescriptor contentDescriptor = null;

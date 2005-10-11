@@ -127,7 +127,9 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
     DebuggerSession session = new DebuggerSession(sessionName, new DebugProcessEvents(myProject));
 
     final ExecutionResult executionResult = session.attach(state, remoteConnection, pollConnection);
-
+    if (executionResult == null) {
+      return null;
+    }
     session.getContextManager().addListener(mySessionListener);
     getContextManager().setState(DebuggerContextUtil.createDebuggerContext(session, session.getContextManager().getContext().getSuspendContext()), session.getState(), DebuggerSession.EVENT_REFRESH, null);
 

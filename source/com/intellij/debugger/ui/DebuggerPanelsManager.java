@@ -22,6 +22,8 @@ import com.intellij.openapi.project.Project;
 
 import java.util.HashMap;
 
+import org.jetbrains.annotations.Nullable;
+
 /*
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
  * Use is subject to license terms.
@@ -64,13 +66,17 @@ public class DebuggerPanelsManager implements ProjectComponent{
     }
   };
 
-  public RunContentDescriptor attachVirtualMachine(RunProfile runProfile,
+  public @Nullable RunContentDescriptor attachVirtualMachine(RunProfile runProfile,
                                                    JavaProgramRunner runner,
                                                    RunProfileState state,
                                                    RunContentDescriptor reuseContent,
                                                    RemoteConnection remoteConnection,
                                                    boolean pollConnection) throws ExecutionException {
-    DebuggerSession debuggerSession = DebuggerManagerEx.getInstanceEx(myProject).attachVirtualMachine(runProfile.getName(), state, remoteConnection, pollConnection);
+
+    final DebuggerSession debuggerSession = DebuggerManagerEx.getInstanceEx(myProject).attachVirtualMachine(runProfile.getName(), state, remoteConnection, pollConnection);
+    if (debuggerSession == null) {
+      return null;
+    }
 
     if (state instanceof RemoteState) {
       // optimization: that way BatchEvaluator will not try to lookup the class file in remote VM
