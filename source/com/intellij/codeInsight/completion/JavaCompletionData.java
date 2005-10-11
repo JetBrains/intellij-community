@@ -289,6 +289,7 @@ public class JavaCompletionData extends CompletionData{
 
 // completion
       CompletionVariant variant = new CompletionVariant(PsiMethod.class, position);
+      variant.includeScopeClass(PsiClass.class); // for throws on separate line
       variant.addCompletion(PsiKeyword.THROWS);
 
       this.registerVariant(variant);
