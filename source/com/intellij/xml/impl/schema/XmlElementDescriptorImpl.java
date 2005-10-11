@@ -48,7 +48,13 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
       if(tag != null){
         final String namespacePrefix = tag.getPrefixByNamespace(namespace);
         if (namespacePrefix != null && namespacePrefix.length() > 0) {
-          value = namespacePrefix + ":" + XmlUtil.findLocalNameByQualifiedName(value);
+          final XmlTag rootTag = ((XmlFile)myDescriptorTag.getContainingFile()).getDocument().getRootTag();
+          
+          if (rootTag != null && NONQUALIFIED_ATTR_VALUE.equals(rootTag.getAttributeValue(ELEMENT_FORM_DEFAULT))) {
+            value = XmlUtil.findLocalNameByQualifiedName(value);
+          } else {
+            value = namespacePrefix + ":" + XmlUtil.findLocalNameByQualifiedName(value);
+          }
         }
       }
     }
