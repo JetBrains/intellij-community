@@ -6,6 +6,7 @@ import com.intellij.ide.startup.FileContent;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
+import com.intellij.lang.StdLanguages;
 import com.intellij.lang.cacheBuilder.WordOccurrence;
 import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lang.findUsages.FindUsagesProvider;
@@ -34,6 +35,7 @@ import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.util.Processor;
 import com.intellij.util.text.CharArrayCharSequence;
+import com.intellij.codeHighlighting.CopyCreatorLexer;
 import gnu.trove.TIntIntHashMap;
 
 import java.util.HashMap;
@@ -157,13 +159,13 @@ public class IdTableBuilding {
 
   static class HtmlIdCacheBuilder extends XmlIdCacheBuilder {
     protected BaseFilterLexer createLexer(TIntIntHashMap wordsTable, int[] todoCounts) {
-      return new XHtmlFilterLexer(new HtmlLexer(), wordsTable, todoCounts);
+      return new XHtmlFilterLexer(new HtmlHighlightingLexer(), wordsTable, todoCounts);
     }
   }
 
   static class XHtmlIdCacheBuilder extends XmlIdCacheBuilder {
     protected BaseFilterLexer createLexer(TIntIntHashMap wordsTable, int[] todoCounts) {
-      return new XHtmlFilterLexer(new XHtmlLexer(), wordsTable, todoCounts);
+      return new XHtmlFilterLexer(new XHtmlHighlightingLexer(), wordsTable, todoCounts);
     }
   }
 
@@ -314,10 +316,28 @@ public class IdTableBuilding {
 
       if (myHighlightingLexer != null && myCommentTokens != null && todoCounts != null) {
         BaseFilterLexer filterLexer = new BaseFilterLexer(myHighlightingLexer, wordsTable, todoCounts) {
+          private Language myJavaLanguage = StdLanguages.JAVA;
+          private Language myXmlLanguage = StdLanguages.XML;
+          private Language myELLanguage = StdLanguages.EL;
+          private Language myAnyLanguage = Language.ANY;
+          
           public void advance() {
             IElementType tokenType = myOriginalLexer.getTokenType();
+            if(tokenType instanceof CopyCreatorLexer.HighlightingCopyElementType){
+              final CopyCreatorLexer.HighlightingCopyElementType scriptletJavaElementTypeToken = (CopyCreatorLexer.HighlightingCopyElementType)tokenType;
+              tokenType = scriptletJavaElementTypeToken.getBase();
+            }
+            
             if (myCommentTokens.contains(tokenType)) {
               advanceTodoItemCounts(getBuffer(), getTokenStart(), getTokenEnd());
+            } else if (tokenType.getLanguage() != myXmlLanguage &&
+                       tokenType.getLanguage() != myJavaLanguage &&
+                       tokenType.getLanguage() != myELLanguage &&
+                       tokenType.getLanguage() != myAnyLanguage
+                      ) {
+              if (IdCacheUtil.isInComments(tokenType)) {
+                advanceTodoItemCounts(getBuffer(), getTokenStart(), getTokenEnd());
+              }
             }
             myOriginalLexer.advance();
           }
