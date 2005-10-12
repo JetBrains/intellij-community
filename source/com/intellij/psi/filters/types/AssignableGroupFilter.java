@@ -3,8 +3,6 @@ package com.intellij.psi.filters.types;
 import com.intellij.psi.filters.FalseFilter;
 import com.intellij.psi.filters.OrFilter;
 import com.intellij.psi.filters.InitializableFilter;
-import com.intellij.psi.filters.classes.InheritorFilter;
-import com.intellij.psi.filters.element.AssignableFilter;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiSubstitutor;

@@ -4,7 +4,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.classes.AnyInnerFilter;
-import com.intellij.psi.filters.classes.InheritorFilter;
 import com.intellij.psi.filters.classes.InterfaceFilter;
 import com.intellij.psi.filters.classes.ThisOrAnyInnerFilter;
 import com.intellij.psi.filters.element.IsAccessibleFilter;
