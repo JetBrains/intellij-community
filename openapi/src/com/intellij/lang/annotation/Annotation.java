@@ -33,8 +33,8 @@ import java.util.List;
  * @author max
  * @see Annotator
  * @see AnnotationHolder
+ * @see com.intellij.openapi.editor.markup.RangeHighlighter
  */
-
 public final class Annotation {
   private final int myStartOffset;
   private final int myEndOffset;

@@ -20,8 +20,17 @@ import com.intellij.openapi.editor.Editor;
 import java.awt.event.MouseEvent;
 
 /**
+ * Interface which should be implemented in order to paint custom markers in the line
+ * marker area (over the folding area) and process mouse events on the markers.
+ *
  * @author max
  */
 public interface ActiveGutterRenderer extends LineMarkerRenderer {
+  /**
+   * Processes a mouse released event on the marker.
+   *
+   * @param editor the editor to which the marker belongs.
+   * @param e      the mouse event instance.
+   */
   void doAction(Editor editor, MouseEvent e);
 }

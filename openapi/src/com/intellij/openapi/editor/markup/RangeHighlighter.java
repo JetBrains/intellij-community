@@ -19,42 +19,184 @@ import com.intellij.openapi.editor.RangeMarker;
 
 import java.awt.*;
 
+import org.jetbrains.annotations.Nullable;
+
+/**
+ * Represents a range of text in the document which has specific markup (special text attributes,
+ * line marker, gutter icon, error stripe marker or line separator).
+ *
+ * @see MarkupModel#addRangeHighlighter(int, int, int, TextAttributes, HighlighterTargetArea)
+ * @see com.intellij.lang.annotation.Annotation
+ */
 public interface RangeHighlighter extends RangeMarker {
+  /**
+   * Returns the relative priority of the highlighter (higher priority highlighters can override
+   * lower priority ones; layer number values for standard IDEA highlighters are given in
+   * {@link HighlighterLayer} class).
+   *
+   * @return the highlighter priority.
+   */
   int getLayer();
 
+  /**
+   * Returns the value indicating whether the highlighter affects a range of text or a sequence of
+   * of entire lines in the specified range.
+   *
+   * @return the highlighter target area.
+   */
   HighlighterTargetArea getTargetArea();
 
+  /**
+   * Returns the text attributes used for highlighting.
+   *
+   * @return the attributes to use for highlighting, or null if the highlighter
+   * does not modify the text attributes.
+   */
+  @Nullable
   TextAttributes getTextAttributes();
 
+  /**
+   * Returns the renderer used for drawing line markers in the area covered by the
+   * highlighter, and optionally for processing mouse events over the markers.
+   * Line markers are drawn over the folding area and are used, for example,
+   * to highlight modified lines in files under source control.
+   *
+   * @return the renderer instance, or null if the highlighter does not add any line markers.
+   * @see ActiveGutterRenderer
+   */
+  @Nullable
   LineMarkerRenderer getLineMarkerRenderer();
 
-  void setLineMarkerRenderer(LineMarkerRenderer renderer);
+  /**
+   * Sets the renderer used for drawing line markers in the area covered by the
+   * highlighter, and optionally for processing mouse events over the markers.
+   * Line markers are drawn over the folding area and are used, for example,
+   * to highlight modified lines in files under source control.
+   *
+   * @param renderer the renderer instance, or null if the highlighter does not add any line markers.
+   * @see ActiveGutterRenderer
+   */
+  void setLineMarkerRenderer(@Nullable LineMarkerRenderer renderer);
 
+  /**
+   * Returns the renderer used for drawing gutter icons in the area covered by the
+   * highlighter. Gutter icons are drawn to the left of the folding area and can be used,
+   * for example, to mark implemented or overridden methods.
+   *
+   * @return the renderer instance, or null if the highlighter does not add any gutter icons.
+   */
+  @Nullable
   GutterIconRenderer getGutterIconRenderer();
 
-  void setGutterIconRenderer(GutterIconRenderer renderer);
+  /**
+   * Sets the renderer used for drawing gutter icons in the area covered by the
+   * highlighter. Gutter icons are drawn to the left of the folding area and can be used,
+   * for example, to mark implemented or overridden methods.
+   *
+   * @param renderer the renderer instance, or null if the highlighter does not add any gutter icons.
+   */
+  void setGutterIconRenderer(@Nullable GutterIconRenderer renderer);
 
+  /**
+   * Returns the color of the marker drawn in the error stripe in the area covered by the highlighter.
+   *
+   * @return the error stripe marker color, or null if the highlighter does not add any
+   * error stripe markers.
+   */
+  @Nullable
   Color getErrorStripeMarkColor();
 
-  void setErrorStripeMarkColor(Color color);
+  /**
+   * Sets the color of the marker drawn in the error stripe in the area covered by the highlighter.
+   *
+   * @param color the error stripe marker color, or null if the highlighter does not add any
+   * error stripe markers.
+   */
+  void setErrorStripeMarkColor(@Nullable Color color);
 
+  /**
+   * Returns the object whose <code>toString()</code> method is called to get the text of the tooltip
+   * for the error stripe marker added by the highlighter.
+   *
+   * @return the error stripe tooltip objects, or null if the highlighter does not add any error
+   * stripe markers or the marker has no tooltip.
+   */
+  @Nullable
   Object getErrorStripeTooltip();
 
-  void setErrorStripeTooltip(Object tooltipObject);
+  /**
+   * Sets the object whose <code>toString()</code> method is called to get the text of the tooltip
+   * for the error stripe marker added by the highlighter.
+   *
+   * @param tooltipObject the error stripe tooltip objects, or null if the highlighter does not
+   * add any error stripe markers or the marker has no tooltip.
+   */
+  void setErrorStripeTooltip(@Nullable Object tooltipObject);
 
+  /**
+   * Returns the value indicating whether the error stripe marker has reduced width (like
+   * the markers used to highlight changed lines).
+   *
+   * @return true if the marker has reduced width, false otherwise.
+   */
   boolean isThinErrorStripeMark();
 
+  /**
+   * Sets the value indicating whether the error stripe marker has reduced width (like
+   * the markers used to highlight changed lines).
+   *
+   * @param value true if the marker has reduced width, false otherwise.
+   */
   void setThinErrorStripeMark(boolean value);
 
+  /**
+   * Returns the color of the separator drawn above or below the range covered by
+   * the highlighter.
+   *
+   * @return the separator color, or null if the highlighter does not add a line separator.
+   */
+  @Nullable
   Color getLineSeparatorColor();
 
-  void setLineSeparatorColor(Color color);
+  /**
+   * Sets the color of the separator drawn above or below the range covered by
+   * the highlighter.
+   *
+   * @param color the separator color, or null if the highlighter does not add a line separator.
+   */
+  void setLineSeparatorColor(@Nullable Color color);
 
+  /**
+   * Returns the placement of the separator drawn by the range highlighter
+   * (above or below the range).
+   *
+   * @return the separator placement, or null if the highlighter does not add a line separator.
+   */
+  @Nullable
   SeparatorPlacement getLineSeparatorPlacement();
 
-  void setLineSeparatorPlacement(SeparatorPlacement placement);
+  /**
+   * Sets the placement of the separator drawn by the range highlighter
+   * (above or below the range).
+   *
+   * @param placement the separator placement, or null if the highlighter does not add a line separator.
+   */
+  void setLineSeparatorPlacement(@Nullable SeparatorPlacement placement);
 
-  void setEditorFilter(MarkupEditorFilter filter);
+  /**
+   * Sets the filter which can disable the highlighter in specific editor instances.
+   *
+   * @param filter the filter controlling the highlighter availability, or null if the
+   * highlighter is available in all editors.
+   */
+  void setEditorFilter(@Nullable MarkupEditorFilter filter);
 
+  /**
+   * Gets the filter which can disable the highlighter in specific editor instances.
+   *
+   * @return the filter controlling the highlighter availability, or null if the
+   * highlighter is available in all editors.
+   */
+  @Nullable
   MarkupEditorFilter getEditorFilter();
 }
