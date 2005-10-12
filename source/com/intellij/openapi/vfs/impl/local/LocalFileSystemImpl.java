@@ -13,8 +13,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.util.Alarm;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.WorkerThread;
+import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.WeakHashMap;
 import com.intellij.vfs.local.win32.FileWatcher;
@@ -32,17 +32,15 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
 
   final Object LOCK = new Object();
 
-  private final ArrayList<VirtualFile> myRoots = new ArrayList<VirtualFile>();
   private final List<WatchRequest> myRootsToWatch = new ArrayList<WatchRequest>();
   private WatchRequest[] myCachedNormalizedRequests = null;
+  private BidirectionalMap<VirtualFile, String> myRootsToPaths = null;
 
   private ArrayList<VirtualFile> myFilesToWatchManual = new ArrayList<VirtualFile>();
   private final HashSet<String> myDirtyFiles = new HashSet<String>(); // dirty files when FileWatcher is available
   private final HashSet<String> myDeletedFiles = new HashSet<String>();
 
   private Alarm mySynchronizeQueueAlarm;
-
-  private String[] myCachedRootPaths;
 
   private final Map<VirtualFile,Key> myRefreshStatusMap = new WeakHashMap<VirtualFile, Key>(); // VirtualFile --> 'status'
   private static final Key DIRTY_STATUS = Key.create("DIRTY_STATUS");
@@ -51,6 +49,10 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
   private List<LocalFileOperationsHandler> myHandlers = new ArrayList<LocalFileOperationsHandler>();
 
   private WatchForChangesThread myWatchForChangesThread;
+
+  public String getRootPath(final VirtualFileImpl rootFile) {
+    return myRootsToPaths.get(rootFile);
+  }
 
   private class WatchRequestImpl implements WatchRequest {
     public VirtualFile myRoot;
@@ -67,8 +69,6 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
   }
 
   public LocalFileSystemImpl() {
-    myCachedRootPaths = getCachedRootPaths();
-
     mySynchronizeQueueAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD){
       public void addRequest(Runnable request, int delay) {
         LOG.info("adding request to synchronize queue:" + request);
@@ -84,15 +84,52 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
     }
   }
 
-  private String[] getCachedRootPaths() {
+  private void initRoots() {
+    if (myRootsToPaths != null) return;
+    myRootsToPaths = new BidirectionalMap<VirtualFile, String>();
+
     final File[] files = File.listRoots();
-    if (files.length == 0) return ArrayUtil.EMPTY_STRING_ARRAY;
-    String[] result = new String[files.length];
-    for (int i = 0; i < files.length; i++) {
-      result[i] = files[i].getPath();
+    for (File file : files) {
+      String path = getCanonicalPath(file);
+      if (path != null) {
+        path = path.replace(File.separatorChar, '/');
+        final VirtualFileImpl root = new VirtualFileImpl(path);
+        myRootsToPaths.put(root, path);
+      }
     }
-    return result;
   }
+
+  private void refreshRoots() {
+    if (myRootsToPaths == null) {
+      initRoots();
+    }
+    else {
+      final File[] files = File.listRoots();
+      Set<String> newRootPaths= new HashSet<String>();
+      for (File file : files) {
+        String path = getCanonicalPath(file);
+        if (path != null) {
+          path = path.replace(File.separatorChar, '/');
+          final List<VirtualFile> roots = myRootsToPaths.getKeysByValue(path);
+          if (roots == null) {
+            final VirtualFileImpl root = new VirtualFileImpl(path);
+            myRootsToPaths.put(root, path);
+          }
+
+          newRootPaths.add(path);
+        }
+      }
+
+      for (Iterator<Map.Entry<VirtualFile,String>> iterator = myRootsToPaths.entrySet().iterator(); iterator.hasNext();) {
+        Map.Entry<VirtualFile,String> entry = iterator.next();
+        if (!newRootPaths.contains(entry.getValue())) {
+          iterator.remove();
+        }
+      }
+    }
+
+  }
+
 
   public void initComponent() {
   }
@@ -110,7 +147,7 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
     );
 
     myRootsToWatch.clear();
-    myRoots.clear();
+    myRootsToPaths = null;
     myDirtyFiles.clear();
     myDeletedFiles.clear();
 
@@ -135,18 +172,9 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
 
   boolean isRoot(VirtualFileImpl file) {
     synchronized (LOCK) {
-      return myRoots.contains(file);
+      initRoots();
+      return myRootsToPaths.containsKey(file);
     }
-  }
-
-  private boolean isPhysicalRoot(String path) {
-    path = path.replace('/', File.separatorChar);
-    for (String rootPath : myCachedRootPaths) {
-      if (FileUtil.pathsEqual(path, rootPath)) {
-        return true;
-      }
-    }
-    return false;
   }
 
   public String getProtocol() {
@@ -183,7 +211,8 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
     }
 
     synchronized (LOCK) {
-      for (VirtualFile root : myRoots) {
+      initRoots();
+      for (VirtualFile root : myRootsToPaths.keySet()) {
         String rootPath = root.getPath();
         if (!FileUtil.startsWith(path, rootPath)) continue;
         if (path.length() == rootPath.length()) return root;
@@ -214,59 +243,7 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
         return root;
       }
 
-      boolean isPhysicalRoot = isPhysicalRoot(path);
-      File file = new File(path.replace('/', File.separatorChar));
-      boolean exists;
-      if (!isPhysicalRoot) {
-        exists = file.exists();
-      }
-      else {
-        exists = true; // not used
-      }
-      if (!isPhysicalRoot && exists) { // getting canonicalPath is very slow for some network drives
-        String newPath = getCanonicalPath(file);
-        if (newPath == null) return null;
-        newPath = newPath.replace(File.separatorChar, '/');
-        if (!path.equals(newPath)) return findFileByPath(newPath, createIfNoCache);
-      }
-
-      if (!createIfNoCache) return null;
-      if (!isPhysicalRoot && !exists) return null;
-
-      VirtualFileImpl newRoot = new VirtualFileImpl(this, path);
-      for (int i = 0; i < myRoots.size(); i++) {
-        VirtualFile root = myRoots.get(i);
-        String rootPath = root.getPath();
-        if (!FileUtil.startsWith(rootPath, path)) continue;
-        if (rootPath.length() == path.length()) return root;
-        String tail;
-        if (rootPath.charAt(path.length()) == '/') {
-          tail = rootPath.substring(path.length() + 1);
-        }
-        else if (StringUtil.endsWithChar(path, '/')) {
-          tail = rootPath.substring(path.length());
-        }
-        else {
-          continue;
-        }
-        StringTokenizer tokenizer = new StringTokenizer(tail, "/");
-        VirtualFileImpl vFile = newRoot;
-        while (tokenizer.hasMoreTokens()) {
-          String name = tokenizer.nextToken();
-          VirtualFile child = vFile.findChild(name);
-          if (child == null) break;
-          if (!tokenizer.hasMoreTokens()) {
-            vFile.replaceChild((VirtualFileImpl)child, (VirtualFileImpl)root);
-            ((VirtualFileImpl)root).setParent(vFile);
-            myRoots.remove(i);
-            i--;
-          }
-          vFile = (VirtualFileImpl)child;
-        }
-      }
-      myRoots.add(newRoot);
-      updateFileWatcher();
-      return newRoot;
+      return null;
     }
   }
 
@@ -374,8 +351,7 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
 
         storeRefreshStatusToFiles();
 
-        myCachedRootPaths = getCachedRootPaths();
-
+        refreshRoots();
         WatchRequest[] requests;
         synchronized (LOCK) {
           requests = normalizeRootsForRefresh();
@@ -395,7 +371,6 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
                 synchronized (LOCK) {
                   final VirtualFileImpl parent = (VirtualFileImpl)rootFile.getParent();
                   if (parent != null) parent.removeChild(rootFile);
-                  myRoots.remove(rootFile);
                   myRootsToWatch.remove(request);
                   updateFileWatcher();
                 }

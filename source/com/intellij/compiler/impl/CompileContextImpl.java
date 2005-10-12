@@ -26,7 +26,6 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -70,7 +69,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     if (collection == null) {
       return CompilerMessage.EMPTY_ARRAY;
     }
-    return (CompilerMessage[])collection.toArray(new CompilerMessage[collection.size()]);
+    return collection.toArray(new CompilerMessage[collection.size()]);
   }
 
   public void addMessage(CompilerMessageCategory category, String message, String url, int lineNum, int columnNum) {
@@ -95,8 +94,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
       return collection != null ? collection.size() : 0;
     }
     int count = 0;
-    for (Iterator<Collection<CompilerMessage>> it = myMessages.values().iterator(); it.hasNext();) {
-      Collection<CompilerMessage> collection = it.next();
+    for (Collection<CompilerMessage> collection : myMessages.values()) {
       if (collection != null) {
         count += collection.size();
       }
@@ -153,8 +151,9 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
       return null;
     }
     Compiler[] compilers = CompilerManager.getInstance(myProject).getCompilers(TranslatingCompiler.class);
-    for (int idx = 0; idx < compilers.length; idx++) {
-      final TranslatingCompilerStateCache translatingCompilerCache = myCompileDriver.getTranslatingCompilerCache((TranslatingCompiler)compilers[idx]);
+    for (Compiler compiler : compilers) {
+      final TranslatingCompilerStateCache translatingCompilerCache =
+        myCompileDriver.getTranslatingCompilerCache((TranslatingCompiler)compiler);
       if (translatingCompilerCache == null) {
         continue;
       }
@@ -173,8 +172,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   public Module getModuleByFile(VirtualFile file) {
     Module module = VfsUtil.getModuleForFile(myProject, file);
     if (module == null) {
-      for (Iterator it = myRootToModuleMap.keySet().iterator(); it.hasNext();) {
-        VirtualFile root = (VirtualFile)it.next();
+      for (final VirtualFile root : myRootToModuleMap.keySet()) {
         if (VfsUtil.isAncestor(root, file, false)) {
           module = myRootToModuleMap.get(root);
           break;
@@ -208,16 +206,16 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     final VirtualFile[] allRoots = new VirtualFile[additionalRoots.size() + moduleRoots.length];
     System.arraycopy(moduleRoots, 0, allRoots, 0, moduleRoots.length);
     int index = moduleRoots.length;
-    for (Iterator<VirtualFile> it = additionalRoots.iterator(); it.hasNext();) {
-      allRoots[index++] = it.next();
+    for (final VirtualFile additionalRoot : additionalRoots) {
+      allRoots[index++] = additionalRoot;
     }
     myModuleToRootsCache.put(module, allRoots);
     return allRoots;
   }
 
   private boolean areFilesValid(VirtualFile[] files) {
-    for (int idx = 0; idx < files.length; idx++) {
-      if (!files[idx].isValid()) {
+    for (VirtualFile file : files) {
+      if (!file.isValid()) {
         return false;
       }
     }

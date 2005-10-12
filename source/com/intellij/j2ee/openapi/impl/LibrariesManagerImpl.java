@@ -32,7 +32,7 @@ public class LibrariesManagerImpl extends LibrariesManager implements Applicatio
     for (String url : urls) {
       VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
       if (file == null) continue;
-      if (file.getFileSystem() != JarFileSystem.getInstance() && !file.isDirectory()) {
+      if (!(file.getFileSystem() instanceof JarFileSystem) && !file.isDirectory()) {
         file = JarFileSystem.getInstance().findFileByPath(file.getPath() + JarFileSystem.JAR_SEPARATOR);
       }
       if (file == null) continue;
