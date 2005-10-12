@@ -69,7 +69,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
     }
     finally {
       if (filesToRefresh.size() > 0) {
-        CompilerUtil.refreshIOFiles(filesToRefresh.toArray(new File[filesToRefresh.size()]));
+        CompilerUtil.refreshIOFiles(filesToRefresh);
       }
     }
   }

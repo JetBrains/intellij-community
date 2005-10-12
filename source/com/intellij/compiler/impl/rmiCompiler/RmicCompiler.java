@@ -179,7 +179,7 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
         filesToRefresh.add(item.mySkel);
         filesToRefresh.add(item.myTie);
       }
-      CompilerUtil.refreshIOFiles((File[])filesToRefresh.toArray(new File[filesToRefresh.size()]));
+      CompilerUtil.refreshIOFiles(filesToRefresh);
       return processedItems;
     }
     finally {

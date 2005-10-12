@@ -647,7 +647,7 @@ public class CompileDriver {
           }
         }
         if (createdFiles.size() > 0) {
-          CompilerUtil.refreshIOFiles(createdFiles.toArray(new File[createdFiles.size()]));
+          CompilerUtil.refreshIOFiles(createdFiles);
         }
       }
 
@@ -809,7 +809,7 @@ public class CompileDriver {
     }
     finally {
       context.getProgressIndicator().pushState();
-      CompilerUtil.refreshIOFiles(filesToRefresh.toArray(new File[filesToRefresh.size()]));
+      CompilerUtil.refreshIOFiles(filesToRefresh);
       if (forceGenerate && generatedFiles.size() > 0) {
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {

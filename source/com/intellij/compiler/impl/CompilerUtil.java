@@ -14,12 +14,12 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.io.File;
 import java.io.FileFilter;
 import java.util.Collection;
-import java.util.Map;
 
 public class CompilerUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.CompilerUtil");
@@ -84,8 +84,8 @@ public class CompilerUtil {
    * must not be called inside ReadAction
    * @param files
    */
-  public static void refreshIOFiles(final File[] files) {
-    if (files.length == 0) {
+  public static void refreshIOFiles(@NotNull final Collection<File> files) {
+    if (files.size() == 0) {
       return;
     }
     doRefresh(new Runnable() {
@@ -116,17 +116,6 @@ public class CompilerUtil {
       public void run() {
         for (VirtualFile file : files) {
           file.refresh(false, false);
-        }
-      }
-    });
-  }
-  // file -> true/false for refresh recursively/non recursively coorespondingly
-  public static void refreshVirtualFiles(final Map<VirtualFile, Boolean> filesToRefresh) {
-    doRefresh(new Runnable() {
-      public void run() {
-        for (VirtualFile virtualFile : filesToRefresh.keySet()) {
-          boolean recursively = filesToRefresh.get(virtualFile).booleanValue();
-          virtualFile.refresh(false, recursively);
         }
       }
     });

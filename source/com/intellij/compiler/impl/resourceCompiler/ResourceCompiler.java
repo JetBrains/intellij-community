@@ -114,7 +114,7 @@ public class ResourceCompiler implements TranslatingCompiler {
       }
     }
     if (filesToRefresh.size() > 0) {
-      CompilerUtil.refreshIOFiles(filesToRefresh.toArray(new File[filesToRefresh.size()]));
+      CompilerUtil.refreshIOFiles(filesToRefresh);
     }
 
     context.getProgressIndicator().popState();

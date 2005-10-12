@@ -531,7 +531,7 @@ class BackendCompilerWrapper {
         }
       }
     });
-    CompilerUtil.refreshIOFiles(myFilesToRefresh.toArray(new File[myFilesToRefresh.size()]));
+    CompilerUtil.refreshIOFiles(myFilesToRefresh);
     myFileNameToSourceMap.clear(); // clear the map before the next use
     myFilesToRefresh.clear();
   }
