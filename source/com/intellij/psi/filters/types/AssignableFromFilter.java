@@ -3,6 +3,7 @@ package com.intellij.psi.filters.types;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.FilterUtil;
 import com.intellij.psi.infos.CandidateInfo;
@@ -17,10 +18,15 @@ import org.jdom.Element;
  * To change this template use Options | File Templates.
  */
 public class AssignableFromFilter implements ElementFilter{
-  private PsiType myType;
+  private PsiType myType = null;
+  private String myClassName = null;
 
   public AssignableFromFilter(PsiType type){
     myType = type;
+  }
+
+  public AssignableFromFilter(final String className) {
+    myClassName = className;
   }
 
   public AssignableFromFilter(){}
@@ -30,8 +36,11 @@ public class AssignableFromFilter implements ElementFilter{
   }
 
   public boolean isAcceptable(Object element, PsiElement context){
+    PsiType type = myType;
+    if(type == null)
+      type = new PsiImmediateClassType(context.getManager().findClass(myClassName, context.getResolveScope()), PsiSubstitutor.EMPTY);
     if(element == null) return false;
-    if (element instanceof PsiType) return myType.isAssignableFrom((PsiType) element);
+    if (element instanceof PsiType) return type.isAssignableFrom((PsiType) element);
     PsiSubstitutor substitutor = null;
     if(element instanceof CandidateInfo){
       final CandidateInfo info = (CandidateInfo)element;
@@ -46,7 +55,7 @@ public class AssignableFromFilter implements ElementFilter{
         PsiType returnType = method.getReturnType();
         if (substitutor != null) returnType = substitutor.substitute(returnType);
         final PsiType substitutionForParameter = method.getManager().getResolveHelper().getSubstitutionForTypeParameter(parameter,
-                                                                                                                        returnType, myType,
+                                                                                                                        returnType, type,
                                                                                                                         false);
         if (substitutionForParameter != PsiType.NULL) {
           return true;
@@ -54,11 +63,11 @@ public class AssignableFromFilter implements ElementFilter{
       }
     }
     final PsiType typeByElement = FilterUtil.getTypeByElement((PsiElement)element, context);
-    if(substitutor != null) return myType.isAssignableFrom(substitutor.substitute(typeByElement));
+    if(substitutor != null) return type.isAssignableFrom(substitutor.substitute(typeByElement));
     if (typeByElement == null) {
       return false;
     }
-    return myType.isAssignableFrom(typeByElement);
+    return type.isAssignableFrom(typeByElement);
   }
 
   public void readExternal(Element element) throws InvalidDataException{
@@ -68,6 +77,6 @@ public class AssignableFromFilter implements ElementFilter{
   }
 
   public String toString(){
-    return "assignable-from(" + myType + ")";
+    return "assignable-from(" + (myType != null ? myType : myClassName) + ")";
   }
 }
