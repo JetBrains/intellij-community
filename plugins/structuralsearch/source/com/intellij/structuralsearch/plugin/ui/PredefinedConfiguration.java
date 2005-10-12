@@ -224,6 +224,7 @@ public class PredefinedConfiguration extends Configuration {
         createSearchTemplateInfo("xml tag", "<'a/>",HTML_XML, StdFileTypes.XML),
         createSearchTemplateInfo("xml attribute", "<'_tag 'attribute='_value/>",HTML_XML, StdFileTypes.XML),
         createSearchTemplateInfo("xml attribute value", "<'_tag '_attribute='value/>",HTML_XML, StdFileTypes.XML),
+        createSearchTemplateInfo("html tables", "<table>'_content*</table>",HTML_XML, StdFileTypes.HTML),
       };
     }
 
