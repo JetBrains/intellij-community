@@ -213,7 +213,7 @@ public class PredefinedConfiguration extends Configuration {
         createSearchTemplateInfo(SSRBundle.message("predefined.configuration.fields_variables.with.given.name.pattern.updated"),"'Symbol:[regex( name ) && write]",INTERESTING_TYPE),
         createSearchTemplateInfo(SSRBundle.message("predefined.configuration.usage.of.derived.type.in.cast"),"('CastType:*Base ) 'Expr",INTERESTING_TYPE),
         createSearchTemplateInfo(SSRBundle.message("predefined.configuration.boxing.in.declarations"),"'_Type:Integer|Boolean|Long|Character|Short|Byte 'Var = '_Value:[formal( int|boolean|long|char|short|byte )]",INTERESTING_TYPE),
-        createSearchTemplateInfo(SSRBundle.message("predefined.configuration.]unboxing.in.declarations"),"'_Type:int|boolean|long|char|short|byte 'Var = '_Value:[formal( Integer|Boolean|Long|Character|Short|Byte )]",INTERESTING_TYPE),
+        createSearchTemplateInfo(SSRBundle.message("predefined.configuration.unboxing.in.declarations"),"'_Type:int|boolean|long|char|short|byte 'Var = '_Value:[formal( Integer|Boolean|Long|Character|Short|Byte )]",INTERESTING_TYPE),
         createSearchTemplateInfo(SSRBundle.message("predefined.configuration.boxing.in.method.calls"),"'_Instance?.'Call('_BeforeParam*,'_Param:[ exprtype( int|boolean|long|char|short|byte ) && formal( Integer|Boolean|Long|Character|Short|Byte )],'_AfterParam*)",INTERESTING_TYPE),
         createSearchTemplateInfo(SSRBundle.message("predefined.configuration.unboxing.in.method.calls"), "'_Instance?.'Call('_BeforeParam*,'_Param:[ formal( int|boolean|long|char|short|byte ) && exprtype( Integer|Boolean|Long|Character|Short|Byte )],'_AfterParam*)\"",INTERESTING_TYPE),
         //createSearchTemplateInfo("methods called","'_?.'_:[ref('Method)] ('_*)", INTERESTING_TYPE),
