@@ -858,8 +858,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
           if (LOG.isDebugEnabled()) {
             LOG.debug("Resuming " + invokeThread + " that is paused by " + suspendContextThread);
           }
-          LOG.assertTrue(suspendContextThread != null);
-          LOG.assertTrue(!invokeThreadRef.equals(suspendContextThread.getThreadReference()));
+          LOG.assertTrue(suspendContextThread == null || !invokeThreadRef.equals(suspendContextThread.getThreadReference()));
           getSuspendManager().resumeThread(suspendingContext, invokeThread);
         }
       }
@@ -870,13 +869,15 @@ public abstract class DebugProcessImpl implements DebugProcess {
       getVirtualMachineProxy().clearCaches();
 
       try {
-        for (; ;) {
+        while (true) {
           try {
             return invokeMethodAndFork(suspendContext);
           }
           catch (ClassNotLoadedException e) {
             ReferenceType loadedClass = loadClass(evaluationContext, e.className(), evaluationContext.getClassLoader());
-            if (loadedClass == null) throw EvaluateExceptionUtil.createEvaluateException(e);
+            if (loadedClass == null) {
+              throw EvaluateExceptionUtil.createEvaluateException(e);
+            }
           }
         }
       }
