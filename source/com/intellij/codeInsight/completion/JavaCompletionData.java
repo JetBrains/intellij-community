@@ -11,6 +11,7 @@ import com.intellij.psi.filters.element.ReferenceOnFilter;
 import com.intellij.psi.filters.getters.UpWalkGetter;
 import com.intellij.psi.filters.position.*;
 import com.intellij.psi.filters.types.TypeCodeFragmentIsVoidEnabledFilter;
+import com.intellij.psi.filters.types.AssignableFromFilter;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.jsp.JspElementType;
 import org.jetbrains.annotations.NonNls;
@@ -311,7 +312,7 @@ public class JavaCompletionData extends CompletionData{
 // completion
       final CompletionVariant variant = new CompletionVariant(position);
       variant.includeScopeClass(PsiMethod.class, true);
-      variant.addCompletionFilterOnElement(new ThisOrAnyInnerFilter(new InheritorFilter("java.lang.Throwable")));
+      variant.addCompletionFilterOnElement(new ThisOrAnyInnerFilter(new AssignableFromFilter("java.lang.Throwable")));
       variant.addCompletionFilterOnElement(new ClassFilter(PsiPackage.class));
 
       this.registerVariant(variant);
@@ -440,7 +441,7 @@ public class JavaCompletionData extends CompletionData{
       )));
       variant.includeScopeClass(PsiParameter.class);
 
-      variant.addCompletionFilterOnElement(new ThisOrAnyInnerFilter(new InheritorFilter("java.lang.Throwable")));
+      variant.addCompletionFilterOnElement(new ThisOrAnyInnerFilter(new AssignableFromFilter("java.lang.Throwable")));
       variant.addCompletionFilterOnElement(new ClassFilter(PsiPackage.class));
 
       this.registerVariant(variant);
@@ -558,7 +559,7 @@ public class JavaCompletionData extends CompletionData{
         new ParentElementFilter(new ClassFilter(PsiNewExpression.class)))
       );
       variant.includeScopeClass(PsiNewExpression.class, false);
-      variant.addCompletionFilterOnElement(new ThisOrAnyInnerFilter(new InheritorFilter("java.lang.Throwable")));
+      variant.addCompletionFilterOnElement(new ThisOrAnyInnerFilter(new AssignableFromFilter("java.lang.Throwable")));
 
       this.registerVariant(variant);
     }

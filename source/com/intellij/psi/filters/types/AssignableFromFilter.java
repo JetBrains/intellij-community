@@ -37,8 +37,11 @@ public class AssignableFromFilter implements ElementFilter{
 
   public boolean isAcceptable(Object element, PsiElement context){
     PsiType type = myType;
-    if(type == null)
-      type = new PsiImmediateClassType(context.getManager().findClass(myClassName, context.getResolveScope()), PsiSubstitutor.EMPTY);
+    if(type == null) {
+      final PsiClass aClass = context.getManager().findClass(myClassName, context.getResolveScope());
+      type = aClass != null ? new PsiImmediateClassType(aClass, PsiSubstitutor.EMPTY) : null;
+    }
+    if(type == null) return false;
     if(element == null) return false;
     if (element instanceof PsiType) return type.isAssignableFrom((PsiType) element);
     PsiSubstitutor substitutor = null;

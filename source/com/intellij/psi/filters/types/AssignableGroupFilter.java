@@ -7,6 +7,8 @@ import com.intellij.psi.filters.classes.InheritorFilter;
 import com.intellij.psi.filters.element.AssignableFilter;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.impl.source.PsiImmediateClassType;
 
 /**
  * Created by IntelliJ IDEA.
@@ -25,7 +27,7 @@ public class AssignableGroupFilter extends OrFilter implements InitializableFilt
   public void init(Object[] classes){
     for (Object aClass : classes) {
       if (aClass instanceof PsiClass) {
-        addFilter(new InheritorFilter((PsiClass)aClass));
+        addFilter(new AssignableFromFilter(new PsiImmediateClassType((PsiClass)aClass, PsiSubstitutor.EMPTY)));
       }
       if (aClass instanceof PsiType) {
         addFilter(new AssignableFromFilter((PsiType)aClass));

@@ -47,7 +47,6 @@ public class FilterUtil{
     registerFilter("and", AndFilter.class);
     registerFilter("or", OrFilter.class);
     registerFilter("any-inner", AnyInnerFilter.class);
-    registerFilter("assignable", InheritorFilter.class);
     registerFilter("class", ClassFilter.class);
     registerFilter("constructor", AndFilter.class);
     registerFilter("interface", InterfaceFilter.class);
