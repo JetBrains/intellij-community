@@ -445,9 +445,7 @@ public final class PsiUtil {
       return true;
     }
     else if (element instanceof PsiExpressionStatement) {
-      final PsiExpression expression = ((PsiExpressionStatement) element).getExpression();
-      if (expression == null) return false;
-      return isStatement(expression);
+      return isStatement(((PsiExpressionStatement) element).getExpression());
     }
     if (element instanceof PsiDeclarationStatement) {
       if (parent instanceof PsiCodeBlock) return true;
