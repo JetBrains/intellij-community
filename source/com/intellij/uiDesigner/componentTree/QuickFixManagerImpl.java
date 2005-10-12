@@ -1,6 +1,8 @@
 package com.intellij.uiDesigner.componentTree;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.StatusBar;
 import com.intellij.uiDesigner.ErrorAnalyzer;
 import com.intellij.uiDesigner.ErrorInfo;
 import com.intellij.uiDesigner.RadComponent;
@@ -42,6 +44,15 @@ public final class QuickFixManagerImpl extends QuickFixManager<ComponentTree>{
     public void valueChanged(final TreeSelectionEvent e) {
       hideIntentionHint();
       updateIntentionHintVisibility();
+
+      ErrorInfo errorInfo = getErrorInfo();
+      final StatusBar statusBar = WindowManager.getInstance().getStatusBar(getEditor().getProject());
+      if (errorInfo != null && errorInfo.myDescription != null) {
+        statusBar.setInfo(errorInfo.myDescription);
+      }
+      else {
+        statusBar.setInfo("");        
+      }
     }
   }
 }
