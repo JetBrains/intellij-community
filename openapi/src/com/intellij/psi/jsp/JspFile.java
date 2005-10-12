@@ -34,6 +34,7 @@ public interface JspFile extends XmlFile {
 
   boolean isErrorPage();
   boolean isSessionPage();
+  boolean isTagPage();
 
   XmlTag[] getDirectiveTags(JspDirectiveKind directiveKind, final boolean searchInIncludes);
   XmlTag createDirective(XmlTag context, JspDirectiveKind page);
