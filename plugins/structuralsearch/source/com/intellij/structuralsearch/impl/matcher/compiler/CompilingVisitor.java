@@ -2,6 +2,8 @@ package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlText;
+import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.*;
@@ -56,10 +58,10 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
 
     };
 
-    for(int i=0;i<classes.length;++i) {
+    for (PsiClass aClass : classes) {
       context.helper.processInheritors(
         processor,
-        classes[i],
+        aClass,
         scope,
         true,
         true
@@ -67,8 +69,8 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
     }
 
     if (includeSelf) {
-      for(int i=0;i<classes.length;++i) {
-        results.add( classes[i] );
+      for (PsiClass aClass : classes) {
+        results.add(aClass);
       }
     }
 
@@ -402,13 +404,15 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
 
       if(handler.isStrictSubtype() || handler.isSubtype()) {
         List classes = buildDescendants(refname,handler.isSubtype());
-        for(Iterator i=classes.iterator();i.hasNext();) {
-          final PsiClass clazz = (PsiClass)i.next();
+        
+        for (final Object aClass : classes) {
+          final PsiClass clazz = (PsiClass)aClass;
           String text;
 
           if (clazz instanceof PsiAnonymousClass) {
             text = ((PsiAnonymousClass)clazz).getBaseClassReference().getReferenceName();
-          } else {
+          }
+          else {
             text = clazz.getName();
           }
 
@@ -539,11 +543,11 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
         );
 
         final PsiTypeElement[] params = reference.getParameterList().getTypeParameterElements();
-        for(int i=0;i<params.length;++i) {
-          if (params[i].getInnermostComponentReferenceElement() != null &&
-              (context.pattern.isRealTypedVar(params[i].getInnermostComponentReferenceElement().getReferenceNameElement()))
-             ) {
-            context.pattern.getHandler(params[i]).setFilter(
+        for (PsiTypeElement param : params) {
+          if (param.getInnermostComponentReferenceElement() != null &&
+              (context.pattern.isRealTypedVar(param.getInnermostComponentReferenceElement().getReferenceNameElement()))
+            ) {
+            context.pattern.getHandler(param).setFilter(
               TypeParameterFilter.getInstance()
             );
           }
@@ -668,6 +672,19 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
 
   private int codeBlockLevel;
 
+  public void visitXmlToken(XmlToken token) {
+    super.visitXmlToken(token);
+    
+    if (token.getParent() instanceof XmlText && context.pattern.isRealTypedVar(token)) {
+      final Handler handler = context.pattern.getHandler(token);
+      handler.setFilter(TagValueFilter.getInstance());
+      
+      final XmlTextHandler parentHandler = new XmlTextHandler();
+      context.pattern.setHandler(token.getParent(), parentHandler);
+      parentHandler.setFilter(TagValueFilter.getInstance());
+    }
+  }
+
   public void visitXmlTag(XmlTag xmlTag) {
     super.visitXmlTag(xmlTag);
 
@@ -675,7 +692,7 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
       context.pattern.setStrategy(XmlMatchingStrategy.getInstance());
     }
   }
-
+  
   public void visitCodeBlock(PsiCodeBlock block) {
     ++codeBlockLevel;
     MatchingStrategy strategy = null;
@@ -690,11 +707,14 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
         if (codeBlockLevel==1) {
           MatchingStrategy newstrategy = findStrategy(el);
 
-          if (strategy == null || (strategy instanceof JavaDocMatchingStrategy)) strategy = newstrategy;
+          if (strategy == null || (strategy instanceof JavaDocMatchingStrategy)) {
+            strategy = newstrategy;
+          }
           else {
             if (strategy.getClass() != newstrategy.getClass()) {
-              if (!(strategy instanceof CommentMatchingStrategy))
+              if (!(strategy instanceof CommentMatchingStrategy)) {
                 throw new UnsupportedPatternException(SSRBundle.message("different.strategies.for.top.level.nodes.error.message"));
+              }
               strategy = newstrategy;
             }
           }

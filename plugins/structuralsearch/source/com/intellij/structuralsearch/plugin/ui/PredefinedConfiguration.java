@@ -221,9 +221,9 @@ public class PredefinedConfiguration extends Configuration {
         //createSearchTemplateInfo("symbols used","'_:[ref('Symbol)] ", INTERESTING_TYPE),
         //createSearchTemplateInfo("types used","'_:[ref('Type)] '_;", INTERESTING_TYPE),
 
-        //createSearchTemplateInfo("xml tag", "<'a/>",HTML_XML, StdFileTypes.XML),
-        //createSearchTemplateInfo("xml attribute", "<'_tag 'attribute='_value/>",HTML_XML, StdFileTypes.XML),
-        //createSearchTemplateInfo("xml attribute value", "<'_tag '_attribute='value/>",HTML_XML, StdFileTypes.XML),
+        createSearchTemplateInfo("xml tag", "<'a/>",HTML_XML, StdFileTypes.XML),
+        createSearchTemplateInfo("xml attribute", "<'_tag 'attribute='_value/>",HTML_XML, StdFileTypes.XML),
+        createSearchTemplateInfo("xml attribute value", "<'_tag '_attribute='value/>",HTML_XML, StdFileTypes.XML),
       };
     }
 

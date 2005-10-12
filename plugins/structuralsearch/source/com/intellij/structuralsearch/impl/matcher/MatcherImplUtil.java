@@ -31,7 +31,7 @@ public class MatcherImplUtil {
   public static PsiElement[] createTreeFromText(String text, boolean file, FileType fileType, Project project) throws IncorrectOperationException {
     PsiElementFactory elementFactory = PsiManager.getInstance(project).getElementFactory();
     if (fileType == StdFileTypes.XML || fileType == StdFileTypes.HTML) {
-      return ((XmlFile)elementFactory.createFileFromText("dummy." + StdFileTypes.XML.getDefaultExtension(), "<QQQ>\n"+text+"\n</QQQ>"))
+      return ((XmlFile)elementFactory.createFileFromText("dummy." + fileType.getDefaultExtension(), "<QQQ>\n"+text+"\n</QQQ>"))
         .getDocument().getRootTag().getSubTags();
     } else {
       PsiElement element = (file)?

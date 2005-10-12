@@ -1542,10 +1542,8 @@ public class MatchingVisitor extends PsiElementVisitor {
 
   public void visitXmlAttributeValue(XmlAttributeValue value) {
     final XmlAttributeValue another = (XmlAttributeValue) element;
-    String text = value.getText();
-    if (text.length() > 0 && ( text.charAt(0) == '"' || text.charAt(0) == '\'')) {
-      text = text.substring(1,text.length()-1);
-    }
+    final String text = StringUtil.stripQuotesAroundValue( value.getText() );
+    
     final boolean isTypedVar = matchContext.getPattern().isTypedVar(text);
 
     if (isTypedVar) {
@@ -1554,7 +1552,7 @@ public class MatchingVisitor extends PsiElementVisitor {
       int offset = (text2.length() > 0 && ( text2.charAt(0) == '"' || text2.charAt(0) == '\''))? 1:0;
       result = ((SubstitutionHandler)handler).handle(another,offset,text2.length()-offset,matchContext);
     } else {
-      result = text.equals(another.getText());
+      result = text.equals(StringUtil.stripQuotesAroundValue(another.getText()));
     }
   }
 

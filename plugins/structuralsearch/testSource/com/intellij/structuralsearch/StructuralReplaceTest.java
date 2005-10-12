@@ -1,12 +1,5 @@
 package com.intellij.structuralsearch;
 
-import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.PsiManager;
-import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
-import com.intellij.structuralsearch.plugin.replace.Replacer;
-import com.intellij.testFramework.IdeaTestCase;
-
 /**
  * Created by IntelliJ IDEA.
  * User: Maxim.Mossienko
@@ -15,21 +8,7 @@ import com.intellij.testFramework.IdeaTestCase;
  * To change this template use File | Settings | File Templates.
  */
 @SuppressWarnings({"ALL"})
-public class StructuralReplaceTest extends IdeaTestCase {
-  private Replacer replacer;
-  private ReplaceOptions options;
-  private String actualResult;
-
-  protected void setUp() throws Exception {
-    super.setUp();
-
-    PsiManager.getInstance(myProject).setEffectiveLanguageLevel(LanguageLevel.JDK_1_4);
-
-    options = new ReplaceOptions();
-    options.setMatchOptions(new MatchOptions());
-    replacer = new Replacer(myProject, null);
-  }
-
+public class StructuralReplaceTest extends StructuralReplaceTestCase {
   public void testReplaceInLiterals() {
     String s1 = "String ID_SPEED = \"Speed\";";
     String s2 = "String 'name = \"'string\";";
@@ -1157,20 +1136,50 @@ public class StructuralReplaceTest extends IdeaTestCase {
       expectedResult13,
       actualResult
     );
-    
-    String s37 = "class A { void B() {} int C(char ch) { int z = 1; } }";
+  }
+
+  public void testClassReplacement3() {
+    if (true) return;
+    final String actualResult;
+    String s37 = "class A { int a = 1; void B() {} int C(char ch) { int z = 1; } int b = 2; }";
 
     String s38 = "class 'A { 'T* 'M*('PT* 'PN*) { 'S*; } 'O* }";
     String s39 = "class $A$ { $T$ $M$($PT$ $PN$) { System.out.println(\"$M$\"); $S$; } $O$ }";
 
-    String expectedResult14 = "class A { void B( ) { System.out.println(\"B\");  } int C(char ch) { System.out.println(\"C\"); int z = 1; } }";
-    String expectedResult14_2 = "class A { void B( ) { System.out.println(\"B\");  }  }";
+    String expectedResult14 = "class A { int a = 1; void B( ) { System.out.println(\"B\");  } int C(char ch) { System.out.println(\"C\"); int z = 1; } int b = 2;}";
+    String expectedResult14_2 = "class A { int a = 1; void B( ) { System.out.println(\"B\");  } int C(char ch) { System.out.println(\"C\"); int z = 1; } int b = 2;}";
 
     actualResult = replacer.testReplace(s37,s38,s39,options, true);
 
     assertEquals(
       "Multiple methods replacement",
-      expectedResult14_2,
+      expectedResult14,
+      actualResult
+    );
+  }
+
+  public void testClassReplacement4() {
+    final String actualResult;
+    String s1 = "class A {\n" +
+                "  int a = 1;\n" +
+                "  int b;\n" +
+                "  private int c = 2;\n" +
+                "}";
+
+    String s2 = "@Modifier(\"PackageLocal\") 'Type 'Instance = 'Init?;";
+    String s3 = "public $Type$ $Instance$ = $Init$;";
+
+    String expectedResult = "class A {\n" +
+                            "    public int a = 1;\n" +
+                            "    public int b  ;\n" +
+                            "    private int c = 2;\n" +
+                            "}";
+
+    actualResult = replacer.testReplace(s1,s2,s3,options, true);
+
+    assertEquals(
+      "Multiple fields replacement",
+      expectedResult,
       actualResult
     );
   }
@@ -1249,67 +1258,6 @@ public class StructuralReplaceTest extends IdeaTestCase {
       assertTrue("Undefined no ; in search",false);
     } catch(UnsupportedPatternException ex) {
     }
-  }
-
-  public void testReplaceXmlAndHtml() {
-    ReplaceOptions xmlOptions = options.clone();
-    xmlOptions.getMatchOptions().setFileType(StdFileTypes.XML);
-    String s1 = "<a/>";
-    String s2 = "<a/>";
-    String s3 = "<a><b/></a>";
-
-    String expectedResult = "    <a><b/></a>";
-    String actualResult = replacer.testReplace(s1,s2,s3,xmlOptions);
-
-    assertEquals(
-      "First tag replacement",
-      expectedResult,
-      actualResult
-    );
-
-
-    String s4 = "<group id=\"EditorTabPopupMenu\">\n" +
-                "      <reference id=\"Compile\"/>\n" +
-                "      <reference id=\"RunContextPopupGroup\"/>\n" +
-                "      <reference id=\"ValidateXml\"/>\n" +
-                "      <separator/>\n" +
-                "      <reference id=\"VersionControlsGroup\"/>\n" +
-                "      <separator/>\n" +
-                "      <reference id=\"ExternalToolsGroup\"/>\n" +
-                "</group>";
-    String s5 = "<reference id=\"'Value\"/>";
-    String s6 = "<reference ref=\"$Value$\"/>";
-
-    actualResult = replacer.testReplace(s4,s5,s6,xmlOptions);
-    expectedResult = "<group id=\"EditorTabPopupMenu\">\n" +
-                     "    <reference ref=\"Compile\"/>\n" +
-                     "    <reference ref=\"RunContextPopupGroup\"/>\n" +
-                     "    <reference ref=\"ValidateXml\"/>\n" +
-                     "    <separator/>\n" +
-                     "    <reference ref=\"VersionControlsGroup\"/>\n" +
-                     "    <separator/>\n" +
-                     "    <reference ref=\"ExternalToolsGroup\"/>\n" +
-                     "</group>";
-    assertEquals(
-      "Replace tag",
-      expectedResult,
-      actualResult
-    );
-
-    String s7 = "<h4 class=\"a\">My title</h4>\n" +
-                "<h4>My title 2</h4>";
-    String s8 = "<h4 class=\"a\">'Content</h4>";
-    String s9 = "<h5>'Content</h5>";
-
-    actualResult = replacer.testReplace(s7,s8,s9,xmlOptions);
-    expectedResult = "<h5>My title</h5>\n" +
-                     "<h4>My title 2</h4>";
-
-    //assertEquals(
-    //  "Replace tag saving content",
-    //  expectedResult,
-    //  actualResult
-    //);
   }
 
   /** comment */

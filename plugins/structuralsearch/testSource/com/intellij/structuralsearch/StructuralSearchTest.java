@@ -1,11 +1,5 @@
 package com.intellij.structuralsearch;
 
-import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.PsiManager;
-import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
-import com.intellij.testFramework.IdeaTestCase;
-import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.idea.IdeaTestUtil;
 
 import java.util.Calendar;
@@ -18,7 +12,7 @@ import java.util.Calendar;
  * To change this template use File | Settings | File Templates.
  */
 @SuppressWarnings({"ALL"})
-public class StructuralSearchTest extends IdeaTestCase {
+public class StructuralSearchTest extends StructuralSearchTestCase {
   private static final String s1 =
     "debug(\"In action performed:\"+event);"+
     "project = (Project)event.getDataContext().getData(DataConstants.PROJECT);" +
@@ -377,19 +371,6 @@ public class StructuralSearchTest extends IdeaTestCase {
                                      "private int 'T+:field.* ;" +
                                      "}";
 
-  private MatchOptions options;
-  private Matcher testMatcher;
-
-  protected void setUp() throws Exception {
-    super.setUp();
-
-    testMatcher = new Matcher(myProject);
-    options = new MatchOptions();
-    options.setLooseMatching( true );
-    options.setRecursiveSearch(true);
-    PsiManager.getInstance(myProject).setEffectiveLanguageLevel(LanguageLevel.JDK_1_4);
-  }
-
   public void testSearchExpressions() {
     assertFalse("subexpr match",findMatchesCount(s2,s3)==0);
     assertEquals("search for new ",findMatchesCount(s10,s11),0);
@@ -585,23 +566,6 @@ public class StructuralSearchTest extends IdeaTestCase {
       1,
       findMatchesCount(s11,s12)
     );
-  }
-
-  private int findMatchesCount(String in, String pattern, boolean filePattern, FileType fileType) {
-    options.clearVariableConstraints();
-    options.setSearchPattern(pattern);
-    MatcherImplUtil.transform(options);
-    pattern = options.getSearchPattern();
-    options.setFileType(fileType);
-    return testMatcher.testFindMatches(in,pattern,options,filePattern).size();
-  }
-
-  private int findMatchesCount(String in, String pattern, boolean filePattern) {
-    return findMatchesCount(in, pattern,filePattern,StdFileTypes.JAVA);
-  }
-
-  private int findMatchesCount(String in, String pattern) {
-    return findMatchesCount(in,pattern,false);
   }
 
   private static final String s1000 = "{ lastTest = \"search for parameterized pattern\";\n" +
@@ -2153,29 +2117,6 @@ public class StructuralSearchTest extends IdeaTestCase {
 
     assertEquals("Find boxing in method call",1,findMatchesCount(s1,s2,false));
     assertEquals("Find unboxing in method call",2,findMatchesCount(s1,s2_2,false));
-  }
-
-  public void testXmlSearch() {
-    String s1 = "<aaa><bbb class=\"11\"></bbb></aaa><bbb class=\"11\"></bbb>";
-    String s2 = "<bbb></bbb>";
-    String s2_2 = "<bbb/>";
-    String s2_3 = "<'t:[ regex( aaa ) ] />";
-    String s2_4 = "<'_ 't:[ regex( class ) ]=\"'_\" />";
-    String s2_5 = "<'_ '_=\"'t:[ regex( 11 ) ]\" />";
-
-    assertEquals("Simple xml find",2,findMatchesCount(s1,s2,false,StdFileTypes.XML));
-    assertEquals("Simple xml find with empty tag",2,findMatchesCount(s1,s2_2,false,StdFileTypes.XML));
-    assertEquals("Simple xml find with typed var",1,findMatchesCount(s1,s2_3,false,StdFileTypes.XML));
-
-    assertEquals("Simple xml find with typed attr",2,findMatchesCount(s1,s2_4,false,StdFileTypes.HTML));
-    assertEquals("Simple xml find with typed attr value",2,findMatchesCount(s1,s2_5,false,StdFileTypes.HTML));
-
-    String s3 = "<a> content </a>\n" +
-                "<b> another content </b>\n" +
-                "<c>another</c>";
-    String s4 = "<'_tag>'Content:[regex( .*content.* )]</'_tag>";
-    //assertEquals("Content match",2,findMatchesCount(s3,s4,false,StdFileTypes.HTML));
-    //assertEquals("Content match",2,findMatchesCount(s3,s4,false,StdFileTypes.XML));
   }
 
   public void testCommentsInDclSearch() {
