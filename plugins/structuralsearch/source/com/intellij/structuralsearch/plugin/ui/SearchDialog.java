@@ -187,6 +187,17 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
       );
     }
 
+    final PsiFile file = searchContext.getFile();
+    if (file != null) {
+      if (file.getFileType() == StdFileTypes.HTML || file.getFileType() == StdFileTypes.JSP) {
+        ourFileType = "html";
+      } else if(file.getFileType() == StdFileTypes.XHTML || file.getFileType() == StdFileTypes.JSPX) {
+        ourFileType = "xml";
+      } else {
+        ourFileType = "java";
+      }
+    }
+    
     fileTypes.setSelectedItem(ourFileType);
   }
 

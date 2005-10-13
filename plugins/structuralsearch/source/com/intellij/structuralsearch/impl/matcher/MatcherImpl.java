@@ -12,7 +12,9 @@ import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -67,7 +69,7 @@ public class MatcherImpl {
    * @throws com.intellij.structuralsearch.MalformedPatternException
    * @throws com.intellij.structuralsearch.UnsupportedPatternException
    */
-  protected void findMatches(MatchResultSink sink,MatchOptions _options) throws MalformedPatternException, UnsupportedPatternException
+  protected void findMatches(MatchResultSink sink, final MatchOptions _options) throws MalformedPatternException, UnsupportedPatternException
   {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
@@ -126,11 +128,15 @@ public class MatcherImpl {
             if (!fileOrDir.isDirectory()) {
               final PsiFile file = PsiManager.getInstance(project).findFile(fileOrDir);
 
-              if (file instanceof PsiJavaFile ) {
-                ++totalFilesToScan;
-                scheduler.addOneTask(
-                  new MatchOneFile(file)
-                );
+              if ((_options.getFileType() == StdFileTypes.JAVA && file instanceof PsiJavaFile) ||
+                  (_options.getFileType() != StdFileTypes.JAVA && file instanceof XmlFile)
+                 ) {
+                final PsiFile[] psiRoots = file.getPsiRoots();
+                
+                for(PsiFile root:psiRoots) {
+                  ++totalFilesToScan;
+                  scheduler.addOneTask( new MatchOneFile(root) );
+                }
               }
             }
             return true;
@@ -142,9 +148,13 @@ public class MatcherImpl {
         
         final VirtualFile[] rootFiles = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile[]>() {
           public VirtualFile[] compute() {
-            return instance.getRootFiles(ProjectRootType.SOURCE);
+            return (_options.getFileType() == StdFileTypes.JAVA)?
+                   instance.getRootFiles(ProjectRootType.SOURCE):
+                   instance.getContentRoots()
+            ;
           }
         });
+        
         HashSet<VirtualFile> visited = new HashSet<VirtualFile>(rootFiles.length);
         final VirtualFileFilter filter = new VirtualFileFilter() {
           public boolean accept(VirtualFile file) {
@@ -238,14 +248,10 @@ public class MatcherImpl {
     return sink.getMatches();
   }
 
-  private class TaskScheduler implements //ActionListener, 
-                                         MatchingProcess {
+  private class TaskScheduler implements MatchingProcess {
     private LinkedList<Runnable> tasks = new LinkedList<Runnable>();
     private boolean ended;
     private Runnable taskQueueEndAction;
-
-    //private static final int WAIT_TIME = 1;
-    //private Timer timer = new Timer(WAIT_TIME,this);
 
     private boolean suspended;
     private LinkedList<Runnable> tempList = new LinkedList<Runnable>();

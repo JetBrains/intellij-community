@@ -9,6 +9,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.xml.util.HtmlUtil;
 
 import java.util.List;
 
@@ -30,9 +31,14 @@ public class MatcherImplUtil {
 
   public static PsiElement[] createTreeFromText(String text, boolean file, FileType fileType, Project project) throws IncorrectOperationException {
     PsiElementFactory elementFactory = PsiManager.getInstance(project).getElementFactory();
-    if (fileType == StdFileTypes.XML || fileType == StdFileTypes.HTML) {
-      return ((XmlFile)elementFactory.createFileFromText("dummy." + fileType.getDefaultExtension(), "<QQQ>\n"+text+"\n</QQQ>"))
-        .getDocument().getRootTag().getSubTags();
+    if (fileType == StdFileTypes.XML || 
+        fileType == StdFileTypes.HTML ||
+        fileType == StdFileTypes.JSP ||
+        fileType == StdFileTypes.JSPX ||
+        fileType == StdFileTypes.XHTML
+      ) {
+      final PsiFile fileFromText = elementFactory.createFileFromText("dummy." + fileType.getDefaultExtension(), "<QQQ>\n" + text + "\n</QQQ>");
+      return HtmlUtil.getRealXmlDocument(((XmlFile)fileFromText).getDocument()).getRootTag().getSubTags();
     } else {
       PsiElement element = (file)?
         (PsiElement)elementFactory.createFileFromText("__$$__.java",text):
