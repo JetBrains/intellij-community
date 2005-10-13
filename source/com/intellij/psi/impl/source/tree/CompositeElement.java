@@ -410,6 +410,8 @@ public class CompositeElement extends TreeElement implements Cloneable {
       final ParserDefinition parserDefinition = lang.getParserDefinition();
       if (parserDefinition != null) {
         myWrapper = parserDefinition.createElement(this);
+        //noinspection ConstantConditions
+        LOG.assertTrue(myWrapper != null, "ParserDefinition.createElement() may not return null");
       }
       return myWrapper;
     }
