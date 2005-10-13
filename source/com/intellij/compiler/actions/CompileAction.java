@@ -2,13 +2,13 @@ package com.intellij.compiler.actions;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
-import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.compiler.CompilerBundle;
+import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -20,7 +20,6 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPackage;
-import com.intellij.idea.ActionsBundle;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -116,7 +115,7 @@ public class CompileAction extends CompileActionBase {
       return;
     }
 
-    presentation.setText(createPresentationText(elementDescription), false);
+    presentation.setText(createPresentationText(elementDescription), true);
     presentation.setEnabled(true);
   }
 
