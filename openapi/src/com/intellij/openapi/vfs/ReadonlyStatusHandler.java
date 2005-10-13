@@ -55,8 +55,7 @@ public abstract class ReadonlyStatusHandler {
       if (hasReadonlyFiles()) {
         StringBuffer buf = new StringBuffer();
         if (myReadonlyFiles.length > 1) {
-          for (int i = 0; i < myReadonlyFiles.length; i++) {
-            VirtualFile file = myReadonlyFiles[i];
+          for (VirtualFile file : myReadonlyFiles) {
             buf.append('\n');
             buf.append(file.getPresentableUrl());
           }
@@ -71,7 +70,7 @@ public abstract class ReadonlyStatusHandler {
     }
   }
 
-  public abstract OperationStatus ensureFilesWritable(VirtualFile[] files);
+  public abstract OperationStatus ensureFilesWritable(VirtualFile... files);
 
   public static ReadonlyStatusHandler getInstance(Project project) {
     return project.getComponent(ReadonlyStatusHandler.class);

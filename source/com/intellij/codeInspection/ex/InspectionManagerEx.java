@@ -57,7 +57,6 @@ import java.io.OutputStream;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.text.MessageFormat;
 
 public class InspectionManagerEx extends InspectionManager implements JDOMExternalizable, ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.InspectionManagerEx");
@@ -232,8 +231,8 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
     return true;
   }
 
-  private static boolean isToCheckMemberInAnnotation(final PsiDocCommentOwner owner, final String inspectionToolID) {
-    if (LanguageLevel.JDK_1_5.compareTo(owner.getManager().getEffectiveLanguageLevel()) > 0 ) return true;
+  private static boolean isToCheckMemberInAnnotation(final PsiModifierListOwner owner, final String inspectionToolID) {
+    if (LanguageLevel.JDK_1_5.compareTo(owner.getManager().getEffectiveLanguageLevel()) > 0) return true;
     PsiModifierList modifierList = owner.getModifierList();
     if (modifierList != null) {
       PsiAnnotation annotation = modifierList.findAnnotation(SUPPRESS_INSPECTIONS_ANNOTATION_NAME);
@@ -294,6 +293,9 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
         }
       }
     }
+
+    PsiLocalVariable local = PsiTreeUtil.getParentOfType(place, PsiLocalVariable.class);
+    if (local != null && !isToCheckMemberInAnnotation(local, id)) return true;
 
     PsiElement container = place;
     do {
@@ -445,8 +447,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
         performInspectionsWithProgress(scope);
 
         InspectionTool[] tools = getCurrentProfile().getInspectionTools();
-        for (int i = 0; i < tools.length; i++) {
-          InspectionTool tool = tools[i];
+        for (InspectionTool tool : tools) {
           if (getCurrentProfile().isToolEnabled(HighlightDisplayKey.find(tool.getShortName()))) {
             tool.exportResults(root);
           }
@@ -492,8 +493,8 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
       public void run() {
         if (myDerivedClassesRequests != null) {
           List<PsiElement> sortedIDs = getSortedIDs(myDerivedClassesRequests);
-          for (int i = 0; i < sortedIDs.size(); i++) {
-            PsiClass psiClass = (PsiClass)sortedIDs.get(i);
+          for (PsiElement sortedID : sortedIDs) {
+            PsiClass psiClass = (PsiClass)sortedID;
             incrementJobDoneAmount(FIND_EXTERNAL_USAGES, psiClass.getQualifiedName());
 
             final List<DerivedClassesProcessor> processors = myDerivedClassesRequests.get(psiClass);
@@ -501,8 +502,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
               public boolean execute(PsiClass inheritor) {
                 if (scope.contains(inheritor)) return true;
                 DerivedClassesProcessor[] processorsArrayed = processors.toArray(new DerivedClassesProcessor[processors.size()]);
-                for (int j = 0; j < processorsArrayed.length; j++) {
-                  DerivedClassesProcessor processor = processorsArrayed[j];
+                for (DerivedClassesProcessor processor : processorsArrayed) {
                   if (!processor.process(inheritor)) {
                     processors.remove(processor);
                   }
@@ -517,8 +517,8 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
 
         if (myDerivedMethodsRequests != null) {
           List<PsiElement> sortedIDs = getSortedIDs(myDerivedMethodsRequests);
-          for (int i = 0; i < sortedIDs.size(); i++) {
-            PsiMethod psiMethod = (PsiMethod)sortedIDs.get(i);
+          for (PsiElement sortedID : sortedIDs) {
+            PsiMethod psiMethod = (PsiMethod)sortedID;
             final RefMethod refMethod = (RefMethod)refManager.getReference(psiMethod);
 
             incrementJobDoneAmount(FIND_EXTERNAL_USAGES, RefUtil.getQualifiedName(refMethod));
@@ -528,8 +528,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
               public boolean execute(PsiMethod derivedMethod) {
                 if (scope.contains(derivedMethod)) return true;
                 DerivedMethodsProcessor[] processorsArrayed = processors.toArray(new DerivedMethodsProcessor[processors.size()]);
-                for (int j = 0; j < processorsArrayed.length; j++) {
-                  DerivedMethodsProcessor processor = processorsArrayed[j];
+                for (DerivedMethodsProcessor processor : processorsArrayed) {
                   if (!processor.process(derivedMethod)) {
                     processors.remove(processor);
                   }
@@ -545,8 +544,8 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
 
         if (myFieldUsagesRequests != null) {
           List<PsiElement> sortedIDs = getSortedIDs(myFieldUsagesRequests);
-          for (int i = 0; i < sortedIDs.size(); i++) {
-            PsiField psiField = (PsiField)sortedIDs.get(i);
+          for (PsiElement sortedID : sortedIDs) {
+            PsiField psiField = (PsiField)sortedID;
             final List<UsagesProcessor> processors = myFieldUsagesRequests.get(psiField);
 
             incrementJobDoneAmount(FIND_EXTERNAL_USAGES, RefUtil.getQualifiedName(refManager.getReference(psiField)));
@@ -559,8 +558,8 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
 
         if (myClassUsagesRequests != null) {
           List<PsiElement> sortedIDs = getSortedIDs(myClassUsagesRequests);
-          for (int i = 0; i < sortedIDs.size(); i++) {
-            PsiClass psiClass = (PsiClass)sortedIDs.get(i);
+          for (PsiElement sortedID : sortedIDs) {
+            PsiClass psiClass = (PsiClass)sortedID;
             final List<UsagesProcessor> processors = myClassUsagesRequests.get(psiClass);
 
             incrementJobDoneAmount(FIND_EXTERNAL_USAGES, psiClass.getQualifiedName());
@@ -573,8 +572,8 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
 
         if (myMethodUsagesRequests != null) {
           List<PsiElement> sortedIDs = getSortedIDs(myMethodUsagesRequests);
-          for (int i = 0; i < sortedIDs.size(); i++) {
-            PsiMethod psiMethod = (PsiMethod)sortedIDs.get(i);
+          for (PsiElement sortedID : sortedIDs) {
+            PsiMethod psiMethod = (PsiMethod)sortedID;
             final List<UsagesProcessor> processors = myMethodUsagesRequests.get(psiMethod);
 
             incrementJobDoneAmount(FIND_EXTERNAL_USAGES, RefUtil.getQualifiedName(refManager.getReference(psiMethod)));
@@ -641,8 +640,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
           return true;
         }
         UsagesProcessor[] processorsArrayed = processors.toArray(new UsagesProcessor[processors.size()]);
-        for (int j = 0; j < processorsArrayed.length; j++) {
-          UsagesProcessor processor = processorsArrayed[j];
+        for (UsagesProcessor processor : processorsArrayed) {
           if (!processor.process(reference)) {
             processors.remove(processor);
           }
@@ -754,8 +752,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
         @Override
         public void visitFile(PsiFile file) {
           incrementJobDoneAmount(LOCAL_ANALYSIS, file.getVirtualFile().getPresentableUrl());
-          for (int i = 0; i < localTools.size(); i++) {
-            LocalInspectionToolWrapper tool = localTools.get(i);
+          for (LocalInspectionToolWrapper tool : localTools) {
             tool.processFile(file);
             psiManager.dropResolveCaches();
           }
@@ -895,8 +892,8 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
 
     int jobCount = myJobDescriptors.size();
     float totalProgress = 0;
-    for (int i = 0; i < myJobDescriptors.size(); i++) {
-      totalProgress += myJobDescriptors.get(i).getProgress();
+    for (JobDescriptor jobDescriptor : myJobDescriptors) {
+      totalProgress += jobDescriptor.getProgress();
     }
 
     totalProgress /= jobCount;

@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -13,15 +14,12 @@ import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -61,7 +59,7 @@ public class AddNoInspectionDocTagAction implements IntentionAction {
     return InspectionsBundle.message(key, myDisplayName);
   }
 
-  @Nullable protected PsiDocCommentOwner getContainer() {
+  protected PsiDocCommentOwner getContainer() {
     if (!(myContext.getContainingFile().getLanguage() instanceof JavaLanguage)){
       return null;
     }
@@ -89,9 +87,7 @@ public class AddNoInspectionDocTagAction implements IntentionAction {
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PsiDocCommentOwner container = getContainer();
-    final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project)
-      .ensureFilesWritable(new VirtualFile[]{container.getContainingFile().getVirtualFile()});
-    if (status.hasReadonlyFiles()) return;
+    if (!CodeInsightUtil.prepareFileForWrite(container.getContainingFile())) return;
     PsiDocComment docComment = container.getDocComment();
     PsiManager manager = myContext.getManager();
     if (docComment == null) {
