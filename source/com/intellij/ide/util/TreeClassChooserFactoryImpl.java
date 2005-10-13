@@ -6,6 +6,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.fileTypes.FileType;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * User: anna
@@ -18,6 +19,7 @@ public class TreeClassChooserFactoryImpl extends TreeClassChooserFactory {
     myProject = project;
   }
 
+  @NotNull
   public TreeClassChooser createWithInnerClassesScopeChooser(String title,
                                                              GlobalSearchScope scope,
                                                              final TreeClassChooser.ClassFilter classFilter,
@@ -25,6 +27,7 @@ public class TreeClassChooserFactoryImpl extends TreeClassChooserFactory {
     return TreeClassChooserDialog.withInnerClasses(title, myProject, scope, classFilter, initialClass);
   }
 
+  @NotNull
   public TreeClassChooser createNoInnerClassesScopeChooser(String title,
                                                            GlobalSearchScope scope,
                                                            TreeClassChooser.ClassFilter classFilter,
@@ -32,18 +35,22 @@ public class TreeClassChooserFactoryImpl extends TreeClassChooserFactory {
     return new TreeClassChooserDialog(title, myProject, scope, classFilter, initialClass);
   }
 
+  @NotNull
   public TreeClassChooser createProjectScopeChooser(String title, PsiClass initialClass) {
     return new TreeClassChooserDialog(title, myProject, initialClass);
   }
 
+  @NotNull
   public TreeClassChooser createProjectScopeChooser(String title) {
     return new TreeClassChooserDialog(title, myProject);
   }
 
+  @NotNull
   public TreeClassChooser createAllProjectScopeChooser(String title) {
     return new TreeClassChooserDialog(title, myProject, GlobalSearchScope.allScope(myProject), null, null);
   }
 
+  @NotNull
   public TreeClassChooser createInheritanceClassChooser(String title,
                                                         GlobalSearchScope scope,
                                                         PsiClass base,
@@ -53,6 +60,7 @@ public class TreeClassChooserFactoryImpl extends TreeClassChooserFactory {
     return new TreeClassChooserDialog(title, myProject, scope, new TreeClassChooserDialog.InheritanceClassFilterImpl(base, acceptsSelf, acceptInner, addtionalCondition), null);
   }
 
+  @NotNull
   public TreeFileChooser createFileChooser(String title,
                                            final PsiFile initialFile,
                                            FileType fileType,
