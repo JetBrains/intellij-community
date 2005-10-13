@@ -1,7 +1,6 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionsBundle;
@@ -9,12 +8,7 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.ProjectJdk;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -76,13 +70,7 @@ public class AddNoInspectionDocTagAction implements IntentionAction {
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
-    final Module module = ModuleUtil.findModuleForPsiElement(myContext);
-    if (module == null) return false;
-    final ProjectJdk jdk = ModuleRootManager.getInstance(module).getJdk();
-    if (jdk == null) return false;
-    final boolean is_1_5 = jdk.getVersionString().indexOf("1.5") > 0;
-    return !(DaemonCodeAnalyzerSettings.getInstance().SUPPRESS_WARNINGS && is_1_5 && LanguageLevel.JDK_1_5.compareTo(myContext.getManager().getEffectiveLanguageLevel()) <= 0) &&
-           myContext.isValid() && myContext.getManager().isInProject(myContext) && getContainer() != null;
+    return myContext.isValid() && myContext.getManager().isInProject(myContext) && getContainer() != null;
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
