@@ -332,8 +332,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
       EjbMethodRole role = J2EERolesUtil.getEjbRole(method);
 
       if (role instanceof EjbImplMethodRole && EjbUtil.findEjbDeclarations(method).length != 0) {
-        LineMarkerInfo info = new LineMarkerInfo(LineMarkerInfo.OVERRIDING_METHOD, method, offset, IMPLEMENTING_METHOD_ICON);
-        return info;
+        return new LineMarkerInfo(LineMarkerInfo.OVERRIDING_METHOD, method, offset, IMPLEMENTING_METHOD_ICON);
       }
 
       PsiMethod[] methods = method.findSuperMethods(false);
@@ -346,9 +345,8 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
           overrides = true;
         }
 
-        LineMarkerInfo info = new LineMarkerInfo(LineMarkerInfo.OVERRIDING_METHOD, method, offset,
-                                                 overrides ? OVERRIDING_METHOD_ICON : IMPLEMENTING_METHOD_ICON);
-        return info;
+        return new LineMarkerInfo(LineMarkerInfo.OVERRIDING_METHOD, method, offset,
+                                  overrides ? OVERRIDING_METHOD_ICON : IMPLEMENTING_METHOD_ICON);
       }
     }
 
