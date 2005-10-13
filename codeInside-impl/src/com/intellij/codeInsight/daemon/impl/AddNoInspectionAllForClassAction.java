@@ -1,10 +1,11 @@
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocCommentOwner;
 import com.intellij.psi.PsiElement;
@@ -14,6 +15,7 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * User: anna
@@ -26,7 +28,7 @@ public class AddNoInspectionAllForClassAction extends AddNoInspectionDocTagActio
     super(null, ID, context);
   }
 
-  protected PsiDocCommentOwner getContainer() {
+  @Nullable protected PsiDocCommentOwner getContainer() {
     PsiDocCommentOwner container = super.getContainer();
     if (container == null){
       return null;
@@ -47,7 +49,9 @@ public class AddNoInspectionAllForClassAction extends AddNoInspectionDocTagActio
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PsiDocCommentOwner container = getContainer();
-    if (!CodeInsightUtil.prepareFileForWrite(container.getContainingFile())) return;
+    final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project)
+      .ensureFilesWritable(new VirtualFile[]{container.getContainingFile().getVirtualFile()});
+    if (status.hasReadonlyFiles()) return;
     PsiDocComment docComment = container.getDocComment();
     if (docComment != null){
       PsiDocTag noInspectionTag = docComment.findTagByName(InspectionManagerEx.SUPPRESS_INSPECTIONS_TAG_NAME);

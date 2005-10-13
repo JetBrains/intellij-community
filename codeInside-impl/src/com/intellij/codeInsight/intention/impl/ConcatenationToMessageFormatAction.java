@@ -3,6 +3,7 @@ package com.intellij.codeInsight.intention.impl;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -19,6 +20,8 @@ import java.util.List;
  * @author ven
  */
 public class ConcatenationToMessageFormatAction implements IntentionAction {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.ConcatenationToMessageFormatAction");
+
   public String getFamilyName() {
     return CodeInsightBundle.message("intention.replace.concatenation.with.formatted.output.family");
   }
@@ -39,6 +42,7 @@ public class ConcatenationToMessageFormatAction implements IntentionAction {
 
     PsiMethodCallExpression call = (PsiMethodCallExpression) manager.getElementFactory().createExpressionFromText("java.text.MessageFormat.format()", concatenation);
     PsiExpressionList argumentList = call.getArgumentList();
+    LOG.assertTrue(argumentList != null);
     String format = prepareString(formatString.toString());
     PsiExpression formatArgument = manager.getElementFactory().createExpressionFromText("\"" + format + "\"", null);
     argumentList.add(formatArgument);
