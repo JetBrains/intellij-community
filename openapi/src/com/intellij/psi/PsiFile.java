@@ -139,7 +139,11 @@ public interface PsiFile extends PsiElement, PsiFileSystemItem {
   @NotNull PsiFile[] getPsiRoots();
 
   /**
-   * @deprecated for IDEA internal use only
+   * Creates a copy which is considered physical (see {@link com.intellij.psi.PsiElement#isPhysical()})
+   * for a PSI file which is not backed by a {@link VirtualFile}. This allows, for example, to obtain a
+   * {@link com.intellij.openapi.editor.Document} instance for such a file.
+   *
+   * @return the pseudo-physical copy of the file.
    */
   @NotNull PsiFile createPseudoPhysicalCopy();
 }
