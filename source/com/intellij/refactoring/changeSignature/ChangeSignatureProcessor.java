@@ -1073,12 +1073,6 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  public static class EjbUsageInfo extends UsageInfo {
-    public EjbUsageInfo(PsiMethod implementation) {
-      super(implementation);
-    }
-  }
-
   public static PsiElement normalizeResolutionContext(PsiElement resolutionContext) {
     PsiElement result = PsiTreeUtil.getNonStrictParentOfType(resolutionContext, PsiStatement.class, PsiClass.class, PsiFile.class);
     if (result != null) return result;
