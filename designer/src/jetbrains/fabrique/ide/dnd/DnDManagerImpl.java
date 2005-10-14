@@ -6,8 +6,6 @@ package jetbrains.fabrique.ide.dnd;
 
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import jetbrains.fabrique.ide.core.settings.UI;
-import jetbrains.fabrique.ide.wm.status.FabriqueStatusBar;
 import jetbrains.fabrique.openapi.ide.dnd.DnDAction;
 import jetbrains.fabrique.openapi.ide.dnd.DnDEvent;
 import jetbrains.fabrique.openapi.ide.dnd.DnDTarget;
@@ -149,7 +147,7 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent {
 
     updateCursor();
 
-    final Container current = (Container) myCurrentEvent.getCurrentOverComponent();
+    final Container current = (Container)myCurrentEvent.getCurrentOverComponent();
     final Point point = myCurrentEvent.getPointOn(getLayeredPane(current));
     Rectangle inPlaceRect = new Rectangle(point.x - 5, point.y - 5, 5, 5);
 
@@ -167,14 +165,16 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent {
             queueTooltip(myCurrentEvent, getLayeredPane(current), inPlaceRect);
           }
         }
-      } else {
+      }
+      else {
         if (!myLastProcessedPoint.equals(myCurrentEvent.getPoint())) {
           hideCurrentHighlighter();
           restartTimer();
           queueTooltip(myCurrentEvent, getLayeredPane(current), inPlaceRect);
         }
       }
-    } else {
+    }
+    else {
       hideCurrentHighlighter();
       myLastProcessedTarget.cleanUpOnLeave();
       myCurrentEvent.clearDropHandler();
@@ -189,7 +189,7 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent {
     myLastProcessedPoint = myCurrentEvent.getPoint();
     myLastProcessedOverComponent = myCurrentEvent.getCurrentOverComponent();
     myLastProcessedAction = myCurrentEvent.getAction().getId();
-    myLastProcessedEvent = (DnDEvent) myCurrentEvent.clone();
+    myLastProcessedEvent = (DnDEvent)myCurrentEvent.clone();
   }
 
   private void updateCursor() {
@@ -200,7 +200,8 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent {
         cursor = myCurrentEvent.getAction().getCursor();
       }
 
-    } else {
+    }
+    else {
       cursor = myCurrentEvent.getAction().getRejectCursor();
     }
 
@@ -225,7 +226,10 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent {
     else {
       message = "";
     }
-    FabriqueStatusBar.setStatusText(message);
+
+    //final WindowManager wm = WindowManager.getInstance();
+    //final StatusBar statusBar = wm.getStatusBar(target.getProject());
+    //statusBar.setInfo(message);
 
     if (myLastMessage != null && !myLastMessage.equals(message)) {
       hideCurrentHighlighter();
@@ -252,14 +256,14 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent {
 
   private DnDSource getSource(Component component) {
     if (component instanceof JComponent) {
-      return (DnDSource) ((JComponent) component).getClientProperty(SOURCE_KEY);
+      return (DnDSource)((JComponent)component).getClientProperty(SOURCE_KEY);
     }
     return null;
   }
 
   private DnDTarget getTarget(Component component) {
     if (component instanceof JComponent) {
-      DnDTarget target = (DnDTarget) ((JComponent) component).getClientProperty(TARGET_KEY);
+      DnDTarget target = (DnDTarget)((JComponent)component).getClientProperty(TARGET_KEY);
       if (target != null) return target;
     }
 
@@ -302,7 +306,7 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent {
     }
 
     final Rectangle rectangle = SwingUtilities.convertRectangle(parent, bounds, layeredPane);
-    setLastHighlightedEvent((DnDEvent) ((DnDEventImpl) aEvent).clone(), rectangle);
+    setLastHighlightedEvent((DnDEvent)((DnDEventImpl)aEvent).clone(), rectangle);
 
     Highlighters.hide();
 
@@ -352,18 +356,18 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent {
     if (aComponent == null) return null;
 
     if (aComponent instanceof JLayeredPane) {
-      return (JLayeredPane) aComponent;
+      return (JLayeredPane)aComponent;
     }
 
     if (aComponent instanceof JFrame) {
-      return ((JFrame) aComponent).getRootPane().getLayeredPane();
+      return ((JFrame)aComponent).getRootPane().getLayeredPane();
     }
 
     if (aComponent instanceof JDialog) {
-      return ((JDialog) aComponent).getRootPane().getLayeredPane();
+      return ((JDialog)aComponent).getRootPane().getLayeredPane();
     }
 
-    final JFrame frame = ((JFrame) SwingUtilities.getWindowAncestor(aComponent));
+    final JFrame frame = ((JFrame)SwingUtilities.getWindowAncestor(aComponent));
 
     if (frame == null) {
       return null;
@@ -427,10 +431,10 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent {
           dge.startDrag(DragSource.DefaultCopyNoDrop, myCurrentEvent, myDragSourceListener);
 
           // check if source is also a target
-  //        DnDTarget target = getTarget(dge.getComponent());
-  //        if( target != null ) {
-  //          target.update(myCurrentEvent);
-  //        }
+          //        DnDTarget target = getTarget(dge.getComponent());
+          //        if( target != null ) {
+          //          target.update(myCurrentEvent);
+          //        }
         }
       }
     }
@@ -439,11 +443,18 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent {
 
   private DnDAction getDnDActionForPlatformAction(int platformAction) {
     DnDAction action = null;
-    switch(platformAction) {
-        case DnDConstants.ACTION_COPY : action = DnDAction.ADD; break;
-        case DnDConstants.ACTION_MOVE : action = DnDAction.MOVE; break;
-        case DnDConstants.ACTION_LINK:  action = DnDAction.BIND; break;
-        default: break;
+    switch (platformAction) {
+      case DnDConstants.ACTION_COPY :
+        action = DnDAction.ADD;
+        break;
+      case DnDConstants.ACTION_MOVE :
+        action = DnDAction.MOVE;
+        break;
+      case DnDConstants.ACTION_LINK:
+        action = DnDAction.BIND;
+        break;
+      default:
+        break;
     }
 
     return action;
@@ -477,7 +488,7 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent {
 
   private class MyDropTargetListener implements DropTargetListener {
     public void drop(final DropTargetDropEvent dtde) {
-      try{
+      try {
         final Component component = dtde.getDropTargetContext().getComponent();
         updateCurrentEvent(component, dtde.getLocation(), dtde.getDropAction());
 
@@ -496,7 +507,7 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent {
           dtde.rejectDrop();
         }
       }
-      catch(Throwable e) {
+      catch (Throwable e) {
         LOG.error(e);
         dtde.rejectDrop();
       }
@@ -506,21 +517,11 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent {
     }
 
     private void doDrop(DropTargetDropEvent dtde, Component component) {
-      if (component instanceof JComponent) {
-        UI.setWaitCursor((JComponent) component);
+      if (myCurrentEvent.canHandleDrop()) {
+        myCurrentEvent.handleDrop();
       }
-      try {
-        if (myCurrentEvent.canHandleDrop()) {
-          myCurrentEvent.handleDrop();
-        }
-        else {
-          getTarget(component).drop(myCurrentEvent);
-        }
-      }
-      finally {
-        if (component instanceof JComponent) {
-          UI.setNormalCursor((JComponent) component);
-        }
+      else {
+        getTarget(component).drop(myCurrentEvent);
       }
     }
 
@@ -539,7 +540,6 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent {
     public void dropActionChanged(DropTargetDragEvent dtde) {
       updateCurrentEvent(dtde.getDropTargetContext().getComponent(), dtde.getLocation(), dtde.getDropAction());
     }
-
   }
 
   private void onDragExit() {
@@ -550,7 +550,7 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent {
 
     myLastProcessedTarget.cleanUpOnLeave();
     hideCurrentHighlighter();
-    FabriqueStatusBar.setStatusText("");
+    //FabriqueStatusBar.setStatusText("");
     myHightlighterShowRequest = null;
   }
 

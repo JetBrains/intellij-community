@@ -11,7 +11,6 @@ import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.ui.popup.BasePopup;
-import jetbrains.fabrique.util.SwingUtilities2;
 
 import javax.swing.*;
 import java.awt.*;

@@ -4,6 +4,8 @@
  */
 package jetbrains.fabrique.openapi.ide.dnd;
 
+import com.intellij.openapi.project.Project;
+
 public interface DnDTarget extends DropTargetHighlightingType {
 
   /**

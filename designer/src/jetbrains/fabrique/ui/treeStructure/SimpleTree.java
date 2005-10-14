@@ -397,6 +397,7 @@ public class SimpleTree extends JTree implements CellEditorListener {
     ApplicationManager.getApplication().invokeLater(runnable, ModalityState.stateForComponent(this));
   }
 
+  // TODO: move to some util?
   public static boolean isDoubleClick(MouseEvent e) {
     return e != null && e.getClickCount() > 0 && e.getClickCount() % 2 == 0;
   }
