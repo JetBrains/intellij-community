@@ -15,10 +15,10 @@
  */
 package com.intellij.debugger.engine;
 
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.NoDataException;
 import com.intellij.debugger.PositionManager;
 import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.j2ee.deployment.JspDeploymentManager;
@@ -32,15 +32,13 @@ import com.sun.jdi.Location;
 import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.request.ClassPrepareRequest;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * Created by IntelliJ IDEA.
@@ -53,6 +51,7 @@ public abstract class JSR45PositionManager implements PositionManager {
   private final DebugProcess      myDebugProcess;
   private final JspDeploymentManager myHelper;
   private final String            JSP_PATTERN;
+  private Matcher myJspPatternMatcher;
   protected static final @NonNls String JSP_STRATUM = "JSP";
 
   public JSR45PositionManager(DebugProcess debugProcess) {
@@ -67,6 +66,7 @@ public abstract class JSR45PositionManager implements PositionManager {
     }
 
     JSP_PATTERN = jsp_pattern;
+    myJspPatternMatcher = Pattern.compile(jsp_pattern.replaceAll("\\*", ".*")).matcher("");
   }
 
   public SourcePosition getSourcePosition(final Location location) throws NoDataException {
@@ -93,23 +93,17 @@ public abstract class JSR45PositionManager implements PositionManager {
       throw new NoDataException();
     }
 
-    List<ReferenceType> referenceTypes = myDebugProcess.getVirtualMachineProxy().allClasses();
+    final List<ReferenceType> referenceTypes = myDebugProcess.getVirtualMachineProxy().allClasses();
 
-    List<ReferenceType> result = new ArrayList<ReferenceType>();
+    final List<ReferenceType> result = new ArrayList<ReferenceType>();
 
-    final String regex = JSP_PATTERN.replaceAll("\\*", ".*");
-    final Matcher matcher = Pattern.compile(regex).matcher("");
-
-    for (Iterator<ReferenceType> iterator = referenceTypes.iterator(); iterator.hasNext();) {
-      ReferenceType referenceType = iterator.next();
-      matcher.reset(referenceType.name());
-      if(!matcher.matches()) {
-        continue;
-      }
-
-      List<Location> locations = locationsOfClassAt(referenceType, classPosition);
-      if(locations != null) {
-        result.add(referenceType);
+    for (final ReferenceType referenceType : referenceTypes) {
+      myJspPatternMatcher.reset(referenceType.name());
+      if (myJspPatternMatcher.matches()) {
+        final List<Location> locations = locationsOfClassAt(referenceType, classPosition);
+        if (locations != null) {
+          result.add(referenceType);
+        }
       }
     }
 
@@ -131,16 +125,14 @@ public abstract class JSR45PositionManager implements PositionManager {
     return ApplicationManager.getApplication().runReadAction(new Computable<List<Location>>() {
       public List<Location> compute() {
         try {
-          PsiFile file = null;
-          List<String> paths = (List<String>)type.sourcePaths(JSP_STRATUM);
-          for (Iterator<String> iterator = paths.iterator(); iterator.hasNext();) {
-            String path = iterator.next();
-            file = myHelper.getDeployedJspSource(getRelativePath(path), myDebugProcess.getProject());
-            if(file != null) break;
-          }
-
-          if(file != null && file.equals(position.getFile())) {
-            return (List<Location>)type.locationsOfLine(JSP_STRATUM, type.sourceName(), position.getLine() + 1);
+          //noinspection HardCodedStringLiteral
+          final List<String> paths = type.sourcePaths(JSP_STRATUM);
+          for (String path : paths) {
+            final PsiFile file = myHelper.getDeployedJspSource(getRelativePath(path), myDebugProcess.getProject());
+            if(file != null && file.equals(position.getFile())) {
+              //noinspection HardCodedStringLiteral
+              return type.locationsOfLine(JSP_STRATUM, file.getName(), position.getLine() + 1);
+            }
           }
         }
         catch (ObjectCollectedException e) {
