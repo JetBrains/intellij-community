@@ -32,6 +32,7 @@
     <orderEntry type="module" module-name="icons" />
     <orderEntry type="module" module-name="resources_eng" />
     <orderEntry type="module" module-name="codeInside-openapi" />
+    <orderEntry type="module" module-name="inspections-openapi" />
     <orderEntryProperties />
   </component>
   <component name="copyright">

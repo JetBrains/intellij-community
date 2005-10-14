@@ -14,6 +14,8 @@
     <orderEntry type="module" module-name="util" />
     <orderEntry type="module" module-name="openapi" />
     <orderEntry type="module" module-name="Annotations" />
+    <orderEntry type="module" module-name="inspections-impl" />
+    <orderEntry type="module" module-name="inspections-openapi" />
     <orderEntryProperties />
   </component>
   <component name="copyright">
