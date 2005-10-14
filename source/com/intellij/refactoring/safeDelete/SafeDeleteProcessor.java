@@ -65,19 +65,33 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
   }
   private static boolean isInside(PsiElement place, Collection<? extends PsiElement> ancestors) {
     for (PsiElement element : ancestors) {
-      if (PsiTreeUtil.isAncestor(element, place, false)) return true;
-      if (place instanceof PsiComment && element instanceof PsiClass) {
-        final PsiClass aClass = (PsiClass) element;
-        if (aClass.getParent() instanceof PsiJavaFile) {
-          final PsiJavaFile file = (PsiJavaFile) aClass.getParent();
-          if (PsiTreeUtil.isAncestor(file, place, false)) {
-            if (file.getClasses().length == 1) { // file will be deleted on class deletion
-              return true;
-            }
+      if (isInside(place, element)) return true;
+    }
+    return false;
+  }
+
+  private static boolean isInside (PsiElement place, PsiElement ancestor) {
+    if (ancestor instanceof PsiPackage) {
+      final PsiDirectory[] directories = ((PsiPackage)ancestor).getDirectories(place.getResolveScope());
+      for (PsiDirectory directory : directories) {
+        if (isInside(place, directory)) return true;
+      }
+    }
+
+    if (PsiTreeUtil.isAncestor(ancestor, place, false)) return true;
+
+    if (place instanceof PsiComment && ancestor instanceof PsiClass) {
+      final PsiClass aClass = (PsiClass)ancestor;
+      if (aClass.getParent() instanceof PsiJavaFile) {
+        final PsiJavaFile file = (PsiJavaFile)aClass.getParent();
+        if (PsiTreeUtil.isAncestor(file, place, false)) {
+          if (file.getClasses().length == 1) { // file will be deleted on class deletion
+            return true;
           }
         }
       }
     }
+
     return false;
   }
 
