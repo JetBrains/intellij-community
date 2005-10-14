@@ -17,6 +17,7 @@ import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.PsiReferenceProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiMatcherImpl;
 import com.intellij.psi.util.PsiUtil;
@@ -413,14 +414,24 @@ public class HighlightControlFlowUtil {
   }
 
   private static boolean isAssigned(final PsiParameter parameter) {
-    final PsiSearchHelper searchHelper = parameter.getManager().getSearchHelper();
-    final PsiReference[] references = searchHelper.findReferences(parameter, new LocalSearchScope(parameter.getDeclarationScope()), true);
-    for (PsiReference reference : references) {
-      if (!(reference.getElement() instanceof PsiReferenceExpression)) continue;
-      final PsiExpression expression = (PsiExpression)reference.getElement();
-      if (PsiUtil.isAccessedForWriting(expression)) return true;
+    class MyProcessor implements PsiReferenceProcessor {
+      boolean myIsWriteRefFound = false;
+      public boolean execute(PsiReference reference) {
+        final PsiElement element = reference.getElement();
+        if (element instanceof PsiReferenceExpression) {
+          myIsWriteRefFound = myIsWriteRefFound || PsiUtil.isAccessedForWriting((PsiExpression)element);
+        }
+        return !myIsWriteRefFound;
+      }
+
+      public boolean isWriteRefFound() {
+        return myIsWriteRefFound;
+      }
     }
-    return false;
+
+    MyProcessor processor = new MyProcessor();
+    parameter.getManager().getSearchHelper().processReferences(processor, parameter, new LocalSearchScope(parameter.getDeclarationScope()), true);
+    return processor.isWriteRefFound();
   }
 
   //@top
