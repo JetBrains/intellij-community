@@ -380,7 +380,10 @@ public class SystemBuilder {
             system.addSubtypeConstraint(argumentType, parmType);
           }
           else {
-            parmType = qualifierSubstitutor.substitute(supertypeSubstitutor.substitute(parameters[i].getType()));
+            parmType = supertypeSubstitutor.substitute(parameters[i].getType());
+            if (qualifierSubstitutor != null) {
+              parmType = qualifierSubstitutor.substitute(parmType);
+            }
 
             if (!Util.bindsTypeVariables(parmType) && !Util.bindsTypeParameters(parmType, typeParameters)) {
               parmType = Util.banalize(parmType);
