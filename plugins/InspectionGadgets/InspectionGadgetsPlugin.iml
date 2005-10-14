@@ -15,6 +15,7 @@
     <orderEntry type="module" module-name="openapi" />
     <orderEntry type="module" module-name="util" />
     <orderEntry type="module" module-name="codeInside-openapi" />
+    <orderEntry type="module" module-name="inspections-openapi" />
     <orderEntryProperties />
   </component>
   <component name="VcsManagerConfiguration">
