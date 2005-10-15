@@ -133,7 +133,7 @@ public class LookupItemUtil{
       s = ((PsiExpression)object).getText();
     }
     else if (object instanceof PsiType) {
-      final PsiType type = CompletionUtil.eliminateWildcards((PsiType) object);
+      final PsiType type = (PsiType) object;
       if (type instanceof PsiPrimitiveType) {
         s = ((PsiType)object).getPresentableText();
       }
