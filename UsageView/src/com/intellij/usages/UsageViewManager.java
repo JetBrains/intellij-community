@@ -39,7 +39,7 @@ public abstract class UsageViewManager {
   @NotNull
   public abstract UsageView showUsages(UsageTarget[] searchedFor, Usage[] foundUsages, UsageViewPresentation presentation);
 
-  @Nullable (documentation = "in case no usages found or usage view not shown for one usage")
+  @Nullable ("in case no usages found or usage view not shown for one usage")
   public abstract UsageView searchAndShowUsages(UsageTarget[] searchFor,
                                 Factory<UsageSearcher> searcherFactory,
                                 boolean showPanelIfOnlyOneUsage,
