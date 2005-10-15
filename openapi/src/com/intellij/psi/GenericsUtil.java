@@ -55,6 +55,13 @@ public class GenericsUtil {
       return getLeastUpperBound(type1, ((PsiCapturedWildcardType)type2).getUpperBound(), compared, manager);
     }
 
+    if (type1 instanceof PsiWildcardType) {
+      return getLeastUpperBound(((PsiWildcardType)type1).getExtendsBound(), type2, compared, manager);
+    }
+    else if (type2 instanceof PsiWildcardType) {
+      return getLeastUpperBound(type1, ((PsiWildcardType)type2).getExtendsBound(), compared, manager);
+    }
+
     if (type1 instanceof PsiArrayType && type2 instanceof PsiArrayType) {
       final PsiType componentType = getLeastUpperBound(((PsiArrayType)type1).getComponentType(),
                                                        ((PsiArrayType)type2).getComponentType(), manager);

@@ -61,8 +61,7 @@ public class ProgressManagerImpl extends ProgressManager implements ApplicationC
   }
 
   public JComponent getProvidedFunComponent(Project project, String processId) {
-    for (int i = 0; i < myFunComponentProviders.size(); i++) {
-      ProgressFunComponentProvider provider = myFunComponentProviders.get(i);
+    for (ProgressFunComponentProvider provider : myFunComponentProviders) {
       JComponent cmp = provider.getProgressFunComponent(project, processId);
       if (cmp != null) return cmp;
     }
