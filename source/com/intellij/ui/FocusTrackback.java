@@ -53,7 +53,7 @@ public class FocusTrackback {
   }
 
   private boolean wrongOS() {
-    return SystemInfo.isWindows;
+    return !SystemInfo.isMac;
   }
 
   private void register(final Window parent) {
