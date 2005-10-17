@@ -16,8 +16,8 @@
     <orderEntry type="library" name="JDOM" level="project" />
     <orderEntry type="library" name="Log4J" level="project" />
     <orderEntry type="module" module-name="resources_eng" />
-    <orderEntry type="module" module-name="codeInside-openapi" />
-    <orderEntry type="module" module-name="codeInside-impl" />
+    <orderEntry type="module" module-name="codeInsight-openapi" />
+    <orderEntry type="module" module-name="codeInsight-impl" />
     <orderEntryProperties />
   </component>
   <component name="copyright">
