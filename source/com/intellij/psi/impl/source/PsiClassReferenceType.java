@@ -32,13 +32,7 @@ public class PsiClassReferenceType extends PsiClassType {
   }
 
   public PsiClass resolve() {
-    ClassResolveResult result = resolveGenerics();
-    if (result != null) {
-      return result.getElement();
-    }
-    else {
-      return null;
-    }
+    return resolveGenerics().getElement();
   }
 
   private static class DelegatingClassResolveResult implements ClassResolveResult {
