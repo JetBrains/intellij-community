@@ -172,10 +172,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
       int index = 0;
       while (it.hasNext()) {
         PsiTypeParameter parameter = it.next();
-        if (index >= myTypeParameters.length) {
-          substitutionMap.put(parameter, null);
-        }
-        else {
+        if (index < myTypeParameters.length) {
           substitutionMap.put(parameter, myTypeParameters[index].getType());
         }
         index++;
