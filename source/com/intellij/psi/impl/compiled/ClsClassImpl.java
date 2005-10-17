@@ -619,7 +619,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
       if (repositoryId < 0) {
         VirtualFile vFile = myClassFileData.vFile;
         VirtualFile parentFile = vFile.getParent();
-        if (parentFile == null) return null;
+        if (parentFile == null) return PsiClass.EMPTY_ARRAY;
         String name = vFile.getNameWithoutExtension();
         String prefix = name + "$";
         ArrayList<PsiClass> array = new ArrayList<PsiClass>();

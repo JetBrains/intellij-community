@@ -20,11 +20,11 @@ import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.HashSet;
 
 /**
  * Created by IntelliJ IDEA.
@@ -39,39 +39,39 @@ public class PsiClassImplUtil {
 
   private static final Key<CachedValue<Map>> MAP_IN_CLASS_KEY = Key.create("MAP_KEY");
 
-  public static PsiField[] getAllFields(final PsiClass aClass) {
+  @NotNull public static PsiField[] getAllFields(final PsiClass aClass) {
     return getAllByMap(aClass, PsiField.class);
   }
 
-  public static PsiMethod[] getAllMethods(final PsiClass aClass) {
+  @NotNull public static PsiMethod[] getAllMethods(final PsiClass aClass) {
     return getAllByMap(aClass, PsiMethod.class);
   }
 
-  public static PsiClass[] getAllInnerClasses(PsiClass aClass) {
+  @NotNull public static PsiClass[] getAllInnerClasses(PsiClass aClass) {
     return getAllByMap(aClass, PsiClass.class);
   }
 
-  public static PsiField findFieldByName(PsiClass aClass, String name, boolean checkBases) {
+  @Nullable public static PsiField findFieldByName(PsiClass aClass, String name, boolean checkBases) {
     final PsiField[] byMap = findByMap(aClass, name, checkBases, PsiField.class);
     return byMap.length >= 1 ? byMap[0] : null;
   }
 
-  public static PsiMethod[] findMethodsByName(PsiClass aClass, String name, boolean checkBases) {
+  @NotNull public static PsiMethod[] findMethodsByName(PsiClass aClass, String name, boolean checkBases) {
     return findByMap(aClass, name, checkBases, PsiMethod.class);
   }
 
-  public static PsiMethod findMethodBySignature(final PsiClass aClass, final PsiMethod patternMethod, final boolean checkBases) {
+  @Nullable public static PsiMethod findMethodBySignature(final PsiClass aClass, final PsiMethod patternMethod, final boolean checkBases) {
     final PsiMethod[] result = findMethodsBySignature(aClass, patternMethod, checkBases, true);
     return (result.length != 0 ? result[0] : null);
   }
 
   // ----------------------------- findMethodsBySignature -----------------------------------
 
-  public static PsiMethod[] findMethodsBySignature(final PsiClass aClass, final PsiMethod patternMethod, final boolean checkBases) {
+  @NotNull public static PsiMethod[] findMethodsBySignature(final PsiClass aClass, final PsiMethod patternMethod, final boolean checkBases) {
     return findMethodsBySignature(aClass, patternMethod, checkBases, false);
   }
 
-  private static PsiMethod[] findMethodsBySignature(final PsiClass aClass,
+  @NotNull private static PsiMethod[] findMethodsBySignature(final PsiClass aClass,
                                                     final PsiMethod patternMethod,
                                                     final boolean checkBases,
                                                     final boolean stopOnFirst) {
@@ -131,12 +131,12 @@ public class PsiClassImplUtil {
 
   // ----------------------------------------------------------------------------------------
 
-  public static PsiClass findInnerByName(PsiClass aClass, String name, boolean checkBases) {
+  @Nullable public static PsiClass findInnerByName(PsiClass aClass, String name, boolean checkBases) {
     final PsiClass[] byMap = findByMap(aClass, name, checkBases, PsiClass.class);
     return byMap.length >= 1 ? byMap[0] : null;
   }
 
-  private static final <T> T[] emptyArrayByType(Class<T> type) {
+  @NotNull private static final <T> T[] emptyArrayByType(Class<T> type) {
     if (type.isAssignableFrom(PsiMethod.class)) return (T[])PsiMethod.EMPTY_ARRAY;
     if (type.isAssignableFrom(PsiField.class)) return (T[])PsiField.EMPTY_ARRAY;
     if (type.isAssignableFrom(PsiClass.class)) return (T[])PsiClass.EMPTY_ARRAY;
@@ -145,7 +145,7 @@ public class PsiClassImplUtil {
     return (T[])ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
-  private static <T extends PsiMember> T[] findByMap(PsiClass aClass, String name, boolean checkBases, Class<T> type) {
+  @NotNull private static <T extends PsiMember> T[] findByMap(PsiClass aClass, String name, boolean checkBases, Class<T> type) {
     if (name == null) return emptyArrayByType(type);
 
     if (!checkBases) {
@@ -186,7 +186,7 @@ public class PsiClassImplUtil {
     return pairs;
   }
 
-  private static <T extends PsiMember> T[] getAllByMap(PsiClass aClass, Class<T> type) {
+  @NotNull private static <T extends PsiMember> T[] getAllByMap(PsiClass aClass, Class<T> type) {
     final Map<String, List<Pair<T, PsiSubstitutor>>> allMap = getMap(aClass, type);
     final List<Pair<T, PsiSubstitutor>> pairs = allMap.get(ALL);
 
@@ -554,7 +554,7 @@ public class PsiClassImplUtil {
     return psiResoved == null ? manager.findClass("java.lang.Object", resolveScope) : psiResoved;
   }
 
-  public static PsiClass[] getSupers(PsiClass psiClass) {
+  @NotNull public static PsiClass[] getSupers(PsiClass psiClass) {
     final PsiClass[] supers = getSupersInner(psiClass);
     for (final PsiClass aSuper : supers) {
       LOG.assertTrue(aSuper != null);///
@@ -618,7 +618,7 @@ public class PsiClassImplUtil {
     return types;
   }
 
-  public static PsiClassType[] getSuperTypes(PsiClass psiClass) {
+  @NotNull public static PsiClassType[] getSuperTypes(PsiClass psiClass) {
     if (psiClass instanceof PsiAnonymousClass) {
       PsiClassType baseClassType = ((PsiAnonymousClass)psiClass).getBaseClassType();
       PsiClass baseClass = baseClassType.resolve();

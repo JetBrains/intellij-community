@@ -35,7 +35,7 @@ public interface PsiClass
   /**
    * The empty array of PSI classes which can be reused to avoid unnecessary allocations.
    */
-  PsiClass[] EMPTY_ARRAY = new PsiClass[0];
+  @NotNull PsiClass[] EMPTY_ARRAY = new PsiClass[0];
 
   /**
    * Returns the fully qualified name of the class.
@@ -122,7 +122,7 @@ public interface PsiClass
    * @return the list of classes or interfaces. May return zero elements when jdk is
    *         not configured, so no java.lang.Object is found
    */
-  PsiClass[] getSupers();
+  @NotNull PsiClass[] getSupers();
 
   /**
    * Returns the list of class types for the classes and interfaces extended or
@@ -131,7 +131,7 @@ public interface PsiClass
    * @return the list of class types for the classes or interfaces. The returned
    *         list always contains at least one element, for the type of the java.lang.Object class.
    */
-  PsiClassType[] getSuperTypes();
+  @NotNull PsiClassType[] getSuperTypes();
 
   /**
    * Returns the list of fields in the class.
@@ -162,35 +162,35 @@ public interface PsiClass
    *
    * @return the list of inner classes.
    */
-  PsiClass[] getInnerClasses();
+  @NotNull PsiClass[] getInnerClasses();
 
   /**
    * Returns the list of class initializers for the class.
    *
    * @return the list of class initializers.
    */
-  PsiClassInitializer[] getInitializers();
+  @NotNull PsiClassInitializer[] getInitializers();
 
   /**
    * Returns the list of fields in the class and all its superclasses.
    *
    * @return the list of fields.
    */
-  PsiField[] getAllFields();
+  @NotNull PsiField[] getAllFields();
 
   /**
    * Returns the list of methods in the class and all its superclasses.
    *
    * @return the list of methods.
    */
-  PsiMethod[] getAllMethods();
+  @NotNull PsiMethod[] getAllMethods();
 
   /**
    * Returns the list of inner classes for the class and all its superclasses..
    *
    * @return the list of inner classes.
    */
-  PsiClass[] getAllInnerClasses();
+  @NotNull PsiClass[] getAllInnerClasses();
 
   /**
    * Searches the class (and optionally its superclasses) for the field with the specified name.
