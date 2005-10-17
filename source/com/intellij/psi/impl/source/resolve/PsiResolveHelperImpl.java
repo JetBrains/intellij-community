@@ -349,12 +349,18 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
       PsiType[] paramTypes = ((PsiClassType)param).getParameters();
       PsiType[] argTypes = ((PsiClassType)arg).getParameters();
       if (paramTypes.length != argTypes.length) return null;
+      Pair<PsiType,ConstraintType> wildcardCaptured = null;
       for (int i = 0; i < argTypes.length; i++) {
         Pair<PsiType,ConstraintType> res = getSubstitutionForTypeParameterInner(paramTypes[i], argTypes[i], patternType, ConstraintType.EQUALS);
-        if (res != null) return res;
+        if (res != null) {
+          PsiType type = res.getFirst();
+          if (!(type instanceof PsiWildcardType)) return res;
+          if (wildcardCaptured != null) return null;
+          wildcardCaptured = res;
+        }
       }
 
-      return null;
+      return wildcardCaptured;
     }
 
     return null;
