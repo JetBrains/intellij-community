@@ -147,14 +147,6 @@ public abstract class FindManager {
   public abstract void findUsages(PsiElement element);
 
   /**
-   * Finds the AspectJ joinpoints matching the specified pointcut. (This functionality is
-   * currently incomplete and should not be used.)
-   *
-   * @param pointcut the pointcut to find.
-   */
-  public abstract void findJoinpointsByPointcut(PsiPointcut pointcut);
-
-  /**
    * Performs a "Find Usages in File" operation for the specified element.
    *
    * @param element the element for which the find is performed.

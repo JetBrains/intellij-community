@@ -1,7 +1,6 @@
 
 package com.intellij.find.impl;
 
-import com.intellij.aspects.psi.PsiPointcut;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.highlighting.HighlightManagerImpl;
 import com.intellij.codeInsight.hint.HintManager;
@@ -377,10 +376,6 @@ public class FindManagerImpl extends FindManager implements ProjectComponent, JD
 
       myFindUsagesManager.findUsages(element, psiFile, fileEditor);
     }
-  }
-
-  public void findJoinpointsByPointcut(PsiPointcut pointcut) {
-    myFindUsagesManager.findPointcutApplications(pointcut);
   }
 
   public boolean findNextUsageInEditor(FileEditor fileEditor) {

@@ -282,7 +282,6 @@
         <action id="FindUsages" class="com.intellij.find.actions.FindUsagesAction"/>
         <action id="FindUsagesInFile" class="com.intellij.find.actions.FindUsagesInFileAction"/>
         <action id="HighlightUsagesInFile" class="com.intellij.codeInsight.highlighting.actions.HighlightUsagesAction"/>
-        <action id="FindJoinpointsByPointcutAction" class="com.intellij.find.actions.FindJoinpointsByPointcutAction"/>
         <separator/>
         <action id="FindInPath" class="com.intellij.find.actions.FindInPathAction"/>
         <action id="ReplaceInPath" class="com.intellij.find.actions.ReplaceInPathAction"/>
@@ -718,7 +717,6 @@
       <reference ref="OpenInBrowser"/>
       <separator/>
       <reference ref="FindUsages"/>
-      <reference ref="FindJoinpointsByPointcutAction"/>
       <reference ref="AnalyzeMenu"/>
       <reference ref="RefactoringMenu"/>
       <separator/>
@@ -809,7 +807,6 @@
       <reference ref="FindUsages"/>
       <reference ref="FindInPath"/>
       <reference ref="ReplaceInPath"/>
-      <reference ref="FindJoinpointsByPointcutAction"/>
       <reference ref="AnalyzeMenu"/>
       <reference ref="RefactoringMenu"/>
       <reference ref="ValidateXml"/>
@@ -853,7 +850,6 @@
       <reference ref="FindUsages"/>
       <reference ref="FindInPath"/>
       <reference ref="ReplaceInPath"/>
-      <reference ref="FindJoinpointsByPointcutAction"/>
       <reference ref="InspectCode"/>
       <reference ref="ShowPackageDeps"/>
       <reference ref="RefactoringMenu"/>
@@ -899,7 +895,6 @@
       <reference ref="FindUsages"/>
       <reference ref="FindInPath"/>
       <reference ref="ReplaceInPath"/>
-      <reference ref="FindJoinpointsByPointcutAction"/>
       <reference ref="AnalyzeMenu"/>
       <reference ref="RefactoringMenu"/>
       <reference ref="ValidateXml"/>
@@ -934,7 +929,6 @@
       <separator/>
       <reference ref="FindUsages"/>
       <reference ref="RefactoringMenu"/>
-      <reference ref="FindJoinpointsByPointcutAction"/>
       <separator/>
         <reference ref="AddToFavorites"/>
       <separator />
@@ -1042,7 +1036,6 @@
       <reference ref="FindUsages"/>
       <reference ref="FindInPath"/>
       <reference ref="ReplaceInPath"/>
-      <reference ref="FindJoinpointsByPointcutAction"/>
       <reference ref="InspectCode"/>
       <reference ref="ShowPackageDeps"/>
       <reference ref="RefactoringMenu"/>
