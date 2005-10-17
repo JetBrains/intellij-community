@@ -58,7 +58,9 @@ public class OverrideImplementUtil {
     return signatures.toArray(new MethodSignature[signatures.size()]);
   }
 
-  private static Map<MethodSignature, CandidateInfo> getMapToOverrideImplement (PsiClass aClass, boolean toImplement) {
+  private static Map<MethodSignature, CandidateInfo> getMapToOverrideImplement(PsiClass aClass,
+                                                                               boolean toImplement) {
+    final PsiSubstitutor contextSubstitutor = getContextSubstitutor(aClass);
     Map<MethodSignature, PsiMethod> abstracts = new LinkedHashMap<MethodSignature,PsiMethod>();
     Map<MethodSignature, PsiMethod> finals = new HashMap<MethodSignature,PsiMethod>();
     Map<MethodSignature, PsiMethod> concretes = new LinkedHashMap<MethodSignature,PsiMethod>();
@@ -78,6 +80,7 @@ public class OverrideImplementUtil {
       if ((substitutor = substitutors.get(hisClass)) == null) {
         substitutor = aClass.isInheritor(hisClass, true) ?
                       TypeConversionUtil.getSuperClassSubstitutor(hisClass, aClass, PsiSubstitutor.EMPTY) : PsiSubstitutor.EMPTY;
+        substitutor = substitutor.putAll(contextSubstitutor);
         substitutors.put(hisClass, substitutor);
       }
 
@@ -115,9 +118,9 @@ public class OverrideImplementUtil {
                                                               abstractOne.getContainingClass()
                                                                 .isInheritor(concrete.getContainingClass(), true))) {
           if (finals.get(signature) == null) {
-            PsiSubstitutor substitutor = GenerateMembersUtil.correctSubstitutor(abstractOne,
+            PsiSubstitutor subst = GenerateMembersUtil.correctSubstitutor(abstractOne,
                                                                                 substitutors.get(abstractOne.getContainingClass()));
-            CandidateInfo info = new CandidateInfo(abstractOne, substitutor);
+            CandidateInfo info = new CandidateInfo(abstractOne, subst);
             result.put(signature, info);
           }
         }
@@ -138,8 +141,8 @@ public class OverrideImplementUtil {
           PsiMethod abstractOne = abstracts.get(signature);
           if (abstractOne == null || !abstractOne.getContainingClass().isInheritor(concrete.getContainingClass(), true) ||
               concrete.getContainingClass().getQualifiedName().equals("java.lang.Object")) {
-            PsiSubstitutor substitutor = GenerateMembersUtil.correctSubstitutor(concrete, substitutors.get(concrete.getContainingClass()));
-            CandidateInfo info = new CandidateInfo(concrete, substitutor);
+            PsiSubstitutor subst = GenerateMembersUtil.correctSubstitutor(concrete, substitutors.get(concrete.getContainingClass()));
+            CandidateInfo info = new CandidateInfo(concrete, subst);
             result.put(signature, info);
           }
         }
@@ -335,7 +338,10 @@ public class OverrideImplementUtil {
     chooseAndOverrideOrImplementMethods(project, editor, aClass, true);
   }
 
-  private static void chooseAndOverrideOrImplementMethods(final Project project, final Editor editor, final PsiClass aClass, boolean toImplement){
+  private static void chooseAndOverrideOrImplementMethods(final Project project,
+                                                          final Editor editor,
+                                                          final PsiClass aClass,
+                                                          boolean toImplement){
     LOG.assertTrue(aClass.isValid());
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
@@ -466,5 +472,13 @@ public class OverrideImplementUtil {
 
     final PsiClass aClass = (PsiClass)element;
     return aClass == null || (!allowInterface && aClass.isInterface()) ? null : aClass;
+  }
+
+  private static PsiSubstitutor getContextSubstitutor(PsiClass aClass) {
+    if (aClass instanceof PsiAnonymousClass) {
+      return ((PsiAnonymousClass)aClass).getBaseClassType().resolveGenerics().getSubstitutor();
+    }
+
+    return PsiSubstitutor.EMPTY;
   }
 }
