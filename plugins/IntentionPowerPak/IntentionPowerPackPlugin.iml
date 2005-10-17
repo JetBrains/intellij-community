@@ -14,7 +14,7 @@
     <orderEntry type="library" name="Log4J" level="project" />
     <orderEntry type="library" name="JDOM" level="project" />
     <orderEntry type="library" name="JUnit" level="project" />
-    <orderEntry type="module" module-name="codeInside-openapi" />
+    <orderEntry type="module" module-name="codeInsight-openapi" />
     <orderEntryProperties />
   </component>
   <component name="VcsManagerConfiguration">
