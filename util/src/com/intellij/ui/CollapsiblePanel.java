@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) 2005 JetBrains s.r.o. All Rights Reserved.
+ */
 package com.intellij.ui;
 
 import javax.swing.*;
@@ -7,11 +10,6 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collection;
 
-/**
- * @author Eugene Zhuravlev
- *         Date: Oct 29
- * @author 2003
- */
 public class CollapsiblePanel extends JPanel {
   private final JButton myToggleCollapseButton;
   private final JComponent myContent;
@@ -21,10 +19,12 @@ public class CollapsiblePanel extends JPanel {
   private final Icon myExpandIcon;
   private final Icon myCollapseIcon;
 
-  public CollapsiblePanel(JComponent content, boolean collapseButtonAtLeft, boolean isCollapsed, Icon collapseIcon, Icon expandIcon) {
+  public CollapsiblePanel(JComponent content, boolean collapseButtonAtLeft,
+                          boolean isCollapsed, Icon collapseIcon, Icon expandIcon,
+                          String title) {
     super(new GridBagLayout());
     myContent = content;
-    this.setBackground(content.getBackground());
+    setBackground(content.getBackground());
     myExpandIcon = expandIcon;
     myCollapseIcon = collapseIcon;
     final Dimension buttonDimension = getButtonDimension();
@@ -34,12 +34,24 @@ public class CollapsiblePanel extends JPanel {
     myToggleCollapseButton.setMinimumSize(buttonDimension);
     myToggleCollapseButton.setMaximumSize(buttonDimension);
 
-    this.add(myToggleCollapseButton,
-             new GridBagConstraints(0, 0, 1, 1, 1.0, 0.0,
-                                    collapseButtonAtLeft ? GridBagConstraints.WEST : GridBagConstraints.EAST,
-                                    GridBagConstraints.NONE,
-                                    new Insets(-5, collapseButtonAtLeft ? 0 : -5, 0, collapseButtonAtLeft ? -5 : 0), 0,
-                                    0));
+    final int iconAnchor = collapseButtonAtLeft ? GridBagConstraints.WEST : GridBagConstraints.EAST;
+    add(myToggleCollapseButton,
+        new GridBagConstraints(0, 0, 1, 1, 1.0, 0.0,
+                               iconAnchor,
+                               GridBagConstraints.NONE,
+                               new Insets(-5, collapseButtonAtLeft ? 0 : -5, 0, collapseButtonAtLeft ? -5 : 0), 0,
+                               0));
+
+    if (title != null) {
+      add(new Label(title),
+          new GridBagConstraints(0, 0, 1, 1, 1.0, 0.0,
+                                 GridBagConstraints.CENTER,
+                                 GridBagConstraints.NONE,
+                                 new Insets(-5, -3, 0, -3), 0,
+                                 0));
+
+    }
+
     myToggleCollapseButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         setCollapsed(!myIsCollapsed);
@@ -57,18 +69,18 @@ public class CollapsiblePanel extends JPanel {
   }
 
   public CollapsiblePanel(JComponent content, boolean collapseButtonAtLeft) {
-    this(content, collapseButtonAtLeft, false, null, null);
+    this(content, collapseButtonAtLeft, false, null, null, null);
   }
 
   protected void setCollapsed(boolean collapse) {
     try {
       if (collapse) {
-        if (myIsInitialized) this.remove(myContent);
+        if (myIsInitialized) remove(myContent);
       }
       else {
-        this.add(myContent,
-                 new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
-                                        new Insets(0, 0, 0, 0), 0, 0));
+        add(myContent,
+            new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+                                   new Insets(0, 0, 0, 0), 0, 0));
       }
       myIsCollapsed = collapse;
 
@@ -106,8 +118,8 @@ public class CollapsiblePanel extends JPanel {
 
   private void notifyListners() {
     CollapsingListener[] listeners = myListeners.toArray(new CollapsingListener[myListeners.size()]);
-    for (int i = 0; i < listeners.length; i++) {
-      listeners[i].onCollapsingChanged(this, isCollapsed());
+    for (CollapsingListener listener : listeners) {
+      listener.onCollapsingChanged(this, isCollapsed());
     }
   }
 
