@@ -14,7 +14,7 @@
     <orderEntry type="library" name="Log4J" level="project" />
     <orderEntry type="module" module-name="openapi" />
     <orderEntry type="module" module-name="util" />
-    <orderEntry type="module" module-name="codeInside-openapi" />
+    <orderEntry type="module" module-name="codeInsight-openapi" />
     <orderEntry type="module" module-name="inspections-openapi" />
     <orderEntry type="module" module-name="refactoring-openapi" />
     <orderEntryProperties />
