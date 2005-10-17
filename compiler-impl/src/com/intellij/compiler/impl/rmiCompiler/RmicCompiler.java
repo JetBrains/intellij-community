@@ -53,7 +53,7 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
     myProject = project;
   }
 
-  public ProcessingItem[] getProcessingItems(final CompileContext context) {
+  public @NotNull ProcessingItem[] getProcessingItems(final CompileContext context) {
     if (!RmicSettings.getInstance(myProject).IS_EANABLED) {
       return ProcessingItem.EMPTY_ARRAY;
     }
@@ -66,8 +66,7 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
           final int[] allClassNames = cache.getAllClassNames();
           final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
           final LocalFileSystem lfs = LocalFileSystem.getInstance();
-          for (int idx = 0; idx < allClassNames.length; idx++) {
-            final int className = allClassNames[idx];
+          for (final int className : allClassNames) {
             final int classId = cache.getClassId(className);
             final boolean isRemoteObject = cache.isRemote(classId) && !CacheUtils.isInterface(cache, className);
             if (!isRemoteObject && !dependencyCache.wasRemote(className)) {
@@ -89,7 +88,9 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
             if (module == null) {
               continue;
             }
-            final VirtualFile outputDir = fileIndex.isInTestSourceContent(sourceFile)? context.getModuleOutputDirectoryForTests(module) : context.getModuleOutputDirectory(module);
+            final VirtualFile outputDir = fileIndex.isInTestSourceContent(sourceFile)
+                                          ? context.getModuleOutputDirectoryForTests(module)
+                                          : context.getModuleOutputDirectory(module);
             if (outputDir == null) {
               continue;
             }
