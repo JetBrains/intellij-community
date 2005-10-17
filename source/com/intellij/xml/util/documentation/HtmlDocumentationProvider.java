@@ -13,6 +13,7 @@ import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlBundle;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.xml.util.ColorSampleLookupValue;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
@@ -77,6 +78,9 @@ public class HtmlDocumentationProvider implements JavaDocManager.DocumentationPr
     } else if (element.getParent() instanceof XmlAttributeValue) {
       isTag = false;
       key = ((XmlAttribute)element.getParent().getParent()).getName();
+    } else if (element instanceof XmlAttributeValue) {
+      isTag = false;
+      key = ((XmlAttribute)element.getParent()).getName();
     } else if (element instanceof XmlAttribute) {
       isTag = false;
       key = ((XmlAttribute)element).getName();
@@ -109,41 +113,46 @@ public class HtmlDocumentationProvider implements JavaDocManager.DocumentationPr
   }
 
   public String generateDoc(PsiElement element, PsiElement originalElement) {
-    String result = generateDocForHtml(element, false, PsiTreeUtil.getParentOfType(originalElement,XmlTag.class,false));
+    final XmlTag tag = PsiTreeUtil.getParentOfType(originalElement, XmlTag.class, false);
+    String result = generateDocForHtml(element, false, tag, originalElement);
 
     if (result == null && styleProvider!=null) {
       result = styleProvider.generateDoc(element, originalElement);
+    }
+    
+    if (result == null && element instanceof XmlAttributeValue) {
+      result = generateDocForHtml(element.getParent(), false, tag, originalElement);
     }
 
     return result;
   }
 
   public String generateDocForHtml(PsiElement element) {
-    return generateDocForHtml(element,true, null);
+    return generateDocForHtml(element,true, null, null);
   }
 
-  protected String generateDocForHtml(PsiElement element, boolean ommitHtmlSpecifics, XmlTag context) {
+  protected String generateDocForHtml(PsiElement element, boolean ommitHtmlSpecifics, XmlTag context, PsiElement originalElement) {
     final EntityDescriptor descriptor = findDocumentationDescriptor(element,context);
 
     if (descriptor!=null) {
-      return generateJavaDoc(descriptor, ommitHtmlSpecifics);
+      return generateJavaDoc(descriptor, ommitHtmlSpecifics, originalElement);
     }
     return null;
   }
 
-  private String generateJavaDoc(EntityDescriptor descriptor, boolean ommitHtmlSpecifics) {
+  private String generateJavaDoc(EntityDescriptor descriptor, boolean ommitHtmlSpecifics, PsiElement element) {
     StringBuffer buf = new StringBuffer();
-    if (descriptor instanceof HtmlTagDescriptor) {
+    final boolean istag = descriptor instanceof HtmlTagDescriptor;
+    
+    if (istag) {
       JavaDocUtil.formatEntityName(XmlBundle.message("xml.javadoc.tag.name.message"),descriptor.getName(),buf);
     } else {
       JavaDocUtil.formatEntityName(XmlBundle.message("xml.javadoc.attribute.name.message"),descriptor.getName(),buf);
     }
 
-
-
     buf.append(XmlBundle.message("xml.javadoc.description.message")).append(NBSP).append(descriptor.getDescription()).append(BR);
 
-    if (descriptor instanceof HtmlTagDescriptor) {
+    if (istag) {
       final HtmlTagDescriptor tagDescriptor = (HtmlTagDescriptor)descriptor;
 
       if (!ommitHtmlSpecifics) {
@@ -185,6 +194,10 @@ public class HtmlDocumentationProvider implements JavaDocManager.DocumentationPr
 
     buf.append(BR);
 
+    if (!istag) {
+      ColorSampleLookupValue.addColorPreviewAndCodeToLookup(element,buf);
+    }
+    
     return buf.toString();
   }
 

@@ -18,8 +18,8 @@ public class XHtmlDocumentationProvider extends HtmlDocumentationProvider {
     super(project);
   }
 
-  protected String generateDocForHtml(PsiElement element, boolean ommitHtmlSpecifics, XmlTag context) {
-    return super.generateDocForHtml(element, true, context);
+  protected String generateDocForHtml(PsiElement element, boolean ommitHtmlSpecifics, XmlTag context, PsiElement originalElement) {
+    return super.generateDocForHtml(element, true, context, originalElement);
   }
 
   protected XmlTag findTagContext(PsiElement context) {
