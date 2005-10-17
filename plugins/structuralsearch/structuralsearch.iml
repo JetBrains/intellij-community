@@ -20,6 +20,7 @@
     <orderEntry type="module" module-name="UsageView" />
     <orderEntry type="module" module-name="codeInside-openapi" />
     <orderEntry type="module" module-name="codeInside-impl" />
+    <orderEntry type="module" module-name="idea-tests" />
     <orderEntryProperties />
   </component>
   <component name="copyright">
