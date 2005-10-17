@@ -670,6 +670,7 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
     if (parent instanceof PsiFile) {
       PsiFile file = (PsiFile)parent;
       String fileName = file.getName();
+      if (fileName == null) return false;
       int dotIndex = fileName.lastIndexOf('.');
       String name = dotIndex >= 0 ? fileName.substring(0, dotIndex) : fileName;
       String oldName = getName();
