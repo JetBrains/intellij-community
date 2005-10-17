@@ -27,6 +27,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.PsiElementBase;
 import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.ChangeUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -455,7 +456,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
 
       try {
         VirtualFile newVFile;
-        if (originalFile instanceof com.intellij.psi.impl.source.PsiFileImpl) {
+        if (originalFile instanceof PsiFileImpl) {
           newVFile = myFile.createChildData(myManager, originalFile.getName());
           String lineSeparator = FileDocumentManager.getInstance().getLineSeparator(newVFile, getProject());
           String text = originalFile.getText();
@@ -494,18 +495,11 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
       }
     }
     else if (element instanceof PsiClass) {
-      if (element.getParent() instanceof PsiJavaFile) {
-        PsiJavaFile newFile = (PsiJavaFile)add(element.getParent());
-        PsiClass[] classes = ((PsiJavaFile)element.getParent()).getClasses();
-        PsiClass[] newClasses = newFile.getClasses();
-        LOG.assertTrue(classes.length == newClasses.length);
-        for (int i = 0; i < classes.length; i++) {
-          if (classes[i] == element) return newClasses[i];
-        }
-        LOG.assertTrue(false);
-        return null;
-      }
-      else {
+      final String name = ((PsiClass)element).getName();
+      if (name != null) {
+        final PsiClass newClass = createClass(name);
+        return newClass.replace(element);
+      } else {
         LOG.error("not implemented");
         return null;
       }
