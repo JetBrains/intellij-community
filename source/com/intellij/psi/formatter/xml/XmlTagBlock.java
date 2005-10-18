@@ -206,17 +206,19 @@ public class XmlTagBlock extends AbstractXmlBlock{
     if (syntheticBlock1.endsWithText()) { //text</tag
       if (saveSpacesBetweenTagAndText) {
         return Spacing.createSafeSpacing(myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
-      } else {
-        return Spacing.createSpacing(0, 0, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
       }
+      if (syntheticBlock1.insertLineFeedAfter()) {
+        return Spacing.createDependentLFSpacing(0, 0, getTag().getValue().getTextRange(), true, myXmlFormattingPolicy.getKeepBlankLines());
+      }
+      return Spacing.createSpacing(0, 0, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
+
     } else if (syntheticBlock1.isTagDescription() && syntheticBlock2.isTagDescription()) { //></
       return Spacing.createSpacing(0, 0, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
     } else if (syntheticBlock2.startsWithText()) { //>text
       if (saveSpacesBetweenTagAndText) {
         return Spacing.createSafeSpacing(true, myXmlFormattingPolicy.getKeepBlankLines());
-      } else {
-        return Spacing.createSpacing(0, 0, 0, true, myXmlFormattingPolicy.getKeepBlankLines());
       }
+      return Spacing.createSpacing(0, 0, 0, true, myXmlFormattingPolicy.getKeepBlankLines());
     } else if (syntheticBlock1.isTagDescription() && syntheticBlock2.startsWithTag()) {
       return Spacing.createSpacing(0, 0, 0, true, myXmlFormattingPolicy.getKeepBlankLines());
     } else if (syntheticBlock1.insertLineFeedAfter()) {

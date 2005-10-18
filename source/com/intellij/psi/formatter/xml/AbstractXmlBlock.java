@@ -77,12 +77,13 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     if (elementType == ElementType.XML_START_TAG_START) return tagBeginWrap;
     if (elementType == ElementType.XML_END_TAG_START) {
       final PsiElement parent = SourceTreeToPsiMap.treeElementToPsi(child.getTreeParent());
-      if ((parent instanceof XmlTag) && canWrapTagEnd((XmlTag)parent)) {
-        return getTagEndWrapping((XmlTag)parent);
+      if (parent instanceof XmlTag) {
+        final XmlTag tag = (XmlTag)parent;
+        if (canWrapTagEnd(tag)) {
+          return getTagEndWrapping(tag);
+        }
       }
-      else {
-        return null;
-      }
+      return null;
     }
     if (elementType == ElementType.XML_TEXT || elementType == ElementType.XML_DATA_CHARACTERS) return textWrap;
     return null;

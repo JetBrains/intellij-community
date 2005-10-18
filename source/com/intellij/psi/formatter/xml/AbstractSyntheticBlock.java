@@ -181,10 +181,12 @@ public abstract class AbstractSyntheticBlock implements Block{
     final List<Block> subBlocks = getSubBlocks();
     final Block lastBlock = subBlocks.get(subBlocks.size() - 1);
     if (lastBlock instanceof XmlTagBlock) {
-      return  insertLineFeedAfter(((XmlTagBlock)lastBlock).getTag());
-    } else {
-      return false;
+      return insertLineFeedAfter(((XmlTagBlock)lastBlock).getTag());
     }
+    if (endsWithText()) {
+      return insertLineFeedAfter(myTag);
+    }
+    return false;
   }
 
   protected boolean insertLineFeedAfter(final XmlTag tag) {
