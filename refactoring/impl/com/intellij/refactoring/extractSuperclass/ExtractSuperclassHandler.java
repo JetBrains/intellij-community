@@ -114,7 +114,7 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
     }
     String[] conflicts = PullUpConflictsUtil.checkConflicts(infos, mySubclass, null, targetPackage, targetDirectory, dialog.getContainmentVerifier());
     if (conflicts.length > 0) {
-      ConflictsDialog conflictsDialog = new ConflictsDialog(myProject);
+      ConflictsDialog conflictsDialog = new ConflictsDialog(myProject, conflicts);
       conflictsDialog.show();
       return conflictsDialog.isOK();
     }

@@ -219,14 +219,8 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
         }
       }
     }
-    if(conflicts.size() > 0 && myPrepareSuccessfulSwingThreadCallback!= null) {
-      ConflictsDialog dialog = new ConflictsDialog(myProject);
-      dialog.show();
-      if(!dialog.isOK()) return false;
-    }
 
-    prepareSuccessful();
-    return true;
+    return showConflicts(conflicts);
   }
 
   private void detectAccessibilityConflicts(final UsageInfo[] usageArray, ArrayList<String> conflicts) {

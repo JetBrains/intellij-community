@@ -334,7 +334,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
   private boolean canRefactor() {
     final String[] conflicts = analyzeMoveConflicts(myMembersToMove, myTargetClass, myNewVisibility);
     if (conflicts.length > 0) {
-      ConflictsDialog dialog = new ConflictsDialog(myProject);
+      ConflictsDialog dialog = new ConflictsDialog(myProject, conflicts);
       dialog.show();
       return dialog.isOK();
     }

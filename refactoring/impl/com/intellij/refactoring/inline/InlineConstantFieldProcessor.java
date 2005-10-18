@@ -171,17 +171,7 @@ class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    if (conflicts.size() > 0) {
-      ConflictsDialog dialog = new ConflictsDialog(myProject
-      );
-      dialog.show();
-      if (!dialog.isOK()) {
-        return false;
-      }
-    }
-
-    prepareSuccessful();
-    return true;
+    return showConflicts(conflicts);
   }
 
   private boolean isAccessedForWriting (PsiExpression expr) {

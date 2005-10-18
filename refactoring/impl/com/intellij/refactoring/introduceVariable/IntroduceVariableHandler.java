@@ -71,7 +71,7 @@ public class IntroduceVariableHandler extends IntroduceVariableBase {
   }
 
   protected boolean reportConflicts(final ArrayList<String> conflicts, final Project project) {
-    ConflictsDialog conflictsDialog = new ConflictsDialog(project);
+    ConflictsDialog conflictsDialog = new ConflictsDialog(project, conflicts);
     conflictsDialog.show();
     return conflictsDialog.isOK();
   }

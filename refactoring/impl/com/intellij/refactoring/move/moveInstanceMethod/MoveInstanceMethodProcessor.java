@@ -110,12 +110,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
     }
     catch (IncorrectOperationException e) {}
 
-    if (conflicts.size() != 0) {
-      final ConflictsDialog conflictsDialog = new ConflictsDialog(myProject);
-      conflictsDialog.show();
-      if (!conflictsDialog.isOK()) return false;
-    }
-    return super.preprocessUsages(refUsages);
+    return showConflicts(conflicts);
   }
 
   @NotNull

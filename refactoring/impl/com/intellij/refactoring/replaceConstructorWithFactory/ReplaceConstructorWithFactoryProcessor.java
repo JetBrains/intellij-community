@@ -159,15 +159,7 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
     }
 
 
-    if (myPrepareSuccessfulSwingThreadCallback != null && conflicts.size() > 0) {
-      ConflictsDialog dialog = new ConflictsDialog(myProject
-      );
-      dialog.show();
-      if (!dialog.isOK()) return false;
-    }
-
-    prepareSuccessful();
-    return true;
+    return showConflicts(conflicts);
   }
 
   private PsiClass getConstructorContainingClass() {

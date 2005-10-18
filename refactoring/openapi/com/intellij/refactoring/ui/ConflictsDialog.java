@@ -6,6 +6,7 @@ package com.intellij.refactoring.ui;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.util.Collection;
 import javax.swing.*;
 
 import com.intellij.openapi.ui.DialogWrapper;
@@ -16,6 +17,9 @@ import org.jetbrains.annotations.NonNls;
 public class ConflictsDialog extends DialogWrapper{
   private String[] myConflictDescriptions;
 
+  public ConflictsDialog(Project project, Collection<String> conflictDescriptions) {
+    this(project, conflictDescriptions.toArray(new String[conflictDescriptions.size()]));
+  }
   public ConflictsDialog(Project project, String... conflictDescriptions) {
     super(project, true);
     myConflictDescriptions = conflictDescriptions;

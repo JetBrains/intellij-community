@@ -159,12 +159,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
       LOG.error(e);
     }
 
-    if (conflicts.size() != 0) {
-      final ConflictsDialog conflictsDialog = new ConflictsDialog(myProject);
-      conflictsDialog.show();
-      if (!conflictsDialog.isOK()) return false;
-    }
-    return super.preprocessUsages(refUsages);
+    return showConflicts(conflicts);
   }
 
   private void addInaccessibilityConflicts(final UsageInfo[] usages, final ArrayList<String> conflicts) throws IncorrectOperationException {

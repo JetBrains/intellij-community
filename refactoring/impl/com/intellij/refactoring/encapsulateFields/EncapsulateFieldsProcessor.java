@@ -77,7 +77,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
       checkExistingMethods(myDialog.getSetterPrototypes(), conflicts, false);
 
       if(conflicts.size() > 0) {
-        ConflictsDialog dialog = new ConflictsDialog(myProject);
+        ConflictsDialog dialog = new ConflictsDialog(myProject, conflicts);
         dialog.show();
         if(!dialog.isOK()) return false;
       }

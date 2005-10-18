@@ -182,7 +182,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
       analyzeConflicts(usagesIn, conflicts);
       if (!conflicts.isEmpty()) {
         ConflictsDialog conflictsDialog =
-                new ConflictsDialog(myProject);
+                new ConflictsDialog(myProject, conflicts);
         conflictsDialog.show();
         if (!conflictsDialog.isOK()) return false;
       }

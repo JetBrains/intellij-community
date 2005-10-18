@@ -54,7 +54,7 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
     if (myPrepareSuccessfulSwingThreadCallback != null) {
       List<String> conflicts = getConflictDescriptions(usagesIn);
       if (conflicts.size() > 0) {
-        ConflictsDialog conflictsDialog = new ConflictsDialog(myProject);
+        ConflictsDialog conflictsDialog = new ConflictsDialog(myProject, conflicts);
         conflictsDialog.show();
         if (!conflictsDialog.isOK()) {
           return false;

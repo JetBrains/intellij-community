@@ -387,7 +387,7 @@ public abstract class BaseRefactoringProcessor {
 
   protected boolean showConflicts(final ArrayList<String> conflicts) {
     if (conflicts.size() > 0 && myPrepareSuccessfulSwingThreadCallback != null) {
-      final ConflictsDialog conflictsDialog = new ConflictsDialog(myProject);
+      final ConflictsDialog conflictsDialog = new ConflictsDialog(myProject, conflicts);
       conflictsDialog.show();
       if (!conflictsDialog.isOK()) return false;
     }
