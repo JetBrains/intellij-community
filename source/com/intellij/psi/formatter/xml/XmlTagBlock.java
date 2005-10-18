@@ -204,11 +204,11 @@ public class XmlTagBlock extends AbstractXmlBlock{
     }
 
     if (syntheticBlock1.endsWithText()) { //text</tag
+      if (syntheticBlock1.insertLineFeedAfter()) {
+        return Spacing.createDependentLFSpacing(0, 0, getTag().getTextRange(), myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
+      }
       if (saveSpacesBetweenTagAndText) {
         return Spacing.createSafeSpacing(myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
-      }
-      if (syntheticBlock1.insertLineFeedAfter()) {
-        return Spacing.createDependentLFSpacing(0, 0, getTag().getValue().getTextRange(), true, myXmlFormattingPolicy.getKeepBlankLines());
       }
       return Spacing.createSpacing(0, 0, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
 

@@ -168,13 +168,15 @@ public abstract class AbstractSyntheticBlock implements Block{
   }
 
   public boolean startsWithCDATA() {
-    final ASTNode child = myStartTreeNode.getFirstChildNode();
-    return child != null && child.getElementType() == ElementType.XML_CDATA;
+    return isCDATA(myStartTreeNode.getFirstChildNode());
+  }
+
+  private boolean isCDATA(final ASTNode node) {
+    return node != null && node.getElementType() == ElementType.XML_CDATA;
   }
 
   public boolean endsWithCDATA() {
-    final ASTNode child = myStartTreeNode.getLastChildNode();
-    return child != null && child.getElementType() == ElementType.XML_CDATA;
+    return isCDATA(myStartTreeNode.getLastChildNode());
   }
 
   public boolean insertLineFeedAfter() {
