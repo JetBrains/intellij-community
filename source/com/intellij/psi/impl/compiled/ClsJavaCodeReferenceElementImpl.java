@@ -30,8 +30,8 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
   private final String myCanonicalText;
   private final String myQualifiedName;
   private ClsReferenceParametersListImpl myTypeParameterList = null;
-  private final ClsTypeElementImpl[] myTypeParameters;  // in right-to-left order
-  private PsiType[] myTypeParametersCachedTypes = null; // in left-to-right-order
+  private final ClsTypeElementImpl[] myTypeParameters;
+  private PsiType[] myTypeParametersCachedTypes = null;
   private static final @NonNls String EXTENDS_PREFIX = "?extends";
   private static final @NonNls String SUPER_PREFIX = "?super";
 
@@ -42,7 +42,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
     final String[] classParametersText = PsiNameHelper.getClassParametersText(canonicalText);
     myTypeParameters = new ClsTypeElementImpl[classParametersText.length];
     for (int i = 0; i < classParametersText.length; i++) {
-      String s = classParametersText[classParametersText.length - i - 1];
+      String s = classParametersText[i];
       char variance = ClsTypeElementImpl.VARIANCE_NONE;
       if (s.startsWith(EXTENDS_PREFIX)) {
         variance = ClsTypeElementImpl.VARIANCE_EXTENDS;
@@ -106,11 +106,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
       }
     }
     myCanonicalText = canonicalText.toString();
-    final int nParams = typeParameters.size();
-    myTypeParameters = new ClsTypeElementImpl[nParams];
-    for (int i = nParams - 1; i >= 0; i--) {
-      myTypeParameters[nParams - i - 1] = typeParameters.get(i);
-    }
+    myTypeParameters = typeParameters.toArray(new ClsTypeElementImpl[typeParameters.size()]);;
     myQualifiedName = PsiNameHelper.getQualifiedClassName(myCanonicalText, false);
 
     signature.next();
@@ -167,16 +163,20 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
   private JavaResolveResult advancedResolveImpl() {
     final PsiElement resolve = resolveElement();
     if (resolve instanceof PsiClass) {
+      final PsiClass aClass = ((PsiClass)resolve);
       final Map<PsiTypeParameter, PsiType> substitutionMap = new HashMap<PsiTypeParameter, PsiType>();
-      final Iterator<PsiTypeParameter> it = PsiUtil.typeParametersIterator((PsiClass)resolve);
       int index = 0;
-      while (it.hasNext()) {
-        PsiTypeParameter parameter = it.next();
+      final PsiTypeParameter[] typeParameters = aClass.getTypeParameters();
+      for (PsiTypeParameter parameter : typeParameters) {
         if (index < myTypeParameters.length) {
           substitutionMap.put(parameter, myTypeParameters[index].getType());
         }
+        else {
+          substitutionMap.put(parameter, null);
+        }
         index++;
       }
+
       return new CandidateInfo(resolve, PsiSubstitutorImpl.createSubstitutor(substitutionMap));
     }
     else {
@@ -301,7 +301,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
     if (myTypeParametersCachedTypes == null) {
       myTypeParametersCachedTypes = new PsiType[myTypeParameters.length];
       for (int i = 0; i < myTypeParametersCachedTypes.length; i++) {
-        myTypeParametersCachedTypes[myTypeParametersCachedTypes.length - i - 1] = myTypeParameters[i].getType();
+        myTypeParametersCachedTypes[i] = myTypeParameters[i].getType();
       }
     }
 
