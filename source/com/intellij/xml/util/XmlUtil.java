@@ -87,6 +87,8 @@ public class XmlUtil {
   public static final String XSD_SIMPLE_CONTENT_TAG = "simpleContent";
   public static final @NonNls String NO_NAMESPACE_SCHEMA_LOCATION_ATT = "noNamespaceSchemaLocation";
   public static final @NonNls String SCHEMA_LOCATION_ATT = "schemaLocation";
+  private static final @NonNls String JSF_URI = "http://java.sun.com/dtd/web-facesconfig_1_1.dtd";
+  public static final @NonNls String[] JSF_URIS = new String[] { JSF_URI };
 
   public static String getSchemaLocation(XmlTag tag, String namespace) {
     final String uri = ExternalResourceManagerEx.getInstanceEx().getResourceLocation(namespace);

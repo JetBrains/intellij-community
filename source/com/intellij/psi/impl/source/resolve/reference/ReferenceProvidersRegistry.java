@@ -382,6 +382,36 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
       XmlTag.class,
       new TaglibReferenceProvider( getProviderByType(CLASS_REFERENCE_PROVIDER) )
     );
+    
+    registerReferenceProvider(
+      new ScopeFilter(
+        new AndFilter(
+          new TextFilter(
+            new String[] {
+              "managed-bean-class"
+            }
+          ),
+          new NamespaceFilter(XmlUtil.JSF_URIS)
+        )
+      ),
+      XmlTag.class,
+      new TaglibReferenceProvider( getProviderByType(CLASS_REFERENCE_PROVIDER) )
+    );
+    
+    registerReferenceProvider(
+      new ScopeFilter(
+        new AndFilter(
+          new TextFilter(
+            new String[] {
+              "property-name"
+            }
+          ),
+          new NamespaceFilter(XmlUtil.JSF_URIS)
+        )
+      ),
+      XmlTag.class,
+      new JSFReferencesProvider()
+    );
 
     final DtdReferencesProvider dtdReferencesProvider = new DtdReferencesProvider();
     //registerReferenceProvider(null, XmlEntityDecl.class,dtdReferencesProvider);
