@@ -3,6 +3,8 @@
  */
 package com.intellij.ui;
 
+import com.intellij.util.ui.UIUtil;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -29,6 +31,8 @@ public class CollapsiblePanel extends JPanel {
     myCollapseIcon = collapseIcon;
     final Dimension buttonDimension = getButtonDimension();
     myToggleCollapseButton = new JButton();
+    myToggleCollapseButton.setOpaque(false);
+    myToggleCollapseButton.setFocusable(false);
     myToggleCollapseButton.setSize(buttonDimension);
     myToggleCollapseButton.setPreferredSize(buttonDimension);
     myToggleCollapseButton.setMinimumSize(buttonDimension);
@@ -43,7 +47,10 @@ public class CollapsiblePanel extends JPanel {
                                0));
 
     if (title != null) {
-      add(new Label(title),
+      final Label label = new Label(title);
+      label.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
+      label.setBackground(UIUtil.getTableBackground());
+      add(label,
           new GridBagConstraints(0, 0, 1, 1, 1.0, 0.0,
                                  GridBagConstraints.CENTER,
                                  GridBagConstraints.NONE,
