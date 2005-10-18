@@ -2,16 +2,15 @@
 <module version="4" relativePaths="true" type="JAVA_MODULE">
   <component name="ModuleRootManager" />
   <component name="NewModuleRootManager">
-    <output url="file://$MODULE_DIR$/classes/openapi" />
+    <output url="file://$MODULE_DIR$/../classes/openapi" />
     <exclude-output />
-    <content url="file://$MODULE_DIR$/openapi">
-      <sourceFolder url="file://$MODULE_DIR$/openapi" isTestSource="false" />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="Annotations" />
     <orderEntry type="module" module-name="openapi" />
-    <orderEntry type="module" module-name="execution-openapi" />
+    <orderEntry type="module" module-name="Annotations" />
     <orderEntryProperties />
   </component>
   <component name="copyright">
