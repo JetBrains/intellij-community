@@ -14,6 +14,8 @@ import com.intellij.util.IncorrectOperationException;
  * @author Mike
  */
 public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttributeValue{
+  private static final Class ourReferenceClass = XmlAttributeValue.class;
+  
   public XmlAttributeValueImpl() {
     super(XML_ATTRIBUTE_VALUE);
   }
@@ -27,7 +29,7 @@ public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttribut
   }
 
   public PsiReference[] getReferences() {
-    return ResolveUtil.getReferencesFromProviders(this, XmlAttributeValue.class);
+    return ResolveUtil.getReferencesFromProviders(this, ourReferenceClass);
   }
 
   public PsiElement replaceRangeInText(final TextRange range, String newSubText)

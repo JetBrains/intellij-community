@@ -47,6 +47,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, ModificationTracker */{
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlTagImpl");
+  private static final Class ourReferenceClass = XmlTag.class;
 
   private String myName = null;
   private XmlAttribute[] myAttributes = null;
@@ -83,7 +84,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     final ASTNode startTagName = XmlChildRole.START_TAG_NAME_FINDER.findChild(this);
     if (startTagName == null) return PsiReference.EMPTY_ARRAY;
     final ASTNode endTagName = XmlChildRole.CLOSING_TAG_NAME_FINDER.findChild(this);
-    final PsiReference[] referencesFromProviders = ResolveUtil.getReferencesFromProviders(this, XmlTag.class);
+    final PsiReference[] referencesFromProviders = ResolveUtil.getReferencesFromProviders(this, ourReferenceClass);
     
     if (endTagName != null){
       final PsiReference[] psiReferences = new PsiReference[referencesFromProviders.length + 2];
