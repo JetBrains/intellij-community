@@ -189,7 +189,9 @@ public class DuplicatesFinder {
       final PsiReferenceExpression patternRefExpr = ((PsiReferenceExpression)pattern);
       final PsiReferenceExpression candidateRefExpr = ((PsiReferenceExpression)candidate);
       if (patternRefExpr.getQualifierExpression() == null) {
-        return match.registerInstanceExpression(candidateRefExpr.getQualifierExpression());
+        PsiClass contextClass = PsiTreeUtil.getParentOfType(pattern, PsiClass.class);
+        if (contextClass == null) return false;
+        return match.registerInstanceExpression(candidateRefExpr.getQualifierExpression(), contextClass);
       }
     }
 

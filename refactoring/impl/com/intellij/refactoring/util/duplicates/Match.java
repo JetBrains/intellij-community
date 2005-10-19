@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
@@ -109,8 +110,14 @@ public final class Match {
     }
   }
 
-  boolean registerInstanceExpression(PsiExpression instanceExpression) {
+  boolean registerInstanceExpression(PsiExpression instanceExpression, final PsiClass contextClass) {
     if (myInstanceExpression == null) {
+      if (instanceExpression != null) {
+        final PsiType type = instanceExpression.getType();
+        if (!(type instanceof PsiClassType)) return false;
+        final PsiClass hisClass = ((PsiClassType) type).resolve();
+        if (hisClass == null || !InheritanceUtil.isInheritorOrSelf(hisClass, contextClass, true)) return false;
+      }
       myInstanceExpression = Ref.create(instanceExpression);
       return true;
     }
