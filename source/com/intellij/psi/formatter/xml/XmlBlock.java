@@ -131,14 +131,14 @@ public class XmlBlock extends AbstractXmlBlock {
     }
 
     if (type1 == ElementType.XML_PROLOG) {
-      return createDefaultSpace(true);
+      return createDefaultSpace(true, false);
     }
 
     if (elementType == ElementType.XML_DOCTYPE) {
-      return createDefaultSpace(true);
+      return createDefaultSpace(true, false);
     }
 
-    return createDefaultSpace(false);
+    return createDefaultSpace(false, false);
   }
 
   private Spacing getSpacesInsideAttribute(final IElementType type1, final IElementType type2) {
@@ -148,17 +148,17 @@ public class XmlBlock extends AbstractXmlBlock {
                                    myXmlFormattingPolicy.getKeepBlankLines());
     }
     else {
-      return createDefaultSpace(false);
+      return createDefaultSpace(false, false);
     }
   }
 
   private Spacing getSpacesInsideText(final IElementType type1, final IElementType type2) {
     if (type1 == ElementType.XML_DATA_CHARACTERS && type2 == ElementType.XML_DATA_CHARACTERS) {
-      return Spacing.createSpacing(1, 1, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(),
+      return Spacing.createSpacing(1, 1, 0, myXmlFormattingPolicy.getShouldKeepLineBreaksInText(),
                                    myXmlFormattingPolicy.getKeepBlankLines());
     }
     else {
-      return createDefaultSpace(false);
+      return createDefaultSpace(false, true);
     }
   }
 

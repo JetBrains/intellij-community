@@ -54,6 +54,7 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
   private JCheckBox myKeepLineBreaks;
   private JCheckBox myInEmptyTag;
   private JCheckBox myWrapText;
+  private JCheckBox myKeepLineBreaksInText;
 
   public CodeStyleXmlPanel(CodeStyleSettings settings) {
     super(settings);
@@ -75,6 +76,7 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
   public void apply(CodeStyleSettings settings) {
     settings.XML_KEEP_BLANK_LINES = getIntValue(myKeepBlankLines);
     settings.XML_KEEP_LINE_BREAKS = myKeepLineBreaks.isSelected();
+    settings.XML_KEEP_LINE_BREAKS_IN_TEXT = myKeepLineBreaksInText.isSelected();
     settings.XML_ATTRIBUTE_WRAP = ourWrappings[myWrapAttributes.getSelectedIndex()];
     settings.XML_TEXT_WRAP = myWrapText.isSelected() ? CodeStyleSettings.WRAP_AS_NEEDED : CodeStyleSettings.DO_NOT_WRAP;
     settings.XML_ALIGN_ATTRIBUTES = myAlignAttributes.isSelected();
@@ -102,6 +104,7 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
     mySpacesAroundTagName.setSelected(settings.XML_SPACE_AROUND_TAG_NAME);
     mySpacesAroundEquality.setSelected(settings.XML_SPACE_AROUND_EQUALITY_IN_ATTRINUTE);
     myKeepLineBreaks.setSelected(settings.XML_KEEP_LINE_BREAKS);
+    myKeepLineBreaksInText.setSelected(settings.XML_KEEP_LINE_BREAKS_IN_TEXT);
     myInEmptyTag.setSelected(settings.XML_SPACE_INSIDE_EMPTY_TAG);
     myWrapText.setSelected(wrapText(settings));
   }
@@ -132,6 +135,10 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
     }
 
     if (settings.XML_KEEP_LINE_BREAKS != myKeepLineBreaks.isSelected()) {
+      return true;
+    }
+
+    if (settings.XML_KEEP_LINE_BREAKS_IN_TEXT != myKeepLineBreaksInText.isSelected()) {
       return true;
     }
 

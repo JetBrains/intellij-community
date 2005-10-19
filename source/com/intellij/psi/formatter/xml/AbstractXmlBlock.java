@@ -401,9 +401,22 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
 
   public abstract boolean removeLineBreakBeforeTag();
 
-  protected Spacing createDefaultSpace(boolean forceKeepLineBreaks) {
-    boolean shouldKeepLineBreaks = myXmlFormattingPolicy.getShouldKeepLineBreaks() || forceKeepLineBreaks;
+  protected Spacing createDefaultSpace(boolean forceKeepLineBreaks, final boolean inText) {
+    boolean shouldKeepLineBreaks = getShouldKeepLineBreaks(inText, forceKeepLineBreaks);
     return Spacing.createSpacing(0, Integer.MAX_VALUE, 0, shouldKeepLineBreaks, myXmlFormattingPolicy.getKeepBlankLines());
+  }
+
+  private boolean getShouldKeepLineBreaks(final boolean inText, final boolean forceKeepLineBreaks) {
+    if (forceKeepLineBreaks) {
+      return true;
+    }
+    if (inText && myXmlFormattingPolicy.getShouldKeepLineBreaksInText()) {
+      return true;
+    }
+    if (!inText && myXmlFormattingPolicy.getShouldKeepLineBreaks()) {
+      return true;
+    }
+    return false;
   }
 
   public abstract boolean isTextElement();

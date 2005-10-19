@@ -773,6 +773,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   public int XML_TEXT_WRAP = WRAP_AS_NEEDED;
 
   public boolean XML_KEEP_LINE_BREAKS = true;
+  public boolean XML_KEEP_LINE_BREAKS_IN_TEXT = true;
   public int XML_KEEP_BLANK_LINES = 2;
 
   public boolean XML_ALIGN_ATTRIBUTES = true;
@@ -790,6 +791,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   public int HTML_TEXT_WRAP = WRAP_AS_NEEDED;
 
   public boolean HTML_KEEP_LINE_BREAKS = true;
+  public boolean HTML_KEEP_LINE_BREAKS_IN_TEXT = true;
   public int HTML_KEEP_BLANK_LINES = 2;
 
   public boolean HTML_ALIGN_ATTRIBUTES = true;

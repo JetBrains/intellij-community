@@ -12,7 +12,7 @@
       <grid id="4e91d" row-count="9" column-count="4" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="3" bottom="0" right="0"/>
         <constraints>
-          <xy x="0" y="0" width="373" height="417"/>
+          <xy x="0" y="0" width="369" height="417"/>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
         </constraints>
         <properties/>
@@ -20,7 +20,7 @@
         <children>
           <component id="c888a" class="javax.swing.JCheckBox" binding="myShouldKeepBlankLines">
             <constraints>
-              <xy x="3" y="1" width="98" height="18"/>
+              <xy x="3" y="1" width="99" height="18"/>
               <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
@@ -31,7 +31,7 @@
           <grid id="ca5bb" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="3" y="184" width="370" height="213"/>
+              <xy x="3" y="185" width="366" height="212"/>
               <grid row="7" column="0" row-span="1" col-span="4" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
             </constraints>
             <properties/>
@@ -40,7 +40,7 @@
               <grid id="e19e0" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                 <margin top="0" left="0" bottom="0" right="0"/>
                 <constraints>
-                  <xy x="0" y="0" width="370" height="213"/>
+                  <xy x="0" y="0" width="366" height="212"/>
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
                 </constraints>
                 <properties/>
@@ -49,7 +49,7 @@
                   <grid id="3c281" row-count="7" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                     <margin top="0" left="0" bottom="0" right="0"/>
                     <constraints>
-                      <xy x="0" y="0" width="370" height="170"/>
+                      <xy x="0" y="0" width="366" height="170"/>
                       <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
                     </constraints>
                     <properties/>
@@ -57,7 +57,7 @@
                     <children>
                       <component id="121a0" class="javax.swing.JLabel">
                         <constraints>
-                          <xy x="0" y="78" width="115" height="14"/>
+                          <xy x="0" y="78" width="111" height="14"/>
                           <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
                         </constraints>
                         <properties>
@@ -66,7 +66,7 @@
                       </component>
                       <component id="547a0" class="javax.swing.JTextField" binding="myDoNotAlignChildrenMinSize">
                         <constraints>
-                          <xy x="137" y="75" width="198" height="20"/>
+                          <xy x="133" y="75" width="202" height="20"/>
                           <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
                             <preferred-size width="150" height="-1"/>
                           </grid>
@@ -75,7 +75,7 @@
                       </component>
                       <component id="a3eda" class="javax.swing.JLabel">
                         <constraints>
-                          <xy x="345" y="78" width="25" height="14"/>
+                          <xy x="345" y="78" width="21" height="14"/>
                           <grid row="3" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
                         </constraints>
                         <properties>
@@ -84,7 +84,7 @@
                       </component>
                       <component id="fe20d" class="javax.swing.JLabel">
                         <constraints>
-                          <xy x="0" y="3" width="114" height="14"/>
+                          <xy x="0" y="3" width="110" height="14"/>
                           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
                         </constraints>
                         <properties>
@@ -93,7 +93,7 @@
                       </component>
                       <component id="160eb" class="javax.swing.JLabel">
                         <constraints>
-                          <xy x="0" y="28" width="124" height="14"/>
+                          <xy x="0" y="28" width="120" height="14"/>
                           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
                         </constraints>
                         <properties>
@@ -102,7 +102,7 @@
                       </component>
                       <component id="93fdf" class="javax.swing.JLabel">
                         <constraints>
-                          <xy x="0" y="53" width="126" height="14"/>
+                          <xy x="0" y="53" width="122" height="14"/>
                           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
                         </constraints>
                         <properties>
@@ -111,7 +111,7 @@
                       </component>
                       <component id="d6b64" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myInsertNewLineTagNames">
                         <constraints>
-                          <xy x="137" y="0" width="233" height="20"/>
+                          <xy x="133" y="0" width="233" height="20"/>
                           <grid row="0" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="3"/>
                         </constraints>
                         <properties>
@@ -120,7 +120,7 @@
                       </component>
                       <component id="47f60" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myRemoveNewLineTagNames">
                         <constraints>
-                          <xy x="137" y="25" width="233" height="20"/>
+                          <xy x="133" y="25" width="233" height="20"/>
                           <grid row="1" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="3"/>
                         </constraints>
                         <properties>
@@ -129,7 +129,7 @@
                       </component>
                       <component id="655c2" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myDoNotAlignChildrenTagNames">
                         <constraints>
-                          <xy x="137" y="50" width="233" height="20"/>
+                          <xy x="133" y="50" width="233" height="20"/>
                           <grid row="2" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="3"/>
                         </constraints>
                         <properties>
@@ -138,7 +138,7 @@
                       </component>
                       <component id="c0d93" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myTextElementsTagNames">
                         <constraints>
-                          <xy x="137" y="100" width="233" height="20"/>
+                          <xy x="133" y="100" width="233" height="20"/>
                           <grid row="4" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="3"/>
                         </constraints>
                         <properties>
@@ -147,7 +147,7 @@
                       </component>
                       <component id="9646b" class="javax.swing.JLabel">
                         <constraints>
-                          <xy x="0" y="103" width="76" height="14"/>
+                          <xy x="0" y="103" width="72" height="14"/>
                           <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
                         </constraints>
                         <properties>
@@ -156,7 +156,7 @@
                       </component>
                       <component id="1ade9" class="javax.swing.JLabel">
                         <constraints>
-                          <xy x="0" y="128" width="127" height="14"/>
+                          <xy x="0" y="128" width="123" height="14"/>
                           <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
                         </constraints>
                         <properties>
@@ -165,7 +165,7 @@
                       </component>
                       <component id="77303" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myKeepWhiteSpacesTagNames">
                         <constraints>
-                          <xy x="137" y="125" width="233" height="20"/>
+                          <xy x="133" y="125" width="233" height="20"/>
                           <grid row="5" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="3"/>
                         </constraints>
                         <properties>
@@ -174,7 +174,7 @@
                       </component>
                       <component id="be680" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myAlwaysWrapTags">
                         <constraints>
-                          <xy x="137" y="150" width="233" height="20"/>
+                          <xy x="133" y="150" width="233" height="20"/>
                           <grid row="6" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="3"/>
                         </constraints>
                         <properties>
@@ -183,7 +183,7 @@
                       </component>
                       <component id="8af5e" class="javax.swing.JLabel">
                         <constraints>
-                          <xy x="0" y="153" width="93" height="14"/>
+                          <xy x="0" y="153" width="89" height="14"/>
                           <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
                         </constraints>
                         <properties>
@@ -194,7 +194,7 @@
                   </grid>
                   <vspacer id="9276c">
                     <constraints>
-                      <xy x="179" y="170" width="11" height="43"/>
+                      <xy x="177" y="170" width="11" height="42"/>
                       <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
                     </constraints>
                   </vspacer>
@@ -204,7 +204,7 @@
           </grid>
           <component id="d4efa" class="javax.swing.JLabel">
             <constraints>
-              <xy x="3" y="54" width="84" height="14"/>
+              <xy x="3" y="54" width="80" height="14"/>
               <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
             </constraints>
             <properties>
@@ -213,7 +213,7 @@
           </component>
           <component id="8bb88" class="javax.swing.JComboBox" binding="myWrapAttributes">
             <constraints>
-              <xy x="127" y="50" width="246" height="22"/>
+              <xy x="123" y="50" width="246" height="23"/>
               <grid row="2" column="2" row-span="1" col-span="2" vsize-policy="0" hsize-policy="2" anchor="8" fill="1"/>
             </constraints>
             <properties>
@@ -223,7 +223,7 @@
           <grid id="6063" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="127" y="104" width="246" height="75"/>
+              <xy x="123" y="105" width="246" height="75"/>
               <grid row="4" column="2" row-span="3" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
             </constraints>
             <properties/>
@@ -231,7 +231,7 @@
             <children>
               <component id="f4575" class="javax.swing.JCheckBox" binding="mySpacesAroundEquality">
                 <constraints>
-                  <xy x="6" y="20" width="136" height="22"/>
+                  <xy x="6" y="20" width="135" height="22"/>
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
@@ -240,7 +240,7 @@
               </component>
               <component id="8f9a9" class="javax.swing.JCheckBox" binding="mySpacesAroundTagName">
                 <constraints>
-                  <xy x="6" y="47" width="109" height="22"/>
+                  <xy x="6" y="47" width="108" height="22"/>
                   <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
@@ -249,7 +249,7 @@
               </component>
               <component id="2830e" class="javax.swing.JCheckBox" binding="mySpaceInEmptyTag">
                 <constraints>
-                  <xy x="152" y="20" width="88" height="22"/>
+                  <xy x="152" y="20" width="87" height="22"/>
                   <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
@@ -260,7 +260,7 @@
           </grid>
           <component id="8a13c" class="javax.swing.JCheckBox" binding="myAlignAttributes">
             <constraints>
-              <xy x="3" y="106" width="93" height="18"/>
+              <xy x="3" y="107" width="94" height="18"/>
               <grid row="4" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
@@ -270,7 +270,7 @@
           </component>
           <component id="165dc" class="javax.swing.JCheckBox" binding="myAlignText">
             <constraints>
-              <xy x="3" y="133" width="66" height="18"/>
+              <xy x="3" y="134" width="67" height="18"/>
               <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
@@ -280,7 +280,7 @@
           </component>
           <component id="959da" class="javax.swing.JCheckBox" binding="myKeepWhiteSpaces">
             <constraints>
-              <xy x="3" y="159" width="109" height="18"/>
+              <xy x="3" y="160" width="110" height="18"/>
               <grid row="6" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
@@ -288,21 +288,15 @@
               <text resource-bundle="messages/ApplicationBundle" key="checkbox.keep.white.spaces"/>
             </properties>
           </component>
-          <hspacer id="b6d89">
-            <constraints>
-              <xy x="127" y="4" width="246" height="11"/>
-              <grid row="0" column="2" row-span="1" col-span="2" vsize-policy="1" hsize-policy="6" anchor="0" fill="1"/>
-            </constraints>
-          </hspacer>
           <hspacer id="92041">
             <constraints>
-              <xy x="147" y="29" width="226" height="11"/>
+              <xy x="153" y="29" width="216" height="11"/>
               <grid row="1" column="3" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1"/>
             </constraints>
           </hspacer>
           <component id="e4b98" class="javax.swing.JLabel">
             <constraints>
-              <xy x="3" y="28" width="84" height="14"/>
+              <xy x="3" y="28" width="80" height="14"/>
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
             </constraints>
             <properties>
@@ -311,7 +305,7 @@
           </component>
           <component id="18182" class="javax.swing.JTextField" binding="myKeepBlankLines">
             <constraints>
-              <xy x="97" y="25" width="40" height="20"/>
+              <xy x="93" y="25" width="40" height="20"/>
               <grid row="1" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="8" fill="0">
                 <preferred-size width="40" height="-1"/>
               </grid>
@@ -322,11 +316,21 @@
           </component>
           <component id="bfd7f" class="javax.swing.JCheckBox" binding="myWrapText">
             <constraints>
-              <xy x="3" y="77" width="75" height="22"/>
+              <xy x="3" y="78" width="74" height="22"/>
               <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
               <text resource-bundle="messages/ApplicationBundle" key="checkbox.wrap.text"/>
+            </properties>
+          </component>
+          <component id="f6beb" class="javax.swing.JCheckBox" binding="myShouldKeepLineBreaksInText">
+            <constraints>
+              <xy x="153" y="1" width="133" height="18"/>
+              <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+            </constraints>
+            <properties>
+              <margin top="0" left="0" bottom="0" right="0"/>
+              <text resource-bundle="messages/ApplicationBundle" key="checkbox.keep.line.breaks.in.text"/>
             </properties>
           </component>
         </children>
@@ -334,7 +338,7 @@
       <xy id="3dbb2" binding="myPreviewPanel" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="383" y="0" width="169" height="417"/>
+          <xy x="379" y="0" width="173" height="417"/>
           <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
         </constraints>
         <properties/>

@@ -200,7 +200,7 @@ public class XmlTagBlock extends AbstractXmlBlock{
       syntheticBlock1.getTextRange().getEndOffset() < syntheticBlock2.getTextRange().getStartOffset();
 
     if (syntheticBlock1.endsWithTextElement() && syntheticBlock2.startsWithTextElement()) {
-      return Spacing.createSafeSpacing(myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
+      return Spacing.createSafeSpacing(myXmlFormattingPolicy.getShouldKeepLineBreaksInText(), myXmlFormattingPolicy.getKeepBlankLines());
     }
 
     if (syntheticBlock1.endsWithText()) { //text</tag
@@ -226,7 +226,7 @@ public class XmlTagBlock extends AbstractXmlBlock{
     } else if (syntheticBlock1.endsWithTag() && syntheticBlock2.isTagDescription()) {
       return Spacing.createSpacing(0, 0, 0, true, myXmlFormattingPolicy.getKeepBlankLines());
     } else {
-      return createDefaultSpace(true);
+      return createDefaultSpace(true, true);
     }
 
   }

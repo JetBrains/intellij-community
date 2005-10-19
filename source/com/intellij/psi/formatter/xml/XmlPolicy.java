@@ -78,6 +78,10 @@ public class XmlPolicy extends XmlFormattingPolicy{
     return mySettings.XML_KEEP_LINE_BREAKS;
   }
 
+  public boolean getShouldKeepLineBreaksInText() {
+    return mySettings.XML_KEEP_LINE_BREAKS_IN_TEXT;
+  }
+
   public CodeStyleSettings getSettings() {
     return mySettings;
   }

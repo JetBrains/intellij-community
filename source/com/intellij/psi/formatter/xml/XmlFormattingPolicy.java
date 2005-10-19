@@ -92,6 +92,8 @@ public abstract class XmlFormattingPolicy {
 
   public abstract boolean getShouldKeepLineBreaks();
 
+  public abstract boolean getShouldKeepLineBreaksInText();
+
   public abstract CodeStyleSettings getSettings();
 
   public boolean processJsp() {

@@ -73,6 +73,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
   private JCheckBox mySpaceInEmptyTag;
   private JCheckBox myWrapText;
   private TextFieldWithBrowseButton myAlwaysWrapTags;
+  private JCheckBox myShouldKeepLineBreaksInText;
 
   public CodeStyleHtmlPanel(CodeStyleSettings settings) {
     super(settings);
@@ -199,6 +200,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     settings.HTML_TEXT_ELEMENTS = myTextElementsTagNames.getText();
     settings.HTML_KEEP_WHITESPACES_INSIDE = myKeepWhiteSpacesTagNames.getText();
     settings.HTML_KEEP_LINE_BREAKS = myShouldKeepBlankLines.isSelected();
+    settings.HTML_KEEP_LINE_BREAKS_IN_TEXT = myShouldKeepLineBreaksInText.isSelected();
   }
 
   private int getIntValue(JTextField keepBlankLines) {
@@ -221,6 +223,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     mySpacesAroundTagName.setSelected(settings.HTML_SPACE_AROUND_TAG_NAME);
     mySpacesAroundEquality.setSelected(settings.HTML_SPACE_AROUND_EQUALITY_IN_ATTRINUTE);
     myShouldKeepBlankLines.setSelected(settings.HTML_KEEP_LINE_BREAKS);
+    myShouldKeepLineBreaksInText.setSelected(settings.HTML_KEEP_LINE_BREAKS_IN_TEXT);
 
     myAlwaysWrapTags.setText(settings.HTML_PLACE_ON_NEW_LINE);
     myInsertNewLineTagNames.setText(settings.HTML_ELEMENTS_TO_INSERT_NEW_LINE_BEFORE);
@@ -297,6 +300,10 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     }
 
     if (myShouldKeepBlankLines.isSelected() != settings.HTML_KEEP_LINE_BREAKS) {
+      return true;
+    }
+
+    if (myShouldKeepLineBreaksInText.isSelected() != settings.HTML_KEEP_LINE_BREAKS_IN_TEXT) {
       return true;
     }
 
