@@ -121,6 +121,8 @@ public class Table extends JTable {
       add(editorComp);
       editorComp.validate();
 
+      editorComp.requestFocusInWindow();
+
       setCellEditor(editor);
       setEditingRow(row);
       setEditingColumn(column);
