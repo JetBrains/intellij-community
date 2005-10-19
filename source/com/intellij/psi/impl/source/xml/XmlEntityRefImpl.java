@@ -121,7 +121,7 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
   }
 
   public PsiReference[] getReferences() {
-    return ResolveUtil.getReferencesFromProviders(this);
+    return ResolveUtil.getReferencesFromProviders(this,XmlEntityRef.class);
   }
 
   public void accept(PsiElementVisitor visitor) {

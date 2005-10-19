@@ -181,7 +181,7 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype {
       };
     }
 
-    final PsiReference[] referencesFromProviders = ResolveUtil.getReferencesFromProviders(this);
+    final PsiReference[] referencesFromProviders = ResolveUtil.getReferencesFromProviders(this,XmlDoctype.class);
     
     return ArrayUtil.mergeArrays(
       uriRefs != null? uriRefs: PsiReference.EMPTY_ARRAY,

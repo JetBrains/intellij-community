@@ -27,7 +27,7 @@ public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttribut
   }
 
   public PsiReference[] getReferences() {
-    return ResolveUtil.getReferencesFromProviders(this);
+    return ResolveUtil.getReferencesFromProviders(this, XmlAttributeValue.class);
   }
 
   public PsiElement replaceRangeInText(final TextRange range, String newSubText)

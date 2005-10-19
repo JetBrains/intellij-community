@@ -87,7 +87,7 @@ public class XmlElementDeclImpl extends XmlElementImpl implements XmlElementDecl
 
   @NotNull
   public PsiReference[] getReferences() {
-    return ResolveUtil.getReferencesFromProviders(this);
+    return ResolveUtil.getReferencesFromProviders(this,XmlElementDecl.class);
   }
   
   public PsiElement getOriginalElement() {

@@ -1,10 +1,8 @@
 package com.intellij.psi.impl.source.resolve.reference;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.filters.ElementFilter;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -15,5 +13,5 @@ import java.util.List;
  * To change this template use Options | File Templates.
  */
 public interface ProviderBinding {
-  public PsiReferenceProvider[] getAcceptableProviders(PsiElement position);
+  void addAcceptableReferenceProviders(@NotNull PsiElement position, @NotNull List<PsiReferenceProvider> list);
 }

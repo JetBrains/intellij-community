@@ -49,6 +49,6 @@ public class XmlAttlistDeclImpl extends XmlElementImpl implements XmlAttlistDecl
 
   @NotNull
   public PsiReference[] getReferences() {
-    return ResolveUtil.getReferencesFromProviders(this);
+    return ResolveUtil.getReferencesFromProviders(this,XmlAttlistDecl.class);
   }
 }

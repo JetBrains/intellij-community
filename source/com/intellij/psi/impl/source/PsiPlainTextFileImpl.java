@@ -48,6 +48,6 @@ public class PsiPlainTextFileImpl extends PsiFileImpl implements PsiPlainTextFil
     if (myFileType.equals(StdFileTypes.GUI_DESIGNER_FORM)) {
       return ReferenceUtil.getReferences(this);
     }
-    return ResolveUtil.getReferencesFromProviders(this);
+    return ResolveUtil.getReferencesFromProviders(this,PsiPlainTextFile.class);
   }
 }

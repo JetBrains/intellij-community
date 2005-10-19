@@ -83,7 +83,8 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     final ASTNode startTagName = XmlChildRole.START_TAG_NAME_FINDER.findChild(this);
     if (startTagName == null) return PsiReference.EMPTY_ARRAY;
     final ASTNode endTagName = XmlChildRole.CLOSING_TAG_NAME_FINDER.findChild(this);
-    final PsiReference[] referencesFromProviders = ResolveUtil.getReferencesFromProviders(this);
+    final PsiReference[] referencesFromProviders = ResolveUtil.getReferencesFromProviders(this, XmlTag.class);
+    
     if (endTagName != null){
       final PsiReference[] psiReferences = new PsiReference[referencesFromProviders.length + 2];
       psiReferences[0] = new TagNameReference(startTagName, true);

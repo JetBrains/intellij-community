@@ -1,10 +1,11 @@
 package com.intellij.psi.impl.source.resolve.reference;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.ElementFilter;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -15,44 +16,33 @@ import java.util.List;
  * To change this template use Options | File Templates.
  */
 public class SimpleProviderBinding implements ProviderBinding {
-  private final ElementFilter myPosition;
-  private final List myScopes = new ArrayList();
-  private final List myProviders = new ArrayList();
-
-  public SimpleProviderBinding(ElementFilter filter, Class scope){
-    myScopes.add(scope);
-    myPosition = filter;
-  }
+  private final Class myScope;
+  private List<Pair<PsiReferenceProvider,ElementFilter>> myProviderPairs =
+    new ArrayList<Pair<PsiReferenceProvider,ElementFilter>>(1);
 
   public SimpleProviderBinding(Class scope){
-    this(null, scope);
+    myScope = scope;
   }
 
-  public SimpleProviderBinding(){
-    myPosition = null;
-  }
-
-  private boolean isAcceptable(PsiElement position){
+  private boolean isAcceptable(PsiElement position, ElementFilter filter){
     if(position == null) return false;
-    for (final Object myScope : myScopes) {
-      final Class scopeClass = (Class)myScope;
-      if (scopeClass.isAssignableFrom(position.getClass())) {
-        return myPosition == null || myPosition.isAcceptable(position, position);
-      }
+
+    if (myScope.isAssignableFrom(position.getClass())) {
+      return filter == null || filter.isAcceptable(position, position);
     }
+
     return false;
   }
 
-  public void registerProvider(PsiReferenceProvider provider){
-    myProviders.add(provider);
+  public void registerProvider(PsiReferenceProvider provider,ElementFilter elementFilter){
+    myProviderPairs.add(new Pair<PsiReferenceProvider, ElementFilter>(provider, elementFilter));
   }
 
-  public PsiReferenceProvider[] getAcceptableProviders(PsiElement position) {
-    if (isAcceptable(position)) return getProviders();
-    return null;
-  }
-
-  public PsiReferenceProvider[] getProviders(){
-    return (PsiReferenceProvider[]) myProviders.toArray(new PsiReferenceProvider[myProviders.size()]);
+  public void addAcceptableReferenceProviders(@NotNull PsiElement position, @NotNull List<PsiReferenceProvider> list) {
+    for(Pair<PsiReferenceProvider,ElementFilter> pair:myProviderPairs) {
+      if (isAcceptable(position,pair.second)) {
+        list.add(pair.first);
+      }
+    }
   }
 }

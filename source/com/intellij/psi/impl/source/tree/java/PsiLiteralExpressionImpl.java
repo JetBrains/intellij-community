@@ -390,7 +390,7 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
   }
 
   public PsiReference[] getReferences() {
-    return ResolveUtil.getReferencesFromProviders(this);
+    return ResolveUtil.getReferencesFromProviders(this,PsiLiteralExpression.class);
   }
 }
 

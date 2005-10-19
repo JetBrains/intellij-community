@@ -56,6 +56,6 @@ public class XmlElementContentSpecImpl extends XmlElementImpl implements XmlElem
   
   @NotNull
   public PsiReference[] getReferences() {
-    return ResolveUtil.getReferencesFromProviders(this);
+    return ResolveUtil.getReferencesFromProviders(this,XmlElementContentSpec.class);
   }
 }

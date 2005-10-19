@@ -19,9 +19,8 @@ import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.*;
 import com.intellij.psi.xml.*;
-import com.intellij.util.ArrayUtil;
-import com.intellij.xml.util.XmlUtil;
 import com.intellij.xml.util.HtmlReferenceProvider;
+import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
@@ -38,7 +37,8 @@ import java.util.Map;
  */
 public class ReferenceProvidersRegistry implements ProjectComponent {
   private final List<Class> myTempScopes = new ArrayList<Class>();
-  private final List<ProviderBinding> myBindings = new ArrayList<ProviderBinding>();
+  private final List<ProviderBinding> myBindingsWithoutClass = new ArrayList<ProviderBinding>();
+  private final Map<Class,ProviderBinding> myBindingsMap = new HashMap<Class,ProviderBinding>();
   private final List<Pair<Class, ElementManipulator>> myManipulators = new ArrayList<Pair<Class, ElementManipulator>>();
   private final Map<ReferenceProviderType,PsiReferenceProvider> myReferenceTypeToProviderMap = new HashMap<ReferenceProviderType, PsiReferenceProvider>(5);
 
@@ -367,49 +367,32 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
     registerReferenceProvider(new TokenTypeFilter(XmlTokenType.XML_DATA_CHARACTERS), XmlToken.class,
                               classListProvider);
 
-    registerReferenceProvider(
-      new ScopeFilter(
-        new AndFilter(
-          new TextFilter(
-            new String[] {
-              "function-class", "tag-class", "tei-class", "variable-class", "type", "path",
-              "function-signature", "name", "name-given"
-            }
-          ),
-          new NamespaceFilter(MetaRegistry.TAGLIB_URIS)
-        )
-      ),
-      XmlTag.class,
+    registerXmlTagReferenceProvider(
+      new String[] {
+        "function-class", "tag-class", "tei-class", "variable-class", "type", "path",
+        "function-signature", "name", "name-given"
+      },
+      null,
+      true,
       new TaglibReferenceProvider( getProviderByType(CLASS_REFERENCE_PROVIDER) )
     );
     
-    registerReferenceProvider(
-      new ScopeFilter(
-        new AndFilter(
-          new TextFilter(
-            new String[] {
-              "managed-bean-class"
-            }
-          ),
-          new NamespaceFilter(XmlUtil.JSF_URIS)
-        )
-      ),
-      XmlTag.class,
+    registerXmlTagReferenceProvider(
+      new String[] {
+              "render-kit-class","render-class","managed-bean-class","attribute-class","component-class", "converter-for-class", 
+              "converter-class", "property-class", "key-class", "value-class", "reference-bean-class", "validator-class"
+            },
+      null,
+      true,
       new TaglibReferenceProvider( getProviderByType(CLASS_REFERENCE_PROVIDER) )
     );
     
-    registerReferenceProvider(
-      new ScopeFilter(
-        new AndFilter(
-          new TextFilter(
-            new String[] {
-              "property-name"
-            }
-          ),
-          new NamespaceFilter(XmlUtil.JSF_URIS)
-        )
-      ),
-      XmlTag.class,
+    registerXmlTagReferenceProvider(
+      new String[] {
+        "property-name"
+      },
+      null,
+      true,
       new JSFReferencesProvider()
     );
 
@@ -434,8 +417,11 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
 
     HtmlReferenceProvider provider = new HtmlReferenceProvider();
     registerXmlAttributeValueReferenceProvider(
-      null,
+      new String[] {
+        "src", "href", "action", "background", "width", "height", "type", "bgcolor", "color", "vlink", "link", "alink", "text"
+      },
       provider.getFilter(),
+      false,
       provider
     );
 
@@ -564,32 +550,61 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
     if (scope == XmlAttributeValue.class) {
       registerXmlAttributeValueReferenceProvider(null, elementFilter, provider);
       return;
+    } else if (scope == XmlTag.class) {
+      registerXmlTagReferenceProvider(null, elementFilter, false, provider);
+      return;
     }
 
-    final SimpleProviderBinding binding = new SimpleProviderBinding(elementFilter, scope);
-    binding.registerProvider(provider);
-    myBindings.add(binding);
-  }
-
-  public void registerXmlAttributeValueReferenceProvider(@NonNls String[] attributeNames, ElementFilter elementFilter, PsiReferenceProvider provider) {
-    XmlAttributeValueProviderBinding attributeValueProviderBinding = null;
-    for(ProviderBinding binding:myBindings) {
-      if (binding instanceof XmlAttributeValueProviderBinding) {
-        attributeValueProviderBinding = (XmlAttributeValueProviderBinding)binding;
-        break;
+    if (scope != null) {
+      final ProviderBinding providerBinding = myBindingsMap.get(scope);
+      if (providerBinding != null) {
+        ((SimpleProviderBinding)providerBinding).registerProvider(provider, elementFilter);
+        return;
       }
     }
+    
+    final SimpleProviderBinding binding = new SimpleProviderBinding(scope);
+    binding.registerProvider(provider,elementFilter);
+    if (scope == null) myBindingsWithoutClass.add(binding);
+    else {
+      myBindingsMap.put(scope,binding);
+    }
+  }
 
+  public void registerXmlTagReferenceProvider(@NonNls String[] names, ElementFilter elementFilter, boolean caseSensitive,PsiReferenceProvider provider) {
+    XmlTagProviderBinding tagProviderBinding = (XmlTagProviderBinding)myBindingsMap.get(XmlTag.class);
+    
+    if (tagProviderBinding == null) {
+      tagProviderBinding = new XmlTagProviderBinding();
+      myBindingsMap.put(XmlTag.class, tagProviderBinding);
+    }
+
+    tagProviderBinding.registerProvider(
+      names,
+      elementFilter,
+      caseSensitive, 
+      provider
+    );
+  }
+  
+  public void registerXmlAttributeValueReferenceProvider(@NonNls String[] attributeNames, ElementFilter elementFilter, boolean caseSensitive,PsiReferenceProvider provider) {
+    XmlAttributeValueProviderBinding attributeValueProviderBinding = (XmlAttributeValueProviderBinding)myBindingsMap.get(XmlAttributeValue.class);
+    
     if (attributeValueProviderBinding == null) {
       attributeValueProviderBinding = new XmlAttributeValueProviderBinding();
-      myBindings.add(attributeValueProviderBinding);
+      myBindingsMap.put(XmlAttributeValue.class, attributeValueProviderBinding);
     }
 
     attributeValueProviderBinding.registerProvider(
       attributeNames,
       elementFilter,
+      caseSensitive, 
       provider
     );
+  }
+  
+  public void registerXmlAttributeValueReferenceProvider(@NonNls String[] attributeNames, ElementFilter elementFilter, PsiReferenceProvider provider) {
+    registerXmlAttributeValueReferenceProvider(attributeNames, elementFilter, true, provider);
   }
 
   public PsiReferenceProvider getProviderByType(ReferenceProviderType type) {
@@ -600,23 +615,35 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
     registerReferenceProvider(null, scope, provider);
   }
 
-  public PsiReferenceProvider[] getProvidersByElement(PsiElement element) {
-    PsiReferenceProvider[] ret = PsiReferenceProvider.EMPTY_ARRAY;
+  public PsiReferenceProvider[] getProvidersByElement(PsiElement element, Class hintClass) {
+    assert hintClass == null || hintClass.isInstance(element);
+    
+    List<PsiReferenceProvider> ret = new ArrayList<PsiReferenceProvider>(1);
     PsiElement current;
     do {
       current = element;
 
-      for (final ProviderBinding binding : myBindings) {
-        final PsiReferenceProvider[] acceptableProviders = binding.getAcceptableProviders(current);
-        if (acceptableProviders != null && acceptableProviders.length > 0) {
-          ret = ArrayUtil.mergeArrays(ret, acceptableProviders, PsiReferenceProvider.class);
+      if (hintClass != null) {
+        final ProviderBinding providerBinding = myBindingsMap.get(hintClass);
+        if (providerBinding != null) providerBinding.addAcceptableReferenceProviders(current, ret);
+      } else {
+        for(ProviderBinding providerBinding:myBindingsMap.values()) {
+          providerBinding.addAcceptableReferenceProviders(current, ret);
         }
+      }
+      
+      for (final ProviderBinding binding : myBindingsWithoutClass) {
+        binding.addAcceptableReferenceProviders(current, ret);
       }
       element = ResolveUtil.getContext(element);
     }
     while (!isScopeFinal(current.getClass()));
 
-    return ret;
+    return ret.size() > 0 ? ret.toArray(new PsiReferenceProvider[ret.size()]) : PsiReferenceProvider.EMPTY_ARRAY;
+  }
+
+  public PsiReferenceProvider[] getProvidersByElement(PsiElement element) {
+    return getProvidersByElement(element, null);
   }
 
   public <T extends PsiElement> ElementManipulator<T> getManipulator(T element) {
