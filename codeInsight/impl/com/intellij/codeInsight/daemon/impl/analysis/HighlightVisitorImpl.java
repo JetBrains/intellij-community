@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
+import static com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor.DO_NOT_VALIDATE_KEY;
 import com.intellij.aspects.psi.PsiAspectFile;
 import com.intellij.aspects.psi.PsiPointcutDef;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
@@ -323,18 +324,18 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
 
   private static boolean filterJspErrors(final PsiErrorElement element) {
     PsiElement nextSibling = element.getNextSibling();
-
+    
     if (nextSibling == null) {
       final PsiFile containingFile = element.getContainingFile();
       if (containingFile instanceof JspFile) {
         nextSibling = ((JspFile)containingFile).getBaseLanguageRoot().findElementAt(element.getTextOffset()+1);
       }
     }
-
+    
     while (nextSibling instanceof PsiWhiteSpace) {
       nextSibling = nextSibling.getNextSibling();
     }
-
+    
     if ((nextSibling instanceof JspText ||
          nextSibling instanceof JspExpression ||
          nextSibling instanceof ELExpressionHolder
@@ -345,8 +346,15 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     }
 
     final XmlAttributeValue parentOfType = PsiTreeUtil.getParentOfType(element, XmlAttributeValue.class);
-    return parentOfType != null &&
-           parentOfType.getUserData(XmlHighlightVisitor.DO_NOT_VALIDATE_KEY) != null;
+    if(parentOfType != null && parentOfType.getUserData(DO_NOT_VALIDATE_KEY) != null) {
+      return true;
+    }
+    
+    if (element.getParent().getUserData(DO_NOT_VALIDATE_KEY) != null) {
+      return true;
+    }
+    
+    return false;
   }
 
   public void visitEnumConstant(PsiEnumConstant enumConstant) {

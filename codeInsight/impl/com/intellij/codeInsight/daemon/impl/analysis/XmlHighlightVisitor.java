@@ -781,6 +781,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
   }
 
   public void visitXmlDoctype(XmlDoctype xmlDoctype) {
+    if (xmlDoctype.getUserData(DO_NOT_VALIDATE_KEY) != null) return;
     String uri = xmlDoctype.getDtdUri();
     if (uri == null || ExternalResourceManagerEx.getInstanceEx().isIgnoredResource(uri)) return;
 
