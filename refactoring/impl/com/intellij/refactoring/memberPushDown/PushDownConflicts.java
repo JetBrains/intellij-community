@@ -1,6 +1,7 @@
 package com.intellij.refactoring.memberPushDown;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -40,17 +41,15 @@ public class PushDownConflicts {
     return !myConflicts.isEmpty();
   }
 
-  public String[] getConflicts() {
-    return myConflicts.toArray(new String[myConflicts.size()]);
+  public ArrayList<String> getConflicts() {
+    return myConflicts;
   }
 
   public void checkSourceClassConflicts() {
     final PsiElement[] children = myClass.getChildren();
     for (PsiElement child : children) {
-      if (child instanceof PsiClass || child instanceof PsiMethod || child instanceof PsiField) {
-        if (!myMovedMembers.contains(child)) {
-          child.accept(new UsedMovedMembersConflictsCollector(child));
-        }
+      if (child instanceof PsiMember && !myMovedMembers.contains(child)) {
+        child.accept(new UsedMovedMembersConflictsCollector(child));
       }
     }
   }
@@ -83,6 +82,28 @@ public class PushDownConflicts {
             String message = RefactoringBundle.message("0.already.contains.inner.class.named.1", ConflictsUtil.getDescription(targetClass, false),
                                                   CommonRefactoringUtil.htmlEmphasize(name));
             myConflicts.add(message);
+          }
+        }
+      }
+
+      Members:
+      for (PsiMember member : myMovedMembers) {
+        final PsiReference[] refs = myClass.getManager().getSearchHelper().findReferences(member, member.getResolveScope(), false);
+        for (PsiReference ref : refs) {
+          final PsiElement element = ref.getElement();
+          if (element instanceof PsiReferenceExpression) {
+            final PsiReferenceExpression referenceExpression = ((PsiReferenceExpression)element);
+            final PsiExpression qualifier = referenceExpression.getQualifierExpression();
+            if (qualifier != null) {
+              final PsiType qualifierType = qualifier.getType();
+              if (qualifierType instanceof PsiClassType) {
+                final PsiClass aClass = ((PsiClassType)qualifierType).resolve();
+                if (!InheritanceUtil.isInheritorOrSelf(aClass, targetClass, true)) {
+                  myConflicts.add(RefactoringBundle.message("pushed.members.will.not.be.visible.from.certain.call.sites"));
+                  break Members;
+                }
+              }
+            }
           }
         }
       }

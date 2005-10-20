@@ -11,7 +11,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.JavaDocPolicy;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
@@ -22,6 +21,8 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
 
 import java.util.Set;
+
+import org.jetbrains.annotations.NotNull;
 
 public class PushDownProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.memberPushDown.PushDownProcessor");
@@ -47,6 +48,7 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
     return new PushDownUsageViewDescriptor(myClass, usages, refreshCommand);
   }
 
+  @NotNull
   protected UsageInfo[] findUsages() {
     PsiManager manager = PsiManager.getInstance(myProject);
     final PsiSearchHelper searchHelper = manager.getSearchHelper();
@@ -77,16 +79,8 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
         pushDownConflicts.checkTargetClassConflicts((PsiClass)element);
       }
     }
-    if(pushDownConflicts.isAnyConflicts()) {
-      final String[] conflicts = pushDownConflicts.getConflicts();
-      ConflictsDialog dialog = new ConflictsDialog(myProject, conflicts);
-      dialog.show();
-      if(!dialog.isOK()) return false;
-    }
 
-    prepareSuccessful();
-
-    return true;
+    return showConflicts(pushDownConflicts.getConflicts());
   }
 
   protected void refreshElements(PsiElement[] elements) {
