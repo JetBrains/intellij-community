@@ -43,19 +43,11 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
 
     try {
       if (EventQueue.isDispatchThread()) {
-        getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            executeCommand(result);
-          }
-        });
+        performWriteCommandAction(result);
       } else {
         SwingUtilities.invokeAndWait(new Runnable() {
           public void run() {
-            getApplication().runWriteAction(new Runnable() {
-              public void run() {
-                executeCommand(result);
-              }
-            });
+            performWriteCommandAction(result);
           }
         });
       }
@@ -63,6 +55,14 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
       throw new Error(e);
     }
     return result;
+  }
+
+  private void performWriteCommandAction(final RunResult<T> result) {
+    getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        executeCommand(result);
+      }
+    });
   }
 
   protected RunResult executeCommand(RunResult result) {
