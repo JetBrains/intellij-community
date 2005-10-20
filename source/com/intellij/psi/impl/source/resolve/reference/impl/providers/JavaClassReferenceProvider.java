@@ -14,6 +14,8 @@ import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlTagValue;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -30,18 +32,34 @@ import java.util.List;
  */
 public class JavaClassReferenceProvider extends GenericReferenceProvider{
   private static final char SEPARATOR = '.';
+  private static final ReferenceType ourType = new ReferenceType(ReferenceType.JAVA_CLASS);
 
   public PsiReference[] getReferencesByElement(PsiElement element){
-    return getReferencesByElement(element, new ReferenceType(ReferenceType.JAVA_CLASS));
+    return getReferencesByElement(element, ourType);
   }
 
   public PsiReference[] getReferencesByElement(PsiElement element, ReferenceType type){
       String text = element.getText();
+    
       if (element instanceof XmlAttributeValue) {
           final String valueString = ((XmlAttributeValue) element).getValue();
           int startOffset = StringUtil.startsWithChar(text, '"') ||
                             StringUtil.startsWithChar(text, '\'') ? 1 : 0;
           return getReferencesByString(valueString, element, type, startOffset);
+      } else if (element instanceof XmlTag) {
+        final XmlTagValue value = ((XmlTag)element).getValue();
+        
+        if (value != null) {
+          text = value.getText();
+          final String trimmedText = text.trim();
+          
+          return getReferencesByString(
+            trimmedText, 
+            element, 
+            type, 
+            value.getTextRange().getStartOffset() + text.indexOf(trimmedText) - element.getTextOffset() 
+          );
+        }
       }
 
       return getReferencesByString(text, element, type, 0);

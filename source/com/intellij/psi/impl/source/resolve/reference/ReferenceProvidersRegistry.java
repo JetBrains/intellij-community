@@ -372,28 +372,32 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
         "function-class", "tag-class", "tei-class", "variable-class", "type", "path",
         "function-signature", "name", "name-given"
       },
-      null,
+      new NamespaceFilter(MetaRegistry.TAGLIB_URIS),
       true,
       new TaglibReferenceProvider( getProviderByType(CLASS_REFERENCE_PROVIDER) )
     );
-    
+
+    final NamespaceFilter jsfNsFilter = new NamespaceFilter(XmlUtil.JSF_URIS);
     registerXmlTagReferenceProvider(
       new String[] {
-              "render-kit-class","render-class","managed-bean-class","attribute-class","component-class", "converter-for-class", 
-              "converter-class", "property-class", "key-class", "value-class", "reference-bean-class", "validator-class"
-            },
-      null,
-      true,
-      new TaglibReferenceProvider( getProviderByType(CLASS_REFERENCE_PROVIDER) )
-    );
-    
-    registerXmlTagReferenceProvider(
-      new String[] {
-        "property-name"
+        "render-kit-class","renderer-class","managed-bean-class","attribute-class","component-class",
+        "converter-for-class", "converter-class", "key-class", "value-class",
+        "referenced-bean-class", "validator-class", "application-factory", "faces-context-factory",
+        "render-kit-factory", "lifecycle-factory", "view-handler", "variable-resolver", "phase-listener",
+        "property-resolver", "state-manager", "action-listener", "navigation-handler"
       },
-      null,
+      jsfNsFilter,
       true,
-      new JSFReferencesProvider()
+      getProviderByType(CLASS_REFERENCE_PROVIDER) 
+    );
+
+    final JSFReferencesProvider jsfProvider = new JSFReferencesProvider();
+    
+    registerXmlTagReferenceProvider(
+      new String[] { "property-name", "property-class" },
+      jsfNsFilter,
+      true,
+      jsfProvider
     );
 
     final DtdReferencesProvider dtdReferencesProvider = new DtdReferencesProvider();
@@ -632,8 +636,10 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
         }
       }
       
-      for (final ProviderBinding binding : myBindingsWithoutClass) {
-        binding.addAcceptableReferenceProviders(current, ret);
+      if (myBindingsWithoutClass.size() > 0) {
+        for (final ProviderBinding binding : myBindingsWithoutClass) {
+          binding.addAcceptableReferenceProviders(current, ret);
+        }
       }
       element = ResolveUtil.getContext(element);
     }

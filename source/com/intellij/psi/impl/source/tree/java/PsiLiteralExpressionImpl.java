@@ -13,7 +13,7 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
   private static final @NonNls String HEXPREFIX = "0x";
   private static final @NonNls String HEXPREFIX2 = "0X";
   private static final @NonNls String LHEX_PREFIX = "0xl";
-
+  private static final Class<PsiLiteralExpression> ourHintClazz = PsiLiteralExpression.class;
 
   public PsiLiteralExpressionImpl() {
     super(LITERAL_EXPRESSION);
@@ -390,7 +390,7 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
   }
 
   public PsiReference[] getReferences() {
-    return ResolveUtil.getReferencesFromProviders(this,PsiLiteralExpression.class);
+    return ResolveUtil.getReferencesFromProviders(this,ourHintClazz);
   }
 }
 

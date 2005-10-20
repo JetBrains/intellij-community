@@ -22,6 +22,7 @@ import com.intellij.ide.util.EditSourceUtil;
  */
 public class XmlTokenImpl extends LeafPsiElement implements XmlToken, Navigatable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlTokenImpl");
+  private static final Class<XmlToken> ourHintClazz = XmlToken.class;
 
   public XmlTokenImpl(IElementType type, char[] buffer, int startOffset, int endOffset, int lexerState, CharTable table) {
     super(type, buffer, startOffset, endOffset, lexerState, table);
@@ -50,7 +51,7 @@ public class XmlTokenImpl extends LeafPsiElement implements XmlToken, Navigatabl
 
   public PsiReference[] getReferences() {
     if (getElementType() == XmlTokenType.XML_DATA_CHARACTERS) {
-      return ResolveUtil.getReferencesFromProviders(this,XmlToken.class);
+      return ResolveUtil.getReferencesFromProviders(this,ourHintClazz);
     } else {
       return super.getReferences();
     }

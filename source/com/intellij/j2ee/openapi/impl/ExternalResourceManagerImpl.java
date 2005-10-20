@@ -50,6 +50,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     addInternalResource(J2EE_1_3 +  "application_1_3.dtd", "application_1_3.dtd");
     addInternalResource(J2EE_1_3 +   "ejb-jar_2_0.dtd", "ejb-jar_2_0.dtd");
     addInternalResource(J2EE_1_3 +   "logger.dtd", "logger.dtd");
+    addInternalResource(J2EE_1_3 +   "web-facesconfig_1_1.dtd", "web-facesconfig_1_1.dtd");
 
     addInternalResource(J2EE_1_2 +  "application-client_1_2.dtd", "application-client_1_2.dtd");
     addInternalResource(J2EE_1_2 +  "application_1_2.dtd", "application_1_2.dtd");
