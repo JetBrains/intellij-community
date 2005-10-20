@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Anton Katilin
@@ -55,6 +56,7 @@ public interface FileEditorProvider {
   /**
    * Deserializes state from the specified <code>sourceElemet</code>
    */
+  @NotNull
   FileEditorState readState(Element sourceElement, Project project, VirtualFile file);
 
   /**
