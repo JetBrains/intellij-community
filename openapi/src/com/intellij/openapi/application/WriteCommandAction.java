@@ -37,8 +37,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     final RunResult<T> result = new RunResult<T>();
 
     if (canWriteNow()) {
-      executeCommand(result);
-      return result;
+      return executeCommand(result);
     }
 
     try {
@@ -65,7 +64,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     });
   }
 
-  protected RunResult executeCommand(RunResult result) {
+  protected <T> RunResult<T> executeCommand(RunResult<T> result) {
     //this is needed to prevent memory leak, since command
     // is put into undo queue
     final RunResult[] results = new RunResult[] {result};
