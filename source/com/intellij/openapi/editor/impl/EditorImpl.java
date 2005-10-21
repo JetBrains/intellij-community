@@ -1029,7 +1029,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     borderEffect.paintHighlighters((getMarkupModel()).getAllHighlighters());
     paintCaretCursor(g);
 
-    //paintComposedTextDecoration((Graphics2D)g);
+    paintComposedTextDecoration((Graphics2D)g);
   }
 
   public void setBackgroundColor(Color color) {
