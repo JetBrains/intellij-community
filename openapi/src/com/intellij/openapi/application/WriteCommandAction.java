@@ -34,7 +34,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   }
 
   public RunResult<T> execute() {
-    final RunResult<T> result = new RunResult<T>();
+    final RunResult<T> result = new RunResult<T>(this);
 
     if (canWriteNow()) {
       return executeCommand(result);
