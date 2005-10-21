@@ -11,10 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -47,22 +44,23 @@ public class PropertiesUtil {
 
   @NotNull
   public static Collection<Property> findPropertiesByKey(Project project, final String key) {
-    final PsiSearchHelper searchHelper = PsiManager.getInstance(project).getSearchHelper();
-    final Collection<Property> properties = new THashSet<Property>();
-    List<String> words = StringUtil.getWordsIn(key);
-    for (String word : words) {
-      searchHelper.processAllFilesWithWord(word, PROP_FILES_SCOPE, new Processor<PsiFile>() {
-        public boolean process(PsiFile file) {
-          if (file instanceof PropertiesFile) {
-            PropertiesFile propertiesFile = (PropertiesFile)file;
-            properties.addAll(propertiesFile.findPropertiesByKey(key));
-          }
-          return true;
-        }
-      });
-    }
-
-    return properties;
+    return PropertiesReferenceManager.getInstance(project).findPropertiesByKey(key);
+    //final PsiSearchHelper searchHelper = PsiManager.getInstance(project).getSearchHelper();
+    //final Collection<Property> properties = new THashSet<Property>();
+    //List<String> words = StringUtil.getWordsIn(key);
+    //for (String word : words) {
+    //  searchHelper.processAllFilesWithWord(word, PROP_FILES_SCOPE, new Processor<PsiFile>() {
+    //    public boolean process(PsiFile file) {
+    //      if (file instanceof PropertiesFile) {
+    //        PropertiesFile propertiesFile = (PropertiesFile)file;
+    //        properties.addAll(propertiesFile.findPropertiesByKey(key));
+    //      }
+    //      return true;
+    //    }
+    //  });
+    //}
+    //
+    //return properties;
   }
 
   public static boolean isPropertyComplete(final Project project, ResourceBundle resourceBundle, String propertyName) {

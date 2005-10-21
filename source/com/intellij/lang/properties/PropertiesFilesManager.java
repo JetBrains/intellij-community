@@ -57,12 +57,16 @@ public class PropertiesFilesManager implements ApplicationComponent {
     addNewFile(file);
   }
 
-  void addNewFile(final VirtualFile file) {
+  // returns true if file is of properties file type
+  boolean addNewFile(final VirtualFile file) {
     FileType fileType = myFileTypeManager.getFileTypeByFile(file);
     if (fileType == StdFileTypes.PROPERTIES) {
-      myPropertiesFiles.add(file);
-      firePropertiesFileAdded(file);
+      if (myPropertiesFiles.add(file)) {
+        firePropertiesFileAdded(file);
+      }
+      return true;
     }
+    return false;
   }
 
   public Collection<VirtualFile> getAllPropertiesFiles() {
@@ -141,6 +145,7 @@ public class PropertiesFilesManager implements ApplicationComponent {
   public void removePropertiesFileListener(PropertiesFileListener fileListener) {
     myPropertiesFileListeners.remove(fileListener);
   }
+
   private void firePropertiesFileAdded(VirtualFile propertiesFile) {
     for (PropertiesFileListener listener : myPropertiesFileListeners) {
       listener.fileAdded(propertiesFile);

@@ -2,9 +2,8 @@ package com.intellij.lang.properties.psi.impl;
 
 import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.properties.PropertiesUtil;
+import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.ResourceBundle;
-import com.intellij.lang.properties.ResourceBundleImpl;
 import com.intellij.lang.properties.parsing.PropertiesElementTypes;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
@@ -150,6 +149,7 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
 
   public synchronized void subtreeChanged() {
     super.subtreeChanged();
+    PropertiesReferenceManager.getInstance(getProject()).beforePropertiesFileChange(this, myPropertiesMap == null ? null : myPropertiesMap.keySet());
     myPropertiesMap = null;
     myProperties = null;
   }
