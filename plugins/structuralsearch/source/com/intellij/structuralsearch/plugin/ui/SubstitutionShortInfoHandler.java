@@ -1,6 +1,5 @@
 package com.intellij.structuralsearch.plugin.ui;
 
-import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.codeInsight.template.impl.TemplateImplUtil;
 import com.intellij.codeInsight.template.impl.Variable;
@@ -9,8 +8,6 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.util.Key;
 
-import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -80,23 +77,7 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
     }
 
     if (text.length() > 0) {
-      Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
-      Point top = editor.logicalPositionToXY(editor.offsetToLogicalPosition(start));
-      Point bottom = editor.logicalPositionToXY(editor.offsetToLogicalPosition(end));
-
-      Point bestPoint = new Point(top.x, bottom.y + editor.getLineHeight());
-
-      if (!visibleArea.contains(bestPoint)) {
-        int defaultOffset = editor.logicalPositionToOffset(editor.xyToLogicalPosition(new Point(0,0)));
-        bestPoint = editor.logicalPositionToXY(editor.offsetToLogicalPosition(defaultOffset));
-      }
-
-      Point p = SwingUtilities.convertPoint(
-        editor.getContentComponent(),
-        bestPoint,
-        editor.getComponent().getRootPane().getLayeredPane()
-      );
-      HintManager.getInstance().getTooltipController().showTooltip(editor, p, text, false, SS_INFO_TOOLTIP_GROUP);
+      UIUtil.showTooltip(editor, start, end, text, SS_INFO_TOOLTIP_GROUP);
     }
   }
 

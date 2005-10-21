@@ -2,6 +2,8 @@ package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.codeInsight.template.impl.TemplateContext;
 import com.intellij.codeInsight.template.impl.TemplateEditorUtil;
+import com.intellij.codeInsight.hint.TooltipGroup;
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
@@ -95,8 +97,8 @@ public class UIUtil {
     JPanel tmp = new JPanel();
 
     tmp.setLayout( new BoxLayout(tmp,BoxLayout.X_AXIS));
-    for(int i=0;i < options.length; ++i) {
-      tmp.add( options[i] );
+    for (JComponent option : options) {
+      tmp.add(option);
     }
     tmp.add( Box.createHorizontalGlue() );
 
@@ -296,5 +298,25 @@ public class UIUtil {
     } else {
       StructuralReplaceAction.triggerAction(config,context);
     }
+  }
+
+  static void showTooltip(final Editor editor, final int start, final int end, final String text, TooltipGroup group) {
+    Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
+    Point top = editor.logicalPositionToXY(editor.offsetToLogicalPosition(start));
+    Point bottom = editor.logicalPositionToXY(editor.offsetToLogicalPosition(end));
+
+    Point bestPoint = new Point(top.x, bottom.y + editor.getLineHeight());
+
+    if (!visibleArea.contains(bestPoint)) {
+      int defaultOffset = editor.logicalPositionToOffset(editor.xyToLogicalPosition(new Point(0,0)));
+      bestPoint = editor.logicalPositionToXY(editor.offsetToLogicalPosition(defaultOffset));
+    }
+
+    Point p = SwingUtilities.convertPoint(
+      editor.getContentComponent(),
+      bestPoint,
+      editor.getComponent().getRootPane().getLayeredPane()
+    );
+    HintManager.getInstance().getTooltipController().showTooltip(editor, p, text, false, group);
   }
 }

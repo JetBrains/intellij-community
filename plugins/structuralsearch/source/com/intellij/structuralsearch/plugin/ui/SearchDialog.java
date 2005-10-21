@@ -2,8 +2,9 @@ package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.template.impl.Variable;
-import com.intellij.find.FindSettings;
+import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.find.FindProgressIndicator;
+import com.intellij.find.FindSettings;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -13,13 +14,13 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -28,19 +29,22 @@ import com.intellij.structuralsearch.plugin.replace.ui.NavigateSearchResultsDial
 import com.intellij.structuralsearch.plugin.ui.actions.DoSearchAction;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.usages.*;
+import com.intellij.util.Alarm;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-import org.jetbrains.annotations.NonNls;
-
 // Class to show the user the request for search
+@SuppressWarnings({"RefusedBequest", "AssignmentToStaticFieldFromInstanceMethod"})
 public class SearchDialog extends DialogWrapper implements ConfigurationCreator {
   protected SearchContext searchContext;
 
@@ -61,6 +65,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
 
   protected SearchModel model;
   private JCheckBox openInNewTab;
+  private Alarm myAlarm;
 
   protected static final String USER_DEFINED = SSRBundle.message("new.template.defaultname");
   protected final ExistingTemplatesComponent existingTemplatesComponent;
@@ -70,6 +75,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
   private static boolean ourOpenInNewTab;
   private static boolean ourUseMaxCount;
   @NonNls private static String ourFileType = "java";
+  private static final TooltipGroup OUR_TOOLTIP_GROUP = new TooltipGroup("ssr.error.tooltip",100);
 
   protected UsageViewContext createUsageViewContext(Configuration configuration) {
     return new UsageViewContext(searchContext, configuration);
@@ -123,7 +129,20 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     Document doc = PsiDocumentManager.getInstance(searchContext.getProject()).getDocument( file );
     DaemonCodeAnalyzer.getInstance(searchContext.getProject()).setHighlightingEnabled(file,false);
     Editor editor = UIUtil.createEditor(doc, searchContext.getProject(),true,true);
+    
+    editor.getContentComponent().addKeyListener(
+      new KeyAdapter() {
+        public void keyPressed(KeyEvent e) {
+          myAlarm.cancelAllRequests();
+          myAlarm.addRequest(new Runnable() {
 
+            public void run() {
+              if (false) doValidate();
+            }
+          }, 500);
+        }
+      }
+    );
     return editor;
   }
 
@@ -372,6 +391,8 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
 
     existingTemplatesComponent = ExistingTemplatesComponent.getInstance(searchContext.getProject());
     model = new SearchModel(createConfiguration());
+    myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+    
     init();
   }
 
@@ -630,28 +651,8 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     SearchScope selectedScope = combo.getSelectedScope();
     if (selectedScope == null) return;
 
-    setValuesToConfig(model.getConfig());
+    doValidate();
     
-    try {
-      Matcher.validate(searchContext.getProject(),model.getConfig().getMatchOptions());
-    } catch(UnsupportedPatternException ex) {
-      Messages.showMessageDialog(
-        searchContext.getProject(),
-        SSRBundle.message("this.pattern.is.malformed.or.unsupported.message"),
-        SSRBundle.message("information.message.title"),
-        Messages.getInformationIcon()
-      );
-      return;
-    } catch(MalformedPatternException ex) {
-      Messages.showMessageDialog(
-        searchContext.getProject(),
-        SSRBundle.message("this.pattern.is.malformed.or.unsupported.message"),
-        SSRBundle.message("information.message.title"),
-        Messages.getInformationIcon()
-      );
-      return;
-    }
-
     super.doOKAction();
     if (!isReplaceDialog()) {
       FindSettings.getInstance().setDefaultScopeName(combo.getSelectedScopeName());
@@ -682,6 +683,43 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
         Messages.getInformationIcon()
       );
     }
+  }
+
+  protected boolean doValidate() {
+    boolean result = true;
+    setValuesToConfig(model.getConfig());
+
+    try {
+      Matcher.validate(searchContext.getProject(),model.getConfig().getMatchOptions());
+    } catch(Exception ex) {
+      if (ex instanceof UnsupportedPatternException ||
+          ex instanceof MalformedPatternException
+         ) {
+        doMessage("this.pattern.is.malformed.or.unsupported.message");
+      }
+      result = false;
+    }
+    
+    getOKAction().setEnabled(result);
+    return result;
+  }
+
+  protected void doMessage(@NonNls String messageId) {
+    final int offset = searchCriteriaEdit.getCaretModel().getOffset();
+    //UIUtil.showTooltip(
+    //  searchCriteriaEdit,
+    //  offset,
+    //  offset + 1,
+    //  SSRBundle.message(messageId),
+    //  OUR_TOOLTIP_GROUP
+    //);
+    
+    Messages.showMessageDialog(
+      searchContext.getProject(),
+      SSRBundle.message(messageId),
+      SSRBundle.message("information.message.title"),
+      Messages.getInformationIcon()
+    );
   }
 
   protected void setValuesToConfig(Configuration config) {
@@ -724,7 +762,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     return getFileTypeByString((String) fileTypes.getSelectedItem());
   }
 
-  private FileType getFileTypeByString(String ourFileType) {
+  private static FileType getFileTypeByString(String ourFileType) {
     //noinspection HardCodedStringLiteral
     if (ourFileType.equals("java")) {
       return StdFileTypes.JAVA;

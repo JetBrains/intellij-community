@@ -2,28 +2,29 @@ package com.intellij.structuralsearch.plugin.replace.ui;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.localVcs.LocalVcs;
 import com.intellij.openapi.localVcs.LvcsAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.structuralsearch.UnsupportedPatternException;
 import com.intellij.structuralsearch.SSRBundle;
+import com.intellij.structuralsearch.UnsupportedPatternException;
+import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
+import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
+import com.intellij.structuralsearch.plugin.replace.Replacer;
 import com.intellij.structuralsearch.plugin.ui.*;
-import com.intellij.structuralsearch.plugin.replace.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageInfo2UsageAdapter;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Set;
-import java.util.Iterator;
 import java.util.ArrayList;
+import java.util.Set;
 
 // Class to show the user the request for search
+@SuppressWarnings({"RefusedBequest"})
 public class ReplaceDialog extends SearchDialog {
   private Editor replaceCriteriaEdit;
   private JCheckBox shortenFQN;
@@ -225,10 +226,10 @@ public class ReplaceDialog extends SearchDialog {
     Set<Usage> infos = context.getUsageView().getUsages();
     java.util.List<ReplacementInfo> results = new ArrayList<ReplacementInfo>(context.getResults().size());
 
-    for(Iterator<Usage> i = infos.iterator(); i.hasNext();) {
-      UsageInfo2UsageAdapter usage = (UsageInfo2UsageAdapter)i.next();
+    for (final Usage info : infos) {
+      UsageInfo2UsageAdapter usage = (UsageInfo2UsageAdapter)info;
 
-      if (isValid(usage,context)) {
+      if (isValid(usage, context)) {
         results.add(context.getUsage2ReplacementInfo().get(usage));
       }
     }
@@ -317,8 +318,11 @@ public class ReplaceDialog extends SearchDialog {
     return false;
   }
 
-  // Performs ok action
-  protected void doOKAction() {
+  protected boolean doValidate() {
+    if(!super.doValidate()) return false;
+    
+    boolean result = true;
+    
     try {
       Replacer.checkSupportedReplacementPattern(
         searchContext.getProject(),
@@ -326,14 +330,13 @@ public class ReplaceDialog extends SearchDialog {
         replaceCriteriaEdit.getDocument().getText(),
         getCurrentFileType()
       );
-      super.doOKAction();
     } catch(UnsupportedPatternException ex) {
-      Messages.showErrorDialog(
-        searchContext.getProject(),
-        ex.toString(),
-        SSRBundle.message("unsupported.replacement.pattern.message")
-      );
+      doMessage("unsupported.replacement.pattern.message");
+      result = false;
     }
+    
+    getOKAction().setEnabled(result);
+    return result;
   }
 
   public void show() {
