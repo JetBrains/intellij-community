@@ -3,7 +3,6 @@
  */
 package com.intellij.lang.properties;
 
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -20,6 +19,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.rename.RenameHandler;
+import com.intellij.codeInsight.CodeInsightUtil;
 
 import java.io.File;
 import java.io.IOException;

@@ -1,7 +1,7 @@
 package com.intellij.codeInspection.miscGenerics;
 
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;

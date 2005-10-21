@@ -4,7 +4,6 @@
  */
 package com.intellij.debugger.engine.evaluation.expression;
 
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.debugger.engine.ContextUtil;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.JVMName;
@@ -19,6 +18,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.ArrayList;
@@ -263,7 +263,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
             PsiElementFactory elementFactory = localVariable.getManager().getElementFactory();
             try {
-              PsiExpression initialValue = elementFactory.createExpressionFromText(CodeInsightUtil.getDefaultValueOfType(type), null);
+              PsiExpression initialValue = elementFactory.createExpressionFromText(PsiTypesUtil.getDefaultValueOfType(type), null);
               Object value = ConstantExpressionEvaluator.computeConstantExpression(initialValue, null, true);
               myCurrentFragmentEvaluator.setInitialValue(localVariable.getName(), value);
             }

@@ -1,7 +1,6 @@
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.ChangeContextUtil;
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -19,6 +18,7 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduceParameter.Util;
@@ -490,7 +490,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
         name = myCodeStyleManager.suggestUniqueVariableName(name, block.getFirstChild(), true);
       }
       RefactoringUtil.renameVariableReferences(parm, name, GlobalSearchScope.projectScope(myProject));
-      String defaultValue = CodeInsightUtil.getDefaultValueOfType(parm.getType());
+      String defaultValue = PsiTypesUtil.getDefaultValueOfType(parm.getType());
       PsiExpression initializer = myFactory.createExpressionFromText(defaultValue, null);
       PsiDeclarationStatement declaration = myFactory.createVariableDeclarationStatement(name, callSubstitutor.substitute(parm.getType()),
                                                                                          initializer);

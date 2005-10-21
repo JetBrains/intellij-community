@@ -1,10 +1,10 @@
 
 package com.intellij.codeInsight.generation.surroundWith;
 
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
@@ -56,7 +56,7 @@ public class SurroundWithUtil {
                   initializer.delete();
                 }
                 else {
-                  String defaultValue = CodeInsightUtil.getDefaultValueOfType(var.getType());
+                  String defaultValue = PsiTypesUtil.getDefaultValueOfType(var.getType());
                   PsiExpression expr = factory.createExpressionFromText(defaultValue, null);
                   initializer.replace(expr);
                 }

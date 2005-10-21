@@ -28,6 +28,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
@@ -94,7 +95,7 @@ public class CreateFromUsageUtils {
     Properties properties = new Properties();
     properties.setProperty(FileTemplate.ATTRIBUTE_RETURN_TYPE, returnType.getPresentableText());
     properties.setProperty(FileTemplate.ATTRIBUTE_DEFAULT_RETURN_VALUE,
-                           CodeInsightUtil.getDefaultValueOfType(returnType));
+                           PsiTypesUtil.getDefaultValueOfType(returnType));
 
     FileTemplateUtil.setClassAndMethodNameProperties(properties, aClass, method);
 

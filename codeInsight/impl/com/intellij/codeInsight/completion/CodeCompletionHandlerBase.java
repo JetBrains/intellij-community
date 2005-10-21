@@ -18,6 +18,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.xml.XmlTag;
@@ -422,22 +423,22 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   protected PsiFile createCopy(final CompletionContext context) {
     final PsiElementVisitor visitor = new PsiRecursiveElementVisitor() {
       public void visitClass(PsiClass aClass) {
-        aClass.putCopyableUserData(CompletionUtil.ORIGINAL_KEY, aClass);
+        aClass.putCopyableUserData(PsiUtil.ORIGINAL_KEY, aClass);
         super.visitClass(aClass);
       }
 
       public void visitVariable(PsiVariable variable) {
-        variable.putCopyableUserData(CompletionUtil.ORIGINAL_KEY, variable);
+        variable.putCopyableUserData(PsiUtil.ORIGINAL_KEY, variable);
         super.visitVariable(variable);
       }
 
       public void visitMethod(PsiMethod method) {
-        method.putCopyableUserData(CompletionUtil.ORIGINAL_KEY, method);
+        method.putCopyableUserData(PsiUtil.ORIGINAL_KEY, method);
         super.visitMethod(method);
       }
 
       public void visitXmlTag(XmlTag tag) {
-        tag.putCopyableUserData(CompletionUtil.ORIGINAL_KEY, tag);
+        tag.putCopyableUserData(PsiUtil.ORIGINAL_KEY, tag);
         super.visitXmlTag(tag);
       }
     };
@@ -451,12 +452,12 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       }
 
       public void visitClass(PsiClass aClass) {
-        final PsiElement originalElement = aClass.getCopyableUserData(CompletionUtil.ORIGINAL_KEY);
+        final PsiElement originalElement = aClass.getCopyableUserData(PsiUtil.ORIGINAL_KEY);
         if (originalElement != null){
-          originalElement.putCopyableUserData(CompletionUtil.ORIGINAL_KEY, null);
+          originalElement.putCopyableUserData(PsiUtil.ORIGINAL_KEY, null);
           originalElement.putUserData(CompletionUtil.COPY_KEY, aClass);
-          aClass.putCopyableUserData(CompletionUtil.ORIGINAL_KEY, null);
-          aClass.putUserData(CompletionUtil.ORIGINAL_KEY, originalElement);
+          aClass.putCopyableUserData(PsiUtil.ORIGINAL_KEY, null);
+          aClass.putUserData(PsiUtil.ORIGINAL_KEY, originalElement);
         }
         super.visitClass(aClass);
       }

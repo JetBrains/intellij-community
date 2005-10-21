@@ -1,14 +1,15 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.ArrayList;
@@ -71,7 +72,7 @@ public class AddReturnFix implements IntentionAction {
         return variable.getName();
       }
     }
-    return CodeInsightUtil.getDefaultValueOfType(type);
+    return PsiTypesUtil.getDefaultValueOfType(type);
   }
 
   private PsiVariable[] getDeclaredVariables(PsiMethod method) {

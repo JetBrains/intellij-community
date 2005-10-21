@@ -219,41 +219,6 @@ public class CodeInsightUtil {
     return minIndent;
   }
 
-  public static String getDefaultValueOfType(PsiType type) {
-    if (type instanceof PsiArrayType) {
-      int count = type.getArrayDimensions() - 1;
-      PsiType componentType = type.getDeepComponentType();
-
-      if (componentType instanceof PsiClassType) {
-        final PsiClassType classType = (PsiClassType)componentType;
-        if (classType.resolve() instanceof PsiTypeParameter) {
-          return PsiKeyword.NULL;
-        }
-      }
-
-      StringBuffer buffer = new StringBuffer();
-      buffer.append(PsiKeyword.NEW);
-      buffer.append(" ");
-      buffer.append(componentType.getCanonicalText());
-      buffer.append("[0]");
-      for (int i = 0; i < count; i++) {
-        buffer.append("[]");
-      }
-      return buffer.toString();
-    }
-    else if (type instanceof PsiPrimitiveType) {
-      if (PsiType.BOOLEAN == type) {
-        return PsiKeyword.FALSE;
-      }
-      else {
-        return "0";
-      }
-    }
-    else {
-      return PsiKeyword.NULL;
-    }
-  }
-
   public static PsiExpression[] findExpressionOccurrences(PsiElement scope, PsiExpression expr) {
     List<PsiExpression> array = new ArrayList<PsiExpression>();
     addExpressionOccurrences(RefactoringUtil.unparenthesizeExpression(expr), array, scope);
@@ -299,6 +264,14 @@ public class CodeInsightUtil {
     return Comparing.equal(type1, type2);
   }
 
+  public static Editor positionCursor(final Project project, PsiFile targetFile, PsiElement element) {
+    TextRange range = element.getTextRange();
+    int textOffset = range.getStartOffset();
+
+    OpenFileDescriptor descriptor = new OpenFileDescriptor(project, targetFile.getVirtualFile(), textOffset);
+    return FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
+  }
+
   public static boolean preparePsiElementForWrite(final PsiElement element) {
     PsiFile file = element == null ? null : element.getContainingFile();
     return prepareFileForWrite(file);
@@ -317,7 +290,6 @@ public class CodeInsightUtil {
       if (!FileDocumentManager.fileForDocumentCheckedOutSuccessfully(document, project)) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
-
             if (editor != null && editor.getComponent().isDisplayable()) {
               HintManager.getInstance().showErrorHint(
                 editor,
@@ -332,14 +304,5 @@ public class CodeInsightUtil {
 
     return true;
   }
-
-  public static Editor positionCursor(final Project project, PsiFile targetFile, PsiElement element) {
-    TextRange range = element.getTextRange();
-    int textOffset = range.getStartOffset();
-
-    OpenFileDescriptor descriptor = new OpenFileDescriptor(project, targetFile.getVirtualFile(), textOffset);
-    return FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
-  }
-
 }
 

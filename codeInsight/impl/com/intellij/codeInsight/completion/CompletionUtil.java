@@ -85,7 +85,6 @@ public class CompletionUtil {
 
   public static final @NonNls String DUMMY_IDENTIFIER = "IntellijIdeaRulezzz ";
   public static final Key<String> COMPLETION_PREFIX = Key.create("Completion prefix");
-  public static final Key<PsiElement> ORIGINAL_KEY = Key.create("ORIGINAL_KEY");
   public static final Key<PsiElement> COPY_KEY = Key.create("COPY_KEY");
 
   public static PsiType getQualifierType(LookupItem item){

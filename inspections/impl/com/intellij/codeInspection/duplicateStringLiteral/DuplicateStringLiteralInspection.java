@@ -1,7 +1,7 @@
 package com.intellij.codeInspection.duplicateStringLiteral;
 
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.openapi.diagnostic.Logger;

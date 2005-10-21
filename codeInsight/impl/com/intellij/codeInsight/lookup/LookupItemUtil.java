@@ -108,8 +108,8 @@ public class LookupItemUtil{
     int tailType = TailType.NONE;
     if (object instanceof PsiElement){
       PsiElement element = (PsiElement) object;
-      if(element.getUserData(CompletionUtil.ORIGINAL_KEY) != null){
-        element = element.getUserData(CompletionUtil.ORIGINAL_KEY);
+      if(element.getUserData(PsiUtil.ORIGINAL_KEY) != null){
+        element = element.getUserData(PsiUtil.ORIGINAL_KEY);
         object = element;
         item = new LookupItem(object, "");
       }
