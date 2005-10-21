@@ -1,10 +1,8 @@
 package com.intellij.ide.macro;
 
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.DataAccessor;
 
 import java.io.File;
 

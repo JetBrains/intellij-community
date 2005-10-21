@@ -6,6 +6,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.DataAccessor;
 
 import java.io.File;
 

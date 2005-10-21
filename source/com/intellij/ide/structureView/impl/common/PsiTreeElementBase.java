@@ -31,7 +31,7 @@
  */
 package com.intellij.ide.structureView.impl.common;
 
-import com.intellij.codeInsight.CodeInsightColors;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.ide.structureView.StructureViewExtension;
 import com.intellij.ide.structureView.StructureViewFactoryEx;
 import com.intellij.ide.structureView.StructureViewTreeElement;

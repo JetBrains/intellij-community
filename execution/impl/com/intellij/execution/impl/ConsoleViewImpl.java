@@ -1,16 +1,15 @@
 package com.intellij.execution.impl;
 
-import com.intellij.codeInsight.CodeInsightColors;
 import com.intellij.codeInsight.navigation.IncrementalSearchHandler;
-import com.intellij.execution.filters.*;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.filters.*;
 import com.intellij.ide.GeneralSettings;
-import com.intellij.ide.macro.DataAccessor;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.ide.DataAccessor;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
@@ -24,6 +23,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.EditorMouseAdapter;
 import com.intellij.openapi.editor.event.EditorMouseEvent;

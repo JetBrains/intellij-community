@@ -10,7 +10,7 @@ import com.intellij.aspects.psi.PsiIntertypeMethod;
 import com.intellij.aspects.psi.PsiPointcutDef;
 import com.intellij.aspects.psi.PsiPrimitiveTypePattern;
 import com.intellij.aspects.psi.gen.PsiRegularMethodPattern;
-import com.intellij.codeInsight.CodeInsightColors;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;

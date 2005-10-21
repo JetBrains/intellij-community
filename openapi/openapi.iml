@@ -36,6 +36,8 @@
     <orderEntry type="module" module-name="refactoring-openapi" />
     <orderEntry type="module" module-name="compiler-openapi" />
     <orderEntry type="module" module-name="execution-openapi" />
+    <orderEntry type="module" module-name="action-system-openapi" />
+    <orderEntry type="module" module-name="ui-openapi" />
     <orderEntryProperties />
   </component>
   <component name="copyright">

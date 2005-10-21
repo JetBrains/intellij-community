@@ -16,6 +16,8 @@
     <orderEntry type="module" module-name="util" />
     <orderEntry type="module" module-name="openapi" />
     <orderEntry type="library" name="Trove4j" level="project" />
+    <orderEntry type="module" module-name="action-system-openapi" />
+    <orderEntry type="module" module-name="ui-openapi" />
     <orderEntryProperties />
   </component>
   <component name="copyright">

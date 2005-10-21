@@ -1,4 +1,4 @@
-package com.intellij.ide.macro;
+package com.intellij.ide;
 
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;

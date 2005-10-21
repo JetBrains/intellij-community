@@ -1,6 +1,6 @@
 package com.intellij.openapi.diff.actions;
 
-import com.intellij.ide.macro.DataAccessor;
+import com.intellij.ide.DataAccessor;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -10,14 +10,12 @@ import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.DiffManager;
 import com.intellij.openapi.diff.DiffRequest;
 import com.intellij.openapi.diff.DiffBundle;
-import com.intellij.openapi.diff.impl.external.DiffManagerImpl;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.Convertor;
-import com.intellij.util.ProfilingUtil;
 
 abstract class BaseDiffAction extends AnAction {
   protected static final Convertor<PsiElement, PsiElement> SOURCE_ELEMENT = new Convertor<PsiElement, PsiElement>() {

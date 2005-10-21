@@ -3,7 +3,7 @@
  */
 package com.intellij.codeInsight.intention.impl.config;
 
-import com.intellij.codeInsight.CodeInsightColors;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;

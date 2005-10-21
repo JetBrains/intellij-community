@@ -15,7 +15,7 @@
  */
 package com.intellij.lang.annotation;
 
-import com.intellij.codeInsight.CodeInsightColors;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.editor.HighlighterColors;

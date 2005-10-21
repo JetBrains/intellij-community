@@ -15,7 +15,7 @@ import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import com.intellij.util.containers.HashMap;
-import com.intellij.codeInsight.CodeInsightColors;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
 
 import java.awt.*;
 import java.util.*;

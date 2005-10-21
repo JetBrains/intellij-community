@@ -31,7 +31,7 @@
  */
 package com.intellij.openapi.options.colors.pages;
 
-import com.intellij.codeInsight.CodeInsightColors;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.debugger.settings.DebuggerColors;
 import com.intellij.ide.highlighter.JavaFileHighlighter;
 import com.intellij.openapi.editor.HighlighterColors;

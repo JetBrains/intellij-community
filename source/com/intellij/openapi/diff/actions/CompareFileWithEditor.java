@@ -1,6 +1,6 @@
 package com.intellij.openapi.diff.actions;
 
-import com.intellij.ide.macro.DataAccessor;
+import com.intellij.ide.DataAccessor;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;

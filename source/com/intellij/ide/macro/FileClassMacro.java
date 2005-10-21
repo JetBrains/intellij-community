@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.DataAccessor;
 
 public final class FileClassMacro extends Macro {
   public String getName() {

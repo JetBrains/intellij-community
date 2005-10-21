@@ -1,12 +1,11 @@
 
 package com.intellij.ide.macro;
 
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootsTraversing;
 import com.intellij.openapi.module.Module;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.DataAccessor;
 
 public final class ModulePathMacro extends Macro {
   public String getName() {

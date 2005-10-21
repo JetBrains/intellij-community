@@ -4,6 +4,7 @@ package com.intellij.ide.macro;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.psi.PsiPackage;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.DataAccessor;
 
 public final class FilePackageMacro extends Macro {
   public String getName() {

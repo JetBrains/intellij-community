@@ -21,6 +21,7 @@
     <orderEntry type="library" name="Trove4j" level="project" />
     <orderEntry type="module" module-name="refactoring-openapi" />
     <orderEntry type="module" module-name="refactoring-impl" />
+    <orderEntry type="module" module-name="action-system-openapi" />
     <orderEntryProperties />
   </component>
   <component name="copyright">
