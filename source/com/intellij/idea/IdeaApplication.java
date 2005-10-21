@@ -36,7 +36,7 @@ public class IdeaApplication {
   private boolean myPerformProjectLoad = true;
   private static IdeaApplication ourInstance;
   private ApplicationStarter myStarter;
-  @NonNls private static final String IDEA_IS_INTERNAL_PROPERTY = "idea.is.internal";
+  @NonNls public static final String IDEA_IS_INTERNAL_PROPERTY = "idea.is.internal";
   @NonNls private static final String IPR_SUFFIX = ".ipr";
 
   protected IdeaApplication(String[] args) {

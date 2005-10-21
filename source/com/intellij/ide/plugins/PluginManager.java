@@ -2,6 +2,7 @@ package com.intellij.ide.plugins;
 
 import com.intellij.ExtensionPoints;
 import com.intellij.CommonBundle;
+import com.intellij.idea.IdeaApplication;
 import com.intellij.codeInspection.InspectionMain;
 import com.intellij.diagnostic.ITNReporter;
 import com.intellij.execution.JUnitPatcher;
@@ -268,6 +269,10 @@ public class PluginManager {
     loadDescriptors(PathManager.getPluginsPath(), result);
     loadDescriptors(PathManager.getPreinstalledPluginsPath(), result);
 
+    if (Boolean.valueOf(System.getProperty(IdeaApplication.IDEA_IS_INTERNAL_PROPERTY))) {
+      loadDescriptorsFromClassPath(result);
+    }
+
     String errorMessage = filterBadPlugins(result);
 
     PluginDescriptor[] pluginDescriptors = result.toArray(new PluginDescriptor[result.size()]);
@@ -282,6 +287,31 @@ public class PluginManager {
       JOptionPane.showMessageDialog(null, errorMessage, IdeBundle.message("title.plugin.error"), JOptionPane.ERROR_MESSAGE);
     }
     return pluginDescriptors;
+  }
+
+  @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
+  private static void loadDescriptorsFromClassPath(final List<PluginDescriptor> result) {
+    try {
+      final String homePath = PathManager.getHomePath();
+      final ClassLoader classLoader = PluginManager.class.getClassLoader();
+      final ArrayList<URL> urls = (ArrayList<URL>)classLoader.getClass().getDeclaredMethod("getUrls").invoke(classLoader);
+      for (URL url : urls) {
+        final String protocol = url.getProtocol();
+        if ("file".equals(protocol)) {
+          final File file = new File(url.getFile());
+          final String canonicalPath = file.getCanonicalPath();
+          if (!canonicalPath.startsWith(homePath) || canonicalPath.endsWith(".jar")) continue;
+          final PluginDescriptor pluginDescriptor = loadDescriptor(file);
+          if (pluginDescriptor != null && !result.contains(pluginDescriptor)) {
+            result.add(pluginDescriptor);
+          }
+        }
+      }
+    }
+    catch (Exception e) {
+      System.err.println("Error loading plugins from classpath:");
+      e.printStackTrace();
+    }
   }
 
   private static String filterBadPlugins(List<PluginDescriptor> result) {
