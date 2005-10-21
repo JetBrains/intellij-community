@@ -358,7 +358,7 @@ public class XmlCompletionData extends CompletionData {
     }
   }
 
-  private static class EntityRefGetter implements ContextGetter {
+  protected static class EntityRefGetter implements ContextGetter {
     public Object[] get(final PsiElement context, CompletionContext completionContext) {
       final XmlTag parentOfType = PsiTreeUtil.getParentOfType(context, XmlTag.class);
       if (parentOfType != null) {
@@ -394,7 +394,7 @@ public class XmlCompletionData extends CompletionData {
     }
   }
 
-  private static class EntityRefInsertHandler extends BasicInsertHandler {
+  protected static class EntityRefInsertHandler extends BasicInsertHandler {
     public void handleInsert(CompletionContext context,
                              int startOffset,
                              LookupData data,

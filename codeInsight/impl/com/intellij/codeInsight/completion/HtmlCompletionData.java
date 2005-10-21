@@ -3,10 +3,16 @@ package com.intellij.codeInsight.completion;
 import com.intellij.lang.Language;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.ElementFilter;
+import com.intellij.psi.filters.AndFilter;
+import com.intellij.psi.filters.TextStartFilter;
+import com.intellij.psi.filters.position.TokenTypeFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.psi.xml.XmlToken;
 import com.intellij.util.ArrayUtil;
+import com.intellij.codeInsight.TailType;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.Set;
@@ -32,6 +38,21 @@ public class HtmlCompletionData extends XmlCompletionData {
 
   protected HtmlCompletionData(boolean _caseInsensitive) {
     myCaseInsensitive = _caseInsensitive;
+    
+    if (myCaseInsensitive) {
+      // amp is not parsed in html separately
+      final CompletionVariant variant = new CompletionVariant(
+        new AndFilter(
+          new TokenTypeFilter(XmlTokenType.XML_DATA_CHARACTERS),
+          new TextStartFilter("&")
+        )
+      );
+      variant.includeScopeClass(XmlToken.class, true);
+      variant.addCompletion(new EntityRefGetter(), TailType.NONE);
+      variant.setInsertHandler(new EntityRefInsertHandler());
+
+      registerVariant(variant);
+    }
   }
 
   private boolean equalNames(String str,String str2) {
