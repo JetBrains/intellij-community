@@ -5,6 +5,7 @@ import com.intellij.lang.properties.PropertiesReferenceProvider;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiLiteralExpression;
@@ -21,6 +22,7 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.*;
 import com.intellij.psi.xml.*;
 import com.intellij.xml.util.HtmlReferenceProvider;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.idea.LoggerFactory;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
@@ -42,6 +44,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
   private final List<Pair<Class, ElementManipulator>> myManipulators = new ArrayList<Pair<Class, ElementManipulator>>();
   private final Map<ReferenceProviderType,PsiReferenceProvider> myReferenceTypeToProviderMap = new HashMap<ReferenceProviderType, PsiReferenceProvider>(5);
 
+  private static final Logger LOG = Logger.getInstance("ReferenceProvidersRegistry");
 
   static public class ReferenceProviderType {
     private String myId;
@@ -56,7 +59,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
   public static ReferenceProviderType CSS_CLASS_OR_ID_KEY_PROVIDER = new ReferenceProviderType("Css Class or ID Provider");
   public static ReferenceProviderType URI_PROVIDER = new ReferenceProviderType("Uri references provider");
 
-  public static final ReferenceProvidersRegistry getInstance(Project project) {
+  public static ReferenceProvidersRegistry getInstance(Project project) {
     return project.getComponent(ReferenceProvidersRegistry.class);
   }
 
@@ -576,14 +579,31 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
   }
 
   public void registerXmlTagReferenceProvider(@NonNls String[] names, ElementFilter elementFilter, boolean caseSensitive,PsiReferenceProvider provider) {
-    XmlTagProviderBinding tagProviderBinding = (XmlTagProviderBinding)myBindingsMap.get(XmlTag.class);
-    
-    if (tagProviderBinding == null) {
-      tagProviderBinding = new XmlTagProviderBinding();
-      myBindingsMap.put(XmlTag.class, tagProviderBinding);
+    registerNamedReferenceProvider(names, elementFilter, XmlTagProviderBinding.class,XmlTag.class,caseSensitive, provider);
+  }
+  
+  private void registerNamedReferenceProvider(
+    @NonNls String[] names, 
+    ElementFilter elementFilter, 
+    Class<? extends NamedObjectProviderBinding> bindingClass,
+    Class scopeClass,
+    boolean caseSensitive,
+    PsiReferenceProvider provider
+  ) {
+    NamedObjectProviderBinding providerBinding = (NamedObjectProviderBinding)myBindingsMap.get(scopeClass);
+
+    if (providerBinding == null) {
+      try {
+        providerBinding = bindingClass.newInstance();
+        myBindingsMap.put(scopeClass, providerBinding);
+      }
+      catch (Exception e) {
+        LOG.error(e);
+        return;
+      }
     }
 
-    tagProviderBinding.registerProvider(
+    providerBinding.registerProvider(
       names,
       elementFilter,
       caseSensitive, 
@@ -592,20 +612,15 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
   }
   
   public void registerXmlAttributeValueReferenceProvider(@NonNls String[] attributeNames, ElementFilter elementFilter, boolean caseSensitive,PsiReferenceProvider provider) {
-    XmlAttributeValueProviderBinding attributeValueProviderBinding = (XmlAttributeValueProviderBinding)myBindingsMap.get(XmlAttributeValue.class);
-    
-    if (attributeValueProviderBinding == null) {
-      attributeValueProviderBinding = new XmlAttributeValueProviderBinding();
-      myBindingsMap.put(XmlAttributeValue.class, attributeValueProviderBinding);
-    }
-
-    attributeValueProviderBinding.registerProvider(
-      attributeNames,
-      elementFilter,
+    registerNamedReferenceProvider(
+      attributeNames, 
+      elementFilter, 
+      XmlAttributeValueProviderBinding.class,
+      XmlAttributeValue.class,
       caseSensitive, 
       provider
     );
-  }
+  }  
   
   public void registerXmlAttributeValueReferenceProvider(@NonNls String[] attributeNames, ElementFilter elementFilter, PsiReferenceProvider provider) {
     registerXmlAttributeValueReferenceProvider(attributeNames, elementFilter, true, provider);
