@@ -29,8 +29,6 @@ public class IgnoreExtResourceAction extends BaseIntentionAction {
     XmlFile xmlFile = XmlUtil.findXmlFile(file, uri);
     if (xmlFile != null) return false;
 
-    if (!uri.startsWith(HTTP_PROTOCOL) && !uri.startsWith(FTP_PROTOCOL)) return false;
-
     setText(QuickFixBundle.message("ignore.external.resource.text"));
     return true;
   }
