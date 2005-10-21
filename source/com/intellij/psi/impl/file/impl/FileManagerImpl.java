@@ -606,7 +606,7 @@ public class FileManagerImpl implements FileManager {
   private static PsiClass findClassByName(PsiJavaFile scope, String name) {
     PsiClass[] classes = scope.getClasses();
     for (PsiClass aClass : classes) {
-      if (aClass.getName().equals(name)) {
+      if (name.equals(aClass.getName())) {
         return aClass;
       }
     }
@@ -616,7 +616,7 @@ public class FileManagerImpl implements FileManager {
   private static PsiClass findClassByName(PsiClass scope, String name) {
     PsiClass[] classes = scope.getInnerClasses();
     for (PsiClass aClass : classes) {
-      if (aClass.getName().equals(name)) {
+      if (name.equals(aClass.getName())) {
         return aClass;
       }
     }
