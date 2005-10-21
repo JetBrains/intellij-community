@@ -36,6 +36,7 @@ import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.containers.WeakValueHashMap;
+import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -56,7 +57,7 @@ public class FileManagerImpl implements FileManager {
   private ProjectFileIndex myProjectFileIndex;
   private RootManager myRootManager;
 
-  private com.intellij.util.containers.HashMap<VirtualFile, PsiDirectory> myVFileToPsiDirMap = new com.intellij.util.containers.HashMap<VirtualFile, PsiDirectory>();
+  private HashMap<VirtualFile, PsiDirectory> myVFileToPsiDirMap = new HashMap<VirtualFile, PsiDirectory>();
   private WeakValueHashMap<VirtualFile,PsiFile> myVFileToPsiFileMap = new WeakValueHashMap<VirtualFile, PsiFile>(); // VirtualFile --> PsiFile
 
   private VirtualFileListener myVirtualFileListener;
@@ -69,8 +70,7 @@ public class FileManagerImpl implements FileManager {
 
   private HashMap<GlobalSearchScope, PsiClass> myCachedObjectClassMap = null;
 
-  private Map<String,PsiClass> myNameToClassMap = new com.intellij.util.containers.HashMap<String, PsiClass>(); // used only in mode without repository
-  private Map myNameToPacakageMap = new com.intellij.util.containers.HashMap(); // used only in mode without repository
+  private Map<String,PsiClass> myNameToClassMap = new HashMap<String, PsiClass>(); // used only in mode without repository
   private HashSet<String> myNontrivialPackagePrefixes;
   private final VirtualFileManager myVirtualFileManager;
   private final FileDocumentManager myFileDocumentManager;
@@ -218,8 +218,8 @@ public class FileManagerImpl implements FileManager {
       LOG.assertTrue(myVFileToPsiDirMap.containsKey(parent));
     }
 
-    com.intellij.util.containers.HashMap<VirtualFile, PsiDirectory> fileToPsiDirMap = myVFileToPsiDirMap;
-    myVFileToPsiDirMap = new com.intellij.util.containers.HashMap<VirtualFile, PsiDirectory>();
+    HashMap<VirtualFile, PsiDirectory> fileToPsiDirMap = myVFileToPsiDirMap;
+    myVFileToPsiDirMap = new HashMap<VirtualFile, PsiDirectory>();
     for (VirtualFile vFile : fileToPsiDirMap.keySet()) {
       LOG.assertTrue(vFile.isValid());
       PsiDirectory psiDir1 = findDirectory(vFile);
@@ -753,7 +753,6 @@ public class FileManagerImpl implements FileManager {
 
   private void clearNonRepositoryMaps() {
     myNameToClassMap.clear();
-    myNameToPacakageMap.clear();
   }
 
   private class MyVirtualFileListener extends VirtualFileAdapter {
