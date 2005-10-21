@@ -11,7 +11,6 @@ import com.intellij.compiler.make.CacheCorruptedException;
 import com.intellij.compiler.make.DependencyCache;
 import com.intellij.compiler.make.MakeUtil;
 import com.intellij.compiler.progress.CompilerProgressIndicator;
-import com.intellij.j2ee.make.impl.MakeUtilImpl;
 import com.intellij.j2ee.module.J2EEModuleUtilEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -227,7 +226,7 @@ public class CompileDriver {
       final VirtualFile outputDir = myGenerationCompilerModuleToOutputDirMap.get(pair);
       scope = new CompositeScope(scope, new FileSetCompileScope(new VirtualFile[]{outputDir}, new Module[]{pair.getSecond()}));
     }
-    CompileScope additionalJ2eeScope = MakeUtilImpl.getOutOfSourceJ2eeCompileScope(scope);
+    CompileScope additionalJ2eeScope = com.intellij.j2ee.make.MakeUtil.getInstance().getOutOfSourceJ2eeCompileScope(scope);
     if (additionalJ2eeScope != null) {
       scope = new CompositeScope(scope, additionalJ2eeScope);
     }

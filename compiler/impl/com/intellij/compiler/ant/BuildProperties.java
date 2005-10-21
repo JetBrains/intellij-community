@@ -2,7 +2,6 @@ package com.intellij.compiler.ant;
 
 import com.intellij.compiler.JavacSettings;
 import com.intellij.compiler.ant.taskdefs.*;
-import com.intellij.j2ee.appServerIntegrations.impl.ApplicationServersManagerImpl;
 import com.intellij.j2ee.serverInstances.ApplicationServersManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -104,7 +103,7 @@ public class BuildProperties extends CompositeGenerator {
       add(globalLibs);
     }
 
-    LibraryTable appServerLibraryTable = ((ApplicationServersManagerImpl)ApplicationServersManager.getInstance()).getLibraryTable();
+    LibraryTable appServerLibraryTable = ApplicationServersManager.getInstance().getLibraryTable();
     if (appServerLibraryTable.getLibraries().length != 0) {
       final Generator appServerLibs = factory.create(appServerLibraryTable, null,
                                                      CompilerBundle.message("generated.ant.build.application.server.libraries.comment"));
