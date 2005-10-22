@@ -2,7 +2,7 @@ package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.plugins.PluginDescriptor;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.openapi.actionSystem.*;
@@ -143,9 +143,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
   }
 
   private void registerActions() {
-    final PluginDescriptor[] plugins = PluginManager.getPlugins();
+    final IdeaPluginDescriptor[] plugins = PluginManager.getPlugins();
     for (int i = 0; i < plugins.length; i++) {
-      PluginDescriptor plugin = plugins[i];
+      IdeaPluginDescriptor plugin = plugins[i];
 
       final Element e = plugin.getActionsDescriptionElement();
       if (e != null) {
@@ -258,7 +258,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
    */
   @Nullable
   private AnAction processActionElement(Element element, final ClassLoader loader, PluginId pluginId) {
-    final PluginDescriptor plugin = PluginManager.getPlugin(pluginId);
+    final IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
     @NonNls final String resBundleName = plugin != null ? plugin.getResourceBundleBaseName() : ACTIONS_BUNDLE;
     ResourceBundle bundle = null;
     if (resBundleName != null) {
@@ -350,7 +350,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
   }
 
   private AnAction processGroupElement(Element element, final ClassLoader loader, PluginId pluginId) {
-    final PluginDescriptor plugin = PluginManager.getPlugin(pluginId);
+    final IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
     @NonNls final String resBundleName = plugin != null ? plugin.getResourceBundleBaseName() : ACTIONS_BUNDLE;
     ResourceBundle bundle = null;
     if (resBundleName != null) {

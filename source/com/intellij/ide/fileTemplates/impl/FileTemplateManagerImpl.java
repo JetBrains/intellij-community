@@ -1,16 +1,16 @@
 package com.intellij.ide.fileTemplates.impl;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
-import com.intellij.ide.plugins.PluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
@@ -673,7 +673,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
     appendDefaultTemplatesFromClassloader(FileTemplateManagerImpl.class.getClassLoader(), dirList);
     PluginDescriptor[] plugins = PluginManager.getPlugins();
     for (PluginDescriptor plugin : plugins) {
-      appendDefaultTemplatesFromClassloader(plugin.getLoader(), dirList);
+      appendDefaultTemplatesFromClassloader(plugin.getPluginClassLoader(), dirList);
     }
 
     ourTopDirs = dirList.toArray(new VirtualFile[dirList.size()]);

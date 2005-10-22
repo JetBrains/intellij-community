@@ -4,7 +4,7 @@ import com.intellij.CommonBundle;
 import com.intellij.Patches;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.plugins.PluginDescriptor;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
@@ -146,8 +146,8 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     loadComponentsConfiguration(APPLICATION_LAYER);
 
     if (PluginManager.shouldLoadPlugins()) {
-      final PluginDescriptor[] plugins = PluginManager.getPlugins();
-      for (PluginDescriptor plugin : plugins) {
+      final IdeaPluginDescriptor[] plugins = PluginManager.getPlugins();
+      for (IdeaPluginDescriptor plugin : plugins) {
         if (!PluginManager.shouldLoadPlugin(plugin)) continue;
         final Element appComponents = plugin.getAppComponents();
         if (appComponents != null) {

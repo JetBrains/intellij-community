@@ -3,7 +3,7 @@ package com.intellij.openapi.components.impl;
 import com.intellij.ExtensionPoints;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.plugins.ComponentDescriptor;
-import com.intellij.ide.plugins.PluginDescriptor;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -21,9 +21,9 @@ import com.intellij.util.containers.HashMap;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.NonNls;
 import org.picocontainer.*;
 import org.picocontainer.defaults.*;
-import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -505,7 +505,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     loadComponentsConfiguration(element, null);
   }
 
-  public void loadComponentsConfiguration(final Element element, PluginDescriptor descriptor) {
+  public void loadComponentsConfiguration(final Element element, IdeaPluginDescriptor descriptor) {
     if (element == null) return;
     final boolean headless = ApplicationManager.getApplication().isHeadlessEnvironment();
     for (Iterator i = element.getChildren().iterator(); i.hasNext();) {

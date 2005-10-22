@@ -2,7 +2,6 @@ package com.intellij.ide.plugins;
 
 import com.intellij.util.ui.SortableColumnModel;
 import com.intellij.util.ui.Table;
-import com.intellij.ui.table.TableHeaderRenderer;
 
 import javax.swing.*;
 import javax.swing.table.JTableHeader;

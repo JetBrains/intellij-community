@@ -9,7 +9,7 @@ import java.util.Arrays;
  * Time: 3:51:58 PM
  * To change this template use Options | File Templates.
  */
-public class InstalledPluginsTableModel extends PluginTableModel<PluginDescriptor> {
+public class InstalledPluginsTableModel extends PluginTableModel<IdeaPluginDescriptor> {
   public InstalledPluginsTableModel(SortableProvider sortableProvider) {
     super(new PluginManagerColumnInfo [] {
       new PluginManagerColumnInfo(PluginManagerColumnInfo.COLUMN_NAME, sortableProvider),

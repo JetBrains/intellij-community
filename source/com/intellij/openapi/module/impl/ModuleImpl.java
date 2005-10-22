@@ -4,9 +4,9 @@ import com.intellij.application.options.ExpandMacroToPathMap;
 import com.intellij.application.options.PathMacroMap;
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.application.options.ReplacePathToMacroMap;
-import com.intellij.ide.plugins.PluginDescriptor;
-import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.highlighter.ModuleFileType;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.components.BaseComponent;
@@ -34,8 +34,8 @@ import org.jdom.Attribute;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -97,8 +97,8 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
     loadComponentsConfiguration(MODULE_LAYER);
 
     if (PluginManager.shouldLoadPlugins()) {
-      final PluginDescriptor[] plugins = PluginManager.getPlugins();
-      for (PluginDescriptor plugin : plugins) {
+      final IdeaPluginDescriptor[] plugins = PluginManager.getPlugins();
+      for (IdeaPluginDescriptor plugin : plugins) {
         if (!PluginManager.shouldLoadPlugin(plugin)) continue;
 
         final Element moduleComponents = plugin.getModuleComponents();

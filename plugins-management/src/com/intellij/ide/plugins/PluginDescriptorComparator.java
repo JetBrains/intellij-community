@@ -4,9 +4,9 @@
  */
 package com.intellij.ide.plugins;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.util.containers.HashMap;
-import com.intellij.ide.IdeBundle;
 import gnu.trove.TObjectIntHashMap;
 
 import java.util.Comparator;
@@ -17,13 +17,13 @@ import java.util.Stack;
  * @author Eugene Zhuravlev
  *         Date: Aug 3, 2004
  */
-public class PluginDescriptorComparator implements Comparator<PluginDescriptor>{
+public class PluginDescriptorComparator implements Comparator<IdeaPluginDescriptor>{
   private final TObjectIntHashMap<PluginId> myIdToNumberMap = new TObjectIntHashMap<PluginId>();
   private int myAvailableNumber = 0;
 
-  public PluginDescriptorComparator(PluginDescriptor[] descriptors) throws Exception{
-    final Map<PluginId, PluginDescriptor> idToDescriptorMap = new HashMap<PluginId, PluginDescriptor>();
-    for (final PluginDescriptor descriptor : descriptors) {
+  public PluginDescriptorComparator(IdeaPluginDescriptor[] descriptors) throws Exception{
+    final Map<PluginId, IdeaPluginDescriptor> idToDescriptorMap = new HashMap<PluginId, IdeaPluginDescriptor>();
+    for (final IdeaPluginDescriptor descriptor : descriptors) {
       idToDescriptorMap.put(descriptor.getPluginId(), descriptor);
     }
     
@@ -34,7 +34,7 @@ public class PluginDescriptorComparator implements Comparator<PluginDescriptor>{
     }
   }
 
-  private void assignNumbers(PluginId id, Map<PluginId,PluginDescriptor> idToDescriptorMap, Stack<PluginId> visited) throws Exception {
+  private void assignNumbers(PluginId id, Map<PluginId,IdeaPluginDescriptor> idToDescriptorMap, Stack<PluginId> visited) throws Exception {
     visited.push(id);
     try {
       final PluginId[] parentIds = idToDescriptorMap.get(id).getDependentPluginIds();
@@ -55,7 +55,7 @@ public class PluginDescriptorComparator implements Comparator<PluginDescriptor>{
     }
   }
 
-  public int compare(PluginDescriptor d1, PluginDescriptor d2) {
+  public int compare(IdeaPluginDescriptor d1, IdeaPluginDescriptor d2) {
     return myIdToNumberMap.get(d1.getPluginId()) - myIdToNumberMap.get(d2.getPluginId());
   }
 }

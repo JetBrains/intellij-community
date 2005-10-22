@@ -1,5 +1,6 @@
 package com.intellij.ide.plugins;
 
+import com.intellij.CommonBundle;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
@@ -20,7 +21,7 @@ import com.intellij.ui.SpeedSearchBase;
 import com.intellij.ui.TableUtil;
 import com.intellij.util.net.HTTPProxySettingsDialog;
 import com.intellij.util.net.IOExceptionDialog;
-import com.intellij.CommonBundle;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.*;
@@ -35,8 +36,6 @@ import java.io.IOException;
 import java.util.*;
 import java.util.List;
 import java.util.zip.ZipException;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * Created by IntelliJ IDEA.
@@ -87,7 +86,7 @@ public class PluginManagerMain {
   private AnAction installPluginAction;
   private AnAction uninstallPluginAction;
 
-  private PluginTable<PluginDescriptor> installedPluginTable;
+  private PluginTable<IdeaPluginDescriptor> installedPluginTable;
   private PluginTable<PluginNode> availablePluginTable;
   //private PluginTable<PluginNode> cartTable;
 
@@ -104,8 +103,8 @@ public class PluginManagerMain {
   private final SortableProvider myCartProvider;
 
   private void pluginInfoUpdate (Object plugin) {
-    if (plugin instanceof PluginDescriptor) {
-      PluginDescriptor pluginDescriptor = (PluginDescriptor)plugin;
+    if (plugin instanceof IdeaPluginDescriptor) {
+      IdeaPluginDescriptor pluginDescriptor = (IdeaPluginDescriptor)plugin;
 
       myVendorLabel.setText(pluginDescriptor.getVendor());
 
@@ -229,7 +228,7 @@ public class PluginManagerMain {
     myChangeNotesTextArea.setContentType("text/html");
     myChangeNotesTextArea.addHyperlinkListener(new MyHyperlinkListener());
 
-    installedPluginTable = new PluginTable<PluginDescriptor>(new InstalledPluginsTableModel(myInstalledProvider));
+    installedPluginTable = new PluginTable<IdeaPluginDescriptor>(new InstalledPluginsTableModel(myInstalledProvider));
 
     installedScrollPane.getViewport().setBackground(installedPluginTable.getBackground());
     installedScrollPane.getViewport().setView(installedPluginTable);
@@ -304,7 +303,7 @@ public class PluginManagerMain {
         String email = null;
 
         if (tabs.getSelectedIndex() == INSTALLED_TAB) {
-          PluginDescriptor pluginDescriptor = installedPluginTable.getSelectedObject();
+          IdeaPluginDescriptor pluginDescriptor = installedPluginTable.getSelectedObject();
           if (pluginDescriptor != null) {
             email = pluginDescriptor.getVendorEmail();
           }
@@ -339,7 +338,7 @@ public class PluginManagerMain {
         String url = null;
 
         if (tabs.getSelectedIndex() == INSTALLED_TAB) {
-          PluginDescriptor pluginDescriptor = installedPluginTable.getSelectedObject();
+          IdeaPluginDescriptor pluginDescriptor = installedPluginTable.getSelectedObject();
           if (pluginDescriptor != null) {
             url = pluginDescriptor.getVendorUrl();
           }
@@ -369,7 +368,7 @@ public class PluginManagerMain {
         String url = null;
 
         if (tabs.getSelectedIndex() == INSTALLED_TAB) {
-          PluginDescriptor pluginDescriptor = installedPluginTable.getSelectedObject();
+          IdeaPluginDescriptor pluginDescriptor = installedPluginTable.getSelectedObject();
           if (pluginDescriptor != null) {
             url = pluginDescriptor.getUrl();
           }
@@ -393,7 +392,7 @@ public class PluginManagerMain {
       }
     });
 
-    new SpeedSearchBase<PluginTable<PluginDescriptor>>(installedPluginTable) {
+    new SpeedSearchBase<PluginTable<IdeaPluginDescriptor>>(installedPluginTable) {
       public int getSelectedIndex() {
         return installedPluginTable.getSelectedRow();
       }
@@ -403,12 +402,12 @@ public class PluginManagerMain {
       }
 
       public String getElementText(Object element) {
-        return ((PluginDescriptor)element).getName();
+        return ((IdeaPluginDescriptor)element).getName();
       }
 
       public void selectElement(Object element, String selectedText) {
         for (int i = 0; i < installedPluginTable.getRowCount(); i++) {
-          if (installedPluginTable.getObjectAt(i).getName().equals(((PluginDescriptor)element).getName())) {
+          if (installedPluginTable.getObjectAt(i).getName().equals(((IdeaPluginDescriptor)element).getName())) {
             installedPluginTable.setRowSelectionInterval(i, i);
             TableUtil.scrollSelectionToVisible(installedPluginTable);
             break;
@@ -634,9 +633,9 @@ public class PluginManagerMain {
                 }
                 else {
                   Set<PluginNode> pluginsToUpdate = new HashSet<PluginNode>();
-                  final PluginDescriptor[] installedPlugins = PluginManager.getPlugins();
+                  final IdeaPluginDescriptor[] installedPlugins = PluginManager.getPlugins();
                   for (PluginNode pluginNode : updateList) {
-                    for (PluginDescriptor descriptor : installedPlugins) {
+                    for (IdeaPluginDescriptor descriptor : installedPlugins) {
                       if (descriptor.getPluginId().equals(pluginNode.getId())) {
                         pluginsToUpdate.add(pluginNode);
                       }
@@ -723,7 +722,7 @@ public class PluginManagerMain {
                 enabled = true;
               }
               presentation.setText(downloadMessage);
-            } else if (pluginObject instanceof PluginDescriptor){
+            } else if (pluginObject instanceof IdeaPluginDescriptor){
               presentation.setText(updateMessage);
               presentation.setDescription(updateMessage);
               enabled = true;
@@ -747,8 +746,8 @@ public class PluginManagerMain {
               PluginNode pluginNode;
               if (selectedObject instanceof PluginNode){
                 pluginNode = (PluginNode)selectedObject;
-              } else if (selectedObject instanceof PluginDescriptor) {
-                final PluginDescriptor pluginDescriptor = (PluginDescriptor)selectedObject;
+              } else if (selectedObject instanceof IdeaPluginDescriptor) {
+                final IdeaPluginDescriptor pluginDescriptor = (IdeaPluginDescriptor)selectedObject;
                 pluginNode = new PluginNode(pluginDescriptor.getPluginId());
                 pluginNode.setName(pluginDescriptor.getName());
                 pluginNode.setDepends(Arrays.asList(pluginDescriptor.getDependentPluginIds()));
@@ -812,7 +811,7 @@ public class PluginManagerMain {
           boolean enabled = false;
 
           if (installedPluginTable != null && tabs.getSelectedIndex() == INSTALLED_TAB) {
-            PluginDescriptor pluginDescriptor = installedPluginTable.getSelectedObject();
+            IdeaPluginDescriptor pluginDescriptor = installedPluginTable.getSelectedObject();
 
             if (pluginDescriptor != null && ! pluginDescriptor.isDeleted()) {
               enabled = true;
@@ -825,7 +824,7 @@ public class PluginManagerMain {
           PluginId pluginId = null;
 
           if (tabs.getSelectedIndex() == INSTALLED_TAB) {
-            PluginDescriptor pluginDescriptor = installedPluginTable.getSelectedObject();
+            IdeaPluginDescriptor pluginDescriptor = installedPluginTable.getSelectedObject();
             if (pluginDescriptor != null) {
               if (Messages.showYesNoDialog(main, IdeBundle.message("prompt.uninstall.plugin", pluginDescriptor.getName()),
                                            IdeBundle.message("title.plugin.uninstall"), Messages.getQuestionIcon()) == 0) {

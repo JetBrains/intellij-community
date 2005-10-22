@@ -1,5 +1,6 @@
 package com.intellij.ide.plugins;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.PathManagerEx;
@@ -7,9 +8,8 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressStream;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.ide.IdeBundle;
-import org.xml.sax.SAXException;
 import org.jetbrains.annotations.NonNls;
+import org.xml.sax.SAXException;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;

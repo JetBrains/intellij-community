@@ -1,5 +1,6 @@
 package com.intellij.ide.plugins;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -9,7 +10,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.util.ui.SortableColumnModel;
-import com.intellij.ide.IdeBundle;
 import org.jdom.Element;
 
 import javax.swing.*;

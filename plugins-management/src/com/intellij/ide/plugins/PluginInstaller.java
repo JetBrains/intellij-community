@@ -1,25 +1,22 @@
 package com.intellij.ide.plugins;
 
-import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.Application;
+import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.util.io.ZipUtil;
+import org.jetbrains.annotations.NonNls;
 
-import javax.swing.*;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * Created by IntelliJ IDEA.
@@ -152,7 +149,7 @@ public class PluginInstaller {
     synchronized (lock) {
       if (PluginManager.isPluginInstalled(pluginId)) {
         // add command to delete the 'action script' file
-        PluginDescriptor pluginDescriptor = PluginManager.getPlugin(pluginId);
+        IdeaPluginDescriptor pluginDescriptor = PluginManager.getPlugin(pluginId);
 
         StartupActionScriptManager.ActionCommand deleteOld = new StartupActionScriptManager.DeleteCommand(pluginDescriptor.getPath());
         StartupActionScriptManager.addActionCommand(deleteOld);

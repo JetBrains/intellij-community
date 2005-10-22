@@ -5,15 +5,14 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.OpenProjectAction;
 import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.ide.plugins.PluginDescriptor;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
-import com.intellij.util.ui.EmptyIcon;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.util.IconLoader;
@@ -21,12 +20,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.LabeledIcon;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.UIBundle;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.image.PixelGrabber;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -34,6 +33,7 @@ import java.awt.event.MouseMotionListener;
 import java.awt.font.FontRenderContext;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
+import java.awt.image.PixelGrabber;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -508,7 +508,7 @@ public class WelcomeScreen {
 
   private void createListOfPlugins(final JPanel installedPluginsPanel, final JPanel bundledPluginsPanel) {
     //Create the list of installed plugins
-    PluginDescriptor[] myInstalledPlugins = PluginManager.getPlugins();
+    IdeaPluginDescriptor[] myInstalledPlugins = PluginManager.getPlugins();
     if (myInstalledPlugins == null || myInstalledPlugins.length == 0) {
       addListItemToPlugins(installedPluginsPanel, makeItalic(UIBundle
         .message("welcome.screen.plugins.panel.no.plugins.currently.installed.message.text")), null, null, null, null);
@@ -516,8 +516,8 @@ public class WelcomeScreen {
         .message("welcome.screen.plugins.panel.all.bundled.plugins.were.uninstalled.message.text")), null, null, null, null);
     }
     else {
-      final Comparator<PluginDescriptor> pluginsComparator = new Comparator<PluginDescriptor>() {
-        public int compare(final PluginDescriptor o1, final PluginDescriptor o2) {
+      final Comparator<IdeaPluginDescriptor> pluginsComparator = new Comparator<IdeaPluginDescriptor>() {
+        public int compare(final IdeaPluginDescriptor o1, final IdeaPluginDescriptor o2) {
           return o1.getName().compareTo(o2.getName());
         }
       };
@@ -527,7 +527,7 @@ public class WelcomeScreen {
       int installedPlugins = 0;
       String preinstalledPrefix = PathManager.getPreinstalledPluginsPath();
 
-      for (PluginDescriptor plugin : myInstalledPlugins) {
+      for (IdeaPluginDescriptor plugin : myInstalledPlugins) {
         if (plugin.getPath().getAbsolutePath().startsWith(preinstalledPrefix)) {
           embeddedPlugins++;
           addListItemToPlugins(bundledPluginsPanel, plugin.getName(), plugin.getDescription(), plugin.getVendorLogoPath(),

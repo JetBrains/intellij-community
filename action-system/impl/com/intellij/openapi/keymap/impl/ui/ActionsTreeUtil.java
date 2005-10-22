@@ -4,24 +4,23 @@ import com.intellij.ant.AntConfiguration;
 import com.intellij.ant.BuildFile;
 import com.intellij.ant.actions.TargetAction;
 import com.intellij.ide.actionMacro.ActionMacro;
-import com.intellij.ide.plugins.PluginDescriptor;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeyMapBundle;
+import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.tools.Tool;
 import com.intellij.tools.ToolManager;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.*;
-
-import org.jetbrains.annotations.NonNls;
 
 public class ActionsTreeUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil");
@@ -75,9 +74,9 @@ public class ActionsTreeUtil {
   private static Group createPluginsActionsGroup() {
     Group pluginsGroup = new Group(KeyMapBundle.message("plugins.group.title"), null, null);
     ActionManagerEx managerEx = ActionManagerEx.getInstanceEx();
-    final PluginDescriptor[] plugins = PluginManager.getPlugins();
+    final IdeaPluginDescriptor[] plugins = PluginManager.getPlugins();
     for (int i = 0; i < plugins.length; i++) {
-      PluginDescriptor plugin = plugins[i];
+      IdeaPluginDescriptor plugin = plugins[i];
       Group pluginGroup = new Group(plugin.getName(), null, null);
       final String[] pluginActions = managerEx.getPluginActions(plugin.getPluginId());
       if (pluginActions == null || pluginActions.length == 0){

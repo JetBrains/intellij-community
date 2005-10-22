@@ -18,6 +18,8 @@ package com.intellij.openapi.extensions;
 import org.jdom.Element;
 import org.picocontainer.PicoContainer;
 
+import java.util.List;
+
 /**
  * @author AKireyev
  */
@@ -53,4 +55,9 @@ public interface ExtensionsArea  {
   String getAreaClass();
 
   void registerExtensionPoint(String extensionPointName, String extensionPointBeanClass, PluginDescriptor descriptor);
+
+  void registerAreaExtensionsAndPoints(final PluginDescriptor pluginDescriptor,
+                                       final List<Element> extensionsPoints,
+                                       final List<Element> extensions);
+
 }

@@ -4,10 +4,10 @@ import com.intellij.application.options.ExpandMacroToPathMap;
 import com.intellij.application.options.PathMacroMap;
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.application.options.ReplacePathToMacroMap;
-import com.intellij.ide.plugins.PluginDescriptor;
+import com.intellij.ide.highlighter.ProjectFileType;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.startup.StartupManagerEx;
-import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.command.CommandProcessor;
@@ -22,8 +22,8 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.ModuleImpl;
 import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.ex.MessagesEx;
@@ -148,9 +148,9 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx, Area
     loadComponentsConfiguration(PROJECT_LAYER);
 
     if (PluginManager.shouldLoadPlugins()) {
-      final PluginDescriptor[] plugins = PluginManager.getPlugins();
+      final IdeaPluginDescriptor[] plugins = PluginManager.getPlugins();
       for (int i = 0; i < plugins.length; i++) {
-        PluginDescriptor plugin = plugins[i];
+        IdeaPluginDescriptor plugin = plugins[i];
         if (!PluginManager.shouldLoadPlugin(plugin)) continue;
         final Element projectComponents = plugin.getProjectComponents();
         if (projectComponents != null) {

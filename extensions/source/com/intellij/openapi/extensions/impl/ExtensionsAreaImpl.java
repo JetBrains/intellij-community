@@ -34,8 +34,9 @@ import java.util.*;
 
 public class ExtensionsAreaImpl implements ExtensionsArea {
   private final LogProvider myLogger;
+  private static final String ATTRIBUTE_AREA = "area";
 
-  static Map ourDefaultEPs = new HashMap();
+  static Map<String,String> ourDefaultEPs = new HashMap<String, String>();
 
   static {
     ourDefaultEPs.put(EPAvailabilityListenerExtension.EXTENSION_POINT_NAME, EPAvailabilityListenerExtension.class.getName());
@@ -45,16 +46,16 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
 
   private AreaPicoContainerImpl myPicoContainer;
   private Throwable myCreationTrace = null;
-  private Map myExtensionPoints = new HashMap();
-  private Map myEPTraces = new HashMap();
+  private Map<String,ExtensionPointImpl> myExtensionPoints = new HashMap<String, ExtensionPointImpl>();
+  private Map<String,Throwable> myEPTraces = new HashMap<String, Throwable>();
   private MultiMap myAvailabilityListeners = new MultiHashMap();
-  private List mySuspendedListenerActions = new ArrayList();
+  private List<Runnable> mySuspendedListenerActions = new ArrayList<Runnable>();
   private boolean myAvailabilityNotificationsActive = true;
 
   private final AreaInstance myAreaInstance;
   private final String myAreaClass;
-  private Map myExtensionElement2extension = new HashMap();
-  private Map myPluginName2picoContainer = new HashMap();
+  private Map<Element,ExtensionComponentAdapter> myExtensionElement2extension = new HashMap<Element, ExtensionComponentAdapter>();
+  private Map<String,DefaultPicoContainer> myPluginName2picoContainer = new HashMap<String, DefaultPicoContainer>();
 
   public ExtensionsAreaImpl(String areaClass, AreaInstance areaInstance, PicoContainer parentPicoContainer, LogProvider logger) {
     if (DEBUG_REGISTRATION) {
@@ -160,7 +161,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   private MutablePicoContainer internalGetPluginContainer(String pluginName) {
-    DefaultPicoContainer pluginContainer = (DefaultPicoContainer) myPluginName2picoContainer.get(pluginName);
+    DefaultPicoContainer pluginContainer = myPluginName2picoContainer.get(pluginName);
     if (pluginContainer == null) {
       pluginContainer = new DefaultPicoContainer(myPicoContainer);
       myPicoContainer.addChildContainer(pluginContainer);
@@ -170,7 +171,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   private void disposePluginContainer(String pluginName) {
-    DefaultPicoContainer pluginContainer = (DefaultPicoContainer) myPluginName2picoContainer.remove(pluginName);
+    DefaultPicoContainer pluginContainer = myPluginName2picoContainer.remove(pluginName);
     if (pluginContainer != null) {
       myPicoContainer.removeChildContainer(pluginContainer);
     }
@@ -198,7 +199,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
       myLogger.warn(stringWriter.toString());
       throw new IllegalArgumentException("Trying to unregister extension element that was never registered");
     }
-    ExtensionComponentAdapter adapter = (ExtensionComponentAdapter) myExtensionElement2extension.remove(extensionElement);
+    ExtensionComponentAdapter adapter = myExtensionElement2extension.remove(extensionElement);
     if (adapter == null) return;
     if (getExtensionPointImpl(epName).unregisterComponentAdapter(adapter)) {
       MutablePicoContainer pluginContainer = internalGetPluginContainer(pluginName);
@@ -210,15 +211,15 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   public void initialize() {
-    for (Iterator iterator = ourDefaultEPs.keySet().iterator(); iterator.hasNext();) {
-      String epName = (String) iterator.next();
-      registerExtensionPoint(epName, (String) ourDefaultEPs.get(epName));
+    for (String epName : ourDefaultEPs.keySet()) {
+      registerExtensionPoint(epName, ourDefaultEPs.get(epName));
     }
+
     getExtensionPoint(EPAvailabilityListenerExtension.EXTENSION_POINT_NAME).addExtensionPointListener(new ExtensionPointListener() {
       public void extensionRemoved(Object extension) {
         EPAvailabilityListenerExtension epListenerExtension = (EPAvailabilityListenerExtension) extension;
-        List listeners = (List) myAvailabilityListeners.get(epListenerExtension.getExtensionPointName());
-        for (Iterator iterator = listeners.iterator(); iterator.hasNext();) {
+        List<Object> listeners = (List<Object>) myAvailabilityListeners.get(epListenerExtension.getExtensionPointName());
+        for (Iterator<Object> iterator = listeners.iterator(); iterator.hasNext();) {
           Object listener = iterator.next();
           if (listener.getClass().getName().equals(epListenerExtension.getListenerClass())) {
             iterator.remove();
@@ -244,7 +245,9 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   public Object instantiate(Class clazz) {
-    ConstructorInjectionComponentAdapter adapter = new ConstructorInjectionComponentAdapter(System.identityHashCode(new Object()) + "", clazz);
+    ConstructorInjectionComponentAdapter adapter =
+      new ConstructorInjectionComponentAdapter(Integer.toString(System.identityHashCode(new Object())), clazz);
+
     return adapter.getComponentInstance(getPicoContainer());
   }
 
@@ -255,7 +258,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   public void addAvailabilityListener(String epName, ExtensionPointAvailabilityListener listener) {
     myAvailabilityListeners.put(epName, listener);
     if (hasExtensionPoint(epName)) {
-      notifyAvailableListener(listener, (ExtensionPoint) myExtensionPoints.get(epName));
+      notifyAvailableListener(listener, myExtensionPoints.get(epName));
     }
   }
 
@@ -266,7 +269,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   public void registerExtensionPoint(final String extensionPointName, String extensionPointBeanClass, PluginDescriptor descriptor) {
     if (hasExtensionPoint(extensionPointName)) {
       if (DEBUG_REGISTRATION) {
-        myLogger.error((Throwable) myEPTraces.get(extensionPointName));
+        myLogger.error(myEPTraces.get(extensionPointName));
       }
       throw new RuntimeException("Duplicate registration for EP: " + extensionPointName);
     }
@@ -279,11 +282,40 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     }
   }
 
+  public void registerAreaExtensionsAndPoints(final PluginDescriptor pluginDescriptor,
+                                              final List<Element> extensionsPoints,
+                                              final List<Element> extensions) {
+    final String areaClass = getAreaClass();
+    if (extensionsPoints != null) {
+      for (Element element : extensionsPoints) {
+        if (equal(areaClass, element.getAttributeValue(ATTRIBUTE_AREA))) {
+          registerExtensionPoint(pluginDescriptor, element);
+        }
+      }
+    }
+
+    if (extensions != null) {
+      for (Element element : extensions) {
+        if (equal(areaClass, element.getAttributeValue(ATTRIBUTE_AREA))) {
+          registerExtension(pluginDescriptor, element);
+        }
+      }
+    }
+  }
+
+  private static boolean equal(final String areaClass, final String anotherAreaClass) {
+    if (areaClass != null) {
+      return areaClass.equals(anotherAreaClass);
+    }
+    else {
+      return anotherAreaClass == null;
+    }
+  }
+
   private void notifyEPRegistered(final ExtensionPoint extensionPoint) {
-    List listeners = (List) myAvailabilityListeners.get(extensionPoint.getName());
+    List<ExtensionPointAvailabilityListener> listeners = (List<ExtensionPointAvailabilityListener>) myAvailabilityListeners.get(extensionPoint.getName());
     if (listeners != null) {
-      for (Iterator i = listeners.iterator(); i.hasNext();) {
-        final ExtensionPointAvailabilityListener listener = (ExtensionPointAvailabilityListener) i.next();
+      for (final ExtensionPointAvailabilityListener listener : listeners) {
         notifyAvailableListener(listener, extensionPoint);
       }
     }
@@ -312,15 +344,15 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
       throw new IllegalArgumentException("Missing extension point: " + extensionPointName +
           " in area " + myAreaInstance );
     }
-    return (ExtensionPointImpl) myExtensionPoints.get(extensionPointName);
+    return myExtensionPoints.get(extensionPointName);
   }
 
   public ExtensionPoint[] getExtensionPoints() {
-    return (ExtensionPoint[]) myExtensionPoints.values().toArray(new ExtensionPoint[myExtensionPoints.size()]);
+    return myExtensionPoints.values().toArray(new ExtensionPoint[myExtensionPoints.size()]);
   }
 
   public void unregisterExtensionPoint(final String extensionPointName) {
-    ExtensionPoint extensionPoint = (ExtensionPoint) myExtensionPoints.get(extensionPointName);
+    ExtensionPoint extensionPoint = myExtensionPoints.get(extensionPointName);
     if (extensionPoint != null) {
       extensionPoint.reset();
       myExtensionPoints.remove(extensionPointName);
@@ -329,10 +361,9 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   private void notifyEPRemoved(final ExtensionPoint extensionPoint) {
-    List listeners = (List) myAvailabilityListeners.get(extensionPoint.getName());
+    List<ExtensionPointAvailabilityListener> listeners = (List<ExtensionPointAvailabilityListener>) myAvailabilityListeners.get(extensionPoint.getName());
     if (listeners != null) {
-      for (Iterator i = listeners.iterator(); i.hasNext();) {
-        final ExtensionPointAvailabilityListener listener = (ExtensionPointAvailabilityListener) i.next();
+      for (final ExtensionPointAvailabilityListener listener : listeners) {
         Runnable action = new Runnable() {
           public void run() {
             listener.extensionPointRemoved(extensionPoint);
@@ -359,12 +390,10 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   public void resumeInteractions() {
     myAvailabilityNotificationsActive = true;
     ExtensionPoint[] extensionPoints = getExtensionPoints();
-    for (int i = 0; i < extensionPoints.length; i++) {
-      ExtensionPoint extensionPoint = extensionPoints[i];
+    for (ExtensionPoint extensionPoint : extensionPoints) {
       extensionPoint.getExtensions(); // creates extensions from ComponentAdapters
     }
-    for (Iterator i = mySuspendedListenerActions.iterator(); i.hasNext();) {
-      Runnable action = (Runnable) i.next();
+    for (Runnable action : mySuspendedListenerActions) {
       try {
         action.run();
       }
@@ -380,12 +409,12 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   public MutablePicoContainer[] getPluginContainers() {
-    return (MutablePicoContainer[])myPluginName2picoContainer.values().toArray(new MutablePicoContainer[myPluginName2picoContainer.values().size()]);
+    return myPluginName2picoContainer.values().toArray(new MutablePicoContainer[myPluginName2picoContainer.values().size()]);
   }
 
   public void removeAllComponents(final Set extensionAdapters) {
-    for (Iterator iterator = extensionAdapters.iterator(); iterator.hasNext();) {
-      ExtensionComponentAdapter componentAdapter = (ExtensionComponentAdapter)iterator.next();
+    for (final Object extensionAdapter : extensionAdapters) {
+      ExtensionComponentAdapter componentAdapter = (ExtensionComponentAdapter)extensionAdapter;
       final String pluginId = componentAdapter.getPluginName().getIdString();
       internalGetPluginContainer(pluginId).unregisterComponent(componentAdapter.getComponentKey());
     }

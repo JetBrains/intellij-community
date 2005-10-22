@@ -1,7 +1,7 @@
 package com.intellij.ide.plugins;
 
-import com.intellij.openapi.extensions.PluginId;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.extensions.PluginId;
 
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;

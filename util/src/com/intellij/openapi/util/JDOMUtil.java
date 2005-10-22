@@ -216,6 +216,18 @@ public class JDOMUtil {
     return (buffer == null) ? text : buffer.toString();
   }
 
+  public static List<Element> getChildrenFromAllNamespaces(final Element element, final String name) {
+    final ArrayList<Element> result = new ArrayList<Element>();
+    final List children = element.getChildren();
+    for (final Object aChildren : children) {
+      Element child = (Element)aChildren;
+      if (name.equals(child.getName())) {
+        result.add(child);
+      }
+    }
+    return result;
+  }
+
   public static class MyXMLOutputter extends XMLOutputter {
     public String escapeAttributeEntities(String str) {
       return escapeText(str, true);
