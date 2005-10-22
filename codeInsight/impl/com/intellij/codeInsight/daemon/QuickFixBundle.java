@@ -17,7 +17,7 @@ public class QuickFixBundle {
 
   private QuickFixBundle() {}
 
-  public static String message(@PropertyKey(resourceBundle = "messages.QuickFixBundle") String key, Object... params) {
+  public static String message(@NonNls @PropertyKey(resourceBundle = "messages.QuickFixBundle") String key, Object... params) {
     return CommonBundle.message(ourBundle, key, params);
   }
 }
