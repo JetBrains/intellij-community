@@ -81,18 +81,71 @@ public class PredefinedConfiguration extends Configuration {
         createSearchTemplateInfo(SSRBundle.message("predefined.configuration.switches"),"switch('_Condition) {\n  '_Statement*;\n}",OPERATOR_TYPE),
 
         // Class based
-        createSearchTemplateInfo(SSRBundle.message("predefined.configuration.methods.of.the.class"),"class '_Class { \n  '_ReturnType+ 'MethodName+('_ParameterType* '_Parameter*);\n}",CLASS_TYPE),
-        createSearchTemplateInfo(SSRBundle.message("predefined.configuration.fields.of.the.class"),"class '_Class { \n  '_FieldType+ 'FieldName+ = '_Init*;\n}",CLASS_TYPE),
-        createSearchTemplateInfo(SSRBundle.message("predefined.configuration.all.methods.of.the.class.within.hierarchy"),"class '_ { \n  '_ReturnType+ 'MethodName+:* ('_ParameterType* '_Parameter*);\n}",CLASS_TYPE),
-        createSearchTemplateInfo(SSRBundle.message("predefined.configuration.all.fields.of.the.class"),"class '_Class { \n  '_FieldType+ 'FieldName+:* = '_Init*;\n}",CLASS_TYPE),
-        createSearchTemplateInfo(SSRBundle.message("predefined.configuration.constructors.of.the.class"),"class 'Class {\n  'Class+('_ParameterType* '_ParameterName*) {\n    '_Statement*;\n  }\n}",CLASS_TYPE),
-        createSearchTemplateInfo(SSRBundle.message("predefined.configuration.classes"),"class 'Class {}", CLASS_TYPE),
-        createSearchTemplateInfo(SSRBundle.message("predefined.configuration.direct.subclasses"),"class 'Class extends '_Parent: {}", CLASS_TYPE),
-        createSearchTemplateInfo(SSRBundle.message("predefined.configuration.implementors.of.interface.within.hierarchy"),"class 'Class implements 'Interface:* {}", CLASS_TYPE),
-        createSearchTemplateInfo(SSRBundle.message("predefined.configuration.interfaces"),"interface 'Interface {}", CLASS_TYPE),
-        createSearchTemplateInfo(SSRBundle.message("predefined.configuration.inner.classes"),"class '_ {\n  class 'InnerClass+ {}\n}",CLASS_TYPE),
-        createSearchTemplateInfo(SSRBundle.message("predefined.configuration.all.inner.classes.within.hierarchy"),"class '_Class {\n  class 'InnerClass+:* {}\n}",CLASS_TYPE),
-        createSearchTemplateInfo(SSRBundle.message("predefined.configuration.anonymous.classes"),"new 'AnonymousClass() {}", CLASS_TYPE),
+        createSearchTemplateInfo(
+          SSRBundle.message("predefined.configuration.methods.of.the.class"),
+          "class '_Class { \n  '_ReturnType+ 'MethodName+('_ParameterType* '_Parameter*);\n}",
+          CLASS_TYPE
+        ),
+        createSearchTemplateInfo(
+          SSRBundle.message("predefined.configuration.fields.of.the.class"),
+          "class '_Class { \n  '_FieldType+ 'FieldName+ = '_Init*;\n}",
+          CLASS_TYPE
+        ),
+        createSearchTemplateInfo(
+          SSRBundle.message("predefined.configuration.all.methods.of.the.class.within.hierarchy"),
+          "class '_ { \n  '_ReturnType+ 'MethodName+:* ('_ParameterType* '_Parameter*);\n}",
+          CLASS_TYPE
+        ),
+        createSearchTemplateInfo(
+          SSRBundle.message("predefined.configuration.all.fields.of.the.class"),
+          "class '_Class { \n  '_FieldType+ 'FieldName+:* = '_Init*;\n}",
+          CLASS_TYPE
+        ),
+        createSearchTemplateInfo(
+          SSRBundle.message("predefined.configuration.constructors.of.the.class"),
+          "class 'Class {\n  'Class+('_ParameterType* '_ParameterName*) {\n    '_Statement*;\n  }\n}",
+          CLASS_TYPE
+        ),
+        createSearchTemplateInfo(
+          SSRBundle.message("predefined.configuration.classes"),
+          "class 'Class {}", 
+          CLASS_TYPE
+        ),
+        createSearchTemplateInfo(
+          SSRBundle.message("predefined.configuration.direct.subclasses"),
+          "class 'Class extends '_Parent: {}", 
+          CLASS_TYPE
+        ),
+        createSearchTemplateInfo(
+          SSRBundle.message("predefined.configuration.implementors.of.interface.within.hierarchy"),
+          "class 'Class implements 'Interface:* {}", 
+          CLASS_TYPE
+        ),
+        createSearchTemplateInfo(
+          SSRBundle.message("predefined.configuration.interfaces"),
+          "interface 'Interface {}", 
+          CLASS_TYPE
+        ),
+        createSearchTemplateInfo(
+          SSRBundle.message("predefined.configuration.inner.classes"),
+          "class '_ {\n  class 'InnerClass+ {}\n}",
+          CLASS_TYPE
+        ),
+        createSearchTemplateInfo(
+          SSRBundle.message("predefined.configuration.all.inner.classes.within.hierarchy"),
+          "class '_Class {\n  class 'InnerClass+:* {}\n}",
+          CLASS_TYPE
+        ),
+        createSearchTemplateInfo(
+          SSRBundle.message("predefined.configuration.anonymous.classes"),
+          "new 'AnonymousClass() {}", 
+          CLASS_TYPE
+        ),
+        createSearchTemplateInfo(
+          SSRBundle.message("predefined.configuration.class.implements.two.interfaces"),
+          "class 'A implements '_Interface1:[regex( *java\\.lang\\.Cloneable )], '_Interface2:*java\\.io\\.Serializable {\n" +"}",
+          CLASS_TYPE
+        ),
 
         // Generics
         createSearchTemplateInfo(SSRBundle.message("predefined.configuration.generic.classes"),"class 'GenericClass<'_TypeParameter+> {} ", GENERICS_TYPE),

@@ -4,6 +4,8 @@ import com.intellij.psi.*;
 import com.intellij.structuralsearch.impl.matcher.MatchUtils;
 
 import java.util.ArrayList;
+import java.util.Set;
+import java.util.HashSet;
 
 /**
  * Passes the hierarchy
@@ -12,10 +14,12 @@ public class HierarchyNodeIterator extends NodeIterator {
   private int index;
   private ArrayList<PsiElement> remaining;
   private boolean objectTaken;
-  private boolean acceptClasses;
-  private boolean acceptInterfaces;
+  private boolean firstElementTaken;
+  private final boolean acceptClasses;
+  private final boolean acceptInterfaces;
+  private final boolean acceptFirstElement;
 
-  private void build(PsiElement current) {
+  private void build(PsiElement current, Set<PsiElement> visited) {
 
     if (current!=null) {
       if (MatchUtils.compareWithNoDifferenceToPackage(current.getText(),"Object")) {
@@ -24,15 +28,17 @@ public class HierarchyNodeIterator extends NodeIterator {
       }
 
       PsiElement element = MatchUtils.getReferencedElement(current);
-      if (!(element instanceof PsiClass)) {
-        remaining.add(element);
-        return;
-      }
-      PsiClass clazz = (PsiClass) element;
-      if (clazz!=null) {
-        remaining.add(clazz);
+
+      if (element instanceof PsiClass) {
+        if (visited.contains(element)) return;
+        visited.add(element);
+
+        final PsiClass clazz = (PsiClass)element;
+        if (!firstElementTaken && acceptFirstElement || firstElementTaken) remaining.add(clazz);
+        firstElementTaken = true;
+
         if (clazz instanceof PsiAnonymousClass) {
-          build(((PsiAnonymousClass)clazz).getBaseClassReference());
+          build(((PsiAnonymousClass)clazz).getBaseClassReference(),visited);
           return;
         }
 
@@ -41,23 +47,20 @@ public class HierarchyNodeIterator extends NodeIterator {
           final PsiElement[] extendsList = (clazzExtendsList != null)?clazzExtendsList.getReferenceElements():null;
 
           if (extendsList!=null) {
-            for(int i=0;i<extendsList.length;++i) {
-              build(extendsList[i]);
+            for (PsiElement anExtendsList : extendsList) {
+              build(anExtendsList,visited);
             }
-          } else {
-            /*
-            if (!objectTaken) {
-              remaining.add("Object");
-              objectTaken = true;
-            }*/
           }
         }
 
         if (acceptInterfaces) {
-          final PsiElement[] implementsList = clazz.getImplementsList().getReferenceElements();
-          if (implementsList!=null) {
-            for(int i=0;i<implementsList.length;++i) {
-              build(implementsList[i]);
+          final PsiReferenceList implementsList = clazz.getImplementsList();
+
+          if (implementsList != null) {
+            final PsiElement[] implementsListElements = implementsList.getReferenceElements();
+
+            for (PsiElement anImplementsList : implementsListElements) {
+              build(anImplementsList,visited);
             }
           }
         }
@@ -68,15 +71,20 @@ public class HierarchyNodeIterator extends NodeIterator {
   }
 
   public HierarchyNodeIterator(PsiElement reference, boolean acceptClasses, boolean acceptInterfaces) {
+    this(reference, acceptClasses, acceptInterfaces, true);
+  }
+
+  public HierarchyNodeIterator(PsiElement reference, boolean acceptClasses, boolean acceptInterfaces, boolean acceptFirstElement) {
     remaining = new ArrayList<PsiElement>();
     this.acceptClasses = acceptClasses;
     this.acceptInterfaces = acceptInterfaces;
+    this.acceptFirstElement = acceptFirstElement;
 
     if (reference instanceof PsiIdentifier) {
       reference = reference.getParent();
     }
 
-    build(reference);
+    build(reference,new HashSet<PsiElement>());
   }
 
   public boolean hasNext() {

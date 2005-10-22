@@ -309,28 +309,46 @@ public class MatchingVisitor extends PsiElementVisitor {
       if (!matchInAnyOrder(clazz.getExtendsList(),clazz2.getExtendsList())) {
         return false;
       }
-      if (!matchInAnyOrder(clazz.getImplementsList(),clazz2.getImplementsList())) {
-        return false;
+      
+      // check if implements is in extended classes implements
+      final PsiReferenceList implementsList = clazz.getImplementsList();
+      if (implementsList != null) {
+        if (!matchInAnyOrder(implementsList,clazz2.getImplementsList())) {
+          final PsiReferenceList anotherExtendsList = clazz2.getExtendsList();
+          final PsiJavaCodeReferenceElement[] referenceElements = implementsList.getReferenceElements();
+          
+          boolean accepted = false;
+          
+          if (referenceElements.length > 0 && anotherExtendsList != null) {
+            final HierarchyNodeIterator iterator = new HierarchyNodeIterator(clazz2, true, true, false);
+          
+            accepted = matchInAnyOrder(new ArrayBackedNodeIterator(referenceElements),iterator);
+          } 
+          
+          if (!accepted) return false;
+        }
       }
 
-      final PsiField fields[]  = clazz.getFields();
+      final PsiField[] fields  = clazz.getFields();
 
       if (fields.length > 0) {
-        final PsiField fields2[] = (matchContext.getPattern()).isRequestsSuperFields()?
-                                   clazz2.getAllFields():
-                                   clazz2.getFields();
+        final PsiField[] fields2;
+        fields2 = (matchContext.getPattern()).isRequestsSuperFields()?
+                  clazz2.getAllFields():
+                  clazz2.getFields();
 
         if (!matchInAnyOrder(fields,fields2)) {
           return false;
         }
       }
 
-      final PsiMethod methods[]  = clazz.getMethods();
+      final PsiMethod[] methods  = clazz.getMethods();
 
       if (methods.length > 0) {
-        final PsiMethod methods2[] = (matchContext.getPattern()).isRequestsSuperMethods()?
-                                     clazz2.getAllMethods():
-                                     clazz2.getMethods();
+        final PsiMethod[] methods2;
+        methods2 = (matchContext.getPattern()).isRequestsSuperMethods()?
+                   clazz2.getAllMethods():
+                   clazz2.getMethods();
 
         if (!matchInAnyOrder(methods,methods2)) {
           return false;

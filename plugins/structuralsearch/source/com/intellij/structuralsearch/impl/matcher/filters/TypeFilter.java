@@ -3,6 +3,7 @@ package com.intellij.structuralsearch.impl.matcher.filters;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiClass;
 
 /**
  * Created by IntelliJ IDEA.
@@ -12,6 +13,10 @@ import com.intellij.psi.PsiJavaCodeReferenceElement;
  * To change this template use File | Settings | File Templates.
  */
 public class TypeFilter extends NodeFilter {
+  public void visitClass(PsiClass aClass) {
+    result = true;
+  }
+
   public void visitReferenceElement(PsiJavaCodeReferenceElement psiMethod) {
     result = true;
   }

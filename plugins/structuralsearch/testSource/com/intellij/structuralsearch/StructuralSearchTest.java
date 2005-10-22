@@ -11,7 +11,7 @@ import java.util.Calendar;
  * Time: 5:45:17 PM
  * To change this template use File | Settings | File Templates.
  */
-@SuppressWarnings({"ALL"})
+@SuppressWarnings({"HardCodedStringLiteral"})
 public class StructuralSearchTest extends StructuralSearchTestCase {
   private static final String s1 =
     "debug(\"In action performed:\"+event);"+
@@ -998,6 +998,41 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     );
   }
 
+  public void testInterfaceImplementationsSearch() {
+    String in = "class A implements Cloneable {\n" +
+                "    \n" +
+                "  }\n" +
+                "  \n" +
+                "  class B implements Serializable {\n" +
+                "    \n" +
+                "  }\n" +
+                "  \n" +
+                "  class C implements Cloneable,Serializable {\n" +
+                "    \n" +
+                "  }\n" +
+                "  class C2 implements Serializable,Cloneable {\n" +
+                "    \n" +
+                "  }\n" +
+                "  \n" +
+                "  class E extends B implements Cloneable {\n" +
+                "    \n" +
+                "  }\n" +
+                "  \n" +
+                "  class F extends A implements Serializable {\n" +
+                "    \n" +
+                "  }\n" +
+                "  \n" +
+                "  class D extends C {\n" +
+                "    \n" +
+                "  }";
+    String what = "class 'A implements '_B:*Serializable , '_C:*Cloneable {}";
+    assertEquals(
+      "search interface within hierarchy",
+      5, 
+      findMatchesCount(in, what)
+    );
+  }
+  
   public void testSearchBacktracking() {
     assertEquals(
       "backtracking greedy regexp",
@@ -1607,8 +1642,8 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     assertEquals(
       "implements navigation match",
-      findMatchesCount(s107,s108_2),
-      1
+      2,
+      findMatchesCount(s107,s108_2)
     );
 
     final String s109 = "interface I {} interface I2 extends I {} class A implements I2 {} class B extends A { } class C extends B {} class D { void e() { C c; B b; A a;} }";
