@@ -3,7 +3,7 @@ package com.intellij.ide.fileTemplates.impl;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
-import com.intellij.ide.plugins.PluginManager;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
@@ -671,7 +671,8 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
     Set<VirtualFile> dirList = new HashSet<VirtualFile>();
 
     appendDefaultTemplatesFromClassloader(FileTemplateManagerImpl.class.getClassLoader(), dirList);
-    PluginDescriptor[] plugins = PluginManager.getPlugins();
+    final Application app = ApplicationManager.getApplication();
+    PluginDescriptor[] plugins = app.getPlugins();
     for (PluginDescriptor plugin : plugins) {
       appendDefaultTemplatesFromClassloader(plugin.getPluginClassLoader(), dirList);
     }

@@ -34,7 +34,7 @@ public class PluginDescriptorComparator implements Comparator<IdeaPluginDescript
     }
   }
 
-  private void assignNumbers(PluginId id, Map<PluginId,IdeaPluginDescriptor> idToDescriptorMap, Stack<PluginId> visited) throws Exception {
+  private void assignNumbers(PluginId id, Map<PluginId, IdeaPluginDescriptor> idToDescriptorMap, Stack<PluginId> visited) throws Exception {
     visited.push(id);
     try {
       final PluginId[] parentIds = idToDescriptorMap.get(id).getDependentPluginIds();

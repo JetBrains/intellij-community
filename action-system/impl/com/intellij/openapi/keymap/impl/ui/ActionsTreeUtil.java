@@ -9,6 +9,8 @@ import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.QuickList;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
@@ -74,7 +76,8 @@ public class ActionsTreeUtil {
   private static Group createPluginsActionsGroup() {
     Group pluginsGroup = new Group(KeyMapBundle.message("plugins.group.title"), null, null);
     ActionManagerEx managerEx = ActionManagerEx.getInstanceEx();
-    final IdeaPluginDescriptor[] plugins = PluginManager.getPlugins();
+    final Application app = ApplicationManager.getApplication();
+    final IdeaPluginDescriptor[] plugins = app.getPlugins();
     for (int i = 0; i < plugins.length; i++) {
       IdeaPluginDescriptor plugin = plugins[i];
       Group pluginGroup = new Group(plugin.getName(), null, null);

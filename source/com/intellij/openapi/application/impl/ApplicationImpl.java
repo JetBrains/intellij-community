@@ -16,6 +16,7 @@ import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AreaPicoContainer;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -173,6 +174,14 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   public boolean isHeadlessEnvironment() {
     return myTestModeFlag;
+  }
+
+  public IdeaPluginDescriptor getPlugin(PluginId id) {
+    return PluginsFacade.INSTANCE.getPlugin(id);
+  }
+
+  public IdeaPluginDescriptor[] getPlugins() {
+    return PluginsFacade.INSTANCE.getPlugins();
   }
 
   public boolean isAspectJSupportEnabled() {

@@ -1,5 +1,6 @@
 package com.intellij.ide.plugins;
 
+import com.intellij.ui.table.TableHeaderRenderer;
 import com.intellij.util.ui.SortableColumnModel;
 import com.intellij.util.ui.Table;
 

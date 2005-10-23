@@ -14,6 +14,7 @@ import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.reporter.ScrData;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
@@ -26,8 +27,8 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.text.DateFormatUtil;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -153,7 +154,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
                                                       ApplicationNamesInfo.getInstance().getProductName()));
       }
       else {
-        myBlameLabel.setText(DiagnosticBundle.message("error.list.message.blame.plugin", PluginManager.getPlugin(pluginId).getName()));
+        final Application app = ApplicationManager.getApplication();
+        myBlameLabel.setText(DiagnosticBundle.message("error.list.message.blame.plugin", app.getPlugin(pluginId).getName()));
       }
     }
     else {

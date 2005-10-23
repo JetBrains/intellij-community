@@ -1,9 +1,11 @@
 package com.intellij.mock;
 
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.ApplicationListener;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.components.BaseComponent;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
@@ -65,6 +67,14 @@ public class MockApplication extends UserDataHolderBase implements ApplicationEx
 
   public boolean isHeadlessEnvironment() {
     return true;
+  }
+
+  public IdeaPluginDescriptor getPlugin(PluginId id) {
+    return null;
+  }
+
+  public IdeaPluginDescriptor[] getPlugins() {
+    return new IdeaPluginDescriptor[0];
   }
 
   public boolean isAspectJSupportEnabled() {

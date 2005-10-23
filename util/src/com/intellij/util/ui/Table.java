@@ -58,12 +58,12 @@ public class Table extends JTable {
       public void columnMoved(TableColumnModelEvent e) {}
       public void columnRemoved(TableColumnModelEvent e) {}
     });
-    getTableHeader().setDefaultRenderer(new TableHeaderRenderer());
+    getTableHeader().setDefaultRenderer(new MyTableHeaderRenderer());
     //noinspection UNUSED_SYMBOL
     boolean marker = Patches.SUN_BUG_ID_4503845; // Don't remove. It's a marker for find usages
   }
 
-  private static class TableHeaderRenderer extends DefaultTableCellRenderer {
+  private static class MyTableHeaderRenderer extends DefaultTableCellRenderer {
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       if (table != null) {
         JTableHeader header = table.getTableHeader();

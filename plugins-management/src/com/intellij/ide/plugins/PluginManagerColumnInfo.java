@@ -97,7 +97,7 @@ class PluginManagerColumnInfo extends ColumnInfo {
         default:
           return "?";
       }
-    } else if (o instanceof IdeaPluginDescriptor) {
+    } else if (o instanceof IdeaPluginDescriptorImpl) {
       switch(columnIdx) {
         case COLUMN_NAME:
           return ((IdeaPluginDescriptor) o).getName();
@@ -105,7 +105,7 @@ class PluginManagerColumnInfo extends ColumnInfo {
         case COLUMN_INSTALLED_VERSION:
           return ((IdeaPluginDescriptor) o).getVersion();
         case COLUMN_STATE:
-          return ((IdeaPluginDescriptor) o).isDeleted() ?
+          return ((IdeaPluginDescriptorImpl) o).isDeleted() ?
                  IdeBundle.message("status.plugin.will.be.removed.after.restart") :
                  IdeBundle.message("status.plugin.installed");
         default:
@@ -160,7 +160,7 @@ class PluginManagerColumnInfo extends ColumnInfo {
               PluginNode p2 = (PluginNode)(mySortableProvider.getSortOrder() == SortableColumnModel.SORT_ASCENDING ? (PluginNode)o2 : o1);
 
               return p1.getName().compareToIgnoreCase(p2.getName());
-            } else if (o1 instanceof IdeaPluginDescriptor && o2 instanceof IdeaPluginDescriptor) {
+            } else if (o1 instanceof IdeaPluginDescriptorImpl && o2 instanceof IdeaPluginDescriptorImpl) {
               IdeaPluginDescriptor p1 = (IdeaPluginDescriptor)(mySortableProvider.getSortOrder() == SortableColumnModel.SORT_ASCENDING ? (IdeaPluginDescriptor)o1 : o2);
               IdeaPluginDescriptor p2 = (IdeaPluginDescriptor)(mySortableProvider.getSortOrder() == SortableColumnModel.SORT_ASCENDING ? (IdeaPluginDescriptor)o2 : o1);
 
@@ -201,7 +201,7 @@ class PluginManagerColumnInfo extends ColumnInfo {
               PluginNode p2 = (PluginNode)(mySortableProvider.getSortOrder() == SortableColumnModel.SORT_ASCENDING ? (PluginNode)o2 : o1);
 
               return compareVersion(p1.getVersion(), p2.getVersion());
-            } else if (o1 instanceof IdeaPluginDescriptor && o2 instanceof IdeaPluginDescriptor) {
+            } else if (o1 instanceof IdeaPluginDescriptorImpl && o2 instanceof IdeaPluginDescriptorImpl) {
               IdeaPluginDescriptor p1 = (IdeaPluginDescriptor)(mySortableProvider.getSortOrder() == SortableColumnModel.SORT_ASCENDING ? (IdeaPluginDescriptor)o1 : o2);
               IdeaPluginDescriptor p2 = (IdeaPluginDescriptor)(mySortableProvider.getSortOrder() == SortableColumnModel.SORT_ASCENDING ? (IdeaPluginDescriptor)o2 : o1);
 
@@ -283,9 +283,9 @@ class PluginManagerColumnInfo extends ColumnInfo {
       case COLUMN_STATE:
         return new Comparator() {
           public int compare(Object o1, Object o2) {
-            if (o1 instanceof IdeaPluginDescriptor && o2 instanceof IdeaPluginDescriptor) {
-              IdeaPluginDescriptor p1 = (IdeaPluginDescriptor)(mySortableProvider.getSortOrder() == SortableColumnModel.SORT_ASCENDING ? (IdeaPluginDescriptor)o1 : o2);
-              IdeaPluginDescriptor p2 = (IdeaPluginDescriptor)(mySortableProvider.getSortOrder() == SortableColumnModel.SORT_ASCENDING ? (IdeaPluginDescriptor)o2 : o1);
+            if (o1 instanceof IdeaPluginDescriptorImpl && o2 instanceof IdeaPluginDescriptorImpl) {
+              IdeaPluginDescriptorImpl p1 = (IdeaPluginDescriptorImpl)(mySortableProvider.getSortOrder() == SortableColumnModel.SORT_ASCENDING ? (IdeaPluginDescriptor)o1 : o2);
+              IdeaPluginDescriptorImpl p2 = (IdeaPluginDescriptorImpl)(mySortableProvider.getSortOrder() == SortableColumnModel.SORT_ASCENDING ? (IdeaPluginDescriptor)o2 : o1);
 
               if (p1.isDeleted() == p2.isDeleted())
                 return 0;
@@ -357,7 +357,7 @@ class PluginManagerColumnInfo extends ColumnInfo {
 
         if (! isSelected) {
           if (table.getModel() instanceof InstalledPluginsTableModel) {
-            IdeaPluginDescriptor descriptor = ((PluginTable<IdeaPluginDescriptor>)table).getObjectAt(row);
+            IdeaPluginDescriptorImpl descriptor = (IdeaPluginDescriptorImpl)((PluginTable<IdeaPluginDescriptor>)table).getObjectAt(row);
             if (descriptor.isDeleted())
               setBackground(Color.lightGray);
             else

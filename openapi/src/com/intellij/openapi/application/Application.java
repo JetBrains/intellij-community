@@ -15,14 +15,15 @@
  */
 package com.intellij.openapi.application;
 
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.components.ComponentManager;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * Provides access to core application-wide functionality and methods for working with the IDEA
@@ -256,4 +257,8 @@ public interface Application extends ComponentManager {
    * @return true if IDEA is running in UI-less mode, false otherwise
    */
   boolean isHeadlessEnvironment();
+
+  IdeaPluginDescriptor getPlugin(PluginId id);
+
+  IdeaPluginDescriptor[] getPlugins();
 }

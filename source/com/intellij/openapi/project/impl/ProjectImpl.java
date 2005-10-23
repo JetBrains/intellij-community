@@ -8,6 +8,7 @@ import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.startup.StartupManagerEx;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.command.CommandProcessor;
@@ -148,7 +149,8 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx, Area
     loadComponentsConfiguration(PROJECT_LAYER);
 
     if (PluginManager.shouldLoadPlugins()) {
-      final IdeaPluginDescriptor[] plugins = PluginManager.getPlugins();
+      final Application app = ApplicationManager.getApplication();
+      final IdeaPluginDescriptor[] plugins = app.getPlugins();
       for (int i = 0; i < plugins.length; i++) {
         IdeaPluginDescriptor plugin = plugins[i];
         if (!PluginManager.shouldLoadPlugin(plugin)) continue;

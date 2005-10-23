@@ -6,11 +6,13 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.OpenProjectAction;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -508,7 +510,8 @@ public class WelcomeScreen {
 
   private void createListOfPlugins(final JPanel installedPluginsPanel, final JPanel bundledPluginsPanel) {
     //Create the list of installed plugins
-    IdeaPluginDescriptor[] myInstalledPlugins = PluginManager.getPlugins();
+    IdeaPluginDescriptor[] myInstalledPlugins = ApplicationManager.getApplication().getPlugins();
+
     if (myInstalledPlugins == null || myInstalledPlugins.length == 0) {
       addListItemToPlugins(installedPluginsPanel, makeItalic(UIBundle
         .message("welcome.screen.plugins.panel.no.plugins.currently.installed.message.text")), null, null, null, null);

@@ -19,10 +19,10 @@ import java.util.*;
 /**
  * @author mike
  */
-public class IdeaPluginDescriptor implements JDOMExternalizable, PluginDescriptor {
+public class IdeaPluginDescriptorImpl implements JDOMExternalizable, IdeaPluginDescriptor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.plugins.PluginDescriptor");
 
-  public static final IdeaPluginDescriptor[] EMPTY_ARRAY = new IdeaPluginDescriptor[0];
+  public static final IdeaPluginDescriptorImpl[] EMPTY_ARRAY = new IdeaPluginDescriptorImpl[0];
   private String myName;
   private PluginId myId;
   private String myDescription;
@@ -43,7 +43,7 @@ public class IdeaPluginDescriptor implements JDOMExternalizable, PluginDescripto
   private Element myModuleComponents = null;
   private boolean myDeleted = false;
   private IdeaClassLoader myLoader;
-  private HSPath[] myHelpSets;
+  private HelpSetPath[] myHelpSets;
   private int myFormatVersion = 1;
   private List<Element> myExtensions;
   private List<Element> myExtensionsPoints;
@@ -72,7 +72,7 @@ public class IdeaPluginDescriptor implements JDOMExternalizable, PluginDescripto
   @NonNls private static final String ELEMENT_EXTENSIONS = "extensions";
   @NonNls private static final String ELEMENT_EXTENSION_POINTS = "extensionPoints";
 
-  public IdeaPluginDescriptor(File pluginPath) {
+  public IdeaPluginDescriptorImpl(File pluginPath) {
     myPath = pluginPath;
   }
 
@@ -124,13 +124,13 @@ public class IdeaPluginDescriptor implements JDOMExternalizable, PluginDescripto
     myDependencies = dependentPlugins.toArray(new PluginId[dependentPlugins.size()]);
 
     children = element.getChildren(ELEMENT_HELPSET);
-    List<HSPath> hsPathes = new ArrayList<HSPath>(children.size());
+    List<HelpSetPath> hsPathes = new ArrayList<HelpSetPath>(children.size());
     for (final Object aChildren1 : children) {
       final Element helpset = (Element)aChildren1;
-      HSPath hsPath = new HSPath(helpset.getAttributeValue(ATTRIBUTE_FILE), helpset.getAttributeValue(ATTRIBUTE_PATH));
+      HelpSetPath hsPath = new HelpSetPath(helpset.getAttributeValue(ATTRIBUTE_FILE), helpset.getAttributeValue(ATTRIBUTE_PATH));
       hsPathes.add(hsPath);
     }
-    myHelpSets = hsPathes.toArray(new HSPath[hsPathes.size()]);
+    myHelpSets = hsPathes.toArray(new HelpSetPath[hsPathes.size()]);
 
     Element vendor = element.getChild(ELEMENT_VENDOR);
     if (vendor != null) {
@@ -184,7 +184,7 @@ public class IdeaPluginDescriptor implements JDOMExternalizable, PluginDescripto
       Extensions.getRootArea().getExtensionPoint(Extensions.AREA_LISTENER_EXTENSION_POINT).registerExtension(new AreaListener() {
         public void areaCreated(String areaClass, AreaInstance areaInstance) {
           final ExtensionsArea area = Extensions.getArea(areaInstance);
-          area.registerAreaExtensionsAndPoints(IdeaPluginDescriptor.this, myExtensionsPoints, myExtensions);
+          area.registerAreaExtensionsAndPoints(IdeaPluginDescriptorImpl.this, myExtensionsPoints, myExtensions);
         }
 
         public void areaDisposing(String areaClass, AreaInstance areaInstance) {
@@ -321,9 +321,9 @@ public class IdeaPluginDescriptor implements JDOMExternalizable, PluginDescripto
 
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof IdeaPluginDescriptor)) return false;
+    if (!(o instanceof IdeaPluginDescriptorImpl)) return false;
 
-    final IdeaPluginDescriptor pluginDescriptor = (IdeaPluginDescriptor)o;
+    final IdeaPluginDescriptorImpl pluginDescriptor = (IdeaPluginDescriptorImpl)o;
 
     if (myName != null ? !myName.equals(pluginDescriptor.myName) : pluginDescriptor.myName != null) return false;
 
@@ -334,7 +334,7 @@ public class IdeaPluginDescriptor implements JDOMExternalizable, PluginDescripto
     return (myName != null ? myName.hashCode() : 0);
   }
 
-  public HSPath[] getHelpSets() {
+  public HelpSetPath[] getHelpSets() {
     return myHelpSets;
   }
 
@@ -368,21 +368,4 @@ public class IdeaPluginDescriptor implements JDOMExternalizable, PluginDescripto
     myDescription = loadDescription(myDescriptionChildText, bundle, myId);
   }
 
-  public static class HSPath {
-    private String file;
-    private String path;
-
-    public HSPath(String file, String path) {
-      this.file = file;
-      this.path = path;
-    }
-
-    public String getFile() {
-      return file;
-    }
-
-    public String getPath() {
-      return path;
-    }
-  }
 }

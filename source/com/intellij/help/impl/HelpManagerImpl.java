@@ -2,8 +2,10 @@ package com.intellij.help.impl;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.plugins.HelpSetPath;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManager;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.help.HelpManager;
@@ -74,12 +76,13 @@ public class HelpManagerImpl extends HelpManager implements ApplicationComponent
       HelpSet helpSet = new HelpSet(null, new URL (urlToHelp));
 
       // merge plugins help sets
-      IdeaPluginDescriptor [] pluginDescriptors = PluginManager.getPlugins();
+      final Application app = ApplicationManager.getApplication();
+      IdeaPluginDescriptor[] pluginDescriptors = app.getPlugins();
       for (int i = 0; i < pluginDescriptors.length; i++) {
         IdeaPluginDescriptor pluginDescriptor = pluginDescriptors[i];
         if (pluginDescriptor.getHelpSets() != null && pluginDescriptor.getHelpSets().length > 0) {
           for (int j = 0; j < pluginDescriptor.getHelpSets().length; j++) {
-            IdeaPluginDescriptor.HSPath hsPath = pluginDescriptor.getHelpSets()[j];
+            HelpSetPath hsPath = pluginDescriptor.getHelpSets()[j];
 
             URL hsURL = new URL("jar:file:///" + pluginDescriptor.getPath().getAbsolutePath() + "/help/" + hsPath.getFile() + "!" + hsPath.getPath());
             try {

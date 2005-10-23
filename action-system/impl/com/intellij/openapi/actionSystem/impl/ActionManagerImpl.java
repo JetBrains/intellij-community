@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.actionSystem.ex.TimerListener;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -143,7 +144,8 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
   }
 
   private void registerActions() {
-    final IdeaPluginDescriptor[] plugins = PluginManager.getPlugins();
+    final Application app = ApplicationManager.getApplication();
+    final IdeaPluginDescriptor[] plugins = app.getPlugins();
     for (int i = 0; i < plugins.length; i++) {
       IdeaPluginDescriptor plugin = plugins[i];
 
@@ -258,7 +260,8 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
    */
   @Nullable
   private AnAction processActionElement(Element element, final ClassLoader loader, PluginId pluginId) {
-    final IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
+    final Application app = ApplicationManager.getApplication();
+    final IdeaPluginDescriptor plugin = app.getPlugin(pluginId);
     @NonNls final String resBundleName = plugin != null ? plugin.getResourceBundleBaseName() : ACTIONS_BUNDLE;
     ResourceBundle bundle = null;
     if (resBundleName != null) {
@@ -350,7 +353,8 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
   }
 
   private AnAction processGroupElement(Element element, final ClassLoader loader, PluginId pluginId) {
-    final IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
+    final Application app = ApplicationManager.getApplication();
+    final IdeaPluginDescriptor plugin = app.getPlugin(pluginId);
     @NonNls final String resBundleName = plugin != null ? plugin.getResourceBundleBaseName() : ACTIONS_BUNDLE;
     ResourceBundle bundle = null;
     if (resBundleName != null) {

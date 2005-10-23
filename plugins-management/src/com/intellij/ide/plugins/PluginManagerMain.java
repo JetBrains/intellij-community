@@ -103,7 +103,7 @@ public class PluginManagerMain {
   private final SortableProvider myCartProvider;
 
   private void pluginInfoUpdate (Object plugin) {
-    if (plugin instanceof IdeaPluginDescriptor) {
+    if (plugin instanceof IdeaPluginDescriptorImpl) {
       IdeaPluginDescriptor pluginDescriptor = (IdeaPluginDescriptor)plugin;
 
       myVendorLabel.setText(pluginDescriptor.getVendor());
@@ -722,7 +722,7 @@ public class PluginManagerMain {
                 enabled = true;
               }
               presentation.setText(downloadMessage);
-            } else if (pluginObject instanceof IdeaPluginDescriptor){
+            } else if (pluginObject instanceof IdeaPluginDescriptorImpl){
               presentation.setText(updateMessage);
               presentation.setDescription(updateMessage);
               enabled = true;
@@ -746,7 +746,7 @@ public class PluginManagerMain {
               PluginNode pluginNode;
               if (selectedObject instanceof PluginNode){
                 pluginNode = (PluginNode)selectedObject;
-              } else if (selectedObject instanceof IdeaPluginDescriptor) {
+              } else if (selectedObject instanceof IdeaPluginDescriptorImpl) {
                 final IdeaPluginDescriptor pluginDescriptor = (IdeaPluginDescriptor)selectedObject;
                 pluginNode = new PluginNode(pluginDescriptor.getPluginId());
                 pluginNode.setName(pluginDescriptor.getName());
@@ -811,7 +811,7 @@ public class PluginManagerMain {
           boolean enabled = false;
 
           if (installedPluginTable != null && tabs.getSelectedIndex() == INSTALLED_TAB) {
-            IdeaPluginDescriptor pluginDescriptor = installedPluginTable.getSelectedObject();
+            IdeaPluginDescriptorImpl pluginDescriptor = (IdeaPluginDescriptorImpl)installedPluginTable.getSelectedObject();
 
             if (pluginDescriptor != null && ! pluginDescriptor.isDeleted()) {
               enabled = true;
@@ -824,7 +824,7 @@ public class PluginManagerMain {
           PluginId pluginId = null;
 
           if (tabs.getSelectedIndex() == INSTALLED_TAB) {
-            IdeaPluginDescriptor pluginDescriptor = installedPluginTable.getSelectedObject();
+            IdeaPluginDescriptorImpl pluginDescriptor = (IdeaPluginDescriptorImpl)installedPluginTable.getSelectedObject();
             if (pluginDescriptor != null) {
               if (Messages.showYesNoDialog(main, IdeBundle.message("prompt.uninstall.plugin", pluginDescriptor.getName()),
                                            IdeBundle.message("title.plugin.uninstall"), Messages.getQuestionIcon()) == 0) {

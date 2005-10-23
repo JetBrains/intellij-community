@@ -4,7 +4,7 @@ import com.intellij.ExtensionPoints;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.plugins.ComponentDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManager;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
@@ -386,7 +386,8 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   protected void initComponentsFromExtensions(final ExtensionsArea extensionsArea) {
     //if (ApplicationManagerEx.getApplicationEx().isUnitTestMode()) return; // TODO: quick and dirty. To make tests running.
-    final boolean headless = ApplicationManager.getApplication().isHeadlessEnvironment();
+    final Application app = ApplicationManager.getApplication();
+    final boolean headless = app.isHeadlessEnvironment();
 
     final ComponentDescriptor[] componentDescriptors =
       (ComponentDescriptor[])extensionsArea.getExtensionPoint(ExtensionPoints.COMPONENT).getExtensions();
@@ -394,6 +395,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       ComponentDescriptor descriptor = componentDescriptors[i];
       final Map<String, String> options = descriptor.getOptionsMap();
       if (isComponentSuitable(options)) {
+
         ClassLoader loader = findLoader(descriptor.getPluginId());
         try {
           final String implementation = headless ? descriptor.getHeadlessImplementation() : descriptor.getImplementation();
@@ -406,10 +408,10 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
           }
         }
         catch (Exception e) {
-          LOG.error(new PluginException(e, PluginManager.getPlugin(descriptor.getPluginId())));
+          LOG.error(new PluginException(e, app.getPlugin(descriptor.getPluginId())));
         }
         catch (Error e) {
-          LOG.error(new PluginException(e, PluginManager.getPlugin(descriptor.getPluginId())));
+          LOG.error(new PluginException(e, app.getPlugin(descriptor.getPluginId())));
         }
       }
     }
@@ -417,7 +419,8 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   private ClassLoader findLoader(final PluginId id) {
-    ClassLoader loader = PluginManager.getPlugin(id).getLoader();
+    final Application app = ApplicationManager.getApplication();
+    ClassLoader loader = app.getPlugin(id).getLoader();
     if (loader == null) {
       loader = getClass().getClassLoader();
     }

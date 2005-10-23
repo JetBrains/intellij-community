@@ -5,11 +5,8 @@ import com.intellij.ExtensionPoints;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.reporter.ConnectionException;
-import com.intellij.openapi.application.ApplicationStarter;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
@@ -22,11 +19,10 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import com.intellij.ui.Splash;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.io.IOException;
-
-import org.jetbrains.annotations.NonNls;
 
 
 public class IdeaApplication {
@@ -52,7 +48,9 @@ public class IdeaApplication {
 
   private ApplicationStarter getStarter() {
     if (myArgs.length > 0) {
-      PluginManager.getPlugins(); //TODO[max] make it clearer plugins should initialize before querying for extpoints.
+      final Application app = ApplicationManager.getApplication();
+      app.getPlugins(); //TODO[max] make it clearer plugins should initialize before querying for extpoints.
+
       final Object[] starters = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.APPLICATION_STARTER).getExtensions();
       String key = myArgs[0];
       for (int i = 0; i < starters.length; i++) {
