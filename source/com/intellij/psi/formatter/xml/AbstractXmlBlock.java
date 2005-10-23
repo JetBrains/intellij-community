@@ -90,7 +90,8 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
   }
 
   private boolean canWrapTagEnd(final XmlTag tag) {
-    return tag.getSubTags().length > 0 || tag.getName().toLowerCase().startsWith(JSP_TAG_PREFIX);
+    final String name = tag.getName();
+    return tag.getSubTags().length > 0 || (name != null && name.toLowerCase().startsWith(JSP_TAG_PREFIX));
   }
 
   protected XmlTag getTag() {
@@ -248,16 +249,9 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
       }
     }
 
-    if (isXmlTag(child)
-      //   || child.getElementType() == ElementType.XML_TAG
-      ) {
+    if (isXmlTag(child)) {
       result.add(new XmlTagBlock(child, wrap, alignment, myXmlFormattingPolicy, indent != null ? indent : Indent.getNoneIndent()));
     }
-    /*
-    else if (child.getElementType() == ElementType.JSP_SCRIPTLET_END) {
-      result.add(new XmlBlock(child, wrap, alignment, myXmlFormattingPolicy, Indent.getNoneIndent(), null));
-    }
-    */
     else {
       result.add(new XmlBlock(child, wrap, alignment, myXmlFormattingPolicy, indent, null));
     }
@@ -324,27 +318,15 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
 
   private Block createAnotherTreeTagBlock(final PsiElement tag, final Indent childIndent) {
     if (isXmlTag(tag)) {
-      return new XmlTagBlock(tag.getNode(), null, null, createPolicyFor(tag), childIndent);
+      return new XmlTagBlock(tag.getNode(), null, null, createPolicyFor(), childIndent);
     }
     else {
-      return new XmlBlock(tag.getNode(), null, null, createPolicyFor(tag), childIndent, tag.getTextRange());
+      return new XmlBlock(tag.getNode(), null, null, createPolicyFor(), childIndent, tag.getTextRange());
     }
 
   }
 
-  private XmlFormattingPolicy createPolicyFor(final PsiElement psiElement) {
-    /*
-    final Language language = psiElement.getLanguage();
-    final XmlFormattingPolicy result;
-    if (language == StdLanguages.JSP || language == StdLanguages.XML) {
-      result = new HtmlPolicy(getSettings(), myXmlFormattingPolicy.getDocumentModel());
-    }
-    else {
-      result = new HtmlPolicy(getSettings(), myXmlFormattingPolicy.getDocumentModel());
-    }
-    result.copyFrom(myXmlFormattingPolicy);
-    return result;
-    */
+  private XmlFormattingPolicy createPolicyFor() {
     return myXmlFormattingPolicy;
   }
 

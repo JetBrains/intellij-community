@@ -6,6 +6,7 @@ import com.intellij.lang.ASTNode;
 import java.util.List;
 
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 public class AnotherLanguageBlockWrapper extends AbstractXmlBlock{
   private final Block myOriginal;
@@ -41,5 +42,10 @@ public class AnotherLanguageBlockWrapper extends AbstractXmlBlock{
 
   @Nullable public Spacing getSpacing(Block child1, Block child2) {
     return myOriginal.getSpacing(child1,  child2);
+  }
+
+  @NotNull
+  public ChildAttributes getChildAttributes(final int newChildIndex) {
+    return myOriginal.getChildAttributes(newChildIndex);
   }
 }
