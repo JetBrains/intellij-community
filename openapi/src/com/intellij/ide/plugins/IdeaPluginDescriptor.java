@@ -6,7 +6,6 @@ package com.intellij.ide.plugins;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
@@ -49,7 +48,4 @@ public interface IdeaPluginDescriptor extends PluginDescriptor {
   HelpSetPath[] getHelpSets();
 
   String getVendorLogoPath();
-
-  @NotNull
-  ClassLoader getLoader();
 }

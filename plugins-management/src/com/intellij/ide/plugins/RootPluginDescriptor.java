@@ -18,6 +18,6 @@ public class RootPluginDescriptor implements PluginDescriptor {
   }
 
   public ClassLoader getPluginClassLoader() {
-    return null;
+    return getClass().getClassLoader();
   }
 }

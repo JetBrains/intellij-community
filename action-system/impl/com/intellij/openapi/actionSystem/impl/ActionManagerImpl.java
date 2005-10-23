@@ -151,7 +151,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
 
       final Element e = plugin.getActionsDescriptionElement();
       if (e != null) {
-        processActionsElement(e, plugin.getLoader(), plugin.getPluginId());
+        processActionsElement(e, plugin.getPluginClassLoader(), plugin.getPluginId());
       }
     }
   }

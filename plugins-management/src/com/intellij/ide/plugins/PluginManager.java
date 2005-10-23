@@ -240,7 +240,7 @@ public class PluginManager {
         getLogger().assertTrue(false, "Plugin not found: " + id);
         return null;
       }
-      final ClassLoader loader = pluginDescriptor.getLoader();
+      final ClassLoader loader = pluginDescriptor.getPluginClassLoader();
       if (loader == null) {
         getLogger().assertTrue(false, "Plugin class loader should be initialized for plugin " + id);
       }

@@ -304,11 +304,6 @@ public class IdeaPluginDescriptorImpl implements JDOMExternalizable, IdeaPluginD
     myDeleted = deleted;
   }
 
-  @NotNull
-  public ClassLoader getLoader() {
-    return myLoader != null ? myLoader : getClass().getClassLoader();
-  }
-
   public void setLoader(IdeaClassLoader loader) {
     myLoader = loader;
 
@@ -316,7 +311,7 @@ public class IdeaPluginDescriptorImpl implements JDOMExternalizable, IdeaPluginD
 
     Extensions.getRootArea().registerAreaExtensionsAndPoints(this, myExtensionsPoints, myExtensions);
 
-    initialize(getLoader());
+    initialize(getPluginClassLoader());
   }
 
   public boolean equals(Object o) {
@@ -343,7 +338,7 @@ public class IdeaPluginDescriptorImpl implements JDOMExternalizable, IdeaPluginD
   }
 
   public ClassLoader getPluginClassLoader() {
-    return myLoader;
+    return myLoader != null ? myLoader : getClass().getClassLoader();
   }
 
   public String getVendorLogoPath() {

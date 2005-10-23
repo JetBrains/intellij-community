@@ -420,7 +420,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   private ClassLoader findLoader(final PluginId id) {
     final Application app = ApplicationManager.getApplication();
-    ClassLoader loader = app.getPlugin(id).getLoader();
+    ClassLoader loader = app.getPlugin(id).getPluginClassLoader();
     if (loader == null) {
       loader = getClass().getClassLoader();
     }
@@ -544,7 +544,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
           ClassLoader loader = null;
           if (descriptor != null) {
-            loader = descriptor.getLoader();
+            loader = descriptor.getPluginClassLoader();
           }
           if (loader == null) {
             loader = getClass().getClassLoader();
