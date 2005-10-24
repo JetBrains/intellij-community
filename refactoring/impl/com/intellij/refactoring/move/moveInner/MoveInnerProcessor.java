@@ -156,14 +156,11 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
       if (myTargetContainer instanceof PsiDirectory) {
         newClass = ((PsiDirectory)myTargetContainer).createClass(newClassName);
         PsiDocComment defaultDocComment = newClass.getDocComment();
-        if (defaultDocComment != null) {
-          defaultDocComment = (PsiDocComment)defaultDocComment.copy();
-        }
-        newClass = (PsiClass)newClass.replace(myInnerClass);
         if (defaultDocComment != null && myInnerClass.getDocComment() == null) {
-          newClass.addAfter(defaultDocComment, null);
+          myInnerClass.addAfter(defaultDocComment, null);
         }
 
+        newClass = (PsiClass)newClass.replace(myInnerClass);
         newClass.getModifierList().setModifierProperty(PsiModifier.STATIC, false);
         newClass.getModifierList().setModifierProperty(PsiModifier.PRIVATE, false);
         newClass.getModifierList().setModifierProperty(PsiModifier.PROTECTED, false);
