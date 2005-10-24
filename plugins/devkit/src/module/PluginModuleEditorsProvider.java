@@ -37,11 +37,12 @@ public class PluginModuleEditorsProvider implements ModuleComponent, ModuleConfi
     ModulesProvider provider = state.getModulesProvider();
     List<ModuleConfigurationEditor> editors = new ArrayList<ModuleConfigurationEditor>();
     editors.add(editorFactory.createModuleContentRootsEditor(state));
-    editors.add(editorFactory.createLibrariesEditor(state));
-    if (provider.getModules().length > 1) {
-      editors.add(editorFactory.createDependenciesEditor(state));
-    }
-    editors.add(editorFactory.createOrderEntriesEditor(state));
+    //editors.add(editorFactory.createLibrariesEditor(state));
+    //if (provider.getModules().length > 1) {
+    //  editors.add(editorFactory.createDependenciesEditor(state));
+    //}
+    //editors.add(editorFactory.createOrderEntriesEditor(state));
+    editors.add(editorFactory.createClasspathEditor(state));
     editors.add(editorFactory.createJavadocEditor(state));
     editors.add(new PluginModuleBuildConfEditor(state));
     return editors.toArray(new ModuleConfigurationEditor[editors.size()]);
