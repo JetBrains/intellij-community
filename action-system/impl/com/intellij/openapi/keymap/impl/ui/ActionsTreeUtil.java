@@ -4,18 +4,18 @@ import com.intellij.ant.AntConfiguration;
 import com.intellij.ant.BuildFile;
 import com.intellij.ant.actions.TargetAction;
 import com.intellij.ide.actionMacro.ActionMacro;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.QuickList;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
+import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.tools.Tool;
 import com.intellij.tools.ToolManager;
 import org.jetbrains.annotations.NonNls;
@@ -75,9 +75,9 @@ public class ActionsTreeUtil {
 
   private static Group createPluginsActionsGroup() {
     Group pluginsGroup = new Group(KeyMapBundle.message("plugins.group.title"), null, null);
+    final KeymapManagerEx keymapManager = KeymapManagerEx.getInstanceEx();
     ActionManagerEx managerEx = ActionManagerEx.getInstanceEx();
-    final Application app = ApplicationManager.getApplication();
-    final IdeaPluginDescriptor[] plugins = app.getPlugins();
+    final IdeaPluginDescriptor[] plugins = PluginManager.getPlugins();
     for (int i = 0; i < plugins.length; i++) {
       IdeaPluginDescriptor plugin = plugins[i];
       Group pluginGroup = new Group(plugin.getName(), null, null);
@@ -87,6 +87,7 @@ public class ActionsTreeUtil {
       }
       for (int j = 0; j < pluginActions.length; j++) {
         String pluginAction = pluginActions[j];
+        if (keymapManager.getBoundActions().contains(pluginAction)) continue;
         pluginGroup.addActionId(pluginAction);
       }
       pluginsGroup.addGroup(pluginGroup);
@@ -349,15 +350,20 @@ public class ActionsTreeUtil {
 
     // add all registered actions
     final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
+    final KeymapManagerEx keymapManager = KeymapManagerEx.getInstanceEx();
     String[] registeredActionIds = actionManager.getActionIds("");
     for (int i = 0; i < registeredActionIds.length; i++) {
       String id = registeredActionIds[i];
       if (actionManager.getAction(id) instanceof ActionGroup){
         continue;
       }
-      if (!id.startsWith(QuickList.QUICK_LIST_PREFIX) && !addedActions.containsId(id) && !result.contains(id)) {
-        result.add(id);
+      if (id.startsWith(QuickList.QUICK_LIST_PREFIX) || addedActions.containsId(id) || result.contains(id)) {
+        continue;
       }
+
+      if (keymapManager.getBoundActions().contains(id)) continue;
+
+      result.add(id);
     }
 
     filterOtherActionsGroup(result);

@@ -91,6 +91,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
   @NonNls protected static final String KEYSTROKE_ATTR_NAME = "keystroke";
   @NonNls protected static final String REF_ATTR_NAME = "ref";
   @NonNls private static final String ACTIONS_BUNDLE = "messages.ActionsBundle";
+  @NonNls protected static final String USE_SHORTCUT_OF_ATTR_NAME = "use-shortcut-of";
 
   ActionManagerImpl(KeymapManager keymapManager, DataManager dataManager) {
     myId2Action = new THashMap<String, Object>();
@@ -333,6 +334,10 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
         return null;
       }
     }
+    if (element.getAttributeValue(USE_SHORTCUT_OF_ATTR_NAME) != null) {
+      ((KeymapManagerEx)myKeymapManager).bindShortcuts(element.getAttributeValue(USE_SHORTCUT_OF_ATTR_NAME), id);
+    }
+
     // register action
     registerAction(id, stub, pluginId);
     return stub;

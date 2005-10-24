@@ -3,8 +3,8 @@ package com.intellij.openapi.keymap.impl;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeyMapBundle;
+import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.ex.KeymapManagerListener;
 import com.intellij.openapi.util.*;
@@ -20,6 +20,8 @@ import java.io.FileFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Anton Katilin
@@ -34,6 +36,7 @@ public class KeymapManagerImpl extends KeymapManagerEx implements NamedJDOMExter
   private KeymapImpl myActiveKeymap;
   private ArrayList<KeymapManagerListener> myListeners = new ArrayList<KeymapManagerListener>();
   private String myActiveKeymapName;
+  private Map<String, String> myBoundShortcuts = new java.util.HashMap<String, String>();
 
   @NonNls
   private static final String KEYMAP = "keymap";
@@ -94,6 +97,18 @@ public class KeymapManagerImpl extends KeymapManagerEx implements NamedJDOMExter
   public void setActiveKeymap(Keymap activeKeymap) {
     myActiveKeymap = (KeymapImpl) activeKeymap;
     fireActiveKeymapChanged();
+  }
+
+  public void bindShortcuts(String sourceActionId, String targetActionId) {
+    myBoundShortcuts.put(targetActionId, sourceActionId);
+  }
+
+  public Set<String> getBoundActions() {
+    return myBoundShortcuts.keySet();
+  }
+
+  public String getActionBinding(String actionId) {
+    return myBoundShortcuts.get(actionId);
   }
 
   public void addKeymap(Keymap keymap) {

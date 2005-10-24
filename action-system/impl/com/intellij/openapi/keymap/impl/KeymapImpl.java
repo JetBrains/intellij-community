@@ -7,12 +7,12 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.keymap.KeyMapBundle;
+import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.HashMap;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -25,6 +25,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.Set;
 
 /**
  * @author Eugene Belyaev
@@ -90,12 +91,12 @@ public class KeymapImpl implements Keymap {
   private boolean myCanModify = true;
   private boolean myDisableMnemonics = false;
 
-  private THashMap myActionId2ListOfShortcuts = new THashMap();
+  private THashMap<String, ArrayList<Shortcut>> myActionId2ListOfShortcuts = new THashMap<String, ArrayList<Shortcut>>();
 
   /**
    * Don't use this field directly! Use it only through <code>getKeystroke2ListOfIds</code>.
    */
-  private THashMap myKeystroke2ListOfIds = null;
+  private THashMap<KeyStroke, ArrayList<String>> myKeystroke2ListOfIds = null;
   // TODO[vova,anton] it should be final member
 
   /**
@@ -107,6 +108,7 @@ public class KeymapImpl implements Keymap {
   private static HashMap ourNamesForKeycodes = null;
   private static final Shortcut[] ourEmptyShortcutsArray = new Shortcut[0];
   private final ArrayList<Keymap.Listener> myListeners = new ArrayList<Keymap.Listener>();
+  private KeymapManagerEx myKeymapManager;
 
   static {
     ourNamesForKeycodes = new HashMap();
@@ -212,12 +214,12 @@ public class KeymapImpl implements Keymap {
   }
 
   public void addShortcut(String actionId, Shortcut shortcut) {
-    addShortcutSilently(actionId, shortcut);
+    addShortcutSilently(actionId, shortcut, true);
     fireShortcutChanged(actionId);
   }
 
-  private void addShortcutSilently(String actionId, Shortcut shortcut) {
-    ArrayList list = (ArrayList)myActionId2ListOfShortcuts.get(actionId);
+  private void addShortcutSilently(String actionId, Shortcut shortcut, final boolean checkParentShortcut) {
+    ArrayList list = myActionId2ListOfShortcuts.get(actionId);
     if (list == null) {
       list = new ArrayList();
       myActionId2ListOfShortcuts.put(actionId, list);
@@ -232,7 +234,7 @@ public class KeymapImpl implements Keymap {
     }
     list.add(shortcut);
 
-    if (myParent != null && areShortcutsEqual(getParentShortcuts(actionId), getShortcuts(actionId))) {
+    if (checkParentShortcut && myParent != null && areShortcutsEqual(getParentShortcuts(actionId), getShortcuts(actionId))) {
       myActionId2ListOfShortcuts.remove(actionId);
     }
     myKeystroke2ListOfIds = null;
@@ -278,29 +280,19 @@ public class KeymapImpl implements Keymap {
 
   private THashMap getKeystroke2ListOfIds() {
     if (myKeystroke2ListOfIds == null) {
-      myKeystroke2ListOfIds = new THashMap();
+      myKeystroke2ListOfIds = new THashMap<KeyStroke, ArrayList<String>>();
 
       for (Iterator ids = myActionId2ListOfShortcuts.keySet().iterator(); ids.hasNext();) {
         String id = (String)ids.next();
-        ArrayList listOfShortcuts = (ArrayList)myActionId2ListOfShortcuts.get(id);
-        for (int i=0; i<listOfShortcuts.size(); i++) {
-          Shortcut shortcut = (Shortcut)listOfShortcuts.get(i);
-          if (!(shortcut instanceof KeyboardShortcut)) {
-            continue;
-          }
-          KeyStroke firstKeyStroke = ((KeyboardShortcut)shortcut).getFirstKeyStroke();
-          ArrayList listOfIds = (ArrayList)myKeystroke2ListOfIds.get(firstKeyStroke);
-          if (listOfIds == null) {
-            listOfIds = new ArrayList();
-            myKeystroke2ListOfIds.put(firstKeyStroke, listOfIds);
-          }
-          // action may have more that 1 shortcut with same first keystroke
-          if (!listOfIds.contains(id)) {
-            listOfIds.add(id);
-          }
-        }
+        addAction2ShortcutsMap(id, myKeystroke2ListOfIds, KeyboardShortcut.class);
+      }
+
+      final Set<String> boundActions = getKeymapManager().getBoundActions();
+      for (String id : boundActions) {
+        addAction2ShortcutsMap(id, myKeystroke2ListOfIds, KeyboardShortcut.class);
       }
     }
+
     return myKeystroke2ListOfIds;
   }
 
@@ -310,26 +302,70 @@ public class KeymapImpl implements Keymap {
 
       for (Iterator ids = myActionId2ListOfShortcuts.keySet().iterator(); ids.hasNext();) {
         String id = (String)ids.next();
-        ArrayList listOfShortcuts = (ArrayList)myActionId2ListOfShortcuts.get(id);
-        for (int i=0; i<listOfShortcuts.size(); i++) {
-          Shortcut shortcut = (Shortcut)listOfShortcuts.get(i);
-          if (!(shortcut instanceof MouseShortcut)) {
-            continue;
-          }
-          ArrayList listOfIds = (ArrayList)myMouseShortcut2ListOfIds.get(shortcut);
-          if (listOfIds == null) {
-            listOfIds = new ArrayList();
-            myMouseShortcut2ListOfIds.put(shortcut, listOfIds);
-          }
-          // action may have more that 1 shortcut with same first keystroke
-          if (!listOfIds.contains(id)) {
-            listOfIds.add(id);
-          }
-        }
+        addAction2ShortcutsMap(id, myMouseShortcut2ListOfIds, MouseShortcut.class);
+      }
+
+      final Set<String> boundActions = getKeymapManager().getBoundActions();
+      for (String id : boundActions) {
+        addAction2ShortcutsMap(id, myMouseShortcut2ListOfIds, MouseShortcut.class);
       }
     }
     return myMouseShortcut2ListOfIds;
   }
+
+  private void addAction2ShortcutsMap(
+    final String actionId,
+    final THashMap strokesMap,
+    final Class shortcutClass) {
+    ArrayList listOfShortcuts = _getShortcuts(actionId);
+    for (int i=0; i<listOfShortcuts.size(); i++) {
+      Shortcut shortcut = (Shortcut)listOfShortcuts.get(i);
+      if (!shortcutClass.isInstance(shortcut)) {
+        continue;
+      }
+
+      ArrayList<String> listOfIds = null;
+      if (shortcut instanceof KeyboardShortcut) {
+        KeyStroke firstKeyStroke = ((KeyboardShortcut)shortcut).getFirstKeyStroke();
+        listOfIds = (ArrayList<String>)strokesMap.get(firstKeyStroke);
+        if (listOfIds == null) {
+          listOfIds = new ArrayList<String>();
+          strokesMap.put(firstKeyStroke, listOfIds);
+        }
+      }
+      else {
+        listOfIds = (ArrayList)strokesMap.get(shortcut);
+        if (listOfIds == null) {
+          listOfIds = new ArrayList<String>();
+          strokesMap.put(shortcut, listOfIds);
+        }
+      }
+
+      // action may have more that 1 shortcut with same first keystroke
+      if (!listOfIds.contains(actionId)) {
+        listOfIds.add(actionId);
+      }
+    }
+  }
+
+  private ArrayList<Shortcut> _getShortcuts(final String actionId) {
+    KeymapManagerEx keymapManager = getKeymapManager();
+    ArrayList<Shortcut> listOfShortcuts = myActionId2ListOfShortcuts.get(actionId);
+    if (listOfShortcuts != null) {
+      listOfShortcuts = new ArrayList<Shortcut>(listOfShortcuts);
+    }
+    else {
+      listOfShortcuts = new ArrayList<Shortcut>();
+    }
+
+    final String actionBinding = keymapManager.getActionBinding(actionId);
+    if (actionBinding != null) {
+      listOfShortcuts.addAll(_getShortcuts(actionBinding));
+    }
+
+    return listOfShortcuts;
+  }
+
 
   protected String[] getParentActionIds(KeyStroke firstKeyStroke) {
     return myParent.getActionIds(firstKeyStroke);
@@ -422,7 +458,13 @@ public class KeymapImpl implements Keymap {
   }
 
   public Shortcut[] getShortcuts(String actionId) {
-    ArrayList<Shortcut> shortcuts = (ArrayList<Shortcut>)myActionId2ListOfShortcuts.get(actionId);
+    KeymapManagerEx keymapManager = getKeymapManager();
+    if (keymapManager.getBoundActions().contains(actionId)) {
+      return getShortcuts(keymapManager.getActionBinding(actionId));
+    }
+
+    ArrayList<Shortcut> shortcuts = myActionId2ListOfShortcuts.get(actionId);
+
     if (shortcuts == null) {
       if (myParent != null) {
         return getParentShortcuts(actionId);
@@ -431,6 +473,13 @@ public class KeymapImpl implements Keymap {
       }
     }
     return shortcuts.toArray(new Shortcut[shortcuts.size()]);
+  }
+
+  private KeymapManagerEx getKeymapManager() {
+    if (myKeymapManager == null) {
+      myKeymapManager = KeymapManagerEx.getInstanceEx();
+    }
+    return myKeymapManager;
   }
 
   /**
@@ -481,7 +530,7 @@ public class KeymapImpl implements Keymap {
               if(firstKeyStroke==null){
                 throw new InvalidDataException(
                   "Cannot parse first-keystroke: '" + firstKeyStrokeStr+"'; "+
-                    "Action's id="+id+"; Keymap's name="+myName
+                  "Action's id="+id+"; Keymap's name="+myName
                 );
               }
             }else{
@@ -537,7 +586,7 @@ public class KeymapImpl implements Keymap {
       ArrayList shortcuts=(ArrayList)id2shortcuts.get(id);
       for(Iterator j=shortcuts.iterator();j.hasNext();){
         Shortcut shortcut=(Shortcut)j.next();
-        addShortcutSilently(id,shortcut);
+        addShortcutSilently(id,shortcut, false);
       }
     }
   }
