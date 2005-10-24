@@ -35,9 +35,9 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.io.ZipUtil;
-import org.jetbrains.idea.devkit.module.PluginModuleType;
-import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.idea.devkit.module.PluginModuleType;
 
 import java.io.*;
 import java.util.HashSet;
@@ -89,10 +89,10 @@ public class PrepareToDeployAction extends AnAction {
       }
 
     @NonNls final Set<String> errorSet = new HashSet<String>();
-    final boolean isOk = ApplicationManager.getApplication().runProcessWithProgressSynchronously(new Runnable() {
+    final boolean isOk = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
         final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-        if (progressIndicator != null){
+        if (progressIndicator != null) {
           progressIndicator.setText(DevKitBundle.message("prepare.for.deployment.common"));
           progressIndicator.setIndeterminate(true);
         }
@@ -107,7 +107,7 @@ public class PrepareToDeployAction extends AnAction {
             final ZipOutputStream zos = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(zipFile)));
             ZipUtil.addFileToZip(zos, jarFile, "/" + name + MIDDLE_LIB_DIR + name + JAR_EXTENSION, new HashSet<String>(), new FileFilter() {
               public boolean accept(File pathname) {
-                if (progressIndicator != null){
+                if (progressIndicator != null) {
                   progressIndicator.setText2("");
                 }
                 return true;
@@ -129,7 +129,7 @@ public class PrepareToDeployAction extends AnAction {
                   }
                   ZipUtil.addFileOrDirRecursively(jar, libraryJar, VfsUtil.virtualToIoFile(virtualFile), "", new FileFilter() {
                     public boolean accept(File pathname) {
-                      if (progressIndicator != null){
+                      if (progressIndicator != null) {
                         progressIndicator.setText2("");
                       }
                       return true;
@@ -153,7 +153,7 @@ public class PrepareToDeployAction extends AnAction {
                 else {
                   ZipUtil.addFileOrDirRecursively(zos, jarFile, ioFile, "/" + name + MIDDLE_LIB_DIR + ioFile.getName(), new FileFilter() {
                     public boolean accept(File pathname) {
-                      if (progressIndicator != null){
+                      if (progressIndicator != null) {
                         progressIndicator.setText2("");
                       }
                       return true;
@@ -163,14 +163,15 @@ public class PrepareToDeployAction extends AnAction {
               }
               if (libraryName != null) {
                 jar.close();
-                ZipUtil.addFileOrDirRecursively(zos, jarFile, libraryJar, "/" + name + MIDDLE_LIB_DIR + libraryName + JAR_EXTENSION, new FileFilter() {
-                  public boolean accept(File pathname) {
-                    if (progressIndicator != null){
-                      progressIndicator.setText2("");
-                    }
-                    return true;
-                  }
-                }, new HashSet<String>());
+                ZipUtil.addFileOrDirRecursively(zos, jarFile, libraryJar, "/" + name + MIDDLE_LIB_DIR + libraryName + JAR_EXTENSION,
+                                                new FileFilter() {
+                                                  public boolean accept(File pathname) {
+                                                    if (progressIndicator != null) {
+                                                      progressIndicator.setText2("");
+                                                    }
+                                                    return true;
+                                                  }
+                                                }, new HashSet<String>());
               }
             }
             zos.close();
