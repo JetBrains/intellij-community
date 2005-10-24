@@ -82,14 +82,15 @@ public class SvnAuthenticationProvider implements ISVNAuthenticationProvider {
           }
           dialog.show();
           if (dialog.isOK()) {
+            int port = dialog.getPortNumber();
             if (dialog.getKeyFile() != null && dialog.getKeyFile().trim().length() > 0) {
               String passphrase = dialog.getPassphrase();
               if (passphrase != null && passphrase.length() == 0) {
                 passphrase = null;
               }
-              result[0] = new SVNSSHAuthentication(dialog.getUserName(), new File(dialog.getKeyFile()), passphrase, -1, dialog.isSaveAllowed());
+              result[0] = new SVNSSHAuthentication(dialog.getUserName(), new File(dialog.getKeyFile()), passphrase, port, dialog.isSaveAllowed());
             } else {
-              result[0] = new SVNSSHAuthentication(dialog.getUserName(), dialog.getPassword(), -1, dialog.isSaveAllowed());
+              result[0] = new SVNSSHAuthentication(dialog.getUserName(), dialog.getPassword(), port, dialog.isSaveAllowed());
             }
           }
         }

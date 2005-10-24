@@ -24,7 +24,6 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.help.HelpManager;
-import com.intellij.util.ui.DialogUtil;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -50,6 +49,7 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
 
   private String myRealm;
   private JTextField myUserNameText;
+  private JTextField myPortText;
   private JCheckBox myAllowSaveCheckBox;
   private JPasswordField myPasswordText;
   private JPasswordField myPassphraseText;
@@ -58,6 +58,8 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
   private JRadioButton myKeyButton;
   private JLabel myPasswordLabel;
   private JLabel myKeyFileLabel;
+  private JLabel myPortLabel;
+  private JTextField myPortField;
   private JLabel myPassphraseLabel;
   private Project myProject;
 
@@ -212,6 +214,29 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
 
     myPassphraseLabel.setLabelFor(myPassphraseText);
 
+      // key file.
+      gb.gridy += 1;
+      gb.weightx = 0;
+      gb.gridx = 0;
+      gb.gridwidth = 1;
+      gb.fill = GridBagConstraints.NONE;
+      gb.gridwidth = 1;
+
+      myPortLabel = new JLabel(SvnBundle.message("label.ssh.port"));
+      panel.add(myPortLabel, gb);
+
+      // key field
+      gb.gridx = 1;
+      gb.weightx = 0;
+      gb.gridwidth = 2;
+      gb.fill = GridBagConstraints.NONE;
+
+      myPortField = new JTextField();
+      myPortField.setColumns(6);
+      panel.add(myPortField, gb);
+      myPortLabel.setLabelFor(myPortField);
+      myPortField.setText("22");
+      myPortField.getDocument().addDocumentListener(this);
 
     ButtonGroup group = new ButtonGroup();
     group.add(myPasswordButton);
@@ -234,7 +259,7 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
     gb.weighty = 1;
     panel.add(new JLabel(), gb);
 
-    myAllowSaveCheckBox.setSelected(!myAllowSave);
+    myAllowSaveCheckBox.setSelected(false);
     myAllowSaveCheckBox.setEnabled(myAllowSave);
 
     myKeyButton.addActionListener(this);
@@ -267,6 +292,15 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
       else if (myKeyButton.isSelected()) {
         ok = myKeyFileText != null && myKeyFileText.getText().trim().length() > 0;
       }
+        if (ok) {
+            String portNumber = myPortField.getText();
+            try {
+                int port = Integer.parseInt(portNumber);
+                ok = port > 0;
+            } catch (NumberFormatException nfe) {
+                ok = false;
+            }
+        }
     }
     return ok;
   }
@@ -280,6 +314,20 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
       return myKeyFileText.getText();
     }
     return null;
+  }
+
+  public int getPortNumber() {
+      String portNumber = myPortField.getText();
+      int port = 22;
+      try {
+          port = Integer.parseInt(portNumber);
+      } catch (NumberFormatException nfe) {
+          port = 22;
+      }
+      if (port <= 0) {
+          port = 22;
+      }
+      return port;      
   }
 
   public String getPassphrase() {
@@ -309,7 +357,7 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
   }
 
   public boolean isSaveAllowed() {
-    return isOK() && myAllowSave && myAllowSaveCheckBox != null && !myAllowSaveCheckBox.isSelected();
+    return isOK() && myAllowSave && myAllowSaveCheckBox != null && myAllowSaveCheckBox.isSelected();
   }
 
   public void actionPerformed(ActionEvent e) {
@@ -317,7 +365,7 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
       updateFields();
     }
     else {
-      @NonNls String path = myKeyFileText.getText();
+      String path = myKeyFileText.getText();
       VirtualFile file;
       if (path != null && path.trim().length() > 0) {
         path = "file://" + path.replace(File.separatorChar, '/');

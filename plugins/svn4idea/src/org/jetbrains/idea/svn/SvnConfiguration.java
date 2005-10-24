@@ -123,10 +123,9 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable{
 
   public ISVNAuthenticationManager getAuthenticationManager(Project project) {
     if (myAuthManager == null) {
-      File path = new File(getConfigurationDirectory());
-      myAuthManager = SVNWCUtil.createDefaultAuthenticationManager(path, null, null, getOptions(project).isAuthStorageEnabled());
-      myAuthManager.setAuthenticationProvider(new SvnAuthenticationProvider(project));
-      myAuthManager.setRuntimeStorage(RUNTIME_AUTH_CACHE);
+        myAuthManager = new SvnAuthenticationManager();
+        myAuthManager.setAuthenticationProvider(new SvnAuthenticationProvider(project));
+        myAuthManager.setRuntimeStorage(RUNTIME_AUTH_CACHE);
     }
     return myAuthManager;
   }

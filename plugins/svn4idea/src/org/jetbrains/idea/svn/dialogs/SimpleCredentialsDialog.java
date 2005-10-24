@@ -18,7 +18,6 @@ package org.jetbrains.idea.svn.dialogs;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.help.HelpManager;
-import com.intellij.util.ui.DialogUtil;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -138,7 +137,7 @@ public class SimpleCredentialsDialog extends DialogWrapper implements DocumentLi
     gb.gridy += 1;
     panel.add(new JSeparator(), gb);
 
-    myAllowSaveCheckBox.setSelected(!myAllowSave);
+    myAllowSaveCheckBox.setSelected(false);
     myAllowSaveCheckBox.setEnabled(myAllowSave);
 
     return panel;
@@ -176,7 +175,7 @@ public class SimpleCredentialsDialog extends DialogWrapper implements DocumentLi
   }
 
   public boolean isSaveAllowed() {
-    return isOK() && myAllowSave && myAllowSaveCheckBox != null && !myAllowSaveCheckBox.isSelected();
+    return isOK() && myAllowSave && myAllowSaveCheckBox != null && myAllowSaveCheckBox.isSelected();
   }
 
   public void insertUpdate(DocumentEvent e) {
