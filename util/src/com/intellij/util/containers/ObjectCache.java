@@ -1,10 +1,10 @@
 package com.intellij.util.containers;
 
-import java.util.Iterator;
+import com.intellij.util.EventDispatcher;
+
 import java.util.ArrayList;
 import java.util.EventListener;
-
-import com.intellij.util.EventDispatcher;
+import java.util.Iterator;
 
 /**
  * Created by IntelliJ IDEA.
@@ -25,8 +25,8 @@ public class ObjectCache<K,V> implements Iterable {
   protected int myHashTableSize;
   protected int myCount;
   protected int myFirstFree;
-  final protected EventDispatcher<DeletedPairsListener> myEventDispatcher =
-    EventDispatcher.create(DeletedPairsListener.class, false);
+
+  final protected EventDispatcher<DeletedPairsListener> myEventDispatcher = EventDispatcher.create(DeletedPairsListener.class);
 
   private static final int[] tableSizes =
     new int[]{5, 11, 23, 47, 101, 199, 397, 797, 1597, 3191, 6397, 12799, 25589, 51199,

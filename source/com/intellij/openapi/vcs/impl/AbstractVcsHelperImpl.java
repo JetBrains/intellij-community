@@ -572,17 +572,17 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
     final PsiManager manager = PsiManager.getInstance(myProject);
     final FileDocumentManager fileManager = FileDocumentManager.getInstance();
 
-    boolean completed = ApplicationManager.getApplication().runProcessWithProgressSynchronously(new Runnable() {
+    boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
         final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
-        for (int i  = 0; i < filesToCheck.size(); i++) {
+        for (int i = 0; i < filesToCheck.size(); i++) {
 
           if (progress.isCanceled()) throw new ProcessCanceledException();
 
           VirtualFile file = filesToCheck.get(i);
 
           progress.setText(VcsBundle.message("searching.for.code.smells.processing.file.progress.text", file.getPresentableUrl()));
-          progress.setFraction((double)i/(double)filesToCheck.size());
+          progress.setFraction((double)i / (double)filesToCheck.size());
 
           final PsiFile psiFile = manager.findFile(file);
           if (psiFile != null) {

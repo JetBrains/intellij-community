@@ -36,6 +36,7 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SmartExpander;
 import com.intellij.ui.content.Content;
+import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.*;
 import com.intellij.usages.rules.*;
 import com.intellij.util.Alarm;
@@ -43,11 +44,10 @@ import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.usageView.UsageViewBundle;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -482,9 +482,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
         public void run() {}
       });
     }  else {
-      application.runProcessWithProgressSynchronously(
-        process, UsageViewManagerImpl.getProgressTitle(myPresentation), true, myProject
-      );
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(process, UsageViewManagerImpl.getProgressTitle(myPresentation), true, myProject);
     }
   }
 

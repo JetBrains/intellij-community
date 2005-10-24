@@ -4,7 +4,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.cyclicDependencies.CyclicDependenciesBuilder;
 import com.intellij.cyclicDependencies.ui.CyclicDependenciesPanel;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.packageDependencies.DependencyValidationManagerImpl;
@@ -26,7 +26,7 @@ public class CyclicDependenciesHandler {
 
   public void analyze() {
     final CyclicDependenciesBuilder builder = new CyclicDependenciesBuilder(myProject, myScope);
-    if (ApplicationManager.getApplication().runProcessWithProgressSynchronously(new Runnable() {
+    if (ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
         builder.analyze();
       }

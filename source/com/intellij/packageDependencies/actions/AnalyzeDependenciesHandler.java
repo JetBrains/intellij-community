@@ -2,7 +2,7 @@ package com.intellij.packageDependencies.actions;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.AnalysisScopeBundle;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.packageDependencies.DependencyValidationManager;
@@ -23,7 +23,7 @@ public class AnalyzeDependenciesHandler {
 
   public void analyze() {
     final DependenciesBuilder forwardBuilder = new ForwardDependenciesBuilder(myProject, myScope);
-    if (ApplicationManager.getApplication().runProcessWithProgressSynchronously(new Runnable() {
+    if (ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
         forwardBuilder.analyze();
       }
@@ -33,7 +33,7 @@ public class AnalyzeDependenciesHandler {
                                                                                     AnalysisScopeBundle.message(
                                                                                       "package.dependencies.toolwindow.title",
                                                                                       forwardBuilder.getScope().getDisplayName()),
-                                                                                  false);
+                                                                                    false);
       panel.setContent(content);
       ((DependencyValidationManagerImpl)DependencyValidationManager.getInstance(myProject)).addContent(content);
     }

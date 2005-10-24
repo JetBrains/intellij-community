@@ -1,6 +1,6 @@
 package com.intellij.packageDependencies.ui;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -20,7 +20,6 @@ import com.intellij.util.Icons;
 import com.intellij.util.containers.GenericHashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.analysis.AnalysisScopeBundle;
 import gnu.trove.TObjectHashingStrategy;
 
 import javax.swing.*;
@@ -217,7 +216,7 @@ public class TreeModelBuilder {
     };
 
     if (showProgress) {
-      ApplicationManager.getApplication().runProcessWithProgressSynchronously(buildingRunnable, AnalysisScopeBundle.message("package.dependencies.build.process.title"), false, project);
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(buildingRunnable, AnalysisScopeBundle.message("package.dependencies.build.process.title"), false, project);
     }
     else {
       buildingRunnable.run();
@@ -278,7 +277,7 @@ public class TreeModelBuilder {
     };
 
     if (showProgress) {
-      ApplicationManager.getApplication().runProcessWithProgressSynchronously(buildingRunnable, AnalysisScopeBundle.message("package.dependencies.build.process.title"), false, myProject);
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(buildingRunnable, AnalysisScopeBundle.message("package.dependencies.build.process.title"), false, myProject);
     }
     else {
       buildingRunnable.run();

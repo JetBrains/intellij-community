@@ -1,5 +1,6 @@
 package com.intellij.openapi.vcs.history.impl;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffManager;
@@ -8,17 +9,17 @@ import com.intellij.openapi.diff.SimpleContent;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
@@ -26,7 +27,6 @@ import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.SortableColumnModel;
-import com.intellij.execution.ExecutionBundle;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -209,7 +209,7 @@ public class VcsHistoryDialog extends DialogWrapper {
     synchronized (myCachedContents) {
 
       final VcsFileRevision[] revisionsToLoad = revisionsNeededToBeLoaded(revisions);
-      ApplicationManager.getApplication().runProcessWithProgressSynchronously(new Runnable() {
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
         public void run() {
           ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
           progressIndicator.pushState();

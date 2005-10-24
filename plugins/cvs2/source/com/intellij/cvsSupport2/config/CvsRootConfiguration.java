@@ -1,5 +1,6 @@
 package com.intellij.cvsSupport2.config;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.CvsResultEx;
 import com.intellij.cvsSupport2.connections.*;
 import com.intellij.cvsSupport2.connections.ssh.ui.SshSettings;
@@ -13,13 +14,12 @@ import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.RevisionOrDate;
 import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.RevisionOrDateImpl;
 import com.intellij.cvsSupport2.errorHandling.CvsException;
 import com.intellij.cvsSupport2.javacvsImpl.io.ReadWriteStatistics;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.cvsIntegration.CvsRepository;
 import com.intellij.openapi.cvsIntegration.CvsResult;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.CvsBundle;
 import org.netbeans.lib.cvsclient.CvsRoot;
 import org.netbeans.lib.cvsclient.ValidRequestsExpectedException;
 import org.netbeans.lib.cvsclient.command.CommandException;
@@ -149,7 +149,7 @@ public class CvsRootConfiguration
 
     final CvsResult result = new CvsResultEx();
     try {
-      ApplicationManager.getApplication().runProcessWithProgressSynchronously(new Runnable() {
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
         public void run() {
           final GetModulesListOperation operation = new GetModulesListOperation(settings);
 
@@ -174,7 +174,7 @@ public class CvsRootConfiguration
             result.addError(new CvsException(e, cvsRootProvider.getCvsRootAsString()));
           }
         }
-      }, com.intellij.CvsBundle.message("operation.name.test.connection"), true, null);
+      }, CvsBundle.message("operation.name.test.connection"), true, null);
       if (result.isCanceled()) throw new ProcessCanceledException();
 
       if (!result.hasNoErrors()) {

@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.ModuleUtil;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -19,10 +20,9 @@ import com.intellij.util.containers.HashSet;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
-
-import org.jetbrains.annotations.NonNls;
 
 public class JUnitUtil {
   @NonNls private static final String TESTCASE_CLASS = "junit.framework.TestCase";
@@ -55,16 +55,11 @@ public class JUnitUtil {
     }
 
     final PsiClass[][] result = new PsiClass[1][];
-    ApplicationManager.getApplication().runProcessWithProgressSynchronously(
-      new Runnable() {
-        public void run() {
-          result[0] = ConfigurationUtil.getAllTestClasses(classFilter);
-        }
-      },
-      ExecutionBundle.message("seaching.test.progress.title"),
-      true,
-      classFilter.getProject()
-    );
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      public void run() {
+        result[0] = ConfigurationUtil.getAllTestClasses(classFilter);
+      }
+    }, ExecutionBundle.message("seaching.test.progress.title"), true, classFilter.getProject());
 
     if (result[0] != null) {
       callback.found(result[0]);

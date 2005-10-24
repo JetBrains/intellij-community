@@ -2,7 +2,7 @@ package com.intellij.packageDependencies.actions;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.AnalysisScopeBundle;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.packageDependencies.BackwardDependenciesBuilder;
 import com.intellij.packageDependencies.DependenciesBuilder;
@@ -28,7 +28,7 @@ public class BackwardDependenciesHandler {
   public void analyze() {
     final DependenciesBuilder builder = new BackwardDependenciesBuilder(myProject, myScope);
 
-    if (ApplicationManager.getApplication().runProcessWithProgressSynchronously(new Runnable() {
+    if (ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
         builder.analyze();
       }
@@ -38,7 +38,7 @@ public class BackwardDependenciesHandler {
                                                                                     AnalysisScopeBundle.message(
                                                                                       "backward.dependencies.toolwindow.title",
                                                                                       builder.getScope().getDisplayName()),
-                                                                                  false);
+                                                                                    false);
       panel.setContent(content);
       ((DependencyValidationManagerImpl)DependencyValidationManager.getInstance(myProject)).addContent(content);
 

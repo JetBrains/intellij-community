@@ -6,7 +6,10 @@ import com.intellij.execution.ExecutionRegistry;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.actions.RunContextAction;
 import com.intellij.execution.actions.RunnerAction;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.configurations.ConfigurationInfoProvider;
+import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.runners.JavaProgramRunner;
 import com.intellij.execution.runners.RunStrategy;
 import com.intellij.execution.runners.RunnerInfo;
@@ -17,10 +20,9 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.util.EventDispatcher;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
-
-import org.jetbrains.annotations.NonNls;
 
 
 public class ExecutionRegistryImpl extends ExecutionRegistry {

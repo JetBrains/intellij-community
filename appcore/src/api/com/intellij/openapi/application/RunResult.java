@@ -4,8 +4,8 @@
  */
 package com.intellij.openapi.application;
 
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 
 
 public class RunResult<T> extends Result<T> {

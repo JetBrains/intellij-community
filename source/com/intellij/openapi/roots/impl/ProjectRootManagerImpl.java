@@ -12,6 +12,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ex.ProjectEx;
@@ -33,6 +34,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.PendingEventDispatcher;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import org.jdom.Element;
@@ -53,8 +55,8 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   private final ProjectEx myProject;
   private ProjectFileIndex myProjectFileIndex;
 
-  private final EventDispatcher<ModuleRootListener> myModuleRootEventDispatcher = EventDispatcher.create(ModuleRootListener.class);
-  private final EventDispatcher<ProjectJdkListener> myProjectJdkEventDispatcher = EventDispatcher.create(ProjectJdkListener.class);
+  private final PendingEventDispatcher<ModuleRootListener> myModuleRootEventDispatcher = PendingEventDispatcher.create(ModuleRootListener.class);
+  private final PendingEventDispatcher<ProjectJdkListener> myProjectJdkEventDispatcher = PendingEventDispatcher.create(ProjectJdkListener.class);
 
   private final MyVirtualFilePointerListener myVirtualFilePointerListener = new MyVirtualFilePointerListener();
 
@@ -412,8 +414,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
           synchronizer.execute();
         }
       };
-      ApplicationManager.getApplication().runProcessWithProgressSynchronously(process,
-                                                                              ProjectBundle.message("project.root.change.loading.progress"), false, myProject);
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(process, ProjectBundle.message("project.root.change.loading.progress"), false, myProject);
     }
     else {
       synchronizer.execute();

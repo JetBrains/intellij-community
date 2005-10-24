@@ -18,6 +18,7 @@ package com.intellij.openapi.application;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import org.jetbrains.annotations.NotNull;
@@ -151,21 +152,6 @@ public interface Application extends ComponentManager {
    * @return true if the current thread is the Swing dispatch thread, false otherwise.
    */
   boolean isDispatchThread();
-
-  /**
-   * Runs the specified operation in a background thread and shows a modal progress dialog in the
-   * main thread while the operation is executing.
-   *
-   * @param process       the operation to execute.
-   * @param progressTitle the title of the progress window.
-   * @param canBeCanceled whether "Cancel" button is shown on the progress window.
-   * @param project       the project in the context of which the operation is executed.
-   * @return true if the operation completed successfully, false if it was cancelled.
-   */
-  boolean runProcessWithProgressSynchronously(Runnable process,
-                                              String progressTitle,
-                                              boolean canBeCanceled,
-                                              Project project);
 
   /**
    * Causes <i>runnable.run()</i> to be executed asynchronously on the

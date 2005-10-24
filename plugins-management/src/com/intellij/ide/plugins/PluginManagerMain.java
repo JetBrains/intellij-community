@@ -887,8 +887,8 @@ public class PluginManagerMain {
   private CategoryNode loadPluginList() {
     StatusProcess statusProcess = new StatusProcess();
     do {
-      boolean canceled = ApplicationManager.getApplication().runProcessWithProgressSynchronously(
-        statusProcess, IdeBundle.message("progress.downloading.list.of.plugins"), true, null);
+      boolean canceled = ProgressManager.getInstance()
+        .runProcessWithProgressSynchronously(statusProcess, IdeBundle.message("progress.downloading.list.of.plugins"), true, null);
       if (canceled && statusProcess.getException() != null) {
         if (statusProcess.getException() instanceof IOException) {
           if (! IOExceptionDialog.showErrorDialog((IOException)statusProcess.getException(), IdeBundle.message("title.plugin.manager"),
@@ -942,12 +942,11 @@ public class PluginManagerMain {
   private boolean downloadPlugins (final List <PluginNode> plugins) throws IOException {
     final boolean[] result = new boolean[1];
     try {
-      ApplicationManager.getApplication().runProcessWithProgressSynchronously(
-        new Runnable () {
-          public void run() {
-            result[0] = PluginInstaller.prepareToInstall(plugins);
-          }
-        }, IdeBundle.message("progress.download.plugins"), true, null);
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable () {
+        public void run() {
+          result[0] = PluginInstaller.prepareToInstall(plugins);
+        }
+      }, IdeBundle.message("progress.download.plugins"), true, null);
     } catch (RuntimeException e) {
       if (e.getCause() != null && e.getCause() instanceof IOException)
         throw (IOException)e.getCause();
@@ -960,28 +959,27 @@ public class PluginManagerMain {
   private boolean downloadPlugin (final PluginNode pluginNode) throws IOException {
     final boolean[] result = new boolean[1];
     try {
-      ApplicationManager.getApplication().runProcessWithProgressSynchronously(
-        new Runnable () {
-          public void run() {
-            ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable () {
+        public void run() {
+          ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
 
-            pi.setText(pluginNode.getName());
+          pi.setText(pluginNode.getName());
 
-            try {
-              result[0] = PluginInstaller.prepareToInstall(pluginNode);
-            } catch (ZipException e) {
-              ApplicationManager.getApplication().invokeLater(new Runnable() {
-                public void run() {
-                  Messages.showErrorDialog(IdeBundle.message("error.plugin.zip.problems", pluginNode.getName()),
-                                           IdeBundle.message("title.installing.plugin"));
+          try {
+            result[0] = PluginInstaller.prepareToInstall(pluginNode);
+          } catch (ZipException e) {
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              public void run() {
+                Messages.showErrorDialog(IdeBundle.message("error.plugin.zip.problems", pluginNode.getName()),
+                                         IdeBundle.message("title.installing.plugin"));
 
-                }
-              });
-            } catch (IOException e) {
-              throw new RuntimeException (e);
-            }
+              }
+            });
+          } catch (IOException e) {
+            throw new RuntimeException (e);
           }
-        }, IdeBundle.message("progress.download.plugin", pluginNode.getName()), true, null);
+        }
+      }, IdeBundle.message("progress.download.plugin", pluginNode.getName()), true, null);
     } catch (RuntimeException e) {
       if (e.getCause() != null && e.getCause() instanceof IOException)
         throw (IOException)e.getCause();

@@ -4,7 +4,6 @@ import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorHighlighter;
@@ -136,8 +135,8 @@ class PrintManager {
       }
     };
     
-    ((ApplicationEx)ApplicationManager.getApplication()).runProcessWithProgressSynchronously(runnable,
-                                                                                             CodeEditorBundle.message("print.progress"), true, project, false);
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(runnable,
+                                                                      CodeEditorBundle.message("print.progress"), true, project);
   }
 
   private static void addToPsiFileList(PsiDirectory psiDirectory, ArrayList filesList, boolean isRecursive) {

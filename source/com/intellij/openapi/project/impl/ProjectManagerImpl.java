@@ -1,12 +1,9 @@
 package com.intellij.openapi.project.impl;
 
+import com.intellij.CommonBundle;
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -16,10 +13,11 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.project.ProjectReloadState;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
@@ -32,7 +30,6 @@ import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.containers.HashMap;
-import com.intellij.CommonBundle;
 import gnu.trove.TObjectLongHashMap;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -283,16 +280,11 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     myOpenProjects.add(project);
     fireProjectOpened(project);
 
-    ApplicationManager.getApplication().runProcessWithProgressSynchronously(
-      new Runnable() {
-        public void run() {
-          ((StartupManagerImpl)StartupManager.getInstance(project)).runStartupActivities();
-        }
-      },
-      ProjectBundle.message("project.load.progress"),
-      false,
-      project
-    );
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      public void run() {
+        ((StartupManagerImpl)StartupManager.getInstance(project)).runStartupActivities();
+      }
+    }, ProjectBundle.message("project.load.progress"), false, project);
     ((StartupManagerImpl)StartupManager.getInstance(project)).runPostStartupActivities();
 
     // Hack. We need to initialize FileDocumentManagerImpl's dummy project since it is lazy initialized and initialization can happen in

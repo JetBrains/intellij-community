@@ -2,12 +2,12 @@ package com.intellij.ide.todo;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.search.TodoAttributes;
 import com.intellij.psi.search.TodoPattern;
-import com.intellij.util.EventDispatcher;
+import com.intellij.util.PendingEventDispatcher;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
@@ -24,7 +24,7 @@ public class TodoConfiguration implements ApplicationComponent, JDOMExternalizab
   private TodoFilter[] myTodoFilters;
 
 
-  private EventDispatcher<PropertyChangeListener> myPropertyChangeMulticaster = EventDispatcher.create(PropertyChangeListener.class);
+  private PendingEventDispatcher<PropertyChangeListener> myPropertyChangeMulticaster = PendingEventDispatcher.create(PropertyChangeListener.class);
 
   @NonNls public static final String PROP_TODO_PATTERNS = "todoPatterns";
   @NonNls public static final String PROP_TODO_FILTERS = "todoFilters";

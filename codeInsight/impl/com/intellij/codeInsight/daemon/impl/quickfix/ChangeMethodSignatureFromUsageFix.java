@@ -7,17 +7,18 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.find.findUsages.FindUsagesUtil;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -27,11 +28,11 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.SearchScopeCache;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.ChangeSignatureDialog;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfo;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 
@@ -111,7 +112,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
           }
         };
     String progressTitle = QuickFixBundle.message("searching.for.usages.progress.title");
-    if (!ApplicationManager.getApplication().runProcessWithProgressSynchronously(runnable, progressTitle, true, project)) return;
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(runnable, progressTitle, true, project)) return;
 
     if (usages[0].length <= 1) {
       ChangeSignatureProcessor processor = new ChangeSignatureProcessor(

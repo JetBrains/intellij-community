@@ -18,12 +18,12 @@ package com.intellij.openapi.application;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.*;
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.*;
-
-import org.jetbrains.annotations.NonNls;
 
 public class PathManager {
   @NonNls private static final String PROPERTIES_FILE = "idea.properties.file";
@@ -115,6 +115,7 @@ public class PathManager {
     return ourSystemPath;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static void ensureConfigFolderExists(boolean userInteractionAllowed, final boolean createIfNotExists) {
     getConfigPathWithoutDialog();
 
@@ -122,7 +123,14 @@ public class PathManager {
     if (createIfNotExists && !file.exists()) {
       file.mkdirs();
       if (userInteractionAllowed) {
-        ConfigImportHelper.importConfigsTo(ourConfigPath);
+        try {
+          final Class<?> helper = Class.forName("com.intellij.openapi.application.ConfigImportHelper");
+          final Method helperMethod = helper.getMethod("importConfigsTo", String.class);
+          helperMethod.invoke(null, ourConfigPath);
+        }
+        catch (Exception e) {
+          // Ignore exceptions. No config helping stuff is present.
+        }
       }
     }
   }

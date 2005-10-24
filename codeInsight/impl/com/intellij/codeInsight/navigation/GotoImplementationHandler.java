@@ -8,9 +8,9 @@ import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.MethodCellRenderer;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.ide.util.PsiElementListCellRenderer;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
@@ -52,15 +52,11 @@ public class GotoImplementationHandler implements CodeInsightActionHandler {
 
   public PsiElement[] searchImplementations(Editor editor, PsiFile file, final PsiElement element, boolean includeSelf) {
     final PsiElement[][] result = new PsiElement[1][];
-    if (!ApplicationManager.getApplication().runProcessWithProgressSynchronously(
-      new Runnable() {
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
         result[0] = getSearchResults(element);
       }
-    },
-      CodeInsightBundle.message("searching.for.implementations"),
-      true,
-      element.getProject())) {
+    }, CodeInsightBundle.message("searching.for.implementations"), true, element.getProject())) {
       return null;
     }
 

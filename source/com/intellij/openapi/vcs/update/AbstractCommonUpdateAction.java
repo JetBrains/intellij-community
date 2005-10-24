@@ -96,7 +96,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
         }
         final ArrayList<VcsException> vcsExceptions = new ArrayList<VcsException>();
         final List<UpdateSession> updateSessions = new ArrayList<UpdateSession>();
-        ApplicationManager.getApplication().runProcessWithProgressSynchronously(new Runnable() {
+        ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
           public void run() {
 
             ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
@@ -129,7 +129,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
                   public void run() {
                     semaphore.up();
                   }
-                });                  
+                });
               }
             });
             semaphore.waitFor();

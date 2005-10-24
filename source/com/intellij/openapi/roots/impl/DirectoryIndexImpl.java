@@ -19,7 +19,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.impl.PsiManagerConfiguration;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.EventDispatcher;
+import com.intellij.util.PendingEventDispatcher;
 import gnu.trove.THashMap;
 import junit.framework.Assert;
 
@@ -474,7 +474,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
   }
 
   private void dispatchPendingEvents() {
-    if (EventDispatcher.isDispatchingAnyEvent()){ // optimization
+    if (PendingEventDispatcher.isDispatchingAnyEvent()){ // optimization
       VirtualFileManager.getInstance().dispatchPendingEvent(myVirtualFileListener);
       ProjectRootManager.getInstance(myProject).dispatchPendingEvent(myRootListener);
       //TODO: other listners!!!

@@ -1,7 +1,7 @@
 package com.intellij.debugger.impl;
 
-import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.apiAdapters.TransportServiceWrapper;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.settings.DebuggerSettings;
@@ -45,7 +45,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
   private HashMap<ProcessHandler, DebuggerSession> mySessions = new HashMap<ProcessHandler, DebuggerSession>();
   private BreakpointManager myBreakpointManager;
 
-  private final EventDispatcher<DebuggerManagerListener> myDispatcher = EventDispatcher.create(DebuggerManagerListener.class, false);
+  private final EventDispatcher<DebuggerManagerListener> myDispatcher = EventDispatcher.create(DebuggerManagerListener.class);
   private final MyDebuggerStateManager myDebuggerStateManager = new MyDebuggerStateManager();
 
   private DebuggerContextListener mySessionListener = new DebuggerContextListener() {

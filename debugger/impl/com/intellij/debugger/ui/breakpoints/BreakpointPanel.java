@@ -1,7 +1,7 @@
 package com.intellij.debugger.ui.breakpoints;
 
-import com.intellij.debugger.ui.breakpoints.actions.BreakpointPanelAction;
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.ui.breakpoints.actions.BreakpointPanelAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -12,6 +12,8 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableUtil;
 import com.intellij.util.EventDispatcher;
+import gnu.trove.TIntArrayList;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.*;
@@ -20,9 +22,6 @@ import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.EventListener;
-
-import gnu.trove.TIntArrayList;
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Jeka

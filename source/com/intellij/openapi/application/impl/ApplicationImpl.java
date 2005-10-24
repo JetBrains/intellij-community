@@ -6,7 +6,7 @@ import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.RuntimeInterruptedException;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
@@ -398,14 +398,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
                                                      String progressTitle,
                                                      boolean canBeCanceled,
                                                      Project project) {
-    return runProcessWithProgressSynchronously(process, progressTitle, canBeCanceled, project, true);
-  }
-
-  public boolean runProcessWithProgressSynchronously(final Runnable process,
-                                                     String progressTitle,
-                                                     boolean canBeCanceled,
-                                                     Project project,
-                                                     boolean smoothProgress) {
     assertIsDispatchThread();
 
     if (myExceptionalThreadWithReadAccess != null) {
@@ -413,6 +405,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       return true;
     }
 
+    boolean smoothProgress = true;
     if (Patches.MAC_HIDE_QUIT_HACK) {
       smoothProgress = false;
     }

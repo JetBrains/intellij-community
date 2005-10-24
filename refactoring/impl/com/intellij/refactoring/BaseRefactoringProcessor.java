@@ -6,6 +6,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.localVcs.LvcsAction;
 import com.intellij.openapi.localVcs.impl.LvcsIntegration;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
@@ -134,7 +135,8 @@ public abstract class BaseRefactoringProcessor {
       }
     };
 
-    if (!ApplicationManager.getApplication().runProcessWithProgressSynchronously(findUsagesRunnable, RefactoringBundle.message("progress.text"), true, myProject)) return;
+    if (!ProgressManager.getInstance()
+      .runProcessWithProgressSynchronously(findUsagesRunnable, RefactoringBundle.message("progress.text"), true, myProject)) return;
 
     LOG.assertTrue(!refUsages.isNull());
     if (!preprocessUsages(refUsages)) return;

@@ -18,6 +18,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
@@ -52,18 +53,13 @@ public class ImplementAbstractMethodHandler {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
     final PsiClass[][] result = new PsiClass[1][];
-    ApplicationManager.getApplication().runProcessWithProgressSynchronously(
-      new Runnable() {
-        public void run() {
-          final PsiClass psiClass = myMethod.getContainingClass();
-          if (!psiClass.isValid()) return;
-          result[0] = getClassImplementations(psiClass);
-        }
-      },
-      CodeInsightBundle.message("intention.implement.abstract.method.searching.for.descendants.progress"),
-      true,
-      myProject
-    );
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      public void run() {
+        final PsiClass psiClass = myMethod.getContainingClass();
+        if (!psiClass.isValid()) return;
+        result[0] = getClassImplementations(psiClass);
+      }
+    }, CodeInsightBundle.message("intention.implement.abstract.method.searching.for.descendants.progress"), true, myProject);
 
     if (result[0] == null) return;
 

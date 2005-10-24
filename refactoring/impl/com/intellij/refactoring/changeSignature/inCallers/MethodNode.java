@@ -1,6 +1,6 @@
 package com.intellij.refactoring.changeSignature.inCallers;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.*;
@@ -69,7 +69,7 @@ public class MethodNode extends CheckedTreeNode {
     if (myMethod == null) return PsiMethod.EMPTY_ARRAY;
     final Project project = myMethod.getProject();
     final List<PsiMethod> callers = new ArrayList<PsiMethod>();
-    ApplicationManager.getApplication().runProcessWithProgressSynchronously(new Runnable() {
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
         final PsiSearchHelper searchHelper = PsiManager.getInstance(project).getSearchHelper();
         final PsiReference[] refs = searchHelper.findReferencesIncludingOverriding(myMethod, GlobalSearchScope.allScope(project), true);

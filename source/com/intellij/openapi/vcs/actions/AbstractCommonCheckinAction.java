@@ -35,12 +35,13 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.localVcs.LocalVcs;
 import com.intellij.openapi.localVcs.LvcsAction;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.checkin.VcsOperation;
+import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.fileView.impl.FileViewPanel;
 import com.intellij.openapi.vcs.ui.CheckinDialog;
 import com.intellij.openapi.vcs.ui.CheckinFileDialog;
@@ -52,7 +53,10 @@ import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.util.ui.OptionsDialog;
 import com.intellij.vcsUtil.VcsUtil;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 
 public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
@@ -191,7 +195,7 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
                   AbstractVcsHelper.getInstance(project).showErrors(vcsExceptions, getActionName(context));
                 }
               };
-              ApplicationManager.getApplication().runProcessWithProgressSynchronously(checkinAction, getActionName(context), true, project);
+              ProgressManager.getInstance().runProcessWithProgressSynchronously(checkinAction, getActionName(context), true, project);
             }
           };
 

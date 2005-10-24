@@ -8,6 +8,7 @@ import com.intellij.internal.diGraph.impl.EdgeImpl;
 import com.intellij.internal.diGraph.impl.NodeImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -21,17 +22,16 @@ import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.AutomaticRenamingDialog;
 import com.intellij.refactoring.rename.naming.AutomaticVariableRenamer;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.Queue;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author dsl
@@ -77,8 +77,8 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
         }
       };
 
-      if (!ApplicationManager.getApplication().runProcessWithProgressSynchronously(
-        runnable, RefactoringBundle.message("searching.for.variables"), true, myProject)) {
+      if (!ProgressManager.getInstance()
+        .runProcessWithProgressSynchronously(runnable, RefactoringBundle.message("searching.for.variables"), true, myProject)) {
         return false;
       }
     }

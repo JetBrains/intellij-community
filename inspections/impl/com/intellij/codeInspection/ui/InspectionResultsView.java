@@ -49,6 +49,7 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -322,8 +323,8 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
           }
         };
 
-        if (!ApplicationManager.getApplication()
-          .runProcessWithProgressSynchronously(exportRunnable, InspectionsBundle.message("inspection.generating.html.progress.title"), true, myProject)) {
+        if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(exportRunnable, InspectionsBundle.message(
+          "inspection.generating.html.progress.title"), true, myProject)) {
           return;
         }
 

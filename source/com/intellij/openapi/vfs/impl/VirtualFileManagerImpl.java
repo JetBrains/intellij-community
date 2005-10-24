@@ -14,7 +14,7 @@ import com.intellij.openapi.vfs.ex.FileContentProvider;
 import com.intellij.openapi.vfs.ex.ProvidedContent;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerListener;
-import com.intellij.util.EventDispatcher;
+import com.intellij.util.PendingEventDispatcher;
 import com.intellij.util.containers.HashMap;
 
 import java.awt.*;
@@ -28,14 +28,14 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
   private ArrayList<VirtualFileSystem> myFileSystems = null;
   private HashMap<String, VirtualFileSystem> myProtocolToSystemMap = null;
 
-  private EventDispatcher<VirtualFileListener> myVirtualFileListenerMulticaster = EventDispatcher.create(VirtualFileListener.class);
-  private EventDispatcher<VirtualFileManagerListener> myVirtualFileManagerListenerMulticaster = EventDispatcher.create(VirtualFileManagerListener.class);
-  private EventDispatcher<ModificationAttemptListener> myModificationAttemptListenerMulticaster = EventDispatcher.create(ModificationAttemptListener.class);
+  private PendingEventDispatcher<VirtualFileListener> myVirtualFileListenerMulticaster = PendingEventDispatcher.create(VirtualFileListener.class);
+  private PendingEventDispatcher<VirtualFileManagerListener> myVirtualFileManagerListenerMulticaster = PendingEventDispatcher.create(VirtualFileManagerListener.class);
+  private PendingEventDispatcher<ModificationAttemptListener> myModificationAttemptListenerMulticaster = PendingEventDispatcher.create(ModificationAttemptListener.class);
 
   private ProgressIndicator myRefreshIndicator = new StatusBarProgress();
 
   private ArrayList<FileContentProvider> myContentProviders = new ArrayList<FileContentProvider>();
-  private EventDispatcher<VirtualFileListener> myContentProvidersDispatcher = EventDispatcher.create(VirtualFileListener.class);
+  private PendingEventDispatcher<VirtualFileListener> myContentProvidersDispatcher = PendingEventDispatcher.create(VirtualFileListener.class);
   private ArrayList<CacheUpdater> myRefreshParticipants = new ArrayList<CacheUpdater>();
 
   private int myRefreshCount = 0;
@@ -257,10 +257,8 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
                           synchronizer.execute();
                         }
                       };
-                      ApplicationManager.getApplication().runProcessWithProgressSynchronously(process,
-                                                                                              VfsBundle.message(
-                                                                                                "file.update.modified.progress"),
-                                                                                              false, null);
+                      ProgressManager.getInstance().runProcessWithProgressSynchronously(process, VfsBundle.message(
+                        "file.update.modified.progress"), false, null);
                     }
                     else {
                       synchronizer.execute();

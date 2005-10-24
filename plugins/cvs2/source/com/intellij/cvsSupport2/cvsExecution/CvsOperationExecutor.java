@@ -1,5 +1,6 @@
 package com.intellij.cvsSupport2.cvsExecution;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.CvsResultEx;
 import com.intellij.cvsSupport2.config.CvsConfiguration;
 import com.intellij.cvsSupport2.config.ui.ConfigureCvsGlobalSettingsDialog;
@@ -32,12 +33,9 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.errorView.ContentManagerProvider;
 import com.intellij.util.ui.ErrorTreeView;
 import com.intellij.util.ui.MessageCategory;
-import com.intellij.CvsBundle;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-import java.text.MessageFormat;
-
-import org.jetbrains.annotations.NotNull;
 
 /**
  * author: lesya
@@ -150,8 +148,7 @@ public class CvsOperationExecutor {
       myExecutor.runInDispatchThread(finish);
     }
     else {
-      if (ApplicationManager.getApplication().runProcessWithProgressSynchronously(cvsAction, handler.getTitle(),
-                                                                                  handler.canBeCanceled(), myProject)) {
+      if (ProgressManager.getInstance().runProcessWithProgressSynchronously(cvsAction, handler.getTitle(), handler.canBeCanceled(), myProject)) {
         finish.run();
       }
 

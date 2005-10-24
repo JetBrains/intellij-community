@@ -1,6 +1,8 @@
 package com.intellij.openapi.module.impl;
 
+import com.intellij.CommonBundle;
 import com.intellij.application.options.PathMacrosImpl;
+import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.LoadCancelledException;
 import com.intellij.openapi.components.ProjectComponent;
@@ -19,20 +21,18 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.PomModel;
-import com.intellij.util.EventDispatcher;
+import com.intellij.util.PendingEventDispatcher;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
-import com.intellij.CommonBundle;
-import com.intellij.ide.highlighter.ModuleFileType;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jdom.JDOMException;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -43,7 +43,7 @@ import java.util.*;
  */
 public class ModuleManagerImpl extends ModuleManager implements ProjectComponent, JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.module.impl.ModuleManagerImpl");
-  private final EventDispatcher<ModuleListener> myModuleEventDispatcher = EventDispatcher.create(ModuleListener.class);
+  private final PendingEventDispatcher<ModuleListener> myModuleEventDispatcher = PendingEventDispatcher.create(ModuleListener.class);
   private final Project myProject;
   private ModuleModelImpl myModuleModel = new ModuleModelImpl();
   private Map<Module, String[]> myModuleGroupPath;

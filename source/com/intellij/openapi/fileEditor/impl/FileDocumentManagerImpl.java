@@ -42,11 +42,10 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.PsiManagerConfiguration;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
-import com.intellij.util.EventDispatcher;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.text.CharArrayCharSequence;
-import com.intellij.CommonBundle;
 import com.intellij.ui.UIBundle;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.PendingEventDispatcher;
+import com.intellij.util.text.CharArrayCharSequence;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -72,7 +71,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   private boolean myDummyProjectInitialized = false;
   private Object myDummyProjectInitializationLock = new Object();
 
-  private EventDispatcher<FileDocumentManagerListener> myEventDispatcher = EventDispatcher.create(FileDocumentManagerListener.class);
+  private PendingEventDispatcher<FileDocumentManagerListener> myEventDispatcher = PendingEventDispatcher.create(FileDocumentManagerListener.class);
   private final PsiManagerConfiguration myPsiManagerConfiguration;
   private final ProjectManagerEx myProjectManagerEx;
   private VirtualFileManager myVirtualFileManager;

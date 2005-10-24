@@ -1,11 +1,11 @@
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.util.EventDispatcher;
 
 import javax.swing.*;

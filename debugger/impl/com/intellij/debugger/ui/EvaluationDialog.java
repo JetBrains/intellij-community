@@ -1,22 +1,22 @@
 package com.intellij.debugger.ui;
 
-import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.evaluation.CodeFragmentFactory;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.impl.*;
-import com.intellij.debugger.ui.impl.WatchPanel;
 import com.intellij.debugger.ui.impl.WatchDebuggerTree;
+import com.intellij.debugger.ui.impl.WatchPanel;
 import com.intellij.debugger.ui.impl.watch.EvaluationDescriptor;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.Disposable;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.EventDispatcher;
 

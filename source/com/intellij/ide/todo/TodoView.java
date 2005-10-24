@@ -1,11 +1,13 @@
 package com.intellij.ide.todo;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.IconLoader;
@@ -22,7 +24,6 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.TabbedPaneContentUI;
-import com.intellij.ide.IdeBundle;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
@@ -192,7 +193,7 @@ public class TodoView implements ProjectComponent,JDOMExternalizable{
           public void run() {
             // [vova] It's very important to pass null as project. Each TODO view shows own progress
             // window. It causes frame switching.
-            ApplicationManager.getApplication().runProcessWithProgressSynchronously(new Runnable() {
+            ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
               public void run() {
                 ApplicationManager.getApplication().runReadAction(new Runnable() {
                   public void run() {
@@ -208,7 +209,7 @@ public class TodoView implements ProjectComponent,JDOMExternalizable{
                 }, ModalityState.NON_MMODAL);
               }
             }, IdeBundle.message("progress.looking.for.todos"), false, myProject);
-        }}, ModalityState.NON_MMODAL);
+          }}, ModalityState.NON_MMODAL);
       }
       else if (TodoConfiguration.PROP_TODO_FILTERS.equals(e.getPropertyName())) {
         if (!myRebuildInProgress) {
@@ -232,7 +233,7 @@ public class TodoView implements ProjectComponent,JDOMExternalizable{
       // PSI gets the same event.
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
-          ApplicationManager.getApplication().runProcessWithProgressSynchronously(new Runnable(){
+          ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable(){
             public void run(){
               if (myAllTodos == null) return;
 

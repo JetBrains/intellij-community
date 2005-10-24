@@ -1,5 +1,6 @@
 package com.intellij.jar;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.j2ee.make.*;
 import com.intellij.j2ee.module.LibraryLink;
 import com.intellij.j2ee.module.ModuleContainer;
@@ -7,7 +8,6 @@ import com.intellij.j2ee.module.ModuleLink;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.DummyCompileContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -16,19 +16,17 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.ide.IdeBundle;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.*;
 import java.util.Collection;
 import java.util.Set;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author cdr
@@ -54,7 +52,7 @@ public class BuildJarAction extends AnAction {
   }
 
   private static void buildJars(final Project project) {
-    ApplicationManager.getApplication().runProcessWithProgressSynchronously(new Runnable(){
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable(){
       public void run() {
         Module[] modules = ModuleManager.getInstance(project).getModules();
         try {

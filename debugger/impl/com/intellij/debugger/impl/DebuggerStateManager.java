@@ -10,10 +10,10 @@ import com.intellij.util.EventDispatcher;
  * To change this template use Options | File Templates.
  */
 public abstract class DebuggerStateManager {
-  private EventDispatcher<DebuggerContextListener> myEventDispatcher = EventDispatcher.create(DebuggerContextListener.class); 
+  private EventDispatcher<DebuggerContextListener> myEventDispatcher = EventDispatcher.create(DebuggerContextListener.class);
 
   public abstract DebuggerContextImpl getContext();
-  
+
   public abstract void setState(DebuggerContextImpl context, int state, int event, String description);
 
   //we allow add listeners inside DebuggerContextListener.changeEvent

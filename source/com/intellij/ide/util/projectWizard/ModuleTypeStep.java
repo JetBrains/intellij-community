@@ -1,7 +1,8 @@
 package com.intellij.ide.util.projectWizard;
 
-import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.util.BrowseFilesListener;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -9,7 +10,6 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.ui.FieldPanel;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.EventDispatcher;

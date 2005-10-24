@@ -45,7 +45,10 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.AutoScrollToSourceHandler;
-import com.intellij.ui.content.*;
+import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManager;
+import com.intellij.ui.content.ContentManagerAdapter;
+import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -669,7 +672,8 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
       }
     };
 
-    if (!ApplicationManager.getApplication().runProcessWithProgressSynchronously(runInspection, InspectionsBundle.message("inspection.progress.title"), true, myProject)) return;
+    if (!ProgressManager.getInstance()
+      .runProcessWithProgressSynchronously(runInspection, InspectionsBundle.message("inspection.progress.title"), true, myProject)) return;
 
     InspectionResultsView view = new InspectionResultsView(myProject, getCurrentProfile(), scope);
     if (!view.update()) {

@@ -1,6 +1,8 @@
 package com.intellij.openapi.progress.impl;
 
 import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -158,5 +160,10 @@ public class ProgressManagerImpl extends ProgressManager implements ApplicationC
     synchronized (this) {
       return myThreadToIndicatorMap.get(Thread.currentThread());
     }
+  }
+
+  public boolean runProcessWithProgressSynchronously(Runnable process, String progressTitle, boolean canBeCanceled, Project project) {
+    return ((ApplicationEx)ApplicationManager.getApplication())
+      .runProcessWithProgressSynchronously(process, progressTitle, canBeCanceled, project);
   }
 }

@@ -4,13 +4,13 @@
  */
 package com.intellij.execution.ui;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionRegistry;
 import com.intellij.execution.TerminateRemoteProcessDialog;
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.JavaProgramRunner;
-import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.execution.runners.RunStrategy;
+import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.ContentManagerWatcher;
 import com.intellij.openapi.actionSystem.DataConstants;
@@ -33,7 +33,10 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
 import com.intellij.peer.PeerFactory;
 import com.intellij.ui.ListenerUtil;
-import com.intellij.ui.content.*;
+import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManager;
+import com.intellij.ui.content.ContentManagerAdapter;
+import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.concurrency.Semaphore;
 
@@ -544,7 +547,7 @@ public class RunContentManagerImpl implements RunContentManager {
   public void waitForProcess(final RunContentDescriptor descriptor) {
     String progressTitle =  ExecutionBundle.message("terminating.process.progress.title", descriptor.getDisplayName());
 
-    ApplicationManager.getApplication().runProcessWithProgressSynchronously(new Runnable() {
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       private ProgressIndicator myProgressIndicator;
       private Semaphore mySemaphore = new Semaphore();
 

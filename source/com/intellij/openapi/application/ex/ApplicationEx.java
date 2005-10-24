@@ -33,15 +33,15 @@ public interface ApplicationEx extends Application {
 
   void doNotSave();
 
-  boolean runProcessWithProgressSynchronously(Runnable process,
-                                                     String progressTitle,
-                                                     boolean canBeCanceled,
-                                                     Project project,
-                                                     boolean smoothProgress);
-
   //used in Fabrique 
   boolean isExceptionalThreadWithReadAccess(Thread thread);
 
   //force exit
   void exit(boolean force);
+
+  // TODO move implementation to the ProgressManager or better place.
+  boolean runProcessWithProgressSynchronously(final Runnable process,
+                                              String progressTitle,
+                                              boolean canBeCanceled,
+                                              Project project);
 }

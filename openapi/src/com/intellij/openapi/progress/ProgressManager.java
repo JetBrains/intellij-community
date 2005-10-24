@@ -17,10 +17,9 @@ package com.intellij.openapi.progress;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
-
-import org.jetbrains.annotations.NonNls;
 
 public abstract class ProgressManager {
   private static volatile ProgressManager ourCachedInstance = null;
@@ -45,4 +44,20 @@ public abstract class ProgressManager {
   public abstract JComponent getProvidedFunComponent(Project project, @NonNls String processId);
 
   public abstract void setCancelButtonText(String cancelButtonText);
+
+
+  /**
+   * Runs the specified operation in a background thread and shows a modal progress dialog in the
+   * main thread while the operation is executing.
+   *
+   * @param process       the operation to execute.
+   * @param progressTitle the title of the progress window.
+   * @param canBeCanceled whether "Cancel" button is shown on the progress window.
+   * @param project       the project in the context of which the operation is executed.
+   * @return true if the operation completed successfully, false if it was cancelled.
+   */
+  public abstract boolean runProcessWithProgressSynchronously(Runnable process,
+                                                              String progressTitle,
+                                                              boolean canBeCanceled,
+                                                              Project project);
 }
