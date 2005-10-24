@@ -91,6 +91,16 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     myName = appName;
     ApplicationManagerEx.setApplication(this);
 
+    PluginsFacade.INSTANCE = new PluginsFacade() {
+      public IdeaPluginDescriptor getPlugin(PluginId id) {
+        return PluginManager.getPlugin(id);
+      }
+
+      public IdeaPluginDescriptor[] getPlugins() {
+        return PluginManager.getPlugins();
+      }
+    };
+
     if (!isUnitTestMode) {
       Toolkit.getDefaultToolkit().getSystemEventQueue().push(IdeEventQueue.getInstance());
     }
