@@ -102,11 +102,6 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
 
   
   public void doCollectInformation(ProgressIndicator progress) {
-    /*
-    if (myUpdateAll){
-      AlternativeWay.processFile(myFile);
-    }
-    */
     PsiElement[] psiRoots = myFile.getPsiRoots();
 
     if (myUpdateAll) {
