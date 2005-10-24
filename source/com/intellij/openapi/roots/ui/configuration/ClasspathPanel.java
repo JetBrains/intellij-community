@@ -652,7 +652,7 @@ public class ClasspathPanel extends JPanel {
     }
 
     public boolean isEditable() {
-      return true;
+      return getEntry().isValid();
     }
   }
 
