@@ -10,6 +10,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="util" exported="" />
+    <orderEntry type="module" module-name="appcore-api" exported="" />
     <orderEntry type="module" module-name="idea_rt" />
     <orderEntry type="library" name="JUnit" level="project" />
     <orderEntry type="library" name="JDOM" level="project" />
