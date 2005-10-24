@@ -128,9 +128,8 @@ class LineMarkerNavigator {
         project
       );
 
-      MouseEvent mouseEvent = e;
-      Point p = new Point(mouseEvent.getPoint());
-      SwingUtilities.convertPointToScreen(p, mouseEvent.getComponent());
+      Point p = new Point(e.getPoint());
+      SwingUtilities.convertPointToScreen(p, e.getComponent());
 
       listPopup.show(p.x, p.y);
     }
