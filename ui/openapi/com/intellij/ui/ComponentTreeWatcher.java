@@ -5,8 +5,8 @@ package com.intellij.ui;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ContainerListener;
 import java.awt.event.ContainerEvent;
+import java.awt.event.ContainerListener;
 
 public abstract class ComponentTreeWatcher {
   protected final Class[] myControlsToIgnore;

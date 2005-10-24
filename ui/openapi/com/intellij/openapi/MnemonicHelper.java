@@ -5,13 +5,12 @@ package com.intellij.openapi;
 
 import com.intellij.ui.ComponentTreeWatcher;
 import com.intellij.util.ui.DialogUtil;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
-import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeEvent;
-
-import org.jetbrains.annotations.NonNls;
+import java.beans.PropertyChangeListener;
 
 /**
  * Created by IntelliJ IDEA.
