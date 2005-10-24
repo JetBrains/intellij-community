@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.svn;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -23,13 +22,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.wm.WindowManager;
-import org.jetbrains.idea.svn.dialogs.LockDialog;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.idea.svn.dialogs.LockDialog;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.*;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
 
 public class SvnUtil {
   @NonNls public static final String SVN_ADMIN_DIR_NAME = ".svn";
@@ -135,8 +137,7 @@ public class SvnUtil {
       }
     };
 
-    ApplicationManager.getApplication().runProcessWithProgressSynchronously(command,
-                                                                            SvnBundle.message("progress.title.lock.files"), false, project);
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(command, SvnBundle.message("progress.title.lock.files"), false, project);
     if (!failedLocks.isEmpty() && helper != null) {
       String[] failedFiles = failedLocks.toArray(new String[failedLocks.size()]);
       List<VcsException> exceptions = new ArrayList<VcsException>();
@@ -201,8 +202,7 @@ public class SvnUtil {
       }
     };
 
-    ApplicationManager.getApplication().runProcessWithProgressSynchronously(command,
-                                                                            SvnBundle.message("progress.title.unlock.files"), false, project);
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(command, SvnBundle.message("progress.title.unlock.files"), false, project);
     if (!failedUnlocks.isEmpty() && helper != null) {
       String[] failedFiles = failedUnlocks.toArray(new String[failedUnlocks.size()]);
       List<VcsException> exceptions = new ArrayList<VcsException>();

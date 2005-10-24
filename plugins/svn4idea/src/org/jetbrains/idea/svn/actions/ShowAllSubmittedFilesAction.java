@@ -18,7 +18,6 @@ package org.jetbrains.idea.svn.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -28,9 +27,9 @@ import com.intellij.openapi.vcs.VcsDataConstants;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.versions.AbstractRevisions;
+import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.checkin.AbstractSvnRevisionsFactory;
 import org.jetbrains.idea.svn.history.SvnFileRevision;
 import org.jetbrains.idea.svn.history.SvnVersionRevisions;
@@ -95,7 +94,7 @@ public class ShowAllSubmittedFilesAction extends AnAction {
       final String url = svnRevision.getURL();
       final SVNLogEntry[] logEntry = new SVNLogEntry[1];
       final SVNRepository repos = vcs.createRepository(url);
-      ApplicationManager.getApplication().runProcessWithProgressSynchronously(new Runnable() {
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
         public void run() {
           try {
             ProgressManager.getInstance().getProgressIndicator().setText(SvnBundle.message("progress.text.loading.log"));

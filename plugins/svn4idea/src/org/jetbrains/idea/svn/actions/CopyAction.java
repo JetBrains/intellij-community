@@ -33,7 +33,6 @@
 package org.jetbrains.idea.svn.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -42,8 +41,8 @@ import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
-import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.CopyDialog;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
@@ -117,7 +116,7 @@ public class CopyAction extends BasicAction {
           }
         }
       };
-      ApplicationManager.getApplication().runProcessWithProgressSynchronously(copyCommand, SvnBundle.message("progress.title.copy"), false, project);
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(copyCommand, SvnBundle.message("progress.title.copy"), false, project);
       if (exception[0] != null) {
         throw new VcsException(exception[0]);
       }

@@ -23,9 +23,9 @@ import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.history.SvnFileRevision;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.ISVNAnnotateHandler;
@@ -78,7 +78,7 @@ public class SvnAnnotationProvider implements AnnotationProvider {
       }
     };
     if (ApplicationManager.getApplication().isDispatchThread()) {
-      ApplicationManager.getApplication().runProcessWithProgressSynchronously(command, SvnBundle.message("action.text.annotate"), false, myVcs.getProject());
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(command, SvnBundle.message("action.text.annotate"), false, myVcs.getProject());
     }
     else {
       command.run();

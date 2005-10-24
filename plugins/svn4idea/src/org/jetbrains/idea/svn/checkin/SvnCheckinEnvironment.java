@@ -232,7 +232,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
       doCommit(committables, progress, committer, comment, force, recursive, exception);
     }
     else if (ApplicationManager.getApplication().isDispatchThread()) {
-      ApplicationManager.getApplication().runProcessWithProgressSynchronously(new Runnable() {
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
         public void run() {
           ProgressIndicator p = ProgressManager.getInstance().getProgressIndicator();
           doCommit(committables, p, committer, comment, force, recursive, exception);

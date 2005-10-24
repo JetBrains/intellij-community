@@ -57,8 +57,7 @@ public class SvnDiffProvider implements DiffProvider {
         ConentLoader loader = new ConentLoader(file, contents, svnRevision);
         if (ApplicationManager.getApplication().isDispatchThread() &&
             !svnRevision.isLocal()) {
-          ApplicationManager.getApplication().runProcessWithProgressSynchronously(loader,
-                                                                                  SvnBundle.message("progress.title.loading.file.content"), false, null);
+          ProgressManager.getInstance().runProcessWithProgressSynchronously(loader, SvnBundle.message("progress.title.loading.file.content"), false, null);
         }
         else {
           loader.run();

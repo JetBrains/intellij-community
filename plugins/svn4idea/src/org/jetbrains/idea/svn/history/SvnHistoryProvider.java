@@ -24,9 +24,9 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.actions.ShowAllSubmittedFilesAction;
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNException;
@@ -106,7 +106,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
     };
 
     if (ApplicationManager.getApplication().isDispatchThread()) {
-      ApplicationManager.getApplication().runProcessWithProgressSynchronously(command, SvnBundle.message("progress.title.revisions.history"), false, myVcs.getProject());
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(command, SvnBundle.message("progress.title.revisions.history"), false, myVcs.getProject());
     }
     else {
       command.run();

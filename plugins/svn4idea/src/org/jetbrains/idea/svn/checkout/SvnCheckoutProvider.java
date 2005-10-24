@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.svn.checkout;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -24,8 +23,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
-import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.CheckoutDialog;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
@@ -50,7 +49,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
       final String url = dialog.getSelectedURL();
       final File target = new File(dialog.getSelectedFile());
 
-      ApplicationManager.getApplication().runProcessWithProgressSynchronously(new Runnable() {
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
         public void run() {
           ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
           client.setEventHandler(new CheckoutEventHandler(SvnVcs.getInstance(project), progressIndicator));

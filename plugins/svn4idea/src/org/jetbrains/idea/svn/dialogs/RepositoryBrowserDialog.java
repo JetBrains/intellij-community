@@ -15,21 +15,19 @@
  */
 package org.jetbrains.idea.svn.dialogs;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.help.HelpManager;
-import com.intellij.CommonBundle;
-import com.intellij.util.ui.DialogUtil;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.annotations.NonNls;
 import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
@@ -386,8 +384,7 @@ public class RepositoryBrowserDialog extends DialogWrapper implements ActionList
         }
       }
     };
-    ApplicationManager.getApplication().runProcessWithProgressSynchronously(command,
-                                                                            SvnBundle.message("progress.title.browser.delete"), false, myProject);
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(command, SvnBundle.message("progress.title.browser.delete"), false, myProject);
     if (exception[0] != null) {
       Messages.showErrorDialog(exception[0].getMessage(), SvnBundle.message("message.text.error"));
     }
@@ -411,8 +408,7 @@ public class RepositoryBrowserDialog extends DialogWrapper implements ActionList
         }
       }
     };
-    ApplicationManager.getApplication().runProcessWithProgressSynchronously(command,
-                                                                            SvnBundle.message("progress.text.create.remote.folder"), false, myProject);
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(command, SvnBundle.message("progress.text.create.remote.folder"), false, myProject);
     if (exception[0] != null) {
       Messages.showErrorDialog(exception[0].getMessage(), SvnBundle.message("message.text.error"));
     }
@@ -437,8 +433,8 @@ public class RepositoryBrowserDialog extends DialogWrapper implements ActionList
         }
       }
     };
-    ApplicationManager.getApplication().runProcessWithProgressSynchronously(command,
-                                                                            move ? SvnBundle.message("progress.title.browser.move") : SvnBundle.message("progress.title.browser.copy"), false, myProject);
+    String progressTitle = move ? SvnBundle.message("progress.title.browser.move") : SvnBundle.message("progress.title.browser.copy");
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(command, progressTitle, false, myProject);
     if (exception[0] != null) {
       Messages.showErrorDialog(exception[0].getMessage(), SvnBundle.message("message.text.error"));
     }
