@@ -1108,11 +1108,13 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
         PsiParameter[] parms = method.getParameterList().getParameters();
         if (index < parms.length) {
           PsiIdentifier identifier = parms[index].getNameIdentifier();
-          String name = identifier.getText();
-          if (name != null) {
-            name = variableNameToPropertyName(name, VariableKind.PARAMETER);
-            String[] names = getSuggestionsByName(name, variableKind, false);
-            return new NamesByExprInfo(names, name);
+          if (identifier != null) {
+            String name = identifier.getText();
+            if (name != null) {
+              name = variableNameToPropertyName(name, VariableKind.PARAMETER);
+              String[] names = getSuggestionsByName(name, variableKind, false);
+              return new NamesByExprInfo(names, name);
+            }
           }
         }
       }
