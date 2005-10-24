@@ -64,6 +64,22 @@ public class StringUtil {
     }
     return newText != null ? newText.toString() : "";
   }
+  
+  public static String getShortName(String fqName) {
+    return getShortName(fqName, '.');
+  }
+
+  public static String getShortName(Class aClass) {
+    return getShortName(aClass.getName());
+  }
+
+  public static String getShortName(String fqName, char separator) {
+    int lastPointIdx = fqName.lastIndexOf(separator);
+    if (lastPointIdx >= 0) {
+      return fqName.substring(lastPointIdx + 1);
+    }
+    return fqName;
+  }
 
   /**
    * Converts line separators to <code>"\n"</code>
