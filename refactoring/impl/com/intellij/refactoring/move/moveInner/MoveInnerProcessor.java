@@ -263,27 +263,9 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
     class Visitor extends PsiRecursiveElementVisitor {
       private final HashMap<PsiElement,HashSet<PsiElement>> reported = new HashMap<PsiElement, HashSet<PsiElement>>();
 
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
-        visitReferenceElement(expression);
-      }
-
       public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
         PsiElement resolved = reference.resolve();
-        final boolean isInInnerClass;
-
-        final PsiManager manager = myOuterClass.getManager();
-        if (resolved instanceof PsiField) {
-          isInInnerClass = manager.areElementsEquivalent(((PsiField)resolved).getContainingClass(), myInnerClass);
-        }
-        else if (resolved instanceof PsiMethod) {
-          isInInnerClass = manager.areElementsEquivalent(((PsiMethod)resolved).getContainingClass(), myInnerClass);
-        }
-        else {
-          isInInnerClass = false;
-        }
-
-        if (isInInnerClass &&
-            becomesInaccessible(((PsiModifierListOwner)resolved))) {
+        if (resolved instanceof PsiMember && becomesInaccessible(((PsiMember)resolved))) {
           final PsiElement container = ConflictsUtil.getContainer(reference);
           HashSet<PsiElement> containerSet = reported.get(resolved);
           if (containerSet == null) {
@@ -305,8 +287,9 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
         if (PsiModifier.PRIVATE.equals(visibilityModifier)) return true;
         if (PsiModifier.PUBLIC.equals(visibilityModifier)) return false;
         final PsiFile containingFile = myOuterClass.getContainingFile();
-        if (myTargetContainer instanceof PsiPackage) {
-          return !isInPackage(containingFile, (PsiPackage)myTargetContainer);
+        if (myTargetContainer instanceof PsiDirectory) {
+          final PsiPackage aPackage = ((PsiDirectory)myTargetContainer).getPackage();
+          return !isInPackage(containingFile, aPackage);
         }
         else { // target container is a class
           PsiFile targetFile = myTargetContainer.getContainingFile();
