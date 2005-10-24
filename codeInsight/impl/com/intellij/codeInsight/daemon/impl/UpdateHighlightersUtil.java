@@ -122,7 +122,7 @@ public class UpdateHighlightersUtil {
             marker = document.createRangeMarker(range.getStartOffset(), range.getEndOffset());
             ranges2markers.put(range, marker);
           }
-          info.quickFixActionMarkers.add(new Pair<Pair<IntentionAction, List<IntentionAction>>, RangeMarker>(pair.first, marker));
+          info.quickFixActionMarkers.add(Pair.create(pair.first, marker));
         }
       }
       info.fixMarker = ranges2markers.get(new TextRange(info.fixStartOffset, info.fixEndOffset));

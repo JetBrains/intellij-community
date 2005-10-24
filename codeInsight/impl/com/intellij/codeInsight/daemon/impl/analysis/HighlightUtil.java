@@ -31,7 +31,6 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -2175,10 +2174,10 @@ public class HighlightUtil {
   public static HighlightInfo convertToHighlightInfo(Annotation annotation) {
     HighlightInfo info = new HighlightInfo(annotation.getTextAttributes(), convertType(annotation), annotation.getStartOffset(), annotation.getEndOffset(),
                                            annotation.getMessage(), annotation.getTooltip(), annotation.getSeverity(), annotation.isAfterEndOfLine(), annotation.needsUpdateOnTyping());
-    List<Pair<IntentionAction, TextRange>> fixes = annotation.getQuickFixes();
+    List<Annotation.QuickFixInfo> fixes = annotation.getQuickFixes();
     if (fixes != null) {
-      for (Pair<IntentionAction, TextRange> pair : fixes) {
-        QuickFixAction.registerQuickFixAction(info, pair.getSecond(), pair.getFirst(), null);
+      for (Annotation.QuickFixInfo quickFixInfo : fixes) {
+        QuickFixAction.registerQuickFixAction(info, quickFixInfo.textRange, quickFixInfo.quickFix, quickFixInfo.options);
       }
     }
     return info;
@@ -2189,6 +2188,7 @@ public class HighlightUtil {
     if (type == ProblemHighlightType.LIKE_UNUSED_SYMBOL) return HighlightInfoType.UNUSED_SYMBOL;
     if (type == ProblemHighlightType.LIKE_UNKNOWN_SYMBOL) return HighlightInfoType.WRONG_REF;
     if (type == ProblemHighlightType.LIKE_DEPRECATED) return HighlightInfoType.DEPRECATED;
+    if (type == ProblemHighlightType.J2EE_PROBLEM) return annotation.getSeverity() == HighlightSeverity.ERROR ? HighlightInfoType.EJB_ERROR : annotation.getSeverity() == HighlightSeverity.WARNING ? HighlightInfoType.EJB_WARNING : HighlightInfoType.INFORMATION;
     return annotation.getSeverity() == HighlightSeverity.ERROR ? HighlightInfoType.ERROR :
            annotation.getSeverity() == HighlightSeverity.WARNING ? HighlightInfoType.WARNING :
            HighlightInfoType.INFORMATION;

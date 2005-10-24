@@ -23,6 +23,7 @@
     <orderEntry type="module" module-name="refactoring-impl" />
     <orderEntry type="module" module-name="action-system-openapi" />
     <orderEntry type="module" module-name="ui-impl" />
+    <orderEntry type="module" module-name="EJB" />
     <orderEntryProperties />
   </component>
   <component name="copyright">

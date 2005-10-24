@@ -37,7 +37,7 @@ public final class QuickFixAction extends IntentionActionComposite {
     if (info.quickFixActionRanges == null) {
       info.quickFixActionRanges = new ArrayList<Pair<Pair<IntentionAction, List<IntentionAction>>, TextRange>>();
     }
-    info.quickFixActionRanges.add(new Pair<Pair<IntentionAction, List<IntentionAction>>, TextRange>(new Pair<IntentionAction, List<IntentionAction>>(action, options), fixRange));
+    info.quickFixActionRanges.add(Pair.create(Pair.create(action, options), fixRange));
     info.fixStartOffset = Math.min (info.fixStartOffset, fixRange.getStartOffset());
     info.fixEndOffset = Math.max (info.fixEndOffset, fixRange.getEndOffset());
   }

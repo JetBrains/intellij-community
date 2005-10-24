@@ -8,7 +8,7 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.analysis.aspect.AspectHighlighter;
-import com.intellij.codeInsight.daemon.impl.analysis.ejb.EjbHighlightVisitor;
+import com.intellij.codeInsight.daemon.impl.analysis.annotator.EjbHighlightVisitor;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.SetupJDKFix;
 import com.intellij.j2ee.ejb.EjbUtil;
@@ -123,10 +123,10 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
       }
       if (runEjbHighlighting.booleanValue()) {
         if (myEjbHighlightVisitor == null) {
-          myEjbHighlightVisitor = new EjbHighlightVisitor(myProject);
+          myEjbHighlightVisitor = new EjbHighlightVisitor(myAnnotationHolder);
         }
         element.accept(myEjbHighlightVisitor);
-        myHolder.addAll(myEjbHighlightVisitor.getResults());
+        convertAnnotationsToHighlightInfos();
         myEjbHighlightVisitor.clearResults();
       }
     }
@@ -150,16 +150,20 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     Annotator annotator = lang.getAnnotator();
     if (annotator != null) {
       annotator.annotate(element, myAnnotationHolder);
-      if (myAnnotationHolder.hasAnnotations()) {
-        Annotation[] annotations = myAnnotationHolder.getResult();
-        for (Annotation annotation : annotations) {
-          myHolder.add(HighlightUtil.convertToHighlightInfo(annotation));
-        }
-      }
-      myAnnotationHolder.clear();
-    } else if (element instanceof JspText) {
+      convertAnnotationsToHighlightInfos();
+    }
+    else if (element instanceof JspText) {
       myXmlVisitor.visitJspElement((JspText)element);
     }
+  }
+
+  private void convertAnnotationsToHighlightInfos() {
+    if (myAnnotationHolder.hasAnnotations()) {
+      for (Annotation annotation : myAnnotationHolder) {
+        myHolder.add(HighlightUtil.convertToHighlightInfo(annotation));
+      }
+    }
+    myAnnotationHolder.clear();
   }
 
   public void visitArrayInitializerExpression(PsiArrayInitializerExpression expression) {
@@ -267,9 +271,9 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   }
 
   public void visitErrorElement(PsiErrorElement element) {
-    HighlightInfoType errorType;
 
     if(filterJspErrors(element)) return;
+    HighlightInfoType errorType;
 
     if (PsiTreeUtil.getParentOfType(element, PsiDocComment.class) != null) {
       errorType = HighlightInfoType.JAVADOC_ERROR;
@@ -349,12 +353,9 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     if(parentOfType != null && parentOfType.getUserData(DO_NOT_VALIDATE_KEY) != null) {
       return true;
     }
-    
-    if (element.getParent().getUserData(DO_NOT_VALIDATE_KEY) != null) {
-      return true;
-    }
-    
-    return false;
+
+    return element.getParent().getUserData(DO_NOT_VALIDATE_KEY) != null;
+
   }
 
   public void visitEnumConstant(PsiEnumConstant enumConstant) {

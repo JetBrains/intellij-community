@@ -15,12 +15,11 @@
  */
 package com.intellij.lang.annotation;
 
-import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.editor.HighlighterColors;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,7 +42,18 @@ public final class Annotation {
 
   private ProblemHighlightType myHighlightType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
   private TextAttributesKey myEnforcedAttributes = null;
-  private List<Pair<IntentionAction, TextRange>> myQuickFixes = null;
+  public static class QuickFixInfo {
+    public final IntentionAction quickFix;
+    public final TextRange textRange;
+    public final List<IntentionAction> options;
+
+    public QuickFixInfo(final IntentionAction quickFix, final TextRange textRange, final List<IntentionAction> options) {
+      this.quickFix = quickFix;
+      this.textRange = textRange;
+      this.options = options;
+    }
+  }
+  private List<QuickFixInfo> myQuickFixes = null;
   private Boolean myNeedsUpdateOnTyping = null;
   private String myTooltip;
   private boolean myAfterEndOfLine = false;
@@ -77,6 +87,10 @@ public final class Annotation {
     registerFix(fix, null);
   }
 
+  public void registerFix(IntentionAction fix, TextRange range) {
+    registerFix(fix,range,null);
+  }
+
   /**
    * Registers a quick fix for the annotation which is only available on a particular range of text
    * within the annotation.
@@ -84,14 +98,14 @@ public final class Annotation {
    * @param fix   the quick fix implementation.
    * @param range the text range (relative to the document) where the quick fix is available.
    */
-  public void registerFix(IntentionAction fix, TextRange range) {
+  public void registerFix(IntentionAction fix, TextRange range, List<IntentionAction> options) {
     if (range == null) {
       range = new TextRange(myStartOffset, myEndOffset);
     }
     if (myQuickFixes == null) {
-      myQuickFixes = new ArrayList<Pair<IntentionAction, TextRange>>();
+      myQuickFixes = new ArrayList<QuickFixInfo>();
     }
-    myQuickFixes.add(new Pair<IntentionAction, TextRange>(fix, range));
+    myQuickFixes.add(new QuickFixInfo(fix, range, options));
   }
 
   /**
@@ -172,14 +186,14 @@ public final class Annotation {
       if (mySeverity == HighlightSeverity.ERROR) return CodeInsightColors.ERRORS_ATTRIBUTES;
       if (mySeverity == HighlightSeverity.WARNING) return CodeInsightColors.WARNINGS_ATTRIBUTES;
     }
-    else if (myHighlightType == ProblemHighlightType.LIKE_DEPRECATED) {
+    if (myHighlightType == ProblemHighlightType.LIKE_DEPRECATED) {
       return CodeInsightColors.DEPRECATED_ATTRIBUTES;
     }
-    else if (myHighlightType == ProblemHighlightType.LIKE_UNKNOWN_SYMBOL) {
-      return CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES;
-    }
-    else if (myHighlightType == ProblemHighlightType.LIKE_UNUSED_SYMBOL) {
+    if (myHighlightType == ProblemHighlightType.LIKE_UNUSED_SYMBOL) {
       return CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES;
+    }
+    if (myHighlightType == ProblemHighlightType.LIKE_UNKNOWN_SYMBOL) {
+      return CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES;
     }
     return HighlighterColors.TEXT;
   }
@@ -191,7 +205,7 @@ public final class Annotation {
    */
 
   @Nullable
-  public List<Pair<IntentionAction, TextRange>> getQuickFixes() {
+  public List<QuickFixInfo> getQuickFixes() {
     return myQuickFixes;
   }
 

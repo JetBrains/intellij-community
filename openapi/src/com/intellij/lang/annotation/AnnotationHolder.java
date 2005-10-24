@@ -108,4 +108,14 @@ public interface AnnotationHolder {
    * @return the annotation (which can be modified to set additional annotation parameters)
    */
   Annotation createInfoAnnotation(TextRange range, String message);
+
+  /**
+   * Creates an J2EE-specific annotation with the specified message and severity over the specified element.
+   * @see HighlightSeverity
+   *
+   * @param element     the element over which the annotation is created.
+   * @param message the information message.
+   * @return the annotation (which can be modified to set additional annotation parameters)
+   */
+  Annotation createJ2eeAnnotation(PsiElement element, String message, HighlightSeverity severity);
 }
