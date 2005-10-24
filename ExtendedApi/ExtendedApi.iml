@@ -18,6 +18,9 @@
     <orderEntry type="module" module-name="resources_eng" />
     <orderEntry type="module" module-name="codeInsight-openapi" />
     <orderEntry type="module" module-name="codeInsight-impl" />
+    <orderEntry type="module" module-name="action-system-openapi" />
+    <orderEntry type="module" module-name="inspections-impl" />
+    <orderEntry type="module" module-name="inspections-openapi" />
     <orderEntryProperties />
   </component>
   <component name="copyright">
