@@ -53,7 +53,7 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
       }
     }
     final Set<ComponentElementProperties> componentElementProperties = new LinkedHashSet<ComponentElementProperties>(componentToContainingListElement.values());
-    myChooser = new ElementsChooser<ComponentElementProperties>();
+    myChooser = new ElementsChooser<ComponentElementProperties>(true);
     for (Iterator iterator = componentElementProperties.iterator(); iterator.hasNext();) {
       ComponentElementProperties elementProperties = (ComponentElementProperties)iterator.next();
       myChooser.addElement(elementProperties, true, elementProperties);
