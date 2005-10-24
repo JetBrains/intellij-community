@@ -4,9 +4,9 @@
  */
 package com.intellij.debugger.settings;
 
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.ui.tree.render.CompoundNodeRenderer;
 import com.intellij.debugger.ui.tree.render.NodeRenderer;
-import com.intellij.debugger.DebuggerBundle;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -88,7 +88,7 @@ public class UserRenderersConfigurable implements Configurable{
   }
 
   private JComponent createRenderersList() {
-    myRendererChooser = new ElementsChooser<NodeRenderer>();
+    myRendererChooser = new ElementsChooser<NodeRenderer>(true);
     myRendererChooser.addElementsMarkListener(new ElementsChooser.ElementsMarkListener<NodeRenderer>() {
       public void elementMarkChanged(final NodeRenderer element, final boolean isMarked) {
         element.setEnabled(isMarked);

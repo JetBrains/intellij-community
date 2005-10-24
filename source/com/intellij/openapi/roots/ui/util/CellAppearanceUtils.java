@@ -4,8 +4,11 @@ import com.intellij.ide.IconUtilEx;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.LightFilePointer;
 import com.intellij.openapi.util.IconLoader;
@@ -15,7 +18,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Icons;
@@ -217,6 +219,26 @@ public class CellAppearanceUtils {
     File parent = file.getParentFile();
     CompositeAppearance appearance = CompositeAppearance.textComment(name, parent.getAbsolutePath());
     appearance.setIcon(fileType.getIcon());
+    return appearance;
+  }
+
+  public static CellAppearance forProjectJdk(final Project project) {
+    final ProjectRootManager projectRootManager = ProjectRootManagerEx.getInstance(project);
+    final ProjectJdk projectJdk = projectRootManager.getProjectJdk();
+    final CellAppearance appearance;
+    if (projectJdk != null) {
+      appearance = forJdk(projectJdk, false, false);
+    }
+    else {
+      // probably invalid JDK
+      final String projectJdkName = projectRootManager.getProjectJdkName();
+      if (projectJdkName != null) {
+        appearance = SimpleTextCellAppearance.invalid(ProjectBundle.message("jdk.combo.box.invalid.item", projectJdkName), INVALID_ICON);
+      }
+      else {
+        appearance = forJdk(null, false, false);
+      }
+    }
     return appearance;
   }
 

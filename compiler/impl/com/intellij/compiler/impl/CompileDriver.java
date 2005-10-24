@@ -5,6 +5,7 @@
  */
 package com.intellij.compiler.impl;
 
+import com.intellij.CommonBundle;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.compiler.*;
 import com.intellij.compiler.make.CacheCorruptedException;
@@ -30,8 +31,8 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
 import com.intellij.openapi.roots.ui.configuration.ContentEntriesEditor;
-import com.intellij.openapi.roots.ui.configuration.LibrariesEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
@@ -50,14 +51,12 @@ import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ProfilingUtil;
-import com.intellij.CommonBundle;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectProcedure;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.*;
 import java.util.*;
-
-import org.jetbrains.annotations.NonNls;
 
 public class CompileDriver {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.CompileDriver");
@@ -1445,7 +1444,7 @@ public class CompileDriver {
       }
     }
     if (modulesWithoutJdkAssigned.size() > 0) {
-      showNotSpecifiedError("error.jdk.not.specified", modulesWithoutJdkAssigned, LibrariesEditor.NAME);
+      showNotSpecifiedError("error.jdk.not.specified", modulesWithoutJdkAssigned, ClasspathEditor.NAME);
       return false;
     }
 

@@ -6,6 +6,7 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.ProjectRootType;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.util.Computable;
@@ -14,12 +15,12 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.Icons;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.ui.UIUtil;
+import gnu.trove.TIntArrayList;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -27,9 +28,9 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
-
-import gnu.trove.TIntArrayList;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Set;
 
 /**
  * @author MYakovlev
@@ -119,8 +120,8 @@ public abstract class PathEditor {
     });
     myList.setCellRenderer(new MyCellRenderer());
 
-    myRemoveButton = new JButton(ProjectBundle.message("sdk.paths.remove.button"));
-    myAddButton = new JButton(ProjectBundle.message("sdk.paths.add.button"));
+    myRemoveButton = new JButton(ProjectBundle.message("button.remove"));
+    myAddButton = new JButton(ProjectBundle.message("button.add"));
     mySpecifyUrlButton = new JButton(ProjectBundle.message("sdk.paths.specify.url.button"));
 
     mySpecifyUrlButton.setVisible(isShowUrlButton());

@@ -1,9 +1,10 @@
 package com.intellij.ide.util.projectWizard;
 
+import com.intellij.CommonBundle;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.JavaUtil;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,7 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
 import com.intellij.util.concurrency.SwingWorker;
-import com.intellij.CommonBundle;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -38,8 +39,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Eugene Zhuravlev
@@ -173,7 +172,7 @@ public class SourcePathsStep extends ModuleWizardStep {
 
   private JComponent createComponentForChooseSources() {
     final JPanel panel = new JPanel(new GridBagLayout());
-    mySourcePathsChooser = new ElementsChooser<Pair<String, String>>() {
+    mySourcePathsChooser = new ElementsChooser<Pair<String, String>>(true) {
       public String getItemText(Pair<String, String> pair) {
         if ("".equals(pair.second)) return pair.first;
         return pair.first + " (" + pair.second + ")";

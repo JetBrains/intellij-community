@@ -1,13 +1,13 @@
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.ide.util.ElementsChooser;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryTableEditor;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryTableEditor;
 
 import javax.swing.*;
 import java.awt.*;
@@ -51,7 +51,7 @@ public class NamedLibrariesPanel extends JPanel {
         updateChooser(null, true, null);
       }
     };
-    myLibrariesChooser = new ElementsChooser<LibraryChooserElement>();
+    myLibrariesChooser = new ElementsChooser<LibraryChooserElement>(true);
     myLibrariesChooser.setColorUnmarkedElements(false);
 
     myMarkListener = new ElementsChooser.ElementsMarkListener<LibraryChooserElement>() {
@@ -61,7 +61,7 @@ public class NamedLibrariesPanel extends JPanel {
     };
     myLibrariesChooser.addElementsMarkListener(myMarkListener);
 
-    final JButton editButton = new JButton(ProjectBundle.message("module.libraries.edit.button"));
+    final JButton editButton = new JButton(ProjectBundle.message("button.edit"));
     myIncludeAllButton = new JButton(ProjectBundle.message("module.libraries.include.all.button"));
     myExcludeAllButton = new JButton(ProjectBundle.message("module.libraries.exclude.all.button"));
     editButton.addActionListener(new ActionListener() {

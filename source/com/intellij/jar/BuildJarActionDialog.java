@@ -1,7 +1,9 @@
 package com.intellij.jar;
 
-import com.intellij.ide.RecentProjectsManager;
+import com.intellij.ide.IconUtilEx;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.RecentProjectsManager;
+import com.intellij.ide.ui.SplitterProportionsData;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
@@ -15,7 +17,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ui.configuration.ModuleChooserElement;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -30,7 +31,6 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.io.FileTypeFilter;
-import com.intellij.ide.ui.SplitterProportionsData;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 
@@ -59,7 +59,7 @@ public class BuildJarActionDialog extends DialogWrapper {
   private PackagingSettingsEditor myEditor;
   private final Map<Module, SettingsEditor> mySettings = new THashMap<Module, SettingsEditor>();
   private Module myCurrentModule;
-  private ElementsChooser<ModuleChooserElement> myElementsChooser;
+  private ElementsChooser<Module> myElementsChooser;
   private JPanel myModuleSettingsPanel;
   private LabeledComponent<TextFieldWithBrowseButton> myMainClassComponent;
   private LabeledComponent<TextFieldWithBrowseButton> myJarFilePathComponent;
@@ -104,36 +104,34 @@ public class BuildJarActionDialog extends DialogWrapper {
     myJarPath = myJarFilePathComponent.getComponent();
     myMainClass = myMainClassComponent.getComponent();
 
-    myElementsChooser = new ElementsChooser<ModuleChooserElement>();
+    myElementsChooser = new ElementsChooser<Module>(true);
     myModulesPanel.setLayout(new BorderLayout());
     myModulesPanel.add(myElementsChooser, BorderLayout.CENTER);
 
     final Collection<Module> modules = getModulesToJar(myProject);
-    for (Module module : modules) {
+    for (final Module module : modules) {
       if (module.getModuleType().isJ2EE()) continue;
-      ModuleChooserElement moduleChooserElement = new ModuleChooserElement(module, null);
       BuildJarSettings buildJarSettings = BuildJarSettings.getInstance(module);
-      myElementsChooser.addElement(moduleChooserElement, buildJarSettings.isBuildJar(), moduleChooserElement);
+      myElementsChooser.addElement(module, buildJarSettings.isBuildJar(), new ChooserElementProperties(module));
     }
     myElementsChooser.addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {
         if (myCurrentModule != null) {
           applyEditor(myCurrentModule);
         }
-        ModuleChooserElement selectedElement = myElementsChooser.getSelectedElement();
-        Module module = selectedElement == null ? null : selectedElement.getModule();
-        if (module != null) {
-          BuildJarSettings buildJarSettings = BuildJarSettings.getInstance(module);
-          SettingsEditor settingsEditor = new SettingsEditor(module, buildJarSettings);
-          mySettings.put(module, settingsEditor);
-          boolean isBuildJar = myElementsChooser.getMarkedElements().contains(selectedElement);
+        Module selectedModule = myElementsChooser.getSelectedElement();
+        if (selectedModule != null) {
+          BuildJarSettings buildJarSettings = BuildJarSettings.getInstance(selectedModule);
+          SettingsEditor settingsEditor = new SettingsEditor(selectedModule, buildJarSettings);
+          mySettings.put(selectedModule, settingsEditor);
+          boolean isBuildJar = myElementsChooser.getMarkedElements().contains(selectedModule);
           GuiUtils.enableChildren(myModuleSettingsPanel, isBuildJar, null);
         }
-        myCurrentModule = module;
+        myCurrentModule = selectedModule;
       }
     });
-    myElementsChooser.addElementsMarkListener(new ElementsChooser.ElementsMarkListener<ModuleChooserElement>() {
-      public void elementMarkChanged(final ModuleChooserElement element, final boolean isMarked) {
+    myElementsChooser.addElementsMarkListener(new ElementsChooser.ElementsMarkListener<Module>() {
+      public void elementMarkChanged(final Module element, final boolean isMarked) {
         GuiUtils.enableChildren(myModuleSettingsPanel, isMarked, null);
         if (isMarked) {
           setDefaultJarPath();
@@ -188,7 +186,7 @@ public class BuildJarActionDialog extends DialogWrapper {
 
     SwingUtilities.invokeLater(new Runnable(){
       public void run() {
-        ModuleChooserElement element = myElementsChooser.getElementAt(0);
+        Module element = myElementsChooser.getElementAt(0);
         myElementsChooser.selectElements(Collections.singletonList(element));
       }
     });
@@ -242,10 +240,9 @@ public class BuildJarActionDialog extends DialogWrapper {
   }
 
   protected void doOKAction() {
-    ModuleChooserElement selectedElement = myElementsChooser.getSelectedElement();
-    if (selectedElement != null) {
-      Module module = selectedElement.getModule();
-      applyEditor(module);
+    final Module selectedModule = myElementsChooser.getSelectedElement();
+    if (selectedModule != null) {
+      applyEditor(selectedModule);
     }
     super.doOKAction();
   }
@@ -290,7 +287,7 @@ public class BuildJarActionDialog extends DialogWrapper {
       }
       myEditor.disposeUIResources();
       myModifiedBuildJarSettings.setJarPath(myJarPath.getText());
-      boolean isBuildJar = myElementsChooser.getMarkedElements().contains(new ModuleChooserElement(myModule, null));
+      boolean isBuildJar = myElementsChooser.getMarkedElements().contains(myModule);
       myModifiedBuildJarSettings.setBuildJar(isBuildJar);
       myModifiedBuildJarSettings.setMainClass(myMainClass.getText());
       copySettings(myModifiedBuildJarSettings, myBuildJarSettings);
@@ -313,4 +310,19 @@ public class BuildJarActionDialog extends DialogWrapper {
     }
   }
 
+  private static class ChooserElementProperties implements ElementsChooser.ElementProperties {
+    private final Module myModule;
+
+    public ChooserElementProperties(final Module module) {
+      myModule = module;
+    }
+
+    public Icon getIcon() {
+      return IconUtilEx.getIcon(myModule, 0);
+    }
+
+    public Color getColor() {
+      return null;
+    }
+  }
 }

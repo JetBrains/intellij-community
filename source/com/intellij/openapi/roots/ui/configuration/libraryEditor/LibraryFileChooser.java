@@ -1,22 +1,22 @@
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
-import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.FieldPanel;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
-import javax.swing.event.DocumentListener;
 import javax.swing.event.DocumentEvent;
-import javax.swing.event.TreeSelectionListener;
+import javax.swing.event.DocumentListener;
 import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
 import java.awt.*;
 
-class LibraryFileChooser extends FileChooserDialogImpl {
+public class LibraryFileChooser extends FileChooserDialogImpl {
   private JTextField myNameField;
   private final boolean myInputName;
   private final LibraryTableEditor myParentEditor;

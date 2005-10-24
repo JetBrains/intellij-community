@@ -26,7 +26,6 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
 
 /**
  * @author Eugene Zhuravlev
@@ -91,7 +90,7 @@ public class JavadocEditor extends ModuleElementsEditor {
     myRemoveButton = new JButton(ProjectBundle.message("module.javadoc.remove.button"));
     myRemoveButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        final ArrayList removedItems = TableUtil.removeSelectedItems(myTable);
+        final java.util.List removedItems = TableUtil.removeSelectedItems(myTable);
         if (removedItems.size() > 0) {
           saveData();
         }

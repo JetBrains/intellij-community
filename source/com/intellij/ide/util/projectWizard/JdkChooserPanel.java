@@ -1,10 +1,15 @@
 package com.intellij.ide.util.projectWizard;
 
+import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.ui.ProjectJdksEditor;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
 import gnu.trove.TIntArrayList;
 
 import javax.swing.*;
@@ -127,6 +132,20 @@ public class JdkChooserPanel extends JPanel {
     }
     dialog.show();
     return dialog.isOK() ? jdkChooserPanel.getChosenJdk() : null;
+  }
+
+  public static ProjectJdk chooseAndSetJDK(final Project project) {
+    final ProjectJdk projectJdk = ProjectRootManager.getInstance(project).getProjectJdk();
+    final ProjectJdk jdk = showDialog(ProjectBundle.message("module.libraries.target.jdk.select.title"), WindowManagerEx.getInstanceEx().getFrame(project), projectJdk);
+    if (jdk == null) {
+      return null;
+    }
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        ProjectRootManager.getInstance(project).setProjectJdk(jdk);
+      }
+    });
+    return jdk;
   }
 
   public class MyDialog extends DialogWrapper implements ListSelectionListener {

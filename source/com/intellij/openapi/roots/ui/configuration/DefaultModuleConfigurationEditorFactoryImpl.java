@@ -20,16 +20,20 @@ public class DefaultModuleConfigurationEditorFactoryImpl extends DefaultModuleCo
     return new ContentEntriesEditor(state.getProject(), moduleName, rootModel, state.getModulesProvider());
   }
 
-  public ModuleConfigurationEditor createLibrariesEditor(ModuleConfigurationState state) {
+  public @Deprecated ModuleConfigurationEditor createLibrariesEditor(ModuleConfigurationState state) {
     return new LibrariesEditor(state.getProject(), state.getRootModel());
   }
 
-  public ModuleConfigurationEditor createDependenciesEditor(ModuleConfigurationState state) {
+  public @Deprecated ModuleConfigurationEditor createDependenciesEditor(ModuleConfigurationState state) {
     return new DependenciesEditor(state.getProject(), state.getRootModel(), state.getModulesProvider());
   }
 
-  public ModuleConfigurationEditor createOrderEntriesEditor(ModuleConfigurationState state) {
+  public @Deprecated ModuleConfigurationEditor createOrderEntriesEditor(ModuleConfigurationState state) {
     return new OrderEntryEditor(state.getProject(), state.getRootModel());
+  }
+
+  public ModuleConfigurationEditor createClasspathEditor(ModuleConfigurationState state) {
+    return new ClasspathEditor(state.getProject(), state.getRootModel(), state.getModulesProvider());
   }
 
   public ModuleConfigurationEditor createJavadocEditor(ModuleConfigurationState state) {

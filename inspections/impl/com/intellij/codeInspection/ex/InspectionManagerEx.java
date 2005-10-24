@@ -6,6 +6,7 @@
 
 package com.intellij.codeInspection.ex;
 
+import com.intellij.CommonBundle;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.*;
@@ -13,6 +14,7 @@ import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.InspectCodePanel;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.ide.impl.ContentManagerWatcher;
+import com.intellij.ide.util.projectWizard.JdkChooserPanel;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
@@ -28,7 +30,6 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.projectRoots.ProjectJdk;
-import com.intellij.openapi.roots.ui.configuration.LibrariesEditor;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -46,7 +47,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.ui.content.*;
 import com.intellij.util.containers.HashMap;
-import com.intellij.CommonBundle;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -400,7 +400,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
                                  InspectionsBundle.message("inspection.no.jdk.error.message"),
                                  CommonBundle.message("title.error"),
                                  Messages.getErrorIcon());
-      final ProjectJdk projectJdk = LibrariesEditor.chooseAndSetJDK(myProject);
+      final ProjectJdk projectJdk = JdkChooserPanel.chooseAndSetJDK(myProject);
       if (projectJdk == null) return;
     }
 

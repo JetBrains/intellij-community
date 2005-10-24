@@ -3,13 +3,11 @@
  */
 package com.intellij.openapi.roots.ui.configuration;
 
-import com.intellij.ide.IconUtilEx;
-import com.intellij.util.Icons;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.util.Icons;
 
 import javax.swing.*;

@@ -12,10 +12,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 public class ElementsChooser<T> extends JPanel {
   private JTable myTable = null;
@@ -24,28 +22,22 @@ public class ElementsChooser<T> extends JPanel {
   private List<ElementsMarkListener<T>> myListeners = new ArrayList<ElementsMarkListener<T>>();
   private Map<T,ElementProperties> myElementToPropertiesMap = new HashMap<T, ElementProperties>();
 
-  public ElementsChooser() {
-    this(null, false);
-  }
-
-  public void refresh() {
-    myTableModel.fireTableDataChanged();
-  }
-  public void refresh(T element) {
-    final int row = myTableModel.getElementRow(element);
-    if (row >= 0) {
-      myTableModel.fireTableRowsUpdated(row, row);
-    }
-  }
-
   public static interface ElementsMarkListener<T> {
     void elementMarkChanged(T element, boolean isMarked);
   }
 
+  public ElementsChooser(final boolean elementsCanBeMarked) {
+    this(null, false, elementsCanBeMarked);
+  }
+
   public ElementsChooser(List<T> elements, boolean marked) {
+    this(elements, marked, true);
+  }
+
+  private ElementsChooser(List<T> elements, boolean marked, boolean elementsCanBeMarked) {
     super(new BorderLayout());
 
-    myTableModel = new MyTableModel();
+    myTableModel = new MyTableModel(elementsCanBeMarked);
     myTable = new Table(myTableModel);
     myTable.setShowGrid(false);
     myTable.setIntercellSpacing(new Dimension(0, 0));
@@ -57,11 +49,13 @@ public class ElementsChooser<T> extends JPanel {
     int width = new JCheckBox().getPreferredSize().width;
     TableColumnModel columnModel = myTable.getColumnModel();
 
-    TableColumn checkMarkColumn = columnModel.getColumn(MyTableModel.CHECK_MARK);
-    checkMarkColumn.setPreferredWidth(width);
-    checkMarkColumn.setMaxWidth(width);
-    checkMarkColumn.setCellRenderer(new CheckMarkColumnCellRenderer(myTable.getDefaultRenderer(Boolean.class)));
-    columnModel.getColumn(MyTableModel.ELEMENT).setCellRenderer(new MyElementColumnCellRenderer());
+    if (elementsCanBeMarked) {
+      TableColumn checkMarkColumn = columnModel.getColumn(myTableModel.CHECK_MARK_COLUM_INDEX);
+      checkMarkColumn.setPreferredWidth(width);
+      checkMarkColumn.setMaxWidth(width);
+      checkMarkColumn.setCellRenderer(new CheckMarkColumnCellRenderer(myTable.getDefaultRenderer(Boolean.class)));
+    }
+    columnModel.getColumn(myTableModel.ELEMENT_COLUMN_INDEX).setCellRenderer(new MyElementColumnCellRenderer());
 
     add(pane, BorderLayout.CENTER);
     myTable.registerKeyboardAction(
@@ -69,8 +63,8 @@ public class ElementsChooser<T> extends JPanel {
         public void actionPerformed(ActionEvent e) {
           final int[] selectedRows = myTable.getSelectedRows();
           boolean currentlyMarked = true;
-          for (int idx = 0; idx < selectedRows.length; idx++) {
-            currentlyMarked = myTableModel.isElementMarked(selectedRows[idx]);
+          for (int selectedRow : selectedRows) {
+            currentlyMarked = myTableModel.isElementMarked(selectedRow);
             if (!currentlyMarked) {
               break;
             }
@@ -83,6 +77,17 @@ public class ElementsChooser<T> extends JPanel {
     );
 
     setElements(elements, marked);
+  }
+
+  public void refresh() {
+    myTableModel.fireTableDataChanged();
+  }
+
+  public void refresh(T element) {
+    final int row = myTableModel.getElementRow(element);
+    if (row >= 0) {
+      myTableModel.fireTableRowsUpdated(row, row);
+    }
   }
 
   private int[] mySavedSelection = null;
@@ -205,7 +210,7 @@ public class ElementsChooser<T> extends JPanel {
     return elements;
   }
 
-  public void selectElements(List<T> elements) {
+  public void selectElements(Collection<T> elements) {
     if (elements.size() == 0) {
       myTable.clearSelection();
       return;
@@ -280,8 +285,21 @@ public class ElementsChooser<T> extends JPanel {
   private final class MyTableModel extends AbstractTableModel {
     private final List<T> myElements = new ArrayList<T>();
     private final Map<T, Boolean> myMarkedMap = new HashMap<T, Boolean>();
-    public static final int CHECK_MARK = 0;
-    public static final int ELEMENT = 1;
+    public final int CHECK_MARK_COLUM_INDEX;
+    public final int ELEMENT_COLUMN_INDEX;
+    private final boolean myElementsCanBeMarked;
+
+    public MyTableModel(final boolean elementsCanBeMarked) {
+      myElementsCanBeMarked = elementsCanBeMarked;
+      if (elementsCanBeMarked) {
+        CHECK_MARK_COLUM_INDEX = 0;
+        ELEMENT_COLUMN_INDEX = 1;
+      }
+      else {
+        CHECK_MARK_COLUM_INDEX = -1;
+        ELEMENT_COLUMN_INDEX = 0;
+      }
+    }
 
     public T getElementAt(int index) {
       return myElements.get(index);
@@ -352,22 +370,22 @@ public class ElementsChooser<T> extends JPanel {
     }
 
     public int getColumnCount() {
-      return 2;
+      return myElementsCanBeMarked? 2 : 1;
     }
 
     public Object getValueAt(int rowIndex, int columnIndex) {
       T element = myElements.get(rowIndex);
-      if (columnIndex == ELEMENT) {
+      if (columnIndex == ELEMENT_COLUMN_INDEX) {
         return element;
       }
-      if (columnIndex == CHECK_MARK) {
+      if (columnIndex == CHECK_MARK_COLUM_INDEX) {
         return myMarkedMap.get(element);
       }
       return null;
     }
 
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-      if (columnIndex == CHECK_MARK) {
+      if (columnIndex == CHECK_MARK_COLUM_INDEX) {
         setMarked(rowIndex, ((Boolean)aValue).booleanValue());
       }
     }
@@ -402,7 +420,7 @@ public class ElementsChooser<T> extends JPanel {
     }
 
     public Class getColumnClass(int columnIndex) {
-      if (columnIndex == CHECK_MARK) {
+      if (columnIndex == CHECK_MARK_COLUM_INDEX) {
         return Boolean.class;
       }
       return super.getColumnClass(columnIndex);
@@ -410,7 +428,7 @@ public class ElementsChooser<T> extends JPanel {
 
     public boolean isCellEditable(int rowIndex, int columnIndex) {
       if (ElementsChooser.this.isEnabled()) {
-        return columnIndex == CHECK_MARK;
+        return columnIndex == CHECK_MARK_COLUM_INDEX;
       }
       return false;
     }

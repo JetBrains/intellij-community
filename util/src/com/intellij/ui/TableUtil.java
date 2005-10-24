@@ -22,13 +22,14 @@ import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableModel;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.LinkedList;
 
 public class TableUtil {
   public interface ItemChecker {
     boolean isOperationApplyable(TableModel model, int row);
   }
 
-  public static ArrayList removeSelectedItems(JTable table) {
+  public static java.util.List removeSelectedItems(JTable table) {
     return removeSelectedItems(table, null);
   }
 
@@ -59,7 +60,7 @@ public class TableUtil {
     table.scrollRectToVisible(new Rectangle(selectPoint, new Dimension(1,allHeight)));
   }
 
-  public static ArrayList removeSelectedItems(JTable table, ItemChecker applyable) {
+  public static java.util.List removeSelectedItems(JTable table, ItemChecker applyable) {
     if (table.isEditing()){
       table.getCellEditor().stopCellEditing();
     }
@@ -73,31 +74,29 @@ public class TableUtil {
     int minSelectionIndex = selectionModel.getMinSelectionIndex();
     if (minSelectionIndex == -1) return new ArrayList(0);
 
-    ArrayList removedItems = new ArrayList();
+    java.util.List removedItems = new LinkedList();
 
-    for (int idx = 0; idx < table.getRowCount(); idx++) {
+    final int columnCount = model.getColumnCount();
+    for (int idx = table.getRowCount() - 1; idx >= 0; idx--) {
       if (selectionModel.isSelectedIndex(idx) && (applyable == null || applyable.isOperationApplyable(model, idx))) {
-        int columnCount = model.getColumnCount();
-        Object[] row = new Object[columnCount];
+        final Object[] row = new Object[columnCount];
         for(int column = 0; column < columnCount; column++){
           row[column] = model.getValueAt(idx, column);
         }
-        removedItems.add(row);
+        removedItems.add(0, row);
         ((ItemRemovable)model).removeRow(idx);
-        idx--;
       }
     }
     int count = model.getRowCount();
     if (count == 0) {
       table.clearSelection();
     }
-    else if (selectionModel.getMinSelectionIndex() == -1) {
-      // if nothing remains selected, set selected row
-      if (minSelectionIndex >= count){
-        selectionModel.setSelectionInterval(count - 1, count - 1);
-      }
-      else{
-        selectionModel.setSelectionInterval(minSelectionIndex, minSelectionIndex);
+    else {
+      final int selectionIndex = selectionModel.getMinSelectionIndex();
+      if (selectionIndex < 0 || selectionIndex >= count) {
+        // if nothing remains selected, set selected row
+        int rowToSelect = Math.min(count -1, selectionIndex);
+        selectionModel.setSelectionInterval(rowToSelect, rowToSelect);
       }
     }
     return removedItems;

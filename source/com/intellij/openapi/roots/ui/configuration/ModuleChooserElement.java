@@ -1,7 +1,7 @@
 package com.intellij.openapi.roots.ui.configuration;
 
-import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.IconUtilEx;
+import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.ui.util.CellAppearanceUtils;
@@ -10,7 +10,7 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
- * @author cdr
+ * TODO: remove it together witrh DependenciesEditor
  */
 public class ModuleChooserElement implements ElementsChooser.ElementProperties{
   private final String myName;

@@ -23,11 +23,13 @@ public abstract class DefaultModuleConfigurationEditorFactory implements Applica
 
   public abstract ModuleConfigurationEditor createModuleContentRootsEditor(ModuleConfigurationState state);
 
-  public abstract ModuleConfigurationEditor createLibrariesEditor(ModuleConfigurationState state);
+  @Deprecated public abstract ModuleConfigurationEditor createLibrariesEditor(ModuleConfigurationState state);
 
-  public abstract ModuleConfigurationEditor createDependenciesEditor(ModuleConfigurationState state);
+  @Deprecated public abstract ModuleConfigurationEditor createDependenciesEditor(ModuleConfigurationState state);
 
-  public abstract ModuleConfigurationEditor createOrderEntriesEditor(ModuleConfigurationState state);
+  @Deprecated public abstract ModuleConfigurationEditor createOrderEntriesEditor(ModuleConfigurationState state);
+
+  public abstract ModuleConfigurationEditor createClasspathEditor(ModuleConfigurationState state);
 
   public abstract ModuleConfigurationEditor createJavadocEditor(ModuleConfigurationState state);
 
