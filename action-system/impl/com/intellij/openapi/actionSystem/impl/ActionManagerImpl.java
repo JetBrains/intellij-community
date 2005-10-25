@@ -3,7 +3,6 @@ package com.intellij.openapi.actionSystem.impl;
 import com.intellij.CommonBundle;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManager;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -147,9 +146,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
   private void registerActions() {
     final Application app = ApplicationManager.getApplication();
     final IdeaPluginDescriptor[] plugins = app.getPlugins();
-    for (int i = 0; i < plugins.length; i++) {
-      IdeaPluginDescriptor plugin = plugins[i];
-
+    for (IdeaPluginDescriptor plugin : plugins) {
       final Element e = plugin.getActionsDescriptionElement();
       if (e != null) {
         processActionsElement(e, plugin.getPluginClassLoader(), plugin.getPluginId());
@@ -295,7 +292,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     String text = loadTextForElement(element, bundle, id, ACTION_ELEMENT_NAME);
 
     if (text == null) {
-      LOG.error("'text' attribute is mandatory (action ID=" + id + ")");
+      @NonNls String message = "'text' attribute is mandatory (action ID=" + id + ";" +
+                               (plugin == null ? "" : " plugin path: "+plugin.getPath()) + ")";
+      LOG.error(message);
       return null;
     }
 
@@ -343,8 +342,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     return stub;
   }
 
-  private String loadDescriptionForElement(final Element element, final ResourceBundle bundle, final String id, String elementType) {
-    String description = null;
+  private static String loadDescriptionForElement(final Element element, final ResourceBundle bundle, final String id, String elementType) {
     if (bundle != null) {
       @NonNls final String key = elementType + "." + id + ".description";
       return CommonBundle.messageOrDefault(bundle, key, element.getAttributeValue(DESCRIPTION));
@@ -353,7 +351,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     }
   }
 
-  private String loadTextForElement(final Element element, final ResourceBundle bundle, final String id, String elementType) {
+  private static String loadTextForElement(final Element element, final ResourceBundle bundle, final String id, String elementType) {
     return CommonBundle.messageOrDefault(bundle, elementType + "." + id + "." + TEXT, element.getAttributeValue(TEXT));
   }
 
@@ -694,7 +692,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     }
   }
 
-  private void assertActionIsGroupOrStub(final AnAction action) {
+  private static void assertActionIsGroupOrStub(final AnAction action) {
     LOG.assertTrue(action instanceof ActionGroup || action instanceof ActionStub, "Action : "+action + "; class: "+action.getClass());
   }
 
@@ -831,7 +829,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     return myPrevPerformedActionId;
   }
 
-  private boolean haveActiveFrames() {
+  private static boolean haveActiveFrames() {
     final Project[] projects = ProjectManager.getInstance().getOpenProjects();
     final WindowManagerEx wmanager = WindowManagerEx.getInstanceEx();
     if (wmanager == null) return false;
