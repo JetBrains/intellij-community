@@ -19,6 +19,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
@@ -416,7 +417,8 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
         compilerManager.addCompilationStatusListener(new CompilationStatusListener() {
           public void compilationFinished(boolean aborted, int errors, int warnings) {
             compilerManager.removeCompilationStatusListener(this);
-            ProjectUtil.closeProject(project);
+            if (ProjectManagerEx.getInstanceEx().closeProject(project))
+              ((ProjectEx)project).dispose();
           }
         });
         cancel();
