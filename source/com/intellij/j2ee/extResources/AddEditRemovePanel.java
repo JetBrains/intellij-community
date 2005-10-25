@@ -141,7 +141,7 @@ public abstract class AddEditRemovePanel extends PanelWithButtons {
 
     myTableModel.fireTableRowsUpdated(selected, selected);
   }
-
+  
   protected void doRemove() {
     final int[] selected = myTable.getSelectedRows();
     if (selected == null || selected.length == 0) return;
@@ -178,6 +178,15 @@ public abstract class AddEditRemovePanel extends PanelWithButtons {
     myRemoveButton.setEnabled(myTable.getSelectedRowCount() >= 1);
   }
 
+  void setSelected(Object o) {
+    for(int i = 0; i < myTableModel.getRowCount(); ++i) {
+      if (myData.get(i).equals(o)) {
+        myTable.getSelectionModel().setSelectionInterval(i,i);
+        break;
+      }
+    }
+  }
+  
   public static interface TableModel {
     int getColumnCount();
     String getColumnName(int columnIndex);

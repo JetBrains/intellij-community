@@ -189,9 +189,16 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Ap
     return dialog.getPair().myName;
   }
 
-
+  public void editUri() {
+    myExtPanel.doEdit();
+  }
+  
   public String getComponentName() {
     return "ExternalResourceConfigurable";
+  }
+
+  public void selectResource(final String uri) {
+    myExtPanel.setSelected(new EditLocationDialog.Pair(uri,null));
   }
 
   private class PathRenderer extends DefaultTableCellRenderer {

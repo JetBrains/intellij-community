@@ -138,6 +138,15 @@ public class EditLocationDialog extends DialogWrapper {
       return myName.compareTo(((Pair)o).myName);
     }
 
+    public boolean equals(Object obj) {
+      if (! (obj instanceof Pair)) return false;
+      return compareTo(obj) == 0;
+    }
+
+    public int hashCode() {
+      return myName.hashCode();
+    }
+
     public String getName() {
       return myName;
     }

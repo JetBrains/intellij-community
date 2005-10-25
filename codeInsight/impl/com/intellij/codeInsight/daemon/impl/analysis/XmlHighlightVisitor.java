@@ -5,10 +5,7 @@ import com.intellij.codeInsight.daemon.impl.EditInspectionToolsSettingsAction;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.RefCountHolder;
-import com.intellij.codeInsight.daemon.impl.quickfix.AddHtmlTagOrAttributeToCustoms;
-import com.intellij.codeInsight.daemon.impl.quickfix.FetchExtResourceAction;
-import com.intellij.codeInsight.daemon.impl.quickfix.IgnoreExtResourceAction;
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
+import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
@@ -24,6 +21,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.html.HtmlTag;
@@ -787,14 +785,9 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
     XmlFile xmlFile = XmlUtil.findXmlFile(xmlDoctype.getContainingFile(), uri);
     if (xmlFile == null) {
-      HighlightInfo info = HighlightInfo.createHighlightInfo(
-            HighlightInfoType.WRONG_REF,
-            xmlDoctype.getDtdUrlElement().getTextRange().getStartOffset() + 1,
-            xmlDoctype.getDtdUrlElement().getTextRange().getEndOffset() - 1,
-            XmlErrorMessages.message("uri.is.not.registered"));
-      addToResults(info);
-      QuickFixAction.registerQuickFixAction(info, new FetchExtResourceAction(), null);
-      QuickFixAction.registerQuickFixAction(info, new IgnoreExtResourceAction(), null);
+      final TextRange textRange = xmlDoctype.getDtdUrlElement().getTextRange();
+      
+      reportURIProblem(textRange.getStartOffset() + 1,textRange.getEndOffset() - 1);
     }
   }
 
@@ -879,6 +872,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
       end,
       XmlErrorMessages.message("uri.is.not.registered"));
     QuickFixAction.registerQuickFixAction(info, new FetchExtResourceAction(), null);
+    QuickFixAction.registerQuickFixAction(info, new ManuallySetupExtResourceAction(), null);
     QuickFixAction.registerQuickFixAction(info, new IgnoreExtResourceAction(), null);
     addToResults(info);
   }
