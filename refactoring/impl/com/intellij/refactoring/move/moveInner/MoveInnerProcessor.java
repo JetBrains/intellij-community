@@ -265,7 +265,9 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
 
       public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
         PsiElement resolved = reference.resolve();
-        if (resolved instanceof PsiMember && becomesInaccessible(((PsiMember)resolved))) {
+        if (resolved instanceof PsiMember &&
+            PsiTreeUtil.isAncestor(myOuterClass, resolved, true) &&
+            becomesInaccessible(((PsiMember)resolved))) {
           final PsiElement container = ConflictsUtil.getContainer(reference);
           HashSet<PsiElement> containerSet = reported.get(resolved);
           if (containerSet == null) {
@@ -282,7 +284,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
         }
       }
 
-      private boolean becomesInaccessible(PsiModifierListOwner element) {
+      private boolean becomesInaccessible(PsiMember element) {
         final String visibilityModifier = VisibilityUtil.getVisibilityModifier(element.getModifierList());
         if (PsiModifier.PRIVATE.equals(visibilityModifier)) return true;
         if (PsiModifier.PUBLIC.equals(visibilityModifier)) return false;
