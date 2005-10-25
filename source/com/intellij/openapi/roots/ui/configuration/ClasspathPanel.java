@@ -238,7 +238,30 @@ public class ClasspathPanel extends JPanel {
           editJdk((JdkItem)tableItem, row);
         }
         else if (tableItem instanceof LibItem) {
-          editLibrary(((LibItem)tableItem).getEntry(), row);
+          final LibraryOrderEntry entry = ((LibItem)tableItem).getEntry();
+          if (entry != null && entry.isValid()) {
+            final Library library = entry.getLibrary();
+            final LibraryTable moduleLibraryTable = myRootModel.getModuleLibraryTable();
+            final boolean isModuleLibrary = moduleLibraryTable.getTableLevel().equals(entry.getLibraryLevel());
+            final LibraryTable table = isModuleLibrary ? moduleLibraryTable : library.getTable();
+            final Library[] libraries = table.getLibraries();
+            // need the following code because library instance can be proxied
+            final ArrayList<Library> toSelect = new ArrayList<Library>(1);
+            for (final Library lib : libraries) {
+              if (lib.equals(library)) { // the order is important, not library.equals(lib)!
+                toSelect.add(lib);
+              }
+            }
+            LibraryTableEditor.showEditDialog(ClasspathPanel.this, table, toSelect);
+            // library's name may have changed, so update the row with the entry
+            if (isModuleLibrary) {
+              // there might be new libraries edded from this dialog
+              forceInitFromModel();
+            }
+            else {
+              myModel.fireTableRowsUpdated(row, row);
+            }
+          }
         }
       }
     });
@@ -277,16 +300,6 @@ public class ClasspathPanel extends JPanel {
       }
     });
     return panel;
-  }
-
-  private void editLibrary(final LibraryOrderEntry entry, int row) {
-    if (entry == null || !entry.isValid()) {
-      return;
-    }
-    final Library library = entry.getLibrary();
-    LibraryTableEditor.showEditDialog(ClasspathPanel.this, library.getTable(), new ArrayList<Library>(Arrays.asList(library)));
-    // library's name may have chaned, so update the row with the entry
-    myModel.fireTableRowsUpdated(row, row);
   }
 
   private void editJdk(JdkItem item, int row) {
@@ -389,13 +402,15 @@ public class ClasspathPanel extends JPanel {
       if (chosen.size() == 0) {
         return;
       }
-      int insertionIndex = myEntryTable.getSelectedRow();
+      //int insertionIndex = myEntryTable.getSelectedRow();
       for (ItemType item : chosen) {
-        myModel.addItemAt(createTableItem(item), insertionIndex++);
+        //myModel.addItemAt(createTableItem(item), insertionIndex++);
+        myModel.addItem(createTableItem(item));
       }
       myModel.fireTableDataChanged();
       final ListSelectionModel selectionModel = myEntryTable.getSelectionModel();
-      selectionModel.setSelectionInterval(insertionIndex - chosen.size(), insertionIndex - 1);
+      //selectionModel.setSelectionInterval(insertionIndex - chosen.size(), insertionIndex - 1);
+      selectionModel.setSelectionInterval(myEntryTable.getRowCount() - chosen.size(), myEntryTable.getRowCount() - 1);
     }
 
     protected abstract TableItem createTableItem(final ItemType item);
@@ -528,16 +543,6 @@ public class ClasspathPanel extends JPanel {
     return newIndex;
   }
 
-  public void addLibraryOrderEntry(LibraryOrderEntry orderEntry, int row) {
-    myModel.addItemAt(new LibItem(orderEntry), row);
-    myModel.fireTableRowsInserted(row, row);
-  }
-
-  public void addModuleOrderEntry(ModuleOrderEntry orderEntry, int row) {
-    myModel.addItemAt(new ModuleItem(orderEntry), row);
-    myModel.fireTableRowsInserted(row, row);
-  }
-
   public void stopEditing() {
     TableUtil.stopEditing(myEntryTable);
   }
@@ -557,12 +562,16 @@ public class ClasspathPanel extends JPanel {
   private int myInsideChange = 0;
   public void initFromModel() {
     if (myInsideChange == 0) {
-      final int[] selection = myEntryTable.getSelectedRows();
-      myModel.clear();
-      myModel.init();
-      myModel.fireTableDataChanged();
-      TableUtil.selectRows(myEntryTable, selection);
+      forceInitFromModel();
     }
+  }
+
+  private void forceInitFromModel() {
+    final int[] selection = myEntryTable.getSelectedRows();
+    myModel.clear();
+    myModel.init();
+    myModel.fireTableDataChanged();
+    TableUtil.selectRows(myEntryTable, selection);
   }
 
   private List<Module> getDependencyModules() {
