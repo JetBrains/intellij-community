@@ -23,7 +23,7 @@ public class OptionsBundle {
   private OptionsBundle() {
   }
 
-  public static String message(@PropertyKey(resourceBundle = "messages.OptionsBundle") String key, Object... params) {
+  public static String message(@NonNls @PropertyKey(resourceBundle = "messages.OptionsBundle") String key, Object... params) {
     return CommonBundle.message(ourResourceBundle, key, params);
   }
 
