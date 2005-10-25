@@ -73,7 +73,7 @@ public class ClasspathPanel extends JPanel {
   private final Project myProject;
   private final ModifiableRootModel myRootModel;
   private final ModulesProvider myModulesProvider;
-  private final JTable myEntryTable;
+  private final Table myEntryTable;
   private final MyTableModel myModel;
   private final EventDispatcher<OrderPanelListener> myListeners = EventDispatcher.create(OrderPanelListener.class);
   private PopupAction[] myPopupActions = null;
@@ -105,6 +105,37 @@ public class ClasspathPanel extends JPanel {
     myEntryTable.setDefaultRenderer(TableItem.class, new TableItemRenderer());
     myEntryTable.setDefaultRenderer(Boolean.class, new ExportFlagRenderer(myEntryTable.getDefaultRenderer(Boolean.class)));
     myEntryTable.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+
+    new SpeedSearchBase<Table>(myEntryTable) {
+      public int getSelectedIndex() {
+        return myEntryTable.getSelectedRow();
+      }
+
+      public Object[] getAllElements() {
+        final int count = myModel.getRowCount();
+        Object[] elements = new Object[count];
+        for (int idx = 0; idx < count; idx++) {
+          elements[idx] = myModel.getItemAt(idx);
+        };
+        return elements;
+      }
+
+      public String getElementText(Object element) {
+        return getCellAppearance(((TableItem)element), false).getText();
+      }
+
+      public void selectElement(Object element, String selectedText) {
+        final int count = myModel.getRowCount();
+        for (int row = 0; row < count; row++) {
+          if (element.equals(myModel.getItemAt(row))) {
+            myEntryTable.getSelectionModel().setSelectionInterval(row, row);
+            TableUtil.scrollSelectionToVisible(myEntryTable);
+            break;
+          }
+        }
+      }
+    };
+
 
     final FontMetrics fontMetrics = myEntryTable.getFontMetrics(myEntryTable.getFont());
     final int width = fontMetrics.stringWidth(" " + MyTableModel.EXPORT_COLUMN_NAME + " ") + 4;
@@ -410,7 +441,8 @@ public class ClasspathPanel extends JPanel {
       myModel.fireTableDataChanged();
       final ListSelectionModel selectionModel = myEntryTable.getSelectionModel();
       //selectionModel.setSelectionInterval(insertionIndex - chosen.size(), insertionIndex - 1);
-      selectionModel.setSelectionInterval(myEntryTable.getRowCount() - chosen.size(), myEntryTable.getRowCount() - 1);
+      selectionModel.setSelectionInterval(myModel.getRowCount() - chosen.size(), myModel.getRowCount() - 1);
+      TableUtil.scrollSelectionToVisible(myEntryTable);
     }
 
     protected abstract TableItem createTableItem(final ItemType item);
@@ -825,6 +857,15 @@ public class ClasspathPanel extends JPanel {
     }
   }
 
+  private CellAppearance getCellAppearance(final TableItem item, final boolean selected) {
+    if (item instanceof JdkItem && item.getEntry() == null) {
+      return CellAppearanceUtils.forJdk(null, false, selected);
+    }
+    else {
+      return CellAppearanceUtils.forOrderEntry(item.getEntry(), selected);
+    }
+  }
+
   private class TableItemRenderer extends ColoredTableCellRenderer {
     private final Border NO_FOCUS_BORDER = BorderFactory.createEmptyBorder(1, 1, 1, 1);
 
@@ -833,13 +874,9 @@ public class ClasspathPanel extends JPanel {
       setFocusBorderAroundIcon(true);
       setBorder(NO_FOCUS_BORDER);
       final TableItem item = (TableItem)value;
-      if (item instanceof JdkItem && item.getEntry() == null) {
-        CellAppearanceUtils.forJdk(null, false, selected).customize(this);
-      }
-      else {
-        CellAppearanceUtils.forOrderEntry(item.getEntry(), selected).customize(this);
-      }
+      getCellAppearance(item, selected).customize(this);
     }
+
   }
 
   private static class ExportFlagRenderer implements TableCellRenderer {
