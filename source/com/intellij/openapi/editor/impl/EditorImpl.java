@@ -941,6 +941,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
       int lineNum = Math.max(1, getDocument().getLineCount());
       myGutterComponent.setLineNumberAreaWidth(getFontMetrics(Font.PLAIN).stringWidth(Integer.toString(lineNum + 2)) + 6);
 
+      myEditorComponent.setSize(dim);
       myEditorComponent.fireResized();
 
       myMarkupModel.repaint();
