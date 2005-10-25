@@ -48,6 +48,16 @@ public class PathManager {
   @NonNls public static final String PLUGINS_DIRECTORY = "plugins";
   @NonNls private static final String BIN_FOLDER = "bin";
   @NonNls private static final String OPTIONS_FOLDER = "options";
+  private static final FileFilter BIN_FOLDER_FILE_FILTER = new FileFilter() {
+    public boolean accept(File pathname) {
+      return pathname.isDirectory() && BIN_FOLDER.equalsIgnoreCase(pathname.getName());
+    }
+  };
+  private static final FileFilter PROPERTIES_FILE_FILTER = new FileFilter() {
+    public boolean accept(File pathname) {
+      return pathname.isFile() && IDEA_PROPERTIES.equalsIgnoreCase(pathname.getName());
+    }
+  };
 
   public static String getHomePath() {
     if (ourHomePath != null) return ourHomePath;
@@ -62,21 +72,30 @@ public class PathManager {
     //noinspection HardCodedStringLiteral
     String rootPath = getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");
     if (rootPath != null) {
-      File root = new File(rootPath);
-      root = root.getAbsoluteFile();
+      File root = new File(rootPath).getAbsoluteFile();
 
-      root = new File(root.getParent()); // one step back to get folder
-/*
-      if (!root.isDirectory() || root.getName().toLowerCase().endsWith(".zip") || root.getName().toLowerCase().endsWith(".jar")) {
-        root = new File(root.getParent()); // one step back to get folder
+      do {
+        root = new File(root.getParent()).getAbsoluteFile(); // one step back to get folder
       }
-*/
-      root = root.getAbsoluteFile();
+      while (root != null && !isIdeaHome(root));
 
-      ourHomePath = root.getParentFile().getAbsolutePath();    // one step back to get rid of "lib" or "classes" folder
+      ourHomePath = root != null? root.getAbsolutePath() : null;
     }
 
     return ourHomePath;
+  }
+
+  private static boolean isIdeaHome(final File root) {
+    final File[] files = root.listFiles(BIN_FOLDER_FILE_FILTER);
+    if (files != null && files.length > 0) {
+      for (File binFolder : files) {
+        final File[] binFolderContents = binFolder.listFiles(PROPERTIES_FILE_FILTER);
+        if (binFolderContents != null && binFolderContents.length > 0) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   public static String getLibPath() {
