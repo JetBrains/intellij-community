@@ -12,12 +12,12 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class OrderEntryUtil {
-  public static Collection<OrderEntry> getDependentOrderEntries(ModifiableRootModel modifiableModel) {
+  public static Collection<OrderEntry> getDependentOrderEntries(ModuleRootModel modifiableModel) {
     HashSet<Module> processedModules = new HashSet<Module>();
     processedModules.add(modifiableModel.getModule());
     return getDependentOrderEntries(modifiableModel,processedModules);
   }
-  private static Collection<OrderEntry> getDependentOrderEntries(ModifiableRootModel modifiableModel, Set<Module> processedModules) {
+  private static Collection<OrderEntry> getDependentOrderEntries(ModuleRootModel modifiableModel, Set<Module> processedModules) {
     final Set<OrderEntry> orderEntries = modifiableModel.processOrder(new CollectDependentOrderEntries(processedModules), new HashSet<OrderEntry>());
     return orderEntries;
   }
@@ -38,7 +38,7 @@ public class OrderEntryUtil {
       final Module module = moduleOrderEntry.getModule();
       if (module != null && myProcessedModules.add(module)) {
         orderEntries.add(moduleOrderEntry);
-        final ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(module).getModifiableModel();
+        final ModuleRootModel modifiableModel = ModuleRootManager.getInstance(module);
         final Collection<OrderEntry> dependentOrderEntries = getDependentOrderEntries(modifiableModel,myProcessedModules);
         orderEntries.addAll(dependentOrderEntries);
       }

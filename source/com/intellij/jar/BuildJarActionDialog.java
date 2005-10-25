@@ -123,7 +123,12 @@ public class BuildJarActionDialog extends DialogWrapper {
         if (selectedModule != null) {
           BuildJarSettings buildJarSettings = BuildJarSettings.getInstance(selectedModule);
           SettingsEditor settingsEditor = new SettingsEditor(selectedModule, buildJarSettings);
-          mySettings.put(selectedModule, settingsEditor);
+          
+          final BuildJarActionDialog.SettingsEditor oldEditor = mySettings.put(selectedModule, settingsEditor);
+          if (oldEditor != null) {
+            oldEditor.dispose();
+          }
+
           boolean isBuildJar = myElementsChooser.getMarkedElements().contains(selectedModule);
           GuiUtils.enableChildren(myModuleSettingsPanel, isBuildJar, null);
         }
@@ -236,6 +241,9 @@ public class BuildJarActionDialog extends DialogWrapper {
   protected void dispose() {
     mySplitterProportionsData.saveSplitterProportions(myPanel);
     mySplitterProportionsData.externalizeToDimensionService(getDimensionKey());
+    for (SettingsEditor editor : mySettings.values()) {
+      editor.dispose();
+    }
     super.dispose();
   }
 
@@ -277,6 +285,10 @@ public class BuildJarActionDialog extends DialogWrapper {
       myMainClass.setText(buildJarSettings.getMainClass());
     }
 
+    public void dispose() {
+      myEditor.disposeUIResources();
+    }
+
     public void apply() {
       myEditor.saveData();
       try {
@@ -285,7 +297,6 @@ public class BuildJarActionDialog extends DialogWrapper {
       catch (ConfigurationException e1) {
         //ignore
       }
-      myEditor.disposeUIResources();
       myModifiedBuildJarSettings.setJarPath(myJarPath.getText());
       boolean isBuildJar = myElementsChooser.getMarkedElements().contains(myModule);
       myModifiedBuildJarSettings.setBuildJar(isBuildJar);
