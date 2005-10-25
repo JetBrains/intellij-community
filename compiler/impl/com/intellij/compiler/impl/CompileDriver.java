@@ -1592,8 +1592,7 @@ public class CompileDriver {
     for (Module allModule : allModules) {
       final ModuleRootManager rootManager = ModuleRootManager.getInstance(allModule);
       final VirtualFile[] sourceRoots = rootManager.getSourceRoots();
-      for (int j = 0; j < outputPaths.length; j++) {
-        VirtualFile outputPath = outputPaths[j];
+      for (final VirtualFile outputPath : outputPaths) {
         for (VirtualFile sourceRoot : sourceRoots) {
           if (VfsUtil.isAncestor(outputPath, sourceRoot, true) || VfsUtil.isAncestor(sourceRoot, outputPath, false)) {
             affectedOutputPaths.add(outputPath);
