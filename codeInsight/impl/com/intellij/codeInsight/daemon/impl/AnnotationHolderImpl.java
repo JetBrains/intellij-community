@@ -8,7 +8,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.SmartList;
 import com.intellij.xml.util.XmlUtil;
-import com.intellij.codeInspection.ProblemHighlightType;
 
 /**
  * Created by IntelliJ IDEA.
@@ -52,12 +51,6 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
 
   public Annotation createInfoAnnotation(TextRange range, String message) {
     return createAnnotation(range, HighlightSeverity.INFORMATION, message);
-  }
-
-  public Annotation createJ2eeAnnotation(PsiElement element, String message, HighlightSeverity severity) {
-    Annotation annotation = createAnnotation(element.getTextRange(), severity, message);
-    annotation.setHighlightType(ProblemHighlightType.J2EE_PROBLEM);
-    return annotation;
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})

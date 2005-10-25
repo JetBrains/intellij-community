@@ -33,10 +33,7 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
 import com.intellij.peer.PeerFactory;
 import com.intellij.ui.ListenerUtil;
-import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.content.ContentManagerAdapter;
-import com.intellij.ui.content.ContentManagerEvent;
+import com.intellij.ui.content.*;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.concurrency.Semaphore;
 
