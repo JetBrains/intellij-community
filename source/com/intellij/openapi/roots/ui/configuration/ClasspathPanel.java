@@ -238,6 +238,30 @@ public class ClasspathPanel extends JPanel {
       }
     });
 
+    myEntryTable.registerKeyboardAction(
+      new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+          if (removeButton.isEnabled()) {
+            removeButton.doClick();
+          }
+        }
+      },
+      KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0),
+      JComponent.WHEN_FOCUSED
+    );
+
+    myEntryTable.registerKeyboardAction(
+      new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+          if (addButton.isEnabled()) {
+            addButton.doClick();
+          }
+        }
+      },
+      KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, 0),
+      JComponent.WHEN_FOCUSED
+    );
+
     addButton.addActionListener(new ButtonAction() {
       protected void executeImpl() {
         initPopupActions();
