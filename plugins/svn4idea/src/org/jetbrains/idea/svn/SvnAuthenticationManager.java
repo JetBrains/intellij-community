@@ -46,7 +46,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
                 if (ISVNAuthenticationManager.PASSWORD.equals(kind)) {
                     return new SVNPasswordAuthentication((String) info.get("username"), (String) info.get("password"), authMayBeStored);
                 } else if (ISVNAuthenticationManager.SSH.equals(kind)) {
-                    int port = url.getPort();
+                    int port = url.hasPort() ? url.getPort() : -1;
                     if (port < 0 && info.get("port") != null) {
                         port = Integer.parseInt((String) info.get("port"));
                     }

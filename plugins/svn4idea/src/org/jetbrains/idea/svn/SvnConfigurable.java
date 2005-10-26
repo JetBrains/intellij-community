@@ -237,6 +237,7 @@ public class SvnConfigurable implements Configurable, ActionListener {
           SVNFileUtil.deleteAll(authDir, false);
         }
         SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
+        SvnApplicationSettings.getInstance().clearAuthenticationInfo();
       }
     }
   }
