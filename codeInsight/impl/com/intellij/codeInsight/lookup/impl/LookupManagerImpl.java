@@ -169,7 +169,12 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
     if (!(containingFile instanceof XmlFile)) return true;
 
     for (LookupItem item : items) {
-      if (item.getObject() instanceof PsiElement) return true;
+      final Object object = item.getObject();
+      
+      if (object instanceof PsiElement ||
+          object instanceof LookupValueWithPriority) {
+        return true;
+      }
     }
 
     return CodeInsightSettings.getInstance().SORT_XML_LOOKUP_ITEMS;
