@@ -4,16 +4,15 @@
  */
 package jetbrains.fabrique.ide.dnd;
 
-import icons.ide.error;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.SystemInfo;
+import jetbrains.fabrique.openapi.ide.dnd.DnDEvent;
+import jetbrains.fabrique.openapi.ide.dnd.DropTargetHighlightingType;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
-
-import com.intellij.openapi.util.SystemInfo;
-import jetbrains.fabrique.openapi.ide.dnd.DropTargetHighlightingType;
-import jetbrains.fabrique.openapi.ide.dnd.DnDEvent;
 
 public class Highlighters implements DropTargetHighlightingType {
   private static List ourHightlighters = new ArrayList();
@@ -193,7 +192,7 @@ public class Highlighters implements DropTargetHighlightingType {
   private static class ErrorTextHighlighter extends BaseTextHighlighter {
     public ErrorTextHighlighter() {
       super();
-      myLabel.setIcon(error.png.getIcon());
+      myLabel.setIcon(IconLoader.getIcon("/icons/ide/error.png"));
     }
 
     public int getMask() {
@@ -235,8 +234,8 @@ public class Highlighters implements DropTargetHighlightingType {
   }
 
   private static class HorizontalLinesHighlighter extends AbstractComponentHighlighter {
-    private Icon myLeft = icons.ide.dnd.left.png.getIcon();
-    private Icon myRight = icons.ide.dnd.right.png.getIcon();
+    private Icon myLeft = IconLoader.getIcon("/icons/ide/dnd/left.png");
+    private Icon myRight = IconLoader.getIcon("/icons/ide/dnd/right.png");
 
     protected void _show(JLayeredPane aPane, Rectangle aRectangle, DnDEvent aEvent) {
       final Rectangle rectangle = new Rectangle(aRectangle.x - myLeft.getIconWidth(), aRectangle.y - myLeft.getIconHeight(), aRectangle.width + myLeft.getIconWidth() + myRight.getIconWidth(), aRectangle.height + myLeft.getIconHeight());
@@ -254,8 +253,8 @@ public class Highlighters implements DropTargetHighlightingType {
   }
 
   private static class VerticalLinesHighlighter extends AbstractComponentHighlighter {
-    private Icon myTop = icons.ide.dnd.top.png.getIcon();
-    private Icon myBottom = icons.ide.dnd.bottom.png.getIcon();
+    private Icon myTop = IconLoader.getIcon("/icons/ide/dnd/top.png");
+    private Icon myBottom = IconLoader.getIcon("/icons/ide/dnd/bottom.png");
 
     protected void _show(JLayeredPane aPane, Rectangle aRectangle, DnDEvent aEvent) {
       final Rectangle rectangle = new Rectangle(aRectangle.x, aRectangle.y - myTop.getIconHeight(), aRectangle.width, aRectangle.height + myTop.getIconHeight() + myBottom.getIconHeight());
