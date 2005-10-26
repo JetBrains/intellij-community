@@ -489,7 +489,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     for (Object reporter1 : reporters) {
       ErrorReportSubmitter reporter = (ErrorReportSubmitter)reporter1;
       final PluginDescriptor descriptor = reporter.getPluginDescriptor();
-      if (pluginId == null && descriptor == null || descriptor != null && Comparing.equal(pluginId, descriptor.getPluginId())) {
+      if (pluginId == null && (descriptor == null || PluginId.getId("com.intellij") == descriptor.getPluginId())
+          || descriptor != null && Comparing.equal(pluginId, descriptor.getPluginId())) {
         submitter = reporter;
       }
     }
