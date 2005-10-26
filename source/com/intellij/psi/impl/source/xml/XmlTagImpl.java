@@ -14,12 +14,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
@@ -36,10 +36,9 @@ import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.util.XmlTagTextUtil;
 import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Mike
@@ -398,6 +397,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     return getNamespaceByPrefix(getNamespacePrefix());
   }
 
+  @NotNull
   public String getNamespacePrefix() {
     final String name = getName();
     final int index = name.indexOf(':');
@@ -407,6 +407,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     return "";
   }
 
+  @NotNull
   public String getNamespaceByPrefix(String prefix){
     final PsiElement parent = getParent();
     initNamespaceMaps(parent);

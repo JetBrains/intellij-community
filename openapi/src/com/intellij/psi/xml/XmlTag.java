@@ -21,6 +21,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
@@ -52,8 +53,8 @@ public interface XmlTag extends XmlElement, PsiNamedElement, PsiMetaOwner, XmlTa
   XmlTag[] findSubTags(@NonNls String localName, @NonNls String namespace);
   XmlTag findFirstSubTag(@NonNls String qname);
 
-  @NonNls String getNamespacePrefix();
-  String getNamespaceByPrefix(@NonNls String prefix);
+  @NotNull @NonNls String getNamespacePrefix();
+  @NotNull @NonNls String getNamespaceByPrefix(@NonNls String prefix);
   String getPrefixByNamespace(@NonNls String namespace);
   String[] knownNamespaces();
 
