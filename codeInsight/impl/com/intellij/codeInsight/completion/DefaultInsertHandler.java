@@ -648,7 +648,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     int existingRParenthOffset = -1;
     for(HighlighterIterator iterator = highlighter.createIterator(tailOffset); !iterator.atEnd(); iterator.advance()){
       IElementType tokenType = iterator.getTokenType();
-      if (tokenType instanceof IJavaElementType && JavaTokenType.WHITE_SPACE_OR_COMMENT_BIT_SET.isInSet(tokenType)) continue;
+      if (JavaTokenType.WHITE_SPACE_OR_COMMENT_BIT_SET.isInSet(tokenType)) continue;
       if (tokenType == JavaTokenType.RPARENTH){
         existingRParenthOffset = iterator.getStart();
       }
