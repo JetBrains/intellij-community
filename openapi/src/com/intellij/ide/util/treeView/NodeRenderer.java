@@ -27,6 +27,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
 
 public class NodeRenderer extends ColoredTreeCellRenderer {
+
   public void customizeCellRenderer(JTree tree,
                                     Object value,
                                     boolean selected,
@@ -54,12 +55,7 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
 
     if (text == null) text = "";
 
-    SimpleTextAttributes simpleTextAttributes = getSimpleTextAttributes(value);
-    if (color != null) {
-      final TextAttributes textAttributes = simpleTextAttributes.toTextAttributes();
-      textAttributes.setForegroundColor(color);
-      simpleTextAttributes = SimpleTextAttributes.fromTextAttributes(textAttributes);
-    }
+    SimpleTextAttributes simpleTextAttributes = getSimpleTextAttributes(value, color);
 
     append(text, simpleTextAttributes);
 
@@ -73,20 +69,25 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
         if (locationString != null && locationString.length() > 0) {
           append(" (" + locationString + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
         }
-        final String toolTip = treeNode.getToolTip();
-        setToolTipText(toolTip);
+        setToolTipText(treeNode.getToolTip());
       }
     }
   }
 
-  public static SimpleTextAttributes getSimpleTextAttributes(final Object value) {
+  protected SimpleTextAttributes getSimpleTextAttributes(final Object value, final Color color) {
+    SimpleTextAttributes simpleTextAttributes = SimpleTextAttributes.REGULAR_ATTRIBUTES;
     if (value instanceof DefaultMutableTreeNode) {
       final Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
       if (userObject instanceof AbstractTreeNode) {
-        return getSimpleTextAttributes(((AbstractTreeNode)userObject).getPresentation());
+        simpleTextAttributes = getSimpleTextAttributes(((AbstractTreeNode)userObject).getPresentation());
       }
     }
-    return SimpleTextAttributes.REGULAR_ATTRIBUTES;
+    if (color != null) {
+      final TextAttributes textAttributes = simpleTextAttributes.toTextAttributes();
+      textAttributes.setForegroundColor(color);
+      simpleTextAttributes = SimpleTextAttributes.fromTextAttributes(textAttributes);
+    }
+    return simpleTextAttributes;
   }
 
   public static SimpleTextAttributes getSimpleTextAttributes(final ItemPresentation presentation) {

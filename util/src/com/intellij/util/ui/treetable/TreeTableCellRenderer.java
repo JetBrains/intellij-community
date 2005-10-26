@@ -51,6 +51,15 @@ public class TreeTableCellRenderer implements TableCellRenderer {
     TableModel model = myTreeTable.getModel();
     myTree.setTreeTableTreeBorder(hasFocus && model.getColumnClass(column).equals(TreeTableModel.class) ? myDefaultBorder : null);
     myTree.setVisibleRow(row);
+
+    final Object treeObject = myTree.getPathForRow(row).getLastPathComponent();
+    boolean leaf = myTree.getModel().isLeaf(treeObject);
+    final boolean expanded = myTree.isExpanded(row);
+    Component component = myTree.getCellRenderer().getTreeCellRendererComponent(myTree, treeObject, isSelected, expanded, leaf, row, hasFocus);
+    if (component instanceof JComponent) {
+      table.setToolTipText(((JComponent)component).getToolTipText());
+    }
+
     return myTree;
   }
 

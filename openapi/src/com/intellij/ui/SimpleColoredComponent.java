@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.peer.PeerFactory;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -36,7 +37,7 @@ import java.util.Collections;
  */
 public class SimpleColoredComponent extends JComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.SimpleColoredComponent");
-  
+
   private final ArrayList<String> myFragments;
   private final ArrayList<SimpleTextAttributes> myAttributes;
 
@@ -326,6 +327,15 @@ public class SimpleColoredComponent extends JComponent {
 
       xOffset+=fragmentWidth;
     }
+  }
+
+  @NotNull
+  protected final String getText() {
+    StringBuffer buffer = new StringBuffer();
+    for (String s : myFragments) {
+      buffer.append(s);
+    }
+    return buffer.toString();
   }
 
   private void checkCanPaint() {
