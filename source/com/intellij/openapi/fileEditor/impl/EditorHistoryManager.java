@@ -297,7 +297,7 @@ public final class EditorHistoryManager implements ProjectComponent, JDOMExterna
     }
 
     public void selectionChanged(final FileEditorManagerEvent event){
-      updateHistoryEntry(event.getOldFile(), true);
+      updateHistoryEntry(event.getNewFile(), true);
     }
   }
 
