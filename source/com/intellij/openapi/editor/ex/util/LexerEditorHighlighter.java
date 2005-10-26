@@ -270,7 +270,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     return attrs;
   }
 
-  private class HighlighterIteratorImpl implements HighlighterIterator {
+  public class HighlighterIteratorImpl implements HighlighterIterator {
     private int mySegmentIndex = 0;
     private SegmentArrayWithData mySegments;
 
@@ -301,7 +301,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
       return token;
     }
 
-    private IElementType getRawToken() {
+    public IElementType getRawToken() {
         return unpackToken(mySegments.getSegmentData(mySegmentIndex));
     }
 
