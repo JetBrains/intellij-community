@@ -6,8 +6,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.IdentifierRole;
 import com.intellij.util.IncorrectOperationException;
 
 /**
@@ -71,10 +69,8 @@ public class CreateClassFromUsageAction extends CreateFromUsageBaseAction {
 
   protected PsiElement getElement() {
     if (!myRefElement.isValid() || !myRefElement.getManager().isInProject(myRefElement)) return null;
-    CodeStyleManager codeStyleManager = myRefElement.getManager().getCodeStyleManager();
     if (!CreateFromUsageUtils.isValidReference(myRefElement, true) &&
-        myRefElement.getReferenceNameElement() != null &&
-        codeStyleManager.checkIdentifierRole(myRefElement.getReferenceName(), IdentifierRole.CLASS_NAME)) {
+        myRefElement.getReferenceNameElement() != null && checkClassName(myRefElement.getReferenceName())) {
       PsiElement parent = myRefElement.getParent();
 
       if (parent instanceof PsiTypeElement) {
@@ -118,7 +114,7 @@ public class CreateClassFromUsageAction extends CreateFromUsageBaseAction {
       if (parent.getParent() instanceof PsiMethodCallExpression && myCreateInterface) return null;
 
       if (referenceExpression.getReferenceNameElement() != null &&
-          codeStyleManager.checkIdentifierRole(referenceExpression.getReferenceName(), IdentifierRole.CLASS_NAME) &&
+          checkClassName(referenceExpression.getReferenceName()) &&
           !CreateFromUsageUtils.isValidReference(referenceExpression, true)) {
         return referenceExpression;
       }
@@ -127,8 +123,13 @@ public class CreateClassFromUsageAction extends CreateFromUsageBaseAction {
     return null;
   }
 
+  private boolean checkClassName(String name) {
+    return Character.isUpperCase(name.charAt(0));
+  }
+
   protected boolean isAvailableImpl(int offset) {
     PsiElement nameElement = myRefElement.getReferenceNameElement();
+    if (nameElement == null) return false;
     PsiElement parent = myRefElement.getParent();
     if (parent instanceof PsiExpression && !(parent instanceof PsiReferenceExpression)) return false;
     if (shouldShowTag(offset, nameElement, myRefElement)) {

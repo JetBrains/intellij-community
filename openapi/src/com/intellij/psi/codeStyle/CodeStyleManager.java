@@ -295,18 +295,6 @@ public abstract class CodeStyleManager {
   public abstract String suggestUniqueVariableName(@NonNls String baseName, PsiElement place, boolean lookForward);
 
   /**
-   * Checks if the specified identifier is valid for the specified role (local variable,
-   * field name etc.) according to the user's code style.
-   *
-   * @param identifier the identifier to check.
-   * @param role       the role to check for.
-   * @return true if the identifier is valid, false it it does not match the coding style
-   *         or the role is unknown.
-   * @deprecated
-   */
-  public abstract boolean checkIdentifierRole(String identifier, IdentifierRole role);
-
-  /**
    * Replaces all references to Java classes in the contents of the specified element,
    * except for references to classes in the same package or in implicitly imported packages,
    * with full-qualified references.

@@ -1321,32 +1321,6 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     }
   }
 
-  public boolean checkIdentifierRole(String identifier, IdentifierRole role) {
-    if (role == IdentifierRole.CLASS_NAME) {
-      return identifier.length() > 0 && Character.isUpperCase(identifier.charAt(0));
-    }
-    else {
-      if (role == IdentifierRole.FIELD_NAME) {
-        return identifier.startsWith(getSettings().FIELD_NAME_PREFIX) &&
-               identifier.endsWith(getSettings().FIELD_NAME_SUFFIX);
-      }
-      else {
-        if (role == IdentifierRole.LOCAL_VAR_NAME) {
-          return identifier.startsWith(getSettings().LOCAL_VARIABLE_NAME_PREFIX) &&
-                 identifier.endsWith(getSettings().LOCAL_VARIABLE_NAME_SUFFIX);
-        }
-        else {
-          if (role == IdentifierRole.PARAMETER_NAME) {
-            return identifier.startsWith(getSettings().PARAMETER_NAME_PREFIX) &&
-                   identifier.endsWith(getSettings().PARAMETER_NAME_SUFFIX);
-          }
-        }
-      }
-    }
-
-    return false;
-  }
-
   private void sortVariableNameSuggestions(String[] names,
                                            final VariableKind variableKind,
                                            final String propertyName,

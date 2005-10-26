@@ -21,7 +21,7 @@ import java.util.ArrayList;
 
 public class NameUtil {
   public static String[] nameToWords(String name){
-    ArrayList array = new ArrayList();
+    ArrayList<String> array = new ArrayList<String>();
     int index = 0;
     int wordStart;
   WordsLoop:
@@ -58,7 +58,7 @@ public class NameUtil {
       String word = name.substring(wordStart, index);
       array.add(word);
     }
-    return (String[])array.toArray(new String[array.size()]);
+    return array.toArray(new String[array.size()]);
   }
 
   private static boolean containsOnlyUppercaseLetters(String s) {
@@ -160,7 +160,6 @@ public class NameUtil {
       buffer.append("[a-z0-9_\\$]*");
     }
 
-    final String regex = buffer.toString();
-    return regex;
+    return buffer.toString();
   }
 }
