@@ -67,10 +67,10 @@ public interface HighlighterColors {
 
   TextAttributesKey JSP_COMMENT = TextAttributesKey.createTextAttributesKey("JSP_COMMENT");
   TextAttributesKey JSP_SCRIPTING_BACKGROUND = TextAttributesKey.createTextAttributesKey("JSP_SCRIPTING_BACKGROUND");
-  TextAttributesKey JSP_DIRECTIVE_BACKGROUND = TextAttributesKey.createTextAttributesKey("JSP_DIRECTIVE_BACKGROUND");
-  TextAttributesKey JSP_ACTION_BACKGROUND = TextAttributesKey.createTextAttributesKey("JSP_ACTION_BACKGROUND");
-  TextAttributesKey JSP_DIRECTIVE_NAME = TextAttributesKey.createTextAttributesKey("JSP_DIRECTIVE_NAME");
-  TextAttributesKey JSP_ACTION_NAME = TextAttributesKey.createTextAttributesKey("JSP_ACTION_NAME");
+  TextAttributesKey JSP_ACTION_AND_DIRECTIVE_BACKGROUND = TextAttributesKey.createTextAttributesKey("JSP_DIRECTIVE_BACKGROUND");
+  
+  TextAttributesKey JSP_ACTION_AND_DIRECTIVE_NAME = TextAttributesKey.createTextAttributesKey("JSP_DIRECTIVE_NAME");
   TextAttributesKey JSP_ATTRIBUTE_NAME = TextAttributesKey.createTextAttributesKey("JSP_ATTRIBUTE_NAME");
   TextAttributesKey JSP_ATTRIBUTE_VALUE = TextAttributesKey.createTextAttributesKey("JSP_ATTRIBUTE_VALUE");
+  TextAttributesKey JSP_EL_KEYWORDS = TextAttributesKey.createTextAttributesKey("JSP_EL_KEYWORDS");
 }
