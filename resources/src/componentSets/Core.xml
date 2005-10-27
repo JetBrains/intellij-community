@@ -5,6 +5,10 @@
       <implementation-class>com.intellij.openapi.application.impl.ApplicationInfoImpl</implementation-class>
     </component>
     <component>
+      <interface-class>com.intellij.ide.XmlRpcServer</interface-class>
+      <implementation-class>com.intellij.ide.XmlRpcServerImpl</implementation-class>
+    </component>
+    <component>
       <interface-class>com.intellij.ide.util.PropertiesComponent</interface-class>
       <implementation-class>com.intellij.ide.util.PropertiesComponentImpl</implementation-class>
     </component>
@@ -130,7 +134,10 @@
     <component>
       <interface-class>com.intellij.formatting.FormatterEx</interface-class>
       <implementation-class>com.intellij.formatting.FormatterImpl</implementation-class>
-    </component>    
+    </component>
+    <component>
+      <implementation-class>com.intellij.ide.OpenFileXmlRpcHandler</implementation-class>
+    </component>
   </application-components>
 
 
