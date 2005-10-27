@@ -21,7 +21,7 @@ import java.io.File;
  * @author mike
  */
 public class OpenFileXmlRpcHandler implements ApplicationComponent {
-  private static final String HANDLER_NAME = "openFile";
+  private static final String HANDLER_NAME = "fileOpener";
   private final XmlRpcServer myXmlRpcServer;
 
   public OpenFileXmlRpcHandler(final XmlRpcServer xmlRpcServer) {
@@ -43,7 +43,7 @@ public class OpenFileXmlRpcHandler implements ApplicationComponent {
 
   public static class OpenFileHandler {
     @SuppressWarnings({"MethodMayBeStatic"})
-    public void open(final String absolutePath) {
+    public boolean open(final String absolutePath) {
       final Application application = ApplicationManager.getApplication();
 
       application.invokeLater(new Runnable() {
@@ -68,6 +68,8 @@ public class OpenFileXmlRpcHandler implements ApplicationComponent {
           FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
         }
       });
+
+      return true;
     }
   }
 }
