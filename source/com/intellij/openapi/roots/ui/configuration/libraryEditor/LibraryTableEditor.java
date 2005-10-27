@@ -132,7 +132,7 @@ public class LibraryTableEditor {
     myTreePanel.setLayout(new BorderLayout());
     myTreePanel.add(ScrollPaneFactory.createScrollPane(myTree), BorderLayout.CENTER);
 
-    myAddLibraryButton.setText(myEditingModuleLibraries? ProjectBundle.message("classpath.add.jar.directory.action") :
+    myAddLibraryButton.setText(myEditingModuleLibraries? ProjectBundle.message("library.add.jar.directory.action") :
                                ProjectBundle.message("library.create.library.action"));
     myAddLibraryButton.addActionListener(new AddLibraryAction());
     myRemoveButton.addActionListener(new RemoveAction());
@@ -163,8 +163,7 @@ public class LibraryTableEditor {
     if (selection != null) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
-          for (Iterator<Library> iterator = selection.iterator(); iterator.hasNext();) {
-            final Library library = iterator.next();
+          for (final Library library : selection) {
             libraryTableEditor.selectLibrary(library, true);
           }
         }
@@ -221,8 +220,7 @@ public class LibraryTableEditor {
   public void commitChanges() {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        for (Iterator<Library> it = myLibraryToEditorMap.keySet().iterator(); it.hasNext();) {
-          Library library = it.next();
+        for (Library library : myLibraryToEditorMap.keySet()) {
           final LibraryEditor libraryEditor = myLibraryToEditorMap.get(library);
           libraryEditor.commit();
         }
@@ -265,7 +263,7 @@ public class LibraryTableEditor {
     if (selectionPaths == null) {
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
-    List elements = new ArrayList();
+    List<Object> elements = new ArrayList<Object>();
     for (TreePath selectionPath : selectionPaths) {
       final Object pathElement = getPathElement(selectionPath);
       if (pathElement != null) {
@@ -376,8 +374,7 @@ public class LibraryTableEditor {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
           if (myEditingModuleLibraries) {
-            for (int idx = 0; idx < files.length; idx++) {
-              VirtualFile file = files[idx];
+            for (VirtualFile file : files) {
               final Library library = myTableModifiableModel.createLibrary(null);
               getLibraryEditor(library).addRoot(file, OrderRootType.CLASSES);
               libraryToSelect[0] = library;
@@ -387,8 +384,8 @@ public class LibraryTableEditor {
           else {
             final Library library = myTableModifiableModel.createLibrary(name);
             final LibraryEditor libraryEditor = getLibraryEditor(library);
-            for (int i = 0; i < files.length; i++) {
-              libraryEditor.addRoot(files[i], OrderRootType.CLASSES);
+            for (VirtualFile file : files) {
+              libraryEditor.addRoot(file, OrderRootType.CLASSES);
             }
             libraryToSelect[0] = library;
           }
@@ -434,8 +431,8 @@ public class LibraryTableEditor {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
           final LibraryEditor libraryEditor = getLibraryEditor(library);
-          for (int i = 0; i < filesToAttach.length; i++) {
-            libraryEditor.addRoot(filesToAttach[i], rootType);
+          for (VirtualFile aFilesToAttach : filesToAttach) {
+            libraryEditor.addRoot(aFilesToAttach, rootType);
           }
           if (myEditingModuleLibraries) {
             commitChanges();
@@ -472,6 +469,7 @@ public class LibraryTableEditor {
   }
 
   private class AttachClassesAction extends AttachItemAction {
+    @SuppressWarnings({"RefusedBequest"})
     protected FileChooserDescriptor createDescriptor() {
       return new FileChooserDescriptor(false, true, true, false, false, true);
     }
@@ -544,8 +542,7 @@ public class LibraryTableEditor {
       }
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
-          for (int idx = 0; idx < selectedElements.length; idx++) {
-            Object selectedElement = selectedElements[idx];
+          for (Object selectedElement : selectedElements) {
             if (selectedElement instanceof LibraryElement) {
               // todo: any confirmation on library remove?
               removeLibrary(((LibraryElement)selectedElement).getLibrary());
@@ -637,7 +634,6 @@ public class LibraryTableEditor {
 
     public MyDialogWrapper(final Component parent) {
       super(parent, true);
-      String levelName = "";
       final String tableLevel = LibraryTableEditor.this.myLibraryTable.getTableLevel();
       if (tableLevel == LibraryTablesRegistrar.PROJECT_LEVEL) {
         setTitle(ProjectBundle.message("library.configure.project.title"));
@@ -648,10 +644,12 @@ public class LibraryTableEditor {
       init();
     }
 
+    @SuppressWarnings({"RefusedBequest"})
     protected String getDimensionServiceKey() {
       return "#com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryTableEditor.MyDialogWrapper";
     }
 
+    @SuppressWarnings({"RefusedBequest"})
     public JComponent getPreferredFocusedComponent() {
       return myTree;
     }
@@ -680,7 +678,7 @@ public class LibraryTableEditor {
 
     public void updateButtons() {
       final Object[] selectedElements = getSelectedElements();
-      final Class elementsClass = getElementsClass(selectedElements);
+      final Class<? extends Object> elementsClass = getElementsClass(selectedElements);
       myRemoveButton.setEnabled(
         elementsClass != null &&
         !(elementsClass.isAssignableFrom(ClassesElement.class) || elementsClass.equals(SourcesElement.class) || elementsClass.isAssignableFrom(JavadocElement.class))
@@ -699,11 +697,11 @@ public class LibraryTableEditor {
       myAttachSourcesButton.setEnabled(attachActionsEnabled);
     }
 
-    private Class getElementsClass(Object[] elements) {
+    private Class<? extends Object> getElementsClass(Object[] elements) {
       if (elements.length == 0) {
         return null;
       }
-      Class cls = null;
+      Class<? extends Object> cls = null;
       for (Object element : elements) {
         if (cls == null) {
           cls = element.getClass();
