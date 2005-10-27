@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.event;
 
 import com.intellij.openapi.editor.Document;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.EventObject;
 
@@ -24,7 +25,7 @@ public abstract class DocumentEvent extends EventObject {
     super(document);
   }
 
-  public abstract Document getDocument();
+  @NotNull public abstract Document getDocument();
 
   public abstract int getOffset();
 

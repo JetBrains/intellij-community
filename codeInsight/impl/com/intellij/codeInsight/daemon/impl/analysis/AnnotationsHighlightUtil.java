@@ -12,6 +12,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -119,7 +120,7 @@ public class AnnotationsHighlightUtil {
     return null;
   }
 
-  public static Collection<HighlightInfo> checkDuplicatedAnnotations(PsiModifierList list) {
+  @NotNull public static Collection<HighlightInfo> checkDuplicatedAnnotations(PsiModifierList list) {
     List<HighlightInfo> result = new ArrayList<HighlightInfo>();
     Set<PsiClass> refInterfaces = new HashSet<PsiClass>();
     PsiAnnotation[] annotations = list.getAnnotations();

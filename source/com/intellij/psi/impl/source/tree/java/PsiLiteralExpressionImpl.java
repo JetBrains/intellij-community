@@ -7,6 +7,7 @@ import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class PsiLiteralExpressionImpl extends CompositePsiElement implements PsiLiteralExpression {
   private static final @NonNls String QUOT = "&quot;";
@@ -171,7 +172,7 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
     final int radix = 1 << bitsInRadix;
     int textLength = text.length();
     long integer = Long.parseLong(text.substring(0, textLength - 1), radix);
-    final int lastDigit = Integer.parseInt("" + text.charAt(textLength - 1), radix);
+    final int lastDigit = Character.digit(text.charAt(textLength - 1), radix);
     if ((integer & (-1L << maxBits - 4)) != 0) return null;
     integer <<= bitsInRadix;
     integer |= lastDigit;
@@ -271,6 +272,7 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
   }
 
   private static String parseStringCharacters(String chars) {
+    // should return interned strings since ConstantEvaluator should compute ("0" == "0") to true
     if (chars.indexOf('\\') < 0) return chars.intern();
     StringBuffer buffer = new StringBuffer(chars.length());
     int index = 0;
@@ -389,6 +391,7 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
     return "PsiLiteralExpression:" + getText();
   }
 
+  @NotNull
   public PsiReference[] getReferences() {
     return ResolveUtil.getReferencesFromProviders(this,ourHintClazz);
   }
