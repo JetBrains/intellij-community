@@ -4,8 +4,8 @@
  */
 package com.intellij.ui.popup.list;
 
-import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.ListItemDescriptor;
+import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.ui.popup.PopupIcons;
 
 import javax.swing.*;

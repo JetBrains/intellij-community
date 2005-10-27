@@ -265,7 +265,10 @@ public class ClasspathPanel extends JPanel {
     addButton.addActionListener(new ButtonAction() {
       protected void executeImpl() {
         initPopupActions();
-        final Popup popup = PopupFactory.getInstance().createWizardStep(new BaseListPopupStep("Add:", myPopupActions, myIcons) {
+        final Popup popup = PopupFactory.getInstance().createWizardStep(new BaseListPopupStep(null, myPopupActions, myIcons) {
+          public boolean isMnemonicsNavigationEnabled() {
+            return true;
+          }
           public boolean isSelectable(Object value) {
             return ((PopupAction)value).isSelectable();
           }
@@ -278,7 +281,9 @@ public class ClasspathPanel extends JPanel {
             return PopupStep.FINAL_CHOICE;
           }
           public String getTextFor(Object value) {
-            return ((PopupAction)value).getTitle();
+            final PopupAction popupAction = (PopupAction)value;
+            final String s = "&" + popupAction.getIndex() + "  " + popupAction.getTitle();
+            return s;
           }
         });
         popup.showUnderneathOf(addButton);
@@ -413,10 +418,12 @@ public class ClasspathPanel extends JPanel {
   private class PopupAction extends ButtonAction{
     private final String myTitle;
     private final Icon myIcon;
+    private final int myIndex;
 
-    protected PopupAction(String title, Icon icon) {
+    protected PopupAction(String title, Icon icon, final int index) {
       myTitle = title;
       myIcon = icon;
+      myIndex = index;
     }
 
     public String getTitle() {
@@ -425,6 +432,10 @@ public class ClasspathPanel extends JPanel {
 
     public Icon getIcon() {
       return myIcon;
+    }
+
+    public int getIndex() {
+      return myIndex;
     }
 
     public boolean isSelectable() {
@@ -440,8 +451,8 @@ public class ClasspathPanel extends JPanel {
   }
 
   private abstract class ChooseAndAddAction<ItemType> extends PopupAction implements ChooseItemsProvider<ItemType>{
-    public ChooseAndAddAction(String title, Icon icon) {
-      super(title, icon);
+    public ChooseAndAddAction(int index, String title, Icon icon) {
+      super(title, icon, index);
     }
 
     protected final void executeImpl() {
@@ -477,7 +488,7 @@ public class ClasspathPanel extends JPanel {
   private void initPopupActions() {
     if (myPopupActions == null) {
       myPopupActions = new PopupAction[] {
-        new ChooseAndAddAction<Library>(ProjectBundle.message("library.add.jar.directory.action"), Icons.JAR_ICON) {
+        new ChooseAndAddAction<Library>(1, ProjectBundle.message("classpath.add.jar.directory.action"), Icons.JAR_ICON) {
           protected TableItem createTableItem(final Library item) {
             final OrderEntry[] entries = myRootModel.getOrderEntries();
             for (OrderEntry entry : entries) {
@@ -500,43 +511,43 @@ public class ClasspathPanel extends JPanel {
             return Collections.EMPTY_LIST; // this chooser chooses items from file system
           }
         },
-        new ChooseAndAddAction<Library>("Project-Level Library", Icons.LIBRARY_ICON) {
+        new ChooseAndAddAction<Library>(2, ProjectBundle.message("classpath.add.project.library.action"), Icons.LIBRARY_ICON) {
           protected TableItem createTableItem(final Library item) {
             return new LibItem(myRootModel.addLibraryEntry(item));
           }
           protected ChooserDialog<Library> createChooserDialog() {
-            return new ChooseLibrariesDialog(this, "Add Project-Level Library", LibraryTablesRegistrar.getInstance().getLibraryTable(myProject));
+            return new ChooseLibrariesDialog(this, ProjectBundle.message("classpath.chooser.title.add.project.library"), LibraryTablesRegistrar.getInstance().getLibraryTable(myProject));
           }
           @NotNull public List<Library> getChooseItems() {
             return getDependencyLibraries(LibraryTablesRegistrar.getInstance().getLibraryTable(myProject));
           }
         },
-        new ChooseAndAddAction<Library>("Global Library", Icons.LIBRARY_ICON) {
+        new ChooseAndAddAction<Library>(3, ProjectBundle.message("classpath.add.global.library.action"), Icons.LIBRARY_ICON) {
           protected TableItem createTableItem(final Library item) {
             return new LibItem(myRootModel.addLibraryEntry(item));
           }
           protected ChooserDialog<Library> createChooserDialog() {
-            return new ChooseLibrariesDialog(this, "Add Global Library", LibraryTablesRegistrar.getInstance().getLibraryTable());
+            return new ChooseLibrariesDialog(this, ProjectBundle.message("classpath.chooser.title.add.global.library"), LibraryTablesRegistrar.getInstance().getLibraryTable());
           }
           @NotNull public List<Library> getChooseItems() {
             return getDependencyLibraries(LibraryTablesRegistrar.getInstance().getLibraryTable());
           }
         },
-        new ChooseAndAddAction<Module>("Module Dependency", IconUtilEx.getModuleTypeIcon(ModuleType.JAVA, 0)) {
+        new ChooseAndAddAction<Module>(4, ProjectBundle.message("classpath.add.module.dependency.action"), IconUtilEx.getModuleTypeIcon(ModuleType.JAVA, 0)) {
           protected TableItem createTableItem(final Module item) {
             return new ModuleItem(myRootModel.addModuleOrderEntry(item));
           }
           protected ChooserDialog<Module> createChooserDialog() {
             final List<Module> chooseItems = getChooseItems();
             if (chooseItems.size() == 0) {
-              Messages.showMessageDialog(ClasspathPanel.this, "Found no modules to depend on", getTitle(), Messages.getInformationIcon());
+              Messages.showMessageDialog(ClasspathPanel.this, ProjectBundle.message("message.no.module.dependency.candidates"), getTitle(), Messages.getInformationIcon());
               return null;
             }
             return new ChooseModulesDialog(new ChooseItemsProvider<Module>() {
               public List<Module> getChooseItems() {
                 return chooseItems;  // return pre-calculated array, to avoid obtaining modules several times
               }
-            }, "Choose Dependent Modules");
+            }, ProjectBundle.message("classpath.chooser.title.add.module.dependency"));
           }
           public List<Module> getChooseItems() {
             return getDependencyModules();

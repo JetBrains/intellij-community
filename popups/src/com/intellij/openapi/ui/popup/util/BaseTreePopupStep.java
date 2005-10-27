@@ -60,10 +60,6 @@ public class BaseTreePopupStep extends BaseStep implements TreePopupStep {
     return new Object[0];
   }
 
-  public final boolean isMnemonicsNavigationEnabled() {
-    return false;
-  }
-
   public boolean isSpeedSearchEnabled() {
     return true;
   }

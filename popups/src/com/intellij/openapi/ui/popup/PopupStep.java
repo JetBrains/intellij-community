@@ -4,10 +4,13 @@
  */
 package com.intellij.openapi.ui.popup;
 
+import org.jetbrains.annotations.Nullable;
+
 public interface PopupStep {
 
   PopupStep FINAL_CHOICE = null;
 
+  @Nullable
   String getTitle();
 
   PopupStep onChosen(Object selectedValue);

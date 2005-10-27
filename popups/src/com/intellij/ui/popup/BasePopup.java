@@ -10,6 +10,8 @@ import com.intellij.openapi.ui.popup.Popup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.TreePopupStep;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.labels.BoldLabel;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.popup.list.ListPopupImpl;
@@ -17,9 +19,8 @@ import com.intellij.ui.popup.tree.TreePopupImpl;
 import com.intellij.ui.popup.util.ElementFilter;
 import com.intellij.ui.popup.util.MnemonicsSearch;
 import com.intellij.ui.popup.util.SpeedSearch;
-import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.ScreenUtil;
 import com.intellij.util.ui.BlockBorder;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -45,6 +46,7 @@ public abstract class BasePopup implements ActionListener, ElementFilter, Popup 
   protected BasePopup myChild;
 
   protected JScrollPane myScrollPane;
+  @Nullable
   protected JLabel myTitle;
 
   protected JComponent myContent;
@@ -99,12 +101,14 @@ public abstract class BasePopup implements ActionListener, ElementFilter, Popup 
       myContainer.setBorder(new BlockBorder());
     }
 
-    myTitle = new BoldLabel(aStep.getTitle());
-    myTitle.setOpaque(true);
-    myTitle.setBorder(BorderFactory.createEmptyBorder(2, 4, 2, 4));
-    myTitle.setBackground(TITLE_BACKGROUND);
-
-    myContainer.add(myTitle, BorderLayout.NORTH);
+    final String title = aStep.getTitle();
+    if (title != null) {
+      myTitle = new BoldLabel(title);
+      myTitle.setOpaque(true);
+      myTitle.setBorder(BorderFactory.createEmptyBorder(2, 4, 2, 4));
+      myTitle.setBackground(TITLE_BACKGROUND);
+      myContainer.add(myTitle, BorderLayout.NORTH);
+    }
 
     registerAction("disposeAll", KeyEvent.VK_ESCAPE, KeyEvent.SHIFT_MASK, new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
@@ -270,7 +274,7 @@ public abstract class BasePopup implements ActionListener, ElementFilter, Popup 
     final JComponent component = getTargetComponent(aComponent);
 
     final Point point = aComponent.getLocationOnScreen();
-    point.y += component.getVisibleRect().height + 4;
+    point.y += component.getVisibleRect().height ;
     show(aComponent, point.x, point.y);
   }
 
@@ -322,8 +326,14 @@ public abstract class BasePopup implements ActionListener, ElementFilter, Popup 
     public Dimension getPreferredSize() {
       final Dimension ofContent = getContentPreferredSize();
 
-      ofContent.height += 30;
-      ofContent.width = Math.max(ofContent.width, myTitle.getPreferredSize().width);
+      if (myTitle != null) {
+        ofContent.height += 30;
+        ofContent.width = Math.max(ofContent.width, myTitle.getPreferredSize().width);
+      }
+      else {
+        ofContent.height += 10;
+      }
+
       ofContent.width += myScrollPane.getVerticalScrollBar().getPreferredSize().width + 4;
       return computeNotBiggerDimension(ofContent);
     }

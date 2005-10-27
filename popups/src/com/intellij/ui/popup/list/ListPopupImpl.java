@@ -92,7 +92,9 @@ public class ListPopupImpl extends BasePopup implements ListPopup {
 
     myListModel = new ListPopupModel(this, getListStep().getValues());
     myList = new MyList();
-    myList.getAccessibleContext().setAccessibleName(myStep.getTitle());
+    if (myStep.getTitle() != null) {
+      myList.getAccessibleContext().setAccessibleName(myStep.getTitle());
+    }
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
     myList.setSelectedIndex(0);

@@ -1,13 +1,16 @@
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
-import com.intellij.ide.IconUtilEx;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IconUtilEx;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.ui.Util;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
@@ -25,9 +28,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.ArrayUtil;
@@ -132,7 +132,7 @@ public class LibraryTableEditor {
     myTreePanel.setLayout(new BorderLayout());
     myTreePanel.add(ScrollPaneFactory.createScrollPane(myTree), BorderLayout.CENTER);
 
-    myAddLibraryButton.setText(myEditingModuleLibraries? ProjectBundle.message("library.add.jar.directory.action") :
+    myAddLibraryButton.setText(myEditingModuleLibraries? ProjectBundle.message("classpath.add.jar.directory.action") :
                                ProjectBundle.message("library.create.library.action"));
     myAddLibraryButton.addActionListener(new AddLibraryAction());
     myRemoveButton.addActionListener(new RemoveAction());

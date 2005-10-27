@@ -5,8 +5,9 @@
 package com.intellij.openapi.ui.popup.util;
 
 import com.intellij.openapi.ui.popup.MnemonicNavigationFilter;
-import com.intellij.openapi.ui.popup.SpeedSearchFilter;
 import com.intellij.openapi.ui.popup.PopupStep;
+import com.intellij.openapi.ui.popup.SpeedSearchFilter;
+import com.intellij.util.ui.UIUtil;
 
 public abstract class BaseStep implements PopupStep, SpeedSearchFilter, MnemonicNavigationFilter {
 
@@ -35,7 +36,12 @@ public abstract class BaseStep implements PopupStep, SpeedSearchFilter, Mnemonic
   }
 
   public int getMnemonicPos(Object value) {
-    return value.toString().indexOf("&");
+    final String text = getTextFor(value);
+    int i = text.indexOf("&");
+    if (i < 0) {
+      i = text.indexOf(UIUtil.MNEMONIC);
+    }
+    return i;
   }
 
   public MnemonicNavigationFilter getMnemonicNavigationFilter() {

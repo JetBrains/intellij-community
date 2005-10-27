@@ -4,8 +4,9 @@
  */
 package com.intellij.openapi.ui.popup.util;
 
-import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.ListPopupStep;
+import com.intellij.openapi.ui.popup.PopupStep;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -16,7 +17,7 @@ public class BaseListPopupStep extends BaseStep implements ListPopupStep {
 
   private String myTitle;
   private List myValues;
-  private List myIcons;
+  private List<Icon> myIcons;
 
   private int myDefaultOptionIndex = -1;
 
@@ -24,7 +25,7 @@ public class BaseListPopupStep extends BaseStep implements ListPopupStep {
     this(aTitle, aValues, new Icon[]{});
   }
   public BaseListPopupStep(String aTitle, List aValues) {
-    this(aTitle, aValues, new ArrayList());
+    this(aTitle, aValues, new ArrayList<Icon>());
   }
 
   public BaseListPopupStep(String aTitle, Object[] aValues, Icon[] aIcons) {
@@ -32,32 +33,35 @@ public class BaseListPopupStep extends BaseStep implements ListPopupStep {
   }
 
   public BaseListPopupStep(String aTitle, List aValues, Icon aSameIcon) {
-    List icons = new ArrayList();
+    List<Icon> icons = new ArrayList<Icon>();
+    //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < aValues.size(); i++) {
       icons.add(aSameIcon);
     }
     init(aTitle, aValues, icons);
   }
 
-  public BaseListPopupStep(String aTitle, List aValues, List aIcons) {
+  public BaseListPopupStep(String aTitle, List aValues, List<Icon> aIcons) {
     init(aTitle, aValues, aIcons);
   }
 
   protected BaseListPopupStep() {
   }
 
-  protected final void init(String aTitle, List aValues, List aIcons) {
+  protected final void init(@Nullable String aTitle, List aValues, List<Icon> aIcons) {
     myTitle = aTitle;
     myValues = aValues;
     myIcons = aIcons;
   }
 
+  @Nullable
   public final String getTitle() {
     return myTitle;
   }
 
   public final Object[] getValues() {
-    return (Object[]) myValues.toArray(new Object[myValues.size()]);
+    //noinspection unchecked
+    return myValues.toArray(new Object[myValues.size()]);
   }
 
   public PopupStep onChosen(Object selectedValue) {
@@ -67,7 +71,7 @@ public class BaseListPopupStep extends BaseStep implements ListPopupStep {
   public Icon getIconFor(Object aValue) {
     int index = myValues.indexOf(aValue);
     if (index != -1 && index < myIcons.size()) {
-      return (Icon) myIcons.get(index);
+      return myIcons.get(index);
     }
     else {
       return null;
@@ -101,33 +105,6 @@ public class BaseListPopupStep extends BaseStep implements ListPopupStep {
     return myDefaultOptionIndex;
   }
 
-  public static class Mnemonics extends BaseListPopupStep {
-
-    public Mnemonics(String aTitle, Object[] aValues) {
-      super(aTitle, aValues);
-    }
-
-    public Mnemonics(String aTitle, Object[] aValues, Icon[] aIcons) {
-      super(aTitle, aValues, aIcons);
-    }
-
-    public Mnemonics(String aTitle, List aValues, Icon aSameIcon) {
-      super(aTitle, aValues, aSameIcon);
-    }
-
-    public Mnemonics(String aTitle, List aValues, List aIcons) {
-      super(aTitle, aValues, aIcons);
-    }
-
-    public final boolean isSpeedSearchEnabled() {
-      return false;
-    }
-
-    public final boolean isMnemonicsNavigationEnabled() {
-      return true;
-    }
-  }
-
   public static class Speedsearch extends BaseListPopupStep {
     public Speedsearch(String aTitle, Object[] aValues) {
       super(aTitle, aValues);
@@ -141,16 +118,8 @@ public class BaseListPopupStep extends BaseStep implements ListPopupStep {
       super(aTitle, aValues, aSameIcon);
     }
 
-    public Speedsearch(String aTitle, List aValues, List aIcons) {
+    public Speedsearch(String aTitle, List aValues, List<Icon> aIcons) {
       super(aTitle, aValues, aIcons);
-    }
-
-    public final boolean isSpeedSearchEnabled() {
-      return true;
-    }
-
-    public final boolean isMnemonicsNavigationEnabled() {
-      return false;
     }
   }
 
