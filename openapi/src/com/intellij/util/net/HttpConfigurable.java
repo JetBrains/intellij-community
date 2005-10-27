@@ -21,7 +21,7 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
-import org.apache.xmlrpc.Base64;
+import org.apache.commons.codec.binary.Base64;
 import org.jdom.Element;
 
 import java.io.IOException;
@@ -75,11 +75,11 @@ public class HttpConfigurable implements JDOMExternalizable, ApplicationComponen
   }
 
   public String getPlainProxyPassword () {
-    return new String(Base64.decode(HttpConfigurable.getInstance().PROXY_PASSWORD_CRYPT.getBytes()));
+    return new String(new Base64().decode(HttpConfigurable.getInstance().PROXY_PASSWORD_CRYPT.getBytes()));
   }
 
   public void setPlainProxyPassword (String password) {
-    PROXY_PASSWORD_CRYPT = new String(Base64.encode(new String(password).getBytes()));
+    PROXY_PASSWORD_CRYPT = new String(new Base64().encode(new String(password).getBytes()));
   }
 
   private Authenticator getAuthenticator () {
