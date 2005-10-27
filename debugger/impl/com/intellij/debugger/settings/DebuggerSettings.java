@@ -4,6 +4,7 @@ import com.intellij.debugger.ClassFilter;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.options.colors.ColorSettingsPages;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -12,7 +13,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 public class DebuggerSettings implements JDOMExternalizable, ApplicationComponent {
@@ -45,13 +45,16 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
 
   private ClassFilter[] mySteppingFilters = ClassFilter.EMPTY_ARRAY;
 
-  public DebuggerSettings() {
+  public DebuggerSettings(ColorSettingsPages pages) {
+    if (pages != null) {
+      pages.registerPage(new DebuggerColorsPage());
+    }
   }
 
   public void disposeComponent() {
   }
 
-  public void initComponent() { }
+  public void initComponent() {}
 
   public ClassFilter[] getSteppingFilters() {
     return retrieveFilters(mySteppingFilters);
@@ -79,13 +82,13 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
   @SuppressWarnings({"HardCodedStringLiteral"})
   public void readExternal(Element parentNode) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, parentNode);
-    List filtersList = new ArrayList();
+    List<ClassFilter> filtersList = new ArrayList<ClassFilter>();
 
-    for (Iterator i = parentNode.getChildren("filter").iterator(); i.hasNext();) {
-      Element filter = (Element)i.next();
+    for (final Object o : parentNode.getChildren("filter")) {
+      Element filter = (Element)o;
       filtersList.add(DebuggerUtilsEx.create(filter));
     }
-    setSteppingFilters((ClassFilter[])filtersList.toArray(new ClassFilter[filtersList.size()]));
+    setSteppingFilters(filtersList.toArray(new ClassFilter[filtersList.size()]));
 
     filtersList.clear();
   }
@@ -94,10 +97,10 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
   public void writeExternal(Element parentNode) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, parentNode);
     Element element;
-    for (int idx = 0; idx < mySteppingFilters.length; idx++) {
+    for (ClassFilter mySteppingFilter : mySteppingFilters) {
       element = new Element("filter");
       parentNode.addContent(element);
-      mySteppingFilters[idx].writeExternal(element);
+      mySteppingFilter.writeExternal(element);
     }
   }
 

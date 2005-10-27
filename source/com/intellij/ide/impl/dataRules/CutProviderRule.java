@@ -2,8 +2,8 @@ package com.intellij.ide.impl.dataRules;
 
 import com.intellij.ide.CutProvider;
 import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.editor.ex.EditorEx;
 
 public class CutProviderRule implements GetDataRule {
   public Object getData(DataProvider dataProvider) {

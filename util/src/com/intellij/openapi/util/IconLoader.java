@@ -15,12 +15,11 @@
  */
 package com.intellij.openapi.util;
 
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.containers.WeakHashMap;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.NonNls;
 import sun.reflect.Reflection;
 
 import javax.swing.*;
@@ -29,19 +28,17 @@ import java.awt.image.BufferedImage;
 import java.net.URL;
 import java.util.Map;
 
-import org.jetbrains.annotations.NonNls;
-
 public final class IconLoader {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.IconLoader");
   private static final Color ourTransparentColor = new Color(0, 0, 0, 0);
   /**
    * This cache contains mapping between loaded images and <code>IJImage</code> icons.
    */
-  private static final Map<Image,Icon> myImage2Icon = new THashMap<Image, Icon>(200, 0.9f);
+  private static final Map<Image,Icon> ourImage2Icon = new THashMap<Image, Icon>(200, 0.9f);
   /**
    * This cache contains mapping between icons and disabled icons.
    */
-  private static final Map<Icon, Icon> myIcon2DisabledIcon = new WeakHashMap<Icon, Icon>(200);
+  private static final Map<Icon, Icon> ourIcon2DisabledIcon = new WeakHashMap<Icon, Icon>(200);
   /**
    * To get disabled icon with paint it into the imag. Some icons require
    * not null component to paint.
@@ -52,16 +49,19 @@ public final class IconLoader {
       return "Empty icon " + super.toString();
     }
   };
+  private static boolean ourIsActivated = false;
+
+  private IconLoader() {}
 
   public static Icon getIcon(final Image image) {
     LOG.assertTrue(image != null);
-    Icon icon = myImage2Icon.get(image);
+    Icon icon = ourImage2Icon.get(image);
     if (icon != null) {
       return icon;
     }
     else {
       icon = new MyImageIcon(image);
-      myImage2Icon.put(image, icon);
+      ourImage2Icon.put(image, icon);
       return icon;
     }
   }
@@ -99,21 +99,23 @@ public final class IconLoader {
     return icon;
   }
 
+  public static void activate() {
+    ourIsActivated = true;
+  }
+
+  private static boolean isLoaderDisabled() {
+    return !ourIsActivated;
+  }
+
   public static Icon findIcon(final String path, final Class aClass) {
-    final Application application = ApplicationManager.getApplication();
-    if (application != null && application.isUnitTestMode()) {
-      return EMPTY_ICON;
-    }
+    if (isLoaderDisabled()) return EMPTY_ICON;
 
     final Image image = ImageLoader.loadFromResource(path, aClass);
     return checkIcon(image, path);
   }
 
   public static Icon findIcon(final String path, final ClassLoader aClassLoader) {
-    final Application application = ApplicationManager.getApplication();
-    if (application != null && application.isUnitTestMode()) {
-      return EMPTY_ICON;
-    }
+    if (isLoaderDisabled()) return EMPTY_ICON;
 
     if (!path.startsWith("/")) return null;
 
@@ -125,7 +127,7 @@ public final class IconLoader {
   }
 
   private static Icon checkIcon(final Image image, final String path) {
-    if(image == null || image.getHeight(ourFakeComponent) < 1 || image.getHeight(ourFakeComponent) < 1){ // image wasn't loaded or broken
+    if(image == null || image.getHeight(ourFakeComponent) < 1){ // image wasn't loaded or broken
       return null;
     }
 
@@ -145,7 +147,7 @@ public final class IconLoader {
     if (icon == null) {
       return null;
     }
-    Icon disabledIcon = myIcon2DisabledIcon.get(icon);
+    Icon disabledIcon = ourIcon2DisabledIcon.get(icon);
     if (disabledIcon == null) {
       if (!ImageLoader.isGoodSize(icon)) {
         LOG.error(icon.toString()); // # 22481
@@ -161,7 +163,7 @@ public final class IconLoader {
       graphics.dispose();
 
       disabledIcon = new MyImageIcon(GrayFilter.createDisabledImage(image));
-      myIcon2DisabledIcon.put(icon, disabledIcon);
+      ourIcon2DisabledIcon.put(icon, disabledIcon);
     }
     return disabledIcon;
   }

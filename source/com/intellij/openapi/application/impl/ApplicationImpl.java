@@ -103,7 +103,9 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
     if (!isUnitTestMode) {
       Toolkit.getDefaultToolkit().getSystemEventQueue().push(IdeEventQueue.getInstance());
+      IconLoader.activate();
     }
+
     getPicoContainer().registerComponentInstance(ApplicationEx.class, this);
 
     myComponentsDescriptor = componentsDescriptor;
@@ -212,7 +214,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
     HashMap<String, Element> fileNameToRootElementMap = new HashMap<String, Element>();
 
-    for (Class componentClass : componentClasses) {
+    for (Class<?> componentClass : componentClasses) {
       Object component = getComponent(componentClass);
 
       String fileName;
@@ -715,7 +717,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   public Object getCurrentWriteAction(Class actionClass) {
     synchronized (myWriteActionsStack) {
       for (int i = myWriteActionsStack.size() - 1; i >= 0; i--) {
-        Object action = myWriteActionsStack.get(i);
+        Runnable action = myWriteActionsStack.get(i);
         if (actionClass == null || actionClass.isAssignableFrom(action.getClass())) return action;
       }
     }
@@ -732,7 +734,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
   }
 
-  private String describe(Object o) {
+  private String describe(Thread o) {
     if (o == null) return NULL_STR;
     return o.toString() + " " + System.identityHashCode(o);
   }
@@ -860,7 +862,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
   }
 
-  private void fireBeforeWriteActionStart(Object action) {
+  private void fireBeforeWriteActionStart(Runnable action) {
     ApplicationListener[] listeners = getListeners();
 
     for (ApplicationListener listener : listeners) {
@@ -868,7 +870,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
   }
 
-  private void fireWriteActionStarted(Object action) {
+  private void fireWriteActionStarted(Runnable action) {
     ApplicationListener[] listeners = getListeners();
 
     for (ApplicationListener listener : listeners) {
@@ -876,7 +878,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
   }
 
-  private void fireWriteActionFinished(Object action) {
+  private void fireWriteActionFinished(Runnable action) {
     ApplicationListener[] listeners = getListeners();
 
     for (ApplicationListener listener : listeners) {

@@ -8,9 +8,9 @@ import com.intellij.debugger.ui.tree.render.BatchEvaluator;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.configurations.RemoteConnection;
+import com.intellij.execution.configurations.RemoteState;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
-import com.intellij.execution.configurations.RemoteState;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.JavaProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -18,11 +18,13 @@ import com.intellij.execution.ui.RunContentListener;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.EditorColorsListener;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
-
-import org.jetbrains.annotations.Nullable;
 
 /*
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
@@ -36,9 +38,16 @@ public class DebuggerPanelsManager implements ProjectComponent{
 
   private PositionHighlighter myEditorManager;
   private HashMap<ProcessHandler, DebuggerSessionTab> mySessionTabs = new HashMap<ProcessHandler, DebuggerSessionTab>();
+  private final EditorColorsListener myColorsListener;
 
-  public DebuggerPanelsManager(Project project) {
+  public DebuggerPanelsManager(Project project, EditorColorsManager colorsManager) {
     myProject = project;
+    myColorsListener = new EditorColorsListener() {
+      public void globalSchemeChange(EditorColorsScheme scheme) {
+        updateContextPointDescription();
+      }
+    };
+    colorsManager.addEditorColorsListener(myColorsListener);
   }
 
   private DebuggerStateManager getContextManager() {
@@ -137,6 +146,7 @@ public class DebuggerPanelsManager implements ProjectComponent{
   }
 
   public void disposeComponent() {
+    EditorColorsManager.getInstance().removeEditorColorsListener(myColorsListener);
   }
 
   public static DebuggerPanelsManager getInstance(Project project) {

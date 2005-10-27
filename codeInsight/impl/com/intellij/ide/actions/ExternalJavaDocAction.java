@@ -1,6 +1,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.javadoc.JavaDocManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -10,7 +11,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.jsp.JspFile;
-import com.intellij.ide.IdeBundle;
 
 public class ExternalJavaDocAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {

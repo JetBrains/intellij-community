@@ -17,6 +17,9 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.EditorColorsListener;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.ex.PathUtilEx;
@@ -36,13 +39,12 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.jar.Attributes;
 
 public class DebuggerManagerImpl extends DebuggerManagerEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.DebuggerManagerImpl");
   private final Project myProject;
-  private HashMap<ProcessHandler, DebuggerSession> mySessions = new HashMap<ProcessHandler, DebuggerSession>();
+  private final HashMap<ProcessHandler, DebuggerSession> mySessions = new HashMap<ProcessHandler, DebuggerSession>();
   private BreakpointManager myBreakpointManager;
 
   private final EventDispatcher<DebuggerManagerListener> myDispatcher = EventDispatcher.create(DebuggerManagerListener.class);
@@ -70,6 +72,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
     }
   };
   private static final @NonNls String DEBUG_KEY_NAME = "idea.xdebug.key";
+  private EditorColorsListener myColorsListener;
 
   public void addDebuggerManagerListener(DebuggerManagerListener listener) {
     myDispatcher.addListener(listener);
@@ -79,15 +82,20 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
     myDispatcher.removeListener(listener);
   }
 
-  public DebuggerManagerImpl(Project project, StartupManager startupManager) {
+  public DebuggerManagerImpl(Project project, StartupManager startupManager, EditorColorsManager colorsManager) {
     myProject = project;
     myBreakpointManager = new BreakpointManager(myProject, startupManager, this);
+    myColorsListener = new EditorColorsListener() {
+      public void globalSchemeChange(EditorColorsScheme scheme) {
+        getBreakpointManager().updateBreakpointsUI();
+      }
+    };
+    colorsManager.addEditorColorsListener(myColorsListener);
   }
 
   public DebuggerSession getSession(DebugProcess process) {
     LOG.assertTrue(SwingUtilities.isEventDispatchThread());
-    for (Iterator iterator = getSessions().iterator(); iterator.hasNext();) {
-      DebuggerSession debuggerSession = (DebuggerSession)iterator.next();
+    for (final DebuggerSession debuggerSession : getSessions()) {
       if (process == debuggerSession.getProcess()) return debuggerSession;
     }
     return null;
@@ -98,6 +106,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
   }
 
   public void disposeComponent() {
+    EditorColorsManager.getInstance().removeEditorColorsListener(myColorsListener);
   }
 
   public void initComponent() {
@@ -279,7 +288,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
       if (version.startsWith("1.2") && SystemInfo.isWindows) {
         return true;
       }
-      version = version + ".0";
+      version += ".0";
       if (version.startsWith("1.3.0") && SystemInfo.isWindows) {
         return true;
       }
@@ -318,7 +327,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
       address = debugPort;
     }
 
-    String listenTo = null;
+    String listenTo;
     if(serverMode && useSockets) {
       try {
         listenTo = InetAddress.getLocalHost().getHostName() + ":" + address;

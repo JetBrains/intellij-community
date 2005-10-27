@@ -26,6 +26,7 @@
     <orderEntry type="module" module-name="action-system-openapi" />
     <orderEntry type="module" module-name="ui-impl" />
     <orderEntry type="module" module-name="EJB" />
+    <orderEntry type="module" module-name="web-impl" />
     <orderEntryProperties />
   </component>
   <component name="copyright">

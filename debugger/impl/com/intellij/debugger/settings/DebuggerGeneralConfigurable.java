@@ -1,7 +1,7 @@
 package com.intellij.debugger.settings;
 
-import com.intellij.debugger.ui.ClassFilterEditor;
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.ui.ClassFilterEditor;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
@@ -116,7 +116,7 @@ public class DebuggerGeneralConfigurable implements Configurable{
     if (myBaseRenderersConfigurable.isModified()) {
       return true;
     }
-    final DebuggerSettings debuggerSettings = new DebuggerSettings();
+    final DebuggerSettings debuggerSettings = new DebuggerSettings(null);
     getSettingsTo(debuggerSettings);
     return !debuggerSettings.equals(DebuggerSettings.getInstance());
   }

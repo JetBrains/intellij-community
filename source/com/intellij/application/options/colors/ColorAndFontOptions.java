@@ -1,7 +1,6 @@
 package com.intellij.application.options.colors;
 
-import com.intellij.debugger.DebuggerManagerEx;
-import com.intellij.debugger.ui.DebuggerPanelsManager;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diff.impl.settings.DiffColorsForm;
 import com.intellij.openapi.editor.EditorFactory;
@@ -26,7 +25,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
-import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.peer.PeerFactory;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
@@ -97,8 +95,7 @@ public class ColorAndFontOptions extends BaseConfigurable implements Application
     });
 
     ArrayList<String> names = new ArrayList<String>(schemes.size());
-    for (int i = 0; i < schemes.size(); i++) {
-      EditorColorsScheme scheme = schemes.get(i);
+    for (MyColorScheme scheme : schemes) {
       names.add(scheme.getName());
     }
 
@@ -149,12 +146,6 @@ public class ColorAndFontOptions extends BaseConfigurable implements Application
 
       EditorFactory.getInstance().refreshAllEditors();
 
-      Project[] projects = ProjectManager.getInstance().getOpenProjects();
-      for (Project project1 : projects) {
-        // Update breakpoints for debugger.
-        updateBreakpoints(project1);
-      }
-
       initAll();
       myPanel.resetSchemesCombo();
 
@@ -168,14 +159,6 @@ public class ColorAndFontOptions extends BaseConfigurable implements Application
     catch (IOException e) {
       throw new ConfigurationException(e.getMessage());
     }
-  }
-
-  private static void updateBreakpoints(Project project) {
-    if (project == null) return;
-    DebuggerManagerEx debuggerManager = DebuggerManagerEx.getInstanceEx(project);
-    if (debuggerManager == null) return;
-    debuggerManager.getBreakpointManager().updateBreakpointsUI();
-    DebuggerPanelsManager.getInstance(project).updateContextPointDescription();
   }
 
   public JComponent createComponent() {
