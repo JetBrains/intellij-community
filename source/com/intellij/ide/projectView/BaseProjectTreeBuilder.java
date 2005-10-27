@@ -6,7 +6,6 @@ import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
@@ -100,8 +99,52 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
   }
 
   public void select(Object element, VirtualFile file, boolean requestFocus) {
+    if (isAlreadySelected(element)) {
+      return;
+    }
     AbstractTreeNode node = select((AbstractTreeNode)getTreeStructure().getRootElement(), file, element);
     TreeUtil.selectInTree(getNodeForElement(node), requestFocus, getTree());
+  }
+
+  private boolean isAlreadySelected(final Object element) {
+    final TreePath[] selectionPaths = myTree.getSelectionPaths();
+    if (selectionPaths == null || selectionPaths.length == 0) {
+      return false;
+    }
+
+    for (TreePath selectionPath : selectionPaths) {
+      if (treePathContainsElement(selectionPath, element)) {
+        return true;
+      }
+    }
+
+    return false;
+
+  }
+
+  private boolean treePathContainsElement(final TreePath selectionPath, final Object element) {
+    final Object[] pathNodes = selectionPath.getPath();
+    for (Object node : pathNodes) {
+      if (elementIsEqualTo(node, element)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  private boolean elementIsEqualTo(final Object node, final Object element) {
+    if (node instanceof DefaultMutableTreeNode) {
+      final Object userObject = ((DefaultMutableTreeNode)node).getUserObject();
+      if (userObject instanceof ProjectViewNode) {
+        final ProjectViewNode projectViewNode = ((ProjectViewNode)userObject);
+        return projectViewNode.canRepresent(element);
+      } else {
+        return false;
+      }
+    } else {
+      return false;
+    }
   }
 
   private AbstractTreeNode select(AbstractTreeNode current, VirtualFile file, Object element) {
