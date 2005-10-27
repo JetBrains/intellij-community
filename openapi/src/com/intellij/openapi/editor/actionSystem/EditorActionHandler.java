@@ -18,10 +18,28 @@ package com.intellij.openapi.editor.actionSystem;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 
+/**
+ * Interface for actions activated by keystrokes in the editor.
+ *
+ * @see EditorActionManager#setActionHandler(String, EditorActionHandler)
+ */
 public abstract class EditorActionHandler {
+  /**
+   * Checks if the action handler is currently enabled.
+   *
+   * @param editor      the editor in which the action is invoked.
+   * @param dataContext the data context for the action.
+   * @return true if the action is enabled, false otherwise
+   */
   public boolean isEnabled(Editor editor, DataContext dataContext) {
     return true;
   }
 
+  /**
+   * Executes the action.
+   *
+   * @param editor      the editor in which the action is invoked.
+   * @param dataContext the data context for the action.
+   */
   public abstract void execute(Editor editor, DataContext dataContext);
 }

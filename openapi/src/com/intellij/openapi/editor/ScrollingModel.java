@@ -19,6 +19,11 @@ import com.intellij.openapi.editor.event.VisibleAreaListener;
 
 import java.awt.*;
 
+/**
+ * Provides services for getting the visible area of the editor and scrolling the editor.
+ *
+ * @see Editor#getScrollingModel()
+ */
 public interface ScrollingModel {
   Rectangle getVisibleArea();
   Rectangle getVisibleAreaOnScrollingFinished();

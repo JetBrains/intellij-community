@@ -15,12 +15,58 @@
  */
 package com.intellij.openapi.editor;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+/**
+ * Provides services for controlling and getting information about folded regions in the
+ * editor.
+ *
+ * @see Editor#getFoldingModel()
+ */
 public interface FoldingModel {
-  FoldRegion addFoldRegion(int startOffset, int endOffset, String placeholderText);
+  /**
+   * Adds a fold region for the specified range of the document. This method must be called
+   * from the <code>Runnable</code> passed to {@link #runBatchFoldingOperation(Runnable)}.
+   * The region is initially not folded.
+   *
+   * @param startOffset     the start offset of the region to fold.
+   * @param endOffset       the end offset of the region to fold.
+   * @param placeholderText the text to display instead of the region contents when the region is folded.
+   * @return the fold region, or null if folding is currently disabled.
+   */
+  @Nullable
+  FoldRegion addFoldRegion(int startOffset, int endOffset, @NotNull String placeholderText);
+
+  /**
+   * Removes the specified fold region. This method must be called
+   * from the <code>Runnable</code> passed to {@link #runBatchFoldingOperation(Runnable)}.
+   *
+   * @param region the region to remove.
+   */
   void removeFoldRegion(FoldRegion region);
+
+  /**
+   * Gets the list of all fold regions in the specified editor.
+   *
+   * @return the array of fold regions, or an empty array if folding is currently disabled.
+   */
+  @NotNull
   FoldRegion[] getAllFoldRegions();
 
+  /**
+   * Checks if the specified offset in the document belongs to a folded region.
+   *
+   * @param offset the offset to check.
+   * @return true if the offset belongs to a folded region, false otherwise.
+   */
   boolean isOffsetCollapsed(int offset);
 
+  /**
+   * Runs an operation which is allowed to modify fold regions in the editor by calling
+   * {@link #addFoldRegion(int, int, String)} and {@link #removeFoldRegion(FoldRegion)}.
+   *
+   * @param operation the operation to execute.
+   */
   void runBatchFoldingOperation(Runnable operation);
 }

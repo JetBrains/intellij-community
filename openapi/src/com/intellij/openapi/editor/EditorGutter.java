@@ -18,15 +18,24 @@ package com.intellij.openapi.editor;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Created by IntelliJ IDEA.
- * User: lesya
- * Date: Aug 13, 2004
- * Time: 9:55:12 PM
- * To change this template use File | Settings | File Templates.
+ * Provides services for drawing custom text annotations in the editor gutter.
+ * Such annotations are used, for example, by the "Annotate" feature of version
+ * control integrations.
+ *
+ * @author lesya
+ * @see Editor#getGutter()
  */
 public interface EditorGutter {
+  /**
+   * Adds a provider for drawing custom text annotations in the editor gutter.
+   *
+   * @param provider the provider instance.
+   */
   void registerTextAnnotation(@NotNull TextAnnotationGutterProvider provider);
   void registerTextAnnotation(@NotNull TextAnnotationGutterProvider provider, @NotNull EditorGutterAction action);
 
+  /**
+   * Removes all text annotations from the gutter.
+   */
   void closeAllAnnotations();
 }

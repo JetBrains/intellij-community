@@ -15,10 +15,30 @@
  */
 package com.intellij.openapi.editor;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
+ * Interface which should be implemented in order to draw custom text annotations in the
+ * editor gutter.
+ *
  * @author max
+ * @see EditorGutter#registerTextAnnotation(TextAnnotationGutterProvider)
  */
 public interface TextAnnotationGutterProvider {
+  /**
+   * Returns the text which should be drawn for the line with the specified number in the specified editor.
+   *
+   * @param line   the line for which the text is requested.
+   * @param editor the editor in which the text will be drawn.
+   * @return the text to draw, or null if no text should be drawn.
+   */
+  @Nullable
   String getLineText(int line, Editor editor);
+
+  /**
+   * Called when the annotations are removed from the editor gutter.
+   *
+   * @see EditorGutter#closeAllAnnotations()
+   */
   void gutterClosed();
 }

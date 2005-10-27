@@ -29,6 +29,11 @@ import com.intellij.psi.PsiTreeChangeAdapter;
 import com.intellij.psi.PsiTreeChangeEvent;
 import com.intellij.psi.PsiTreeChangeListener;
 
+/**
+ * Provides services for registering actions which are activated by typing in the editor.
+ *
+ * @see EditorActionManager#getTypedAction()
+ */
 public class TypedAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.actionSystem.TypedAction");
 
@@ -70,10 +75,22 @@ public class TypedAction {
     }
   }
 
+  /**
+   * Gets the current typing handler.
+   *
+   * @return the current typing handler.
+   */
   public TypedActionHandler getHandler() {
     return myHandler;
   }
 
+  /**
+   * Replaces the typing handler with the specified handler. The handler should pass
+   * unprocessed typing to the previously registered handler.
+   *
+   * @param handler the handler to set.
+   * @return the previously registered handler.
+   */
   public TypedActionHandler setupHandler(TypedActionHandler handler) {
     TypedActionHandler tmp = myHandler;
     myHandler = handler;

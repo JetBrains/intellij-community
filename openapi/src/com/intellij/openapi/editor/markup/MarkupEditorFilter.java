@@ -18,7 +18,11 @@ package com.intellij.openapi.editor.markup;
 import com.intellij.openapi.editor.Editor;
 
 /**
+ * Interface which should be implemented in order to disable specific range highlighters
+ * in specific editor instances.
+ *
  * @author max
+ * @see RangeHighlighter#setEditorFilter(MarkupEditorFilter)
  */
 public interface MarkupEditorFilter {
   MarkupEditorFilter EMPTY = new MarkupEditorFilter() {
@@ -27,5 +31,11 @@ public interface MarkupEditorFilter {
     }
   };
 
+  /**
+   * Checks if the highlighter is active in the specified editor.
+   *
+   * @param editor the editor to check for.
+   * @return true if the highlighter is available, false otherwise.
+   */
   boolean avaliableIn(Editor editor);
 }

@@ -18,13 +18,31 @@ package com.intellij.openapi.editor.markup;
 import java.awt.*;
 
 /**
+ * Interface which should be implemented to handle drag and drop of gutter icons. An example of
+ * a gutter icon which can be dragged and dropped is the breakpoint icon.
+ *
  * @author ven
+ * @see GutterIconRenderer#getDraggableObject()
  */
 public interface GutterDraggableObject {
-
+  /**
+   * Called when the drag and drop operation is successfully completed.
+   */
   public void removeSelf();
 
-  public boolean copy (int line);
+  /**
+   * Called when the icon is dropped over the specified line.
+   *
+   * @param line the line over which the icon has been dropped.
+   * @return true if the drag and drop operation has completed successfully, false otherwise.
+   */
+  public boolean copy(int line);
 
+  /**
+   * Returns the cursor to show when the drag is over the specified line.
+   *
+   * @param line the line over which the drag is performed.
+   * @return the cursor to show.
+   */
   Cursor getCursor(int line);
 }

@@ -15,8 +15,12 @@
  */
 package com.intellij.openapi.editor.event;
 
-
-
+/**
+ * Allows to attach listeners which receive notifications about changes in any currently open
+ * editor.
+ *
+ * @see com.intellij.openapi.editor.EditorFactory#getEventMulticaster() 
+ */
 public interface EditorEventMulticaster {
   void addDocumentListener(DocumentListener listener);
   void removeDocumentListener(DocumentListener listener);

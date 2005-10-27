@@ -252,6 +252,7 @@ public interface Document extends UserDataHolder {
    * @return the marker instance.
    * @see #removeGuardedBlock(RangeMarker)
    * @see #startGuardedBlockChecking()
+   * @see com.intellij.openapi.editor.actionSystem.EditorActionManager#setReadonlyFragmentModificationHandler(com.intellij.openapi.editor.actionSystem.ReadonlyFragmentModificationHandler) 
    */
   RangeMarker createGuardedBlock(int startOffset, int endOffset);
 

@@ -17,6 +17,17 @@ package com.intellij.openapi.editor.event;
 
 import java.util.EventListener;
 
+/**
+ * Allows to receive notifications about caret movement.
+ *
+ * @see com.intellij.openapi.editor.CaretModel#addCaretListener(CaretListener)
+ * @see EditorEventMulticaster#addCaretListener(CaretListener)
+ */
 public interface CaretListener extends EventListener {
+  /**
+   * Called when the caret position has changed.
+   *
+   * @param e the event containing information about the caret movement.
+   */
   void caretPositionChanged(CaretEvent e);
 }

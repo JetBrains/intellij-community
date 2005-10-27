@@ -31,6 +31,9 @@ import java.awt.event.MouseEvent;
 
 /**
  * Represents an instance of the IDEA text editor.
+ *
+ * @see EditorFactory#createEditor(Document)
+ * @see EditorFactory#createViewer(Document)
  */
 public interface Editor extends UserDataHolder {
   /**

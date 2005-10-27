@@ -18,6 +18,19 @@ package com.intellij.openapi.editor.actionSystem;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 
+/**
+ * Interface for actions activated by typing in the editor.
+ *
+ * @see TypedAction#setupHandler(TypedActionHandler)
+ */
 public interface TypedActionHandler {
+  /**
+   * Processes a key typed in the editor. The handler is responsible for delegating to
+   * the previously registered handler if it did not handle the typed key.
+   *
+   * @param editor      the editor in which the key was typed.
+   * @param charTyped   the typed character.
+   * @param dataContext the current data context.
+   */
   void execute(Editor editor, char charTyped, DataContext dataContext);
 }

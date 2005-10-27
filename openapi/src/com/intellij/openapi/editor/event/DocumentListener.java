@@ -17,7 +17,24 @@ package com.intellij.openapi.editor.event;
 
 import java.util.EventListener;
 
+/**
+ * Allows to receive notifications about changes in edited documents.
+ *
+ * @see com.intellij.openapi.editor.Document#addDocumentListener(DocumentListener)
+ * @see EditorEventMulticaster#addDocumentListener(DocumentListener)
+ */
 public interface DocumentListener extends EventListener{
+  /**
+   * Called before the text of the document is changed.
+   *
+   * @param event the event containing the information about the change.
+   */
   void beforeDocumentChange(DocumentEvent event);
+
+  /**
+   * Called after the text of the document has been changed.
+   *
+   * @param event the event containing the information about the change.
+   */
   void documentChanged(DocumentEvent event);
 }

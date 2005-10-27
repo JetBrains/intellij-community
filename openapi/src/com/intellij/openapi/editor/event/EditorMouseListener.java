@@ -17,10 +17,46 @@ package com.intellij.openapi.editor.event;
 
 import java.util.EventListener;
 
+/**
+ * Allows to receive information about mouse clicks in an editor.
+ *
+ * @see com.intellij.openapi.editor.Editor#addEditorMouseListener(EditorMouseListener)
+ * @see EditorEventMulticaster#addEditorMouseListener(EditorMouseListener)
+ * @see EditorMouseMotionListener
+ */
 public interface EditorMouseListener extends EventListener {
+  /**
+   * Called when a mouse button is pressed over the editor.
+   *
+   * @param e the event containing information about the mouse press.
+   */
   void mousePressed(EditorMouseEvent e);
+
+  /**
+   * Called when a mouse button is clicked over the editor.
+   *
+   * @param e the event containing information about the mouse click.
+   */
   void mouseClicked(EditorMouseEvent e);
+
+  /**
+   * Called when a mouse button is released over the editor.
+   *
+   * @param e the event containing information about the mouse release.
+   */
   void mouseReleased(EditorMouseEvent e);
+
+  /**
+   * Called when the mouse enters the editor.
+   *
+   * @param e the event containing information about the mouse movement.
+   */
   void mouseEntered(EditorMouseEvent e);
+
+  /**
+   * Called when the mouse exits the editor.
+   *
+   * @param e the event containing information about the mouse movement.
+   */
   void mouseExited(EditorMouseEvent e);
 }

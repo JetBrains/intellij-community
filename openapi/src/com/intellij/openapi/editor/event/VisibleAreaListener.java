@@ -17,6 +17,17 @@ package com.intellij.openapi.editor.event;
 
 import java.util.EventListener;
 
+/**
+ * Allows to receive notifications about editor scrolling and resize.
+ *
+ * @see com.intellij.openapi.editor.ScrollingModel#addVisibleAreaListener(VisibleAreaListener)
+ * @see EditorEventMulticaster#addVisibleAreaListener(VisibleAreaListener)
+ */
 public interface VisibleAreaListener extends EventListener {
+  /**
+   * Called when the editor is scrolled or resized.
+   *
+   * @param e the event containing information about changes in the visible area of the editor.
+   */
   void visibleAreaChanged(VisibleAreaEvent e);
 }
