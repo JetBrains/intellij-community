@@ -73,7 +73,9 @@ public class ListTableModel <Item> extends TableViewModel<Item> implements ItemR
   }
 
   public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-    myColumnInfos[columnIndex].setValue(myItems.get(rowIndex), aValue);
+    if (rowIndex < myItems.size()) {
+      myColumnInfos[columnIndex].setValue(myItems.get(rowIndex), aValue);
+    }
   }
 
   public List<Item> getItems() {

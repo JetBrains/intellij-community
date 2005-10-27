@@ -1,13 +1,12 @@
 package com.intellij.cvsSupport2.cvsoperations.common;
 
+import com.intellij.openapi.diagnostic.Logger;
 import org.netbeans.lib.cvsclient.file.AbstractFileObject;
 import org.netbeans.lib.cvsclient.file.DirectoryObject;
 import org.netbeans.lib.cvsclient.file.FileObject;
 
 import java.io.File;
 import java.util.*;
-
-import com.intellij.openapi.diagnostic.Logger;
 
 /**
  * author: lesya
@@ -30,13 +29,13 @@ public class CreateFileObjects {
   }
 
   public Collection execute(){
-    for (int i = 0; i < myFiles.length; i++) {
-      File file = myFiles[i];
-      LOG.assertTrue(file.isDirectory() || file.isFile() || file.getParentFile().isDirectory(), file.getAbsolutePath());
-      String fileAbsolutePath = file.getAbsolutePath();
-      String filePath = fileAbsolutePath.equals(myRootPath) ? "/" : fileAbsolutePath.substring(myRootPath.length() + 1);
-      File relativeFile =  new File(filePath);
-      myResult.add(createAbstractFileObject(relativeFile.getParentFile(), relativeFile, file.isDirectory()));
+    for (File file : myFiles) {
+      if (file.isDirectory() || ! file.isFile() || !file.getParentFile().isDirectory()) {
+        String fileAbsolutePath = file.getAbsolutePath();
+        String filePath = fileAbsolutePath.equals(myRootPath) ? "/" : fileAbsolutePath.substring(myRootPath.length() + 1);
+        File relativeFile = new File(filePath);
+        myResult.add(createAbstractFileObject(relativeFile.getParentFile(), relativeFile, file.isDirectory()));
+      }
     }
 
     return myResult;

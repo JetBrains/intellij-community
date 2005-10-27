@@ -24,7 +24,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
-@SuppressWarnings({"unchecked"})
+@SuppressWarnings({"unchecked", "CastToIncompatibleInterface", "InstanceofIncompatibleInterface"})
 public abstract class BasePsiNode <T extends PsiElement> extends ProjectViewNode<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.impl.nodes.BasePsiNode");
 
@@ -83,11 +83,14 @@ public abstract class BasePsiNode <T extends PsiElement> extends ProjectViewNode
 
 
   public void update(PresentationData data) {
-    final T value = getValue();
+    T value = getValue();
     if (value == null || !value.isValid()) {
       setValue(null);
     }
-    if (getValue() == null) return;
+
+    value = getValue();
+
+    if (value == null) return;
 
     int flags = Iconable.ICON_FLAG_VISIBILITY;
     if (isMarkReadOnly()) {
@@ -107,6 +110,7 @@ public abstract class BasePsiNode <T extends PsiElement> extends ProjectViewNode
     updateImpl(data);
   }
 
+  @SuppressWarnings({"InstanceofIncompatibleInterface", "CastToIncompatibleInterface"})
   private boolean isDeprecated() {
     final T element = getValue();
     if (element == null || !element.isValid()) return false;
@@ -118,6 +122,9 @@ public abstract class BasePsiNode <T extends PsiElement> extends ProjectViewNode
   public boolean contains(VirtualFile file) {
     if (getValue() == null) return false;
     PsiFile containingFile = getValue().getContainingFile();
+    if (containingFile == null) {
+      return false;
+    }
     final VirtualFile valueFile = containingFile.getVirtualFile();
     if (valueFile != null) {
       return file.equals(valueFile);

@@ -10,6 +10,7 @@ import java.io.*;
 /**
  * author: lesya
  */
+@SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
 public class StreamLogger implements IStreamLogger {
 
   private int myCloseCount = 0;
@@ -24,9 +25,6 @@ public class StreamLogger implements IStreamLogger {
 
   private static final long MAX_OUTPUT_SIZE = 1000000;
   @NonNls private static final String OUTPUT_PATHNAME = "cvs.output";
-
-  public StreamLogger() {
-  }
 
   private OutputStream createFileOutputStream(final File cvsOutputFile) {
     try {
@@ -69,14 +67,14 @@ public class StreamLogger implements IStreamLogger {
 
       public void close() throws IOException {
         myCloseCount++;
-        if (myCloseCount == 2) {
+        if (myCloseCount == 2 && myLogOutput != null) {
           myLogOutput.close();
           myLogOutput = null;
           myCloseCount = 0;
         }
       }
 
-      public int read(byte b[], int off, int len) throws IOException {
+      public int read(byte[] b, int off, int len) throws IOException {
         if (len == 0) return 0;
         final int read = read();
         if (read == -1) return -1;

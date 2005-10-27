@@ -1,13 +1,12 @@
 package com.intellij.openapi.localVcs.impl;
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ex.LineStatusTracker;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.ex.Range;
-import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
 
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -38,8 +37,8 @@ public class UpToDateLineNumberProviderImpl implements UpToDateLineNumberProvide
     List ranges = tracker.getRanges();
     int result = currentNumber;
 
-    for (Iterator each = ranges.iterator(); each.hasNext();) {
-      Range range = (Range) each.next();
+    for (final Object range1 : ranges) {
+      Range range = (Range)range1;
       int startOffset = range.getOffset1();
       int endOffset = range.getOffset2();
 

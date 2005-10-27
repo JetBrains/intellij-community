@@ -37,9 +37,9 @@ public interface MergeVersion {
     private final String myOriginalText;
 
     public MergeDocumentVersion(Document document, String originalText) {
-      LOG.assertTrue(originalText != null);
-      LOG.assertTrue(document != null);
-      LOG.assertTrue(document.isWritable());
+      LOG.assertTrue(originalText != null, "text should not be null");
+      LOG.assertTrue(document != null, "document should not be null");
+      LOG.assertTrue(document.isWritable(), "document should be writable");
       myDocument = document;
       myOriginalText = originalText;
     }
