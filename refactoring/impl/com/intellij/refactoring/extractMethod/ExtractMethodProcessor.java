@@ -737,7 +737,9 @@ public class ExtractMethodProcessor implements MatchProvider {
     if(variable instanceof ImplicitVariable) return false;
     int startOffset = myElements[0].getTextRange().getStartOffset();
     int endOffset = myElements[myElements.length - 1].getTextRange().getEndOffset();
-    int offset = variable.getNameIdentifier().getTextRange().getStartOffset();
+    final TextRange range = variable.getNameIdentifier().getTextRange();
+    if (range == null) return false;
+    int offset = range.getStartOffset();
     return startOffset <= offset && offset <= endOffset;
   }
 
