@@ -2,6 +2,7 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.ClassCandidateInfo;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -31,6 +32,7 @@ import java.util.List;
  * To change this template use Options | File Templates.
  */
 public class JavaClassReferenceProvider extends GenericReferenceProvider{
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider");
   private static final char SEPARATOR = '.';
   private static final ReferenceType ourType = new ReferenceType(ReferenceType.JAVA_CLASS);
 
@@ -172,6 +174,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider{
 
       public JavaReference(TextRange range, int index, String text){
         super(JavaClassReferenceProvider.this);
+        LOG.assertTrue(range.getEndOffset() <= myElement.getTextLength());
         myIndex = index;
         myRange = range;
         myText = text;
