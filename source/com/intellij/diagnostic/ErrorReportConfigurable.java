@@ -6,9 +6,9 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
-import org.apache.xmlrpc.Base64;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.apache.commons.codec.binary.Base64;
 
 import java.util.*;
 
@@ -102,10 +102,10 @@ public class ErrorReportConfigurable implements JDOMExternalizable, ApplicationC
   }
 
   public String getPlainItnPassword () {
-    return new String(Base64.decode(ErrorReportConfigurable.getInstance().ITN_PASSWORD_CRYPT.getBytes()));
+    return new String(new Base64().decode(ErrorReportConfigurable.getInstance().ITN_PASSWORD_CRYPT.getBytes()));
   }
 
   public void setPlainItnPassword (String password) {
-    ITN_PASSWORD_CRYPT = new String(Base64.encode(new String(password).getBytes()));
+    ITN_PASSWORD_CRYPT = new String(new Base64().encode(new String(password).getBytes()));
   }
 }
