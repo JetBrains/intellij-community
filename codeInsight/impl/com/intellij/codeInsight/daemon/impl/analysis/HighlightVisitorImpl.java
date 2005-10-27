@@ -1,14 +1,14 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import static com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor.DO_NOT_VALIDATE_KEY;
 import com.intellij.aspects.psi.PsiAspectFile;
 import com.intellij.aspects.psi.PsiPointcutDef;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.*;
-import com.intellij.codeInsight.daemon.impl.analysis.aspect.AspectHighlighter;
+import static com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor.DO_NOT_VALIDATE_KEY;
 import com.intellij.codeInsight.daemon.impl.analysis.annotator.EjbHighlightVisitor;
+import com.intellij.codeInsight.daemon.impl.analysis.aspect.AspectHighlighter;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.SetupJDKFix;
 import com.intellij.j2ee.ejb.EjbUtil;
@@ -17,7 +17,6 @@ import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
@@ -48,7 +47,6 @@ import java.util.Map;
 
 public class HighlightVisitorImpl extends PsiElementVisitor implements HighlightVisitor, ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl");
-  private final Project myProject;
 
   private final DaemonCodeAnalyzerSettings mySettings;
   private PsiResolveHelper myResolveHelper;
@@ -89,8 +87,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
 
   public void projectClosed() {}
 
-  public HighlightVisitorImpl(Project project, DaemonCodeAnalyzerSettings settings, PsiManager manager) {
-    myProject = project;
+  public HighlightVisitorImpl(DaemonCodeAnalyzerSettings settings, PsiManager manager) {
     mySettings = settings;
 
     myXmlVisitor = new XmlHighlightVisitor(settings);
@@ -603,7 +600,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     }
 
     if (!myHolder.hasErrorResults()) {
-      HighlightInfo[] duplicateResults = AnnotationsHighlightUtil.checkDuplicatedAnnotations(list);
+      Collection<HighlightInfo> duplicateResults = AnnotationsHighlightUtil.checkDuplicatedAnnotations(list);
       for (HighlightInfo duplicateResult : duplicateResults) {
         myHolder.add(duplicateResult);
       }
