@@ -71,7 +71,7 @@ public class XmlCompletionData extends CompletionData {
     {
       final CompletionVariant variant = new CompletionVariant(createAttributeValueCompletionFilter());
       variant.includeScopeClass(XmlAttributeValue.class);
-      variant.addCompletion(new XmlAttributeValueGetter());
+      variant.addCompletion(getAttributeValueGetter());
       variant.addCompletionFilter(TrueFilter.INSTANCE, TailType.NONE);
       variant.setInsertHandler(new XmlAttributeValueInsertHandler());
       registerVariant(variant);
@@ -100,6 +100,10 @@ public class XmlCompletionData extends CompletionData {
       variant.setInsertHandler(new EntityRefInsertHandler());
       registerVariant(variant);
     }
+  }
+
+  protected XmlAttributeValueGetter getAttributeValueGetter() {
+    return new XmlAttributeValueGetter();
   }
 
   protected ElementFilter createAttributeCompletion() {

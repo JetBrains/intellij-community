@@ -5,6 +5,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.AndFilter;
 import com.intellij.psi.filters.TextStartFilter;
+import com.intellij.psi.filters.getters.XmlAttributeValueGetter;
+import com.intellij.psi.filters.getters.HtmlAttributeValueGetter;
 import com.intellij.psi.filters.position.TokenTypeFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
@@ -24,6 +26,7 @@ import java.util.Set;
  * Time: 6:50:33 PM
  * To change this template use File | Settings | File Templates.
  */
+@SuppressWarnings({"RefusedBequest"})
 public class HtmlCompletionData extends XmlCompletionData {
   private static CompletionData ourStyleCompletionData;
   private boolean myCaseInsensitive;
@@ -66,6 +69,10 @@ public class HtmlCompletionData extends XmlCompletionData {
 
   protected void setCaseInsensitive(final boolean caseInsensitive) {
     myCaseInsensitive = caseInsensitive;
+  }
+
+  protected XmlAttributeValueGetter getAttributeValueGetter() {
+    return new HtmlAttributeValueGetter(!isCaseInsensitive());
   }
 
   protected ElementFilter createTagCompletionFilter() {
@@ -119,7 +126,7 @@ public class HtmlCompletionData extends XmlCompletionData {
   private boolean isScriptContext(PsiElement element) {
     final Language language = element.getLanguage();
 
-    return language != null && language.getID().equals(JAVASCRIPT_LANGUAGE_ID);
+    return language.getID().equals(JAVASCRIPT_LANGUAGE_ID);
   }
 
   private boolean isScriptTag(XmlTag tag) {
@@ -169,8 +176,10 @@ public class HtmlCompletionData extends XmlCompletionData {
 
     if (parentOfType != null) {
       String name = parentOfType.getName();
-      if (myCaseInsensitive) name = name.toLowerCase();
-      return STYLE_TAG.equals(name); //name.endsWith("style");
+      if (name != null) {
+        if (myCaseInsensitive) name = name.toLowerCase();
+        return STYLE_TAG.equals(name); //name.endsWith("style");
+      }
     }
 
     return false;

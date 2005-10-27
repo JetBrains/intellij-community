@@ -26,7 +26,7 @@ public class XmlAttributeValueGetter implements ContextGetter {
     return getApplicableAttributeVariants(context, completionContext);
   }
 
-  public static Object[] getApplicableAttributeVariants(PsiElement _context, CompletionContext completionContext) {
+  private Object[] getApplicableAttributeVariants(PsiElement _context, CompletionContext completionContext) {
     PsiElement context = _context;
     if(context != null) {
       context = PsiTreeUtil.getParentOfType(context, XmlAttribute.class);
@@ -39,9 +39,13 @@ public class XmlAttributeValueGetter implements ContextGetter {
       final XmlAttributeDescriptor descriptor = ((XmlAttribute)context).getDescriptor();
 
       if(descriptor != null) {
-        final String[] values = descriptor.getEnumeratedValues();
+        String[] values = descriptor.getEnumeratedValues();
         
-        if((values == null || values.length==0)) {
+        if(values == null || values.length==0) {
+          values = addSpecificCompletions(context);
+        } 
+        
+        if(values == null || values.length==0) {
           final PsiReference[] references = ((XmlAttribute)context).getValueElement().getReferences();
           if (references.length == 0) return getAllWordsFromDocument(context,completionContext);
           if (values == null) return new Object[0];
@@ -55,6 +59,10 @@ public class XmlAttributeValueGetter implements ContextGetter {
     } else {
       return new Object[0];
     }
+  }
+
+  protected String[] addSpecificCompletions(final PsiElement context) {
+    return null;
   }
 
   private static Object[] getAllWordsFromDocument(PsiElement context, CompletionContext completionContext) {
