@@ -13,9 +13,7 @@ import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author ven
@@ -113,7 +111,7 @@ public class AnnotationsHighlightUtil {
       }
 
       String description = JavaErrorMessages.message("annotation.incompatible.types",
-                                                HighlightUtil.formatType(type), HighlightUtil.formatType(expectedType));
+                                                     HighlightUtil.formatType(type), HighlightUtil.formatType(expectedType));
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, value, description);
     }
 
@@ -121,13 +119,13 @@ public class AnnotationsHighlightUtil {
     return null;
   }
 
-  public static HighlightInfo[] checkDuplicatedAnnotations(PsiModifierList list) {
+  public static Collection<HighlightInfo> checkDuplicatedAnnotations(PsiModifierList list) {
     List<HighlightInfo> result = new ArrayList<HighlightInfo>();
     Set<PsiClass> refInterfaces = new HashSet<PsiClass>();
     PsiAnnotation[] annotations = list.getAnnotations();
     for (PsiAnnotation annotation : annotations) {
       PsiJavaCodeReferenceElement nameRef = annotation.getNameReferenceElement();
-      if (nameRef == null) return HighlightInfo.EMPTY_ARRAY;
+      if (nameRef == null) return Collections.EMPTY_LIST;
       PsiClass aClass = (PsiClass)nameRef.resolve();
       if (aClass != null) {
         if (refInterfaces.contains(aClass)) {
@@ -139,7 +137,7 @@ public class AnnotationsHighlightUtil {
       }
     }
 
-    return result.toArray(new HighlightInfo[result.size()]);
+    return result;
   }
 
   @Nullable
@@ -200,7 +198,7 @@ public class AnnotationsHighlightUtil {
 
   public static HighlightInfo checkValidAnnotationType(final PsiTypeElement typeElement) {
     PsiType type = typeElement.getType();
-    if (type != null && !type.accept(new PsiTypeVisitor<Boolean>() {
+    if (!type.accept(new PsiTypeVisitor<Boolean>() {
       public Boolean visitType(PsiType type) {
         return Boolean.FALSE;
       }
