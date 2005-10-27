@@ -107,7 +107,7 @@ public final class DebuggerContextImpl implements DebuggerContext {
       DebuggerCommandImpl currentCommand = getDebugProcess().getManagerThread().getCurrentCommand();
       LOG.assertTrue(currentCommand instanceof SuspendContextCommandImpl);
       LOG.assertTrue(((SuspendContextCommandImpl)currentCommand).getSuspendContext().getThread() == frameProxy.threadProxy());      
-      LOG.error("Thread : " + frameProxy.threadProxy().name(), e);
+      LOG.info("Thread : " + frameProxy.threadProxy().name(), e);
       objectReference = null;
     }
     return new EvaluationContextImpl(getSuspendContext(), frameProxy, objectReference);

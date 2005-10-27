@@ -1478,7 +1478,9 @@ public abstract class DebugProcessImpl implements DebugProcess {
       catch (EvaluateException e) {
         LOG.error(e);
       }
-      getSuspendManager().popFrame(suspendContext);
+      finally {
+        getSuspendManager().popFrame(suspendContext);
+      }
     }
   }
 

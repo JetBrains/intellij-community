@@ -4,7 +4,10 @@ import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.ListIterator;
+import java.util.Set;
 
 /*
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
@@ -52,10 +55,12 @@ public class SuspendManagerUtil {
     Set<SuspendContextImpl> result = new HashSet<SuspendContextImpl>();
 
     for (Iterator<SuspendContextImpl> iterator = suspendManager.getEventContexts().iterator(); iterator.hasNext();) {
-      SuspendContextImpl suspendContext = iterator.next();
+      final SuspendContextImpl suspendContext = iterator.next();
       if(suspendContext.suspends(thread)) {
         ThreadReferenceProxyImpl contextThread = suspendContext.getThread();
-        LOG.assertTrue(!contextThreads.contains(contextThread));
+        if (contextThreads.contains(contextThread)) {
+          LOG.assertTrue(false, suspendContext.toString());
+        }
         contextThreads.add(contextThread);
         result.add(suspendContext);
       }
