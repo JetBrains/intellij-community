@@ -32,7 +32,8 @@ public class ImplementMethodsAction extends BaseCodeInsightAction {
     if (aClass == null) {
       return false;
     }
-    final Collection<HierarchicalMethodSignature> allMethods = aClass.getVisibleSignatures();
-    return ClassUtil.getAnyMethodToImplement(aClass, allMethods) != null;
+    return OverrideImplementUtil.getMethodSignaturesToImplement(aClass).length != 0;
+    //final Collection<HierarchicalMethodSignature> allMethods = aClass.getVisibleSignatures();
+    //return ClassUtil.getAnyMethodToImplement(aClass, allMethods) != null;
   }
 }
