@@ -1,6 +1,8 @@
 package com.intellij.psi.filters;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -18,4 +20,6 @@ public interface ElementFilter{
    * Means toString() should only be used for debug purposes and never presented to the user.
    */
   @NonNls String toString();
+  
+  Key<PsiSubstitutor> SUBSTITUTOR = Key.create("SUBSTITUTOR");
 }

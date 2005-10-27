@@ -44,11 +44,15 @@ public class AssignableFromFilter implements ElementFilter{
     if(type == null) return false;
     if(element == null) return false;
     if (element instanceof PsiType) return type.isAssignableFrom((PsiType) element);
+    
     PsiSubstitutor substitutor = null;
+    
     if(element instanceof CandidateInfo){
       final CandidateInfo info = (CandidateInfo)element;
       substitutor = info.getSubstitutor();
       element = info.getElement();
+    } else if (element instanceof PsiElement) {
+      substitutor = ((PsiElement)element).getUserData(SUBSTITUTOR);
     }
 
     if(element instanceof PsiMethod){
