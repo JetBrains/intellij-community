@@ -39,7 +39,6 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.jsp.JspFile;
-import com.intellij.psi.jsp.JspUtil;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.search.*;
@@ -82,9 +81,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         return new LocalSearchScope(element);
       }
       PsiFile file = element.getContainingFile();
-      if (file instanceof JspFile) {
-        return new LocalSearchScope(JspUtil.getReferencingFiles((JspFile)file));
-      }
+      if (file instanceof JspFile) return maximalUseScope;
       PsiClass aClass = (PsiClass)element;
       if (aClass.hasModifierProperty(PsiModifier.PUBLIC)) {
         return maximalUseScope;
@@ -121,9 +118,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     else if (element instanceof PsiMethod || element instanceof PsiField) {
       PsiMember member = (PsiMember) element;
       PsiFile file = element.getContainingFile();
-      if (file instanceof JspFile) {
-        return new LocalSearchScope(JspUtil.getReferencingFiles((JspFile)file));
-      }
+      if (file instanceof JspFile) return maximalUseScope;
 
       PsiClass aClass = member.getContainingClass();
       if (aClass instanceof PsiAnonymousClass) {
@@ -178,6 +173,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       return maximalUseScope;
     }
   }
+
+
 
   public PsiSearchHelperImpl(PsiManagerImpl manager) {
     myManager = manager;
