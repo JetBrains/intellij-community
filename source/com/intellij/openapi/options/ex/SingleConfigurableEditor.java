@@ -21,7 +21,7 @@ public class SingleConfigurableEditor extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.options.ex.SingleConfigurableEditor");
   private Project myProject;
   private Component myParentComponent;
-  protected Configurable myConfigurable;
+  private Configurable myConfigurable;
   private JComponent myCenterPanel;
   private String myDimensionKey;
 
@@ -52,7 +52,7 @@ public class SingleConfigurableEditor extends DialogWrapper {
     this(parent, configurable, null);
   }
 
-  private String createTitleString(Configurable configurable) {
+  private static String createTitleString(Configurable configurable) {
     String displayName = configurable.getDisplayName();
     LOG.assertTrue(displayName != null, configurable.getClass().getName());
     return displayName.replaceAll("\n", " ");
@@ -169,5 +169,6 @@ public class SingleConfigurableEditor extends DialogWrapper {
   protected void dispose() {
     super.dispose();
     myConfigurable.disposeUIResources();
+    myConfigurable = null;
   }
 }

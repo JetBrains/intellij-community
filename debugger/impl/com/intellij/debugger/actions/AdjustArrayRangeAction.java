@@ -4,14 +4,11 @@ import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.tree.render.ArrayRenderer;
-import com.intellij.debugger.ui.tree.render.ArrayRenderer;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.settings.ArrayRendererConfigurable;
-import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
@@ -53,7 +50,7 @@ public class AdjustArrayRangeAction extends DebuggerAction {
     final ArrayRenderer cloneRenderer = renderer.clone();
     SingleConfigurableEditor editor = new SingleConfigurableEditor(project, new NamedArrayConfigurable(title, cloneRenderer)) {
       protected Action[] createActions() {
-        final String helpTopic = myConfigurable.getHelpTopic();
+        final String helpTopic = getConfigurable().getHelpTopic();
         return (helpTopic != null)?
                new Action[]{getOKAction(), getCancelAction(), getHelpAction()} : 
                new Action[]{getOKAction(), getCancelAction()};

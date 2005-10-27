@@ -17,7 +17,7 @@ public class EditKeymapsDialog extends SingleConfigurableEditor {
     if (myActionToSelect != null) {
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
-          ((KeymapConfigurable)myConfigurable).selectAction(myActionToSelect);
+          ((KeymapConfigurable)getConfigurable()).selectAction(myActionToSelect);
         }
       });
     }

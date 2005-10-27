@@ -235,7 +235,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       new UndefinedMacrosConfigurable(text, usedMacros.toArray(new String[usedMacros.size()]));
     final SingleConfigurableEditor editor = new SingleConfigurableEditor(project, configurable) {
       protected void doOKAction() {
-        if (!myConfigurable.isModified()) {
+        if (!getConfigurable().isModified()) {
           Messages.showErrorDialog(getContentPane(), ProjectBundle.message("project.load.undefined.path.variables.all.needed"),
                                    ProjectBundle.message("project.load.undefined.path.variables.title"));
           return;
