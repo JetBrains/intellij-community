@@ -123,8 +123,9 @@ public class HighlightUtil {
     ourInterfaceIncompatibleModifiers.put(PsiModifier.STATIC, Collections.EMPTY_SET);
     ourMethodIncompatibleModifiers = new THashMap<String, Set<String>>(10);
     modifiers = new THashSet<String>(6);
-    modifiers.addAll(Arrays.asList(new String[]{PsiModifier.NATIVE, PsiModifier.STATIC, PsiModifier.FINAL, PsiModifier.PRIVATE, PsiModifier.STRICTFP,
-                                                PsiModifier.SYNCHRONIZED}));
+    modifiers.addAll(Arrays.asList(PsiModifier.NATIVE, PsiModifier.STATIC, PsiModifier.FINAL,
+                                   PsiModifier.PRIVATE, PsiModifier.STRICTFP,
+                                   PsiModifier.SYNCHRONIZED));
     ourMethodIncompatibleModifiers.put(PsiModifier.ABSTRACT, modifiers);
     modifiers = new THashSet<String>(2);
     modifiers.add(PsiModifier.ABSTRACT);
@@ -591,6 +592,15 @@ public class HighlightUtil {
       VariablesNotProcessor proc = new VariablesNotProcessor(variable, false);
       PsiScopesUtil.treeWalkUp(proc, identifier, scope);
       if (proc.size() > 0) {
+        isIncorrect = true;
+      }
+    }
+    else if (variable instanceof PsiField) {
+      PsiField field = ((PsiField)variable);
+      PsiClass aClass = field.getContainingClass();
+      if (aClass == null) return null;
+      PsiField fieldByName = aClass.findFieldByName(name, false);
+      if (fieldByName != null && fieldByName != field) {
         isIncorrect = true;
       }
     }
@@ -1510,7 +1520,6 @@ public class HighlightUtil {
   static boolean isSuperOrThisMethodCall(PsiElement element) {
     if (!(element instanceof PsiMethodCallExpression)) return false;
     PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)element).getMethodExpression();
-    if (methodExpression == null) return false;
     String name = methodExpression.getReferenceName();
     return PsiKeyword.SUPER.equals(name) || PsiKeyword.THIS.equals(name);
   }
@@ -2203,7 +2212,7 @@ public class HighlightUtil {
 
   public static boolean isSerializationImplicitlyUsedField(PsiField field) {
     final String name = field.getName();
-    if (!name.equals(SERIAL_VERSION_UID_FIELD_NAME) && !name.equals(SERIAL_PERSISTENT_FIELDS_FIELD_NAME)) return false;
+    if (!SERIAL_VERSION_UID_FIELD_NAME.equals(name) && !SERIAL_PERSISTENT_FIELDS_FIELD_NAME.equals(name)) return false;
     if (!field.hasModifierProperty(PsiModifier.STATIC)) return false;
     PsiClass aClass = field.getContainingClass();
     return aClass == null || isSerializable(aClass);
