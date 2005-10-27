@@ -17,5 +17,5 @@ public interface PropertiesElementTypes {
   IFileElementType FILE = new IFileElementType(Language.findInstance(PropertiesLanguage.class));
   IElementType PROPERTY = new PropertiesElementType("PROPERTY");
   IElementType PROPERTIES_LIST = new PropertiesElementType("PROPERTIES_LIST");
-  TokenSet PROPERTIES = TokenSet.create(new IElementType[]{PROPERTY});
+  TokenSet PROPERTIES = TokenSet.create(PROPERTY);
 }

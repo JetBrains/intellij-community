@@ -20,6 +20,7 @@ public interface PropertiesTokenTypes {
   IElementType VALUE_CHARACTERS = new PropertiesElementType("VALUE_CHARACTERS");
   IElementType KEY_VALUE_SEPARATOR = new PropertiesElementType("KEY_VALUE_SEPARATOR");
 
-  TokenSet COMMENTS = TokenSet.create(new IElementType[] {END_OF_LINE_COMMENT});
-  TokenSet WHITESPACES = TokenSet.create(new IElementType[] {PropertiesTokenTypes.WHITE_SPACE});
+  TokenSet COMMENTS = TokenSet.create(END_OF_LINE_COMMENT);
+  TokenSet WHITESPACES = TokenSet.create(WHITE_SPACE);
+  TokenSet PROPERTIES_TYPES_TO_IGNORE = TokenSet.create(END_OF_LINE_COMMENT, VALUE_CHARACTERS);
 }
