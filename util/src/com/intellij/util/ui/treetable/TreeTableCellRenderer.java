@@ -44,9 +44,11 @@ public class TreeTableCellRenderer implements TableCellRenderer {
       myTree.setCellRenderer(myTreeCellRenderer);
     if (isSelected){
       myTree.setBackground(table.getSelectionBackground());
+      myTree.setForeground(table.getSelectionForeground());
     }
     else{
       myTree.setBackground(table.getBackground());
+      myTree.setForeground(table.getForeground());
     }
     TableModel model = myTreeTable.getModel();
     myTree.setTreeTableTreeBorder(hasFocus && model.getColumnClass(column).equals(TreeTableModel.class) ? myDefaultBorder : null);
