@@ -12,6 +12,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
@@ -74,13 +75,13 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
             if (xmlFile != null) {
               if (xmlFile != targetElement) {
                 deps.add(xmlFile);
-                if(!PsiTreeUtil.processElements(xmlFile, this)) return false;
+                if(!XmlUtil.processXmlElements(xmlFile, this,true)) return false;
               }
             }
           }
           final XmlMarkupDecl markupDecl = xmlDoctype.getMarkupDecl();
           if (markupDecl != null) {
-            if (!PsiTreeUtil.processElements(markupDecl, this)) return false;
+            if (!XmlUtil.processXmlElements(markupDecl, this, true)) return false;
           }
         }
         else if (element instanceof XmlEntityDecl) {
@@ -97,7 +98,31 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
     };
     deps.add(targetElement);
 
-    PsiTreeUtil.processElements(targetElement, processor);
+    boolean notfound = PsiTreeUtil.processElements(targetElement, processor);
+    
+    if (notfound &&       // no dtd ref at all
+        targetElement instanceof XmlFile &&
+        deps.size() == 1
+       ) {
+      final XmlTag rootTag = ((XmlFile)targetElement).getDocument().getRootTag();
+      
+      if (rootTag != null) {
+        final XmlElementDescriptor descriptor = rootTag.getDescriptor();
+          
+          if (descriptor != null) {
+            final XmlFile descriptorFile = descriptor.getNSDescriptor().getDescriptorFile();
+            
+            if (descriptorFile != null && !descriptorFile.equals(targetElement)) {
+              deps.add(descriptorFile);
+              XmlUtil.processXmlElements(
+                descriptorFile,
+                processor,
+                true
+              );
+            }
+          }
+      }
+    }
 
     return new CachedValueProvider.Result<XmlEntityDecl>(result[0], deps.toArray(new Object[deps.size()]));
   }

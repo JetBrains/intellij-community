@@ -221,6 +221,14 @@ public class HtmlCompletionData extends XmlCompletionData {
 
     if (prefix == null) {
       prefix = super.findPrefix(insertedElement, offset);
+      
+      if (insertedElement instanceof XmlToken &&
+          ((XmlToken)insertedElement).getTokenType() == XmlTokenType.XML_DATA_CHARACTERS &&
+          prefix != null &&
+          prefix.startsWith("&")
+         ) {
+        prefix = prefix.substring(1);
+      }
     }
 
     return prefix;
