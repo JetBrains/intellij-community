@@ -31,7 +31,6 @@ public abstract class InspectionManager {
    * @param psiElement problem is reported against
    * @param descriptionTemplate problem message. Use <code>#ref</code> for a link to problem piece of code and <code>#loc</code> for location in source code.
    * @param fix should be null if no fix is provided.
-   * @return
    */
   public abstract ProblemDescriptor createProblemDescriptor(PsiElement psiElement, String descriptionTemplate, LocalQuickFix fix, ProblemHighlightType highlightType);
 

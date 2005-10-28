@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -85,7 +86,7 @@ public abstract class CreateConstructorFromThisOrSuperAction extends CreateFromU
                 CreateFromUsageUtils.setupMethodBody(constructor);
                 CreateFromUsageUtils.setupEditor(constructor, editor);
 
-                QuickFixAction.markDocumentForUndo(callSite);
+                UndoManager.getInstance(callSite.getProject()).markDocumentForUndo(callSite);
               } catch (IncorrectOperationException e) {
                 LOG.error(e);
               }

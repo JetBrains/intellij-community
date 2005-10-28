@@ -1,14 +1,15 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
@@ -17,7 +18,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 public class ModifierFix implements IntentionAction {
@@ -28,18 +28,10 @@ public class ModifierFix implements IntentionAction {
   private final boolean myShouldHave;
   private boolean myShowContainingClass;
 
-  public ModifierFix(PsiModifierList modifierList, String modifier, boolean shouldHave) {
+  public ModifierFix(PsiModifierList modifierList, String modifier, boolean shouldHave, boolean showContainingClass) {
     myModifierList = modifierList;
     myModifier = modifier;
     myShouldHave = shouldHave;
-  }
-
-  public ModifierFix(PsiModifierListOwner owner, String modifier, boolean shouldHave) {
-    this(owner, modifier, shouldHave, false);
-  }
-
-  public ModifierFix(PsiModifierListOwner owner, String modifier, boolean shouldHave, boolean showContainingClass) {
-    this(owner.getModifierList(), modifier, shouldHave);
     myShowContainingClass = showContainingClass;
   }
 
@@ -104,7 +96,7 @@ public class ModifierFix implements IntentionAction {
 
   public void invoke(Project project, Editor editor, final PsiFile file) {
 
-    final List<PsiModifierList> modifiersList = new ArrayList<PsiModifierList>();
+    final List<PsiModifierList> modifierLists = new ArrayList<PsiModifierList>();
     PsiElement owner = myModifierList.getParent();
     if (owner instanceof PsiMethod) {
       PsiSearchHelper helper = PsiManager.getInstance(project).getSearchHelper();
@@ -117,7 +109,7 @@ public class ModifierFix implements IntentionAction {
           PsiMethod inheritor = element;
           PsiModifierList list = inheritor.getModifierList();
           if (element.getManager().isInProject(element) && PsiUtil.getAccessLevel(list) < accessLevel) {
-            modifiersList.add(list);
+            modifierLists.add(list);
           }
           return true;
         }
@@ -126,15 +118,15 @@ public class ModifierFix implements IntentionAction {
 
     if (!CodeInsightUtil.prepareFileForWrite(myModifierList.getContainingFile())) return;
 
-    if (modifiersList.size() > 0) {
+    if (modifierLists.size() > 0) {
       if (Messages.showYesNoDialog(project,
                                    QuickFixBundle.message("change.inheritors.visibility.warning.text"),
                                    QuickFixBundle.message("change.inheritors.visibility.warning.title"),
                                    Messages.getQuestionIcon()) == DialogWrapper.OK_EXIT_CODE) {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
-            for (Iterator<PsiModifierList> iterator = modifiersList.iterator(); iterator.hasNext();) {
-              changeModifierList(iterator.next());
+            for (final PsiModifierList modifierList : modifierLists) {
+              changeModifierList(modifierList);
             }
           }
         });
@@ -144,7 +136,7 @@ public class ModifierFix implements IntentionAction {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         changeModifierList(myModifierList);
-        QuickFixAction.markDocumentForUndo(file);
+        UndoManager.getInstance(file.getProject()).markDocumentForUndo(file);
       }
     });
   }

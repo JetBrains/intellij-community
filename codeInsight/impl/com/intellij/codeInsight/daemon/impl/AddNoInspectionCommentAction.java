@@ -1,7 +1,6 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -9,6 +8,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -71,7 +71,7 @@ public class AddNoInspectionCommentAction implements IntentionAction {
     if (caretWasBeforeStatement) {
       editor.getCaretModel().moveToOffset(container.getTextRange().getStartOffset());
     }
-    QuickFixAction.markDocumentForUndo(file);
+    UndoManager.getInstance(file.getProject()).markDocumentForUndo(file);
   }
 
   public boolean startInWriteAction() {

@@ -10,14 +10,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Arrays;
 
 public class AddMethodFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.AddMethodFix");
@@ -27,13 +30,14 @@ public class AddMethodFix implements IntentionAction {
   private String myText;
   private List<String> myExceptions = new ArrayList<String>();
 
-  public AddMethodFix(PsiMethod method, PsiClass implClass) {
+  public AddMethodFix(@NotNull PsiMethod method, @NotNull PsiClass implClass) {
     init(method, implClass);
   }
 
-  public AddMethodFix(@NonNls String methodText, PsiClass implClass) {
+  public AddMethodFix(@NonNls @NotNull String methodText, @NotNull PsiClass implClass, String... exceptions) {
     try {
       init(implClass.getManager().getElementFactory().createMethodFromText(methodText, implClass), implClass);
+      myExceptions.addAll(Arrays.asList(exceptions));
     } catch (IncorrectOperationException e) {
       LOG.error(e);
     }
@@ -83,7 +87,8 @@ public class AddMethodFix implements IntentionAction {
   public void invoke(Project project, Editor editor, PsiFile file) {
     if (!CodeInsightUtil.prepareFileForWrite(myClass.getContainingFile())) return;
     try {
-      if (myClass.isInterface() && myMethod.getBody() != null) myMethod.getBody().delete();
+      PsiCodeBlock body;
+      if (myClass.isInterface() && (body = myMethod.getBody()) != null) body.delete();
       myMethod = (PsiMethod) myClass.add(myMethod);
       for (String exception : myExceptions) {
         PsiUtil.addException(myMethod, exception);

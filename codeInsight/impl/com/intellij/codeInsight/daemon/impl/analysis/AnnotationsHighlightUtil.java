@@ -27,6 +27,7 @@ public class AnnotationsHighlightUtil {
 
   private static final Logger LOG = Logger.getInstance("com.intellij.codeInsight.daemon.impl.analysis.AnnotationsHighlightUtil");
   private static final @NonNls String ANNOTATION_TARGET_MESSAGE_KEY_PREFIX = "annotation.target.";
+  @NonNls private static final String PACKAGE_INFO_JAVA = "package-info.java";
 
   public static HighlightInfo checkNameValuePair(PsiNameValuePair pair) {
     PsiReference ref = pair.getReference();
@@ -366,5 +367,17 @@ public class AnnotationsHighlightUtil {
   }
 
 
+  public static HighlightInfo checkPackageAnnotationContainingFile(final PsiPackageStatement statement) {
+    if (statement.getAnnotationList() == null) {
+      return null;
+    }
+    PsiFile file = statement.getContainingFile();
+    if (file != null && !PACKAGE_INFO_JAVA.equals(file.getName())) {
+      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
+                                               statement.getAnnotationList().getTextRange(),
+                                               JavaErrorMessages.message("invalid.package.annotation.containing.file"));
 
+    }
+    return null;
+  }
 }

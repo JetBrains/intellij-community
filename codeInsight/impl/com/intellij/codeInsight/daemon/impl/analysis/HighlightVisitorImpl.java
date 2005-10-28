@@ -630,7 +630,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   public void visitPackageStatement(PsiPackageStatement statement) {
     super.visitPackageStatement(statement);
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkPackageNameConformsToDirectoryName(statement));
-    myHolder.add(HighlightClassUtil.checkPackageAnnotationContainingFile(statement));
+    myHolder.add(AnnotationsHighlightUtil.checkPackageAnnotationContainingFile(statement));
   }
 
   public void visitParameter(PsiParameter parameter) {

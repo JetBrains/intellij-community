@@ -33,10 +33,9 @@ public class RemoveUnusedParameterFix implements IntentionAction {
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
     return
-        myParameter.getManager().isInProject(myParameter)
-        && myParameter != null
-        && myParameter.isValid()
-        && myParameter.getDeclarationScope() instanceof PsiMethod;
+      myParameter.isValid()
+      && myParameter.getDeclarationScope() instanceof PsiMethod
+      && myParameter.getManager().isInProject(myParameter);
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) {

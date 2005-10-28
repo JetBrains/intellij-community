@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
@@ -19,8 +20,8 @@ public class MethodReturnFix implements IntentionAction {
   private final boolean myFixWholeHierarchy;
 
   public MethodReturnFix(PsiMethod method, PsiType toReturn, boolean fixWholeHierarchy) {
-    this.myMethod = method;
-    this.myReturnType = toReturn;
+    myMethod = method;
+    myReturnType = toReturn;
     myFixWholeHierarchy = fixWholeHierarchy;
   }
 
@@ -62,7 +63,7 @@ public class MethodReturnFix implements IntentionAction {
       processor.run();
     }
     if (method.getContainingFile() != file) {
-      QuickFixAction.markDocumentForUndo(file);
+      UndoManager.getInstance(file.getProject()).markDocumentForUndo(file);
     }
   }
 

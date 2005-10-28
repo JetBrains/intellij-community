@@ -5,13 +5,16 @@
  */
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.codeInsight.intention.IntentionManager;
+import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
@@ -27,6 +30,8 @@ import java.text.MessageFormat;
 import java.util.*;
 
 public class HighlightMethodUtil {
+  private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
+
   public static String createClashMethodMessage(PsiMethod method1, PsiMethod method2, boolean showContainingClasses) {
     @NonNls String pattern = showContainingClasses ?
                                                        "clash.methods.message.show.classes" :
@@ -73,8 +78,9 @@ public class HighlightMethodUtil {
         }
 
         HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, message);
-        QuickFixAction
-          .registerQuickFixAction(highlightInfo, new ModifierFix(method, PsiUtil.getAccessModifier(superAccessLevel), true), null);
+        IntentionAction fix =
+          QUICK_FIX_FACTORY.createModifierListFix(method.getModifierList(), PsiUtil.getAccessModifier(superAccessLevel), true, false);
+        QuickFixAction.registerQuickFixAction(highlightInfo, fix, null);
         return highlightInfo;
       }
     }
@@ -156,7 +162,8 @@ public class HighlightMethodUtil {
     String message = MessageFormat.format("{0}; {1}", createClashMethodMessage(method, superMethod, true), detailMessage);
     TextRange textRange = includeRealPositionInfo ? methodToHighlight.getReturnTypeElement().getTextRange() : new TextRange(0, 0);
     HighlightInfo errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, message);
-    QuickFixAction.registerQuickFixAction(errorResult, new MethodReturnFix(method, substitutedSuperReturnType, false), null);
+    IntentionAction fix = QUICK_FIX_FACTORY.createMethodReturnFix(method, substitutedSuperReturnType, false);
+    QuickFixAction.registerQuickFixAction(errorResult, fix, null);
     QuickFixAction.registerQuickFixAction(errorResult, new SuperMethodReturnFix(superMethod, returnType), null);
 
     return errorResult;
@@ -179,7 +186,8 @@ public class HighlightMethodUtil {
         HighlightInfo errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                                       textRange,
                                                                       message);
-        QuickFixAction.registerQuickFixAction(errorResult, new ModifierFix(superMethod, PsiModifier.FINAL, false, true), null);
+        IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(superMethod.getModifierList(), PsiModifier.FINAL, false, true);
+        QuickFixAction.registerQuickFixAction(errorResult, fix, null);
         return errorResult;
       }
     }
@@ -233,8 +241,8 @@ public class HighlightMethodUtil {
           textRange = new TextRange(0, 0);
         }
         HighlightInfo errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, message);
-        QuickFixAction.registerQuickFixAction(errorResult, new MethodThrowsFix(method, exception, false), null);
-        QuickFixAction.registerQuickFixAction(errorResult, new MethodThrowsFix(superMethod, exception, true, true), null);
+        QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createMethodThrowsFix(method, exception, false, false), null);
+        QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createMethodThrowsFix(superMethod, exception, true, true), null);
         return errorResult;
       }
     }
@@ -326,15 +334,8 @@ public class HighlightMethodUtil {
 
     String description = JavaErrorMessages.message("exception.is.never.thrown", HighlightUtil.formatType(exceptionType));
     HighlightInfo errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.UNUSED_THROWS_DECL, referenceElement, description);
-    List<IntentionAction> options = new ArrayList<IntentionAction>();
-    options.add(new EditInspectionToolsSettingsAction(HighlightDisplayKey.UNUSED_THROWS_DECL));
-    options.add(new AddNoInspectionDocTagAction(HighlightDisplayKey.UNUSED_THROWS_DECL, method.getBody()));
-    options.add(new AddNoInspectionForClassAction(HighlightDisplayKey.UNUSED_THROWS_DECL, method.getBody()));
-    options.add(new AddNoInspectionAllForClassAction(method.getBody()));
-    options.add(new AddSuppressWarningsAnnotationAction(HighlightDisplayKey.UNUSED_THROWS_DECL, method.getBody()));
-    options.add(new AddSuppressWarningsAnnotationForClassAction(HighlightDisplayKey.UNUSED_THROWS_DECL, method.getBody()));
-    options.add(new AddSuppressWarningsAnnotationForAllAction(method.getBody()));
-    QuickFixAction.registerQuickFixAction(errorResult, new MethodThrowsFix(method, exceptionType, false), options);
+    List<IntentionAction> options = IntentionManager.getInstance(method.getProject()).getStandardIntentionOptions(HighlightDisplayKey.UNUSED_THROWS_DECL,method.getBody());
+    QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createMethodThrowsFix(method, exceptionType, false, false), options);
     return errorResult;
   }
 
@@ -683,7 +684,8 @@ public class HighlightMethodUtil {
                                                       JavaErrorMessages.message("missing.method.body"));
       if (HighlightUtil.getIncompatibleModifier(PsiModifier.ABSTRACT, method.getModifierList(),
                                                 HighlightUtil.ourMethodIncompatibleModifiers) == null) {
-        QuickFixAction.registerQuickFixAction(errorResult, new ModifierFix(method, PsiModifier.ABSTRACT, true), null);
+        IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(method.getModifierList(), PsiModifier.ABSTRACT, true, false);
+        QuickFixAction.registerQuickFixAction(errorResult, fix, null);
       }
       QuickFixAction.registerQuickFixAction(errorResult, new AddMethodBodyFix(method), null);
     }
@@ -703,10 +705,12 @@ public class HighlightMethodUtil {
                                                       elementToHighlight,
                                                       JavaErrorMessages.message("abstract.method.in.non.abstract.class"));
       if (method.getBody() != null) {
-        QuickFixAction.registerQuickFixAction(errorResult, new ModifierFix(method, PsiModifier.ABSTRACT, false), null);
+        IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(method.getModifierList(), PsiModifier.ABSTRACT, false, false);
+        QuickFixAction.registerQuickFixAction(errorResult, fix, null);
       }
       QuickFixAction.registerQuickFixAction(errorResult, new AddMethodBodyFix(method), null);
-      QuickFixAction.registerQuickFixAction(errorResult, new ModifierFix(aClass, PsiModifier.ABSTRACT, true), null);
+      IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(aClass.getModifierList(), PsiModifier.ABSTRACT, true, false);
+      QuickFixAction.registerQuickFixAction(errorResult, fix, null);
     }
     return errorResult;
   }
@@ -776,7 +780,8 @@ public class HighlightMethodUtil {
       HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, message);
       QuickFixAction.registerQuickFixAction(info, new DeleteMethodBodyFix(method), null);
       if (method.hasModifierProperty(PsiModifier.ABSTRACT) && aClass != null && !aClass.isInterface()) {
-        QuickFixAction.registerQuickFixAction(info, new ModifierFix(method, PsiModifier.ABSTRACT, false), null);
+        IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(method.getModifierList(), PsiModifier.ABSTRACT, false, false);
+        QuickFixAction.registerQuickFixAction(info, fix, null);
       }
       return info;
     }
@@ -839,7 +844,7 @@ public class HighlightMethodUtil {
     HighlightInfo info = HighlightClassUtil.checkBaseClassDefaultConstructorProblem(aClass, refCountHolder, textRange, handledExceptions);
     if (info != null) {
       QuickFixAction.registerQuickFixAction(info, new InsertSuperFix(constructor), null);
-      QuickFixAction.registerQuickFixAction(info, new AddDefaultConstructorFix(aClass.getSuperClass()), null);
+      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createAddDefaultConstructorFix(aClass.getSuperClass()), null);
     }
     return info;
   }
@@ -902,11 +907,14 @@ public class HighlightMethodUtil {
                                                                       textRange,
                                                                       message);
       if (!isSuperMethodStatic || HighlightUtil.getIncompatibleModifier(PsiModifier.STATIC, modifierList) == null) {
-        QuickFixAction.registerQuickFixAction(highlightInfo, new ModifierFix(method, PsiModifier.STATIC, isSuperMethodStatic), null);
+        IntentionAction fix =
+          QUICK_FIX_FACTORY.createModifierListFix(method.getModifierList(), PsiModifier.STATIC, isSuperMethodStatic, false);
+        QuickFixAction.registerQuickFixAction(highlightInfo, fix, null);
       }
       if (manager.isInProject(superMethod) &&
           (!isMethodStatic || HighlightUtil.getIncompatibleModifier(PsiModifier.STATIC, superModifierList) == null)) {
-        QuickFixAction.registerQuickFixAction(highlightInfo, new ModifierFix(superMethod, PsiModifier.STATIC, isMethodStatic, true), null);
+        IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(superMethod.getModifierList(), PsiModifier.STATIC, isMethodStatic, true);
+        QuickFixAction.registerQuickFixAction(highlightInfo, fix, null);
       }
       return highlightInfo;
     }
@@ -1007,7 +1015,7 @@ public class HighlightMethodUtil {
 
     if (errorDescription != null) {
       // show error info at the class level
-      TextRange textRange = ClassUtil.getClassDeclarationTextRange(aClass);
+      TextRange textRange = com.intellij.codeInsight.ClassUtil.getClassDeclarationTextRange(aClass);
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                textRange,
                                                errorDescription);
@@ -1033,18 +1041,11 @@ public class HighlightMethodUtil {
         String description = JavaErrorMessages.message("overrides.deprecated.method",
                                                        HighlightMessageUtil.getSymbolName(aClass, PsiSubstitutor.EMPTY));
         HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.DEPRECATED, methodName, description);
-        List<IntentionAction> options = new ArrayList<IntentionAction>();
-        options.add(new EditInspectionToolsSettingsAction(HighlightDisplayKey.DEPRECATED_SYMBOL));
-        options.add(new AddNoInspectionDocTagAction(HighlightDisplayKey.DEPRECATED_SYMBOL, method));
-        options.add(new AddNoInspectionForClassAction(HighlightDisplayKey.DEPRECATED_SYMBOL, method));
-        options.add(new AddNoInspectionAllForClassAction(method));
-        options.add(new AddSuppressWarningsAnnotationAction(HighlightDisplayKey.DEPRECATED_SYMBOL, method));
-        options.add(new AddSuppressWarningsAnnotationForClassAction(HighlightDisplayKey.DEPRECATED_SYMBOL, method));
-        options.add(new AddSuppressWarningsAnnotationForAllAction(method));
+        List<IntentionAction> options = IntentionManager.getInstance(method.getProject()).getStandardIntentionOptions(HighlightDisplayKey.DEPRECATED_SYMBOL,method);
         QuickFixAction
           .registerQuickFixAction(highlightInfo,
                                   new EmptyIntentionAction(HighlightDisplayKey.getDisplayNameByKey(HighlightDisplayKey.DEPRECATED_SYMBOL),
-                                                           options), options);
+                                                                                              options), options);
         return highlightInfo;
       }
     }
@@ -1070,7 +1071,7 @@ public class HighlightMethodUtil {
                                                                     textRange,
                                                                     description);
     for (PsiClassType exception : unhandled) {
-      QuickFixAction.registerQuickFixAction(highlightInfo, new MethodThrowsFix(method, exception, true), null);
+      QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createMethodThrowsFix(method, exception, true, false), null);
     }
     return highlightInfo;
   }

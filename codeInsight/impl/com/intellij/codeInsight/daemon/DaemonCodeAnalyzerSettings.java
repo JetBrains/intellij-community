@@ -22,6 +22,7 @@ public class DaemonCodeAnalyzerSettings implements NamedJDOMExternalizable, Clon
   @NonNls public static final String PROFILE_COPY_NAME = "copy";
 
 
+  @SuppressWarnings({"RedundantNoArgConstructor"})
   public DaemonCodeAnalyzerSettings() {
   }
 

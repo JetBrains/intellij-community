@@ -38,6 +38,10 @@
     <component>
       <implementation-class>com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings</implementation-class>
     </component>
+    <component>
+      <interface-class>com.intellij.codeInsight.intention.QuickFixFactory</interface-class>
+      <implementation-class>com.intellij.codeInsight.intention.impl.config.QuickFixFactoryImpl</implementation-class>
+    </component>
   </application-components>
 
   <project-components>

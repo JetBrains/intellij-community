@@ -2,12 +2,15 @@ package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
+import com.intellij.codeInsight.daemon.impl.*;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInsight.intention.impl.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiElement;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,7 +55,7 @@ public class IntentionManagerImpl extends IntentionManager {
     registerIntentionAndMetaData(action, category, getDescriptionDirectoryName(action));
   }
 
-  private String getDescriptionDirectoryName(final IntentionAction action) {
+  private static String getDescriptionDirectoryName(final IntentionAction action) {
     final String fqn = action.getClass().getName();
     return fqn.substring(fqn.lastIndexOf('.') + 1);
   }
@@ -60,6 +63,19 @@ public class IntentionManagerImpl extends IntentionManager {
   public void registerIntentionAndMetaData(IntentionAction action, String[] category, String descriptionDirectoryName) {
     addAction(action);
     mySettings.registerIntentionMetaData(action, category, descriptionDirectoryName);
+  }
+
+  public List<IntentionAction> getStandardIntentionOptions(final HighlightDisplayKey displayKey, final PsiElement context) {
+    List<IntentionAction> options = new ArrayList<IntentionAction>();
+    options.add(new EditInspectionToolsSettingsAction(displayKey));
+    options.add(new AddNoInspectionCommentAction(displayKey, context));
+    options.add(new AddNoInspectionDocTagAction(displayKey, context));
+    options.add(new AddNoInspectionForClassAction(displayKey, context));
+    options.add(new AddNoInspectionAllForClassAction(context));
+    options.add(new AddSuppressWarningsAnnotationAction(displayKey, context));
+    options.add(new AddSuppressWarningsAnnotationForClassAction(displayKey, context));
+    options.add(new AddSuppressWarningsAnnotationForAllAction(context));
+    return options;
   }
 
   public void initComponent() { }

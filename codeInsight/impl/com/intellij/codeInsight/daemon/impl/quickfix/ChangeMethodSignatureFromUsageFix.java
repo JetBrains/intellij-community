@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -131,7 +132,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
       
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
-          QuickFixAction.markDocumentForUndo(file);
+          UndoManager.getInstance(file.getProject()).markDocumentForUndo(file);
         }
       });
     }

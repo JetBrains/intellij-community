@@ -12,11 +12,12 @@ import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.PsiReferenceProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiMatcherImpl;
@@ -25,6 +26,7 @@ import com.intellij.psi.util.PsiUtil;
 import java.util.*;
 
 public class HighlightControlFlowUtil {
+  private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
   //@top
   public static HighlightInfo checkMissingReturnStatement(PsiMethod method) {
     PsiCodeBlock body = method.getBody();
@@ -48,7 +50,8 @@ public class HighlightControlFlowUtil {
             context,
             JavaErrorMessages.message("missing.return.statement"));
         QuickFixAction.registerQuickFixAction(highlightInfo, new AddReturnFix(method), null);
-        QuickFixAction.registerQuickFixAction(highlightInfo, new MethodReturnFix(method, PsiType.VOID, false), null);
+        IntentionAction fix = QUICK_FIX_FACTORY.createMethodReturnFix(method, PsiType.VOID, false);
+        QuickFixAction.registerQuickFixAction(highlightInfo, fix, null);
         return highlightInfo;
       }
     }
@@ -238,7 +241,8 @@ public class HighlightControlFlowUtil {
           description);
       final PsiClass containingClass = field.getContainingClass();
       if (containingClass != null && !containingClass.isInterface()) {
-        QuickFixAction.registerQuickFixAction(highlightInfo, new ModifierFix(field, PsiModifier.FINAL, false), null);
+        IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(field.getModifierList(), PsiModifier.FINAL, false, false);
+        QuickFixAction.registerQuickFixAction(highlightInfo, fix, null);
       }
       QuickFixAction.registerQuickFixAction(highlightInfo, new AddVariableInitializerFix(field),null);
       return highlightInfo;
@@ -419,7 +423,7 @@ public class HighlightControlFlowUtil {
       public boolean execute(PsiReference reference) {
         final PsiElement element = reference.getElement();
         if (element instanceof PsiReferenceExpression) {
-          myIsWriteRefFound = myIsWriteRefFound || PsiUtil.isAccessedForWriting((PsiExpression)element);
+          myIsWriteRefFound |= PsiUtil.isAccessedForWriting((PsiExpression)element);
         }
         return !myIsWriteRefFound;
       }
@@ -527,7 +531,8 @@ public class HighlightControlFlowUtil {
           HighlightInfoType.ERROR,
           expression,
           description);
-      QuickFixAction.registerQuickFixAction(highlightInfo, new ModifierFix(variable, PsiModifier.FINAL, false), null);
+      IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(variable.getModifierList(), PsiModifier.FINAL, false, false);
+      QuickFixAction.registerQuickFixAction(highlightInfo, fix, null);
       QuickFixAction.registerQuickFixAction(highlightInfo, new DeferFinalAssignmentFix(variable, expression), null);
       return highlightInfo;
     }
@@ -558,7 +563,8 @@ public class HighlightControlFlowUtil {
           HighlightInfoType.ERROR,
           expression,
           description);
-      QuickFixAction.registerQuickFixAction(highlightInfo, new ModifierFix((PsiVariable)resolved, PsiModifier.FINAL, false), null);
+      IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(((PsiVariable)resolved).getModifierList(), PsiModifier.FINAL, false, false);
+      QuickFixAction.registerQuickFixAction(highlightInfo, fix, null);
       return highlightInfo;
     }
     return null;
@@ -599,7 +605,8 @@ public class HighlightControlFlowUtil {
           description);
       final PsiClass innerClass = getInnerClassVariableReferencedFrom(variable, expression);
       if (innerClass == null || variable instanceof PsiField) {
-        QuickFixAction.registerQuickFixAction(highlightInfo, new ModifierFix(variable, PsiModifier.FINAL, false), null);
+        IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(variable.getModifierList(), PsiModifier.FINAL, false, false);
+        QuickFixAction.registerQuickFixAction(highlightInfo, fix, null);
       }
       else {
         QuickFixAction.registerQuickFixAction(highlightInfo, new VariableAccessFromInnerClassFix(variable, innerClass), null);

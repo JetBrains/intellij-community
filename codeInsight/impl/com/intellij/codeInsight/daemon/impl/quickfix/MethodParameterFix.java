@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -29,8 +30,8 @@ public class MethodParameterFix implements IntentionAction {
   private final boolean myFixWholeHierarchy;
 
   public MethodParameterFix(PsiMethod method, PsiType type, int index, boolean fixWholeHierarchy) {
-    this.myMethod = method;
-    this.myParameterType = type;
+    myMethod = method;
+    myParameterType = type;
     myIndex = index;
     myFixWholeHierarchy = fixWholeHierarchy;
   }
@@ -79,7 +80,7 @@ public class MethodParameterFix implements IntentionAction {
       }
 
 
-      QuickFixAction.markDocumentForUndo(file);
+      UndoManager.getInstance(file.getProject()).markDocumentForUndo(file);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);

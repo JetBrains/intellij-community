@@ -6,6 +6,7 @@ import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -74,7 +75,7 @@ public class ExtendsListFix implements IntentionAction {
 
   public void invoke(Project project, Editor editor, PsiFile file) {
     invokeImpl();
-    QuickFixAction.markDocumentForUndo(file);
+    UndoManager.getInstance(file.getProject()).markDocumentForUndo(file);
   }
 
   /**

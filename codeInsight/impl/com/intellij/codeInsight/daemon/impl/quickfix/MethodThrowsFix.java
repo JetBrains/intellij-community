@@ -6,6 +6,7 @@ import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -18,9 +19,6 @@ public class MethodThrowsFix implements IntentionAction {
   private final boolean myShouldThrow;
   private final boolean myShowContainingClass;
 
-  public MethodThrowsFix(PsiMethod method, PsiClassType exceptionClass, boolean shouldThrow) {
-    this(method, exceptionClass, shouldThrow, false);
-  }
   public MethodThrowsFix(PsiMethod method, PsiClassType exceptionClass, boolean shouldThrow, boolean showContainingClass) {
     myMethod = method;
     myThrowsClassType = exceptionClass;
@@ -67,7 +65,7 @@ public class MethodThrowsFix implements IntentionAction {
       if (myShouldThrow && !alreadyThrows) {
         myMethod.getThrowsList().add(myMethod.getManager().getElementFactory().createReferenceElementByType(myThrowsClassType));
       }
-      QuickFixAction.markDocumentForUndo(file);
+      UndoManager.getInstance(file.getProject()).markDocumentForUndo(file);
     } catch (IncorrectOperationException e) {
       LOG.error(e);
     }

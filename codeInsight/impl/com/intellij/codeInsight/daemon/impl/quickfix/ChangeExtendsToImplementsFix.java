@@ -18,8 +18,8 @@ public class ChangeExtendsToImplementsFix extends ExtendsListFix {
 
   public String getText() {
     String text = QuickFixBundle.message("exchange.extends.implements.keyword",
-          (myClass.isInterface() == myClassToExtendFrom.isInterface() ? PsiKeyword.IMPLEMENTS : PsiKeyword.EXTENDS),
-          (myClass.isInterface() == myClassToExtendFrom.isInterface() ? PsiKeyword.EXTENDS : PsiKeyword.IMPLEMENTS),
+          myClass.isInterface() == myClassToExtendFrom.isInterface() ? PsiKeyword.IMPLEMENTS : PsiKeyword.EXTENDS,
+          myClass.isInterface() == myClassToExtendFrom.isInterface() ? PsiKeyword.EXTENDS : PsiKeyword.IMPLEMENTS,
           myClassToExtendFrom.getQualifiedName());
     return text;
   }

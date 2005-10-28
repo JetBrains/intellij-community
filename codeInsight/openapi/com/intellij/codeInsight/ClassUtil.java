@@ -1,15 +1,13 @@
 /**
  * @author Alexey
  */
-package com.intellij.codeInsight.daemon.impl.analysis;
+package com.intellij.codeInsight;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.HierarchicalMethodSignature;
 
-import java.util.List;
-import java.util.Set;
 import java.util.Collection;
+import java.util.List;
 
 public class ClassUtil {
   public static PsiMethod getAnyAbstractMethod(PsiClass aClass, Collection<HierarchicalMethodSignature> allMethodsCollection) {

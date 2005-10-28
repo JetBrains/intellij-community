@@ -18,6 +18,9 @@ import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.codeInsight.intention.IntentionManager;
+import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.lang.annotation.Annotation;
@@ -64,6 +67,7 @@ public class HighlightUtil {
   private static final Key<String> HAS_OVERFLOW_IN_CHILD = Key.create("HAS_OVERFLOW_IN_CHILD");
   private static final @NonNls String SERIAL_VERSION_UID_FIELD_NAME = "serialVersionUID";
   private static final @NonNls String SERIAL_PERSISTENT_FIELDS_FIELD_NAME = "serialPersistentFields";
+  private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
 
   private HighlightUtil() {}
 
@@ -248,7 +252,8 @@ public class HighlightUtil {
 
     PsiClass packageLocalClassInTheMiddle = getPackageLocalClassInTheMiddle(place);
     if (packageLocalClassInTheMiddle != null) {
-      QuickFixAction.registerQuickFixAction(errorResult, new ModifierFix(packageLocalClassInTheMiddle, PsiModifier.PUBLIC, true, true), null);
+      IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(packageLocalClassInTheMiddle.getModifierList(), PsiModifier.PUBLIC, true, true);
+      QuickFixAction.registerQuickFixAction(errorResult, fix, null);
       return;
     }
 
@@ -267,7 +272,8 @@ public class HighlightUtil {
         String modifier = modifiers[i];
         modifierListCopy.setModifierProperty(modifier, true);
         if (refElement.getManager().getResolveHelper().isAccessible(refElement, modifierListCopy, place, accessObjectClass, fileResolveScope)) {
-          QuickFixAction.registerQuickFixAction(errorResult, new ModifierFix(refElement, modifier, true, true), null);
+          IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(refElement.getModifierList(), modifier, true, true);
+          QuickFixAction.registerQuickFixAction(errorResult, fix, null);
         }
       }
     }
@@ -542,13 +548,15 @@ public class HighlightUtil {
         if (isMethodVoid) {
           description = JavaErrorMessages.message("return.from.void.method");
           errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, statement, description);
-          QuickFixAction.registerQuickFixAction(errorResult, new MethodReturnFix(method, returnValue.getType(), false), null);
+          IntentionAction fix = QUICK_FIX_FACTORY.createMethodReturnFix(method, returnValue.getType(), false);
+          QuickFixAction.registerQuickFixAction(errorResult, fix, null);
         }
         else {
           PsiType valueType = returnValue.getType();
           errorResult = checkAssignability(returnType, valueType, returnValue, statement);
           if (errorResult != null) {
-            QuickFixAction.registerQuickFixAction(errorResult, new MethodReturnFix(method, returnValue.getType(), false), null);
+            IntentionAction fix = QUICK_FIX_FACTORY.createMethodReturnFix(method, returnValue.getType(), false);
+            QuickFixAction.registerQuickFixAction(errorResult, fix, null);
           }
         }
         navigationShift = returnValue.getStartOffsetInParent();
@@ -557,7 +565,8 @@ public class HighlightUtil {
         if (!isMethodVoid) {
           description = JavaErrorMessages.message("missing.return.value");
           errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, statement, description);
-          QuickFixAction.registerQuickFixAction(errorResult, new MethodReturnFix(method, PsiType.VOID, false), null);
+          IntentionAction fix = QUICK_FIX_FACTORY.createMethodReturnFix(method, PsiType.VOID, false);
+          QuickFixAction.registerQuickFixAction(errorResult, fix, null);
           navigationShift = PsiKeyword.RETURN.length();
         }
       }
@@ -596,7 +605,7 @@ public class HighlightUtil {
       }
     }
     else if (variable instanceof PsiField) {
-      PsiField field = ((PsiField)variable);
+      PsiField field = (PsiField)variable;
       PsiClass aClass = field.getContainingClass();
       if (aClass == null) return null;
       PsiField fieldByName = aClass.findFieldByName(name, false);
@@ -741,7 +750,8 @@ public class HighlightUtil {
       String message = JavaErrorMessages.message("incompatible.modifiers", modifier, incompatible);
 
       highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, keyword, message);
-      QuickFixAction.registerQuickFixAction(highlightInfo, new ModifierFix(modifierList, modifier, false), null);
+
+      QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createModifierListFix(modifierList, modifier, false, false), null);
     }
     return highlightInfo;
   }
@@ -857,7 +867,7 @@ public class HighlightUtil {
       HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                                       keyword,
                                                                       message);
-      QuickFixAction.registerQuickFixAction(highlightInfo, new ModifierFix(modifierList, modifier, false), null);
+      QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createModifierListFix(modifierList, modifier, false, false), null);
       return highlightInfo;
     }
     return null;
@@ -1051,13 +1061,14 @@ public class HighlightUtil {
       modifierList = ((PsiModifierListOwner)refElement).getModifierList();
     }
     if (modifierList != null) {
-      QuickFixAction.registerQuickFixAction(errorResult,
-                                            new ModifierFix(modifierList, PsiModifier.STATIC, true), null);
+      QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createModifierListFix(modifierList, PsiModifier.STATIC, true,
+                                                                                                 false), null);
     }
     // make context non static
     PsiModifierListOwner staticParent = PsiUtil.getEnclosingStaticElement(place, null);
     if (staticParent != null) {
-      QuickFixAction.registerQuickFixAction(errorResult, new ModifierFix(staticParent, PsiModifier.STATIC, false), null);
+      QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createModifierListFix(staticParent.getModifierList(), PsiModifier.STATIC, false,
+                                                                                                 false), null);
     }
   }
 
@@ -1610,15 +1621,7 @@ public class HighlightUtil {
     HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.SILLY_ASSIGNMENT,
                                                                     assignment,
                                                                     JavaErrorMessages.message("assignment.to.itself"));
-    List<IntentionAction> options = new ArrayList<IntentionAction>();
-    options.add(new EditInspectionToolsSettingsAction(HighlightDisplayKey.SILLY_ASSIGNMENT));
-    options.add(new AddNoInspectionCommentAction(HighlightDisplayKey.SILLY_ASSIGNMENT, assignment));
-    options.add(new AddNoInspectionDocTagAction(HighlightDisplayKey.SILLY_ASSIGNMENT, assignment));
-    options.add(new AddNoInspectionForClassAction(HighlightDisplayKey.SILLY_ASSIGNMENT, assignment));
-    options.add(new AddNoInspectionAllForClassAction(assignment));
-    options.add(new AddSuppressWarningsAnnotationAction(HighlightDisplayKey.SILLY_ASSIGNMENT, assignment));
-    options.add(new AddSuppressWarningsAnnotationForClassAction(HighlightDisplayKey.SILLY_ASSIGNMENT, assignment));
-    options.add(new AddSuppressWarningsAnnotationForAllAction(assignment));
+    List<IntentionAction> options = IntentionManager.getInstance(assignment.getProject()).getStandardIntentionOptions(HighlightDisplayKey.SILLY_ASSIGNMENT,assignment);
     QuickFixAction.registerQuickFixAction(highlightInfo, new EmptyIntentionAction(HighlightDisplayKey.getDisplayNameByKey(HighlightDisplayKey.SILLY_ASSIGNMENT), options), options);
     return highlightInfo;
   }
@@ -1900,15 +1903,7 @@ public class HighlightUtil {
                                                    HighlightMessageUtil.getSymbolName(resolved, result.getSubstitutor()));
 
     HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ACCESS_STATIC_VIA_INSTANCE, expr, description);
-    List<IntentionAction> options = new ArrayList<IntentionAction>();
-    options.add(new EditInspectionToolsSettingsAction(HighlightDisplayKey.ACCESS_STATIC_VIA_INSTANCE));
-    options.add(new AddNoInspectionCommentAction(HighlightDisplayKey.ACCESS_STATIC_VIA_INSTANCE, expr));
-    options.add(new AddNoInspectionDocTagAction(HighlightDisplayKey.ACCESS_STATIC_VIA_INSTANCE, expr));
-    options.add(new AddNoInspectionForClassAction(HighlightDisplayKey.ACCESS_STATIC_VIA_INSTANCE, expr));
-    options.add(new AddNoInspectionAllForClassAction(expr));
-    options.add(new AddSuppressWarningsAnnotationAction(HighlightDisplayKey.ACCESS_STATIC_VIA_INSTANCE, expr));
-    options.add(new AddSuppressWarningsAnnotationForClassAction(HighlightDisplayKey.ACCESS_STATIC_VIA_INSTANCE, expr));
-    options.add(new AddSuppressWarningsAnnotationForAllAction(expr));
+    List<IntentionAction> options = IntentionManager.getInstance(expr.getProject()).getStandardIntentionOptions(HighlightDisplayKey.ACCESS_STATIC_VIA_INSTANCE,expr);
     QuickFixAction.registerQuickFixAction(highlightInfo, new AccessStaticViaInstanceFix(expr, result), options);
     return highlightInfo;
   }
@@ -2106,15 +2101,7 @@ public class HighlightUtil {
 
     TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.DEPRECATED_ATTRIBUTES);
     HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.DEPRECATED, elementToHighlight.getTextRange(), description,attributes);
-    List<IntentionAction> options = new ArrayList<IntentionAction>();
-    options.add(new EditInspectionToolsSettingsAction(HighlightDisplayKey.DEPRECATED_SYMBOL));
-    options.add(new AddNoInspectionCommentAction(HighlightDisplayKey.DEPRECATED_SYMBOL, elementToHighlight));
-    options.add(new AddNoInspectionDocTagAction(HighlightDisplayKey.DEPRECATED_SYMBOL, elementToHighlight));
-    options.add(new AddNoInspectionForClassAction(HighlightDisplayKey.DEPRECATED_SYMBOL, elementToHighlight));
-    options.add(new AddNoInspectionAllForClassAction(elementToHighlight));
-    options.add(new AddSuppressWarningsAnnotationAction(HighlightDisplayKey.DEPRECATED_SYMBOL, elementToHighlight));
-    options.add(new AddSuppressWarningsAnnotationForClassAction(HighlightDisplayKey.DEPRECATED_SYMBOL, elementToHighlight));
-    options.add(new AddSuppressWarningsAnnotationForAllAction(elementToHighlight));
+    List<IntentionAction> options = IntentionManager.getInstance(elementToHighlight.getProject()).getStandardIntentionOptions(HighlightDisplayKey.DEPRECATED_SYMBOL,elementToHighlight);
     QuickFixAction.registerQuickFixAction(highlightInfo, new EmptyIntentionAction(HighlightDisplayKey.getDisplayNameByKey(HighlightDisplayKey.DEPRECATED_SYMBOL), options), options);
     return highlightInfo;
   }

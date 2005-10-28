@@ -6,6 +6,7 @@ import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiMatcherImpl;
 import com.intellij.util.IncorrectOperationException;
@@ -51,7 +52,7 @@ public class InsertSuperFix implements IntentionAction {
                 .dot(PsiMatcherImpl.hasText("("))
                 .getElement();
       editor.getCaretModel().moveToOffset(lBrace.getTextOffset()+1);
-      QuickFixAction.markDocumentForUndo(file);
+      UndoManager.getInstance(file.getProject()).markDocumentForUndo(file);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);

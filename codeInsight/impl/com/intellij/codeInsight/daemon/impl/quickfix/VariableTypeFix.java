@@ -6,6 +6,7 @@ import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.psi.GenericsUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiType;
@@ -51,7 +52,7 @@ public class VariableTypeFix implements IntentionAction {
       myVariable.normalizeDeclaration();
       myVariable.getTypeElement().replace(file.getManager().getElementFactory().createTypeElement(myReturnType));
       CodeStyleManager.getInstance(project).shortenClassReferences(myVariable);
-      QuickFixAction.markDocumentForUndo(file);
+      UndoManager.getInstance(file.getProject()).markDocumentForUndo(file);
     } catch (IncorrectOperationException e) {
       LOG.error(e);
     }

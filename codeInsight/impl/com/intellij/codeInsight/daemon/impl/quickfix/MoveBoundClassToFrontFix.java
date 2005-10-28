@@ -6,6 +6,7 @@ import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiFile;
@@ -40,7 +41,7 @@ public class MoveBoundClassToFrontFix extends ExtendsListFix {
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
-    QuickFixAction.markDocumentForUndo(file);
+    UndoManager.getInstance(file.getProject()).markDocumentForUndo(file);
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {

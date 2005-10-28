@@ -1,11 +1,11 @@
-package com.intellij.codeInsight.daemon.impl;
+package com.intellij.codeInsight.intention;
 
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -17,7 +17,7 @@ public class EmptyIntentionAction implements IntentionAction{
   private String myName;
   private List<IntentionAction> myOptions;
 
-  public EmptyIntentionAction(final String name, List<IntentionAction> options) {
+  public EmptyIntentionAction(@NotNull final String name, @NotNull List<IntentionAction> options) {
     myName = name;
     myOptions = options;
   }

@@ -6,6 +6,9 @@ import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.codeInsight.intention.IntentionManager;
+import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -29,6 +32,7 @@ import java.util.*;
 public abstract class GenericsHighlightUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil");
   private static final String GENERICS_ARE_NOT_SUPPORTED = JavaErrorMessages.message("generics.are.not.supported");
+  private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
 
   public static HighlightInfo checkInferredTypeArguments(PsiMethod genericMethod,
                                                          PsiMethodCallExpression call,
@@ -146,7 +150,7 @@ public abstract class GenericsHighlightUtil {
                                                                                   typeElement,
                                                                                   description);
             if (bound instanceof PsiClassType) {
-              QuickFixAction.registerQuickFixAction(highlightInfo, new ExtendsListFix(referenceClass, (PsiClassType)bound, true), null);
+              QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createExtendsListFix(referenceClass, (PsiClassType)bound, true), null);
             }
             return highlightInfo;
           }
@@ -202,7 +206,7 @@ public abstract class GenericsHighlightUtil {
     final PsiClassType[] types = aClass.getSuperTypes();
     if (types.length < 2) return null;
     Map<PsiClass, PsiSubstitutor> inheritedClasses = new HashMap<PsiClass, PsiSubstitutor>();
-    final TextRange textRange = ClassUtil.getClassDeclarationTextRange(aClass);
+    final TextRange textRange = com.intellij.codeInsight.ClassUtil.getClassDeclarationTextRange(aClass);
     return checkInterfaceMultipleInheritance(aClass,
                                              PsiSubstitutor.EMPTY, inheritedClasses,
                                              new HashSet<PsiClass>(), textRange);
@@ -313,7 +317,7 @@ public abstract class GenericsHighlightUtil {
           "generics.methods.have.same.erasure.override",
           HighlightMethodUtil.createClashMethodMessage(method1, superMethod, true)
         );
-        TextRange textRange = ClassUtil.getClassDeclarationTextRange(aClass);
+        TextRange textRange = com.intellij.codeInsight.ClassUtil.getClassDeclarationTextRange(aClass);
         classHighliht = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, descr);
       }
     }
@@ -415,15 +419,7 @@ public abstract class GenericsHighlightUtil {
     HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.UNCHECKED_WARNING,
                                                                     elementToHighlight,
                                                                     description);
-    List<IntentionAction> options = new ArrayList<IntentionAction>();
-    options.add(new EditInspectionToolsSettingsAction(HighlightDisplayKey.UNCHECKED_WARNING));
-    options.add(new AddNoInspectionCommentAction(HighlightDisplayKey.UNCHECKED_WARNING, elementToHighlight));
-    options.add(new AddNoInspectionDocTagAction(HighlightDisplayKey.UNCHECKED_WARNING, elementToHighlight));
-    options.add(new AddNoInspectionForClassAction(HighlightDisplayKey.UNCHECKED_WARNING, elementToHighlight));
-    options.add(new AddNoInspectionAllForClassAction(elementToHighlight));
-    options.add(new AddSuppressWarningsAnnotationAction(HighlightDisplayKey.UNCHECKED_WARNING, elementToHighlight));
-    options.add(new AddSuppressWarningsAnnotationForClassAction(HighlightDisplayKey.UNCHECKED_WARNING, elementToHighlight));
-    options.add(new AddSuppressWarningsAnnotationForAllAction(elementToHighlight));
+    List<IntentionAction> options = IntentionManager.getInstance(elementToHighlight.getProject()).getStandardIntentionOptions(HighlightDisplayKey.UNCHECKED_WARNING,elementToHighlight);
     QuickFixAction.registerQuickFixAction(highlightInfo, new GenerifyFileFix(elementToHighlight.getContainingFile()), options);
     return highlightInfo;
   }
@@ -457,15 +453,7 @@ public abstract class GenericsHighlightUtil {
       HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.UNCHECKED_WARNING,
                                                                       typeCast,
                                                                       description);
-      List<IntentionAction> options = new ArrayList<IntentionAction>();
-      options.add(new EditInspectionToolsSettingsAction(HighlightDisplayKey.UNCHECKED_WARNING));
-      options.add(new AddNoInspectionCommentAction(HighlightDisplayKey.UNCHECKED_WARNING, expression));
-      options.add(new AddNoInspectionDocTagAction(HighlightDisplayKey.UNCHECKED_WARNING, expression));
-      options.add(new AddNoInspectionForClassAction(HighlightDisplayKey.UNCHECKED_WARNING, expression));
-      options.add(new AddNoInspectionAllForClassAction(expression));
-      options.add(new AddSuppressWarningsAnnotationAction(HighlightDisplayKey.UNCHECKED_WARNING, expression));
-      options.add(new AddSuppressWarningsAnnotationForClassAction(HighlightDisplayKey.UNCHECKED_WARNING, expression));
-      options.add(new AddSuppressWarningsAnnotationForAllAction(expression));
+      List<IntentionAction> options = IntentionManager.getInstance(expression.getProject()).getStandardIntentionOptions(HighlightDisplayKey.UNCHECKED_WARNING,expression);
       QuickFixAction.registerQuickFixAction(highlightInfo, new GenerifyFileFix(expression.getContainingFile()), options);
       return highlightInfo;
     }
@@ -594,15 +582,7 @@ public abstract class GenericsHighlightUtil {
                              : call;
         if (InspectionManagerEx.inspectionResultSuppressed(call, HighlightDisplayKey.UNCHECKED_WARNING.getID())) return null;
         HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.UNCHECKED_WARNING, element, description);
-        List<IntentionAction> options = new ArrayList<IntentionAction>();
-        options.add(new EditInspectionToolsSettingsAction(HighlightDisplayKey.UNCHECKED_WARNING));
-        options.add(new AddNoInspectionCommentAction(HighlightDisplayKey.UNCHECKED_WARNING, call));
-        options.add(new AddNoInspectionDocTagAction(HighlightDisplayKey.UNCHECKED_WARNING, call));
-        options.add(new AddNoInspectionForClassAction(HighlightDisplayKey.UNCHECKED_WARNING, call));
-        options.add(new AddNoInspectionAllForClassAction(call));
-        options.add(new AddSuppressWarningsAnnotationAction(HighlightDisplayKey.UNCHECKED_WARNING, call));
-        options.add(new AddSuppressWarningsAnnotationForClassAction(HighlightDisplayKey.UNCHECKED_WARNING, call));
-        options.add(new AddSuppressWarningsAnnotationForAllAction(call));
+        List<IntentionAction> options = IntentionManager.getInstance(call.getProject()).getStandardIntentionOptions(HighlightDisplayKey.UNCHECKED_WARNING,call);
         QuickFixAction.registerQuickFixAction(highlightInfo, new GenerifyFileFix(element.getContainingFile()), options);
         return highlightInfo;
       }
@@ -967,15 +947,7 @@ public abstract class GenericsHighlightUtil {
 
         final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.UNCHECKED_WARNING,
                                                                               overrider.getReturnTypeElement(), message);
-        List<IntentionAction> options = new ArrayList<IntentionAction>();
-
-        options.add(new EditInspectionToolsSettingsAction(HighlightDisplayKey.UNCHECKED_WARNING));
-        options.add(new AddNoInspectionDocTagAction(HighlightDisplayKey.UNCHECKED_WARNING, overrider.getReturnTypeElement()));
-        options.add(new AddNoInspectionForClassAction(HighlightDisplayKey.UNCHECKED_WARNING, overrider.getReturnTypeElement()));
-        options.add(new AddNoInspectionAllForClassAction(overrider.getReturnTypeElement()));
-        options.add(new AddSuppressWarningsAnnotationAction(HighlightDisplayKey.UNCHECKED_WARNING, overrider.getReturnTypeElement()));
-        options.add(new AddSuppressWarningsAnnotationForClassAction(HighlightDisplayKey.UNCHECKED_WARNING, overrider.getReturnTypeElement()));
-        options.add(new AddSuppressWarningsAnnotationForAllAction(overrider.getReturnTypeElement()));
+        List<IntentionAction> options = IntentionManager.getInstance(overrider.getProject()).getStandardIntentionOptions(HighlightDisplayKey.UNCHECKED_WARNING,overrider.getReturnTypeElement());
         QuickFixAction.registerQuickFixAction(highlightInfo,
                                               new EmptyIntentionAction(JavaErrorMessages.message("unchecked.overriding"), options),
                                               options);
@@ -991,7 +963,7 @@ public abstract class GenericsHighlightUtil {
     PsiElement parent = aClass.getParent();
     if (!(parent instanceof PsiClass || parent instanceof PsiFile)) {
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
-                                               ClassUtil.getClassDeclarationTextRange(aClass),
+                                               com.intellij.codeInsight.ClassUtil.getClassDeclarationTextRange(aClass),
                                                JavaErrorMessages.message("local.enum"));
     }
     return null;

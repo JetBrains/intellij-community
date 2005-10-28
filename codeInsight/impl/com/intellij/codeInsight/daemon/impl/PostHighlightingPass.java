@@ -12,6 +12,8 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.IntentionManager;
+import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionProfile;
@@ -249,15 +251,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     if (InspectionManagerEx.inspectionResultSuppressed(identifier, HighlightDisplayKey.UNUSED_SYMBOL.getID())) return null;
     PsiElement parent = identifier.getParent();
     if (PsiUtil.hasErrorElementChild(parent)) return null;
-    List<IntentionAction> options = new ArrayList<IntentionAction>();
-    options.add(new EditInspectionToolsSettingsAction(HighlightDisplayKey.UNUSED_SYMBOL));
-    options.add(new AddNoInspectionCommentAction(HighlightDisplayKey.UNUSED_SYMBOL, identifier));
-    options.add(new AddNoInspectionDocTagAction(HighlightDisplayKey.UNUSED_SYMBOL, identifier));
-    options.add(new AddNoInspectionForClassAction(HighlightDisplayKey.UNUSED_SYMBOL, identifier));
-    options.add(new AddNoInspectionAllForClassAction(identifier));
-    options.add(new AddSuppressWarningsAnnotationAction(HighlightDisplayKey.UNUSED_SYMBOL, identifier));
-    options.add(new AddSuppressWarningsAnnotationForClassAction(HighlightDisplayKey.UNUSED_SYMBOL, identifier));
-    options.add(new AddSuppressWarningsAnnotationForAllAction(identifier));
+    List<IntentionAction> options = IntentionManager.getInstance(myProject).getStandardIntentionOptions(HighlightDisplayKey.UNUSED_SYMBOL, identifier);
     HighlightInfo info;
     InspectionProfile.UnusedSymbolSettings unusedSymbolSettings = profile.getUnusedSymbolSettings();
     if (parent instanceof PsiLocalVariable && unusedSymbolSettings.LOCAL_VARIABLE) {

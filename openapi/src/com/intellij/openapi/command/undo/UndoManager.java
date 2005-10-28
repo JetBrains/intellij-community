@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
 
 public abstract class UndoManager {
   public static UndoManager getInstance(Project project) {
@@ -45,4 +46,9 @@ public abstract class UndoManager {
   public abstract void clearUndoRedoQueue(Document document);
 
   public abstract void dropHistory();
+
+  /**
+   * make undoable action in current document in order to Undo action work from current file
+   */
+  public abstract void markDocumentForUndo(PsiFile file);
 }

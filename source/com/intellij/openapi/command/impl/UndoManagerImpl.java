@@ -25,6 +25,8 @@ import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.containers.HashSet;
 import com.intellij.CommonBundle;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiDocumentManager;
 
 import java.util.*;
 
@@ -512,6 +514,23 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     }
     return null;
 
+  }
+
+  public void markDocumentForUndo(PsiFile file) {
+    Project project = file.getProject();
+    final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+    final DocumentReference ref = DocumentReferenceByDocument.createDocumentReference(document);
+    undoableActionPerformed(new UndoableAction() {
+      public void undo() {}
+
+      public void redo() {}
+
+      public DocumentReference[] getAffectedDocuments() {
+        return new DocumentReference[] {ref};
+      }
+
+      public boolean isComplex() { return false; }
+    });
   }
 
 

@@ -15,8 +15,12 @@
  */
 package com.intellij.codeInsight.intention;
 
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
+
+import java.util.List;
 
 /**
  * Manager for intentions. All intentions must be registered here.
@@ -26,7 +30,6 @@ public abstract class IntentionManager implements ProjectComponent {
   /**
    * Returns instance of <code>IntententionManager</code> for given project.
    * @param project
-   * @return
    */
   public static IntentionManager getInstance(Project project){
     return project.getComponent(IntentionManager.class);
@@ -51,4 +54,11 @@ public abstract class IntentionManager implements ProjectComponent {
    */
   @Deprecated
   public abstract void registerIntentionAndMetaData(IntentionAction action, String[] category, String descriptionDirectoryName);
+
+  /**
+   * @return actions used as additional options for the given problem.
+   * E.g. actions for suppress the problem via comment, javadoc or annotation,
+   * and edit corresponding inspection settings.   
+   */
+  public abstract List<IntentionAction> getStandardIntentionOptions(final HighlightDisplayKey displayKey, PsiElement context);
 }
