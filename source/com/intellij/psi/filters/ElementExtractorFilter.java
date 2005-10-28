@@ -38,7 +38,6 @@ public class ElementExtractorFilter implements ElementFilter{
     if(element instanceof CandidateInfo) {
       final CandidateInfo candidateInfo = (CandidateInfo)element;
       final PsiElement psiElement = candidateInfo.getElement();
-      if (psiElement != null) psiElement.putUserData(SUBSTITUTOR, candidateInfo.getSubstitutor());
       
       return myFilter.isAcceptable(psiElement, context);
     }

@@ -51,8 +51,6 @@ public class AssignableFromFilter implements ElementFilter{
       final CandidateInfo info = (CandidateInfo)element;
       substitutor = info.getSubstitutor();
       element = info.getElement();
-    } else if (element instanceof PsiElement) {
-      substitutor = ((PsiElement)element).getUserData(SUBSTITUTOR);
     }
 
     if(element instanceof PsiMethod){
