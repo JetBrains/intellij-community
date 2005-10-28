@@ -359,6 +359,8 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
     if (oldIdentifier == null) {
       throw new IncorrectOperationException();
     }
+    final String oldRefName = oldIdentifier.getText();
+    if (PsiKeyword.THIS.equals(oldRefName) || PsiKeyword.SUPER.equals(oldRefName)) return this;
     PsiIdentifier identifier = getManager().getElementFactory().createIdentifier(newElementName);
     oldIdentifier.replace(identifier);
     return this;

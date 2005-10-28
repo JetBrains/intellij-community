@@ -27,6 +27,10 @@ public class RenameClassTest extends MultiFileTestCase {
     doTest("a.Blubfoo", "BlubFoo");
   }
 
+  public void testConstructorJavadoc() throws Exception {
+    doTest("Test", "Test1");
+  }
+
   private void doTest(final String qClassName, final String newName) throws Exception {
     doTest(new PerformAction() {
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {

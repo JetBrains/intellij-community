@@ -119,7 +119,9 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   }
 
   public void prepareRenaming() {
-    if (myPrimaryElement instanceof PsiField) {
+    if (myPrimaryElement instanceof PsiClass) {
+      prepareClassRenaming((PsiClass) myPrimaryElement, myNewName);
+    } else if (myPrimaryElement instanceof PsiField) {
       prepareFieldRenaming((PsiField) myPrimaryElement, myNewName);
     } else if (myPrimaryElement instanceof PsiMethod) {
       prepareMethodRenaming((PsiMethod) myPrimaryElement, myNewName);
@@ -129,6 +131,13 @@ public class RenameProcessor extends BaseRefactoringProcessor {
       prepareDirectoryRenaming((PsiDirectory) myPrimaryElement, myNewName);
     } else if (myPrimaryElement instanceof Property) {
       preparePropertyRenaming((Property) myPrimaryElement, myNewName);
+    }
+  }
+
+  protected void prepareClassRenaming(final PsiClass aClass, final String newName) {
+    final PsiMethod[] constructors = aClass.getConstructors();
+    for (PsiMethod constructor : constructors) {
+      myAllRenames.put(constructor, newName);
     }
   }
 
