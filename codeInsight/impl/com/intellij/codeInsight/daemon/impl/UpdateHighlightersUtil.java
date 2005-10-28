@@ -110,6 +110,7 @@ public class UpdateHighlightersUtil {
 
       highlighter.setErrorStripeMarkColor(info.getErrorStripeMarkColor());
       highlighter.setErrorStripeTooltip(info);
+      highlighter.setGutterIconRenderer(info.getGutterIconRenderer());
 
       HashMap<TextRange, RangeMarker> ranges2markers = new HashMap<TextRange, RangeMarker>();
       ranges2markers.put(new TextRange(info.startOffset, info.endOffset), info.highlighter);
@@ -202,7 +203,6 @@ public class UpdateHighlightersUtil {
     switch (type) {
       case LineMarkerInfo.OVERRIDEN_METHOD:
       case LineMarkerInfo.SUBCLASSED_CLASS:
-      case LineMarkerInfo.BOUND_CLASS_OR_FIELD:
         return group == OVERRIDEN_MARKERS_GROUP;
 
       case LineMarkerInfo.OVERRIDING_METHOD:

@@ -59,10 +59,23 @@ public class FormClassAnnotator implements ApplicationComponent, Annotator {
         annotateFormField(field, boundForm, holder);
       }
     }
+    else if (psiElement instanceof PsiClass) {
+      PsiClass aClass = (PsiClass) psiElement;
+      if (aClass.getName() != null) {
+        final PsiFile[] formsBoundToClass = psiElement.getManager().getSearchHelper().findFormsBoundToClass(aClass.getQualifiedName());
+        if (formsBoundToClass.length > 0) {
+          Annotation boundClassAnnotation = holder.createInfoAnnotation(aClass.getNameIdentifier(), null);
+          boundClassAnnotation.setGutterIconRenderer(new BoundIconRenderer(aClass));
+        }
+      }
+    }
   }
 
   private void annotateFormField(final PsiField field, final PsiFile boundForm, final AnnotationHolder holder) {
     final List<IntentionAction> options = new ArrayList<IntentionAction>();
+
+    Annotation boundFieldAnnotation = holder.createInfoAnnotation(field, null);
+    boundFieldAnnotation.setGutterIconRenderer(new BoundIconRenderer(field));
 
     LOG.assertTrue(boundForm instanceof PsiPlainTextFile);
     final PsiType guiComponentType = ReferenceUtil.getGUIComponentType((PsiPlainTextFile)boundForm, field.getName());

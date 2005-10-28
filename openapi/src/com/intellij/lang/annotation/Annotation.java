@@ -18,6 +18,7 @@ package com.intellij.lang.annotation;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.editor.HighlighterColors;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.TextRange;
@@ -57,6 +58,7 @@ public final class Annotation {
   private Boolean myNeedsUpdateOnTyping = null;
   private String myTooltip;
   private boolean myAfterEndOfLine = false;
+  private GutterIconRenderer myGutterIconRenderer;
 
   /**
    * Creates an instance of the annotation.
@@ -272,5 +274,24 @@ public final class Annotation {
    */
   public void setAfterEndOfLine(final boolean afterEndOfLine) {
     myAfterEndOfLine = afterEndOfLine;
+  }
+
+  /**
+   * Gets the renderer used to draw the gutter icon in the region covered by the annotation.
+   *
+   * @return the gutter icon renderer instance.
+   */
+  @Nullable
+  public GutterIconRenderer getGutterIconRenderer() {
+    return myGutterIconRenderer;
+  }
+
+  /**
+   * Sets the renderer used to draw the gutter icon in the region covered by the annotation.
+   *
+   * @param gutterIconRenderer the gutter icon renderer instance.
+   */
+  public void setGutterIconRenderer(@Nullable final GutterIconRenderer gutterIconRenderer) {
+    myGutterIconRenderer = gutterIconRenderer;
   }
 }

@@ -181,6 +181,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   }
 
   public void visitClass(PsiClass aClass) {
+    super.visitClass(aClass);
     if (aClass instanceof JspClass) return;
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkInterfaceMultipleInheritance(aClass));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkMissingPackageStatement(aClass));

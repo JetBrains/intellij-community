@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -156,6 +157,8 @@ public class HighlightInfo {
   public List<Pair<Pair<IntentionAction, List<IntentionAction>>, TextRange>> quickFixActionRanges;
   public List<Pair<Pair<IntentionAction, List<IntentionAction>>, RangeMarker>> quickFixActionMarkers;
 
+  private GutterIconRenderer gutterIconRenderer;
+
   public HighlightInfo(HighlightInfoType type, int startOffset, int endOffset, String description, String toolTip) {
     this.type = type;
     this.startOffset = startOffset;
@@ -218,4 +221,11 @@ public class HighlightInfo {
     return createHighlightInfo(type, SourceTreeToPsiMap.treeElementToPsi(childByRole), localizedMessage);
   }
 
+  public GutterIconRenderer getGutterIconRenderer() {
+    return gutterIconRenderer;
+  }
+
+  public void setGutterIconRenderer(final GutterIconRenderer gutterIconRenderer) {
+    this.gutterIconRenderer = gutterIconRenderer;
+  }
 }

@@ -1,4 +1,3 @@
-
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.DaemonBundle;
@@ -34,7 +33,6 @@ public class LineMarkerInfo {
   public static final int OVERRIDEN_METHOD = 2;
   public static final int METHOD_SEPARATOR = 5;
   public static final int SUBCLASSED_CLASS = 6;
-  public static final int BOUND_CLASS_OR_FIELD = 7;
 
   public final int type;
   private Icon myIcon;
@@ -89,10 +87,6 @@ public class LineMarkerInfo {
       PsiClass aClass = (PsiClass)element;
       return getClassTooltip(aClass);
     }
-    else if (element instanceof PsiField) {
-      PsiField psiField = (PsiField)element;
-      return getFieldTooltip(psiField);
-    }
     return null;
   }
 
@@ -142,19 +136,6 @@ public class LineMarkerInfo {
     }
   }
 
-  private String getFieldTooltip(PsiField psiField) {
-    if (type == BOUND_CLASS_OR_FIELD) {
-      PsiSearchHelper helper = psiField.getManager().getSearchHelper();
-      PsiClass aClass = psiField.getContainingClass();
-      if (aClass != null && aClass.getQualifiedName() != null) {
-        PsiFile[] formFiles = helper.findFormsBoundToClass(aClass.getQualifiedName());
-        @NonNls final String pattern = "&nbsp;&nbsp;&nbsp;&nbsp;{0}";
-        return composeText(formFiles, DaemonBundle.message("ui.is.bound.header"), pattern);
-      }
-    }
-    return null;
-  }
-
   private String getClassTooltip(PsiClass aClass) {
     PsiManager manager = aClass.getManager();
     PsiSearchHelper helper = manager.getSearchHelper();
@@ -180,13 +161,6 @@ public class LineMarkerInfo {
                      : DaemonBundle.message("class.is.subclassed.by.header");
       @NonNls String pattern = "&nbsp;&nbsp;&nbsp;&nbsp;{0}";
       return composeText(subclasses, start, pattern);
-    }
-    else if (type == BOUND_CLASS_OR_FIELD) {
-      if (aClass.getQualifiedName() != null) {
-        PsiFile[] formFiles = helper.findFormsBoundToClass(aClass.getQualifiedName());
-        @NonNls final String pattern = "&nbsp;&nbsp;&nbsp;&nbsp;{0}";
-        return composeText(formFiles, DaemonBundle.message("ui.is.bound.header"), pattern);
-      }
     }
 
     return null;

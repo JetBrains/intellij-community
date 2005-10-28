@@ -2155,6 +2155,7 @@ public class HighlightUtil {
   public static HighlightInfo convertToHighlightInfo(Annotation annotation) {
     HighlightInfo info = new HighlightInfo(annotation.getTextAttributes(), convertType(annotation), annotation.getStartOffset(), annotation.getEndOffset(),
                                            annotation.getMessage(), annotation.getTooltip(), annotation.getSeverity(), annotation.isAfterEndOfLine(), annotation.needsUpdateOnTyping());
+    info.setGutterIconRenderer(annotation.getGutterIconRenderer());
     List<Annotation.QuickFixInfo> fixes = annotation.getQuickFixes();
     if (fixes != null) {
       for (Annotation.QuickFixInfo quickFixInfo : fixes) {

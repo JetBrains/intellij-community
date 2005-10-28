@@ -99,28 +99,6 @@ public class OverriddenMarkersPass extends TextEditorHighlightingPass {
       else if (element.getParent() instanceof PsiClass && !(element.getParent() instanceof PsiTypeParameter)) {
         collectInheritingClasses(element, helper, result);
       }
-      else if (element.getParent() instanceof PsiField) {
-        collectBoundForms(element, helper, result);
-      }
-    }
-  }
-
-  private static void collectBoundForms(PsiElement element, PsiSearchHelper helper, List<LineMarkerInfo> result) {
-    PsiField field = (PsiField)element.getParent();
-    PsiClass aClass = field.getContainingClass();
-    if (aClass != null && aClass.getQualifiedName() != null) {
-      PsiFile[] formFiles = helper.findFormsBoundToClass(aClass.getQualifiedName());
-      filesLoop:
-      for (PsiFile file : formFiles) {
-        PsiReference[] references = file.getReferences();
-        for (final PsiReference reference : references) {
-          if (reference.isReferenceTo(field)) {
-            int offset = element.getTextRange().getStartOffset();
-            result.add(new LineMarkerInfo(LineMarkerInfo.BOUND_CLASS_OR_FIELD, field, offset, Icons.UI_FORM_ICON));
-            break filesLoop;
-          }
-        }
-      }
     }
   }
 
@@ -141,14 +119,6 @@ public class OverriddenMarkersPass extends TextEditorHighlightingPass {
           LineMarkerInfo info = new LineMarkerInfo(LineMarkerInfo.SUBCLASSED_CLASS, aClass, offset, aClass.isInterface() ? IMPLEMENTED_INTERFACE_MARKER_RENDERER : SUBCLASSED_CLASS_MARKER_RENDERER);
 
           result.add(info);
-        }
-      }
-
-      if (aClass.getQualifiedName() != null) {
-        ProgressManager.getInstance().checkCanceled();
-        if (helper.findFormsBoundToClass(aClass.getQualifiedName()).length > 0) {
-          int offset = element.getTextRange().getStartOffset();
-          result.add(new LineMarkerInfo(LineMarkerInfo.BOUND_CLASS_OR_FIELD, aClass, offset, Icons.UI_FORM_ICON));
         }
       }
     }

@@ -5,16 +5,12 @@ import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.ide.util.MethodCellRenderer;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.ListPopup;
-import com.intellij.uiDesigner.editor.UIFormEditor;
 
 import javax.swing.*;
 import java.awt.*;
@@ -71,32 +67,6 @@ class LineMarkerNavigator {
         PsiClassListCellRenderer renderer = new PsiClassListCellRenderer();
         Arrays.sort(inheritors, renderer.getComparator());
         openTargets(e, inheritors, title, renderer);
-      } else if (info.type == LineMarkerInfo.BOUND_CLASS_OR_FIELD) {
-        openFormFile(helper, aClass, null, manager);
-      }
-    }
-    else if (element instanceof PsiField) {
-      PsiField field = (PsiField)element;
-      PsiClass aClass = field.getContainingClass();
-      PsiManager manager = aClass.getManager();
-      PsiSearchHelper helper = manager.getSearchHelper();
-      openFormFile(helper, aClass, field.getName(), manager);
-    }
-  }
-
-  private static void openFormFile(PsiSearchHelper helper, PsiClass aClass, String field, PsiManager manager) {
-    if (aClass.getQualifiedName() != null) {
-      PsiFile[] formFiles = helper.findFormsBoundToClass(aClass.getQualifiedName());
-      if (formFiles.length == 0) return;
-      VirtualFile virtualFile = formFiles[0].getVirtualFile();
-      Project project = manager.getProject();
-      FileEditor[] editors = FileEditorManager.getInstance(project).openFile(virtualFile, true);
-      if (field != null) {
-        for (FileEditor editor : editors) {
-          if (editor instanceof UIFormEditor) {
-            ((UIFormEditor)editor).selectComponent(field);
-          }
-        }
       }
     }
   }
