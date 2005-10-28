@@ -112,7 +112,7 @@ public abstract class JSR45PositionManager implements PositionManager {
 
   public List<Location> locationsOfLine(final ReferenceType type, final SourcePosition position) throws NoDataException {
     List<Location> locations = locationsOfClassAt(type, position);
-    return locations != null ? locations : Collections.EMPTY_LIST;
+    return locations != null ? locations : Collections.<Location>emptyList();
 
   }
 

@@ -50,7 +50,7 @@ class BackendCompilerWrapper {
   private final CompileContextEx myCompileContext;
   private final VirtualFile[] myFilesToCompile;
   private final Project myProject;
-  private Set<VirtualFile> myFilesToRecompile = Collections.EMPTY_SET;
+  private Set<VirtualFile> myFilesToRecompile = Collections.emptySet();
   private ClassParsingThread myClassParsingThread;
   private int myExitCode;
   private Map<Module, VirtualFile> myModuleToTempDirMap = new HashMap<Module, VirtualFile>();
@@ -622,7 +622,7 @@ class BackendCompilerWrapper {
 
   private Set<VirtualFile> getFilesCompiledWithErrors() {
     CompilerMessage[] messages = myCompileContext.getMessages(CompilerMessageCategory.ERROR);
-    Set<VirtualFile> compiledWithErrors = Collections.EMPTY_SET;
+    Set<VirtualFile> compiledWithErrors = Collections.emptySet();
     if (messages.length > 0) {
       compiledWithErrors = new HashSet<VirtualFile>(messages.length);
       for (int idx = 0; idx < messages.length; idx++) {

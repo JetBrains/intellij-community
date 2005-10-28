@@ -169,7 +169,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
       }
       finally{
         if(myNSDescriptorsMap == null && !exceptionOccurred) {
-          myNSDescriptorsMap = Collections.EMPTY_MAP;
+          myNSDescriptorsMap = Collections.emptyMap();
         }
       }
     }
@@ -309,7 +309,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
       }, this
     );
     if (result.isEmpty()) {
-      myAttributeValueMap = Collections.EMPTY_MAP;
+      myAttributeValueMap = Collections.emptyMap();
       return XmlAttribute.EMPTY_ARRAY;
     }
     else {
@@ -434,7 +434,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
   public String[] knownNamespaces(){
     final PsiElement parent = getParent();
     initNamespaceMaps(parent);
-    List<String> known = Collections.EMPTY_LIST;
+    List<String> known = Collections.emptyList();
     if(myNamespaceMap != null){
       known = new ArrayList<String>(myNamespaceMap.values());
     }

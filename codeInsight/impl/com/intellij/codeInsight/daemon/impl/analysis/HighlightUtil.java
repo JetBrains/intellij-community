@@ -96,10 +96,10 @@ public class HighlightUtil {
     modifiers.add(PsiModifier.PUBLIC);
     modifiers.add(PsiModifier.PRIVATE);
     ourClassIncompatibleModifiers.put(PsiModifier.PROTECTED, modifiers);
-    ourClassIncompatibleModifiers.put(PsiModifier.STRICTFP, Collections.EMPTY_SET);
-    ourClassIncompatibleModifiers.put(PsiModifier.STATIC, Collections.EMPTY_SET);
+    ourClassIncompatibleModifiers.put(PsiModifier.STRICTFP, Collections.<String>emptySet());
+    ourClassIncompatibleModifiers.put(PsiModifier.STATIC, Collections.<String>emptySet());
     ourInterfaceIncompatibleModifiers = new THashMap<String, Set<String>>(7);
-    ourInterfaceIncompatibleModifiers.put(PsiModifier.ABSTRACT, Collections.EMPTY_SET);
+    ourInterfaceIncompatibleModifiers.put(PsiModifier.ABSTRACT, Collections.<String>emptySet());
     modifiers = new THashSet<String>(3);
     modifiers.add(PsiModifier.PRIVATE);
     modifiers.add(PsiModifier.PUBLIC);
@@ -120,8 +120,8 @@ public class HighlightUtil {
     modifiers.add(PsiModifier.PUBLIC);
     modifiers.add(PsiModifier.PACKAGE_LOCAL);
     ourInterfaceIncompatibleModifiers.put(PsiModifier.PROTECTED, modifiers);
-    ourInterfaceIncompatibleModifiers.put(PsiModifier.STRICTFP, Collections.EMPTY_SET);
-    ourInterfaceIncompatibleModifiers.put(PsiModifier.STATIC, Collections.EMPTY_SET);
+    ourInterfaceIncompatibleModifiers.put(PsiModifier.STRICTFP, Collections.<String>emptySet());
+    ourInterfaceIncompatibleModifiers.put(PsiModifier.STATIC, Collections.<String>emptySet());
     ourMethodIncompatibleModifiers = new THashMap<String, Set<String>>(10);
     modifiers = new THashSet<String>(6);
     modifiers.addAll(Arrays.asList(PsiModifier.NATIVE, PsiModifier.STATIC, PsiModifier.FINAL,
@@ -183,14 +183,14 @@ public class HighlightUtil {
     modifiers.add(PsiModifier.PRIVATE);
     modifiers.add(PsiModifier.PUBLIC);
     ourFieldIncompatibleModifiers.put(PsiModifier.PROTECTED, modifiers);
-    ourFieldIncompatibleModifiers.put(PsiModifier.STATIC, Collections.EMPTY_SET);
-    ourFieldIncompatibleModifiers.put(PsiModifier.TRANSIENT, Collections.EMPTY_SET);
+    ourFieldIncompatibleModifiers.put(PsiModifier.STATIC, Collections.<String>emptySet());
+    ourFieldIncompatibleModifiers.put(PsiModifier.TRANSIENT, Collections.<String>emptySet());
     modifiers = new THashSet<String>(1);
     modifiers.add(PsiModifier.FINAL);
     ourFieldIncompatibleModifiers.put(PsiModifier.VOLATILE, modifiers);
 
     ourClassInitializerIncompatibleModifiers = new THashMap<String, Set<String>>(1);
-    ourClassInitializerIncompatibleModifiers.put(PsiModifier.STATIC, Collections.EMPTY_SET);
+    ourClassInitializerIncompatibleModifiers.put(PsiModifier.STATIC, Collections.<String>emptySet());
 
     ourConstructorNotAllowedModifiers = new THashSet<String>(6);
     ourConstructorNotAllowedModifiers.add(PsiModifier.ABSTRACT);

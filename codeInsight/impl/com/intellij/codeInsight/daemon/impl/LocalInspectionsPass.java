@@ -45,9 +45,9 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
   private Document myDocument;
   private int myStartOffset;
   private int myEndOffset;
-  private List<ProblemDescriptor> myDescriptors = Collections.EMPTY_LIST;
-  private List<HighlightInfoType> myLevels = Collections.EMPTY_LIST;
-  private List<LocalInspectionTool> myTools = Collections.EMPTY_LIST;
+  private List<ProblemDescriptor> myDescriptors = Collections.emptyList();
+  private List<HighlightInfoType> myLevels = Collections.emptyList();
+  private List<LocalInspectionTool> myTools = Collections.emptyList();
 
   public LocalInspectionsPass(Project project,
                               PsiFile file,
@@ -259,9 +259,9 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
 
     UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myStartOffset, myEndOffset, infos,
                                                    UpdateHighlightersUtil.INSPECTION_HIGHLIGHTERS_GROUP);
-    myDescriptors = Collections.EMPTY_LIST;
-    myLevels = Collections.EMPTY_LIST;
-    myTools = Collections.EMPTY_LIST;
+    myDescriptors = Collections.emptyList();
+    myLevels = Collections.emptyList();
+    myTools = Collections.emptyList();
 
     DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
     daemonCodeAnalyzer.getFileStatusMap().markFileUpToDate(myDocument, FileStatusMap.LOCAL_INSPECTIONS);

@@ -77,7 +77,7 @@ public abstract class DiffRequest {
    * @return not null (possibly empty) collection of hints for diff tool.
    */
   public Collection getHints() {
-    return Collections.EMPTY_SET;
+    return Collections.emptySet();
   }
 
   /**

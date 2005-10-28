@@ -64,7 +64,7 @@ public class FilePathReferenceProvider implements PsiReferenceProvider {
 
   @NotNull private static Collection<PsiElement> getRoots(PsiElement element) {
     Module thisModule = ModuleUtil.findModuleForPsiElement(element);
-    if (thisModule == null) return Collections.EMPTY_LIST;
+    if (thisModule == null) return Collections.emptyList();
     List<Module> modules = new ArrayList<Module>();
     modules.add(thisModule);
     ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(thisModule);

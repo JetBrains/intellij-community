@@ -33,7 +33,7 @@ public class ResourceBundleImpl implements ResourceBundle {
   public static final ResourceBundle NULL = new ResourceBundle() {
     @NotNull
     public List<PropertiesFile> getPropertiesFiles(final Project project) {
-      return Collections.EMPTY_LIST;
+      return Collections.emptyList();
     }
 
     @NotNull

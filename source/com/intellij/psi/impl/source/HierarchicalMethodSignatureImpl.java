@@ -23,7 +23,9 @@ public class HierarchicalMethodSignatureImpl extends HierarchicalMethodSignature
   }
 
   public List<HierarchicalMethodSignature> getSuperSignatures() {
-    return Collections.unmodifiableList(mySupers == null ? Collections.EMPTY_LIST : mySupers);
+    return Collections.unmodifiableList(mySupers == null ?
+                                        Collections.<HierarchicalMethodSignature>emptyList() :
+                                        mySupers);
   }
 
 }

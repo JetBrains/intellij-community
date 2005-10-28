@@ -553,7 +553,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
     private final Object[] myElements;
 
     public SelectionInfo() {
-      List selectedElements = Collections.EMPTY_LIST;
+      List selectedElements = Collections.emptyList();
       final TreePath[] selectionPaths = myTree.getSelectionPaths();
       if (selectionPaths != null) {
         selectedElements = new ArrayList();
@@ -710,9 +710,9 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
         if (parentDescriptor != null) {
           final Object parentElement = parentDescriptor.getElement();
           if (parentElement instanceof AbstractTreeNode) {
-            final AbstractTreeNode parentNode = ((AbstractTreeNode)parentElement);
+            final AbstractTreeNode<PsiDirectory> parentNode = ((AbstractTreeNode<PsiDirectory>)parentElement);
             if (parentNode.getValue() instanceof PsiDirectory) {
-              return (PsiDirectory)parentNode.getValue();
+              return parentNode.getValue();
             }
           }
         }

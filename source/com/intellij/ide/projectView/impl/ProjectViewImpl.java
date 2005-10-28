@@ -1171,7 +1171,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     }
 
     public static SelectionInfo create(final AbstractProjectViewPane viewPane) {
-      List<Object> selectedElements = Collections.EMPTY_LIST;
+      List<Object> selectedElements = Collections.emptyList();
       if (viewPane != null) {
         final TreePath[] selectionPaths = viewPane.getSelectionPaths();
         if (selectionPaths != null) {

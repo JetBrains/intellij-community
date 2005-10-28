@@ -194,7 +194,7 @@ public abstract class ReorderableListController <T> {
       final ActionBehaviour<List<T>> behaviour = new ActionBehaviour<List<T>>() {
         public List<T> performAction(final AnActionEvent e) {
           if (myConfirmation != null && !myConfirmation.value((List<T>)Arrays.asList(myList.getSelectedValues()))) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
           }
           return ListUtil.removeSelectedItems(myList, myEnableCondition);
         }

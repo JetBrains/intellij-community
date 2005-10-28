@@ -81,7 +81,7 @@ public class LibraryTreeStructure extends AbstractTreeStructure{
       }
     }
     else {
-      validUrls = Collections.EMPTY_SET;
+      validUrls = Collections.emptySet();
     }
     ArrayList<ItemElement> items = new ArrayList<ItemElement>();
 

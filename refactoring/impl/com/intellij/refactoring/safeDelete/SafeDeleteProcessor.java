@@ -124,7 +124,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
 
   private void findFileUsages(final PsiFile file, final ArrayList<UsageInfo> usages) {
     findGenericElementUsages(file, usages);
-    List<Property> declarations = Collections.EMPTY_LIST;
+    List<Property> declarations = Collections.emptyList();
     if (file instanceof PropertiesFile) {
       declarations = ((PropertiesFile)file).getProperties();
     }

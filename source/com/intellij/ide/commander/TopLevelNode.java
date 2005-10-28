@@ -8,7 +8,7 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.navigation.ItemPresentation;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -27,8 +27,9 @@ public class TopLevelNode extends AbstractTreeNode {
     myOpenIcon = myClosedIcon = ourUpLevelIcon;
   }
 
-  public Collection getChildren() {
-    return Collections.EMPTY_LIST;
+  @NotNull
+  public Collection<AbstractTreeNode> getChildren() {
+    return Collections.emptyList();
   }
 
   public String getName() {

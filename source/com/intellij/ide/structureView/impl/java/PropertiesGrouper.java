@@ -18,7 +18,7 @@ public class PropertiesGrouper implements Grouper{
   @NonNls public static final String ID = "SHOW_PROPERTIES";
 
   public Collection<Group> group(final AbstractTreeNode parent, Collection<TreeElement> children) {
-    if (parent.getValue() instanceof PropertyGroup) return Collections.EMPTY_LIST;
+    if (parent.getValue() instanceof PropertyGroup) return Collections.emptyList();
     Map<Group,Group> result = new THashMap<Group, Group>();
     for (TreeElement o : children) {
       if (o instanceof JavaClassTreeElementBase) {

@@ -38,11 +38,11 @@ public abstract class BasePsiNode <T extends PsiElement> extends ProjectViewNode
     if (value == null) return new ArrayList<AbstractTreeNode>();
     boolean valid = value.isValid();
     if (!LOG.assertTrue(valid)) {
-      return Collections.EMPTY_LIST;
+      return Collections.emptyList();
     }
     
     final Collection<AbstractTreeNode> children = getChildrenImpl();
-    return children != null ? children : Collections.EMPTY_LIST;
+    return children != null ? children : Collections.<AbstractTreeNode>emptyList();
   }
 
   protected abstract Collection<AbstractTreeNode> getChildrenImpl();

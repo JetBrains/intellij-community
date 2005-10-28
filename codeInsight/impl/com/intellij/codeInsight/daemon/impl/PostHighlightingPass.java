@@ -140,7 +140,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
   public void doCollectInformation(ProgressIndicator progress) {
     if (myCompiled) {
-      myHighlights = Collections.EMPTY_LIST;
+      myHighlights = Collections.emptyList();
       return;
     }
 

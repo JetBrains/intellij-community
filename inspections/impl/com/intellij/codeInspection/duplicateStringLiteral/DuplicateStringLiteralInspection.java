@@ -43,7 +43,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
   }
 
   private List<ProblemDescriptor> visitExpressionsUnder(PsiElement element, final InspectionManager manager, final boolean onTheFly) {
-    if (element == null) return Collections.EMPTY_LIST;
+    if (element == null) return Collections.emptyList();
     final List<ProblemDescriptor> allProblems = new ArrayList<ProblemDescriptor>();
     element.acceptChildren(new PsiRecursiveElementVisitor() {
       public void visitClass(PsiClass aClass) {

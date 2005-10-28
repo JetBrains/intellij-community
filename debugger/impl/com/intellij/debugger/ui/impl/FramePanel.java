@@ -261,7 +261,7 @@ public class FramePanel extends DebuggerPanel implements DataProvider{
 
     private java.util.List<StackFrameDescriptorImpl> getFrameList(ThreadReferenceProxyImpl thread) {
       if(!getSuspendContext().getDebugProcess().getSuspendManager().isSuspended(thread)) {
-        return (java.util.List<StackFrameDescriptorImpl>)Collections.EMPTY_LIST;
+        return Collections.<StackFrameDescriptorImpl>emptyList();
       }
 
       java.util.List<StackFrameProxyImpl> frames;

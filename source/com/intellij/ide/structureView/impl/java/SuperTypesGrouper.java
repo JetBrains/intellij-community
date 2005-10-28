@@ -22,7 +22,7 @@ public class SuperTypesGrouper implements Grouper{
   @NonNls public static final String ID = "SHOW_INTERFACES";
 
   public Collection<Group> group(final AbstractTreeNode parent, Collection<TreeElement> children) {
-    if (isParentGrouped(parent)) return Collections.EMPTY_LIST;
+    if (isParentGrouped(parent)) return Collections.emptyList();
     Map<Group, SuperTypeGroup> groups = new THashMap<Group, SuperTypeGroup>();
 
     for (TreeElement child : children) {

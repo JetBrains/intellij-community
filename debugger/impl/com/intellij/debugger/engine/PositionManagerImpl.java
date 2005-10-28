@@ -1,6 +1,7 @@
 package com.intellij.debugger.engine;
 
-import com.intellij.debugger.*;
+import com.intellij.debugger.PositionManager;
+import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.openapi.application.ApplicationManager;
@@ -9,8 +10,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiUtil;
 import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.Location;
 import com.sun.jdi.ReferenceType;
@@ -18,7 +19,6 @@ import com.sun.jdi.request.ClassPrepareRequest;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -45,7 +45,7 @@ public class PositionManagerImpl implements PositionManager {
                                         SourcePosition position) {
     try {
       int line = position.getLine() + 1;
-      List<Location> locs = (List<Location>) (getDebugProcess().getVirtualMachineProxy().versionHigher("1.4") ? type.locationsOfLine(DebugProcessImpl.JAVA_STRATUM, null, line) : type.locationsOfLine(line));
+      List<Location> locs = (getDebugProcess().getVirtualMachineProxy().versionHigher("1.4") ? type.locationsOfLine(DebugProcessImpl.JAVA_STRATUM, null, line) : type.locationsOfLine(line));
       if (locs.size() > 0) {
         return locs;
       }
@@ -189,14 +189,14 @@ public class PositionManagerImpl implements PositionManager {
         final PsiClass psiClass = JVMNameUtil.getClassAt(classPosition);
 
         if(psiClass == null) {
-          return (List<ReferenceType>)Collections.EMPTY_LIST;
+          return Collections.emptyList();
         }
 
         if(PsiUtil.isLocalOrAnonymousClass(psiClass)) {
           final PsiClass parentNonLocal = JVMNameUtil.getTopLevelParentClass(psiClass);
           if(parentNonLocal == null) {
             LOG.assertTrue(false, "Local class has no non-local parent");
-            return (List<ReferenceType>)Collections.EMPTY_LIST;
+            return Collections.emptyList();
           }
           final String parentClassName = JVMNameUtil.getNonAnonymousClassName(parentNonLocal);
           final List<ReferenceType> outer = myDebugProcess.getVirtualMachineProxy().classesByName(parentClassName);
@@ -225,15 +225,14 @@ public class PositionManagerImpl implements PositionManager {
     if (outer.size() == 0) {
       return;
     }
-    for (Iterator<ReferenceType> iterator = outer.iterator(); iterator.hasNext();) {
-      ReferenceType referenceType = iterator.next();
-      if(referenceType.isPrepared()) {
+    for (ReferenceType referenceType : outer) {
+      if (referenceType.isPrepared()) {
         final List<ReferenceType> nested = myDebugProcess.getVirtualMachineProxy().nestedTypes(referenceType);
         findNested(nested, classPosition, result);
 
         try {
           final int lineNumber = classPosition.getLine() + 1;
-          if(referenceType.locationsOfLine(lineNumber).size() > 0) {
+          if (referenceType.locationsOfLine(lineNumber).size() > 0) {
             result.add(referenceType);
           }
         }
@@ -285,9 +284,8 @@ public class PositionManagerImpl implements PositionManager {
 
     public void visitClass(PsiClass aClass) {
       final List<ReferenceType> allClasses = myDebugProcess.getPositionManager().getAllClasses(SourcePosition.createFromElement(aClass));
-      for (Iterator<ReferenceType> iterator = allClasses.iterator(); iterator.hasNext();) {
-        ReferenceType referenceType = iterator.next();
-        if(referenceType.name().equals(myClassName)) {
+      for (ReferenceType referenceType : allClasses) {
+        if (referenceType.name().equals(myClassName)) {
           myCompiledClass = aClass;
         }
       }

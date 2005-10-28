@@ -47,7 +47,7 @@ public class PsiSuperMethodImplUtil {
   @SuppressWarnings({"unchecked"})
   public static @NotNull List<MethodSignatureBackedByPsiMethod> findSuperMethodSignaturesIncludingStatic(PsiMethod method,
                                                                                                          boolean checkAccess) {
-    if (!canHaveSuperMethod(method, checkAccess, true)) return Collections.EMPTY_LIST;
+    if (!canHaveSuperMethod(method, checkAccess, true)) return Collections.emptyList();
     return findSuperMethodSignatures(method, method.getContainingClass(), true);
   }
 

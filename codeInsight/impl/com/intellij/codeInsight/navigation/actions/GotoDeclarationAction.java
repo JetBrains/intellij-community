@@ -92,7 +92,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
   private static Collection<PsiElement> suggestCandidates(Project project, Editor editor, int offset) {
     PsiReference reference = TargetElementUtil.findReference(editor, offset);
     if (reference == null) {
-      return Collections.EMPTY_LIST;
+      return Collections.emptyList();
     }
     return resolveElements(reference, project);
   }
@@ -133,7 +133,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     if (resolved != null) {
       return Collections.singleton(resolved);
     }
-    return Collections.EMPTY_LIST;
+    return Collections.emptyList();
   }
 
   public boolean startInWriteAction() {
@@ -163,8 +163,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       IElementType type = ((PsiKeyword)elementAt).getTokenType();
       if (type == JavaTokenType.CONTINUE_KEYWORD) {
         if (elementAt.getParent() instanceof PsiContinueStatement) {
-          PsiStatement statement = ((PsiContinueStatement)elementAt.getParent()).findContinuedStatement();
-          return statement;
+          return ((PsiContinueStatement)elementAt.getParent()).findContinuedStatement();
         }
       }
       else if (type == JavaTokenType.BREAK_KEYWORD) {

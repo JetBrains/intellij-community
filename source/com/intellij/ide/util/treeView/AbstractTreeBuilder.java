@@ -859,7 +859,7 @@ public abstract class AbstractTreeBuilder {
 
     @NotNull
     public Collection<AbstractTreeNode> getChildren() {
-      return Collections.EMPTY_LIST;
+      return Collections.emptyList();
     }
 
     public void update(PresentationData presentation) {

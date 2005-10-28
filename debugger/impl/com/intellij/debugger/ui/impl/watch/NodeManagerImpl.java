@@ -3,14 +3,12 @@ package com.intellij.debugger.ui.impl.watch;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.impl.nodes.NodeComparator;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.NodeManager;
-import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.CollectUtil;
@@ -31,7 +29,7 @@ public class NodeManagerImpl extends NodeDescriptorFactoryImpl implements NodeMa
   private static Comparator ourNodeComparator = new NodeComparator();
 
   private final DebuggerTree myDebuggerTree;
-  private List<Breakpoint> myBreakpoints = Collections.EMPTY_LIST;
+  private List<Breakpoint> myBreakpoints = Collections.emptyList();
 
   public NodeManagerImpl(Project project, DebuggerTree tree) {
     super(project);
@@ -44,8 +42,7 @@ public class NodeManagerImpl extends NodeDescriptorFactoryImpl implements NodeMa
 
   public DebuggerTreeNodeImpl createNode(NodeDescriptor descriptor, EvaluationContext evaluationContext) {
     ((NodeDescriptorImpl)descriptor).setContext((EvaluationContextImpl)evaluationContext);
-    DebuggerTreeNodeImpl node = DebuggerTreeNodeImpl.createNode(getTree(), (NodeDescriptorImpl)descriptor, (EvaluationContextImpl)evaluationContext);
-    return node;
+    return DebuggerTreeNodeImpl.createNode(getTree(), (NodeDescriptorImpl)descriptor, (EvaluationContextImpl)evaluationContext);
   }
 
   public DebuggerTreeNodeImpl getDefaultNode() {
@@ -53,13 +50,11 @@ public class NodeManagerImpl extends NodeDescriptorFactoryImpl implements NodeMa
   }
 
   public DebuggerTreeNodeImpl createMessageNode(MessageDescriptor descriptor) {
-    DebuggerTreeNodeImpl node = DebuggerTreeNodeImpl.createNodeNoUpdate(getTree(), descriptor);
-    return node;
+    return DebuggerTreeNodeImpl.createNodeNoUpdate(getTree(), descriptor);
   }
 
   public DebuggerTreeNodeImpl createMessageNode(String message) {
-    DebuggerTreeNodeImpl node = DebuggerTreeNodeImpl.createNodeNoUpdate(getTree(), new MessageDescriptor(message));
-    return node;
+    return DebuggerTreeNodeImpl.createNodeNoUpdate(getTree(), new MessageDescriptor(message));
   }
 
   public void setHistoryByContext(final DebuggerContextImpl context) {

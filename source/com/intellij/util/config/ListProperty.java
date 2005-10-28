@@ -23,7 +23,7 @@ public class ListProperty<T> extends AbstractProperty<List<T>> {
   }
 
   public List<T> getDefault(AbstractProperty.AbstractPropertyContainer container) {
-    return Collections.EMPTY_LIST;
+    return Collections.emptyList();
   }
 
   public List<T> copy(List<T> value) {

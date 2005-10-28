@@ -84,7 +84,7 @@ public class GroupByWordPrefixes implements Grouper {
         continue;
       }
       // find longest group prefix
-      List<String> firstKey = groupStart == keys.size() ? Collections.EMPTY_LIST :  keys.get(groupStart).words;
+      List<String> firstKey = groupStart == keys.size() ? Collections.<String>emptyList() :  keys.get(groupStart).words;
       int prefixLen = firstKey.size();
       for (int j = groupStart+1; j < i; j++) {
         List<String> prevKey = keys.get(j-1).words;

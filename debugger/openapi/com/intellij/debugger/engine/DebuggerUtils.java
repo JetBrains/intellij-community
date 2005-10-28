@@ -89,7 +89,7 @@ public abstract class DebuggerUtils  implements ApplicationComponent {
         stringReference = (StringReference)evaluationContext.getDebugProcess().invokeMethod(
           evaluationContext, objRef,
           toStringMethod,
-          Collections.EMPTY_LIST);
+          Collections.emptyList());
 
         return  stringReference == null ? "null" : stringReference.value();
       }

@@ -110,7 +110,7 @@ public class PropertiesReferenceManager implements ProjectComponent {
   public Collection<Property> findPropertiesByKey(final String key) {
     updateChangedFiles();
     Collection<VirtualFile> virtualFiles = myPropertiesMap.get(key);
-    if (virtualFiles == null || virtualFiles.size() == 0) return Collections.EMPTY_LIST;
+    if (virtualFiles == null || virtualFiles.size() == 0) return Collections.emptyList();
     Collection<Property> result = new ArrayList<Property>(virtualFiles.size());
     PsiManager psiManager = PsiManager.getInstance(myProject);
     for (VirtualFile file : virtualFiles) {

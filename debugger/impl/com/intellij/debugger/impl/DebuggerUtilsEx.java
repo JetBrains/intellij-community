@@ -96,9 +96,9 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
           return superClass;
         }
       }
-      List ifaces = classType.allInterfaces();
-      for (Iterator it = ifaces.iterator(); it.hasNext();) {
-        InterfaceType iface = (InterfaceType)it.next();
+      List<InterfaceType> ifaces = classType.allInterfaces();
+      for (Iterator<InterfaceType> it = ifaces.iterator(); it.hasNext();) {
+        InterfaceType iface = it.next();
         ReferenceType superClass = getSuperClass(baseQualifiedName, iface);
         if (superClass != null) {
           return superClass;
@@ -107,9 +107,9 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     }
 
     if (checkedType instanceof InterfaceType) {
-      List list = ((InterfaceType)checkedType).superinterfaces();
-      for (Iterator it = list.iterator(); it.hasNext();) {
-        InterfaceType superInterface = (InterfaceType)it.next();
+      List<InterfaceType> list = ((InterfaceType)checkedType).superinterfaces();
+      for (Iterator<InterfaceType> it = list.iterator(); it.hasNext();) {
+        InterfaceType superInterface = it.next();
         ReferenceType superClass = getSuperClass(baseQualifiedName, superInterface);
         if (superClass != null) {
           return superClass;
@@ -147,13 +147,13 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
            isInteger(value);
   }
 
-  private static Set myCharOrIntegers;
+  private static Set<String> myCharOrIntegers;
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static boolean isCharOrIntegerArray(Value value) {
     if (value == null) return false;
     if (myCharOrIntegers == null) {
-      myCharOrIntegers = new HashSet();
+      myCharOrIntegers = new HashSet<String>();
       myCharOrIntegers.add("C");
       myCharOrIntegers.add("B");
       myCharOrIntegers.add("S");
@@ -195,9 +195,8 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       return false; //is array
     }
 
-    for(int i = 0; i < classFilters.length; i++) {
-      ClassFilter filter = classFilters[i];
-      if(isFiltered(filter, qName)) {
+    for (ClassFilter filter : classFilters) {
+      if (isFiltered(filter, qName)) {
         return true;
       }
     }
@@ -218,10 +217,10 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   public static void writeFilters(Element parentNode, @NonNls String tagName, ClassFilter[] filters) throws WriteExternalException {
-    for (int idx = 0; idx < filters.length; idx++) {
+    for (ClassFilter filter : filters) {
       Element element = new Element(tagName);
       parentNode.addContent(element);
-      filters[idx].writeExternal(element);
+      filter.writeExternal(element);
     }
   }
 
@@ -229,8 +228,8 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     if (filters1.length != filters2.length) {
       return false;
     }
-    Set f1 = new HashSet();
-    Set f2 = new HashSet();
+    Set<ClassFilter> f1 = new HashSet<ClassFilter>();
+    Set<ClassFilter> f2 = new HashSet<ClassFilter>();
     for (int idx = 0; idx < filters1.length; idx++) {
       f1.add(filters1[idx]);
     }
@@ -309,12 +308,12 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   public static List<Pair<Breakpoint, Event>> getEventDescriptors(SuspendContextImpl suspendContext) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     if(suspendContext == null || suspendContext.getEventSet() == null) {
-      return Collections.EMPTY_LIST;
+      return Collections.emptyList();
     }
     final List<Pair<Breakpoint, Event>> eventDescriptors = new ArrayList<Pair<Breakpoint, Event>>();
 
-    for (Iterator iterator = suspendContext.getEventSet().iterator(); iterator.hasNext();) {
-      Event event = (Event)iterator.next();
+    for (Iterator<Event> iterator = suspendContext.getEventSet().iterator(); iterator.hasNext();) {
+      Event event = iterator.next();
       Requestor requestor = suspendContext.getDebugProcess().getRequestsManager().findRequestor(event.request());
       if(requestor instanceof Breakpoint) {
         eventDescriptors.add(new Pair<Breakpoint, Event>((Breakpoint)requestor, event));
@@ -562,7 +561,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   //ToDo:[lex] find common implementation
-  public static void findAllSupertypes(final Type type, final Collection typeNames) {
+  public static void findAllSupertypes(final Type type, final Collection<ReferenceType> typeNames) {
     if (type instanceof ClassType) {
       ClassType classType = (ClassType)type;
       ClassType superclassType = classType.superclass();
@@ -570,17 +569,17 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
         typeNames.add(superclassType);
         findAllSupertypes(superclassType, typeNames);
       }
-      List ifaces = classType.allInterfaces();
-      for (Iterator it = ifaces.iterator(); it.hasNext();) {
-        InterfaceType iface = (InterfaceType)it.next();
+      List<InterfaceType> ifaces = classType.allInterfaces();
+      for (Iterator<InterfaceType> it = ifaces.iterator(); it.hasNext();) {
+        InterfaceType iface = it.next();
         typeNames.add(iface);
         findAllSupertypes(iface, typeNames);
       }
     }
     if (type instanceof InterfaceType) {
-      List ifaces = ((InterfaceType)type).superinterfaces();
-      for (Iterator it = ifaces.iterator(); it.hasNext();) {
-        InterfaceType iface = (InterfaceType)it.next();
+      List<InterfaceType> ifaces = ((InterfaceType)type).superinterfaces();
+      for (Iterator<InterfaceType> it = ifaces.iterator(); it.hasNext();) {
+        InterfaceType iface = it.next();
         typeNames.add(iface);
         findAllSupertypes(iface, typeNames);
       }

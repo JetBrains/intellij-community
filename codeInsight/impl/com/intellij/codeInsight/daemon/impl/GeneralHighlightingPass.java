@@ -61,8 +61,8 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
 
   private final HighlightVisitor[] myHighlightVisitors;
 
-  private Collection<HighlightInfo> myHighlights = Collections.EMPTY_LIST;
-  private Collection<LineMarkerInfo> myMarkers = Collections.EMPTY_LIST;
+  private Collection<HighlightInfo> myHighlights = Collections.emptyList();
+  private Collection<LineMarkerInfo> myMarkers = Collections.emptyList();
 
   private final DaemonCodeAnalyzerSettings mySettings = DaemonCodeAnalyzerSettings.getInstance();
 

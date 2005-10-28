@@ -119,7 +119,7 @@ public class ThreadsDebuggerTree extends DebuggerTree {
 
       final ThreadReferenceProxyImpl thread = getSuspendContext().getThread();
       final boolean hasThreadToSelect = thread != null && ThreadsViewSettings.getInstance().SHOW_THREAD_GROUPS; // thread can be null if pause was pressed
-      final List<ThreadGroupReferenceProxyImpl> groups = hasThreadToSelect? new ArrayList<ThreadGroupReferenceProxyImpl>() : (List<ThreadGroupReferenceProxyImpl>)Collections.EMPTY_LIST;
+      final List<ThreadGroupReferenceProxyImpl> groups = hasThreadToSelect? new ArrayList<ThreadGroupReferenceProxyImpl>() : Collections.<ThreadGroupReferenceProxyImpl>emptyList();
       if (hasThreadToSelect) {
         for(ThreadGroupReferenceProxyImpl group = thread.threadGroupProxy(); group != null; group = group.parent()) {
           groups.add(group);

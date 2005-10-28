@@ -1,8 +1,8 @@
 package com.intellij.debugger.engine;
 
+import com.intellij.debugger.NoDataException;
 import com.intellij.debugger.PositionManager;
 import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.NoDataException;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.sun.jdi.Location;
@@ -10,9 +10,8 @@ import com.sun.jdi.ReferenceType;
 import com.sun.jdi.request.ClassPrepareRequest;
 
 import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Collections;
+import java.util.List;
 
 /*
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
@@ -56,25 +55,22 @@ public class CompoundPositionManager implements PositionManager{
         LOG.info(e);
       }
     }
-    return Collections.EMPTY_LIST;
+    return Collections.emptyList();
   }
 
   public List<Location> locationsOfLine(ReferenceType type, SourcePosition position) {
-    for (Iterator<PositionManager> iterator = myPositionManagers.iterator(); iterator.hasNext();) {
-      PositionManager positionManager = iterator.next();
+    for (PositionManager positionManager : myPositionManagers) {
       try {
         return positionManager.locationsOfLine(type, position);
       }
       catch (NoDataException e) {
       }
     }
-    return Collections.EMPTY_LIST;
+    return Collections.emptyList();
   }
 
   public ClassPrepareRequest createPrepareRequest(ClassPrepareRequestor requestor, SourcePosition position) {
-    for (Iterator<PositionManager> iterator = myPositionManagers.iterator(); iterator.hasNext();) {
-      PositionManager positionManager = iterator.next();
-
+    for (PositionManager positionManager : myPositionManagers) {
       try {
         return positionManager.createPrepareRequest(requestor, position);
       }

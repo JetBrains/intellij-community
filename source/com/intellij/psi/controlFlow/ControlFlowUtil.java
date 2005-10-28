@@ -1318,7 +1318,7 @@ public class ControlFlowUtil {
 
     public Collection<VariableInfo> getResult() {
       CopyOnWriteList writtenTwiceVariable = writtenTwiceVariables[0];
-      if (writtenTwiceVariable == null) return Collections.EMPTY_LIST;
+      if (writtenTwiceVariable == null) return Collections.emptyList();
       return writtenTwiceVariable.getList();
     }
   }

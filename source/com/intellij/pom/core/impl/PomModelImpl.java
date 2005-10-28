@@ -110,12 +110,12 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
   //private final Pair<PomModelAspect, PomModelAspect> myHolderPair = new Pair<PomModelAspect, PomModelAspect>(null, null);
   public List<PomModelAspect> getAllDependencies(PomModelAspect aspect){
     List<PomModelAspect> pomModelAspects = myIncidence.get(aspect);
-    return pomModelAspects != null ? pomModelAspects : Collections.EMPTY_LIST;
+    return pomModelAspects != null ? pomModelAspects : Collections.<PomModelAspect>emptyList();
   }
 
   public List<PomModelAspect> getAllDependants(PomModelAspect aspect){
     List<PomModelAspect> pomModelAspects = myInvertedIncidence.get(aspect);
-    return pomModelAspects != null ? pomModelAspects : Collections.EMPTY_LIST;
+    return pomModelAspects != null ? pomModelAspects : Collections.<PomModelAspect>emptyList();
   }
 
   public void addModelListener(PomModelListener listener) {

@@ -368,7 +368,7 @@ public class HighlightControlFlowUtil {
         codeBlockProblems = ControlFlowUtil.getReadBeforeWrite(controlFlow);
       }
       catch (AnalysisCanceledException e) {
-        codeBlockProblems = Collections.EMPTY_LIST;
+        codeBlockProblems = Collections.emptyList();
       }
       uninitializedVarProblems.put(topBlock, codeBlockProblems);
     }
@@ -548,7 +548,7 @@ public class HighlightControlFlowUtil {
         codeBlockProblems = ControlFlowUtil.getInitializedTwice(controlFlow);
       }
       catch (AnalysisCanceledException e) {
-        codeBlockProblems = Collections.EMPTY_LIST;
+        codeBlockProblems = Collections.emptyList();
       }
       finalVarProblems.put(codeBlock, codeBlockProblems);
     }

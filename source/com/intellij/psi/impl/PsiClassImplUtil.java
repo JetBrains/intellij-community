@@ -730,7 +730,9 @@ public class PsiClassImplUtil {
     }
     final Map<String, List<Pair<PsiMethod, PsiSubstitutor>>> map = getMap(psiClass, PsiMethod.class);
     final List<Pair<PsiMethod, PsiSubstitutor>> list = map.get(name);
-    return list == null ? Collections.EMPTY_LIST : Collections.unmodifiableList(list);
+    return list == null ?
+           Collections.<Pair<PsiMethod, PsiSubstitutor>>emptyList() :
+           Collections.unmodifiableList(list);
   }
 
   public static PsiClassType[] getExtendsListTypes(PsiClass psiClass) {

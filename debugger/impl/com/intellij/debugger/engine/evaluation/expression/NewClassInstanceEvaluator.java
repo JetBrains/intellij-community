@@ -45,15 +45,15 @@ class NewClassInstanceEvaluator implements Evaluator {
         DebuggerBundle.message("evaluation.error.cannot.resolve.constructor", myConstructorSignature.getDisplayName(debugProcess)));
     }
     // evaluate arguments
-    List arguments;
+    List<Object> arguments;
     if (myParamsEvaluators != null) {
-      arguments = new ArrayList(myParamsEvaluators.length);
+      arguments = new ArrayList<Object>(myParamsEvaluators.length);
       for (Evaluator evaluator : myParamsEvaluators) {
         arguments.add(evaluator.evaluate(context));
       }
     }
     else {
-      arguments = Collections.EMPTY_LIST;
+      arguments = Collections.emptyList();
     }
     ObjectReference objRef;
     try {

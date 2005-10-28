@@ -136,7 +136,7 @@ public class FileReferenceSet {
     LOG.assertTrue(file != null, "Invalid element: " + element);
 
     if (!file.isPhysical()) file = file.getOriginalFile();
-    if (file == null) return Collections.EMPTY_LIST;
+    if (file == null) return Collections.emptyList();
     final WebModuleProperties properties = (WebModuleProperties)WebUtil.getWebModuleProperties(file);
 
     PsiElement result = null;
@@ -168,7 +168,9 @@ public class FileReferenceSet {
       }
     }
 
-    return result == null ? Collections.EMPTY_LIST : Collections.singleton(result);
+    return result == null ?
+           Collections.<PsiElement>emptyList() :
+           Collections.singleton(result);
   }
 
   protected PsiScopeProcessor createProcessor(final List result, ReferenceType type) throws ProcessorRegistry.IncompatibleReferenceTypeException {

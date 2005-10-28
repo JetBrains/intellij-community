@@ -94,7 +94,7 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
   public List<Property> findPropertiesByKey(@NotNull String key) {
     ensurePropertiesLoaded();
     List<Property> list = myPropertiesMap.get(key);
-    return list == null ? Collections.EMPTY_LIST : list;
+    return list == null ? Collections.<Property>emptyList() : list;
   }
 
   @NotNull

@@ -127,7 +127,7 @@ public class AnnotationsHighlightUtil {
     PsiAnnotation[] annotations = list.getAnnotations();
     for (PsiAnnotation annotation : annotations) {
       PsiJavaCodeReferenceElement nameRef = annotation.getNameReferenceElement();
-      if (nameRef == null) return Collections.EMPTY_LIST;
+      if (nameRef == null) return Collections.emptyList();
       PsiClass aClass = (PsiClass)nameRef.resolve();
       if (aClass != null) {
         if (refInterfaces.contains(aClass)) {

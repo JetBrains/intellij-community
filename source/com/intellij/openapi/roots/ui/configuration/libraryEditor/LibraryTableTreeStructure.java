@@ -92,7 +92,7 @@ class LibraryTableTreeStructure extends AbstractTreeStructure {
       }
     }
     else {
-      validUrls = Collections.EMPTY_SET;
+      validUrls = Collections.emptySet();
     }
     ArrayList<ItemElement> items = new ArrayList<ItemElement>();
 
@@ -116,7 +116,7 @@ class LibraryTableTreeStructure extends AbstractTreeStructure {
       }
     }
     else {
-      validUrls = Collections.EMPTY_SET;
+      validUrls = Collections.emptySet();
     }
 
     final String[] urls = myParentEditor.getLibraryEditor(library).getUrls(orderRootType);

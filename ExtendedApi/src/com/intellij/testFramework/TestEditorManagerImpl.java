@@ -290,7 +290,7 @@ import java.util.Map;
 
   @NotNull
   public List<FileEditor> openEditor(OpenFileDescriptor descriptor, boolean focusEditor) {
-    return Collections.EMPTY_LIST;
+    return Collections.emptyList();
   }
 
   @NotNull

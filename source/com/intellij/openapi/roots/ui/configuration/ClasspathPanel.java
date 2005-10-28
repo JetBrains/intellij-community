@@ -508,7 +508,7 @@ public class ClasspathPanel extends JPanel {
           }
 
           public List<Library> getChooseItems() {
-            return Collections.EMPTY_LIST; // this chooser chooses items from file system
+            return Collections.emptyList(); // this chooser chooses items from file system
           }
         },
         new ChooseAndAddAction<Library>(2, ProjectBundle.message("classpath.add.project.library.action"), Icons.LIBRARY_ICON) {
@@ -954,7 +954,7 @@ public class ClasspathPanel extends JPanel {
       myChooser.setColorUnmarkedElements(false);
 
       final List<T> elements = provider.getChooseItems();
-      setElements(elements, elements.size() > 0? elements.subList(0, 1) : Collections.EMPTY_LIST);
+      setElements(elements, elements.size() > 0? elements.subList(0, 1) : Collections.<T>emptyList());
       init();
     }
 
@@ -1049,7 +1049,7 @@ public class ClasspathPanel extends JPanel {
             }
           }
           else {
-            setElements(librariesAfterEdit, Collections.EMPTY_LIST);
+            setElements(librariesAfterEdit, Collections.<Library>emptyList());
             myChooser.restoreSelection();
           }
           if (myChooser.getSelectedElementRow() < 0 && myChooser.getElementCount() > 0) {
@@ -1098,11 +1098,11 @@ public class ClasspathPanel extends JPanel {
 
     public List<Library> getSelectedElements() {
       if (myLastChosen == null) {
-        return Collections.EMPTY_LIST;
+        return Collections.emptyList();
       }
       final VirtualFile[] files = filterAlreadyAdded(myLastChosen.getSecond());
       if (files.length == 0) {
-        return Collections.EMPTY_LIST;
+        return Collections.emptyList();
       }
       final LibraryTable.ModifiableModel modifiableModel = myLibraryTable.getModifiableModel();
       final List<Library> addedLibraries = new ArrayList<Library>(files.length);

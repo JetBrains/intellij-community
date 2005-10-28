@@ -57,7 +57,7 @@ public class SourcePathsStep extends ModuleWizardStep {
   @NonNls private static final String CHOOSE_SOURCE_PANEL = "choose_source";
   private String myCurrentMode;
   private ElementsChooser<Pair<String,String>> mySourcePathsChooser;
-  private static final List<Pair<String,String>> EMPTY_STRING_STRING_ARRAY = Collections.EMPTY_LIST;
+  private static final List<Pair<String,String>> EMPTY_STRING_STRING_ARRAY = Collections.emptyList();
   private String myCurrentContentEntryPath = null;
   private JRadioButton myRbCreateSource;
   private JRadioButton myRbNoSource;

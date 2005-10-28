@@ -2,7 +2,10 @@ package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 
 /*
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
@@ -63,7 +66,7 @@ public class DescriptorTree {
     }
 
     List<NodeDescriptor> children = myChildrenMap.get(parent);
-    return children != null ? children : Collections.EMPTY_LIST;
+    return children != null ? children : Collections.<NodeDescriptor>emptyList();
   }
 
   public void dfst(DFSTWalker walker) {
@@ -72,8 +75,7 @@ public class DescriptorTree {
 
   private void dfstImpl(NodeDescriptor descriptor, List<NodeDescriptor> children, DFSTWalker walker) {
     if(children != null) {
-      for (Iterator<NodeDescriptor> iterator = children.iterator(); iterator.hasNext();) {
-        NodeDescriptor child = iterator.next();
+      for (NodeDescriptor child : children) {
         walker.visit(descriptor, child);
         dfstImpl(child, myChildrenMap.get(child), walker);
       }

@@ -3,6 +3,7 @@ package com.intellij.psi.impl;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.Map;
@@ -54,8 +55,9 @@ public final class EmptySubstitutorImpl extends EmptySubstitutor implements PsiS
     return "EMPTY";
   }
 
+  @NotNull
   public Map<PsiTypeParameter, PsiType> getSubstitutionMap() {
-    return Collections.EMPTY_MAP;
+    return Collections.emptyMap();
   }
 
   public boolean isValid() {

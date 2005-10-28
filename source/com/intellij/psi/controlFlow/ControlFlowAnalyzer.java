@@ -919,9 +919,9 @@ public class ControlFlowAnalyzer extends PsiElementVisitor {
    */
   private List<PsiElement> findThrowToBlocks(PsiThrowStatement statement) {
     final PsiExpression exceptionExpr = statement.getException();
-    if (exceptionExpr == null) return Collections.EMPTY_LIST;
+    if (exceptionExpr == null) return Collections.emptyList();
     final PsiType throwType = exceptionExpr.getType();
-    if (!(throwType instanceof PsiClassType)) return Collections.EMPTY_LIST;
+    if (!(throwType instanceof PsiClassType)) return Collections.emptyList();
     return findThrowToBlocks((PsiClassType)throwType);
   }
 

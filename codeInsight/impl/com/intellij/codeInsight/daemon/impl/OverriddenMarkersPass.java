@@ -37,7 +37,7 @@ public class OverriddenMarkersPass extends TextEditorHighlightingPass {
   private final int myStartOffset;
   private final int myEndOffset;
 
-  private Collection<LineMarkerInfo> myMarkers = Collections.EMPTY_LIST;
+  private Collection<LineMarkerInfo> myMarkers = Collections.emptyList();
 
   private Map<PsiClass,PsiClass> myClassToFirstDerivedMap = new THashMap<PsiClass, PsiClass>();
 

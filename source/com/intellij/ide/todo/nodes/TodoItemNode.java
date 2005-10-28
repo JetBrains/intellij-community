@@ -25,7 +25,7 @@ import java.util.Collections;
 public final class TodoItemNode extends BaseToDoNode<SmartTodoItemPointer> implements HighlightedRegionProvider{
   private static final Logger LOG=Logger.getInstance("#com.intellij.ide.toDo.TodoItemNodeDescriptor");
 
-  private final ArrayList myHighlightedRegions;
+  private final ArrayList<HighlightedRegion> myHighlightedRegions;
 
   public TodoItemNode(Project project,
                       SmartTodoItemPointer value,
@@ -34,7 +34,7 @@ public final class TodoItemNode extends BaseToDoNode<SmartTodoItemPointer> imple
     RangeMarker rangeMarker = getValue().getRangeMarker();
     LOG.assertTrue(rangeMarker.isValid());
 
-    myHighlightedRegions=new ArrayList();
+    myHighlightedRegions=new ArrayList<HighlightedRegion>();
 
   }
 
@@ -44,7 +44,7 @@ public final class TodoItemNode extends BaseToDoNode<SmartTodoItemPointer> imple
 
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
-    return Collections.EMPTY_LIST;
+    return Collections.emptyList();
   }
 
   public void update(PresentationData presentation) {
@@ -115,7 +115,7 @@ public final class TodoItemNode extends BaseToDoNode<SmartTodoItemPointer> imple
       TextAttributes attributes=iterator.getTextAttributes();
       int fontType = attributes.getFontType();
       if ((fontType & Font.BOLD) != 0){ // suppress bold attribute
-        attributes = (TextAttributes)attributes.clone();
+        attributes = attributes.clone();
         attributes.setFontType(fontType & ~Font.BOLD);
       }
       HighlightedRegion region=new HighlightedRegion(

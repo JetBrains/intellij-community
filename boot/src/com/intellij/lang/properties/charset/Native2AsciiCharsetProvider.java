@@ -17,7 +17,7 @@ public class Native2AsciiCharsetProvider extends CharsetProvider {
     return Native2AsciiCharset.forName(charsetName);
   }
 
-  public Iterator charsets() {
-    return Collections.EMPTY_LIST.iterator();
+  public Iterator<Charset> charsets() {
+    return Collections.<Charset>emptyList().iterator();
   }
 }

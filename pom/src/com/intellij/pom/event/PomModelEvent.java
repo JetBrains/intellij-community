@@ -31,7 +31,7 @@ public class PomModelEvent extends EventObject {
     if (myChangeSets != null) {
       return myChangeSets.keySet();
     } else {
-      return Collections.EMPTY_SET;
+      return Collections.emptySet();
     }
   }
 
@@ -56,14 +56,15 @@ public class PomModelEvent extends EventObject {
       myChangeSets = new HashMap<PomModelAspect, PomChangeSet>(event.myChangeSets);
       return;
     }
-    final Iterator iterator = event.myChangeSets.entrySet().iterator();
-    while (iterator.hasNext()) {
-      final Map.Entry entry = (Map.Entry)iterator.next();
-      final PomModelAspect aspect = (PomModelAspect)entry.getKey();
+    for (final Map.Entry<PomModelAspect, PomChangeSet> entry : event.myChangeSets.entrySet()) {
+      final PomModelAspect aspect = entry.getKey();
       final PomChangeSet pomChangeSet = myChangeSets.get(aspect);
-      if(pomChangeSet != null)
-        pomChangeSet.merge((PomChangeSet)entry.getValue());
-      else myChangeSets.put(aspect, (PomChangeSet)entry.getValue());
+      if (pomChangeSet != null) {
+        pomChangeSet.merge(entry.getValue());
+      }
+      else {
+        myChangeSets.put(aspect, (PomChangeSet)entry.getValue());
+      }
     }
   }
 }

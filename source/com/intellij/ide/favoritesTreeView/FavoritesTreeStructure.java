@@ -155,7 +155,7 @@ public class FavoritesTreeStructure extends ProjectAbstractTreeStructureBase imp
   private AbstractTreeNode<String> getEmptyScreen() {
     return new AbstractTreeNode<String>(myProject, IdeBundle.message("favorites.empty.screen")){
                                 public Collection<AbstractTreeNode> getChildren() {
-                                  return Collections.EMPTY_LIST;
+                                  return Collections.emptyList();
                                 }
 
       public void update(final PresentationData presentation) {

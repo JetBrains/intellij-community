@@ -41,7 +41,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
   private DebugProcessImpl myDebugProcess;
   private HashMap<Requestor, String> myInvalidRequestors = new HashMap<Requestor, String>();
 
-  private Map<Requestor, Set<EventRequest>> myRequestorToBelongedRequests        = new com.intellij.util.containers.HashMap<Requestor, Set<EventRequest>>();
+  private Map<Requestor, Set<EventRequest>> myRequestorToBelongedRequests        = new HashMap<Requestor, Set<EventRequest>>();
   private Map<EventRequest, Requestor>      myRequestsToProcessingRequestor     = new HashMap<EventRequest, Requestor>();
   private EventRequestManager myEventRequestManager;
 
@@ -53,9 +53,9 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
   public Set findRequests(Requestor requestor) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     if (!myRequestorToBelongedRequests.containsKey(requestor)) {
-      return Collections.EMPTY_SET;
+      return Collections.emptySet();
     }
-    return Collections.unmodifiableSet((Set) myRequestorToBelongedRequests.get(requestor));
+    return Collections.unmodifiableSet(myRequestorToBelongedRequests.get(requestor));
   }
 
   public Requestor findRequestor(EventRequest request) {

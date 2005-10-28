@@ -15,7 +15,7 @@ public class PsiFieldTreeElement extends JavaClassTreeElementBase<PsiField>{
  }
 
   public Collection<StructureViewTreeElement> getChildrenBase() {
-    return Collections.EMPTY_LIST;
+    return Collections.emptyList();
   }
 
   public ItemPresentation getPresentation() {
