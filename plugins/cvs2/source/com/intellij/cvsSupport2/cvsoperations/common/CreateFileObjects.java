@@ -30,7 +30,7 @@ public class CreateFileObjects {
 
   public Collection execute(){
     for (File file : myFiles) {
-      if (file.isDirectory() || ! file.isFile() || !file.getParentFile().isDirectory()) {
+      if (file.isDirectory() || file.isFile() || file.getParentFile().isDirectory()) {
         String fileAbsolutePath = file.getAbsolutePath();
         String filePath = fileAbsolutePath.equals(myRootPath) ? "/" : fileAbsolutePath.substring(myRootPath.length() + 1);
         File relativeFile = new File(filePath);
