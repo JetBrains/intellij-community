@@ -41,11 +41,8 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ActionToolbarEx;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import com.intellij.peer.PeerFactory;
-import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.content.ContentManagerAdapter;
-import com.intellij.ui.content.ContentManagerEvent;
-import org.apache.log4j.lf5.viewer.categoryexplorer.TreeModelAdapter;
+import com.intellij.ui.content.*;
+import com.intellij.util.ui.tree.TreeModelAdapter;
 
 import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
