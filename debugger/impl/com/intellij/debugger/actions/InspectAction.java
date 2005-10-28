@@ -4,8 +4,9 @@
  */
 package com.intellij.debugger.actions;
 
-import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.DebuggerInvocationUtil;
+import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.expression.Modifier;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
@@ -14,11 +15,11 @@ import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerStateManager;
 import com.intellij.debugger.ui.impl.InspectDialog;
 import com.intellij.debugger.ui.impl.watch.*;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.idea.ActionsBundle;
 import com.sun.jdi.Field;
 
 public class InspectAction extends DebuggerAction {
@@ -34,28 +35,33 @@ public class InspectAction extends DebuggerAction {
     if (!canInspect((ValueDescriptorImpl)descriptor, context)) {
       return;
     }
-
     context.getDebugProcess().getManagerThread().invokeLater(new DebuggerContextCommandImpl(context) {
       public void threadAction() {
-        final TextWithImports evaluationText = DebuggerTreeNodeExpression.createEvaluationText(node, context);
+        try {
+          final TextWithImports evaluationText = DebuggerTreeNodeExpression.createEvaluationText(node, context);
 
-        final NodeDescriptorImpl inspectDescriptor;
-
-        if (descriptor instanceof WatchItemDescriptor) {
-          inspectDescriptor = (NodeDescriptorImpl) ((WatchItemDescriptor) descriptor).getModifier().getInspectItem(project);
-        } else {
-          inspectDescriptor = descriptor;
-        }
-
-        DebuggerInvocationUtil.invokeLater(project, new Runnable() {
-          public void run() {
-            InspectDialog dialog = new InspectDialog(project,
-                    stateManager,
-                    ActionsBundle.actionText(DebuggerActions.INSPECT) + " '" + evaluationText + "'",
-                    inspectDescriptor);
-            dialog.show();
+          final NodeDescriptorImpl inspectDescriptor;
+          if (descriptor instanceof WatchItemDescriptor) {
+            inspectDescriptor = (NodeDescriptorImpl) ((WatchItemDescriptor) descriptor).getModifier().getInspectItem(project);
           }
-        });
+          else {
+            inspectDescriptor = descriptor;
+          }
+
+          DebuggerInvocationUtil.invokeLater(project, new Runnable() {
+            public void run() {
+              final InspectDialog dialog = new InspectDialog(project, stateManager, ActionsBundle.actionText(DebuggerActions.INSPECT) + " '" + evaluationText + "'", inspectDescriptor);
+              dialog.show();
+            }
+          });
+        }
+        catch (final EvaluateException e1) {
+          DebuggerInvocationUtil.invokeLater(project, new Runnable() {
+            public void run() {
+              Messages.showErrorDialog(project, e1.getMessage(), ActionsBundle.actionText(DebuggerActions.INSPECT));
+            }
+          });
+        }
       }
     });
   }

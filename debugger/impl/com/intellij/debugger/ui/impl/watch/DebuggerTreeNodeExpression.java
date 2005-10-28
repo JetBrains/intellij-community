@@ -1,10 +1,12 @@
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.codeInsight.ChangeContextUtil;
-import com.intellij.debugger.engine.evaluation.*;
+import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.engine.evaluation.TextWithImports;
+import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -219,7 +221,7 @@ public class DebuggerTreeNodeExpression {
     if (contextElement == null) {
       return qualifiedName;
     }
-    
+
     final PsiManager psiManager = PsiManager.getInstance(project);
     PsiClass aClass = psiManager.findClass(qualifiedName, GlobalSearchScope.allScope(project));
     if (aClass != null) {
@@ -251,23 +253,24 @@ public class DebuggerTreeNodeExpression {
     }
   }
 
-  public static TextWithImports createEvaluationText(final DebuggerTreeNodeImpl node, final DebuggerContextImpl context) {
-    final Project project = context.getProject();
-    return PsiDocumentManager.getInstance(project).commitAndRunReadAction(new Computable<TextWithImports>() {
+  public static TextWithImports createEvaluationText(final DebuggerTreeNodeImpl node, final DebuggerContextImpl context) throws EvaluateException {
+    final EvaluateException[] ex = new EvaluateException[] {null};
+    final TextWithImports textWithImports = PsiDocumentManager.getInstance(context.getProject()).commitAndRunReadAction(new Computable<TextWithImports>() {
       public TextWithImports compute() {
-        PsiExpression expressionText = null;
         try {
-          expressionText = getEvaluationExpression(node, context);
-        } catch (EvaluateException e) {
-          LOG.error(e.getMessage());
-          return null;
+          PsiExpression expressionText = getEvaluationExpression(node, context);
+          return new TextWithImportsImpl(expressionText);
         }
-
-        if (expressionText == null) return null;
-
-        return new TextWithImportsImpl(expressionText);
+        catch (EvaluateException e) {
+          ex[0] = e;
+        }
+        return null;
       }
     });
+    if (ex[0] != null) {
+      throw ex[0];
+    }
+    return textWithImports;
   }
 
   private static class IncorrectOperationRuntimeException extends RuntimeException {

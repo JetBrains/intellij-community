@@ -27,6 +27,7 @@ public interface DebuggerActions {
   @NonNls String DEBUGGER_PANEL = "DebuggerPanel";
   @NonNls String REMOVE_WATCH = "Debugger.RemoveWatch";
   @NonNls String NEW_WATCH = "Debugger.NewWatch";
+  @NonNls String ADD_TO_WATCH = "Debugger.AddToWatch";
   @NonNls String EDIT_WATCH = "Debugger.EditWatch";
   @NonNls String SET_VALUE = "Debugger.SetValue";
   @NonNls String EDIT_FRAME_SOURCE = "Debugger.EditFrameSource";

@@ -3,6 +3,7 @@ package com.intellij.debugger.ui;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerContextListener;
@@ -40,7 +41,10 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ActionToolbarEx;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import com.intellij.peer.PeerFactory;
-import com.intellij.ui.content.*;
+import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManager;
+import com.intellij.ui.content.ContentManagerAdapter;
+import com.intellij.ui.content.ContentManagerEvent;
 import org.apache.log4j.lf5.viewer.categoryexplorer.TreeModelAdapter;
 
 import javax.swing.*;
@@ -199,7 +203,7 @@ public class DebuggerSessionTab {
         }
       }
     });
-    
+
     myContentPanel.add(myViewsContentManager.getComponent(), BorderLayout.CENTER);
   }
 
@@ -209,15 +213,15 @@ public class DebuggerSessionTab {
       myViewsContentManager.setSelectedContent(content);
     }
   }
-  
+
   private Project getProject() {
     return myProject;
   }
-  
+
   public MainWatchPanel getWatchPanel() {
     return myWatchPanel;
-  }  
-  
+  }
+
   private RunContentDescriptor initUI(ExecutionResult executionResult) {
 
     myConsole = executionResult.getExecutionConsole();
@@ -387,7 +391,7 @@ public class DebuggerSessionTab {
     }
     return null;
   }
-  
+
   public void dispose() {
     disposeSession();
     myThreadsPanel.dispose();
@@ -409,9 +413,9 @@ public class DebuggerSessionTab {
   }
 
   private DebugProcessImpl getDebugProcess() {
-    return myDebuggerSession != null ? myDebuggerSession.getProcess() : null;    
+    return myDebuggerSession != null ? myDebuggerSession.getProcess() : null;
   }
-  
+
   public void reuse(DebuggerSessionTab reuseSession) {
     getDebugProcess().setSuspendPolicy(reuseSession.getDebugProcess().getSuspendPolicy());
     DebuggerTreeNodeImpl[] watches = reuseSession.getWatchPanel().getWatchTree().getWatches();
@@ -442,11 +446,11 @@ public class DebuggerSessionTab {
   public ContentManager getViewsContentManager() {
     return myViewsContentManager;
   }
-  
+
   public DebuggerStateManager getContextManager() {
     return myStateManager;
   }
-  
+
   public TextWithImports getSelectedExpression() {
     if (myDebuggerSession.getState() != DebuggerSession.STATE_PAUSED) {
       return null;
@@ -473,7 +477,12 @@ public class DebuggerSessionTab {
     if (descriptor instanceof WatchItemDescriptor) {
       return ((WatchItemDescriptor)descriptor).getEvaluationText();
     }
-    return DebuggerTreeNodeExpression.createEvaluationText(node, getContextManager().getContext());
+    try {
+      return DebuggerTreeNodeExpression.createEvaluationText(node, getContextManager().getContext());
+    }
+    catch (EvaluateException e) {
+      return null;
+    }
   }
 
   public RunContentDescriptor attachToSession(

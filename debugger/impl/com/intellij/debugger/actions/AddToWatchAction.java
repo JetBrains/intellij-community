@@ -5,19 +5,23 @@
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.DebuggerInvocationUtil;
+import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.DebuggerPanelsManager;
+import com.intellij.debugger.ui.impl.FramePanel;
 import com.intellij.debugger.ui.impl.MainWatchPanel;
 import com.intellij.debugger.ui.impl.WatchDebuggerTree;
-import com.intellij.debugger.ui.impl.FramePanel;
 import com.intellij.debugger.ui.impl.watch.*;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 
 public class AddToWatchAction extends DebuggerAction {
   public void actionPerformed(AnActionEvent e) {
@@ -94,14 +98,23 @@ public class AddToWatchAction extends DebuggerAction {
     }
 
     public void threadAction() {
-      for (int idx = 0; idx < mySelectedNodes.length; idx++) {
-        DebuggerTreeNodeImpl node = mySelectedNodes[idx];
+      for (final DebuggerTreeNodeImpl node : mySelectedNodes) {
         final NodeDescriptorImpl descriptor = node.getDescriptor();
-        final TextWithImports expression = DebuggerTreeNodeExpression.createEvaluationText(node, myDebuggerContext);
-        if (expression != null) {
-          DebuggerInvocationUtil.invokeLater(myDebuggerContext.getDebuggerSession().getProject(), new Runnable() {
+        final Project project = myDebuggerContext.getDebuggerSession().getProject();
+        try {
+          final TextWithImports expression = DebuggerTreeNodeExpression.createEvaluationText(node, myDebuggerContext);
+          if (expression != null) {
+            DebuggerInvocationUtil.invokeLater(project, new Runnable() {
+              public void run() {
+                doAddWatch(myWatchPanel, expression, descriptor);
+              }
+            });
+          }
+        }
+        catch (final EvaluateException e) {
+          DebuggerInvocationUtil.invokeLater(project, new Runnable() {
             public void run() {
-              doAddWatch(myWatchPanel, expression, descriptor);
+              Messages.showErrorDialog(project, e.getMessage(), ActionsBundle.actionText(DebuggerActions.ADD_TO_WATCH));
             }
           });
         }
@@ -111,12 +124,11 @@ public class AddToWatchAction extends DebuggerAction {
     protected void commandCancelled() {
       DebuggerInvocationUtil.invokeLater(myDebuggerContext.getProject(), new Runnable() {
         public void run() {
-          for (int idx = 0; idx < mySelectedNodes.length; idx++) {
-            DebuggerTreeNodeImpl node = mySelectedNodes[idx];
+          for (DebuggerTreeNodeImpl node : mySelectedNodes) {
             final NodeDescriptorImpl descriptor = node.getDescriptor();
-            if(descriptor instanceof WatchItemDescriptor) {
-              final TextWithImports expression = ((WatchItemDescriptor) descriptor).getEvaluationText();
-              if(expression != null) {
+            if (descriptor instanceof WatchItemDescriptor) {
+              final TextWithImports expression = ((WatchItemDescriptor)descriptor).getEvaluationText();
+              if (expression != null) {
                 doAddWatch(myWatchPanel, expression, descriptor);
               }
             }
