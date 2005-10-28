@@ -10,6 +10,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.j2ee.J2EERolesUtil;
@@ -212,6 +213,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
     final HighlightInfoFilter[] filters = ApplicationManager.getApplication().getComponents(HighlightInfoFilter.class);
 
     final HighlightInfoHolder holder = new HighlightInfoHolder(myFile, filters);
+    holder.setWritable(false);
     PsiManager.getInstance(myProject).performActionWithFormatterDisabled(new Runnable() {
       public void run() {
         for (PsiElement element : elements) {
@@ -222,9 +224,11 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
             continue;
           }
 
+          holder.setWritable(true);
           for (HighlightVisitor visitor : visitors) {
             visitor.visit(element, holder);
           }
+          holder.setWritable(false);
 
           //noinspection ForLoopReplaceableByForEach
           for (int i=0; i<holder.size(); i++) {
@@ -287,15 +291,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
                                                                                                rules[0].getDisplayText()));
               if (info != null) {
                 list.add(info);
-                List<IntentionAction> options = new ArrayList<IntentionAction>();
-                options.add(new EditInspectionToolsSettingsAction(HighlightDisplayKey.ILLEGAL_DEPENDENCY));
-                options.add(new AddNoInspectionCommentAction(HighlightDisplayKey.ILLEGAL_DEPENDENCY, place));
-                options.add(new AddNoInspectionDocTagAction(HighlightDisplayKey.ILLEGAL_DEPENDENCY, place));
-                options.add(new AddNoInspectionForClassAction(HighlightDisplayKey.ILLEGAL_DEPENDENCY, place));
-                options.add(new AddNoInspectionAllForClassAction(place));
-                options.add(new AddSuppressWarningsAnnotationAction(HighlightDisplayKey.ILLEGAL_DEPENDENCY, place));
-                options.add(new AddSuppressWarningsAnnotationForClassAction(HighlightDisplayKey.ILLEGAL_DEPENDENCY, place));
-                options.add(new AddSuppressWarningsAnnotationForAllAction(place));
+                List<IntentionAction> options = IntentionManager.getInstance(myProject).getStandardIntentionOptions(HighlightDisplayKey.ILLEGAL_DEPENDENCY,place);
                 QuickFixAction.registerQuickFixAction(info, new EditDependencyRulesAction(rules[0]), options);
               }
             }

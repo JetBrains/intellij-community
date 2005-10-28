@@ -22,6 +22,7 @@ public class HighlightInfoHolder extends ArrayList<HighlightInfo> {
   private int myErrorCount;
   private int myWarningCount;
   private int myInfoCount;
+  private boolean writable = true;
 
   public HighlightInfoHolder(PsiFile contextFile, HighlightInfoFilter[] filters) {
     super(5);
@@ -30,6 +31,7 @@ public class HighlightInfoHolder extends ArrayList<HighlightInfo> {
   }
 
   public boolean add(HighlightInfo info) {
+    if (!writable) throw new UnsupportedOperationException("Update highlight holder after visit finished; "+this);
     if (info == null || !accepted(info)) return false;
 
     HighlightSeverity severity = info.getSeverity();
@@ -84,6 +86,10 @@ public class HighlightInfoHolder extends ArrayList<HighlightInfo> {
       added |= add(highlightInfo);
     }
     return added;
+  }
+
+  public void setWritable(final boolean writable) {
+    this.writable = writable;
   }
 
   public HighlightInfo set(final int index, final HighlightInfo element) {
