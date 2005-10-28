@@ -16,6 +16,9 @@
     <orderEntry type="module" module-name="execution-openapi" />
     <orderEntry type="module" module-name="action-system-openapi" />
     <orderEntry type="module" module-name="ui-openapi" />
+    <orderEntry type="module" module-name="ui-impl" />
+    <orderEntry type="module" module-name="action-system-impl" />
+    <orderEntry type="module" module-name="execution-impl" />
     <orderEntryProperties />
   </component>
   <component name="copyright">
