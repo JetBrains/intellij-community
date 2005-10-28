@@ -223,6 +223,7 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
 
   public void projectClosed() {
     VirtualFileManager.getInstance().removeVirtualFileListener(myEntriesFileListener);
+    new DefaultSVNRepositoryPool(null).shutdownConnections(true);
   }
 
   public void projectOpened() {
