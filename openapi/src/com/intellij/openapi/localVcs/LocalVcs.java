@@ -29,7 +29,11 @@ public abstract class LocalVcs implements SettingsSavingComponent {
     return project.getComponent(LocalVcs.class);
   }
 
+  public abstract Project getProject();
+
   public abstract void save();
+
+  public abstract VirtualFile[] getCoveredDirectories();
 
   public abstract String[] getRootPaths();
 
@@ -49,6 +53,8 @@ public abstract class LocalVcs implements SettingsSavingComponent {
 
   public abstract LvcsLabel addLabel(byte type, String name, String path);
 
+  public abstract LvcsAction startExternalChangesAction();
+
   public abstract LvcsAction startAction(String action, String path, boolean isExternalChanges);
 
   public abstract LvcsRevision[] getChanges(String path, LvcsLabel label, boolean upToDateOnly);
@@ -56,6 +62,8 @@ public abstract class LocalVcs implements SettingsSavingComponent {
   public abstract LvcsRevision[] getChanges(LvcsLabel label1, LvcsLabel label2);
 
   public abstract boolean isUnderVcs(VirtualFile file);
+
+  public abstract LvcsDirectory addDirectory(String name, VirtualFile onDisk);
 
   public abstract int purge();
 
@@ -78,4 +86,6 @@ public abstract class LocalVcs implements SettingsSavingComponent {
   public abstract void removeLvcsLabelListener(LvcsLabelListener listener);
 
   public abstract UpToDateLineNumberProvider getUpToDateLineNumberProvider(Document document, String upToDateContent);
+
+  public abstract void setCanProvideContents( boolean canProvide );
 }
