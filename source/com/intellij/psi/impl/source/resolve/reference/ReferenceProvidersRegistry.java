@@ -425,7 +425,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
     HtmlReferenceProvider provider = new HtmlReferenceProvider();
     registerXmlAttributeValueReferenceProvider(
       new String[] {
-        "src", "href", "action", "background", "width", "height", "type", "bgcolor", "color", "vlink", "link", "alink", "text"
+        "src", "href", "action", "background", "width", "height", "type", "bgcolor", "color", "vlink", "link", "alink", "text", "name"
       },
       provider.getFilter(),
       false,
