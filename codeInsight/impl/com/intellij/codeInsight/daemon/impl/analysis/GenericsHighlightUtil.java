@@ -127,6 +127,7 @@ public abstract class GenericsHighlightUtil {
         final PsiType type = typeElement.getType();
         if (!(type instanceof PsiClassType)) continue;
         final PsiClass referenceClass = ((PsiClassType)type).resolve();
+        if (referenceClass == null) continue;
         final PsiClassType[] bounds = classParameter.getSuperTypes();
         for (PsiClassType type1 : bounds) {
           PsiType bound = substitutor.substitute(type1);
