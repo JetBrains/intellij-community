@@ -1,6 +1,5 @@
 package com.intellij.uiDesigner.make;
 
-import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.ex.CompilerPathsEx;
@@ -27,6 +26,7 @@ import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.util.BcelUtils;
 import org.apache.bcel.util.ClassPath;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInputStream;
 import java.io.File;
@@ -37,7 +37,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.StringTokenizer;
-import java.text.MessageFormat;
 
 public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.make.Form2ByteCodeCompiler");
@@ -56,9 +55,7 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
     return true;
   }
 
-  /**
-   * @return never <code>null</code>
-   */
+  @NotNull
   public static URLClassLoader createClassLoader(final String classPath){
     if (classPath == null) {
       //noinspection HardCodedStringLiteral
@@ -90,7 +87,7 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
         final CompileScope projectScope = context.getProjectCompileScope();
 
         final VirtualFile[] formFiles = projectScope.getFiles(StdFileTypes.GUI_DESIGNER_FORM, true);
-        final CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(myProject);
+        final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
         final BindingsCache bindingsCache = new BindingsCache(myProject);
         final VirtualFile[] outputDirectories = CompilerPathsEx.getOutputDirectories(
           ModuleManager.getInstance(myProject).getSortedModules()
@@ -108,7 +105,7 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
             for (int i = 0; i < list.size(); i++) {
               final VirtualFile formFile = (VirtualFile)list.get(i);
 
-              if (compilerConfiguration.isExcludedFromCompilation(formFile)) {
+              if (compilerManager.isExcludedFromCompilation(formFile)) {
                 continue;
               }
 

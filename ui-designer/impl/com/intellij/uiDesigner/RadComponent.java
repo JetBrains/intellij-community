@@ -20,6 +20,8 @@ import java.lang.reflect.Constructor;
 import java.util.HashSet;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Anton Katilin
@@ -53,13 +55,13 @@ public abstract class RadComponent implements IComponent {
    */
   private String myBinding;
 
-  private final Module myModule;
-  private final Class myClass;
+  @NotNull private final Module myModule;
+  @NotNull private final Class myClass;
   /**
    * Delegee is the JComponent which really represents the
    * component in UI.
    */
-  private final JComponent myDelegee;
+  @NotNull private final JComponent myDelegee;
   /**
    * Parent RadContainer. This field is always not <code>null</code>
    * is the component is in hierarchy. But the root of hierarchy
@@ -70,16 +72,14 @@ public abstract class RadComponent implements IComponent {
    * Defines whether the component selected or not.
    */
   private boolean mySelected;
-  /**
-   * never <code>null</code>
-   */
-  private final GridConstraints myConstraints;
+
+  @NotNull private final GridConstraints myConstraints;
 
   private Object myCustomLayoutConstraints;
 
   private final PropertyChangeSupport myChangeSupport;
 
-  private final HashSet myModifiedPropertyNames;
+  private final HashSet<String> myModifiedPropertyNames;
 
   private boolean myHasDragger;
 
@@ -91,9 +91,12 @@ public abstract class RadComponent implements IComponent {
    * @param id id of the compoent inside the form. <code>id</code>
    * should be a unique atring inside the form.
    */
-  public RadComponent(final Module module, final Class aClass, final String id){
+  public RadComponent(@NotNull final Module module, @NotNull final Class aClass, @NotNull final String id){
+    //noinspection ConstantConditions
     LOG.assertTrue(module != null);
+    //noinspection ConstantConditions
     LOG.assertTrue(aClass != null);
+    //noinspection ConstantConditions
     LOG.assertTrue(id != null);
 
     myModule = module;
@@ -102,7 +105,7 @@ public abstract class RadComponent implements IComponent {
 
     myChangeSupport=new PropertyChangeSupport(this);
     myConstraints = new GridConstraints();
-    myModifiedPropertyNames = new HashSet();
+    myModifiedPropertyNames = new HashSet<String>();
 
     try {
       final Constructor constructor = myClass.getConstructor(new Class[0]);
@@ -119,6 +122,7 @@ public abstract class RadComponent implements IComponent {
   /**
    * @return module for the component. Never returns <code>null</code>.
    */
+  @NotNull
   public final Module getModule() {
     return myModule;
   }
@@ -131,8 +135,7 @@ public abstract class RadComponent implements IComponent {
     LOG.assertTrue(item != null);
 
     final IntrospectedProperty[] properties = Palette.getInstance(myModule.getProject()).getIntrospectedProperties(myClass);
-    for (int i = 0; i < properties.length; i++) {
-      final IntrospectedProperty property = properties[i];
+    for (final IntrospectedProperty property : properties) {
       final Object initialValue = item.getInitialValue(property);
       if (initialValue != null) {
         try {
@@ -167,6 +170,7 @@ public abstract class RadComponent implements IComponent {
    * @return Swing delegee component. The <code>RadComponent</code> has the same
    * delegee during all its life. The method never returns <code>null</code>.
    */
+  @NotNull
   public final JComponent getDelegee(){
     return myDelegee;
   }
@@ -197,21 +201,18 @@ public abstract class RadComponent implements IComponent {
    * @return area where editor component is located. This is the hint to the
    * designer.  Designer can use or not this rectangle.
    */
+  @Nullable
   public Rectangle getInplaceEditorBounds(final Property property, final int x, final int y){
     LOG.assertTrue(property != null);
     return null;
   }
 
-  /**
-   * @return never <code>null</code>.
-   */
+  @NotNull
   public final Class getComponentClass(){
     return myClass;
   }
 
-  /**
-   * @return never <code>null</code>.
-   */
+  @NotNull
   public String getComponentClassName() {
     return myClass.getName();
   }
@@ -252,6 +253,7 @@ public abstract class RadComponent implements IComponent {
   /**
    * @return component's constarints. The method never returns <code>null</code>.
    */
+  @NotNull
   public final GridConstraints getConstraints(){
     return myConstraints;
   }
@@ -345,7 +347,6 @@ public abstract class RadComponent implements IComponent {
 
   /**
    * todo[anton] get rid of
-   * @return
    */
   public final RevalidateInfo revalidate() {
     final RevalidateInfo info = new RevalidateInfo();
@@ -433,15 +434,15 @@ public abstract class RadComponent implements IComponent {
     try{
       final IntrospectedProperty[] introspectedProperties =
         Palette.getInstance(myModule.getProject()).getIntrospectedProperties(getComponentClass());
-      for (int i = 0; i < introspectedProperties.length; i++) {
-        final IntrospectedProperty property = introspectedProperties[i];
+      for(final IntrospectedProperty property : introspectedProperties) {
         if (isMarkedAsModified(property)) {
           final Object value = property.getValue(this);
           if (value != null) {
             writer.startElement(property.getName());
-            try{
+            try {
               property.write(value, writer);
-            }finally{
+            }
+            finally {
               writer.endElement();
             }
           }

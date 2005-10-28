@@ -144,9 +144,11 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
 
   public void visitElement(PsiElement element) {
     Language lang = element.getLanguage();
-    Annotator annotator = lang.getAnnotator();
-    if (annotator != null) {
-      annotator.annotate(element, myAnnotationHolder);
+    List<Annotator> annotators = lang.getAnnotators();
+    if (annotators.size() > 0) {
+      for(Annotator annotator: annotators) {
+        annotator.annotate(element, myAnnotationHolder);
+      }
       convertAnnotationsToHighlightInfos();
     }
     else if (element instanceof JspText) {
@@ -905,6 +907,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   }
 
   public void visitVariable(PsiVariable variable) {
+    super.visitVariable(variable);
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkVariableInitializerType(variable));
 
     if (HighlightControlFlowUtil.isReassigned(variable, myFinalVarProblems, myParameterIsReassigned)) {

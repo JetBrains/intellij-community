@@ -1,6 +1,5 @@
 package com.intellij.uiDesigner.make;
 
-import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
@@ -22,7 +21,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.text.MessageFormat;
+
+import org.jetbrains.annotations.NotNull;
 
 public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.make.Form2SourceCompiler");
@@ -33,6 +33,7 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
     myProject = project;
   }
 
+  @NotNull
   public String getDescription() {
     return UIDesignerBundle.message("component.gui.designer.form.to.source.compiler");
   }
@@ -41,6 +42,7 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
     return true;
   }
 
+  @NotNull
   public ProcessingItem[] getProcessingItems(final CompileContext context) {
     if (GuiDesignerConfiguration.getInstance(myProject).INSTRUMENT_CLASSES) {
       return ProcessingItem.EMPTY_ARRAY;
@@ -54,16 +56,14 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
         final CompileScope projectScope = context.getProjectCompileScope();
 
         final VirtualFile[] formFiles = projectScope.getFiles(StdFileTypes.GUI_DESIGNER_FORM, true);
-        final CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(myProject);
+        final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
         final BindingsCache bindingsCache = new BindingsCache(myProject);
 
         try {
           final HashMap<String, VirtualFile> class2form = new HashMap<String, VirtualFile>();
 
-          for (int i = 0; i < formFiles.length; i++) {
-            final VirtualFile formFile = formFiles[i];
-
-            if (compilerConfiguration.isExcludedFromCompilation(formFile)) {
+          for (final VirtualFile formFile : formFiles) {
+            if (compilerManager.isExcludedFromCompilation(formFile)) {
               continue;
             }
 
@@ -136,10 +136,10 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
 
     final HashSet<Module> processedModules = new HashSet<Module>();
 
-    for (int i = 0; i < items.length; i++) {
+    for (ProcessingItem item1 : items) {
       context.getProgressIndicator().setFraction((double)(++formsProcessed) / ((double)items.length));
 
-      final MyInstrumentationItem item = (MyInstrumentationItem)items[i];
+      final MyInstrumentationItem item = (MyInstrumentationItem)item1;
 
       final VirtualFile formFile = item.getFormFile();
 
@@ -173,37 +173,36 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
       }
 
       ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-          public void run() {
-            CommandProcessor.getInstance().executeCommand(
-              myProject,
-              new Runnable() {
-                public void run() {
-                  ApplicationManager.getApplication().runWriteAction(
-                    new Runnable() {
-                      public void run() {
-                        PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-                        generator.generate(formFile);
-                        final ArrayList<String> errors = generator.getErrors();
-                        if (errors.size() == 0) {
-                          compiledItems.add(item);
-                        }
-                        else {
-                          for (int j = 0; j < errors.size(); j++) {
-                            final String s = errors.get(j);
-                            addError(context, s, formFile);
-                          }
-                        }
-                        FileDocumentManager.getInstance().saveAllDocuments();
+        public void run() {
+          CommandProcessor.getInstance().executeCommand(
+            myProject,
+            new Runnable() {
+              public void run() {
+                ApplicationManager.getApplication().runWriteAction(
+                  new Runnable() {
+                    public void run() {
+                      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+                      generator.generate(formFile);
+                      final ArrayList<String> errors = generator.getErrors();
+                      if (errors.size() == 0) {
+                        compiledItems.add(item);
                       }
+                      else {
+                        for (final String s : errors) {
+                          addError(context, s, formFile);
+                        }
+                      }
+                      FileDocumentManager.getInstance().saveAllDocuments();
                     }
-                  );
-                }
-              },
-              "",
-              null
-            );
-          }
-        }, ModalityState.NON_MMODAL);
+                  }
+                );
+              }
+            },
+            "",
+            null
+          );
+        }
+      }, ModalityState.NON_MMODAL);
     }
     return compiledItems.toArray(new ProcessingItem[compiledItems.size()]);
   }
@@ -222,16 +221,17 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
   }
 
   private static final class MyInstrumentationItem implements ProcessingItem {
-    private final VirtualFile mySourceFile;
+    @NotNull private final VirtualFile mySourceFile;
     private final VirtualFile myFormFile;
     private final TimestampValidityState myState;
 
-    public MyInstrumentationItem(final VirtualFile sourceFile, final VirtualFile formFile) {
+    public MyInstrumentationItem(@NotNull final VirtualFile sourceFile, final VirtualFile formFile) {
       mySourceFile = sourceFile;
       myFormFile = formFile;
       myState = new TimestampValidityState(formFile.getTimeStamp());
     }
 
+    @NotNull
     public VirtualFile getFile() {
       return mySourceFile;
     }

@@ -1,5 +1,6 @@
 package com.intellij.uiDesigner.make;
 
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
@@ -7,7 +8,6 @@ import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -25,15 +25,14 @@ import com.intellij.uiDesigner.shared.BorderType;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectIntHashMap;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.*;
-import java.text.MessageFormat;
-
-import org.jetbrains.annotations.NonNls;
 
 public final class FormSourceCodeGenerator {
   private StringBuffer myBuffer;
@@ -44,7 +43,8 @@ public final class FormSourceCodeGenerator {
   private static final TIntObjectHashMap myAnchors = fillMap(GridConstraints.class, "ANCHOR_");
   private static final TIntObjectHashMap myFills = fillMap(GridConstraints.class, "FILL_");
 
-  public FormSourceCodeGenerator(final Project project){
+  public FormSourceCodeGenerator(@NotNull final Project project){
+    //noinspection ConstantConditions
     if (project == null){
       //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("project cannot be null");
@@ -117,7 +117,6 @@ public final class FormSourceCodeGenerator {
     return myErrors;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   private void _generate(final LwRootContainer rootContainer, final Module module) throws CodeGenerationException, IncorrectOperationException{
     myBuffer = new StringBuffer();
     myIsFirstParameterStack = new Stack<Boolean>();
@@ -126,10 +125,10 @@ public final class FormSourceCodeGenerator {
     final TObjectIntHashMap<String> class2variableIndex = new TObjectIntHashMap<String>();
 
     if (rootContainer.getComponentCount() != 1) {
-      throw new CodeGenerationException("There should be only one component at the top level");
+      throw new CodeGenerationException(UIDesignerBundle.message("error.one.toplevel.component.required"));
     }
     if (containsNotEmptyPanelsWithXYLayout((LwComponent)rootContainer.getComponent(0))) {
-      throw new CodeGenerationException("There are non empty panels with XY layout. Please lay them out in a grid.");
+      throw new CodeGenerationException(UIDesignerBundle.message("error.nonempty.xy.panels.found"));
     }
 
     final GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
@@ -142,7 +141,7 @@ public final class FormSourceCodeGenerator {
 
     final PsiClass aClass = FormEditingUtil.findClassToBind(module, rootContainer.getClassToBind());
     if (aClass == null) {
-      throw new ClassToBindNotFoundException("Class to bind not found: " + rootContainer.getClassToBind());
+      throw new ClassToBindNotFoundException(UIDesignerBundle.message("error.class.to.bind.not.found", rootContainer.getClassToBind()));
     }
 
     cleanup(aClass);

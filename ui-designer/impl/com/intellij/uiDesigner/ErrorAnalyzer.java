@@ -18,6 +18,8 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Anton Katilin
@@ -50,13 +52,16 @@ public final class ErrorAnalyzer {
    * @param editor if null, no quick fixes are created. This is used in form to source compiler.
    */
   public static void analyzeErrors(
-    final Module module,
-    final VirtualFile formFile,
-    final GuiEditor editor,
-    final IRootContainer rootContainer
+    @NotNull final Module module,
+    @NotNull final VirtualFile formFile,
+    @Nullable final GuiEditor editor,
+    @NotNull final IRootContainer rootContainer
   ){
+    //noinspection ConstantConditions
     LOG.assertTrue(module != null);
+    //noinspection ConstantConditions
     LOG.assertTrue(formFile != null);
+    //noinspection ConstantConditions
     LOG.assertTrue(rootContainer != null);
 
     // 1. Validate class to bind
@@ -262,6 +267,7 @@ public final class ErrorAnalyzer {
    * @return first ErrorInfo for the specified component. If component doesn't contain
    * any error then the method returns <code>null</code>.
    */
+  @Nullable
   public static ErrorInfo getErrorForComponent(final IComponent component){
     LOG.assertTrue(component != null);
 

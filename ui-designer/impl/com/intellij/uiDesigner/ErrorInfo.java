@@ -12,10 +12,12 @@ public final class ErrorInfo {
   public final QuickFix[] myFixes;
 
   public ErrorInfo(@NotNull final String description, @NotNull final QuickFix[] fixes) {
+    //noinspection ConstantConditions
     if (description == null) {
       //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("description cannot be null");
     }
+    //noinspection ConstantConditions
     if (fixes == null) {
       //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("fixes cannot be null");

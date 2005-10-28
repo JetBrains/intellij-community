@@ -13,6 +13,7 @@ import java.awt.*;
 import java.util.HashMap;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Anton Katilin
@@ -31,6 +32,7 @@ public final class PsiPropertiesProvider implements PropertiesProvider{
     myCache = new HashMap();
   }
 
+  @Nullable
   public HashMap getLwProperties(final String className){
     if (myCache.containsKey(className)) {
       return (HashMap)myCache.get(className);
@@ -45,20 +47,18 @@ public final class PsiPropertiesProvider implements PropertiesProvider{
     final HashMap result = new HashMap();
 
     final PsiMethod[] methods = aClass.getAllMethods();
-    for (int i = 0; i < methods.length; i++) {
-      final PsiMethod method = methods[i];
-
+    for (final PsiMethod method : methods) {
       // it's a setter candidate.. try to find getter
 
       if (!PropertyUtil.isSimplePropertySetter(method)) {
         continue;
       }
       final String name = PropertyUtil.getPropertyName(method);
-      if(name == null){
+      if (name == null) {
         throw new IllegalStateException();
       }
       final PsiMethod getter = PropertyUtil.findPropertyGetter(aClass, name, false, true);
-      if(getter == null){
+      if (getter == null) {
         continue;
       }
 
@@ -67,7 +67,7 @@ public final class PsiPropertiesProvider implements PropertiesProvider{
         name.equals("preferredSize") ||
         name.equals("minimumSize") ||
         name.equals("maximumSize")
-      ){
+        ) {
         // our own properties must be used instead
         continue;
       }
@@ -86,7 +86,7 @@ public final class PsiPropertiesProvider implements PropertiesProvider{
       else if (double.class.getName().equals(propertyClassName)) { // double
         property = new LwIntroDoubleProperty(name);
       }
-      else if (String.class.getName().equals(propertyClassName)){ // java.lang.String
+      else if (String.class.getName().equals(propertyClassName)) { // java.lang.String
         property = new LwRbIntroStringProperty(name);
       }
       else if (Insets.class.getName().equals(propertyClassName)) { // java.awt.Insets
@@ -95,7 +95,7 @@ public final class PsiPropertiesProvider implements PropertiesProvider{
       else if (Dimension.class.getName().equals(propertyClassName)) { // java.awt.Dimension
         property = new LwIntroDimensionProperty(name);
       }
-      else if(Rectangle.class.getName().equals(propertyClassName)){ // java.awt.Rectangle
+      else if (Rectangle.class.getName().equals(propertyClassName)) { // java.awt.Rectangle
         property = new LwIntroRectangleProperty(name);
       }
       else {

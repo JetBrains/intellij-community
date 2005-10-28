@@ -14,6 +14,8 @@ import com.intellij.uiDesigner.propertyInspector.editors.string.StringEditor;
 import com.intellij.uiDesigner.shared.BorderType;
 import com.intellij.uiDesigner.shared.XYLayoutManager;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -37,14 +39,14 @@ public class RadContainer extends RadComponent implements IContainer {
   private final ArrayList<RadComponent> myComponents;
   private final MyPropertyChangeListener myChangeListener;
   /**
-   * Describes border's type. This member is never <code>null</code>
+   * Describes border's type.
    */
-  private BorderType myBorderType;
+  @NotNull private BorderType myBorderType;
   /**
    * Border's title. If border doesn't have any title then
    * this member is <code>null</code>.
    */
-  private StringDescriptor myBorderTitle;
+  @Nullable private StringDescriptor myBorderTitle;
 
   protected RadContainer(final Module module, final String id){
     this(module, JPanel.class, id);
@@ -126,7 +128,8 @@ public class RadContainer extends RadComponent implements IContainer {
    * @exception java.lang.IllegalArgumentException if <code>component</code> already exist in the
    * container
    */
-  public final void addComponent(final RadComponent component){
+  public final void addComponent(@NotNull final RadComponent component){
+    //noinspection ConstantConditions
     if (component == null) {
       //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("component cannot be null");
@@ -172,7 +175,8 @@ public class RadContainer extends RadComponent implements IContainer {
    * @exception java.lang.IllegalArgumentException if <code>component</code>
    * doesn't exist in the container
    */
-  public final void removeComponent(final RadComponent component){
+  public final void removeComponent(@NotNull final RadComponent component){
+    //noinspection ConstantConditions
     if (component == null) {
       //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("component cannot be null");
@@ -272,8 +276,8 @@ public class RadContainer extends RadComponent implements IContainer {
 
       // shift components if necessary to make sure that no component has negative x or y
       if (patchX < 0 || patchY < 0) {
-        for (int i = 0; i < components.length; i++) {
-          components[i].shift(-patchX, -patchY);
+        for(RadComponent component : components) {
+          component.shift(-patchX, -patchY);
         }
       }
       return new DropInfo(this, null, null);
@@ -321,6 +325,7 @@ public class RadContainer extends RadComponent implements IContainer {
    *
    * @see com.intellij.uiDesigner.shared.BorderType
    */
+  @NotNull
   public final BorderType getBorderType(){
     return myBorderType;
   }
@@ -331,7 +336,8 @@ public class RadContainer extends RadComponent implements IContainer {
    * @exception java.lang.IllegalArgumentException if <code>type</code>
    * is <code>null</code>
    */
-  public final void setBorderType(final BorderType type){
+  public final void setBorderType(@NotNull final BorderType type){
+    //noinspection ConstantConditions
     if(type==null){
       //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("type cannot be null");
@@ -347,6 +353,7 @@ public class RadContainer extends RadComponent implements IContainer {
    * @return border's title. If the container doesn't have any title then the
    * method returns <code>null</code>.
    */
+  @Nullable
   public final StringDescriptor getBorderTitle(){
     return myBorderTitle;
   }
@@ -468,7 +475,8 @@ public class RadContainer extends RadComponent implements IContainer {
   /**
    * Serializes child constraints into the currently opened "constraints" tag
    */
-  public void writeConstraints(final XmlWriter writer, final RadComponent child){
+  public void writeConstraints(final XmlWriter writer, @NotNull final RadComponent child){
+    //noinspection ConstantConditions
     if (child == null) {
       //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("child cannot be null");

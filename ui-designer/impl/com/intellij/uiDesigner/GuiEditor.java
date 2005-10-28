@@ -35,6 +35,7 @@ import java.awt.*;
 import java.util.EventListener;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * <code>GuiEditor</code> is a panel with border layout. It has palette at the north,
@@ -47,8 +48,8 @@ import org.jetbrains.annotations.NonNls;
 public final class GuiEditor extends JPanel implements DataProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.GuiEditor");
 
-  private final Module myModule;
-  private final VirtualFile myFile;
+  @NotNull private final Module myModule;
+  @NotNull private final VirtualFile myFile;
 
   /**
    * for debug purposes
@@ -95,7 +96,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
    * This layered pane contains all layers to lay components out and to
    * show all necessary decoration items
    */
-  private final MyLayeredPane myLayeredPane;
+  @NotNull private final MyLayeredPane myLayeredPane;
   /**
    * The component which represents decoration layer. All passive
    * decorators are on this layer.
@@ -123,14 +124,14 @@ public final class GuiEditor extends JPanel implements DataProvider {
   /**
    * Panel with components palette.
    */
-  private final PalettePanel myPalettePanel;
+  @NotNull private final PalettePanel myPalettePanel;
   /**
    * GuiEditor should not react on own events. If <code>myInsideChange</code>
    * is <code>true</code> then we do not react on incoming DocumentEvent.
    */
   private boolean myInsideChange;
-  private final PropertyInspector myPropertyInspector;
-  private final ComponentTree myComponentTree;
+  @NotNull private final PropertyInspector myPropertyInspector;
+  @NotNull private final ComponentTree myComponentTree;
   private final DocumentAdapter myDocumentListener;
   private final CardLayout myCardLayout;
 
@@ -146,7 +147,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
    * Implementation of Crtl+W and Ctrl+Shift+W behavior
    */
   private final SelectionState mySelectionState;
-  private final GlassLayer myGlassLayer;
+  @NotNull private final GlassLayer myGlassLayer;
 
   /**
    * @param file file to be edited
@@ -154,9 +155,11 @@ public final class GuiEditor extends JPanel implements DataProvider {
    *          if the <code>file</code>
    *          is <code>null</code> or <code>file</code> is not falid PsiFile
    */
-  public GuiEditor(final Module module, final VirtualFile file) {
+  public GuiEditor(@NotNull final Module module, @NotNull final VirtualFile file) {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    //noinspection ConstantConditions
     LOG.assertTrue(module != null);
+    //noinspection ConstantConditions
     LOG.assertTrue(file != null);
     LOG.assertTrue(file.isValid());
 
@@ -254,9 +257,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
     PsiManager.getInstance(module.getProject()).addPsiTreeChangeListener(myPsiTreeChangeListener);
   }
 
-  /**
-   * @return never <code>null</code>.
-   */
+  @NotNull
   public SelectionState getSelectionState() {
     return mySelectionState;
   }
@@ -277,23 +278,17 @@ public final class GuiEditor extends JPanel implements DataProvider {
     myPsiTreeChangeListener.dispose();
   }
 
-  /**
-   * @return never <code>null</code>
-   */
+  @NotNull
   public Project getProject() {
     return myModule.getProject();
   }
 
-  /**
-   * @return never <code>null</code>
-   */
+  @NotNull
   public Module getModule() {
     return myModule;
   }
 
-  /**
-   * @return never <code>null</code>
-   */
+  @NotNull
   public VirtualFile getFile() {
     return myFile;
   }
@@ -435,9 +430,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
     }
   }
 
-  /**
-   * @return never <code>null</code>.
-   */
+  @NotNull
   GlassLayer getGlassLayer() {
     return myGlassLayer;
   }
@@ -450,9 +443,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
     return myInplaceEditingLayer;
   }
 
-  /**
-   * @return never <code>null</code>
-   */
+  @NotNull
   public JLayeredPane getLayeredPane() {
     return myLayeredPane;
   }
@@ -642,23 +633,17 @@ public final class GuiEditor extends JPanel implements DataProvider {
     }
   }
 
-  /**
-   * @return never <code>null</code>.
-   */
+  @NotNull
   public PalettePanel getPalettePanel() {
     return myPalettePanel;
   }
 
-  /**
-   * @return never <code>null</code>.
-   */
+  @NotNull
   public ComponentTree getComponentTree() {
     return myComponentTree;
   }
 
-  /**
-   * @return never <code>null</code>.
-   */
+  @NotNull
   public PropertyInspector getPropertyInspector() {
     return myPropertyInspector;
   }

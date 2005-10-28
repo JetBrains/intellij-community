@@ -3,6 +3,7 @@ package com.intellij.uiDesigner;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -20,6 +21,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Anton Katilin
@@ -172,8 +176,7 @@ public final class FormEditingUtil {
       }
     }
 
-    for (int i = 0; i < componentsToConvert.length; i++) {
-      final RadComponent component = componentsToConvert[i];
+    for (final RadComponent component : componentsToConvert) {
       if (component instanceof RadContainer) {
         final LayoutManager layout = ((RadContainer)component).getLayout();
         if (layout instanceof XYLayoutManager) {
@@ -191,8 +194,8 @@ public final class FormEditingUtil {
       newContainer.setLayout(gridLayoutManager);
       newContainer.init(panelItem);
 
-      for (int i = 0; i < componentsToConvert.length; i++) {
-        newContainer.addComponent(componentsToConvert[i]);
+      for (RadComponent componentToConvert : componentsToConvert) {
+        newContainer.addComponent(componentToConvert);
       }
 
       final Point topLeftPoint = getTopLeftPoint(componentsToConvert);
@@ -232,10 +235,10 @@ public final class FormEditingUtil {
   private static GridLayoutManager createOneDimensionGrid(final RadComponent[] selection, final boolean isVertical){
     Arrays.sort(
       selection,
-      new Comparator() {
-        public int compare(final Object o1, final Object o2){
-          final Rectangle bounds1 = ((RadComponent)o1).getBounds();
-          final Rectangle bounds2 = ((RadComponent)o2).getBounds();
+      new Comparator<RadComponent>() {
+        public int compare(final RadComponent o1, final RadComponent o2){
+          final Rectangle bounds1 = o1.getBounds();
+          final Rectangle bounds2 = o2.getBounds();
 
           if (isVertical) {
             return (bounds1.y + bounds1.height / 2) - (bounds2.y + bounds2.height / 2);
@@ -355,8 +358,7 @@ public final class FormEditingUtil {
    */
   public static void deleteSelection(final GuiEditor editor){
     final ArrayList<RadComponent> selection = getSelectedComponents(editor);
-    for (int i = 0; i < selection.size(); i++) {
-      final RadComponent component = selection.get(i);
+    for (final RadComponent component : selection) {
       component.getParent().removeComponent(component);
     }
 
@@ -399,16 +401,18 @@ public final class FormEditingUtil {
    * @return component which has dragger. There is only one component with the dargger
    * at a time.
    */
-  public static RadComponent getDraggerHost(final GuiEditor editor){
+  @Nullable
+  public static RadComponent getDraggerHost(@NotNull final GuiEditor editor){
+    //noinspection ConstantConditions
     LOG.assertTrue(editor != null);
 
-    final RadComponent[] result = new RadComponent[1];
+    final Ref<RadComponent> result = new Ref<RadComponent>();
     iterate(
       editor.getRootContainer(),
       new ComponentVisitor<RadComponent>() {
         public boolean visit(final RadComponent component) {
           if(component.hasDragger()){
-            result[0] = component;
+            result.set(component);
             return false;
           }
           return true;
@@ -416,7 +420,7 @@ public final class FormEditingUtil {
       }
     );
 
-    return result[0];
+    return result.get();
   }
 
   /**
@@ -485,7 +489,9 @@ public final class FormEditingUtil {
    * selected container contains some selected children then only this container
    * will be added to the returned array.
    */
-  public static ArrayList<RadComponent> getSelectedComponents(final GuiEditor editor){
+  @NotNull
+  public static ArrayList<RadComponent> getSelectedComponents(@NotNull final GuiEditor editor){
+    //noinspection ConstantConditions
     LOG.assertTrue(editor != null);
 
     final ArrayList<RadComponent> result = new ArrayList<RadComponent>();
@@ -517,7 +523,9 @@ public final class FormEditingUtil {
   /**
    * @return all selected component inside the <code>editor</code>
    */
-  public static ArrayList<RadComponent> getAllSelectedComponents(final GuiEditor editor){
+  @NotNull
+  public static ArrayList<RadComponent> getAllSelectedComponents(@NotNull final GuiEditor editor){
+    //noinspection ConstantConditions
     LOG.assertTrue(editor != null);
 
     final ArrayList<RadComponent> result = new ArrayList<RadComponent>();
@@ -563,11 +571,11 @@ public final class FormEditingUtil {
     /**
      * @return true if iteration should continue
      */
-    public boolean visit(Type component);
+    boolean visit(Type component);
   }
 
   public static interface StringDescriptorVisitor<Type extends IComponent> {
-    public boolean visit(IComponent component, StringDescriptor descriptor);
+    boolean visit(IComponent component, StringDescriptor descriptor);
   }
 
   /**
@@ -642,8 +650,7 @@ public final class FormEditingUtil {
     LOG.assertTrue(components.length > 0);
 
     final Point point = new Point(Integer.MAX_VALUE, Integer.MAX_VALUE);
-    for (int i = 0; i < components.length; i++) {
-      final RadComponent component = components[i];
+    for (final RadComponent component : components) {
       point.x = Math.min(component.getX(), point.x);
       point.y = Math.min(component.getY(), point.y);
     }
@@ -659,8 +666,7 @@ public final class FormEditingUtil {
     LOG.assertTrue(components.length > 0);
 
     final Point point = new Point(Integer.MIN_VALUE, Integer.MIN_VALUE);
-    for (int i = 0; i < components.length; i++) {
-      final RadComponent component = components[i];
+    for (final RadComponent component : components) {
       point.x = Math.max(component.getX() + component.getWidth(), point.x);
       point.y = Math.max(component.getY() + component.getHeight(), point.y);
     }
@@ -688,6 +694,7 @@ public final class FormEditingUtil {
    * of components. Note, that if <code>container</code> itself has <code>id</code>
    * then the method immediately retuns it.
    */
+  @Nullable
   public static RadComponent findComponent(final RadComponent component, final String id) {
     LOG.assertTrue(component != null);
     LOG.assertTrue(id != null);
@@ -709,6 +716,7 @@ public final class FormEditingUtil {
     return null;
   }
 
+  @Nullable
   public static PsiClass findClassToBind(final Module module, final String classToBindName) {
     LOG.assertTrue(module != null);
     LOG.assertTrue(classToBindName != null);

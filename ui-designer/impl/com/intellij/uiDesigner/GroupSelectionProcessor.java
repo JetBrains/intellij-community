@@ -86,8 +86,8 @@ public final class GroupSelectionProcessor extends EventProcessor{
       // [anton] it is very important to iterate through a STORED array because setSelected can
       // change order of components so iteration via getComponent(i) is incorrect 
       final RadComponent[] components = container.getComponents();
-      for (int i = 0; i < components.length; i++) {
-        markRectangle(components[i], rectangle, coordinateOriginComponent);
+      for (RadComponent component1 : components) {
+        markRectangle(component1, rectangle, coordinateOriginComponent);
       }
     }
   }

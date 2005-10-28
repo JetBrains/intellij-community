@@ -37,15 +37,17 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
 
   public void doCollectInformation(ProgressIndicator progress) {
     if (!HighlightUtil.isRootInspected(myFile)) return;
-    final ExternalAnnotator externalAnnotator = myFile.getLanguage().getExternalAnnotator();
+    final List<ExternalAnnotator> externalAnnotators = myFile.getLanguage().getExternalAnnotators();
     
-    if (externalAnnotator != null) {
+    if (externalAnnotators.size() > 0) {
       final HighlightInfo[] errors = DaemonCodeAnalyzerImpl.getHighlights(myDocument, HighlightSeverity.ERROR, myProject);
       
       if ( errors.length > 0) {
         return;
       }
-      externalAnnotator.annotate(myFile, myAnnotationHolder);
+      for(ExternalAnnotator externalAnnotator: externalAnnotators) {
+        externalAnnotator.annotate(myFile, myAnnotationHolder);
+      }
     }
   }
 

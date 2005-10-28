@@ -17,6 +17,9 @@ package com.intellij.lang.annotation;
 
 import com.intellij.psi.PsiElement;
 
+import java.util.List;
+import java.util.ArrayList;
+
 /**
  * Implemented by a custom language plugin to add annotations to files in the language.
  *
@@ -24,6 +27,8 @@ import com.intellij.psi.PsiElement;
  * @see com.intellij.lang.Language#getAnnotator()
  */
 public interface Annotator {
+  List<Annotator> EMPTY_LIST = new ArrayList<Annotator>();
+
   /**
    * Annotates the specified PSI element.
    *

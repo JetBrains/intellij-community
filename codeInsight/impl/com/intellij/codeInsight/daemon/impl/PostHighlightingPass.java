@@ -43,7 +43,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerEx;
 import com.intellij.psi.impl.source.jsp.jspJava.JspxImportStatement;
 import com.intellij.psi.jsp.JspFile;
-import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -76,8 +75,6 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   private static final String PRIVATE_INNER_INTERFACE_IS_NOT_USED = JavaErrorMessages.message("private.inner.interface.is.not.used");
   private static final String TYPE_PARAMETER_IS_NOT_USED = JavaErrorMessages.message("type.parameter.is.not.used");
   private static final String LOCAL_CLASS_IS_NOT_USED = JavaErrorMessages.message("local.class.is.not.used");
-  private static final String FIELD_IS_OVERWRITTEN = JavaErrorMessages.message("uidesigned.field.is.overwritten.by.generated.code");
-  private static final String BOUND_FIELD_TYPE_MISMATCH = JavaErrorMessages.message("uidesigner.bound.field.type.mismatch");
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.PostHighlightingPass");
   private final Project myProject;
@@ -313,30 +310,8 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
   private HighlightInfo processField(PsiField field, final List<IntentionAction> options) {
     final PsiIdentifier identifier = field.getNameIdentifier();
-    final PsiFile boundForm = getFormFile(field);
+    final PsiFile boundForm = CodeInsightUtil.getFormFile(field);
     final boolean isBoundToForm = boundForm != null;
-
-    if (isBoundToForm) { // bound to form
-      LOG.assertTrue(boundForm instanceof PsiPlainTextFile);
-      final PsiType guiComponentType = ReferenceUtil.getGUIComponentType((PsiPlainTextFile)boundForm, field.getName());
-      if (guiComponentType != null) {
-        final PsiType fieldType = field.getType();
-        if (!fieldType.isAssignableFrom(guiComponentType)) {
-          String message = MessageFormat.format(BOUND_FIELD_TYPE_MISMATCH, guiComponentType.getCanonicalText(), fieldType.getCanonicalText());
-          final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, field.getTypeElement(), message);
-          QuickFixAction.registerQuickFixAction(highlightInfo, new ChangeFormComponentTypeFix((PsiPlainTextFile)boundForm, field.getName(), field.getType()), options);
-          QuickFixAction.registerQuickFixAction(highlightInfo, new ChangeBoundFieldTypeFix(field, guiComponentType), options);
-          return highlightInfo;
-        }
-      }
-
-      if (field.hasInitializer()) {
-        String message = MessageFormat.format(FIELD_IS_OVERWRITTEN, identifier.getText());
-        final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.WARNING, field.getInitializer(), message);
-        QuickFixAction.registerQuickFixAction(highlightInfo, new EmptyIntentionAction(HighlightDisplayKey.getDisplayNameByKey(HighlightDisplayKey.UNUSED_SYMBOL), options), options);
-        return highlightInfo;
-      }
-    }
 
     if (field.hasModifierProperty(PsiModifier.PRIVATE)) {
       if (!myRefCountHolder.isReferenced(field)) {
@@ -372,23 +347,6 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
       }
     }
 
-    return null;
-  }
-
-  private static PsiFile getFormFile(PsiField field) {
-    final PsiSearchHelper searchHelper = field.getManager().getSearchHelper();
-    final PsiClass containingClass = field.getContainingClass();
-    if (containingClass != null && containingClass.getQualifiedName() != null) {
-      final PsiFile[] forms = searchHelper.findFormsBoundToClass(containingClass.getQualifiedName());
-      for (PsiFile formFile : forms) {
-        final PsiReference[] refs = formFile.getReferences();
-        for (final PsiReference ref : refs) {
-          if (ref.isReferenceTo(field)) {
-            return formFile;
-          }
-        }
-      }
-    }
     return null;
   }
 

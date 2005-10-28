@@ -6,10 +6,10 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.uiDesigner.lw.LwXmlReader;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 
 /**
  * @author Anton Katilin
@@ -22,7 +22,7 @@ public final class Properties implements ApplicationComponent, JDOMExternalizabl
   public static Properties getInstance() {
     return ApplicationManager.getApplication().getComponent(Properties.class);
   }
-  
+
   public Properties(){
     myClass2InplaceProperty = new HashMap<String,String>();
     myClass2ExpertProperties = new HashMap<String,HashSet<String>>();
@@ -30,7 +30,7 @@ public final class Properties implements ApplicationComponent, JDOMExternalizabl
 
   /**
    * @return it is possible that properties do not exist in class; returned values are ones specified in config. Never null
-   */ 
+   */
   public boolean isExpertProperty(final Class aClass, final String propertyName) {
     for (Class c = aClass; c != null; c = c.getSuperclass()){
       final HashSet<String> properties = myClass2ExpertProperties.get(c.getName());
@@ -43,7 +43,8 @@ public final class Properties implements ApplicationComponent, JDOMExternalizabl
 
   /**
    * @return it is possible that property does not exist in class; returned value is one specified in config
-   */ 
+   */
+  @Nullable
   public String getInplaceProperty(final Class aClass) {
     for (Class c = aClass; c != null; c = c.getSuperclass()){
       final String property = myClass2InplaceProperty.get(c.getName());
@@ -53,7 +54,7 @@ public final class Properties implements ApplicationComponent, JDOMExternalizabl
     }
     return null;
   }
-  
+
   public String getComponentName(){
     return "gui-designer-properties";
   }
@@ -64,9 +65,8 @@ public final class Properties implements ApplicationComponent, JDOMExternalizabl
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public void readExternal(final Element element) {
-    final Iterator i = element.getChildren("class").iterator();
-    while (i.hasNext()) {
-      final Element classElement = (Element)i.next();
+    for (final Object classObject : element.getChildren("class")) {
+      final Element classElement = (Element)classObject;
 
       final String className = LwXmlReader.getRequiredString(classElement, "name");
 
@@ -75,9 +75,8 @@ public final class Properties implements ApplicationComponent, JDOMExternalizabl
       if (expertPropertiesElement != null) {
         final HashSet<String> expertProperties = new HashSet<String>();
 
-        final Iterator iterator = expertPropertiesElement.getChildren("property").iterator();
-        while (iterator.hasNext()) {
-          final Element e = (Element)iterator.next();
+        for (final Object o : expertPropertiesElement.getChildren("property")) {
+          final Element e = (Element)o;
           final String name = LwXmlReader.getRequiredString(e, "name");
           expertProperties.add(name);
         }

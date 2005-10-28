@@ -17,6 +17,9 @@ package com.intellij.lang.annotation;
 
 import com.intellij.psi.PsiFile;
 
+import java.util.List;
+import java.util.ArrayList;
+
 /**
  * Implemented by a custom language plugin to process the files in a language by an
  * external annotation tool. The external annotator is expected to be slow and is started
@@ -25,6 +28,8 @@ import com.intellij.psi.PsiFile;
  * @author ven
  */
 public interface ExternalAnnotator {
+  List<ExternalAnnotator> EMPTY_LIST = new ArrayList<ExternalAnnotator>();
+
   /**
    * Annotates the specified file.
    *

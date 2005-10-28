@@ -12,6 +12,7 @@ import com.intellij.uiDesigner.lw.LwContainer;
 import gnu.trove.TIntArrayList;
 import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -111,14 +112,14 @@ final class CutCopyPasteSupport implements CopyProvider, CutProvider, PasteProvi
       final LwContainer container = new LwContainer(JPanel.class.getName());
         
       final java.util.List children = rootElement.getChildren();
-      for (Iterator iterator = children.iterator(); iterator.hasNext();) {
-        final Element e = (Element)iterator.next();
+      for (final Object aChildren : children) {
+        final Element e = (Element)aChildren;
 
         //noinspection HardCodedStringLiteral
         final int x = Integer.parseInt(e.getAttributeValue("x"));
         //noinspection HardCodedStringLiteral
         final int y = Integer.parseInt(e.getAttributeValue("y"));
-          
+
         xs.add(x);
         ys.add(y);
 
@@ -126,11 +127,11 @@ final class CutCopyPasteSupport implements CopyProvider, CutProvider, PasteProvi
         final LwComponent lwComponent = LwContainer.createComponentFromTag(componentElement);
 
         container.addComponent(lwComponent);
-          
+
         lwComponent.read(componentElement, provider);
 
         // pasted components should have no bindings
-        lwComponent.setBinding(null);  
+        lwComponent.setBinding(null);
         lwComponent.setId(myEditor.generateId());
         FormEditingUtil.iterate(lwComponent, new FormEditingUtil.ComponentVisitor<LwComponent>() {
           public boolean visit(final LwComponent c) {
@@ -180,6 +181,7 @@ final class CutCopyPasteSupport implements CopyProvider, CutProvider, PasteProvi
     }
   }
 
+  @Nullable
   private String getSerializedComponents() {
     try {
       final Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
@@ -224,24 +226,22 @@ final class CutCopyPasteSupport implements CopyProvider, CutProvider, PasteProvi
     final XmlWriter writer = new XmlWriter();
     
     writer.startElement("serialized", Utils.FORM_NAMESPACE);
-    
-    for (int i = 0; i < components.size(); i++) {
-      final RadComponent component = components.get(i);
 
+    for (final RadComponent component : components) {
       final Point shift = SwingUtilities.convertPoint(
-        component.getParent().getDelegee(), 
+        component.getParent().getDelegee(),
         component.getX(),
         component.getY(),
         myEditor.getRootContainer().getDelegee()
       );
-      
+
       component.getX();
-      
+
       writer.startElement("item");
-      writer.addAttribute("x", shift.x); 
-      writer.addAttribute("y", shift.y); 
+      writer.addAttribute("x", shift.x);
+      writer.addAttribute("y", shift.y);
       component.write(writer);
-      
+
       writer.endElement();
     }
     

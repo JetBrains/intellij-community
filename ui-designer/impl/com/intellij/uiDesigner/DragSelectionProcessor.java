@@ -74,8 +74,7 @@ public final class DragSelectionProcessor extends EventProcessor{
     int dy = 0;
 
     // Remove components from their parents.
-    for (int i = 0; i < mySelection.size(); i++) {
-      final RadComponent c = mySelection.get(i);
+    for (final RadComponent c : mySelection) {
       c.getParent().removeComponent(c);
     }
 
@@ -102,8 +101,8 @@ public final class DragSelectionProcessor extends EventProcessor{
       }
     }
 
-    for (int i = 0; i < mySelection.size(); i++) {
-      mySelection.get(i).shift(dx, dy);
+    for (RadComponent aMySelection : mySelection) {
+      aMySelection.shift(dx, dy);
     }
 
     myEditor.refresh();
@@ -145,8 +144,7 @@ public final class DragSelectionProcessor extends EventProcessor{
 
   private void cancelDrop(){
     // Remove dropped preview
-    for (int i = 0; i < mySelection.size(); i++) {
-      final RadComponent component = mySelection.get(i);
+    for (final RadComponent component : mySelection) {
       final RadContainer parent = component.getParent();
       LOG.assertTrue(parent != null);
       parent.removeComponent(component);
@@ -235,8 +233,8 @@ public final class DragSelectionProcessor extends EventProcessor{
     // Move components in the drag layer.
     final int dx = e.getX() - myLastPoint.x;
     final int dy = e.getY() - myLastPoint.y;
-    for (int i = 0; i < mySelection.size(); i++) {
-      mySelection.get(i).shift(dx, dy);
+    for (RadComponent aMySelection : mySelection) {
+      aMySelection.shift(dx, dy);
     }
 
     myLastPoint=e.getPoint();

@@ -34,16 +34,15 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.util.containers.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
 import java.util.HashMap;
-import java.util.Map;
 
 /**
  * The base class for all programming language support implementations. Specific language implementations should inherit from this class
@@ -62,6 +61,13 @@ public abstract class Language {
   public static final Language ANY = new Language("", "") {
   };
   private static final EmptyFindUsagesProvider EMPTY_FIND_USAGES_PROVIDER = new EmptyFindUsagesProvider();
+
+  private Set<Annotator> myInjectedAnnotators;
+  private Set<ExternalAnnotator> myInjectedExternalAnnotators;
+  private Annotator myLastAnnotator;
+  private List<Annotator> myCachedAnnotators;
+  private ExternalAnnotator myLastExternalAnnotator;
+  private List<ExternalAnnotator> myCachedExternalAnnotators;
 
   protected Language(String id) {
     this(id, "");
@@ -215,6 +221,61 @@ public abstract class Language {
   }
 
   /**
+   * Registers an annotator to provide additional error highlighting for files in the language.
+   * Can be used, for example, to provide additional highlighting in Java files.
+   *
+   * @param annotator the annotator to inject.
+   */
+  public final void injectAnnotator(@NotNull Annotator annotator) {
+    if (myInjectedAnnotators == null) {
+      myInjectedAnnotators = new com.intellij.util.containers.HashSet<Annotator>();
+    }
+    myInjectedAnnotators.add(annotator);
+    myCachedAnnotators = null;
+  }
+
+  /**
+   * Unregisters an injected annotator.
+   *
+   * @param annotator the annotator to remove.
+   */
+  public final void removeAnnotator(@NotNull Annotator annotator) {
+    if (myInjectedAnnotators != null) {
+      myInjectedAnnotators.remove(annotator);
+      myCachedAnnotators = null;
+    }
+  }
+
+  /**
+   * Returns a list containing the language's own annotator and injected annotators.
+   *
+   * @return a list of all annotators for the language.
+   */
+  @NotNull
+  public final List<Annotator> getAnnotators() {
+    Annotator annotator = getAnnotator();
+    if (annotator == myLastAnnotator && myCachedAnnotators != null) {
+      return myCachedAnnotators;
+    }
+    myLastAnnotator = annotator;
+    int injectCount = myInjectedAnnotators == null ? 0 : myInjectedAnnotators.size();
+    if (annotator == null && injectCount == 0) {
+        myCachedAnnotators = Annotator.EMPTY_LIST;
+    }
+    else {
+      myCachedAnnotators = new ArrayList<Annotator>();
+      if (annotator != null) {
+        myCachedAnnotators.add(annotator);
+      }
+      if (myInjectedAnnotators != null) {
+        myCachedAnnotators.addAll(myInjectedAnnotators);
+      }
+
+    }
+    return myCachedAnnotators;
+  }
+
+  /**
    * Same as {@link #getAnnotator()} but is being run once against whole file. It's most proper to use when integrating external
    * validation tools like xerces schema validator for XML.
    *
@@ -224,6 +285,61 @@ public abstract class Language {
   @Nullable
   public ExternalAnnotator getExternalAnnotator() {
     return null;
+  }
+
+  /**
+   * Registers an external annotator to provide additional error highlighting for files in the language.
+   * Can be used, for example, to provide additional highlighting in Java files.
+   *
+   * @param annotator the annotator to inject.
+   */
+  public final void injectExternalAnnotator(@NotNull ExternalAnnotator annotator) {
+    if (myInjectedExternalAnnotators == null) {
+      myInjectedExternalAnnotators = new com.intellij.util.containers.HashSet<ExternalAnnotator>();
+    }
+    myInjectedExternalAnnotators.add(annotator);
+    myCachedExternalAnnotators = null;
+  }
+
+  /**
+   * Unregisters an injected annotator.
+   *
+   * @param annotator the annotator to remove.
+   */
+  public final void removeExternalAnnotator(@NotNull ExternalAnnotator annotator) {
+    if (myInjectedExternalAnnotators != null) {
+      myInjectedExternalAnnotators.remove(annotator);
+      myCachedExternalAnnotators = null;
+    }
+  }
+
+  /**
+   * Returns a list containing the language's own annotator and injected annotators.
+   *
+   * @return a list of all annotators for the language.
+   */
+  @NotNull
+  public final List<ExternalAnnotator> getExternalAnnotators() {
+    ExternalAnnotator annotator = getExternalAnnotator();
+    if (annotator == myLastExternalAnnotator && myCachedExternalAnnotators != null) {
+      return myCachedExternalAnnotators;
+    }
+    myLastExternalAnnotator = annotator;
+    int injectCount = myInjectedExternalAnnotators == null ? 0 : myInjectedExternalAnnotators.size();
+    if (annotator == null && injectCount == 0) {
+        myCachedExternalAnnotators = ExternalAnnotator.EMPTY_LIST;
+    }
+    else {
+      myCachedExternalAnnotators = new ArrayList<ExternalAnnotator>();
+      if (annotator != null) {
+        myCachedExternalAnnotators.add(annotator);
+      }
+      if (myInjectedExternalAnnotators != null) {
+        myCachedExternalAnnotators.addAll(myInjectedExternalAnnotators);
+      }
+
+    }
+    return myCachedExternalAnnotators;
   }
 
   /**

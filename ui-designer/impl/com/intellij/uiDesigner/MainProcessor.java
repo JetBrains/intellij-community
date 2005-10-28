@@ -10,6 +10,8 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
@@ -21,9 +23,10 @@ public final class MainProcessor extends EventProcessor{
 
   private EventProcessor myCurrentProcessor;
 
-  private final GuiEditor myEditor;
+  @NotNull private final GuiEditor myEditor;
 
-  public MainProcessor(final GuiEditor editor){
+  public MainProcessor(@NotNull final GuiEditor editor){
+    //noinspection ConstantConditions
     if (editor == null){
       //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("editor cannot be null");
@@ -124,7 +127,7 @@ public final class MainProcessor extends EventProcessor{
 
   private void updateDragger(final MouseEvent e){
     final RadComponent component = FormEditingUtil.getRadComponentAt(myEditor, e.getX(), e.getY());
-    
+
     LOG.assertTrue(component != null);
 
     // Dragger
@@ -136,9 +139,9 @@ public final class MainProcessor extends EventProcessor{
         break;
       }
     }
-          
+
     boolean keepOldHost = false;
-          
+
     if (oldDraggerHost != null && oldDraggerHost.isSelected()) {
       final Point p = SwingUtilities.convertPoint(oldDraggerHost.getDelegee(), 0, 0, e.getComponent());
       final int deltaX = e.getX() - p.x;
@@ -151,14 +154,14 @@ public final class MainProcessor extends EventProcessor{
         newDraggerHost = null;
       }
     }
-          
+
     boolean shouldRepaint = false;
-          
+
     if (oldDraggerHost != null && !keepOldHost && oldDraggerHost != newDraggerHost){
       oldDraggerHost.setDragger(false);
       shouldRepaint = true;
     }
-          
+
     if (newDraggerHost != null){
       newDraggerHost.setDragger(true);
       shouldRepaint = true;

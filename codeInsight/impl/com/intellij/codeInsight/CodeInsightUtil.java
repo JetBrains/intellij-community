@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.Indent;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
@@ -304,5 +305,21 @@ public class CodeInsightUtil {
 
     return true;
   }
-}
 
+  public static PsiFile getFormFile(PsiField field) {
+    final PsiSearchHelper searchHelper = field.getManager().getSearchHelper();
+    final PsiClass containingClass = field.getContainingClass();
+    if (containingClass != null && containingClass.getQualifiedName() != null) {
+      final PsiFile[] forms = searchHelper.findFormsBoundToClass(containingClass.getQualifiedName());
+      for (PsiFile formFile : forms) {
+        final PsiReference[] refs = formFile.getReferences();
+        for (final PsiReference ref : refs) {
+          if (ref.isReferenceTo(field)) {
+            return formFile;
+          }
+        }
+      }
+    }
+    return null;
+  }
+}

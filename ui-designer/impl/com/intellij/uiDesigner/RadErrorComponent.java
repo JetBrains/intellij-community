@@ -3,6 +3,7 @@ package com.intellij.uiDesigner;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -50,6 +51,7 @@ public final class RadErrorComponent extends RadAtomicComponent {
     myProperties = properties;
   }
 
+  @NotNull
   public String getComponentClassName(){
     return myComponentClassName;
   }

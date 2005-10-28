@@ -5,6 +5,8 @@ import com.intellij.openapi.util.IconLoader;
 import javax.swing.*;
 import java.awt.*;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Decoration layer is over COMPONENT_LAYER (layer where all components are located).
  * It contains all necessary decorators. Decorators are:
@@ -15,9 +17,10 @@ import java.awt.*;
  * @author Vladimir Kondratyev
  */
 class PassiveDecorationLayer extends JComponent{
-  private final GuiEditor myEditor;
+  @NotNull private final GuiEditor myEditor;
 
-  public PassiveDecorationLayer(final GuiEditor editor) {
+  public PassiveDecorationLayer(@NotNull final GuiEditor editor) {
+    //noinspection ConstantConditions
     if (editor == null) {
       //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("editor cannot be null");
