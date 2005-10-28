@@ -830,11 +830,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
   }
 
   private static boolean haveActiveFrames() {
-    final Project[] projects = ProjectManager.getInstance().getOpenProjects();
     final WindowManagerEx wmanager = WindowManagerEx.getInstanceEx();
     if (wmanager == null) return false;
-    for (Project project : projects) {
-      final IdeFrame frame = wmanager.getFrame(project);
+    for (IdeFrame frame : wmanager.getAllFrames()) {
       if (frame != null && frame.getState() != JFrame.ICONIFIED) return true;
     }
     return false;

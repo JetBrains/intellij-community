@@ -59,6 +59,10 @@ public final class TestWindowManager extends WindowManagerEx implements Applicat
     public final void updateEditorHighlightingStatus(final boolean isClear) {}
   }
 
+  public IdeFrame[] getAllFrames() {
+    return new IdeFrame[0];
+  }
+
   public final IdeFrame getFrame(final Project project) {
     return null;
   }

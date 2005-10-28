@@ -32,10 +32,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Anton Katilin
@@ -163,6 +160,11 @@ public class WindowManagerImpl extends WindowManagerEx implements ApplicationCom
     }
     frame.show();
     frame.setExtendedState(myFrameExtendedState);
+  }
+
+  public IdeFrame[] getAllFrames() {
+    final Collection<IdeFrame> ideFrames = myProject2Frame.values();
+    return ideFrames.toArray(new IdeFrame[ideFrames.size()]);
   }
 
   public final Rectangle getScreenBounds() {
@@ -427,7 +429,7 @@ public class WindowManagerImpl extends WindowManagerEx implements ApplicationCom
     else {
       project = null;
     }
-    
+
     final IdeFrame frame = getFrame(project);
     if (frame != null) {
       final Rectangle rectangle = frame.getBounds();
