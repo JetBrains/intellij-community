@@ -159,7 +159,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
       if (dclType == null || dclType.length() == 0) dclType = LangBundle.message("java.terms.symbol");
       String message = MessageFormat.format(SYMBOL_IS_NOT_USED, dclType, unusedDcl.getName());
 
-      HighlightInfo highlightInfo = createUnusedSymbolInfo(unusedDcl.getNavigationElement(), dclType + message);
+      HighlightInfo highlightInfo = createUnusedSymbolInfo(unusedDcl.getNavigationElement(), message);
       highlights.add(highlightInfo);
     }
 
