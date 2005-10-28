@@ -61,8 +61,9 @@ public class FormClassAnnotator implements ApplicationComponent, Annotator {
     }
     else if (psiElement instanceof PsiClass) {
       PsiClass aClass = (PsiClass) psiElement;
-      if (aClass.getName() != null) {
-        final PsiFile[] formsBoundToClass = psiElement.getManager().getSearchHelper().findFormsBoundToClass(aClass.getQualifiedName());
+      final String qName = aClass.getQualifiedName();
+      if (qName != null) {
+        final PsiFile[] formsBoundToClass = psiElement.getManager().getSearchHelper().findFormsBoundToClass(qName);
         if (formsBoundToClass.length > 0) {
           Annotation boundClassAnnotation = holder.createInfoAnnotation(aClass.getNameIdentifier(), null);
           boundClassAnnotation.setGutterIconRenderer(new BoundIconRenderer(aClass));
