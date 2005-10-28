@@ -1,6 +1,6 @@
 package com.intellij.psi.impl.cache.impl.idCache;
 
-import com.intellij.aspects.lexer.AspectjLexer;
+import com.intellij.codeHighlighting.CopyCreatorLexer;
 import com.intellij.ide.highlighter.custom.impl.CustomFileType;
 import com.intellij.ide.startup.FileContent;
 import com.intellij.ide.todo.TodoConfiguration;
@@ -14,13 +14,13 @@ import com.intellij.lang.properties.parsing.PropertiesLexer;
 import com.intellij.lexer.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.*;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.CustomHighlighterTokenType;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.CustomHighlighterTokenType;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.cache.impl.CacheManagerImpl;
 import com.intellij.psi.impl.source.tree.ElementType;
@@ -35,15 +35,13 @@ import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.util.Processor;
 import com.intellij.util.text.CharArrayCharSequence;
-import com.intellij.codeHighlighting.CopyCreatorLexer;
 import gnu.trove.TIntIntHashMap;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
 
 public class IdTableBuilding {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.cache.impl.idCache.IdTableBuilding");
@@ -130,12 +128,6 @@ public class IdTableBuilding {
     }
   }
 
-
-  static class AspectJIdCacheBuilder extends JavaIdCacheBuilder {
-    protected Lexer createLexer() {
-      return new AspectjLexer(false, false);
-    }
-  }
 
   static class XmlIdCacheBuilder implements IdCacheBuilder {
     public void build(char[] chars,
@@ -234,7 +226,6 @@ public class IdTableBuilding {
 
   static {
     registerCacheBuilder(StdFileTypes.JAVA,new JavaIdCacheBuilder());
-    registerCacheBuilder(StdFileTypes.ASPECT,new AspectJIdCacheBuilder());
     registerCacheBuilder(StdFileTypes.XML,new XmlIdCacheBuilder());
     registerCacheBuilder(StdFileTypes.DTD,new XmlIdCacheBuilder());
 

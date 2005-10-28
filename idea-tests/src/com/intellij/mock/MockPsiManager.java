@@ -128,10 +128,6 @@ public class MockPsiManager extends PsiManager {
     return new PsiModificationTrackerImpl(this);
   }
 
-  public PsiAspectManager getAspectManager() {
-    return null;
-  }
-
   public CachedValuesManager getCachedValuesManager() {
     return null;
   }

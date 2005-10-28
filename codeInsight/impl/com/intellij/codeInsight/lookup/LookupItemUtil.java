@@ -1,6 +1,5 @@
 package com.intellij.codeInsight.lookup;
 
-import com.intellij.aspects.psi.PsiPointcutDef;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.completion.InsertHandler;
@@ -24,6 +23,9 @@ import java.util.Set;
  */
 public class LookupItemUtil{
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.lookup.LookupItemUtil");
+
+  private LookupItemUtil() {
+  }
 
   public static LookupItem addLookupItem(Set<LookupItem> set, Object object, String prefix) {
     LOG.assertTrue(object != null, "Lookup item can't be null!");
@@ -169,7 +171,7 @@ public class LookupItemUtil{
           item = new LookupItem(contentType, "");
           s = contentType.getPresentableText();
         }
-        item.setAttribute(LookupItem.TAIL_TEXT_ATTR, " " + tail.toString() + "");
+        item.setAttribute(LookupItem.TAIL_TEXT_ATTR, " " + tail.toString());
         item.setAttribute(LookupItem.TAIL_TEXT_SMALL_ATTR, "");
         item.setAttribute(LookupItem.BRACKETS_COUNT_ATTR, new Integer(dim));
       }
@@ -212,9 +214,7 @@ public class LookupItemUtil{
     else if (object instanceof Template) {
       s = "";
     }
-    else if (object instanceof PsiPointcutDef) {
-      s = ((PsiPointcutDef)object).getName();
-    } else if (object instanceof PresentableLookupValue) {
+    else if (object instanceof PresentableLookupValue) {
       s = ((PresentableLookupValue)object).getPresentation();
     }
 

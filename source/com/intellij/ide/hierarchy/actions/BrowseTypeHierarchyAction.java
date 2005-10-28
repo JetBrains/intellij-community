@@ -1,12 +1,10 @@
 package com.intellij.ide.hierarchy.actions;
 
-import com.intellij.aspects.psi.PsiAspect;
-import com.intellij.aspects.psi.PsiAspectFile;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.hierarchy.HierarchyBrowserManager;
 import com.intellij.ide.hierarchy.type.SubtypesHierarchyTreeStructure;
 import com.intellij.ide.hierarchy.type.TypeHierarchyBrowser;
 import com.intellij.ide.hierarchy.type.TypeHierarchyTreeStructure;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -113,10 +111,6 @@ public final class BrowseTypeHierarchyAction extends AnAction {
       while (element != null) {
         if (element instanceof PsiFile) {
           if (!(element instanceof PsiJavaFile)) return null;
-          if (element instanceof PsiAspectFile) {
-            final PsiAspect[] aspects = ((PsiAspectFile) element).getAspects();
-            return aspects.length == 1 ? aspects[0] : null;
-          }
           final PsiClass[] classes = ((PsiJavaFile)element).getClasses();
           return classes.length == 1 ? classes[0] : null;
         }

@@ -5,16 +5,15 @@
  */
 package com.intellij.refactoring.actions;
 
-import com.intellij.aspects.psi.PsiPointcutDef;
+import com.intellij.lang.Language;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.inline.InlineHandler;
-import com.intellij.lang.Language;
-import com.intellij.lang.java.JavaLanguage;
 import org.jetbrains.annotations.NonNls;
 
 public class InlineAction extends BaseRefactoringAction {
@@ -30,8 +29,7 @@ public class InlineAction extends BaseRefactoringAction {
   public boolean isEnabledOnElements(PsiElement[] elements) {
     return elements.length == 1 &&
            (elements[0] instanceof PsiMethod ||
-            elements[0] instanceof PsiField ||
-            elements[0] instanceof PsiPointcutDef);
+            elements[0] instanceof PsiField);
   }
 
   public RefactoringActionHandler getHandler(DataContext dataContext) {

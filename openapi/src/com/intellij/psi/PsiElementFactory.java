@@ -15,7 +15,6 @@
  */
 package com.intellij.psi;
 
-import com.intellij.aspects.psi.PsiTypePattern;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -488,14 +487,6 @@ public interface PsiElementFactory {
    */
   XmlAttribute createXmlAttribute(@NonNls String name, String value) throws IncorrectOperationException;
 
-  /**
-   * Creates an AspectJ type pattern from the specified text.
-   *
-   * @param pattern the text of the pattern to create.
-   * @return the created pattern instance.
-   * @throws IncorrectOperationException if the text does not specify a valid type pattern.
-   */
-  PsiTypePattern createTypePattern(String pattern) throws IncorrectOperationException;
 
   /**
    * Creates a Java expression code fragment from the text of the expression.

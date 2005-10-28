@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.util;
 
-import com.intellij.aspects.psi.PsiPointcutDef;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
@@ -106,31 +105,6 @@ public class MethodSignatureUtil {
     }
 
     return false;
-  }
-
-  // TODO: add substitutor to signature
-  public static boolean areSignaturesEqual(PsiPointcutDef method1, PsiPointcutDef method2) {
-    String name1 = method1.getName();
-    String name2 = method2.getName();
-    if (!name1.equals(name2)) return false;
-
-    PsiParameter[] parms1 = method1.getParameterList().getParameters();
-    PsiParameter[] parms2 = method2.getParameterList().getParameters();
-    return areParametersEqual(parms1, PsiSubstitutor.EMPTY, parms2, PsiSubstitutor.EMPTY);
-  }
-
-  private static boolean areParametersEqual(PsiParameter[] parms1,
-                                            PsiSubstitutor substitutor1,
-                                            PsiParameter[] parms2,
-                                            PsiSubstitutor substitutor2) {
-
-    if (parms1.length != parms2.length) return false;
-    for (int i = 0; i < parms1.length; i++) {
-      PsiType type1 = substitutor1.substitute(parms1[i].getType());
-      PsiType type2 = substitutor2.substitute(parms2[i].getType());
-      if (!type1.equals(type2)) return false;
-    }
-    return true;
   }
 
   /**

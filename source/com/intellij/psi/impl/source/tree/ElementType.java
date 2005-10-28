@@ -17,8 +17,8 @@ public interface ElementType extends
                              JavaElementType,
                              JavaDocElementType,
                              JspElementType,
-                             XmlElementType,
-                             AspectElementType {
+                             XmlElementType
+                             {
   IElementType PLAIN_TEXT_FILE = new IElementType("PLAIN_TEXT_FILE", Language.ANY);
   IElementType PLAIN_TEXT = new IElementType("PLAIN_TEXT", Language.ANY);
   IElementType CODE_FRAGMENT = new IElementType("CODE_FRAGMENT", Language.ANY);

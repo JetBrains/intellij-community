@@ -77,10 +77,6 @@ public class MockApplication extends UserDataHolderBase implements ApplicationEx
     return new IdeaPluginDescriptor[0];
   }
 
-  public boolean isAspectJSupportEnabled() {
-    return true;
-  }
-
   public BaseComponent getComponent(String name) {
     return null;
   }

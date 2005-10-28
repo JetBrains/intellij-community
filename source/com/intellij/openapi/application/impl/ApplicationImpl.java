@@ -75,7 +75,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   private Thread myExceptionalThreadWithReadAccess = null;
 
   private int myInEditorPaintCounter = 0;
-  @NonNls private final boolean myAspectJSupportEnabled = "enabled".equals(System.getProperty("idea.aspectj.support"));
   private long myStartTime = 0;
   private boolean myDoNotSave = false;
   private boolean myIsWaitingForWriteAction = false;
@@ -194,10 +193,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   public IdeaPluginDescriptor[] getPlugins() {
     return PluginsFacade.INSTANCE.getPlugins();
-  }
-
-  public boolean isAspectJSupportEnabled() {
-    return myAspectJSupportEnabled || isUnitTestMode();
   }
 
   private static Thread ourDispatchThread = null;

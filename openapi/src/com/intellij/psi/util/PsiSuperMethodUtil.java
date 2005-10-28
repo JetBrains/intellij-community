@@ -15,37 +15,9 @@
  */
 package com.intellij.psi.util;
 
-import com.intellij.aspects.psi.PsiAspect;
-import com.intellij.aspects.psi.PsiPointcutDef;
 import com.intellij.psi.*;
 
 public class PsiSuperMethodUtil {
-  public static PsiPointcutDef findSuperPointcut(PsiPointcutDef pointcut) {
-    return findSuperPointcut(pointcut, pointcut.getContainingAspect());
-  }
-
-  private static PsiPointcutDef findSuperPointcut(PsiPointcutDef pointcut, PsiAspect psiAspect) {
-    PsiClass superClass = psiAspect.getSuperClass();
-
-    while (!(superClass instanceof PsiAspect) && superClass != null) superClass = superClass.getSuperClass();
-    if (superClass == null) return null;
-
-    PsiAspect superAspect = (PsiAspect) superClass;
-    return superAspect.findPointcutDefBySignature(pointcut, true);
-  }
-
-  public static PsiPointcutDef findDeepestSuperPointcut(PsiPointcutDef pointcut) {
-    PsiPointcutDef superPointcut = findSuperPointcut(pointcut);
-    PsiPointcutDef prevSuperPointcut = null;
-
-    while (superPointcut != null) {
-      prevSuperPointcut = superPointcut;
-      superPointcut = findSuperPointcut(prevSuperPointcut);
-    }
-
-    return prevSuperPointcut;
-  }
-
   public static PsiMethod findConstructorInSuper(PsiMethod constructor) {
     final PsiCodeBlock body = constructor.getBody();
     if (body != null) {

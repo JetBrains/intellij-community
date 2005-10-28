@@ -15,8 +15,6 @@
 */
 package com.intellij.psi.search;
 
-import com.intellij.aspects.psi.PsiPointcut;
-import com.intellij.aspects.psi.PsiPointcutDef;
 import com.intellij.psi.*;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
@@ -119,15 +117,6 @@ public interface PsiSearchHelper {
    */
   boolean processOverridingMethods(PsiElementProcessor<PsiMethod> processor, PsiMethod method, SearchScope searchScope, boolean checkDeep);
 
-  /**
-   * AspectJ functionality, not currently supported.
-   */
-  PsiPointcutDef[] findOverridingPointcuts(PsiPointcutDef pointcut, SearchScope searchScope, boolean checkDeep);
-
-  /**
-   * AspectJ functionality, not currently supported.
-   */
-  boolean processOverridingPointcuts(PsiElementProcessor processor, PsiPointcutDef pointcut, SearchScope searchScope, boolean checkDeep);
 
   /**
    * Searches the specified scope for references to the specified method and its overriding methods.
@@ -208,16 +197,6 @@ public interface PsiSearchHelper {
    * @return the array of found string literals.
    */
   PsiLiteralExpression[] findStringLiteralsContainingIdentifier(String identifier, SearchScope searchScope);
-
-  /**
-   * AspectJ functionality, not currently supported.
-   */
-  PsiElement[] findJoinPointsByPointcut(PsiPointcut pointcut, SearchScope searchScope);
-
-  /**
-   * AspectJ functionality, not currently supported.
-   */
-  boolean processJoinPointsByPointcut(PsiElementProcessor processor, PsiPointcut pointcut, SearchScope searchScope);
 
   /**
    * Passes all classes in the specified scope to the specified processor.

@@ -1,6 +1,5 @@
 package com.intellij.codeInsight;
 
-import com.intellij.aspects.psi.PsiPointcutDef;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupItem;
@@ -95,9 +94,6 @@ public class TargetElementUtil {
           return parent;
         }
         else if (parent instanceof PsiMethod && element.equals(((PsiMethod) parent).getNameIdentifier())) {
-          return parent;
-        }
-        else if (parent instanceof PsiPointcutDef && element.equals(((PsiPointcutDef) parent).getNameIdentifier())) {
           return parent;
         }
         else if (parent instanceof PsiLabeledStatement && element.equals(((PsiLabeledStatement)parent).getLabelIdentifier())) {

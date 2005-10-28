@@ -114,10 +114,6 @@
       <mouse-shortcut keystroke="ctrl shift button1"/>
       <mouse-shortcut keystroke="shift button2"/>
     </action>
-    <action id="GotoAspect">
-      <keyboard-shortcut first-keystroke="control alt A"/>
-    </action>
-
     <action id="GotoBookmark0">
       <keyboard-shortcut first-keystroke="control 0"/>
     </action>

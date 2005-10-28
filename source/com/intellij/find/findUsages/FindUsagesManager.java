@@ -1,7 +1,6 @@
 package com.intellij.find.findUsages;
 
 import com.intellij.CommonBundle;
-import com.intellij.aspects.psi.PsiPointcutDef;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.find.FindBundle;
@@ -219,12 +218,9 @@ public class FindUsagesManager implements JDOMExternalizable{
       isOpenInNewTabEnabled = (UsageViewManager.getInstance(myProject).getReusableContentsCount() > 0);
     }
 
-    if (psiElement instanceof PsiMethod || psiElement instanceof PsiPointcutDef) {
-      psiElement = psiElement instanceof PsiMethod
-                   ? (PsiElement)SuperMethodWarningUtil.checkSuperMethod((PsiMethod)psiElement,
-                                                                         FindBundle.message("find.super.method.warning.action.verb"))
-                   : (PsiElement)SuperMethodWarningUtil.checkSuperPointcut((PsiPointcutDef)psiElement,
-                                                                           FindBundle.message("find.super.method.warning.action.verb"));
+    if (psiElement instanceof PsiMethod) {
+      psiElement = SuperMethodWarningUtil.checkSuperMethod((PsiMethod)psiElement,
+                                                           FindBundle.message("find.super.method.warning.action.verb"));
     }
 
     if (psiElement == null) {
@@ -666,10 +662,6 @@ public class FindUsagesManager implements JDOMExternalizable{
     }
     else if (element instanceof PsiVariable) {
       return new FindVariableUsagesDialog(element, myProject, myFindVariableOptions, isOpenInNewTab,
-                                          isOpenInNewTabEnabled, isSingleFile);
-    }
-    else if (element instanceof PsiPointcutDef) {
-      return new FindPointcutUsagesDialog(element, myProject, myFindPointcutOptions, isOpenInNewTab,
                                           isOpenInNewTabEnabled, isSingleFile);
     }
     else if (ThrowSearchUtil.isSearchable(element)) {

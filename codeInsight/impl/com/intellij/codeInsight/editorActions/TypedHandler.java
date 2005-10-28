@@ -4,6 +4,7 @@ import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.JspxCompletionData;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -24,10 +25,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.html.HtmlTag;
-import com.intellij.psi.impl.source.xml.XmlTokenImpl;
-import com.intellij.psi.impl.source.tree.TreeUtil;
-import com.intellij.psi.impl.source.jsp.jspJava.JspXmlTagBase;
 import com.intellij.psi.impl.source.jsp.jspJava.JspText;
+import com.intellij.psi.impl.source.jsp.jspJava.JspXmlTagBase;
+import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.impl.source.xml.XmlTokenImpl;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.jsp.el.ELExpressionHolder;
 import com.intellij.psi.jsp.el.ELTokenType;
@@ -40,7 +41,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
-import com.intellij.lang.ASTNode;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -372,7 +372,6 @@ public class TypedHandler implements TypedActionHandler {
 
     if (virtualFile != null){
       originalFileType = fileType = FileTypeManager.getInstance().getFileTypeByFile(virtualFile);
-      if (fileType == StdFileTypes.ASPECT) fileType = StdFileTypes.JAVA;
     }
     else {
       fileType = file.getFileType();

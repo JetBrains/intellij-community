@@ -15,14 +15,12 @@
  */
 package com.intellij.psi;
 
-import com.intellij.aspects.psi.gen.PsiAspectElementVisitor;
-
 /**
  * Visitor which can be used to visit Java, XML and AspectJ PSI elements.
  *
  * @see PsiRecursiveElementVisitor
  */
-public abstract class PsiElementVisitor extends PsiAspectElementVisitor {
+public abstract class PsiElementVisitor extends XmlElementVisitor {
   public void visitCodeFragment(PsiCodeFragment codeFragment) {
     visitFile(codeFragment);
   }

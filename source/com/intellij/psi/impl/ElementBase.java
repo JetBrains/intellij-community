@@ -1,13 +1,6 @@
 package com.intellij.psi.impl;
 
 import com.intellij.ant.PsiAntElement;
-import com.intellij.aspects.psi.PsiAdvice;
-import com.intellij.aspects.psi.PsiAspect;
-import com.intellij.aspects.psi.PsiPointcutDef;
-import com.intellij.aspects.psi.gen.PsiErrorIntroduction;
-import com.intellij.aspects.psi.gen.PsiParentsIntroduction;
-import com.intellij.aspects.psi.gen.PsiSofteningIntroduction;
-import com.intellij.aspects.psi.gen.PsiWarningIntroduction;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.ide.IconUtilEx;
 import com.intellij.j2ee.J2EERolesUtil;
@@ -21,8 +14,8 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.jsp.WebDirectoryElement;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
+import com.intellij.psi.jsp.WebDirectoryElement;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.InheritanceUtil;
@@ -101,24 +94,6 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     else if (element instanceof PsiVariable) {
       baseIcon = createLayeredIcon(Icons.VARIABLE_ICON, getFlags((PsiVariable)element, false));
     }
-    else if (element instanceof PsiPointcutDef) {
-      baseIcon = createLayeredIcon(Icons.POINTCUT_ICON, 0);
-    }
-    else if (element instanceof PsiParentsIntroduction) {
-      baseIcon = createLayeredIcon(Icons.PARENTS_INTRODUCTION_ICON, 0);
-    }
-    else if (element instanceof PsiErrorIntroduction) {
-      baseIcon = createLayeredIcon(Icons.ERROR_INTRODUCTION_ICON, 0);
-    }
-    else if (element instanceof PsiWarningIntroduction) {
-      baseIcon = createLayeredIcon(Icons.WARNING_INTRODUCTION_ICON, 0);
-    }
-    else if (element instanceof PsiSofteningIntroduction) {
-      baseIcon = createLayeredIcon(Icons.SOFTENING_INTRODUCTION_ICON, 0);
-    }
-    else if (element instanceof PsiAdvice) {
-      baseIcon = createLayeredIcon(Icons.ADVICE_ICON, 0);
-    }
     else if (element instanceof XmlTag) {
       return Icons.XML_TAG_ICON;
     }
@@ -191,7 +166,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
 
   private static final Key<CachedValue<Integer>> CLASS_KIND_KEY = new Key<CachedValue<Integer>>("CLASS_KIND_KEY");
 
-  public static final int getClassKind(final PsiClass aClass) {
+  public static int getClassKind(final PsiClass aClass) {
     if (!aClass.isValid()) {
       aClass.putUserData(CLASS_KIND_KEY, null);
       return CLASS_KIND_CLASS;
@@ -210,14 +185,11 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     return value.getValue().intValue();
   }
 
-  private static final int getClassKindImpl(PsiClass aClass) {
+  private static int getClassKindImpl(PsiClass aClass) {
     if (!aClass.isValid()) return CLASS_KIND_CLASS;
 
     final EjbClassRole role = J2EERolesUtil.getEjbRole(aClass);
     if (role != null) return role.getType();
-    if (aClass instanceof PsiAspect) {
-      return CLASS_KIND_ASPECT;
-    }
     if (aClass.isAnnotationType()) {
       return CLASS_KIND_ANNOTATION;
     }

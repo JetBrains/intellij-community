@@ -1,6 +1,5 @@
 package com.intellij.ide.projectView;
 
-import com.intellij.aspects.psi.*;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 
@@ -32,24 +31,8 @@ public interface PsiClassChildrenSource {
     }
   };
 
-  PsiClassChildrenSource ASPECT_CHILDREN = new PsiClassChildrenSource() {
-    public void addChildren(PsiClass psiClass, List<PsiElement> children) {
-      if (!(psiClass instanceof PsiAspect)) return;
-      PsiAspect aspect = (PsiAspect)psiClass;
-      PsiAdvice[] advices = aspect.getAdvices();
-      PsiIntertypeDeclaration[] intertypeDeclarations = aspect.getIntertypeDeclarations();
-      PsiIntroduction[] introductions = aspect.getIntroductions();
-      PsiPointcutDef[] pointcutDefs = aspect.getPointcutDefs();
-      children.addAll(Arrays.asList(advices));
-      children.addAll(Arrays.asList(intertypeDeclarations));
-      children.addAll(Arrays.asList(introductions));
-      children.addAll(Arrays.asList(pointcutDefs));
-    }
-  };
-
   PsiClassChildrenSource DEFAULT_CHILDREN = new CompositePsiClasChildrenSource(
       new PsiClassChildrenSource[]{CLASSES,
                                    METHODS,
-                                   FIELDS,
-                                   ASPECT_CHILDREN});  
+                                   FIELDS});
 }

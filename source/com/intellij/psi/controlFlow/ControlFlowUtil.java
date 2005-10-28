@@ -1,12 +1,12 @@
 package com.intellij.psi.controlFlow;
 
-import com.intellij.aspects.psi.PsiAdvice;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.IntArrayList;
-import gnu.trove.*;
+import gnu.trove.THashSet;
+import gnu.trove.TIntHashSet;
 
 import java.util.*;
 
@@ -360,7 +360,7 @@ public class ControlFlowUtil {
     PsiElement parent = codeFragment.getParent();
     while (parent != null) {
       if (parent instanceof PsiDirectory
-          || parent instanceof PsiMethod || parent instanceof PsiAdvice
+          || parent instanceof PsiMethod
           || parent instanceof PsiField || parent instanceof PsiClassInitializer) {
         break;
       }

@@ -9,6 +9,8 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="Trove4j" level="project" />
+    <orderEntry type="library" name="OroMatcher" level="project" />
     <orderEntry type="module" module-name="action-system-impl" />
     <orderEntry type="module" module-name="J2EE" />
     <orderEntry type="module" module-name="idea" />
@@ -20,7 +22,6 @@
     <orderEntry type="module" module-name="inspections-openapi" />
     <orderEntry type="module" module-name="ui-designer-impl" />
     <orderEntry type="module" module-name="UIDesignerCore" />
-    <orderEntry type="library" name="Trove4j" level="project" />
     <orderEntry type="module" module-name="refactoring-openapi" />
     <orderEntry type="module" module-name="refactoring-impl" />
     <orderEntry type="module" module-name="action-system-openapi" />

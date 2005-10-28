@@ -1,7 +1,6 @@
 
 package com.intellij.refactoring;
 
-import com.intellij.aspects.psi.PsiPointcutDef;
 import com.intellij.psi.*;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
@@ -12,7 +11,6 @@ public class HelpID {
   private static final String RENAME_FIELD     = "refactoring.renameField";
   private static final String RENAME_VARIABLE  = "refactoring.renameVariable";
   private static final String RENAME_PARAMETER = "refactoring.renameParameter";
-  private static final String RENAME_NAMED_POINTCUT = "refactoring.renamePointcutDef";
 
   private static final String MOVE_PACKAGE = "refactoring.movePackage";
   private static final String MOVE_CLASS   = "refactoring.moveClass";
@@ -34,7 +32,6 @@ public class HelpID {
   public static final String MOVE_MEMBERS       = "refactoring.moveMembers";
   public static final String INLINE_METHOD      = "refactoring.inlineMethod";
   public static final String INLINE_VARIABLE    = "refactoring.inlineVariable";
-  public static final String INLINE_POINTCUT    = "refactoring.inlinePointcut";
   public static final String INLINE_FIELD       = "refactoring.inlineField";
   public static final String INLINE_INCLUDE     = "refactoring.inlineInclude";
 
@@ -80,9 +77,6 @@ public class HelpID {
     }
     else if (element instanceof PsiParameter){
       helpID = HelpID.RENAME_PARAMETER;
-    }
-    else if (element instanceof PsiPointcutDef) {
-      helpID = HelpID.RENAME_NAMED_POINTCUT;
     }
     return helpID;
   }

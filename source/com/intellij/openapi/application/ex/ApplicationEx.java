@@ -21,8 +21,6 @@ public interface ApplicationEx extends Application {
 
   boolean isInternal();
 
-  boolean isAspectJSupportEnabled();
-
   String getComponentsDescriptor();
 
   String getName();

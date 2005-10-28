@@ -1,6 +1,5 @@
 package com.intellij.codeInsight.completion;
 
-import com.intellij.aspects.psi.PsiAspectFile;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
@@ -173,10 +172,7 @@ public class CompletionUtil {
     final CompletionData completionDataByFileType = getCompletionDataByFileType(file.getFileType());
     if (completionDataByFileType != null) return completionDataByFileType;
 
-    if(file instanceof PsiAspectFile){
-      return ourGenericCompletionData;
-    }
-    else if((file instanceof PsiJavaFile || file instanceof PsiCodeFragment) &&
+    if((file instanceof PsiJavaFile || file instanceof PsiCodeFragment) &&
             ! (file instanceof JspFile) // TODO: we need to check the java context of JspX
             ){
       if (element != null && new SuperParentFilter(new ClassFilter(PsiDocComment.class)).isAcceptable(element, element.getParent())){

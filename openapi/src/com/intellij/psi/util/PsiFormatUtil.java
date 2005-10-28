@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.util;
 
-import com.intellij.aspects.psi.PsiPointcutDef;
 import com.intellij.psi.*;
 
 /**
@@ -214,70 +213,6 @@ public class PsiFormatUtil {
         //noinspection HardCodedStringLiteral
         buffer.append("throws ");
         buffer.append(throwsText);
-      }
-    }
-    return buffer.toString();
-  }
-
-  public static String formatPointcut(PsiPointcutDef pointcut, int options, int parameterOptions){
-    StringBuffer buffer = new StringBuffer();
-    if ((options & SHOW_MODIFIERS) != 0 && (options & MODIFIERS_AFTER) == 0){
-      buffer.append(formatModifiers(pointcut, options));
-    }
-    if ((options & SHOW_CONTAINING_CLASS) != 0){
-      PsiClass aClass = pointcut.getContainingClass();
-      if (aClass != null){
-        if (buffer.length() > 0){
-          buffer.append(' ');
-        }
-        String name = aClass.getName();
-        if (name != null) {
-          if ((options & SHOW_FQ_NAME) != 0){
-            String qName = aClass.getQualifiedName();
-            if (qName != null){
-              buffer.append(qName);
-            }
-            else{
-              buffer.append(name);
-            }
-          }
-          else{
-            buffer.append(name);
-          }
-          buffer.append('.');
-        }
-      }
-      if ((options & SHOW_NAME) != 0){
-        buffer.append(pointcut.getName());
-      }
-    }
-    else{
-      if ((options & SHOW_NAME) != 0){
-        if (buffer.length() > 0){
-          buffer.append(' ');
-        }
-        buffer.append(pointcut.getName());
-      }
-    }
-    if ((options & SHOW_PARAMETERS) != 0){
-      buffer.append('(');
-      PsiParameter[] parms = pointcut.getParameterList().getParameters();
-      for(int i = 0; i < parms.length; i++) {
-        PsiParameter parm = parms[i];
-        if (i > 0){
-          buffer.append(", ");
-        }
-        buffer.append(formatVariable(parm, parameterOptions, PsiSubstitutor.EMPTY));
-      }
-      buffer.append(')');
-    }
-    if ((options & SHOW_MODIFIERS) != 0 && (options & MODIFIERS_AFTER) != 0){
-      String modifiers = formatModifiers(pointcut, options);
-      if (modifiers.length() > 0){
-        if (buffer.length() > 0){
-          buffer.append(' ');
-        }
-        buffer.append(modifiers);
       }
     }
     return buffer.toString();

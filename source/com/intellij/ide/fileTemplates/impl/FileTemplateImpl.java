@@ -1,9 +1,10 @@
 package com.intellij.ide.fileTemplates.impl;
 
+import com.intellij.CommonBundle;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -15,7 +16,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.ArrayUtil;
-import com.intellij.CommonBundle;
 import org.apache.velocity.runtime.parser.ParseException;
 
 import java.io.*;
@@ -117,7 +117,7 @@ public class FileTemplateImpl implements FileTemplate, Cloneable{
 
   public boolean isJavaClassTemplate(){
     FileType fileType = FileTypeManagerEx.getInstanceEx().getFileTypeByExtension(myExtension);
-    return fileType.equals(StdFileTypes.JAVA) || fileType.equals(StdFileTypes.ASPECT);
+    return fileType.equals(StdFileTypes.JAVA);
   }
 
   public String getExtension(){

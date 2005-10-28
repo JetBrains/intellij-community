@@ -234,7 +234,7 @@ public class BraceMatchingUtil {
               pair.isStructural()) return true;
         }
       }
-      if (fileType == StdFileTypes.JAVA || fileType == StdFileTypes.ASPECT) {
+      if (fileType == StdFileTypes.JAVA) {
         return tokenType == JavaTokenType.RBRACE || tokenType == JavaTokenType.LBRACE;
       }
       else if (fileType == StdFileTypes.HTML || fileType == StdFileTypes.XML) {

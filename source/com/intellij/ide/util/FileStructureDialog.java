@@ -1,8 +1,6 @@
 
 package com.intellij.ide.util;
 
-import com.intellij.aspects.psi.PsiAspect;
-import com.intellij.aspects.psi.PsiAspectFile;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.commander.CommanderPanel;
 import com.intellij.ide.commander.ProjectListBuilder;
@@ -138,12 +136,6 @@ public class FileStructureDialog extends DialogWrapper {
       PsiClass[] classes = ((PsiJavaFile)parent).getClasses();
       if (classes.length == 1) {
         parent = classes[0];
-      }
-    }
-    if (parent instanceof PsiAspectFile) {
-      PsiAspect[] aspects = ((PsiAspectFile) parent).getAspects();
-      if (aspects.length == 1) {
-        parent = aspects[0];
       }
     }
 

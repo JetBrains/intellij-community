@@ -1,6 +1,5 @@
 package com.intellij.codeInsight.highlighting;
 
-import com.intellij.aspects.psi.PsiPointcutDef;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.TargetElementUtil;
@@ -542,9 +541,6 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     }
     if (element instanceof PsiVariable) {
       return ((PsiVariable)element).getNameIdentifier();
-    }
-    if (element instanceof PsiPointcutDef) {
-      return ((PsiPointcutDef)element).getNameIdentifier();
     }
 
     if (element.isPhysical() && element instanceof PsiNamedElement && element.getContainingFile() != null) {

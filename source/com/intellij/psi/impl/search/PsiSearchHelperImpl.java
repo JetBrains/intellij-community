@@ -1,9 +1,6 @@
 package com.intellij.psi.impl.search;
 
 import com.intellij.ant.PsiAntElement;
-import com.intellij.aspects.psi.PsiAspect;
-import com.intellij.aspects.psi.PsiPointcut;
-import com.intellij.aspects.psi.PsiPointcutDef;
 import com.intellij.codeHighlighting.CopyCreatorLexer;
 import com.intellij.ide.highlighter.custom.impl.CustomFileType;
 import com.intellij.ide.todo.TodoConfiguration;
@@ -66,7 +63,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.search.PsiSearchHelperImpl");
 
   private final PsiManagerImpl myManager;
-  private final JoinPointSearchHelper myJoinPointSearchHelper;
   private static final TodoItem[] EMPTY_TODO_ITEMS = new TodoItem[0];
   private static final TokenSet XML_DATA_CHARS = TokenSet.create(XmlTokenType.XML_DATA_CHARACTERS);
 
@@ -178,7 +174,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
   public PsiSearchHelperImpl(PsiManagerImpl manager) {
     myManager = manager;
-    myJoinPointSearchHelper = new JoinPointSearchHelper(manager, this);
   }
 
   public PsiReference[] findReferences(PsiElement element, SearchScope searchScope, boolean ignoreAccessScope) {
@@ -563,40 +558,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return true;
   }
 
-  public PsiPointcutDef[] findOverridingPointcuts(PsiPointcutDef pointcut,
-                                                  SearchScope searchScope,
-                                                  boolean checkDeep) {
-    LOG.assertTrue(searchScope != null);
 
-    PsiElementProcessor.CollectElements<PsiPointcutDef> processor = new PsiElementProcessor.CollectElements<PsiPointcutDef>();
-    processOverridingPointcuts(processor, pointcut, searchScope, checkDeep);
-
-    final Collection<PsiPointcutDef> foundPointcuts = processor.getCollection();
-    return foundPointcuts.toArray(new PsiPointcutDef[foundPointcuts.size()]);
-  }
-
-  public boolean processOverridingPointcuts(final PsiElementProcessor processor,
-                                            final PsiPointcutDef pointcut,
-                                            SearchScope searchScope,
-                                            boolean checkDeep) {
-    PsiAspect parentAspect = pointcut.getContainingAspect();
-
-    if (parentAspect == null || pointcut.hasModifierProperty(PsiModifier.FINAL)) {
-      return true;
-    }
-
-    PsiElementProcessor<PsiClass> inheritorsProcessor = new PsiElementProcessor<PsiClass>() {
-      public boolean execute(PsiClass element) {
-        if (!(element instanceof PsiAspect)) return true;
-        PsiAspect inheritor = (PsiAspect)element;
-        PsiPointcutDef pointcut1 = inheritor.findPointcutDefBySignature(pointcut, false);
-        if (pointcut1 == null) return true;
-        return processor.execute(pointcut1);
-      }
-    };
-
-    return processInheritors(inheritorsProcessor, parentAspect, searchScope, true);
-  }
 
   public PsiReference[] findReferencesIncludingOverriding(final PsiMethod method,
                                                           SearchScope searchScope,
@@ -786,18 +748,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
     if ("java.lang.Object".equals(aClass.getQualifiedName())) { // special case
       // TODO!
-    }
-
-    if (aClass instanceof PsiAspect) {
-      PsiAspectManager aspectManager = aClass.getManager().getAspectManager();
-      PsiAspect[] aspects = aspectManager.getAspects();
-      for (PsiAspect aspect : aspects) {
-        if (!processInheritorCandidate(processor, aspect, aClass, searchScope, checkDeep, processed,
-                                       checkInheritance)) {
-          return false;
-        }
-      }
-      return true;
     }
 
     final SearchScope searchScope1 = searchScope.intersectWith(aClass.getUseScope());
@@ -1259,15 +1209,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                       progress);
   }
 
-  public PsiElement[] findJoinPointsByPointcut(PsiPointcut pointcut, SearchScope searchScope) {
-    return myJoinPointSearchHelper.findJoinPointsByPointcut(pointcut, searchScope);
-  }
-
-  public boolean processJoinPointsByPointcut(PsiElementProcessor processor,
-                                             PsiPointcut pointcut,
-                                             SearchScope searchScope) {
-    return myJoinPointSearchHelper.processJoinPointsByPointcut(processor, pointcut, searchScope);
-  }
 
   private boolean processElementsWithWord(PsiElementProcessorEx processor,
                                           SearchScope searchScope,

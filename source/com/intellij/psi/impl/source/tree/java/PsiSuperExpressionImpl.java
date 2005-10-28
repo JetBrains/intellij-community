@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.source.tree.java;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
@@ -7,7 +8,6 @@ import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.lang.ASTNode;
 
 public class PsiSuperExpressionImpl extends CompositePsiElement implements PsiSuperExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiSuperExpressionImpl");
@@ -60,13 +60,6 @@ public class PsiSuperExpressionImpl extends CompositePsiElement implements PsiSu
 
     if ("java.lang.Object".equals(aClass.getQualifiedName())) return null;
     PsiClassType[] superTypes = aClass.getExtendsListTypes();
-    PsiReferenceList[] introducedExtendsList = new PsiReferenceList[1];
-    PsiReferenceList[] introducedImplementsList = new PsiReferenceList[1];
-
-    getManager().getAspectManager().getIntroducedParents(aClass, introducedExtendsList,
-                                                         introducedImplementsList);
-    if (introducedExtendsList[0] != null) superTypes = introducedExtendsList[0].getReferencedTypes();
-
     if (superTypes.length == 0) {
       final PsiClass javaLangObject = getManager().findClass("java.lang.Object", getResolveScope());
       if (javaLangObject != null) {

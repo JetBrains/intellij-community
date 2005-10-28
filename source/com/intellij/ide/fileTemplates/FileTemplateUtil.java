@@ -1,9 +1,7 @@
 package com.intellij.ide.fileTemplates;
 
-import com.intellij.aspects.psi.PsiAspect;
-import com.intellij.aspects.psi.PsiAspectFile;
-import com.intellij.ide.fileTemplates.impl.FileTemplateImpl;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.fileTemplates.impl.FileTemplateImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
@@ -240,9 +238,6 @@ public class FileTemplateUtil{
                 String extension = template.getExtension();
                 myCreatedElement[0] = createClassOrInterface(project, directory, templateText, template.isAdjust(), extension);
               }
-              else if (fileType.equals(StdFileTypes.ASPECT)) {
-                myCreatedElement[0] = createAspect(project, directory, templateText, template.isAdjust());
-              }
               else{
                 myCreatedElement[0] = createPsiFile(project, directory, templateText, fileName, template.getExtension());
               }
@@ -261,24 +256,6 @@ public class FileTemplateUtil{
       throw commandException[0];
     }
     return true;
-  }
-
-  public static PsiAspect createAspect(Project project, PsiDirectory directory, String content, boolean reformat) throws IncorrectOperationException {
-    String extension = StdFileTypes.ASPECT.getDefaultExtension();
-    PsiAspectFile file = (PsiAspectFile) PsiManager.getInstance(project).getElementFactory().createFileFromText("myaspect." + extension, content);
-    PsiAspect[] aspects = file.getAspects();
-    if (aspects == null || aspects.length == 0) {
-      throw new IncorrectOperationException("This template did not produce an aspect!");
-    }
-    PsiAspect aspect = aspects[0];
-    if (reformat) {
-      CodeStyleManager.getInstance(project).reformat(file);
-    }
-    String fileName = aspect.getName() + "." + extension;
-    directory.checkCreateFile(fileName);
-    file = (PsiAspectFile) file.setName(fileName);
-    file = (PsiAspectFile) directory.add(file);
-    return file.getAspects()[0];
   }
 
   public static PsiClass createClassOrInterface(Project project,

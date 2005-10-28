@@ -1,7 +1,5 @@
 package com.intellij.ide.impl;
 
-import com.intellij.aspects.psi.PsiAspect;
-import com.intellij.aspects.psi.PsiAspectFile;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -50,18 +48,14 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
       }
       element = element.getParent();
     }
-    if (element instanceof PsiAspectFile) {
-      PsiAspect[] aspects = ((PsiAspectFile) element).getAspects();
-      if (aspects.length > 0) {
-        element = aspects[0];
-      }
-    }
-    else if (element instanceof PsiJavaFile) {
+
+    if (element instanceof PsiJavaFile) {
       PsiClass[] classes = ((PsiJavaFile)element).getClasses();
       if (classes.length > 0 && isTopLevelClass(classes[0])) {
         element = classes[0];
       }
     }
+
     final ProjectView projectView = ProjectView.getInstance(myProject);
     final PsiElement _element1 = element.getOriginalElement();
     ToolWindowManager windowManager=ToolWindowManager.getInstance(myProject);

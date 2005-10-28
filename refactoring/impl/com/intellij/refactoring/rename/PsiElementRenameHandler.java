@@ -1,6 +1,5 @@
 package com.intellij.refactoring.rename;
 
-import com.intellij.aspects.psi.PsiPointcutDef;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.j2ee.ejb.EjbUtil;
@@ -95,7 +94,7 @@ public class PsiElementRenameHandler implements RenameHandler {
 
     final String REFACTORING_NAME = RefactoringBundle.message("rename.title");
     if (element == null ||
-        !(element instanceof PsiFile || element instanceof PsiPointcutDef || element instanceof PsiPackage ||
+        !(element instanceof PsiFile || element instanceof PsiPackage ||
           element instanceof PsiDirectory || element instanceof PsiClass || element instanceof PsiVariable ||
           element instanceof PsiMethod || element instanceof PsiNamedElement || element instanceof XmlAttributeValue)) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.symbol"));

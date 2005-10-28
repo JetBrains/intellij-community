@@ -367,7 +367,6 @@
         <action id="SmartGotoImplementation" internal="true" class="com.intellij.codeInsight.navigation.actions.SmartGotoImplementationAction"/>
         <action id="GotoTypeDeclaration" class="com.intellij.codeInsight.navigation.actions.GotoTypeDeclarationAction"/>
         <action id="GotoSuperMethod" class="com.intellij.codeInsight.navigation.actions.GotoSuperAction"/>
-        <action id="GotoAspect" class="com.intellij.codeInsight.navigation.actions.GotoAspectAction"/>
         <separator/>
         <action id="GotoNextError" class="com.intellij.codeInsight.daemon.impl.actions.GotoNextErrorAction"/>
         <action id="GotoPreviousError" class="com.intellij.codeInsight.daemon.impl.actions.GotoPreviousErrorAction"/>

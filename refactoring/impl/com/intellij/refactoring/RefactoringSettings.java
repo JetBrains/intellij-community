@@ -1,7 +1,6 @@
 
 package com.intellij.refactoring;
 
-import com.intellij.aspects.psi.PsiPointcutDef;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,7 +23,6 @@ public class RefactoringSettings implements JDOMExternalizable, ApplicationCompo
   public boolean RENAME_SEARCH_IN_COMMENTS_FOR_METHOD = true;
   public boolean RENAME_SEARCH_IN_COMMENTS_FOR_FIELD = true;
   public boolean RENAME_SEARCH_IN_COMMENTS_FOR_VARIABLE = true;
-  public boolean RENAME_SEARCH_IN_COMMENTS_FOR_POINTCUT_DEF = true;
 
   public boolean RENAME_SEARCH_FOR_TEXT_FOR_PACKAGE = true;
   public boolean RENAME_SEARCH_FOR_TEXT_FOR_CLASS = true;
@@ -114,9 +112,6 @@ public class RefactoringSettings implements JDOMExternalizable, ApplicationCompo
     else if (element instanceof PsiVariable){
       return RENAME_SEARCH_IN_COMMENTS_FOR_VARIABLE;
     }
-    else if (element instanceof PsiPointcutDef) {
-      return RENAME_SEARCH_IN_COMMENTS_FOR_POINTCUT_DEF;
-    }
     else if (element instanceof XmlAttributeValue) {
       return false;
     }
@@ -182,9 +177,6 @@ public class RefactoringSettings implements JDOMExternalizable, ApplicationCompo
     }
     else if (element instanceof PsiVariable){
       RENAME_SEARCH_IN_COMMENTS_FOR_VARIABLE = value;
-    }
-    else if (element instanceof PsiPointcutDef){
-      RENAME_SEARCH_IN_COMMENTS_FOR_POINTCUT_DEF = value;
     }
     else if (element instanceof PsiNamedElement ||
              element instanceof XmlAttributeValue) {

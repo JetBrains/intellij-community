@@ -27,9 +27,9 @@ import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 /**
  * The main entry point for accessing the PSI services for a project.
@@ -233,13 +233,6 @@ public abstract class PsiManager implements UserDataHolder {
    */
   public abstract @NotNull PsiModificationTracker getModificationTracker();
 
-  /**
-   * Returns the aspect manager for the project, which can be used to access AspectJ-related
-   * functionality.
-   *
-   * @return the aspect manager instance.
-   */
-  public abstract @NotNull PsiAspectManager getAspectManager();
 
   /**
    * Returns the cached values manager for the project, which can be used to create values

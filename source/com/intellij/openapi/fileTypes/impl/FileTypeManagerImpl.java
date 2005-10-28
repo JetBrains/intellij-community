@@ -6,7 +6,6 @@ import com.intellij.ide.highlighter.custom.impl.CustomFileType;
 import com.intellij.lang.Language;
 import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.*;
@@ -514,9 +513,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     registerFileTypeWithoutNotification(StdFileTypes.HTML = new HtmlFileType(), parse("html;htm;sht;shtm;shtml"));
     registerFileTypeWithoutNotification(StdFileTypes.XHTML = new XHtmlFileType(), parse("xhtml"));
     registerFileTypeWithoutNotification(StdFileTypes.JAVA = new JavaFileType(), new String[] {"java"});
-    if (ApplicationManagerEx.getApplicationEx().isAspectJSupportEnabled()) {
-      registerFileTypeWithoutNotification(StdFileTypes.ASPECT = new AspectFileType(), new String[] {"aj"});
-    }
     registerFileTypeWithoutNotification(StdFileTypes.JSP = new NewJspFileType(), parse("xjsp;jsp;jsf;jspf;tag;tagf"));
     registerFileTypeWithoutNotification(StdFileTypes.JSPX = new JspxFileType(), parse ("jspx;tagx"));
     registerFileTypeWithoutNotification(StdFileTypes.PLAIN_TEXT = new PlainTextFileType(), parse("txt;sh;bat;cmd;policy;log;cgi;pl;MF;sql;jad;jam"));

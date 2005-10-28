@@ -29,8 +29,6 @@ public class FindUsagesOptions implements Cloneable {
   public boolean isIncludeInherited = false;
   public boolean isReadAccess = false;
   public boolean isWriteAccess = false;
-  public boolean isImplementingPointcuts = false;
-  public boolean isOverridingPointcuts = false;
   public boolean isIncludeOverloadUsages = false;
   public boolean isThrowUsages = false;
   public ThrowSearchUtil.Root myThrowRoot = null;
@@ -66,8 +64,6 @@ public class FindUsagesOptions implements Cloneable {
     isIncludeInherited = false;
     isReadAccess = false;
     isWriteAccess = false;
-    isImplementingPointcuts = false;
-    isOverridingPointcuts = false;
     isIncludeOverloadUsages = false;
     isThrowUsages = false;
     myThrowRoot = null;

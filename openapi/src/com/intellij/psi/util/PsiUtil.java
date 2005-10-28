@@ -15,9 +15,6 @@
  */
 package com.intellij.psi.util;
 
-import com.intellij.aspects.psi.PsiIdPattern;
-import com.intellij.aspects.psi.PsiTypeNamePattern;
-import com.intellij.aspects.psi.PsiTypeNamePatternElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
@@ -28,13 +25,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.jsp.JspFile;
@@ -42,10 +32,9 @@ import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.codeInsight.CodeInsightBundle;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -496,62 +485,6 @@ public final class PsiUtil {
   }
 
   private static final Key<Pattern> REGEXP_IN_TYPE_NAME_PATTERN = Key.create("REGEXP_IN_TYPE_NAME_PATTERN");
-
-  public static Pattern convertToRegexp(PsiIdPattern idPattern) {
-    Pattern result = idPattern.getUserData(REGEXP_IN_TYPE_NAME_PATTERN);
-    if (result == null) {
-      StringBuffer buf = new StringBuffer();
-      convertToRegexp(idPattern, buf);
-      result = Pattern.compile(buf.toString());
-      idPattern.putUserData(REGEXP_IN_TYPE_NAME_PATTERN, result);
-    }
-    return result;
-  }
-
-  public static Pattern convertToRegexp(PsiTypeNamePattern typeNamePattern) {
-    Pattern result = typeNamePattern.getUserData(REGEXP_IN_TYPE_NAME_PATTERN);
-
-    if (result == null) {
-      StringBuffer regexp;
-      PsiTypeNamePatternElement[] namePatternElements = typeNamePattern.getNamePatternElements();
-      regexp = new StringBuffer();
-      boolean doubleDot = false;
-      for (int i = 0; i < namePatternElements.length; i++) {
-        if (i > 0 && !doubleDot) {
-          regexp.append("\\."); // dot
-        }
-
-        PsiTypeNamePatternElement typePatternElement = namePatternElements[i];
-        PsiIdPattern pattern = typePatternElement.getPattern();
-        if (pattern != null) {
-          convertToRegexp(pattern, regexp);
-          doubleDot = false;
-        }
-        else {
-          regexp.append("(.*\\.)?"); // Empty string or any string that ends up with dot.
-          doubleDot = true;
-        }
-      }
-
-      result = Pattern.compile(regexp.toString());
-      typeNamePattern.putUserData(REGEXP_IN_TYPE_NAME_PATTERN, result);
-    }
-
-    return result;
-  }
-
-  private static void convertToRegexp(PsiIdPattern pattern, StringBuffer regexp) {
-    final String canonicalText = pattern.getCanonicalText();
-    for (int j = 0; j < canonicalText.length(); j++) {
-      final char c = canonicalText.charAt(j);
-      if (c == '*') {
-        regexp.append("[^\\.]*");
-      }
-      else {
-        regexp.append(c);
-      }
-    }
-  }
 
   @Nullable
   public static PsiClass resolveClassInType(PsiType type) {

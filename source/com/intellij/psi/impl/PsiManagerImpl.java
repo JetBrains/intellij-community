@@ -77,7 +77,6 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
   private JavadocManager myJavadocManager;
   private PsiNameHelper myNameHelper;
   private PsiModificationTrackerImpl myModificationTracker;
-  private PsiAspectManager myAspectManager;
   private ResolveCache myResolveCache;
   private CachedValuesManager myCachedValuesManager;
   private PsiConstantEvaluationHelper myConstantEvaluationHelper;
@@ -167,7 +166,6 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
     myNameHelper = new PsiNameHelperImpl(this);
     myExternalResourceListener = new MyExternalResourceListener();
     myModificationTracker = new PsiModificationTrackerImpl(this);
-    myAspectManager = new PsiAspectManagerImpl(this);
     myResolveCache = new ResolveCache(this);
     myCachedValuesManager = new CachedValuesManagerImpl(this);
     myConstantEvaluationHelper = new PsiConstantEvaluationHelperImpl();
@@ -884,11 +882,6 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
   }
 
   @NotNull
-  public PsiAspectManager getAspectManager() {
-    return myAspectManager;
-  }
-
-  @NotNull
   public CachedValuesManager getCachedValuesManager() {
     return myCachedValuesManager;
   }
@@ -1048,11 +1041,6 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
   private class PsiElementFinderImpl implements PsiElementFinder {
     public PsiClass findClass(String qualifiedName, GlobalSearchScope scope) {
       PsiClass psiClass = myFileManager.findClass(qualifiedName, scope);
-
-      //TODO: remove
-      if (psiClass == null) {
-        psiClass = ((PsiAspectManagerImpl)myAspectManager).findAspectByQualifiedName(qualifiedName);
-      }
 
       if (psiClass == null && myCurrentMigration != null) {
         psiClass = myCurrentMigration.getMigrationClass(qualifiedName);

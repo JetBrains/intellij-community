@@ -435,11 +435,6 @@ public class PsiClassImplUtil {
           if (!processor.execute(field, substitutor)) return false;
         }
       }
-
-      final PsiField[] introducedFields = manager.getAspectManager().getIntroducedFields(aClass);
-      for (PsiField introducedField : introducedFields) {
-        if (!processor.execute(introducedField, substitutor)) return false;
-      }
     }
 
     if (classHint == null || classHint.shouldProcess(PsiMethod.class)) {
@@ -452,11 +447,6 @@ public class PsiClassImplUtil {
           }
         }
         if (!processor.execute(method, substitutor)) return false;
-      }
-
-      PsiMethod[] introducedMethods = manager.getAspectManager().getIntroducedMethods(aClass);
-      for (PsiMethod introducedMethod : introducedMethods) {
-        if (!processor.execute(introducedMethod, substitutor)) return false;
       }
     }
 
@@ -535,18 +525,7 @@ public class PsiClassImplUtil {
 
     if ("java.lang.Object".equals(psiClass.getQualifiedName())) return null;
 
-    PsiReferenceList[] introducedExtendsList = new PsiReferenceList[1];
-    PsiReferenceList[] introducedImplementsList = new PsiReferenceList[1];
-
-    manager.getAspectManager().getIntroducedParents(psiClass, introducedExtendsList,
-                                                    introducedImplementsList);
-    final PsiClassType[] referenceElements;
-    if (introducedExtendsList[0] != null) {
-      referenceElements = introducedExtendsList[0].getReferencedTypes();
-    }
-    else {
-      referenceElements = psiClass.getExtendsListTypes();
-    }
+    final PsiClassType[] referenceElements = psiClass.getExtendsListTypes();
 
     if (referenceElements.length == 0) return manager.findClass("java.lang.Object", resolveScope);
 
@@ -565,18 +544,6 @@ public class PsiClassImplUtil {
   private static PsiClass[] getSupersInner(PsiClass psiClass) {
     PsiClassType[] extendsListTypes = psiClass.getExtendsListTypes();
     PsiClassType[] implementsListTypes = psiClass.getImplementsListTypes();
-
-    PsiReferenceList[] introducedExtendsList = new PsiReferenceList[1];
-    PsiReferenceList[] introducedImplementsList = new PsiReferenceList[1];
-
-    psiClass.getManager().getAspectManager().getIntroducedParents(psiClass, introducedExtendsList,
-                                                                  introducedImplementsList);
-    if (introducedExtendsList[0] != null) {
-      extendsListTypes = introducedExtendsList[0].getReferencedTypes();
-    }
-    if (introducedImplementsList[0] != null) {
-      implementsListTypes = introducedImplementsList[0].getReferencedTypes();
-    }
 
     if (psiClass.isInterface()) {
       return resolveClassReferenceList(extendsListTypes,
@@ -639,15 +606,6 @@ public class PsiClassImplUtil {
     boolean noExtends = extendsTypes.length == 0;
 
     result.addAll(Arrays.asList(psiClass.getImplementsListTypes()));
-
-    final PsiReferenceList[] extendsListOut = new PsiReferenceList[1];
-    final PsiReferenceList[] implementsListOut = new PsiReferenceList[1];
-    psiClass.getManager().getAspectManager().getIntroducedParents(psiClass, extendsListOut,
-                                                                  implementsListOut);
-    noExtends = noExtends && extendsListOut[0] == null;
-    addReferenceTypes(extendsListOut[0], result);
-    addReferenceTypes(implementsListOut[0], result);
-
 
     if (noExtends) {
       PsiManager manager = psiClass.getManager();
@@ -713,18 +671,7 @@ public class PsiClassImplUtil {
   }
 
   public static PsiClass[] getInterfaces(PsiClass psiClass) {
-    PsiReferenceList[] introducedExtendsList = new PsiReferenceList[1];
-    PsiReferenceList[] introducedImplementsList = new PsiReferenceList[1];
-
-    psiClass.getManager().getAspectManager().getIntroducedParents(psiClass, introducedExtendsList,
-                                                                  introducedImplementsList);
-    final PsiClassType[] extendsListTypes;
-    if (introducedExtendsList[0] == null) {
-      extendsListTypes = psiClass.getExtendsListTypes();
-    }
-    else {
-      extendsListTypes = introducedExtendsList[0].getReferencedTypes();
-    }
+    final PsiClassType[] extendsListTypes = psiClass.getExtendsListTypes();
     if (psiClass.isInterface()) {
       return resolveClassReferenceList(extendsListTypes, psiClass.getManager(), psiClass.getResolveScope(), false);
     }
@@ -736,13 +683,7 @@ public class PsiClassImplUtil {
       return PsiClass.EMPTY_ARRAY;
     }
 
-    final PsiClassType[] implementsListTypes;
-    if (introducedImplementsList[0] == null) {
-      implementsListTypes = psiClass.getImplementsListTypes();
-    }
-    else {
-      implementsListTypes = introducedImplementsList[0].getReferencedTypes();
-    }
+    final PsiClassType[] implementsListTypes = psiClass.getImplementsListTypes();
 
     return resolveClassReferenceList(implementsListTypes, psiClass.getManager(), psiClass.getResolveScope(), false);
   }

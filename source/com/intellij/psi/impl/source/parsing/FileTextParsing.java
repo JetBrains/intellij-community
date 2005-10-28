@@ -25,7 +25,7 @@ public class FileTextParsing extends Parsing {
     return parseFileText(manager, lexer, buffer, startOffset, endOffset, false, table);
   }
 
-  private static final TokenSet IMPORT_LIST_STOPPER_BIT_SET = TokenSet.create(new IElementType[]{CLASS_KEYWORD, INTERFACE_KEYWORD, ENUM_KEYWORD, ASPECT_ASPECT, AT});
+  private static final TokenSet IMPORT_LIST_STOPPER_BIT_SET = TokenSet.create(new IElementType[]{CLASS_KEYWORD, INTERFACE_KEYWORD, ENUM_KEYWORD, AT});
 
   public static TreeElement parseFileText(PsiManager manager, Lexer lexer, char[] buffer, int startOffset, int endOffset, boolean skipHeader, CharTable table) {
     if (lexer == null){

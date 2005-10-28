@@ -1,7 +1,7 @@
 
 package com.intellij.find.findUsages;
 
-import com.intellij.aspects.psi.PsiPointcutDef;
+import com.intellij.find.FindBundle;
 import com.intellij.j2ee.ejb.EjbUsagesUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -15,7 +15,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Processor;
-import com.intellij.find.FindBundle;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -103,23 +102,6 @@ public class FindUsagesUtil {
       else{
         if (options.isImplementingMethods){
           processOverridingMethods(psiMethod, processor, searchHelper, options);
-        }
-      }
-    }
-
-    if (element instanceof PsiPointcutDef){
-      PsiSearchHelper searchHelper = element.getManager().getSearchHelper();
-      PsiPointcutDef pointcut = (PsiPointcutDef)element;
-      if (!pointcut.hasModifierProperty(PsiModifier.ABSTRACT)){
-        if (options.isOverridingPointcuts){
-          PsiPointcutDef[] pointcuts = searchHelper.findOverridingPointcuts(pointcut, options.searchScope, options.isCheckDeepInheritance);
-          addResults(processor, pointcuts, options, null);
-        }
-      }
-      else{
-        if (options.isImplementingPointcuts){
-          PsiPointcutDef[] pointcuts = searchHelper.findOverridingPointcuts(pointcut, options.searchScope, options.isCheckDeepInheritance);
-          addResults(processor, pointcuts, options, null);
         }
       }
     }

@@ -1,52 +1,25 @@
 package com.intellij.psi.impl;
 
-import com.intellij.aspects.psi.PsiAspect;
-import com.intellij.aspects.psi.PsiPointcutDef;
 import com.intellij.j2ee.J2EERolesUtil;
 import com.intellij.j2ee.ejb.EjbUtil;
 import com.intellij.j2ee.ejb.role.EjbImplMethodRole;
 import com.intellij.j2ee.ejb.role.EjbMethodRole;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.HierarchicalMethodSignatureImpl;
 import com.intellij.psi.util.*;
 import com.intellij.util.containers.HashMap;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.diagnostic.Logger;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-import java.util.HashSet;
-
-import gnu.trove.THashMap;
 
 public class PsiSuperMethodImplUtil {
   private static final Key<CachedValue<Map<MethodSignature, HierarchicalMethodSignatureImpl>>> SIGNATURES_KEY = Key.create("MAP_KEY");
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiSuperMethodImplUtil");
 
-  public static PsiPointcutDef findSuperPointcut(PsiPointcutDef pointcut) {
-    return findSuperPointcut(pointcut, pointcut.getContainingAspect());
-  }
-
-  private static PsiPointcutDef findSuperPointcut(PsiPointcutDef pointcut, PsiAspect psiAspect) {
-    PsiClass superClass = psiAspect.getSuperClass();
-
-    while (!(superClass instanceof PsiAspect) && superClass != null) superClass = superClass.getSuperClass();
-    if (superClass == null) return null;
-
-    PsiAspect superAspect = (PsiAspect)superClass;
-    return superAspect.findPointcutDefBySignature(pointcut, true);
-  }
-
-  public static PsiPointcutDef findDeepestSuperPointcut(PsiPointcutDef pointcut) {
-    PsiPointcutDef superPointcut = findSuperPointcut(pointcut);
-    PsiPointcutDef prevSuperPointcut = null;
-
-    while (superPointcut != null) {
-      prevSuperPointcut = superPointcut;
-      superPointcut = findSuperPointcut(prevSuperPointcut);
-    }
-
-    return prevSuperPointcut;
+  private PsiSuperMethodImplUtil() {
   }
 
   public static @NotNull PsiMethod[] findSuperMethods(PsiMethod method) {
@@ -71,6 +44,7 @@ public class PsiSuperMethodImplUtil {
     return MethodSignatureUtil.convertMethodSignaturesToMethods(outputMethods);
   }
 
+  @SuppressWarnings({"unchecked"})
   public static @NotNull List<MethodSignatureBackedByPsiMethod> findSuperMethodSignaturesIncludingStatic(PsiMethod method,
                                                                                                          boolean checkAccess) {
     if (!canHaveSuperMethod(method, checkAccess, true)) return Collections.EMPTY_LIST;

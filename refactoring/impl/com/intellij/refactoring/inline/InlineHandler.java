@@ -4,7 +4,7 @@
  */
 package com.intellij.refactoring.inline;
 
-import com.intellij.aspects.psi.PsiPointcutDef;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
@@ -17,7 +17,6 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.lang.jsp.inlineInclude.InlineIncludeFileHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.ide.DataManager;
 
 public class InlineHandler implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.inline.InlineHandler");
@@ -31,8 +30,6 @@ public class InlineHandler implements RefactoringActionHandler {
     final Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
     if (elements[0] instanceof PsiMethod) {
       new InlineMethodHandler().invoke(project, editor, (PsiMethod) elements[0]);
-    } else if (elements[0] instanceof  PsiPointcutDef) {
-      new InlinePointcutHandler().invoke(project, editor, (PsiPointcutDef) elements[0]);
     } else if (elements[0] instanceof  PsiField) {
       new InlineConstantFieldHandler().invoke(project, editor, (PsiField) elements[0]);
     } else if (elements[0] instanceof PsiLocalVariable) {
@@ -47,8 +44,6 @@ public class InlineHandler implements RefactoringActionHandler {
     PsiElement element = (PsiElement) dataContext.getData(DataConstants.PSI_ELEMENT);
     if (element instanceof PsiLocalVariable) {
       new InlineLocalHandler().invoke(project, editor, (PsiLocalVariable) element);
-    } else if (element instanceof PsiPointcutDef) {
-      new InlinePointcutHandler().invoke(project, editor, (PsiPointcutDef) element);
     } else if (element instanceof PsiMethod) {
       new InlineMethodHandler().invoke(project, editor, (PsiMethod) element);
     } else if (element instanceof PsiField) {

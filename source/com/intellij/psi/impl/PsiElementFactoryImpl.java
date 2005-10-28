@@ -1,8 +1,5 @@
 package com.intellij.psi.impl;
 
-import com.intellij.aspects.psi.PsiAspectFile;
-import com.intellij.aspects.psi.PsiTypePattern;
-import com.intellij.aspects.psi.PsiWithinPointcut;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
@@ -774,11 +771,6 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return (PsiJavaFile) createFileFromText(myManager, type, fileName, chars, startOffset, endOffset);
   }
 
-  private PsiAspectFile createDummyAspectFile(@NonNls String text) throws IncorrectOperationException {
-    String ext = StdFileTypes.ASPECT.getDefaultExtension();
-    return (PsiAspectFile)createFileFromText("_Dummy_." + ext, text);
-  }
-
   public XmlTag createTagFromText(String text) throws IncorrectOperationException {
     return ((XmlFile)createFileFromText("dummy.xml", text)).getDocument().getRootTag();
   }
@@ -787,12 +779,6 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     XmlTag tag = ((XmlFile)createFileFromText("dummy.xml", "<tag " + name + "=\"" + value + "\"/>")).getDocument()
       .getRootTag();
     return tag.getAttributes()[0];
-  }
-
-  public PsiTypePattern createTypePattern(String pattern) throws IncorrectOperationException {
-    PsiAspectFile psiFile = createDummyAspectFile("aspect foo { pointcut foo():within(" + pattern + ");}");
-    PsiWithinPointcut pointcut = (PsiWithinPointcut)psiFile.getAspects()[0].getPointcutDefs()[0].getPointcut();
-    return pointcut.getTypePattern();
   }
 
   public PsiExpressionCodeFragment createExpressionCodeFragment(String text,

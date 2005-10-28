@@ -7,7 +7,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -598,18 +597,12 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
     return result;
   }
 
-  private static boolean isAspectTemplate(VirtualFile file) {
-    //noinspection HardCodedStringLiteral
-    return file.getNameWithoutExtension().endsWith(".aj");
-  }
-
   private void removeDeletedTemplates(Set<VirtualFile> files) {
-    boolean aspectsEnabled = ApplicationManagerEx.getApplicationEx().isAspectJSupportEnabled();
     Set<VirtualFile> removedSet = new HashSet<VirtualFile>();
 
     for (VirtualFile file: files) {
       String nameWithExtension = file.getName();
-      if (!aspectsEnabled && isAspectTemplate(file) || myDeletedTemplatesManager.contains(nameWithExtension)) {
+      if (myDeletedTemplatesManager.contains(nameWithExtension)) {
         removedSet.add(file);
       }
     }

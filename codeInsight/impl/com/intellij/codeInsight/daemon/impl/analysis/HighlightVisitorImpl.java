@@ -1,14 +1,11 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.aspects.psi.PsiAspectFile;
-import com.intellij.aspects.psi.PsiPointcutDef;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.*;
 import static com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor.DO_NOT_VALIDATE_KEY;
 import com.intellij.codeInsight.daemon.impl.analysis.annotator.EjbHighlightVisitor;
-import com.intellij.codeInsight.daemon.impl.analysis.aspect.AspectHighlighter;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.SetupJDKFix;
 import com.intellij.j2ee.ejb.EjbUtil;
@@ -62,7 +59,6 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   private final JavadocHighlightVisitor myJavadocVisitor;
   private EjbHighlightVisitor myEjbHighlightVisitor;
   private Boolean runEjbHighlighting;
-  private AspectHighlighter myAspectHighlightVisitor;
   // map codeBlock->List of PsiReferenceExpression of uninitailized final variables
   private final Map<PsiElement, Collection<PsiReferenceExpression>> myUninitializedVarProblems = Collections.synchronizedMap(new THashMap<PsiElement, Collection<PsiReferenceExpression>>());
   // map codeBlock->List of PsiReferenceExpression of extra initailization of final variable
@@ -93,8 +89,6 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     myXmlVisitor = new XmlHighlightVisitor(settings);
     myJavadocVisitor = new JavadocHighlightVisitor(settings);
 
-    myAspectHighlightVisitor = new AspectHighlighter();
-
     myResolveHelper = manager.getResolveHelper();
   }
 
@@ -108,12 +102,6 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
       LOG.assertTrue(element.isValid());
     }
     element.accept(this);
-    PsiFile containingFile = element.getContainingFile();
-    if (!(containingFile instanceof PsiCodeFragment) && containingFile instanceof PsiAspectFile) {
-      element.accept(myAspectHighlightVisitor);
-      myHolder.add(myAspectHighlightVisitor.getResults());
-      myAspectHighlightVisitor.clearResults();
-    }
     if (!myHolder.hasErrorResults()) {
       if (runEjbHighlighting == null) {
         runEjbHighlighting = Boolean.valueOf(EjbUtil.getEjbModuleProperties(element) != null);
@@ -327,18 +315,18 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
 
   private static boolean filterJspErrors(final PsiErrorElement element) {
     PsiElement nextSibling = element.getNextSibling();
-    
+
     if (nextSibling == null) {
       final PsiFile containingFile = element.getContainingFile();
       if (containingFile instanceof JspFile) {
         nextSibling = ((JspFile)containingFile).getBaseLanguageRoot().findElementAt(element.getTextOffset()+1);
       }
     }
-    
+
     while (nextSibling instanceof PsiWhiteSpace) {
       nextSibling = nextSibling.getNextSibling();
     }
-    
+
     if ((nextSibling instanceof JspText ||
          nextSibling instanceof JspExpression ||
          nextSibling instanceof ELExpressionHolder
@@ -591,11 +579,6 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
       if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkOverrideEquivalentInheritedMethods(aClass));
       if (!myHolder.hasErrorResults()) myHolder.addAll(GenericsHighlightUtil.checkOverrideEquivalentMethods(aClass));
       if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkCyclicInheritance(aClass));
-    }
-    else if (parent instanceof PsiPointcutDef) {
-      PsiPointcutDef pointcutDef = (PsiPointcutDef)parent;
-      if (!myHolder.hasErrorResults()) myHolder.add(HighlightAspectUtil.checkAbstractPointcutBody(pointcutDef));
-      if (!myHolder.hasErrorResults()) myHolder.add(HighlightAspectUtil.checkPointcutOverridesFinal(pointcutDef));
     }
     else if (parent instanceof PsiEnumConstant) {
       if (!myHolder.hasErrorResults()) myHolder.addAll(GenericsHighlightUtil.checkEnumConstantModifierList(list));

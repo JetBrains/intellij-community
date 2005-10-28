@@ -1,12 +1,8 @@
 package com.intellij.usageView;
 
 import com.intellij.ant.PsiAntElement;
-import com.intellij.aspects.psi.PsiAdvice;
-import com.intellij.aspects.psi.PsiPointcutDef;
-import com.intellij.aspects.psi.gen.PsiErrorIntroduction;
-import com.intellij.aspects.psi.gen.PsiVerificationIntroduction;
-import com.intellij.lang.Language;
 import com.intellij.lang.LangBundle;
+import com.intellij.lang.Language;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -18,7 +14,6 @@ import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.usageView.UsageViewBundle;
 import gnu.trove.THashSet;
 
 import java.util.Arrays;
@@ -135,13 +130,6 @@ public class UsageViewUtil {
     else if (psiElement instanceof XmlAttributeValue) {
       ret = ((XmlAttributeValue)psiElement).getValue();
     }
-    else if (psiElement instanceof PsiVerificationIntroduction) {
-      PsiLiteralExpression message = ((PsiVerificationIntroduction)psiElement).getMessage();
-      ret = message == null ? UsageViewBundle.message("usage.target.verification.no.message") : (String)message.getValue();
-    }
-    else if (psiElement instanceof PsiAdvice) {
-      ret = ((PsiAdvice)psiElement).getPointcut().getText();
-    }
     return ret;
   }
 
@@ -185,20 +173,6 @@ public class UsageViewUtil {
       ret =
       PsiFormatUtil.formatMethod(psiMethod, PsiSubstitutor.EMPTY,
                                  PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS, PsiFormatUtil.SHOW_TYPE);
-    }
-    else if (psiElement instanceof PsiPointcutDef) {
-      PsiPointcutDef pointcutDef = (PsiPointcutDef)psiElement;
-      ret =
-      PsiFormatUtil.formatPointcut(pointcutDef, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS,
-                                   PsiFormatUtil.SHOW_TYPE);
-    }
-    else if (psiElement instanceof PsiVerificationIntroduction) {
-      PsiErrorIntroduction introduction = (PsiErrorIntroduction)psiElement;
-      PsiLiteralExpression message = introduction.getMessage();
-      ret = message == null ? UsageViewBundle.message("usage.target.verification.no.message") : (String)message.getValue();
-    }
-    else if (psiElement instanceof PsiAdvice) {
-      ret = ((PsiAdvice)psiElement).getPointcut().getText();
     }
     else {
       ret = "";

@@ -1,24 +1,19 @@
 package com.intellij.psi.impl;
 
-import com.intellij.aspects.psi.PsiAspect;
-import com.intellij.aspects.psi.PsiPointcutDef;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.light.LightClassReference;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
-import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassHint;
-import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.processor.FilterScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -27,6 +22,9 @@ import java.util.List;
 public class PsiImplUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiImplUtil");
 
+  private PsiImplUtil() {
+  }
+
   public static PsiMethod[] getConstructors(PsiClass aClass) {
     final List<PsiMethod> constructorsList = new ArrayList<PsiMethod>();
     final PsiMethod[] methods = aClass.getMethods();
@@ -34,25 +32,6 @@ public class PsiImplUtil {
       if (method.isConstructor()) constructorsList.add(method);
     }
     return constructorsList.toArray(PsiMethod.EMPTY_ARRAY);
-  }
-
-  public static PsiPointcutDef findPointcutDefBySignature(PsiAspect psiAspect, PsiPointcutDef patternPointcut,
-                                                          boolean checkBases) {
-    if (!checkBases) {
-      PsiPointcutDef[] pointcuts = psiAspect.getPointcutDefs();
-      for (PsiPointcutDef pointcut : pointcuts) {
-        if (MethodSignatureUtil.areSignaturesEqual(pointcut, patternPointcut)) {
-          return pointcut;
-        }
-      }
-      return null;
-    }
-    else {
-      FindPointcutBySignatureProcessor processor = new FindPointcutBySignatureProcessor(patternPointcut);
-      PsiScopesUtil.processScope(psiAspect, processor, PsiSubstitutor.UNKNOWN, null, patternPointcut);
-
-      return processor.getResult();
-    }
   }
 
   public static PsiAnnotationMemberValue findAttributeValue(PsiAnnotation annotation, String attributeName) {
@@ -81,44 +60,6 @@ public class PsiImplUtil {
     return PsiTypeParameter.EMPTY_ARRAY;
   }
 
-  private static class FindPointcutBySignatureProcessor extends BaseScopeProcessor implements NameHint,
-                                                                                              ElementClassHint {
-    private final String myName;
-    private final PsiPointcutDef myPatternPointcut;
-    private PsiPointcutDef myResult = null;
-
-    public FindPointcutBySignatureProcessor(PsiPointcutDef patternPointcut) {
-      myName = patternPointcut.getName();
-      myPatternPointcut = patternPointcut;
-    }
-
-    public PsiPointcutDef getResult() {
-      return myResult;
-    }
-
-    public String getName() {
-      return myName;
-    }
-
-    public boolean shouldProcess(Class elementClass) {
-      return PsiMethod.class.isAssignableFrom(elementClass);
-    }
-
-    public void handleEvent(Event event, Object associated) {
-    }
-
-    public boolean execute(PsiElement element, PsiSubstitutor substitutor) {
-      if (element instanceof PsiPointcutDef) {
-        PsiPointcutDef method = (PsiPointcutDef)element;
-        if (MethodSignatureUtil.areSignaturesEqual(method, myPatternPointcut)) {
-          myResult = method;
-          return false;
-        }
-      }
-      return true;
-    }
-  }
-
   @NotNull public static PsiJavaCodeReferenceElement[] namesToPackageReferences(PsiManager manager, String[] names) {
     PsiJavaCodeReferenceElement[] refs = new PsiJavaCodeReferenceElement[names.length];
     for (int i = 0; i < names.length; i++) {
@@ -127,7 +68,7 @@ public class PsiImplUtil {
         refs[i] = manager.getElementFactory().createPackageReferenceElement(name);
       }
       catch (IncorrectOperationException e) {
-        e.printStackTrace();
+        LOG.error(e);
       }
     }
     return refs;

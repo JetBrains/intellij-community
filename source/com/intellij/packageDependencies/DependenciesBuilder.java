@@ -6,7 +6,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiUtil;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * User: anna
@@ -56,14 +59,13 @@ public abstract class DependenciesBuilder {
   public Map<PsiFile, Map<DependencyRule, Set<PsiFile>>> getIllegalDependencies(){
     Map<PsiFile, Map<DependencyRule, Set<PsiFile>>> result = new HashMap<PsiFile, Map<DependencyRule, Set<PsiFile>>>();
     DependencyValidationManager validator = DependencyValidationManager.getInstance(myProject);
-    for (Iterator<PsiFile> iterator = myDependencies.keySet().iterator(); iterator.hasNext();) {
-      PsiFile file = iterator.next();
+    for (PsiFile file : myDependencies.keySet()) {
       Set<PsiFile> deps = myDependencies.get(file);
       Map<DependencyRule, Set<PsiFile>> illegal = null;
-      for (Iterator<PsiFile> depsIterator = deps.iterator(); depsIterator.hasNext();) {
-        PsiFile dependency = depsIterator.next();
-        final DependencyRule rule = isBackward() ? validator.getViolatorDependencyRule(dependency, file) :
-                                                   validator.getViolatorDependencyRule(file, dependency);
+      for (PsiFile dependency : deps) {
+        final DependencyRule rule = isBackward() ?
+                                    validator.getViolatorDependencyRule(dependency, file) :
+                                    validator.getViolatorDependencyRule(file, dependency);
         if (rule != null) {
           if (illegal == null) {
             illegal = new HashMap<DependencyRule, Set<PsiFile>>();
@@ -104,8 +106,7 @@ public abstract class DependenciesBuilder {
     public void visitElement(PsiElement element) {
       super.visitElement(element);
       PsiReference[] refs = element.getReferences();
-      for (int i = 0; i < refs.length; i++) {
-        PsiReference ref = refs[i];
+      for (PsiReference ref : refs) {
         PsiElement resolved = ref.resolve();
         if (resolved != null) {
           myProcessor.process(ref.getElement(), resolved);

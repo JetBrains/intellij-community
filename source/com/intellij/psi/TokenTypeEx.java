@@ -14,6 +14,5 @@ public interface TokenTypeEx extends
                            JavaDocTokenType,
                            JspTokenType,
                            XmlTokenType,
-                           DTDTokenType,
-                           com.intellij.aspects.psi.gen.TokenType {
+                           DTDTokenType {
 }

@@ -1,6 +1,5 @@
 package com.intellij.psi.scope.conflictResolvers;
 
-import com.intellij.aspects.psi.PsiIntertypeField;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiLocalVariable;
@@ -32,7 +31,7 @@ public class JavaVariableConflictResolver implements PsiConflictResolver{
         for(int i = 1; i < uncheckedResult.length; i++){
           //TODO[ik]: Handle introduced fields properly.
           final CandidateInfo candidate = uncheckedResult[i];
-          if(candidate.getElement() == null || candidate.getElement() instanceof PsiIntertypeField) continue;
+          if(candidate.getElement() == null) continue;
 
           if (!(candidate.getElement() instanceof PsiField)) {
             if(candidate.getElement() instanceof PsiLocalVariable) {

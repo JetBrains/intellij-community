@@ -15,7 +15,6 @@
 */
 package com.intellij.find;
 
-import com.intellij.aspects.psi.PsiPointcut;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;

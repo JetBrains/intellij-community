@@ -1,6 +1,5 @@
 package com.intellij.refactoring.rename;
 
-import com.intellij.aspects.psi.PsiPointcutDef;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -25,7 +24,10 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
-import com.intellij.refactoring.util.*;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.MoveRenameUsageInfo;
+import com.intellij.refactoring.util.NonCodeUsageInfo;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.Queue;
@@ -496,9 +498,6 @@ public class RenameUtil {
       else if (element instanceof XmlAttributeValue) {
         doRenameXmlAttributeValue((XmlAttributeValue)element, newName, usages, listener);
       }
-      else if (element instanceof PsiPointcutDef) {
-        doRenamePointcutDef((PsiPointcutDef)element, newName, usages, listener);
-      }
       else if (element instanceof PsiPackage) {
         final PsiPackage psiPackage = (PsiPackage)element;
         psiPackage.handleQualifiedNameChange(getQualifiedNameAfterRename(psiPackage.getQualifiedName(), newName));
@@ -547,23 +546,6 @@ public class RenameUtil {
     }
 
     listener.elementRenamed(namedElement);
-  }
-
-  private static void doRenamePointcutDef(PsiPointcutDef pointcutDef,
-                                          String newName,
-                                          UsageInfo[] usages,
-                                          RefactoringElementListener listener) throws IncorrectOperationException {
-    PsiManager manager = pointcutDef.getManager();
-    PsiElementFactory factory = manager.getElementFactory();
-    PsiIdentifier newNameIdentifier = factory.createIdentifier(newName);
-
-    pointcutDef.getNameIdentifier().replace(newNameIdentifier);
-
-    for (UsageInfo usage : usages) {
-      rename(usage, newName);
-    }
-
-    listener.elementRenamed(pointcutDef);
   }
 
   private static void doRenameXmlAttribute(XmlAttribute attribute,
