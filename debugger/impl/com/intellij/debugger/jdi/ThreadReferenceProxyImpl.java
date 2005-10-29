@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.sun.jdi.IncompatibleThreadStateException;
 import com.sun.jdi.StackFrame;
 import com.sun.jdi.ThreadReference;
+import com.sun.jdi.InternalException;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -160,6 +161,9 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
         frames = getThreadReference().frames(0, count - myFramesFromBottom.size());
       }
       catch (IncompatibleThreadStateException e) {
+        throw EvaluateExceptionUtil.createEvaluateException(e);
+      }
+      catch (InternalException e) {
         throw EvaluateExceptionUtil.createEvaluateException(e);
       }
 
