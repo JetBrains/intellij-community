@@ -1,32 +1,34 @@
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.psi.*;
+import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.javadoc.PsiDocTag;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.search.PsiShortNamesCache;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.psi.xml.XmlToken;
-import com.intellij.psi.javadoc.PsiDocTag;
-import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.search.*;
+import com.intellij.structuralsearch.SSRBundle;
+import com.intellij.structuralsearch.UnsupportedPatternException;
+import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
+import com.intellij.structuralsearch.impl.matcher.MatchUtils;
 import com.intellij.structuralsearch.impl.matcher.filters.*;
 import com.intellij.structuralsearch.impl.matcher.handlers.*;
-import com.intellij.structuralsearch.impl.matcher.iterators.NodeIterator;
 import com.intellij.structuralsearch.impl.matcher.iterators.DocValuesIterator;
-import com.intellij.structuralsearch.impl.matcher.MatchUtils;
-import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
-import com.intellij.structuralsearch.impl.matcher.strategies.*;
-import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
+import com.intellij.structuralsearch.impl.matcher.iterators.NodeIterator;
 import com.intellij.structuralsearch.impl.matcher.predicates.BinaryPredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.NotPredicate;
-import com.intellij.structuralsearch.UnsupportedPatternException;
-import com.intellij.structuralsearch.SSRBundle;
-import com.intellij.util.containers.GenericHashMap;
+import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
+import com.intellij.structuralsearch.impl.matcher.strategies.*;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.GenericHashMap;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
-import java.util.regex.Pattern;
 import java.util.regex.Matcher;
-
-import org.jetbrains.annotations.NonNls;
+import java.util.regex.Pattern;
 
 /**
  * Created by IntelliJ IDEA.
@@ -63,7 +65,6 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
         processor,
         aClass,
         scope,
-        true,
         true
       );
     }
