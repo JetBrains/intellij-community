@@ -45,10 +45,14 @@ public class CommonProcessors {
     public <T> T[] toArray(T[] a) {
       return myCollection.toArray(a);
     }
+
+    public Collection<T> getResults() {
+      return myCollection;
+    }
   }
 
   public static class FindFirstProcessor<T> implements Processor<T> {
-    private T myValue;
+    private T myValue = null;
 
     public boolean isFound() {
       return myValue != null;

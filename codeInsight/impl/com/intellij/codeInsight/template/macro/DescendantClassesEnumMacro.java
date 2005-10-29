@@ -66,7 +66,7 @@ public class DescendantClassesEnumMacro implements Macro{
           return true;
         }
 
-      }, myBaseClass, GlobalSearchScope.projectScope(context.getProject()), true, true);
+      }, myBaseClass, GlobalSearchScope.projectScope(context.getProject()), true);
 
       return classes;
     }

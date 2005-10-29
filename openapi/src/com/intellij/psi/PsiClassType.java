@@ -16,6 +16,7 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -176,6 +177,13 @@ public abstract class PsiClassType extends PsiType {
    * @return the raw type instance.
    */
   @NotNull public abstract PsiClassType rawType();
+
+  /**
+   * Overrides {@link com.intellij.psi.PsiType#getResolveScope()} to narrow specify @NotNull.
+   */
+  @NotNull
+  public abstract GlobalSearchScope getResolveScope();
+
 
   public <A> A accept(PsiTypeVisitor<A> visitor) {
     return visitor.visitClassType(this);
