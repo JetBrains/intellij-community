@@ -19,7 +19,7 @@ public class QueryFactory<Result, Parameters> {
     myExecutors.remove(executor);
   }
 
-  public final Query<Result, Parameters> createQuery(Parameters parameters) {
-    return new Query<Result, Parameters>(parameters, myExecutors);
+  public final Query<Result> createQuery(Parameters parameters) {
+    return new QueryInstance<Result, Parameters>(parameters, myExecutors);
   }
 }

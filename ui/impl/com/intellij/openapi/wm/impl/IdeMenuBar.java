@@ -160,6 +160,9 @@ public class IdeMenuBar extends JMenuBar{
         return;
       }
 
+      Window mywindow = SwingUtilities.windowForComponent(IdeMenuBar.this);
+      if (mywindow != null && !mywindow.isActive()) return;
+
       // do not update when a popup menu is shown (if popup menu contains action which is also in the menu bar, it should not be enabled/disabled)
 
       final MenuSelectionManager menuSelectionManager=MenuSelectionManager.defaultManager();

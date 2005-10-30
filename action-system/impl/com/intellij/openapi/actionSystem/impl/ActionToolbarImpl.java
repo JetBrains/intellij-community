@@ -143,9 +143,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbarEx {
     }
   }
 
-  /**
-   * @fabrique
-   */
   protected ActionButton createToolbarButton(final AnAction action) {
     if (action.displayTextInToolbar()) {
       return new ActionButtonWithText(action, myPresentationFactory.getPresentation(action), myPlace,
@@ -481,6 +478,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbarEx {
       if (!ActionToolbarImpl.this.isShowing()) {
         return;
       }
+
+      Window mywindow = SwingUtilities.windowForComponent(ActionToolbarImpl.this);
+      if (mywindow != null && !mywindow.isActive()) return;
+
 
       // do not update when a popup menu is shown (if popup menu contains action which is also in the toolbar, it should not be enabled/disabled)
       final MenuSelectionManager menuSelectionManager = MenuSelectionManager.defaultManager();

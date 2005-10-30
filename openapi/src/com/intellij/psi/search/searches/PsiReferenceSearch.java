@@ -43,15 +43,15 @@ public class PsiReferenceSearch extends QueryFactory<PsiReference, PsiReferenceS
     }
   }
 
-  public Query<PsiReference, SearchParameters> createSearch(PsiElement element) {
-    return createSearch(element, GlobalSearchScope.allScope(element.getProject()));
+  public static Query<PsiReference> search(PsiElement element) {
+    return search(element, GlobalSearchScope.allScope(element.getProject()));
   }
 
-  public Query<PsiReference, SearchParameters> createSearch(PsiElement element, SearchScope searchScope) {
-    return createSearch(element, searchScope, false);
+  public static Query<PsiReference> search(PsiElement element, SearchScope searchScope) {
+    return search(element, searchScope, false);
   }
 
-  public Query<PsiReference, SearchParameters> createSearch(PsiElement element, SearchScope searchScope, boolean ignoreAccessScope) {
-    return createQuery(new SearchParameters(element, searchScope, ignoreAccessScope));
+  public static Query<PsiReference> search(PsiElement element, SearchScope searchScope, boolean ignoreAccessScope) {
+    return INSTANCE.createQuery(new SearchParameters(element, searchScope, ignoreAccessScope));
   }
 }

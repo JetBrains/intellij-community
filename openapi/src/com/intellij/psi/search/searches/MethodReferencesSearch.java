@@ -40,18 +40,17 @@ public class MethodReferencesSearch extends QueryFactory<PsiReference, MethodRef
     }
   }
 
-  private MethodReferencesSearch() {
+  private MethodReferencesSearch() {}
+
+  public static Query<PsiReference> search(final PsiMethod method, SearchScope scope, final boolean strictSignatureSearch) {
+    return INSTANCE.createQuery(new MethodReferencesSearch.SearchParameters(method, scope, strictSignatureSearch));
   }
 
-  public Query<PsiReference, SearchParameters> createSearch(final PsiMethod method, SearchScope scope, final boolean strictSignatureSearch) {
-    return createQuery(new MethodReferencesSearch.SearchParameters(method, scope, strictSignatureSearch));
+  public static Query<PsiReference> search(final PsiMethod method, final boolean strictSignatureSearch) {
+    return search(method, GlobalSearchScope.allScope(method.getProject()), strictSignatureSearch);
   }
 
-  public Query<PsiReference, MethodReferencesSearch.SearchParameters> createSearch(final PsiMethod method, final boolean strictSignatureSearch) {
-    return createQuery(new MethodReferencesSearch.SearchParameters(method, GlobalSearchScope.allScope(method.getProject()), strictSignatureSearch));
-  }
-
-  public Query<PsiReference, MethodReferencesSearch.SearchParameters> createSearch(final PsiMethod method) {
-    return createSearch(method, true);
+  public static Query<PsiReference> search(final PsiMethod method) {
+    return search(method, true);
   }
 }

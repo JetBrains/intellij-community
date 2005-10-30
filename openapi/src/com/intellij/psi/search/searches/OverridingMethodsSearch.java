@@ -42,15 +42,15 @@ public class OverridingMethodsSearch extends QueryFactory<PsiMethod, OverridingM
   private OverridingMethodsSearch() {
   }
 
-  public Query<PsiMethod, SearchParameters> createSearch(final PsiMethod method, SearchScope scope, final boolean checkDeep) {
-    return createQuery(new SearchParameters(method, scope, checkDeep));
+  public static Query<PsiMethod> search(final PsiMethod method, SearchScope scope, final boolean checkDeep) {
+    return INSTANCE.createQuery(new SearchParameters(method, scope, checkDeep));
   }
 
-  public Query<PsiMethod, SearchParameters> createSearch(final PsiMethod method, final boolean checkDeep) {
-    return createQuery(new SearchParameters(method, GlobalSearchScope.allScope(method.getProject()), checkDeep));
+  public static Query<PsiMethod> search(final PsiMethod method, final boolean checkDeep) {
+    return search(method, GlobalSearchScope.allScope(method.getProject()), checkDeep);
   }
 
-  public Query<PsiMethod, SearchParameters> createSearch(final PsiMethod method) {
-    return createSearch(method, true);
+  public static Query<PsiMethod> search(final PsiMethod method) {
+    return search(method, true);
   }
 }

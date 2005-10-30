@@ -7,14 +7,13 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.UIBundle;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.ui.UIBundle;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
-
-import org.jetbrains.annotations.NonNls;
 
 //Made public for Fabrique
 public class MemoryUsagePanel extends JPanel {
@@ -26,6 +25,8 @@ public class MemoryUsagePanel extends JPanel {
 
   private final JPanel myIndicatorPanel;
   private final Alarm myAlarm;
+  private long myLastTotal = -1;
+  private long myLastUsed = -1;
 
   public MemoryUsagePanel() {
     setLayout(new BorderLayout());
@@ -74,10 +75,14 @@ public class MemoryUsagePanel extends JPanel {
       return;
     }
     final Runtime runtime = Runtime.getRuntime();
-    repaint();
-    final long total = runtime.totalMemory();
-    final long used = total - runtime.freeMemory();
-    myIndicatorPanel.setToolTipText(UIBundle.message("memory.usage.panel.statistics.message", total / MEGABYTE, used / MEGABYTE));
+    final long total = runtime.totalMemory() / MEGABYTE;
+    final long used = total - runtime.freeMemory() / MEGABYTE;
+    if (total != myLastTotal || used != myLastUsed) {
+      myLastTotal = total;
+      myLastUsed = used;
+      repaint();
+      myIndicatorPanel.setToolTipText(UIBundle.message("memory.usage.panel.statistics.message", total, used));
+    }
   }
 
   /**
