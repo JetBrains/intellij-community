@@ -21,10 +21,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.WildcardType;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Collection;
+import java.util.*;
 
 /**
  * @author peter
@@ -118,25 +115,6 @@ public class XmlAnnotatedElementManagerImpl extends XmlAnnotatedElementManager i
         return null;
       }
 
-      checkInitialized();
-
-      if (XmlAnnotatedElement.class.isAssignableFrom(method.getReturnType())) {
-        final String qname = getSubTagName(method);
-        final XmlTag subTag = myTag.findFirstSubTag(qname);
-        if (subTag != null) {
-          return getCachedElement(subTag);
-        }
-      }
-
-      if (extractElementType(method.getGenericReturnType()) != null) {
-        final XmlTag[] subTags = myTag.findSubTags(getSubTagNameForCollection(method));
-        final ArrayList<XmlAnnotatedElement> list = new ArrayList<XmlAnnotatedElement>(subTags.length);
-        for (XmlTag xmlTag : subTags) {
-          list.add(getCachedElement(xmlTag));
-        }
-        return Collections.unmodifiableList(list);
-      }
-
       if (Object.class.equals(method.getDeclaringClass())) {
         final String name = method.getName();
         if ("toString".equals(name)) {
@@ -147,6 +125,34 @@ public class XmlAnnotatedElementManagerImpl extends XmlAnnotatedElementManager i
         }
         if ("hashCode".equals(name)) {
           return System.identityHashCode(proxy);
+        }
+      }
+
+      checkInitialized();
+
+      if (XmlAnnotatedElement.class.isAssignableFrom(method.getReturnType())) {
+        final String qname = getSubTagName(method);
+        if (qname != null) {
+          final XmlTag subTag = myTag.findFirstSubTag(qname);
+          if (subTag != null) {
+            final XmlAnnotatedElement element = getCachedElement(subTag);
+            assert element != null : "Null annotated element for " + myTag.getText() + "; " + qname;
+            return element;
+          }
+        }
+      }
+
+      if (extractElementType(method.getGenericReturnType()) != null) {
+        final String qname = getSubTagNameForCollection(method);
+        if (qname != null) {
+          final XmlTag[] subTags = myTag.findSubTags(qname);
+          XmlAnnotatedElement[] elements = new XmlAnnotatedElement[subTags.length];
+          for (int i = 0; i < subTags.length; i++) {
+            final XmlAnnotatedElement element = getCachedElement(subTags[i]);
+            assert element != null : "Null annotated element for " + myTag.getText() + "; " + qname + "; " + i;
+            elements[i] = element;
+          }
+          return Arrays.asList(elements);
         }
       }
 
