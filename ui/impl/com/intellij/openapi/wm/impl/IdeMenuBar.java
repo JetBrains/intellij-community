@@ -28,8 +28,8 @@ import java.util.ArrayList;
 public class IdeMenuBar extends JMenuBar{
   private final MyTimerListener myTimerListener;
   private final MyKeymapManagerListener myKeymapManagerListener;
-  private ArrayList myVisibleActions;
-  private ArrayList myNewVisibleActions;
+  private ArrayList<AnAction> myVisibleActions;
+  private ArrayList<AnAction> myNewVisibleActions;
   private final PresentationFactory myPresentationFactory;
   private DataManager myDataManager;
   private ActionManager myActionManager;
@@ -40,8 +40,8 @@ public class IdeMenuBar extends JMenuBar{
     myTimerListener=new MyTimerListener();
     myKeymapManagerListener=new MyKeymapManagerListener();
     //(DefaultActionGroup)actionManager.getAction(IdeActions.GROUP_MAIN_MENU);
-    myVisibleActions = new ArrayList();
-    myNewVisibleActions = new ArrayList();
+    myVisibleActions = new ArrayList<AnAction>();
+    myNewVisibleActions = new ArrayList<AnAction>();
     myPresentationFactory = new PresentationFactory();
     myDataManager = dataManager;
     myKeymapManager = keymapManager;
@@ -78,14 +78,13 @@ public class IdeMenuBar extends JMenuBar{
 
       final boolean changeBarVisibility = myNewVisibleActions.size() == 0 || myVisibleActions.size() == 0;
 
-      final ArrayList temp = myVisibleActions;
+      final ArrayList<AnAction> temp = myVisibleActions;
       myVisibleActions = myNewVisibleActions;
       myNewVisibleActions = temp;
 
       removeAll();
       Color background = null;
-      for(int i=0;i<myVisibleActions.size();i++){
-        final AnAction action=(AnAction)myVisibleActions.get(i);
+      for (final AnAction action : myVisibleActions) {
         final ActionMenu menu = new ActionMenu(null, ActionPlaces.MAIN_MENU, (ActionGroup)action, myPresentationFactory);
         add(menu);
         background = menu.getBackground();
@@ -121,22 +120,21 @@ public class IdeMenuBar extends JMenuBar{
   }
 
   private void expandActionGroup(final DataContext context,
-                                 final ArrayList newVisibleActions,
+                                 final ArrayList<AnAction> newVisibleActions,
                                  ActionManager actionManager) {
     final ActionGroup mainActionGroup = (ActionGroup)CustomizableActionsSchemas.getInstance().getCorrectedAction(IdeActions.GROUP_MAIN_MENU);
     if (mainActionGroup == null) return;
     final AnAction[] children = mainActionGroup.getChildren(null);
-    for (int i = 0; i < children.length; i++) {
-      final AnAction action = children[i];
+    for (final AnAction action : children) {
       if (!(action instanceof ActionGroup)) {
         continue;
       }
-      final Presentation presentation=myPresentationFactory.getPresentation(action);
+      final Presentation presentation = myPresentationFactory.getPresentation(action);
       final AnActionEvent e = new AnActionEvent(null, context, ActionPlaces.MAIN_MENU, presentation,
                                                 actionManager,
                                                 0);
       action.update(e);
-      if(presentation.isVisible()){ // add only visible items
+      if (presentation.isVisible()) { // add only visible items
         newVisibleActions.add(action);
       }
     }
