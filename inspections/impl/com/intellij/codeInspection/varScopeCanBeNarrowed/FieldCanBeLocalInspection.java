@@ -14,17 +14,16 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.PsiReferenceSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author ven
@@ -47,7 +46,6 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
   }
 
   public ProblemDescriptor[] checkClass(PsiClass aClass, InspectionManager manager, boolean isOnTheFly) {
-    PsiManager psiManager = aClass.getManager();
     final Set<PsiField> candidates = new LinkedHashSet<PsiField>();
     final PsiClass topLevelClass = PsiUtil.getTopLevelClass(aClass);
     if (topLevelClass == null) return null;
@@ -56,9 +54,8 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
     for (PsiField field : fields) {
       if (field.hasModifierProperty(PsiModifier.PRIVATE)) {
         if (HighlightUtil.isSerializationImplicitlyUsedField(field)) continue;
-        final PsiReference[] refs = psiManager.getSearchHelper().findReferences(field, new LocalSearchScope(field.getContainingFile()),
-                                                                                true);
-        if (refs.length == 0) continue;
+        final Collection<PsiReference> refs = PsiReferenceSearch.search(field, new LocalSearchScope(field.getContainingFile()), true).findAll();
+        if (refs.size() == 0) continue;
         for (PsiReference ref : refs) {
           PsiElement element = ref.getElement();
           final PsiMember parentOfType = PsiTreeUtil.getParentOfType(element, PsiMember.class);
@@ -134,10 +131,8 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
       if (!myField.isValid()) return; //weird. should not get here when field becomes invalid
 
       PsiManager manager = PsiManager.getInstance(project);
-      PsiSearchHelper helper = manager.getSearchHelper();
       Set<PsiMember> methodSet = new HashSet<PsiMember>();
-      final PsiReference[] allRefs = helper.findReferences(myField, new LocalSearchScope(myField.getContainingFile()), true);
-      for (PsiReference ref : allRefs) {
+      for (PsiReference ref : PsiReferenceSearch.search(myField, new LocalSearchScope(myField.getContainingFile()), true)) {
         if (ref instanceof PsiReferenceExpression) {
           final PsiMember member = PsiTreeUtil.getParentOfType((PsiReferenceExpression)ref, PsiMethod.class, PsiClassInitializer.class);
           if (member != null) {
@@ -148,9 +143,9 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
 
       PsiElement newCaretPosition = null;
       for (PsiMember member : methodSet) {
-        final PsiReference[] refs = helper.findReferences(myField, new LocalSearchScope(member), true);
-        LOG.assertTrue(refs.length > 0);
-        Set<PsiReference> refsSet = new HashSet<PsiReference>(Arrays.asList(refs));
+        final Collection<PsiReference> refs = PsiReferenceSearch.search(myField, new LocalSearchScope(member), true).findAll();
+        LOG.assertTrue(refs.size() > 0);
+        Set<PsiReference> refsSet = new HashSet<PsiReference>(refs);
         PsiCodeBlock anchorBlock = findAnchorBlock(refs);
         LOG.assertTrue(anchorBlock != null);
         final PsiElementFactory elementFactory = manager.getElementFactory();
@@ -237,7 +232,7 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
       return getName();
     }
 
-    private static PsiElement getAnchorElement(final PsiCodeBlock anchorBlock, final PsiReference[] refs) {
+    private static PsiElement getAnchorElement(final PsiCodeBlock anchorBlock, final Collection<PsiReference> refs) {
       PsiElement firstElement = null;
       for (PsiReference reference : refs) {
         final PsiElement element = reference.getElement();
@@ -253,7 +248,7 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
       return firstElement;
     }
 
-    private static PsiCodeBlock findAnchorBlock(final PsiReference[] refs) {
+    private static PsiCodeBlock findAnchorBlock(final Collection<PsiReference> refs) {
       PsiCodeBlock result = null;
       for (PsiReference psiReference : refs) {
         final PsiElement element = psiReference.getElement();

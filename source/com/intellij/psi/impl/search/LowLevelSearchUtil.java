@@ -12,13 +12,14 @@ import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.search.TextOccurenceProcessor;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.text.StringSearcher;
 
 import java.util.Set;
 
 public class LowLevelSearchUtil {
-  public static boolean processElementsContainingWordInElement(PsiElementProcessorEx processor,
+  public static boolean processElementsContainingWordInElement(TextOccurenceProcessor processor,
                                                                PsiElement scope,
                                                                StringSearcher searcher,
                                                                ProgressIndicator progress,
@@ -27,7 +28,7 @@ public class LowLevelSearchUtil {
   }
 
 
-  private static boolean processElementsContainingWordInElement(PsiElementProcessorEx processor,
+  private static boolean processElementsContainingWordInElement(TextOccurenceProcessor processor,
                                                                 ASTNode scope,
                                                                 StringSearcher searcher,
                                                                 ProgressIndicator progress,
@@ -104,7 +105,7 @@ public class LowLevelSearchUtil {
 
   private static boolean processChildren(ASTNode scope,
                                          StringSearcher searcher,
-                                         PsiElementProcessorEx processor,
+                                         TextOccurenceProcessor processor,
                                          ProgressIndicator progress,
                                          final short searchContext) {
     synchronized (PsiLock.LOCK) {

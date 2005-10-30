@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface PsiSearchHelper {
   /**
+   * @deprecated Use <code>PsiReferenceSearch.search(...).findAll()</code> instead
    * Searches the specified scope for references to the specified element.
    *
    * @param element           the element to find the references to.
@@ -38,6 +39,7 @@ public interface PsiSearchHelper {
   PsiReference[] findReferences(PsiElement element, SearchScope searchScope, boolean ignoreAccessScope);
 
   /**
+   * @deprecated Use <code>PsiReferenceSearch.search(...).forEach(...)</code> instead
    * Passes all references to the specified element in the specified scope to the specified
    * processor.
    *
@@ -345,4 +347,10 @@ public interface PsiSearchHelper {
    * @param processor the processor which accepts the references.
    */
   void processAllFilesWithWordInLiterals(String word, GlobalSearchScope scope, Processor<PsiFile> processor);
+
+  boolean processElementsWithWord(TextOccurenceProcessor processor,
+                                  SearchScope searchScope,
+                                  String text,
+                                  short searchContext,
+                                  boolean caseSensitive);
 }

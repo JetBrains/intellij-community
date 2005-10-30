@@ -8,11 +8,8 @@ import com.intellij.j2ee.J2EERolesUtil;
 import com.intellij.j2ee.ejb.role.EjbClassRole;
 import com.intellij.j2ee.ejb.role.EjbDeclMethodRole;
 import com.intellij.j2ee.ejb.role.EjbMethodRole;
-import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
-import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.psi.Property;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -25,7 +22,6 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -36,18 +32,19 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.jsp.JspFile;
-import com.intellij.psi.meta.PsiMetaData;
-import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.search.*;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.search.searches.PsiReferenceSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.*;
-import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.Query;
+import com.intellij.util.QueryExecutor;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.StringSearcher;
@@ -65,6 +62,28 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   private final PsiManagerImpl myManager;
   private static final TodoItem[] EMPTY_TODO_ITEMS = new TodoItem[0];
   private static final TokenSet XML_DATA_CHARS = TokenSet.create(XmlTokenType.XML_DATA_CHARACTERS);
+
+  static {
+    PsiReferenceSearch.INSTANCE.registerExecutor(new PsiAnnotationMethodReferencesSearcher());
+    PsiReferenceSearch.INSTANCE.registerExecutor(new PsiAntElementReferenceSearcher());
+    PsiReferenceSearch.INSTANCE.registerExecutor(new CachesBasedRefSearcher());
+    PsiReferenceSearch.INSTANCE.registerExecutor(new FormReferencesSearcher());
+    PsiReferenceSearch.INSTANCE.registerExecutor(new ConstructorReferencesSearcher());
+
+    // Temporary.
+    ClassInheritorsSearch.INSTANCE.registerExecutor(new QueryExecutor<PsiClass, ClassInheritorsSearch.SearchParameters>() {
+      public boolean execute(final ClassInheritorsSearch.SearchParameters p, final Processor<PsiClass> consumer) {
+        final PsiClass klass = p.getClassToProcess();
+        PsiManager.getInstance(klass.getProject()).getSearchHelper().processInheritors(new PsiElementProcessor<PsiClass>() {
+          public boolean execute(final PsiClass element) {
+            return consumer.process(element);
+          }
+        }, klass, p.getScope(), p.isCheckDeep(), true);
+
+        return true;
+      }
+    });
+  }
 
   @NotNull
   public SearchScope getUseScope(PsiElement element) {
@@ -171,7 +190,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
 
-
   public PsiSearchHelperImpl(PsiManagerImpl manager) {
     myManager = manager;
   }
@@ -186,322 +204,16 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
   public boolean processReferences(final PsiReferenceProcessor processor,
                                    final PsiElement refElement,
-                                   SearchScope searchScope,
+                                   SearchScope originalScope,
                                    boolean ignoreAccessScope) {
-    return processReferences(processor, refElement, searchScope, ignoreAccessScope, true);
-  }
-
-  private boolean processReferences(final PsiReferenceProcessor processor,
-                                    final PsiElement refElement,
-                                    SearchScope originalScope,
-                                    boolean ignoreAccessScope,
-                                    boolean isStrictSignatureSearch) {
     LOG.assertTrue(originalScope != null);
 
-    if (refElement instanceof PsiAnnotationMethod) {
-      PsiMethod method = (PsiMethod)refElement;
-      if (PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.equals(method.getName()) && method.getParameterList().getParameters().length == 0) {
-        PsiReference[] references = findReferences(method.getContainingClass(), originalScope, ignoreAccessScope);
-        for (PsiReference reference : references) {
-          if (reference instanceof PsiJavaCodeReferenceElement) {
-            PsiJavaCodeReferenceElement javaReference = (PsiJavaCodeReferenceElement)reference;
-            if (javaReference.getParent() instanceof PsiAnnotation) {
-              PsiNameValuePair[] members = ((PsiAnnotation)javaReference.getParent()).getParameterList().getAttributes();
-              if (members.length == 1 && members[0].getNameIdentifier() == null) {
-                processor.execute(members[0].getReference());
-              }
-            }
-          }
-        }
+    final Query<PsiReference> query = PsiReferenceSearch.search(refElement, originalScope, ignoreAccessScope);
+    return query.forEach(new Processor<PsiReference>() {
+      public boolean process(final PsiReference t) {
+        return processor.execute(t);
       }
-    }
-
-    if (refElement instanceof PsiMethod && ((PsiMethod)refElement).isConstructor()) {
-      if (!processConstructorReferences(processor, (PsiMethod)refElement, originalScope, ignoreAccessScope,
-                                        isStrictSignatureSearch)) {
-        return false;
-      }
-    }
-
-    if (refElement instanceof PsiAntElement) {
-      final PsiAntElement antElement = (PsiAntElement)refElement;
-      final SearchScope searchScope = antElement.getSearchScope().intersectWith(originalScope);
-      if (searchScope instanceof LocalSearchScope) {
-        final PsiElement[] scopes = ((LocalSearchScope)searchScope).getScope();
-        for (final PsiElement scope : scopes) {
-          if (!processAntElementScopeRoot(scope, refElement, antElement, processor)) return false;
-        }
-      }
-      return true;
-    }
-    //End of custom search cases
-
-    String text;
-    if (refElement instanceof XmlAttributeValue) {
-      text = ((XmlAttributeValue)refElement).getValue();
-    }
-    else if (refElement instanceof PsiNamedElement) {
-      text = ((PsiNamedElement)refElement).getName();
-
-      if (refElement instanceof PsiMetaOwner) {
-        final PsiMetaData metaData = ((PsiMetaOwner)refElement).getMetaData();
-        if (metaData!=null) text = metaData.getName();
-      } else if (refElement instanceof JspFile) {
-        final VirtualFile virtualFile = ((JspFile)refElement).getVirtualFile();
-        text = virtualFile != null ? virtualFile.getNameWithoutExtension():text;
-      }
-    }
-    else {
-      return true;
-    }
-
-    if (text == null) return true;
-
-    SearchScope searchScope;
-    if (!ignoreAccessScope) {
-      SearchScope accessScope = refElement.getUseScope();
-      searchScope = originalScope.intersectWith(accessScope);
-      if (searchScope == null) return true;
-    }
-    else {
-      searchScope = originalScope;
-    }
-
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("visitReferences() search scope: " + searchScope);
-    }
-
-    final PsiElementProcessorEx processor1 = new PsiElementProcessorEx() {
-      Set<PsiReference> myRefs = new HashSet<PsiReference>();
-      PsiFile myLastFileProcessed = null;
-      public boolean execute(PsiElement element, int offsetInElement) {
-        final PsiFile currentfile = element.getContainingFile();
-        if (myLastFileProcessed != currentfile) {
-          myRefs = new HashSet<PsiReference>();
-          myLastFileProcessed = currentfile;
-        }
-
-        final PsiReference reference = element.findReferenceAt(offsetInElement);
-        if (reference == null) return true;
-        if (!myRefs.add(reference)) return true;  //Hack:(
-        if (reference.isReferenceTo(refElement)) {
-          return processor.execute(reference);
-        }
-        else {
-          return true;
-        }
-      }
-    };
-
-
-    short searchContext;
-
-    if (refElement instanceof XmlAttributeValue) {
-      searchContext = UsageSearchContext.IN_PLAIN_TEXT;
-    }
-    else {
-      searchContext = UsageSearchContext.IN_CODE |
-                      UsageSearchContext.IN_FOREIGN_LANGUAGES |
-                      UsageSearchContext.IN_COMMENTS;
-    }
-
-    if (!processElementsWithWord(
-      processor1,
-      searchScope,
-      text,
-      searchContext,
-      false
-    )) {
-      return false;
-    }
-
-
-    if (refElement instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)refElement;
-      if (PropertyUtil.isSimplePropertyAccessor(method)) {
-        final String propertyName = PropertyUtil.getPropertyName(method);
-        //if (myManager.getNameHelper().isIdentifier(propertyName)) {
-          if (searchScope instanceof GlobalSearchScope) {
-            searchScope = GlobalSearchScope.getScopeRestrictedByFileTypes(
-              (GlobalSearchScope)searchScope,
-              StdFileTypes.JSP,
-              StdFileTypes.JSPX,
-              StdFileTypes.XML
-            );
-          }
-          if (!processElementsWithWord(processor1,
-                                       searchScope,
-                                       propertyName,
-                                       UsageSearchContext.IN_FOREIGN_LANGUAGES,
-                                       false)) {
-            return false;
-          }
-        //}
-      }
-    }
-
-    if (refElement instanceof PsiPackage && originalScope instanceof GlobalSearchScope) {
-      if (!UIFormUtil.processReferencesInUIForms(processor, (PsiPackage)refElement, (GlobalSearchScope)originalScope)) return false;
-    }
-    else if (refElement instanceof PsiClass && originalScope instanceof GlobalSearchScope) {
-      if (!UIFormUtil.processReferencesInUIForms(processor, (PsiClass)refElement, (GlobalSearchScope)originalScope)) return false;
-    }
-    else if (refElement instanceof PsiField && originalScope instanceof GlobalSearchScope) {
-      if (!UIFormUtil.processReferencesInUIForms(processor, (PsiField)refElement, (GlobalSearchScope)originalScope)) return false;
-    }
-    else if (refElement instanceof Property && originalScope instanceof GlobalSearchScope) {
-      if (!UIFormUtil.processReferencesInUIForms(processor, (Property)refElement, (GlobalSearchScope)originalScope)) return false;
-    }
-    else if (refElement instanceof PropertiesFile && originalScope instanceof GlobalSearchScope) {
-      if (!UIFormUtil.processReferencesInUIForms(processor, (PropertiesFile)refElement, (GlobalSearchScope)originalScope)) return false;
-    }
-
-    return true;
-  }
-
-  private static boolean processAntElementScopeRoot(final PsiElement scope,
-                                                    final PsiElement refElement,
-                                                    final PsiAntElement antElement,
-                                                    final PsiReferenceProcessor processor) {
-    final PsiReference[] references = findReferencesInNonJavaFile(scope.getContainingFile(), refElement, antElement.getName());
-    for (PsiReference reference : references) {
-      if (!processor.execute(reference)) return false;
-    }
-    return true;
-  }
-
-  private boolean processConstructorReferences(final PsiReferenceProcessor processor,
-                                               final PsiMethod constructor,
-                                               final SearchScope searchScope,
-                                               boolean ignoreAccessScope,
-                                               final boolean isStrictSignatureSearch) {
-    LOG.assertTrue(searchScope != null);
-
-    PsiClass aClass = constructor.getContainingClass();
-    if (aClass == null) return true;
-
-    if (aClass.isEnum()) {
-      PsiField[] fields = aClass.getFields();
-      for (PsiField field : fields) {
-        if (field instanceof PsiEnumConstant) {
-          PsiReference reference = field.getReference();
-          if (reference != null && reference.isReferenceTo(constructor)) {
-            if (!processor.execute(reference)) return false;
-          }
-        }
-      }
-    }
-
-    // search usages like "new XXX(..)"
-    PsiReferenceProcessor processor1 = new PsiReferenceProcessor() {
-      public boolean execute(PsiReference reference) {
-        PsiElement parent = reference.getElement().getParent();
-        if (parent instanceof PsiAnonymousClass) {
-          parent = parent.getParent();
-        }
-        if (parent instanceof PsiNewExpression) {
-          PsiMethod constructor1 = ((PsiNewExpression)parent).resolveConstructor();
-          if (constructor1 != null) {
-            if (isStrictSignatureSearch) {
-              if (myManager.areElementsEquivalent(constructor, constructor1)) {
-                return processor.execute(reference);
-              }
-            }
-            else {
-              if (myManager.areElementsEquivalent(constructor.getContainingClass(), constructor1.getContainingClass())) {
-                return processor.execute(reference);
-              }
-            }
-          }
-        }
-        return true;
-      }
-    };
-    if (!processReferences(processor1, aClass, searchScope, ignoreAccessScope)) return false;
-
-    // search usages like "this(..)"
-    PsiMethod[] methods = aClass.getMethods();
-    for (PsiMethod method : methods) {
-      if (method.isConstructor()) {
-        PsiCodeBlock body = method.getBody();
-        if (body != null) {
-          PsiStatement[] statements = body.getStatements();
-          if (statements.length > 0) {
-            PsiStatement statement = statements[0];
-            if (statement instanceof PsiExpressionStatement) {
-              PsiExpression expr = ((PsiExpressionStatement)statement).getExpression();
-              if (expr instanceof PsiMethodCallExpression) {
-                PsiReferenceExpression refExpr = ((PsiMethodCallExpression)expr).getMethodExpression();
-                if (PsiSearchScopeUtil.isInScope(searchScope, refExpr)) {
-                  if (refExpr.getText().equals(PsiKeyword.THIS)) {
-                    PsiElement referencedElement = refExpr.resolve();
-                    if (referencedElement instanceof PsiMethod) {
-                      PsiMethod constructor1 = (PsiMethod)referencedElement;
-                      if (isStrictSignatureSearch) {
-                        if (myManager.areElementsEquivalent(constructor1, constructor)) {
-                          if (!processor.execute(refExpr)) return false;
-                        }
-                      }
-                      else {
-                        if (myManager.areElementsEquivalent(constructor.getContainingClass(),
-                                                            constructor1.getContainingClass())) {
-                          if (!processor.execute(refExpr)) return false;
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-
-    // search usages like "super(..)"
-    PsiElementProcessor<PsiClass> processor2 = new PsiElementProcessor<PsiClass>() {
-      public boolean execute(PsiClass inheritor) {
-        PsiMethod[] methods = inheritor.getMethods();
-        for (PsiMethod method : methods) {
-          if (method.isConstructor()) {
-            PsiCodeBlock body = method.getBody();
-            if (body != null) {
-              PsiStatement[] statements = body.getStatements();
-              if (statements.length > 0) {
-                PsiStatement statement = statements[0];
-                if (statement instanceof PsiExpressionStatement) {
-                  PsiExpression expr = ((PsiExpressionStatement)statement).getExpression();
-                  if (expr instanceof PsiMethodCallExpression) {
-                    PsiReferenceExpression refExpr = ((PsiMethodCallExpression)expr).getMethodExpression();
-                    if (PsiSearchScopeUtil.isInScope(searchScope, refExpr)) {
-                      if (refExpr.getText().equals(PsiKeyword.SUPER)) {
-                        PsiElement referencedElement = refExpr.resolve();
-                        if (referencedElement instanceof PsiMethod) {
-                          PsiMethod constructor1 = (PsiMethod)referencedElement;
-                          if (isStrictSignatureSearch) {
-                            if (myManager.areElementsEquivalent(constructor1, constructor)) {
-                              if (!processor.execute(refExpr)) return false;
-                            }
-                          }
-                          else {
-                            if (myManager.areElementsEquivalent(constructor.getContainingClass(),
-                                                                constructor1.getContainingClass())) {
-                              if (!processor.execute(refExpr)) return false;
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-        return true;
-      }
-    };
-    return processInheritors(processor2, aClass, searchScope, false);
+    });
   }
 
   public PsiMethod[] findOverridingMethods(PsiMethod method, SearchScope searchScope, boolean checkDeep) {
@@ -582,14 +294,20 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                       final boolean isStrictSignatureSearch) {
     LOG.assertTrue(searchScope != null);
 
-    PsiClass parentClass = method.getContainingClass();
     if (method.isConstructor()) {
-      if (!processConstructorReferences(processor, method, searchScope, !isStrictSignatureSearch,
-                                        isStrictSignatureSearch)) {
+      Processor<PsiReference> adapter = new Processor<PsiReference>() {
+        public boolean process(final PsiReference t) {
+          return processor.execute(t);
+        }
+      };
+
+      final ConstructorReferencesSearchHelper helper = new ConstructorReferencesSearchHelper(myManager);
+      if (!helper. processConstructorReferences(adapter, method, searchScope, !isStrictSignatureSearch, isStrictSignatureSearch)) {
         return false;
       }
     }
 
+    PsiClass parentClass = method.getContainingClass();
     if (isStrictSignatureSearch && (parentClass == null
                                     || parentClass instanceof PsiAnonymousClass
                                     || parentClass.hasModifierProperty(PsiModifier.FINAL)
@@ -612,7 +330,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
     final PsiClass aClass = method.getContainingClass();
 
-    final PsiElementProcessorEx processor1 = new PsiElementProcessorEx() {
+    final TextOccurenceProcessor processor1 = new TextOccurenceProcessor() {
       public boolean execute(PsiElement element, int offsetInElement) {
         PsiReference reference = element.findReferenceAt(offsetInElement);
 
@@ -1001,7 +719,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                     short searchContext) {
     LOG.assertTrue(searchScope != null);
 
-    PsiElementProcessorEx processor1 = new PsiElementProcessorEx() {
+    TextOccurenceProcessor processor1 = new TextOccurenceProcessor() {
       public boolean execute(PsiElement element, int offsetInElement) {
         if (element instanceof PsiIdentifier) {
           return processor.execute((PsiIdentifier)element);
@@ -1013,13 +731,11 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
 
-  private static final TokenSet IDENTIFIER_BIT_SET = TokenSet.create(new IElementType[]{ElementType.IDENTIFIER});
-
   public PsiElement[] findCommentsContainingIdentifier(String identifier, SearchScope searchScope) {
     LOG.assertTrue(searchScope != null);
 
     final ArrayList<PsiElement> results = new ArrayList<PsiElement>();
-    PsiElementProcessorEx processor = new PsiElementProcessorEx() {
+    TextOccurenceProcessor processor = new TextOccurenceProcessor() {
       public boolean execute(PsiElement element, int offsetInElement) {
         if (element.getContainingFile().findReferenceAt(element.getTextRange().getStartOffset() + offsetInElement) == null) {
           results.add(element);
@@ -1035,7 +751,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     LOG.assertTrue(searchScope != null);
 
     final ArrayList<PsiLiteralExpression> results = new ArrayList<PsiLiteralExpression>();
-    PsiElementProcessorEx processor = new PsiElementProcessorEx() {
+    TextOccurenceProcessor processor = new TextOccurenceProcessor() {
       public boolean execute(PsiElement element, int offsetInElement) {
         if (element instanceof PsiLiteralExpression) {
           results.add((PsiLiteralExpression)element);
@@ -1140,77 +856,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return processor.toArray(PsiClass.EMPTY_ARRAY);
   }
 
-  static class SearchDescriptor {
-    private HashSet<String> myNames = new HashSet<String>();
-    private HashSet<PsiFile> myFiles = new HashSet<PsiFile>();
-    private HashSet<PsiElement> myElements = new HashSet<PsiElement>();
-  }
-
-  public SearchDescriptor prepareBundleReferenceSearch(PsiElement[] refElements) {
-    SearchDescriptor descriptor = new SearchDescriptor();
-    for (PsiElement refElement : refElements) {
-      if (refElement instanceof PsiNamedElement) {
-        String name = ((PsiNamedElement)refElement).getName();
-        if (name != null) {
-          PsiFile[] files = myManager.getCacheManager().getFilesWithWord(name,
-                                                                         UsageSearchContext.IN_CODE,
-                                                                         GlobalSearchScope.allScope(myManager.getProject()));
-          descriptor.myNames.add(name);
-          descriptor.myFiles.addAll(Arrays.asList(files));
-          descriptor.myElements.add(refElement);
-        }
-      }
-    }
-
-    return descriptor;
-  }
-
-  public static boolean processReferencesToElementsInLocalScope(final PsiReferenceProcessor processor,
-                                                                final SearchDescriptor bundleSearchDescriptor,
-                                                                LocalSearchScope scope) {
-    PsiElement[] scopeElements = scope.getScope();
-    for (final PsiElement scopeElement : scopeElements) {
-      if (!processReferencesToElementInScopeElement(scopeElement, bundleSearchDescriptor, processor)) {
-        return false;
-      }
-    }
-    return true;
-
-  }
-
-  private static boolean processReferencesToElementInScopeElement(PsiElement scopeElement,
-                                                                  final SearchDescriptor bundleSearchDescriptor,
-                                                                  final PsiReferenceProcessor processor) {
-    if (scopeElement == null) return true;
-    if (!bundleSearchDescriptor.myFiles.contains(scopeElement.getContainingFile())) return true;
-
-    final PsiElementProcessor processor1 = new PsiElementProcessor() {
-      public boolean execute(PsiElement element) {
-        PsiElement parent = element.getParent();
-        if (parent instanceof PsiJavaCodeReferenceElement) {
-          PsiReference ref = (PsiJavaCodeReferenceElement)parent;
-          PsiElement target = ref.resolve();
-          //TODO: including overriding!
-          if (bundleSearchDescriptor.myElements.contains(target)) {
-            return processor.execute(ref);
-          }
-        }
-
-        return true;
-      }
-    };
-
-    ASTNode scopeTreeElement = SourceTreeToPsiMap.psiElementToTree(scopeElement);
-    ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
-    return LowLevelSearchUtil.processIdentifiersBySet(processor1,
-                                                      scopeTreeElement,
-                                                      IDENTIFIER_BIT_SET,
-                                                      bundleSearchDescriptor.myNames,
-                                                      progress);
-  }
-
-
-  private boolean processElementsWithWord(PsiElementProcessorEx processor,
+  public boolean processElementsWithWord(TextOccurenceProcessor processor,
                                           SearchScope searchScope,
                                           String text,
                                           short searchContext,
@@ -1238,7 +884,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   private static boolean processElementsWithWordInScopeElement(PsiElement scopeElement,
-                                                               PsiElementProcessorEx processor,
+                                                               TextOccurenceProcessor processor,
                                                                String word,
                                                                boolean caseSensitive,
                                                                final short searchContext) {
@@ -1256,7 +902,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     }
   }
 
-  private boolean processElementsWithTextInGlobalScope(PsiElementProcessorEx processor,
+  private boolean processElementsWithTextInGlobalScope(TextOccurenceProcessor processor,
                                                        GlobalSearchScope scope,
                                                        StringSearcher searcher,
                                                        short searchContext) {
@@ -1316,36 +962,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return myManager.getCacheManager().getFilesWithWord(word,
                                                         UsageSearchContext.IN_PLAIN_TEXT,
                                                         GlobalSearchScope.projectScope(myManager.getProject()));
-  }
-
-  private static PsiReference[] findReferencesInNonJavaFile(PsiFile file, final PsiElement element, String refText) {
-    class MyRefsProcessor implements PsiNonJavaFileReferenceProcessor {
-      private List<PsiReference> myRefs = new ArrayList<PsiReference>();
-
-      PsiReference[] getResult() {
-        return myRefs.toArray(new PsiReference[myRefs.size()]);
-      }
-
-      public boolean process(PsiFile file, int startOffset, int endOffset) {
-        PsiElement elementAt = file.findElementAt(startOffset);
-        if (elementAt != null) {
-          PsiReference ref = elementAt.findReferenceAt(startOffset - elementAt.getTextRange().getStartOffset());
-          if (ref != null && ref.isReferenceTo(element)) myRefs.add(ref);
-        }
-
-        return true;
-      }
-    }
-
-    MyRefsProcessor processor = new MyRefsProcessor();
-
-    char[] text = file.textToCharArray();
-    StringSearcher searcher = new StringSearcher(refText);
-    for (int index = LowLevelSearchUtil.searchWord(text, 0, text.length, searcher); index >= 0;) {
-      if (!processor.process(file, index, index + searcher.getPattern().length())) break;
-      index = LowLevelSearchUtil.searchWord(text, index + searcher.getPattern().length(), text.length, searcher);
-    }
-    return processor.getResult();
   }
 
 
