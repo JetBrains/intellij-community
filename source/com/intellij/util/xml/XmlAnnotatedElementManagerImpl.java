@@ -9,10 +9,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.PsiLock;
 import net.sf.cglib.proxy.InvocationHandler;
 import net.sf.cglib.proxy.Proxy;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
@@ -21,28 +24,53 @@ import java.lang.reflect.WildcardType;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Collection;
 
 /**
  * @author peter
  */
 public class XmlAnnotatedElementManagerImpl extends XmlAnnotatedElementManager implements ApplicationComponent {
-  private static final Key<NameStrategy> NAME_STRATEGY_KEY = new Key<NameStrategy>("NameStrategy");
+  private static final Key<NameStrategy> NAME_STRATEGY_KEY = Key.create("NameStrategy");
+  private static final Key CACHED_ELEMENT = Key.create("CachedXmlAnnotatedElement");
 
-  public <T extends XmlAnnotatedElement> T getXmlAnnotatedElement(final Class<T> aClass, final XmlTag tag) {
-    return (T)Proxy.newProxyInstance(null, new Class[]{aClass}, new MyInvocationHandler(tag));
+  @NotNull
+  protected <T extends XmlAnnotatedElement> T createXmlAnnotatedElement(final Class<T> aClass, final XmlTag tag) {
+    synchronized (PsiLock.LOCK) {
+      final T element = (T)Proxy.newProxyInstance(null, new Class[]{aClass}, new MyInvocationHandler<T>(tag, aClass));
+      setCachedElement(tag, element);
+      return element;
+    }
   }
 
   public void setNameStrategy(final XmlFile file, final NameStrategy strategy) {
     file.putUserData(NAME_STRATEGY_KEY, strategy);
   }
 
+  @NotNull
   public NameStrategy getNameStrategy(final XmlFile file) {
     final NameStrategy strategy = file.getUserData(NAME_STRATEGY_KEY);
     return strategy == null ? NameStrategy.HYPHEN_STRATEGY : strategy;
   }
 
+  @NotNull
   public <T extends XmlAnnotatedElement> XmlFileAnnotatedElement<T> getFileElement(final XmlFile file, final Class<T> aClass) {
-    return new XmlFileAnnotatedElement<T>(file, this, aClass);
+    synchronized (PsiLock.LOCK) {
+      XmlFileAnnotatedElement<T> element = getCachedElement(file);
+      if (element == null) {
+        element = new XmlFileAnnotatedElement<T>(file, this, aClass);
+        setCachedElement(file, element);
+      }
+      return element;
+    }
+  }
+
+  private <T extends XmlAnnotatedElement> void setCachedElement(final XmlElement xmlElement, final T element) {
+    xmlElement.putUserData(CACHED_ELEMENT, element);
+  }
+
+  @Nullable
+  public <T extends XmlAnnotatedElement> T getCachedElement(final XmlElement element) {
+    return (T)element.getUserData(CACHED_ELEMENT);
   }
 
   @NonNls
@@ -56,19 +84,23 @@ public class XmlAnnotatedElementManagerImpl extends XmlAnnotatedElementManager i
   public void disposeComponent() {
   }
 
-  private class MyInvocationHandler implements InvocationHandler {
+  private class MyInvocationHandler<T extends XmlAnnotatedElement> implements InvocationHandler {
     private final XmlTag myTag;
     private final XmlFile myFile;
+    private final Class<T> myClass;
+    private boolean myInitialized = false;
+    private boolean myInitializing = false;
 
-    public MyInvocationHandler(final XmlTag tag) {
+    public MyInvocationHandler(final XmlTag tag, final Class<T> aClass) {
       myTag = tag;
       myFile = (XmlFile)tag.getContainingFile();
+      myClass = aClass;
     }
 
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
       final AttributeValue attributeValue = method.getAnnotation(AttributeValue.class);
       if (attributeValue != null) {
-        return processAttributeValue(attributeValue, method);
+        return myTag.getAttributeValue(guessName(attributeValue.value(), method));
       }
       final TagValue tagValue = method.getAnnotation(TagValue.class);
       if (tagValue != null || isGetValueMethod(method)) {
@@ -76,93 +108,158 @@ public class XmlAnnotatedElementManagerImpl extends XmlAnnotatedElementManager i
       }
       final SubTagValue subTagValue = method.getAnnotation(SubTagValue.class);
       if (subTagValue != null) {
-        return processSubTagValue(subTagValue, method);
+        final String qname = guessName(subTagValue.value(), method);
+        if (qname != null) {
+          final XmlTag subTag = myTag.findFirstSubTag(qname);
+          if (subTag != null) {
+            return subTag.getValue().getText();
+          }
+        }
+        return null;
       }
 
-      final Class<?> returnType = method.getReturnType();
-      final SubTag subTagAnnotation = method.getAnnotation(SubTag.class);
-      if (subTagAnnotation != null && XmlAnnotatedElement.class.isAssignableFrom(returnType)) {
-        return processSubTag(subTagAnnotation, method);
-      }
+      checkInitialized();
 
-      final SubTagList subTagList = method.getAnnotation(SubTagList.class);
-      if (subTagList != null) {
-        final Class<? extends XmlAnnotatedElement> aClass = extractElementType(method.getGenericReturnType());
-        if (aClass != null) {
-          return processSubTagList(subTagList, method, aClass);
+      if (XmlAnnotatedElement.class.isAssignableFrom(method.getReturnType())) {
+        final String qname = getSubTagName(method);
+        final XmlTag subTag = myTag.findFirstSubTag(qname);
+        if (subTag != null) {
+          return getCachedElement(subTag);
         }
       }
 
-      throw new UnsupportedOperationException();
-    }
-
-    private Object processSubTagList(final SubTagList subTagList, final Method method, final Class<? extends XmlAnnotatedElement> aClass) {
-      final XmlTag[] subTags = myTag.findSubTags(guessSingularName(subTagList.value(), method));
-      final ArrayList<XmlAnnotatedElement> list = new ArrayList<XmlAnnotatedElement>(subTags.length);
-      for (XmlTag xmlTag : subTags) {
-        list.add(getXmlAnnotatedElement(aClass, xmlTag));
+      if (extractElementType(method.getGenericReturnType()) != null) {
+        final XmlTag[] subTags = myTag.findSubTags(getSubTagNameForCollection(method));
+        final ArrayList<XmlAnnotatedElement> list = new ArrayList<XmlAnnotatedElement>(subTags.length);
+        for (XmlTag xmlTag : subTags) {
+          list.add(getCachedElement(xmlTag));
+        }
+        return Collections.unmodifiableList(list);
       }
-      return Collections.unmodifiableList(list);
+
+      if (Object.class.equals(method.getDeclaringClass())) {
+        final String name = method.getName();
+        if ("toString".equals(name)) {
+          return StringUtil.getShortName(myClass) + " on tag " + myTag.getText() + " @" + System.identityHashCode(proxy);
+        }
+        if ("equals".equals(name)) {
+          return proxy == args[0];
+        }
+        if ("hashCode".equals(name)) {
+          return System.identityHashCode(proxy);
+        }
+      }
+
+      throw new UnsupportedOperationException("Cannot call " + method.toString());
     }
 
-    private Object processSubTag(final SubTag subTagAnnotation, final Method method) {
-      final XmlTag subTag = myTag.findFirstSubTag(guessName(subTagAnnotation.value(), method));
-      return subTag == null ? null : getXmlAnnotatedElement((Class<XmlAnnotatedElement>)method.getReturnType(), subTag);
+    private void checkInitialized() {
+      synchronized (PsiLock.LOCK) {
+        if (myInitialized || myInitializing) return;
+        myInitializing = true;
+        try {
+          for (Method method : myClass.getMethods()) {
+            createElement(method);
+          }
+        }
+        finally {
+          myInitializing = false;
+          myInitialized = true;
+        }
+      }
+    }
+
+    private void createElement(final Method method) {
+      final Class<?> returnType = method.getReturnType();
+      if (XmlAnnotatedElement.class.isAssignableFrom(returnType)) {
+        final String qname = getSubTagName(method);
+        if (qname != null) {
+          final XmlTag subTag = myTag.findFirstSubTag(qname);
+          if (subTag != null) {
+            createXmlAnnotatedElement((Class<XmlAnnotatedElement>)returnType, subTag);
+            return;
+          }
+        }
+      }
+      final Class<? extends XmlAnnotatedElement> aClass = extractElementType(method.getGenericReturnType());
+      if (aClass != null) {
+        final String qname = getSubTagNameForCollection(method);
+        if (qname != null) {
+          for (XmlTag xmlTag : myTag.findSubTags(qname)) {
+            createXmlAnnotatedElement(aClass, xmlTag);
+          }
+        }
+      }
+    }
+
+    @Nullable
+    private String getSubTagName(final Method method) {
+      final SubTag subTagAnnotation = method.getAnnotation(SubTag.class);
+      if (subTagAnnotation == null || StringUtil.isEmpty(subTagAnnotation.value())) {
+        return getNameFromMethod(method);
+      }
+      return subTagAnnotation.value();
+    }
+
+    @Nullable
+    private String getSubTagNameForCollection(final Method method) {
+      final SubTagList subTagList = method.getAnnotation(SubTagList.class);
+      if (subTagList == null || StringUtil.isEmpty(subTagList.value())) {
+        final String propertyName = getPropertyName(method);
+        return propertyName != null ? getNameStrategy(myFile).convertName(StringUtil.unpluralize(propertyName)) : null;
+      }
+      return subTagList.value();
     }
 
     private boolean isGetValueMethod(final Method method) {
       return "getValue".equals(method.getName()) && String.class.equals(method.getReturnType()) && method.getParameterTypes().length == 0;
     }
 
-    private Object processSubTagValue(final SubTagValue subTagValue, final Method method) {
-      final XmlTag subTag = myTag.findFirstSubTag(guessName(subTagValue.value(), method));
-      return subTag == null ? null : subTag.getValue().getText();
-    }
-
-    private Object processAttributeValue(final AttributeValue attributeValue, Method method) {
-      return myTag.getAttributeValue(guessName(attributeValue.value(), method));
-    }
-
+    @Nullable
     private String guessName(final String value, final Method method) {
       if (StringUtil.isEmpty(value)) {
-        return getNameStrategy(myFile).convertName(getPropertyName(method));
+        return getNameFromMethod(method);
       }
       return value;
     }
 
-    private String guessSingularName(final String value, final Method method) {
-      if (StringUtil.isEmpty(value)) {
-        return getNameStrategy(myFile).convertName(StringUtil.unpluralize(getPropertyName(method)));
-      }
-      return value;
+    @Nullable
+    private String getNameFromMethod(final Method method) {
+      final String propertyName = getPropertyName(method);
+      return propertyName == null ? null : getNameStrategy(myFile).convertName(propertyName);
     }
+
   }
 
   @Nullable
   private static Class<? extends XmlAnnotatedElement> extractElementType(Type returnType) {
     if (returnType instanceof ParameterizedType) {
       ParameterizedType parameterizedType = (ParameterizedType)returnType;
-      if (List.class.equals(parameterizedType.getRawType())) {
-        final Type[] arguments = parameterizedType.getActualTypeArguments();
-        if (arguments.length == 1) {
-          final Type argument = arguments[0];
-          if (argument instanceof WildcardType) {
-            WildcardType wildcardType = (WildcardType)argument;
-            final Type[] upperBounds = wildcardType.getUpperBounds();
-            if (upperBounds.length == 1) {
-              final Type upperBound = upperBounds[0];
-              if (upperBound instanceof Class) {
-                Class aClass1 = (Class)upperBound;
-                if (XmlAnnotatedElement.class.isAssignableFrom(aClass1)) {
-                  return (Class<? extends XmlAnnotatedElement>)aClass1;
+      final Type rawType = parameterizedType.getRawType();
+      if (rawType instanceof Class) {
+        final Class<?> rawClass = (Class<?>)rawType;
+        if (List.class.isAssignableFrom(rawClass) || Collection.class.equals(rawClass)) {
+          final Type[] arguments = parameterizedType.getActualTypeArguments();
+          if (arguments.length == 1) {
+            final Type argument = arguments[0];
+            if (argument instanceof WildcardType) {
+              WildcardType wildcardType = (WildcardType)argument;
+              final Type[] upperBounds = wildcardType.getUpperBounds();
+              if (upperBounds.length == 1) {
+                final Type upperBound = upperBounds[0];
+                if (upperBound instanceof Class) {
+                  Class aClass1 = (Class)upperBound;
+                  if (XmlAnnotatedElement.class.isAssignableFrom(aClass1)) {
+                    return (Class<? extends XmlAnnotatedElement>)aClass1;
+                  }
                 }
               }
             }
-          }
-          else if (argument instanceof Class) {
-            Class aClass1 = (Class)argument;
-            if (XmlAnnotatedElement.class.isAssignableFrom(aClass1)) {
-              return (Class<? extends XmlAnnotatedElement>)aClass1;
+            else if (argument instanceof Class) {
+              Class aClass1 = (Class)argument;
+              if (XmlAnnotatedElement.class.isAssignableFrom(aClass1)) {
+                return (Class<? extends XmlAnnotatedElement>)aClass1;
+              }
             }
           }
         }

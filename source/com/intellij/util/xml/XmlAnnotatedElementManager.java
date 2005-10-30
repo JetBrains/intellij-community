@@ -3,9 +3,11 @@
  */
 package com.intellij.util.xml;
 
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlFile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -16,12 +18,14 @@ public abstract class XmlAnnotatedElementManager {
     return ApplicationManager.getApplication().getComponent(XmlAnnotatedElementManager.class);
   }
 
-  public abstract <T extends XmlAnnotatedElement> T getXmlAnnotatedElement(final Class<T> aClass, final XmlTag tag);
-
   public abstract void setNameStrategy(final XmlFile file, final NameStrategy strategy);
 
+  @NotNull
   public abstract NameStrategy getNameStrategy(final XmlFile file);
 
+  @NotNull
   public abstract <T extends XmlAnnotatedElement> XmlFileAnnotatedElement<T> getFileElement(final XmlFile file, final Class<T> aClass);
 
+  @Nullable
+  public abstract <T extends XmlAnnotatedElement> T getCachedElement(XmlElement element);
 }
