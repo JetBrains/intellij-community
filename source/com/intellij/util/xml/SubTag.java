@@ -11,5 +11,5 @@ import java.lang.annotation.ElementType;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD})
 public @interface SubTag {
-  String value();
+  String value() default "";
 }
