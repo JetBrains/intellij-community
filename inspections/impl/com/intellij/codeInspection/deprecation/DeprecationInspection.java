@@ -26,7 +26,7 @@ public class DeprecationInspection extends DescriptorProviderInspection {
     getRefManager().iterate(new RefManager.RefIterator() {
       public void accept(RefElement refElement) {
         if (refElement instanceof RefMethod && ((RefMethod) refElement).isOverridesDeprecated()) {
-          if (!InspectionManagerEx.isToCheckMember((PsiDocCommentOwner) ((RefMethod)refElement).getElement(), DeprecationInspection.this.getShortName())) return;
+          if (!InspectionManagerEx.isToCheckMember((PsiDocCommentOwner) refElement.getElement(), DeprecationInspection.this.getShortName())) return;
           addProblemElement(refElement, new ProblemDescriptor[]{getManager().createProblemDescriptor(refElement.getElement(), InspectionsBundle.message("inspection.deprecated.problem.descriptor"), (LocalQuickFix [])null, ProblemHighlightType.LIKE_DEPRECATED)});
         } else if (refElement.isUsesDeprecatedApi()) {
           if (getDescriptions(refElement) != null) return;
