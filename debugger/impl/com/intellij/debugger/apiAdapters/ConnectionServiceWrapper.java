@@ -1,14 +1,15 @@
 package com.intellij.debugger.apiAdapters;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
 import com.sun.jdi.Bootstrap;
+import com.sun.jdi.VMDisconnectedException;
 import com.sun.jdi.VirtualMachine;
 import com.sun.jdi.VirtualMachineManager;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.diagnostic.Logger;
 
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 /**
  * @author max
@@ -73,6 +74,9 @@ public class ConnectionServiceWrapper {
       final Throwable cause = e.getCause();
       if (cause instanceof IOException) {
         throw (IOException)cause;
+      }
+      if (cause instanceof VMDisconnectedException) {
+        return null; // ignore this one
       }
       LOG.error(e);
     }

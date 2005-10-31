@@ -238,29 +238,10 @@ public class ClasspathPanel extends JPanel {
       }
     });
 
-    myEntryTable.registerKeyboardAction(
-      new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-          if (removeButton.isEnabled()) {
-            removeButton.doClick();
-          }
-        }
-      },
-      KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0),
-      JComponent.WHEN_FOCUSED
-    );
-
-    myEntryTable.registerKeyboardAction(
-      new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-          if (addButton.isEnabled()) {
-            addButton.doClick();
-          }
-        }
-      },
-      KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, 0),
-      JComponent.WHEN_FOCUSED
-    );
+    addKeyboardShortcut(myEntryTable, removeButton, KeyEvent.VK_DELETE, 0);
+    addKeyboardShortcut(myEntryTable, addButton, KeyEvent.VK_INSERT, 0);
+    addKeyboardShortcut(myEntryTable, upButton, KeyEvent.VK_UP, KeyEvent.CTRL_DOWN_MASK);
+    addKeyboardShortcut(myEntryTable, downButton, KeyEvent.VK_DOWN, KeyEvent.CTRL_DOWN_MASK);
 
     addButton.addActionListener(new ButtonAction() {
       protected void executeImpl() {
@@ -282,8 +263,7 @@ public class ClasspathPanel extends JPanel {
           }
           public String getTextFor(Object value) {
             final PopupAction popupAction = (PopupAction)value;
-            final String s = "&" + popupAction.getIndex() + "  " + popupAction.getTitle();
-            return s;
+            return "&" + popupAction.getIndex() + "  " + popupAction.getTitle();
           }
         });
         popup.showUnderneathOf(addButton);
@@ -360,6 +340,20 @@ public class ClasspathPanel extends JPanel {
       }
     });
     return panel;
+  }
+
+  private static void addKeyboardShortcut(final JComponent target, final JButton button, final int keyEvent, final int modifiers) {
+    target.registerKeyboardAction(
+      new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+          if (button.isEnabled()) {
+            button.doClick();
+          }
+        }
+      },
+      KeyStroke.getKeyStroke(keyEvent, modifiers),
+      JComponent.WHEN_FOCUSED
+    );
   }
 
   private void editJdk(JdkItem item, int row) {
@@ -446,11 +440,7 @@ public class ClasspathPanel extends JPanel {
     }
   }
 
-  private static interface ChooseItemsProvider<T> {
-    @NotNull List<T> getChooseItems();
-  }
-
-  private abstract class ChooseAndAddAction<ItemType> extends PopupAction implements ChooseItemsProvider<ItemType>{
+  private abstract class ChooseAndAddAction<ItemType> extends PopupAction{
     public ChooseAndAddAction(int index, String title, Icon icon) {
       super(title, icon, index);
     }
@@ -464,7 +454,7 @@ public class ClasspathPanel extends JPanel {
       if (!dialog.isOK()) {
         return;
       }
-      final List<ItemType> chosen = dialog.getSelectedElements();
+      final List<ItemType> chosen = dialog.getChosenElements();
       if (chosen.size() == 0) {
         return;
       }
@@ -506,51 +496,20 @@ public class ClasspathPanel extends JPanel {
           protected ChooserDialog<Library> createChooserDialog() {
             return new ChooseModuleLibrariesDialog(ClasspathPanel.this, myRootModel.getModuleLibraryTable());
           }
-
-          public List<Library> getChooseItems() {
-            return Collections.emptyList(); // this chooser chooses items from file system
-          }
         },
-        new ChooseAndAddAction<Library>(2, ProjectBundle.message("classpath.add.project.library.action"), Icons.LIBRARY_ICON) {
-          protected TableItem createTableItem(final Library item) {
-            return new LibItem(myRootModel.addLibraryEntry(item));
-          }
-          protected ChooserDialog<Library> createChooserDialog() {
-            return new ChooseLibrariesDialog(this, ProjectBundle.message("classpath.chooser.title.add.project.library"), LibraryTablesRegistrar.getInstance().getLibraryTable(myProject));
-          }
-          @NotNull public List<Library> getChooseItems() {
-            return getDependencyLibraries(LibraryTablesRegistrar.getInstance().getLibraryTable(myProject));
-          }
-        },
-        new ChooseAndAddAction<Library>(3, ProjectBundle.message("classpath.add.global.library.action"), Icons.LIBRARY_ICON) {
-          protected TableItem createTableItem(final Library item) {
-            return new LibItem(myRootModel.addLibraryEntry(item));
-          }
-          protected ChooserDialog<Library> createChooserDialog() {
-            return new ChooseLibrariesDialog(this, ProjectBundle.message("classpath.chooser.title.add.global.library"), LibraryTablesRegistrar.getInstance().getLibraryTable());
-          }
-          @NotNull public List<Library> getChooseItems() {
-            return getDependencyLibraries(LibraryTablesRegistrar.getInstance().getLibraryTable());
-          }
-        },
+        new ChooseNamedLibraryAction(2, ProjectBundle.message("classpath.add.project.library.action"), LibraryTablesRegistrar.getInstance().getLibraryTable(myProject)),
+        new ChooseNamedLibraryAction(3, ProjectBundle.message("classpath.add.global.library.action"), LibraryTablesRegistrar.getInstance().getLibraryTable()),
         new ChooseAndAddAction<Module>(4, ProjectBundle.message("classpath.add.module.dependency.action"), IconUtilEx.getModuleTypeIcon(ModuleType.JAVA, 0)) {
           protected TableItem createTableItem(final Module item) {
             return new ModuleItem(myRootModel.addModuleOrderEntry(item));
           }
           protected ChooserDialog<Module> createChooserDialog() {
-            final List<Module> chooseItems = getChooseItems();
+            final List<Module> chooseItems = getDependencyModules();
             if (chooseItems.size() == 0) {
               Messages.showMessageDialog(ClasspathPanel.this, ProjectBundle.message("message.no.module.dependency.candidates"), getTitle(), Messages.getInformationIcon());
               return null;
             }
-            return new ChooseModulesDialog(new ChooseItemsProvider<Module>() {
-              public List<Module> getChooseItems() {
-                return chooseItems;  // return pre-calculated array, to avoid obtaining modules several times
-              }
-            }, ProjectBundle.message("classpath.chooser.title.add.module.dependency"));
-          }
-          public List<Module> getChooseItems() {
-            return getDependencyModules();
+            return new ChooseModulesDialog(chooseItems, ProjectBundle.message("classpath.chooser.title.add.module.dependency"));
           }
         }
       };
@@ -664,26 +623,6 @@ public class ClasspathPanel extends JPanel {
     return elements;
   }
 
-  private List<Library> getDependencyLibraries(LibraryTable libTable) {
-    final int rowCount = myModel.getRowCount();
-    final Set<String> filtered = new HashSet<String>(rowCount);
-    for (int row = 0; row < rowCount; row++) {
-      final OrderEntry entry = myModel.getItemAt(row).getEntry();
-      if (entry instanceof LibraryOrderEntry) {
-        filtered.add(((LibraryOrderEntry)entry).getLibraryName());
-      }
-    }
-
-    final Library[] libraries = libTable.getLibraries();
-    List<Library> elements = new ArrayList<Library>(libraries.length);
-    for (Library library : libraries) {
-      if (!filtered.contains(library.getName())) {
-        elements.add(library);
-      }
-    }
-    Collections.sort(elements, LIBRARIES_COMPARATOR);
-    return elements;
-  }
 
   private static abstract class TableItem<T extends OrderEntry> {
     protected @Nullable T myEntry;
@@ -728,7 +667,8 @@ public class ClasspathPanel extends JPanel {
     }
 
     public boolean isEditable() {
-      return getEntry().isValid();
+      final LibraryOrderEntry orderEntry = getEntry();
+      return orderEntry != null && orderEntry.isValid();
     }
   }
 
@@ -911,7 +851,6 @@ public class ClasspathPanel extends JPanel {
       final TableItem item = (TableItem)value;
       getCellAppearance(item, selected).customize(this);
     }
-
   }
 
   private static class ExportFlagRenderer implements TableCellRenderer {
@@ -933,32 +872,42 @@ public class ClasspathPanel extends JPanel {
   }
 
   private static interface ChooserDialog<T> {
-    List<T> getSelectedElements();
+    List<T> getChosenElements();
     void doChoose();
     boolean isOK();
   }
 
-  private abstract class ChooseItemsDialog<T> extends DialogWrapper implements ChooserDialog<T>{
-    protected ElementsChooser<T> myChooser;
-    protected final ChooseItemsProvider<T> myChooseItemsProvider;
+  private class ChooseModulesDialog extends DialogWrapper implements ChooserDialog<Module>{
+    protected ElementsChooser<Module> myChooser;
 
-    public ChooseItemsDialog(final ChooseItemsProvider<T> provider, final String title) {
+    public ChooseModulesDialog(final List<Module> items, final String title) {
       super(ClasspathPanel.this, true);
-      myChooseItemsProvider = provider;
       setTitle(title);
-      myChooser = new ElementsChooser<T>(false) {
-        protected String getItemText(final T item) {
-          return ChooseItemsDialog.this.getItemText(item);
+      myChooser = new ElementsChooser<Module>(false) {
+        protected String getItemText(final Module item) {
+          return ChooseModulesDialog.this.getItemText(item);
         }
       };
       myChooser.setColorUnmarkedElements(false);
 
-      final List<T> elements = provider.getChooseItems();
-      setElements(elements, elements.size() > 0? elements.subList(0, 1) : Collections.<T>emptyList());
+      setElements(items, items.size() > 0? items.subList(0, 1) : Collections.<Module>emptyList());
+      myChooser.getComponent().registerKeyboardAction(
+        new ActionListener() {
+          public void actionPerformed(ActionEvent e) {
+            doOKAction();
+          }
+        },
+        KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0),
+        JComponent.WHEN_FOCUSED
+      );
       init();
     }
 
-    public List<T> getSelectedElements() {
+    public void doChoose() {
+      show();
+    }
+
+    public List<Module> getChosenElements() {
       return myChooser.getSelectedElements();
     }
 
@@ -970,25 +919,15 @@ public class ClasspathPanel extends JPanel {
       return ScrollPaneFactory.createScrollPane(myChooser.getComponent());
     }
 
-    protected final void setElements(final Collection<T> elements, final Collection<T> elementsToSelect) {
+    private void setElements(final Collection<Module> elements, final Collection<Module> elementsToSelect) {
       myChooser.clear();
-      for (final T item : elements) {
+      for (final Module item : elements) {
         myChooser.addElement(item, false, createElementProperties(item));
       }
       myChooser.selectElements(elementsToSelect);
     }
 
-    protected abstract ElementsChooser.ElementProperties createElementProperties(final T item);
-
-    protected abstract String getItemText(final T item);
-  }
-
-  private class ChooseModulesDialog extends ChooseItemsDialog<Module> {
-    public ChooseModulesDialog(final ChooseItemsProvider<Module> provider, final String title) {
-      super(provider, title);
-    }
-
-    protected ElementsChooser.ElementProperties createElementProperties(final Module item) {
+    private ElementsChooser.ElementProperties createElementProperties(final Module item) {
       return new ElementsChooser.ElementProperties() {
         public Icon getIcon() {
           return IconUtilEx.getIcon(item, 0);
@@ -999,83 +938,7 @@ public class ClasspathPanel extends JPanel {
       };
     }
 
-    public void doChoose() {
-      show();
-    }
-
-    protected String getItemText(final Module item) {
-      return item.getName();
-    }
-  }
-
-  private class ChooseLibrariesDialog extends ChooseItemsDialog<Library> {
-    private ElementsChooser.ElementProperties myProps;
-    private final LibraryTable myLibraryTable;
-
-    public ChooseLibrariesDialog(final ChooseItemsProvider<Library> provider, final String title, final LibraryTable libraryTable) {
-      super(provider, title);
-      myLibraryTable = libraryTable;
-    }
-
-    public void doChoose() {
-      show();
-    }
-
-    protected JComponent createCenterPanel() {
-      final JComponent chooser = super.createCenterPanel();
-      final JPanel panel = new JPanel(new GridBagLayout());
-      final JButton editButton = new JButton(ProjectBundle.message("button.edit"));
-      panel.add(chooser, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
-      panel.add(editButton, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 2, 0, 0), 0, 0));
-      myChooser.getComponent().addMouseListener(new MouseAdapter() {
-        public void mouseClicked(MouseEvent e) {
-          if (e.getClickCount() == 2) {
-            editButton.doClick();
-          }
-        }
-      });
-      editButton.addActionListener(new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-          final HashSet<Library> librariesBeforeEdit = new HashSet<Library>(myChooseItemsProvider.getChooseItems());
-          final boolean isOk = LibraryTableEditor.showEditDialog(editButton, myLibraryTable, getSelectedElements());
-          final List<Library> librariesAfterEdit = myChooseItemsProvider.getChooseItems();
-          myChooser.saveSelection();
-          if (isOk) {
-            final Set<Library> librariesToSelect = new HashSet<Library>(librariesAfterEdit);
-            librariesToSelect.removeAll(librariesBeforeEdit);
-            setElements(librariesAfterEdit, librariesToSelect);
-            if (librariesToSelect.size() == 0) {
-              myChooser.restoreSelection();
-            }
-          }
-          else {
-            setElements(librariesAfterEdit, Collections.<Library>emptyList());
-            myChooser.restoreSelection();
-          }
-          if (myChooser.getSelectedElementRow() < 0 && myChooser.getElementCount() > 0) {
-            myChooser.selectElements(Arrays.asList(myChooser.getElementAt(0)));
-          }
-        }
-      });
-      return panel;
-    }
-
-    protected ElementsChooser.ElementProperties createElementProperties(final Library item) {
-      if (myProps == null) {
-        myProps = new ElementsChooser.ElementProperties() {
-          public Icon getIcon() {
-            return Icons.LIBRARY_ICON;
-          }
-
-          public Color getColor() {
-            return null;
-          }
-        };
-      }
-      return myProps;
-    }
-
-    protected String getItemText(final Library item) {
+    private String getItemText(final Module item) {
       return item.getName();
     }
   }
@@ -1096,7 +959,7 @@ public class ClasspathPanel extends JPanel {
       return descriptor;
     }
 
-    public List<Library> getSelectedElements() {
+    public List<Library> getChosenElements() {
       if (myLastChosen == null) {
         return Collections.emptyList();
       }
@@ -1325,5 +1188,59 @@ public class ClasspathPanel extends JPanel {
 
   }
 
+  private class ChooseNamedLibraryAction extends ChooseAndAddAction<Library> {
+    private LibraryTable myLibraryTable;
 
+    public ChooseNamedLibraryAction(final int index, final String title, final LibraryTable libraryTable) {
+      super(index, title, Icons.LIBRARY_ICON);
+      myLibraryTable = libraryTable;
+    }
+
+    protected TableItem createTableItem(final Library item) {
+      // clear invalid order entry corresponding to added library if any
+      final OrderEntry[] orderEntries = myRootModel.getOrderEntries();
+      for (OrderEntry orderEntry : orderEntries) {
+        if (orderEntry instanceof LibraryOrderEntry && !orderEntry.isValid()) {
+          if (item.getName().equals(((LibraryOrderEntry)orderEntry).getLibraryName())) {
+            myRootModel.removeOrderEntry(orderEntry);
+          }
+        }
+      }
+      return new LibItem(myRootModel.addLibraryEntry(item));
+    }
+
+    protected ChooserDialog<Library> createChooserDialog() {
+      return new ChooserDialog<Library>() {
+        private LibraryTableEditor myEditor = LibraryTableEditor.editLibraryTable(myLibraryTable);
+        private boolean myIsOk;
+
+        public List<Library> getChosenElements() {
+          final List<Library> chosen = new ArrayList<Library>(Arrays.asList(myEditor.getSelectedLibraries()));
+          chosen.removeAll(getAlreadyAddedLibraries());
+          return chosen;
+        }
+
+        public void doChoose() {
+          final Iterator iter = myLibraryTable.getLibraryIterator();
+          myIsOk = myEditor.openDialog(ClasspathPanel.this, iter.hasNext()? Collections.singleton((Library)iter.next()) : Collections.<Library>emptyList(), false);
+        }
+
+        public boolean isOK() {
+          return myIsOk;
+        }
+      };
+    }
+
+    private Collection<Library> getAlreadyAddedLibraries() {
+      final OrderEntry[] orderEntries = myRootModel.getOrderEntries();
+      final Set<Library> result = new HashSet<Library>(orderEntries.length);
+      for (OrderEntry orderEntry : orderEntries) {
+        if (orderEntry instanceof LibraryOrderEntry && orderEntry.isValid()) {
+          result.add(((LibraryOrderEntry)orderEntry).getLibrary());
+        }
+      }
+      return result;
+    }
+
+  }
 }

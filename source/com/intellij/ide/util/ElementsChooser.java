@@ -1,6 +1,7 @@
 package com.intellij.ide.util;
 
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SpeedSearchBase;
 import com.intellij.ui.TableUtil;
 import com.intellij.util.ui.Table;
 import com.intellij.util.ui.UIUtil;
@@ -16,7 +17,7 @@ import java.util.*;
 import java.util.List;
 
 public class ElementsChooser<T> extends JPanel {
-  private JTable myTable = null;
+  private Table myTable = null;
   private MyTableModel myTableModel = null;
   private boolean myColorUnmarkedElements = true;
   private List<ElementsMarkListener<T>> myListeners = new ArrayList<ElementsMarkListener<T>>();
@@ -75,6 +76,36 @@ public class ElementsChooser<T> extends JPanel {
       KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0),
       JComponent.WHEN_FOCUSED
     );
+
+    new SpeedSearchBase<Table>(myTable) {
+      public int getSelectedIndex() {
+        return myTable.getSelectedRow();
+      }
+
+      public Object[] getAllElements() {
+        final int count = myTableModel.getRowCount();
+        Object[] elements = new Object[count];
+        for (int idx = 0; idx < count; idx++) {
+          elements[idx] = myTableModel.getElementAt(idx);
+        };
+        return elements;
+      }
+
+      public String getElementText(Object element) {
+        return getItemText((T)element);
+      }
+
+      public void selectElement(Object element, String selectedText) {
+        final int count = myTableModel.getRowCount();
+        for (int row = 0; row < count; row++) {
+          if (element.equals(myTableModel.getElementAt(row))) {
+            myTable.getSelectionModel().setSelectionInterval(row, row);
+            TableUtil.scrollSelectionToVisible(myTable);
+            break;
+          }
+        }
+      }
+    };
 
     setElements(elements, marked);
   }

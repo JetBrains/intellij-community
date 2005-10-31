@@ -24,4 +24,8 @@ class LibraryTableTreeBuilder extends AbstractTreeBuilder {
     return rootElement.equals(element) || (element instanceof ClassesElement) || (element instanceof SourcesElement) ||
            (element instanceof JavadocElement);
   }
+
+  protected boolean isSmartExpand() {
+    return false;
+  }
 }

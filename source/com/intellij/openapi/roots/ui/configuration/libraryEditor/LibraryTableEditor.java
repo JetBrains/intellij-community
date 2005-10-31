@@ -159,18 +159,7 @@ public class LibraryTableEditor {
 
   public static boolean showEditDialog(final Component parent, LibraryTable libraryTable, final Collection<Library> selection) {
     final LibraryTableEditor libraryTableEditor = LibraryTableEditor.editLibraryTable(libraryTable);
-    final MyDialogWrapper dialogWrapper = libraryTableEditor.new MyDialogWrapper(parent);
-    if (selection != null) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          for (final Library library : selection) {
-            libraryTableEditor.selectLibrary(library, true);
-          }
-        }
-      }, ModalityState.stateForComponent(dialogWrapper.getContentPane()));
-    }
-    dialogWrapper.show();
-    final boolean ok = dialogWrapper.isOK();
+    final boolean ok = libraryTableEditor.openDialog(parent, selection, true);
     if (selection != null && ok) {
       selection.clear();
       selection.addAll(Arrays.asList(libraryTableEditor.getSelectedLibraries()));
@@ -300,7 +289,7 @@ public class LibraryTableEditor {
     }
   }
 
-  private Library[] getSelectedLibraries() {
+  public Library[] getSelectedLibraries() {
     final List<Library> libs = new ArrayList<Library>();
     final Object[] selectedElements = getSelectedElements();
     for (Object selectedElement : selectedElements) {
@@ -342,6 +331,24 @@ public class LibraryTableEditor {
     }
     librariesChanged(false);
 
+  }
+
+  /**
+   * @return true if Ok button was pressed on dialog close, false otherwise
+   */
+  public boolean openDialog(final Component parent, final Collection<Library> selection, final boolean expandSelectedItems) {
+    final MyDialogWrapper dialogWrapper = new MyDialogWrapper(parent);
+    if (selection != null) {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          for (final Library library : selection) {
+            selectLibrary(library, expandSelectedItems);
+          }
+        }
+      }, ModalityState.stateForComponent(dialogWrapper.getContentPane()));
+    }
+    dialogWrapper.show();
+    return dialogWrapper.isOK();
   }
 
   private class AddLibraryAction implements ActionListener {
