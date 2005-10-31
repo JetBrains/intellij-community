@@ -43,6 +43,8 @@ import java.util.ArrayList;
 import java.util.EventObject;
 import java.util.HashSet;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
@@ -52,7 +54,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
 
   private static final Color SYNTETIC_PROPERTY_BACKGROUND = new Color(230,230,230);
   private static final Color SYNTETIC_SUBPROPERTY_BACKGROUND = new Color(240,240,240);
-  
+
   private final ComponentTree myComponentTree;
   private final ArrayList<Property> myProperties;
   private final MyModel myModel;
@@ -160,6 +162,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
    * @return currently selected {@link IntrospectedProperty} or <code>null</code>
    * if nothing selected or synthetic property is selected.
    */
+  @Nullable
   public IntrospectedProperty getSelectedIntrospectedProperty(){
     final int selectedRow = getSelectedRow();
     if(selectedRow < 0 || selectedRow >= getRowCount()){
@@ -227,7 +230,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
   public void updateUI() {
     myPropertyNameAttrs = SimpleTextAttributes.REGULAR_ATTRIBUTES;
     myErrorPropertyNameAttrs = new SimpleTextAttributes(
-      SimpleTextAttributes.STYLE_PLAIN | SimpleTextAttributes.STYLE_WAVED,
+      SimpleTextAttributes.STYLE_WAVED,
       null, Color.RED
     );
     super.updateUI();
@@ -445,9 +448,8 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
         final Property[] introspectedProperties =
           Palette.getInstance(myEditor.getProject()).getIntrospectedProperties(componentClass);
         final Properties properties = Properties.getInstance();
-        for (int i = 0; i < introspectedProperties.length; i++) {
-          final Property property = introspectedProperties[i];
-          if(!myShowExpertProperties && properties.isExpertProperty(componentClass, property.getName())){
+        for (final Property property: introspectedProperties) {
+          if (!myShowExpertProperties && properties.isExpertProperty(componentClass, property.getName())) {
             continue;
           }
           result.add(property);
@@ -597,6 +599,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
    * @return first error for the property at the specified row. If component doesn't contain
    * any error then the method returns <code>null</code>.
    */
+  @Nullable
   private String getErrorForRow(final int row){
     LOG.assertTrue(row < myProperties.size());
     final ErrorInfo errorInfo = getErrorInfoForRow(row);
@@ -755,11 +758,11 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
         // syntetic property 
         background = property.getParent() == null ? SYNTETIC_PROPERTY_BACKGROUND : SYNTETIC_SUBPROPERTY_BACKGROUND;
       }
-      
+
       if (!selected){
         myPropertyNameRenderer.setBackground(background);
       }
-      
+
       if(column==0){ // painter for first column
         // 1. Text
         final boolean hasErrors = getErrorForRow(row) != null;
@@ -871,6 +874,19 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       }
       else {
         expandProperty(row);
+      }
+    }
+
+    public void mouseClicked(MouseEvent e) {
+      if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1) {
+        int row = rowAtPoint(e.getPoint());
+        int column = columnAtPoint(e.getPoint());
+        if (row >= 0 && column == 0) {
+          final Property property = myProperties.get(row);
+          if (property.getChildren().length == 0) {
+            startEditing(row);
+          }
+        }
       }
     }
   }
