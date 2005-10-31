@@ -93,7 +93,7 @@ public class ProgressIndicatorBase implements ProgressIndicator {
 
   public final void checkCanceled(){
     if (isCanceled() && myNonCancelableCount == 0) {
-      throw new ProcessCanceledException();
+//      throw new ProcessCanceledException();
     }
   }
 
