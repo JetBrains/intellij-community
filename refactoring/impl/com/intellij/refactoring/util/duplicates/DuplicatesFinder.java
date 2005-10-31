@@ -4,10 +4,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
+import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.lang.ASTNode;
+import com.intellij.util.containers.IntArrayList;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,6 +26,7 @@ public class DuplicatesFinder {
   private final List<? extends PsiVariable> myParameters;
   private final List<? extends PsiVariable> myOutputParameters;
   private final List<PsiElement> myPatternAsList;
+  private boolean myMultipleExitPoints = false;
 
   public DuplicatesFinder(PsiElement[] pattern,
                           List<? extends PsiVariable> parameters,
@@ -35,6 +38,23 @@ public class DuplicatesFinder {
     myParameters = parameters;
     myOutputParameters = outputParameters;
     mySkipStaticContext = maintainStaticContext && !RefactoringUtil.isInStaticContext(myPattern[0]);
+
+    final PsiElement codeFragment = ControlFlowUtil.findCodeFragment(pattern[0]);
+    ControlFlowAnalyzer analyzer = new ControlFlowAnalyzer(codeFragment, new LocalsControlFlowPolicy(codeFragment), false);
+    try {
+      final ControlFlow controlFlow = analyzer.buildControlFlow();
+      IntArrayList exitPoints = new IntArrayList();
+      final ArrayList<PsiStatement> exitStatements = new ArrayList<PsiStatement>();
+
+      ControlFlowUtil.findExitPointsAndStatements
+        (controlFlow, controlFlow.getStartOffset(pattern[0]),
+         controlFlow.getEndOffset(pattern[pattern.length - 1]),
+         exitPoints, exitStatements,
+         ControlFlowUtil.DEFAULT_EXIT_STATEMENTS_CLASSES);
+      myMultipleExitPoints = exitPoints.size() > 1;
+    }
+    catch (AnalysisCanceledException e) {
+    }
   }
 
 
@@ -240,8 +260,14 @@ public class DuplicatesFinder {
       return match.registerReturnValue(new VariableReturnValue(variable));
     }
     else if (candidate instanceof PsiReturnStatement) {
-      if (!match.registerReturnValue(ReturnStatementReturnValue.INSTANCE)) return false;
-      return matchPattern(patternReturnStatement.getReturnValue(), ((PsiReturnStatement)candidate).getReturnValue(), candidates, match);
+      final PsiExpression returnValue = ((PsiReturnStatement)candidate).getReturnValue();
+      if (myMultipleExitPoints) {
+        if (!match.registerReturnValue(new ConditionalReturnStatementValue(returnValue))) return false;
+      }
+      else {
+        if (!match.registerReturnValue(ReturnStatementReturnValue.INSTANCE)) return false;
+      }
+      return matchPattern(patternReturnStatement.getReturnValue(), returnValue, candidates, match);
     }
     else return false;
   }

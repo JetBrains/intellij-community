@@ -97,6 +97,7 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   public void testCodeDuplicates5() throws Exception { doDuplicatesTest(); }
   public void testCodeDuplicatesWithOutputValue() throws Exception { doDuplicatesTest(); }
   public void testCodeDuplicatesWithOutputValue1() throws Exception { doDuplicatesTest(); }
+  public void testCodeDuplicatesWithMultExitPoints() throws Exception { doDuplicatesTest(); }
   public void testCodeDuplicatesWithReturn() throws Exception { doDuplicatesTest(); }
   public void testCodeDuplicatesWithReturn2() throws Exception { doDuplicatesTest(); }
   public void testSCR32924() throws Exception { doDuplicatesTest(); }
