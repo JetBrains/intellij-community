@@ -222,7 +222,7 @@ public class GotoImplementationHandler implements CodeInsightActionHandler {
         }
       };
 
-      String title = CodeInsightBundle.message("goto.implementation.chooser.title", ((PsiNamedElement)sourceElement).getName());
+      String title = CodeInsightBundle.message("goto.implementation.chooser.title", ((PsiNamedElement)sourceElement).getName(), elements.length);
       ListPopup listPopup = new ListPopup(title, list, runnable, project);
       LogicalPosition caretPosition = editor.getCaretModel().getLogicalPosition();
       Point caretLocation = editor.logicalPositionToXY(caretPosition);

@@ -1,6 +1,7 @@
 
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.ide.util.MethodCellRenderer;
 import com.intellij.ide.util.PsiClassListCellRenderer;
@@ -42,8 +43,8 @@ class LineMarkerNavigator {
         PsiMethod[] overridings = helper.findOverridingMethods(method, scope, true);
         if (overridings.length == 0) return;
         String title = method.hasModifierProperty(PsiModifier.ABSTRACT) ?
-                       DaemonBundle .message("navigation.title.implementation.method", method.getName()) :
-                       DaemonBundle.message("navigation.title.overrider.method", method.getName());
+                       DaemonBundle .message("navigation.title.implementation.method", method.getName(), overridings.length) :
+                       DaemonBundle.message("navigation.title.overrider.method", method.getName(), overridings.length);
         boolean showMethodNames = !PsiUtil.allMethodsHaveSameSignature(overridings);
         MethodCellRenderer renderer = new MethodCellRenderer(showMethodNames);
         Arrays.sort(overridings, renderer.getComparator());
@@ -62,14 +63,14 @@ class LineMarkerNavigator {
         PsiClass[] inheritors = helper.findInheritors(aClass, scope, true);
         if (inheritors.length == 0) return;
         String title = aClass.isInterface() ?
-                       DaemonBundle.message("navigation.title.implementation.class", aClass.getName()) :
-                       DaemonBundle.message("navigation.title.subclass", aClass.getName());
+                       CodeInsightBundle.message("goto.implementation.chooser.title", aClass.getName(), inheritors.length) :
+                       DaemonBundle.message("navigation.title.subclass", aClass.getName(), inheritors.length);
         PsiClassListCellRenderer renderer = new PsiClassListCellRenderer();
         Arrays.sort(inheritors, renderer.getComparator());
         openTargets(e, inheritors, title, renderer);
       }
     }
-  }
+    }
 
   private static void openTargets(MouseEvent e, PsiMember[] targets, String title, ListCellRenderer listRenderer) {
     if (targets.length == 0) return;
