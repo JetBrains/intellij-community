@@ -3,8 +3,8 @@ package com.intellij.uiDesigner.binding;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
@@ -13,6 +13,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
+import com.intellij.psi.search.searches.PsiReferenceSearch;
 import com.intellij.uiDesigner.ReferenceUtil;
 import org.jetbrains.annotations.NonNls;
 
@@ -32,6 +33,7 @@ public class FormClassAnnotator implements ApplicationComponent, Annotator {
 
   private static final String FIELD_IS_OVERWRITTEN = JavaErrorMessages.message("uidesigned.field.is.overwritten.by.generated.code");
   private static final String BOUND_FIELD_TYPE_MISMATCH = JavaErrorMessages.message("uidesigner.bound.field.type.mismatch");
+  private FormReferencesSearcher myRefSearcher;
 
   @SuppressWarnings({"UNUSED_SYMBOL"})
   public FormClassAnnotator(final FileTypeManager fileTypeManager) {
@@ -45,10 +47,13 @@ public class FormClassAnnotator implements ApplicationComponent, Annotator {
 
   public void initComponent() {
     StdFileTypes.JAVA.getLanguage().injectAnnotator(this);
+    myRefSearcher = new FormReferencesSearcher();
+    PsiReferenceSearch.INSTANCE.registerExecutor(myRefSearcher);
   }
 
   public void disposeComponent() {
     StdFileTypes.JAVA.getLanguage().removeAnnotator(this);
+    PsiReferenceSearch.INSTANCE.unregisterExecutor(myRefSearcher);
   }
 
   public void annotate(PsiElement psiElement, AnnotationHolder holder) {

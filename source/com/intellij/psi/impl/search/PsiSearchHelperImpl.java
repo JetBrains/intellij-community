@@ -5,7 +5,6 @@ import com.intellij.codeHighlighting.CopyCreatorLexer;
 import com.intellij.ide.highlighter.custom.impl.CustomFileType;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.j2ee.J2EERolesUtil;
-import com.intellij.j2ee.ejb.role.EjbClassRole;
 import com.intellij.j2ee.ejb.role.EjbDeclMethodRole;
 import com.intellij.j2ee.ejb.role.EjbMethodRole;
 import com.intellij.lang.Language;
@@ -22,18 +21,15 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.psi.impl.RepositoryElementsManager;
-import com.intellij.psi.impl.cache.RepositoryIndex;
-import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.search.searches.PsiReferenceSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -44,7 +40,6 @@ import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
-import com.intellij.util.QueryExecutor;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.StringSearcher;
@@ -67,22 +62,10 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     PsiReferenceSearch.INSTANCE.registerExecutor(new PsiAnnotationMethodReferencesSearcher());
     PsiReferenceSearch.INSTANCE.registerExecutor(new PsiAntElementReferenceSearcher());
     PsiReferenceSearch.INSTANCE.registerExecutor(new CachesBasedRefSearcher());
-    PsiReferenceSearch.INSTANCE.registerExecutor(new FormReferencesSearcher());
     PsiReferenceSearch.INSTANCE.registerExecutor(new ConstructorReferencesSearcher());
 
-    // Temporary.
-    ClassInheritorsSearch.INSTANCE.registerExecutor(new QueryExecutor<PsiClass, ClassInheritorsSearch.SearchParameters>() {
-      public boolean execute(final ClassInheritorsSearch.SearchParameters p, final Processor<PsiClass> consumer) {
-        final PsiClass klass = p.getClassToProcess();
-        PsiManager.getInstance(klass.getProject()).getSearchHelper().processInheritors(new PsiElementProcessor<PsiClass>() {
-          public boolean execute(final PsiClass element) {
-            return consumer.process(element);
-          }
-        }, klass, p.getScope(), p.isCheckDeep(), true);
-
-        return true;
-      }
-    });
+    DirectClassInheritorsSearch.INSTANCE.registerExecutor(new JavaDirectInheritorsSearcher());
+    DirectClassInheritorsSearch.INSTANCE.registerExecutor(new EjbDirectInhertiorsSearcher());
   }
 
   @NotNull
@@ -419,126 +402,16 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return processInheritors(processor, aClass, searchScope, checkDeep, true);
   }
 
-  public boolean processInheritors(PsiElementProcessor<PsiClass> processor,
+  public boolean processInheritors(final PsiElementProcessor<PsiClass> processor,
                                    PsiClass aClass,
                                    SearchScope searchScope,
                                    boolean checkDeep,
                                    boolean checkInheritance) {
-    LOG.assertTrue(searchScope != null);
-
-    ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
-    if (progress != null) {
-      progress.pushState();
-      String className = aClass.getName();
-      progress.setText(className != null ?
-                       PsiBundle.message("psi.search.inheritors.of.class.progress", className) :
-                       PsiBundle.message("psi.search.inheritors.progress"));
-    }
-
-    ArrayList<PsiClass> processed = new ArrayList<PsiClass>();
-    processed.add(aClass);
-    boolean result = processInheritors(processor, aClass, searchScope, checkDeep, processed,
-                                       checkInheritance);
-
-    if (progress != null) {
-      progress.popState();
-    }
-
-    return result;
-  }
-
-  private boolean processInheritors(PsiElementProcessor<PsiClass> processor,
-                                    PsiClass aClass,
-                                    final SearchScope searchScope,
-                                    boolean checkDeep,
-                                    ArrayList<PsiClass> processed,
-                                    boolean checkInheritance) {
-    LOG.assertTrue(searchScope != null);
-
-    if (aClass instanceof PsiAnonymousClass) return true;
-
-    if (aClass.hasModifierProperty(PsiModifier.FINAL)) return true;
-
-    String name = aClass.getName();
-
-    RepositoryManager repositoryManager = myManager.getRepositoryManager();
-    RepositoryElementsManager repositoryElementsManager = myManager.getRepositoryElementsManager();
-
-    if ("java.lang.Object".equals(aClass.getQualifiedName())) { // special case
-      // TODO!
-    }
-
-    final SearchScope searchScope1 = searchScope.intersectWith(aClass.getUseScope());
-
-    RepositoryIndex repositoryIndex = repositoryManager.getIndex();
-    VirtualFileFilter rootFilter;
-    if (!checkDeep && searchScope1 instanceof GlobalSearchScope) {
-      rootFilter = repositoryIndex.rootFilterBySearchScope((GlobalSearchScope)searchScope1);
-    }
-    else {
-      rootFilter = null;
-    }
-
-    long[] candidateIds = repositoryIndex.getNameOccurrencesInExtendsLists(name, rootFilter);
-    for (int i = 0; i < candidateIds.length; i++) {
-      PsiClass candidate = (PsiClass)repositoryElementsManager.findOrCreatePsiElementById(candidateIds[i]);
-      LOG.assertTrue(candidate.isValid());
-      if (!processInheritorCandidate(processor, candidate, aClass, searchScope, checkDeep, processed,
-                                     checkInheritance)) {
-        return false;
+    return ClassInheritorsSearch.search(aClass, searchScope, checkDeep, checkInheritance).forEach(new Processor<PsiClass>() {
+      public boolean process(final PsiClass t) {
+        return processor.execute(t);
       }
-    }
-
-
-    final EjbClassRole classRole = J2EERolesUtil.getEjbRole(aClass);
-    if (classRole != null && classRole.isDeclarationRole()) {
-      final PsiClass[] implementations = classRole.findImplementations();
-      for (PsiClass candidate : implementations) {
-        if (!processInheritorCandidate(processor, candidate, aClass, searchScope, checkDeep, processed,
-                                       checkInheritance)) {
-          return false;
-        }
-      }
-    }
-
-    return true;
-  }
-
-  private boolean processInheritorCandidate(PsiElementProcessor<PsiClass> processor,
-                                            PsiClass candidate,
-                                            PsiClass baseClass,
-                                            SearchScope searchScope,
-                                            boolean checkDeep,
-                                            ArrayList<PsiClass> processed,
-                                            boolean checkInheritance) {
-    if (checkInheritance || (checkDeep && !(candidate instanceof PsiAnonymousClass))) {
-      if (!candidate.isInheritor(baseClass, false)) return true;
-    }
-
-    if (processed.contains(candidate)) return true;
-    processed.add(candidate);
-
-    if (candidate instanceof PsiAnonymousClass) {
-      if (!processor.execute(candidate)) return false;
-    }
-    else {
-      if (PsiSearchScopeUtil.isInScope(searchScope, candidate)) {
-        if (searchScope instanceof GlobalSearchScope) {
-          String qName = candidate.getQualifiedName();
-          if (qName != null) {
-            PsiClass candidate1 = myManager.findClass(qName, (GlobalSearchScope)searchScope);
-            if (candidate != candidate1) return true;
-          }
-        }
-        if (!processor.execute(candidate)) return false;
-      }
-
-      if (checkDeep) {
-        if (!processInheritors(processor, candidate, searchScope, checkDeep, processed, checkInheritance)) return false;
-      }
-    }
-
-    return true;
+    });
   }
 
   public PsiFile[] findFilesWithTodoItems() {
