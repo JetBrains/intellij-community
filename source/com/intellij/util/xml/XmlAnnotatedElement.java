@@ -3,8 +3,22 @@
  */
 package com.intellij.util.xml;
 
+import com.intellij.psi.xml.XmlTag;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 /**
  * @author peter
  */
 public interface XmlAnnotatedElement {
+
+  @Nullable
+  XmlTag getXmlTag();
+
+  @NotNull
+  XmlFileAnnotatedElement getRoot();
+
+  @Nullable
+  XmlAnnotatedElement getParent();
+
 }

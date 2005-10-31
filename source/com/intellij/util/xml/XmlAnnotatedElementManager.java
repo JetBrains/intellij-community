@@ -22,8 +22,5 @@ public abstract class XmlAnnotatedElementManager {
   public abstract NameStrategy getNameStrategy(final XmlFile file);
 
   @NotNull
-  public abstract <T extends XmlAnnotatedElement> XmlFileAnnotatedElement<T> getFileElement(final XmlFile file, final Class<T> aClass);
-
-  @NotNull
   public abstract <T extends XmlAnnotatedElement> XmlFileAnnotatedElement<T> getFileElement(XmlFile file, Class<T> aClass, String rootTagName);
 }
