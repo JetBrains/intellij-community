@@ -108,9 +108,7 @@ public class XmlAnnotatedElementManagerImpl extends XmlAnnotatedElementManager i
     return Converter.EMPTY_CONVERTER;
   }
 
-  private <T> T convertFromString(Method method, String s) throws IllegalAccessException, InstantiationException {
-    return ((Converter<T>)getConverter(method)).fromString(s);
-  }
+
 
   private class MyInvocationHandler<T extends XmlAnnotatedElement> implements InvocationHandler {
     private final XmlTag myTag;
@@ -123,6 +121,10 @@ public class XmlAnnotatedElementManagerImpl extends XmlAnnotatedElementManager i
       myTag = tag;
       myFile = (XmlFile)tag.getContainingFile();
       myClass = aClass;
+    }
+
+    private <T> T convertFromString(Method method, String s) throws IllegalAccessException, InstantiationException {
+      return ((Converter<T>)getConverter(method)).fromString(s, new ConvertContext(myFile));
     }
 
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
