@@ -4,6 +4,8 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiModifier;
 import org.jdom.Element;
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
@@ -12,6 +14,7 @@ import org.jetbrains.annotations.NonNls;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Arrays;
 
 /**
  * match options
@@ -40,6 +43,10 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
   @NonNls private static final String CONSTRAINT_ATTR_NAME = "constraint";
   @NonNls private static final String FILE_TYPE_ATTR_NAME = "type";
   @NonNls private static final String XML = "xml";
+  @NonNls public static final String INSTANCE_MODIFIER_NAME = "Instance";
+  @NonNls public static final String MODIFIER_ANNOTATION_NAME = "Modifier";
+  @NonNls public static final String PACKAGE_LOCAL_MODIFIER_NAME = PsiModifier.PACKAGE_LOCAL;
+
   //private static final String UNDEFINED_SCOPE = "undefined";
 
   public void addVariableConstraint(MatchVariableConstraint constraint) {

@@ -12,6 +12,7 @@ import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
 import com.intellij.structuralsearch.impl.matcher.predicates.ExprTypePredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.NotPredicate;
 import com.intellij.structuralsearch.MatchResult;
+import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.openapi.util.text.StringUtil;
 
 import java.util.*;
@@ -161,11 +162,12 @@ public class MatchingVisitor extends PsiElementVisitor {
              token.textMatches(anotherToken);
   }
 
-  static final String[] MODIFIERS = { PsiModifier.PUBLIC, PsiModifier.ABSTRACT, PsiModifier.FINAL, PsiModifier.STATIC,
+  public static final String[] MODIFIERS = { PsiModifier.PUBLIC, PsiModifier.ABSTRACT, PsiModifier.FINAL, PsiModifier.STATIC,
     PsiModifier.PRIVATE,PsiModifier.PROTECTED, PsiModifier.ABSTRACT,
     PsiModifier.FINAL,PsiModifier.SYNCHRONIZED, PsiModifier.NATIVE,
     PsiModifier.VOLATILE, PsiModifier.STRICTFP
   };
+  static { Arrays.sort(MODIFIERS); }
 
   public final void visitModifierList(final PsiModifierList list) {
     final PsiModifierList list2 = (PsiModifierList) element;
@@ -184,35 +186,46 @@ public class MatchingVisitor extends PsiElementVisitor {
       for(PsiAnnotation annotation:annotations) {
         final PsiJavaCodeReferenceElement nameReferenceElement = annotation.getNameReferenceElement();
         
-        if (nameReferenceElement != null && "Modifier".equals(nameReferenceElement.getText())) {
+        if (nameReferenceElement != null && MatchOptions.MODIFIER_ANNOTATION_NAME.equals(nameReferenceElement.getText())) {
           final PsiAnnotationParameterList parameterList = annotation.getParameterList();
+          final PsiNameValuePair[] attributes = parameterList.getAttributes();
           
-          if (parameterList != null) {
-            final PsiNameValuePair[] attributes = parameterList.getAttributes();
+          for(PsiNameValuePair pair:attributes) {
+            final PsiAnnotationMemberValue value = pair.getValue();
+            if (value == null) continue;
             
-            for(PsiNameValuePair pair:attributes) {
-              final PsiAnnotationMemberValue value = pair.getValue();
-              if (value == null) continue;
+            if (value instanceof PsiArrayInitializerMemberValue) {
+              boolean matchedOne = false;
               
-              if (value instanceof PsiArrayInitializerMemberValue) {
-                boolean matchedOne = false;
-                
-                for(PsiAnnotationMemberValue v:((PsiArrayInitializerMemberValue)value).getInitializers()) {
-                  if (list2.hasModifierProperty(StringUtil.stripQuotesAroundValue(v.getText()))) {
+              for(PsiAnnotationMemberValue v:((PsiArrayInitializerMemberValue)value).getInitializers()) {
+                final String name = StringUtil.stripQuotesAroundValue(v.getText());
+                if (MatchOptions.INSTANCE_MODIFIER_NAME.equals(name)) {
+                  if (list2.hasModifierProperty("static")) {
+                    result = false;
+                    return;
+                  } else {
                     matchedOne = true;
-                    break;
                   }
+                } else if (list2.hasModifierProperty(name)) {
+                  matchedOne = true;
+                  break;
                 }
-                
-                if (!matchedOne) {
+              }
+              
+              if (!matchedOne) {
+                result = false;
+                return;
+              }
+            } else {
+              final String name = StringUtil.stripQuotesAroundValue(value.getText());
+              if (MatchOptions.INSTANCE_MODIFIER_NAME.equals(name)) {
+                if (list2.hasModifierProperty("static")) {
                   result = false;
                   return;
                 }
-              } else {
-                if (!list2.hasModifierProperty(StringUtil.stripQuotesAroundValue(value.getText()))) {
-                  result = false;
-                  return;
-                }
+              } else if (!list2.hasModifierProperty(name)) {
+                result = false;
+                return;
               }
             }
           }

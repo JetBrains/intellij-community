@@ -60,13 +60,13 @@ class EditVarConstraintsDialog extends DialogWrapper {
   EditVarConstraintsDialog(Project project,SearchModel _model,List<Variable> _variables, boolean replaceContext, FileType fileType) {
     super(project,false);
 
-    regexp.getDocument().addDocumentListener(
-      new DocumentAdapter() {
-        public void documentChanged(DocumentEvent event) {
-          doProcessing(applyWithinTypeHierarchy, regexp);
-        }
-      }
-    );
+    //regexp.getDocument().addDocumentListener(
+    //  new DocumentAdapter() {
+    //    public void documentChanged(DocumentEvent event) {
+    //      doProcessing(applyWithinTypeHierarchy, regexp);
+    //    }
+    //  }
+    //);
     
     regexprForExprType.getDocument().addDocumentListener(
       new DocumentAdapter() {
@@ -274,7 +274,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
       
       applyWithinTypeHierarchy.setSelected(varInfo.isWithinHierarchy());
       regexp.setText(varInfo.getRegExp());
-      doProcessing(applyWithinTypeHierarchy,regexp);
+      //doProcessing(applyWithinTypeHierarchy,regexp);
       
       notRegexp.setSelected(varInfo.isInvertRegExp());
       minoccurs.setText(Integer.toString(varInfo.getMinCount()));

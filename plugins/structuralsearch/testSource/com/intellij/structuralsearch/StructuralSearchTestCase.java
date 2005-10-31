@@ -6,6 +6,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
+import com.intellij.structuralsearch.impl.matcher.MatcherImpl;
 
 /**
  * Created by IntelliJ IDEA.
@@ -34,6 +35,8 @@ abstract class StructuralSearchTestCase extends IdeaTestCase {
     MatcherImplUtil.transform(options);
     pattern = options.getSearchPattern();
     options.setFileType(fileType);
+
+    MatcherImpl.validate(myProject, options);
     return testMatcher.testFindMatches(in,pattern,options,filePattern).size();
   }
 

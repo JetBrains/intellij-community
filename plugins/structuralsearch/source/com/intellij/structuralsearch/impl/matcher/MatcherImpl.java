@@ -12,8 +12,10 @@ import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
@@ -21,6 +23,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
 import com.intellij.structuralsearch.impl.matcher.iterators.ArrayBackedNodeIterator;
+import com.intellij.structuralsearch.impl.matcher.iterators.NodeIterator;
 import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
 import com.intellij.structuralsearch.plugin.util.CollectingMatchResultSink;
 import com.intellij.util.IncorrectOperationException;
@@ -28,6 +31,7 @@ import com.intellij.util.IncorrectOperationException;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Arrays;
 
 /**
  * This class makes program structure tree matching:
@@ -62,6 +66,49 @@ public class MatcherImpl {
       lastPattern =  PatternCompiler.compilePattern(project,_options);
       lastOptions = _options;
     }
+    
+    class ValidatingVisitor extends PsiRecursiveElementVisitor {
+      public void visitAnnotation(PsiAnnotation annotation) {
+        final PsiJavaCodeReferenceElement nameReferenceElement = annotation.getNameReferenceElement();
+        
+        if (nameReferenceElement == null || 
+            !nameReferenceElement.getText().equals(MatchOptions.MODIFIER_ANNOTATION_NAME)) {
+          return;
+        }
+        
+        for(PsiNameValuePair pair:annotation.getParameterList().getAttributes()) {
+          final PsiAnnotationMemberValue value = pair.getValue();
+  
+          if (value instanceof PsiArrayInitializerMemberValue) {
+            for(PsiAnnotationMemberValue v:((PsiArrayInitializerMemberValue)value).getInitializers()) {
+              final String name = StringUtil.stripQuotesAroundValue(v.getText());
+              checkModifier(name);
+            }
+  
+          } else {
+            final String name = StringUtil.stripQuotesAroundValue(value.getText());
+            checkModifier(name);
+          }
+        }
+      }
+
+      private void checkModifier(final String name) {
+        if (!MatchOptions.INSTANCE_MODIFIER_NAME.equals(name) &&
+            !MatchOptions.PACKAGE_LOCAL_MODIFIER_NAME.equals(name) &&
+            Arrays.binarySearch(MatchingVisitor.MODIFIERS, name) < 0
+           ) {
+          throw new MalformedPatternException(SSRBundle.message("invalid.modifier.type",name));
+        }
+      }
+    };
+    
+    ValidatingVisitor visitor = new ValidatingVisitor();
+    final NodeIterator nodes = lastPattern.getNodes();
+    while(nodes.hasNext()) {
+      nodes.current().accept( visitor );
+      nodes.advance();
+    }
+    nodes.reset();
   }
 
   /**
@@ -120,7 +167,7 @@ public class MatcherImpl {
 
       SearchScope searchScope = compiledPattern.getScope();
       if (searchScope==null) searchScope = _options.getScope();
-      
+
       if (searchScope instanceof GlobalSearchScope) {
         final GlobalSearchScope scope = (GlobalSearchScope)searchScope;
         final ContentIterator ci = new ContentIterator() {
@@ -132,7 +179,7 @@ public class MatcherImpl {
                   (_options.getFileType() != StdFileTypes.JAVA && file instanceof XmlFile)
                  ) {
                 final PsiFile[] psiRoots = file.getPsiRoots();
-                
+
                 for(PsiFile root:psiRoots) {
                   ++totalFilesToScan;
                   scheduler.addOneTask( new MatchOneFile(root) );
@@ -145,7 +192,7 @@ public class MatcherImpl {
 
         final ProjectRootManager instance = ProjectRootManager.getInstance(project);
         ProjectFileIndex projectFileIndex = instance.getFileIndex();
-        
+
         final VirtualFile[] rootFiles = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile[]>() {
           public VirtualFile[] compute() {
             return (_options.getFileType() == StdFileTypes.JAVA)?
@@ -154,7 +201,7 @@ public class MatcherImpl {
             ;
           }
         });
-        
+
         HashSet<VirtualFile> visited = new HashSet<VirtualFile>(rootFiles.length);
         final VirtualFileFilter filter = new VirtualFileFilter() {
           public boolean accept(VirtualFile file) {
@@ -177,10 +224,10 @@ public class MatcherImpl {
               );
             }
           });
-          
+
           visited.add(rootFile);
         }
-        
+
         /* @ todo factor out handlers, etc*/
       } else {
         final PsiElement[] elementsToScan = ((LocalSearchScope)searchScope).getScope();
@@ -303,11 +350,11 @@ public class MatcherImpl {
           ended = true;
           break;
         }
-  
+
         Runnable task = tasks.removeFirst();
         task.run();
       }
-      
+
       if (ended) clearSchedule();
     }
 
@@ -378,7 +425,7 @@ public class MatcherImpl {
           },
           ModalityState.defaultModalityState()
         );
-        
+
       }
 
       if (file instanceof PsiFile) {
@@ -394,7 +441,7 @@ public class MatcherImpl {
         // Searching in previous results
         file = file.getParent();
       }
-      
+
       ApplicationManager.getApplication().runReadAction(
         new Runnable() {
           public void run() {
@@ -402,7 +449,7 @@ public class MatcherImpl {
           }
         }
       );
-      
+
       file = null;
     }
   }

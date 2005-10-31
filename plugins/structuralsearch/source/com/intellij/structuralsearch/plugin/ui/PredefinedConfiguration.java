@@ -102,6 +102,16 @@ public class PredefinedConfiguration extends Configuration {
           CLASS_TYPE
         ),
         createSearchTemplateInfo(
+          SSRBundle.message("predefined.configuration.instance.fields.of.the.class"),
+          "class '_Class { \n  @Modifier(\"Instance\") '_FieldType+ 'FieldName+ = '_Init*;\n}",
+          CLASS_TYPE
+        ),
+        createSearchTemplateInfo(
+          SSRBundle.message("predefined.configuration.packagelocal.fields.of.the.class"),
+          "class '_Class { \n @Modifier(\"packageLocal\") '_FieldType+ 'FieldName+ = '_Init*;\n}",
+          CLASS_TYPE
+        ),
+        createSearchTemplateInfo(
           SSRBundle.message("predefined.configuration.constructors.of.the.class"),
           "class 'Class {\n  'Class+('_ParameterType* '_ParameterName*) {\n    '_Statement*;\n  }\n}",
           CLASS_TYPE

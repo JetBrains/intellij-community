@@ -1,5 +1,6 @@
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
+import static com.intellij.structuralsearch.MatchOptions.*;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -437,7 +438,14 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
     addFilesToSearchForGivenWord(refname,endTransaction,true,false,false);
   }
 
+  private static Set<String> ourReservedWords = new HashSet<String>(
+    Arrays.asList(MODIFIER_ANNOTATION_NAME,INSTANCE_MODIFIER_NAME,PACKAGE_LOCAL_MODIFIER_NAME)
+  );
+  
+  
   private void addFilesToSearchForGivenWord(String refname, boolean endTransaction,boolean code, boolean comments, boolean literals) {
+    if(ourReservedWords.contains(refname)) return; // skip our special annotations !!!
+      
     boolean addedSomething = false;
 
     if (code && context.scanned.get(refname)==null) {

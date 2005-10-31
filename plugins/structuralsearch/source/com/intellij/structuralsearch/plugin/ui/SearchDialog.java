@@ -651,7 +651,8 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     SearchScope selectedScope = combo.getSelectedScope();
     if (selectedScope == null) return;
 
-    doValidate();
+    boolean result = doValidate();
+    if (!result) return;
     
     super.doOKAction();
     if (!isReplaceDialog()) {
@@ -691,20 +692,19 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
 
     try {
       Matcher.validate(searchContext.getProject(),model.getConfig().getMatchOptions());
-    } catch(Exception ex) {
-      if (ex instanceof UnsupportedPatternException ||
-          ex instanceof MalformedPatternException
-         ) {
-        doMessage("this.pattern.is.malformed.or.unsupported.message");
-      }
+    } catch(MalformedPatternException ex) {
+      doMessage("this.pattern.is.malformed.message", ex.getMessage());
+      result = false;
+    } catch(UnsupportedPatternException ex) {
+      doMessage("this.pattern.is.unsupported.message");
       result = false;
     }
     
-    getOKAction().setEnabled(result);
+    //getOKAction().setEnabled(result);
     return result;
   }
 
-  protected void doMessage(@NonNls String messageId) {
+  protected void doMessage(@NonNls String messageId, Object... params) {
     final int offset = searchCriteriaEdit.getCaretModel().getOffset();
     //UIUtil.showTooltip(
     //  searchCriteriaEdit,
@@ -716,7 +716,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     
     Messages.showMessageDialog(
       searchContext.getProject(),
-      SSRBundle.message(messageId),
+      SSRBundle.message(messageId, params),
       SSRBundle.message("information.message.title"),
       Messages.getInformationIcon()
     );

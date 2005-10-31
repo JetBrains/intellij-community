@@ -568,16 +568,6 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     );
   }
 
-  private static final String s1000 = "{ lastTest = \"search for parameterized pattern\";\n" +
-                                      "      matches = testMatcher.findMatches(s14_1,s15, options);\n" +
-                                      "      if (matches.size()!=2 ) return false;\n" +
-                                      "lastTest = \"search for parameterized pattern\";\n" +
-                                      "      matches = testMatcher.findMatches(s14_1,s15, options);\n" +
-                                      "      if (matches.size()!=2 ) return false; }";
-  private static final String s1001 = "lastTest = '_Descr; " +
-                                      "      matches = testMatcher.findMatches('_In,'_Pattern, options);\n" +
-                                      "      if (matches.size()!='_Number ) return false;";
-
   // @todo support back references (\1 in another reg exp or as fild member)
   //private static final String s1002 = " setSSS( instance.getSSS() ); " +
   //                                    " setSSS( instance.SSS ); ";
@@ -592,6 +582,16 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("several constructions 3",findMatchesCount(s7,s8),2);
     assertEquals("several constructions 4",findMatchesCount(s7,s9),2);
 
+    final String s1000 = "{ lastTest = \"search for parameterized pattern\";\n" +
+                         "      matches = testMatcher.findMatches(s14_1,s15, options);\n" +
+                         "      if (matches.size()!=2 ) return false;\n" +
+                         "lastTest = \"search for parameterized pattern\";\n" +
+                         "      matches = testMatcher.findMatches(s14_1,s15, options);\n" +
+                         "      if (matches.size()!=2 ) return false; }";
+    final String s1001 = "lastTest = '_Descr; " +
+                         "      matches = testMatcher.findMatches('_In,'_Pattern, options);\n" +
+                         "      if (matches.size()!='_Number ) return false;";
+    
     assertEquals("several operators 5",findMatchesCount(s1000,s1001),2);
 
     assertEquals(
@@ -2133,8 +2133,14 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     assertEquals("Find annotated methods",2,findMatchesCount(s5,s6));
     assertEquals("Find annotated methods, 2",2,findMatchesCount(s5,s6_2));
+    
+    //String s7 = "class A { void message(@NonNls String msg); }\n" +
+    //            "class B { void message2(String msg); }\n" +
+    //            "class C { void message2(String msg); }";
+    //String s8 = "class 'A { void '_b( @'_Ann{0,0}:NonNls String  '_); }";
+    //assertEquals("Find not annotated methods, 2",2,findMatchesCount(s7,s8));
   }
-
+  
   public void testBoxingAndUnboxing() {
     String s1 = " class A { void b(Integer i); void b2(int i); void c(int d); void c2(Integer d); }\n" +
                 "A a;\n" +
@@ -2176,7 +2182,8 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("Find field by dcl with comment 2",2,findMatchesCount(s1_2,s2_2));
   }
   
-  public void testPackageLocalAccessModifier() {
+  public void testSearchingEmptyModifiers() {
+    
     String s1 = "class A {\n" +
                 "  int a;\n" +
                 "  private char b;\n" +
@@ -2184,9 +2191,28 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                 "  public int c;\n" +
                 "  public int c2;\n" +
                 "}";
-    String s2 = "@Modifier(\"PackageLocal\") '_Type '_Variable = '_Value?;";
-    String s2_2 = "@Modifier({\"PackageLocal\",\"private\"}) '_Type '_Variable = '_Value?;";
+    String s2 = "@Modifier(\"packageLocal\") '_Type '_Variable = '_Value?;";
+    String s2_2 = "@Modifier({\"packageLocal\",\"private\"}) '_Type '_Variable = '_Value?;";
+    String s2_3 = "@Modifier({\"PackageLocal\",\"private\"}) '_Type '_Variable = '_Value?;";
+    
     assertEquals("Finding package local dcls",1,findMatchesCount(s1,s2));
     assertEquals("Finding package local dcls",3,findMatchesCount(s1,s2_2));
+    
+    try {
+      findMatchesCount(s1,s2_3);
+      assertTrue("Finding package local dcls",false);  
+    } catch(MalformedPatternException ex) {
+    
+    }
+    
+    String s3 = "class A {\n" +
+                "  int a;\n" +
+                "  static char b;\n" +
+                "  static char b2;\n" +
+                "}";
+    String s4 = "@Modifier(\"Instance\") '_Type '_Variable = '_Value?;";
+    String s4_2 = "@Modifier({\"static\",\"Instance\"}) '_Type '_Variable = '_Value?;";
+    assertEquals("Finding instance fields",1,findMatchesCount(s3,s4));
+    assertEquals("Finding all fields",3,findMatchesCount(s3,s4_2));
   }
 }
