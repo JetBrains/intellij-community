@@ -234,12 +234,14 @@ public class ControlFlowUtil {
     return inputVariables;
   }
 
-  public static PsiVariable[] getOutputVariables(ControlFlow flow, int start, int end, int exitPoint) {
+  public static PsiVariable[] getOutputVariables(ControlFlow flow, int start, int end, int[] exitPoints) {
     PsiVariable[] writtenVariables = ControlFlowUtil.getWrittenVariables(flow, start, end);
     ArrayList<PsiVariable> array = new ArrayList<PsiVariable>();
     for (PsiVariable variable : writtenVariables) {
-      if (ControlFlowUtil.needVariableValueAt(variable, flow, exitPoint)) {
-        array.add(variable);
+      for (int exitPoint : exitPoints) {
+        if (ControlFlowUtil.needVariableValueAt(variable, flow, exitPoint)) {
+          array.add(variable);
+        }
       }
     }
     PsiVariable[] outputVariables = array.toArray(new PsiVariable[array.size()]);

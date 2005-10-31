@@ -2,6 +2,7 @@ package com.intellij.refactoring.extractMethod;
 
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -82,6 +83,8 @@ public class ExtractMethodProcessor implements MatchProvider {
   private boolean myCanBeStatic;
   private List<Match> myDuplicates;
   private String myMethodVisibility = PsiModifier.PRIVATE;
+  private boolean myGenerateConditionalExit;
+  private PsiStatement myFirstExitStatementCopy;
 
   public ExtractMethodProcessor(Project project, Editor editor, PsiElement[] elements,
                                 PsiType forcedReturnType, String refactoringName,
@@ -139,6 +142,18 @@ public class ExtractMethodProcessor implements MatchProvider {
     myShowErrorDialogs = showErrorDialogs;
   }
 
+  private boolean areExitStatementsTheSame() {
+    if (myExitStatements.size() == 0) return false;
+    PsiStatement firstExitStatement = myExitStatements.get(0);
+    for (int i = 1; i < myExitStatements.size(); i++) {
+      PsiStatement statement = myExitStatements.get(i);
+      if (!PsiEquivalenceUtil.areElementsEquivalent(firstExitStatement, statement)) return false;
+    }
+
+    myFirstExitStatementCopy = (PsiStatement)firstExitStatement.copy();
+    return true;
+  }
+
   /**
    * Invoked in atomic action
    */
@@ -193,14 +208,19 @@ public class ExtractMethodProcessor implements MatchProvider {
       // if the fragment never exits assume as if it exits in the end
       exitPoints.add(myControlFlow.getEndOffset(myElements[myElements.length - 1]));
     }
-    if (exitPoints.size() != 1) {
-      showMultipleExitPointsMessage();
-      return false;
-    }
-    final int exitPoint = exitPoints.get(0);
 
-    myHasReturnStatement = myExpression == null &&
-                           ControlFlowUtil.returnPresentBetween(myControlFlow, myFlowStart, myFlowEnd);
+    myOutputVariables = ControlFlowUtil.getOutputVariables(myControlFlow, myFlowStart, myFlowEnd, exitPoints.toArray());
+
+    if (exitPoints.size() != 1) {
+      if (!areExitStatementsTheSame()) {
+        showMultipleExitPointsMessage();
+        return false;
+      }
+      myGenerateConditionalExit = true;
+    } else {
+      myHasReturnStatement = myExpression == null &&
+                             ControlFlowUtil.returnPresentBetween(myControlFlow, myFlowStart, myFlowEnd);
+    }
 
     myInputVariables = ControlFlowUtil.getInputVariables(myControlFlow, myFlowStart, myFlowEnd);
 
@@ -212,13 +232,11 @@ public class ExtractMethodProcessor implements MatchProvider {
       }
     });
 
-    myOutputVariables = ControlFlowUtil.getOutputVariables(myControlFlow, myFlowStart, myFlowEnd, exitPoint);
 
     chooseTargetClass();
 
     PsiType expressionType = null;
     if (myExpression != null) {
-//        expressionType = myExpresssion.getType();
       if (myForcedReturnType != null) {
         expressionType = myForcedReturnType;
       }
@@ -240,7 +258,9 @@ public class ExtractMethodProcessor implements MatchProvider {
     myHasReturnStatementOutput = returnStatementType != null && returnStatementType != PsiType.VOID;
 
     if (!myHasReturnStatementOutput) {
-      int outputCount = (myHasExpressionOutput ? 1 : 0) + myOutputVariables.length;
+      int outputCount = (myHasExpressionOutput ? 1 : 0) +
+                        (myGenerateConditionalExit ? 1 : 0) +
+                        myOutputVariables.length;
       if (outputCount > 1) {
         showMultipleOutputMessage(expressionType);
         return false;
@@ -253,6 +273,9 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
     else if (myOutputVariable != null) {
       myReturnType = myOutputVariable.getTypeElement().getType();
+    }
+    else if (myGenerateConditionalExit) {
+      myReturnType = PsiType.BOOLEAN;
     }
     else {
       myReturnType = expressionType;
@@ -380,6 +403,9 @@ public class ExtractMethodProcessor implements MatchProvider {
         returnStatement =
         (PsiReturnStatement)myElementFactory.createStatementFromText("return " + outVariableName + ";", null);
       }
+      else if (myGenerateConditionalExit) {
+        returnStatement = (PsiReturnStatement)myElementFactory.createStatementFromText("return false;", null);
+      }
       else {
         returnStatement = (PsiReturnStatement)myElementFactory.createStatementFromText("return;", null);
       }
@@ -395,7 +421,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       // replace all exit-statements such as break's or continue's with appropriate return
       for (PsiStatement exitStatement : myExitStatements) {
         if (exitStatement instanceof PsiReturnStatement) {
-          continue;
+          if (!myGenerateConditionalExit) continue;
         }
         else if (exitStatement instanceof PsiBreakStatement) {
           PsiStatement statement = ((PsiBreakStatement)exitStatement).findExitedStatement();
@@ -441,11 +467,20 @@ public class ExtractMethodProcessor implements MatchProvider {
       }
 
       body.addRange(myElements[0], myElements[myElements.length - 1]);
-      if (!myHasReturnStatement && hasNormalExit && myOutputVariable != null) {
+      if (myGenerateConditionalExit) {
+        body.add(myElementFactory.createStatementFromText("return true;", null));
+      }
+      else if (!myHasReturnStatement && hasNormalExit && myOutputVariable != null) {
         body.add(returnStatement);
       }
 
-      if (myOutputVariable != null) {
+      if (myGenerateConditionalExit) {
+        PsiIfStatement ifStatement = (PsiIfStatement)myElementFactory.createStatementFromText("if (a) b;", null);
+        ifStatement = (PsiIfStatement)addToMethodCallLocation(ifStatement);
+        methodCall = (PsiMethodCallExpression)ifStatement.getCondition().replace(methodCall);
+        ifStatement.getThenBranch().replace(myFirstExitStatementCopy);
+      }
+      else if (myOutputVariable != null) {
         String name = myOutputVariable.getName();
         boolean toDeclare = isDeclaredInside(myOutputVariable);
         if (!toDeclare) {
@@ -481,7 +516,7 @@ public class ExtractMethodProcessor implements MatchProvider {
         PsiStatement statement = myElementFactory.createStatementFromText("return;", null);
         addToMethodCallLocation(statement);
       }
-      else if (exitStatementCopy != null) {
+      else if (!myGenerateConditionalExit && exitStatementCopy != null) {
         addToMethodCallLocation(exitStatementCopy);
       }
 
@@ -825,6 +860,10 @@ public class ExtractMethodProcessor implements MatchProvider {
       if (myHasExpressionOutput) {
         buffer.append("    ").append(RefactoringBundle.message("expression.result")).append(": ");
         buffer.append(PsiFormatUtil.formatType(expressionType, 0, PsiSubstitutor.EMPTY));
+        buffer.append(",\n");
+      }
+      if (myGenerateConditionalExit) {
+        buffer.append("    ").append(RefactoringBundle.message("boolean.method.result"));
         buffer.append(",\n");
       }
       for (int i = 0; i < myOutputVariables.length; i++) {

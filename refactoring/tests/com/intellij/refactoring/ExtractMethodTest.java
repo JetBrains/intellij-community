@@ -26,7 +26,7 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   }
 
   public void testExitPoints2() throws Exception {
-    doExitPointsTest(false);
+    doTest();
   }
 
   public void testExitPoints3() throws Exception {
@@ -38,10 +38,11 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   }
 
   public void testExitPointsInsideLoop() throws Exception {
-    doExitPointsTest(false);
+    doExitPointsTest(true);
   }
 
   public void testExitPoints5() throws Exception { doTest(); }
+  public void testExitPoints6() throws Exception { doExitPointsTest(false); }
 
   public void testBooleanExpression() throws Exception { doTest(); }
 
