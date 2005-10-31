@@ -2,7 +2,7 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.intention.EmptyIntentionAction;
+import com.intellij.codeInsight.daemon.impl.EmptyIntentionAction;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.hint.QuestionAction;
@@ -35,8 +35,7 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
-import java.util.EventListener;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -138,7 +137,23 @@ public class IntentionHintComponent extends JPanel {
                                                          ArrayList<Pair<IntentionAction, List<IntentionAction>>> intentions,
                                                          ArrayList<Pair<IntentionAction, List<IntentionAction>>> quickFixes,
                                                          boolean showExpanded) {
-    final IntentionHintComponent component = new IntentionHintComponent(project, view, intentions, quickFixes);
+    ArrayList<Pair<IntentionAction, List<IntentionAction>>> filteredIntentions = new ArrayList<Pair<IntentionAction, List<IntentionAction>>>(intentions.size());
+    Set<IntentionAction> seenIntentions = new HashSet<IntentionAction>();
+    for (Pair<IntentionAction, List<IntentionAction>> pair : intentions) {
+      if (seenIntentions.contains(pair.first)) continue;
+      seenIntentions.add(pair.first);
+      filteredIntentions.add(pair);
+    }
+
+    ArrayList<Pair<IntentionAction, List<IntentionAction>>> filteredFixes = new ArrayList<Pair<IntentionAction, List<IntentionAction>>>(quickFixes.size());
+    Set<IntentionAction> seenFixes = new HashSet<IntentionAction>();
+    for (Pair<IntentionAction, List<IntentionAction>> pair : quickFixes) {
+      if (seenFixes.contains(pair.first)) continue;
+      seenFixes.add(pair.first);
+      filteredFixes.add(pair);
+    }
+
+    final IntentionHintComponent component = new IntentionHintComponent(project, view, filteredIntentions, filteredFixes);
 
     if (showExpanded) {
       component.showIntentionHintImpl(false);
@@ -704,7 +719,7 @@ public class IntentionHintComponent extends JPanel {
 
     public String getText() {
       return mySettings.isEnabled(myActionFamilyName) ?
-             CodeInsightBundle.message("disable.intention.action", myActionFamilyName) : 
+             CodeInsightBundle.message("disable.intention.action", myActionFamilyName) :
              CodeInsightBundle.message("enable.intention.action", myActionFamilyName);
     }
 

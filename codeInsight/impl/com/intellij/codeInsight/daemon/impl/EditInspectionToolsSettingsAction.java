@@ -122,4 +122,23 @@ public class EditInspectionToolsSettingsAction implements IntentionAction {
   public boolean startInWriteAction() {
     return false;
   }
+
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    final EditInspectionToolsSettingsAction that = (EditInspectionToolsSettingsAction)o;
+
+    if (myDisplayName != null ? !myDisplayName.equals(that.myDisplayName) : that.myDisplayName != null) return false;
+    if (myShortName != null ? !myShortName.equals(that.myShortName) : that.myShortName != null) return false;
+
+    return true;
+  }
+
+  public int hashCode() {
+    int result;
+    result = (myDisplayName != null ? myDisplayName.hashCode() : 0);
+    result = 29 * result + (myShortName != null ? myShortName.hashCode() : 0);
+    return result;
+  }
 }
