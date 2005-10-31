@@ -1,8 +1,9 @@
-package com.intellij.codeInsight.i18n;
+package com.intellij.uiDesigner.i18n;
 
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.GuiEditor;
 import com.intellij.uiDesigner.RadComponent;
+import com.intellij.uiDesigner.i18n.I18nizeFormQuickFix;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 
 /**

@@ -77,4 +77,8 @@ public interface ExtensionPoints {
    */
   @NonNls
   String APPLICATION_STARTER = "com.intellij.appStarter";
+
+  @NonNls String INVALID_PROPERTY_KEY_INSPECTION_TOOL = "com.intellij.invalidPropertyKeyInspectionTool";
+  @NonNls String I18N_INSPECTION_TOOL = "com.intellij.i18nInspectionTool";
+  @NonNls String FORM_INSPECTION_TOOL = "com.intellij.formInspectionTool";
 }

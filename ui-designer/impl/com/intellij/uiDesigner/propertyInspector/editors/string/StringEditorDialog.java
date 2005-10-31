@@ -4,6 +4,7 @@ import com.intellij.CommonBundle;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.ide.util.TreeFileChooser;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
@@ -203,7 +204,7 @@ final class StringEditorDialog extends DialogWrapper{
         new ActionListener() {
           public void actionPerformed(final ActionEvent e) {
             Project project = myModule.getProject();
-            PsiFile initialPropertiesFile = ReferenceUtil.getPropertiesFile(MyResourceBundleCard.this.myTfBundleName.getText(), myModule);
+            PsiFile initialPropertiesFile = PropertiesUtil.getPropertiesFile(MyResourceBundleCard.this.myTfBundleName.getText(), myModule);
             final GlobalSearchScope moduleScope = GlobalSearchScope.moduleWithDependenciesScope(myModule);
             TreeFileChooser fileChooser = TreeClassChooserFactory.getInstance(project).createFileChooser(UIDesignerBundle.message("title.choose.properties.file"), initialPropertiesFile,
                                                                                                          StdFileTypes.PROPERTIES, new TreeFileChooser.PsiFileFilter() {
@@ -249,7 +250,7 @@ final class StringEditorDialog extends DialogWrapper{
               );
               return;
             }
-            final PropertiesFile bundle = ReferenceUtil.getPropertiesFile(bundleName, myModule);
+            final PropertiesFile bundle = PropertiesUtil.getPropertiesFile(bundleName, myModule);
             if(bundle == null){
               Messages.showErrorDialog(
                 UIDesignerBundle.message("error.bundle.does.not.exist", bundleName),

@@ -18,7 +18,6 @@
     <orderEntry type="module" module-name="Annotations" />
     <orderEntry type="module" module-name="inspections-impl" />
     <orderEntry type="module" module-name="inspections-openapi" />
-    <orderEntry type="module" module-name="ui-designer-impl" />
     <orderEntry type="module" module-name="UIDesignerCore" />
     <orderEntry type="library" name="Trove4j" level="project" />
     <orderEntry type="module" module-name="refactoring-openapi" />

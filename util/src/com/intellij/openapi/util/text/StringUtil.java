@@ -706,4 +706,11 @@ public class StringUtil {
     }
     return res;
   }
+
+  public static boolean containsAlphaCharacters(String value) {
+    for (int i = 0; i < value.length(); i++) {
+      if (Character.isLetter(value.charAt(i))) return true;
+    }
+    return false;
+  }
 }

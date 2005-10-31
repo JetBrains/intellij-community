@@ -1,7 +1,9 @@
-package com.intellij.codeInsight.i18n;
+package com.intellij.uiDesigner.i18n;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.i18n.I18nizeQuickFixDialog;
+import com.intellij.codeInsight.i18n.I18nizeQuickFix;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -30,7 +32,7 @@ import java.util.Collection;
  * To change this template use File | Settings | File Templates.
  */
 public abstract class I18nizeFormQuickFix extends QuickFix {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.i18n.I18nizeFormQuickFix");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.i18n.I18nizeFormQuickFix");
   protected final RadComponent myComponent;
 
   public I18nizeFormQuickFix(final GuiEditor editor, final String name, final RadComponent component) {

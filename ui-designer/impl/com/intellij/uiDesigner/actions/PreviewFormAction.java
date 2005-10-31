@@ -12,6 +12,7 @@ import com.intellij.execution.runners.JavaProgramRunner;
 import com.intellij.execution.runners.RunStrategy;
 import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.lang.properties.ResourceBundle;
+import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Document;
@@ -231,7 +232,7 @@ public final class PreviewFormAction extends AnAction{
         HashSet<VirtualFile> virtualFiles = new HashSet<VirtualFile>();
         HashSet<Module> modules = new HashSet<Module>();
         for(String bundleName: bundleSet) {
-          PropertiesFile basePropFile = ReferenceUtil.getPropertiesFile(bundleName, module);
+          PropertiesFile basePropFile = PropertiesUtil.getPropertiesFile(bundleName, module);
           if (basePropFile != null) {
             ResourceBundle resBundle = basePropFile.getResourceBundle();
             for(PropertiesFile propFile: resBundle.getPropertiesFiles(module.getProject())) {

@@ -3,6 +3,7 @@ package com.intellij.uiDesigner;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.*;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.IContainer;
@@ -12,6 +13,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
+import com.intellij.ExtensionPoints;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -229,11 +231,11 @@ public final class ErrorAnalyzer {
       // Run inspections for form elements
       final PsiFile formPsiFile = PsiManager.getInstance(module.getProject()).findFile(formFile);
       if (formPsiFile != null) {
-        final InspectionProfileImpl profile = DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(formPsiFile);
         final List<FormInspectionTool> formInspectionTools = new ArrayList<FormInspectionTool>();
-        for(LocalInspectionTool tool: profile.getHighlightingLocalInspectionTools()) {
-          if (tool instanceof FormInspectionTool) {
-            formInspectionTools.add((FormInspectionTool) tool);
+        for(Object object: Extensions.getRootArea().getExtensionPoint(ExtensionPoints.FORM_INSPECTION_TOOL).getExtensions()) {
+          final FormInspectionTool formInspectionTool = (FormInspectionTool)object;
+          if (formInspectionTool.isActive(formPsiFile)) {
+            formInspectionTools.add(formInspectionTool);
           }
         }
 

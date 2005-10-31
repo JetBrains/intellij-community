@@ -5,19 +5,24 @@ import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
 /**
  * @author cdr
@@ -142,5 +147,38 @@ public class PropertiesUtil {
       }
     }
     return result;
+  }
+
+  @Nullable
+  public static PropertiesFile getPropertiesFile(final String bundleName, final Module searchFromModule) {
+    @NonNls final String fileName = bundleName + ".properties";
+    final Set<Module> dependentModules = new com.intellij.util.containers.HashSet<Module>();
+    ModuleUtil.getDependencies(searchFromModule, dependentModules);
+    for(Module m: dependentModules) {
+      final PropertiesFile file = findPropertiesFile(fileName, m);
+      if (file != null) {
+        return file;
+      }
+    }
+    return null;
+  }
+
+  private static PropertiesFile findPropertiesFile(final String name, final Module inModule) {
+    final VirtualFile[] sourceRoots = ModuleRootManager.getInstance(inModule).getSourceRoots();
+    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(inModule.getProject()).getFileIndex();
+    for (final VirtualFile sourceRoot : sourceRoots) {
+      final String packagePrefix = fileIndex.getPackageNameByDirectory(sourceRoot);
+      final String prefix = (packagePrefix == null || packagePrefix.length() == 0) ? null : packagePrefix.replace('.', '/') + "/";
+      final String relPath = (prefix != null && name.startsWith(prefix) && name.length() > prefix.length()) ? name.substring(prefix.length()) : name;
+      final String fullPath = sourceRoot.getPath() + "/" + relPath;
+      final VirtualFile fileByPath = LocalFileSystem.getInstance().findFileByPath(fullPath);
+      if (fileByPath != null) {
+        final PsiFile psiFile = PsiManager.getInstance(inModule.getProject()).findFile(fileByPath);
+        if (psiFile instanceof PropertiesFile) {
+          return (PropertiesFile)psiFile;
+        }
+      }
+    }
+    return null;
   }
 }

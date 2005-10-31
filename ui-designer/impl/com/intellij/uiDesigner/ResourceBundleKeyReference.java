@@ -6,20 +6,16 @@ package com.intellij.uiDesigner;
 
 import com.intellij.psi.PsiPlainTextFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
+import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.util.IncorrectOperationException;
-
-import java.net.URL;
 
 /**
  * @author Eugene Zhuravlev
@@ -44,7 +40,7 @@ final class ResourceBundleKeyReference extends ReferenceInForm {
     if (module == null) {
       return null;
     }
-    final PropertiesFile propertiesFile = ReferenceUtil.getPropertiesFile(myBundleName, module);
+    final PropertiesFile propertiesFile = PropertiesUtil.getPropertiesFile(myBundleName, module);
     if (propertiesFile == null) {
       return null;
     }

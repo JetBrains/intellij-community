@@ -27,6 +27,9 @@
     <orderEntry type="library" name="BCEL" level="project" />
     <orderEntry type="module" module-name="inspections-openapi" />
     <orderEntry type="module" module-name="inspections-impl" />
+    <orderEntry type="module" module-name="execution-impl" />
+    <orderEntry type="module" module-name="execution-openapi" />
+    <orderEntry type="module" module-name="compiler-impl" />
     <orderEntryProperties />
   </component>
   <component name="copyright">
