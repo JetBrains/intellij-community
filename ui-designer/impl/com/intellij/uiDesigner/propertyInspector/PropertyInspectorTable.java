@@ -107,6 +107,8 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
    */
   private SimpleTextAttributes myPropertyNameAttrs;
   private SimpleTextAttributes myErrorPropertyNameAttrs;
+  private SimpleTextAttributes myModifiedPropertyNameAttrs;
+  private SimpleTextAttributes myModifiedErrorPropertyNameAttrs;
   private boolean myInsideSynch;
 
   PropertyInspectorTable(final GuiEditor editor,final ComponentTree componentTree){
@@ -229,8 +231,13 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
 
   public void updateUI() {
     myPropertyNameAttrs = SimpleTextAttributes.REGULAR_ATTRIBUTES;
+    myModifiedPropertyNameAttrs = SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
     myErrorPropertyNameAttrs = new SimpleTextAttributes(
       SimpleTextAttributes.STYLE_WAVED,
+      null, Color.RED
+    );
+    myModifiedErrorPropertyNameAttrs = new SimpleTextAttributes(
+      SimpleTextAttributes.STYLE_WAVED | SimpleTextAttributes.STYLE_BOLD,
       null, Color.RED
     );
     super.updateUI();
@@ -766,12 +773,14 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       if(column==0){ // painter for first column
         // 1. Text
         final boolean hasErrors = getErrorForRow(row) != null;
-        if(hasErrors){
-          myPropertyNameRenderer.append(property.getName(), myErrorPropertyNameAttrs);
+        SimpleTextAttributes attrs;
+        if (hasErrors) {
+          attrs = myComponent.isMarkedAsModified(property) ? myModifiedErrorPropertyNameAttrs : myErrorPropertyNameAttrs;
         }
-        else{
-          myPropertyNameRenderer.append(property.getName(), myPropertyNameAttrs);
+        else {
+          attrs = myComponent.isMarkedAsModified(property) ? myModifiedPropertyNameAttrs : myPropertyNameAttrs;
         }
+        myPropertyNameRenderer.append(property.getName(), attrs);
 
         // 2. Icon
         if(property.getChildren().length>0){
@@ -797,6 +806,9 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
         final JComponent component = renderer.getComponent(property.getValue(myComponent),selected,hasFocus);
         if (!selected) {
           component.setBackground(background);
+        }
+        if (myComponent.isMarkedAsModified(property)) {
+          component.setFont(table.getFont().deriveFont(Font.BOLD));
         }
         return component;
       }
