@@ -18,20 +18,27 @@ public class InheritanceImplUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.InheritanceImplUtil");
 
   public static boolean isInheritor(PsiClass candidateClass, final PsiClass baseClass, final boolean checkDeep) {
+    return isInheritor(candidateClass, baseClass, checkDeep, true);
+  }
+
+  public static boolean isInheritor(final PsiClass candidateClass, final PsiClass baseClass, final boolean checkDeep, final boolean checkEjb) {
     if (baseClass instanceof PsiAnonymousClass) {
       return false;
     }
     if (isInheritor(candidateClass, baseClass, checkDeep, null)) return true;
 
-    final EjbClassRole classRole = J2EERolesUtil.getEjbRole(candidateClass);
-    if (classRole != null && candidateClass.getManager().areElementsEquivalent(candidateClass, classRole.getEjb().getEjbClass().getPsiClass())) {
-      final Ejb ejb = classRole.getEjb();
-      return !EjbUtil.visitEjbInterfaces(ejb, new J2EEElementsVisitor(){
-        public boolean visitInterface(PsiClass anInterface) {
-          return !InheritanceUtil.isInheritorOrSelf(anInterface, baseClass, checkDeep);
-        }
-      });
+    if (checkEjb) {
+      final EjbClassRole classRole = J2EERolesUtil.getEjbRole(candidateClass);
+      if (classRole != null && candidateClass.getManager().areElementsEquivalent(candidateClass, classRole.getEjb().getEjbClass().getPsiClass())) {
+        final Ejb ejb = classRole.getEjb();
+        return !EjbUtil.visitEjbInterfaces(ejb, new J2EEElementsVisitor(){
+          public boolean visitInterface(PsiClass anInterface) {
+            return !InheritanceUtil.isInheritorOrSelf(anInterface, baseClass, checkDeep);
+          }
+        });
+      }
     }
+
     return false;
   }
 
