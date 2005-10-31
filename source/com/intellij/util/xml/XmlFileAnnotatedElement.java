@@ -16,11 +16,20 @@ public class XmlFileAnnotatedElement<T extends XmlAnnotatedElement> implements X
   private final XmlFile myFile;
   private final Class<T> myRootElementClass;
   private final XmlAnnotatedElementManagerImpl myManager;
+  private final String myRootTagName;
 
-  public XmlFileAnnotatedElement(final XmlFile file, final XmlAnnotatedElementManagerImpl manager, final Class<T> rootElementClass) {
+  protected XmlFileAnnotatedElement(final XmlFile file, final XmlAnnotatedElementManagerImpl manager, final Class<T> rootElementClass) {
+    this(file, manager, rootElementClass, null);
+  }
+
+  protected XmlFileAnnotatedElement(final XmlFile file,
+                                 final XmlAnnotatedElementManagerImpl manager,
+                                 final Class<T> rootElementClass,
+                                 final String rootTagName) {
     myFile = file;
     myManager = manager;
     myRootElementClass = rootElementClass;
+    myRootTagName = rootTagName;
   }
 
   public XmlFile getFile() {
@@ -33,7 +42,7 @@ public class XmlFileAnnotatedElement<T extends XmlAnnotatedElement> implements X
       final XmlDocument document = myFile.getDocument();
       if (document != null) {
         final XmlTag tag = document.getRootTag();
-        if (tag != null) {
+        if (tag != null && (myRootTagName == null || myRootTagName.equals(tag.getName()))) {
           final T element = (T) myManager.getCachedElement(tag);
           return element == null ? myManager.createXmlAnnotatedElement(myRootElementClass, tag) : element;
         }

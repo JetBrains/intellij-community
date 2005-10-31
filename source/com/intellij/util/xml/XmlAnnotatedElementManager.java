@@ -4,10 +4,8 @@
 package com.intellij.util.xml;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -26,6 +24,6 @@ public abstract class XmlAnnotatedElementManager {
   @NotNull
   public abstract <T extends XmlAnnotatedElement> XmlFileAnnotatedElement<T> getFileElement(final XmlFile file, final Class<T> aClass);
 
-  @Nullable
-  public abstract <T extends XmlAnnotatedElement> T getCachedElement(XmlElement element);
+  @NotNull
+  public abstract <T extends XmlAnnotatedElement> XmlFileAnnotatedElement<T> getFileElement(XmlFile file, Class<T> aClass, String rootTagName);
 }

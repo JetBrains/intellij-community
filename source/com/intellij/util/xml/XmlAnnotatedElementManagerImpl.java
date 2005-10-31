@@ -28,7 +28,7 @@ import java.util.*;
  */
 public class XmlAnnotatedElementManagerImpl extends XmlAnnotatedElementManager implements ApplicationComponent {
   private static final Key<NameStrategy> NAME_STRATEGY_KEY = Key.create("NameStrategy");
-  private static final Key CACHED_ELEMENT = Key.create("CachedXmlAnnotatedElement");
+  private static final Key<XmlAnnotatedElement> CACHED_ELEMENT = Key.create("CachedXmlAnnotatedElement");
 
   @NotNull
   protected <T extends XmlAnnotatedElement> T createXmlAnnotatedElement(final Class<T> aClass, final XmlTag tag) {
@@ -52,7 +52,7 @@ public class XmlAnnotatedElementManagerImpl extends XmlAnnotatedElementManager i
   @NotNull
   public <T extends XmlAnnotatedElement> XmlFileAnnotatedElement<T> getFileElement(final XmlFile file, final Class<T> aClass) {
     synchronized (PsiLock.LOCK) {
-      XmlFileAnnotatedElement<T> element = getCachedElement(file);
+      XmlFileAnnotatedElement<T> element = (XmlFileAnnotatedElement<T>)getCachedElement(file);
       if (element == null) {
         element = new XmlFileAnnotatedElement<T>(file, this, aClass);
         setCachedElement(file, element);
@@ -61,13 +61,25 @@ public class XmlAnnotatedElementManagerImpl extends XmlAnnotatedElementManager i
     }
   }
 
-  private <T extends XmlAnnotatedElement> void setCachedElement(final XmlElement xmlElement, final T element) {
+  @NotNull
+  public <T extends XmlAnnotatedElement> XmlFileAnnotatedElement<T> getFileElement(final XmlFile file, final Class<T> aClass, String rootTagName) {
+    synchronized (PsiLock.LOCK) {
+      XmlFileAnnotatedElement<T> element = (XmlFileAnnotatedElement<T>)getCachedElement(file);
+      if (element == null) {
+        element = new XmlFileAnnotatedElement<T>(file, this, aClass, rootTagName);
+        setCachedElement(file, element);
+      }
+      return element;
+    }
+  }
+
+  private void setCachedElement(final XmlElement xmlElement, final XmlAnnotatedElement element) {
     xmlElement.putUserData(CACHED_ELEMENT, element);
   }
 
   @Nullable
-  public <T extends XmlAnnotatedElement> T getCachedElement(final XmlElement element) {
-    return (T)element.getUserData(CACHED_ELEMENT);
+  public XmlAnnotatedElement getCachedElement(final XmlElement element) {
+    return element.getUserData(CACHED_ELEMENT);
   }
 
   @NonNls
@@ -79,6 +91,25 @@ public class XmlAnnotatedElementManagerImpl extends XmlAnnotatedElementManager i
   }
 
   public void disposeComponent() {
+  }
+
+  private Converter getConverter(Method method) throws IllegalAccessException, InstantiationException {
+    final Convert convert = method.getAnnotation(Convert.class);
+    if (convert != null) {
+      return convert.value().newInstance();
+    }
+    final Class<?> returnType = method.getReturnType();
+    if (returnType.equals(int.class) || returnType.equals(Integer.class)) {
+      return Converter.INTEGER_CONVERTER;
+    }
+    if (returnType.equals(boolean.class) || returnType.equals(Boolean.class)) {
+      return Converter.BOOLEAN_CONVERTER;
+    }
+    return Converter.EMPTY_CONVERTER;
+  }
+
+  private <T> T convertFromString(Method method, String s) throws IllegalAccessException, InstantiationException {
+    return ((Converter<T>)getConverter(method)).fromString(s);
   }
 
   private class MyInvocationHandler<T extends XmlAnnotatedElement> implements InvocationHandler {
@@ -97,11 +128,11 @@ public class XmlAnnotatedElementManagerImpl extends XmlAnnotatedElementManager i
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
       final AttributeValue attributeValue = method.getAnnotation(AttributeValue.class);
       if (attributeValue != null) {
-        return myTag.getAttributeValue(guessName(attributeValue.value(), method));
+        return convertFromString(method, myTag.getAttributeValue(guessName(attributeValue.value(), method)));
       }
       final TagValue tagValue = method.getAnnotation(TagValue.class);
       if (tagValue != null || isGetValueMethod(method)) {
-        return myTag.getValue().getText();
+        return convertFromString(method, myTag.getValue().getText());
       }
       final SubTagValue subTagValue = method.getAnnotation(SubTagValue.class);
       if (subTagValue != null) {
@@ -109,7 +140,7 @@ public class XmlAnnotatedElementManagerImpl extends XmlAnnotatedElementManager i
         if (qname != null) {
           final XmlTag subTag = myTag.findFirstSubTag(qname);
           if (subTag != null) {
-            return subTag.getValue().getText();
+            return convertFromString(method, subTag.getValue().getText());
           }
         }
         return null;
