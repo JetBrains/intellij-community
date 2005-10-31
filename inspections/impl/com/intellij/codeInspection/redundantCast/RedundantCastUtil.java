@@ -15,6 +15,7 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.pom.java.LanguageLevel;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -113,6 +114,7 @@ public class RedundantCastUtil {
     }
 
     public void visitConditionalExpression(PsiConditionalExpression expression) {
+      super.visitConditionalExpression(expression);
       // Do not go inside conditional expression because branches are required to be exactly the same type, not assignable.
     }
 
@@ -333,6 +335,13 @@ public class RedundantCastUtil {
         }
       }
       else {
+        if (typeCast.getParent() instanceof PsiConditionalExpression) {
+          if (typeCast.getManager().getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) < 0) {
+            //branches need to be of the same type
+            if (!operand.getType().equals(((PsiConditionalExpression)typeCast.getParent()).getType())) return;
+          }
+        }
+
         processAlreadyHasTypeCast(typeCast);
       }
     }
@@ -346,7 +355,7 @@ public class RedundantCastUtil {
 
       PsiType toType = typeCast.getCastType().getType();
       PsiType fromType = typeCast.getOperand().getType();
-      if (fromType == null || toType == null) return;
+      if (fromType == null) return;
       if (parent instanceof PsiReferenceExpression) {
         if (toType instanceof PsiClassType && fromType instanceof PsiPrimitiveType) return; //explicit boxing
         //Check accessibility
