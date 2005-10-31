@@ -17,6 +17,7 @@ import com.intellij.uiDesigner.editor.UIFormEditor;
 import com.intellij.util.Icons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 
@@ -91,9 +92,9 @@ public class BoundIconRenderer extends GutterIconRenderer {
   }
 
   private String composeText(final PsiFile[] formFiles) {
-    StringBuilder result = new StringBuilder("<html><body>");
+    @NonNls StringBuilder result = new StringBuilder("<html><body>");
     result.append(DaemonBundle.message("ui.is.bound.header"));
-    String sep = "";
+    @NonNls String sep = "";
     for (PsiFile file: formFiles) {
       result.append(sep);
       sep = "<br>";
