@@ -102,19 +102,6 @@ class XmlAnnotatedElementImpl<T extends XmlAnnotatedElement> implements Invocati
     if (tagValue != null || isGetValueMethod(method)) {
       return tag != null ? convertFromString(method, tag.getValue().getText()) : null;
     }
-    final SubTagValue subTagValue = method.getAnnotation(SubTagValue.class);
-    if (subTagValue != null) {
-      if (tag == null) return null;
-
-      final String qname = guessName(subTagValue.value(), method);
-      if (qname != null) {
-        final XmlTag subTag = tag.findFirstSubTag(qname);
-        if (subTag != null) {
-          return convertFromString(method, subTag.getValue().getText());
-        }
-      }
-      return null;
-    }
 
     checkInitialized();
 
