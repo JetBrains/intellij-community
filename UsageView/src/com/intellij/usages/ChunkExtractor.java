@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
@@ -90,7 +91,11 @@ public class ChunkExtractor {
     final int lineStartOffset = myDocument.getLineStartOffset(myLineNumber);
     final int lineEndOffset = myDocument.getLineEndOffset(myLineNumber);
     final FileType fileType = myElement.getContainingFile().getFileType();
-    return createTextChunks(myDocument.getCharsSequence(), fileType.getHighlighter(myElement.getProject()), lineStartOffset, lineEndOffset);
+    SyntaxHighlighter highlighter = fileType.getHighlighter(myElement.getProject());
+    if (highlighter == null) {
+      highlighter = new PlainSyntaxHighlighter();
+    }
+    return createTextChunks(myDocument.getCharsSequence(), highlighter, lineStartOffset, lineEndOffset);
   }
 
   private TextChunk[] createTextChunks(final CharSequence chars,
