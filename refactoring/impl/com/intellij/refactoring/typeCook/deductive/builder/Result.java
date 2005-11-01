@@ -79,7 +79,7 @@ public class Result {
     return originalType;
   }
 
-  public HashSet<PsiElement> getChangedElements() {
+  public HashSet<PsiElement> getCookedElements() {
     myCookedNumber = 0;
 
     final HashSet<PsiElement> set = new HashSet<PsiElement>();
