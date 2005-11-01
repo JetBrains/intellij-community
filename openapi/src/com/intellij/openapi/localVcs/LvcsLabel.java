@@ -37,6 +37,7 @@ public interface LvcsLabel extends Comparable<LvcsLabel>{
   String getAction();
   int getVersionId();
 
+  LvcsLabel getRecentChangesBeforeLabel( long date );
 
   int compareTo(LvcsRevision revision);
 }
