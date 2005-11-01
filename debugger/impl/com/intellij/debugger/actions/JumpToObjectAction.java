@@ -8,13 +8,9 @@ import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Computable;
 import com.sun.jdi.*;
 
 import java.util.List;
@@ -46,7 +42,9 @@ public class JumpToObjectAction extends DebuggerAction{
     debugProcess.getManagerThread().invokeLater(new SuspendContextCommandImpl(debuggerContext.getSuspendContext()) {
       public void contextAction() throws Exception {
         final SourcePosition sourcePosition = calcPosition((ValueDescriptor)descriptor, debugProcess);
-        sourcePosition.navigate(true);
+        if (sourcePosition != null) {
+          sourcePosition.navigate(true);
+        }
       }
     });
   }
