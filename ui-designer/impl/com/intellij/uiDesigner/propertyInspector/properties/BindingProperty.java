@@ -12,6 +12,7 @@ import com.intellij.uiDesigner.GuiEditor;
 import com.intellij.uiDesigner.GuiEditorUtil;
 import com.intellij.uiDesigner.RadComponent;
 import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.uiDesigner.quickFixes.CreateFieldFix;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
@@ -80,10 +81,6 @@ public final class BindingProperty extends Property {
 
     component.setBinding(newBinding);
 
-    if(oldBinding == null){
-      return;
-    }
-
     final String classToBind = myGuiEditor.getRootContainer().getClassToBind();
     if(classToBind == null){
       return;
@@ -92,6 +89,13 @@ public final class BindingProperty extends Property {
     final Project project = myGuiEditor.getProject();
     final PsiClass aClass = PsiManager.getInstance(project).findClass(classToBind, GlobalSearchScope.allScope(project));
     if(aClass == null){
+      return;
+    }
+
+    if(oldBinding == null) {
+      if (aClass.findFieldByName(newBinding, true) == null) {
+        CreateFieldFix.runImpl(myGuiEditor, aClass, component.getComponentClassName(), newBinding, false);
+      }
       return;
     }
 
