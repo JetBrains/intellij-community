@@ -78,8 +78,8 @@ class DomInvocationHandler<T extends DomElement> implements InvocationHandler, D
     return ((Converter<T>)getConverter(method, getter)).fromString(s, new ConvertContext(getFile()));
   }
 
-  private <T> String convertToString(Method method, T s, final boolean getter) throws IllegalAccessException, InstantiationException {
-    return ((Converter<T>)getConverter(method, getter)).toString(s, new ConvertContext(getFile()));
+  private <T> String convertToString(Method method, T argument, final boolean getter) throws IllegalAccessException, InstantiationException {
+    return ((Converter<T>)getConverter(method, getter)).toString(argument, new ConvertContext(getFile()));
   }
 
   public final DomElement getProxy() {
@@ -121,17 +121,6 @@ class DomInvocationHandler<T extends DomElement> implements InvocationHandler, D
     return myFile;
   }
 
-  public boolean equals(final Object o) {
-    if (o instanceof DomInvocationHandler) {
-      return myProxy.equals(((DomInvocationHandler)o).myProxy);
-    }
-    return false;
-  }
-
-  public int hashCode() {
-    return myProxy.hashCode();
-  }
-
   public final Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
     final String name = method.getName();
     if (isCoreMethod(method)) {
@@ -147,7 +136,13 @@ class DomInvocationHandler<T extends DomElement> implements InvocationHandler, D
     final AttributeValue attributeValue = method.getAnnotation(AttributeValue.class);
     final XmlTag tag = getXmlTag();
     if (attributeValue != null) {
-      return tag != null ? convertFromString(method, tag.getAttributeValue(guessName(attributeValue.value(), method)), true) : null;
+      final String attributeName = guessName(attributeValue.value(), method);
+      if (getter) {
+        return tag != null ? convertFromString(method, tag.getAttributeValue(attributeName), true) : null;
+      }
+      assert setter : "Annotated method " + method.toString() + " should be either setter or getter";
+      ensureTagExists().setAttribute(attributeName, convertToString(method, args[0], false));
+      return null;
     }
 
     final TagValue tagValue = method.getAnnotation(TagValue.class);
