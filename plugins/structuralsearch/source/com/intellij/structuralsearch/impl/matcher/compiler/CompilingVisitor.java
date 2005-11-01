@@ -451,8 +451,7 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
     if (code && context.scanned.get(refname)==null) {
       context.helper.processAllFilesWithWord(refname,
                                              (GlobalSearchScope)context.options.getScope(),
-                                             new MyFileProcessor()
-      );
+                                             new MyFileProcessor(), true);
 
       context.scanned.put( refname, refname );
       addedSomething  = true;
