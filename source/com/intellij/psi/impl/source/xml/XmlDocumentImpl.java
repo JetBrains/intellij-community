@@ -91,14 +91,23 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     final Map<String, CachedValue<XmlNSDescriptor>> defaultDescriptorsCache;
     if(strict) defaultDescriptorsCache = myDefaultDescriptorsCacheStrict;
     else defaultDescriptorsCache = myDefaultDescriptorsCacheNotStrict;
-    if(defaultDescriptorsCache.containsKey(namespace)) return defaultDescriptorsCache.get(namespace).getValue();
-    defaultDescriptorsCache.put(namespace, new CachedValueImpl<XmlNSDescriptor>(getManager(), new CachedValueProvider<XmlNSDescriptor>(){
-      public Result<XmlNSDescriptor> compute() {
-        final XmlNSDescriptor defaultNSDescriptorInner = getDefaultNSDescriptorInner(namespace, strict);
-        return new Result<XmlNSDescriptor>(defaultNSDescriptorInner, defaultNSDescriptorInner != null ? defaultNSDescriptorInner.getDependences() : new Object[0]);
-      }
-    }, false));
-    return getDefaultNSDescriptor(namespace, strict);
+    if(defaultDescriptorsCache.containsKey(namespace)){
+      final CachedValue<XmlNSDescriptor> cachedValue = defaultDescriptorsCache.get(namespace);
+      if(cachedValue != null) return cachedValue.getValue();
+      else return null;
+    }
+    defaultDescriptorsCache.put(namespace, null);
+    final CachedValueImpl<XmlNSDescriptor> value =
+      new CachedValueImpl<XmlNSDescriptor>(getManager(), new CachedValueProvider<XmlNSDescriptor>() {
+        public Result<XmlNSDescriptor> compute() {
+          final XmlNSDescriptor defaultNSDescriptorInner = getDefaultNSDescriptorInner(namespace, strict);
+          return new Result<XmlNSDescriptor>(defaultNSDescriptorInner,
+                                             defaultNSDescriptorInner != null ? defaultNSDescriptorInner.getDependences() : new Object[0]);
+        }
+      }, false);
+    final XmlNSDescriptor defaultNSDescriptor = value.getValue();
+    defaultDescriptorsCache.put(namespace, value);
+    return defaultNSDescriptor;
   }
 
   public XmlNSDescriptor getDefaultNSDescriptorInner(final String namespace, final boolean strict) {
