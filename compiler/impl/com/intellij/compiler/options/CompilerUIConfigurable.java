@@ -3,10 +3,10 @@ package com.intellij.compiler.options;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.RmicSettings;
+import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.util.Options;
@@ -14,7 +14,6 @@ import com.intellij.util.Options;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.StringTokenizer;
 import java.util.regex.PatternSyntaxException;
 
@@ -75,7 +74,7 @@ public class CompilerUIConfigurable implements Configurable {
     myCbCompileInBackground.setSelected(workspaceConfiguration.COMPILE_IN_BACKGROUND);
     myCbCloseMessageViewOnSuccess.setSelected(workspaceConfiguration.CLOSE_MESSAGE_VIEW_IF_SUCCESS);
     myCbCompileDependent.setSelected(workspaceConfiguration.COMPILE_DEPENDENT_FILES);
-    myCbClearOutputDirectory.setSelected(configuration.isClearOutputDirectory());
+    myCbClearOutputDirectory.setSelected(workspaceConfiguration.CLEAR_OUTPUT_DIRECTORY);
 
     configuration.convertPatterns();
 
@@ -115,7 +114,7 @@ public class CompilerUIConfigurable implements Configurable {
     workspaceConfiguration.COMPILE_IN_BACKGROUND = myCbCompileInBackground.isSelected();
     workspaceConfiguration.CLOSE_MESSAGE_VIEW_IF_SUCCESS = myCbCloseMessageViewOnSuccess.isSelected();
     workspaceConfiguration.COMPILE_DEPENDENT_FILES = myCbCompileDependent.isSelected();
-    configuration.setClearOutputDirectory(myCbClearOutputDirectory.isSelected());
+    workspaceConfiguration.CLEAR_OUTPUT_DIRECTORY = myCbClearOutputDirectory.isSelected();
 
     configuration.removeResourceFilePatterns();
     String extensionString = myResourcePatternsField.getText().trim();
@@ -171,7 +170,7 @@ public class CompilerUIConfigurable implements Configurable {
     isModified |= ComparingUtils.isModified(myCbCompileDependent, workspaceConfiguration.COMPILE_DEPENDENT_FILES);
 
     final CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(myProject);
-    isModified |= ComparingUtils.isModified(myCbClearOutputDirectory, compilerConfiguration.isClearOutputDirectory());
+    isModified |= ComparingUtils.isModified(myCbClearOutputDirectory, workspaceConfiguration.CLEAR_OUTPUT_DIRECTORY);
     isModified |= ComparingUtils.isModified(myResourcePatternsField, patternsToString(compilerConfiguration.getResourceFilePatterns()));
     isModified |= compilerConfiguration.DEPLOY_AFTER_MAKE != getSelectedDeploymentOption();
 

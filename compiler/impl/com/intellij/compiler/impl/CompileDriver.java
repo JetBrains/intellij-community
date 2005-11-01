@@ -82,7 +82,7 @@ public class CompileDriver {
   public CompileDriver(Project project) {
     myProject = project;
     myCachesDirectoryPath = CompilerPaths.getCacheStoreDirectory(myProject).getPath().replace('/', File.separatorChar);
-    myShouldClearOutputDirectory = CompilerConfiguration.getInstance(myProject).isClearOutputDirectory();
+    myShouldClearOutputDirectory = CompilerWorkspaceConfiguration.getInstance(myProject).CLEAR_OUTPUT_DIRECTORY;
 
     myGenerationCompilerModuleToOutputDirMap = new com.intellij.util.containers.HashMap<Pair<Compiler, Module>, VirtualFile>();
 

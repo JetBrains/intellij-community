@@ -17,6 +17,7 @@ public class CompilerWorkspaceConfiguration  implements JDOMExternalizable, Proj
   public boolean AUTO_SHOW_ERRORS_IN_EDITOR = true;
   public boolean CLOSE_MESSAGE_VIEW_IF_SUCCESS = true;
   public boolean COMPILE_DEPENDENT_FILES = false;
+  public boolean CLEAR_OUTPUT_DIRECTORY = false;
 
 
   public static CompilerWorkspaceConfiguration getInstance(Project project) {

@@ -4,7 +4,10 @@
  */
 package com.intellij.compiler;
 
+import com.intellij.CommonBundle;
 import com.intellij.compiler.impl.ExcludeEntryDescription;
+import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -13,10 +16,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.util.Options;
-import com.intellij.CommonBundle;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
@@ -34,7 +34,6 @@ public class CompilerConfiguration implements JDOMExternalizable, ProjectCompone
   public static final @NonNls String JIKES = "Jikes";
 
   public String DEFAULT_COMPILER = JAVAC;
-  public boolean CLEAR_OUTPUT_DIRECTORY = false;
 
   // exclude from compile
   private List myExcludeEntryDescriptions = new ArrayList();
@@ -346,14 +345,6 @@ public class CompilerConfiguration implements JDOMExternalizable, ProjectCompone
   public void setDefaultCompiler(String defaultCompiler) {
     LOG.assertTrue(defaultCompiler.equals(JAVAC) || defaultCompiler.equals(JIKES), "Unsupported compiler");
     this.DEFAULT_COMPILER = defaultCompiler;
-  }
-
-  public boolean isClearOutputDirectory() {
-    return CLEAR_OUTPUT_DIRECTORY;
-  }
-
-  public void setClearOutputDirectory(boolean value) {
-    this.CLEAR_OUTPUT_DIRECTORY = value;
   }
 
   public void convertPatterns() {
