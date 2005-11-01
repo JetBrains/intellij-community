@@ -126,11 +126,11 @@ public abstract class LeafElement extends TreeElement {
 
 
 
-  public ASTNode getFirstChildNode() {
+  public TreeElement getFirstChildNode() {
     return null;
   }
 
-  public ASTNode getLastChildNode() {
+  public TreeElement getLastChildNode() {
     return null;
   }
 

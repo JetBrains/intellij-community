@@ -8,7 +8,7 @@ import com.intellij.psi.impl.source.html.HtmlTagImpl;
 import com.intellij.psi.impl.source.javadoc.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspTemplateDeclaration;
 import com.intellij.psi.impl.source.jsp.jspJava.JspTemplateStatement;
-import com.intellij.psi.impl.source.jsp.jspJava.JspText;
+import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
 import com.intellij.psi.impl.source.jsp.jspXml.JspCommentImpl;
 import com.intellij.psi.impl.source.tree.java.*;
 import com.intellij.psi.impl.source.xml.*;
@@ -70,7 +70,7 @@ public class Factory implements Constants {
       element = new JspCommentImpl(buffer, startOffset, endOffset, lexerState, table);
     }
     else if (type == JspElementType.HOLDER_TEMPLATE_DATA) {
-      element = new JspText(buffer, startOffset, endOffset, table);
+      element = new OuterLanguageElement(buffer, startOffset, endOffset, table);
     }
     else {
       if (KEYWORD_BIT_SET.isInSet(type)) {

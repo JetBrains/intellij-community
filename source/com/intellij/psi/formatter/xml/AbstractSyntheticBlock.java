@@ -5,7 +5,7 @@ import com.intellij.formatting.*;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.jsp.jspJava.JspText;
+import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTag;
@@ -154,7 +154,7 @@ public abstract class AbstractSyntheticBlock implements Block{
   public boolean isJspTextBlock() {
     final List<Block> subBlocks = getSubBlocks();
     return subBlocks.size() == 1 && subBlocks.get(0) instanceof JspTextBlock &&
-      ((JspTextBlock) subBlocks.get(0)).getNode() instanceof JspText;
+      ((JspTextBlock) subBlocks.get(0)).getNode() instanceof OuterLanguageElement;
   }
 
   public boolean isJspxTextBlock() {

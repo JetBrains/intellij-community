@@ -13,7 +13,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.Helper;
-import com.intellij.psi.impl.source.jsp.jspJava.JspText;
+import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -117,7 +117,7 @@ public class PsiBasedFormattingModel implements FormattingModel {
       final ASTNode found = psiRoot.getNode().findLeafElementAt(offset);
       if (found != null) {
         if (!myCanModifyAllWhiteSpaces && found.getElementType() == ElementType.WHITE_SPACE) return found;
-        if (!(found.getPsi()instanceof JspText) && found.getTextRange().getStartOffset() == offset) {
+        if (!(found.getPsi()instanceof OuterLanguageElement) && found.getTextRange().getStartOffset() == offset) {
           return chooseElement(found);
         }
       }

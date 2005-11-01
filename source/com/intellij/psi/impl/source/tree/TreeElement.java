@@ -11,6 +11,7 @@ import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class TreeElement extends ElementBase implements ASTNode, Constants, Cloneable {
   public static final TreeElement[] EMPTY_ARRAY = new TreeElement[0];
@@ -59,6 +60,10 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Consta
   public abstract char[] textToCharArray();
 
   public abstract boolean textContains(char c);
+
+  public abstract TreeElement getFirstChildNode();
+
+  public abstract TreeElement getLastChildNode();
 
   public TextRange getTextRange() {
   synchronized (PsiLock.LOCK) {

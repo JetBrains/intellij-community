@@ -14,7 +14,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.jsp.jspJava.JspText;
+import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
@@ -659,7 +659,7 @@ public class Helper {
   private static boolean checkJspTexts(final ASTNode leaf) {
     ASTNode child = leaf.getFirstChildNode();
     while(child != null){
-      if(child instanceof JspText) return true;
+      if(child instanceof OuterLanguageElement) return true;
       child = child.getTreeNext();
     }
     return false;

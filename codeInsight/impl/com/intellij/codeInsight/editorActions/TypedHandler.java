@@ -25,10 +25,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.html.HtmlTag;
-import com.intellij.psi.impl.source.jsp.jspJava.JspText;
-import com.intellij.psi.impl.source.jsp.jspJava.JspXmlTagBase;
-import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.impl.source.xml.XmlTokenImpl;
+import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.impl.source.jsp.jspJava.JspXmlTagBase;
+import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.jsp.el.ELExpressionHolder;
 import com.intellij.psi.jsp.el.ELTokenType;
@@ -294,7 +294,7 @@ public class TypedHandler implements TypedActionHandler {
         // check escape next
         if (!iterator.atEnd()) {
           iterator.advance();
-          
+
           if (!iterator.atEnd() && StringEscapesTokenTypes.STRING_LITERAL_ESCAPES.isInSet( iterator.getTokenType() )) {
             closingQuote = false;
           }
@@ -514,7 +514,7 @@ public class TypedHandler implements TypedActionHandler {
     ASTNode prevLeaf = element.getNode();
     if (!"/".equals(prevLeaf.getText())) return;
     while((prevLeaf = TreeUtil.prevLeaf(prevLeaf)) != null && prevLeaf.getElementType() == XmlTokenType.XML_WHITE_SPACE);
-    if(prevLeaf instanceof JspText) {
+    if(prevLeaf instanceof OuterLanguageElement) {
       element = file.getDocument().findElementAt(offset - 1);
       prevLeaf = element.getNode();
       while((prevLeaf = TreeUtil.prevLeaf(prevLeaf)) != null && prevLeaf.getElementType() == XmlTokenType.XML_WHITE_SPACE);

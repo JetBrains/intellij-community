@@ -367,11 +367,11 @@ public class CompositeElement extends TreeElement implements Cloneable {
     myCachedLength = length;
   }
 
-  public ASTNode getFirstChildNode() {
+  public TreeElement getFirstChildNode() {
     return firstChild;
   }
 
-  public ASTNode getLastChildNode() {
+  public TreeElement getLastChildNode() {
     return lastChild;
   }
 

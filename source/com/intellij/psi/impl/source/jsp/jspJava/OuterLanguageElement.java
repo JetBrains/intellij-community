@@ -13,16 +13,16 @@ import com.intellij.util.CharTable;
 import java.util.HashSet;
 import java.util.Set;
 
-public class JspText extends LeafPsiElement {
+public class OuterLanguageElement extends LeafPsiElement {
   private XmlText myFollowingText;
   private XmlTag[] myIncludes = null;
 
-  public JspText(IElementType type, char[] buffer, int start, int end, CharTable table) {
+  public OuterLanguageElement(IElementType type, char[] buffer, int start, int end, CharTable table) {
     super(type, buffer, start, end, -1, table);
     myFollowingText = null;
   }
 
-  public JspText(char[] buffer, int start, int end, CharTable table) {
+  public OuterLanguageElement(char[] buffer, int start, int end, CharTable table) {
     super(JspElementType.HOLDER_TEMPLATE_DATA, buffer, start, end, -1, table);
     myFollowingText = null;
   }

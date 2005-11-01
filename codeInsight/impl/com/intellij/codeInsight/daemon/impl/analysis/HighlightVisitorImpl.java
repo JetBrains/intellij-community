@@ -21,7 +21,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.jsp.jspJava.JspExpression;
-import com.intellij.psi.impl.source.jsp.jspJava.JspText;
+import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
@@ -139,8 +139,8 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
       }
       convertAnnotationsToHighlightInfos();
     }
-    else if (element instanceof JspText) {
-      myXmlVisitor.visitJspElement((JspText)element);
+    else if (element instanceof OuterLanguageElement) {
+      myXmlVisitor.visitJspElement((OuterLanguageElement)element);
     }
   }
 
@@ -328,7 +328,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
       nextSibling = nextSibling.getNextSibling();
     }
 
-    if ((nextSibling instanceof JspText ||
+    if ((nextSibling instanceof OuterLanguageElement ||
          nextSibling instanceof JspExpression ||
          nextSibling instanceof ELExpressionHolder
         ) &&
