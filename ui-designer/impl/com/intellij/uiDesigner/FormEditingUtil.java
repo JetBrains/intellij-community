@@ -359,7 +359,12 @@ public final class FormEditingUtil {
   public static void deleteSelection(final GuiEditor editor){
     final ArrayList<RadComponent> selection = getSelectedComponents(editor);
     for (final RadComponent component : selection) {
-      component.getParent().removeComponent(component);
+      boolean wasSelected = component.isSelected();
+      final RadContainer parent = component.getParent();
+      parent.removeComponent(component);
+      if (wasSelected) {
+        parent.setSelected(true);
+      }
     }
 
     editor.refreshAndSave(true);

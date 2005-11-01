@@ -415,17 +415,15 @@ public final class GuiEditor extends JPanel implements DataProvider {
    * Fires event that selection changes
    */
   public void fireSelectedComponentChanged() {
-    final EventListener[] listeners = myListenerList.getListeners(ComponentSelectionListener.class);
-    for (int i = 0; i < listeners.length; i++) {
-      final ComponentSelectionListener l = (ComponentSelectionListener)listeners[i];
-      l.selectedComponentChanged(this);
+    final ComponentSelectionListener[] listeners = myListenerList.getListeners(ComponentSelectionListener.class);
+    for (ComponentSelectionListener listener : listeners) {
+      listener.selectedComponentChanged(this);
     }
   }
 
   private void fireHierarchyChanged() {
-    final EventListener[] listeners = myListenerList.getListeners(HierarchyChangeListener.class);
-    for (int i = 0; i < listeners.length; i++) {
-      final HierarchyChangeListener listener = (HierarchyChangeListener)listeners[i];
+    final HierarchyChangeListener[] listeners = myListenerList.getListeners(HierarchyChangeListener.class);
+    for(final HierarchyChangeListener listener : listeners) {
       listener.hierarchyChanged();
     }
   }

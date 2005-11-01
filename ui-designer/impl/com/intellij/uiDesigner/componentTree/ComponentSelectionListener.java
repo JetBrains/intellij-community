@@ -9,5 +9,5 @@ import java.util.EventListener;
  * @author Vladimir Kondratyev
  */
 public interface ComponentSelectionListener extends EventListener{
-  public void selectedComponentChanged(GuiEditor source);
+  void selectedComponentChanged(GuiEditor source);
 }
