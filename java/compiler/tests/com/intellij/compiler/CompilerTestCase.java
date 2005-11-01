@@ -18,7 +18,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.testFramework.ModuleTestCase;
-import com.intellij.compiler.impl.CompilerUtil;
 import org.apache.log4j.Level;
 import org.jdom.Document;
 
@@ -86,7 +85,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
           ex[0] = e;
         }
         catch (Throwable th) {
-          ex[0] = new Exception(th); 
+          ex[0] = new Exception(th);
         }
       }
     });
@@ -287,8 +286,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
 
     CompilerManagerImpl.testSetup();
 
-    final CompilerConfiguration configuration = CompilerConfiguration.getInstance(myProject);
-    configuration.setClearOutputDirectory(true);
+    CompilerWorkspaceConfiguration.getInstance(myProject).CLEAR_OUTPUT_DIRECTORY = true;
 
     final Exception[] ex = new Exception[1];
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
