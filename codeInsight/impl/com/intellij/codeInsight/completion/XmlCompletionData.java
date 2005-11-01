@@ -29,6 +29,7 @@ import com.intellij.psi.xml.*;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.impl.schema.ComplexTypeDescriptor;
 import com.intellij.xml.impl.schema.TypeDescriptor;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
@@ -370,7 +371,8 @@ public class XmlCompletionData extends CompletionData {
         final List<String> results = new ArrayList<String>();
 
         if (descriptor != null) {
-          final XmlFile descriptorFile = descriptor.getNSDescriptor().getDescriptorFile();
+          final XmlNSDescriptor nsDescriptor = descriptor.getNSDescriptor();
+          final XmlFile descriptorFile = nsDescriptor != null ? nsDescriptor.getDescriptorFile():null;
 
           // skip content of embedded dtd, its content will be inserted by word completion
           if (descriptorFile != null && !descriptorFile.equals(parentOfType.getContainingFile())) {
