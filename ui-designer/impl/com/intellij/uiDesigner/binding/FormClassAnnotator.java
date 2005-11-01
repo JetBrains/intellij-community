@@ -13,7 +13,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
-import com.intellij.psi.search.searches.PsiReferenceSearch;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.uiDesigner.ReferenceUtil;
 import org.jetbrains.annotations.NonNls;
 
@@ -48,12 +48,12 @@ public class FormClassAnnotator implements ApplicationComponent, Annotator {
   public void initComponent() {
     StdFileTypes.JAVA.getLanguage().injectAnnotator(this);
     myRefSearcher = new FormReferencesSearcher();
-    PsiReferenceSearch.INSTANCE.registerExecutor(myRefSearcher);
+    ReferencesSearch.INSTANCE.registerExecutor(myRefSearcher);
   }
 
   public void disposeComponent() {
     StdFileTypes.JAVA.getLanguage().removeAnnotator(this);
-    PsiReferenceSearch.INSTANCE.unregisterExecutor(myRefSearcher);
+    ReferencesSearch.INSTANCE.unregisterExecutor(myRefSearcher);
   }
 
   public void annotate(PsiElement psiElement, AnnotationHolder holder) {

@@ -13,10 +13,10 @@ import com.intellij.util.QueryFactory;
 /**
  * @author max
  */
-public class PsiReferenceSearch extends QueryFactory<PsiReference, PsiReferenceSearch.SearchParameters> {
-  public static PsiReferenceSearch INSTANCE = new PsiReferenceSearch();
+public class ReferencesSearch extends QueryFactory<PsiReference, ReferencesSearch.SearchParameters> {
+  public static ReferencesSearch INSTANCE = new ReferencesSearch();
 
-  private PsiReferenceSearch() {
+  private ReferencesSearch() {
   }
 
   public static class SearchParameters {

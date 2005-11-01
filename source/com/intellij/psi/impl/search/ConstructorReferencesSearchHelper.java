@@ -7,7 +7,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
-import com.intellij.psi.search.searches.PsiReferenceSearch;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.Processor;
 
 /**
@@ -66,7 +66,7 @@ public class ConstructorReferencesSearchHelper {
       }
     };
 
-    if (!PsiReferenceSearch.search(aClass, searchScope, ignoreAccessScope).forEach(processor1)) return false;
+    if (!ReferencesSearch.search(aClass, searchScope, ignoreAccessScope).forEach(processor1)) return false;
 
     // search usages like "this(..)"
     if (!processConstructorReferencesViaSuperOrThis(processor, aClass, constructor, searchScope, isStrictSignatureSearch, PsiKeyword.THIS)) {

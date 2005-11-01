@@ -3,9 +3,13 @@
  */
 package com.intellij.psi.search.searches;
 
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.util.EmptyQuery;
 import com.intellij.util.Query;
 import com.intellij.util.QueryFactory;
 
@@ -14,6 +18,7 @@ import com.intellij.util.QueryFactory;
  */
 public class OverridingMethodsSearch extends QueryFactory<PsiMethod, OverridingMethodsSearch.SearchParameters> {
   public static OverridingMethodsSearch INSTANCE = new OverridingMethodsSearch();
+  private static EmptyQuery<PsiMethod> EMPTY = new EmptyQuery<PsiMethod>();
 
   public static class SearchParameters {
     private final PsiMethod myMethod;
@@ -43,7 +48,19 @@ public class OverridingMethodsSearch extends QueryFactory<PsiMethod, OverridingM
   }
 
   public static Query<PsiMethod> search(final PsiMethod method, SearchScope scope, final boolean checkDeep) {
+    if (cannotBeOverriden(method)) return EMPTY; // Optimization
     return INSTANCE.createQuery(new SearchParameters(method, scope, checkDeep));
+  }
+
+  private static boolean cannotBeOverriden(final PsiMethod method) {
+    final PsiClass parentClass = method.getContainingClass();
+    return parentClass == null
+           || method.isConstructor()
+           || method.hasModifierProperty(PsiModifier.STATIC)
+           || method.hasModifierProperty(PsiModifier.FINAL)
+           || method.hasModifierProperty(PsiModifier.PRIVATE)
+           || parentClass instanceof PsiAnonymousClass
+           || parentClass.hasModifierProperty(PsiModifier.FINAL);
   }
 
   public static Query<PsiMethod> search(final PsiMethod method, final boolean checkDeep) {

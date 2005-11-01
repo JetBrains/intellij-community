@@ -4,9 +4,6 @@ import com.intellij.ant.PsiAntElement;
 import com.intellij.codeHighlighting.CopyCreatorLexer;
 import com.intellij.ide.highlighter.custom.impl.CustomFileType;
 import com.intellij.ide.todo.TodoConfiguration;
-import com.intellij.j2ee.J2EERolesUtil;
-import com.intellij.j2ee.ejb.role.EjbDeclMethodRole;
-import com.intellij.j2ee.ejb.role.EjbMethodRole;
 import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lexer.Lexer;
@@ -28,12 +25,11 @@ import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.search.*;
-import com.intellij.psi.search.searches.ClassInheritorsSearch;
-import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
-import com.intellij.psi.search.searches.PsiReferenceSearch;
+import com.intellij.psi.search.searches.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.uiDesigner.compiler.Utils;
@@ -59,13 +55,18 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   private static final TokenSet XML_DATA_CHARS = TokenSet.create(XmlTokenType.XML_DATA_CHARACTERS);
 
   static {
-    PsiReferenceSearch.INSTANCE.registerExecutor(new PsiAnnotationMethodReferencesSearcher());
-    PsiReferenceSearch.INSTANCE.registerExecutor(new PsiAntElementReferenceSearcher());
-    PsiReferenceSearch.INSTANCE.registerExecutor(new CachesBasedRefSearcher());
-    PsiReferenceSearch.INSTANCE.registerExecutor(new ConstructorReferencesSearcher());
+    ReferencesSearch.INSTANCE.registerExecutor(new CachesBasedRefSearcher());
+    ReferencesSearch.INSTANCE.registerExecutor(new PsiAnnotationMethodReferencesSearcher());
+    ReferencesSearch.INSTANCE.registerExecutor(new PsiAntElementReferenceSearcher());
+    ReferencesSearch.INSTANCE.registerExecutor(new ConstructorReferencesSearcher());
 
     DirectClassInheritorsSearch.INSTANCE.registerExecutor(new JavaDirectInheritorsSearcher());
     DirectClassInheritorsSearch.INSTANCE.registerExecutor(new EjbDirectInhertiorsSearcher());
+
+    OverridingMethodsSearch.INSTANCE.registerExecutor(new JavaOverridingMethodsSearcher());
+    OverridingMethodsSearch.INSTANCE.registerExecutor(new EjbOverridingMethodSearcher());
+
+    MethodReferencesSearch.INSTANCE.registerExecutor(new MethodUsagesSearcher());
   }
 
   @NotNull
@@ -191,7 +192,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                    boolean ignoreAccessScope) {
     LOG.assertTrue(originalScope != null);
 
-    final Query<PsiReference> query = PsiReferenceSearch.search(refElement, originalScope, ignoreAccessScope);
+    final Query<PsiReference> query = ReferencesSearch.search(refElement, originalScope, ignoreAccessScope);
     return query.forEach(new Processor<PsiReference>() {
       public boolean process(final PsiReference t) {
         return processor.execute(t);
@@ -212,48 +213,12 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                           final PsiMethod method,
                                           SearchScope searchScope,
                                           final boolean checkDeep) {
-    LOG.assertTrue(searchScope != null);
-
-    final PsiClass parentClass = method.getContainingClass();
-    if (parentClass == null
-        || method.isConstructor()
-        || method.hasModifierProperty(PsiModifier.STATIC)
-        || method.hasModifierProperty(PsiModifier.FINAL)
-        || method.hasModifierProperty(PsiModifier.PRIVATE)
-        || parentClass instanceof PsiAnonymousClass
-        || parentClass.hasModifierProperty(PsiModifier.FINAL)) {
-      return true;
-    }
-
-    PsiElementProcessor<PsiClass> inheritorsProcessor = new PsiElementProcessor<PsiClass>() {
-      public boolean execute(PsiClass inheritor) {
-        PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(parentClass, inheritor,
-                                                                                 PsiSubstitutor.EMPTY);
-        MethodSignature signature = method.getSignature(substitutor);
-        PsiMethod method1 = MethodSignatureUtil.findMethodBySuperSignature(inheritor, signature);
-        if (method1 == null
-            || method1.hasModifierProperty(PsiModifier.STATIC)
-            || (method.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)
-                && !method1.getManager().arePackagesTheSame(parentClass, inheritor))) {
-          return true;
-        }
-        return processor.execute(method1);
+    return OverridingMethodsSearch.search(method, searchScope, checkDeep).forEach(new Processor<PsiMethod>() {
+      public boolean process(final PsiMethod t) {
+        return processor.execute(t);
       }
-    };
-    if (!processInheritors(inheritorsProcessor, parentClass, searchScope, true)) return false;
-    final EjbMethodRole ejbRole = J2EERolesUtil.getEjbRole(method);
-    if (ejbRole instanceof EjbDeclMethodRole) {
-      final PsiMethod[] implementations = ((EjbDeclMethodRole)ejbRole).findImplementations();
-      for (PsiMethod implementation : implementations) {
-        // same signature methods were processed already
-        if (implementation.getSignature(PsiSubstitutor.EMPTY).equals(method.getSignature(PsiSubstitutor.EMPTY))) continue;
-        if (!processor.execute(implementation)) return false;
-      }
-    }
-    return true;
+    });
   }
-
-
 
   public PsiReference[] findReferencesIncludingOverriding(final PsiMethod method,
                                                           SearchScope searchScope,
@@ -277,114 +242,11 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                       final boolean isStrictSignatureSearch) {
     LOG.assertTrue(searchScope != null);
 
-    if (method.isConstructor()) {
-      Processor<PsiReference> adapter = new Processor<PsiReference>() {
-        public boolean process(final PsiReference t) {
-          return processor.execute(t);
-        }
-      };
-
-      final ConstructorReferencesSearchHelper helper = new ConstructorReferencesSearchHelper(myManager);
-      if (!helper. processConstructorReferences(adapter, method, searchScope, !isStrictSignatureSearch, isStrictSignatureSearch)) {
-        return false;
+    return MethodReferencesSearch.search(method, searchScope, isStrictSignatureSearch).forEach(new Processor<PsiReference>() {
+      public boolean process(final PsiReference t) {
+        return processor.execute(t);
       }
-    }
-
-    PsiClass parentClass = method.getContainingClass();
-    if (isStrictSignatureSearch && (parentClass == null
-                                    || parentClass instanceof PsiAnonymousClass
-                                    || parentClass.hasModifierProperty(PsiModifier.FINAL)
-                                    || method.hasModifierProperty(PsiModifier.STATIC)
-                                    || method.hasModifierProperty(PsiModifier.FINAL)
-                                    || method.hasModifierProperty(PsiModifier.PRIVATE))
-    ) {
-      return processReferences(processor, method, searchScope, false);
-    }
-
-    final String text = method.getName();
-    final PsiMethod[] methods = isStrictSignatureSearch ? new PsiMethod[]{method} : getOverloadsMayBeOverriden(method);
-
-    SearchScope accessScope = methods[0].getUseScope();
-    for (int i = 1; i < methods.length; i++) {
-      PsiMethod method1 = methods[i];
-      SearchScope someScope = PsiSearchScopeUtil.scopesUnion(accessScope, method1.getUseScope());
-      accessScope = someScope == null ? accessScope : someScope;
-    }
-
-    final PsiClass aClass = method.getContainingClass();
-
-    final TextOccurenceProcessor processor1 = new TextOccurenceProcessor() {
-      public boolean execute(PsiElement element, int offsetInElement) {
-        PsiReference reference = element.findReferenceAt(offsetInElement);
-
-        if (reference != null) {
-          for (PsiMethod method : methods) {
-            if (reference.isReferenceTo(method)) {
-              return processor.execute(reference);
-            }
-            PsiElement refElement = reference.resolve();
-
-            if (refElement instanceof PsiMethod) {
-              PsiMethod refMethod = (PsiMethod)refElement;
-              PsiClass refMethodClass = refMethod.getContainingClass();
-              if (refMethodClass == null) return true;
-
-              if (!refMethod.hasModifierProperty(PsiModifier.STATIC)) {
-                PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(aClass, refMethodClass, PsiSubstitutor.EMPTY);
-                if (substitutor != null) {
-                  if (refMethod.getSignature(PsiSubstitutor.EMPTY).equals(method.getSignature(substitutor))) {
-                    if (!processor.execute(reference)) return false;
-                  }
-                }
-              }
-
-              if (!isStrictSignatureSearch) {
-                PsiManager manager = method.getManager();
-                if (manager.areElementsEquivalent(refMethodClass, aClass)) {
-                  return processor.execute(reference);
-                }
-              }
-            }
-            else {
-              return true;
-            }
-          }
-        }
-
-        return true;
-      }
-    };
-
-    searchScope = searchScope.intersectWith(accessScope);
-
-    short searchContext = UsageSearchContext.IN_CODE | UsageSearchContext.IN_COMMENTS;
-    boolean toContinue = processElementsWithWord(processor1,
-                                                 searchScope,
-                                                 text,
-                                                 searchContext, true);
-    if (!toContinue) return false;
-
-    if (PropertyUtil.isSimplePropertyAccessor(method)) {
-      final String propertyName = PropertyUtil.getPropertyName(method);
-
-      //if (myManager.getNameHelper().isIdentifier(propertyName)) {
-        if (searchScope instanceof GlobalSearchScope) {
-          searchScope = GlobalSearchScope.getScopeRestrictedByFileTypes(
-            (GlobalSearchScope)searchScope,
-            StdFileTypes.JSP,
-            StdFileTypes.JSPX,
-            StdFileTypes.XML
-          );
-        }
-        toContinue = processElementsWithWord(processor1,
-                                             searchScope,
-                                             propertyName,
-                                             UsageSearchContext.IN_FOREIGN_LANGUAGES, true);
-        if (!toContinue) return false;
-      //}
-    }
-
-    return true;
+    });
   }
 
   public PsiClass[] findInheritors(PsiClass aClass, SearchScope searchScope, boolean checkDeep) {
@@ -952,22 +814,4 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     }
   }
 
-  private static PsiMethod[] getOverloadsMayBeOverriden(PsiMethod method) {
-    PsiClass aClass = method.getContainingClass();
-    if (aClass == null) return new PsiMethod[]{method};
-    PsiMethod[] methods = aClass.findMethodsByName(method.getName(), false);
-    List<PsiMethod> result = new ArrayList<PsiMethod>();
-    for (PsiMethod psiMethod : methods) {
-      PsiModifierList modList = psiMethod.getModifierList();
-      if (!modList.hasModifierProperty(PsiModifier.STATIC) &&
-          !modList.hasModifierProperty(PsiModifier.FINAL)) {
-        result.add(psiMethod);
-      }
-    }
-
-    //Should not happen
-    if (result.size() == 0) return new PsiMethod[]{method};
-
-    return result.toArray(new PsiMethod[result.size()]);
-  }
 }

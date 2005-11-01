@@ -10,7 +10,7 @@ import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.search.*;
-import com.intellij.psi.search.searches.PsiReferenceSearch;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.Processor;
@@ -22,8 +22,8 @@ import java.util.Set;
 /**
  * @author max
  */
-public class CachesBasedRefSearcher implements QueryExecutor<PsiReference, PsiReferenceSearch.SearchParameters> {
-  public boolean execute(final PsiReferenceSearch.SearchParameters p, final Processor<PsiReference> consumer) {
+public class CachesBasedRefSearcher implements QueryExecutor<PsiReference, ReferencesSearch.SearchParameters> {
+  public boolean execute(final ReferencesSearch.SearchParameters p, final Processor<PsiReference> consumer) {
     final PsiElement refElement = p.getElementToSearch();
     boolean ignoreAccessScope = p.isIgnoreAcccessScope();
     SearchScope originalScope = p.getScope();

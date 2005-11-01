@@ -4,7 +4,7 @@
 package com.intellij.psi.impl.search;
 
 import com.intellij.psi.*;
-import com.intellij.psi.search.searches.PsiReferenceSearch;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import com.intellij.util.QueryExecutor;
@@ -12,13 +12,13 @@ import com.intellij.util.QueryExecutor;
 /**
  * @author max
  */
-public class PsiAnnotationMethodReferencesSearcher implements QueryExecutor<PsiReference, PsiReferenceSearch.SearchParameters> {
-  public boolean execute(final PsiReferenceSearch.SearchParameters p, final Processor<PsiReference> consumer) {
+public class PsiAnnotationMethodReferencesSearcher implements QueryExecutor<PsiReference, ReferencesSearch.SearchParameters> {
+  public boolean execute(final ReferencesSearch.SearchParameters p, final Processor<PsiReference> consumer) {
     final PsiElement refElement = p.getElementToSearch();
     if (refElement instanceof PsiAnnotationMethod) {
       PsiMethod method = (PsiMethod)refElement;
       if (PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.equals(method.getName()) && method.getParameterList().getParameters().length == 0) {
-        final Query<PsiReference> query = PsiReferenceSearch.search(method.getContainingClass(), p.getScope(), p.isIgnoreAcccessScope());
+        final Query<PsiReference> query = ReferencesSearch.search(method.getContainingClass(), p.getScope(), p.isIgnoreAcccessScope());
         return query.forEach(new Processor<PsiReference>() {
           public boolean process(final PsiReference reference) {
             if (reference instanceof PsiJavaCodeReferenceElement) {

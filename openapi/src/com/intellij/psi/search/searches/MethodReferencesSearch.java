@@ -21,10 +21,10 @@ public class MethodReferencesSearch extends QueryFactory<PsiReference, MethodRef
     private final SearchScope myScope;
     private final boolean myStrictSignatureSearch;
 
-    public SearchParameters(final PsiMethod aClass, SearchScope scope, final boolean checkDeep) {
+    public SearchParameters(final PsiMethod aClass, SearchScope scope, final boolean strict) {
       myMethod = aClass;
       myScope = scope;
-      myStrictSignatureSearch = checkDeep;
+      myStrictSignatureSearch = strict;
     }
 
     public PsiMethod getMethod() {

@@ -14,7 +14,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.searches.PsiReferenceSearch;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
@@ -54,7 +54,7 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
     for (PsiField field : fields) {
       if (field.hasModifierProperty(PsiModifier.PRIVATE)) {
         if (HighlightUtil.isSerializationImplicitlyUsedField(field)) continue;
-        final Collection<PsiReference> refs = PsiReferenceSearch.search(field, new LocalSearchScope(field.getContainingFile()), true).findAll();
+        final Collection<PsiReference> refs = ReferencesSearch.search(field, new LocalSearchScope(field.getContainingFile()), true).findAll();
         if (refs.size() == 0) continue;
         for (PsiReference ref : refs) {
           PsiElement element = ref.getElement();
@@ -132,7 +132,7 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
 
       PsiManager manager = PsiManager.getInstance(project);
       Set<PsiMember> methodSet = new HashSet<PsiMember>();
-      for (PsiReference ref : PsiReferenceSearch.search(myField, new LocalSearchScope(myField.getContainingFile()), true)) {
+      for (PsiReference ref : ReferencesSearch.search(myField, new LocalSearchScope(myField.getContainingFile()), true)) {
         if (ref instanceof PsiReferenceExpression) {
           final PsiMember member = PsiTreeUtil.getParentOfType((PsiReferenceExpression)ref, PsiMethod.class, PsiClassInitializer.class);
           if (member != null) {
@@ -143,7 +143,7 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
 
       PsiElement newCaretPosition = null;
       for (PsiMember member : methodSet) {
-        final Collection<PsiReference> refs = PsiReferenceSearch.search(myField, new LocalSearchScope(member), true).findAll();
+        final Collection<PsiReference> refs = ReferencesSearch.search(myField, new LocalSearchScope(member), true).findAll();
         LOG.assertTrue(refs.size() > 0);
         Set<PsiReference> refsSet = new HashSet<PsiReference>(refs);
         PsiCodeBlock anchorBlock = findAnchorBlock(refs);
