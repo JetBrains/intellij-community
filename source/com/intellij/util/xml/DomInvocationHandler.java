@@ -78,6 +78,7 @@ class DomInvocationHandler<T extends DomElement> implements InvocationHandler, D
         LOG.error(e);
       }
       myTag = null;
+      myManager.fireEvent(new ElementUndefinedEvent(this));
     }
   }
 

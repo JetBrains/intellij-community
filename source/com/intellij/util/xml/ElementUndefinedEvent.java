@@ -17,6 +17,10 @@ public class ElementUndefinedEvent implements DomEvent{
     return myElement;
   }
 
+  public String toString() {
+    return "Undefined " + myElement;
+  }
+
   public void accept(DomEventVisitor visitor) {
     visitor.visitElementUndefined(this);
   }

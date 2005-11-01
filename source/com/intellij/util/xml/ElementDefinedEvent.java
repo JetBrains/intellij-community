@@ -17,6 +17,10 @@ public class ElementDefinedEvent implements DomEvent{
     return myElement;
   }
 
+  public String toString() {
+    return "Defined " + myElement;
+  }
+
   public void accept(DomEventVisitor visitor) {
     visitor.visitElementDefined(this);
   }
