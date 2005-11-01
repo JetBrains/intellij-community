@@ -64,7 +64,7 @@ public class TypeCookProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    final HashSet<PsiElement> changedItems = myResult.getChangedElements();
+    final HashSet<PsiElement> changedItems = myResult.getCookedElements();
     final UsageInfo[] usages = new UsageInfo[changedItems.size()];
 
     int i = 0;
