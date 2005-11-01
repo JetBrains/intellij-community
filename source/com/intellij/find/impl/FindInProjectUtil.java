@@ -331,7 +331,7 @@ public class FindInProjectUtil {
           Set<PsiFile> resultFiles = new THashSet<PsiFile>();
           for (int i = 0; i < words.size(); i++) {
             String word = words.get(i);
-            PsiFile[] files = cacheManager.getFilesWithWord(word, UsageSearchContext.ANY, scope);
+            PsiFile[] files = cacheManager.getFilesWithWord(word, UsageSearchContext.ANY, scope, findModel.isCaseSensitive());
 
             final List<PsiFile> psiFiles = Arrays.asList(files);
             if (i == 0) {

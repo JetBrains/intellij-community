@@ -333,7 +333,7 @@ public class DuplicatePropertyInspection extends DescriptorProviderInspection {
     });
     for (String word : words) {
       final Set<PsiFile> files = new THashSet<PsiFile>();
-      searchHelper.processAllFilesWithWord(word, scope, new CommonProcessors.CollectProcessor<PsiFile>(files));
+      searchHelper.processAllFilesWithWord(word, scope, new CommonProcessors.CollectProcessor<PsiFile>(files), true);
       if (resultFiles.size() == 0) {
         resultFiles.addAll(files);
       }

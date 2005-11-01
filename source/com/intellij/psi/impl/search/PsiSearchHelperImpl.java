@@ -595,24 +595,24 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                           SearchScope searchScope,
                                           String text,
                                           short searchContext,
-                                          boolean caseSensitive) {
+                                          boolean caseSensitively) {
     LOG.assertTrue(searchScope != null);
 
     if (searchScope instanceof GlobalSearchScope) {
       StringSearcher searcher = new StringSearcher(text);
-      searcher.setCaseSensitive(caseSensitive);
+      searcher.setCaseSensitive(caseSensitively);
 
       return processElementsWithTextInGlobalScope(processor,
                                                   (GlobalSearchScope)searchScope,
                                                   searcher,
-                                                  searchContext);
+                                                  searchContext, caseSensitively);
     }
     else {
       LocalSearchScope _scope = (LocalSearchScope)searchScope;
       PsiElement[] scopeElements = _scope.getScope();
 
       for (final PsiElement scopeElement : scopeElements) {
-        if (!processElementsWithWordInScopeElement(scopeElement, processor, text, caseSensitive, searchContext)) return false;
+        if (!processElementsWithWordInScopeElement(scopeElement, processor, text, caseSensitively, searchContext)) return false;
       }
       return true;
     }
@@ -640,7 +640,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   private boolean processElementsWithTextInGlobalScope(TextOccurenceProcessor processor,
                                                        GlobalSearchScope scope,
                                                        StringSearcher searcher,
-                                                       short searchContext) {
+                                                       short searchContext,
+                                                       final boolean caseSensitively) {
 
     ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
     if (progress != null) {
@@ -654,9 +655,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       if(words.length == 0) return true;
 
       Set<PsiFile> fileSet = new HashSet<PsiFile>();
-      fileSet.addAll(Arrays.asList(myManager.getCacheManager().getFilesWithWord(words[0], searchContext, scope)));
+      fileSet.addAll(Arrays.asList(myManager.getCacheManager().getFilesWithWord(words[0], searchContext, scope, caseSensitively)));
       for (int i = 1; i < words.length; i++) {
-        fileSet.retainAll(Arrays.asList(myManager.getCacheManager().getFilesWithWord(words[i], searchContext, scope)));
+        fileSet.retainAll(Arrays.asList(myManager.getCacheManager().getFilesWithWord(words[i], searchContext, scope, caseSensitively)));
       }
       PsiFile[] files = fileSet.toArray(new PsiFile[fileSet.size()]);
 
@@ -696,7 +697,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   public PsiFile[] findFilesWithPlainTextWords(String word) {
     return myManager.getCacheManager().getFilesWithWord(word,
                                                         UsageSearchContext.IN_PLAIN_TEXT,
-                                                        GlobalSearchScope.projectScope(myManager.getProject()));
+                                                        GlobalSearchScope.projectScope(myManager.getProject()), true);
   }
 
 
@@ -717,7 +718,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     int dollarIndex = qName.lastIndexOf('$');
     int maxIndex = Math.max(dotIndex, dollarIndex);
     String wordToSearch = maxIndex >= 0 ? qName.substring(maxIndex + 1) : qName;
-    PsiFile[] files = myManager.getCacheManager().getFilesWithWord(wordToSearch, UsageSearchContext.IN_PLAIN_TEXT, searchScope);
+    PsiFile[] files = myManager.getCacheManager().getFilesWithWord(wordToSearch, UsageSearchContext.IN_PLAIN_TEXT, searchScope, true);
 
     StringSearcher searcher = new StringSearcher(qName);
     searcher.setCaseSensitive(true);
@@ -757,7 +758,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   public PsiFile[] findFormsBoundToClass(String className) {
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myManager.getProject());
     PsiFile[] files = myManager.getCacheManager().getFilesWithWord(className, UsageSearchContext.IN_FOREIGN_LANGUAGES,
-                                                                   projectScope);
+                                                                   projectScope, true);
     List<PsiFile> boundForms = new ArrayList<PsiFile>(files.length);
     for (PsiFile psiFile : files) {
       if (psiFile.getFileType() != StdFileTypes.GUI_DESIGNER_FORM) continue;
@@ -790,8 +791,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return false;
   }
 
-  public void processAllFilesWithWord(String word, GlobalSearchScope scope, Processor<PsiFile> processor) {
-    PsiFile[] files = myManager.getCacheManager().getFilesWithWord(word, UsageSearchContext.IN_CODE, scope);
+  public void processAllFilesWithWord(String word, GlobalSearchScope scope, Processor<PsiFile> processor, final boolean caseSensitively) {
+    PsiFile[] files = myManager.getCacheManager().getFilesWithWord(word, UsageSearchContext.IN_CODE, scope, caseSensitively);
 
     for (PsiFile file : files) {
       if (!processor.process(file)) return;
@@ -799,7 +800,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   public void processAllFilesWithWordInComments(String word, GlobalSearchScope scope, Processor<PsiFile> processor) {
-    PsiFile[] files = myManager.getCacheManager().getFilesWithWord(word, UsageSearchContext.IN_COMMENTS, scope);
+    PsiFile[] files = myManager.getCacheManager().getFilesWithWord(word, UsageSearchContext.IN_COMMENTS, scope, true);
 
     for (PsiFile file : files) {
       if (!processor.process(file)) return;
@@ -807,7 +808,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   public void processAllFilesWithWordInLiterals(String word, GlobalSearchScope scope, Processor<PsiFile> processor) {
-    PsiFile[] files = myManager.getCacheManager().getFilesWithWord(word, UsageSearchContext.IN_STRINGS, scope);
+    PsiFile[] files = myManager.getCacheManager().getFilesWithWord(word, UsageSearchContext.IN_STRINGS, scope, true);
 
     for (PsiFile file : files) {
       if (!processor.process(file)) return;

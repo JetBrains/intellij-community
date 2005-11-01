@@ -13,7 +13,7 @@ public interface CacheManager {
   void dispose();
   CacheUpdater[] getCacheUpdaters();
 
-  PsiFile[] getFilesWithWord(String word, short occurenceMask, GlobalSearchScope scope);
+  PsiFile[] getFilesWithWord(String word, short occurenceMask, GlobalSearchScope scope, final boolean caseSensitively);
 
   /**
    * @return all VirtualFile's that contain todo-items under project roots

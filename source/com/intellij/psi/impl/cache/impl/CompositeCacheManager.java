@@ -9,7 +9,6 @@ import com.intellij.psi.search.TodoPattern;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -42,10 +41,10 @@ public class CompositeCacheManager implements CacheManager{
     return updaters.toArray(new CacheUpdater[updaters.size()]);
   }
 
-  public PsiFile[] getFilesWithWord(String word, short occurenceMask, GlobalSearchScope scope) {
+  public PsiFile[] getFilesWithWord(String word, short occurenceMask, GlobalSearchScope scope, final boolean caseSensitively) {
     List<PsiFile> files = new ArrayList<PsiFile>();
     for (CacheManager cacheManager : myManagers) {
-      files.addAll(Arrays.asList(cacheManager.getFilesWithWord(word, occurenceMask, scope)));
+      files.addAll(Arrays.asList(cacheManager.getFilesWithWord(word, occurenceMask, scope, caseSensitively)));
     }
     return files.toArray(new PsiFile[files.size()]);
   }

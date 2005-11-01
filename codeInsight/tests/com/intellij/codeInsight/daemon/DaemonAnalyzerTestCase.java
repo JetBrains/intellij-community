@@ -42,7 +42,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     myFile.getText(); //to load text
     //to initialize caches
-    myPsiManager.getCacheManager().getFilesWithWord("XXX", UsageSearchContext.IN_COMMENTS, GlobalSearchScope.allScope(myProject));
+    myPsiManager.getCacheManager().getFilesWithWord("XXX", UsageSearchContext.IN_COMMENTS, GlobalSearchScope.allScope(myProject), true);
     VirtualFileFilter javaFilesFilter = new VirtualFileFilter() {
       public boolean accept(VirtualFile file) {
         FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(file);
