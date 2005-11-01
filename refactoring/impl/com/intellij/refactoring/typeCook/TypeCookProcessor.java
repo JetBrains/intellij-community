@@ -1,6 +1,5 @@
 package com.intellij.refactoring.typeCook;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.DummyComplexUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.project.Project;
@@ -17,13 +16,12 @@ import com.intellij.refactoring.typeCook.deductive.resolver.ResolverTree;
 import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-
-import org.jetbrains.annotations.NotNull;
 
 public class TypeCookProcessor extends BaseRefactoringProcessor {
   private PsiElement[] myElements;
@@ -97,15 +95,8 @@ public class TypeCookProcessor extends BaseRefactoringProcessor {
 
     myResult.apply (victims);
 
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        if (myProject.isOpen()) {
-          WindowManager.getInstance().getStatusBar(myProject).setInfo(myResult.getReport());
-        }
-      }
-    });
-
     UndoManager.getInstance(myProject).undoableActionPerformed(new DummyComplexUndoableAction()); // force confirmation dialog for undo
+    WindowManager.getInstance().getStatusBar(myProject).setInfo(myResult.getReport());
   }
 
   protected String getCommandName() {
