@@ -79,7 +79,7 @@ public class Result {
     return originalType;
   }
 
-  public HashSet<PsiElement> getCookedElements() {
+  public HashSet<PsiElement> getChangedElements() {
     myCookedNumber = 0;
 
     final HashSet<PsiElement> set = new HashSet<PsiElement>();
@@ -94,39 +94,41 @@ public class Result {
       }
     }
 
+    if (mySettings.dropObsoleteCasts()) {
+      myCastsRemoved = 0;
+      for (final PsiTypeCastExpression cast : myCasts) {
+        cast.accept(new PsiRecursiveElementVisitor() {
+          public void visitTypeCastExpression(final PsiTypeCastExpression expression) {
+            super.visitTypeCastExpression(expression);
+            if (myCasts.contains(expression)) {
+              if (expression.getType().equals(expression.getOperand().getType())) {
+                set.add(cast);
+              }
+
+              myCasts.remove(expression);
+            }
+          }
+        });
+      }
+    }
+
     return set;
   }
 
   public void apply(final HashSet<PsiElement> victims) {
     for (final PsiElement element : victims) {
-      Util.changeType(element, getCookedType(element));
-    }
+      if (element instanceof PsiTypeCastExpression) {
+        final PsiTypeCastExpression cast = ((PsiTypeCastExpression)element);
+        try {
+          cast.replace(cast.getOperand());
+          myCastsRemoved++;
+        }
+        catch (IncorrectOperationException e1) {
+          LOG.error(e1);
+        }
 
-    if (mySettings.dropObsoleteCasts()) {
-      myCastsRemoved = 0;
-
-      while (myCasts.size() > 0) {
-        final PsiTypeCastExpression cast = myCasts.iterator().next();
-
-        cast.accept(new PsiRecursiveElementVisitor() {
-                      public void visitTypeCastExpression(final PsiTypeCastExpression expression) {
-                        super.visitTypeCastExpression(expression);
-
-                        if (myCasts.contains(expression)) {
-                          if (expression.getType().equals(expression.getOperand().getType())) {
-                            try {
-                              expression.replace(expression.getOperand());
-                              myCastsRemoved++;
-                            }
-                            catch (IncorrectOperationException e1) {
-                              LOG.error(e1);
-                            }
-                          }
-
-                          myCasts.remove(expression);
-                        }
-                      }
-                    });
+      } else {
+        Util.changeType(element, getCookedType(element));
       }
     }
   }

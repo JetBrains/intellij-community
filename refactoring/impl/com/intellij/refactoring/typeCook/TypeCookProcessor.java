@@ -6,6 +6,7 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiTypeCastExpression;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.typeCook.deductive.builder.Result;
@@ -63,16 +64,21 @@ public class TypeCookProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    final HashSet<PsiElement> cookedItems = myResult.getCookedElements();
-    final UsageInfo[] usages = new UsageInfo[cookedItems.size()];
+    final HashSet<PsiElement> changedItems = myResult.getChangedElements();
+    final UsageInfo[] usages = new UsageInfo[changedItems.size()];
 
     int i = 0;
-    for (final PsiElement element : cookedItems) {
-      usages[i++] = new UsageInfo(element) {
-        public String getTooltipText() {
-          return myResult.getCookedType(element).getCanonicalText();
-        }
-      };
+    for (final PsiElement element : changedItems) {
+      if (!(element instanceof PsiTypeCastExpression)) {
+        usages[i++] = new UsageInfo(element) {
+          public String getTooltipText() {
+            return myResult.getCookedType(element).getCanonicalText();
+          }
+        };
+      }
+      else {
+        usages[i++] = new UsageInfo(element);
+      }
     }
 
     return usages;

@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Set;
 
 public class RedundantCastUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.redundantCast.RedundantCastUtil");
   public static List<PsiTypeCastExpression> getRedundantCastsInside(PsiElement where) {
     final ArrayList<PsiTypeCastExpression> result = new ArrayList<PsiTypeCastExpression>();
     PsiElementProcessor<PsiTypeCastExpression> processor = new PsiElementProcessor<PsiTypeCastExpression>() {
