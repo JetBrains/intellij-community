@@ -210,12 +210,12 @@ public class TestAll implements Test {
         }
         test.run(testResult);
         try {
-          ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-            public void run() {
-              try {
-                Application application = ApplicationManager.getApplication();
-                if (application != null) {
-                  application.runWriteAction(new Runnable() {
+          final Application app = ApplicationManager.getApplication();
+          if (app != null) {
+            app.invokeAndWait(new Runnable() {
+              public void run() {
+                try {
+                  app.runWriteAction(new Runnable() {
                     public void run() {
                       //todo[myakovlev] is it necessary?
                       FileDocumentManager manager = FileDocumentManager.getInstance();
@@ -225,12 +225,12 @@ public class TestAll implements Test {
                     }
                   });
                 }
+                catch (Throwable e) {
+                  e.printStackTrace(System.err);
+                }
               }
-              catch (Throwable e) {
-                e.printStackTrace(System.err);
-              }
-            }
-          }, ModalityState.NON_MMODAL);
+            }, ModalityState.NON_MMODAL);
+          }
         }
         catch (Exception e) {
           e.printStackTrace();
