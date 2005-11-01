@@ -140,7 +140,7 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder{
         final RadContainer container1 = component1.getParent();
         final RadContainer container2 = component2.getParent();
         if(Comparing.equal(container1, container2)){
-          final int i = indexOf(container2, component2) - indexOf(container1, component1);
+          final int i = indexOf(container1, component1) - indexOf(container2, component2);
           return i;
         }
         else{
