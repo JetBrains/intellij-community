@@ -18,6 +18,7 @@ package com.intellij.codeHighlighting;
 import com.intellij.openapi.progress.ProgressIndicator;
 
 public interface HighlightingPass {
+  HighlightingPass[] EMPTY_ARRAY = new HighlightingPass[0];
   /**
    * pass is intended to perform analysis stuff and hold collected information internally
    * until {@link #collectInformation(com.intellij.openapi.progress.ProgressIndicator)} is called.

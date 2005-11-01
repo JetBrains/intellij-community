@@ -5,20 +5,21 @@ import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.editor.Document;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.ui.EditorTextField;
 import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.renderers.ClassToBindRenderer;
-import com.intellij.ui.EditorTextField;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -75,7 +76,7 @@ public final class ClassToBindProperty extends Property {
 
     public MyEditor(final Project project) {
       myProject = project;
-      myEditorTextField = new EditorTextField("") {
+      myEditorTextField = new EditorTextField("", project, StdFileTypes.JAVA) {
         protected boolean shouldHaveBorder() {
           return false;
         }

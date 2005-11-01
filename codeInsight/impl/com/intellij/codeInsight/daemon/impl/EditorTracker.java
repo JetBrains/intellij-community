@@ -206,13 +206,8 @@ public class EditorTracker {
 
   private void setActiveWindow(Window window) {
     myActiveWindow = window;
-    if (myActiveWindow == null || myActiveWindow == myIdeFrame) {
-      setActiveEditors(EMPTY_EDITOR_ARRAY);
-    }
-    else {
-      Editor[] editors = editorsByWindow(myActiveWindow);
-      setActiveEditors(editors);
-    }
+    Editor[] editors = editorsByWindow(myActiveWindow);
+    setActiveEditors(editors);
   }
 
   /**
@@ -221,15 +216,6 @@ public class EditorTracker {
   protected Editor[] editorsByWindow(Window window) {
     List<Editor> list = myWindowToEditorsMap.get(window);
     if (list == null) return EMPTY_EDITOR_ARRAY;
-    if (window instanceof IdeFrame){
-      List<Editor> filteredList = new ArrayList<Editor>();
-      for (Editor editor : list) {
-        if (isEditorInIdeFrameActive(editor)) {
-          filteredList.add(editor);
-        }
-      }
-      list = filteredList;
-    }
     return list.toArray(new Editor[list.size()]);
   }
 

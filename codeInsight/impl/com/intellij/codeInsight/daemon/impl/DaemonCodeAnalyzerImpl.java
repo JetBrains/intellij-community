@@ -345,8 +345,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     }
 
     BackgroundEditorHighlighter highlighter = editor.getBackgroundHighlighter();
-    if (highlighter == null) return;
-    updateHighlighters(editor, new LinkedHashSet<HighlightingPass>(Arrays.asList(highlighter.createPassesForEditor())), postRunnable);
+    final HighlightingPass[] passes = highlighter == null ? HighlightingPass.EMPTY_ARRAY : highlighter.createPassesForEditor();
+    updateHighlighters(editor, new LinkedHashSet<HighlightingPass>(Arrays.asList(passes)), postRunnable);
   }
 
   public void setUpdateByTimerEnabled(boolean value) {
@@ -789,16 +789,25 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   private FileEditor[] getSelectedEditors() {
     // Editors in modal context
     Editor[] editors = myEditorTracker.getActiveEditors();
+    FileEditor[] fileEditors = new FileEditor[editors.length];
     if (editors.length > 0) {
-      FileEditor[] fileEditors = new FileEditor[editors.length];
       for (int i = 0; i < fileEditors.length; i++) {
         fileEditors[i] = TextEditorProvider.getInstance().getTextEditor(editors[i]);
       }
+    }
+
+    if (ApplicationManager.getApplication().getCurrentModalityState() != ModalityState.NON_MMODAL) {
       return fileEditors;
     }
 
+    final FileEditor[] tabEditors = FileEditorManager.getInstance(myProject).getSelectedEditors();
+    if (fileEditors.length == 0) return tabEditors;
+
     // Editors in tabs.
-    return FileEditorManager.getInstance(myProject).getSelectedEditors();
+    Set<FileEditor> common = new HashSet<FileEditor>(Arrays.asList(fileEditors));
+    common.addAll(Arrays.asList(tabEditors));
+
+    return common.toArray(new FileEditor[common.size()]);
   }
 
   /**
