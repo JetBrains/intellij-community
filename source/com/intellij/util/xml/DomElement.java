@@ -10,15 +10,15 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author peter
  */
-public interface XmlAnnotatedElement {
+public interface DomElement {
 
   @Nullable
   XmlTag getXmlTag();
 
   @NotNull
-  XmlFileAnnotatedElement getRoot();
+  DomFileElement getRoot();
 
   @Nullable
-  XmlAnnotatedElement getParent();
+  DomElement getParent();
 
 }

@@ -21,19 +21,19 @@ import java.util.*;
 /**
  * @author peter
  */
-class XmlAnnotatedElementImpl<T extends XmlAnnotatedElement> implements InvocationHandler, XmlAnnotatedElement {
+class DomInvocationHandler<T extends DomElement> implements InvocationHandler, DomElement {
   private final Class<T> myClass;
-  private final XmlAnnotatedElement myParent;
+  private final DomElement myParent;
   private final String myTagName;
   private XmlTag myTag;
 
   private XmlFile myFile;
-  private XmlAnnotatedElement myProxy;
+  private DomElement myProxy;
   private boolean myInitialized = false;
   private boolean myInitializing = false;
-  private final Map<Method,XmlAnnotatedElement> myChildren = new HashMap<Method, XmlAnnotatedElement>();
+  private final Map<Method,DomElement> myChildren = new HashMap<Method, DomElement>();
 
-  public XmlAnnotatedElementImpl(final Class<T> aClass, final XmlTag tag, final XmlAnnotatedElement parent, final String tagName) {
+  public DomInvocationHandler(final Class<T> aClass, final XmlTag tag, final DomElement parent, final String tagName) {
     myClass = aClass;
     myTag = tag;
     myParent = parent;
@@ -41,12 +41,12 @@ class XmlAnnotatedElementImpl<T extends XmlAnnotatedElement> implements Invocati
   }
 
   @NotNull
-  public XmlFileAnnotatedElement getRoot() {
+  public DomFileElement getRoot() {
     return myParent.getRoot();
   }
 
   @NotNull
-  public XmlAnnotatedElement getParent() {
+  public DomElement getParent() {
     return myParent;
   }
 
@@ -54,11 +54,11 @@ class XmlAnnotatedElementImpl<T extends XmlAnnotatedElement> implements Invocati
     return ((Converter<T>)getConverter(method)).fromString(s, new ConvertContext(getFile()));
   }
 
-  public final XmlAnnotatedElement getProxy() {
+  public final DomElement getProxy() {
     return myProxy;
   }
 
-  public final void setProxy(final XmlAnnotatedElement proxy) {
+  public final void setProxy(final DomElement proxy) {
     myProxy = proxy;
   }
 
@@ -109,12 +109,12 @@ class XmlAnnotatedElementImpl<T extends XmlAnnotatedElement> implements Invocati
       return myChildren.get(method);
     }
     final Class<?> returnType = method.getReturnType();
-    if (tag != null && XmlAnnotatedElement.class.isAssignableFrom(returnType)) {
+    if (tag != null && DomElement.class.isAssignableFrom(returnType)) {
       final String qname = getSubTagName(method);
       if (qname != null) {
         XmlTag subTag = tag.findFirstSubTag(qname);
         if (subTag != null) {
-          final XmlAnnotatedElement element = XmlAnnotatedElementManagerImpl.getCachedElement(subTag);
+          final DomElement element = DomElementManagerImpl.getCachedElement(subTag);
           if (element != null) {
             myChildren.put(method, element);
             return element;
@@ -129,9 +129,9 @@ class XmlAnnotatedElementImpl<T extends XmlAnnotatedElement> implements Invocati
       final String qname = getSubTagNameForCollection(method);
       if (qname != null) {
         final XmlTag[] subTags = tag.findSubTags(qname);
-        XmlAnnotatedElement[] elements = new XmlAnnotatedElement[subTags.length];
+        DomElement[] elements = new DomElement[subTags.length];
         for (int i = 0; i < subTags.length; i++) {
-          final XmlAnnotatedElement element = XmlAnnotatedElementManagerImpl.getCachedElement(subTags[i]);
+          final DomElement element = DomElementManagerImpl.getCachedElement(subTags[i]);
           assert element != null : "Null annotated element for " + tag.getText() + "; " + qname + "; " + i;
           elements[i] = element;
         }
@@ -145,7 +145,7 @@ class XmlAnnotatedElementImpl<T extends XmlAnnotatedElement> implements Invocati
 
   private boolean isCoreMethod(final Method method) {
     final Class<?> declaringClass = method.getDeclaringClass();
-    return Object.class.equals(declaringClass) || XmlAnnotatedElement.class.equals(declaringClass);
+    return Object.class.equals(declaringClass) || DomElement.class.equals(declaringClass);
   }
 
   public String toString() {
@@ -154,7 +154,7 @@ class XmlAnnotatedElementImpl<T extends XmlAnnotatedElement> implements Invocati
   }
 
   @Nullable
-  private static Class<? extends XmlAnnotatedElement> extractElementType(Type returnType) {
+  private static Class<? extends DomElement> extractElementType(Type returnType) {
     if (returnType instanceof ParameterizedType) {
       ParameterizedType parameterizedType = (ParameterizedType)returnType;
       final Type rawType = parameterizedType.getRawType();
@@ -171,16 +171,16 @@ class XmlAnnotatedElementImpl<T extends XmlAnnotatedElement> implements Invocati
                 final Type upperBound = upperBounds[0];
                 if (upperBound instanceof Class) {
                   Class aClass1 = (Class)upperBound;
-                  if (XmlAnnotatedElement.class.isAssignableFrom(aClass1)) {
-                    return (Class<? extends XmlAnnotatedElement>)aClass1;
+                  if (DomElement.class.isAssignableFrom(aClass1)) {
+                    return (Class<? extends DomElement>)aClass1;
                   }
                 }
               }
             }
             else if (argument instanceof Class) {
               Class aClass1 = (Class)argument;
-              if (XmlAnnotatedElement.class.isAssignableFrom(aClass1)) {
-                return (Class<? extends XmlAnnotatedElement>)aClass1;
+              if (DomElement.class.isAssignableFrom(aClass1)) {
+                return (Class<? extends DomElement>)aClass1;
               }
             }
           }
@@ -214,24 +214,24 @@ class XmlAnnotatedElementImpl<T extends XmlAnnotatedElement> implements Invocati
     final Class<?> returnType = method.getReturnType();
     final XmlTag tag = getXmlTag();
 
-    if (XmlAnnotatedElement.class.isAssignableFrom(returnType)) {
+    if (DomElement.class.isAssignableFrom(returnType)) {
       final String qname = getSubTagName(method);
       if (qname != null) {
         XmlTag subTag = tag == null ? null : tag.findFirstSubTag(qname);
-        myChildren.put(method, XmlAnnotatedElementManagerImpl.createXmlAnnotatedElement((Class<XmlAnnotatedElement>)returnType, subTag, getProxy(), qname));
+        myChildren.put(method, DomElementManagerImpl.createXmlAnnotatedElement((Class<DomElement>)returnType, subTag, getProxy(), qname));
         tags.add(subTag);
         return;
       }
     }
     if (tag != null) {
-      final Class<? extends XmlAnnotatedElement> aClass = extractElementType(method.getGenericReturnType());
+      final Class<? extends DomElement> aClass = extractElementType(method.getGenericReturnType());
       if (aClass != null) {
         final String qname = getSubTagNameForCollection(method);
         if (qname != null) {
           for (int i = 0; i < tag.findSubTags(qname).length; i++) {
             XmlTag subTag = tag.findSubTags(qname)[i];
             if (!tags.contains(subTag)) {
-              XmlAnnotatedElementManagerImpl.createXmlAnnotatedElement(aClass, subTag, getProxy(), qname);
+              DomElementManagerImpl.createXmlAnnotatedElement(aClass, subTag, getProxy(), qname);
               tags.add(subTag);
             }
           }
@@ -265,11 +265,11 @@ class XmlAnnotatedElementImpl<T extends XmlAnnotatedElement> implements Invocati
 
   @NotNull
   private NameStrategy getNameStrategy() {
-    return XmlAnnotatedElementManagerImpl._getNameStrategy(getFile());
+    return DomElementManagerImpl._getNameStrategy(getFile());
   }
 
   private boolean isGetValueMethod(final Method method) {
-    return "getValue".equals(method.getName()) && String.class.equals(method.getReturnType()) && method.getParameterTypes().length == 0;
+    return "getValue".equals(method.getName()) && method.getParameterTypes().length == 0;
   }
 
   @Nullable
@@ -289,7 +289,7 @@ class XmlAnnotatedElementImpl<T extends XmlAnnotatedElement> implements Invocati
   @Nullable
   public XmlTag getXmlTag() {
     if (myTag == null && myTagName != null) {
-      final XmlFileAnnotatedElement root = myParent.getRoot();
+      final DomFileElement root = myParent.getRoot();
       if (myParent == root) {
         final XmlTag tag = root.getRootTag();
         if (myTagName.equals(tag.getName())) {
@@ -303,7 +303,7 @@ class XmlAnnotatedElementImpl<T extends XmlAnnotatedElement> implements Invocati
         }
       }
       synchronized (PsiLock.LOCK) {
-        XmlAnnotatedElementManagerImpl.setCachedElement(myTag, getProxy());
+        DomElementManagerImpl.setCachedElement(myTag, getProxy());
       }
     }
     return myTag;

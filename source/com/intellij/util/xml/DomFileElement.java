@@ -13,14 +13,14 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author peter
  */
-public class XmlFileAnnotatedElement<T extends XmlAnnotatedElement> implements XmlAnnotatedElement {
+public class DomFileElement<T extends DomElement> implements DomElement {
   private final XmlFile myFile;
   private final Class<T> myRootElementClass;
   private final String myRootTagName;
 
-  protected XmlFileAnnotatedElement(final XmlFile file,
-                                    final Class<T> rootElementClass,
-                                    final String rootTagName) {
+  protected DomFileElement(final XmlFile file,
+                           final Class<T> rootElementClass,
+                           final String rootTagName) {
     myFile = file;
     myRootElementClass = rootElementClass;
     myRootTagName = rootTagName;
@@ -48,8 +48,8 @@ public class XmlFileAnnotatedElement<T extends XmlAnnotatedElement> implements X
       if (document != null) {
         final XmlTag tag = document.getRootTag();
         if (tag != null && (myRootTagName == null || myRootTagName.equals(tag.getName()))) {
-          final T element = (T) XmlAnnotatedElementManagerImpl.getCachedElement(tag);
-          return element == null ? XmlAnnotatedElementManagerImpl.createXmlAnnotatedElement(myRootElementClass, tag, this, myRootTagName) : element;
+          final T element = (T) DomElementManagerImpl.getCachedElement(tag);
+          return element == null ? DomElementManagerImpl.createXmlAnnotatedElement(myRootElementClass, tag, this, myRootTagName) : element;
         }
       }
       return null;
@@ -61,11 +61,11 @@ public class XmlFileAnnotatedElement<T extends XmlAnnotatedElement> implements X
   }
 
   @NotNull
-  public XmlFileAnnotatedElement getRoot() {
+  public DomFileElement getRoot() {
     return this;
   }
 
-  public XmlAnnotatedElement getParent() {
+  public DomElement getParent() {
     return null;
   }
 }

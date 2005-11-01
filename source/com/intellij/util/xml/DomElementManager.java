@@ -10,10 +10,10 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author peter
  */
-public abstract class XmlAnnotatedElementManager {
+public abstract class DomElementManager {
 
-  public static XmlAnnotatedElementManager getXmlAnnotatedElementManager() {
-    return ApplicationManager.getApplication().getComponent(XmlAnnotatedElementManager.class);
+  public static DomElementManager getXmlAnnotatedElementManager() {
+    return ApplicationManager.getApplication().getComponent(DomElementManager.class);
   }
 
   public abstract void setNameStrategy(final XmlFile file, final NameStrategy strategy);
@@ -22,5 +22,5 @@ public abstract class XmlAnnotatedElementManager {
   public abstract NameStrategy getNameStrategy(final XmlFile file);
 
   @NotNull
-  public abstract <T extends XmlAnnotatedElement> XmlFileAnnotatedElement<T> getFileElement(XmlFile file, Class<T> aClass, String rootTagName);
+  public abstract <T extends DomElement> DomFileElement<T> getFileElement(XmlFile file, Class<T> aClass, String rootTagName);
 }

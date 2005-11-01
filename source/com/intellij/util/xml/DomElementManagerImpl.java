@@ -17,17 +17,17 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author peter
  */
-public class XmlAnnotatedElementManagerImpl extends XmlAnnotatedElementManager implements ApplicationComponent {
+public class DomElementManagerImpl extends DomElementManager implements ApplicationComponent {
   private static final Key<NameStrategy> NAME_STRATEGY_KEY = Key.create("NameStrategy");
-  private static final Key<XmlAnnotatedElement> CACHED_ELEMENT = Key.create("CachedXmlAnnotatedElement");
+  private static final Key<DomElement> CACHED_ELEMENT = Key.create("CachedXmlAnnotatedElement");
 
   @NotNull
-  protected static <T extends XmlAnnotatedElement>T createXmlAnnotatedElement(final Class<T> aClass,
+  protected static <T extends DomElement>T createXmlAnnotatedElement(final Class<T> aClass,
                                                                      final XmlTag tag,
-                                                                     final XmlAnnotatedElement parent,
+                                                                     final DomElement parent,
                                                                      final String tagName) {
     synchronized (PsiLock.LOCK) {
-      final XmlAnnotatedElementImpl<T> handler = new XmlAnnotatedElementImpl<T>(aClass, tag, parent, tagName);
+      final DomInvocationHandler<T> handler = new DomInvocationHandler<T>(aClass, tag, parent, tagName);
       final T element = newProxyInstance(aClass, handler);
       handler.setProxy(element);
       setCachedElement(tag, element);
@@ -35,8 +35,8 @@ public class XmlAnnotatedElementManagerImpl extends XmlAnnotatedElementManager i
     }
   }
 
-  private static <T extends XmlAnnotatedElement>T newProxyInstance(final Class<T> aClass,
-                                                            final XmlAnnotatedElementImpl<T> invocationHandler) {
+  private static <T extends DomElement>T newProxyInstance(final Class<T> aClass,
+                                                            final DomInvocationHandler<T> invocationHandler) {
     return (T)Proxy.newProxyInstance(null, new Class[]{aClass}, invocationHandler);
   }
 
@@ -55,27 +55,27 @@ public class XmlAnnotatedElementManagerImpl extends XmlAnnotatedElementManager i
   }
 
   @NotNull
-  public <T extends XmlAnnotatedElement> XmlFileAnnotatedElement<T> getFileElement(final XmlFile file,
+  public <T extends DomElement> DomFileElement<T> getFileElement(final XmlFile file,
                                                                                    final Class<T> aClass,
                                                                                    String rootTagName) {
     synchronized (PsiLock.LOCK) {
-      XmlFileAnnotatedElement<T> element = (XmlFileAnnotatedElement<T>)getCachedElement(file);
+      DomFileElement<T> element = (DomFileElement<T>)getCachedElement(file);
       if (element == null) {
-        element = new XmlFileAnnotatedElement<T>(file, aClass, rootTagName);
+        element = new DomFileElement<T>(file, aClass, rootTagName);
         setCachedElement(file, element);
       }
       return element;
     }
   }
 
-  protected static void setCachedElement(final XmlElement xmlElement, final XmlAnnotatedElement element) {
+  protected static void setCachedElement(final XmlElement xmlElement, final DomElement element) {
     if (xmlElement != null) {
       xmlElement.putUserData(CACHED_ELEMENT, element);
     }
   }
 
   @Nullable
-  public static XmlAnnotatedElement getCachedElement(final XmlElement element) {
+  public static DomElement getCachedElement(final XmlElement element) {
     return element.getUserData(CACHED_ELEMENT);
   }
 
