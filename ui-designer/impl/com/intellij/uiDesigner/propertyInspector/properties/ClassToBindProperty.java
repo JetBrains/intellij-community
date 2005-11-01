@@ -8,15 +8,17 @@ import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiClass;
+import com.intellij.openapi.editor.Document;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.renderers.ClassToBindRenderer;
+import com.intellij.ui.EditorTextField;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -35,7 +37,7 @@ public final class ClassToBindProperty extends Property {
     super(null, "bind to class");
     myUiEditor = editor;
     myRenderer = new ClassToBindRenderer();
-    myEditor = new MyEditor();
+    myEditor = new MyEditor(editor.getProject());
   }
 
   public Property[] getChildren(){
@@ -65,24 +67,35 @@ public final class ClassToBindProperty extends Property {
   }
 
   private final class MyEditor extends PropertyEditor{
-    private final TextFieldWithBrowseButton myTfWithButton;
+    private EditorTextField myEditorTextField;
+    private Document myDocument;
+    private final ComponentWithBrowseButton<EditorTextField> myTfWithButton;
     private String myInitialValue;
+    private final Project myProject;
 
-    public MyEditor() {
-      myTfWithButton = new TextFieldWithBrowseButton(new MyActionListener());
-      myTfWithButton.getTextField().setBorder(null);
+    public MyEditor(final Project project) {
+      myProject = project;
+      myEditorTextField = new EditorTextField("") {
+        protected boolean shouldHaveBorder() {
+          return false;
+        }
+      };
+      myTfWithButton = new ComponentWithBrowseButton<EditorTextField>(myEditorTextField, new MyActionListener());
+      myEditorTextField.setBorder(null);
       new MyCancelEditingAction().registerCustomShortcutSet(CommonShortcuts.ESCAPE, myTfWithButton);
-      myTfWithButton.getTextField().addActionListener(
+      /*
+      myEditorTextField.addActionListener(
         new ActionListener() {
           public void actionPerformed(final ActionEvent e) {
             fireValueCommited();
           }
         }
       );
+      */
     }
 
     public Object getValue() throws Exception {
-      final String value = myTfWithButton.getText();
+      final String value = myDocument.getText();
       if (value.length() == 0 && myInitialValue == null) {
         return null;
       }
@@ -92,8 +105,17 @@ public final class ClassToBindProperty extends Property {
     public JComponent getComponent(final RadComponent component, final Object value, final boolean inplace) {
       final String s = (String)value;
       myInitialValue = s;
-      myTfWithButton.setText(s);
+      setEditorText(s != null ? s : "");
       return myTfWithButton;
+    }
+
+    private void setEditorText(final String s) {
+      final PsiManager manager = PsiManager.getInstance(myProject);
+      final PsiElementFactory factory = manager.getElementFactory();
+      PsiPackage defaultPackage = manager.findPackage("");
+      final PsiCodeFragment fragment = factory.createReferenceCodeFragment(s, defaultPackage, true, true);
+      myDocument = PsiDocumentManager.getInstance(manager.getProject()).getDocument(fragment);
+      myEditorTextField.setDocument(myDocument);
     }
 
     public void updateUI() {
@@ -102,7 +124,7 @@ public final class ClassToBindProperty extends Property {
 
     private final class MyActionListener implements ActionListener{
       public void actionPerformed(final ActionEvent e){
-        final String className = myTfWithButton.getText();
+        final String className = myEditorTextField.getText();
         final PsiClass aClass = FormEditingUtil.findClassToBind(myUiEditor.getModule(), className);
 
         final Project project = myUiEditor.getProject();
@@ -122,10 +144,10 @@ public final class ClassToBindProperty extends Property {
 
         final PsiClass result = chooser.getSelectedClass();
         if (result != null) {
-          myTfWithButton.setText(result.getQualifiedName());
+          setEditorText(result.getQualifiedName());
         }
 
-        myTfWithButton.getTextField().requestFocus(); // todo[anton] make it via providing proper parent
+        myEditorTextField.requestFocus(); // todo[anton] make it via providing proper parent
       }
     }
 
