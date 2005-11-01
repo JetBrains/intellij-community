@@ -48,16 +48,16 @@ public class DomManagerImpl extends DomManager implements ApplicationComponent {
   }
 
   @NotNull
-  protected <T extends DomElement>T createXmlAnnotatedElement(final Class<T> aClass,
-                                                                     final XmlTag tag,
-                                                                     final DomElement parent,
-                                                                     final String tagName) {
-    return createXmlAnnotatedElement(aClass, tag, new DomInvocationHandler<T>(aClass, tag, parent, tagName, this));
+  protected <T extends DomElement>T createDomElement(final Class<T> aClass,
+                                                     final XmlTag tag,
+                                                     final DomElement parent,
+                                                     final String tagName) {
+    return createDomElement(aClass, tag, new DomInvocationHandler<T>(aClass, tag, parent, tagName, this));
   }
 
-  protected static <T extends DomElement>T createXmlAnnotatedElement(final Class<T> aClass,
-                                                                     final XmlTag tag,
-                                                                     final DomInvocationHandler<T> handler) {
+  protected static <T extends DomElement>T createDomElement(final Class<T> aClass,
+                                                            final XmlTag tag,
+                                                            final DomInvocationHandler<T> handler) {
     synchronized (PsiLock.LOCK) {
       final T element = newProxyInstance(aClass, handler);
       handler.setProxy(element);

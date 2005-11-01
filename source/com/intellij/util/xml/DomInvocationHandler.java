@@ -36,7 +36,9 @@ class DomInvocationHandler<T extends DomElement> implements InvocationHandler, D
   private DomElement myProxy;
   private boolean myInitialized = false;
   private boolean myInitializing = false;
-  private final Map<Method, DomElement> myChildren = new HashMap<Method, DomElement>();
+  private final Map<Method, DomElement> myMethod2Children = new HashMap<Method, DomElement>();
+  private final Map<String, DomElement> myName2Children = new HashMap<String, DomElement>();
+  private final Set<String> myCollectionChildrenNames = new HashSet<String>();
 
   public DomInvocationHandler(final Class<T> aClass, final XmlTag tag, final DomElement parent, @NotNull final String tagName, DomManagerImpl manager) {
     myClass = aClass;
@@ -57,9 +59,16 @@ class DomInvocationHandler<T extends DomElement> implements InvocationHandler, D
   }
 
   public final XmlTag ensureTagExists() {
+    return _ensureTagExists(true);
+  }
+
+  private XmlTag _ensureTagExists(final boolean fireEvent) {
     if (getXmlTag() == null) {
       try {
         setXmlTag(getFile().getManager().getElementFactory().createTagFromText("<" + myTagName + "/>"));
+        if (fireEvent) {
+          myManager.fireEvent(new ElementDefinedEvent(this));
+        }
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
@@ -151,37 +160,33 @@ class DomInvocationHandler<T extends DomElement> implements InvocationHandler, D
     boolean getter = isGetter(method);
     boolean setter = isSetter(method);
 
-    final AttributeValue attributeValue = method.getAnnotation(AttributeValue.class);
-    final XmlTag tag = getXmlTag();
-    if (attributeValue != null) {
-      final String attributeName = guessName(attributeValue.value(), method);
-      if (getter) {
-        return getAttributeValue(tag, method, attributeName);
-      }
-      assert setter : "Annotated method " + method.toString() + " should be either setter or getter";
-      final Object oldValue = getAttributeValue(tag, method, attributeName);
-      final Object newValue = args[0];
-      ensureTagExists().setAttribute(attributeName, convertToString(method, newValue, false));
-      myManager.fireEvent(new AttributeChangeEvent(this, attributeName, oldValue, newValue));
-      return null;
-    }
+    XmlTag tag = getXmlTag();
 
     final TagValue tagValue = method.getAnnotation(TagValue.class);
     if (getter && (tagValue != null || "getValue".equals(name))) {
       return getValue(tag, method);
     }
     else if (setter && (tagValue != null || "setValue".equals(method.getName()))) {
+      tag = ensureTagExists();
       final Object oldValue = getValue(tag, method);
       final Object newValue = args[0];
-      ensureTagExists().getValue().setText(convertToString(method, newValue, false));
+      setTagValue(tag, convertToString(method, newValue, false));
       myManager.fireEvent(new ValueChangeEvent(this, oldValue, newValue == null ? "" : newValue));
       return null;
     }
 
     checkInitialized();
 
-    if (myChildren.containsKey(method)) {
-      return myChildren.get(method);
+    if (isCopyFrom(name, method)) {
+      String qname = getTagNameFromCopyFromMethod(method);
+      if (!StringUtil.isEmpty(qname)) {
+        copyFrom((DomElement)args[0]);
+        return null;
+      }
+    }
+
+    if (myMethod2Children.containsKey(method)) {
+      return myMethod2Children.get(method);
     }
     final Class<?> returnType = method.getReturnType();
     if (tag != null && DomElement.class.isAssignableFrom(returnType)) {
@@ -191,7 +196,7 @@ class DomInvocationHandler<T extends DomElement> implements InvocationHandler, D
         if (subTag != null) {
           final DomElement element = DomManagerImpl.getCachedElement(subTag);
           if (element != null) {
-            myChildren.put(method, element);
+            myMethod2Children.put(method, element);
             return element;
           }
         }
@@ -217,13 +222,69 @@ class DomInvocationHandler<T extends DomElement> implements InvocationHandler, D
     throw new UnsupportedOperationException("Cannot call " + method.toString());
   }
 
+  private void copyFrom(final DomElement element) throws IncorrectOperationException {
+    final XmlTag tag;
+    tag = _ensureTagExists(false);
+    final XmlTag newTag = element.ensureTagExists();
+    List<DomEvent> events = new ArrayList<DomEvent>();
+    if (!getTagValue(tag).equals(getTagValue(newTag))) {
+      events.add(new ValueChangeEvent(this, getTagValue(tag), getTagValue(newTag)));
+    }
+    for (XmlTag subTag : tag.getSubTags()) {
+      if (myName2Children.containsKey(subTag)) {
+        events.add(new ElementUndefinedEvent(DomManagerImpl.getCachedElement(subTag)));
+      }
+    }
+    for (XmlTag subTag : newTag.getSubTags()) {
+      final DomElement child = myName2Children.get(subTag.getName());
+      if (child != null) {
+        events.add(new ElementDefinedEvent(child));
+        events.add(new ElementChangedEvent(child));
+      }
+    }
+
+    myTag = (XmlTag) tag.replace(newTag);
+    for (DomEvent event : events) {
+      myManager.fireEvent(event);
+    }
+  }
+
+  private void setTagValue(final XmlTag tag, final String value) {
+    tag.getValue().setText(value);
+  }
+
+  private String getTagNameFromCopyFromMethod(final Method method) {
+    final SubTag subTag = method.getAnnotation(SubTag.class);
+    if (subTag != null && !StringUtil.isEmpty(subTag.value())) {
+      return subTag.value();
+    }
+
+    final String name = method.getName();
+    return getNameStrategy().convertName(name.substring("copy".length(), name.length() - "From".length()));
+  }
+
+  private boolean isCopyFrom(final String name, final Method method) {
+    if (!name.startsWith("copy") || !name.endsWith("From")) {
+      return false;
+    }
+    final Class<?>[] parameterTypes = method.getParameterTypes();
+    if (parameterTypes.length != 1 || !DomElement.class.isAssignableFrom(parameterTypes[0])) {
+      return false;
+    }
+    return void.class.equals(method.getReturnType());
+  }
+
   private Object getAttributeValue(final XmlTag tag, final Method method, final String attributeName) throws IllegalAccessException,
                                                                                                              InstantiationException {
     return tag != null ? convertFromString(method, tag.getAttributeValue(attributeName), true) : null;
   }
 
   private Object getValue(final XmlTag tag, final Method method) throws IllegalAccessException, InstantiationException {
-    return tag != null ? convertFromString(method, tag.getValue().getText(), true) : null;
+    return tag != null ? convertFromString(method, getTagValue(tag), true) : null;
+  }
+
+  private String getTagValue(final XmlTag tag) {
+    return tag.getValue().getText();
   }
 
   private static boolean isSetter(final Method method) {
@@ -251,8 +312,7 @@ class DomInvocationHandler<T extends DomElement> implements InvocationHandler, D
   }
 
   public String toString() {
-    final XmlTag tag = getXmlTag();
-    return StringUtil.getShortName(myClass) + " on tag " + (tag == null ? "null" : tag.getText()) + " @" + hashCode();
+    return StringUtil.getShortName(myClass) + " @" + hashCode();
   }
 
   @Nullable
@@ -320,7 +380,9 @@ class DomInvocationHandler<T extends DomElement> implements InvocationHandler, D
       final String qname = getSubTagName(method);
       if (qname != null) {
         XmlTag subTag = tag == null ? null : tag.findFirstSubTag(qname);
-        myChildren.put(method, myManager.createXmlAnnotatedElement((Class<DomElement>)returnType, subTag, getProxy(), qname));
+        final DomElement element = myManager.createDomElement((Class<DomElement>)returnType, subTag, getProxy(), qname);
+        myName2Children.put(qname, element);
+        myMethod2Children.put(method, element);
         tags.add(subTag);
         return;
       }
@@ -330,10 +392,11 @@ class DomInvocationHandler<T extends DomElement> implements InvocationHandler, D
       if (aClass != null) {
         final String qname = getSubTagNameForCollection(method);
         if (qname != null) {
+          myCollectionChildrenNames.add(qname);
           for (int i = 0; i < tag.findSubTags(qname).length; i++) {
             XmlTag subTag = tag.findSubTags(qname)[i];
             if (!tags.contains(subTag)) {
-              myManager.createXmlAnnotatedElement(aClass, subTag, getProxy(), qname);
+              myManager.createDomElement(aClass, subTag, getProxy(), qname);
               tags.add(subTag);
             }
           }

@@ -51,16 +51,12 @@
  * information on the Apache Software Foundation, please see
  * <http://www.apache.org/>.
  */
-package jetbrains.fabrique.util;
-
-import jetbrains.fabrique.util.beanutils.PropertyUtils;
+package com.intellij.util;
 
 import java.io.Serializable;
-import java.util.List;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.beans.PropertyDescriptor;
-import java.lang.reflect.InvocationTargetException;
+import java.util.List;
 /**
  * Common <code>Object</code> manipulation routines.
  *
@@ -126,45 +122,6 @@ public class ObjectUtils {
         return object1.equals(object2);
     }
 
-  /**
-   * Compares beans by their properties. Recursive, stops when java.lang.* classes are reached.
-   */
-  public static boolean equalByProperties(Object object1, Object object2) {
-    if (object1 == object2) {
-        return true;
-    }
-    if ((object1 == null) || (object2 == null)) {
-        return false;
-    }
-    if (!object1.getClass().equals(object2.getClass())) return false;
-
-    if (object1.equals(object2)) return true;
-
-    if (object1.getClass().getName().startsWith("java.lang")) return object1.equals(object2);
-
-    PropertyDescriptor[] propertyDescriptors = PropertyUtils.getPropertyDescriptors(object1);
-    for (int i = 0; i < propertyDescriptors.length; i++) {
-      PropertyDescriptor descriptor = propertyDescriptors[i];
-      Object property1 = null;
-      Object property2 = null;
-      try {
-        property1 = PropertyUtils.getSimpleProperty(object1, descriptor.getName());
-        property2 = PropertyUtils.getSimpleProperty(object2, descriptor.getName());
-      }
-      catch (IllegalAccessException e) {
-        throw new RuntimeException(e);
-      }
-      catch (InvocationTargetException e) {
-        // ignore unreadable properties
-        continue;
-      }
-      catch (NoSuchMethodException e) {
-        throw new RuntimeException(e);
-      }
-      if (!equalByProperties(property1, property2)) return false;
-    }
-    return true;
-  }
     /**
      * Gets the toString that would be produced by Object if a class did not
      * override toString itself. Null will return null.

@@ -6,19 +6,14 @@ package com.intellij.util.xml;
 /**
  * @author peter
  */
-public class ElementUndefinedEvent implements DomEvent{
-  private DomElement myElement;
+public class ElementUndefinedEvent extends ElementChangedEvent {
 
   public ElementUndefinedEvent(final DomElement element) {
-    myElement = element;
-  }
-
-  public DomElement getElement() {
-    return myElement;
+    super(element);
   }
 
   public String toString() {
-    return "Undefined " + myElement;
+    return "Undefined " + getElement();
   }
 
   public void accept(DomEventVisitor visitor) {

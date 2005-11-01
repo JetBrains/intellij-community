@@ -6,19 +6,13 @@ package com.intellij.util.xml;
 /**
  * @author peter
  */
-public class ElementDefinedEvent implements DomEvent{
-  private DomElement myElement;
-
+public class ElementDefinedEvent extends ElementChangedEvent{
   public ElementDefinedEvent(final DomElement element) {
-    myElement = element;
-  }
-
-  public DomElement getElement() {
-    return myElement;
+    super(element);
   }
 
   public String toString() {
-    return "Defined " + myElement;
+    return "Defined " + getElement();
   }
 
   public void accept(DomEventVisitor visitor) {
