@@ -259,8 +259,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     docsOnHold.removeAll(myRedoStacksHolder.getDocsInGlobalQueue());
 
     Set<DocumentReference> openedDocs = new HashSet<DocumentReference>();
-    for (Iterator<DocumentReference> iterator = docsOnHold.iterator(); iterator.hasNext();) {
-      DocumentReference docRef = iterator.next();
+    for (DocumentReference docRef : docsOnHold) {
       final VirtualFile file = docRef.getFile();
       if (file != null) {
         if (myProject != null && FileEditorManager.getInstance(myProject).isFileOpen(file)) {
@@ -404,10 +403,9 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
         return false;
       }
 
-      for (int i = 0; i < documents.length; i++) {
-        Document document = documents[i];
+      for (Document document : documents) {
         LinkedList localStack = getRedoStacksHolder().getStack(document);
-        if (!localStack.isEmpty()){
+        if (!localStack.isEmpty()) {
           return true;
         }
       }
@@ -477,9 +475,9 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     if (myCurrentMerger != null && !myCurrentMerger.isEmpty(docRef)) return false;
     if (myLastMerger != null && !myLastMerger.isEmpty(docRef)) return false;
     if (!myUndoStacksHolder.getStack(docRef).isEmpty()) return false;
-    LinkedList globalStack = myUndoStacksHolder.getGlobalStack();
-    for (Iterator each = globalStack.iterator(); each.hasNext();) {
-      Collection<DocumentReference> affectedDocuments = ((UndoableGroup)each.next()).getAffectedDocuments();
+    LinkedList<UndoableGroup> globalStack = myUndoStacksHolder.getGlobalStack();
+    for (final UndoableGroup group : globalStack) {
+      Collection<DocumentReference> affectedDocuments = group.getAffectedDocuments();
       if (affectedDocuments.contains(docRef)) return false;
     }
     return true;
@@ -508,8 +506,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   }
 
   private DocumentReference findInvalidatedReferenceByUrl(Collection<DocumentReference> collection, String url) {
-    for (Iterator each = collection.iterator(); each.hasNext();) {
-      DocumentReference documentReference = (DocumentReference)each.next();
+    for (final DocumentReference documentReference : collection) {
       if (documentReference.equalsByUrl(url)) return documentReference;
     }
     return null;
@@ -546,8 +543,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     }
 
     private void beforeFileDeletion(VirtualFile file, Collection<DocumentReference> docs) {
-      for (Iterator iterator = docs.iterator(); iterator.hasNext();) {
-        DocumentReference documentReference = (DocumentReference)iterator.next();
+      for (final DocumentReference documentReference : docs) {
         documentReference.beforeFileDeletion(file);
       }
 
