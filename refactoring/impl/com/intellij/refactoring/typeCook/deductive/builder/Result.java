@@ -104,8 +104,6 @@ public class Result {
               if (expression.getType().equals(expression.getOperand().getType())) {
                 set.add(cast);
               }
-
-              myCasts.remove(expression);
             }
           }
         });
