@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author peter
  */
-public class DomElementManagerImpl extends DomElementManager implements ApplicationComponent {
+public class DomManagerImpl extends DomManager implements ApplicationComponent {
   private static final Key<NameStrategy> NAME_STRATEGY_KEY = Key.create("NameStrategy");
   private static final Key<DomElement> CACHED_ELEMENT = Key.create("CachedXmlAnnotatedElement");
 
@@ -26,8 +26,13 @@ public class DomElementManagerImpl extends DomElementManager implements Applicat
                                                                      final XmlTag tag,
                                                                      final DomElement parent,
                                                                      final String tagName) {
+    return createXmlAnnotatedElement(aClass, tag, new DomInvocationHandler<T>(aClass, tag, parent, tagName));
+  }
+
+  protected static <T extends DomElement>T createXmlAnnotatedElement(final Class<T> aClass,
+                                                                   final XmlTag tag,
+                                                                   final DomInvocationHandler<T> handler) {
     synchronized (PsiLock.LOCK) {
-      final DomInvocationHandler<T> handler = new DomInvocationHandler<T>(aClass, tag, parent, tagName);
       final T element = newProxyInstance(aClass, handler);
       handler.setProxy(element);
       setCachedElement(tag, element);
@@ -36,7 +41,7 @@ public class DomElementManagerImpl extends DomElementManager implements Applicat
   }
 
   private static <T extends DomElement>T newProxyInstance(final Class<T> aClass,
-                                                            final DomInvocationHandler<T> invocationHandler) {
+                                                          final DomInvocationHandler<T> invocationHandler) {
     return (T)Proxy.newProxyInstance(null, new Class[]{aClass}, invocationHandler);
   }
 

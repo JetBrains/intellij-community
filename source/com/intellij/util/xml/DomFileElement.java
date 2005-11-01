@@ -3,12 +3,12 @@
  */
 package com.intellij.util.xml;
 
+import com.intellij.psi.PsiLock;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.PsiLock;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -17,6 +17,7 @@ public class DomFileElement<T extends DomElement> implements DomElement {
   private final XmlFile myFile;
   private final Class<T> myRootElementClass;
   private final String myRootTagName;
+  private T myRootValue;
 
   protected DomFileElement(final XmlFile file,
                            final Class<T> rootElementClass,
@@ -30,6 +31,7 @@ public class DomFileElement<T extends DomElement> implements DomElement {
     return myFile;
   }
 
+  @Nullable
   public XmlTag getRootTag() {
     final XmlDocument document = myFile.getDocument();
     if (document != null) {
@@ -41,18 +43,15 @@ public class DomFileElement<T extends DomElement> implements DomElement {
     return null;
   }
 
-  @Nullable
+  @NotNull
   public T getRootElement() {
     synchronized (PsiLock.LOCK) {
-      final XmlDocument document = myFile.getDocument();
-      if (document != null) {
-        final XmlTag tag = document.getRootTag();
-        if (tag != null && (myRootTagName == null || myRootTagName.equals(tag.getName()))) {
-          final T element = (T) DomElementManagerImpl.getCachedElement(tag);
-          return element == null ? DomElementManagerImpl.createXmlAnnotatedElement(myRootElementClass, tag, this, myRootTagName) : element;
-        }
+      if (myRootValue == null) {
+        final XmlTag tag = getRootTag();
+        final DomRootInvocationHandler<T> handler = new DomRootInvocationHandler<T>(myRootElementClass, tag, this, myRootTagName);
+        myRootValue = DomManagerImpl.createXmlAnnotatedElement(myRootElementClass, tag, handler);
       }
-      return null;
+      return myRootValue;
     }
   }
 
@@ -66,6 +65,10 @@ public class DomFileElement<T extends DomElement> implements DomElement {
   }
 
   public DomElement getParent() {
+    return null;
+  }
+
+  public XmlTag ensureTagExists() {
     return null;
   }
 }

@@ -18,7 +18,10 @@ public interface DomElement {
   @NotNull
   DomFileElement getRoot();
 
+  @NotNull
   @Nullable
   DomElement getParent();
+
+  XmlTag ensureTagExists();
 
 }
