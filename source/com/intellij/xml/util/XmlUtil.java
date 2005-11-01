@@ -79,7 +79,7 @@ public class XmlUtil {
   public static final String STRUTS_HTML_URI = "http://struts.apache.org/tags-html";
   
   public static final String SPRING_CORE_URI = "http://www.springframework.org/dtd/spring-beans.dtd";
-  public static final String HIBERNATE_URIS[] = { 
+  public static final String[] HIBERNATE_URIS = { 
     "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd",
     "http://hibernate.sourceforge.net/hibernate-mapping-2.0.dtd"
   };
@@ -479,9 +479,8 @@ public class XmlUtil {
     
     for (XmlTag tag : forTags) {
       final XmlTag[] allTags = tag.findSubTags(subTag);
-      
-      for (int j = 0; j < allTags.length; j++) {
-        XmlTag curTag = allTags[j];
+
+      for (XmlTag curTag : allTags) {
         if (curTag.getName().equals(subTag) && curTag.getValue().getTrimmedText().equalsIgnoreCase(withValue)) {
           return tag;
         }
@@ -826,7 +825,19 @@ public class XmlUtil {
     final StringBuffer buffer = new StringBuffer();
     final Map<String,List<String>> tags = new HashMap<String, List<String>>();
     final Map<String,List<MyAttributeInfo>> attributes = new HashMap<String, List<MyAttributeInfo>>();
-    computeTag(doc.getRootTag(), tags, attributes);
+    final XmlTag rootTag = doc.getRootTag();
+    computeTag(rootTag, tags, attributes);
+    
+    // For supporting not welformed XML
+    for(PsiElement element = rootTag != null ? rootTag.getNextSibling():null; 
+        element != null; 
+        element = element.getNextSibling()
+    ) {
+      if (element instanceof XmlTag) {
+        computeTag((XmlTag)element, tags, attributes);
+      }
+    }
+    
     final Iterator<String> iter = tags.keySet().iterator();
     while (iter.hasNext()) {
       final String tagName = iter.next();
