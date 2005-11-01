@@ -73,6 +73,7 @@ public final class WindowInfo implements Cloneable,JDOMExternalizable{
   /**
    * Creates copy of <code>WindowInfo</code> object.
    */
+  @SuppressWarnings({"EmptyCatchBlock"})
   public WindowInfo copy(){
     WindowInfo info=null;
     try{
@@ -211,6 +212,7 @@ public final class WindowInfo implements Cloneable,JDOMExternalizable{
     }
   }
 
+  @SuppressWarnings({"EmptyCatchBlock"})
   public void readExternal(final Element element){
     myId=element.getAttributeValue(ID_ATTR);
     try{
@@ -248,6 +250,7 @@ public final class WindowInfo implements Cloneable,JDOMExternalizable{
    */
   void setAnchor(final ToolWindowAnchor anchor){
     if(anchor==null){
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("anchor cannot be null");
     }
     myAnchor=anchor;
@@ -267,6 +270,7 @@ public final class WindowInfo implements Cloneable,JDOMExternalizable{
 
   void setType(final ToolWindowType type){
     if(type==null){
+      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("type cannot be null");
     }
     if(ToolWindowType.DOCKED==type||ToolWindowType.SLIDING==type){
