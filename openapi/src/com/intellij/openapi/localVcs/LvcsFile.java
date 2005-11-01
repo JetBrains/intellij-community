@@ -28,4 +28,6 @@ public interface LvcsFile extends LvcsObject {
   long getByteLength(LvcsLabel label);
 
   long getTimeStamp();
+
+  LvcsFileRevision getRevision();
 }

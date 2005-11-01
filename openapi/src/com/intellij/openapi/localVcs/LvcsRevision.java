@@ -55,4 +55,6 @@ public interface LvcsRevision extends Comparable{
   long getCreationDate();
 
   int getVersionId();
+
+  int getVersion();
 }

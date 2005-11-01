@@ -559,9 +559,6 @@
           </group>
           <action internal="true" id="DecodeBytesAction" class="com.intellij.internal.encodings.DecodeBytesAction"/>
           <separator/>
-          <action id="LocalVcs.ShowStatistics" class="com.intellij.localVcs.actions.ShowStatistics" internal="true"/>
-          <action id="LocalVcs.ShowRepHistory" class="com.intellij.localVcs.actions.PringRepositoryHistoryAction" internal="true"/>
-          <separator/>
           <action id="DropAnError" internal="true" class="com.intellij.diagnostic.DropAnErrorAction"/>
         </group>
       </group>

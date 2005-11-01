@@ -23,4 +23,6 @@ public interface LvcsFileRevision extends LvcsRevision {
   long getByteLength();
 
   LvcsFileRevision getLastSavedRevision();
+
+  void markSaved();
 }

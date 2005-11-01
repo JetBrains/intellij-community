@@ -9,7 +9,7 @@
   <project-components>
     <component>
       <interface-class>com.intellij.openapi.localVcs.LocalVcs</interface-class>
-      <implementation-class>com.intellij.localVcs.impl.LocalVcsImpl</implementation-class>
+      <implementation-class>com.intellij.localVcs.common.CommonLVCS</implementation-class>
     </component>
     <component>
       <interface-class>com.intellij.openapi.localVcs.LocalVcsServices</interface-class>
