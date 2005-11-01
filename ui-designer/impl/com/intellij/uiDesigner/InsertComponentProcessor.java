@@ -8,7 +8,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.uiDesigner.core.Util;
-import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.palette.PalettePanel;
@@ -20,7 +19,6 @@ import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.text.MessageFormat;
 
 /**
  * @author Anton Katilin
@@ -101,26 +99,9 @@ public final class InsertComponentProcessor extends EventProcessor{
         VariableKind.FIELD
       );
 
-      // Check that binding is unique
-      final boolean[] isUnique = new boolean[]{true};
-      FormEditingUtil.iterate(
-        myEditor.getRootContainer(),
-        new FormEditingUtil.ComponentVisitor() {
-          public boolean visit(final IComponent component) {
-            if(binding.equals(component.getBinding())){
-              isUnique[0] = false;
-              return false;
-            }
-            return true;
-          }
-        }
-      );
-
-      if(!isUnique[0]){
-        continue; // check next candidate
+      if (!FormEditingUtil.bindingExists(myEditor.getRootContainer(), binding)) {
+        return binding;
       }
-
-      return binding;
     }
   }
 

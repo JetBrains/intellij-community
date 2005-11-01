@@ -572,6 +572,25 @@ public final class FormEditingUtil {
     return message;
   }
 
+  public static boolean bindingExists(IComponent component, final String binding) {
+    // Check that binding is unique
+    final Ref<Boolean> bindingExists = new Ref<Boolean>(Boolean.FALSE);
+    FormEditingUtil.iterate(
+      component,
+      new FormEditingUtil.ComponentVisitor() {
+        public boolean visit(final IComponent component) {
+          if(binding.equals(component.getBinding())){
+            bindingExists.set(Boolean.TRUE);
+            return false;
+          }
+          return true;
+        }
+      }
+    );
+
+    return bindingExists.get();
+  }
+
   public static interface ComponentVisitor <Type extends IComponent>{
     /**
      * @return true if iteration should continue

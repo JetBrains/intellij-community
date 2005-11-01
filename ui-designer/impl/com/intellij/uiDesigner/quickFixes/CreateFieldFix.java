@@ -10,6 +10,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.uiDesigner.GuiEditor;
 import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.CommonBundle;
 
@@ -125,7 +126,18 @@ public final class CreateFieldFix extends QuickFix{
     LOG.assertTrue(type != null);
     try {
       final PsiField field = factory.createField(fieldName, type);
-      boundClass.add(field);
+      PsiField lastUiField = null;
+      for(PsiField uiField: boundClass.getFields()) {
+        if (FormEditingUtil.bindingExists(editor.getRootContainer(), uiField.getName())) {
+          lastUiField = uiField;
+        }
+      }
+      if (lastUiField != null) {
+        boundClass.addAfter(field, lastUiField);
+      }
+      else {
+        boundClass.add(field);
+      }
     }
     catch (final IncorrectOperationException exc) {
       if (showErrors) {
@@ -141,7 +153,6 @@ public final class CreateFieldFix extends QuickFix{
           }
         );
       }
-      return;
     }
   }
 
