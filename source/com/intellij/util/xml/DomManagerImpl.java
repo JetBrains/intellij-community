@@ -14,6 +14,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+import java.util.ArrayList;
+
 /**
  * @author peter
  */
@@ -21,17 +24,40 @@ public class DomManagerImpl extends DomManager implements ApplicationComponent {
   private static final Key<NameStrategy> NAME_STRATEGY_KEY = Key.create("NameStrategy");
   private static final Key<DomElement> CACHED_ELEMENT = Key.create("CachedXmlAnnotatedElement");
 
+  private final List<DomEventListener> myListeners = new ArrayList<DomEventListener>();
+  private DomEventListener[] myCachedListeners;
+
+  public void addDomEventListener(DomEventListener listener) {
+    myCachedListeners = null;
+    myListeners.add(listener);
+  }
+
+  public void removeDomEventListener(DomEventListener listener) {
+    myCachedListeners = null;
+    myListeners.remove(listener);
+  }
+
+  protected void fireEvent(DomEvent event) {
+    DomEventListener[] listeners = myCachedListeners;
+    if (listeners == null) {
+      listeners = myCachedListeners = myListeners.toArray(new DomEventListener[myListeners.size()]);
+    }
+    for (DomEventListener listener : listeners) {
+      listener.eventOccured(event);
+    }
+  }
+
   @NotNull
-  protected static <T extends DomElement>T createXmlAnnotatedElement(final Class<T> aClass,
+  protected <T extends DomElement>T createXmlAnnotatedElement(final Class<T> aClass,
                                                                      final XmlTag tag,
                                                                      final DomElement parent,
                                                                      final String tagName) {
-    return createXmlAnnotatedElement(aClass, tag, new DomInvocationHandler<T>(aClass, tag, parent, tagName));
+    return createXmlAnnotatedElement(aClass, tag, new DomInvocationHandler<T>(aClass, tag, parent, tagName, this));
   }
 
   protected static <T extends DomElement>T createXmlAnnotatedElement(final Class<T> aClass,
-                                                                   final XmlTag tag,
-                                                                   final DomInvocationHandler<T> handler) {
+                                                                     final XmlTag tag,
+                                                                     final DomInvocationHandler<T> handler) {
     synchronized (PsiLock.LOCK) {
       final T element = newProxyInstance(aClass, handler);
       handler.setProxy(element);
@@ -61,12 +87,12 @@ public class DomManagerImpl extends DomManager implements ApplicationComponent {
 
   @NotNull
   public <T extends DomElement> DomFileElement<T> getFileElement(final XmlFile file,
-                                                                                   final Class<T> aClass,
-                                                                                   String rootTagName) {
+                                                                 final Class<T> aClass,
+                                                                 String rootTagName) {
     synchronized (PsiLock.LOCK) {
       DomFileElement<T> element = (DomFileElement<T>)getCachedElement(file);
       if (element == null) {
-        element = new DomFileElement<T>(file, aClass, rootTagName);
+        element = new DomFileElement<T>(file, aClass, rootTagName, this);
         setCachedElement(file, element);
       }
       return element;

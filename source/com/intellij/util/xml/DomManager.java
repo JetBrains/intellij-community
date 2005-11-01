@@ -23,4 +23,8 @@ public abstract class DomManager {
 
   @NotNull
   public abstract <T extends DomElement> DomFileElement<T> getFileElement(XmlFile file, Class<T> aClass, String rootTagName);
+
+  public abstract void addDomEventListener(DomEventListener listener);
+
+  public abstract void removeDomEventListener(DomEventListener listener);
 }

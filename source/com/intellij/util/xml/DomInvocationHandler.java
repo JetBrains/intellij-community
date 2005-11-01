@@ -28,6 +28,7 @@ class DomInvocationHandler<T extends DomElement> implements InvocationHandler, D
 
   private final Class<T> myClass;
   private final DomElement myParent;
+  private final DomManagerImpl myManager;
   @NotNull private final String myTagName;
   private XmlTag myTag;
 
@@ -37,11 +38,12 @@ class DomInvocationHandler<T extends DomElement> implements InvocationHandler, D
   private boolean myInitializing = false;
   private final Map<Method, DomElement> myChildren = new HashMap<Method, DomElement>();
 
-  public DomInvocationHandler(final Class<T> aClass, final XmlTag tag, final DomElement parent, @NotNull final String tagName) {
+  public DomInvocationHandler(final Class<T> aClass, final XmlTag tag, final DomElement parent, @NotNull final String tagName, DomManagerImpl manager) {
     myClass = aClass;
     myTag = tag;
     myParent = parent;
     myTagName = tagName;
+    myManager = manager;
   }
 
   @NotNull
@@ -66,6 +68,19 @@ class DomInvocationHandler<T extends DomElement> implements InvocationHandler, D
     return getXmlTag();
   }
 
+  public void undefine() {
+    final XmlTag tag = getXmlTag();
+    if (tag != null) {
+      try {
+        tag.delete();
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+      myTag = null;
+    }
+  }
+
   protected void setXmlTag(final XmlTag tag) throws IncorrectOperationException {
     myParent.ensureTagExists().add(tag);
   }
@@ -75,10 +90,12 @@ class DomInvocationHandler<T extends DomElement> implements InvocationHandler, D
   }
 
   private <T> T convertFromString(Method method, String s, final boolean getter) throws IllegalAccessException, InstantiationException {
+    if (s == null) return null;
     return ((Converter<T>)getConverter(method, getter)).fromString(s, new ConvertContext(getFile()));
   }
 
   private <T> String convertToString(Method method, T argument, final boolean getter) throws IllegalAccessException, InstantiationException {
+    if (argument == null) return null;
     return ((Converter<T>)getConverter(method, getter)).toString(argument, new ConvertContext(getFile()));
   }
 
@@ -138,19 +155,25 @@ class DomInvocationHandler<T extends DomElement> implements InvocationHandler, D
     if (attributeValue != null) {
       final String attributeName = guessName(attributeValue.value(), method);
       if (getter) {
-        return tag != null ? convertFromString(method, tag.getAttributeValue(attributeName), true) : null;
+        return getAttributeValue(tag, method, attributeName);
       }
       assert setter : "Annotated method " + method.toString() + " should be either setter or getter";
-      ensureTagExists().setAttribute(attributeName, convertToString(method, args[0], false));
+      final Object oldValue = getAttributeValue(tag, method, attributeName);
+      final Object newValue = args[0];
+      ensureTagExists().setAttribute(attributeName, convertToString(method, newValue, false));
+      myManager.fireEvent(new AttributeChangeEvent(this, attributeName, oldValue, newValue));
       return null;
     }
 
     final TagValue tagValue = method.getAnnotation(TagValue.class);
     if (getter && (tagValue != null || "getValue".equals(name))) {
-      return tag != null ? convertFromString(method, tag.getValue().getText(), true) : null;
+      return getValue(tag, method);
     }
     else if (setter && (tagValue != null || "setValue".equals(method.getName()))) {
-      ensureTagExists().getValue().setText(convertToString(method, args[0], false));
+      final Object oldValue = getValue(tag, method);
+      final Object newValue = args[0];
+      ensureTagExists().getValue().setText(convertToString(method, newValue, false));
+      myManager.fireEvent(new ValueChangeEvent(this, oldValue, newValue == null ? "" : newValue));
       return null;
     }
 
@@ -191,6 +214,15 @@ class DomInvocationHandler<T extends DomElement> implements InvocationHandler, D
     }
 
     throw new UnsupportedOperationException("Cannot call " + method.toString());
+  }
+
+  private Object getAttributeValue(final XmlTag tag, final Method method, final String attributeName) throws IllegalAccessException,
+                                                                                                             InstantiationException {
+    return tag != null ? convertFromString(method, tag.getAttributeValue(attributeName), true) : null;
+  }
+
+  private Object getValue(final XmlTag tag, final Method method) throws IllegalAccessException, InstantiationException {
+    return tag != null ? convertFromString(method, tag.getValue().getText(), true) : null;
   }
 
   private static boolean isSetter(final Method method) {
@@ -287,7 +319,7 @@ class DomInvocationHandler<T extends DomElement> implements InvocationHandler, D
       final String qname = getSubTagName(method);
       if (qname != null) {
         XmlTag subTag = tag == null ? null : tag.findFirstSubTag(qname);
-        myChildren.put(method, DomManagerImpl.createXmlAnnotatedElement((Class<DomElement>)returnType, subTag, getProxy(), qname));
+        myChildren.put(method, myManager.createXmlAnnotatedElement((Class<DomElement>)returnType, subTag, getProxy(), qname));
         tags.add(subTag);
         return;
       }
@@ -300,7 +332,7 @@ class DomInvocationHandler<T extends DomElement> implements InvocationHandler, D
           for (int i = 0; i < tag.findSubTags(qname).length; i++) {
             XmlTag subTag = tag.findSubTags(qname)[i];
             if (!tags.contains(subTag)) {
-              DomManagerImpl.createXmlAnnotatedElement(aClass, subTag, getProxy(), qname);
+              myManager.createXmlAnnotatedElement(aClass, subTag, getProxy(), qname);
               tags.add(subTag);
             }
           }

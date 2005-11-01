@@ -17,14 +17,17 @@ public class DomFileElement<T extends DomElement> implements DomElement {
   private final XmlFile myFile;
   private final Class<T> myRootElementClass;
   private final String myRootTagName;
+  private final DomManagerImpl myManager;
   private T myRootValue;
 
   protected DomFileElement(final XmlFile file,
                            final Class<T> rootElementClass,
-                           final String rootTagName) {
+                           final String rootTagName,
+                           final DomManagerImpl manager) {
     myFile = file;
     myRootElementClass = rootElementClass;
     myRootTagName = rootTagName;
+    myManager = manager;
   }
 
   public XmlFile getFile() {
@@ -48,7 +51,7 @@ public class DomFileElement<T extends DomElement> implements DomElement {
     synchronized (PsiLock.LOCK) {
       if (myRootValue == null) {
         final XmlTag tag = getRootTag();
-        final DomRootInvocationHandler<T> handler = new DomRootInvocationHandler<T>(myRootElementClass, tag, this, myRootTagName);
+        final DomRootInvocationHandler<T> handler = new DomRootInvocationHandler<T>(myRootElementClass, tag, this, myRootTagName, myManager);
         myRootValue = DomManagerImpl.createXmlAnnotatedElement(myRootElementClass, tag, handler);
       }
       return myRootValue;
@@ -70,5 +73,8 @@ public class DomFileElement<T extends DomElement> implements DomElement {
 
   public XmlTag ensureTagExists() {
     return null;
+  }
+
+  public void undefine() {
   }
 }

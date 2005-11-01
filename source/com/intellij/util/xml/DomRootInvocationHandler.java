@@ -12,8 +12,8 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
  */
 public class DomRootInvocationHandler<T extends DomElement> extends DomInvocationHandler<T>{
-  public DomRootInvocationHandler(final Class<T> aClass, final XmlTag tag, final DomFileElement<T> parent, @NotNull final String tagName) {
-    super(aClass, tag, parent, tagName);
+  public DomRootInvocationHandler(final Class<T> aClass, final XmlTag tag, final DomFileElement<T> parent, @NotNull final String tagName, DomManagerImpl manager) {
+    super(aClass, tag, parent, tagName, manager);
   }
 
   @NotNull
