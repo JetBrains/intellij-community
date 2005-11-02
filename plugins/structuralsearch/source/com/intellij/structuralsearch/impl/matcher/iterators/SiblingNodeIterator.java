@@ -25,12 +25,12 @@ public final class SiblingNodeIterator extends NodeIterator {
 
   public void advance() {
     previous = current;
-    current = current.getNextSibling();
+    current = current != null ? current.getNextSibling():null;
   }
 
   public void rewind() {
     current = previous;
-    previous = current.getPrevSibling();
+    previous = current != null ? current.getPrevSibling():null;
   }
 
   public void reset() {
