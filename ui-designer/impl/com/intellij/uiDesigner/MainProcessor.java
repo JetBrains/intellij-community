@@ -204,7 +204,8 @@ public final class MainProcessor extends EventProcessor{
 
     final ComponentItem selectedItem = myEditor.getPalettePanel().getActiveItem();
     if (selectedItem != null) {
-      myCurrentProcessor = new InsertComponentProcessor(myEditor, myEditor.getPalettePanel(), e.isControlDown());
+      myCurrentProcessor = new InsertComponentProcessor(myEditor, myEditor.getPalettePanel(),
+                                                        e.isControlDown() || e.isShiftDown());
       return;
     }
 
