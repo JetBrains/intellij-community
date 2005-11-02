@@ -221,7 +221,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
     if (!isToCheckMemberInAnnotation(owner, inspectionToolID)){
       return false;
     }
-    PsiDocCommentOwner classContainer = PsiTreeUtil.getParentOfType(owner, PsiClass.class, true);
+    PsiDocCommentOwner classContainer = owner.getContainingClass();
     while (classContainer != null) {
       if (!isToCheckMemberInDocComment(classContainer, inspectionToolID)){
         return false;
@@ -229,7 +229,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
       if (!isToCheckMemberInAnnotation(classContainer, inspectionToolID)){
         return false;
       }
-      classContainer = PsiTreeUtil.getParentOfType(classContainer, PsiClass.class, true);
+      classContainer = classContainer.getContainingClass();
     }
     return true;
   }
