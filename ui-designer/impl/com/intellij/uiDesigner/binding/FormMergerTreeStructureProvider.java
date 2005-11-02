@@ -1,4 +1,4 @@
-package com.intellij.ide.projectView.impl;
+package com.intellij.uiDesigner.binding;
 
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.TreeStructureProvider;
