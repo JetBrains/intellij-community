@@ -1,10 +1,10 @@
 package com.intellij.uiDesigner;
 
 import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.uiDesigner.core.GridConstraints;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseEvent;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -166,30 +166,47 @@ public class GridInsertProcessor {
   }
 
   @Nullable
-  DropInfo processGridInsertOnDrop(final GridInsertLocation location, final RadComponent insertedComponent) {
+  DropInfo processGridInsertOnDrop(final GridInsertLocation location,
+                                   final RadComponent insertedComponent,
+                                   final GridConstraints[] constraintsToAdjust) {
     int row = location.getRow();
     int col = location.getColumn();
     RadContainer container = location.getContainer();
     switch(location.getMode()) {
       case RowBefore:
         GridChangeUtil.insertRowBefore(container, row);
+        checkAdjustConstraints(constraintsToAdjust, true, row);
         break;
 
       case RowAfter:
         GridChangeUtil.insertRowAfter(container, row);
         row++;
+        checkAdjustConstraints(constraintsToAdjust, true, row);
         break;
 
       case ColumnBefore:
         GridChangeUtil.insertColumnBefore(container, col);
+        checkAdjustConstraints(constraintsToAdjust, false, col);
         break;
 
       case ColumnAfter:
         GridChangeUtil.insertColumnAfter(container, col);
         col++;
+        checkAdjustConstraints(constraintsToAdjust, false, col);
         break;
     }
     return container.dropIntoGrid(insertedComponent, row, col);
+  }
+
+  private void checkAdjustConstraints(final GridConstraints[] constraintsToAdjust,
+                                      final boolean isRow,
+                                      final int index
+  ) {
+    if (constraintsToAdjust != null) {
+      for(GridConstraints constraints: constraintsToAdjust) {
+        GridChangeUtil.adjustConstraintsOnInsert(constraints, isRow, index);
+      }
+    }
   }
 
   public Cursor processMouseMoveEvent(int x, int y, int componentCount) {

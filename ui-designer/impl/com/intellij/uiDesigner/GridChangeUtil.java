@@ -33,7 +33,11 @@ public final class GridChangeUtil {
   }
 
   public static boolean canDeleteColumn(final RadContainer grid, final int columnIndex) {
-    return canDeleteCell(grid, columnIndex, false);
+    return canDeleteCell(grid, columnIndex, false, false);
+  }
+
+  public static boolean isColumnEmpty(final RadContainer grid, final int columnIndex) {
+    return canDeleteCell(grid, columnIndex, false, true);
   }
 
   public static void deleteColumn(final RadContainer grid, final int columnIndex) {
@@ -41,7 +45,11 @@ public final class GridChangeUtil {
   }
 
   public static boolean canDeleteRow(final RadContainer grid, final int rowIndex) {
-    return canDeleteCell(grid, rowIndex, true);
+    return canDeleteCell(grid, rowIndex, true, false);
+  }
+
+  public static boolean isRowEmpty(final RadContainer grid, final int rowIndex) {
+    return canDeleteCell(grid, rowIndex, true, true);
   }
 
   public static void deleteRow(final RadContainer grid, final int rowIndex) {
@@ -68,23 +76,26 @@ public final class GridChangeUtil {
 
     for (int i=grid.getComponentCount() - 1; i >= 0; i--){
       final GridConstraints constraints = grid.getComponent(i).getConstraints();
-
-      if (getCell(constraints, isRow) >= beforeIndex) {
-        addToCell(constraints, isRow, 1);
-      }
-      else if (isCellInsideComponent(constraints, isRow, beforeIndex)) {
-        // component belongs to the cell being resized - increment component's span
-        addToSpan(constraints, isRow, 1);
-      }
+      adjustConstraintsOnInsert(constraints, isRow, beforeIndex);
     }
     
     grid.setLayout(newLayout);
   }
 
+  public static void adjustConstraintsOnInsert(final GridConstraints constraints, final boolean isRow, final int beforeIndex) {
+    if (getCell(constraints, isRow) >= beforeIndex) {
+      addToCell(constraints, isRow, 1);
+    }
+    else if (isCellInsideComponent(constraints, isRow, beforeIndex)) {
+      // component belongs to the cell being resized - increment component's span
+      addToSpan(constraints, isRow, 1);
+    }
+  }
+
   /**
    * @param cellIndex column or row index, depending on isRow parameter; must be in the range 0..grid.get{Row|Column}Count()-1
    * @param isRow if true, row is splitted, otherwise column
-   */  
+   */
   private static void splitCell(final RadContainer grid, final int cellIndex, final boolean isRow) {
     check(grid, isRow, cellIndex);
 
@@ -104,16 +115,17 @@ public final class GridChangeUtil {
         addToSpan(constraints, isRow, 1);
       }
     }
-    
+
     grid.setLayout(newLayout);
   }
 
   /**
    * @param cellIndex column or row index, depending on isRow parameter; must be in the range 0..grid.get{Row|Column}Count()-1
    * @param isRow if true, row is deleted, otherwise column
-   * @return true if specified row/column can be deleted 
+   * @param mustBeEmpty
+   * @return true if specified row/column can be deleted
    */  
-  private static boolean canDeleteCell(final RadContainer grid, final int cellIndex, final boolean isRow) {
+  private static boolean canDeleteCell(final RadContainer grid, final int cellIndex, final boolean isRow, final boolean mustBeEmpty) {
     check(grid, isRow, cellIndex);
 
     // Do not allow to delete the single row/column
@@ -130,9 +142,16 @@ public final class GridChangeUtil {
       final int cell = getCell(constraints, isRow);
       final int span = getSpan(constraints, isRow);
 
-      if (cell == cellIndex && span == 1) {
-        // only cells where components with span 1 are located cannot be deleted  
-        return false;
+      if (mustBeEmpty) {
+        if (cellIndex >= cell && cellIndex < cell+span) {
+          return false;
+        }
+      }
+      else {
+        if (cell == cellIndex && span == 1) {
+          // only cells where components with span 1 are located cannot be deleted
+          return false;
+        }
       }
     }
 
@@ -145,7 +164,7 @@ public final class GridChangeUtil {
    */  
   private static void deleteCell(final RadContainer grid, final int cellIndex, final boolean isRow) {
     check(grid, isRow, cellIndex);
-    if (!canDeleteCell(grid, cellIndex, isRow)) {
+    if (!canDeleteCell(grid, cellIndex, isRow, false)) {
       //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("cell cannot be deleted");
     }

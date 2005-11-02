@@ -148,7 +148,7 @@ public final class DragSelectionProcessor extends EventProcessor{
     }
 
     if (location != null && location.getMode() != GridInsertProcessor.GridInsertMode.None) {
-      myDropInfo = myGridInsertProcessor.processGridInsertOnDrop(location, mySelection.get(0));
+      myDropInfo = myGridInsertProcessor.processGridInsertOnDrop(location, mySelection.get(0), myOriginalConstraints);
     }
     else {
       myDropInfo = FormEditingUtil.drop(
@@ -159,6 +159,12 @@ public final class DragSelectionProcessor extends EventProcessor{
         dx,
         dy
       );
+    }
+
+    if (mouseReleased) {
+      for(int i=0; i<myOriginalConstraints.length; i++) {
+        FormEditingUtil.deleteEmptyGridCells(myOriginalParents [i], myOriginalConstraints [i]);
+      }
     }
 
     return true;

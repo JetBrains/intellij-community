@@ -205,6 +205,10 @@ public class RadContainer extends RadComponent implements IContainer {
     return myComponents.size();
   }
 
+  public int indexOfComponent(RadComponent component) {
+    return myComponents.indexOf(component);
+  }
+
   /**
    * @return new array with all children
    */

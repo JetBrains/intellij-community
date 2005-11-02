@@ -361,13 +361,41 @@ public final class FormEditingUtil {
     for (final RadComponent component : selection) {
       boolean wasSelected = component.isSelected();
       final RadContainer parent = component.getParent();
+
+      GridConstraints delConstraints = parent.isGrid() ? component.getConstraints() : null;
+
+      int index = parent.indexOfComponent(component);
       parent.removeComponent(component);
       if (wasSelected) {
-        parent.setSelected(true);
+        if (parent.getComponentCount() > index) {
+          parent.getComponent(index).setSelected(true);
+        }
+        else if (index > 0 && parent.getComponentCount() == index) {
+          parent.getComponent(index-1).setSelected(true);
+        }
+        else {
+          parent.setSelected(true);
+        }
+      }
+      if (delConstraints != null) {
+        deleteEmptyGridCells(parent, delConstraints);
       }
     }
 
     editor.refreshAndSave(true);
+  }
+
+  public static void deleteEmptyGridCells(final RadContainer parent, final GridConstraints delConstraints) {
+    for(int row=delConstraints.getRow(); row<delConstraints.getRow() + delConstraints.getRowSpan(); row++) {
+      if (GridChangeUtil.isRowEmpty(parent, row)) {
+        GridChangeUtil.deleteRow(parent, row);
+      }
+    }
+    for(int col=delConstraints.getColumn(); col<delConstraints.getColumn() + delConstraints.getColSpan(); col++) {
+      if (GridChangeUtil.isColumnEmpty(parent, col)) {
+        GridChangeUtil.deleteColumn(parent, col);
+      }
+    }
   }
 
   /**

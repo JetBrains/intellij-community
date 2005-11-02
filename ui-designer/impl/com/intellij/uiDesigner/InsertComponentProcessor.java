@@ -260,7 +260,7 @@ public final class InsertComponentProcessor extends EventProcessor{
               myDropInfo = FormEditingUtil.drop(myEditor, e.getX(), e.getY(), new RadComponent[]{myInsertedComponent}, new int[]{0}, new int[]{0});
             }
             else {
-              myDropInfo = myGridInsertProcessor.processGridInsertOnDrop(location, myInsertedComponent);
+              myDropInfo = myGridInsertProcessor.processGridInsertOnDrop(location, myInsertedComponent, null);
               if (myDropInfo == null) {
                 return;
               }
