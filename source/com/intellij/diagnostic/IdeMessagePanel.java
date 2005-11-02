@@ -7,8 +7,6 @@ package com.intellij.diagnostic;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.messager.Callout;
 
 import javax.swing.*;
 import java.awt.*;
@@ -111,7 +109,7 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener {
     updateFatalErrorsIcon();
 
     long lastExceptionTimestamp = System.currentTimeMillis();
-    if ((lastExceptionTimestamp - myPreviousExceptionTimeStamp > 1000) && myMessagePool.hasUnreadMessages()){
+    if (lastExceptionTimestamp - myPreviousExceptionTimeStamp > 1000 && myMessagePool.hasUnreadMessages()){
       showErrorCallout();
     }
 
@@ -139,7 +137,7 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener {
     return true;
   }
 
-  private Window getActiveModalWindow() {
+  private static Window getActiveModalWindow() {
     final KeyboardFocusManager manager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
     final Window activeWindow = manager.getActiveWindow();
     if (activeWindow instanceof JDialog) {
@@ -160,6 +158,10 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener {
   }
 
   private class Blinker extends Thread {
+    public Blinker() {
+      super("Error Icon Blinker");
+    }
+
     /** @noinspection BusyWait*/
     public void run() {
       while(true) {
@@ -176,8 +178,7 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener {
     }
 
     private void setBlinkedIconsVisibilityTo(boolean aVisible) {
-      for (int i = 0; i < myIcons.length; i++) {
-        final IdeMessagePanel.IconPane each = myIcons[i];
+      for (final IconPane each : myIcons) {
         each.getIconWrapper().setVisible(aVisible || !each.shouldBlink());
       }
     }

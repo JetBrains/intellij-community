@@ -29,7 +29,7 @@ public class ProgressManagerImpl extends ProgressManager implements ApplicationC
 
   public ProgressManagerImpl(Application application) {
     if (!application.isUnitTestMode()) {
-      new Thread() {
+      new Thread("Progress Cancel Checker") {
         public void run() {
           while (true) {
             try {
@@ -73,7 +73,7 @@ public class ProgressManagerImpl extends ProgressManager implements ApplicationC
   public void setCancelButtonText(String cancelButtonText) {
     ProgressIndicator progressIndicator = getProgressIndicator();
     if (progressIndicator != null) {      
-      if ((progressIndicator instanceof SmoothProgressAdapter) && (cancelButtonText != null)) {
+      if (progressIndicator instanceof SmoothProgressAdapter && cancelButtonText != null) {
         ProgressIndicator original = ((SmoothProgressAdapter)progressIndicator).getOriginal();
         if (original instanceof ProgressWindow) {
           ((ProgressWindow)original).setCancelButtonText(cancelButtonText);
