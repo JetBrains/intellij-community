@@ -7,5 +7,5 @@ package com.intellij.util.xml;
  * @author peter
  */
 public interface NamedEnum {
-  String getName();
+  String getValue();
 }

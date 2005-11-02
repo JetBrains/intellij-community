@@ -16,7 +16,7 @@ public class EnumConverter<T extends Enum&NamedEnum> implements Converter<T>{
   public EnumConverter(final Class<T> aClass) {
     myClass = aClass;
     for (T anEnum : aClass.getEnumConstants()) {
-      myCachedElements.put(anEnum.getName(), anEnum);
+      myCachedElements.put(anEnum.getValue(), anEnum);
     }
   }
 
@@ -29,6 +29,6 @@ public class EnumConverter<T extends Enum&NamedEnum> implements Converter<T>{
   }
 
   public String toString(final T t, final ConvertContext context) {
-    return t.getName();
+    return t.getValue();
   }
 }
