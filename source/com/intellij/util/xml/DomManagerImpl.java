@@ -32,6 +32,7 @@ public class DomManagerImpl extends DomManager implements ApplicationComponent {
   private final ConverterManager myConverterManager = new ConverterManager();
   private final Map<Class<? extends DomElement>,Class> myClass2ProxyClass = new HashMap<Class<? extends DomElement>, Class>();
   private final Map<Class<? extends DomElement>,MethodsMap> myMethodsMaps = new HashMap<Class<? extends DomElement>, MethodsMap>();
+  private final Map<Class<? extends DomElement>,ClassChooser> myClassChoosers = new HashMap<Class<? extends DomElement>, ClassChooser>();
   private DomEventListener[] myCachedListeners;
 
   public final void addDomEventListener(DomEventListener listener) {
@@ -75,12 +76,17 @@ public class DomManagerImpl extends DomManager implements ApplicationComponent {
     return methodsMap;
   }
 
+  private <T extends DomElement> Class<? extends T> getConcreteType(Class<T> aClass, XmlTag tag) {
+    final ClassChooser<T> classChooser = myClassChoosers.get(aClass);
+    return classChooser == null ? aClass : classChooser.chooseClass(tag);
+  }
+
   final <T extends DomElement>T createDomElement(final Class<T> aClass,
                                                      final XmlTag tag,
                                                      final DomInvocationHandler<T> handler) {
     synchronized (PsiLock.LOCK) {
       try {
-        Class clazz = getProxyClassFor(aClass);
+        Class clazz = getProxyClassFor(getConcreteType(aClass, tag));
         final T element = (T) clazz.getConstructor(new Class[]{ InvocationHandler.class }).newInstance(new Object[]{ handler });
         handler.setProxy(element);
         setCachedElement(tag, element);
@@ -150,6 +156,10 @@ public class DomManagerImpl extends DomManager implements ApplicationComponent {
   }
 
   public final void disposeComponent() {
+  }
+
+  public <T extends DomElement> void registerClassChooser(final Class<T> aClass, final ClassChooser<T> classChooser) {
+    myClassChoosers.put(aClass, classChooser);
   }
 
 }

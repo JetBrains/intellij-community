@@ -27,4 +27,6 @@ public abstract class DomManager {
   public abstract void addDomEventListener(DomEventListener listener);
 
   public abstract void removeDomEventListener(DomEventListener listener);
+
+  public abstract <T extends DomElement> void registerClassChooser(Class<T> aClass, ClassChooser<T> classChooser);
 }

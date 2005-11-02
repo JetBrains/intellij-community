@@ -143,10 +143,6 @@ class DomInvocationHandler<T extends DomElement> implements InvocationHandler, D
     myProxy = proxy;
   }
 
-  public MethodsMap getMethodsMap() {
-    return myMethodsMap;
-  }
-
   @NotNull
   protected XmlFile getFile() {
     if (myFile == null) {
@@ -266,7 +262,7 @@ class DomInvocationHandler<T extends DomElement> implements InvocationHandler, D
           Method method = entry.getKey();
           final String qname = entry.getValue();
           XmlTag subTag = tag == null ? null : tag.findFirstSubTag(qname);
-          final DomElement element = myManager.createDomElement((Class<DomElement>)method.getReturnType(), subTag, getProxy(), qname);
+          final DomElement element = myManager.createDomElement((Class<? extends DomElement>)method.getReturnType(), subTag, getProxy(), qname);
           myMethod2Children.put(method, element);
           usedTags.add(subTag);
         }
