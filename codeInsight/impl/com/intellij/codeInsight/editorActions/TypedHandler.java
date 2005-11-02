@@ -399,6 +399,10 @@ public class TypedHandler implements TypedActionHandler {
                )
     ) {
       if (handleELClosingBrace(editor, file,project)) return;
+    } else if ('/' == charTyped){
+      if (file instanceof XmlFile){
+        if(handleXmlSlashInEmptyEnd(project, editor)) return;
+      }
     }
 
     myOriginalHandler.execute(editor, charTyped, dataContext);
@@ -504,6 +508,28 @@ public class TypedHandler implements TypedActionHandler {
     return true;
   }
 
+  private boolean handleXmlSlashInEmptyEnd(Project project, Editor editor){
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
+
+    XmlFile file = (XmlFile)PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    final int offset = editor.getCaretModel().getOffset();
+    PsiElement element = file.findElementAt(offset);
+    
+    if (element instanceof XmlToken) {
+      final IElementType tokenType = ((XmlToken)element).getTokenType();
+      
+      if (tokenType == XmlTokenType.XML_EMPTY_ELEMENT_END &&
+          offset == element.getTextOffset()
+         ) {
+        editor.getCaretModel().moveToOffset(offset + 1);
+        editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+        return true;
+      }
+    }
+    
+    return false;
+  }
+  
   private void handleXmlSlash(Project project, Editor editor){
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
