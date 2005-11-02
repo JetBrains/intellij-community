@@ -1,6 +1,6 @@
 package com.intellij.lang.xml;
 
-import com.intellij.codeInsight.folding.impl.CodeFoldingSettings;
+import com.intellij.codeInsight.folding.CodeFoldingSettings;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.folding.FoldingBuilder;
@@ -176,7 +176,7 @@ public class XmlFoldingBuilder implements FoldingBuilder {
   public boolean isCollapsedByDefault(ASTNode node) {
     final PsiElement psi = node.getPsi();
     if (psi instanceof XmlTag) {
-      return CodeFoldingSettings.getInstance().COLLAPSE_XML_TAGS;
+      return CodeFoldingSettings.getInstance().isCollapseXmlTags();
     }
     return false;
   }

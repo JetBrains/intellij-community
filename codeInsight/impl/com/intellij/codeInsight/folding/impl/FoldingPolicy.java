@@ -19,6 +19,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.uiDesigner.compiler.CodeGenerator;
 import com.intellij.xml.util.HtmlUtil;
+import com.intellij.codeInsight.folding.CodeFoldingSettings;
 
 import java.util.*;
 
@@ -274,29 +275,29 @@ class FoldingPolicy {
 
     CodeFoldingSettings settings = CodeFoldingSettings.getInstance();
     if (element instanceof PsiImportList) {
-      return settings.COLLAPSE_IMPORTS;
+      return settings.isCollapseImports();
     }
     else if (element instanceof PsiMethod || element instanceof PsiClassInitializer) {
       if (element instanceof PsiMethod && isSimplePropertyAccessor((PsiMethod)element)) {
-        return settings.COLLAPSE_ACCESSORS;
+        return settings.isCollapseAccessors();
       }
       if (element instanceof PsiMethod && CodeGenerator.SETUP_METHOD_NAME.equals(((PsiMethod)element).getName()) ||
           element instanceof PsiClassInitializer && isGeneratedUIInitializer((PsiClassInitializer)element)) {
         return true;
       }
-      return settings.COLLAPSE_METHODS;
+      return settings.isCollapseMethods();
     }
     else if (element instanceof PsiAnonymousClass) {
-      return settings.COLLAPSE_ANONYMOUS_CLASSES;
+      return settings.isCollapseAnonymousClasses();
     }
     else if (element instanceof PsiClass) {
-      return element.getParent() instanceof PsiFile ? false : settings.COLLAPSE_INNER_CLASSES;
+      return element.getParent() instanceof PsiFile ? false : settings.isCollapseInnerClasses();
     }
     else if (element instanceof PsiDocComment) {
-      return settings.COLLAPSE_JAVADOCS;
+      return settings.isCollapseJavadocs();
     }
     else if (element instanceof PsiJavaFile) {
-      return settings.COLLAPSE_FILE_HEADER;
+      return settings.isCollapseFileHeader();
     }
     else {
       LOG.error("Unknown element:" + element);

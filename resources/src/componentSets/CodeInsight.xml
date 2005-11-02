@@ -10,7 +10,8 @@
       <implementation-class>com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings</implementation-class>
     </component>
     <component>
-      <implementation-class>com.intellij.codeInsight.folding.impl.CodeFoldingSettings</implementation-class>
+      <interface-class>com.intellij.codeInsight.folding.CodeFoldingSettings</interface-class>
+      <implementation-class>com.intellij.codeInsight.folding.impl.CodeFoldingSettingsImpl</implementation-class>
     </component>
     <component>
       <interface-class>com.intellij.codeInsight.template.impl.TemplateManagerActions</interface-class>

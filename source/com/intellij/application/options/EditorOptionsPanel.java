@@ -3,7 +3,7 @@ package com.intellij.application.options;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
-import com.intellij.codeInsight.folding.impl.CodeFoldingSettings;
+import com.intellij.codeInsight.folding.CodeFoldingSettings;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -263,14 +263,14 @@ public class EditorOptionsPanel {
 
     myCbFolding.setSelected(editorSettings.isFoldingOutlineShown());
 
-    myCbCollapseImports.setSelected(codeFoldingSettings.COLLAPSE_IMPORTS);
-    myCbCollapseJavadocComments.setSelected(codeFoldingSettings.COLLAPSE_JAVADOCS);
-    myCbCollapseMethodBodies.setSelected(codeFoldingSettings.COLLAPSE_METHODS);
-    myCbCollapseAccessors.setSelected(codeFoldingSettings.COLLAPSE_ACCESSORS);
-    myCbCollapseInnerClasses.setSelected(codeFoldingSettings.COLLAPSE_INNER_CLASSES);
-    myCbCollapseXMLTags.setSelected(codeFoldingSettings.COLLAPSE_XML_TAGS);
-    myCbCollapseAnonymousClasses.setSelected(codeFoldingSettings.COLLAPSE_ANONYMOUS_CLASSES);
-    myCbCollapseFileHeader.setSelected(codeFoldingSettings.COLLAPSE_FILE_HEADER);
+    myCbCollapseImports.setSelected(codeFoldingSettings.isCollapseImports());
+    myCbCollapseJavadocComments.setSelected(codeFoldingSettings.isCollapseJavadocs());
+    myCbCollapseMethodBodies.setSelected(codeFoldingSettings.isCollapseMethods());
+    myCbCollapseAccessors.setSelected(codeFoldingSettings.isCollapseAccessors());
+    myCbCollapseInnerClasses.setSelected(codeFoldingSettings.isCollapseInnerClasses());
+    myCbCollapseXMLTags.setSelected(codeFoldingSettings.isCollapseXmlTags());
+    myCbCollapseAnonymousClasses.setSelected(codeFoldingSettings.isCollapseAnonymousClasses());
+    myCbCollapseFileHeader.setSelected(codeFoldingSettings.isCollapseFileHeader());
 
     // optmiza imports
     myCbOptimizeImports.setSelected(codeInsightSettings.OPTIMIZE_IMPORTS_ON_THE_FLY);
@@ -391,14 +391,14 @@ public class EditorOptionsPanel {
 
     editorSettings.setFoldingOutlineShown(myCbFolding.isSelected());
 
-    codeFoldingSettings.COLLAPSE_IMPORTS = myCbCollapseImports.isSelected();
-    codeFoldingSettings.COLLAPSE_JAVADOCS = myCbCollapseJavadocComments.isSelected();
-    codeFoldingSettings.COLLAPSE_METHODS = myCbCollapseMethodBodies.isSelected();
-    codeFoldingSettings.COLLAPSE_ACCESSORS = myCbCollapseAccessors.isSelected();
-    codeFoldingSettings.COLLAPSE_INNER_CLASSES = myCbCollapseInnerClasses.isSelected();
-    codeFoldingSettings.COLLAPSE_XML_TAGS = myCbCollapseXMLTags.isSelected();
-    codeFoldingSettings.COLLAPSE_ANONYMOUS_CLASSES = myCbCollapseAnonymousClasses.isSelected();
-    codeFoldingSettings.COLLAPSE_FILE_HEADER = myCbCollapseFileHeader.isSelected();
+    codeFoldingSettings.setCollapseImports( myCbCollapseImports.isSelected() );
+    codeFoldingSettings.setCollapseJavadocs( myCbCollapseJavadocComments.isSelected() );
+    codeFoldingSettings.setCollapseMethods( myCbCollapseMethodBodies.isSelected() );
+    codeFoldingSettings.setCollapseAccessors( myCbCollapseAccessors.isSelected() );
+    codeFoldingSettings.setCollapseInnerClasses( myCbCollapseInnerClasses.isSelected() );
+    codeFoldingSettings.setCollapseXmlTags( myCbCollapseXMLTags.isSelected() );
+    codeFoldingSettings.setCollapseAnonymousClasses( myCbCollapseAnonymousClasses.isSelected() );
+    codeFoldingSettings.setCollapseFileHeader( myCbCollapseFileHeader.isSelected() );
 
     codeInsightSettings.OPTIMIZE_IMPORTS_ON_THE_FLY = myCbOptimizeImports.isSelected();
     codeInsightSettings.ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = myCbAddUnabmigiousImports.isSelected();
@@ -529,14 +529,14 @@ public class EditorOptionsPanel {
 
     isModified |= isModified(myCbFolding, editorSettings.isFoldingOutlineShown());
 
-    isModified |= isModified(myCbCollapseImports, codeFoldingSettings.COLLAPSE_IMPORTS);
-    isModified |= isModified(myCbCollapseJavadocComments, codeFoldingSettings.COLLAPSE_JAVADOCS);
-    isModified |= isModified(myCbCollapseMethodBodies, codeFoldingSettings.COLLAPSE_METHODS);
-    isModified |= isModified(myCbCollapseAccessors, codeFoldingSettings.COLLAPSE_ACCESSORS);
-    isModified |= isModified(myCbCollapseInnerClasses, codeFoldingSettings.COLLAPSE_INNER_CLASSES);
-    isModified |= isModified(myCbCollapseXMLTags, codeFoldingSettings.COLLAPSE_XML_TAGS);
-    isModified |= isModified(myCbCollapseAnonymousClasses, codeFoldingSettings.COLLAPSE_ANONYMOUS_CLASSES);
-    isModified |= isModified(myCbCollapseFileHeader, codeFoldingSettings.COLLAPSE_FILE_HEADER);
+    isModified |= isModified(myCbCollapseImports, codeFoldingSettings.isCollapseImports());
+    isModified |= isModified(myCbCollapseJavadocComments, codeFoldingSettings.isCollapseJavadocs());
+    isModified |= isModified(myCbCollapseMethodBodies, codeFoldingSettings.isCollapseMethods());
+    isModified |= isModified(myCbCollapseAccessors, codeFoldingSettings.isCollapseAccessors());
+    isModified |= isModified(myCbCollapseInnerClasses, codeFoldingSettings.isCollapseInnerClasses());
+    isModified |= isModified(myCbCollapseXMLTags, codeFoldingSettings.isCollapseXmlTags());
+    isModified |= isModified(myCbCollapseAnonymousClasses, codeFoldingSettings.isCollapseAnonymousClasses());
+    isModified |= isModified(myCbCollapseFileHeader, codeFoldingSettings.isCollapseFileHeader());
 
     // optimize imports
     isModified |= isModified(myCbOptimizeImports, codeInsightSettings.OPTIMIZE_IMPORTS_ON_THE_FLY);
