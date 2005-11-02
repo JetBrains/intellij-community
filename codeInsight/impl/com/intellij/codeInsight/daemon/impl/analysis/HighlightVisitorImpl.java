@@ -409,9 +409,6 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
                                                      statement.getFirstChild(),
                                                      JavaErrorMessages.message("foreach.prior.15")));
     }
-    else {
-      myHolder.add(GenericsHighlightUtil.checkForeachLoopParameterType(statement));
-    }
   }
 
   public void visitIdentifier(PsiIdentifier identifier) {
@@ -625,6 +622,9 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkCatchParameterIsThrowable(parameter));
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkCatchParameterIsClass(parameter));
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkVarArgParameterIsLast(parameter));
+    if (!myHolder.hasErrorResults() && parameter.getParent() instanceof PsiForeachStatement) {
+      myHolder.add(GenericsHighlightUtil.checkForeachLoopParameterType((PsiForeachStatement)parameter.getParent()));
+    }
   }
 
   public void visitPostfixExpression(PsiPostfixExpression expression) {

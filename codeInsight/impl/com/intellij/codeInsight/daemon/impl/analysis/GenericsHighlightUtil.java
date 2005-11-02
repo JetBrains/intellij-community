@@ -47,9 +47,9 @@ public abstract class GenericsHighlightUtil {
         if (!TypeConversionUtil.isAssignable(extendsType, substituted)) {
           PsiClass boundClass = extendsType instanceof PsiClassType ? ((PsiClassType)extendsType).resolve() : null;
 
-          @NonNls String messageKey = (boundClass == null || typeParameter.isInterface() == boundClass.isInterface()
-                                       ? "generics.inferred.type.for.type.parameter.is.not.within.its.bound.extend"
-                                       : "generics.inferred.type.for.type.parameter.is.not.within.its.bound.implement");
+          @NonNls String messageKey = boundClass == null || typeParameter.isInterface() == boundClass.isInterface()
+                                      ? "generics.inferred.type.for.type.parameter.is.not.within.its.bound.extend"
+                                      : "generics.inferred.type.for.type.parameter.is.not.within.its.bound.implement";
 
           String description = JavaErrorMessages.message(
             messageKey,
@@ -138,9 +138,9 @@ public abstract class GenericsHighlightUtil {
           if (!bound.equalsToText("java.lang.Object") && !TypeConversionUtil.isAssignable(bound, type)) {
             PsiClass boundClass = bound instanceof PsiClassType ? ((PsiClassType)bound).resolve() : null;
 
-            @NonNls final String messageKey = (boundClass == null || referenceClass.isInterface() == boundClass.isInterface()
-                                               ? "generics.type.parameter.is.not.within.its.bound.extend"
-                                               : "generics.type.parameter.is.not.within.its.bound.implement");
+            @NonNls final String messageKey = boundClass == null || referenceClass.isInterface() == boundClass.isInterface()
+                                              ? "generics.type.parameter.is.not.within.its.bound.extend"
+                                              : "generics.type.parameter.is.not.within.its.bound.implement";
 
             String description = JavaErrorMessages.message(messageKey,
                                                            HighlightUtil.formatClass(referenceClass),
@@ -261,12 +261,11 @@ public abstract class GenericsHighlightUtil {
     Map<MethodSignature, MethodSignatureBackedByPsiMethod> sameErasureMethods =
       new THashMap<MethodSignature, MethodSignatureBackedByPsiMethod>(MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY);
     Map<MethodSignature, MethodSignatureBackedByPsiMethod> toCheckSubsignature = new HashMap<MethodSignature, MethodSignatureBackedByPsiMethod>();
-    MethodSignatureBackedByPsiMethod sameErasure;
 
     for (HierarchicalMethodSignature signature : signaturesWithSupers) {
       PsiMethod method = signature.getMethod();
       MethodSignature signatureToErase = method.getSignature(PsiSubstitutor.EMPTY);
-      sameErasure = sameErasureMethods.get(signatureToErase);
+      MethodSignatureBackedByPsiMethod sameErasure = sameErasureMethods.get(signatureToErase);
       if (sameErasure != null) {
         classInfo = checkSameErasureNotSubsignature(sameErasure, toCheckSubsignature, signature, aClass, method, result, classInfo);
       }
@@ -390,7 +389,7 @@ public abstract class GenericsHighlightUtil {
   public static HighlightInfo checkReferenceTypeUsedAsTypeArgument(PsiTypeElement typeElement) {
     final PsiType type = typeElement.getType();
     if (type instanceof PsiPrimitiveType ||
-        (type instanceof PsiWildcardType && ((PsiWildcardType)type).getBound() instanceof PsiPrimitiveType)) {
+        type instanceof PsiWildcardType && ((PsiWildcardType)type).getBound() instanceof PsiPrimitiveType) {
       final PsiElement element = new PsiMatcherImpl(typeElement)
         .parent(PsiMatcherImpl.hasClass(PsiReferenceParameterList.class))
         .parent(PsiMatcherImpl.hasClass(PsiJavaCodeReferenceElement.class))
@@ -441,7 +440,7 @@ public abstract class GenericsHighlightUtil {
     if (typeElement == null) return null;
     final PsiType castType = typeElement.getType();
     final PsiExpression expression = typeCast.getOperand();
-    if (expression == null || castType == null) return null;
+    if (expression == null) return null;
     final PsiType exprType = expression.getType();
     if (exprType == null) return null;
     if (isUncheckedTypeCast(castType, exprType)) {
@@ -578,7 +577,7 @@ public abstract class GenericsHighlightUtil {
                                                        HighlightUtil.formatMethod(method),
                                                        HighlightUtil.formatType(type));
         PsiElement element = call instanceof PsiMethodCallExpression
-                             ? (PsiElement)((PsiMethodCallExpression)call).getMethodExpression()
+                             ? ((PsiMethodCallExpression)call).getMethodExpression()
                              : call;
         if (InspectionManagerEx.inspectionResultSuppressed(call, HighlightDisplayKey.UNCHECKED_WARNING.getID())) return null;
         HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.UNCHECKED_WARNING, element, description);
@@ -594,7 +593,6 @@ public abstract class GenericsHighlightUtil {
     final PsiParameter parameter = statement.getIterationParameter();
     final PsiExpression expression = statement.getIteratedValue();
     if (expression == null) return null;
-    if (parameter == null) return null;
     final PsiType itemType = getCollectionItemType(expression);
     if (itemType == null) {
       String description = JavaErrorMessages.message("foreach.not.applicable",
