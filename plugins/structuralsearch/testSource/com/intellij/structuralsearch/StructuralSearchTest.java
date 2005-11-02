@@ -2215,4 +2215,16 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("Finding instance fields",1,findMatchesCount(s3,s4));
     assertEquals("Finding all fields",3,findMatchesCount(s3,s4_2));
   }
+  
+  public void test() {
+    String s1 = "if (LOG.isDebugEnabled()) {\n" +
+                "  int a = 1;\n" +
+                "  int a = 1;\n" +
+                "}";
+    String s2 = "if ('_Log.isDebugEnabled()) {\n" +
+                "  '_ThenStatement;\n" +
+                "  '_ThenStatement;\n" +
+                "}";
+    assertEquals("Comparing declarations",1,findMatchesCount(s1,s2));
+  }
 }

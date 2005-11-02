@@ -782,7 +782,8 @@ public class MatchingVisitor extends PsiElementVisitor {
   }
 
   public void visitDeclarationStatement(final PsiDeclarationStatement dcl) {
-    assert false;
+    final PsiDeclarationStatement declaration = (PsiDeclarationStatement)element;
+    result = matchInAnyOrder(dcl.getDeclaredElements(), declaration.getDeclaredElements());
   }
 
   public void visitDoWhileStatement(final PsiDoWhileStatement while1) {
