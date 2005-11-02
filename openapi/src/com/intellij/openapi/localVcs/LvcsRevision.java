@@ -25,6 +25,9 @@ public interface LvcsRevision extends Comparable{
 
   long getDate();
   boolean isDeleted();
+  boolean isPurged();
+
+  int getId();
 
   LvcsObject getObject();
 
@@ -46,15 +49,21 @@ public interface LvcsRevision extends Comparable{
 
   LvcsRevision findNearestPreviousUpToDateRevision();
 
-  RepositoryItem getItem();
-
   int compareTo(LvcsLabel label);
 
   int compareTo(LvcsRevision label);
 
   long getCreationDate();
 
+  int getLength();
+
   int getVersionId();
 
   int getVersion();
+
+  boolean isScheduledForRemoval();
+
+  boolean isTooLong();
+
+  boolean hasContent();
 }

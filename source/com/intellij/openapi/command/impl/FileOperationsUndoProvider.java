@@ -27,7 +27,7 @@ class FileOperationsUndoProvider implements VirtualFileListener, LocalVcsItemsLo
   private final UndoManagerImpl myUndoManager;
   private final Project myProject;
   private boolean myCommandStarted;
-  private final Collection<RepositoryItem> myLockedRevisions = new HashSet<RepositoryItem>();
+  private final Collection<LvcsRevision> myLockedRevisions = new HashSet<LvcsRevision>();
   private final Key<CompositeUndoableAction> DELETE_UNDOABLE_ACTION_KEY = new Key<CompositeUndoableAction>("DeleteUndoableAction");
 
   private static class CompositeUndoableAction implements UndoableAction, Disposable {
@@ -258,7 +258,7 @@ class FileOperationsUndoProvider implements VirtualFileListener, LocalVcsItemsLo
     final LvcsRevision afterActionPerformedRevision = getCurrentRevision(filePath, isDirectory);
     if (afterActionPerformedRevision == null) return;
     synchronized (myLockedRevisions) {
-      myLockedRevisions.add(afterActionPerformedRevision.getItem());
+      myLockedRevisions.add(afterActionPerformedRevision);
     }
     LvcsBasedUndoableAction action = new LvcsBasedUndoableAction(vFile, filePath, isDirectory, afterActionPerformedRevision);
     compositeUndoableAction.addAction(action);
@@ -329,7 +329,7 @@ class FileOperationsUndoProvider implements VirtualFileListener, LocalVcsItemsLo
 
     while (!currentRevision.equals(lastRevision)) {
       currentRevision = currentRevision.getNextRevision();
-      LOG.assertTrue(!currentRevision.getItem().isPurged());
+      LOG.assertTrue(!currentRevision.isPurged());
       revisions.add(currentRevision);
     }
     return revisions;
@@ -367,8 +367,8 @@ class FileOperationsUndoProvider implements VirtualFileListener, LocalVcsItemsLo
 
     public void dispose() {
       synchronized (myLockedRevisions) {
-        if (myBeforeUndoRevision != null) myLockedRevisions.remove(myBeforeUndoRevision.getItem());
-        if (myAfterActionPerformedRevision != null) myLockedRevisions.remove(myAfterActionPerformedRevision.getItem());
+        if (myBeforeUndoRevision != null) myLockedRevisions.remove(myBeforeUndoRevision);
+        if (myAfterActionPerformedRevision != null) myLockedRevisions.remove(myAfterActionPerformedRevision);
       }
     }
 
@@ -380,7 +380,7 @@ class FileOperationsUndoProvider implements VirtualFileListener, LocalVcsItemsLo
         myBeforeUndoRevision = myBeforeUndoRevision.getNextRevision();
         if (myBeforeUndoRevision != null) {
           synchronized (myLockedRevisions) {
-            myLockedRevisions.add(myBeforeUndoRevision.getItem());
+            myLockedRevisions.add(myBeforeUndoRevision);
           }
         }
       }
@@ -443,7 +443,7 @@ class FileOperationsUndoProvider implements VirtualFileListener, LocalVcsItemsLo
 
   public boolean itemCanBePurged(LvcsRevision revision) {
     synchronized (myLockedRevisions) {
-      return !myLockedRevisions.contains(revision.getItem());
+      return !myLockedRevisions.contains(revision);
     }
   }
 }
