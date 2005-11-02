@@ -25,6 +25,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -130,21 +131,9 @@ public class CodeInsightUtil {
   }
 
   public static PsiElement[] getElementsInRange(PsiElement root, final int startOffset, final int endOffset) {
+    PsiElement commonParent = findCommonParent(root, startOffset, endOffset);
+    if (commonParent == null) return PsiElement.EMPTY_ARRAY;
     final List<PsiElement> list = new ArrayList<PsiElement>();
-
-    final ASTNode leafElementAt1 = root.getNode().findLeafElementAt(startOffset);
-    if(leafElementAt1 == null) return PsiElement.EMPTY_ARRAY;
-    ASTNode leafElementAt2 = root.getNode().findLeafElementAt(endOffset);
-    if (leafElementAt2 == null && endOffset == root.getTextLength()) leafElementAt2 = root.getNode().findLeafElementAt(endOffset - 1);
-    if(leafElementAt2 == null) return PsiElement.EMPTY_ARRAY;
-    TreeElement commonParent = (TreeElement)TreeUtil.findCommonParent(leafElementAt1, leafElementAt2);
-    LOG.assertTrue(commonParent != null);
-    LOG.assertTrue(commonParent.getTextRange() != null);
-
-    while(commonParent.getTreeParent() != null &&
-          commonParent.getTextRange().equals(commonParent.getTreeParent().getTextRange())) {
-      commonParent = commonParent.getTreeParent();
-    }
 
     final int currentOffset = commonParent.getTextRange().getStartOffset();
     final TreeElementVisitor visitor = new TreeElementVisitor() {
@@ -154,10 +143,9 @@ public class CodeInsightUtil {
       }
       public void visitComposite(CompositeElement composite) {
         ChameleonTransforming.transformChildren(composite);
-        TreeElement child = (TreeElement)composite.getFirstChildNode();
-        for (; child != null; child = child.getTreeNext()) {
-          int start = offset;
+        for (TreeElement child = (TreeElement)composite.getFirstChildNode(); child != null; child = child.getTreeNext()) {
           if (offset > endOffset) break;
+          int start = offset;
           child.acceptTree(this);
           if (startOffset <= start && offset <= endOffset) {
             list.add(child.getPsi());
@@ -165,9 +153,30 @@ public class CodeInsightUtil {
         }
       }
     };
-    commonParent.acceptTree(visitor);
-    list.add(commonParent.getPsi());
+    ((TreeElement)commonParent.getNode()).acceptTree(visitor);
+    list.add(commonParent);
     return list.toArray(new PsiElement[list.size()]);
+  }
+
+  @Nullable public static PsiElement findCommonParent(final PsiElement root, final int startOffset, final int endOffset) {
+    final ASTNode leafElementAt1 = root.getNode().findLeafElementAt(startOffset);
+    if(leafElementAt1 == null) return null;
+    ASTNode leafElementAt2 = root.getNode().findLeafElementAt(endOffset);
+    if (leafElementAt2 == null && endOffset == root.getTextLength()) leafElementAt2 = root.getNode().findLeafElementAt(endOffset - 1);
+    if(leafElementAt2 == null) return null;
+    ASTNode prev = leafElementAt2.getTreePrev();
+    if (prev != null && prev.getTextRange().getEndOffset() == endOffset) {
+      leafElementAt2 = prev;
+    }
+    TreeElement commonParent = (TreeElement)TreeUtil.findCommonParent(leafElementAt1, leafElementAt2);
+    LOG.assertTrue(commonParent != null);
+    LOG.assertTrue(commonParent.getTextRange() != null);
+
+    while(commonParent.getTreeParent() != null &&
+          commonParent.getTextRange().equals(commonParent.getTreeParent().getTextRange())) {
+      commonParent = commonParent.getTreeParent();
+    }
+    return commonParent.getPsi();
   }
 
   public static void sortIdenticalShortNameClasses(PsiClass[] classes) {

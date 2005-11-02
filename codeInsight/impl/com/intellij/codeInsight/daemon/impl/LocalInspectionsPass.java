@@ -7,8 +7,8 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
@@ -159,14 +159,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
         HighlightInfo.createHighlightInfo(HighlightInfoType.WARNING, psiElement, message, message);
       highlights.add(highlightInfo);
       LocalInspectionTool tool = myTools.get(i);
-      List<IntentionAction> options = new ArrayList<IntentionAction>();
-      options.add(new EditInspectionToolsSettingsAction(tool));
-      options.add(new AddNoInspectionCommentAction(tool, psiElement));
-      options.add(new AddNoInspectionDocTagAction(tool, psiElement));
-      options.add(new AddNoInspectionForClassAction(tool, psiElement));
-      options.add(new AddSuppressWarningsAnnotationAction(tool, psiElement));
-      options.add(new AddSuppressWarningsAnnotationForClassAction(tool, psiElement));
-      options.add(new AddSuppressWarningsAnnotationForAllAction(psiElement));
+      List<IntentionAction> options = getStandardIntentionOptions(tool, psiElement);
       final LocalQuickFix[] fixes = problemDescriptor.getFixes();
       if (fixes != null && fixes.length > 0) {
         for (int k = 0; k < problemDescriptor.getFixes().length; k++) {
@@ -180,34 +173,31 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
   }
 
   private void appendDescriptors(ProblemDescriptor[] problemDescriptors, LocalInspectionTool tool) {
-    ProgressManager.getInstance().checkCanceled();
+    if (problemDescriptors == null) return;
+    InspectionProfileImpl inspectionProfile = DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(myFile);
+    boolean isError = inspectionProfile.getErrorLevel(HighlightDisplayKey.find(tool.getShortName())) == HighlightDisplayLevel.ERROR;
+    for (ProblemDescriptor problemDescriptor : problemDescriptors) {
+      ProgressManager.getInstance().checkCanceled();
 
-    if (problemDescriptors != null) {
-      boolean isError = DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(myFile).getErrorLevel(
-        HighlightDisplayKey.find(tool.getShortName())) ==
-                                                       HighlightDisplayLevel.ERROR;
-      for (ProblemDescriptor problemDescriptor : problemDescriptors) {
-        if (!InspectionManagerEx.inspectionResultSuppressed(problemDescriptor.getPsiElement(), tool.getID())) {
-          myDescriptors.add(problemDescriptor);
-          ProblemHighlightType highlightType = problemDescriptor.getHighlightType();
-          HighlightInfoType type = null;
-          if (highlightType == ProblemHighlightType.GENERIC_ERROR_OR_WARNING) {
-            type = isError ? HighlightInfoType.ERROR : HighlightInfoType.WARNING;
-          }
-          else if (highlightType == ProblemHighlightType.LIKE_DEPRECATED) {
-            type = HighlightInfoType.DEPRECATED;
-          }
-          else if (highlightType == ProblemHighlightType.LIKE_UNKNOWN_SYMBOL) {
-            type = HighlightInfoType.WRONG_REF;
-          }
-          else if (highlightType == ProblemHighlightType.LIKE_UNUSED_SYMBOL) {
-            type = HighlightInfoType.UNUSED_SYMBOL;
-          }
-
-
-          myLevels.add(type);
-          myTools.add(tool);
+      if (!InspectionManagerEx.inspectionResultSuppressed(problemDescriptor.getPsiElement(), tool.getID())) {
+        myDescriptors.add(problemDescriptor);
+        ProblemHighlightType highlightType = problemDescriptor.getHighlightType();
+        HighlightInfoType type = null;
+        if (highlightType == ProblemHighlightType.GENERIC_ERROR_OR_WARNING) {
+          type = isError ? HighlightInfoType.ERROR : HighlightInfoType.WARNING;
         }
+        else if (highlightType == ProblemHighlightType.LIKE_DEPRECATED) {
+          type = HighlightInfoType.DEPRECATED;
+        }
+        else if (highlightType == ProblemHighlightType.LIKE_UNKNOWN_SYMBOL) {
+          type = HighlightInfoType.WRONG_REF;
+        }
+        else if (highlightType == ProblemHighlightType.LIKE_UNUSED_SYMBOL) {
+          type = HighlightInfoType.UNUSED_SYMBOL;
+        }
+
+        myLevels.add(type);
+        myTools.add(tool);
       }
     }
   }
@@ -242,15 +232,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       @NonNls String tooltip = "<html><body>" + XmlUtil.escapeString(message) + "</body></html>";
       HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(type, psiElement, plainMessage, tooltip);
       infos.add(highlightInfo);
-      List<IntentionAction> options = new ArrayList<IntentionAction>();
-      options.add(new EditInspectionToolsSettingsAction(tool));
-      options.add(new AddNoInspectionCommentAction(tool, psiElement));
-      options.add(new AddNoInspectionDocTagAction(tool, psiElement));
-      options.add(new AddNoInspectionForClassAction(tool, psiElement));
-      options.add(new AddNoInspectionAllForClassAction(psiElement));
-      options.add(new AddSuppressWarningsAnnotationAction(tool, psiElement));
-      options.add(new AddSuppressWarningsAnnotationForClassAction(tool, psiElement));
-      options.add(new AddSuppressWarningsAnnotationForAllAction(psiElement));
+      List<IntentionAction> options = getStandardIntentionOptions(tool, psiElement);
       final LocalQuickFix[] fixes = descriptor.getFixes();
       if (fixes != null && fixes.length > 0) {
         for (int k = 0; k < fixes.length; k++) {
@@ -275,6 +257,19 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
     for (Editor editor : editors) {
       ((EditorMarkupModel)editor.getMarkupModel()).setErrorStripeRenderer(renderer);
     }
+  }
+
+  private static List<IntentionAction> getStandardIntentionOptions(final LocalInspectionTool tool, final PsiElement psiElement) {
+    List<IntentionAction> options = new ArrayList<IntentionAction>();
+    options.add(new EditInspectionToolsSettingsAction(tool));
+    options.add(new AddNoInspectionCommentAction(tool, psiElement));
+    options.add(new AddNoInspectionDocTagAction(tool, psiElement));
+    options.add(new AddNoInspectionForClassAction(tool, psiElement));
+    options.add(new AddNoInspectionAllForClassAction(psiElement));
+    options.add(new AddSuppressWarningsAnnotationAction(tool, psiElement));
+    options.add(new AddSuppressWarningsAnnotationForClassAction(tool, psiElement));
+    options.add(new AddSuppressWarningsAnnotationForAllAction(psiElement));
+    return options;
   }
 
   public int getPassId() {
