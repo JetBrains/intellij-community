@@ -176,7 +176,13 @@ public class PsiSuperMethodImplUtil {
 
   public static Collection<HierarchicalMethodSignature> getVisibleSignatures(PsiClass aClass) {
     Map<MethodSignature, HierarchicalMethodSignatureImpl> map = getSignaturesMap(aClass);
-    return new LinkedHashSet<HierarchicalMethodSignature>(map.values());
+    return (Collection)map.values();
+  }
+
+  public static HierarchicalMethodSignature getHierarchicalMethodSignature(PsiMethod method) {
+    PsiClass aClass = method.getContainingClass();
+    if (aClass == null) return null;
+    return getSignaturesMap(aClass).get(method.getSignature(PsiSubstitutor.EMPTY));
   }
 
   private static Map<MethodSignature, HierarchicalMethodSignatureImpl> getSignaturesMap(final PsiClass aClass) {

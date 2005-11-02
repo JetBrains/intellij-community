@@ -594,6 +594,27 @@ public class StringUtil {
     return result;
   }
 
+  @NotNull public static Iterable<String> tokenize(@NotNull String s, @NotNull String separators) {
+    final com.intellij.util.text.StringTokenizer tokenizer = new com.intellij.util.text.StringTokenizer(s, separators);
+    return new Iterable<String>() {
+      public Iterator<String> iterator() {
+        return new Iterator<String>() {
+          public boolean hasNext() {
+            return tokenizer.hasMoreTokens();
+          }
+
+          public String next() {
+            return tokenizer.nextToken();
+          }
+
+          public void remove() {
+            throw new UnsupportedOperationException();
+          }
+        };
+      }
+    };
+  }
+
   public static List<String> getWordsIn(@NotNull String text) {
     List<String> result = new SmartList<String>();
     int start = -1;

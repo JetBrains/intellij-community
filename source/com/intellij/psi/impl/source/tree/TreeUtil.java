@@ -324,8 +324,9 @@ public class TreeUtil {
       parents.add(one);
     } while((one = one.getTreeParent()) != null);
 
-    while((two = two.getTreeParent()) != null){
+    while(two != null){
       if(parents.contains(two)) return two;
+      two = two.getTreeParent();
     }
     return null;
   }

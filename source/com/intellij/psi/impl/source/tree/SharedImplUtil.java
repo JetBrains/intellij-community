@@ -122,31 +122,32 @@ public class SharedImplUtil {
 
   public static PsiType getType(PsiVariable variable) {
     PsiTypeElement typeElement = variable.getTypeElement();
+    PsiIdentifier nameIdentifier = variable.getNameIdentifier();
+    return getType(typeElement, nameIdentifier);
+  }
+  public static PsiType getType(PsiTypeElement typeElement, PsiElement anchor) {
     int arrayCount = 0;
-    ASTNode name = SourceTreeToPsiMap.psiElementToTree(variable.getNameIdentifier());
-    Loop:
+    ASTNode name = SourceTreeToPsiMap.psiElementToTree(anchor);
     for (ASTNode child = name.getTreeNext(); child != null; child = child.getTreeNext()) {
       IElementType i = child.getElementType();
       if (i == ElementType.LBRACKET) {
         arrayCount++;
       }
-      else if (i == ElementType.RBRACKET ||
-        i == ElementType.WHITE_SPACE ||
-        i == ElementType.C_STYLE_COMMENT ||
-        i == JavaDocElementType.DOC_COMMENT ||
-        i == JavaTokenType.DOC_COMMENT ||
-        i == ElementType.END_OF_LINE_COMMENT) {
-      }
-      else {
-        break Loop;
+      else if (i != ElementType.RBRACKET &&
+               i != ElementType.WHITE_SPACE &&
+               i != ElementType.C_STYLE_COMMENT &&
+               i != JavaDocElementType.DOC_COMMENT &&
+               i != JavaTokenType.DOC_COMMENT &&
+               i != ElementType.END_OF_LINE_COMMENT) {
+        break;
       }
     }
-    PsiType type;
-    if (!(typeElement instanceof PsiTypeElementImpl)) {
-      type = typeElement.getType();
+    PsiType type;//=typeElement.getType();
+    if (typeElement instanceof PsiTypeElementImpl) {
+      type = ((PsiTypeElementImpl)typeElement).getDetachedType(anchor);
     }
     else {
-      type = ((PsiTypeElementImpl)typeElement).getDetachedType(variable);
+      type = typeElement.getType();
     }
 
     for (int i = 0; i < arrayCount; i++) {

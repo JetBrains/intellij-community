@@ -198,6 +198,11 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
     return myName;
   }
 
+  @NotNull
+  public HierarchicalMethodSignature getHierarchicalMethodSignature() {
+    return PsiSuperMethodImplUtil.getHierarchicalMethodSignature(this);
+  }
+
   public PsiElement setName(String name) throws IncorrectOperationException {
     SharedPsiElementImplUtil.setName(getNameIdentifier(), name);
     return this;

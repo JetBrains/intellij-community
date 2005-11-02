@@ -146,6 +146,11 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
     return myCachedName;
   }
 
+  @NotNull
+  public HierarchicalMethodSignature getHierarchicalMethodSignature() {
+    return PsiSuperMethodImplUtil.getHierarchicalMethodSignature(this);
+  }
+
   public PsiElement setName(String name) throws IncorrectOperationException{
     SharedPsiElementImplUtil.setName(getNameIdentifier(), name);
     return this;
@@ -184,35 +189,7 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
 
       PsiTypeElement typeElement = getReturnTypeElement();
       if (typeElement == null) return null;
-
-      int arrayCount = 0;
-      ASTNode parameterList = SourceTreeToPsiMap.psiElementToTree(getParameterList());
-      for (ASTNode child = parameterList.getTreeNext(); child != null; child = child.getTreeNext()) {
-        IElementType i = child.getElementType();
-        if (i == LBRACKET) {
-          arrayCount++;
-        }
-        else if (i == RBRACKET || i == WHITE_SPACE || i == C_STYLE_COMMENT || i == JavaDocElementType.DOC_COMMENT ||
-                 i == END_OF_LINE_COMMENT) {
-        }
-        else {
-          break;
-        }
-      }
-
-      PsiType type;
-      if (!(typeElement instanceof PsiTypeElementImpl)) {
-        type = typeElement.getType();
-      }
-      else {
-        type = ((PsiTypeElementImpl)typeElement).getDetachedType(this);
-      }
-
-      for (int i = 0; i < arrayCount; i++) {
-        type = type.createArrayType();
-      }
-
-      return type;
+      return SharedImplUtil.getType(typeElement, getParameterList());
     }
     else{
       if (myCachedType != null) {

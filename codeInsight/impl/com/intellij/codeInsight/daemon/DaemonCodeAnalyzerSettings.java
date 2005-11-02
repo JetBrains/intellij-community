@@ -11,6 +11,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiElement;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
@@ -48,7 +49,7 @@ public class DaemonCodeAnalyzerSettings implements NamedJDOMExternalizable, Clon
 
   private InspectionProfileImpl myInspectionProfile;
 
-  public InspectionProfileImpl getInspectionProfile() {
+  @NotNull public InspectionProfileImpl getInspectionProfile() {
     if (myInspectionProfile == null) {
       final InspectionProfileManager inspectionProfileManager = InspectionProfileManager.getInstance();
       final String[] avaliableProfileNames = inspectionProfileManager.getAvaliableProfileNames();
@@ -65,7 +66,7 @@ public class DaemonCodeAnalyzerSettings implements NamedJDOMExternalizable, Clon
     return myInspectionProfile;
   }
 
-  public InspectionProfileImpl getInspectionProfile(PsiElement psiRoot) {
+  @NotNull public InspectionProfileImpl getInspectionProfile(PsiElement psiRoot) {
     InspectionProfileImpl inspectionProfile = null;
     if (psiRoot != null) {
       final Pair<String, Boolean> inspectionProfilePair = HighlightingSettingsPerFile.getInstance(psiRoot.getProject())

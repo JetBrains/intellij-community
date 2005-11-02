@@ -168,4 +168,6 @@ public interface PsiMethod extends PsiMember, PsiNamedElement, PsiModifierListOw
 
   @NotNull
   String getName();
+  
+  @NotNull HierarchicalMethodSignature getHierarchicalMethodSignature();
 }

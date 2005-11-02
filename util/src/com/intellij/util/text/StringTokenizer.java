@@ -21,7 +21,7 @@ import java.util.NoSuchElementException;
 /**
  * Copy of java.util.StringTokenizer with getCurrentPosition method.
  */
-public class StringTokenizer implements Enumeration {
+public class StringTokenizer implements Enumeration<String> {
   private int currentPosition;
   private int newPosition;
   private int maxPosition;
@@ -138,7 +138,7 @@ public class StringTokenizer implements Enumeration {
     return hasMoreTokens();
   }
 
-  public Object nextElement() {
+  public String nextElement() {
     return nextToken();
   }
 
@@ -157,5 +157,11 @@ public class StringTokenizer implements Enumeration {
 
   public int getCurrentPosition() {
     return currentPosition;
+  }
+  public void reset(String s) {
+    str = s;
+    currentPosition = 0;
+    newPosition = -1;
+    maxPosition = s.length();
   }
 }

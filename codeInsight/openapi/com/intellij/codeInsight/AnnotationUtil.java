@@ -17,21 +17,19 @@ package com.intellij.codeInsight;
 
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.openapi.diagnostic.Logger;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
-import java.util.Set;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author max
  */
 public class AnnotationUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.AnnotationUtil");
-
   /**
    * The full qualified name of the standard Nullable annotation.
    */
@@ -86,17 +84,14 @@ public class AnnotationUtil {
     PsiAnnotation directAnnotation = findAnnotation(listOwner, annotationNames);
     if (directAnnotation != null) return directAnnotation;
 
-    if (listOwner instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)listOwner;
-      Collection<HierarchicalMethodSignature> visibleSignatures = method.getContainingClass().getVisibleSignatures();
-      for (HierarchicalMethodSignature signature : visibleSignatures) {
-        if (signature.getMethod() == method) {
-          return findAnnotationInHierarchy(signature, annotationNames, method);
-        }
-      }
+    if (!(listOwner instanceof PsiMethod)) {
+      return null;
     }
-
-    return null;
+    PsiMethod method = (PsiMethod)listOwner;
+    PsiClass aClass = method.getContainingClass();
+    if (aClass == null) return null;
+    HierarchicalMethodSignature methodSignature = method.getHierarchicalMethodSignature();
+    return findAnnotationInHierarchy(methodSignature, annotationNames, method);
   }
 
   private static PsiAnnotation findAnnotationInHierarchy(HierarchicalMethodSignature signature, Set<String> annotationNames, PsiElement place) {
@@ -117,9 +112,9 @@ public class AnnotationUtil {
   public static boolean isAnnotated(PsiModifierListOwner listOwner, String annotationFQN, boolean checkHierarchy) {
     if (listOwner instanceof PsiParameter) {
       // this is more efficient than getting the modifier list
-      PsiAnnotation[] paramAnnotations = (((PsiParameter) listOwner)).getAnnotations();
+      PsiAnnotation[] paramAnnotations = ((PsiParameter)listOwner).getAnnotations();
       for(PsiAnnotation annotation: paramAnnotations) {
-        if (annotation.getQualifiedName().equals(annotationFQN)) {
+        if (annotationFQN.equals(annotation.getQualifiedName())) {
           return true;
         }
       }

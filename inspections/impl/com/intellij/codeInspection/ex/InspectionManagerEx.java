@@ -32,6 +32,7 @@ import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -50,6 +51,7 @@ import com.intellij.util.containers.HashMap;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -86,7 +88,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
   public static final String SUPPRESS_INSPECTIONS_ANNOTATION_NAME = "java.lang.SuppressWarnings";
 
   //for use in local comments
-  @NonNls private static final Pattern SUPPRESS_PATTERN = Pattern.compile("//\\s*" + SUPPRESS_INSPECTIONS_TAG_NAME + "\\s+(\\w+(,\\w+)*)");
+  @NonNls private static final Pattern SUPPRESS_IN_LINE_COMMENT_PATTERN = Pattern.compile("//\\s*" + SUPPRESS_INSPECTIONS_TAG_NAME + "\\s+(\\w+(,\\w+)*)");
 
   private InspectionProfile myExternalProfile = null;
 
@@ -203,8 +205,9 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
     ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.INSPECTION).activate(null);
   }
 
-  private static boolean isInspectionToolIdMentioned(String inspectionsList, String inspectionToolID) {
-    String[] ids = inspectionsList.split("[,]");
+  public static boolean isInspectionToolIdMentioned(String inspectionsList, String inspectionToolID) {
+    Iterable<String> ids = StringUtil.tokenize(inspectionsList,"[,]");
+
     for (@NonNls String id : ids) {
       if (id.equals(inspectionToolID) || id.equals("ALL")) return true;
     }
@@ -231,38 +234,45 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
     return true;
   }
 
-  private static boolean isToCheckMemberInAnnotation(final PsiModifierListOwner owner, final String inspectionToolID) {
-    if (LanguageLevel.JDK_1_5.compareTo(owner.getManager().getEffectiveLanguageLevel()) > 0) return true;
+  @NotNull private static Collection<String> getInspectionIdsSuppressedInAnnotation(final PsiModifierListOwner owner) {
+    if (LanguageLevel.JDK_1_5.compareTo(owner.getManager().getEffectiveLanguageLevel()) > 0) return Collections.emptyList();
     PsiModifierList modifierList = owner.getModifierList();
-    if (modifierList != null) {
-      PsiAnnotation annotation = modifierList.findAnnotation(SUPPRESS_INSPECTIONS_ANNOTATION_NAME);
-      if (annotation != null) {
-        final PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
-        if (attributes.length == 0) {
-          return true;
-        }
-        final PsiAnnotationMemberValue attributeValue = attributes[0].getValue();
-        if (attributeValue instanceof PsiArrayInitializerMemberValue) {
-          final PsiAnnotationMemberValue[] initializers = ((PsiArrayInitializerMemberValue)attributeValue).getInitializers();
-          for (PsiAnnotationMemberValue annotationMemberValue : initializers) {
-            if (annotationMemberValue instanceof PsiLiteralExpression) {
-              final Object value = ((PsiLiteralExpression)annotationMemberValue).getValue();
-              if (value instanceof String) {
-                if (isInspectionToolIdMentioned((String)value, inspectionToolID)) {
-                  return false;
-                }
-              }
-            }
-          }
-        } else if (attributeValue instanceof PsiLiteralExpression){
-          final Object value = ((PsiLiteralExpression)attributeValue).getValue();
+    if (modifierList == null) {
+      return Collections.emptyList();
+    }
+    PsiAnnotation annotation = modifierList.findAnnotation(SUPPRESS_INSPECTIONS_ANNOTATION_NAME);
+    if (annotation == null) {
+      return Collections.emptyList();
+    }
+    final PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
+    if (attributes.length == 0) {
+      return Collections.emptyList();
+    }
+    final PsiAnnotationMemberValue attributeValue = attributes[0].getValue();
+    Collection<String> result = new ArrayList<String>();
+    if (attributeValue instanceof PsiArrayInitializerMemberValue) {
+      final PsiAnnotationMemberValue[] initializers = ((PsiArrayInitializerMemberValue)attributeValue).getInitializers();
+      for (PsiAnnotationMemberValue annotationMemberValue : initializers) {
+        if (annotationMemberValue instanceof PsiLiteralExpression) {
+          final Object value = ((PsiLiteralExpression)annotationMemberValue).getValue();
           if (value instanceof String) {
-            if (isInspectionToolIdMentioned((String)value, inspectionToolID)) {
-              return false;
-            }
+            result.add((String)value);
           }
         }
       }
+    }
+    else if (attributeValue instanceof PsiLiteralExpression) {
+      final Object value = ((PsiLiteralExpression)attributeValue).getValue();
+      if (value instanceof String) {
+        result.add((String)value);
+      }
+    }
+    return result;
+  }
+  private static boolean isToCheckMemberInAnnotation(final PsiModifierListOwner owner, final String inspectionToolID) {
+    Collection<String> suppressedIds = getInspectionIdsSuppressedInAnnotation(owner);
+    for (String ids : suppressedIds) {
+      if (isInspectionToolIdMentioned(ids, inspectionToolID)) return false;
     }
     return true;
   }
@@ -281,13 +291,40 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
     return true;
   }
 
+  public static String getSuppressedInspectionIdsIn(PsiElement element) {
+      if (element instanceof PsiComment) {
+        String text = element.getText();
+        Matcher matcher = SUPPRESS_IN_LINE_COMMENT_PATTERN.matcher(text);
+        if (matcher.matches()) {
+          return matcher.group(1);
+        }
+    }
+    if (element instanceof PsiModifierListOwner) {
+      Collection<String> suppressedIds = getInspectionIdsSuppressedInAnnotation((PsiModifierListOwner)element);
+      return StringUtil.join(suppressedIds, ",");
+    }
+    if (element instanceof PsiDocCommentOwner) {
+      PsiDocComment docComment = ((PsiDocCommentOwner)element).getDocComment();
+      if (docComment != null) {
+        PsiDocTag inspectionTag = docComment.findTagByName(SUPPRESS_INSPECTIONS_TAG_NAME);
+        if (inspectionTag != null && inspectionTag.getValueElement() != null) {
+          String valueText = inspectionTag.getValueElement().getText();
+          if (valueText != null){
+            return valueText;
+          }
+        }
+      }
+    }
+    return null;
+  }
+
   public static boolean inspectionResultSuppressed(final PsiElement place, String id) {
     PsiStatement statement = PsiTreeUtil.getParentOfType(place, PsiStatement.class);
     if (statement != null) {
       PsiElement prev = PsiTreeUtil.skipSiblingsBackward(statement, new Class[]{PsiWhiteSpace.class});
       if (prev instanceof PsiComment) {
         String text = prev.getText();
-        Matcher matcher = SUPPRESS_PATTERN.matcher(text);
+        Matcher matcher = SUPPRESS_IN_LINE_COMMENT_PATTERN.matcher(text);
         if (matcher.matches()) {
           return isInspectionToolIdMentioned(matcher.group(1), id);
         }
@@ -302,8 +339,10 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
       container = PsiTreeUtil.getParentOfType(container, PsiDocCommentOwner.class);
     }
     while (container instanceof PsiTypeParameter);
+
     PsiDocCommentOwner classContainer = PsiTreeUtil.getParentOfType(container, PsiDocCommentOwner.class, true);
-    return container != null && !isToCheckMember((PsiDocCommentOwner)container, id) || (classContainer != null && !isToCheckMember(classContainer, id));
+    return container != null && !isToCheckMember((PsiDocCommentOwner)container, id) ||
+           classContainer != null && !isToCheckMember(classContainer, id);
   }
 
   public UIOptions getUIOptions() {
