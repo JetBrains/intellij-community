@@ -2,7 +2,6 @@ package com.intellij.uiDesigner.quickFixes;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ex.ActionListPopup;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.HeavyweightHint;
@@ -15,6 +14,8 @@ import com.intellij.util.IJSwingUtilities;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Anton Katilin
@@ -72,6 +73,7 @@ public abstract class QuickFixManager <T extends JComponent>{
   /**
    * @return error info for the current {@link #myComponent} state.
    */
+  @Nullable
   protected abstract ErrorInfo getErrorInfo();
 
   /**
@@ -80,6 +82,7 @@ public abstract class QuickFixManager <T extends JComponent>{
    * returned non empty list of error infos. <code>null</code> means that
    * error bounds are not defined.
    */
+  @Nullable
   protected abstract Rectangle getErrorBounds();
 
   /**
@@ -172,8 +175,8 @@ public abstract class QuickFixManager <T extends JComponent>{
     }
 
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
-    for(int i = 0; i < errorInfo.myFixes.length; i++){
-      actionGroup.add(new QuickFixActionImpl(myEditor, errorInfo.myFixes[i]));
+    for (QuickFix myFix: errorInfo.myFixes) {
+      actionGroup.add(new QuickFixActionImpl(myEditor, myFix));
     }
 
     final ListPopup popup = ActionListPopup.createListPopup(

@@ -1,9 +1,6 @@
 package com.intellij.uiDesigner.quickFixes;
 
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.uiDesigner.propertyInspector.PropertyInspector;
 
 import javax.swing.*;
@@ -39,5 +36,10 @@ final class ShowHintAction extends AnAction{
       propertyInspector.stopEditing();
     }
     myManager.showIntentionPopup();
+  }
+
+  public void update(AnActionEvent e) {
+    // Alt-Enter hotkey for editor takes precedence over this action
+    e.getPresentation().setEnabled(e.getDataContext().getData(DataConstants.EDITOR) == null);
   }
 }

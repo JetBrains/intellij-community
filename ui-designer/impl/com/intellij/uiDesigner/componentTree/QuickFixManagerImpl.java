@@ -14,6 +14,8 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
@@ -26,6 +28,7 @@ public final class QuickFixManagerImpl extends QuickFixManager<ComponentTree>{
     myComponent.addTreeSelectionListener(new MyTreeSelectionListener());
   }
 
+  @Nullable
   protected ErrorInfo getErrorInfo() {
     final RadComponent component = myComponent.getSelectedComponent();
     if(component == null){
@@ -51,7 +54,7 @@ public final class QuickFixManagerImpl extends QuickFixManager<ComponentTree>{
         statusBar.setInfo(errorInfo.myDescription);
       }
       else {
-        statusBar.setInfo("");        
+        statusBar.setInfo("");
       }
     }
   }

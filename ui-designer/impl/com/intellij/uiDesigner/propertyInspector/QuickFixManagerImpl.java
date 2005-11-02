@@ -9,6 +9,8 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
@@ -21,6 +23,7 @@ final class QuickFixManagerImpl extends QuickFixManager <PropertyInspectorTable>
     propertyInspectorTable.getSelectionModel().addListSelectionListener(new MyListSelectionListener());
   }
 
+  @Nullable
   public Rectangle getErrorBounds() {
     final int selectedRow = myComponent.getSelectedRow();
     if(selectedRow < 0 || selectedRow >= myComponent.getRowCount()){
