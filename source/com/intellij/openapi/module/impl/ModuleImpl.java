@@ -245,7 +245,7 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
     getExpandModuleHomeReplacements(result, f, "$" + PathMacrosImpl.MODULE_DIR_MACRO_NAME + "$");
   }
 
-  private void getExpandModuleHomeReplacements(ExpandMacroToPathMap result, File f, String macro) {
+  private static void getExpandModuleHomeReplacements(ExpandMacroToPathMap result, File f, String macro) {
     if (f == null) return;
 
     getExpandModuleHomeReplacements(result, f.getParentFile(), macro + "/..");
@@ -302,8 +302,8 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
 
   public void loadFromXml(Element root, String filePath) throws InvalidDataException {
     List attributes = root.getAttributes();
-    for (int i = 0; i < attributes.size(); i++) {
-      Attribute attr = (Attribute)attributes.get(i);
+    for (Object attribute : attributes) {
+      Attribute attr = (Attribute)attribute;
       setOption(attr.getName(), attr.getValue());
     }
 

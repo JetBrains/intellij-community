@@ -76,8 +76,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   private void createComponents() {
     try {
       final Class[] componentInterfaces = getComponentInterfaces();
-      for (int i = 0; i < componentInterfaces.length; i++) {
-        Class componentInterface = componentInterfaces[i];
+      for (Class componentInterface : componentInterfaces) {
         if (!myLazyComponents.contains(componentInterface)) {
           try {
             createComponent(componentInterface);
@@ -129,8 +128,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   protected void disposeComponents() {
     final BaseComponent[] components = getComponents(false);
 
-    for (int i = 0; i < components.length; i++) {
-      BaseComponent component = components[i];
+    for (BaseComponent component : components) {
       try {
         component.disposeComponent();
       }
@@ -215,8 +213,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
 
   protected synchronized Object getLock(Class componentClass) {
-    Object lock;
-    lock = myInterfaceToLockMap.get(componentClass);
+    Object lock = myInterfaceToLockMap.get(componentClass);
     if (lock == null) {
       myInterfaceToLockMap.put(componentClass, lock = new Object());
     }
@@ -262,8 +259,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   protected BaseComponent[] getComponents(boolean includeLazyComponents) {
     Class[] componentClasses = getComponentInterfaces();
     ArrayList<BaseComponent> components = new ArrayList<BaseComponent>(componentClasses.length);
-    for (int i = 0; i < componentClasses.length; i++) {
-      Class interfaceClass = componentClasses[i];
+    for (Class interfaceClass : componentClasses) {
       if (includeLazyComponents || !myLazyComponents.contains(interfaceClass)) {
         BaseComponent component = (BaseComponent)getComponent(interfaceClass);
         if (component != null) components.add(component);
@@ -276,9 +272,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     Class[] componentClasses;
     synchronized (this) {
       ArrayList<Class> array = new ArrayList<Class>();
-      Iterator<Class> iter = myComponentInterfaces.iterator();
-      while (iter.hasNext()) {
-        Class componentClass = iter.next();
+      for (Class componentClass : myComponentInterfaces) {
         if (baseInterfaceClass.isAssignableFrom(componentClass)) {
           array.add(componentClass);
         }
@@ -332,8 +326,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   protected static Element serializeComponent(BaseComponent component) {
     try {
-      Element node = null;
-
       if (component instanceof JDOMExternalizable) {
         Element element = new Element(COMPONENT_ELEMENT);
 
@@ -341,7 +333,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
         try {
           ((JDOMExternalizable)component).writeExternal(element);
-          node = element;
+          return element;
         }
 //      catch (JDOMException exception) {
 //        LOG.error(exception);
@@ -349,13 +341,11 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
         catch (WriteExternalException ex) {
         }
       }
-
-      return node;
     }
     catch (Throwable e) { // Request #12351
       LOG.error(e);
-      return null;
     }
+    return null;
   }
 
   protected final BaseComponent instantiateComponent(Class componentClass) {
@@ -391,8 +381,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
     final ComponentDescriptor[] componentDescriptors =
       (ComponentDescriptor[])extensionsArea.getExtensionPoint(ExtensionPoints.COMPONENT).getExtensions();
-    for (int i = 0; i < componentDescriptors.length; i++) {
-      ComponentDescriptor descriptor = componentDescriptors[i];
+    for (ComponentDescriptor descriptor : componentDescriptors) {
       final Map<String, String> options = descriptor.getOptionsMap();
       if (isComponentSuitable(options)) {
 
@@ -486,8 +475,8 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
       List includes = root.getChildren(INCLUDE_ELEMENT);
       if (includes != null) {
-        for (Iterator iterator = includes.iterator(); iterator.hasNext();) {
-          Element includeElement = (Element)iterator.next();
+        for (final Object include : includes) {
+          Element includeElement = (Element)include;
           String includeName = includeElement.getAttributeValue(NAME_ATTR);
 
           if (includeName != null && !loadedIncludes.contains(includeName)) {
@@ -511,9 +500,9 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   public void loadComponentsConfiguration(final Element element, IdeaPluginDescriptor descriptor) {
     if (element == null) return;
     final boolean headless = ApplicationManager.getApplication().isHeadlessEnvironment();
-    for (Iterator i = element.getChildren().iterator(); i.hasNext();) {
+    for (final Object o : element.getChildren()) {
       try {
-        Element child = (Element)i.next();
+        Element child = (Element)o;
         if (COMPONENT_ELEMENT.equals(child.getName())) {
           String interfaceClass = child.getChildText(INTERFACE_CLASS_ELEMENT);
           String implClass = child.getChildText(IMPLEMENTATION_CLASS_ELEMENT);
@@ -532,8 +521,8 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
           final List optionElements = child.getChildren(OPTION_ELEMENT);
           if (optionElements.size() != 0) {
             options = new HashMap<String, String>();
-            for (Iterator j = optionElements.iterator(); j.hasNext();) {
-              Element e = (Element)j.next();
+            for (final Object optionElement : optionElements) {
+              Element e = (Element)optionElement;
               String name = e.getAttributeValue(NAME_ATTR);
               String value = e.getAttributeValue(VALUE_ATTR);
               options.put(name, value);
@@ -580,14 +569,13 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return !isTrue(options, "internal") || ApplicationManagerEx.getApplicationEx().isInternal();
   }
 
-  private boolean isTrue(Map options, @NonNls final String option) {
+  private static boolean isTrue(Map options, @NonNls final String option) {
     return options != null && options.containsKey(option) && Boolean.valueOf(options.get(option).toString());
   }
 
   protected void saveSettingsSavingComponents() {
     Object[] components = getComponents(SettingsSavingComponent.class);
-    for (int i = 0; i < components.length; i++) {
-      Object component = components[i];
+    for (Object component : components) {
       if (component instanceof SettingsSavingComponent) {
         ((SettingsSavingComponent)component).save();
       }

@@ -151,8 +151,7 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx, Area
     if (PluginManager.shouldLoadPlugins()) {
       final Application app = ApplicationManager.getApplication();
       final IdeaPluginDescriptor[] plugins = app.getPlugins();
-      for (int i = 0; i < plugins.length; i++) {
-        IdeaPluginDescriptor plugin = plugins[i];
+      for (IdeaPluginDescriptor plugin : plugins) {
         if (!PluginManager.shouldLoadPlugin(plugin)) continue;
         final Element projectComponents = plugin.getProjectComponents();
         if (projectComponents != null) {
@@ -283,7 +282,7 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx, Area
   private boolean isWorkspace(Class componentInterface) {
     final Map options = getComponentOptions(componentInterface);
     if (options == null) return false;
-    return Boolean.valueOf((String) options.get(OPTION_WORKSPACE));
+    return Boolean.parseBoolean((String) options.get(OPTION_WORKSPACE));
   }
 
   private void getExpandProjectHomeReplacements(ExpandMacroToPathMap result) {
@@ -295,7 +294,7 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx, Area
     getExpandProjectHomeReplacements(result, f, "$" + PathMacrosImpl.PROJECT_DIR_MACRO_NAME + "$");
   }
 
-  private void getExpandProjectHomeReplacements(ExpandMacroToPathMap result, File f, String macro) {
+  private static void getExpandProjectHomeReplacements(ExpandMacroToPathMap result, File f, String macro) {
     if (f == null) return;
 
     getExpandProjectHomeReplacements(result, f.getParentFile(), macro + "/..");
@@ -386,7 +385,7 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx, Area
 
           saveSettingsSavingComponents();
 
-          final Module[] modules = ModuleManager.getInstance(ProjectImpl.this).getModules();
+          final Module[] modules = ModuleManager.getInstance(this).getModules();
           final ReadonlyStatusHandler.OperationStatus operationStatus = ensureConfigFilesWritable(modules);
           if (operationStatus.hasReadonlyFiles()) {
             MessagesEx.error(this, ProjectBundle.message("project.save.error", operationStatus.getReadonlyFilesMessage())).showLater();
@@ -396,8 +395,8 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx, Area
           final Exception[] exception = new Exception[]{null};
           CommandProcessor.getInstance().executeCommand(this, new Runnable() {
             public void run() {
-              for (int i = 0; i < modules.length; i++) {
-                ModuleImpl module = (ModuleImpl)modules[i];
+              for (Module module1 : modules) {
+                ModuleImpl module = (ModuleImpl)module1;
                 try {
                   module._save();
                 }
@@ -412,7 +411,6 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx, Area
               }
               catch (Exception e) {
                 exception[0] = e;
-                return;
               }
             }
           }, ProjectBundle.message("project.save.settings.command"), null);
@@ -438,8 +436,8 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx, Area
 
     collectReadonlyFiles(getConfigurationFiles(), readonlyFiles);
 
-    for (int idx = 0; idx < modules.length; idx++) {
-      final ModuleImpl module = (ModuleImpl)modules[idx];
+    for (Module module1 : modules) {
+      final ModuleImpl module = (ModuleImpl)module1;
       module.collectReadonlyFiles(module.getConfigurationFiles(), readonlyFiles);
     }
 
@@ -458,8 +456,7 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx, Area
       Arrays.sort(usedMacros, ourStringComparator);
       final Element allMacrosElement = new Element(USED_MACROS_ELEMENT_NAME);
       root.addContent(allMacrosElement);
-      for (int idx = 0; idx < usedMacros.length; idx++) {
-        final String usedMacro = usedMacros[idx];
+      for (final String usedMacro : usedMacros) {
         final Element macroElem = new Element(ELEMENT_MACRO);
         allMacrosElement.addContent(macroElem);
         macroElem.setAttribute(ATTRIBUTE_NAME, usedMacro);
@@ -475,8 +472,8 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx, Area
     }
     final List children = child.getChildren(ELEMENT_MACRO);
     final List<String> macroNames = new ArrayList<String>(children.size());
-    for (Iterator it = children.iterator(); it.hasNext();) {
-      final Element macro = (Element)it.next();
+    for (final Object aChildren : children) {
+      final Element macro = (Element)aChildren;
       String macroName = macro.getAttributeValue(ATTRIBUTE_NAME);
       if (macroName != null) {
         macroNames.add(macroName);
@@ -498,9 +495,9 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx, Area
 
   private void projectOpened() {
     final BaseComponent[] components = getComponents(false);
-    for (int i = 0; i < components.length; i++) {
+    for (BaseComponent component1 : components) {
       try {
-        ProjectComponent component = (ProjectComponent)components[i];
+        ProjectComponent component = (ProjectComponent)component1;
         component.projectOpened();
       }
       catch (Throwable e) {
