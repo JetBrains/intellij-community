@@ -734,4 +734,16 @@ public class StringUtil {
     }
     return false;
   }
+
+  public static String firstLetterToUpperCase(final String displayString) {
+    if (displayString == null || displayString.length() == 0) return displayString;
+    char firstChar = displayString.charAt(0);
+    char uppedFirstChar = Character.toUpperCase(firstChar);
+    
+    if (uppedFirstChar == firstChar) return displayString;
+    
+    StringBuilder builder = new StringBuilder(displayString);
+    builder.setCharAt( 0, uppedFirstChar );
+    return builder.toString();
+  }
 }
