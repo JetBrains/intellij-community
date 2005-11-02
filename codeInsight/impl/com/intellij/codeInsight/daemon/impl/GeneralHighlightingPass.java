@@ -182,6 +182,10 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
 
   public Collection<LineMarkerInfo> queryLineMarkers() {
     try {
+      if (myFile.getNode() == null) {
+        // binary file? see IDEADEV-2809
+        return new ArrayList<LineMarkerInfo>();
+      }
       PsiElement[] elements = CodeInsightUtil.getElementsInRange(myFile, myStartOffset, myEndOffset);
       return collectLineMarkers(elements);
     }
