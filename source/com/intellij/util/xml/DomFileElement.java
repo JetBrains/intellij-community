@@ -52,7 +52,7 @@ public class DomFileElement<T extends DomElement> implements DomElement {
       if (myRootValue == null) {
         final XmlTag tag = getRootTag();
         final DomRootInvocationHandler<T> handler = new DomRootInvocationHandler<T>(myRootElementClass, tag, this, myRootTagName, myManager);
-        myRootValue = DomManagerImpl.createDomElement(myRootElementClass, tag, handler);
+        myRootValue = myManager.createDomElement(myRootElementClass, tag, handler);
       }
       return myRootValue;
     }

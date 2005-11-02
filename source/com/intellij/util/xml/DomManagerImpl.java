@@ -10,12 +10,16 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import net.sf.cglib.proxy.Proxy;
+import net.sf.cglib.proxy.InvocationHandler;
+import net.sf.cglib.core.CodeGenerationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.HashMap;
 
 /**
  * @author peter
@@ -25,24 +29,26 @@ public class DomManagerImpl extends DomManager implements ApplicationComponent {
   private static final Key<DomElement> CACHED_ELEMENT = Key.create("CachedXmlAnnotatedElement");
 
   private final List<DomEventListener> myListeners = new ArrayList<DomEventListener>();
+  private final ConverterManager myConverterManager = new ConverterManager();
+  private final Map<Class<? extends DomElement>,Class> myClass2ProxyClass = new HashMap<Class<? extends DomElement>, Class>();
+  private final Map<Class<? extends DomElement>,MethodsMap> myMethodsMaps = new HashMap<Class<? extends DomElement>, MethodsMap>();
   private DomEventListener[] myCachedListeners;
-  private ConverterManager myConverterManager = new ConverterManager();
 
-  public void addDomEventListener(DomEventListener listener) {
+  public final void addDomEventListener(DomEventListener listener) {
     myCachedListeners = null;
     myListeners.add(listener);
   }
 
-  public void removeDomEventListener(DomEventListener listener) {
+  public final void removeDomEventListener(DomEventListener listener) {
     myCachedListeners = null;
     myListeners.remove(listener);
   }
 
-  public ConverterManager getConverterManager() {
+  public final ConverterManager getConverterManager() {
     return myConverterManager;
   }
 
-  protected void fireEvent(DomEvent event) {
+  protected final void fireEvent(DomEvent event) {
     DomEventListener[] listeners = myCachedListeners;
     if (listeners == null) {
       listeners = myCachedListeners = myListeners.toArray(new DomEventListener[myListeners.size()]);
@@ -53,27 +59,47 @@ public class DomManagerImpl extends DomManager implements ApplicationComponent {
   }
 
   @NotNull
-  protected <T extends DomElement>T createDomElement(final Class<T> aClass,
+  final <T extends DomElement>T createDomElement(final Class<T> aClass,
                                                      final XmlTag tag,
                                                      final DomElement parent,
                                                      final String tagName) {
     return createDomElement(aClass, tag, new DomInvocationHandler<T>(aClass, tag, parent, tagName, this));
   }
 
-  protected static <T extends DomElement>T createDomElement(final Class<T> aClass,
-                                                            final XmlTag tag,
-                                                            final DomInvocationHandler<T> handler) {
+  final <T extends DomElement>MethodsMap getMethodsMap(final Class<T> aClass) {
+    MethodsMap methodsMap = myMethodsMaps.get(aClass);
+    if (methodsMap == null) {
+      methodsMap = new MethodsMap(aClass);
+      myMethodsMaps.put(aClass, methodsMap);
+    }
+    return methodsMap;
+  }
+
+  final <T extends DomElement>T createDomElement(final Class<T> aClass,
+                                                     final XmlTag tag,
+                                                     final DomInvocationHandler<T> handler) {
     synchronized (PsiLock.LOCK) {
-      final T element = newProxyInstance(aClass, handler);
-      handler.setProxy(element);
-      setCachedElement(tag, element);
-      return element;
+      try {
+        Class clazz = getProxyClassFor(aClass);
+        final T element = (T) clazz.getConstructor(new Class[]{ InvocationHandler.class }).newInstance(new Object[]{ handler });
+        handler.setProxy(element);
+        setCachedElement(tag, element);
+        return element;
+      } catch (RuntimeException e) {
+        throw e;
+      } catch (Exception e) {
+        throw new CodeGenerationException(e);
+      }
     }
   }
 
-  private static <T extends DomElement>T newProxyInstance(final Class<T> aClass,
-                                                          final DomInvocationHandler<T> invocationHandler) {
-    return (T)Proxy.newProxyInstance(null, new Class[]{aClass}, invocationHandler);
+  private <T extends DomElement>Class getProxyClassFor(final Class<T> aClass) {
+    Class proxyClass = myClass2ProxyClass.get(aClass);
+    if (proxyClass == null) {
+      proxyClass = Proxy.getProxyClass(null, new Class[]{aClass});
+      myClass2ProxyClass.put(aClass, proxyClass);
+    }
+    return proxyClass;
   }
 
   public final void setNameStrategy(final XmlFile file, final NameStrategy strategy) {
@@ -91,7 +117,7 @@ public class DomManagerImpl extends DomManager implements ApplicationComponent {
   }
 
   @NotNull
-  public <T extends DomElement> DomFileElement<T> getFileElement(final XmlFile file,
+  public final <T extends DomElement> DomFileElement<T> getFileElement(final XmlFile file,
                                                                  final Class<T> aClass,
                                                                  String rootTagName) {
     synchronized (PsiLock.LOCK) {
@@ -116,18 +142,14 @@ public class DomManagerImpl extends DomManager implements ApplicationComponent {
   }
 
   @NonNls
-  public String getComponentName() {
+  public final String getComponentName() {
     return getClass().getName();
   }
 
-  public void initComponent() {
+  public final void initComponent() {
   }
 
-  public void disposeComponent() {
+  public final void disposeComponent() {
   }
-
-
-
-
 
 }
