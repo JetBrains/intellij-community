@@ -16,6 +16,7 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
 import com.intellij.util.containers.HashSet;
+import com.intellij.lang.StdLanguages;
 
 import java.util.Set;
 
@@ -99,7 +100,7 @@ public class CachesBasedRefSearcher implements QueryExecutor<PsiReference, Refer
                                         searchScope,
                                         text,
                                         searchContext,
-                                        false
+                                        refElement.getLanguage() == StdLanguages.JAVA  //todo: temporary hack!!
     )) {
       return false;
     }
