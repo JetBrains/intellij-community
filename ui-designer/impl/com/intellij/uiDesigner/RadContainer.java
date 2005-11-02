@@ -295,29 +295,33 @@ public class RadContainer extends RadComponent implements IContainer {
       // Prepare component for drop.
       final RadComponent c = components[0];
 
-      if (c instanceof RadContainer) {
-        final LayoutManager layout = ((RadContainer)c).getLayout();
-        if (layout instanceof XYLayoutManager) {
-          ((XYLayoutManager)layout).setPreferredSize(c.getSize());
-        }
-      }
-
-      final GridConstraints constraints = c.getConstraints();
-      constraints.setRow(row);
-      constraints.setColumn(column);
-      constraints.setRowSpan(1);
-      constraints.setColSpan(1);
-      addComponent(c);
-
-      // Fill DropInfo
-      final RevalidateInfo info = c.revalidate();
-
-      return new DropInfo(this, info.myContainer, info.myPreviousContainerSize);
+      return dropIntoGrid(c, row, column);
     }
     else {
       //noinspection HardCodedStringLiteral
       throw new IllegalStateException("unknown layout: " + getLayout());
     }
+  }
+
+  public DropInfo dropIntoGrid(final RadComponent c, final int row, final int column) {
+    if (c instanceof RadContainer) {
+      final LayoutManager layout = ((RadContainer)c).getLayout();
+      if (layout instanceof XYLayoutManager) {
+        ((XYLayoutManager)layout).setPreferredSize(c.getSize());
+      }
+    }
+
+    final GridConstraints constraints = c.getConstraints();
+    constraints.setRow(row);
+    constraints.setColumn(column);
+    constraints.setRowSpan(1);
+    constraints.setColSpan(1);
+    addComponent(c);
+
+    // Fill DropInfo
+    final RevalidateInfo info = c.revalidate();
+
+    return new DropInfo(this, info.myContainer, info.myPreviousContainerSize);
   }
 
   /**

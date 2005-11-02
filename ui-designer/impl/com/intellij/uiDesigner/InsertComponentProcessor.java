@@ -20,6 +20,8 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
@@ -29,16 +31,25 @@ public final class InsertComponentProcessor extends EventProcessor{
 
   private final GuiEditor myEditor;
   private final PalettePanel myPalette;
-  private final boolean mySticky;
+  private boolean mySticky;
   private DropInfo myDropInfo;
   private RadComponent myInsertedComponent;
   private Point myInitialPoint;
   private Dimension myInitialSize;
   private boolean myShouldSetPreferredSizeIfNotResized;
+  private GridInsertProcessor myGridInsertProcessor;
 
-  public InsertComponentProcessor(final GuiEditor editor, final PalettePanel palette, final boolean sticky){
+  public InsertComponentProcessor(final GuiEditor editor, final PalettePanel palette){
     myEditor = editor;
     myPalette = palette;
+    myGridInsertProcessor = new GridInsertProcessor(editor);
+  }
+
+  public boolean isSticky() {
+    return mySticky;
+  }
+
+  public void setSticky(final boolean sticky) {
     mySticky = sticky;
   }
 
@@ -68,9 +79,7 @@ public final class InsertComponentProcessor extends EventProcessor{
     return false;
   }
 
-  /**
-   * @return never <code>null</code>
-   */
+  @NotNull
   private String suggestBinding(final String componentClassName){
     LOG.assertTrue(componentClassName != null);
 
@@ -190,6 +199,7 @@ public final class InsertComponentProcessor extends EventProcessor{
   }
 
   private void processMousePressed(final MouseEvent e) {
+    myGridInsertProcessor.removeFeedbackPainter();
     final ComponentItem item = myPalette.getActiveItem();
     final String id = myEditor.generateId();
     if (JScrollPane.class.getName().equals(item.getClassName())) {
@@ -238,14 +248,23 @@ public final class InsertComponentProcessor extends EventProcessor{
     }
     myInsertedComponent.init(item);
 
-    if (FormEditingUtil.canDrop(myEditor, e.getX(), e.getY(), 1)) {
+    final GridInsertProcessor.GridInsertLocation location = myGridInsertProcessor.getGridInsertLocation(e.getX(), e.getY());
+    if (FormEditingUtil.canDrop(myEditor, e.getX(), e.getY(), 1) || location.getMode() != GridInsertProcessor.GridInsertMode.None) {
       CommandProcessor.getInstance().executeCommand(
         myEditor.getProject(),
         new Runnable(){
           public void run(){
             createBindingWhenDrop();
 
-            myDropInfo = FormEditingUtil.drop(myEditor, e.getX(), e.getY(), new RadComponent[]{myInsertedComponent}, new int[]{0}, new int[]{0});
+            if (location.getMode() == GridInsertProcessor.GridInsertMode.None) {
+              myDropInfo = FormEditingUtil.drop(myEditor, e.getX(), e.getY(), new RadComponent[]{myInsertedComponent}, new int[]{0}, new int[]{0});
+            }
+            else {
+              myDropInfo = myGridInsertProcessor.processGridInsertOnDrop(location, myInsertedComponent);
+              if (myDropInfo == null) {
+                return;
+              }
+            }
 
             FormEditingUtil.clearSelection(myEditor.getRootContainer());
             myInsertedComponent.setSelected(true);
@@ -277,7 +296,12 @@ public final class InsertComponentProcessor extends EventProcessor{
     }
   }
 
-  protected boolean cancelOperation(){
+  protected boolean cancelOperation() {
+    myGridInsertProcessor.removeFeedbackPainter();
     return false;
+  }
+
+  public Cursor processMouseMoveEvent(final MouseEvent e) {
+    return myGridInsertProcessor.processMouseMoveEvent(e.getX(), e.getY(), 1);
   }
 }

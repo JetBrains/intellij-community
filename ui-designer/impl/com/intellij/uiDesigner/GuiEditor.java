@@ -148,6 +148,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
    */
   private final SelectionState mySelectionState;
   @NotNull private final GlassLayer myGlassLayer;
+  private ActiveDecorationLayer myActiveDecorationLayer;
 
   /**
    * @param file file to be edited
@@ -184,7 +185,8 @@ public final class GuiEditor extends JPanel implements DataProvider {
     myLayeredPane = new MyLayeredPane();
     myInplaceEditingLayer = new InplaceEditingLayer(this);
     myLayeredPane.add(myInplaceEditingLayer, LAYER_INPLACE_EDITING);
-    myLayeredPane.add(new ActiveDecorationLayer(this), LAYER_ACTIVE_DECORATION);
+    myActiveDecorationLayer = new ActiveDecorationLayer(this);
+    myLayeredPane.add(myActiveDecorationLayer, LAYER_ACTIVE_DECORATION);
     myGlassLayer = new GlassLayer(this);
     myLayeredPane.add(myGlassLayer, LAYER_GLASS);
     myLayeredPane.add(myDecorationLayer, LAYER_PASSIVE_DECORATION);
@@ -516,6 +518,10 @@ public final class GuiEditor extends JPanel implements DataProvider {
     }, null, null);
 
     fireHierarchyChanged();
+  }
+
+  public ActiveDecorationLayer getActiveDecorationLayer() {
+    return myActiveDecorationLayer;
   }
 
   public static final class ReplaceInfo {

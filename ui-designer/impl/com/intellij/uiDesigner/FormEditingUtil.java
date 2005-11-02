@@ -436,11 +436,7 @@ public final class FormEditingUtil {
   public static Cursor getDropCursor(final GuiEditor editor, final int x, final int y, final int componentCount){
     Cursor cursor = Cursor.getDefaultCursor();
     if (canDrop(editor, x, y, componentCount)) {
-      try {
-        cursor = Cursor.getSystemCustomCursor("MoveDrop.32x32");
-      }
-      catch (Exception ex) {
-      }
+      return getMoveDropCursor();
     }
     else {
       try {
@@ -450,6 +446,15 @@ public final class FormEditingUtil {
       }
     }
     return cursor;
+  }
+
+  public static Cursor getMoveDropCursor() {
+    try {
+      return Cursor.getSystemCustomCursor("MoveDrop.32x32");
+    }
+    catch (Exception ex) {
+      return Cursor.getDefaultCursor();
+    }
   }
 
   /**
@@ -589,6 +594,16 @@ public final class FormEditingUtil {
     );
 
     return bindingExists.get();
+  }
+
+  public static RadContainer getRadContainerAt(final GuiEditor editor, final int x, final int y) {
+    final RadComponent component = getRadComponentAt(editor, x, y);
+    if (component != null) {
+      return (component instanceof RadContainer)
+             ? (RadContainer)component
+             : component.getParent();
+    }
+    return null;
   }
 
   public static interface ComponentVisitor <Type extends IComponent>{

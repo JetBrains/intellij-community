@@ -11,6 +11,8 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
@@ -42,11 +44,15 @@ public final class DragSelectionProcessor extends EventProcessor{
    */
   private DropInfo myDropInfo;
   private boolean myDragStarted;
-  
-  public DragSelectionProcessor(final GuiEditor editor){
+
+  private final GridInsertProcessor myGridInsertProcessor;
+
+  public DragSelectionProcessor(@NotNull final GuiEditor editor){
+    //noinspection ConstantConditions
     LOG.assertTrue(editor!=null);
 
     myEditor = editor;
+    myGridInsertProcessor = new GridInsertProcessor(editor);
   }
 
   private void processStartDrag(final MouseEvent e){
@@ -116,10 +122,20 @@ public final class DragSelectionProcessor extends EventProcessor{
    *
    * @return true if the selected components were successfully dropped
    */
-  private boolean dropSelection(final Point point){
+  private boolean dropSelection(@NotNull final Point point, boolean mouseReleased) {
+    //noinspection ConstantConditions
     LOG.assertTrue(point!=null);
 
-    if (!FormEditingUtil.canDrop(myEditor, point.x, point.y, mySelection.size())) {
+    GridInsertProcessor.GridInsertLocation location = null;
+    if (mouseReleased) {
+      myGridInsertProcessor.removeFeedbackPainter();
+      if (mySelection.size() == 1) {
+        location = myGridInsertProcessor.getGridInsertLocation(point.x, point.y);
+      }
+    }
+
+    if (!FormEditingUtil.canDrop(myEditor, point.x, point.y, mySelection.size()) &&
+      (location == null || location.getMode() == GridInsertProcessor.GridInsertMode.None)) {
       return false;
     }
 
@@ -131,14 +147,20 @@ public final class DragSelectionProcessor extends EventProcessor{
       dy[i] = component.getY() - point.y;
     }
 
-    myDropInfo = FormEditingUtil.drop(
-      myEditor,
-      point.x,
-      point.y,
-      mySelection.toArray(new RadComponent[mySelection.size()]),
-      dx,
-      dy
-    );
+    if (location != null && location.getMode() != GridInsertProcessor.GridInsertMode.None) {
+      myDropInfo = myGridInsertProcessor.processGridInsertOnDrop(location, mySelection.get(0));
+    }
+    else {
+      myDropInfo = FormEditingUtil.drop(
+        myEditor,
+        point.x,
+        point.y,
+        mySelection.toArray(new RadComponent[mySelection.size()]),
+        dx,
+        dy
+      );
+    }
+
     return true;
   }
 
@@ -153,6 +175,7 @@ public final class DragSelectionProcessor extends EventProcessor{
     if (myDropInfo != null && myDropInfo.myTopmostContainer!=null) {
       myDropInfo.myTopmostContainer.setSize(myDropInfo.myTopmostContainerSize);
     }
+    myGridInsertProcessor.removeFeedbackPainter();
   }
 
   private void processMouseReleased(){
@@ -160,7 +183,7 @@ public final class DragSelectionProcessor extends EventProcessor{
     myPreviewer.dispose();
 
     // Try to drop selection at the point of mouse event.
-    if(dropSelection(myLastPoint)){
+    if(dropSelection(myLastPoint, true)){
       myEditor.refreshAndSave(true);
     }else{
       cancelDrag();
@@ -177,6 +200,7 @@ public final class DragSelectionProcessor extends EventProcessor{
     myPreviewer.dispose();
     // Try to drop selection at the point of mouse event.
     cancelDrag();
+    myGridInsertProcessor.removeFeedbackPainter();
     myEditor.repaintLayeredPane();
     return true;
   }
@@ -240,7 +264,7 @@ public final class DragSelectionProcessor extends EventProcessor{
     myLastPoint=e.getPoint();
     myEditor.getDragLayer().repaint();
 
-    setCursor(FormEditingUtil.getDropCursor(myEditor, e.getX(), e.getY(), mySelection.size()));
+    setCursor(myGridInsertProcessor.processMouseMoveEvent(e.getX(), e.getY(), mySelection.size()));
   }
 
   /**
@@ -282,7 +306,7 @@ public final class DragSelectionProcessor extends EventProcessor{
 
       // Try to drop selection
 
-      myPreview = dropSelection(myLastPoint);
+      myPreview = dropSelection(myLastPoint, false);
       myDropPoint = myPreview ? myLastPoint : null;
       myEditor.refresh();
     }

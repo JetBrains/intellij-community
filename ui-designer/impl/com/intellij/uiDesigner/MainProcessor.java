@@ -22,7 +22,7 @@ public final class MainProcessor extends EventProcessor{
   public static final int DRAGGER_SIZE = 10;
 
   private EventProcessor myCurrentProcessor;
-
+  @NotNull private final InsertComponentProcessor myInsertComponentProcessor;
   @NotNull private final GuiEditor myEditor;
 
   public MainProcessor(@NotNull final GuiEditor editor){
@@ -33,6 +33,7 @@ public final class MainProcessor extends EventProcessor{
     }
     myEditor = editor;
     myEditor.addComponentSelectionListener(new MyComponentSelectionListener());
+    myInsertComponentProcessor = new InsertComponentProcessor(myEditor, myEditor.getPalettePanel());
   }
 
   protected void processKeyEvent(final KeyEvent e){
@@ -87,7 +88,7 @@ public final class MainProcessor extends EventProcessor{
     Cursor cursor = Cursor.getDefaultCursor();
     if(id==MouseEvent.MOUSE_MOVED){
       if (myEditor.getPalettePanel().getActiveItem() != null) {
-        cursor = FormEditingUtil.getDropCursor(myEditor, e.getX(), e.getY(), 1);
+        cursor = myInsertComponentProcessor.processMouseMoveEvent(e);
       }
       else {
         final RadComponent component = FormEditingUtil.getRadComponentAt(myEditor, e.getX(), e.getY());
@@ -204,8 +205,8 @@ public final class MainProcessor extends EventProcessor{
 
     final ComponentItem selectedItem = myEditor.getPalettePanel().getActiveItem();
     if (selectedItem != null) {
-      myCurrentProcessor = new InsertComponentProcessor(myEditor, myEditor.getPalettePanel(),
-                                                        e.isControlDown() || e.isShiftDown());
+      myInsertComponentProcessor.setSticky(e.isControlDown() || e.isShiftDown());
+      myCurrentProcessor = myInsertComponentProcessor;
       return;
     }
 
