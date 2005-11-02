@@ -26,6 +26,7 @@ public class DomManagerImpl extends DomManager implements ApplicationComponent {
 
   private final List<DomEventListener> myListeners = new ArrayList<DomEventListener>();
   private DomEventListener[] myCachedListeners;
+  private ConverterManager myConverterManager = new ConverterManager();
 
   public void addDomEventListener(DomEventListener listener) {
     myCachedListeners = null;
@@ -35,6 +36,10 @@ public class DomManagerImpl extends DomManager implements ApplicationComponent {
   public void removeDomEventListener(DomEventListener listener) {
     myCachedListeners = null;
     myListeners.remove(listener);
+  }
+
+  public ConverterManager getConverterManager() {
+    return myConverterManager;
   }
 
   protected void fireEvent(DomEvent event) {

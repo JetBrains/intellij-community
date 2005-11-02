@@ -9,7 +9,7 @@ import com.intellij.psi.PsiClass;
  * @author peter
  */
 public class PsiClassConverter implements Converter<PsiClass>{
-  public PsiClass fromString(final String s, final ConvertContext context) {
+  public PsiClass fromString(final String s, final ConvertContext context) throws ConvertFormatException {
     return context.findClass(s);
   }
 

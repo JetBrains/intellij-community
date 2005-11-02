@@ -7,12 +7,17 @@ package com.intellij.util.xml;
  * @author peter
  */
 public interface Converter<T> {
-  T fromString(String s, final ConvertContext context);
+  T fromString(String s, final ConvertContext context) throws ConvertFormatException;
   String toString(T t, final ConvertContext context);
 
   Converter<Integer> INTEGER_CONVERTER = new Converter<Integer>() {
-    public Integer fromString(final String s, final ConvertContext context) {
-      return Integer.parseInt(s);
+    public Integer fromString(final String s, final ConvertContext context) throws ConvertFormatException {
+      try {
+        return Integer.decode(s);
+      }
+      catch (NumberFormatException e) {
+        throw new ConvertFormatException(s, Integer.class);
+      }
     }
 
     public String toString(final Integer t, final ConvertContext context) {
@@ -21,8 +26,14 @@ public interface Converter<T> {
   };
 
   Converter<Boolean> BOOLEAN_CONVERTER = new Converter<Boolean>() {
-    public Boolean fromString(final String s, final ConvertContext context) {
-      return Boolean.parseBoolean(s);
+    public Boolean fromString(final String s, final ConvertContext context) throws ConvertFormatException {
+      if ("true".equalsIgnoreCase(s)) {
+        return Boolean.TRUE;
+      }
+      if ("false".equalsIgnoreCase(s)) {
+        return Boolean.FALSE;
+      }
+      throw new ConvertFormatException(s, Boolean.class);
     }
 
     public String toString(final Boolean t, final ConvertContext context) {
@@ -31,7 +42,7 @@ public interface Converter<T> {
   };
 
   Converter<String> EMPTY_CONVERTER = new Converter<String>() {
-    public String fromString(final String s, final ConvertContext context) {
+    public String fromString(final String s, final ConvertContext context) throws ConvertFormatException {
       return s;
     }
 
@@ -39,4 +50,5 @@ public interface Converter<T> {
       return t;
     }
   };
+
 }

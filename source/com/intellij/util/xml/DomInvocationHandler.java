@@ -99,14 +99,19 @@ class DomInvocationHandler<T extends DomElement> implements InvocationHandler, D
     return myTagName;
   }
 
-  private <T> T convertFromString(Method method, String s, final boolean getter) throws IllegalAccessException, InstantiationException {
+  private Object convertFromString(Method method, String s, final boolean getter) throws IllegalAccessException, InstantiationException {
     if (s == null) return null;
-    return ((Converter<T>)getConverter(method, getter)).fromString(s, new ConvertContext(getFile()));
+    return getConverter(method, getter).fromString(s, new ConvertContext(getFile()));
   }
 
-  private <T> String convertToString(Method method, T argument, final boolean getter) throws IllegalAccessException, InstantiationException {
+  @NotNull
+  private Converter getConverter(final Method method, final boolean getter) throws IllegalAccessException, InstantiationException {
+    return myManager.getConverterManager().getConverter(method, getter);
+  }
+
+  private String convertToString(Method method, Object argument, final boolean getter) throws IllegalAccessException, InstantiationException {
     if (argument == null) return null;
-    return ((Converter<T>)getConverter(method, getter)).toString(argument, new ConvertContext(getFile()));
+    return getConverter(method, getter).toString(argument, new ConvertContext(getFile()));
   }
 
   public final DomElement getProxy() {
@@ -115,29 +120,6 @@ class DomInvocationHandler<T extends DomElement> implements InvocationHandler, D
 
   public final void setProxy(final DomElement proxy) {
     myProxy = proxy;
-  }
-
-  @NotNull
-  private static Converter getConverter(Method method, final boolean getter) throws IllegalAccessException, InstantiationException {
-    final Convert convert = method.getAnnotation(Convert.class);
-    if (convert != null) {
-      return convert.value().newInstance();
-    }
-    return getDefaultConverter(getter ? method.getReturnType() : method.getParameterTypes()[0]);
-  }
-
-  private static Converter getDefaultConverter(final Class<?> type) {
-    if (type.equals(int.class) || type.equals(Integer.class)) {
-      return Converter.INTEGER_CONVERTER;
-    }
-    if (isBoolean(type)) {
-      return Converter.BOOLEAN_CONVERTER;
-    }
-    return Converter.EMPTY_CONVERTER;
-  }
-
-  private static boolean isBoolean(final Class<?> type) {
-    return type.equals(boolean.class) || type.equals(Boolean.class);
   }
 
   @NotNull
@@ -168,7 +150,7 @@ class DomInvocationHandler<T extends DomElement> implements InvocationHandler, D
     }
     else if (setter && (tagValue != null || "setValue".equals(method.getName()))) {
       tag = ensureTagExists();
-      final Object oldValue = getValue(tag, method);
+      final Object oldValue = getTagValue(tag);
       final Object newValue = args[0];
       setTagValue(tag, convertToString(method, newValue, false));
       myManager.fireEvent(new ValueChangeEvent(this, oldValue, newValue == null ? "" : newValue));
@@ -222,6 +204,10 @@ class DomInvocationHandler<T extends DomElement> implements InvocationHandler, D
     throw new UnsupportedOperationException("Cannot call " + method.toString());
   }
 
+  static boolean isBoolean(final Class<?> type) {
+    return type.equals(boolean.class) || type.equals(Boolean.class);
+  }
+
   private void copyFrom(final DomElement element) throws IncorrectOperationException {
     final XmlTag tag;
     tag = _ensureTagExists(false);
@@ -272,11 +258,6 @@ class DomInvocationHandler<T extends DomElement> implements InvocationHandler, D
       return false;
     }
     return void.class.equals(method.getReturnType());
-  }
-
-  private Object getAttributeValue(final XmlTag tag, final Method method, final String attributeName) throws IllegalAccessException,
-                                                                                                             InstantiationException {
-    return tag != null ? convertFromString(method, tag.getAttributeValue(attributeName), true) : null;
   }
 
   private Object getValue(final XmlTag tag, final Method method) throws IllegalAccessException, InstantiationException {
@@ -431,14 +412,6 @@ class DomInvocationHandler<T extends DomElement> implements InvocationHandler, D
   @NotNull
   private NameStrategy getNameStrategy() {
     return DomManagerImpl._getNameStrategy(getFile());
-  }
-
-  @Nullable
-  private String guessName(final String value, final Method method) {
-    if (StringUtil.isEmpty(value)) {
-      return getNameFromMethod(method);
-    }
-    return value;
   }
 
   @Nullable
