@@ -323,59 +323,59 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
     return parameterList;
   }
 
-  private ClsAnnotationImpl[][] calcParameterAnnotations() {
-      long repositoryId = getRepositoryId();
-      if (repositoryId < 0) {
-        ClassFileData classFileData = myParent.getClassFileData();
-        try {
-          BytePointer pointer1 = classFileData.findAttribute(myStartOffset + 6, "RuntimeVisibleParameterAnnotations");
-          ClsParameterImpl[] parameters = (ClsParameterImpl[])myParameterList.getParameters();
-          if (pointer1 != null) {
-            ClsAnnotationImpl[][] ann1 = readParameterAnnotations(pointer1, parameters);
-            BytePointer pointer2 = classFileData.findAttribute(myStartOffset + 6, "RuntimeInvisibleParameterAnnotations");
-            if (pointer2 != null) {
-              ClsAnnotationImpl[][] ann2 = readParameterAnnotations(pointer2, parameters);
-              ClsAnnotationImpl[][] result = ArrayUtil.mergeArrays(ann1, ann2, ClsAnnotationImpl[].class);
-              return result;
-            }
-            else {
-              return ann1;
-            }
+  @NotNull private ClsAnnotationImpl[][] calcParameterAnnotations() {
+    long repositoryId = getRepositoryId();
+    if (repositoryId < 0) {
+      ClassFileData classFileData = myParent.getClassFileData();
+      try {
+        BytePointer pointer1 = classFileData.findAttribute(myStartOffset + 6, "RuntimeVisibleParameterAnnotations");
+        ClsParameterImpl[] parameters = (ClsParameterImpl[])myParameterList.getParameters();
+        if (pointer1 != null) {
+          ClsAnnotationImpl[][] ann1 = readParameterAnnotations(pointer1, parameters);
+          BytePointer pointer2 = classFileData.findAttribute(myStartOffset + 6, "RuntimeInvisibleParameterAnnotations");
+          if (pointer2 != null) {
+            ClsAnnotationImpl[][] ann2 = readParameterAnnotations(pointer2, parameters);
+            ClsAnnotationImpl[][] result = ArrayUtil.mergeArrays(ann1, ann2, ClsAnnotationImpl[].class);
+            return result;
           }
           else {
-            BytePointer pointer2 = classFileData.findAttribute(myStartOffset + 6, "RuntimeInvisibleParameterAnnotations");
-            if (pointer2 != null) {
-              return readParameterAnnotations(pointer2, parameters);
-            }
-            else {
-              return new ClsAnnotationImpl[0][];
-            }
+            return ann1;
           }
         }
-        catch (ClsFormatException e) {
-          return new ClsAnnotationImpl[0][];
+        else {
+          BytePointer pointer2 = classFileData.findAttribute(myStartOffset + 6, "RuntimeInvisibleParameterAnnotations");
+          if (pointer2 != null) {
+            return readParameterAnnotations(pointer2, parameters);
+          }
+          else {
+            return ClsAnnotationImpl.EMPTY_2D_ARRAY;
+          }
         }
       }
-      else {
-        MethodView methodView = getRepositoryManager().getMethodView();
-
-        String[][] parameterAnnotations = methodView.getParameterAnnotations(repositoryId);
-        ClsAnnotationImpl[][] result = new ClsAnnotationImpl[parameterAnnotations.length][];
-        for (int i = 0; i < parameterAnnotations.length; i++) {
-          String[] annotations = parameterAnnotations[i];
-          ClsParameterImpl parameter = (ClsParameterImpl)myParameterList.getParameters()[i];
-          result[i] = new ClsAnnotationImpl[annotations.length];
-          for (int j = 0; j < annotations.length; j++) {
-            result[i][j] = (ClsAnnotationImpl)ClsAnnotationsUtil.createMemberValueFromText(annotations[j], myManager,
-                                                                                           (ClsElementImpl)parameter.getModifierList());
-          }
-        }
-
-        return result;
+      catch (ClsFormatException e) {
+        return ClsAnnotationImpl.EMPTY_2D_ARRAY;
       }
     }
+    else {
+      MethodView methodView = getRepositoryManager().getMethodView();
 
-  private ClsAnnotationImpl[][] readParameterAnnotations(BytePointer pointer, ClsParameterImpl[] parameters) throws ClsFormatException {
+      String[][] parameterAnnotations = methodView.getParameterAnnotations(repositoryId);
+      ClsAnnotationImpl[][] result = new ClsAnnotationImpl[parameterAnnotations.length][];
+      for (int i = 0; i < parameterAnnotations.length; i++) {
+        String[] annotations = parameterAnnotations[i];
+        ClsParameterImpl parameter = (ClsParameterImpl)myParameterList.getParameters()[i];
+        result[i] = new ClsAnnotationImpl[annotations.length];
+        for (int j = 0; j < annotations.length; j++) {
+          result[i][j] = (ClsAnnotationImpl)ClsAnnotationsUtil.createMemberValueFromText(annotations[j], myManager,
+                                                                                         (ClsElementImpl)parameter.getModifierList());
+        }
+      }
+
+      return result;
+    }
+  }
+
+  @NotNull private ClsAnnotationImpl[][] readParameterAnnotations(BytePointer pointer, ClsParameterImpl[] parameters) throws ClsFormatException {
     pointer.offset += 4;
     int numParameters = ClsUtil.readU1(pointer);
     ClsAnnotationImpl[][] result = new ClsAnnotationImpl[numParameters][];
@@ -828,7 +828,7 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
     return myAnnotations;
   }
 
-  public ClsAnnotationImpl[] getParameterAnntations(int paramIdx) {
+  @NotNull public ClsAnnotationImpl[] getParameterAnnotations(int paramIdx) {
     if (myParameterAnnotations == null) {
       myParameterAnnotations = calcParameterAnnotations();
     }

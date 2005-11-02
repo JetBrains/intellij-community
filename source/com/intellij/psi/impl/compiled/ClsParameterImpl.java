@@ -192,6 +192,6 @@ public class ClsParameterImpl extends ClsElementImpl implements PsiParameter, Cl
   }
 
   public ClsAnnotationImpl[] getAnnotations() {
-    return ((ClsMethodImpl)myParent.getParent()).getParameterAnntations(myIdx);
+    return ((ClsMethodImpl)myParent.getParent()).getParameterAnnotations(myIdx);
   }
 }

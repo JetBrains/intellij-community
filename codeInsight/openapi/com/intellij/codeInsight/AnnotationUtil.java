@@ -20,7 +20,6 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -71,7 +70,8 @@ public class AnnotationUtil {
     final PsiModifierList list = listOwner.getModifierList();
     final PsiAnnotation[] allAnnotations = list.getAnnotations();
     for (PsiAnnotation annotation : allAnnotations) {
-      if (annotationNames.contains(annotation.getQualifiedName())) {
+      String qualifiedName = annotation.getQualifiedName();
+      if (annotationNames.contains(qualifiedName)) {
         return annotation;
       }
     }

@@ -15,6 +15,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.cls.BytePointer;
 import com.intellij.util.io.RecordDataOutput;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -28,7 +29,7 @@ public class ClsAnnotationsUtil {
 
   private ClsAnnotationsUtil() {}
 
-  private static PsiAnnotationMemberValue getMemberValue(PsiElement element, ClsElementImpl parent) {
+  @NotNull private static PsiAnnotationMemberValue getMemberValue(PsiElement element, ClsElementImpl parent) {
     if (element instanceof PsiLiteralExpression) {
       PsiLiteralExpression expr = (PsiLiteralExpression)element;
       return new ClsLiteralExpressionImpl(parent, element.getText(), expr.getType(), expr.getValue());
@@ -83,7 +84,7 @@ public class ClsAnnotationsUtil {
     }
   }
 
-  public static PsiAnnotationMemberValue createMemberValueFromText(String text, PsiManager manager, ClsElementImpl parent) {
+  @NotNull public static PsiAnnotationMemberValue createMemberValueFromText(String text, PsiManager manager, ClsElementImpl parent) {
     PsiJavaFile dummyJavaFile = ((PsiElementFactoryImpl)manager.getElementFactory()).getDummyJavaFile(); // kind of hack - we need to resolve classes from java.lang
     final FileElement holderElement = new DummyHolder(manager, dummyJavaFile).getTreeElement();
     JavaParsingContext context = new JavaParsingContext(holderElement.getCharTable(), manager.getEffectiveLanguageLevel());
@@ -103,7 +104,7 @@ public class ClsAnnotationsUtil {
     ClassFileData getClassFileData();
   }
 
-  public static ClsAnnotationImpl[] getAnnotationsImpl(ClsRepositoryPsiElement element, AttributeReader reader,
+  @NotNull public static ClsAnnotationImpl[] getAnnotationsImpl(ClsRepositoryPsiElement element, AttributeReader reader,
                                                        ClsModifierListImpl modifierList) {
     long id = element.getRepositoryId();
     if (id < 0) {

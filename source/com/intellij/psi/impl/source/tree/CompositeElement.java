@@ -280,7 +280,9 @@ public class CompositeElement extends TreeElement implements Cloneable {
     int idx = 0;
     for (ASTNode child = getFirstChildNode(); child != null && idx < count; child = child.getTreeNext()) {
       if (filter == null || filter.contains(child.getElementType())) {
-        result[idx++] = (T)SourceTreeToPsiMap.treeElementToPsi(child);
+        T element = (T)SourceTreeToPsiMap.treeElementToPsi(child);
+        LOG.assertTrue(element != null);
+        result[idx++] = element;
       }
     }
     return result;

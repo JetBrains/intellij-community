@@ -16,6 +16,7 @@ public class ClsAnnotationImpl extends ClsElementImpl implements PsiAnnotation {
   private ClsJavaCodeReferenceElementImpl myReferenceElement;
   private ClsAnnotationParameterListImpl myParameterList;
   private ClsElementImpl myParent;
+  public static final ClsAnnotationImpl[][] EMPTY_2D_ARRAY = new ClsAnnotationImpl[0][];
 
   public ClsAnnotationImpl(ClsJavaCodeReferenceElementImpl referenceElement, ClsElementImpl parent) {
     myReferenceElement = referenceElement;
