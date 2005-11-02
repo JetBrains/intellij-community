@@ -379,7 +379,7 @@ public class TypedHandler implements TypedActionHandler {
 
     if ('>' == charTyped){
       if (file instanceof XmlFile){
-        handleXmlGreater(project, editor, fileType);
+        if(handleXmlGreater(project, editor, fileType)) return;
       }
     }
     else if (')' == charTyped){
@@ -536,7 +536,7 @@ public class TypedHandler implements TypedActionHandler {
     EditorModificationUtil.insertStringAtCaret(editor, ">");
   }
 
-  private void handleXmlGreater(Project project, Editor editor, FileType fileType){
+  private boolean handleXmlGreater(Project project, Editor editor, FileType fileType){
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     XmlFile file = (XmlFile)PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
@@ -546,7 +546,21 @@ public class TypedHandler implements TypedActionHandler {
 
     if (offset < editor.getDocument().getTextLength()) {
       element = file.findElementAt(offset);
-      if (!(element instanceof PsiWhiteSpace)) return;
+      if (!(element instanceof PsiWhiteSpace)) {
+        if (element instanceof XmlToken) {
+          final IElementType tokenType = ((XmlToken)element).getTokenType();
+          
+          if (tokenType == XmlTokenType.XML_TAG_END ||
+              tokenType == XmlTokenType.XML_EMPTY_ELEMENT_END && element.getTextOffset() == offset - 1
+             ) {
+            editor.getCaretModel().moveToOffset(offset + 1);
+            editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+            return true;
+          }
+        }
+        return false;
+      }
+      
       PsiElement parent = element.getParent();
       if (parent instanceof XmlText) {
         final String text = parent.getText();
@@ -554,7 +568,7 @@ public class TypedHandler implements TypedActionHandler {
         final int index = offset - parent.getTextOffset() - 1;
 
         if (index >= 0 && text.charAt(index)=='/') {
-          return; // already seen /
+          return false; // already seen /
         }
         element = parent.getPrevSibling();
       } else if (parent instanceof XmlTag && !(element.getPrevSibling() instanceof XmlTag)) {
@@ -563,7 +577,7 @@ public class TypedHandler implements TypedActionHandler {
     }
     else {
       element = file.findElementAt(editor.getDocument().getTextLength() - 1);
-      if (element == null) return;
+      if (element == null) return false;
       element = element.getParent();
     }
 
@@ -572,7 +586,7 @@ public class TypedHandler implements TypedActionHandler {
     }
 
     while(element instanceof PsiWhiteSpace) element = element.getPrevSibling();
-    if (element == null) return;
+    if (element == null) return false;
     if (!(element instanceof XmlTag)) {
       if (element instanceof XmlTokenImpl &&
           element.getPrevSibling() !=null &&
@@ -581,23 +595,24 @@ public class TypedHandler implements TypedActionHandler {
         // tag is started and there is another text in the end
         editor.getDocument().insertString(offset, "</" + element.getText() + ">");
       }
-      return;
+      return false;
     }
 
     XmlTag tag = (XmlTag)element;
-    if (XmlUtil.getTokenOfType(tag, XmlTokenType.XML_TAG_END) != null) return;
-    if (XmlUtil.getTokenOfType(tag, XmlTokenType.XML_EMPTY_ELEMENT_END) != null) return;
-    if (tag instanceof JspXmlTagBase) return;
+    if (XmlUtil.getTokenOfType(tag, XmlTokenType.XML_TAG_END) != null) return false;
+    if (XmlUtil.getTokenOfType(tag, XmlTokenType.XML_EMPTY_ELEMENT_END) != null) return false;
+    if (tag instanceof JspXmlTagBase) return false;
 
     final String name = tag.getName();
-    if (tag instanceof HtmlTag && HtmlUtil.isSingleHtmlTag(name)) return;
-    if ("".equals(name)) return;
+    if (tag instanceof HtmlTag && HtmlUtil.isSingleHtmlTag(name)) return false;
+    if ("".equals(name)) return false;
 
     int tagOffset = tag.getTextRange().getStartOffset();
     HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(tagOffset);
-    if (BraceMatchingUtil.matchBrace(editor.getDocument().getCharsSequence(), fileType, iterator, true)) return;
+    if (BraceMatchingUtil.matchBrace(editor.getDocument().getCharsSequence(), fileType, iterator, true)) return false;
 
     editor.getDocument().insertString(offset, "</" + name + ">");
+    return false;
   }
 
   private void handleAfterLParen(Editor editor, FileType fileType, char lparenChar){
