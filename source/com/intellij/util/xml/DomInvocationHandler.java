@@ -196,7 +196,7 @@ class DomInvocationHandler<T extends DomElement> implements InvocationHandler, D
     }
 
     if (myMethodsMap.isVariableChildrenMethod(method)) {
-      return new GetVariableChildrenInvocation(myMethodsMap, method);
+      return new GetVariableChildrenInvocation(myMethodsMap.getVariableChildrenTagQName(method));
     }
 
     throw new UnsupportedOperationException("No implementation for method " + method.toString());
