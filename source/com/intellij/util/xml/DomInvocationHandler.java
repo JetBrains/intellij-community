@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiLock;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
@@ -41,7 +42,7 @@ class DomInvocationHandler<T extends DomElement> implements InvocationHandler, D
   static {
     for (final Method method : DomElement.class.getMethods()) {
       ourInvocations.put(method, new Invocation() {
-        public Object invoke(DomInvocationHandler handler, final Method method, Object[] args) throws Throwable {
+        public Object invoke(DomInvocationHandler handler, Object[] args) throws Throwable {
           return method.invoke(handler, args);
         }
       });
@@ -49,14 +50,14 @@ class DomInvocationHandler<T extends DomElement> implements InvocationHandler, D
     for (final Method method : Object.class.getMethods()) {
       if ("equals".equals(method.getName())) {
         ourInvocations.put(method, new Invocation() {
-          public Object invoke(DomInvocationHandler handler, final Method method, Object[] args) throws Throwable {
+          public Object invoke(DomInvocationHandler handler, Object[] args) throws Throwable {
             return handler.getProxy() == args[0];
           }
         });
       }
       else {
         ourInvocations.put(method, new Invocation() {
-          public Object invoke(DomInvocationHandler handler, final Method method, Object[] args) throws Throwable {
+          public Object invoke(DomInvocationHandler handler, Object[] args) throws Throwable {
             return method.invoke(handler, args);
           }
         });
@@ -129,20 +130,9 @@ class DomInvocationHandler<T extends DomElement> implements InvocationHandler, D
     return myTagName;
   }
 
-  private Object convertFromString(Method method, String s, final boolean getter) throws IllegalAccessException, InstantiationException {
-    if (s == null) return null;
-    return getConverter(method, getter).fromString(s, new ConvertContext(getFile(), getXmlTag()));
-  }
-
   @NotNull
   private Converter getConverter(final Method method, final boolean getter) throws IllegalAccessException, InstantiationException {
     return myManager.getConverterManager().getConverter(method, getter);
-  }
-
-  String convertToString(Method method, Object argument, final boolean getter)
-    throws IllegalAccessException, InstantiationException {
-    if (argument == null) return null;
-    return getConverter(method, getter).toString(argument, new ConvertContext(getFile(), getXmlTag()));
   }
 
   public final DomElement getProxy() {
@@ -165,26 +155,52 @@ class DomInvocationHandler<T extends DomElement> implements InvocationHandler, D
     return myFile;
   }
 
-  private Invocation createInvocation(final Method method) {
+  @Nullable
+  private String guessAttributeName(Method method) {
+    final AttributeValue attributeValue = method.getAnnotation(AttributeValue.class);
+    if (attributeValue == null) return null;
+
+    if (StringUtil.isNotEmpty(attributeValue.value())) {
+      return attributeValue.value();
+    }
+    final String propertyName = PropertyUtil.getPropertyName(method.getName());
+    if (StringUtil.isEmpty(propertyName)) {
+      return null;
+    }
+
+    return myManager.getNameStrategy(getFile()).convertName(propertyName);
+  }
+
+  private Invocation createInvocation(final Method method) throws IllegalAccessException, InstantiationException {
     boolean getter = isGetter(method);
     boolean setter = isSetter(method);
 
+    final String attributeName = guessAttributeName(method);
+    if (attributeName != null) {
+      final Converter converter = getConverter(method, getter);
+      if (getter) {
+        return new GetAttributeValueInvocation(converter, attributeName);
+      } else if (setter) {
+        return new SetAttributeValueInvocation(converter, attributeName);
+      }
+    }
+
     final TagValue tagValue = method.getAnnotation(TagValue.class);
     if (getter && (tagValue != null || "getValue".equals(method.getName()))) {
-      return new Invocation.GetValueInvocation();
+      return new GetValueInvocation(getConverter(method, true));
     }
     else if (setter && (tagValue != null || "setValue".equals(method.getName()))) {
-      return new Invocation.SetValueInvocation();
+      return new SetValueInvocation(getConverter(method, false));
     }
 
     myMethodsMap.buildMethodMaps(getFile());
 
     if (myMethodsMap.isFixedChildrenMethod(method)) {
-      return new Invocation.GetFixedChildInvocation();
+      return new GetFixedChildInvocation(method);
     }
 
     if (myMethodsMap.isVariableChildrenMethod(method)) {
-      return new Invocation.GetVariableChildrenInvocation(myMethodsMap, method);
+      return new GetVariableChildrenInvocation(myMethodsMap, method);
     }
 
     throw new UnsupportedOperationException("No implementation for method " + method.toString());
@@ -200,22 +216,18 @@ class DomInvocationHandler<T extends DomElement> implements InvocationHandler, D
       invocation = createInvocation(method);
       ourInvocations.put(method, invocation);
     }
-    return invocation.invoke(this, method, args);
+    return invocation.invoke(this, args);
   }
 
   static boolean isBoolean(final Class<?> type) {
     return type.equals(boolean.class) || type.equals(Boolean.class);
   }
 
-  void setTagValue(final XmlTag tag, final String value) {
+  static void setTagValue(final XmlTag tag, final String value) {
     tag.getValue().setText(value);
   }
 
-  Object getValue(final XmlTag tag, final Method method) throws IllegalAccessException, InstantiationException {
-    return tag != null ? convertFromString(method, getTagValue(tag), true) : null;
-  }
-
-  String getTagValue(final XmlTag tag) {
+  static String getTagValue(final XmlTag tag) {
     return tag.getValue().getText();
   }
 
@@ -298,5 +310,6 @@ class DomInvocationHandler<T extends DomElement> implements InvocationHandler, D
   public DomManagerImpl getManager() {
     return myManager;
   }
+
 
 }

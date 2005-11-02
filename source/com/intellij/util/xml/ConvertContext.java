@@ -14,9 +14,9 @@ public class ConvertContext {
   private final XmlTag myTag;
   private final XmlFile myFile;
 
-  public ConvertContext(final XmlFile file, final XmlTag tag) {
-    myFile = file;
-    myTag = tag;
+  public ConvertContext(final DomInvocationHandler handler) {
+    myFile = handler.getFile();
+    myTag = handler.getXmlTag();
   }
 
   public final PsiClass findClass(String name) {
