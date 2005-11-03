@@ -126,6 +126,7 @@ public class PluginRunConfiguration extends RunConfigurationBase {
         params.setJdk(jdk);
 
         params.getClassPath().addFirst(libPath + File.separator + "log4j.jar");
+        params.getClassPath().addFirst(libPath + File.separator + "jdom.jar");
         params.getClassPath().addFirst(libPath + File.separator + "openapi.jar");
         params.getClassPath().addFirst(libPath + File.separator + "extensions.jar");
         params.getClassPath().addFirst(libPath + File.separator + "idea.jar");
