@@ -90,6 +90,7 @@ public class AnnotationUtil {
     PsiClass aClass = method.getContainingClass();
     if (aClass == null) return null;
     HierarchicalMethodSignature methodSignature = method.getHierarchicalMethodSignature();
+    if (methodSignature == null) return null;
     return findAnnotationInHierarchy(methodSignature, annotationNames, method);
   }
 
