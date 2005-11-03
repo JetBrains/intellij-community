@@ -30,6 +30,8 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.pom.java.LanguageLevel;
@@ -430,26 +432,27 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     myRootsToWatch.clear();
 
     Module[] modules = ModuleManager.getInstance(myProject).getModules();
-    Set<VirtualFile> contentRoots = new HashSet<VirtualFile>();
+    Set<String> contentRoots = new HashSet<String>();
     for (Module module : modules) {
       final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-      contentRoots.addAll(Arrays.asList(moduleRootManager.getContentRoots()));
-      final VirtualFile compilerOutputPath = moduleRootManager.getCompilerOutputPath();
-      if (compilerOutputPath != null) {
+      final String[] contentRootUrls = moduleRootManager.getContentRootUrls();
+      for (String url : contentRootUrls) {
+        contentRoots.add(VfsUtil.urlToPath(url));
+      }
+
+      final String compilerOutputPath = VfsUtil.urlToPath(moduleRootManager.getCompilerOutputPathUrl());
+      if (compilerOutputPath.length() > 0) {
         contentRoots.add(compilerOutputPath);
       }
-      final VirtualFile compilerOutputPathForTests = moduleRootManager.getCompilerOutputPathForTests();
-      if (compilerOutputPathForTests != null) {
+      final String compilerOutputPathForTests = VfsUtil.urlToPath(moduleRootManager.getCompilerOutputPathForTestsUrl());
+      if (compilerOutputPathForTests.length() > 0) {
         contentRoots.add(compilerOutputPathForTests);
       }
 
-      final VirtualFile moduleFile = module.getModuleFile();
-      if (moduleFile != null) {
-        contentRoots.add(moduleFile);
-      }
+      contentRoots.add(module.getModuleFilePath());
     }
 
-    final VirtualFile projectFile = myProject.getProjectFile();
+    final String projectFile = myProject.getProjectFilePath();
     if (projectFile != null) {
       contentRoots.add(projectFile);
       // No need to add workspace file separately since they're definetely on same directory with ipr.
@@ -458,7 +461,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     myRootsToWatch.addAll(LocalFileSystem.getInstance().addRootsToWatch(contentRoots, true));
 
 
-    Set<VirtualFile> libraryRoots = new HashSet<VirtualFile>();
+    Set<String> libraryRoots = new HashSet<String>();
     for (Module module : modules) {
       final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
       final OrderEntry[] orderEntries = moduleRootManager.getOrderEntries();
@@ -474,24 +477,26 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
     myRootsToWatch.addAll(LocalFileSystem.getInstance().addRootsToWatch(libraryRoots, false));
 
-    Set<VirtualFile> explodedDirs = new HashSet<VirtualFile>();
+    Set<String> explodedDirs = new HashSet<String>();
     for (Module module : modules) {
       final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-      final VirtualFile explodedDirectory = moduleRootManager.getExplodedDirectory();
+      final String explodedDirectory = moduleRootManager.getExplodedDirectoryUrl();
       if (explodedDirectory != null) {
-        explodedDirs.add(explodedDirectory);
+        explodedDirs.add(VfsUtil.urlToPath(explodedDirectory));
       }
     }
     myRootsToWatch.addAll(LocalFileSystem.getInstance().addRootsToWatch(explodedDirs, true));
   }
 
-  private Collection<VirtualFile> getRootsToTrack(final Library library, final OrderRootType rootType) {
-    List<VirtualFile> result = new ArrayList<VirtualFile>();
+  private Collection<String> getRootsToTrack(final Library library, final OrderRootType rootType) {
+    List<String> result = new ArrayList<String>();
     if (library != null) {
-      final VirtualFile[] files = library.getFiles(rootType);
-      for (VirtualFile file : files) {
-        while (file != null && !(file.getFileSystem() instanceof LocalFileSystem)) file = file.getParent();
-        if (file != null) result.add(file);
+      final String[] urls = library.getUrls(rootType);
+      for (String url : urls) {
+        if (url != null) {
+          String path = VfsUtil.urlToPath(url);
+          result.add(path);
+        }
       }
     }
     return result;

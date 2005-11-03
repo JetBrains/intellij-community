@@ -800,7 +800,7 @@ public class VirtualFileImpl extends VirtualFile {
   }
 
 
-  private void addChild(VirtualFileImpl child) {
+  void addChild(VirtualFileImpl child) {
     getChildren(); // to initialize myChildren
 
     VirtualFileImpl[] newChildren = new VirtualFileImpl[myChildren.length + 1];

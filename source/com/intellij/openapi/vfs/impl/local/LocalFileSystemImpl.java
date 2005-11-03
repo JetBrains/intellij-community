@@ -48,22 +48,46 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
 
   private List<LocalFileOperationsHandler> myHandlers = new ArrayList<LocalFileOperationsHandler>();
 
-  private WatchForChangesThread myWatchForChangesThread;
-
-  public String getRootPath(final VirtualFileImpl rootFile) {
-    return myRootsToPaths.get(rootFile);
-  }
-
   private class WatchRequestImpl implements WatchRequest {
-    public VirtualFile myRoot;
+    public String myRootPath;
+
+    public String myFSRootPath;
     public boolean myToWatchRecursively;
 
-    public WatchRequestImpl(final VirtualFile root, final boolean toWatchRecursively) {
-      myRoot = root;
+    public WatchRequestImpl(String rootPath, final boolean toWatchRecursively) {
       myToWatchRecursively = toWatchRecursively;
+      final int index = rootPath.indexOf(JarFileSystem.JAR_SEPARATOR);
+      if (index >= 0) rootPath = rootPath.substring(0, index);
+      final File file = new File(rootPath.replace('/', File.separatorChar));
+      if (!file.isDirectory()) {
+        final File parentFile = file.getParentFile();
+        if (parentFile != null) {
+          if (SystemInfo.isFileSystemCaseSensitive) {
+            myFSRootPath = parentFile.getAbsolutePath(); // fixes problem with symlinks under Unix (however does not under Windows!)
+          }
+          else {
+            try {
+              myFSRootPath = parentFile.getCanonicalPath();
+            }
+            catch (IOException e) {
+              myFSRootPath = rootPath; //need something
+            }
+          }
+        }
+        else {
+          myFSRootPath = rootPath.replace('/', File.separatorChar);
+        }
+        
+        myRootPath = myFSRootPath.replace(File.separatorChar, '/');
+      } else {
+        myRootPath = rootPath.replace(File.separatorChar, '/');
+        myFSRootPath = rootPath.replace('/', File.separatorChar);
+      }
     }
 
-    @NotNull public VirtualFile getRoot() { return myRoot; }
+    @NotNull public String getRootPath() { return myRootPath; }
+
+    @NotNull public String getFileSystemRootPath() { return myFSRootPath; }
 
     public boolean isToWatchRecursively() { return myToWatchRecursively; }
   }
@@ -78,8 +102,7 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
 
     if (FileWatcher.isAvailable()) {
       FileWatcher.initialize();
-      myWatchForChangesThread = new WatchForChangesThread();
-      myWatchForChangesThread.start();
+      new WatchForChangesThread().start();
       new StoreRefreshStatusThread().start();
     }
   }
@@ -151,9 +174,9 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
     myDirtyFiles.clear();
     myDeletedFiles.clear();
 
-    VirtualFile tempVFile = findFileByIoFile(new File(FileUtil.getTempDirectory()));
-    LOG.assertTrue(tempVFile != null);
-    addRootToWatch(tempVFile, true);
+    final File file = new File(FileUtil.getTempDirectory());
+    String path = file.getCanonicalPath().replace(File.separatorChar, '/');
+    addRootToWatch(path, true);
   }
 
   final VirtualFileManagerEx getManager() {
@@ -235,7 +258,6 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
           }
           else {
             if (!createIfNoCache && !((VirtualFileImpl)root).areChildrenCached()) return null;
-            if (!root.isDirectory()) return null;
             root = root.findChild(name);
           }
           if (root == null) return null;
@@ -299,15 +321,7 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
   }
 
   public String extractPresentableUrl(String path) {
-    String url = super.extractPresentableUrl(path);
-    /*
-    if (SystemInfo.isWindows || SystemInfo.isOS2){
-      if (url.endsWith(":")){
-        url += File.separatorChar;
-      }
-    }
-    */
-    return url;
+    return super.extractPresentableUrl(path);
   }
 
   public void refresh(final boolean asynchronous) {
@@ -358,29 +372,58 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
         }
 
         for (final WatchRequest request : requests) {
-          final VirtualFileImpl rootFile = (VirtualFileImpl)request.getRoot();
-          final boolean recursively = request.isToWatchRecursively();
+          final String rootPath = request.getRootPath();
 
-          PhysicalFile file = rootFile.getPhysicalFile();
-          if (!file.exists()) {
-            final Runnable action = new Runnable() {
-              public void run() {
-                if (!rootFile.isValid()) return;
-                boolean isDirectory = rootFile.isDirectory();
-                fireBeforeFileDeletion(null, rootFile);
-                synchronized (LOCK) {
-                  final VirtualFileImpl parent = (VirtualFileImpl)rootFile.getParent();
-                  if (parent != null) parent.removeChild(rootFile);
-                  myRootsToWatch.remove(request);
-                  updateFileWatcher();
+          String runPath = rootPath;
+          final VirtualFileImpl rootFile = (VirtualFileImpl)findFileByPath(runPath);
+          if (rootFile != null) {
+
+            final PhysicalFile file = rootFile.getPhysicalFile();
+            final boolean recursively = request.isToWatchRecursively();
+
+            if (!file.exists()) {
+              final Runnable action = new Runnable() {
+                public void run() {
+                  if (!rootFile.isValid()) return;
+                  boolean isDirectory = rootFile.isDirectory();
+                  fireBeforeFileDeletion(null, rootFile);
+                  synchronized (LOCK) {
+                    final VirtualFileImpl parent = (VirtualFileImpl)rootFile.getParent();
+                    if (parent != null) parent.removeChild(rootFile);
+                    myRootsToWatch.remove(request);
+                    updateFileWatcher();
+                  }
+                  fireFileDeleted(null, rootFile, rootFile.getName(), isDirectory, null);
                 }
-                fireFileDeleted(null, rootFile, rootFile.getName(), isDirectory, null);
+              };
+              getManager().addEventToFireByRefresh(action, asynchronous, modalityState);
+            }
+            else {
+              refresh(rootFile, recursively, false, worker, modalityState, asynchronous, true);
+            }
+          } else {
+            final boolean physicalExists = new File(request.getFileSystemRootPath()).exists();
+            if (physicalExists) {
+              final int index = runPath.lastIndexOf('/');
+              while(index >= 0) {
+                String parentPath = runPath.substring(0, index);
+                final VirtualFileImpl vParent = (VirtualFileImpl)findFileByPath(parentPath);
+                if (vParent != null) {
+                  final String path = runPath;
+                  getManager().addEventToFireByRefresh(new Runnable() {
+                    public void run() {
+                      final VirtualFileImpl newVFile = new VirtualFileImpl(path);
+                      vParent.addChild(newVFile);
+                      newVFile.setParent(vParent);
+                      fireFileCreated(null, newVFile);
+                    }
+                  }, asynchronous, modalityState);
+                  break;
+                }
+
+                runPath = parentPath;
               }
-            };
-            getManager().addEventToFireByRefresh(action, asynchronous, modalityState);
-          }
-          else {
-            refresh(rootFile, recursively, false, worker, modalityState, asynchronous, true);
+            }
           }
         }
 
@@ -418,18 +461,18 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
     synchronized (LOCK) {
       NextRoot:
       for (WatchRequest request : myRootsToWatch) {
-        VirtualFile root = request.getRoot();
+        String rootPath = request.getRootPath();
         boolean recursively = request.isToWatchRecursively();
 
         for (Iterator<WatchRequest> iterator1 = result.iterator(); iterator1.hasNext();) {
           final WatchRequest otherRequest = iterator1.next();
-          final VirtualFile otherRoot = otherRequest.getRoot();
+          final String otherRootPath = otherRequest.getRootPath();
           final boolean otherRecursively = otherRequest.isToWatchRecursively();
-          if ((root.equals(otherRoot) && (!recursively || otherRecursively)) ||
-              (VfsUtil.isAncestor(otherRoot, root, true) && otherRecursively)) {
+          if ((rootPath.equals(otherRootPath) && (!recursively || otherRecursively)) ||
+              (FileUtil.startsWith(rootPath, otherRootPath) && otherRecursively)) {
             continue NextRoot;
           }
-          else if (VfsUtil.isAncestor(root, otherRoot, true) && (recursively || !otherRecursively)) {
+          else if (FileUtil.startsWith(otherRootPath, rootPath) && (recursively || !otherRecursively)) {
             iterator1.remove();
           }
         }
@@ -714,7 +757,7 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
               boolean[] toWatchRecursively = new boolean[watchRequests.length];
               int cnt = 0;
               for (WatchRequest root : watchRequests) {
-                dirPaths[cnt] = root.getRoot().getPath();
+                dirPaths[cnt] = root.getFileSystemRootPath();
                 toWatchRecursively[cnt] = root.isToWatchRecursively();
                 cnt++;
               }
@@ -774,43 +817,25 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
     return "LocalFileSystem";
   }
 
-  public WatchRequest addRootToWatch(VirtualFile rootFile, boolean toWatchRecursively) {
-    LOG.assertTrue(rootFile != null);
-    if(rootFile.getFileSystem() != this) return null;
-
-    if (!rootFile.isDirectory()) {
-      rootFile = rootFile.getParent();
-      toWatchRecursively = false;
-    }
-
+  public WatchRequest addRootToWatch(String rootPath, boolean toWatchRecursively) {
+    LOG.assertTrue(rootPath != null);
     synchronized (LOCK) {
-      if (rootFile instanceof VirtualFileImpl) {
-        final WatchRequestImpl result = new WatchRequestImpl(rootFile, toWatchRecursively);
-        myRootsToWatch.add(result);
-        setUpFileWatcher();
-        return result;
-      }
-      return null;
+      final WatchRequestImpl result = new WatchRequestImpl(rootPath, toWatchRecursively);
+      myRootsToWatch.add(result);
+      setUpFileWatcher();
+      return result;
     }
   }
 
   @NotNull
-  public Set<WatchRequest> addRootsToWatch(final Collection<VirtualFile> rootFiles, final boolean toWatchRecursively) {
-    LOG.assertTrue(rootFiles != null);
+  public Set<WatchRequest> addRootsToWatch(final Collection<String> rootPaths, final boolean toWatchRecursively) {
+    LOG.assertTrue(rootPaths != null);
     Set<WatchRequest> result = new HashSet<WatchRequest>();
     synchronized (LOCK) {
-      for (VirtualFile file : rootFiles) {
-        LOG.assertTrue(file != null);
-        if (file instanceof VirtualFileImpl) {
-          boolean recWatch = toWatchRecursively;
-          if (!file.isDirectory()) {
-            file = file.getParent();
-            recWatch = false;
-          }
-
-          final WatchRequestImpl request = new WatchRequestImpl(file, recWatch);
-          result.add(request);
-        }
+      for (String rootPath : rootPaths) {
+        LOG.assertTrue(rootPath != null);
+        final WatchRequestImpl request = new WatchRequestImpl(rootPath, toWatchRecursively);
+        result.add(request);
       }
 
       myRootsToWatch.addAll(result);

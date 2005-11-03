@@ -39,21 +39,24 @@ public abstract class LocalFileSystem extends VirtualFileSystem {
   public abstract VirtualFile refreshAndFindFileByIoFile(File file);
 
   public interface WatchRequest {
-    @NotNull VirtualFile getRoot();
+    @NotNull String getRootPath();
+
+    @NotNull String getFileSystemRootPath();
 
     boolean isToWatchRecursively();
   }
 
   /**
    * Adds this rootFile as the watch root for file system
+   * @param rootPath
    * @param toWatchRecursively whether the whole subtree should be monitored
    * @return request handle or null if rootFile does not belong to this file system
    */
   @Nullable
-  public abstract WatchRequest addRootToWatch(final @NotNull VirtualFile rootFile, final boolean toWatchRecursively);
+  public abstract WatchRequest addRootToWatch(final @NotNull String rootPath, final boolean toWatchRecursively);
 
   @NotNull
-  public abstract Set<WatchRequest> addRootsToWatch(final @NotNull Collection<VirtualFile> rootFiles, final boolean toWatchRecursively);
+  public abstract Set<WatchRequest> addRootsToWatch(final @NotNull Collection<String> rootPaths, final boolean toWatchRecursively);
 
   public abstract void removeWatchedRoots(final @NotNull Collection<WatchRequest> rootsToWatch);
 

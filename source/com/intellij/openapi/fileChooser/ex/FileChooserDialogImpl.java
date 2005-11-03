@@ -227,20 +227,23 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     return myFileSystemTree.getChoosenFiles();
   }
 
-  private final Map<VirtualFile, LocalFileSystem.WatchRequest> myRequests = new HashMap<VirtualFile, LocalFileSystem.WatchRequest>();
+  private final Map<String, LocalFileSystem.WatchRequest> myRequests = new HashMap<String, LocalFileSystem.WatchRequest>();
 
   private final class FileTreeExpansionListener implements TreeExpansionListener {
     public void treeExpanded(TreeExpansionEvent event) {
       final Object[] path = event.getPath().getPath();
-      Set<VirtualFile> toAdd = new HashSet<VirtualFile>();
+      Set<String> toAdd = new HashSet<String>();
 
       for (Object o : path) {
         final DefaultMutableTreeNode node = ((DefaultMutableTreeNode)o);
         Object userObject = node.getUserObject();
         if (userObject instanceof FileNodeDescriptor) {
           final VirtualFile file = ((FileNodeDescriptor)userObject).getElement().getFile();
-          if (file != null && myRequests.get(file) == null) {
-            toAdd.add(file);
+          if (file != null) {
+            final String rootPath = file.getPath();
+            if (myRequests.get(rootPath) == null) {
+              toAdd.add(rootPath);
+            }
           }
         }
       }
@@ -248,7 +251,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
       if (toAdd.size() > 0) {
         final Set<LocalFileSystem.WatchRequest> requests = LocalFileSystem.getInstance().addRootsToWatch(toAdd, false);
         for (LocalFileSystem.WatchRequest request : requests) {
-          myRequests.put(request.getRoot(), request);
+          myRequests.put(request.getRootPath(), request);
         }
       }
     }

@@ -541,7 +541,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
         //Add request to watch this editor's virtual file
         final VirtualFile parentDir = file.getParent();
         if (parentDir != null) {
-          final LocalFileSystem.WatchRequest request = LocalFileSystem.getInstance().addRootToWatch(parentDir, false);
+          final LocalFileSystem.WatchRequest request = LocalFileSystem.getInstance().addRootToWatch(parentDir.getPath(), false);
           file.putUserData(WATCH_REQUEST_KEY, request);
         }
       }
