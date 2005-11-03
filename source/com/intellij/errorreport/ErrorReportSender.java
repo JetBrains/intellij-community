@@ -76,7 +76,9 @@ public class ErrorReportSender {
     params.add(exceptionBean.getHashCode());
 
     try {
-      Hashtable hashtable = (Hashtable) client.execute(RemoteMethods.ERROR_CHECK_EXCEPTION, params);
+      final Object result = client.execute(RemoteMethods.ERROR_CHECK_EXCEPTION, params);
+      if (result instanceof Throwable) throw new XmlRpcException(-1, ((Throwable)result).getMessage(), (Throwable)result);
+      Hashtable hashtable = (Hashtable) result;
       return BeanWrapper.getException(hashtable);
     } catch (XmlRpcException ex) {
       if (NoSuchExceptionException.isException(ex))
