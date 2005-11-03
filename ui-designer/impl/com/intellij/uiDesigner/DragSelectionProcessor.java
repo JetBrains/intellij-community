@@ -2,6 +2,7 @@ package com.intellij.uiDesigner;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -10,6 +11,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 
 import org.jetbrains.annotations.NotNull;
 import gnu.trove.TIntArrayList;
@@ -45,6 +48,7 @@ public final class DragSelectionProcessor extends EventProcessor{
    */
   private DropInfo myDropInfo;
   private boolean myDragStarted;
+  private int myDragRelativeColumn;
 
   private final GridInsertProcessor myGridInsertProcessor;
 
@@ -61,6 +65,19 @@ public final class DragSelectionProcessor extends EventProcessor{
 
     // Store selected components
     mySelection = FormEditingUtil.getSelectedComponents(myEditor);
+    // sort selection in correct grid order
+    Collections.sort(mySelection, new Comparator<RadComponent>() {
+      public int compare(final RadComponent o1, final RadComponent o2) {
+        if (o1.getParent() == o2.getParent()) {
+          int result = o1.getConstraints().getRow() - o2.getConstraints().getRow();
+          if (result == 0) {
+            result = o1.getConstraints().getColumn() - o2.getConstraints().getColumn();
+          }
+          return result;
+        }
+        return 0;
+      }
+    });
 
     // Store original constraints and parents. This information is required
     // to restore initial state if drag is canceled.
@@ -79,6 +96,24 @@ public final class DragSelectionProcessor extends EventProcessor{
     final RadComponent componentUnderMouse = FormEditingUtil.getRadComponentAt(myEditor, myPressPoint.x, myPressPoint.y);
     int dx = 0;
     int dy = 0;
+
+    myDragRelativeColumn = 0;
+    if (mySelection.size() > 1) {
+      boolean sameRow = true;
+      for(int i=1; i<myOriginalParents.length; i++) {
+        if (myOriginalParents [i] != myOriginalParents [0] ||
+            myOriginalConstraints [i].getRow() != myOriginalConstraints [0].getRow()) {
+          sameRow = false;
+          break;
+        }
+      }
+      if (sameRow) {
+        for(GridConstraints constraints: myOriginalConstraints) {
+          myDragRelativeColumn = Math.max(myDragRelativeColumn,
+                                          componentUnderMouse.getConstraints().getColumn() - constraints.getColumn());
+        }
+      }
+    }
 
     // Remove components from their parents.
     for (final RadComponent c : mySelection) {
@@ -131,10 +166,15 @@ public final class DragSelectionProcessor extends EventProcessor{
     GridInsertProcessor.GridInsertLocation location = null;
     if (mouseReleased) {
       myGridInsertProcessor.removeFeedbackPainter();
-      location = myGridInsertProcessor.getGridInsertLocation(point.x, point.y);
+      location = myGridInsertProcessor.getGridInsertLocation(point.x, point.y, myDragRelativeColumn);
       if (!myGridInsertProcessor.isDropInsertAllowed(location, mySelection.size())) {
         location = null;
       }
+    }
+
+    if (!FormEditingUtil.canDrop(myEditor, point.x, point.y, mySelection.size()) &&
+        (location == null || location.getMode() == GridInsertProcessor.GridInsertMode.None)) {
+      return false;
     }
 
     if (copyOnDrop) {
@@ -145,11 +185,6 @@ public final class DragSelectionProcessor extends EventProcessor{
       TIntArrayList ys = new TIntArrayList();
       mySelection.clear();
       CutCopyPasteSupport.loadComponentsToPaste(myEditor, serializedComponents, xs, ys, mySelection);
-    }
-
-    if (!FormEditingUtil.canDrop(myEditor, point.x, point.y, mySelection.size()) &&
-        (location == null || location.getMode() == GridInsertProcessor.GridInsertMode.None)) {
-      return false;
     }
 
     final int[] dx = new int[mySelection.size()];
@@ -260,7 +295,7 @@ public final class DragSelectionProcessor extends EventProcessor{
     }
     else if(e.getID()==MouseEvent.MOUSE_RELEASED){
       if (myDragStarted) {
-        processMouseReleased(e.isControlDown());
+        processMouseReleased(UIUtil.isControlKeyDown(e));
       }
       else if (e.isControlDown()) {
         RadComponent component = FormEditingUtil.getRadComponentAt(myEditor, e.getX(), e.getY());
@@ -302,7 +337,8 @@ public final class DragSelectionProcessor extends EventProcessor{
     myLastPoint=e.getPoint();
     myEditor.getDragLayer().repaint();
 
-    setCursor(myGridInsertProcessor.processMouseMoveEvent(e.getX(), e.getY(), mySelection.size(), e.isControlDown()));
+    setCursor(myGridInsertProcessor.processMouseMoveEvent(e.getX(), e.getY(), e.isControlDown(),
+                                                          mySelection.size(), myDragRelativeColumn));
   }
 
   /**

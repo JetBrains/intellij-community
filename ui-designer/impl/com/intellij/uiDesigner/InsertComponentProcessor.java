@@ -250,7 +250,7 @@ public final class InsertComponentProcessor extends EventProcessor{
     }
     myInsertedComponent.init(item);
 
-    final GridInsertProcessor.GridInsertLocation location = myGridInsertProcessor.getGridInsertLocation(e.getX(), e.getY());
+    final GridInsertProcessor.GridInsertLocation location = myGridInsertProcessor.getGridInsertLocation(e.getX(), e.getY(), 0);
     if (FormEditingUtil.canDrop(myEditor, e.getX(), e.getY(), 1) || location.getMode() != GridInsertProcessor.GridInsertMode.None) {
       CommandProcessor.getInstance().executeCommand(
         myEditor.getProject(),
@@ -305,6 +305,6 @@ public final class InsertComponentProcessor extends EventProcessor{
   }
 
   public Cursor processMouseMoveEvent(final MouseEvent e) {
-    return myGridInsertProcessor.processMouseMoveEvent(e.getX(), e.getY(), 1, false);
+    return myGridInsertProcessor.processMouseMoveEvent(e.getX(), e.getY(), false, 1, 0);
   }
 }

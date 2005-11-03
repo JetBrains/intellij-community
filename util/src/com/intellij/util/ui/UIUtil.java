@@ -25,6 +25,7 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 
 /**
  * @author max
@@ -474,6 +475,10 @@ public class UIUtil {
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static Color getTextAreaForeground() {
     return UIManager.getColor("TextArea.foreground");
+  }
+
+  public static boolean isControlKeyDown(MouseEvent mouseEvent) {
+    return SystemInfo.isMac ? mouseEvent.isMetaDown() : mouseEvent.isControlDown();
   }
 }
 

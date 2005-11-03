@@ -1,7 +1,6 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.Patches;
-import com.intellij.CommonBundle;
 import com.intellij.codeInsight.hint.DocumentFragmentTooltipRenderer;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.TooltipController;
@@ -2318,10 +2317,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     }
   }
 
-  private static boolean isControlKeyDown(MouseEvent mouseEvent) {
-    return SystemInfo.isMac ? mouseEvent.isMetaDown() : mouseEvent.isControlDown();
-  }
-
   private void processMouseReleased(MouseEvent e) {
     if (e.getSource() == myGutterComponent) {
       myGutterComponent.mouseReleased(e);
@@ -2532,7 +2527,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
             if (caretShift != 0) {
               if (myMousePressedEvent != null) {
                 if (mySettings.isDndEnabled()) {
-                  boolean isCopy = isControlKeyDown(e) || isViewer() || !getDocument().isWritable();
+                  boolean isCopy = UIUtil.isControlKeyDown(e) || isViewer() || !getDocument().isWritable();
                   mySavedCaretOffsetForDNDUndoHack = oldCaretOffset;
                   getContentComponent().getTransferHandler().exportAsDrag(getContentComponent(), e,
                                                                           isCopy

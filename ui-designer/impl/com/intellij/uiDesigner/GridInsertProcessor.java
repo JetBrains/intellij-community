@@ -114,7 +114,7 @@ public class GridInsertProcessor {
     myEditor = editor;
   }
 
-  GridInsertLocation getGridInsertLocation(final int x, final int y) {
+  GridInsertLocation getGridInsertLocation(final int x, final int y, final int dragColumnDelta) {
     final int EPSILON = 4;
     final RadContainer container = FormEditingUtil.getRadContainerAt(myEditor, x, y, EPSILON);
     if (container == null || !container.isGrid()) {
@@ -161,6 +161,12 @@ public class GridInsertProcessor {
     }
     if (mode != GridInsertMode.None) {
       Rectangle cellRect = new Rectangle(xs [col], ys [row], widths [col], heights [row]);
+      // if a number of adjacent components have been selected and the component being dragged
+      // is not the leftmost, we return the column in which the leftmost component should be dropped
+      if ((mode == GridInsertMode.RowBefore || mode == GridInsertMode.RowAfter) &&
+          col >= dragColumnDelta) {
+        col -= dragColumnDelta;
+      }
       return new GridInsertLocation(container, row, col, cellRect, mode);
     }
     return new GridInsertLocation(GridInsertMode.None);
@@ -210,8 +216,9 @@ public class GridInsertProcessor {
     }
   }
 
-  public Cursor processMouseMoveEvent(int x, int y, int componentCount, final boolean copyOnDrop) {
-    final GridInsertLocation insertLocation = getGridInsertLocation(x, y);
+  public Cursor processMouseMoveEvent(int x, int y, final boolean copyOnDrop, int componentCount,
+                                      final int dragColumnDelta) {
+    final GridInsertLocation insertLocation = getGridInsertLocation(x, y, dragColumnDelta);
     if (insertLocation.getMode() != GridInsertMode.None) {
       if (isDropInsertAllowed(insertLocation, componentCount)) {
         placeInsertFeedbackPainter(insertLocation, componentCount);
@@ -251,7 +258,8 @@ public class GridInsertProcessor {
       final GridLayoutManager layoutManager = (GridLayoutManager) insertLocation.getContainer().getLayout();
       int[] xs = layoutManager.getXs();
       int[] widths = layoutManager.getWidths();
-      cellRect.setSize(xs [lastCol] + widths [lastCol] - xs [insertLocation.getColumn()], (int)cellRect.getHeight());
+      cellRect.setBounds(xs [insertLocation.getColumn()], (int) cellRect.getY(),
+                         xs [lastCol] + widths [lastCol] - xs [insertLocation.getColumn()], (int)cellRect.getHeight());
     }
     cellRect = SwingUtilities.convertRectangle(insertLocation.getContainer().getDelegee(),
                                                cellRect,
