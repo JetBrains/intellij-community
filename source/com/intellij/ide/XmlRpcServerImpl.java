@@ -8,9 +8,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import org.apache.xmlrpc.WebServer;
 import org.jetbrains.annotations.NonNls;
 
-import java.net.ServerSocket;
-import java.net.BindException;
 import java.io.IOException;
+import java.net.BindException;
+import java.net.ServerSocket;
 
 /**
  * @author mike
@@ -38,7 +38,7 @@ public class XmlRpcServerImpl implements XmlRpcServer, ApplicationComponent {
     }
   }
 
-  private boolean checkPort() {
+  private static boolean checkPort() {
     ServerSocket socket = null;
 
     try {

@@ -156,7 +156,7 @@ public class MetaRegistry {
               new NamespaceFilter(TAGLIB_URIS),
               new TextFilter("tag")
           ),
-          TldTagDescriptor.class);
+          TldTagDescriptorImpl.class);
     }
 
     {

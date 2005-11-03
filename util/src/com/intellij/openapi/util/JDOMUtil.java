@@ -29,6 +29,7 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 import java.io.*;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -90,6 +91,11 @@ public class JDOMUtil {
   public static Document loadDocument(InputStream stream) throws JDOMException, IOException {
     SAXBuilder saxBuilder = createBuilder();
     return saxBuilder.build(new InputStreamReader(stream, ENCODING));
+  }
+
+  public static Document loadDocument(URL url) throws JDOMException, IOException {
+    SAXBuilder saxBuilder = createBuilder();
+    return saxBuilder.build(url);
   }
 
   public static void writeDocument(Document document, String filePath, String lineSeparator) throws IOException {
