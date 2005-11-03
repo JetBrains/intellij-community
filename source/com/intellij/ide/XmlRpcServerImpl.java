@@ -19,6 +19,7 @@ public class XmlRpcServerImpl implements XmlRpcServer, ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.XmlRpcServerImpl");
   public static final int PORT_NUMBER = 63342;
   private WebServer myWebServer;
+  @NonNls private static final String PROPERTY_RPC_PORT = "rpc.port";
 
   @NonNls
   public String getComponentName() {
@@ -29,7 +30,7 @@ public class XmlRpcServerImpl implements XmlRpcServer, ApplicationComponent {
     if (!checkPort()) return;
 
     try {
-      myWebServer = new WebServer(PORT_NUMBER);
+      myWebServer = new WebServer(getPortNumber());
       myWebServer.start();
     }
     catch (Exception e) {
@@ -38,11 +39,16 @@ public class XmlRpcServerImpl implements XmlRpcServer, ApplicationComponent {
     }
   }
 
+  private static int getPortNumber() {
+    if (System.getProperty(PROPERTY_RPC_PORT) != null) return Integer.parseInt(System.getProperty(PROPERTY_RPC_PORT));
+    return PORT_NUMBER;
+  }
+
   private static boolean checkPort() {
     ServerSocket socket = null;
 
     try {
-      socket = new ServerSocket(PORT_NUMBER);
+      socket = new ServerSocket(getPortNumber());
     }
     catch (BindException e) {
       return false;
@@ -75,6 +81,9 @@ public class XmlRpcServerImpl implements XmlRpcServer, ApplicationComponent {
   public void addHandler(String name, Object handler) {
     if (myWebServer != null) {
       myWebServer.addHandler(name, handler);
+    }
+    else {
+      LOG.info("Handler not registered because XML-RPC server is not running");
     }
   }
 
