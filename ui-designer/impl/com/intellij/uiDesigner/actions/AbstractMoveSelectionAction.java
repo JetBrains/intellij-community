@@ -3,10 +3,9 @@ package com.intellij.uiDesigner.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.uiDesigner.FormEditingUtil;
-import com.intellij.uiDesigner.RadAtomicComponent;
-import com.intellij.uiDesigner.RadComponent;
-import com.intellij.uiDesigner.GuiEditor;
+import com.intellij.openapi.util.Ref;
+import com.intellij.uiDesigner.*;
+import com.intellij.uiDesigner.core.GridLayoutManager;
 
 import javax.swing.*;
 import java.awt.*;
@@ -30,36 +29,14 @@ abstract class AbstractMoveSelectionAction extends AnAction{
     final ArrayList<RadComponent> selectedComponents = FormEditingUtil.getSelectedComponents(myEditor);
     final JComponent rootContainerDelegee = myEditor.getRootContainer().getDelegee();
     if(selectedComponents.size() == 0){
-      final int[] minX = new int[]{Integer.MAX_VALUE};
-      final int[] minY = new int[]{Integer.MAX_VALUE};
-      final RadComponent[] componentToBeSelected = new RadComponent[1];
-      FormEditingUtil.iterate(
-        myEditor.getRootContainer(),
-        new FormEditingUtil.ComponentVisitor<RadComponent>() {
-          public boolean visit(final RadComponent component) {
-            if (component instanceof RadAtomicComponent) {
-              final JComponent _delegee = component.getDelegee();
-              final Point p = SwingUtilities.convertPoint(
-                _delegee,
-                new Point(0, 0),
-                rootContainerDelegee
-              );
-              if(minX[0] > p.x || minY[0] > p.y){
-                minX[0] = p.x;
-                minY[0] = p.y;
-                componentToBeSelected[0] = component;
-              }
-            }
-            return true;
-          }
-        }
-      );
-      if(componentToBeSelected[0] != null){
-        componentToBeSelected[0].setSelected(true);
-      }
+      moveToFirstComponent(rootContainerDelegee);
       return;
     }
     final RadComponent selectedComponent = selectedComponents.get(0);
+
+    if (moveSelectionByGrid(selectedComponent)) {
+      return;
+    }
 
     // 1. We need to get coordinates of all editor's component in the same
     // coordinate system. For example, in the RadRootContainer rootContainerDelegee's coordinate system.
@@ -119,5 +96,69 @@ abstract class AbstractMoveSelectionAction extends AnAction{
     components.get(nextSelectedIndex).setSelected(true);
   }
 
+  private void moveToFirstComponent(final JComponent rootContainerDelegee) {
+    final int[] minX = new int[]{Integer.MAX_VALUE};
+    final int[] minY = new int[]{Integer.MAX_VALUE};
+    final Ref<RadComponent> componentToBeSelected = new Ref<RadComponent>();
+    FormEditingUtil.iterate(
+      myEditor.getRootContainer(),
+      new FormEditingUtil.ComponentVisitor<RadComponent>() {
+        public boolean visit(final RadComponent component) {
+          if (component instanceof RadAtomicComponent) {
+            final JComponent _delegee = component.getDelegee();
+            final Point p = SwingUtilities.convertPoint(
+              _delegee,
+              new Point(0, 0),
+              rootContainerDelegee
+            );
+            if(minX[0] > p.x || minY[0] > p.y){
+              minX[0] = p.x;
+              minY[0] = p.y;
+              componentToBeSelected.set(component);
+            }
+          }
+          return true;
+        }
+      }
+    );
+    if(!componentToBeSelected.isNull()){
+      componentToBeSelected.get().setSelected(true);
+    }
+  }
+
+  private boolean moveSelectionByGrid(final RadComponent selectedComponent) {
+    final RadContainer parent = selectedComponent.getParent();
+    if (parent == null || !parent.isGrid()) {
+      return false;
+    }
+
+    final GridLayoutManager grid = (GridLayoutManager) parent.getLayout();
+    int row = selectedComponent.getConstraints().getRow();
+    int column = selectedComponent.getConstraints().getColumn();
+
+    do {
+      row += getRowMoveDelta();
+      column += getColumnMoveDelta();
+      if (row < 0 || row >= grid.getRowCount() || column < 0 || column >= grid.getColumnCount()) {
+        return false;
+      }
+
+      final RadComponent component = parent.getComponentAtGrid(row, column);
+      if (component != null && component != selectedComponent) {
+        FormEditingUtil.clearSelection(myEditor.getRootContainer());
+        component.setSelected(true);
+        return true;
+      }
+    } while(true);
+  }
+
   protected abstract int calcDistance(Point source, Point point);
+
+  protected int getColumnMoveDelta() {
+    return 0;
+  }
+
+  protected int getRowMoveDelta() {
+    return 0;
+  }
 }

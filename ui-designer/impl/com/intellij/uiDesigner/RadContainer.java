@@ -235,23 +235,27 @@ public class RadContainer extends RadComponent implements IContainer {
         return false;
       }
 
-      // If the target cell is not empty does not allow drop.
-      for(int i=0; i<getComponentCount(); i++){
-        final GridConstraints c=getComponent(i).getConstraints();
-        if(
-          c.getRow() <= row && row < c.getRow()+c.getRowSpan() &&
-          c.getColumn() <= column && column < c.getColumn()+c.getColSpan()
-        ){
-          return false;
-        }
-      }
-
-      return true;
+      return getComponentAtGrid(row, column) == null;
     }
     else {
       //noinspection HardCodedStringLiteral
       throw new IllegalStateException("unknown layout:" + getLayout());
     }
+  }
+
+  @Nullable
+  public RadComponent getComponentAtGrid(final int row, final int column) {
+    // If the target cell is not empty does not allow drop.
+    for(int i=0; i<getComponentCount(); i++){
+      final GridConstraints c=getComponent(i).getConstraints();
+      if(
+        c.getRow() <= row && row < c.getRow()+c.getRowSpan() &&
+        c.getColumn() <= column && column < c.getColumn()+c.getColSpan()
+      ){
+        return getComponent(i);
+      }
+    }
+    return null;
   }
 
   /**

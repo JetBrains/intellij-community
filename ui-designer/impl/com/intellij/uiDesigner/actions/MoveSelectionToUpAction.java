@@ -22,4 +22,8 @@ public final class MoveSelectionToUpAction extends AbstractMoveSelectionAction{
       return (source.y - point.y) + Math.abs(point.x - source.x) * scale;
     }
   }
+
+  protected int getRowMoveDelta() {
+    return -1;
+  }
 }

@@ -4,13 +4,13 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.uiDesigner.componentTree.ComponentSelectionListener;
 import com.intellij.uiDesigner.palette.ComponentItem;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-
-import org.jetbrains.annotations.NotNull;
+import java.util.ArrayList;
 
 /**
  * @author Anton Katilin
@@ -39,6 +39,21 @@ public final class MainProcessor extends EventProcessor{
   protected void processKeyEvent(final KeyEvent e){
     if (myCurrentProcessor != null) {
       myCurrentProcessor.processKeyEvent(e);
+    }
+    else if (e.getID() == KeyEvent.KEY_PRESSED && Character.isLetterOrDigit(e.getKeyChar())) {
+      final ArrayList<RadComponent> selection = FormEditingUtil.getAllSelectedComponents(myEditor);
+      if (selection.size() > 0) {
+        final RadComponent component = selection.get(0);
+        myEditor.getInplaceEditingLayer().startInplaceEditing(component,
+                                                              component.getDefaultInplaceProperty(),
+                                                              null, false);
+        try {
+          new Robot().keyPress(e.getKeyCode());
+        }
+        catch (AWTException e1) {
+          LOG.error(e1);
+        }
+      }
     }
   }
 

@@ -22,4 +22,8 @@ public final class MoveSelectionToRightAction extends AbstractMoveSelectionActio
       return (point.x - source.x) + Math.abs(point.y - source.y) * scale;
     }
   }
+
+  protected int getColumnMoveDelta() {
+    return 1;
+  }
 }

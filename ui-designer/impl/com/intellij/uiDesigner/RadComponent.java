@@ -188,6 +188,10 @@ public abstract class RadComponent implements IComponent {
    * instances of the property for each invokation.
    */
   public Property getInplaceProperty(final int x, final int y){
+    return getDefaultInplaceProperty(); 
+  }
+
+  public Property getDefaultInplaceProperty() {
     return Palette.getInstance(myModule.getProject()).getInplaceProperty(getComponentClass());
   }
 

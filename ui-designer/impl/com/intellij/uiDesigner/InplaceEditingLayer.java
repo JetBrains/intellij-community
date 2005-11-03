@@ -15,6 +15,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.MouseEvent;
+import java.awt.event.KeyEvent;
+
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Anton Katilin
@@ -117,7 +121,18 @@ public final class InplaceEditingLayer extends JComponent{
 
     // Try to find property with inplace editor
     final Point p = SwingUtilities.convertPoint(this, x, y, inplaceComponent.getDelegee());
-    myInplaceProperty  = inplaceComponent.getInplaceProperty(p.x, p.y);
+    final Property inplaceProperty = inplaceComponent.getInplaceProperty(p.x, p.y);
+    if (inplaceProperty != null) {
+      final Rectangle bounds = inplaceComponent.getInplaceEditorBounds(myInplaceProperty, p.x, p.y);
+      startInplaceEditing(inplaceComponent, inplaceProperty, bounds, true);
+    }
+  }
+
+  public void startInplaceEditing(@NotNull final RadComponent inplaceComponent,
+                                  @Nullable final Property property,
+                                  @Nullable final Rectangle bounds,
+                                  final boolean keepInitialValue) {
+    myInplaceProperty = property;
     if(myInplaceProperty == null){
       return;
     }
@@ -137,14 +152,13 @@ public final class InplaceEditingLayer extends JComponent{
     // 1. Get editor component
     myInplaceEditorComponent = myInplaceEditor.getComponent(
       myInplaceComponent,
-      myInplaceProperty.getValue(myInplaceComponent),
+      keepInitialValue ? myInplaceProperty.getValue(myInplaceComponent) : null,
       true
     );
     LOG.assertTrue(myInplaceEditorComponent != null);
     myInplaceEditor.addPropertyEditorListener(myPropertyEditorListener);
 
     // 2. Set editor component bounds
-    final Rectangle bounds = myInplaceComponent.getInplaceEditorBounds(myInplaceProperty, p.x, p.y);
     final Dimension prefSize = myInplaceEditorComponent.getPreferredSize();
     if(bounds != null){ // use bounds provided by the component itself
       final Point _p = SwingUtilities.convertPoint(myInplaceComponent.getDelegee(), bounds.x, bounds.y, this);
