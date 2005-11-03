@@ -179,6 +179,7 @@ public final class DragSelectionProcessor extends EventProcessor{
       FormEditingUtil.clearSelection(myEditor.getRootContainer());
       for(RadComponent component: mySelection) {
         component.setSelected(true);
+        InsertComponentProcessor.createBindingWhenDrop(myEditor, component);
       }
     }
 

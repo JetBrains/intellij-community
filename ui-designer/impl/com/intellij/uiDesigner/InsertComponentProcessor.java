@@ -80,7 +80,7 @@ public final class InsertComponentProcessor extends EventProcessor{
   }
 
   @NotNull
-  private String suggestBinding(final String componentClassName){
+  private static String suggestBinding(final GuiEditor editor, final String componentClassName){
     LOG.assertTrue(componentClassName != null);
 
     final int lastDotIndex = componentClassName.lastIndexOf('.');
@@ -103,12 +103,12 @@ public final class InsertComponentProcessor extends EventProcessor{
     // Generate member name based on current code style
     for(int i = 0; true; i++){
       final String nameCandidate = shortClassName + (i + 1);
-      final String binding = CodeStyleManager.getInstance(myEditor.getProject()).propertyNameToVariableName(
+      final String binding = CodeStyleManager.getInstance(editor.getProject()).propertyNameToVariableName(
         nameCandidate,
         VariableKind.FIELD
       );
 
-      if (!FormEditingUtil.bindingExists(myEditor.getRootContainer(), binding)) {
+      if (!FormEditingUtil.bindingExists(editor.getRootContainer(), binding)) {
         return binding;
       }
     }
@@ -116,24 +116,26 @@ public final class InsertComponentProcessor extends EventProcessor{
 
   /**
    * Tries to create binding for {@link #myInsertedComponent}
+   * @param editor
+   * @param insertedComponent
    */
-  private void createBindingWhenDrop() {
-    if(isInputComponent(myInsertedComponent)){
+  public static void createBindingWhenDrop(final GuiEditor editor, final RadComponent insertedComponent) {
+    if(isInputComponent(insertedComponent)){
       // Now if the inserted component is a input control, we need to automatically create binding
-      final String binding = suggestBinding(myInsertedComponent.getComponentClassName());
-      myInsertedComponent.setBinding(binding);
+      final String binding = suggestBinding(editor, insertedComponent.getComponentClassName());
+      insertedComponent.setBinding(binding);
 
       // Try to create field in the corresponding bound class
-      final String classToBind = myEditor.getRootContainer().getClassToBind();
+      final String classToBind = editor.getRootContainer().getClassToBind();
       if(classToBind != null){
-        final PsiClass aClass = FormEditingUtil.findClassToBind(myEditor.getModule(), classToBind);
+        final PsiClass aClass = FormEditingUtil.findClassToBind(editor.getModule(), classToBind);
         if(aClass != null){
           ApplicationManager.getApplication().runWriteAction(
             new Runnable() {
               public void run() {
-                CreateFieldFix.runImpl(myEditor,
+                CreateFieldFix.runImpl(editor,
                                        aClass,
-                                       myInsertedComponent.getComponentClassName(),
+                                       insertedComponent.getComponentClassName(),
                                        binding,
                                        false // silently skip all errors (if any)
                 );
@@ -254,7 +256,7 @@ public final class InsertComponentProcessor extends EventProcessor{
         myEditor.getProject(),
         new Runnable(){
           public void run(){
-            createBindingWhenDrop();
+            createBindingWhenDrop(myEditor, myInsertedComponent);
 
             final RadComponent[] components = new RadComponent[]{myInsertedComponent};
             if (location.getMode() == GridInsertProcessor.GridInsertMode.None) {
