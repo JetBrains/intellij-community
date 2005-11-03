@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
-import com.intellij.openapi.keymap.KeyMapBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -23,11 +22,11 @@ import java.util.ArrayList;
  */
 public final class IdeMouseEventDispatcher{
   private final PresentationFactory myPresentationFactory;
-  private final ArrayList myActions;
+  private final ArrayList<AnAction> myActions;
 
   public IdeMouseEventDispatcher(){
     myPresentationFactory=new PresentationFactory();
-    myActions=new ArrayList(1);
+    myActions=new ArrayList<AnAction>(1);
   }
 
   private void fillActionsList(Component component,MouseShortcut shortcut,boolean isModalContext){
@@ -36,13 +35,12 @@ public final class IdeMouseEventDispatcher{
     // here we try to find "local" shortcuts
 
     if(component instanceof JComponent){
-      ArrayList listOfActions = (ArrayList)((JComponent)component).getClientProperty(AnAction.ourClientProperty);
+      ArrayList<AnAction> listOfActions = (ArrayList<AnAction>)((JComponent)component).getClientProperty(AnAction.ourClientProperty);
       if (listOfActions != null) {
-        for (int i=0; i < listOfActions.size(); i++) {
-          AnAction action = (AnAction)listOfActions.get(i);
+        for (AnAction action : listOfActions) {
           Shortcut[] shortcuts = action.getShortcutSet().getShortcuts();
-          for (int j = 0; j < shortcuts.length; j++) {
-            if(shortcut.equals(shortcuts[j]) && !myActions.contains(action)){
+          for (Shortcut shortcut1 : shortcuts) {
+            if (shortcut.equals(shortcut1) && !myActions.contains(action)) {
               myActions.add(action);
             }
           }
@@ -60,13 +58,12 @@ public final class IdeMouseEventDispatcher{
     String[] actionIds=keymap.getActionIds(shortcut);
 
     ActionManager actionManager = ActionManager.getInstance();
-    for (int i = 0; i < actionIds.length; i++) {
-      String actionId = actionIds[i];
+    for (String actionId : actionIds) {
       AnAction action = actionManager.getAction(actionId);
-      if (action == null){
+      if (action == null) {
         continue;
       }
-      if (isModalContext && !action.isEnabledInModalContext()){
+      if (isModalContext && !action.isEnabledInModalContext()) {
         continue;
       }
       if (!myActions.contains(action)) {
@@ -105,7 +102,7 @@ public final class IdeMouseEventDispatcher{
     fillActionsList(component,shortcut,IdeKeyEventDispatcher.isModalContext(component));
     ActionManagerEx actionManager=ActionManagerEx.getInstanceEx();
     for(int i=0;i<myActions.size();i++){
-      AnAction action=(AnAction)myActions.get(i);
+      AnAction action=myActions.get(i);
       DataContext dataContext=DataManager.getInstance().getDataContext(component);
       Presentation presentation=myPresentationFactory.getPresentation(action);
       AnActionEvent actionEvent=new AnActionEvent(e,dataContext,ActionPlaces.MAIN_MENU,presentation,
@@ -114,7 +111,7 @@ public final class IdeMouseEventDispatcher{
       action.update(actionEvent);
       if(presentation.isEnabled()){
         actionManager.fireBeforeActionPerformed(action, dataContext);
-        Component c = ((Component)dataContext.getData(DataConstantsEx.CONTEXT_COMPONENT));
+        Component c = (Component)dataContext.getData(DataConstantsEx.CONTEXT_COMPONENT);
         if (c != null && !c.isShowing()) {
           continue;
         }

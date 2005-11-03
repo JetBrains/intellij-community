@@ -48,6 +48,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 
 /**
  * @author Anton Katilin
@@ -620,6 +621,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     return newComposite;
   }
 
+  @NotNull
   public java.util.List<FileEditor> openEditor(final OpenFileDescriptor descriptor, final boolean focusEditor) {
     if (descriptor == null) {
       throw new IllegalArgumentException("descriptor cannot be null");
@@ -633,8 +635,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
                                                       final FileEditor[] editors = openFile(descriptor.getFile(), focusEditor);
                                                       result.addAll(Arrays.asList(editors));
 
-                                                      for (int i = 0; i < editors.length; i++) {
-                                                        final FileEditor editor = editors[i];
+                                                      for (final FileEditor editor : editors) {
                                                         if (!(editor instanceof TextEditor)) {
                                                           continue;
                                                         }
@@ -649,7 +650,8 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
                                                           _editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
                                                         }
                                                         else if (descriptor.getLine() != -1 && descriptor.getColumn() != -1) {
-                                                          final LogicalPosition pos = new LogicalPosition(descriptor.getLine(), descriptor.getColumn());
+                                                          final LogicalPosition pos =
+                                                            new LogicalPosition(descriptor.getLine(), descriptor.getColumn());
                                                           _editor.getCaretModel().moveToLogicalPosition(pos);
                                                           _editor.getSelectionModel().removeSelection();
                                                           _editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
@@ -672,9 +674,8 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
 
   @Nullable
   public Editor openTextEditor(final OpenFileDescriptor descriptor, final boolean focusEditor) {
-    final java.util.List<FileEditor> fileEditors = openEditor(descriptor, focusEditor);
-    for (int i = 0; i < fileEditors.size(); i++) {
-      FileEditor editor = fileEditors.get(i);
+    final Collection<FileEditor> fileEditors = openEditor(descriptor, focusEditor);
+    for (FileEditor editor : fileEditors) {
       if (editor instanceof TextEditor) {
         return ((TextEditor)editor).getEditor();
       }
