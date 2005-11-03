@@ -216,7 +216,13 @@ public class EditorTracker {
   protected Editor[] editorsByWindow(Window window) {
     List<Editor> list = myWindowToEditorsMap.get(window);
     if (list == null) return EMPTY_EDITOR_ARRAY;
-    return list.toArray(new Editor[list.size()]);
+    List<Editor> filtered = new ArrayList<Editor>();
+    for (Editor editor : list) {
+      if (editor.getContentComponent().isShowing()) {
+        filtered.add(editor);
+      }
+    }
+    return filtered.toArray(new Editor[filtered.size()]);
   }
 
   /**
