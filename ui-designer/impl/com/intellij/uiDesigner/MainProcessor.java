@@ -211,7 +211,7 @@ public final class MainProcessor extends EventProcessor{
     }
 
     if (e.isControlDown()) {
-      component.setSelected(!(component.isSelected()));
+      //component.setSelected(!(component.isSelected()));
     }
     else if (e.isShiftDown()) {
       // Do not select component is shift is pressed

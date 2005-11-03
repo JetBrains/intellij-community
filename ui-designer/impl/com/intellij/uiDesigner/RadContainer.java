@@ -296,10 +296,7 @@ public class RadContainer extends RadComponent implements IContainer {
       final int row = gridLayout.getRowAt(y);
       final int column = gridLayout.getColumnAt(x);
 
-      // Prepare component for drop.
-      final RadComponent c = components[0];
-
-      return dropIntoGrid(c, row, column);
+      return dropIntoGrid(components, row, column);
     }
     else {
       //noinspection HardCodedStringLiteral
@@ -307,24 +304,34 @@ public class RadContainer extends RadComponent implements IContainer {
     }
   }
 
-  public DropInfo dropIntoGrid(final RadComponent c, final int row, final int column) {
-    if (c instanceof RadContainer) {
-      final LayoutManager layout = ((RadContainer)c).getLayout();
-      if (layout instanceof XYLayoutManager) {
-        ((XYLayoutManager)layout).setPreferredSize(c.getSize());
+  public DropInfo dropIntoGrid(final RadComponent[] components, int row, int column) {
+    final GridLayoutManager gridLayout = (GridLayoutManager)getLayout();
+    assert components.length > 0;
+    assert column + components.length <= gridLayout.getColumnCount();
+
+    RevalidateInfo info = null;
+    for (RadComponent c : components) {
+      if (c instanceof RadContainer) {
+        final LayoutManager layout = ((RadContainer)c).getLayout();
+        if (layout instanceof XYLayoutManager) {
+          ((XYLayoutManager)layout).setPreferredSize(c.getSize());
+        }
       }
+
+      final GridConstraints constraints = c.getConstraints();
+      constraints.setRow(row);
+      constraints.setColumn(column);
+      constraints.setRowSpan(1);
+      constraints.setColSpan(1);
+      addComponent(c);
+
+      // Fill DropInfo
+      info = c.revalidate();
+      column++;
     }
 
-    final GridConstraints constraints = c.getConstraints();
-    constraints.setRow(row);
-    constraints.setColumn(column);
-    constraints.setRowSpan(1);
-    constraints.setColSpan(1);
-    addComponent(c);
-
-    // Fill DropInfo
-    final RevalidateInfo info = c.revalidate();
-
+    revalidate();
+    //noinspection ConstantConditions
     return new DropInfo(this, info.myContainer, info.myPreviousContainerSize);
   }
 
@@ -493,6 +500,11 @@ public class RadContainer extends RadComponent implements IContainer {
       //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("parent mismatch: "+child.getParent());
     }
+    writeXYConstraints(writer, child);
+    writeGridConstraints(writer, child);
+  }
+
+  public static void writeXYConstraints(final XmlWriter writer, final RadComponent child) {
     // Constraints of XY layout
     writer.startElement("xy");
     try{
@@ -503,7 +515,9 @@ public class RadContainer extends RadComponent implements IContainer {
     }finally{
       writer.endElement(); // xy
     }
+  }
 
+  public static void writeGridConstraints(final XmlWriter writer, final RadComponent child) {
     // Constraints in Grid layout
     writer.startElement("grid");
     try {

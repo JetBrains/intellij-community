@@ -460,25 +460,37 @@ public final class FormEditingUtil {
    * @param x in editor pane coordinates
    * @param y in editor pane coordinates
    */
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static Cursor getDropCursor(final GuiEditor editor, final int x, final int y, final int componentCount){
-    Cursor cursor = Cursor.getDefaultCursor();
     if (canDrop(editor, x, y, componentCount)) {
       return getMoveDropCursor();
     }
-    else {
-      try {
-        cursor = Cursor.getSystemCustomCursor("MoveNoDrop.32x32");
-      }
-      catch (Exception ex) {
-      }
-    }
-    return cursor;
+    return getMoveNoDropCursor();
   }
 
   public static Cursor getMoveDropCursor() {
     try {
+      //noinspection HardCodedStringLiteral
       return Cursor.getSystemCustomCursor("MoveDrop.32x32");
+    }
+    catch (Exception ex) {
+      return Cursor.getDefaultCursor();
+    }
+  }
+
+  public static Cursor getMoveNoDropCursor() {
+    try {
+      //noinspection HardCodedStringLiteral
+      return Cursor.getSystemCustomCursor("MoveNoDrop.32x32");
+    }
+    catch (Exception ex) {
+      return Cursor.getDefaultCursor();
+    }
+  }
+
+  public static Cursor getCopyDropCursor() {
+    try {
+      //noinspection HardCodedStringLiteral
+      return Cursor.getSystemCustomCursor("CopyDrop.32x32");
     }
     catch (Exception ex) {
       return Cursor.getDefaultCursor();
@@ -624,14 +636,28 @@ public final class FormEditingUtil {
     return bindingExists.get();
   }
 
-  public static RadContainer getRadContainerAt(final GuiEditor editor, final int x, final int y) {
-    final RadComponent component = getRadComponentAt(editor, x, y);
+  @Nullable
+  public static RadContainer getRadContainerAt(final GuiEditor editor, final int x, final int y,
+                                               int epsilon) {
+    RadComponent component = getRadComponentAt(editor, x, y);
+    if (isNullOrRoot(component) && epsilon > 0) {
+      // try to find component near specified location
+      component = getRadComponentAt(editor, x-epsilon, y-epsilon);
+      if (isNullOrRoot(component)) component = getRadComponentAt(editor, x-epsilon, y+epsilon);
+      if (isNullOrRoot(component)) component = getRadComponentAt(editor, x+epsilon, y-epsilon);
+      if (isNullOrRoot(component)) component = getRadComponentAt(editor, x+epsilon, y+epsilon);
+    }
+
     if (component != null) {
       return (component instanceof RadContainer)
              ? (RadContainer)component
              : component.getParent();
     }
     return null;
+  }
+
+  private static boolean isNullOrRoot(final RadComponent component) {
+    return component == null || component instanceof RadRootContainer;
   }
 
   public static interface ComponentVisitor <Type extends IComponent>{

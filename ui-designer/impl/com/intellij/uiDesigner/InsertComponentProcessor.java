@@ -256,11 +256,12 @@ public final class InsertComponentProcessor extends EventProcessor{
           public void run(){
             createBindingWhenDrop();
 
+            final RadComponent[] components = new RadComponent[]{myInsertedComponent};
             if (location.getMode() == GridInsertProcessor.GridInsertMode.None) {
-              myDropInfo = FormEditingUtil.drop(myEditor, e.getX(), e.getY(), new RadComponent[]{myInsertedComponent}, new int[]{0}, new int[]{0});
+              myDropInfo = FormEditingUtil.drop(myEditor, e.getX(), e.getY(), components, new int[]{0}, new int[]{0});
             }
             else {
-              myDropInfo = myGridInsertProcessor.processGridInsertOnDrop(location, myInsertedComponent, null);
+              myDropInfo = myGridInsertProcessor.processGridInsertOnDrop(location, components, null);
               if (myDropInfo == null) {
                 return;
               }
@@ -302,6 +303,6 @@ public final class InsertComponentProcessor extends EventProcessor{
   }
 
   public Cursor processMouseMoveEvent(final MouseEvent e) {
-    return myGridInsertProcessor.processMouseMoveEvent(e.getX(), e.getY(), 1);
+    return myGridInsertProcessor.processMouseMoveEvent(e.getX(), e.getY(), 1, false);
   }
 }

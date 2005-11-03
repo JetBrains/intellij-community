@@ -12,6 +12,7 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 
 import org.jetbrains.annotations.NotNull;
+import gnu.trove.TIntArrayList;
 
 /**
  * @author Anton Katilin
@@ -55,7 +56,7 @@ public final class DragSelectionProcessor extends EventProcessor{
     myGridInsertProcessor = new GridInsertProcessor(editor);
   }
 
-  private void processStartDrag(final MouseEvent e){
+  private void processStartDrag(final MouseEvent e) {
     myPreviewer = new MyPreviewer();
 
     // Store selected components
@@ -120,22 +121,34 @@ public final class DragSelectionProcessor extends EventProcessor{
    *
    * @param point point in coordinates of drag layer (it's convenient here).
    *
+   * @param copyOnDrop
    * @return true if the selected components were successfully dropped
    */
-  private boolean dropSelection(@NotNull final Point point, boolean mouseReleased) {
+  private boolean dropSelection(@NotNull final Point point, boolean mouseReleased, final boolean copyOnDrop) {
     //noinspection ConstantConditions
     LOG.assertTrue(point!=null);
 
     GridInsertProcessor.GridInsertLocation location = null;
     if (mouseReleased) {
       myGridInsertProcessor.removeFeedbackPainter();
-      if (mySelection.size() == 1) {
-        location = myGridInsertProcessor.getGridInsertLocation(point.x, point.y);
+      location = myGridInsertProcessor.getGridInsertLocation(point.x, point.y);
+      if (!myGridInsertProcessor.isDropInsertAllowed(location, mySelection.size())) {
+        location = null;
       }
     }
 
+    if (copyOnDrop) {
+      final String serializedComponents = CutCopyPasteSupport.serializeForCopy(myEditor, mySelection);
+      cancelDrag();
+
+      TIntArrayList xs = new TIntArrayList();
+      TIntArrayList ys = new TIntArrayList();
+      mySelection.clear();
+      CutCopyPasteSupport.loadComponentsToPaste(myEditor, serializedComponents, xs, ys, mySelection);
+    }
+
     if (!FormEditingUtil.canDrop(myEditor, point.x, point.y, mySelection.size()) &&
-      (location == null || location.getMode() == GridInsertProcessor.GridInsertMode.None)) {
+        (location == null || location.getMode() == GridInsertProcessor.GridInsertMode.None)) {
       return false;
     }
 
@@ -147,23 +160,33 @@ public final class DragSelectionProcessor extends EventProcessor{
       dy[i] = component.getY() - point.y;
     }
 
+    final RadComponent[] components = mySelection.toArray(new RadComponent[mySelection.size()]);
     if (location != null && location.getMode() != GridInsertProcessor.GridInsertMode.None) {
-      myDropInfo = myGridInsertProcessor.processGridInsertOnDrop(location, mySelection.get(0), myOriginalConstraints);
+      myDropInfo = myGridInsertProcessor.processGridInsertOnDrop(location, components, myOriginalConstraints);
     }
     else {
       myDropInfo = FormEditingUtil.drop(
         myEditor,
         point.x,
         point.y,
-        mySelection.toArray(new RadComponent[mySelection.size()]),
+        components,
         dx,
         dy
       );
     }
 
+    if (copyOnDrop) {
+      FormEditingUtil.clearSelection(myEditor.getRootContainer());
+      for(RadComponent component: mySelection) {
+        component.setSelected(true);
+      }
+    }
+
     if (mouseReleased) {
       for(int i=0; i<myOriginalConstraints.length; i++) {
-        FormEditingUtil.deleteEmptyGridCells(myOriginalParents [i], myOriginalConstraints [i]);
+        if (myOriginalParents [i].isGrid()) {
+          FormEditingUtil.deleteEmptyGridCells(myOriginalParents [i], myOriginalConstraints [i]);
+        }
       }
     }
 
@@ -184,14 +207,14 @@ public final class DragSelectionProcessor extends EventProcessor{
     myGridInsertProcessor.removeFeedbackPainter();
   }
 
-  private void processMouseReleased(){
+  private void processMouseReleased(final boolean copyOnDrop){
     // Cancel all pending requests for preview.
     myPreviewer.dispose();
 
     // Try to drop selection at the point of mouse event.
-    if(dropSelection(myLastPoint, true)){
+    if(dropSelection(myLastPoint, true, copyOnDrop)){
       myEditor.refreshAndSave(true);
-    }else{
+    } else {
       cancelDrag();
     }
 
@@ -236,7 +259,13 @@ public final class DragSelectionProcessor extends EventProcessor{
     }
     else if(e.getID()==MouseEvent.MOUSE_RELEASED){
       if (myDragStarted) {
-        processMouseReleased();
+        processMouseReleased(e.isControlDown());
+      }
+      else if (e.isControlDown()) {
+        RadComponent component = FormEditingUtil.getRadComponentAt(myEditor, e.getX(), e.getY());
+        if (component != null) {
+          component.setSelected(!component.isSelected());
+        }
       }
     }
     else if(e.getID()==MouseEvent.MOUSE_DRAGGED){
@@ -255,10 +284,12 @@ public final class DragSelectionProcessor extends EventProcessor{
 
   private void processMouseDragged(final MouseEvent e){
     // Restart previewer.
+    /*
     myPreviewer.processMouseDragged(e);
     if(myPreviewer.isPreview()){
       return;
     }
+    */
 
     // Move components in the drag layer.
     final int dx = e.getX() - myLastPoint.x;
@@ -270,7 +301,7 @@ public final class DragSelectionProcessor extends EventProcessor{
     myLastPoint=e.getPoint();
     myEditor.getDragLayer().repaint();
 
-    setCursor(myGridInsertProcessor.processMouseMoveEvent(e.getX(), e.getY(), mySelection.size()));
+    setCursor(myGridInsertProcessor.processMouseMoveEvent(e.getX(), e.getY(), mySelection.size(), e.isControlDown()));
   }
 
   /**
@@ -297,7 +328,7 @@ public final class DragSelectionProcessor extends EventProcessor{
     public MyPreviewer(){
       myTimer = new Timer(DROP_DELAY,this);
       myTimer.setRepeats(false);
-      myTimer.start();
+      //myTimer.start();
     }
 
     public void actionPerformed(final ActionEvent e){
@@ -312,7 +343,7 @@ public final class DragSelectionProcessor extends EventProcessor{
 
       // Try to drop selection
 
-      myPreview = dropSelection(myLastPoint, false);
+      myPreview = dropSelection(myLastPoint, false, false);
       myDropPoint = myPreview ? myLastPoint : null;
       myEditor.refresh();
     }
