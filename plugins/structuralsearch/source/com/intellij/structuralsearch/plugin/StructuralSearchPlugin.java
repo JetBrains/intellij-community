@@ -77,8 +77,8 @@ public final class StructuralSearchPlugin implements ProjectComponent, JDOMExter
   public void projectClosed() {
   }
 
-  public static StructuralSearchPlugin getInstance(Project _project) {
-    return _project.getComponent(StructuralSearchPlugin.class);
+  public static StructuralSearchPlugin getInstance(Project project) {
+    return project.getComponent(StructuralSearchPlugin.class);
   }
 
   public ConfigurationManager getConfigurationManager() {

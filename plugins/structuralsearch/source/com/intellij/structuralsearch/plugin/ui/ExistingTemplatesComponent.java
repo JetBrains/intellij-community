@@ -4,12 +4,12 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.structuralsearch.plugin.StructuralSearchPlugin;
 import com.intellij.structuralsearch.SSRBundle;
+import com.intellij.structuralsearch.plugin.StructuralSearchPlugin;
 import com.intellij.ui.ListSpeedSearch;
-import com.intellij.util.ui.Tree;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 
 import javax.swing.*;
@@ -19,7 +19,6 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.Iterator;
 import java.util.LinkedList;
 
 /**
@@ -40,35 +39,35 @@ public class ExistingTemplatesComponent {
   private DialogWrapper owner;
   private Project project;
 
-  private ExistingTemplatesComponent(Project _project) {
-    final DefaultMutableTreeNode root;
+  private ExistingTemplatesComponent(Project project) {
 
-    project = _project;
+    this.project = project;
+    final DefaultMutableTreeNode root;
     patternTreeModel = new DefaultTreeModel(
       root = new DefaultMutableTreeNode(null)
     );
 
     DefaultMutableTreeNode parent = null;
     String lastCategory = null;
-    LinkedList nodesToExpand = new LinkedList();
+    LinkedList<Object> nodesToExpand = new LinkedList<Object>();
 
     final PredefinedConfiguration[] predefined = PredefinedConfiguration.getPredefinedTemplates();
-    for(int i=0;i<predefined.length;++i) {
-      final PredefinedConfiguration info = predefined[i];
+    for (final PredefinedConfiguration info : predefined) {
       final DefaultMutableTreeNode node = new DefaultMutableTreeNode(info);
 
-      if (lastCategory==null || !lastCategory.equals(info.getCategory())) {
-        if (info.getCategory().length()>0) {
-          root.add( parent = new DefaultMutableTreeNode(info.getCategory()) );
-          nodesToExpand.add( parent );
+      if (lastCategory == null || !lastCategory.equals(info.getCategory())) {
+        if (info.getCategory().length() > 0) {
+          root.add(parent = new DefaultMutableTreeNode(info.getCategory()));
+          nodesToExpand.add(parent);
           lastCategory = info.getCategory();
-        } else {
+        }
+        else {
           root.add(node);
           continue;
         }
       }
 
-      parent.add( node );
+      parent.add(node);
     }
 
     parent = new DefaultMutableTreeNode(PredefinedConfiguration.USER_DEFINED_TYPE);
@@ -76,19 +75,18 @@ public class ExistingTemplatesComponent {
     root.add(parent);
     nodesToExpand.add(parent);
 
-    final ConfigurationManager configurationManager = StructuralSearchPlugin.getInstance(project).getConfigurationManager();
+    final ConfigurationManager configurationManager = StructuralSearchPlugin.getInstance(this.project).getConfigurationManager();
     if (configurationManager.getConfigurations()!=null) {
-      for(Iterator i=configurationManager.getConfigurations().iterator();i.hasNext();) {
-        final Configuration config = (Configuration) i.next();
-        parent.add( new DefaultMutableTreeNode( config ) );
+      for (final Configuration config : configurationManager.getConfigurations()) {
+        parent.add(new DefaultMutableTreeNode(config));
       }
     }
 
     patternTree = createTree(patternTreeModel);
 
-    for(Iterator i=nodesToExpand.iterator();i.hasNext();) {
+    for (final Object aNodesToExpand : nodesToExpand) {
       patternTree.expandPath(
-        new TreePath( new Object[] { root, i.next() } )
+        new TreePath(new Object[]{root, aNodesToExpand})
       );
     }
 
@@ -153,8 +151,8 @@ public class ExistingTemplatesComponent {
     new ListSpeedSearch(historyList);
 
     if (configurationManager.getHistoryConfigurations()!=null) {
-      for(Iterator i=configurationManager.getHistoryConfigurations().iterator();i.hasNext();) {
-        historyModel.addElement(i.next());
+      for (final Configuration configuration : configurationManager.getHistoryConfigurations()) {
+        historyModel.addElement(configuration);
       }
 
       historyList.setSelectedIndex(0);
@@ -192,7 +190,7 @@ public class ExistingTemplatesComponent {
     owner.close(DialogWrapper.OK_EXIT_CODE);
   }
 
-  private Tree createTree(TreeModel treeModel) {
+  private static Tree createTree(TreeModel treeModel) {
     final Tree tree = new Tree(treeModel);
 
     tree.setRootVisible(false);

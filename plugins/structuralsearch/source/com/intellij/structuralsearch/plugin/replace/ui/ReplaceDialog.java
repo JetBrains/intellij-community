@@ -88,10 +88,9 @@ public class ReplaceDialog extends SearchDialog {
 
   }
 
-  protected NavigateSearchResultsDialog createResultsNavigator(final SearchContext searchContext,
-                                                               Configuration config) {
+  protected NavigateSearchResultsDialog createResultsNavigator(final SearchContext searchContext, Configuration config) {
     final NavigateSearchResultsDialog resultsDialog = new NavigateSearchResultsDialog(searchContext.getProject(),true);
-    resultsDialog.setOptions( ((ReplaceConfiguration)config).getOptions() );
+    resultsDialog.setOptions(((ReplaceConfiguration)config).getOptions());
     return resultsDialog;
   }
 
@@ -237,8 +236,8 @@ public class ReplaceDialog extends SearchDialog {
     context.getReplacer().replaceAll(results);
   }
 
-  public ReplaceDialog(SearchContext _searchContext) {
-    super(_searchContext);
+  public ReplaceDialog(SearchContext searchContext) {
+    super(searchContext);
   }
 
   public Configuration createConfiguration() {

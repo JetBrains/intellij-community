@@ -35,9 +35,7 @@ public abstract class Configuration implements JDOMExternalizable {
   public void readExternal(Element element) {
     name = element.getAttributeValue(NAME_ATTRIBUTE_NAME);
 
-    Attribute attr;
-
-    attr = element.getAttribute(DEMAND_ATTRIBUTE_NAME);
+    Attribute attr = element.getAttribute(DEMAND_ATTRIBUTE_NAME);
     if (attr!=null) {
       try {
         searchOnDemand = attr.getBooleanValue();

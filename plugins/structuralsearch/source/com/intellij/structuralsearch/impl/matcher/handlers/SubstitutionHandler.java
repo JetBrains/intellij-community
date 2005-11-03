@@ -30,13 +30,13 @@ public class SubstitutionHandler extends Handler {
   private int totalMatchedOccurs = -1;
   private MatchResultImpl myNestedResult;
 
-  public SubstitutionHandler(final String _name, final boolean _target, int _minOccurs,
-                             int _maxOccurs, boolean _greedy) {
-    name = _name;
-    maxOccurs = _maxOccurs;
-    minOccurs = _minOccurs;
-    target = _target;
-    greedy = _greedy;
+  public SubstitutionHandler(final String name, final boolean target, int minOccurs,
+                             int maxOccurs, boolean greedy) {
+    this.name = name;
+    this.maxOccurs = maxOccurs;
+    this.minOccurs = minOccurs;
+    this.target = target;
+    this.greedy = greedy;
   }
 
   public boolean isSubtype() {

@@ -39,7 +39,7 @@ class SelectTemplateDialog extends DialogWrapper {
     public void valueChanged(TreeSelectionEvent e) {
       if (e.getNewLeadSelectionPath()!=null) {
         setPatternFromNode(
-          ((DefaultMutableTreeNode)e.getNewLeadSelectionPath().getLastPathComponent())
+          (DefaultMutableTreeNode)e.getNewLeadSelectionPath().getLastPathComponent()
         );
       }
     }
@@ -53,20 +53,20 @@ class SelectTemplateDialog extends DialogWrapper {
     }
   }
 
-  SelectTemplateDialog(Project _project, boolean _showHistory, boolean _replace) {
-    super(_project,false);
+  SelectTemplateDialog(Project project, boolean showHistory, boolean replace) {
+    super(project,false);
 
-    project = _project;
-    showHistory = _showHistory;
-    replace = _replace;
-    existingTemplatesComponent = ExistingTemplatesComponent.getInstance(project);
+    this.project = project;
+    this.showHistory = showHistory;
+    this.replace = replace;
+    existingTemplatesComponent = ExistingTemplatesComponent.getInstance(this.project);
 
-    setTitle((showHistory)? SSRBundle.message("used.templates.history.dialog.title") :SSRBundle.message("existing.templates.dialog.title"));
+    setTitle(SSRBundle.message(this.showHistory ? "used.templates.history.dialog.title" :"existing.templates.dialog.title"));
 
     getOKAction().putValue(Action.MNEMONIC_KEY,new Integer('O'));
     init();
 
-    if (showHistory) {
+    if (this.showHistory) {
       final int selection = existingTemplatesComponent.getHistoryList().getSelectedIndex();
       if (selection!=-1) {
         setPatternFromList(selection);
@@ -94,12 +94,12 @@ class SelectTemplateDialog extends DialogWrapper {
     centerPanel.add(BorderLayout.CENTER,splitter = new Splitter(false,0.3f));
     centerPanel.add(splitter);
 
-    final JPanel panel;
     splitter.setFirstComponent(
       showHistory?
-        existingTemplatesComponent.getHistoryPanel():
-        existingTemplatesComponent.getTemplatesPanel()
+      existingTemplatesComponent.getHistoryPanel():
+      existingTemplatesComponent.getTemplatesPanel()
     );
+    final JPanel panel;
     splitter.setSecondComponent(
       panel = new JPanel( new BorderLayout() )
     );
@@ -143,8 +143,8 @@ class SelectTemplateDialog extends DialogWrapper {
   }
 
   public JComponent getPreferredFocusedComponent() {
-    return (showHistory)?
-      (JComponent)existingTemplatesComponent.getHistoryList() :
+    return showHistory ?
+      existingTemplatesComponent.getHistoryList() :
       existingTemplatesComponent.getPatternTree();
   }
 

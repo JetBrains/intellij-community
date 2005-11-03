@@ -1,15 +1,12 @@
 package com.intellij.structuralsearch.plugin.ui;
 
+import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import org.jdom.Element;
-import org.jdom.Attribute;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.List;
-import java.util.LinkedList;
-import java.util.Iterator;
 import java.util.Collection;
-
-import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -56,28 +53,22 @@ public class ConfigurationManager {
 
   public void saveConfigurations(Element element) {
     if (configurations!=null) {
-      for(Iterator<Configuration> i = configurations.iterator();i.hasNext();) {
-        saveOneConfiguration(element, i.next());
+      for (final Configuration configuration : configurations) {
+        saveConfiguration(element, configuration);
       }
     }
 
     if (historyConfigurations!=null) {
-      for(Iterator<Configuration> i = historyConfigurations.iterator();i.hasNext();) {
-        final Element infoElement = saveOneConfiguration(element, i.next());
-
-        infoElement.getAttributes().add(
-          new Attribute(SAVE_HISTORY_ATTR_NAME,"1")
-        );
+      for (final Configuration historyConfiguration : historyConfigurations) {
+        final Element infoElement = saveConfiguration(element, historyConfiguration);
+        infoElement.setAttribute(SAVE_HISTORY_ATTR_NAME, "1");
       }
     }
   }
 
-  private static Element saveOneConfiguration(Element element, final Configuration config) {
-    Element infoElement;
-
-    element.getChildren().add(
-      infoElement = new Element( config instanceof SearchConfiguration ? SAVE_TAG_NAME:SAVE_TAG_NAME2)
-    );
+  private static Element saveConfiguration(Element element, final Configuration config) {
+    Element infoElement = new Element(config instanceof SearchConfiguration ? SAVE_TAG_NAME : SAVE_TAG_NAME2);
+    element.addContent(infoElement);
     config.writeExternal(infoElement);
 
     return infoElement;
@@ -88,17 +79,19 @@ public class ConfigurationManager {
     List patterns = element.getChildren();
 
     if (patterns!=null && patterns.size() > 0) {
-      for(Iterator i = patterns.iterator();i.hasNext();) {
-        final Element childElement = (Element)i.next();
-        final Configuration config = childElement.getName().equals(SAVE_TAG_NAME)?(Configuration)new SearchConfiguration():new ReplaceConfiguration();
+      for (final Object pattern : patterns) {
+        final Element childElement = (Element)pattern;
+        final Configuration config =
+          childElement.getName().equals(SAVE_TAG_NAME) ? new SearchConfiguration() : new ReplaceConfiguration();
 
-        config.readExternal( childElement );
+        config.readExternal(childElement);
 
-        if (childElement.getAttribute(SAVE_HISTORY_ATTR_NAME)!=null) {
-          if (historyConfigurations==null) historyConfigurations = new LinkedList<Configuration>();
+        if (childElement.getAttribute(SAVE_HISTORY_ATTR_NAME) != null) {
+          if (historyConfigurations == null) historyConfigurations = new LinkedList<Configuration>();
           historyConfigurations.add(config);
-        } else {
-          addConfiguration( config );
+        }
+        else {
+          addConfiguration(config);
         }
       }
     }

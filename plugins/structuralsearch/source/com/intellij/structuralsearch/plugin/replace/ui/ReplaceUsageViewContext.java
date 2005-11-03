@@ -22,11 +22,11 @@ import java.util.ArrayList;
  */
 class ReplaceUsageViewContext extends UsageViewContext {
   private HashMap<Usage,ReplacementInfo> usage2ReplacementInfo;
-  private java.util.List<ReplacementInfo> results;
+  private List<ReplacementInfo> results;
   private Replacer replacer;
 
-  ReplaceUsageViewContext(final SearchContext _context, final Configuration _configuration) {
-    super(_context,_configuration);
+  ReplaceUsageViewContext(final SearchContext context, final Configuration configuration) {
+    super(context,configuration);
   }
 
   protected SearchCommand createCommand() {

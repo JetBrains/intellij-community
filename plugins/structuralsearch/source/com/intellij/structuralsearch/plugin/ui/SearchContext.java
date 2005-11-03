@@ -27,11 +27,7 @@ public final class SearchContext implements DataProvider, Cloneable {
   }
 
   public PsiFile getFile() {
-    if ( ( file == null ||
-           !file.getContainingFile().getVirtualFile().equals(currentFile)
-         ) &&
-         currentFile != null
-       ) {
+    if (currentFile != null && (file == null || !currentFile.equals(file.getContainingFile().getVirtualFile()))) {
       file = PsiManager.getInstance(project).findFile(currentFile);
     }
 

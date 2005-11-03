@@ -15,10 +15,10 @@ public class DoSearchAction {
     Matcher matcher = new Matcher(project);
 
     try {
-      matcher.findMatches( sink, options );
-    } catch(RuntimeException ex) {
+      matcher.findMatches(sink, options);
+    }
+    finally {
       sink.matchingFinished();
-      throw ex;
     }
   }
 }

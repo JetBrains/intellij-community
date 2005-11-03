@@ -291,13 +291,13 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
       NavigateSearchResultsDialog resultsDialog = createResultsNavigator(searchContext, config);
 
       DoSearchAction.execute(searchContext.getProject(), resultsDialog, config);
-    } else {
+    }
+    else {
       createUsageView(searchContext, config);
     }
   }
 
-  protected NavigateSearchResultsDialog createResultsNavigator(final SearchContext searchContext,
-                                                               Configuration config) {
+  protected NavigateSearchResultsDialog createResultsNavigator(final SearchContext searchContext, Configuration config) {
     return new NavigateSearchResultsDialog(searchContext.getProject(),false);
   }
 
@@ -381,15 +381,15 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     );
   }
 
-  public SearchDialog(SearchContext _searchContext) {
-    super(_searchContext.getProject(),true);
-    searchContext = (SearchContext)_searchContext.clone();
+  public SearchDialog(SearchContext searchContext) {
+    super(searchContext.getProject(),true);
+    this.searchContext = (SearchContext)searchContext.clone();
     setTitle(getDefaultTitle());
     setOKButtonText(SSRBundle.message("ssdialog.find.botton"));
     setOKButtonIcon(IconLoader.getIcon("/actions/find.png"));
     getOKAction().putValue(Action.MNEMONIC_KEY,new Integer('F'));
 
-    existingTemplatesComponent = ExistingTemplatesComponent.getInstance(searchContext.getProject());
+    existingTemplatesComponent = ExistingTemplatesComponent.getInstance(this.searchContext.getProject());
     model = new SearchModel(createConfiguration());
     myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
     
@@ -414,18 +414,18 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
   private static boolean ourSupportDifferentFileTypes = true;
   
   protected int getRowsCount() {
-    return (ourSupportDifferentFileTypes)?4:3;
+    return ourSupportDifferentFileTypes ?4:3;
   }
 
   protected JComponent createCenterPanel() {
-    JComponent centerPanel = new JPanel(new BorderLayout());
 
-    JPanel panel = new JPanel( new BorderLayout() );
     JPanel editorPanel = new JPanel( new BorderLayout() );
     editorPanel.add(BorderLayout.CENTER,createEditorContent());
     editorPanel.add(BorderLayout.SOUTH,Box.createVerticalStrut(8));
+    JPanel panel = new JPanel(new BorderLayout());
     panel.add(BorderLayout.CENTER,editorPanel);
     panel.add(BorderLayout.SOUTH,createTemplateManagementButtons());
+    JComponent centerPanel = new JPanel(new BorderLayout());
     centerPanel.add(BorderLayout.CENTER,panel);
 
     JPanel optionsContent = new JPanel( new BorderLayout() );
@@ -435,26 +435,23 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     searchOptions.setLayout(new GridLayout(getRowsCount(),1,0,0) );
     searchOptions.setBorder( IdeBorderFactory.createTitledBorder(SSRBundle.message("ssdialog.options.group.border")));
 
-    JPanel allOptions = new JPanel( new BorderLayout() );
-
     JPanel scopePanel = new JPanel(new BorderLayout());
-    JLabel label;
     scopePanel.add(Box.createVerticalStrut(8),BorderLayout.NORTH);
-    scopePanel.add(
-      label = new JLabel(SSRBundle.message("search.dialog.scope.label")), BorderLayout.WEST
-    );
+    JLabel label = new JLabel(SSRBundle.message("search.dialog.scope.label"));
+    scopePanel.add(label, BorderLayout.WEST);
 
     scopePanel.add(
       combo = new ScopeChooserCombo(
         searchContext.getProject(),
         true,
         false,
-        (isReplaceDialog())?SSRBundle.message("default.replace.scope") :FindSettings.getInstance().getDefaultScopeName()
+        isReplaceDialog() ?SSRBundle.message("default.replace.scope") :FindSettings.getInstance().getDefaultScopeName()
       ),
       BorderLayout.CENTER
     );
     label.setLabelFor(combo.getComboBox());
 
+    JPanel allOptions = new JPanel(new BorderLayout());
     allOptions.add(
       scopePanel,
       BorderLayout.SOUTH
@@ -687,8 +684,8 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
   }
 
   protected boolean doValidate() {
-    boolean result = true;
     setValuesToConfig(model.getConfig());
+    boolean result = true;
 
     try {
       Matcher.validate(searchContext.getProject(),model.getConfig().getMatchOptions());
@@ -723,9 +720,8 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
   }
 
   protected void setValuesToConfig(Configuration config) {
-    MatchOptions options;
 
-    options = config.getMatchOptions();
+    MatchOptions options = config.getMatchOptions();
 
     options.setScope(
       combo.getSelectedScope()

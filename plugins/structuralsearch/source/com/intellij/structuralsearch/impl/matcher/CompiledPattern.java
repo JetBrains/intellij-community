@@ -1,17 +1,16 @@
 package com.intellij.structuralsearch.impl.matcher;
 
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.structuralsearch.impl.matcher.handlers.Handler;
-import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.SimpleHandler;
-import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
+import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
 import com.intellij.structuralsearch.impl.matcher.iterators.NodeIterator;
-import com.intellij.openapi.util.Key;
+import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
 
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 
 /**
  * Class to hold compiled pattern information
@@ -127,7 +126,7 @@ public abstract class CompiledPattern {
     handlers.put(node,handler);
   }
 
-  public SubstitutionHandler createSubstituionHandler(
+  public SubstitutionHandler createSubstitutionHandler(
     String name, String compiledName, boolean target,int minOccurs, int maxOccurs, boolean greedy) {
 
     SubstitutionHandler handler = (SubstitutionHandler) handlers.get(compiledName);

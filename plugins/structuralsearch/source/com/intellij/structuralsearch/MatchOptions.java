@@ -1,20 +1,18 @@
 package com.intellij.structuralsearch;
 
-import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.PsiModifierList;
+import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.psi.PsiModifier;
-import org.jdom.Element;
+import com.intellij.psi.search.SearchScope;
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
+import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Arrays;
 
 /**
  * match options
@@ -177,14 +175,10 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
     }
 
     if (variableConstraints!=null) {
-      for(Iterator i=variableConstraints.values().iterator();i.hasNext();) {
-        final MatchVariableConstraint constraint = (MatchVariableConstraint)i.next();
-        final Element infoElement;
-
-        element.getChildren().add(
-          infoElement = new Element(CONSTRAINT_ATTR_NAME)
-        );
-        constraint.writeExternal(infoElement);
+      for (final MatchVariableConstraint matchVariableConstraint : variableConstraints.values()) {
+        final Element infoElement = new Element(CONSTRAINT_ATTR_NAME);
+        element.addContent(infoElement);
+        matchVariableConstraint.writeExternal(infoElement);
       }
     }
   }
@@ -234,9 +228,9 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
 
     List elements = element.getChildren(CONSTRAINT_ATTR_NAME);
     if (elements!=null && elements.size()>0) {
-      for(Iterator i=elements.iterator();i.hasNext();) {
+      for (final Object element1 : elements) {
         final MatchVariableConstraint constraint = new MatchVariableConstraint();
-        constraint.readExternal((Element)i.next());
+        constraint.readExternal((Element)element1);
         addVariableConstraint(constraint);
       }
     }

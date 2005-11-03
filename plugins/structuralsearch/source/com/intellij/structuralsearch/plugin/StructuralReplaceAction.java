@@ -22,13 +22,16 @@ public class StructuralReplaceAction extends AnAction {
    * @param event the event of action
    */
   public void actionPerformed(AnActionEvent event) {
-    searchContext.configureFromDataContext(event.getDataContext());
+    try {
+      searchContext.configureFromDataContext(event.getDataContext());
 
-    triggerAction(null,searchContext);
-
-    searchContext.setProject(null);
-    searchContext.setFile(null);
-    searchContext.setCurrentFile(null);
+      triggerAction(null,searchContext);
+    }
+    finally {
+      searchContext.setProject(null);
+      searchContext.setFile(null);
+      searchContext.setCurrentFile(null);
+    }
   }
 
   public static void triggerAction(Configuration config, SearchContext searchContext) {

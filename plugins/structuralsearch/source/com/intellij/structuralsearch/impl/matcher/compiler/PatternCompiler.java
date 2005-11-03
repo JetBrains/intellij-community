@@ -49,25 +49,25 @@ public class PatternCompiler {
         });
       }
     };
-    
+
     if (!ApplicationManager.getApplication().isDispatchThread()) {
       ApplicationManager.getApplication().invokeAndWait(
         runnable,
         ModalityState.defaultModalityState()
       );
-    } else {
+    }
+    else {
       runnable.run();
     }
-    
+
     return result[0];
   }
   
   private static CompiledPattern compilePatternImpl(Project project,MatchOptions options) {
-    CompiledPattern result;
 
-    result = (options.getFileType() == StdFileTypes.JAVA)?
-      (CompiledPattern)new CompiledPattern.JavaCompiledPattern():
-      new CompiledPattern.XmlCompiledPattern();
+    CompiledPattern result = options.getFileType() == StdFileTypes.JAVA ?
+                             new CompiledPattern.JavaCompiledPattern() :
+                             new CompiledPattern.XmlCompiledPattern();
 
     try {
       context.pattern = result;
@@ -111,7 +111,7 @@ public class PatternCompiler {
           options.addVariableConstraint(constraint);
         }
 
-        SubstitutionHandler handler = result.createSubstituionHandler(
+        SubstitutionHandler handler = result.createSubstitutionHandler(
           name,
           result.getTypedVarPrefix() + name,
           constraint.isPartOfSearchResults(),
@@ -249,13 +249,12 @@ public class PatternCompiler {
         final GlobalSearchScope scope = (GlobalSearchScope)options.getScope();
 
         //@todo we may not need this!
-        for(Iterator<PsiFile> i=set.iterator();i.hasNext();) {
-          final PsiFile file = i.next();
+        for (final PsiFile file : set) {
           if (!scope.contains(file.getVirtualFile())) {
             continue;
           }
 
-          filesToScan.add( file );
+          filesToScan.add(file);
         }
 
         result.setScope(
