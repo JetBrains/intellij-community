@@ -179,10 +179,16 @@ public class PsiSuperMethodImplUtil {
     return (Collection)map.values();
   }
 
-  public static HierarchicalMethodSignature getHierarchicalMethodSignature(PsiMethod method) {
+  @NotNull public static HierarchicalMethodSignature getHierarchicalMethodSignature(PsiMethod method) {
     PsiClass aClass = method.getContainingClass();
-    if (aClass == null) return null;
-    return getSignaturesMap(aClass).get(method.getSignature(PsiSubstitutor.EMPTY));
+    HierarchicalMethodSignatureImpl result = null;
+    if (aClass != null) {
+      result = getSignaturesMap(aClass).get(method.getSignature(PsiSubstitutor.EMPTY));
+    }
+    if (result == null) {
+      result = new HierarchicalMethodSignatureImpl((MethodSignatureBackedByPsiMethod)method.getSignature(PsiSubstitutor.EMPTY));
+    }
+    return result;
   }
 
   private static Map<MethodSignature, HierarchicalMethodSignatureImpl> getSignaturesMap(final PsiClass aClass) {
