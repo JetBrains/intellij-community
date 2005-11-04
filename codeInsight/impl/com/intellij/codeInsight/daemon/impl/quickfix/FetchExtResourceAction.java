@@ -374,7 +374,7 @@ public class FetchExtResourceAction extends BaseIntentionAction {
       InputStream in = urlConnection.getInputStream();
       String contentType = urlConnection.getContentType();
 
-      if (!ApplicationManager.getApplication().isUnitTestMode() && contentType.equals(HTML_MIME)) {
+      if (!ApplicationManager.getApplication().isUnitTestMode() && HTML_MIME.equals(contentType)) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
             Messages.showMessageDialog(project,
