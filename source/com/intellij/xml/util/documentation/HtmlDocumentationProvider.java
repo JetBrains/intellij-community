@@ -25,8 +25,10 @@ import org.jetbrains.annotations.NonNls;
  * To change this template use File | Settings | File Templates.
  */
 public class HtmlDocumentationProvider implements JavaDocManager.DocumentationProvider {
-  private static String baseHtmlExtDocUrl;
-  private JavaDocManager.DocumentationProvider styleProvider;
+  private static String ourBaseHtmlExtDocUrl;
+  private JavaDocManager.DocumentationProvider ourStyleProvider;
+  private JavaDocManager.DocumentationProvider ourScriptProvider;
+  
   protected Project myProject;
   @NonNls public static final String ELEMENT_ELEMENT_NAME = "element";
   @NonNls public static final String NBSP = ":&nbsp;";
@@ -37,14 +39,14 @@ public class HtmlDocumentationProvider implements JavaDocManager.DocumentationPr
   }
 
   public void registerStyleDocumentationProvider(JavaDocManager.DocumentationProvider documentationProvider) {
-    styleProvider = documentationProvider;
+    ourStyleProvider = documentationProvider;
   }
 
   public String getUrlFor(PsiElement element, PsiElement originalElement) {
     String result = getUrlForHtml(element, PsiTreeUtil.getParentOfType(originalElement,XmlTag.class,false));
 
-    if (result == null && styleProvider!=null) {
-      result = styleProvider.getUrlFor(element, originalElement);
+    if (result == null && ourStyleProvider !=null) {
+      result = ourStyleProvider.getUrlFor(element, originalElement);
     }
 
     return result;
@@ -54,7 +56,7 @@ public class HtmlDocumentationProvider implements JavaDocManager.DocumentationPr
     final EntityDescriptor descriptor = findDocumentationDescriptor(element, context);
 
     if (descriptor!=null) {
-      return baseHtmlExtDocUrl + descriptor.getHelpRef();
+      return ourBaseHtmlExtDocUrl + descriptor.getHelpRef();
     } else {
       return null;
     }
@@ -116,8 +118,12 @@ public class HtmlDocumentationProvider implements JavaDocManager.DocumentationPr
     final XmlTag tag = PsiTreeUtil.getParentOfType(originalElement, XmlTag.class, false);
     String result = generateDocForHtml(element, false, tag, originalElement);
 
-    if (result == null && styleProvider!=null) {
-      result = styleProvider.generateDoc(element, originalElement);
+    if (result == null && ourStyleProvider !=null) {
+      result = ourStyleProvider.generateDoc(element, originalElement);
+    }
+    
+    if (result == null && ourScriptProvider !=null) {
+      result = ourScriptProvider.generateDoc(element, originalElement);
     }
     
     if (result == null && element instanceof XmlAttributeValue) {
@@ -204,8 +210,11 @@ public class HtmlDocumentationProvider implements JavaDocManager.DocumentationPr
   public PsiElement getDocumentationElementForLookupItem(Object object, PsiElement element) {
     PsiElement result = createNavigationElementHTML(object.toString(),element);
 
-    if (result== null && styleProvider!=null) {
-      result = styleProvider.getDocumentationElementForLookupItem(object, element);
+    if (result== null && ourStyleProvider !=null) {
+      result = ourStyleProvider.getDocumentationElementForLookupItem(object, element);
+    }
+    if (result== null && ourScriptProvider !=null) {
+      result = ourScriptProvider.getDocumentationElementForLookupItem(object, element);
     }
     return result;
   }
@@ -213,8 +222,11 @@ public class HtmlDocumentationProvider implements JavaDocManager.DocumentationPr
   public PsiElement getDocumentationElementForLink(String link, PsiElement context) {
     PsiElement result = createNavigationElementHTML(link, context);
 
-    if (result== null && styleProvider!=null) {
-      result = styleProvider.getDocumentationElementForLink(link,context);
+    if (result== null && ourStyleProvider !=null) {
+      result = ourStyleProvider.getDocumentationElementForLink(link,context);
+    }
+    if (result== null && ourScriptProvider !=null) {
+      result = ourScriptProvider.getDocumentationElementForLink(link,context);
     }
     return result;
   }
@@ -269,6 +281,10 @@ public class HtmlDocumentationProvider implements JavaDocManager.DocumentationPr
   }
 
   public static void setBaseHtmlExtDocUrl(String baseHtmlExtDocUrl) {
-    HtmlDocumentationProvider.baseHtmlExtDocUrl = baseHtmlExtDocUrl;
+    HtmlDocumentationProvider.ourBaseHtmlExtDocUrl = baseHtmlExtDocUrl;
+  }
+
+  public void registerScriptDocumentationProvider(final JavaDocManager.DocumentationProvider provider) {
+    ourScriptProvider = provider;
   }
 }
