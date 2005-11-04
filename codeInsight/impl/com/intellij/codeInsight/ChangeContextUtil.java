@@ -96,10 +96,12 @@ public class ChangeContextUtil {
 
         if (refClass != null && refClass.isValid()){
           PsiReference ref = scope.getReference();
-          if (ref != null && refClass.getQualifiedName() != null){
+          if (ref != null) {
             final String qualifiedName = refClass.getQualifiedName();
-            if (refClass.getManager().findClass(qualifiedName, scope.getResolveScope()) != null) {
-              scope = ref.bindToElement(refClass);
+            if (qualifiedName != null){
+              if (refClass.getManager().findClass(qualifiedName, scope.getResolveScope()) != null) {
+                scope = ref.bindToElement(refClass);
+              }
             }
           }
         }
@@ -122,7 +124,8 @@ public class ChangeContextUtil {
   private static PsiElement decodeThisExpression(PsiThisExpression thisExpr,
                                                  PsiClass thisClass,
                                                  PsiExpression thisAccessExpr) throws IncorrectOperationException {
-    if (thisExpr.getQualifier() == null){
+    final PsiJavaCodeReferenceElement qualifier = thisExpr.getQualifier();
+    if (qualifier == null){
       PsiClass qualifierClass = thisExpr.getCopyableUserData(THIS_QUALIFIER_CLASS_KEY);
       thisExpr.putCopyableUserData(THIS_QUALIFIER_CLASS_KEY, null);
 
@@ -133,7 +136,7 @@ public class ChangeContextUtil {
       }
     }
     else{
-      PsiClass qualifierClass = (PsiClass)thisExpr.getQualifier().resolve();
+      PsiClass qualifierClass = (PsiClass)qualifier.resolve();
       if (qualifierClass != null){
         if (qualifierClass.equals(thisClass) && thisAccessExpr != null){
           return thisExpr.replace(thisAccessExpr);
