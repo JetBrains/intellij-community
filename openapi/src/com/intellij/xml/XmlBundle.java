@@ -23,7 +23,7 @@ public class XmlBundle {
   private XmlBundle() {
   }
 
-  public static String message(@PropertyKey(resourceBundle = "messages.XmlBundle") String key, Object... params) {
+  public static String message(@NonNls @PropertyKey(resourceBundle = "messages.XmlBundle") String key, Object... params) {
     return CommonBundle.message(ourResourceBundle, key, params);
   }
 
