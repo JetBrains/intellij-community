@@ -12,7 +12,6 @@ import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
@@ -24,8 +23,6 @@ import com.intellij.util.Alarm;
  *
  */
 public class AutoPopupController implements ProjectComponent {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.AutoPopupController");
-
   private final Project myProject;
 
   private final Alarm myAlarm = new Alarm();
