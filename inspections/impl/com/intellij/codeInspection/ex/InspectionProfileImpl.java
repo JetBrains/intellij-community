@@ -74,8 +74,12 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
   private VisibleTreeState myVisibleTreeState = new VisibleTreeState();
 
   private String myAdditionalJavadocTags = "";
-  private String myAdditionalHtmlTags = "";
-  private String myAdditionalHtmlAttributes = "";
+  
+  @NonNls private static final String DEFAULT_ADDITIONAL_HTML_TAGS="embed,nobr";
+  @NonNls private static final String DEFAULT_ADDITIONAL_HTML_ATTRIBUTES="type,wmode,src,width,height";
+  
+  private String myAdditionalHtmlTags = DEFAULT_ADDITIONAL_HTML_TAGS;
+  private String myAdditionalHtmlAttributes = DEFAULT_ADDITIONAL_HTML_ATTRIBUTES;
   private String myAdditionalRequiredHtmlAttributes = "";
 
   public InspectionProfileImpl(File file, InspectionProfileManager manager) throws IOException, JDOMException {
@@ -269,8 +273,8 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
 
   public void resetToBase() {
     myDisplayLevelMap.clear();
-    myAdditionalHtmlAttributes = "";
-    myAdditionalHtmlTags = "";
+    myAdditionalHtmlAttributes = DEFAULT_ADDITIONAL_HTML_ATTRIBUTES;
+    myAdditionalHtmlTags = DEFAULT_ADDITIONAL_HTML_TAGS;
     myAdditionalJavadocTags = "";
     myAdditionalRequiredHtmlAttributes = "";
     copyToolsConfigurations(myBaseProfile);

@@ -46,7 +46,9 @@ import javax.imageio.ImageIO;
  */
 public class HtmlUtil {
   private HtmlUtil() {}
-  @NonNls private static final String[] EMPTY_TAGS = { "base","hr","meta","link","frame","br","basefont","param","img","area","input","isindex","col" };
+  @NonNls private static final String[] EMPTY_TAGS = { 
+    "base","hr","meta","link","frame","br","basefont","param","img","area","input","isindex","col","embed" 
+  };
   private static final Set<String> EMPTY_TAGS_MAP = new THashSet<String>();
   @NonNls private static final String[] OPTIONAL_END_TAGS = {
     //"html",
