@@ -151,7 +151,7 @@ public class ExceptionUtil {
 
   public static PsiClassType[] collectUnhandledExceptions(PsiElement element, PsiElement topElement) {
     final Set<PsiClassType> set = collectUnhandledExceptions(element, topElement, null);
-    return set == null ? PsiClassType.EMPTY_ARRAY : (PsiClassType[])set.toArray(new PsiClassType[set.size()]);
+    return set == null ? PsiClassType.EMPTY_ARRAY : set.toArray(new PsiClassType[set.size()]);
   }
 
   private static Set<PsiClassType> collectUnhandledExceptions(PsiElement element, PsiElement topElement, Set<PsiClassType> foundExceptions) {
@@ -296,12 +296,8 @@ public class ExceptionUtil {
     if (method == null || isArrayClone(method, element)) {
       return PsiClassType.EMPTY_ARRAY;
     }
-    final PsiReferenceList throwsList = method.getThrowsList();
-    if (throwsList == null) {
-      return PsiClassType.EMPTY_ARRAY;
-    }
-    final PsiClassType[] referencedTypes = throwsList.getReferencedTypes();
-    if (referencedTypes != null && referencedTypes.length != 0) {
+    final PsiClassType[] referencedTypes = method.getThrowsList().getReferencedTypes();
+    if (referencedTypes.length > 0) {
       List<PsiClassType> result = new ArrayList<PsiClassType>();
 
       for (PsiClassType referencedType : referencedTypes) {
@@ -465,10 +461,7 @@ public class ExceptionUtil {
   }
 
   public static boolean isHandledByMethodThrowsClause(PsiMethod method, PsiClassType exceptionType) {
-    final PsiReferenceList throwsList = method.getThrowsList();
-    if (throwsList == null) return false;
-
-    final PsiClassType[] referencedTypes = throwsList.getReferencedTypes();
+    final PsiClassType[] referencedTypes = method.getThrowsList().getReferencedTypes();
     return isHandledBy(exceptionType, referencedTypes);
   }
 
