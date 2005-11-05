@@ -69,13 +69,8 @@ public class HeavyweightHint implements Hint {
     return myComponent.isShowing();
   }
 
-  /**
-   * @return location of the hint on the screen. It's allowed to invoke this method
-   * only if hind is visible.
-   */
-  public Point getLocationOnScreen(){
-    LOG.assertTrue(myWindow.isShowing());
-    return myWindow.getLocationOnScreen();
+  public JComponent getComponent() {
+    return myComponent;
   }
 
   /**

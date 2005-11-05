@@ -1,6 +1,5 @@
 package com.intellij.ide.actions;
 
-import com.intellij.execution.Location;
 import com.intellij.ide.FileEditorProvider;
 import com.intellij.ide.SelectInContext;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -9,7 +8,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
@@ -17,10 +15,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.jsp.JspFile;
-import com.intellij.util.IJSwingUtilities;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.InputEvent;
 
 abstract class SelectInContextImpl implements SelectInContext {
@@ -39,10 +35,10 @@ abstract class SelectInContextImpl implements SelectInContext {
     return myPsiFile;
   }
 
-  public static SelectInContextProvider createContext(AnActionEvent event) {
+  public static SelectInContext createContext(AnActionEvent event) {
     DataContext dataContext = event.getDataContext();
 
-    SelectInContextProvider result = createEditorContext(dataContext);
+    SelectInContext result = createEditorContext(dataContext);
     if (result != null) {
       return result;
     }
@@ -51,7 +47,6 @@ abstract class SelectInContextImpl implements SelectInContext {
     if (sourceComponent == null) {
       return null;
     }
-    ComponentCenterLocation popupLocation = new ComponentCenterLocation(sourceComponent);
 
     SelectInContext selectInContext = (SelectInContext)dataContext.getData(SelectInContext.DATA_CONTEXT_ID);
     if (selectInContext == null) {
@@ -69,13 +64,10 @@ abstract class SelectInContextImpl implements SelectInContext {
       }
     }
 
-    if (selectInContext == null) {
-      return null;
-    }
-    return new SelectInContextProvider(selectInContext, popupLocation);
+    return selectInContext;
   }
 
-  private static SelectInContextProvider createEditorContext(DataContext dataContext) {
+  private static SelectInContext createEditorContext(DataContext dataContext) {
     final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
     final FileEditor editor = (FileEditor)dataContext.getData(DataConstants.FILE_EDITOR);
     if (project == null || editor == null) {
@@ -91,16 +83,10 @@ abstract class SelectInContextImpl implements SelectInContext {
     }
 
     if (editor instanceof TextEditor) {
-      return new SelectInContextProvider(
-        new TextEditorContext((TextEditor)editor, psiFile),
-        new EditorCaretLocation(((TextEditor)editor).getEditor())
-      );
+      return new TextEditorContext((TextEditor)editor, psiFile);
     }
     else {
-      return new SelectInContextProvider(
-        new SimpleSelectInContext(psiFile),
-        new ComponentCenterLocation(editor.getComponent())
-      );
+      return new SimpleSelectInContext(psiFile);
     }
   }
 
@@ -124,71 +110,13 @@ abstract class SelectInContextImpl implements SelectInContext {
       return (JComponent)source;
     }
     else {
-      return Location.safeCast(event.getDataContext().getData(DataConstantsEx.CONTEXT_COMPONENT), JComponent.class);
+      return safeCast(event.getDataContext().getData(DataConstantsEx.CONTEXT_COMPONENT), JComponent.class);
     }
   }
 
-  static class SelectInContextProvider {
-    private final SelectInContext myContext;
-    private final PopupLocation myPopupLocation;
-
-    public SelectInContextProvider(SelectInContext context, PopupLocation popupLocation) {
-      LOG.assertTrue(context != null, "Null SelectInContext");
-      LOG.assertTrue(popupLocation != null, "Null PopupLocation");
-
-      myContext = context;
-      myPopupLocation = popupLocation;
-    }
-
-    public SelectInContext getContext() { return myContext; }
-
-    public Point getInvocationPoint() { return myPopupLocation.getPoint(); }
-  }
-
-  private interface PopupLocation {
-    Point getPoint();
-  }
-
-  private static class ComponentCenterLocation implements PopupLocation {
-    private final JComponent myComponent;
-
-    public ComponentCenterLocation(JComponent component) {
-      myComponent = component;
-    }
-
-    public Point getPoint() {
-
-      JViewport viewport = IJSwingUtilities.findParentOfType(myComponent, JViewport.class);
-      JComponent component;
-      if (viewport != null) {
-        component = viewport;
-      }
-      else {
-        component = myComponent;
-      }
-      Point p = new Point(component.getWidth() / 2, component.getHeight() / 2);
-      SwingUtilities.convertPointToScreen(p, component);
-      return p;
-    }
-  }
-
-  private static class EditorCaretLocation implements PopupLocation {
-    private final Editor editor;
-
-    public EditorCaretLocation(Editor editor) {
-      this.editor = editor;
-    }
-
-    public Point getPoint() {
-      Point p;
-      Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
-      p = editor.logicalPositionToXY(editor.getCaretModel().getLogicalPosition());
-      if (!visibleArea.contains(p)) {
-        p = visibleArea.getLocation();
-      }
-      SwingUtilities.convertPointToScreen(p, editor.getContentComponent());
-      return p;
-    }
+  public static <T> T safeCast(final Object obj, final Class<T> expectedClass) {
+    if (expectedClass.isInstance(obj)) return (T)obj;
+    return null;
   }
 
   private static class TextEditorContext extends SelectInContextImpl {

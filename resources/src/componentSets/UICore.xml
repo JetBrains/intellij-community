@@ -55,5 +55,9 @@
       <interface-class>com.intellij.ide.CommonActionsManager</interface-class>
       <implementation-class>com.intellij.ide.impl.CommonActionsManagerImpl</implementation-class>
     </component>
+    <component>
+      <interface-class>com.intellij.openapi.ui.popup.JBPopupFactory</interface-class>
+      <implementation-class>com.intellij.ui.popup.PopupFactoryImpl</implementation-class>
+    </component>
   </application-components>
 </components>

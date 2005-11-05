@@ -1,29 +1,24 @@
 package com.intellij.ide.actions;
 
-import com.intellij.ide.IdeView;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeView;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionListPopup;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.ListPopup;
-
-import javax.swing.*;
-import java.awt.*;
-import java.util.HashMap;
-import java.util.Map;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
 
 public class NewElementAction extends AnAction {
-  private final Map<AnAction,Presentation> myAction2presentationMap = new HashMap<AnAction,Presentation>();
 
   public void actionPerformed(final AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    ListPopup popup =  ActionListPopup.createListPopup(IdeBundle.message("title.popup.new.element"), getGroup(), dataContext, false, false);
-    KeyboardFocusManager focusManager=KeyboardFocusManager.getCurrentKeyboardFocusManager();
-    JComponent focusOwner=(JComponent)focusManager.getFocusOwner();
-    Point location = ShowPopupMenuAction.getPopupLocation(focusOwner, dataContext);
-    SwingUtilities.convertPointToScreen(location, focusOwner);
-    popup.show(location.x, location.y);
+    final ListPopup popup = JBPopupFactory.getInstance()
+      .createActionGroupPopup(IdeBundle.message("title.popup.new.element"),
+                              getGroup(),
+                              dataContext,
+                              JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
+                              false);
+    popup.showInBestPositionFor(dataContext);
   }
 
   public void update(AnActionEvent event){
@@ -39,13 +34,8 @@ public class NewElementAction extends AnAction {
       presentation.setEnabled(false);
       return;
     }
-    try {
-      final boolean groupEmpty = ActionListPopup.isGroupEmpty(getGroup(), event, myAction2presentationMap);
-      presentation.setEnabled(!groupEmpty);
-    }
-    finally {
-      myAction2presentationMap.clear();
-    }
+
+    presentation.setEnabled(!ActionGroupUtil.isGroupEmpty(getGroup(), event));
   }
 
   private DefaultActionGroup getGroup() {

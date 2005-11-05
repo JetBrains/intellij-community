@@ -1,14 +1,14 @@
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
-import com.intellij.ide.actions.QuickSwitchSchemeAction;
 import com.intellij.ide.RecentProjectsManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.ide.actions.QuickSwitchSchemeAction;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.ex.ActionListPopup;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.ui.ListPopup;
 import com.intellij.ui.UIBundle;
 
 import javax.swing.*;
@@ -34,8 +34,7 @@ public class RecentProjectsAction extends QuickSwitchSchemeAction {
       group.add(action);
     }
     else {
-      for (int i = 0; i < recentProjectActions.length; i++) {
-        AnAction action = recentProjectActions[i];
+      for (AnAction action : recentProjectActions) {
         group.add(action);
       }
     }
@@ -45,28 +44,30 @@ public class RecentProjectsAction extends QuickSwitchSchemeAction {
     DefaultActionGroup group = new DefaultActionGroup();
     fillActions(null, group);
 
-    final ListPopup popup = ActionListPopup.createListPopup(e.getPresentation().getText(), group, e.getDataContext(), true, true);
+    final ListPopup popup = JBPopupFactory.getInstance()
+      .createActionGroupPopup(e.getPresentation().getText(),
+                              group,
+                              e.getDataContext(),
+                              JBPopupFactory.ActionSelectionAid.NUMBERING,
+                              true);
 
     Component focusedComponent = e.getInputEvent().getComponent();
-    Rectangle r;
-    int x;
-    int y;
-
     if (focusedComponent != null) {
-      r = focusedComponent.getBounds();
-      x = r.x;
-      y = r.y + r.height;
-    } else {
+      popup.showUnderneathOf(focusedComponent);
+    }
+    else {
+      Rectangle r;
+      int x;
+      int y;
       focusedComponent = WindowManagerEx.getInstanceEx().getFocusedComponent((Project)null);
       r = WindowManagerEx.getInstanceEx().getScreenBounds();
       x = r.x + r.width / 2;
       y = r.y + r.height / 2;
-    }
+      Point point = new Point(x, y);
+      SwingUtilities.convertPointToScreen(point, focusedComponent.getParent());
 
-    Point point = new Point(x, y);
-    SwingUtilities.convertPointToScreen(point, focusedComponent.getParent());
-    popup.getWindow().pack();
-    popup.show(point.x, point.y);
+      popup.showInScreenCoordinates(focusedComponent.getParent(), point);
+    }
   }
 
   protected boolean isEnabled() {

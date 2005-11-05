@@ -2,8 +2,8 @@ package com.intellij.ide.commander;
 
 import com.intellij.ide.CopyPasteManagerEx;
 import com.intellij.ide.DeleteProvider;
-import com.intellij.ide.IdeView;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeView;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
 import com.intellij.ide.projectView.impl.nodes.Form;
@@ -21,19 +21,19 @@ import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.localVcs.impl.LvcsIntegration;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.ui.*;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
@@ -86,7 +86,7 @@ public class CommanderPanel extends JPanel {
 
     myListSpeedSearch = new ListSpeedSearch(myList);
 
-    ListScrollingUtilEx.installActions(myList);
+    ListScrollingUtil.installActions(myList);
 
     myList.registerKeyboardAction(
       new ActionListener() {

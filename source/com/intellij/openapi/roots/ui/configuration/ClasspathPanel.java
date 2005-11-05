@@ -41,8 +41,8 @@ import com.intellij.openapi.roots.ui.util.CellAppearanceUtils;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.popup.Popup;
-import com.intellij.openapi.ui.popup.PopupFactory;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Pair;
@@ -246,24 +246,23 @@ public class ClasspathPanel extends JPanel {
     addButton.addActionListener(new ButtonAction() {
       protected void executeImpl() {
         initPopupActions();
-        final Popup popup = PopupFactory.getInstance().createWizardStep(new BaseListPopupStep(null, myPopupActions, myIcons) {
+        final JBPopup popup = JBPopupFactory.getInstance().createWizardStep(new BaseListPopupStep<PopupAction>(null, myPopupActions, myIcons) {
           public boolean isMnemonicsNavigationEnabled() {
             return true;
           }
-          public boolean isSelectable(Object value) {
-            return ((PopupAction)value).isSelectable();
+          public boolean isSelectable(PopupAction value) {
+            return value.isSelectable();
           }
-          public PopupStep onChosen(final Object selectedValue) {
+          public PopupStep onChosen(final PopupAction selectedValue) {
             ApplicationManager.getApplication().invokeLater(new Runnable() {
               public void run() {
-                ((PopupAction)selectedValue).execute();
+                selectedValue.execute();
               }
             }, ModalityState.stateForComponent(ClasspathPanel.this));
             return PopupStep.FINAL_CHOICE;
           }
-          public String getTextFor(Object value) {
-            final PopupAction popupAction = (PopupAction)value;
-            return "&" + popupAction.getIndex() + "  " + popupAction.getTitle();
+          public String getTextFor(PopupAction value) {
+            return "&" + value.getIndex() + "  " + value.getTitle();
           }
         });
         popup.showUnderneathOf(addButton);

@@ -33,7 +33,6 @@ import com.intellij.ide.actions.NextOccurenceToolbarAction;
 import com.intellij.ide.actions.PreviousOccurenceToolbarAction;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionListPopup;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -54,6 +53,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -63,7 +64,6 @@ import com.intellij.pom.Navigatable;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.ui.ListPopup;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SmartExpander;
@@ -751,7 +751,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
         }
       };
 
-      e.getPresentation().setEnabled(!ActionListPopup.isGroupEmpty(fixes, e, new HashMap<AnAction, Presentation>()));
+      e.getPresentation().setEnabled(!ActionGroupUtil.isGroupEmpty(fixes, e));
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -771,22 +771,14 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
       };
 
       DataContext dataContext = e.getDataContext();
-      ListPopup popup = ActionListPopup.createListPopup(InspectionsBundle.message("inspection.tree.popup.title"), fixes, dataContext, false, false);
+      final ListPopup popup = JBPopupFactory.getInstance()
+        .createActionGroupPopup(InspectionsBundle.message("inspection.tree.popup.title"),
+                                fixes,
+                                dataContext,
+                                JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
+                                false);
 
-      Point location = getSelectedTreeNodeBounds();
-      if (location == null) return;
-      popup.show(location.x, location.y);
-    }
-
-    @Nullable
-    private Point getSelectedTreeNodeBounds() {
-      int row = myTree.getLeadSelectionRow();
-      if (row == -1) return null;
-      Rectangle rowBounds = myTree.getRowBounds(row);
-      Point location = rowBounds.getLocation();
-      location = new Point(location.x, location.y + rowBounds.height);
-      SwingUtilities.convertPointToScreen(location, myTree);
-      return location;
+      popup.showInBestPositionFor(dataContext);
     }
   }
 

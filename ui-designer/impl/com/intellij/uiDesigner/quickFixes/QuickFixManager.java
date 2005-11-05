@@ -1,21 +1,21 @@
 package com.intellij.uiDesigner.quickFixes;
 
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.ex.ActionListPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.HeavyweightHint;
-import com.intellij.ui.ListPopup;
 import com.intellij.uiDesigner.ErrorInfo;
 import com.intellij.uiDesigner.GuiEditor;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Anton Katilin
@@ -179,15 +179,15 @@ public abstract class QuickFixManager <T extends JComponent>{
       actionGroup.add(new QuickFixActionImpl(myEditor, myFix));
     }
 
-    final ListPopup popup = ActionListPopup.createListPopup(
+    final DataContext dataContext = DataManager.getInstance().getDataContext(myComponent);
+    final ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
       null,
       actionGroup,
-      DataManager.getInstance().getDataContext(myComponent),
-      false,
-      true
-    );
-    final Point locationOnScreen = myHint.getLocationOnScreen();
-    popup.show(locationOnScreen.x, locationOnScreen.y + myHint.getPreferredSize().height);
+      dataContext,
+      JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
+      true);
+    
+    popup.showUnderneathOf(myHint.getComponent());
   }
 
   private final class MyShowHintRequest implements Runnable{

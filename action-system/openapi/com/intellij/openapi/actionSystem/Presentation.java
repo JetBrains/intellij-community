@@ -15,14 +15,13 @@
  */
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-
-import org.jetbrains.annotations.NonNls;
-import com.intellij.util.ui.UIUtil;
 
 /**
  * The presentation of an action in a specific place in the user interface.
@@ -140,18 +139,18 @@ public final class Presentation implements Cloneable {
   }
 
   public void restoreTextWithMnemonic(Presentation presentation) {
-    String text = presentation.getText();
-    final int mnemonic = presentation.getMnemonic();
+    setText(restoreTextWithMnemonic(presentation.getText(), presentation.getMnemonic()));
+  }
+
+  public static String restoreTextWithMnemonic(final String text, final int mnemonic) {
     if (text != null) {
      for (int i = 0; i < text.length(); i++) {
        if (Character.toUpperCase(text.charAt(i)) == mnemonic) {
-         text = text.replaceFirst(String.valueOf(text.charAt(i)), "_" + text.charAt(i));
-         setText(text);
-         return;
+         return text.replaceFirst(String.valueOf(text.charAt(i)), "_" + text.charAt(i));
        }
      }
     }
-    setText(text);
+    return text;
   }
 
   public String getDescription(){

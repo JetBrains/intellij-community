@@ -1,7 +1,7 @@
 package com.intellij.ide.util.gotoByName;
 
-import com.intellij.ide.actions.CopyReferenceAction;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.actions.CopyReferenceAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
@@ -21,11 +21,10 @@ import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ListScrollingUtil;
-import com.intellij.ui.ListScrollingUtilEx;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.diff.Diff;
+import com.intellij.util.ui.UIUtil;
 import org.apache.oro.text.regex.*;
 import org.jetbrains.annotations.NonNls;
 
@@ -306,10 +305,10 @@ public abstract class ChooseByNameBase{
         final int keyCode = e.getKeyCode();
         switch (keyCode) {
           case KeyEvent.VK_DOWN:
-            ListScrollingUtilEx.moveDown(myList, e.getModifiersEx());
+            ListScrollingUtil.moveDown(myList, e.getModifiersEx());
             break;
           case KeyEvent.VK_UP:
-            ListScrollingUtilEx.moveUp(myList, e.getModifiersEx());
+            ListScrollingUtil.moveUp(myList, e.getModifiersEx());
             break;
           case KeyEvent.VK_PAGE_UP:
             ListScrollingUtil.movePageUp(myList);

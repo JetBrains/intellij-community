@@ -1,27 +1,24 @@
 package com.intellij.codeInsight.generation.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.ide.actions.ShowPopupMenuAction;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionListPopup;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.ListPopup;
-
-import javax.swing.*;
-import java.awt.*;
-import java.util.HashMap;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
 
 public class GenerateAction extends AnAction {
   public void actionPerformed(final AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    ListPopup popup = ActionListPopup.createListPopup(CodeInsightBundle.message("generate.list.popup.title"),
-                                                      getGroup(), dataContext, false, false);
-    Component focusOwner=(Component)dataContext.getData(DataConstantsEx.CONTEXT_COMPONENT);
-    Point location = ShowPopupMenuAction.getPopupLocation(focusOwner, dataContext);
-    SwingUtilities.convertPointToScreen(location, focusOwner);
-    popup.show(location.x, location.y);
+
+    final ListPopup popup =
+      JBPopupFactory.getInstance().createActionGroupPopup(CodeInsightBundle.message("generate.list.popup.title"),
+                                                          getGroup(),
+                                                          dataContext,
+                                                          JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
+                                                          false);
+
+    popup.showInBestPositionFor(dataContext);
   }
 
   public void update(AnActionEvent event){
@@ -39,7 +36,7 @@ public class GenerateAction extends AnAction {
       return;
     }
 
-    boolean groupEmpty = ActionListPopup.isGroupEmpty(getGroup(), event, new HashMap<AnAction,Presentation>());
+    boolean groupEmpty = ActionGroupUtil.isGroupEmpty(getGroup(), event);
     presentation.setEnabled(!groupEmpty);
   }
 

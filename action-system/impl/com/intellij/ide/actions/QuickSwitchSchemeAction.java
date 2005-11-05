@@ -1,12 +1,15 @@
 package com.intellij.ide.actions;
 
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionListPopup;
-import com.intellij.util.ui.EmptyIcon;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.ui.ListPopup;
+import com.intellij.util.ui.EmptyIcon;
 
 import javax.swing.*;
 import java.awt.*;
@@ -28,15 +31,14 @@ public abstract class QuickSwitchSchemeAction extends AnAction {
   protected abstract void fillActions(Project project, DefaultActionGroup group);
 
   private void showPopup(AnActionEvent e, DefaultActionGroup group) {
-    final ListPopup popup = ActionListPopup.createListPopup(e.getPresentation().getText(), group, e.getDataContext(), true, true);
+    final ListPopup popup = JBPopupFactory.getInstance()
+      .createActionGroupPopup(e.getPresentation().getText(),
+                              group,
+                              e.getDataContext(),
+                              JBPopupFactory.ActionSelectionAid.NUMBERING,
+                              true);
 
-    Rectangle r = getFocusedWindowRect(e);
-    popup.getWindow().pack();
-    Dimension popupSize = popup.getSize();
-    int x = r.x + r.width / 2 - popupSize.width / 2;
-    int y = r.y + r.height / 2 - popupSize.height / 2;
-
-    popup.show(x, y);
+    popup.showInBestPositionFor(e.getDataContext());
   }
 
   private Rectangle getFocusedWindowRect(final AnActionEvent e) {

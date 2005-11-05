@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.actionSystem;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * Identifiers for data items which can be returned from {@link DataContext#getData(String)} and
  * {@link DataProvider#getData(String)}.
@@ -76,7 +78,7 @@ public interface DataConstants {
   String DIFF_VIEWER = "diffViewer";
   /**
    * Returns help id (String)
-   */  
+   */
   String HELP_ID = "helpId";
   /**
    * Returns project if project node is selected (in project view)
@@ -118,4 +120,10 @@ public interface DataConstants {
    * Returns {@link com.intellij.lang.Language}
    */
   String LANGUAGE = "Language";
+
+  /**
+   * Returns java.awt.Component currently in focus, DataContext should be retreived for
+   */
+  @NonNls String CONTEXT_COMPONENT = "contextComponent";
+
 }

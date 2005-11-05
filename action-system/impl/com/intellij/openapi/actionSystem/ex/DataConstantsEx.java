@@ -54,10 +54,6 @@ public interface DataConstantsEx extends DataConstants {
   @NonNls String CONTENT_MANAGER = "contentManager";
 
   /**
-   * Returns java.awt.Component
-   */
-  @NonNls String CONTEXT_COMPONENT = "contextComponent";
-  /**
    * Returns RuntimeConfiguration
    */
   @NonNls String RUNTIME_CONFIGURATION = "runtimeConfiguration";

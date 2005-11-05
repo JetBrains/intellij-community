@@ -1,19 +1,18 @@
 package com.intellij.ide.actions;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SelectInContext;
 import com.intellij.ide.SelectInManager;
 import com.intellij.ide.SelectInTarget;
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionListPopup;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.ui.ListPopup;
 
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -21,7 +20,7 @@ public class SelectInAction extends AnAction {
   
   public void actionPerformed(AnActionEvent e) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.select.in");
-    SelectInContextImpl.SelectInContextProvider context = SelectInContextImpl.createContext(e);
+    SelectInContext context = SelectInContextImpl.createContext(e);
     if (context == null) return;
     invoke(e.getDataContext(), context);
   }
@@ -38,8 +37,7 @@ public class SelectInAction extends AnAction {
     }
   }
 
-  private static void invoke(DataContext dataContext, SelectInContextImpl.SelectInContextProvider contextProvider) {
-    final SelectInContext context = contextProvider.getContext();
+  private static void invoke(DataContext dataContext, SelectInContext context) {
     final SelectInTarget[] targetVector = getTargets(context.getProject());
 
     DefaultActionGroup group = new DefaultActionGroup();
@@ -55,11 +53,14 @@ public class SelectInAction extends AnAction {
       group.add(new NoTargetsAction());
     }
 
-    ListPopup listPopup = ActionListPopup.createListPopup(IdeBundle.message("title.popup.select.target"), group, dataContext, true, true);
+    final ListPopup popup = JBPopupFactory.getInstance().
+      createActionGroupPopup(IdeBundle.message("title.popup.select.target"),
+                             group,
+                             dataContext,
+                             JBPopupFactory.ActionSelectionAid.NUMBERING,
+                             true);
 
-    Point p = contextProvider.getInvocationPoint();
-
-    listPopup.show(p.x, p.y);
+    popup.showInBestPositionFor(dataContext);
   }
 
   private static SelectInTarget[] getTargets(final Project project) {
