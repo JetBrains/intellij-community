@@ -18,8 +18,7 @@ public class ReferencesSearch extends QueryFactory<PsiReference, ReferencesSearc
   private ReferencesSearch() {
   }
 
-  //Cannot make private due to some obscure java scoping rules:(
-  protected static class SearchParameters {
+  public static class SearchParameters {
     private final PsiElement myElementToSearch;
     private final SearchScope myScope;
     private final boolean myIgnoreAcccessScope;

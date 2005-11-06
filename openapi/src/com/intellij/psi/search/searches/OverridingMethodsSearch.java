@@ -20,7 +20,7 @@ public class OverridingMethodsSearch extends QueryFactory<PsiMethod, OverridingM
   public static OverridingMethodsSearch INSTANCE = new OverridingMethodsSearch();
   private static EmptyQuery<PsiMethod> EMPTY = new EmptyQuery<PsiMethod>();
 
-  protected static class SearchParameters {
+  public static class SearchParameters {
     private final PsiMethod myMethod;
     private final SearchScope myScope;
     private final boolean myCheckDeep;

@@ -60,7 +60,7 @@ public class ClassInheritorsSearch extends QueryFactory<PsiClass, ClassInheritor
     });
   }
 
-  protected static class SearchParameters {
+  public static class SearchParameters {
     private final PsiClass myClass;
     private final SearchScope myScope;
     private final boolean myCheckDeep;

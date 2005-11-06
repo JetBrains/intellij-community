@@ -16,7 +16,7 @@ import com.intellij.util.QueryFactory;
 public class MethodReferencesSearch extends QueryFactory<PsiReference, MethodReferencesSearch.SearchParameters> {
   public static MethodReferencesSearch INSTANCE = new MethodReferencesSearch();
 
-  protected static class SearchParameters {
+  public static class SearchParameters {
     private final PsiMethod myMethod;
     private final SearchScope myScope;
     private final boolean myStrictSignatureSearch;

@@ -15,7 +15,7 @@ import com.intellij.util.QueryFactory;
 public class DirectClassInheritorsSearch extends QueryFactory<PsiClass, DirectClassInheritorsSearch.SearchParameters> {
   public static DirectClassInheritorsSearch INSTANCE = new DirectClassInheritorsSearch();
 
-  protected static class SearchParameters {
+  public static class SearchParameters {
     private final PsiClass myClass;
     private final SearchScope myScope;
 
