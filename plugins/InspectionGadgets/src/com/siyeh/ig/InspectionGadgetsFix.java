@@ -130,7 +130,7 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
         final ReadonlyStatusHandler handler =
                 ReadonlyStatusHandler.getInstance(project);
         final ReadonlyStatusHandler.OperationStatus status =
-                handler.ensureFilesWritable(new VirtualFile[]{virtualFile});
+                handler.ensureFilesWritable(virtualFile);
         return status.hasReadonlyFiles();
     }
 }
