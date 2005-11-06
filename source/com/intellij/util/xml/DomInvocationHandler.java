@@ -21,12 +21,12 @@ import java.util.*;
 /**
  * @author peter
  */
-class DomInvocationHandler<T extends DomElement> implements InvocationHandler, DomElement {
+abstract class DomInvocationHandler<T extends DomElement> implements InvocationHandler, DomElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.DomInvocationHandler");
   private static final Map<Method, Invocation> ourInvocations = new HashMap<Method, Invocation>();
 
   private final Class<T> myClass;
-  private final DomElement myParent;
+  private final DomInvocationHandler myParent;
   private final DomManagerImpl myManager;
   @NotNull private final String myTagName;
   private XmlTag myTag;
@@ -68,7 +68,7 @@ class DomInvocationHandler<T extends DomElement> implements InvocationHandler, D
 
   public DomInvocationHandler(final Class<T> aClass,
                               final XmlTag tag,
-                              final DomElement parent,
+                              final DomInvocationHandler parent,
                               @NotNull final String tagName,
                               DomManagerImpl manager) {
     myClass = aClass;
@@ -86,6 +86,10 @@ class DomInvocationHandler<T extends DomElement> implements InvocationHandler, D
 
   @NotNull
   public DomElement getParent() {
+    return myParent.getProxy();
+  }
+
+  public DomInvocationHandler getParentHandler() {
     return myParent;
   }
 
@@ -96,7 +100,7 @@ class DomInvocationHandler<T extends DomElement> implements InvocationHandler, D
   private XmlTag _ensureTagExists(final boolean fireEvent) {
     if (getXmlTag() == null) {
       try {
-        setXmlTag(getFile().getManager().getElementFactory().createTagFromText("<" + myTagName + "/>"));
+        setXmlTag(createEmptyTag());
         if (fireEvent) {
           myManager.fireEvent(new ElementDefinedEvent(this));
         }
@@ -106,6 +110,10 @@ class DomInvocationHandler<T extends DomElement> implements InvocationHandler, D
       }
     }
     return getXmlTag();
+  }
+
+  protected final XmlTag createEmptyTag() throws IncorrectOperationException {
+    return getFile().getManager().getElementFactory().createTagFromText("<" + myTagName + "/>");
   }
 
   public void undefine() {
@@ -122,9 +130,7 @@ class DomInvocationHandler<T extends DomElement> implements InvocationHandler, D
     }
   }
 
-  protected void setXmlTag(final XmlTag tag) throws IncorrectOperationException {
-    myParent.ensureTagExists().add(tag);
-  }
+  protected abstract void setXmlTag(final XmlTag tag) throws IncorrectOperationException;
 
   protected final String getTagName() {
     return myTagName;
@@ -196,14 +202,21 @@ class DomInvocationHandler<T extends DomElement> implements InvocationHandler, D
     }
 
     if (myMethodsMap.isVariableChildrenMethod(method)) {
-      return new GetVariableChildrenInvocation(myMethodsMap.getVariableChildrenTagQName(method));
+      return new GetVariableChildrenInvocation(myMethodsMap, method);
     }
 
     throw new UnsupportedOperationException("No implementation for method " + method.toString());
   }
 
-  DomElement getFixedChild(final Method method) {
-    return myMethod2Children.get(method);
+  @NotNull
+  final DomElement getFixedChild(final Method method) {
+    final DomElement domElement = myMethod2Children.get(method);
+    assert domElement != null : method.toString();
+    return domElement;
+  }
+
+  protected final MethodsMap getMethodsMap() {
+    return myMethodsMap;
   }
 
   public final Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
@@ -258,11 +271,14 @@ class DomInvocationHandler<T extends DomElement> implements InvocationHandler, D
         final HashSet<XmlTag> usedTags = new HashSet<XmlTag>();
 
         final XmlTag tag = getXmlTag();
-        for (Map.Entry<Method, String> entry : myMethodsMap.getFixedChildrenEntries()) {
+        for (Map.Entry<Method, Pair<String, Integer>> entry : myMethodsMap.getFixedChildrenEntries()) {
           Method method = entry.getKey();
-          final String qname = entry.getValue();
-          XmlTag subTag = tag == null ? null : tag.findFirstSubTag(qname);
-          final DomElement element = myManager.createDomElement((Class<? extends DomElement>)method.getReturnType(), subTag, getProxy(), qname);
+          final String qname = entry.getValue().getFirst();
+          final Integer index = entry.getValue().getSecond();
+          XmlTag subTag = findSubTag(tag, qname, index);
+          final Class aClass = method.getReturnType();
+          final IndexedElementInvocationHandler handler = new IndexedElementInvocationHandler(aClass, subTag, this, qname, index);
+          final DomElement element = myManager.createDomElement(aClass, subTag, handler);
           myMethod2Children.put(method, element);
           usedTags.add(subTag);
         }
@@ -273,7 +289,9 @@ class DomInvocationHandler<T extends DomElement> implements InvocationHandler, D
             String qname = pair.getFirst();
             for (XmlTag subTag : tag.findSubTags(qname)) {
               if (!usedTags.contains(subTag)) {
-                myManager.createDomElement(pair.getSecond(), subTag, getProxy(), qname);
+                final Class<? extends DomElement> aClass = pair.getSecond();
+                final DomInvocationHandler handler = new CollectionElementInvocationHandler(aClass, subTag, this, qname);
+                myManager.createDomElement(aClass, subTag, handler);
                 usedTags.add(subTag);
               }
             }
@@ -287,10 +305,15 @@ class DomInvocationHandler<T extends DomElement> implements InvocationHandler, D
     }
   }
 
-  protected XmlTag restoreTag(String tagName) {
-    final XmlTag tag = myParent.getXmlTag();
-    return tag == null ? null : tag.findFirstSubTag(myTagName);
+  protected final XmlTag findSubTag(final XmlTag tag, final String qname, final int index) {
+    if (tag == null) {
+      return null;
+    }
+    final XmlTag[] subTags = tag.findSubTags(qname);
+    return subTags.length <= index ? null : subTags[index];
   }
+
+  protected abstract XmlTag restoreTag(String tagName);
 
   @Nullable
   public final XmlTag getXmlTag() {
@@ -303,7 +326,7 @@ class DomInvocationHandler<T extends DomElement> implements InvocationHandler, D
     return myTag;
   }
 
-  public DomManagerImpl getManager() {
+  public final DomManagerImpl getManager() {
     return myManager;
   }
 

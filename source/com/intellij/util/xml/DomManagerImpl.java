@@ -59,14 +59,6 @@ public class DomManagerImpl extends DomManager implements ApplicationComponent {
     }
   }
 
-  @NotNull
-  final <T extends DomElement>T createDomElement(final Class<T> aClass,
-                                                     final XmlTag tag,
-                                                     final DomElement parent,
-                                                     final String tagName) {
-    return createDomElement(aClass, tag, new DomInvocationHandler<T>(aClass, tag, parent, tagName, this));
-  }
-
   final <T extends DomElement>MethodsMap getMethodsMap(final Class<T> aClass) {
     MethodsMap methodsMap = myMethodsMaps.get(aClass);
     if (methodsMap == null) {
@@ -76,18 +68,18 @@ public class DomManagerImpl extends DomManager implements ApplicationComponent {
     return methodsMap;
   }
 
-  private <T extends DomElement> Class<? extends T> getConcreteType(Class<T> aClass, XmlTag tag) {
-    final ClassChooser<T> classChooser = myClassChoosers.get(aClass);
+  private Class getConcreteType(Class aClass, XmlTag tag) {
+    final ClassChooser classChooser = myClassChoosers.get(aClass);
     return classChooser == null ? aClass : classChooser.chooseClass(tag);
   }
 
-  final <T extends DomElement>T createDomElement(final Class<T> aClass,
+  final DomElement createDomElement(final Class aClass,
                                                      final XmlTag tag,
-                                                     final DomInvocationHandler<T> handler) {
+                                                     final DomInvocationHandler handler) {
     synchronized (PsiLock.LOCK) {
       try {
         Class clazz = getProxyClassFor(getConcreteType(aClass, tag));
-        final T element = (T) clazz.getConstructor(new Class[]{ InvocationHandler.class }).newInstance(new Object[]{ handler });
+        final DomElement element = (DomElement) clazz.getConstructor(InvocationHandler.class).newInstance(handler);
         handler.setProxy(element);
         setCachedElement(tag, element);
         return element;
@@ -99,7 +91,7 @@ public class DomManagerImpl extends DomManager implements ApplicationComponent {
     }
   }
 
-  private <T extends DomElement>Class getProxyClassFor(final Class<T> aClass) {
+  private Class getProxyClassFor(final Class<? extends DomElement> aClass) {
     Class proxyClass = myClass2ProxyClass.get(aClass);
     if (proxyClass == null) {
       proxyClass = Proxy.getProxyClass(null, new Class[]{aClass});
@@ -160,6 +152,10 @@ public class DomManagerImpl extends DomManager implements ApplicationComponent {
 
   public <T extends DomElement> void registerClassChooser(final Class<T> aClass, final ClassChooser<T> classChooser) {
     myClassChoosers.put(aClass, classChooser);
+  }
+
+  public <T extends DomElement> void unregisterClassChooser(Class<T> aClass) {
+    myClassChoosers.remove(aClass);
   }
 
 }

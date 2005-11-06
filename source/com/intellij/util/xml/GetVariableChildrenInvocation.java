@@ -7,15 +7,18 @@ import com.intellij.psi.xml.XmlTag;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.lang.reflect.Method;
 
 /**
  * @author peter
  */
 public class GetVariableChildrenInvocation implements Invocation {
   private final String myQname;
+  private final int myStartIndex;
 
-  public GetVariableChildrenInvocation(String qname) {
-    myQname = qname;
+  public GetVariableChildrenInvocation(MethodsMap methodsMap, Method method) {
+    myQname = methodsMap.getVariableChildrenTagQName(method);
+    myStartIndex = methodsMap.getFixedChildrenCount(myQname);
   }
 
   public Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
@@ -24,11 +27,11 @@ public class GetVariableChildrenInvocation implements Invocation {
 
     handler.checkInitialized();
     final XmlTag[] subTags = tag.findSubTags(myQname);
-    DomElement[] elements = new DomElement[subTags.length];
-    for (int i = 0; i < subTags.length; i++) {
+    DomElement[] elements = new DomElement[subTags.length - myStartIndex];
+    for (int i = myStartIndex; i < subTags.length; i++) {
       final DomElement element = DomManagerImpl.getCachedElement(subTags[i]);
       assert element != null : "Null annotated element for " + tag.getText() + "; " + myQname + "; " + i;
-      elements[i] = element;
+      elements[i - myStartIndex] = element;
     }
     return Arrays.asList(elements);
   }

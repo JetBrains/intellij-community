@@ -12,23 +12,25 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
  */
 public class DomRootInvocationHandler<T extends DomElement> extends DomInvocationHandler<T>{
-  public DomRootInvocationHandler(final Class<T> aClass, final XmlTag tag, final DomFileElement<T> parent, @NotNull final String tagName, DomManagerImpl manager) {
-    super(aClass, tag, parent, tagName, manager);
+  private DomFileElement myParent;
+
+  public DomRootInvocationHandler(final Class<T> aClass,
+                                  final XmlTag tag,
+                                  final DomFileElement<T> fileElement,
+                                  @NotNull final String tagName
+  ) {
+    super(aClass, tag, null, tagName, fileElement.getManager());
+    myParent = fileElement;
   }
 
   @NotNull
   public DomFileElement getRoot() {
-    return getParent();
+    return myParent;
   }
 
   @NotNull
-  public DomFileElement<T> getParent() {
-    return (DomFileElement<T>) super.getParent();
-  }
-
-  @NotNull
-  protected XmlFile getFile() {
-    return getParent().getFile();
+  public DomElement getParent() {
+    return myParent;
   }
 
   protected void setXmlTag(final XmlTag tag) throws IncorrectOperationException {
@@ -36,6 +38,6 @@ public class DomRootInvocationHandler<T extends DomElement> extends DomInvocatio
   }
 
   protected XmlTag restoreTag(final String tagName) {
-    return getParent().getRootTag();
+    return ((DomFileElement)getParent()).getRootTag();
   }
 }

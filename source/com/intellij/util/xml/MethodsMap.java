@@ -20,10 +20,10 @@ import java.util.*;
  * @author peter
  */
 public class MethodsMap {
-  private Class <? extends DomElement> myClass;
-  private Map<Method, String> myFixedChildrenMethods;
-  private Set<String> myFixedChildrenNames;
-  private Map<Method, Pair<String,Class<? extends DomElement>>> myVariableChildrenMethods;
+  private Class<? extends DomElement> myClass;
+  private Map<Method, Pair<String, Integer>> myFixedChildrenMethods;
+  private Map<String, Integer> myFixedChildrenCounts = new HashMap<String, Integer>();
+  private Map<Method, Pair<String, Class<? extends DomElement>>> myVariableChildrenMethods;
 
   public MethodsMap(final Class<? extends DomElement> aClass) {
     myClass = aClass;
@@ -37,22 +37,27 @@ public class MethodsMap {
     return myVariableChildrenMethods.get(method).getFirst();
   }
 
-  boolean hasFixedChildrenMethod(String qname) {
-    return myFixedChildrenNames.contains(qname);
+  Pair<String, Integer> getFixedChildInfo(Method method) {
+    return myFixedChildrenMethods.get(method);
+  }
+
+  int getFixedChildrenCount(String qname) {
+    final Integer integer = myFixedChildrenCounts.get(qname);
+    return integer == null ? 0 : (integer);
   }
 
   Set<Map.Entry<Method, Pair<String, Class<? extends DomElement>>>> getVariableChildrenEntries() {
     return myVariableChildrenMethods.entrySet();
   }
 
-  Set<Map.Entry<Method, String>> getFixedChildrenEntries() {
+  Set<Map.Entry<Method, Pair<String, Integer>>> getFixedChildrenEntries() {
     return myFixedChildrenMethods.entrySet();
   }
 
   private boolean isCoreMethod(final Method method) {
-      final Class<?> declaringClass = method.getDeclaringClass();
-      return Object.class.equals(declaringClass) || DomElement.class.equals(declaringClass);
-    }
+    final Class<?> declaringClass = method.getDeclaringClass();
+    return Object.class.equals(declaringClass) || DomElement.class.equals(declaringClass);
+  }
 
   @Nullable
   private static Class<? extends DomElement> extractElementType(Type returnType) {
@@ -92,46 +97,45 @@ public class MethodsMap {
   }
 
   @Nullable
-    private String getSubTagName(final Method method, final XmlFile file) {
-      final SubTag subTagAnnotation = method.getAnnotation(SubTag.class);
-      if (subTagAnnotation == null || StringUtil.isEmpty(subTagAnnotation.value())) {
-        return getNameFromMethod(method, file);
-      }
-      return subTagAnnotation.value();
+  private String getSubTagName(final Method method, final XmlFile file) {
+    final SubTag subTagAnnotation = method.getAnnotation(SubTag.class);
+    if (subTagAnnotation == null || StringUtil.isEmpty(subTagAnnotation.value())) {
+      return getNameFromMethod(method, file);
     }
-
-    @Nullable
-    private String getSubTagNameForCollection(final Method method, final XmlFile file) {
-      final SubTagList subTagList = method.getAnnotation(SubTagList.class);
-      if (subTagList == null || StringUtil.isEmpty(subTagList.value())) {
-        final String propertyName = getPropertyName(method);
-        return propertyName != null ? getNameStrategy(file).convertName(StringUtil.unpluralize(propertyName)) : null;
-      }
-      return subTagList.value();
-    }
+    return subTagAnnotation.value();
+  }
 
   @Nullable
-    private String getNameFromMethod(final Method method, final XmlFile file) {
+  private String getSubTagNameForCollection(final Method method, final XmlFile file) {
+    final SubTagList subTagList = method.getAnnotation(SubTagList.class);
+    if (subTagList == null || StringUtil.isEmpty(subTagList.value())) {
       final String propertyName = getPropertyName(method);
-      return propertyName == null ? null : getNameStrategy(file).convertName(propertyName);
+      return propertyName != null ? getNameStrategy(file).convertName(StringUtil.unpluralize(propertyName)) : null;
     }
+    return subTagList.value();
+  }
+
+  @Nullable
+  private String getNameFromMethod(final Method method, final XmlFile file) {
+    final String propertyName = getPropertyName(method);
+    return propertyName == null ? null : getNameStrategy(file).convertName(propertyName);
+  }
 
   private static String getPropertyName(Method method) {
-      return PropertyUtil.getPropertyName(method.getName());
-    }
+    return PropertyUtil.getPropertyName(method.getName());
+  }
 
-    @NotNull
-    private NameStrategy getNameStrategy(XmlFile file) {
-      return DomManagerImpl._getNameStrategy(file);
-    }
-
+  @NotNull
+  private NameStrategy getNameStrategy(XmlFile file) {
+    return DomManagerImpl._getNameStrategy(file);
+  }
 
 
   synchronized void buildMethodMaps(final XmlFile file) {
     if (myFixedChildrenMethods != null) return;
-    myFixedChildrenMethods = new HashMap<Method, String>();
+    myFixedChildrenMethods = new HashMap<Method, Pair<String, Integer>>();
     myVariableChildrenMethods = new HashMap<Method, Pair<String, Class<? extends DomElement>>>();
-    myFixedChildrenNames = new HashSet<String>();
+    myFixedChildrenCounts = new HashMap<String, Integer>();
 
     for (Method method : myClass.getMethods()) {
       if (!isCoreMethod(method)) {
@@ -139,8 +143,16 @@ public class MethodsMap {
         if (DomElement.class.isAssignableFrom(returnType)) {
           final String qname = getSubTagName(method, file);
           if (qname != null) {
-            myFixedChildrenMethods.put(method, qname);
-            myFixedChildrenNames.add(qname);
+            int index = 0;
+            final SubTag subTagAnnotation = method.getAnnotation(SubTag.class);
+            if (subTagAnnotation != null && subTagAnnotation.index() != 0) {
+              index = subTagAnnotation.index();
+            }
+            myFixedChildrenMethods.put(method, new Pair<String, Integer>(qname, index));
+            final Integer integer = myFixedChildrenCounts.get(qname);
+            if (integer == null || integer < index + 1) {
+              myFixedChildrenCounts.put(qname, index + 1);
+            }
           }
         }
         final Class<? extends DomElement> aClass = extractElementType(method.getGenericReturnType());

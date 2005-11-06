@@ -12,4 +12,5 @@ import java.lang.annotation.ElementType;
 @Target({ElementType.METHOD})
 public @interface SubTag {
   String value() default "";
+  int index() default 0;
 }

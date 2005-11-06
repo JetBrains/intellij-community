@@ -46,13 +46,17 @@ public class DomFileElement<T extends DomElement> implements DomElement {
     return null;
   }
 
+  public DomManagerImpl getManager() {
+    return myManager;
+  }
+
   @NotNull
   public T getRootElement() {
     synchronized (PsiLock.LOCK) {
       if (myRootValue == null) {
         final XmlTag tag = getRootTag();
-        final DomRootInvocationHandler<T> handler = new DomRootInvocationHandler<T>(myRootElementClass, tag, this, myRootTagName, myManager);
-        myRootValue = myManager.createDomElement(myRootElementClass, tag, handler);
+        final DomRootInvocationHandler<T> handler = new DomRootInvocationHandler<T>(myRootElementClass, tag, this, myRootTagName);
+        myRootValue = (T)myManager.createDomElement(myRootElementClass, tag, handler);
       }
       return myRootValue;
     }
