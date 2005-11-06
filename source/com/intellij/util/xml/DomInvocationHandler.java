@@ -84,7 +84,6 @@ abstract class DomInvocationHandler<T extends DomElement> implements InvocationH
     return myParent.getRoot();
   }
 
-  @NotNull
   public DomElement getParent() {
     return myParent.getProxy();
   }

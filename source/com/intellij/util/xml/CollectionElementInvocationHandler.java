@@ -19,20 +19,24 @@ public class CollectionElementInvocationHandler<T extends DomElement> extends Do
     super(aClass, tag, parent, tag.getName(), parent.getManager());
   }
 
-  protected void setXmlTag(final XmlTag tag) throws IncorrectOperationException {
+  public final DomElement getParent() {
+    return isValid() ? super.getParent() : null;
+  }
+
+  protected final void setXmlTag(final XmlTag tag) throws IncorrectOperationException {
     getParent().ensureTagExists().add(tag);
   }
 
-  public boolean isValid() {
+  public final boolean isValid() {
     return !myInvalidated;
   }
 
-  public void undefine() {
+  public final void undefine() {
     myInvalidated = true;
     super.undefine();
   }
 
-  protected XmlTag restoreTag(String tagName) {
+  protected final XmlTag restoreTag(String tagName) {
     final XmlTag tag = getParent().getXmlTag();
     return tag == null ? null : tag.findFirstSubTag(getTagName());
   }

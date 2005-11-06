@@ -3,27 +3,35 @@
  */
 package com.intellij.util.xml;
 
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.util.Key;
+import com.intellij.pom.PomModel;
+import com.intellij.pom.PomModelAspect;
+import com.intellij.pom.event.PomModelEvent;
+import com.intellij.pom.event.PomModelListener;
+import com.intellij.pom.xml.XmlAspect;
+import com.intellij.pom.xml.XmlChangeSet;
+import com.intellij.pom.xml.XmlChangeVisitor;
+import com.intellij.pom.xml.events.*;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import net.sf.cglib.proxy.Proxy;
-import net.sf.cglib.proxy.InvocationHandler;
 import net.sf.cglib.core.CodeGenerationException;
+import net.sf.cglib.proxy.InvocationHandler;
+import net.sf.cglib.proxy.Proxy;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.ArrayList;
-import java.util.Map;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author peter
  */
-public class DomManagerImpl extends DomManager implements ApplicationComponent {
+public class DomManagerImpl extends DomManager implements ProjectComponent, XmlChangeVisitor {
   private static final Key<NameStrategy> NAME_STRATEGY_KEY = Key.create("NameStrategy");
   private static final Key<DomInvocationHandler> CACHED_HANDLER = Key.create("CachedInvocationHandler");
   private static final Key<DomFileElement> CACHED_FILE_ELEMENT = Key.create("CachedFileElement");
@@ -34,6 +42,12 @@ public class DomManagerImpl extends DomManager implements ApplicationComponent {
   private final Map<Class<? extends DomElement>,MethodsMap> myMethodsMaps = new HashMap<Class<? extends DomElement>, MethodsMap>();
   private final Map<Class<? extends DomElement>,ClassChooser> myClassChoosers = new HashMap<Class<? extends DomElement>, ClassChooser>();
   private DomEventListener[] myCachedListeners;
+  private PomModelListener myXmlListener;
+  private PomModel myPomModel;
+
+  public DomManagerImpl(final PomModel pomModel) {
+    myPomModel = pomModel;
+  }
 
   public final void addDomEventListener(DomEventListener listener) {
     myCachedListeners = null;
@@ -167,4 +181,51 @@ public class DomManagerImpl extends DomManager implements ApplicationComponent {
     myClassChoosers.remove(aClass);
   }
 
+  public void projectOpened() {
+    final XmlAspect xmlAspect = myPomModel.getModelAspect(XmlAspect.class);
+    assert xmlAspect != null;
+    myXmlListener = new PomModelListener() {
+      public void modelChanged(PomModelEvent event) {
+        final XmlChangeSet changeSet = (XmlChangeSet) event.getChangeSet(xmlAspect);
+        if (changeSet != null) {
+          for (XmlChange change : changeSet.getChanges()) {
+            change.accept(DomManagerImpl.this);
+          }
+        }
+      }
+
+      public boolean isAspectChangeInteresting(PomModelAspect aspect) {
+        return xmlAspect.equals(aspect);
+      }
+    };
+    myPomModel.addModelListener(myXmlListener);
+  }
+
+  public void projectClosed() {
+    myPomModel.removeModelListener(myXmlListener);
+  }
+
+  public void visitXmlAttributeSet(final XmlAttributeSet xmlAttributeSet) {
+  }
+
+  public void visitDocumentChanged(final XmlDocumentChanged xmlDocumentChanged) {
+  }
+
+  public void visitXmlElementChanged(final XmlElementChanged xmlElementChanged) {
+  }
+
+  public void visitXmlTagChildAdd(final XmlTagChildAdd xmlTagChildAdd) {
+  }
+
+  public void visitXmlTagChildChanged(final XmlTagChildChanged xmlTagChildChanged) {
+  }
+
+  public void visitXmlTagChildRemoved(final XmlTagChildRemoved xmlTagChildRemoved) {
+  }
+
+  public void visitXmlTagNameChanged(final XmlTagNameChanged xmlTagNameChanged) {
+  }
+
+  public void visitXmlTextChanged(final XmlTextChanged xmlTextChanged) {
+  }
 }

@@ -3,7 +3,7 @@
  */
 package com.intellij.util.xml;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,8 +12,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class DomManager {
 
-  public static DomManager getXmlAnnotatedElementManager() {
-    return ApplicationManager.getApplication().getComponent(DomManager.class);
+  public static DomManager getDomManager(Project project) {
+    return project.getComponent(DomManager.class);
   }
 
   public abstract void setNameStrategy(final XmlFile file, final NameStrategy strategy);
