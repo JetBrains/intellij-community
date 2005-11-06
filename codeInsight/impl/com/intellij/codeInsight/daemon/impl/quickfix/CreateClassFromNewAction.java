@@ -125,19 +125,21 @@ public class CreateClassFromNewAction extends CreateFromUsageBaseAction {
 
     for (ExpectedTypeInfo expectedType : expectedTypes) {
       PsiType type = expectedType.getType();
-      PsiClass aClass = PsiUtil.resolveClassInType(type);
+      if (!(type instanceof PsiClassType)) continue;
+      final PsiClassType classType = (PsiClassType)type;
+      PsiClass aClass = classType.resolve();
       if (aClass == null) continue;
       if (aClass.equals(targetClass) || aClass.hasModifierProperty(PsiModifier.FINAL)) continue;
       PsiElementFactory factory = aClass.getManager().getElementFactory();
 
       if (aClass.isInterface()) {
         PsiReferenceList implementsList = targetClass.getImplementsList();
-        implementsList.add(factory.createClassReferenceElement(aClass));
+        implementsList.add(factory.createReferenceElementByType(classType));
       }
       else {
         PsiReferenceList extendsList = targetClass.getExtendsList();
         if (extendsList.getReferencedTypes().length > 0) continue;
-        extendsList.add(factory.createClassReferenceElement(aClass));
+        extendsList.add(factory.createReferenceElementByType(classType));
       }
     }
   }
