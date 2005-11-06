@@ -15,18 +15,20 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.ConflictsDialog;
-import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Query;
 
 import java.util.*;
 
@@ -182,16 +184,16 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
 
     if (mySettings.isReplaceUsages()) {
       if (myMember instanceof PsiMethod) {
-        findExternalReferences(helper, (PsiMethod)myMember, result);
+        findExternalReferences((PsiMethod)myMember, result);
       } else {
         final PsiClass aClass = (PsiClass)myMember;
         PsiMethod[] constructors = aClass.getConstructors();
         if (constructors.length > 0) {
           for (PsiMethod constructor : constructors) {
-            findExternalReferences(helper, constructor, result);
+            findExternalReferences(constructor, result);
           }
         } else {
-          findDefaultConstructorReferences(helper, aClass, result);
+          findDefaultConstructorReferences(aClass, result);
         }
       }
     }
@@ -208,9 +210,8 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
     return result.toArray(new UsageInfo[result.size()]);
   }
 
-  private void findExternalReferences(final PsiSearchHelper helper, final PsiMethod method, final ArrayList<UsageInfo> result) {
-    PsiReference[] refs = helper.findReferences(method, GlobalSearchScope.projectScope(myProject), true);
-    for (PsiReference ref : refs) {
+  private void findExternalReferences(final PsiMethod method, final ArrayList<UsageInfo> result) {
+    for (PsiReference ref : ReferencesSearch.search(method).findAll()) {
       PsiElement element = ref.getElement();
       PsiElement qualifier = null;
       if (element instanceof PsiReferenceExpression) {
@@ -223,9 +224,8 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
     }
   }
 
-  private void findDefaultConstructorReferences(final PsiSearchHelper helper, final PsiClass aClass, final ArrayList<UsageInfo> result) {
-    PsiReference[] refs = helper.findReferences(aClass, GlobalSearchScope.projectScope(myProject), true);
-    for (PsiReference ref : refs) {
+  private void findDefaultConstructorReferences(final PsiClass aClass, final ArrayList<UsageInfo> result) {
+    for (PsiReference ref : ReferencesSearch.search(aClass).findAll()) {
       PsiElement element = ref.getElement();
       PsiElement qualifier = null;
       if (element.getParent() instanceof PsiNewExpression) {
@@ -254,10 +254,10 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
       methodFromText.getParameterList().add(factory.createParameter("p", type));
     }
     final LocalSearchScope searchScope = new LocalSearchScope(methodFromText);
-    final Iterator<PsiTypeParameter> tpIterator = PsiUtil.typeParametersIterator(myMember.getContainingClass());
-    while (tpIterator.hasNext()) {
-      final PsiTypeParameter psiTypeParameter = tpIterator.next();
-      if (manager.getSearchHelper().findReferences(psiTypeParameter, searchScope, false).length > 0) {
+    final Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(myMember.getContainingClass());
+    while (iterator.hasNext()) {
+      final PsiTypeParameter psiTypeParameter = iterator.next();
+      if (ReferencesSearch.search(psiTypeParameter, searchScope).findFirst() != null) {
         typeParametersToAdd.add(psiTypeParameter);
       }
     }

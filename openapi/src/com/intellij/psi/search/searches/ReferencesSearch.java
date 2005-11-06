@@ -5,7 +5,6 @@ package com.intellij.psi.search.searches;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.Query;
 import com.intellij.util.QueryFactory;
@@ -19,7 +18,8 @@ public class ReferencesSearch extends QueryFactory<PsiReference, ReferencesSearc
   private ReferencesSearch() {
   }
 
-  public static class SearchParameters {
+  //Cannot make private due to some obscure java scoping rules:(
+  protected static class SearchParameters {
     private final PsiElement myElementToSearch;
     private final SearchScope myScope;
     private final boolean myIgnoreAcccessScope;
@@ -44,7 +44,7 @@ public class ReferencesSearch extends QueryFactory<PsiReference, ReferencesSearc
   }
 
   public static Query<PsiReference> search(PsiElement element) {
-    return search(element, GlobalSearchScope.allScope(element.getProject()));
+    return search(element, element.getUseScope(), true);
   }
 
   public static Query<PsiReference> search(PsiElement element, SearchScope searchScope) {

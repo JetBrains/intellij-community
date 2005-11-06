@@ -19,7 +19,12 @@ public class QueryFactory<Result, Parameters> {
     myExecutors.remove(executor);
   }
 
-  public final Query<Result> createQuery(Parameters parameters) {
+  /**
+   * This method is intentionally made protected to be used only by QueryFactory implementations
+   * It is supposed that the implementors will box Parameters themselves based on info passed to them
+   * @return query to perform the search
+   */
+  protected final Query<Result> createQuery(Parameters parameters) {
     return new QueryInstance<Result, Parameters>(parameters, myExecutors);
   }
 }
