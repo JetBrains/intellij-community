@@ -8,7 +8,7 @@ package com.intellij.util.xml;
  */
 public abstract class DomEventListener implements DomEventVisitor{
 
-  public void valueChanged(ValueChangeEvent event) {
+  public void valueChanged(TagValueChangeEvent event) {
   }
 
   public void attributeValueChanged(AttributeValueChangeEvent event) {
@@ -27,7 +27,7 @@ public abstract class DomEventListener implements DomEventVisitor{
     event.accept(this);
   }
 
-  public final void visitValueChangeEvent(final ValueChangeEvent event) {
+  public final void visitValueChangeEvent(final TagValueChangeEvent event) {
     valueChanged(event);
   }
 

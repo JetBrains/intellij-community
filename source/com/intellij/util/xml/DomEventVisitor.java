@@ -7,7 +7,7 @@ package com.intellij.util.xml;
  * @author peter
  */
 public interface DomEventVisitor {
-  void visitValueChangeEvent(final ValueChangeEvent event);
+  void visitValueChangeEvent(final TagValueChangeEvent event);
 
   void visitElementDefined(final ElementDefinedEvent event);
 

@@ -14,8 +14,7 @@ import com.intellij.pom.xml.XmlChangeSet;
 import com.intellij.pom.xml.XmlChangeVisitor;
 import com.intellij.pom.xml.events.*;
 import com.intellij.psi.PsiLock;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.*;
 import net.sf.cglib.core.CodeGenerationException;
 import net.sf.cglib.proxy.InvocationHandler;
 import net.sf.cglib.proxy.Proxy;
@@ -44,6 +43,8 @@ public class DomManagerImpl extends DomManager implements ProjectComponent, XmlC
   private DomEventListener[] myCachedListeners;
   private PomModelListener myXmlListener;
   private PomModel myPomModel;
+  private boolean myChanging;
+
 
   public DomManagerImpl(final PomModel pomModel) {
     myPomModel = pomModel;
@@ -167,25 +168,30 @@ public class DomManagerImpl extends DomManager implements ProjectComponent, XmlC
     return getClass().getName();
   }
 
+  public final void setChanging(final boolean changing) {
+    myChanging = changing;
+  }
+
   public final void initComponent() {
   }
 
   public final void disposeComponent() {
   }
 
-  public <T extends DomElement> void registerClassChooser(final Class<T> aClass, final ClassChooser<T> classChooser) {
+  public final <T extends DomElement> void registerClassChooser(final Class<T> aClass, final ClassChooser<T> classChooser) {
     myClassChoosers.put(aClass, classChooser);
   }
 
-  public <T extends DomElement> void unregisterClassChooser(Class<T> aClass) {
+  public final <T extends DomElement> void unregisterClassChooser(Class<T> aClass) {
     myClassChoosers.remove(aClass);
   }
 
-  public void projectOpened() {
+  public final void projectOpened() {
     final XmlAspect xmlAspect = myPomModel.getModelAspect(XmlAspect.class);
     assert xmlAspect != null;
     myXmlListener = new PomModelListener() {
       public void modelChanged(PomModelEvent event) {
+        if (myChanging) return;
         final XmlChangeSet changeSet = (XmlChangeSet) event.getChangeSet(xmlAspect);
         if (changeSet != null) {
           for (XmlChange change : changeSet.getChanges()) {
@@ -201,31 +207,63 @@ public class DomManagerImpl extends DomManager implements ProjectComponent, XmlC
     myPomModel.addModelListener(myXmlListener);
   }
 
-  public void projectClosed() {
+  public final void projectClosed() {
     myPomModel.removeModelListener(myXmlListener);
   }
 
-  public void visitXmlAttributeSet(final XmlAttributeSet xmlAttributeSet) {
+  public final void visitXmlAttributeSet(final XmlAttributeSet xmlAttributeSet) {
+    final DomInvocationHandler element = getCachedElement(xmlAttributeSet.getTag());
+    if (element != null) {
+      fireEvent(new AttributeValueChangeEvent(element, xmlAttributeSet.getName(), xmlAttributeSet.getValue()));
+    }
   }
 
-  public void visitDocumentChanged(final XmlDocumentChanged xmlDocumentChanged) {
+  public final void visitDocumentChanged(final XmlDocumentChanged change) {
   }
 
-  public void visitXmlElementChanged(final XmlElementChanged xmlElementChanged) {
+  public final void visitXmlElementChanged(final XmlElementChanged change) {
+    xmlElementChanged(change.getElement());
   }
 
-  public void visitXmlTagChildAdd(final XmlTagChildAdd xmlTagChildAdd) {
+  private void xmlElementChanged(final XmlElement xmlElement) {
+    if (xmlElement instanceof XmlText) {
+      fireTagValueChanged(((XmlText)xmlElement).getParentTag());
+    }
   }
 
-  public void visitXmlTagChildChanged(final XmlTagChildChanged xmlTagChildChanged) {
+  public final void visitXmlTagChildAdd(final XmlTagChildAdd change) {
+    final XmlTag tag = change.getTag();
+
+    final XmlTagChild child = change.getChild();
+    if (child instanceof XmlText) {
+      fireTagValueChanged(tag);
+    }
   }
 
-  public void visitXmlTagChildRemoved(final XmlTagChildRemoved xmlTagChildRemoved) {
+  private void fireTagValueChanged(final XmlTag tag) {
+    final DomInvocationHandler element = getCachedElement(tag);
+    if (element != null) {
+      fireEvent(new TagValueChangeEvent(element, DomInvocationHandler.getTagValue(tag)));
+    }
   }
 
-  public void visitXmlTagNameChanged(final XmlTagNameChanged xmlTagNameChanged) {
+  public final void visitXmlTagChildChanged(final XmlTagChildChanged change) {
+    xmlElementChanged(change.getChild());
   }
 
-  public void visitXmlTextChanged(final XmlTextChanged xmlTextChanged) {
+  public final void visitXmlTagChildRemoved(final XmlTagChildRemoved change) {
+    final XmlTagChild child = change.getChild();
+    if (child instanceof XmlText) {
+      fireTagValueChanged(change.getTag());
+    }
   }
+
+  public final void visitXmlTagNameChanged(final XmlTagNameChanged xmlTagNameChanged) {
+
+  }
+
+  public final void visitXmlTextChanged(final XmlTextChanged xmlTextChanged) {
+    fireTagValueChanged(xmlTextChanged.getText().getParentTag());
+  }
+
 }

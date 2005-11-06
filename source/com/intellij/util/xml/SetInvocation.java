@@ -17,15 +17,21 @@ public abstract class SetInvocation implements Invocation {
   }
 
   public Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
-    XmlTag tag = handler.ensureTagExists();
-    final String oldValue = getValue(tag);
-    if (args[0] == null) {
-      clearValue(tag);
-      handler.getManager().fireEvent(createEvent(handler, oldValue, null));
-    } else {
-      final String newValue = myConverter.toString(args[0], new ConvertContext(handler));
-      setValue(tag, newValue);
-      handler.getManager().fireEvent(createEvent(handler, oldValue, newValue));
+    handler.getManager().setChanging(true);
+    try {
+      XmlTag tag = handler.ensureTagExists();
+      final String oldValue = getValue(tag);
+      if (args[0] == null) {
+        clearValue(tag);
+        handler.getManager().fireEvent(createEvent(handler, oldValue, null));
+      } else {
+        final String newValue = myConverter.toString(args[0], new ConvertContext(handler));
+        setValue(tag, newValue);
+        handler.getManager().fireEvent(createEvent(handler, oldValue, newValue));
+      }
+    }
+    finally {
+      handler.getManager().setChanging(false);
     }
     return null;
   }

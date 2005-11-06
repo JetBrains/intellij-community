@@ -363,4 +363,5 @@ abstract class DomInvocationHandler<T extends DomElement> implements InvocationH
     }
     return createCollectionElement(aClass, newTag);
   }
+  
 }
