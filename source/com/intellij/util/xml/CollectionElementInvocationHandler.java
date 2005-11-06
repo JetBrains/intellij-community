@@ -5,17 +5,16 @@ package com.intellij.util.xml;
 
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
  */
 public class CollectionElementInvocationHandler<T extends DomElement> extends DomInvocationHandler<T>{
   public CollectionElementInvocationHandler(final Class<T> aClass,
-                                            final XmlTag tag,
-                                            final DomInvocationHandler parent,
-                                            final String tagName
-  ) {
-    super(aClass, tag, parent, tagName, parent.getManager());
+                                            @NotNull final XmlTag tag,
+                                            final DomInvocationHandler parent) {
+    super(aClass, tag, parent, tag.getName(), parent.getManager());
   }
 
   protected void setXmlTag(final XmlTag tag) throws IncorrectOperationException {

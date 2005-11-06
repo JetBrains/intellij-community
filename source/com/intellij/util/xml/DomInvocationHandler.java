@@ -113,7 +113,11 @@ abstract class DomInvocationHandler<T extends DomElement> implements InvocationH
   }
 
   protected final XmlTag createEmptyTag() throws IncorrectOperationException {
-    return getFile().getManager().getElementFactory().createTagFromText("<" + myTagName + "/>");
+    return createEmptyTag(myTagName);
+  }
+
+  protected final XmlTag createEmptyTag(final String tagName) throws IncorrectOperationException {
+    return getFile().getManager().getElementFactory().createTagFromText("<" + tagName + "/>");
   }
 
   public void undefine() {
@@ -195,17 +199,7 @@ abstract class DomInvocationHandler<T extends DomElement> implements InvocationH
       return new SetValueInvocation(getConverter(method, false));
     }
 
-    myMethodsMap.buildMethodMaps(getFile());
-
-    if (myMethodsMap.isFixedChildrenMethod(method)) {
-      return new GetFixedChildInvocation(method);
-    }
-
-    if (myMethodsMap.isVariableChildrenMethod(method)) {
-      return new GetVariableChildrenInvocation(myMethodsMap, method);
-    }
-
-    throw new UnsupportedOperationException("No implementation for method " + method.toString());
+    return myMethodsMap.createInvocation(getFile(), method);
   }
 
   @NotNull
@@ -244,7 +238,7 @@ abstract class DomInvocationHandler<T extends DomElement> implements InvocationH
     return method.getName().startsWith("set") && method.getParameterTypes().length == 1 && method.getReturnType() == void.class;
   }
 
-  private static boolean isGetter(final Method method) {
+  static boolean isGetter(final Method method) {
     final String name = method.getName();
     if (method.getParameterTypes().length != 0) {
       return false;
@@ -284,14 +278,11 @@ abstract class DomInvocationHandler<T extends DomElement> implements InvocationH
         }
 
         if (tag != null) {
-          for (Map.Entry<Method, Pair<String, Class<? extends DomElement>>> entry : myMethodsMap.getVariableChildrenEntries()) {
-            final Pair<String, Class<? extends DomElement>> pair = entry.getValue();
-            String qname = pair.getFirst();
+          for (Map.Entry<Method, String> entry : myMethodsMap.getVariableChildrenEntries()) {
+            String qname = entry.getValue();
             for (XmlTag subTag : tag.findSubTags(qname)) {
               if (!usedTags.contains(subTag)) {
-                final Class<? extends DomElement> aClass = pair.getSecond();
-                final DomInvocationHandler handler = new CollectionElementInvocationHandler(aClass, subTag, this, qname);
-                myManager.createDomElement(aClass, subTag, handler);
+                createCollectionElement(myMethodsMap.getVariableChildrenClass(qname), subTag);
                 usedTags.add(subTag);
               }
             }
@@ -303,6 +294,11 @@ abstract class DomInvocationHandler<T extends DomElement> implements InvocationH
         myInitialized = true;
       }
     }
+  }
+
+  private DomElement createCollectionElement(final Class aClass, final XmlTag subTag) {
+    final DomInvocationHandler handler = new CollectionElementInvocationHandler(aClass, subTag, this);
+    return myManager.createDomElement(aClass, subTag, handler);
   }
 
   protected final XmlTag findSubTag(final XmlTag tag, final String qname, final int index) {
@@ -330,5 +326,31 @@ abstract class DomInvocationHandler<T extends DomElement> implements InvocationH
     return myManager;
   }
 
+  protected final void createFixedChildrenTags(String tagName, int count) throws IncorrectOperationException {
+    checkInitialized();
+    final XmlTag tag = ensureTagExists();
+    final int existing = tag.findSubTags(tagName).length;
+    for (int i = existing; i < count; i++) {
+      tag.add(createEmptyTag(tagName));
+    }
+    for (Map.Entry<Method, Pair<String, Integer>> entry : myMethodsMap.getFixedChildrenEntries()) {
+      getFixedChild(entry.getKey()).getXmlTag();
+    }
+  }
 
+  public final DomElement addChild(final String tagName, final Class aClass, int index) throws IncorrectOperationException {
+    createFixedChildrenTags(tagName, myMethodsMap.getFixedChildrenCount(tagName));
+    final XmlTag tag = ensureTagExists();
+    final XmlTag[] subTags = tag.findSubTags(tagName);
+    if (subTags.length < index) {
+      index = subTags.length;
+    }
+    XmlTag newTag = createEmptyTag(tagName);
+    if (index == 0) {
+      newTag = (XmlTag)tag.add(newTag);
+    } else {
+      newTag = (XmlTag)tag.addAfter(newTag, subTags[index - 1]);
+    }
+    return createCollectionElement(aClass, newTag);
+  }
 }

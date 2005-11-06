@@ -23,31 +23,25 @@ public class MethodsMap {
   private Class<? extends DomElement> myClass;
   private Map<Method, Pair<String, Integer>> myFixedChildrenMethods;
   private Map<String, Integer> myFixedChildrenCounts = new HashMap<String, Integer>();
-  private Map<Method, Pair<String, Class<? extends DomElement>>> myVariableChildrenMethods;
+  private Map<Method, String> myVariableChildrenGetterMethods;
+  private Map<Method, String> myVariableChildrenAdditionMethods;
+  private Map<String, Class<? extends DomElement>> myVariableChildrenClasses;
 
   public MethodsMap(final Class<? extends DomElement> aClass) {
     myClass = aClass;
   }
 
-  boolean isVariableChildrenMethod(final Method method) {
-    return myVariableChildrenMethods.containsKey(method);
-  }
-
-  String getVariableChildrenTagQName(final Method method) {
-    return myVariableChildrenMethods.get(method).getFirst();
-  }
-
-  Pair<String, Integer> getFixedChildInfo(Method method) {
-    return myFixedChildrenMethods.get(method);
-  }
-
-  int getFixedChildrenCount(String qname) {
+  final int getFixedChildrenCount(String qname) {
     final Integer integer = myFixedChildrenCounts.get(qname);
     return integer == null ? 0 : (integer);
   }
 
-  Set<Map.Entry<Method, Pair<String, Class<? extends DomElement>>>> getVariableChildrenEntries() {
-    return myVariableChildrenMethods.entrySet();
+  Set<Map.Entry<Method, String>> getVariableChildrenEntries() {
+    return myVariableChildrenGetterMethods.entrySet();
+  }
+
+  Class<? extends DomElement> getVariableChildrenClass(String tagName) {
+    return myVariableChildrenClasses.get(tagName);
   }
 
   Set<Map.Entry<Method, Pair<String, Integer>>> getFixedChildrenEntries() {
@@ -71,23 +65,13 @@ public class MethodsMap {
           if (arguments.length == 1) {
             final Type argument = arguments[0];
             if (argument instanceof WildcardType) {
-              WildcardType wildcardType = (WildcardType)argument;
-              final Type[] upperBounds = wildcardType.getUpperBounds();
-              if (upperBounds.length == 1) {
-                final Type upperBound = upperBounds[0];
-                if (upperBound instanceof Class) {
-                  Class aClass1 = (Class)upperBound;
-                  if (DomElement.class.isAssignableFrom(aClass1)) {
-                    return (Class<? extends DomElement>)aClass1;
-                  }
-                }
+              final Type[] upperBounds = ((WildcardType)argument).getUpperBounds();
+              if (upperBounds.length == 1 && isDomElement(upperBounds[0])) {
+                return (Class<? extends DomElement>)upperBounds[0];
               }
             }
-            else if (argument instanceof Class) {
-              Class aClass1 = (Class)argument;
-              if (DomElement.class.isAssignableFrom(aClass1)) {
-                return (Class<? extends DomElement>)aClass1;
-              }
+            else if (isDomElement(argument)) {
+              return (Class<? extends DomElement>)argument;
             }
           }
         }
@@ -130,43 +114,107 @@ public class MethodsMap {
     return DomManagerImpl._getNameStrategy(file);
   }
 
-
-  synchronized void buildMethodMaps(final XmlFile file) {
+  private synchronized void buildMethodMaps(final XmlFile file) {
     if (myFixedChildrenMethods != null) return;
     myFixedChildrenMethods = new HashMap<Method, Pair<String, Integer>>();
-    myVariableChildrenMethods = new HashMap<Method, Pair<String, Class<? extends DomElement>>>();
+    myVariableChildrenGetterMethods = new HashMap<Method, String>();
     myFixedChildrenCounts = new HashMap<String, Integer>();
+    myVariableChildrenAdditionMethods = new HashMap<Method, String>();
+    myVariableChildrenClasses = new HashMap<String, Class<? extends DomElement>>();
 
     for (Method method : myClass.getMethods()) {
       if (!isCoreMethod(method)) {
-        final Class<?> returnType = method.getReturnType();
-        if (DomElement.class.isAssignableFrom(returnType)) {
-          final String qname = getSubTagName(method, file);
-          if (qname != null) {
-            int index = 0;
-            final SubTag subTagAnnotation = method.getAnnotation(SubTag.class);
-            if (subTagAnnotation != null && subTagAnnotation.index() != 0) {
-              index = subTagAnnotation.index();
-            }
-            myFixedChildrenMethods.put(method, new Pair<String, Integer>(qname, index));
-            final Integer integer = myFixedChildrenCounts.get(qname);
-            if (integer == null || integer < index + 1) {
-              myFixedChildrenCounts.put(qname, index + 1);
-            }
-          }
+        if (DomInvocationHandler.isGetter(method)) {
+          processGetterMethod(method, file);
         }
-        final Class<? extends DomElement> aClass = extractElementType(method.getGenericReturnType());
-        if (aClass != null) {
-          final String qname = getSubTagNameForCollection(method, file);
-          if (qname != null) {
-            myVariableChildrenMethods.put(method, new Pair<String, Class<? extends DomElement>>(qname, aClass));
-          }
+      }
+    }
+    for (Method method : myClass.getMethods()) {
+      if (!isCoreMethod(method)) {
+        if (isAddMethod(method, file)) {
+          myVariableChildrenAdditionMethods.put(method, extractTagName(method, "add", file));
         }
       }
     }
   }
 
-  public boolean isFixedChildrenMethod(final Method method) {
-    return myFixedChildrenMethods.containsKey(method);
+  private boolean isAddMethod(Method method, XmlFile file) {
+    final String tagName = extractTagName(method, "add", file);
+    if (tagName == null) return false;
+
+    final Class<? extends DomElement> childrenClass = getVariableChildrenClass(tagName);
+    if (childrenClass == null || !childrenClass.isAssignableFrom(method.getReturnType())) return false;
+
+    final Class<?>[] parameterTypes = method.getParameterTypes();
+    if (parameterTypes.length > 1) return false;
+    return parameterTypes.length == 0 || parameterTypes[0] == int.class;
+  }
+
+  private String extractTagName(Method method, String prefix, XmlFile file) {
+    final String name = method.getName();
+    if (!name.startsWith(prefix)) return null;
+
+    final SubTagList subTagAnnotation = method.getAnnotation(SubTagList.class);
+    if (subTagAnnotation != null && !StringUtil.isEmpty(subTagAnnotation.value())) {
+      return subTagAnnotation.value();
+    }
+
+    final String tagName = getNameStrategy(file).convertName(name.substring(prefix.length()));
+    return StringUtil.isEmpty(tagName) ? null : tagName;
+  }
+
+  private void processGetterMethod(final Method method, final XmlFile file) {
+    final Class<?> returnType = method.getReturnType();
+    if (isDomElement(returnType)) {
+      final String qname = getSubTagName(method, file);
+      if (qname != null) {
+        int index = 0;
+        final SubTag subTagAnnotation = method.getAnnotation(SubTag.class);
+        if (subTagAnnotation != null && subTagAnnotation.index() != 0) {
+          index = subTagAnnotation.index();
+        }
+        myFixedChildrenMethods.put(method, new Pair<String, Integer>(qname, index));
+        final Integer integer = myFixedChildrenCounts.get(qname);
+        if (integer == null || integer < index + 1) {
+          myFixedChildrenCounts.put(qname, index + 1);
+        }
+      }
+    }
+    final Class<? extends DomElement> aClass = extractElementType(method.getGenericReturnType());
+    if (aClass != null) {
+      final String qname = getSubTagNameForCollection(method, file);
+      if (qname != null) {
+        myVariableChildrenClasses.put(qname, aClass);
+        myVariableChildrenGetterMethods.put(method, qname);
+      }
+    }
+  }
+
+  private static boolean isDomElement(final Type type) {
+    return type instanceof Class && isDomElement((Class)type);
+  }
+
+  private static boolean isDomElement(final Class type) {
+    return DomElement.class.isAssignableFrom(type);
+  }
+
+  public Invocation createInvocation(final XmlFile file, final Method method) {
+    buildMethodMaps(file);
+
+    if (myFixedChildrenMethods.containsKey(method)) {
+      return new GetFixedChildInvocation(method);
+    }
+
+    String qname = myVariableChildrenGetterMethods.get(method);
+    if (qname != null) {
+      return new GetVariableChildrenInvocation(qname, getFixedChildrenCount(qname));
+    }
+
+    qname = myVariableChildrenAdditionMethods.get(method);
+    if (qname != null) {
+      return new AddChildInvocation(method.getReturnType(), qname, getFixedChildrenCount(qname));
+    }
+
+    throw new UnsupportedOperationException("No implementation for method " + method.toString());
   }
 }
