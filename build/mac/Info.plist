@@ -42,7 +42,7 @@
       <key>ClassPath</key>
       <string>$APP_PACKAGE/lib/extensions.jar:$APP_PACKAGE/lib/openapi.jar:$APP_PACKAGE/lib/idea.jar:$APP_PACKAGE/lib/jdom.jar:$APP_PACKAGE/lib/log4j.jar</string>
       <key>JVMVersion</key>
-      <string>1.4+</string>
+      <string>1.5+</string>
       <key>MainClass</key>
       <string>com.intellij.idea.Main</string>
       <key>Properties</key>
@@ -67,7 +67,7 @@
         <string>true</string>
       </dict>
       <key>VMOptions</key>
-      <string>-Xms16m -Xmx192m -Xbootclasspath/p:../lib/boot.jar -ea</string>
+      <string>-Xms16m -Xmx192m -XX:MaxPermSize=92m -Xbootclasspath/p:../lib/boot.jar -ea</string>
       <key>WorkingDirectory</key>
       <string>$APP_PACKAGE/bin</string>
    </dict>
