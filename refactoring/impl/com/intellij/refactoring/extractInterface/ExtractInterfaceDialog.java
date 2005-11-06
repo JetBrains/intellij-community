@@ -165,13 +165,11 @@ class ExtractInterfaceDialog extends ExtractSuperBaseDialog {
   @Override
   protected void updateDialogForExtractSubclass() {
     myInterfaceNameLabel.setText(RefactoringBundle.message("rename.implementation.class.to"));
-    myPackageLabel.setText(RefactoringBundle.message("package.for.implementation.class"));
   }
 
   @Override
   protected void updateDialogForExtractSuperclass() {
     myInterfaceNameLabel.setText(RefactoringBundle.message("interface.name.prompt"));
-    myPackageLabel.setText(RefactoringBundle.message("package.for.new.interface"));
   }
 
   protected String getClassNameLabelText() {
