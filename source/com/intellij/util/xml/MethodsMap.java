@@ -23,9 +23,9 @@ public class MethodsMap {
   private Class<? extends DomElement> myClass;
   private Map<Method, Pair<String, Integer>> myFixedChildrenMethods;
   private Map<String, Integer> myFixedChildrenCounts = new HashMap<String, Integer>();
-  private Map<Method, String> myVariableChildrenGetterMethods;
-  private Map<Method, String> myVariableChildrenAdditionMethods;
-  private Map<String, Class<? extends DomElement>> myVariableChildrenClasses;
+  private Map<Method, String> myCollectionChildrenGetterMethods;
+  private Map<Method, String> myCollectionChildrenAdditionMethods;
+  private Map<String, Class<? extends DomElement>> myCollectionChildrenClasses;
 
   public MethodsMap(final Class<? extends DomElement> aClass) {
     myClass = aClass;
@@ -36,12 +36,12 @@ public class MethodsMap {
     return integer == null ? 0 : (integer);
   }
 
-  Set<Map.Entry<Method, String>> getVariableChildrenEntries() {
-    return myVariableChildrenGetterMethods.entrySet();
+  Set<Map.Entry<Method, String>> getCollectionChildrenEntries() {
+    return myCollectionChildrenGetterMethods.entrySet();
   }
 
-  Class<? extends DomElement> getVariableChildrenClass(String tagName) {
-    return myVariableChildrenClasses.get(tagName);
+  Class<? extends DomElement> getCollectionChildrenClass(String tagName) {
+    return myCollectionChildrenClasses.get(tagName);
   }
 
   Set<Map.Entry<Method, Pair<String, Integer>>> getFixedChildrenEntries() {
@@ -117,10 +117,10 @@ public class MethodsMap {
   private synchronized void buildMethodMaps(final XmlFile file) {
     if (myFixedChildrenMethods != null) return;
     myFixedChildrenMethods = new HashMap<Method, Pair<String, Integer>>();
-    myVariableChildrenGetterMethods = new HashMap<Method, String>();
+    myCollectionChildrenGetterMethods = new HashMap<Method, String>();
     myFixedChildrenCounts = new HashMap<String, Integer>();
-    myVariableChildrenAdditionMethods = new HashMap<Method, String>();
-    myVariableChildrenClasses = new HashMap<String, Class<? extends DomElement>>();
+    myCollectionChildrenAdditionMethods = new HashMap<Method, String>();
+    myCollectionChildrenClasses = new HashMap<String, Class<? extends DomElement>>();
 
     for (Method method : myClass.getMethods()) {
       if (!isCoreMethod(method)) {
@@ -132,7 +132,7 @@ public class MethodsMap {
     for (Method method : myClass.getMethods()) {
       if (!isCoreMethod(method)) {
         if (isAddMethod(method, file)) {
-          myVariableChildrenAdditionMethods.put(method, extractTagName(method, "add", file));
+          myCollectionChildrenAdditionMethods.put(method, extractTagName(method, "add", file));
         }
       }
     }
@@ -142,7 +142,7 @@ public class MethodsMap {
     final String tagName = extractTagName(method, "add", file);
     if (tagName == null) return false;
 
-    final Class<? extends DomElement> childrenClass = getVariableChildrenClass(tagName);
+    final Class<? extends DomElement> childrenClass = getCollectionChildrenClass(tagName);
     if (childrenClass == null || !childrenClass.isAssignableFrom(method.getReturnType())) return false;
 
     final Class<?>[] parameterTypes = method.getParameterTypes();
@@ -184,8 +184,8 @@ public class MethodsMap {
     if (aClass != null) {
       final String qname = getSubTagNameForCollection(method, file);
       if (qname != null) {
-        myVariableChildrenClasses.put(qname, aClass);
-        myVariableChildrenGetterMethods.put(method, qname);
+        myCollectionChildrenClasses.put(qname, aClass);
+        myCollectionChildrenGetterMethods.put(method, qname);
       }
     }
   }
@@ -205,12 +205,12 @@ public class MethodsMap {
       return new GetFixedChildInvocation(method);
     }
 
-    String qname = myVariableChildrenGetterMethods.get(method);
+    String qname = myCollectionChildrenGetterMethods.get(method);
     if (qname != null) {
-      return new GetVariableChildrenInvocation(qname, getFixedChildrenCount(qname));
+      return new GetCollectionChildInvocation(qname, getFixedChildrenCount(qname));
     }
 
-    qname = myVariableChildrenAdditionMethods.get(method);
+    qname = myCollectionChildrenAdditionMethods.get(method);
     if (qname != null) {
       return new AddChildInvocation(method.getReturnType(), qname, getFixedChildrenCount(qname));
     }

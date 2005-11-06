@@ -11,11 +11,11 @@ import java.util.Collections;
 /**
  * @author peter
  */
-public class GetVariableChildrenInvocation implements Invocation {
+public class GetCollectionChildInvocation implements Invocation {
   private final String myQname;
   private final int myStartIndex;
 
-  public GetVariableChildrenInvocation(final String qname, final int startIndex) {
+  public GetCollectionChildInvocation(final String qname, final int startIndex) {
     myQname = qname;
     myStartIndex = startIndex;
   }
@@ -28,7 +28,7 @@ public class GetVariableChildrenInvocation implements Invocation {
     final XmlTag[] subTags = tag.findSubTags(myQname);
     DomElement[] elements = new DomElement[subTags.length - myStartIndex];
     for (int i = myStartIndex; i < subTags.length; i++) {
-      final DomElement element = DomManagerImpl.getCachedElement(subTags[i]);
+      final DomElement element = DomManagerImpl.getCachedElement(subTags[i]).getProxy();
       assert element != null : "Null annotated element for " + tag.getText() + "; " + myQname + "; " + i;
       elements[i - myStartIndex] = element;
     }

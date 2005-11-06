@@ -286,11 +286,11 @@ abstract class DomInvocationHandler<T extends DomElement> implements InvocationH
         }
 
         if (tag != null) {
-          for (Map.Entry<Method, String> entry : myMethodsMap.getVariableChildrenEntries()) {
+          for (Map.Entry<Method, String> entry : myMethodsMap.getCollectionChildrenEntries()) {
             String qname = entry.getValue();
             for (XmlTag subTag : tag.findSubTags(qname)) {
               if (!usedTags.contains(subTag)) {
-                createCollectionElement(myMethodsMap.getVariableChildrenClass(qname), subTag);
+                createCollectionElement(myMethodsMap.getCollectionChildrenClass(qname), subTag);
                 usedTags.add(subTag);
               }
             }
@@ -305,8 +305,7 @@ abstract class DomInvocationHandler<T extends DomElement> implements InvocationH
   }
 
   private DomElement createCollectionElement(final Class aClass, final XmlTag subTag) {
-    final DomInvocationHandler handler = new CollectionElementInvocationHandler(aClass, subTag, this);
-    return myManager.createDomElement(aClass, subTag, handler);
+    return myManager.createDomElement(aClass, subTag, new CollectionElementInvocationHandler(aClass, subTag, this));
   }
 
   protected final XmlTag findSubTag(final XmlTag tag, final String qname, final int index) {
@@ -330,7 +329,7 @@ abstract class DomInvocationHandler<T extends DomElement> implements InvocationH
   protected final void cacheDomElement(final XmlTag tag) {
     synchronized (PsiLock.LOCK) {
       myXmlTag = tag;
-      DomManagerImpl.setCachedElement(tag, getProxy());
+      DomManagerImpl.setCachedElement(tag, this);
     }
   }
 

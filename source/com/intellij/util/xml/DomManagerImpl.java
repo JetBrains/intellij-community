@@ -6,7 +6,6 @@ package com.intellij.util.xml;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiLock;
-import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import net.sf.cglib.proxy.Proxy;
@@ -26,7 +25,8 @@ import java.util.HashMap;
  */
 public class DomManagerImpl extends DomManager implements ApplicationComponent {
   private static final Key<NameStrategy> NAME_STRATEGY_KEY = Key.create("NameStrategy");
-  private static final Key<DomElement> CACHED_ELEMENT = Key.create("CachedXmlAnnotatedElement");
+  private static final Key<DomInvocationHandler> CACHED_HANDLER = Key.create("CachedInvocationHandler");
+  private static final Key<DomFileElement> CACHED_FILE_ELEMENT = Key.create("CachedFileElement");
 
   private final List<DomEventListener> myListeners = new ArrayList<DomEventListener>();
   private final ConverterManager myConverterManager = new ConverterManager();
@@ -81,7 +81,7 @@ public class DomManagerImpl extends DomManager implements ApplicationComponent {
         Class clazz = getProxyClassFor(getConcreteType(aClass, tag));
         final DomElement element = (DomElement) clazz.getConstructor(InvocationHandler.class).newInstance(handler);
         handler.setProxy(element);
-        setCachedElement(tag, element);
+        setCachedElement(tag, handler);
         return element;
       } catch (RuntimeException e) {
         throw e;
@@ -119,7 +119,7 @@ public class DomManagerImpl extends DomManager implements ApplicationComponent {
                                                                  final Class<T> aClass,
                                                                  String rootTagName) {
     synchronized (PsiLock.LOCK) {
-      DomFileElement<T> element = (DomFileElement<T>)getCachedElement(file);
+      DomFileElement<T> element = getCachedElement(file);
       if (element == null) {
         element = new DomFileElement<T>(file, aClass, rootTagName, this);
         setCachedElement(file, element);
@@ -128,15 +128,24 @@ public class DomManagerImpl extends DomManager implements ApplicationComponent {
     }
   }
 
-  protected static void setCachedElement(final XmlElement xmlElement, final DomElement element) {
-    if (xmlElement != null) {
-      xmlElement.putUserData(CACHED_ELEMENT, element);
+  protected static void setCachedElement(final XmlFile file, final DomFileElement element) {
+    file.putUserData(CACHED_FILE_ELEMENT, element);
+  }
+
+  protected static void setCachedElement(final XmlTag tag, final DomInvocationHandler element) {
+    if (tag != null) {
+      tag.putUserData(CACHED_HANDLER, element);
     }
   }
 
   @Nullable
-  public static DomElement getCachedElement(final XmlElement element) {
-    return element.getUserData(CACHED_ELEMENT);
+  public static DomFileElement getCachedElement(final XmlFile file) {
+    return file.getUserData(CACHED_FILE_ELEMENT);
+  }
+
+  @Nullable
+  public static DomInvocationHandler getCachedElement(final XmlTag tag) {
+    return tag.getUserData(CACHED_HANDLER);
   }
 
   @NonNls
