@@ -11,6 +11,8 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
  */
 public class CollectionElementInvocationHandler<T extends DomElement> extends DomInvocationHandler<T>{
+  private boolean myInvalidated;
+
   public CollectionElementInvocationHandler(final Class<T> aClass,
                                             @NotNull final XmlTag tag,
                                             final DomInvocationHandler parent) {
@@ -19,6 +21,15 @@ public class CollectionElementInvocationHandler<T extends DomElement> extends Do
 
   protected void setXmlTag(final XmlTag tag) throws IncorrectOperationException {
     getParent().ensureTagExists().add(tag);
+  }
+
+  public boolean isValid() {
+    return !myInvalidated;
+  }
+
+  public void undefine() {
+    myInvalidated = true;
+    super.undefine();
   }
 
   protected XmlTag restoreTag(String tagName) {

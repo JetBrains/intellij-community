@@ -24,4 +24,6 @@ public interface DomElement {
 
   void undefine();
 
+  boolean isValid();
+
 }

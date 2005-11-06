@@ -81,4 +81,8 @@ public class DomFileElement<T extends DomElement> implements DomElement {
 
   public void undefine() {
   }
+
+  public boolean isValid() {
+    return true;
+  }
 }

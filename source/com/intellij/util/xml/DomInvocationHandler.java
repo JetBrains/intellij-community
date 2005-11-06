@@ -29,7 +29,7 @@ abstract class DomInvocationHandler<T extends DomElement> implements InvocationH
   private final DomInvocationHandler myParent;
   private final DomManagerImpl myManager;
   @NotNull private final String myTagName;
-  private XmlTag myTag;
+  protected XmlTag myXmlTag;
 
   private XmlFile myFile;
   private DomElement myProxy;
@@ -72,7 +72,7 @@ abstract class DomInvocationHandler<T extends DomElement> implements InvocationH
                               @NotNull final String tagName,
                               DomManagerImpl manager) {
     myClass = aClass;
-    myTag = tag;
+    myXmlTag = tag;
     myParent = parent;
     myTagName = tagName;
     myManager = manager;
@@ -120,6 +120,10 @@ abstract class DomInvocationHandler<T extends DomElement> implements InvocationH
     return getFile().getManager().getElementFactory().createTagFromText("<" + tagName + "/>");
   }
 
+  public boolean isValid() {
+    return true;
+  }
+
   public void undefine() {
     final XmlTag tag = getXmlTag();
     if (tag != null) {
@@ -129,9 +133,13 @@ abstract class DomInvocationHandler<T extends DomElement> implements InvocationH
       catch (IncorrectOperationException e) {
         LOG.error(e);
       }
-      myTag = null;
-      myManager.fireEvent(new ElementUndefinedEvent(this));
+      myXmlTag = null;
+      fireUndefinedEvent();
     }
+  }
+
+  protected final void fireUndefinedEvent() {
+    myManager.fireEvent(new ElementUndefinedEvent(this));
   }
 
   protected abstract void setXmlTag(final XmlTag tag) throws IncorrectOperationException;
@@ -313,13 +321,17 @@ abstract class DomInvocationHandler<T extends DomElement> implements InvocationH
 
   @Nullable
   public final XmlTag getXmlTag() {
-    if (myTag == null) {
-      myTag = restoreTag(myTagName);
-      synchronized (PsiLock.LOCK) {
-        DomManagerImpl.setCachedElement(myTag, getProxy());
-      }
+    if (myXmlTag == null) {
+      cacheDomElement(restoreTag(myTagName));
     }
-    return myTag;
+    return myXmlTag;
+  }
+
+  protected final void cacheDomElement(final XmlTag tag) {
+    synchronized (PsiLock.LOCK) {
+      myXmlTag = tag;
+      DomManagerImpl.setCachedElement(tag, getProxy());
+    }
   }
 
   public final DomManagerImpl getManager() {
