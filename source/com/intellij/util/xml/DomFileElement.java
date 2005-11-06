@@ -62,6 +62,16 @@ public class DomFileElement<T extends DomElement> implements DomElement {
     }
   }
 
+  void invalidateRoot() {
+    synchronized (PsiLock.LOCK) {
+      myRootValue = null;
+    }
+  }
+
+  public String toString() {
+    return "File " + myFile.toString();
+  }
+
   public XmlTag getXmlTag() {
     return null;
   }

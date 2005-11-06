@@ -37,7 +37,7 @@ abstract class DomInvocationHandler<T extends DomElement> implements InvocationH
   private boolean myInitializing = false;
   private final Map<Method, DomElement> myMethod2Children = new HashMap<Method, DomElement>();
   private final MethodsMap myMethodsMap;
-
+  private boolean myInvalidated;
 
   static {
     for (final Method method : DomElement.class.getMethods()) {
@@ -79,33 +79,34 @@ abstract class DomInvocationHandler<T extends DomElement> implements InvocationH
     myMethodsMap = manager.getMethodsMap(aClass);
   }
 
-  @NotNull
   public DomFileElement getRoot() {
-    return myParent.getRoot();
+    return isValid() ? myParent.getRoot() : null;
   }
 
   public DomElement getParent() {
-    return myParent.getProxy();
+    return isValid() ? myParent.getProxy() : null;
   }
 
-  public DomInvocationHandler getParentHandler() {
+  DomInvocationHandler getParentHandler() {
     return myParent;
   }
 
-  public final XmlTag ensureTagExists() {
-    return _ensureTagExists(true);
+  void invalidate() {
+    myInvalidated = true;
   }
 
-  private XmlTag _ensureTagExists(final boolean fireEvent) {
+  public final XmlTag ensureTagExists() {
     if (getXmlTag() == null) {
+      myManager.setChanging(true);
       try {
         setXmlTag(createEmptyTag());
-        if (fireEvent) {
-          myManager.fireEvent(new ElementDefinedEvent(this));
-        }
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
+      }
+      finally {
+        myManager.setChanging(false);
+        myManager.fireEvent(new ElementDefinedEvent(this));
       }
     }
     return getXmlTag();
@@ -120,7 +121,7 @@ abstract class DomInvocationHandler<T extends DomElement> implements InvocationH
   }
 
   public boolean isValid() {
-    return true;
+    return !myInvalidated;
   }
 
   public void undefine() {
@@ -322,6 +323,9 @@ abstract class DomInvocationHandler<T extends DomElement> implements InvocationH
     if (myXmlTag == null) {
       cacheDomElement(restoreTag(myTagName));
     }
+    if (myXmlTag != null) {
+      assert myXmlTag.isValid() : "Invalid tag: " + myXmlTag.getText();
+    }
     return myXmlTag;
   }
 
@@ -363,5 +367,5 @@ abstract class DomInvocationHandler<T extends DomElement> implements InvocationH
     }
     return createCollectionElement(aClass, newTag);
   }
-  
+
 }

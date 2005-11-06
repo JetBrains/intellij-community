@@ -23,6 +23,9 @@ public abstract class DomEventListener implements DomEventVisitor{
   public void elementChanged(ElementChangedEvent event) {
   }
 
+  public void contentsChanged(ContentsChangedEvent event) {
+  }
+
   public void eventOccured(DomEvent event) {
     event.accept(this);
   }
@@ -45,5 +48,9 @@ public abstract class DomEventListener implements DomEventVisitor{
 
   public void visitAttributeValueChangeEvent(final AttributeValueChangeEvent event) {
     attributeValueChanged(event);
+  }
+
+  public void visitContentsChangedEvent(final ContentsChangedEvent event) {
+    contentsChanged(event);
   }
 }

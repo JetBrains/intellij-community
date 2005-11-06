@@ -23,14 +23,12 @@ public class DomRootInvocationHandler<T extends DomElement> extends DomInvocatio
     myParent = fileElement;
   }
 
-  @NotNull
   public DomFileElement getRoot() {
-    return myParent;
+    return isValid() ? myParent : null;
   }
 
-  @NotNull
   public DomElement getParent() {
-    return myParent;
+    return isValid() ? myParent : null;
   }
 
   protected void setXmlTag(final XmlTag tag) throws IncorrectOperationException {

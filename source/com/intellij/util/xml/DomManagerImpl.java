@@ -218,7 +218,27 @@ public class DomManagerImpl extends DomManager implements ProjectComponent, XmlC
     }
   }
 
+  private void invalidateSubtree(final XmlTag root) {
+    final DomInvocationHandler element = getCachedElement(root);
+    if (element != null) {
+      setCachedElement(root, null);
+      element.invalidate();
+      for (XmlTag tag : root.getSubTags()) {
+        invalidateSubtree(tag);
+      }
+    }
+  }
+
   public final void visitDocumentChanged(final XmlDocumentChanged change) {
+    final DomFileElement element = getCachedElement((XmlFile)change.getDocument().getContainingFile());
+    if (element != null) {
+      final XmlTag rootTag = element.getRootTag();
+      if (rootTag != null) {
+        invalidateSubtree(rootTag);
+      }
+      element.invalidateRoot();
+      fireEvent(new ContentsChangedEvent(element));
+    }
   }
 
   public final void visitXmlElementChanged(final XmlElementChanged change) {
