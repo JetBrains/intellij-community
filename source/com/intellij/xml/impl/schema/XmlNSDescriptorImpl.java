@@ -82,6 +82,12 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
             final CachedValue<XmlElementDescriptor> cachedValue =
               tag.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<XmlElementDescriptor>() {
                 public Result<XmlElementDescriptor> compute() {
+                  final String name = tag.getAttributeValue("name");
+                  
+                  if (name != null && !name.equals(pair.second)) {
+                    myDescriptorsMap.remove(pair);
+                    return new Result<XmlElementDescriptor>(null);
+                  }
                   final XmlElementDescriptor xmlElementDescriptor = createElementDescriptor(tag);
                   return new Result<XmlElementDescriptor>(xmlElementDescriptor, xmlElementDescriptor.getDependences());
                 }
@@ -108,13 +114,14 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
                 final XmlElementDescriptor elementDescriptor =
                   ((XmlNSDescriptorImpl)data).getElementDescriptor(localName, namespace, visited, reference);
                 if (elementDescriptor != null) {
-                  final CachedValue<XmlElementDescriptor> value = includedDocument.getManager().getCachedValuesManager()
-                    .createCachedValue(new CachedValueProvider<XmlElementDescriptor>() {
-                      public Result<XmlElementDescriptor> compute() {
-                        return new Result<XmlElementDescriptor>(elementDescriptor, elementDescriptor.getDependences());
-                      }
-                    }, false);
-                  return value.getValue();
+                  //final CachedValue<XmlElementDescriptor> value = includedDocument.getManager().getCachedValuesManager()
+                  //  .createCachedValue(new CachedValueProvider<XmlElementDescriptor>() {
+                  //    public Result<XmlElementDescriptor> compute() {
+                  //      return new Result<XmlElementDescriptor>(elementDescriptor, elementDescriptor.getDependences());
+                  //    }
+                  //  }, false);
+                  //return value.getValue();
+                  return elementDescriptor;
                 }
               }
             }
@@ -386,6 +393,13 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
               final CachedValue<TypeDescriptor> value =
                 tag.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<TypeDescriptor>() {
                   public Result<TypeDescriptor> compute() {
+                    final String currentName = tag.getAttributeValue("name");
+        
+                    if (currentName != null && !currentName.equals(XmlUtil.findLocalNameByQualifiedName(name))) {
+                      myTypesMap.remove(pair);
+                      return new Result<TypeDescriptor>(null);
+                    }
+                    
                     final TypeDescriptor complexTypeDescriptor =
                       (nsDescriptor1 != XmlNSDescriptorImpl.this)?
                       nsDescriptor1.findTypeDescriptor(rTag, name):
@@ -421,7 +435,13 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
   private CachedValue<TypeDescriptor> createAndPutTypesCachedValue(final XmlTag tag, final Pair<String, XmlTag> pair) {
     final CachedValue<TypeDescriptor> value = tag.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<TypeDescriptor>() {
       public CachedValueProvider.Result<TypeDescriptor> compute() {
-        final ComplexTypeDescriptor complexTypeDescriptor = new ComplexTypeDescriptor(XmlNSDescriptorImpl.this, tag);
+        final String name = tag.getAttributeValue("name");
+        
+        if (name != null && !name.equals(XmlUtil.findLocalNameByQualifiedName(pair.first))) {
+          myTypesMap.remove(pair);
+          return new Result<TypeDescriptor>(null);
+        }
+        final ComplexTypeDescriptor complexTypeDescriptor = new ComplexTypeDescriptor(XmlNSDescriptorImpl.this, tag); 
         return new Result<TypeDescriptor>(complexTypeDescriptor, new Object[]{tag});
       }
     }, false);

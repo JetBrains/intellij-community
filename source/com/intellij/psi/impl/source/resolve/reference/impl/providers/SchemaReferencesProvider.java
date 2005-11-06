@@ -269,7 +269,13 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
       processor.tag = tag;
       HashSet<String> visitedNamespaces = new HashSet<String>(1);
 
+      XmlDocument document = ((XmlFile)myElement.getContainingFile()).getDocument();
+      final XmlTag rootTag = document.getRootTag();
+      String ourNamespace = rootTag != null ? rootTag.getAttributeValue("targetNamespace") : "";
+      if (ourNamespace == null) ourNamespace = "";
+      
       for(String namespace:tag.knownNamespaces()) {
+        if (ourNamespace.equals(namespace)) continue;
         final XmlNSDescriptor nsDescriptor = tag.getNSDescriptor(namespace, true);
 
         if (nsDescriptor instanceof XmlNSDescriptorImpl) {
@@ -278,14 +284,10 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
         }
       }
       
-      XmlDocument document = ((XmlFile)myElement.getContainingFile()).getDocument();
-      final XmlTag rootTag = document.getRootTag();
-      final String namespace = rootTag != null ? rootTag.getAttributeValue("targetNamespace") : "";
-      
-      if (!visitedNamespaces.contains(namespace)) {
+      if (ourNamespace != null && ourNamespace.length() > 0) {
         XmlNSDescriptor nsDescriptor = (XmlNSDescriptor)document.getMetaData();
         processNamespace(
-          namespace,
+          ourNamespace,
           processor,
           nsDescriptor,
           tagNames
