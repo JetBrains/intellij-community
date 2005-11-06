@@ -125,7 +125,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
     gbConstraints.fill = GridBagConstraints.BOTH;
     myCbSearchTextOccurences = new NonFocusableCheckBox();
-    myCbSearchTextOccurences.setText(RefactoringBundle.getSearchForTextOccurencesText());
+    myCbSearchTextOccurences.setText(RefactoringBundle.getSearchForTextOccurrencesText());
     panel.add(myCbSearchTextOccurences, gbConstraints);
 
 

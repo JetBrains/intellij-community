@@ -109,7 +109,7 @@ public class MoveInnerDialog extends RefactoringDialog {
     myCbSearchInComments = new NonFocusableCheckBox();
     myCbSearchInComments.setText(RefactoringBundle.getSearchInCommentsAndStringsText());
     myCbSearchForTextOccurences = new NonFocusableCheckBox();
-    myCbSearchForTextOccurences.setText(RefactoringBundle.getSearchForTextOccurencesText());
+    myCbSearchForTextOccurences.setText(RefactoringBundle.getSearchForTextOccurrencesText());
     super.init();
   }
 

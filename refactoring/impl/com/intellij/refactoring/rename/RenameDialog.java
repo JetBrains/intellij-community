@@ -330,7 +330,7 @@ public class RenameDialog extends RefactoringDialog {
     gbConstraints.weightx = 1;
     gbConstraints.fill = GridBagConstraints.BOTH;
     myCbSearchTextOccurences = new NonFocusableCheckBox();
-    myCbSearchTextOccurences.setText(RefactoringBundle.getSearchForTextOccurencesText());
+    myCbSearchTextOccurences.setText(RefactoringBundle.getSearchForTextOccurrencesText());
     myCbSearchTextOccurences.setSelected(true);
     panel.add(myCbSearchTextOccurences, gbConstraints);
     if (!RefactoringUtil.isSearchTextOccurencesEnabled(myPsiElement)) {

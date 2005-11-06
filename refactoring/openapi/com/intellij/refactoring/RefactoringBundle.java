@@ -22,8 +22,8 @@ public class RefactoringBundle {
     return message("search.in.comments.and.strings");
   }
 
-  public static String getSearchForTextOccurencesText() {
-    return message("search.for.text.occurences");
+  public static String getSearchForTextOccurrencesText() {
+    return message("search.for.text.occurrences");
   }
 
   public static String getVisibilityPackageLocal() {

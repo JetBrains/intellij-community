@@ -83,7 +83,7 @@ public class SafeDeleteDialog extends DialogWrapper {
     if (needSearchForTextOccurences()) {
       gbc.gridx++;
       myCbSearchTextOccurences = new JCheckBox();
-      myCbSearchTextOccurences.setText(RefactoringBundle.getSearchForTextOccurencesText());
+      myCbSearchTextOccurences.setText(RefactoringBundle.getSearchForTextOccurrencesText());
       panel.add(myCbSearchTextOccurences, gbc);
     }
 
