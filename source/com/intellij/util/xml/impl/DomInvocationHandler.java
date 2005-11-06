@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2005 Your Corporation. All Rights Reserved.
  */
-package com.intellij.util.xml;
+package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
@@ -11,6 +11,10 @@ import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.xml.events.ElementDefinedEvent;
+import com.intellij.util.xml.events.ElementUndefinedEvent;
+import com.intellij.util.xml.impl.CollectionElementInvocationHandler;
+import com.intellij.util.xml.*;
 import net.sf.cglib.proxy.InvocationHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,8 +25,8 @@ import java.util.*;
 /**
  * @author peter
  */
-abstract class DomInvocationHandler<T extends DomElement> implements InvocationHandler, DomElement {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.DomInvocationHandler");
+public abstract class DomInvocationHandler<T extends DomElement> implements InvocationHandler, DomElement {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.DomInvocationHandler");
   private static final Map<Method, Invocation> ourInvocations = new HashMap<Method, Invocation>();
 
   private final Class<T> myClass;
@@ -79,7 +83,7 @@ abstract class DomInvocationHandler<T extends DomElement> implements InvocationH
     myMethodsMap = manager.getMethodsMap(aClass);
   }
 
-  public DomFileElement getRoot() {
+  public DomFileElementImpl getRoot() {
     return isValid() ? myParent.getRoot() : null;
   }
 
@@ -87,11 +91,11 @@ abstract class DomInvocationHandler<T extends DomElement> implements InvocationH
     return isValid() ? myParent.getProxy() : null;
   }
 
-  DomInvocationHandler getParentHandler() {
+  final DomInvocationHandler getParentHandler() {
     return myParent;
   }
 
-  void invalidate() {
+  final void invalidate() {
     myInvalidated = true;
   }
 
@@ -120,7 +124,7 @@ abstract class DomInvocationHandler<T extends DomElement> implements InvocationH
     return getFile().getManager().getElementFactory().createTagFromText("<" + tagName + "/>");
   }
 
-  public boolean isValid() {
+  public final boolean isValid() {
     return !myInvalidated;
   }
 
@@ -187,7 +191,7 @@ abstract class DomInvocationHandler<T extends DomElement> implements InvocationH
 
   private Invocation createInvocation(final Method method) throws IllegalAccessException, InstantiationException {
     boolean getter = isGetter(method);
-    boolean setter = isSetter(method);
+    boolean setter = method.getName().startsWith("set") && method.getParameterTypes().length == 1 && method.getReturnType() == void.class;
 
     final String attributeName = guessAttributeName(method);
     if (attributeName != null) {
@@ -217,10 +221,6 @@ abstract class DomInvocationHandler<T extends DomElement> implements InvocationH
     return domElement;
   }
 
-  protected final MethodsMap getMethodsMap() {
-    return myMethodsMap;
-  }
-
   public final Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
     Invocation invocation = ourInvocations.get(method);
     if (invocation == null) {
@@ -230,20 +230,12 @@ abstract class DomInvocationHandler<T extends DomElement> implements InvocationH
     return invocation.invoke(this, args);
   }
 
-  static boolean isBoolean(final Class<?> type) {
-    return type.equals(boolean.class) || type.equals(Boolean.class);
-  }
-
   static void setTagValue(final XmlTag tag, final String value) {
     tag.getValue().setText(value);
   }
 
   static String getTagValue(final XmlTag tag) {
     return tag.getValue().getText();
-  }
-
-  private static boolean isSetter(final Method method) {
-    return method.getName().startsWith("set") && method.getParameterTypes().length == 1 && method.getReturnType() == void.class;
   }
 
   static boolean isGetter(final Method method) {
@@ -256,7 +248,7 @@ abstract class DomInvocationHandler<T extends DomElement> implements InvocationH
       return returnType != void.class;
     }
     if (name.startsWith("is")) {
-      return isBoolean(returnType);
+      return returnType.equals(boolean.class) || returnType.equals(Boolean.class);
     }
     return false;
   }
@@ -265,7 +257,7 @@ abstract class DomInvocationHandler<T extends DomElement> implements InvocationH
     return StringUtil.getShortName(myClass) + " @" + hashCode();
   }
 
-  void checkInitialized() {
+  final void checkInitialized() {
     synchronized (PsiLock.LOCK) {
       if (myInitialized || myInitializing) return;
       myInitializing = true;
@@ -354,18 +346,21 @@ abstract class DomInvocationHandler<T extends DomElement> implements InvocationH
 
   public final DomElement addChild(final String tagName, final Class aClass, int index) throws IncorrectOperationException {
     createFixedChildrenTags(tagName, myMethodsMap.getFixedChildrenCount(tagName));
-    final XmlTag tag = ensureTagExists();
+    return createCollectionElement(aClass, addEmptyTag(tagName, index));
+  }
+
+  private XmlTag addEmptyTag(final String tagName, int index) throws IncorrectOperationException {
+    final XmlTag tag = getXmlTag();
     final XmlTag[] subTags = tag.findSubTags(tagName);
     if (subTags.length < index) {
       index = subTags.length;
     }
     XmlTag newTag = createEmptyTag(tagName);
     if (index == 0) {
-      newTag = (XmlTag)tag.add(newTag);
-    } else {
-      newTag = (XmlTag)tag.addAfter(newTag, subTags[index - 1]);
+      return (XmlTag)tag.add(newTag);
     }
-    return createCollectionElement(aClass, newTag);
+
+    return (XmlTag)tag.addAfter(newTag, subTags[index - 1]);
   }
 
 }

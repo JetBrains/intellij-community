@@ -1,10 +1,11 @@
 /*
  * Copyright (c) 2005 Your Corporation. All Rights Reserved.
  */
-package com.intellij.util.xml;
+package com.intellij.util.xml.impl;
 
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.xml.DomElement;
 import org.jetbrains.annotations.NotNull;
 
 /**

@@ -1,9 +1,12 @@
 /*
  * Copyright (c) 2005 Your Corporation. All Rights Reserved.
  */
-package com.intellij.util.xml;
+package com.intellij.util.xml.impl;
 
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.xml.impl.DomInvocationHandler;
+import com.intellij.util.xml.impl.DomManagerImpl;
+import com.intellij.util.xml.DomElement;
 
 import java.util.Arrays;
 import java.util.Collections;

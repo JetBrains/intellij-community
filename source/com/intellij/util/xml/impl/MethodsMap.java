@@ -1,12 +1,16 @@
 /*
  * Copyright (c) 2005 Your Corporation. All Rights Reserved.
  */
-package com.intellij.util.xml;
+package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.SubTag;
+import com.intellij.util.xml.SubTagList;
+import com.intellij.util.xml.NameStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

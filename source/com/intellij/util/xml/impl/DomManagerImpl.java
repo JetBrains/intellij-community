@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2005 Your Corporation. All Rights Reserved.
  */
-package com.intellij.util.xml;
+package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.util.Key;
@@ -15,6 +15,11 @@ import com.intellij.pom.xml.XmlChangeVisitor;
 import com.intellij.pom.xml.events.*;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.xml.*;
+import com.intellij.util.xml.*;
+import com.intellij.util.xml.events.AttributeValueChangeEvent;
+import com.intellij.util.xml.events.ContentsChangedEvent;
+import com.intellij.util.xml.events.DomEvent;
+import com.intellij.util.xml.events.TagValueChangeEvent;
 import net.sf.cglib.core.CodeGenerationException;
 import net.sf.cglib.proxy.InvocationHandler;
 import net.sf.cglib.proxy.Proxy;
@@ -33,7 +38,7 @@ import java.util.Map;
 public class DomManagerImpl extends DomManager implements ProjectComponent, XmlChangeVisitor {
   private static final Key<NameStrategy> NAME_STRATEGY_KEY = Key.create("NameStrategy");
   private static final Key<DomInvocationHandler> CACHED_HANDLER = Key.create("CachedInvocationHandler");
-  private static final Key<DomFileElement> CACHED_FILE_ELEMENT = Key.create("CachedFileElement");
+  private static final Key<DomFileElementImpl> CACHED_FILE_ELEMENT = Key.create("CachedFileElement");
 
   private final List<DomEventListener> myListeners = new ArrayList<DomEventListener>();
   private final ConverterManager myConverterManager = new ConverterManager();
@@ -130,20 +135,20 @@ public class DomManagerImpl extends DomManager implements ProjectComponent, XmlC
   }
 
   @NotNull
-  public final <T extends DomElement> DomFileElement<T> getFileElement(final XmlFile file,
+  public final <T extends DomElement> DomFileElementImpl<T> getFileElement(final XmlFile file,
                                                                  final Class<T> aClass,
                                                                  String rootTagName) {
     synchronized (PsiLock.LOCK) {
-      DomFileElement<T> element = getCachedElement(file);
+      DomFileElementImpl<T> element = getCachedElement(file);
       if (element == null) {
-        element = new DomFileElement<T>(file, aClass, rootTagName, this);
+        element = new DomFileElementImpl<T>(file, aClass, rootTagName, this);
         setCachedElement(file, element);
       }
       return element;
     }
   }
 
-  protected static void setCachedElement(final XmlFile file, final DomFileElement element) {
+  protected static void setCachedElement(final XmlFile file, final DomFileElementImpl element) {
     file.putUserData(CACHED_FILE_ELEMENT, element);
   }
 
@@ -154,7 +159,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent, XmlC
   }
 
   @Nullable
-  public static DomFileElement getCachedElement(final XmlFile file) {
+  public static DomFileElementImpl getCachedElement(final XmlFile file) {
     return file.getUserData(CACHED_FILE_ELEMENT);
   }
 
@@ -230,7 +235,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent, XmlC
   }
 
   public final void visitDocumentChanged(final XmlDocumentChanged change) {
-    final DomFileElement element = getCachedElement((XmlFile)change.getDocument().getContainingFile());
+    final DomFileElementImpl element = getCachedElement((XmlFile)change.getDocument().getContainingFile());
     if (element != null) {
       final XmlTag rootTag = element.getRootTag();
       if (rootTag != null) {

@@ -1,10 +1,14 @@
 /*
  * Copyright (c) 2005 Your Corporation. All Rights Reserved.
  */
-package com.intellij.util.xml;
+package com.intellij.util.xml.impl;
 
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.xml.events.DomChangeEvent;
+import com.intellij.util.xml.impl.DomInvocationHandler;
+import com.intellij.util.xml.impl.Invocation;
+import com.intellij.util.xml.Converter;
 
 /**
  * @author peter
@@ -25,7 +29,7 @@ public abstract class SetInvocation implements Invocation {
         clearValue(tag);
         handler.getManager().fireEvent(createEvent(handler, oldValue, null));
       } else {
-        final String newValue = myConverter.toString(args[0], new ConvertContext(handler));
+        final String newValue = myConverter.toString(args[0], new ConvertContextImpl(handler));
         setValue(tag, newValue);
         handler.getManager().fireEvent(createEvent(handler, oldValue, newValue));
       }

@@ -5,6 +5,7 @@ package com.intellij.util.xml;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.util.xml.impl.DomFileElementImpl;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -22,7 +23,7 @@ public abstract class DomManager {
   public abstract NameStrategy getNameStrategy(final XmlFile file);
 
   @NotNull
-  public abstract <T extends DomElement> DomFileElement<T> getFileElement(XmlFile file, Class<T> aClass, String rootTagName);
+  public abstract <T extends DomElement> DomFileElementImpl<T> getFileElement(XmlFile file, Class<T> aClass, String rootTagName);
 
   public abstract void addDomEventListener(DomEventListener listener);
 

@@ -1,29 +1,31 @@
 /*
  * Copyright (c) 2005 Your Corporation. All Rights Reserved.
  */
-package com.intellij.util.xml;
+package com.intellij.util.xml.impl;
 
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.xml.impl.DomInvocationHandler;
+import com.intellij.util.xml.DomElement;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
  */
-public class DomRootInvocationHandler<T extends DomElement> extends DomInvocationHandler<T>{
-  private DomFileElement myParent;
+public class DomRootInvocationHandler<T extends DomElement> extends DomInvocationHandler<T> {
+  private DomFileElementImpl myParent;
 
   public DomRootInvocationHandler(final Class<T> aClass,
                                   final XmlTag tag,
-                                  final DomFileElement<T> fileElement,
+                                  final DomFileElementImpl<T> fileElement,
                                   @NotNull final String tagName
   ) {
     super(aClass, tag, null, tagName, fileElement.getManager());
     myParent = fileElement;
   }
 
-  public DomFileElement getRoot() {
+  public DomFileElementImpl getRoot() {
     return isValid() ? myParent : null;
   }
 
@@ -36,6 +38,6 @@ public class DomRootInvocationHandler<T extends DomElement> extends DomInvocatio
   }
 
   protected XmlTag restoreTag(final String tagName) {
-    return ((DomFileElement)getParent()).getRootTag();
+    return ((DomFileElementImpl)getParent()).getRootTag();
   }
 }

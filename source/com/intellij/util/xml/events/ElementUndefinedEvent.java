@@ -1,7 +1,11 @@
 /*
  * Copyright (c) 2005 Your Corporation. All Rights Reserved.
  */
-package com.intellij.util.xml;
+package com.intellij.util.xml.events;
+
+import com.intellij.util.xml.events.ElementChangedEvent;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomEventVisitor;
 
 /**
  * @author peter

@@ -1,9 +1,11 @@
 /*
  * Copyright (c) 2005 Your Corporation. All Rights Reserved.
  */
-package com.intellij.util.xml;
+package com.intellij.util.xml.impl;
 
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.xml.impl.DomInvocationHandler;
+import com.intellij.util.xml.Converter;
 
 /**
  * @author peter
@@ -20,7 +22,7 @@ public abstract class GetInvocation implements Invocation {
     if (tag != null) {
       final String s = getValue(tag);
       if (s != null) {
-        return myConverter.fromString(s, new ConvertContext(handler));
+        return myConverter.fromString(s, new ConvertContextImpl(handler));
       }
     }
     return null;

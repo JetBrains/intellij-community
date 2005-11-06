@@ -3,6 +3,8 @@
  */
 package com.intellij.util.xml;
 
+import com.intellij.util.xml.events.*;
+
 /**
  * @author peter
  */

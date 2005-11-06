@@ -1,17 +1,19 @@
 /*
  * Copyright (c) 2005 Your Corporation. All Rights Reserved.
  */
-package com.intellij.util.xml;
+package com.intellij.util.xml.impl;
 
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.xml.impl.DomInvocationHandler;
+import com.intellij.util.xml.DomElement;
 import com.intellij.openapi.diagnostic.Logger;
 
 /**
  * @author peter
  */
 public class IndexedElementInvocationHandler<T extends DomElement> extends DomInvocationHandler<T>{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.IndexedElementInvocationHandler");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.IndexedElementInvocationHandler");
   private final int myIndex;
 
   public IndexedElementInvocationHandler(final Class<T> aClass,

@@ -3,8 +3,8 @@
  */
 package com.intellij.util.xml;
 
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author peter
