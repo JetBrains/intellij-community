@@ -498,10 +498,10 @@ public class StringUtil {
     return s;
   }
 
-  public static boolean startsWithChar(CharSequence s, char prefix) {
+  public static boolean startsWithChar(@Nullable CharSequence s, char prefix) {
     return s != null && s.length() != 0 && s.charAt(0) == prefix;
   }
-  public static boolean endsWithChar(CharSequence s, char suffix) {
+  public static boolean endsWithChar(@Nullable CharSequence s, char suffix) {
     return s != null && s.length() != 0 && s.charAt(s.length()-1) == suffix;
   }
 
