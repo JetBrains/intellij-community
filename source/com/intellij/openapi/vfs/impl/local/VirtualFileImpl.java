@@ -54,7 +54,7 @@ public class VirtualFileImpl extends VirtualFile {
   ) {
     myParent = parent;
     setName(file.getName());
-    if (myName.length() == 0){
+    if (myName.length() == 0) {
       LOG.error("file:" + file.getPath());
     }
     myDirectoryFlag = isDirectory;
@@ -72,13 +72,7 @@ public class VirtualFileImpl extends VirtualFile {
       myDirectoryFlag = true;
     }
     else {
-      int prevSlash = path.lastIndexOf('/', lastSlash - 1);
-      if (prevSlash < 0) {
-        setName(path.substring(lastSlash + 1));
-      }
-      else {
-        setName(path.substring(lastSlash + 1));
-      }
+      setName(path.substring(lastSlash + 1));
       String systemPath = path.replace('/', File.separatorChar);
       myDirectoryFlag = new IoFile(systemPath).isDirectory();
     }
@@ -155,7 +149,7 @@ public class VirtualFileImpl extends VirtualFile {
       return;
     }
 
-    if (isInvalidName(newName)){
+    if (isInvalidName(newName)) {
       throw new IOException(VfsBundle.message("file.invalid.name.error", newName));
     }
 
@@ -227,13 +221,19 @@ public class VirtualFileImpl extends VirtualFile {
     if (!isDirectory()) return null;
     synchronized (ourFileSystem.LOCK) {
       if (myChildren == null) {
-        ArrayList<VirtualFile> array = new ArrayList<VirtualFile>();
         PhysicalFile file = getPhysicalFile();
         PhysicalFile[] files = file.listFiles();
-        for (PhysicalFile f : files) {
-          array.add(new VirtualFileImpl(this, f, f.isDirectory()));
+        final int length = files.length;
+        if (length == 0) {
+          myChildren = EMPTY_VIRTUAL_FILE_ARRAY;
         }
-        myChildren = array.toArray(EMPTY_VIRTUAL_FILE_ARRAY);
+        else {
+          myChildren = new VirtualFileImpl[ length ];
+          for (int i = 0; i < length; ++i) {
+            PhysicalFile f = files[i];
+            myChildren[i] = new VirtualFileImpl(this, f, f.isDirectory());
+          }
+        }
       }
     }
     return myChildren;
@@ -254,7 +254,7 @@ public class VirtualFileImpl extends VirtualFile {
       throw new IOException(VfsBundle.message("directory.create.wrong.parent.error"));
     }
 
-    if (isInvalidName(name)){
+    if (isInvalidName(name)) {
       throw new IOException(VfsBundle.message("file.invalid.name.error", name));
     }
 
@@ -288,7 +288,7 @@ public class VirtualFileImpl extends VirtualFile {
       throw new IOException(VfsBundle.message("directory.create.wrong.parent.error"));
     }
 
-    if (isInvalidName(name)){
+    if (isInvalidName(name)) {
       throw new IOException(VfsBundle.message("file.invalid.name.error", name));
     }
 
@@ -674,7 +674,8 @@ public class VirtualFileImpl extends VirtualFile {
       PhysicalFile[] files = physicalFile.listFiles();
 
       final boolean[] found = new boolean[myChildren.length];
-      final Map<String, Pair<VirtualFile, Integer>> childrenMap = new HashMap<String, Pair<VirtualFile, Integer>>((int)((double)myChildren.length * 1.5), (float)0.6);
+      final Map<String, Pair<VirtualFile, Integer>> childrenMap =
+        new HashMap<String, Pair<VirtualFile, Integer>>((int)((double)myChildren.length * 1.5), (float)0.6);
       {
         for (int i = 0; i < myChildren.length; i++) {
           final VirtualFileImpl child = myChildren[i];
@@ -824,7 +825,7 @@ public class VirtualFileImpl extends VirtualFile {
     }
   }
 
-  private static boolean isInvalidName(String name){
+  private static boolean isInvalidName(String name) {
     if (name.indexOf('\\') >= 0) return true;
     return name.indexOf('/') >= 0;
   }
@@ -835,6 +836,6 @@ public class VirtualFileImpl extends VirtualFile {
   }
 
   private void setName(String name) {
-    myName = new String(name);
+    myName = name;
   }
 }
