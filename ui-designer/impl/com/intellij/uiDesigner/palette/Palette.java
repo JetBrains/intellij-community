@@ -21,6 +21,9 @@ import com.intellij.uiDesigner.propertyInspector.properties.*;
 import com.intellij.uiDesigner.propertyInspector.renderers.IntEnumRenderer;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -31,7 +34,6 @@ import java.beans.PropertyDescriptor;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.List;
-import java.text.MessageFormat;
 
 /**
  * @author Anton Katilin
@@ -52,6 +54,26 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
    * Predefined item for javax.swing.JPanel
    */
   private ComponentItem myPanelItem;
+  @NonNls private static final String ATTRIBUTE_VSIZE_POLICY = "vsize-policy";
+  @NonNls private static final String ATTRIBUTE_HSIZE_POLICY = "hsize-policy";
+  @NonNls private static final String ATTRIBUTE_ANCHOR = "anchor";
+  @NonNls private static final String ATTRIBUTE_FILL = "fill";
+  @NonNls private static final String ELEMENT_MINIMUM_SIZE = "minimum-size";
+  @NonNls private static final String ATTRIBUTE_WIDTH = "width";
+  @NonNls private static final String ATTRIBUTE_HEIGHT = "height";
+  @NonNls private static final String ELEMENT_PREFERRED_SIZE = "preferred-size";
+  @NonNls private static final String ELEMENT_MAXIMUM_SIZE = "maximum-size";
+  @NonNls private static final String ATTRIBUTE_CLASS = "class";
+  @NonNls private static final String ATTRIBUTE_ICON = "icon";
+  @NonNls private static final String ATTRIBUTE_TOOLTIP_TEXT = "tooltip-text";
+  @NonNls private static final String ELEMENT_DEFAULT_CONSTRAINTS = "default-constraints";
+  @NonNls private static final String ELEMENT_INITIAL_VALUES = "initial-values";
+  @NonNls private static final String ELEMENT_PROPERTY = "property";
+  @NonNls private static final String ATTRIBUTE_NAME = "name";
+  @NonNls private static final String ATTRIBUTE_VALUE = "value";
+  @NonNls private static final String ATTRIBUTE_REMOVABLE = "removable";
+  @NonNls private static final String ELEMENT_ITEM = "item";
+  @NonNls private static final String ELEMENT_GROUP = "group";
 
   public static Palette getInstance(final Project project) {
     LOG.assertTrue(project != null);
@@ -83,8 +105,8 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
 
   private void fireGroupsChanged(){
     final Listener[] listeners = myListeners.toArray(new Listener[myListeners.size()]);
-    for(int i = 0; i < listeners.length; i++){
-      listeners[i].groupsChanged(this);
+    for(Listener listener : listeners) {
+      listener.groupsChanged(this);
     }
   }
 
@@ -112,7 +134,7 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
 
     // Parse XML
     //noinspection HardCodedStringLiteral
-    final List groupElements = element.getChildren("group");
+    final List groupElements = element.getChildren(ELEMENT_GROUP);
     processGroups(groupElements);
 
     // Ensure that all predefined items are loaded
@@ -132,8 +154,8 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
 
   /**
    * @return a predefined palette item which corresponds to the JPanel.
-   * This method never returns <code>null</code>.
    */
+  @NotNull
   public ComponentItem getPanelItem(){
     return myPanelItem;
   }
@@ -143,9 +165,10 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
    * The method returns <code>null</code> if palette has no information about the specified
    * class.
    */
-  public ComponentItem getItem(final String componentClassName) {
+  @Nullable
+  public ComponentItem getItem(@NotNull final String componentClassName) {
+    //noinspection ConstantConditions
     if(componentClassName == null){
-      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("componentClassName cannot be null");
     }
     return myClassName2Item.get(componentClassName);
@@ -160,9 +183,10 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
   }
 
   /**
-   * @param groups list of new groups. Cannot be <code>null</code>.
+   * @param groups list of new groups.
    */
-  public void setGroups(final ArrayList<GroupItem> groups){
+  public void setGroups(@NotNull final ArrayList<GroupItem> groups){
+    //noinspection ConstantConditions
     LOG.assertTrue(groups != null);
 
     myGroups.clear();
@@ -205,59 +229,57 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
   /**
    * Helper method.
    */
-  @SuppressWarnings({"HardCodedStringLiteral"})
   private static GridConstraints processDefaultConstraintsElement(final Element element){
     LOG.assertTrue(element != null);
 
     final GridConstraints constraints = new GridConstraints();
 
     // grid related attributes
-    constraints.setVSizePolicy(LwXmlReader.getRequiredInt(element, "vsize-policy"));
-    constraints.setHSizePolicy(LwXmlReader.getRequiredInt(element, "hsize-policy"));
-    constraints.setAnchor(LwXmlReader.getRequiredInt(element, "anchor"));
-    constraints.setFill(LwXmlReader.getRequiredInt(element, "fill"));
+    constraints.setVSizePolicy(LwXmlReader.getRequiredInt(element, ATTRIBUTE_VSIZE_POLICY));
+    constraints.setHSizePolicy(LwXmlReader.getRequiredInt(element, ATTRIBUTE_HSIZE_POLICY));
+    constraints.setAnchor(LwXmlReader.getRequiredInt(element, ATTRIBUTE_ANCHOR));
+    constraints.setFill(LwXmlReader.getRequiredInt(element, ATTRIBUTE_FILL));
 
     // minimum size
-    final Element minSizeElement = element.getChild("minimum-size");
+    final Element minSizeElement = element.getChild(ELEMENT_MINIMUM_SIZE);
     if (minSizeElement != null) {
-      constraints.myMinimumSize.width = LwXmlReader.getRequiredInt(minSizeElement, "width");
-      constraints.myMinimumSize.height = LwXmlReader.getRequiredInt(minSizeElement, "height");
+      constraints.myMinimumSize.width = LwXmlReader.getRequiredInt(minSizeElement, ATTRIBUTE_WIDTH);
+      constraints.myMinimumSize.height = LwXmlReader.getRequiredInt(minSizeElement, ATTRIBUTE_HEIGHT);
     }
 
     // preferred size
-    final Element prefSizeElement = element.getChild("preferred-size");
+    final Element prefSizeElement = element.getChild(ELEMENT_PREFERRED_SIZE);
     if (prefSizeElement != null){
-      constraints.myPreferredSize.width = LwXmlReader.getRequiredInt(prefSizeElement, "width");
-      constraints.myPreferredSize.height = LwXmlReader.getRequiredInt(prefSizeElement, "height");
+      constraints.myPreferredSize.width = LwXmlReader.getRequiredInt(prefSizeElement, ATTRIBUTE_WIDTH);
+      constraints.myPreferredSize.height = LwXmlReader.getRequiredInt(prefSizeElement, ATTRIBUTE_HEIGHT);
     }
 
     // maximum size
-    final Element maxSizeElement = element.getChild("maximum-size");
+    final Element maxSizeElement = element.getChild(ELEMENT_MAXIMUM_SIZE);
     if (maxSizeElement != null) {
-      constraints.myMaximumSize.width = LwXmlReader.getRequiredInt(maxSizeElement, "width");
-      constraints.myMaximumSize.height = LwXmlReader.getRequiredInt(maxSizeElement, "height");
+      constraints.myMaximumSize.width = LwXmlReader.getRequiredInt(maxSizeElement, ATTRIBUTE_WIDTH);
+      constraints.myMaximumSize.height = LwXmlReader.getRequiredInt(maxSizeElement, ATTRIBUTE_HEIGHT);
     }
 
     return constraints;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   private void processItemElement(final Element itemElement, final GroupItem group){
     LOG.assertTrue(itemElement != null);
     LOG.assertTrue(group != null);
 
     // Class name. It's OK if class does not exist.
-    final String className = LwXmlReader.getRequiredString(itemElement, "class");
+    final String className = LwXmlReader.getRequiredString(itemElement, ATTRIBUTE_CLASS);
 
     // Icon (optional)
-    final String iconPath = LwXmlReader.getString(itemElement, "icon");
+    final String iconPath = LwXmlReader.getString(itemElement, ATTRIBUTE_ICON);
 
     // Tooltip text (optional)
-    final String toolTipText = LwXmlReader.getString(itemElement, "tooltip-text"); // can be null
+    final String toolTipText = LwXmlReader.getString(itemElement, ATTRIBUTE_TOOLTIP_TEXT); // can be null
 
     // Default constraint
     final GridConstraints constraints;
-    final Element defaultConstraints = itemElement.getChild("default-constraints");
+    final Element defaultConstraints = itemElement.getChild(ELEMENT_DEFAULT_CONSTRAINTS);
     if (defaultConstraints != null) {
       constraints = processDefaultConstraintsElement(defaultConstraints);
     }
@@ -267,20 +289,19 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
 
     final HashMap<String, StringDescriptor> propertyName2intitialValue = new HashMap<String, StringDescriptor>();
     {
-      final Element initialValues = itemElement.getChild("initial-values");
+      final Element initialValues = itemElement.getChild(ELEMENT_INITIAL_VALUES);
       if (initialValues != null){
-        final Iterator iterator = initialValues.getChildren("property").iterator();
-        while (iterator.hasNext()) {
-          final Element e = (Element)iterator.next();
-          final String name = LwXmlReader.getRequiredString(e, "name");
+        for(final Object o : initialValues.getChildren(ELEMENT_PROPERTY)) {
+          final Element e = (Element)o;
+          final String name = LwXmlReader.getRequiredString(e, ATTRIBUTE_NAME);
           // TODO[all] currently all initial values are strings
-          final StringDescriptor value = StringDescriptor.create(LwXmlReader.getRequiredString(e, "value"));
+          final StringDescriptor value = StringDescriptor.create(LwXmlReader.getRequiredString(e, ATTRIBUTE_VALUE));
           propertyName2intitialValue.put(name, value);
         }
       }
     }
 
-    final boolean removable = LwXmlReader.getOptionalBoolean(itemElement, "removable", true);
+    final boolean removable = LwXmlReader.getOptionalBoolean(itemElement, ATTRIBUTE_REMOVABLE, true);
 
     final ComponentItem item = new ComponentItem(
       className,
@@ -297,20 +318,17 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
    * Reads PaletteElements from
    */
   private void processGroups(final List groupElements){
-    for (Iterator i = groupElements.iterator(); i.hasNext();) {
-      final Element groupElement = (Element)i.next();
-      //noinspection HardCodedStringLiteral
-      final String groupName = LwXmlReader.getRequiredString(groupElement, "name");
+    for(final Object groupElement1 : groupElements) {
+      final Element groupElement = (Element)groupElement1;
+      final String groupName = LwXmlReader.getRequiredString(groupElement, ATTRIBUTE_NAME);
       final GroupItem group = new GroupItem(groupName);
       myGroups.add(group);
-      //noinspection HardCodedStringLiteral
-      final Iterator iterator = groupElement.getChildren("item").iterator();
-      while (iterator.hasNext()) {
-        final Element itemElement = (Element)iterator.next();
+      for (final Object o : groupElement.getChildren(ELEMENT_ITEM)) {
+        final Element itemElement = (Element)o;
         try {
           processItemElement(itemElement, group);
         }
-        catch(Exception ex) {
+        catch (Exception ex) {
           LOG.error(ex);
         }
       }
@@ -318,106 +336,103 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
   }
 
   /** Helper method */
-  @SuppressWarnings({"HardCodedStringLiteral"})
   private static void writeDefaultConstraintsElement(final Element itemElement, final GridConstraints c){
     LOG.assertTrue(itemElement != null);
-    LOG.assertTrue("item".equals(itemElement.getName()));
+    LOG.assertTrue(ELEMENT_ITEM.equals(itemElement.getName()));
     LOG.assertTrue(c != null);
 
-    final Element element = new Element("default-constraints");
+    final Element element = new Element(ELEMENT_DEFAULT_CONSTRAINTS);
     itemElement.addContent(element);
 
     // grid related attributes
     {
-      element.setAttribute("vsize-policy", Integer.toString(c.getVSizePolicy()));
-      element.setAttribute("hsize-policy", Integer.toString(c.getHSizePolicy()));
-      element.setAttribute("anchor", Integer.toString(c.getAnchor()));
-      element.setAttribute("fill", Integer.toString(c.getFill()));
+      element.setAttribute(ATTRIBUTE_VSIZE_POLICY, Integer.toString(c.getVSizePolicy()));
+      element.setAttribute(ATTRIBUTE_HSIZE_POLICY, Integer.toString(c.getHSizePolicy()));
+      element.setAttribute(ATTRIBUTE_ANCHOR, Integer.toString(c.getAnchor()));
+      element.setAttribute(ATTRIBUTE_FILL, Integer.toString(c.getFill()));
     }
 
     // minimum size
     {
       if (c.myMinimumSize.width != -1 || c.myMinimumSize.height != -1) {
-        final Element _element = new Element("minimum-size");
+        final Element _element = new Element(ELEMENT_MINIMUM_SIZE);
         element.addContent(_element);
-        _element.setAttribute("width", Integer.toString(c.myMinimumSize.width));
-        _element.setAttribute("height", Integer.toString(c.myMinimumSize.height));
+        _element.setAttribute(ATTRIBUTE_WIDTH, Integer.toString(c.myMinimumSize.width));
+        _element.setAttribute(ATTRIBUTE_HEIGHT, Integer.toString(c.myMinimumSize.height));
       }
     }
 
     // preferred size
     {
       if (c.myPreferredSize.width != -1 || c.myPreferredSize.height != -1) {
-        final Element _element = new Element("preferred-size");
+        final Element _element = new Element(ELEMENT_PREFERRED_SIZE);
         element.addContent(_element);
-        _element.setAttribute("width", Integer.toString(c.myPreferredSize.width));
-        _element.setAttribute("height", Integer.toString(c.myPreferredSize.height));
+        _element.setAttribute(ATTRIBUTE_WIDTH, Integer.toString(c.myPreferredSize.width));
+        _element.setAttribute(ATTRIBUTE_HEIGHT, Integer.toString(c.myPreferredSize.height));
       }
     }
 
     // maximum size
     {
       if (c.myMaximumSize.width != -1 || c.myMaximumSize.height != -1) {
-        final Element _element = new Element("maximum-size");
+        final Element _element = new Element(ELEMENT_MAXIMUM_SIZE);
         element.addContent(_element);
-        _element.setAttribute("width", Integer.toString(c.myMaximumSize.width));
-        _element.setAttribute("height", Integer.toString(c.myMaximumSize.height));
+        _element.setAttribute(ATTRIBUTE_WIDTH, Integer.toString(c.myMaximumSize.width));
+        _element.setAttribute(ATTRIBUTE_HEIGHT, Integer.toString(c.myMaximumSize.height));
       }
     }
   }
 
   /** Helper method */
-  @SuppressWarnings({"HardCodedStringLiteral"})
   private static void writeInitialValuesElement(
     final Element itemElement,
     final HashMap<String, StringDescriptor> name2value
   ){
     LOG.assertTrue(itemElement != null);
-    LOG.assertTrue("item".equals(itemElement.getName()));
+    LOG.assertTrue(ELEMENT_ITEM.equals(itemElement.getName()));
     LOG.assertTrue(name2value != null);
 
     if(name2value.size() == 0){ // do not append 'initial-values' subtag
       return;
     }
 
-    final Element initialValuesElement = new Element("initial-values");
+    final Element initialValuesElement = new Element(ELEMENT_INITIAL_VALUES);
     itemElement.addContent(initialValuesElement);
 
     for(final Iterator<Map.Entry<String,StringDescriptor>> i = name2value.entrySet().iterator(); i.hasNext();){
       final Map.Entry<String,StringDescriptor> entry = i.next();
-      final Element propertyElement = new Element("property");
+      final Element propertyElement = new Element(ELEMENT_PROPERTY);
       initialValuesElement.addContent(propertyElement);
-      propertyElement.setAttribute("name", entry.getKey());
-      propertyElement.setAttribute("value", entry.getValue().getValue()/*descriptor is always trivial*/);
+      propertyElement.setAttribute(ATTRIBUTE_NAME, entry.getKey());
+      propertyElement.setAttribute(ATTRIBUTE_VALUE, entry.getValue().getValue()/*descriptor is always trivial*/);
     }
   }
 
   /** Helper method */
-  @SuppressWarnings({"HardCodedStringLiteral"})
   private static void writeComponentItem(final Element groupElement, final ComponentItem item){
     LOG.assertTrue(groupElement != null);
-    LOG.assertTrue("group".equals(groupElement.getName()));
+    LOG.assertTrue(ELEMENT_GROUP.equals(groupElement.getName()));
     LOG.assertTrue(item != null);
 
-    final Element itemElement = new Element("item");
+    final Element itemElement = new Element(ELEMENT_ITEM);
     groupElement.addContent(itemElement);
 
     // Class
-    itemElement.setAttribute("class", item.getClassName());
+    itemElement.setAttribute(ATTRIBUTE_CLASS, item.getClassName());
 
     // Tooltip text (if any)
     if(item.myToolTipText != null){
-      itemElement.setAttribute("tooltip-text", item.myToolTipText);
+      itemElement.setAttribute(ATTRIBUTE_TOOLTIP_TEXT, item.myToolTipText);
     }
 
     // Icon (if any)
     final String iconPath = item.getIconPath();
     if(iconPath != null){
-      itemElement.setAttribute("icon", iconPath);
+      itemElement.setAttribute(ATTRIBUTE_ICON, iconPath);
     }
 
     // Removable
-    itemElement.setAttribute("removable", Boolean.toString(item.isRemovable()));
+    itemElement.setAttribute(ATTRIBUTE_REMOVABLE, Boolean.toString(item.isRemovable()));
 
     // Default constraints
     writeDefaultConstraintsElement(itemElement, item.getDefaultConstraints());
@@ -429,20 +444,17 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
   /**
    * @param parentElement element to which all "group" elements will be appended
    */
-  @SuppressWarnings({"HardCodedStringLiteral"})
   private void writeGroups(final Element parentElement){
     LOG.assertTrue(parentElement != null);
 
-    for(Iterator<GroupItem> i = myGroups.iterator(); i.hasNext();){
-      final GroupItem group = i.next();
-
-      final Element groupElement = new Element("group");
+    for (final GroupItem group : myGroups) {
+      final Element groupElement = new Element(ELEMENT_GROUP);
       parentElement.addContent(groupElement);
-      groupElement.setAttribute("name", group.getName());
+      groupElement.setAttribute(ATTRIBUTE_NAME, group.getName());
 
       final ArrayList<ComponentItem> itemList = group.getItems();
-      for(int j = 0; j < itemList.size(); j++){
-        writeComponentItem(groupElement, itemList.get(j));
+      for (ComponentItem aItemList : itemList) {
+        writeComponentItem(groupElement, aItemList);
       }
     }
   }
@@ -468,11 +480,12 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
   /**
    * @return arrys of all properties that can be introspected from the
    * specified class. Only properties with getter and setter methods are
-   * returned. The method never returns <code>null</code>.
+   * returned.
    */
-  public IntrospectedProperty[] getIntrospectedProperties(final Class aClass){
+  @NotNull
+  public IntrospectedProperty[] getIntrospectedProperties(@NotNull final Class aClass){
+    //noinspection ConstantConditions
     if (aClass == null) {
-      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("aClass cannot be null");
     }
 
@@ -807,18 +820,18 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
    * specified <code>class</code>. The method returns <code>null</code> if there is no
    * property with the such name.
    */
-  public IntrospectedProperty getIntrospectedProperty(final Class aClass, final String name){
+  @Nullable
+  public IntrospectedProperty getIntrospectedProperty(@NotNull final Class aClass, @NotNull final String name){
+    //noinspection ConstantConditions
     if (aClass == null){
-      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("aClass cannot be null");
     }
+    //noinspection ConstantConditions
     if (name == null) {
-      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("name cannot be null");
     }
     final IntrospectedProperty[] properties = getIntrospectedProperties(aClass);
-    for (int i = 0; i < properties.length; i++) {
-      final IntrospectedProperty property = properties[i];
+    for (final IntrospectedProperty property: properties) {
       if (name.equals(property.getName())) {
         return property;
       }
@@ -831,9 +844,10 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
    * <b>DO NOT USE THIS METHOD DIRECTLY</b>. Use {@link com.intellij.uiDesigner.RadComponent#getInplaceProperty(int, int) }
    * instead.
    */
-  public IntrospectedProperty getInplaceProperty(final Class aClass){
+  @Nullable
+  public IntrospectedProperty getInplaceProperty(@NotNull final Class aClass){
+    //noinspection ConstantConditions
     if (aClass == null) {
-      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("aClass cannot be null");
     }
     final String inplaceProperty = com.intellij.uiDesigner.Properties.getInstance().getInplaceProperty(aClass);
@@ -866,8 +880,7 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
     }
 
     public void lookAndFeelChanged(final LafManager source) {
-      for(Iterator<IntrospectedProperty[]> i = myClass2Properties.values().iterator(); i.hasNext();){
-        final IntrospectedProperty[] properties=i.next();
+      for (final IntrospectedProperty[] properties : myClass2Properties.values()) {
         LOG.assertTrue(properties != null);
         for (int j = properties.length - 1; j >= 0; j--) {
           updateUI(properties[j]);
