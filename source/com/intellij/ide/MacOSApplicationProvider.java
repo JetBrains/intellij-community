@@ -63,7 +63,7 @@ public class MacOSApplicationProvider implements ApplicationComponent {
             new IdeConfigurablesGroup()
           };
 
-          ShowSettingsUtil.getInstance().showSettingsDialog(getProject(), group);
+          ShowSettingsUtil.getInstance().showSettingsDialog(project, group);
           applicationEvent.setHandled(true);
         }
 
