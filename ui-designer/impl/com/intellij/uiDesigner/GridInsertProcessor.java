@@ -16,8 +16,11 @@ import org.jetbrains.annotations.Nullable;
  * To change this template use File | Settings | File Templates.
  */
 public class GridInsertProcessor {
+  private static final int INSERT_ARROW_SIZE = 3;
+
   private static class InsertFeedbackPainter extends JPanel {
     private boolean myVertical = false;
+    private boolean myWholeCell = false;
 
     public InsertFeedbackPainter() {
       setOpaque(false);
@@ -27,30 +30,39 @@ public class GridInsertProcessor {
       myVertical = vertical;
     }
 
+    public void setWholeCell(final boolean wholeCell) {
+      myWholeCell = wholeCell;
+    }
+
     protected void paintComponent(Graphics g) {
       super.paintComponent(g);
       Graphics2D g2d = (Graphics2D) g;
       final Stroke savedStroke = g2d.getStroke();
       final Color savedColor = g2d.getColor();
       try {
-        g2d.setStroke(new BasicStroke(1.5f));
         g2d.setColor(Color.BLUE);
-        int delta = 3;
-        if (myVertical) {
+        if (myWholeCell) {
+          g2d.setStroke(new BasicStroke(2.5f));
+          // give space for stroke to be painted
+          g2d.drawRect(1, 1, getWidth()-2, getHeight()-2);
+        }
+        else if (myVertical) {
+          g2d.setStroke(new BasicStroke(1.5f));
           int midX = getWidth()/2;
-          g2d.drawLine(0, 0, midX, delta);
-          g2d.drawLine(getWidth()-1, 0, midX, delta);
-          g2d.drawLine(midX, delta, midX, getHeight()-delta);
-          g2d.drawLine(0, getHeight()-1, midX, getHeight()-delta);
-          g2d.drawLine(getWidth()-1, getHeight()-1, midX, getHeight()-delta);
+          g2d.drawLine(0, 0, midX, INSERT_ARROW_SIZE);
+          g2d.drawLine(getWidth()-1, 0, midX, INSERT_ARROW_SIZE);
+          g2d.drawLine(midX, INSERT_ARROW_SIZE, midX, getHeight()-INSERT_ARROW_SIZE);
+          g2d.drawLine(0, getHeight()-1, midX, getHeight()-INSERT_ARROW_SIZE);
+          g2d.drawLine(getWidth()-1, getHeight()-1, midX, getHeight()-INSERT_ARROW_SIZE);
         }
         else {
+          g2d.setStroke(new BasicStroke(1.5f));
           int midY = getHeight()/2;
-          g2d.drawLine(0, 0, delta, midY);
-          g2d.drawLine(0, getHeight()-1, delta, midY);
-          g2d.drawLine(delta, midY, getWidth()-delta, midY);
-          g2d.drawLine(getWidth()-1, 0, getWidth()-delta, midY);
-          g2d.drawLine(getWidth()-1, getHeight()-1, getWidth()-delta, midY);
+          g2d.drawLine(0, 0, INSERT_ARROW_SIZE, midY);
+          g2d.drawLine(0, getHeight()-1, INSERT_ARROW_SIZE, midY);
+          g2d.drawLine(INSERT_ARROW_SIZE, midY, getWidth()-INSERT_ARROW_SIZE, midY);
+          g2d.drawLine(getWidth()-1, 0, getWidth()-INSERT_ARROW_SIZE, midY);
+          g2d.drawLine(getWidth()-1, getHeight()-1, getWidth()-INSERT_ARROW_SIZE, midY);
         }
       }
       finally {
@@ -128,6 +140,9 @@ public class GridInsertProcessor {
     int[] widths = grid.getWidths();
     int[] heights = grid.getHeights();
 
+    int[] horzGridLines = grid.getHorizontalGridLines();
+    int[] vertGridLines = grid.getVerticalGridLines();
+
     int row=ys.length-1, col=xs.length-1;
     for(int i=0; i<xs.length; i++) {
       if (targetPoint.getX() < xs [i]+widths [i]) {
@@ -159,17 +174,18 @@ public class GridInsertProcessor {
     else if (heights [row] - dy < EPSILON) {
       mode = GridInsertMode.RowAfter;
     }
-    if (mode != GridInsertMode.None) {
-      Rectangle cellRect = new Rectangle(xs [col], ys [row], widths [col], heights [row]);
-      // if a number of adjacent components have been selected and the component being dragged
-      // is not the leftmost, we return the column in which the leftmost component should be dropped
-      if ((mode == GridInsertMode.RowBefore || mode == GridInsertMode.RowAfter) &&
-          col >= dragColumnDelta) {
-        col -= dragColumnDelta;
-      }
-      return new GridInsertLocation(container, row, col, cellRect, mode);
+
+    Rectangle cellRect = new Rectangle(vertGridLines [col],
+                                       horzGridLines [row],
+                                       vertGridLines [col+1]-vertGridLines [col],
+                                       horzGridLines [row+1]-horzGridLines [row]);
+    // if a number of adjacent components have been selected and the component being dragged
+    // is not the leftmost, we return the column in which the leftmost component should be dropped
+    if ((mode == GridInsertMode.RowBefore || mode == GridInsertMode.RowAfter) &&
+        col >= dragColumnDelta) {
+      col -= dragColumnDelta;
     }
-    return new GridInsertLocation(GridInsertMode.None);
+    return new GridInsertLocation(container, row, col, cellRect, mode);
   }
 
   @Nullable
@@ -219,7 +235,7 @@ public class GridInsertProcessor {
   public Cursor processMouseMoveEvent(int x, int y, final boolean copyOnDrop, int componentCount,
                                       final int dragColumnDelta) {
     final GridInsertLocation insertLocation = getGridInsertLocation(x, y, dragColumnDelta);
-    if (insertLocation.getMode() != GridInsertMode.None) {
+    if (insertLocation.getContainer() != null) {
       if (isDropInsertAllowed(insertLocation, componentCount)) {
         placeInsertFeedbackPainter(insertLocation, componentCount);
         if (myInsertFeedbackPainter.getParent() == null) {
@@ -237,8 +253,12 @@ public class GridInsertProcessor {
   }
 
   public boolean isDropInsertAllowed(final GridInsertLocation insertLocation, final int componentCount) {
-    if (insertLocation == null || insertLocation.getMode() == GridInsertMode.None) {
+    if (insertLocation == null || insertLocation.getContainer() == null) {
       return false;
+    }
+    if (insertLocation.getMode() == GridInsertMode.None) {
+      return componentCount == 1 &&
+             insertLocation.getContainer().getComponentAtGrid(insertLocation.getRow(), insertLocation.getColumn()) == null;
     }
     final GridLayoutManager grid = ((GridLayoutManager)insertLocation.getContainer().getLayout());
     return insertLocation.getColumn() + componentCount - 1 < grid.getColumnCount();
@@ -264,31 +284,38 @@ public class GridInsertProcessor {
     cellRect = SwingUtilities.convertRectangle(insertLocation.getContainer().getDelegee(),
                                                cellRect,
                                                myEditor.getActiveDecorationLayer());
-    cellRect.grow(3, 3);
-    myInsertFeedbackPainter.setVertical(insertLocation.getMode() == GridInsertMode.ColumnBefore ||
-                                        insertLocation.getMode() == GridInsertMode.ColumnAfter);
 
-    int w=4;
-    switch(insertLocation.getMode()) {
-      case ColumnBefore:
-        myInsertFeedbackPainter.setBounds((int) cellRect.getMinX()-w, (int) cellRect.getMinY(),
-                                          2*w, (int) cellRect.getHeight());
-        break;
+    if (insertLocation.getMode() == GridInsertMode.None) {
+      myInsertFeedbackPainter.setWholeCell(true);
+      myInsertFeedbackPainter.setBounds(cellRect);
+      }
+    else {
+      myInsertFeedbackPainter.setWholeCell(false);
+      myInsertFeedbackPainter.setVertical(insertLocation.getMode() == GridInsertMode.ColumnBefore ||
+                                          insertLocation.getMode() == GridInsertMode.ColumnAfter);
 
-      case ColumnAfter:
-        myInsertFeedbackPainter.setBounds((int) cellRect.getMaxX()-w, (int) cellRect.getMinY(),
-                                          2*w, (int) cellRect.getHeight());
-        break;
+      int w=4;
+      switch(insertLocation.getMode()) {
+        case ColumnBefore:
+          myInsertFeedbackPainter.setBounds((int) cellRect.getMinX()-w, (int) cellRect.getMinY()-INSERT_ARROW_SIZE,
+                                            2*w, (int) cellRect.getHeight()+2*INSERT_ARROW_SIZE);
+          break;
 
-      case RowBefore:
-        myInsertFeedbackPainter.setBounds((int) cellRect.getMinX(), (int) cellRect.getMinY()-w,
-                                          (int) cellRect.getWidth(), 2*w);
-        break;
+        case ColumnAfter:
+          myInsertFeedbackPainter.setBounds((int) cellRect.getMaxX()-w, (int) cellRect.getMinY()-INSERT_ARROW_SIZE,
+                                            2*w, (int) cellRect.getHeight()+2*INSERT_ARROW_SIZE);
+          break;
 
-      case RowAfter:
-        myInsertFeedbackPainter.setBounds((int) cellRect.getMinX(), (int) cellRect.getMaxY()-w,
-                                          (int) cellRect.getWidth(), 2*w);
-        break;
+        case RowBefore:
+          myInsertFeedbackPainter.setBounds((int) cellRect.getMinX()-INSERT_ARROW_SIZE, (int) cellRect.getMinY()-w,
+                                            (int) cellRect.getWidth()+2*INSERT_ARROW_SIZE, 2*w);
+          break;
+
+        case RowAfter:
+          myInsertFeedbackPainter.setBounds((int) cellRect.getMinX()-INSERT_ARROW_SIZE, (int) cellRect.getMaxY()-w,
+                                            (int) cellRect.getWidth()+2*INSERT_ARROW_SIZE, 2*w);
+          break;
+      }
     }
   }
 }

@@ -782,4 +782,24 @@ public final class GridLayoutManager extends AbstractLayout {
   public void setSameSizeVertically(boolean sameSizeVertically) {
     mySameSizeVertically = sameSizeVertically;
   }
+
+  public int[] getHorizontalGridLines() {
+    int[] result = new int [myYs.length+1];
+    result [0] = 0;
+    for(int i=0; i<myYs.length-1; i++) {
+      result [i+1] = (myYs[i] + myHeights[i] + myYs[i + 1]) / 2;
+    }
+    result [myYs.length] = myYs [myYs.length-1] + myHeights [myYs.length-1];
+    return result;
+  }
+
+  public int[] getVerticalGridLines() {
+    int[] result = new int [myXs.length+1];
+    result [0] = 0;
+    for(int i=0; i<myXs.length-1; i++) {
+      result [i+1] = (myXs[i] + myWidths[i] + myXs[i + 1]) / 2;
+    }
+    result [myXs.length] = myXs [myXs.length-1] + myWidths [myXs.length-1];
+    return result;
+  }
 }

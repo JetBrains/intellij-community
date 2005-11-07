@@ -163,10 +163,9 @@ final class Painter {
 
       // Horizontal lines
       final int width = component.getWidth();
-      final int[] ys = gridLayout.getYs();
-      final int[] heights = gridLayout.getHeights();
-      for (int i = 0; i < ys.length - 1; i++) {
-        final int y = (ys[i] + heights[i] + ys[i + 1]) / 2;
+      final int[] horzGridLines = gridLayout.getHorizontalGridLines();
+      for (int i = 1; i < horzGridLines.length - 1; i++) {
+        final int y = horzGridLines [i];
         // Draw dotted horizontal line
         for(int x = 0; x < width; x+=4){
           UIUtil.drawLine(g, x, y, Math.min(x + 2, width - 1), y);
@@ -175,10 +174,9 @@ final class Painter {
 
       // Vertical lines
       final int height = component.getHeight();
-      final int[] xs = gridLayout.getXs();
-      final int[] widths = gridLayout.getWidths();
-      for (int i = 0; i < xs.length - 1; i++) {
-        final int x = (xs[i] + widths[i] + xs[i + 1]) / 2;
+      final int[] vertGridLines = gridLayout.getVerticalGridLines();
+      for (int i = 1; i < vertGridLines.length - 1; i++) {
+        final int x = vertGridLines [i];
         // Draw dotted vertical line
         for(int y = 0; y < height; y+=4){
           UIUtil.drawLine(g, x, y, x, Math.min(y + 2, height - 1));
