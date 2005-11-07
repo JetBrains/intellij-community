@@ -523,12 +523,13 @@ public class VfsUtil {
    */
 
   @Nullable
-  public static String getPath(VirtualFile src, VirtualFile dst, char separatorChar) throws IncorrectOperationException {
+  public static String getPath(VirtualFile src, VirtualFile dst, char separatorChar) {
     final VirtualFile commonAncestor = getCommonAncestor(src, dst);
     if (commonAncestor != null) {
       StringBuffer buffer = new StringBuffer();
       while (src.getParent() != commonAncestor) {
-        buffer.append("../");
+        buffer.append("..");
+        buffer.append(separatorChar);
         src = src.getParent();
       }
       buffer.append(getRelativePath(dst, commonAncestor, separatorChar));
