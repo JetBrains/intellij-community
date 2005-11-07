@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Represents a Java package.
  */
-public interface PsiPackage extends PsiElement, PsiNamedElement, NavigationItem {
+public interface PsiPackage extends PsiNamedElement, NavigationItem {
   /**
    * Returns the full-qualified name of the package.
    *

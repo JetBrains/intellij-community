@@ -17,6 +17,7 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
@@ -93,10 +94,8 @@ public class PsiElementRenameHandler implements RenameHandler {
     }
 
     final String REFACTORING_NAME = RefactoringBundle.message("rename.title");
-    if (element == null ||
-        !(element instanceof PsiFile || element instanceof PsiPackage ||
-          element instanceof PsiDirectory || element instanceof PsiClass || element instanceof PsiVariable ||
-          element instanceof PsiMethod || element instanceof PsiNamedElement || element instanceof XmlAttributeValue)) {
+    if (element instanceof XmlTag ||
+        !(element instanceof PsiNamedElement || element instanceof XmlAttributeValue)) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.symbol"));
       CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, null, project);
       return false;
@@ -104,14 +103,6 @@ public class PsiElementRenameHandler implements RenameHandler {
 
     if (!PsiManager.getInstance(project).isInProject(element)) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.out.of.project.element", UsageViewUtil.getType(element)));
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, null, project);
-      return false;
-    }
-
-    if (!PsiManager.getInstance(project).isInProject(element)) {
-      String message =
-        "Cannot perform the refactoring.\n" +
-        "Selected " + UsageViewUtil.getType(element) + " is not located inside the project.";
       CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, null, project);
       return false;
     }
