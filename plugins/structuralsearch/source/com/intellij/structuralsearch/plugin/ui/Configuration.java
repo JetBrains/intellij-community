@@ -61,10 +61,11 @@ public abstract class Configuration implements JDOMExternalizable {
   public abstract MatchOptions getMatchOptions();
 
   public boolean equals(Object configuration) {
-    if (configuration instanceof Configuration) {
-      return getMatchOptions().equals(((Configuration)configuration).getMatchOptions());
-    }
-    return false;
+    if (!(configuration instanceof Configuration)) return false;
+    Configuration other = (Configuration)configuration;
+    if (!getMatchOptions().equals(other.getMatchOptions())) return false;
+    if (!getName().equals(other.getName())) return false;
+    return true;
   }
 
   public int hashCode() {

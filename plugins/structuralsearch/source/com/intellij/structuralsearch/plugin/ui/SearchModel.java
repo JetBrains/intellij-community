@@ -1,8 +1,5 @@
 package com.intellij.structuralsearch.plugin.ui;
 
-import com.intellij.structuralsearch.MatchOptions;
-import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
-
 /**
  * Created by IntelliJ IDEA.
  * User: Maxim.Mossienko
@@ -14,16 +11,16 @@ public class SearchModel {
   private Configuration config;
   private Configuration shadowConfig;
 
-  public SearchModel(Configuration _config) {
-    config = _config;
+  public SearchModel(Configuration config) {
+    this.config = config;
   }
 
   public Configuration getConfig() {
     return config;
   }
 
-  public void setShadowConfig(Configuration _shadowConfig) {
-    shadowConfig = _shadowConfig;
+  public void setShadowConfig(Configuration shadowConfig) {
+    this.shadowConfig = shadowConfig;
   }
 
   public Configuration getShadowConfig() {

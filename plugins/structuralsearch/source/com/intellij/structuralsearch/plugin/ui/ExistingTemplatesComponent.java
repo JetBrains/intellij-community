@@ -76,7 +76,7 @@ public class ExistingTemplatesComponent {
     nodesToExpand.add(parent);
 
     final ConfigurationManager configurationManager = StructuralSearchPlugin.getInstance(this.project).getConfigurationManager();
-    if (configurationManager.getConfigurations()!=null) {
+    if (configurationManager.getConfigurations() != null) {
       for (final Configuration config : configurationManager.getConfigurations()) {
         parent.add(new DefaultMutableTreeNode(config));
       }
@@ -97,26 +97,27 @@ public class ExistingTemplatesComponent {
       }
     };
 
-    AnAction removeAction = new AnAction(SSRBundle.message("remove.template.action.name"), null, IconLoader.getIcon("/general/remove.png")) {
-      public void actionPerformed(AnActionEvent e) {
-        Object selection = patternTree.getLastSelectedPathComponent();
+    AnAction removeAction =
+      new AnAction(SSRBundle.message("remove.template.action.name"), null, IconLoader.getIcon("/general/remove.png")) {
+        public void actionPerformed(AnActionEvent e) {
+          Object selection = patternTree.getLastSelectedPathComponent();
 
-        if (selection instanceof DefaultMutableTreeNode) {
-          DefaultMutableTreeNode node = (DefaultMutableTreeNode)selection;
+          if (selection instanceof DefaultMutableTreeNode) {
+            DefaultMutableTreeNode node = (DefaultMutableTreeNode)selection;
 
-          if (node.getUserObject() instanceof Configuration) {
-            Configuration configuration = (Configuration) node.getUserObject();
-            patternTreeModel.removeNodeFromParent(node);
-            configurationManager.removeConfiguration(configuration);
+            if (node.getUserObject() instanceof Configuration) {
+              Configuration configuration = (Configuration)node.getUserObject();
+              patternTreeModel.removeNodeFromParent(node);
+              configurationManager.removeConfiguration(configuration);
+            }
           }
         }
-      }
-    };
+      };
 
     group.add(addAction);
     group.add(removeAction);
 
-    JPanel templatesPanel = new JPanel( new BorderLayout() );
+    JPanel templatesPanel = new JPanel(new BorderLayout());
     addAction.registerCustomShortcutSet(CommonShortcuts.INSERT, templatesPanel);
     removeAction.registerCustomShortcutSet(CommonShortcuts.DELETE, templatesPanel);
 
@@ -124,13 +125,13 @@ public class ExistingTemplatesComponent {
       BorderLayout.NORTH,
       ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent()
     );
-    templatesPanel.add( BorderLayout.CENTER, new JScrollPane( patternTree ) );
+    templatesPanel.add(BorderLayout.CENTER, new JScrollPane(patternTree));
 
     panel = templatesPanel;
     configureSelectTemplateAction(patternTree);
 
     historyModel = new DefaultListModel();
-    historyPanel = new JPanel( new BorderLayout() );
+    historyPanel = new JPanel(new BorderLayout());
     historyPanel.add(
       BorderLayout.NORTH,
       new JLabel(SSRBundle.message("used.templates"))
@@ -150,7 +151,7 @@ public class ExistingTemplatesComponent {
 
     new ListSpeedSearch(historyList);
 
-    if (configurationManager.getHistoryConfigurations()!=null) {
+    if (configurationManager.getHistoryConfigurations() != null) {
       for (final Configuration configuration : configurationManager.getHistoryConfigurations()) {
         historyModel.addElement(configuration);
       }
@@ -165,7 +166,7 @@ public class ExistingTemplatesComponent {
     component.addKeyListener(
       new KeyAdapter() {
         public void keyPressed(KeyEvent e) {
-          if (e.getKeyCode()==KeyEvent.VK_ENTER) {
+          if (e.getKeyCode() == KeyEvent.VK_ENTER) {
             owner.close(DialogWrapper.OK_EXIT_CODE);
           }
         }
@@ -175,7 +176,7 @@ public class ExistingTemplatesComponent {
     component.addMouseListener(
       new MouseAdapter() {
         public void mouseClicked(MouseEvent e) {
-          if (e.getClickCount()==2) {
+          if (e.getClickCount() == 2) {
             owner.close(DialogWrapper.OK_EXIT_CODE);
           }
         }
@@ -197,9 +198,7 @@ public class ExistingTemplatesComponent {
     tree.setShowsRootHandles(true);
     tree.setDragEnabled(false);
     tree.setEditable(false);
-    tree.getSelectionModel().setSelectionMode(
-      TreeSelectionModel.SINGLE_TREE_SELECTION
-    );
+    tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
 
     tree.setCellRenderer(new TreeCellRenderer());
 
@@ -212,9 +211,11 @@ public class ExistingTemplatesComponent {
 
           if (displayValue instanceof PredefinedConfiguration) {
             displayValue = ((PredefinedConfiguration)displayValue).getConfiguration().getName();
-          } else if (displayValue instanceof Configuration) {
+          }
+          else if (displayValue instanceof Configuration) {
             displayValue = ((Configuration)displayValue).getName();
-          } else {
+          }
+          else {
             displayValue = "";
           }
           return displayValue.toString();
@@ -237,7 +238,7 @@ public class ExistingTemplatesComponent {
     StructuralSearchPlugin plugin = StructuralSearchPlugin.getInstance(project);
 
     if (plugin.getExistingTemplatesComponent() == null) {
-      plugin.setExistingTemplatesComponent( new ExistingTemplatesComponent(project) );
+      plugin.setExistingTemplatesComponent(new ExistingTemplatesComponent(project));
     }
 
     return plugin.getExistingTemplatesComponent();
@@ -267,7 +268,14 @@ public class ExistingTemplatesComponent {
       setLeafIcon(null);
       setClosedIcon(null);
     }
-    public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+
+    public Component getTreeCellRendererComponent(JTree tree,
+                                                  Object value,
+                                                  boolean sel,
+                                                  boolean expanded,
+                                                  boolean leaf,
+                                                  int row,
+                                                  boolean hasFocus) {
       DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)value;
       Object displayValue = treeNode.getUserObject();
 
@@ -291,9 +299,9 @@ public class ExistingTemplatesComponent {
 
   void addConfigurationToHistory(Configuration configuration) {
     //configuration.setName( configuration.getName() +" "+new Date());
-    historyModel.insertElementAt(configuration,0);
+    historyModel.insertElementAt(configuration, 0);
     ConfigurationManager configurationManager = StructuralSearchPlugin.getInstance(project).getConfigurationManager();
-    configurationManager.addHistoryConfiguration(configuration);
+    configurationManager.addHistoryConfigurationToFront(configuration);
     historyList.setSelectedIndex(0);
 
     if (historyModel.getSize() > 25) {
@@ -317,18 +325,18 @@ public class ExistingTemplatesComponent {
 
     TreeUtil.selectPath(
       patternTree,
-      new TreePath(new Object[] {patternTreeModel.getRoot(),parent,node} )
+      new TreePath(new Object[]{patternTreeModel.getRoot(), parent, node})
     );
   }
 
   void addConfigurationToUserTemplates(Configuration configuration) {
-    insertNode(configuration,userTemplatesNode,userTemplatesNode.getChildCount());
+    insertNode(configuration, userTemplatesNode, userTemplatesNode.getChildCount());
     ConfigurationManager configurationManager = StructuralSearchPlugin.getInstance(project).getConfigurationManager();
     configurationManager.addConfiguration(configuration);
   }
 
   boolean isConfigurationFromHistory(Configuration config) {
-    return historyModel.indexOf(config)!=-1;
+    return historyModel.indexOf(config) != -1;
   }
 
   public JList getHistoryList() {

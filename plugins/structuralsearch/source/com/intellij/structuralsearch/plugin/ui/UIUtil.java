@@ -1,9 +1,9 @@
 package com.intellij.structuralsearch.plugin.ui;
 
+import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.codeInsight.template.impl.TemplateContext;
 import com.intellij.codeInsight.template.impl.TemplateEditorUtil;
-import com.intellij.codeInsight.hint.TooltipGroup;
-import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
@@ -27,11 +27,10 @@ import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.plugin.StructuralReplaceAction;
 import com.intellij.structuralsearch.plugin.StructuralSearchAction;
 import com.intellij.structuralsearch.plugin.util.SmartPsiPointer;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * Created by IntelliJ IDEA.
@@ -50,8 +49,8 @@ public class UIUtil {
   }
 
   public static Editor createEditor(Document doc, final Project project, boolean editable, boolean addToolTipForVariableHandler) {
-    final Editor editor = ( (editable)? EditorFactory.getInstance().createEditor(doc,project)
-                            :EditorFactory.getInstance().createViewer(doc,project));
+    final Editor editor =
+      editable ? EditorFactory.getInstance().createEditor(doc, project) : EditorFactory.getInstance().createViewer(doc, project);
 
     EditorSettings editorSettings = editor.getSettings();
     editorSettings.setVirtualSpace(false);
@@ -212,7 +211,7 @@ public class UIUtil {
   static String getShortParamString(Configuration config,String varname) {
     final MatchOptions options = config.getMatchOptions();
 
-    MatchVariableConstraint constraint = (options!=null)?options.getVariableConstraint(varname):null;
+    MatchVariableConstraint constraint = options == null ? null : options.getVariableConstraint(varname);
     if (constraint==null) return SSRBundle.message("no.constraints.specified.tooltip.message");
     StringBuffer buf = new StringBuffer();
 

@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NonNls;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Collections;
 
 /**
  * Created by IntelliJ IDEA.
@@ -16,23 +17,23 @@ import java.util.List;
  * To change this template use File | Settings | File Templates.
  */
 public class ConfigurationManager {
-  @NonNls private static final String SAVE_TAG_NAME = "searchConfiguration";
-  @NonNls private static final String SAVE_TAG_NAME2 = "replaceConfiguration";
+  @NonNls private static final String SEARCH_TAG_NAME = "searchConfiguration";
+  @NonNls private static final String REPLACE_TAG_NAME = "replaceConfiguration";
   @NonNls private static final String SAVE_HISTORY_ATTR_NAME = "history";
 
   private List<Configuration> configurations;
   private LinkedList<Configuration> historyConfigurations;
 
-  public void addHistoryConfiguration(Configuration configuration) {
+  public void addHistoryConfigurationToFront(Configuration configuration) {
     if (historyConfigurations == null) historyConfigurations = new LinkedList<Configuration>();
 
-    if (historyConfigurations.indexOf(configuration)==-1) {
+    if (historyConfigurations.indexOf(configuration) == -1) {
       historyConfigurations.addFirst(configuration);
     }
   }
 
   public void removeHistoryConfiguration(Configuration configuration) {
-    if (historyConfigurations!=null) {
+    if (historyConfigurations != null) {
       historyConfigurations.remove(configuration);
     }
   }
@@ -40,25 +41,25 @@ public class ConfigurationManager {
   public void addConfiguration(Configuration configuration) {
     if (configurations == null) configurations = new LinkedList<Configuration>();
 
-    if (configurations.indexOf(configuration)==-1) {
-      configurations.add( configuration );
+    if (configurations.indexOf(configuration) == -1) {
+      configurations.add(configuration);
     }
   }
 
   public void removeConfiguration(Configuration configuration) {
-    if (configurations!=null) {
+    if (configurations != null) {
       configurations.remove(configuration);
     }
   }
 
   public void saveConfigurations(Element element) {
-    if (configurations!=null) {
+    if (configurations != null) {
       for (final Configuration configuration : configurations) {
         saveConfiguration(element, configuration);
       }
     }
 
-    if (historyConfigurations!=null) {
+    if (historyConfigurations != null) {
       for (final Configuration historyConfiguration : historyConfigurations) {
         final Element infoElement = saveConfiguration(element, historyConfiguration);
         infoElement.setAttribute(SAVE_HISTORY_ATTR_NAME, "1");
@@ -67,7 +68,7 @@ public class ConfigurationManager {
   }
 
   private static Element saveConfiguration(Element element, final Configuration config) {
-    Element infoElement = new Element(config instanceof SearchConfiguration ? SAVE_TAG_NAME : SAVE_TAG_NAME2);
+    Element infoElement = new Element(config instanceof SearchConfiguration ? SEARCH_TAG_NAME : REPLACE_TAG_NAME);
     element.addContent(infoElement);
     config.writeExternal(infoElement);
 
@@ -78,21 +79,23 @@ public class ConfigurationManager {
     if (configurations != null) return;
     List patterns = element.getChildren();
 
-    if (patterns!=null && patterns.size() > 0) {
+    if (patterns != null && patterns.size() > 0) {
       for (final Object pattern : patterns) {
         final Element childElement = (Element)pattern;
         final Configuration config =
-          childElement.getName().equals(SAVE_TAG_NAME) ? new SearchConfiguration() : new ReplaceConfiguration();
+          childElement.getName().equals(SEARCH_TAG_NAME) ? new SearchConfiguration() : new ReplaceConfiguration();
 
         config.readExternal(childElement);
 
         if (childElement.getAttribute(SAVE_HISTORY_ATTR_NAME) != null) {
-          if (historyConfigurations == null) historyConfigurations = new LinkedList<Configuration>();
-          historyConfigurations.add(config);
+          addHistoryConfigurationToFront(config);
         }
         else {
           addConfiguration(config);
         }
+      }
+      if (historyConfigurations != null) {
+        Collections.reverse(historyConfigurations);
       }
     }
   }
