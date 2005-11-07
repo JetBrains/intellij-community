@@ -14,6 +14,7 @@ import com.intellij.pom.xml.XmlChangeSet;
 import com.intellij.pom.xml.XmlChangeVisitor;
 import com.intellij.pom.xml.events.*;
 import com.intellij.psi.PsiLock;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.*;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.AttributeValueChangeEvent;
@@ -173,8 +174,10 @@ public class DomManagerImpl extends DomManager implements ProjectComponent, XmlC
     return getClass().getName();
   }
 
-  public final void setChanging(final boolean changing) {
+  public final synchronized boolean setChanging(final boolean changing) {
+    boolean oldChanging = myChanging;
     myChanging = changing;
+    return oldChanging;
   }
 
   public final boolean isChanging() {
@@ -227,13 +230,15 @@ public class DomManagerImpl extends DomManager implements ProjectComponent, XmlC
     }
   }
 
-  private void invalidateSubtree(final XmlTag root) {
+  static void invalidateSubtree(final XmlTag root, final boolean invalidateRoot) {
     final DomInvocationHandler element = getCachedElement(root);
     if (element != null) {
       setCachedElement(root, null);
-      element.invalidate();
+      if (invalidateRoot) {
+        element.invalidate();
+      }
       for (XmlTag tag : root.getSubTags()) {
-        invalidateSubtree(tag);
+        invalidateSubtree(tag, true);
       }
     }
   }
@@ -243,7 +248,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent, XmlC
     if (element != null) {
       final XmlTag rootTag = element.getRootTag();
       if (rootTag != null) {
-        invalidateSubtree(rootTag);
+        invalidateSubtree(rootTag, true);
       }
       element.invalidateRoot();
       fireEvent(new ContentsChangedEvent(element));
@@ -255,17 +260,38 @@ public class DomManagerImpl extends DomManager implements ProjectComponent, XmlC
   }
 
   private void xmlElementChanged(final XmlElement xmlElement) {
-    if (xmlElement instanceof XmlText) {
+    if (isTagValueChange(xmlElement)) {
       fireTagValueChanged(((XmlText)xmlElement).getParentTag());
     }
   }
 
-  public final void visitXmlTagChildAdd(final XmlTagChildAdd change) {
-    final XmlTag tag = change.getTag();
+  private final boolean isTagValueChange(final XmlElement xmlElement) {
+    final PsiElement parent = xmlElement.getParent();
+    if (parent instanceof XmlTag) {
+      return isTagValueChange(xmlElement, (XmlTag) parent);
+    }
+    return false;
+  }
 
+  private final boolean isTagValueChange(final XmlElement xmlElement, XmlTag parent) {
+    if (xmlElement instanceof XmlText) {
+      return ((XmlTag)parent).getSubTags().length == 0;
+    }
+    return false;
+  }
+
+  public final void visitXmlTagChildAdd(final XmlTagChildAdd change) {
     final XmlTagChild child = change.getChild();
-    if (child instanceof XmlText) {
+    final XmlTag tag = change.getTag();
+    if (isTagValueChange(child)) {
       fireTagValueChanged(tag);
+    }
+    if (child instanceof XmlTag) {
+      XmlTag childTag = (XmlTag)child;
+      final DomInvocationHandler element = getCachedElement(tag);
+      if (element != null) {
+        element.processChildTagAdded(childTag);
+      }
     }
   }
 
@@ -281,14 +307,14 @@ public class DomManagerImpl extends DomManager implements ProjectComponent, XmlC
   }
 
   public final void visitXmlTagChildRemoved(final XmlTagChildRemoved change) {
-    final XmlTagChild child = change.getChild();
-    if (child instanceof XmlText) {
-      fireTagValueChanged(change.getTag());
+    final XmlTag tag = change.getTag();
+    if (isTagValueChange(change.getChild(), tag)) {
+      fireTagValueChanged(tag);
     }
   }
 
   public final void visitXmlTagNameChanged(final XmlTagNameChanged xmlTagNameChanged) {
-
+    xmlElementChanged(xmlTagNameChanged.getTag());
   }
 
   public final void visitXmlTextChanged(final XmlTextChanged xmlTextChanged) {

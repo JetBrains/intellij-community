@@ -21,8 +21,7 @@ public abstract class SetInvocation implements Invocation {
   public Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
     XmlTag tag = handler.ensureTagExists();
     final DomManagerImpl manager = handler.getManager();
-    final boolean changing = manager.isChanging();
-    manager.setChanging(true);
+    final boolean changing = manager.setChanging(true);
     try {
       final String oldValue = getValue(tag);
       if (args[0] == null) {

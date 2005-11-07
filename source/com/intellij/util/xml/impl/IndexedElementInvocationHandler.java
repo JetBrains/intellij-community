@@ -3,11 +3,10 @@
  */
 package com.intellij.util.xml.impl;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.xml.impl.DomInvocationHandler;
 import com.intellij.util.xml.DomElement;
-import com.intellij.openapi.diagnostic.Logger;
 
 /**
  * @author peter
@@ -39,6 +38,7 @@ public class IndexedElementInvocationHandler<T extends DomElement> extends DomIn
       return;
     }
 
+    final boolean changing = getManager().setChanging(true);
     try {
       XmlTag tag = getXmlTag();
       assert tag != null;
@@ -51,6 +51,8 @@ public class IndexedElementInvocationHandler<T extends DomElement> extends DomIn
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
+    } finally {
+      getManager().setChanging(changing);
     }
     fireUndefinedEvent();
   }

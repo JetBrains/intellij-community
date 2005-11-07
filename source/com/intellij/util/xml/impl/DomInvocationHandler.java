@@ -26,6 +26,7 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Arrays;
 
 /**
  * @author peter
@@ -105,19 +106,19 @@ public abstract class DomInvocationHandler<T extends DomElement> implements Invo
   }
 
   public final XmlTag ensureTagExists() {
-    if (getXmlTag() == null) {
-      final boolean changing = myManager.isChanging();
-      myManager.setChanging(true);
-      try {
-        setXmlTag(createEmptyTag());
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-      }
-      finally {
-        myManager.setChanging(changing);
-        myManager.fireEvent(new ElementDefinedEvent(this));
-      }
+    final XmlTag tag = getXmlTag();
+    if (tag != null) return tag;
+
+    final boolean changing = myManager.setChanging(true);
+    try {
+      setXmlTag(createEmptyTag());
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+    }
+    finally {
+      myManager.setChanging(changing);
+      myManager.fireEvent(new ElementDefinedEvent(this));
     }
     return getXmlTag();
   }
@@ -152,8 +153,12 @@ public abstract class DomInvocationHandler<T extends DomElement> implements Invo
     myXmlTag = null;
   }
 
-  protected void fireUndefinedEvent() {
-    myManager.fireEvent(new ElementUndefinedEvent(this));
+  protected final void fireUndefinedEvent() {
+    myManager.fireEvent(new ElementUndefinedEvent(getProxy()));
+  }
+
+  protected final void fireDefinedEvent() {
+    myManager.fireEvent(new ElementDefinedEvent(getProxy()));
   }
 
   protected abstract void setXmlTag(final XmlTag tag) throws IncorrectOperationException;
@@ -333,6 +338,7 @@ public abstract class DomInvocationHandler<T extends DomElement> implements Invo
 
   protected final void cacheDomElement(final XmlTag tag) {
     synchronized (PsiLock.LOCK) {
+      DomManagerImpl.setCachedElement(myXmlTag, null);
       myXmlTag = tag;
       DomManagerImpl.setCachedElement(tag, this);
     }
@@ -360,8 +366,12 @@ public abstract class DomInvocationHandler<T extends DomElement> implements Invo
 
   public final DomElement addChild(final String tagName, final Class aClass, int index) throws IncorrectOperationException {
     createFixedChildrenTags(tagName, myMethodsMap.getFixedChildrenCount(tagName));
-    final DomElement element = createCollectionElement(aClass, addEmptyTag(tagName, index));
-    myManager.fireEvent(new CollectionElementAddedEvent(element, tagName));
+    return addCollectionElement(aClass, addEmptyTag(tagName, index));
+  }
+
+  private DomElement addCollectionElement(final Class aClass, final XmlTag tag) {
+    final DomElement element = createCollectionElement(aClass, tag);
+    myManager.fireEvent(new CollectionElementAddedEvent(element, tag.getName()));
     return element;
   }
 
@@ -371,8 +381,7 @@ public abstract class DomInvocationHandler<T extends DomElement> implements Invo
     if (subTags.length < index) {
       index = subTags.length;
     }
-    final boolean changing = myManager.isChanging();
-    myManager.setChanging(true);
+    final boolean changing = myManager.setChanging(true);
     try {
       XmlTag newTag = createEmptyTag(tagName);
       if (index == 0) {
@@ -386,4 +395,30 @@ public abstract class DomInvocationHandler<T extends DomElement> implements Invo
     }
   }
 
+  public void processChildTagAdded(final XmlTag childTag) {
+    synchronized (PsiLock.LOCK) {
+      if (!myInitialized) return;
+    }
+
+    final String qname = childTag.getName();
+    final XmlTag[] subTags = getXmlTag().findSubTags(qname);
+    int index = Arrays.asList(subTags).indexOf(childTag);
+    final int fixedCount = myMethodsMap.getFixedChildrenCount(qname);
+    if (index < fixedCount) {
+      int upper = Math.min(fixedCount + 1, subTags.length);
+      for (int i = index + 1; i < upper; i++) {
+        DomInvocationHandler handler = DomManagerImpl.getCachedElement(subTags[i]);
+        assert handler != null;
+        DomManagerImpl.invalidateSubtree(subTags[i], false);
+        handler.cacheDomElement(null);
+        handler.fireUndefinedEvent();
+        handler.cacheDomElement(subTags[i - 1]);
+        handler.fireDefinedEvent();
+      }
+    }
+    if (subTags.length > fixedCount) {
+      int newIndex = index >= fixedCount ? index : fixedCount;
+      addCollectionElement(myMethodsMap.getCollectionChildrenClass(qname), subTags[newIndex]);
+    }
+  }
 }
