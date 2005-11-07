@@ -286,12 +286,14 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
       
       if (ourNamespace != null && ourNamespace.length() > 0) {
         XmlNSDescriptor nsDescriptor = (XmlNSDescriptor)document.getMetaData();
-        processNamespace(
-          ourNamespace,
-          processor,
-          nsDescriptor,
-          tagNames
-        );
+        if (nsDescriptor != null) {
+          processNamespace(
+            ourNamespace,
+            processor,
+            nsDescriptor,
+            tagNames
+          );
+        }
       }
       
       return processor.myElements.toArray(new String[processor.myElements.size()]);
