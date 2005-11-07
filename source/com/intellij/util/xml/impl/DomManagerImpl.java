@@ -177,6 +177,10 @@ public class DomManagerImpl extends DomManager implements ProjectComponent, XmlC
     myChanging = changing;
   }
 
+  public final boolean isChanging() {
+    return myChanging;
+  }
+
   public final void initComponent() {
   }
 

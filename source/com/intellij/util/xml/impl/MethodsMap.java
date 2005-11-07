@@ -52,6 +52,10 @@ public class MethodsMap {
     return myFixedChildrenMethods.entrySet();
   }
 
+  Pair<String, Integer> getFixedChildInfo(Method method) {
+    return myFixedChildrenMethods.get(method);
+  }
+
   private boolean isCoreMethod(final Method method) {
     final Class<?> declaringClass = method.getDeclaringClass();
     return Object.class.equals(declaringClass) || DomElement.class.equals(declaringClass);

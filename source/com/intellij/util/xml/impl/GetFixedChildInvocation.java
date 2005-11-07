@@ -3,8 +3,6 @@
  */
 package com.intellij.util.xml.impl;
 
-import com.intellij.util.xml.impl.DomInvocationHandler;
-
 import java.lang.reflect.Method;
 
 /**
@@ -19,6 +17,6 @@ public class GetFixedChildInvocation implements Invocation {
 
   public Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
     handler.checkInitialized();
-    return handler.getFixedChild(myMethod);
+    return handler.getFixedChild(myMethod).getProxy();
   }
 }

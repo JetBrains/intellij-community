@@ -20,4 +20,8 @@ public interface DomEventVisitor {
   void visitAttributeValueChangeEvent(final AttributeValueChangeEvent event);
 
   void visitContentsChangedEvent(final ContentsChangedEvent event);
+
+  void visitCollectionElementAddedEvent(final CollectionElementAddedEvent event);
+
+  void visitCollectionElementRemovedEvent(final CollectionElementRemovedEvent event);
 }

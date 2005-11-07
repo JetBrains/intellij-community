@@ -28,6 +28,12 @@ public abstract class DomEventListener implements DomEventVisitor{
   public void contentsChanged(ContentsChangedEvent event) {
   }
 
+  public void childAdded(CollectionElementAddedEvent event) {
+  }
+
+  public void childRemoved(CollectionElementRemovedEvent event) {
+  }
+
   public void eventOccured(DomEvent event) {
     event.accept(this);
   }
@@ -44,15 +50,23 @@ public abstract class DomEventListener implements DomEventVisitor{
     elementUndefined(event);
   }
 
-  public void visitElementChangedEvent(final ElementChangedEvent event) {
+  public final void visitElementChangedEvent(final ElementChangedEvent event) {
     elementChanged(event);
   }
 
-  public void visitAttributeValueChangeEvent(final AttributeValueChangeEvent event) {
+  public final void visitAttributeValueChangeEvent(final AttributeValueChangeEvent event) {
     attributeValueChanged(event);
   }
 
-  public void visitContentsChangedEvent(final ContentsChangedEvent event) {
+  public final void visitContentsChangedEvent(final ContentsChangedEvent event) {
     contentsChanged(event);
+  }
+
+  public final void visitCollectionElementAddedEvent(final CollectionElementAddedEvent event) {
+    childAdded(event);
+  }
+
+  public final void visitCollectionElementRemovedEvent(final CollectionElementRemovedEvent event) {
+    childRemoved(event);
   }
 }

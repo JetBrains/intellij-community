@@ -5,10 +5,8 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.xml.events.DomChangeEvent;
-import com.intellij.util.xml.impl.DomInvocationHandler;
-import com.intellij.util.xml.impl.Invocation;
 import com.intellij.util.xml.Converter;
+import com.intellij.util.xml.events.DomChangeEvent;
 
 /**
  * @author peter
@@ -22,20 +20,22 @@ public abstract class SetInvocation implements Invocation {
 
   public Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
     XmlTag tag = handler.ensureTagExists();
-    handler.getManager().setChanging(true);
+    final DomManagerImpl manager = handler.getManager();
+    final boolean changing = manager.isChanging();
+    manager.setChanging(true);
     try {
       final String oldValue = getValue(tag);
       if (args[0] == null) {
         clearValue(tag);
-        handler.getManager().fireEvent(createEvent(handler, oldValue, null));
+        manager.fireEvent(createEvent(handler, oldValue, null));
       } else {
         final String newValue = myConverter.toString(args[0], new ConvertContextImpl(handler));
         setValue(tag, newValue);
-        handler.getManager().fireEvent(createEvent(handler, oldValue, newValue));
+        manager.fireEvent(createEvent(handler, oldValue, newValue));
       }
     }
     finally {
-      handler.getManager().setChanging(false);
+      manager.setChanging(changing);
     }
     return null;
   }
