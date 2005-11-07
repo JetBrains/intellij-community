@@ -32,13 +32,12 @@ public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, O
                                                                                  PsiSubstitutor.EMPTY);
         MethodSignature signature = method.getSignature(substitutor);
         PsiMethod method1 = MethodSignatureUtil.findMethodBySuperSignature(inheritor, signature);
-        if (method1 == null
-            || method1.hasModifierProperty(PsiModifier.STATIC)
-            || (method.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)
-                && !method1.getManager().arePackagesTheSame(parentClass, inheritor))) {
+        if (method1 == null ||
+            method1.hasModifierProperty(PsiModifier.STATIC) ||
+            (method.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) && !method1.getManager().arePackagesTheSame(parentClass, inheritor))) {
           return true;
         }
-        return consumer.process(method1);
+        return consumer.process(method1) && p.isCheckDeep();
       }
     };
 
