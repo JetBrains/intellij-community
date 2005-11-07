@@ -22,7 +22,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
@@ -116,8 +115,7 @@ public class VfsUtil {
   public static void copyDirectory(Object requestor, VirtualFile fromDir, VirtualFile toDir, VirtualFileFilter filter)
     throws IOException {
     VirtualFile[] children = fromDir.getChildren();
-    for (int i = 0; i < children.length; i++) {
-      VirtualFile child = children[i];
+    for (VirtualFile child : children) {
       if (filter == null || filter.accept(child)) {
         if (!child.isDirectory()) {
           copyFile(requestor, child, toDir);
@@ -176,27 +174,25 @@ public class VfsUtil {
    */
   public static VirtualFile[] getCommonAncestors(VirtualFile[] files) {
     // Separate files by first component in the path.
-    HashMap map = new HashMap();
-    for (int i = 0; i < files.length; i++) {
-      VirtualFile file = files[i].isDirectory() ? files[i] : files[i].getParent();
+    HashMap<VirtualFile,Set<VirtualFile>> map = new HashMap<VirtualFile, Set<VirtualFile>>();
+    for (VirtualFile aFile : files) {
+      VirtualFile file = aFile.isDirectory() ? aFile : aFile.getParent();
       //assertTrue(file != null);
       VirtualFile[] path = getPathComponents(file);
-      Set filesSet;
+      Set<VirtualFile> filesSet;
       if (map.containsKey(path[0])) {
-        filesSet = (Set)map.get(path[0]);
+        filesSet = map.get(path[0]);
       }
       else {
-        map.put(path[0], filesSet = new HashSet());
+        map.put(path[0], filesSet = new HashSet<VirtualFile>());
       }
       filesSet.add(file);
     }
     // Find common ancestor for each set of files.
-    ArrayList ancestorsList = new ArrayList();
-    for (Iterator setIterator = map.values().iterator(); setIterator.hasNext();) {
-      Set filesSet = (Set)setIterator.next();
+    ArrayList<VirtualFile> ancestorsList = new ArrayList<VirtualFile>();
+    for (Set<VirtualFile> filesSet : map.values()) {
       VirtualFile ancestor = null;
-      for (Iterator fileIterator = filesSet.iterator(); fileIterator.hasNext();) {
-        VirtualFile file = (VirtualFile)fileIterator.next();
+      for (VirtualFile file : filesSet) {
         if (ancestor == null) {
           ancestor = file;
           continue;
@@ -207,7 +203,7 @@ public class VfsUtil {
       ancestorsList.add(ancestor);
       filesSet.clear();
     }
-    return (VirtualFile[])ancestorsList.toArray(new VirtualFile[ancestorsList.size()]);
+    return ancestorsList.toArray(new VirtualFile[ancestorsList.size()]);
   }
 
   /**
@@ -256,7 +252,7 @@ public class VfsUtil {
    * @return virtual files which represents paths from root to the passed file
    */
   private static VirtualFile[] getPathComponents(VirtualFile file) {
-    ArrayList componentsList = new ArrayList();
+    ArrayList<VirtualFile> componentsList = new ArrayList<VirtualFile>();
     while (file != null) {
       componentsList.add(file);
       file = file.getParent();
@@ -264,7 +260,7 @@ public class VfsUtil {
     int size = componentsList.size();
     VirtualFile components[] = new VirtualFile[size];
     for (int i = 0; i < size; i++) {
-      components[i] = (VirtualFile)componentsList.get(size - i - 1);
+      components[i] = componentsList.get(size - i - 1);
     }
     return components;
   }
@@ -411,8 +407,7 @@ public class VfsUtil {
     }
 
     path = StringUtil.replace(path, "%20", " ");
-    String vfUrl = protocol + "://" + path;
-    return vfUrl;
+    return protocol + "://" + path;
   }
 
   public static String urlToPath(String url) {
