@@ -64,7 +64,7 @@ public class OverridingMethodsSearch extends QueryFactory<PsiMethod, OverridingM
   }
 
   public static Query<PsiMethod> search(final PsiMethod method, final boolean checkDeep) {
-    return search(method, GlobalSearchScope.allScope(method.getProject()), checkDeep);
+    return search(method, method.getUseScope(), checkDeep);
   }
 
   public static Query<PsiMethod> search(final PsiMethod method) {

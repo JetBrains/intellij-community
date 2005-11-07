@@ -12,14 +12,12 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.Icons;
 import gnu.trove.THashMap;
 
 import javax.swing.*;
@@ -92,25 +90,22 @@ public class OverriddenMarkersPass extends TextEditorHighlightingPass {
   private void addLineMarkerInfo(PsiElement element, List<LineMarkerInfo> result) {
     if (element instanceof PsiIdentifier) {
       PsiManager manager = PsiManager.getInstance(myProject);
-      PsiSearchHelper helper = manager.getSearchHelper();
       if (element.getParent() instanceof PsiMethod) {
-        collectOverridingMethods(element, helper, manager, result);
+        collectOverridingMethods(element, manager, result);
       }
       else if (element.getParent() instanceof PsiClass && !(element.getParent() instanceof PsiTypeParameter)) {
-        collectInheritingClasses(element, helper, result);
+        collectInheritingClasses(element, result);
       }
     }
   }
 
-  private void collectInheritingClasses(PsiElement element, PsiSearchHelper helper, List<LineMarkerInfo> result) {
+  private void collectInheritingClasses(PsiElement element, List<LineMarkerInfo> result) {
     PsiClass aClass = (PsiClass) element.getParent();
     if (element.equals(aClass.getNameIdentifier())) {
       if (!aClass.hasModifierProperty(PsiModifier.FINAL)) {
         if ("java.lang.Object".equals(aClass.getQualifiedName())) return; // It's useless to have overriden markers for object.
 
-        PsiElementProcessor.FindElement<PsiClass> processor = new PsiElementProcessor.FindElement<PsiClass>();
-        helper.processInheritors(processor, aClass, GlobalSearchScope.allScope(myProject), false);
-        PsiClass inheritor = processor.getFoundElement();
+        final PsiClass inheritor = ClassInheritorsSearch.search(aClass, false).findFirst();
         if (inheritor != null) {
           if (!myClassToFirstDerivedMap.containsKey(aClass)){
             myClassToFirstDerivedMap.put(aClass, inheritor);
@@ -124,7 +119,7 @@ public class OverriddenMarkersPass extends TextEditorHighlightingPass {
     }
   }
 
-  private void collectOverridingMethods(PsiElement element, PsiSearchHelper helper, PsiManager manager, List<LineMarkerInfo> result) {
+  private void collectOverridingMethods(PsiElement element, PsiManager manager, List<LineMarkerInfo> result) {
     PsiMethod method = (PsiMethod)element.getParent();
     if (method.getNameIdentifier().equals(element)){
       if (!PsiUtil.canBeOverriden(method)) return;
@@ -133,9 +128,7 @@ public class OverriddenMarkersPass extends TextEditorHighlightingPass {
       if ("java.lang.Object".equals(parentClass.getQualifiedName())) return; // It's useless to have overriden markers for object.
 
       if (!myClassToFirstDerivedMap.containsKey(parentClass)){
-        PsiElementProcessor.FindElement<PsiClass> processor = new PsiElementProcessor.FindElement<PsiClass>();
-        helper.processInheritors(processor, parentClass, GlobalSearchScope.allScope(myProject), false);
-        PsiClass derived = processor.getFoundElement();
+        final PsiClass derived = ClassInheritorsSearch.search(parentClass, false).findFirst();
         myClassToFirstDerivedMap.put(parentClass, derived);
       }
 
@@ -155,9 +148,7 @@ public class OverriddenMarkersPass extends TextEditorHighlightingPass {
       boolean found = method1 != null;
 
       if (!found){
-        PsiElementProcessor.FindElement<PsiMethod> processor = new PsiElementProcessor.FindElement<PsiMethod>();
-        helper.processOverridingMethods(processor, method, GlobalSearchScope.allScope(myProject), true);
-        found = processor.isFound();
+        found = OverridingMethodsSearch.search(method, true).findFirst() != null;
       }
 
       if (found) {

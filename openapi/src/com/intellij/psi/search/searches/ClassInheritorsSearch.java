@@ -101,7 +101,7 @@ public class ClassInheritorsSearch extends QueryFactory<PsiClass, ClassInheritor
   }
 
   public static Query<PsiClass> search(final PsiClass aClass, final boolean checkDeep) {
-    return search(aClass, GlobalSearchScope.allScope(aClass.getProject()), checkDeep);
+    return search(aClass, aClass.getUseScope(), checkDeep);
   }
 
   public static Query<PsiClass> search(final PsiClass aClass) {
