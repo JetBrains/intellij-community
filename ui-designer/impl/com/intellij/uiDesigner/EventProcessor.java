@@ -27,4 +27,8 @@ public abstract class EventProcessor {
    * @return true if processor cancelled its operation; false otherwise
    */ 
   protected abstract boolean cancelOperation();
+
+  public boolean isDragActive() {
+    return false;
+  }
 }

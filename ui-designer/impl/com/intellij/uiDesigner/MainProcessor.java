@@ -51,6 +51,10 @@ public final class MainProcessor extends EventProcessor{
   }
 
   protected void processMouseEvent(final MouseEvent e){
+    if (myCurrentProcessor != null && myCurrentProcessor.isDragActive()) {
+      return;
+    }
+
     // Here is a good place to handle right and wheel mouse clicking. All mouse
     // motion events should go further
     final int id = e.getID();
@@ -128,10 +132,15 @@ public final class MainProcessor extends EventProcessor{
       myCurrentProcessor.processMouseEvent(e);
     }
 
-    if(myCurrentProcessor!=null && myCurrentProcessor.getCursor()!=null){
-      cursor=myCurrentProcessor.getCursor();
+    if (myCurrentProcessor != null && myCurrentProcessor.isDragActive()) {
+      myEditor.getLayeredPane().setCursor(null);
     }
-    myEditor.getLayeredPane().setCursor(cursor);
+    else {
+      if(myCurrentProcessor!=null && myCurrentProcessor.getCursor()!=null){
+        cursor=myCurrentProcessor.getCursor();
+      }
+      myEditor.getLayeredPane().setCursor(cursor);
+    }
   }
 
   private void updateDragger(final MouseEvent e){

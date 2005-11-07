@@ -5,6 +5,7 @@ import com.intellij.uiDesigner.core.GridConstraints;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.dnd.DnDConstants;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -232,8 +233,8 @@ public class GridInsertProcessor {
     }
   }
 
-  public Cursor processMouseMoveEvent(int x, int y, final boolean copyOnDrop, int componentCount,
-                                      final int dragColumnDelta) {
+  public int processDragEvent(int x, int y, final boolean copyOnDrop, int componentCount,
+                              final int dragColumnDelta) {
     final GridInsertLocation insertLocation = getGridInsertLocation(x, y, dragColumnDelta);
     if (insertLocation.getContainer() != null) {
       if (isDropInsertAllowed(insertLocation, componentCount)) {
@@ -242,15 +243,26 @@ public class GridInsertProcessor {
           myEditor.getActiveDecorationLayer().add(myInsertFeedbackPainter);
         }
         myEditor.getActiveDecorationLayer().repaint();
-        return copyOnDrop ? FormEditingUtil.getCopyDropCursor() : FormEditingUtil.getMoveDropCursor();
+        return copyOnDrop ? DnDConstants.ACTION_COPY : DnDConstants.ACTION_MOVE;
       }
     }
     removeFeedbackPainter();
     if (FormEditingUtil.canDrop(myEditor, x, y, componentCount)) {
-      return copyOnDrop ? FormEditingUtil.getCopyDropCursor() : FormEditingUtil.getMoveDropCursor();
+      return copyOnDrop ? DnDConstants.ACTION_COPY : DnDConstants.ACTION_MOVE;
     }
-    return FormEditingUtil.getMoveNoDropCursor();
+    return DnDConstants.ACTION_NONE;
   }
+
+  public Cursor processMouseMoveEvent(final int x, final int y, final boolean copyOnDrop,
+                                      final int componentCount, final int dragColumnDelta) {
+    int operation = processDragEvent(x, y, copyOnDrop, componentCount, dragColumnDelta);
+    switch(operation) {
+      case DnDConstants.ACTION_COPY: return FormEditingUtil.getCopyDropCursor();
+      case DnDConstants.ACTION_MOVE: return FormEditingUtil.getMoveDropCursor();
+      default: return FormEditingUtil.getMoveNoDropCursor();
+    }
+  }
+
 
   public boolean isDropInsertAllowed(final GridInsertLocation insertLocation, final int componentCount) {
     if (insertLocation == null || insertLocation.getContainer() == null) {
