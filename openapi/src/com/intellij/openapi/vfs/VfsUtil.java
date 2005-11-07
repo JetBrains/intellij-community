@@ -528,8 +528,7 @@ public class VfsUtil {
     if (commonAncestor != null) {
       StringBuffer buffer = new StringBuffer();
       while (src.getParent() != commonAncestor) {
-        buffer.append("..");
-        buffer.append(separatorChar);
+        buffer.append("..").append(separatorChar);
         src = src.getParent();
       }
       buffer.append(getRelativePath(dst, commonAncestor, separatorChar));
