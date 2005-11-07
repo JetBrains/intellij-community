@@ -82,7 +82,9 @@ public class PropertiesReferenceManager implements ProjectComponent {
           if (containingFiles != null) containingFiles.remove(virtualFile);
         }
       }
-      myChangedFiles.add(virtualFile);
+      if (virtualFile != null) {
+        myChangedFiles.add(virtualFile);
+      }
     }
   }
 
