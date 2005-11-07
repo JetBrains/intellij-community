@@ -3,6 +3,8 @@
  */
 package com.intellij.util.xml;
 
+import com.intellij.psi.PsiClass;
+
 /**
  * @author peter
  */
@@ -51,4 +53,29 @@ public interface Converter<T> {
     }
   };
 
+  Converter<PsiClassReference> PSI_CLASS_REFERENCE_CONVERTER = new Converter<PsiClassReference>() {
+    public PsiClassReference fromString(final String s, final ConvertContext context) throws ConvertFormatException {
+      return new PsiClassReference() {
+        public final String getClassName() {
+          return s;
+        }
+
+        public final boolean hasClass() {
+          return getPsiClass() != null;
+        }
+
+        public final PsiClass getPsiClass() {
+          return context.findClass(getClassName());
+        }
+
+        public final String getValue() {
+          return s;
+        }
+      };
+    }
+
+    public String toString(final PsiClassReference t, final ConvertContext context) {
+      return t.getClassName();
+    }
+  };
 }

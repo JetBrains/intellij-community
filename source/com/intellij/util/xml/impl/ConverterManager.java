@@ -10,10 +10,7 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.intellij.util.xml.Converter;
-import com.intellij.util.xml.Convert;
-import com.intellij.util.xml.NamedEnum;
-import com.intellij.util.xml.EnumConverter;
+import com.intellij.util.xml.*;
 
 /**
  * @author peter
@@ -28,6 +25,7 @@ public class ConverterManager {
     myConvertersByClass.put(boolean.class, Converter.BOOLEAN_CONVERTER);
     myConvertersByClass.put(Boolean.class, Converter.BOOLEAN_CONVERTER);
     myConvertersByClass.put(String.class, Converter.EMPTY_CONVERTER);
+    myConvertersByClass.put(PsiClassReference.class, Converter.PSI_CLASS_REFERENCE_CONVERTER);
   }
 
   @NotNull
