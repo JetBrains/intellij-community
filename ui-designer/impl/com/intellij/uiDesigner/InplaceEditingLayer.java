@@ -199,6 +199,12 @@ public final class InplaceEditingLayer extends JComponent{
     repaint();
   }
 
+  public void dispatchEditorEvent(KeyEvent event) {
+    if (myInplaceEditorComponent != null) {
+      myInplaceEditorComponent.dispatchEvent(event);
+    }
+  }
+
   private void adjustEditorComponentSize(){
     final Dimension preferredSize = myInplaceEditorComponent.getPreferredSize();
     int width = Math.max(preferredSize.width, myPreferredBounds.width);

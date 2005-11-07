@@ -28,7 +28,6 @@ public final class MainProcessor extends EventProcessor{
   public MainProcessor(@NotNull final GuiEditor editor){
     //noinspection ConstantConditions
     if (editor == null){
-      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("editor cannot be null");
     }
     myEditor = editor;
@@ -44,15 +43,9 @@ public final class MainProcessor extends EventProcessor{
       final ArrayList<RadComponent> selection = FormEditingUtil.getAllSelectedComponents(myEditor);
       if (selection.size() > 0) {
         final RadComponent component = selection.get(0);
-        myEditor.getInplaceEditingLayer().startInplaceEditing(component,
-                                                              component.getDefaultInplaceProperty(),
-                                                              null, false);
-        try {
-          new Robot().keyPress(e.getKeyCode());
-        }
-        catch (AWTException e1) {
-          LOG.error(e1);
-        }
+        final InplaceEditingLayer inplaceLayer = myEditor.getInplaceEditingLayer();
+        inplaceLayer.startInplaceEditing(component, component.getDefaultInplaceProperty(), null, false);
+        inplaceLayer.dispatchEditorEvent(e);
       }
     }
   }
