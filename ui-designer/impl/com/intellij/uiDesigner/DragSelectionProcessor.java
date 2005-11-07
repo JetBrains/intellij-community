@@ -3,19 +3,16 @@ package com.intellij.uiDesigner;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.util.ui.UIUtil;
+import gnu.trove.TIntArrayList;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-
-import org.jetbrains.annotations.NotNull;
-import gnu.trove.TIntArrayList;
 
 /**
  * @author Anton Katilin
@@ -30,7 +27,6 @@ public final class DragSelectionProcessor extends EventProcessor{
   private static final int TREMOR = 3;
 
   private final GuiEditor myEditor;
-  private MyPreviewer myPreviewer;
   private Point myLastPoint;
 
   private Point myPressPoint;
@@ -43,10 +39,6 @@ public final class DragSelectionProcessor extends EventProcessor{
   private Rectangle[] myOriginalBounds;
   private RadContainer[] myOriginalParents;
 
-  /*
-   * Required to undo drop
-   */
-  private DropInfo myDropInfo;
   private boolean myDragStarted;
   private int myDragRelativeColumn;
 
@@ -61,8 +53,6 @@ public final class DragSelectionProcessor extends EventProcessor{
   }
 
   private void processStartDrag(final MouseEvent e) {
-    myPreviewer = new MyPreviewer();
-
     // Store selected components
     mySelection = FormEditingUtil.getSelectedComponents(myEditor);
     // sort selection in correct grid order
@@ -159,17 +149,15 @@ public final class DragSelectionProcessor extends EventProcessor{
    * @param copyOnDrop
    * @return true if the selected components were successfully dropped
    */
-  private boolean dropSelection(@NotNull final Point point, boolean mouseReleased, final boolean copyOnDrop) {
+  private boolean dropSelection(@NotNull final Point point, final boolean copyOnDrop) {
     //noinspection ConstantConditions
     LOG.assertTrue(point!=null);
 
     GridInsertProcessor.GridInsertLocation location = null;
-    if (mouseReleased) {
-      myGridInsertProcessor.removeFeedbackPainter();
-      location = myGridInsertProcessor.getGridInsertLocation(point.x, point.y, myDragRelativeColumn);
-      if (!myGridInsertProcessor.isDropInsertAllowed(location, mySelection.size())) {
-        location = null;
-      }
+    myGridInsertProcessor.removeFeedbackPainter();
+    location = myGridInsertProcessor.getGridInsertLocation(point.x, point.y, myDragRelativeColumn);
+    if (!myGridInsertProcessor.isDropInsertAllowed(location, mySelection.size())) {
+      location = null;
     }
 
     if (!FormEditingUtil.canDrop(myEditor, point.x, point.y, mySelection.size()) &&
@@ -197,10 +185,10 @@ public final class DragSelectionProcessor extends EventProcessor{
 
     final RadComponent[] components = mySelection.toArray(new RadComponent[mySelection.size()]);
     if (location != null && location.getMode() != GridInsertProcessor.GridInsertMode.None) {
-      myDropInfo = myGridInsertProcessor.processGridInsertOnDrop(location, components, myOriginalConstraints);
+      myGridInsertProcessor.processGridInsertOnDrop(location, components, myOriginalConstraints);
     }
     else {
-      myDropInfo = FormEditingUtil.drop(
+      FormEditingUtil.drop(
         myEditor,
         point.x,
         point.y,
@@ -218,37 +206,18 @@ public final class DragSelectionProcessor extends EventProcessor{
       }
     }
 
-    if (mouseReleased) {
-      for(int i=0; i<myOriginalConstraints.length; i++) {
-        if (myOriginalParents [i].isGrid()) {
-          FormEditingUtil.deleteEmptyGridCells(myOriginalParents [i], myOriginalConstraints [i]);
-        }
+    for(int i=0; i<myOriginalConstraints.length; i++) {
+      if (myOriginalParents [i].isGrid()) {
+        FormEditingUtil.deleteEmptyGridCells(myOriginalParents [i], myOriginalConstraints [i]);
       }
     }
 
     return true;
   }
 
-  private void cancelDrop(){
-    // Remove dropped preview
-    for (final RadComponent component : mySelection) {
-      final RadContainer parent = component.getParent();
-      LOG.assertTrue(parent != null);
-      parent.removeComponent(component);
-    }
-
-    if (myDropInfo != null && myDropInfo.myTopmostContainer!=null) {
-      myDropInfo.myTopmostContainer.setSize(myDropInfo.myTopmostContainerSize);
-    }
-    myGridInsertProcessor.removeFeedbackPainter();
-  }
-
   private void processMouseReleased(final boolean copyOnDrop){
-    // Cancel all pending requests for preview.
-    myPreviewer.dispose();
-
     // Try to drop selection at the point of mouse event.
-    if(dropSelection(myLastPoint, true, copyOnDrop)){
+    if(dropSelection(myLastPoint, copyOnDrop)){
       myEditor.refreshAndSave(true);
     } else {
       cancelDrag();
@@ -261,8 +230,6 @@ public final class DragSelectionProcessor extends EventProcessor{
     if (!myDragStarted) {
       return true;
     }
-    // Cancel all pending requests for preview.
-    myPreviewer.dispose();
     // Try to drop selection at the point of mouse event.
     cancelDrag();
     myGridInsertProcessor.removeFeedbackPainter();
@@ -319,14 +286,6 @@ public final class DragSelectionProcessor extends EventProcessor{
   }
 
   private void processMouseDragged(final MouseEvent e){
-    // Restart previewer.
-    /*
-    myPreviewer.processMouseDragged(e);
-    if(myPreviewer.isPreview()){
-      return;
-    }
-    */
-
     // Move components in the drag layer.
     final int dx = e.getX() - myLastPoint.x;
     final int dy = e.getY() - myLastPoint.y;
@@ -339,98 +298,5 @@ public final class DragSelectionProcessor extends EventProcessor{
 
     setCursor(myGridInsertProcessor.processMouseMoveEvent(e.getX(), e.getY(), e.isControlDown(),
                                                           mySelection.size(), myDragRelativeColumn));
-  }
-
-  /**
-   * This class gets notifications from "gusture" timer. It's responsible for
-   * drop preview.
-   */
-  private final class MyPreviewer implements ActionListener{
-    private static final int DROP_DELAY = 500;
-    /**
-     * This timer is responsible for drop preview. The timer is restarted each time user
-     * is dragging the component. When user stop dragging and drag isn't completed then
-     * the timer fires event and user gets drop preview.
-     */
-    private final Timer myTimer;
-    private boolean myPreview;
-    private Point myDropPoint;
-    /**
-     * These are bounds of selection before dropping. This field
-     * is required to bring the dropped selection back to the drad layer
-     * if user is contining mouse drag.
-     */
-    private Rectangle[] myOriginalBounds;
-
-    public MyPreviewer(){
-      myTimer = new Timer(DROP_DELAY,this);
-      myTimer.setRepeats(false);
-      //myTimer.start();
-    }
-
-    public void actionPerformed(final ActionEvent e){
-      LOG.assertTrue(!myPreview);
-
-      // Store current bounds of the selection
-      myOriginalBounds=new Rectangle[mySelection.size()];
-      for(int i=0;i<mySelection.size();i++){
-        final RadComponent component=mySelection.get(i);
-        myOriginalBounds[i]=component.getBounds();
-      }
-
-      // Try to drop selection
-
-      myPreview = dropSelection(myLastPoint, false, false);
-      myDropPoint = myPreview ? myLastPoint : null;
-      myEditor.refresh();
-    }
-
-    public boolean isPreview(){
-      return myPreview;
-    }
-
-    /**
-     * This method should be invoked if some mouse events come in.
-     */
-    public void processMouseDragged(final MouseEvent e){
-      if(!myPreview){
-        myTimer.restart();
-        return;
-      }
-
-      if(
-        (Math.abs(e.getX()-myDropPoint.getX()) > TREMOR || Math.abs(e.getY()-myDropPoint.getY()) > TREMOR)
-      ){
-        cancelPreview();
-        myEditor.refresh();
-      }
-    }
-
-    /**
-     * Disposes the previewer. The method remove preview (if any).
-     */
-    public void dispose(){
-      myTimer.stop();
-      cancelPreview();
-    }
-
-    /**
-     * Cancels preview: removes dropped selection form container and bring it back to
-     * the drag layer.
-     */
-    private void cancelPreview(){
-      if(myPreview){
-        cancelDrop();
-
-        // Bring selection back to the dragged layer
-        for (int i = 0; i < mySelection.size(); i++) {
-          final RadComponent component = mySelection.get(i);
-          component.setBounds(myOriginalBounds[i]);
-          myEditor.getDragLayer().add(component.getDelegee());
-        }
-
-        myPreview=false;
-      }
-    }
   }
 }
