@@ -39,7 +39,7 @@ public class SimpleTreeBuilder extends AbstractTreeBuilder {
     }
 
     if (EventQueue.isDispatchThread()) {
-      updateFromRoot();
+      SimpleTreeBuilder.super.updateFromRoot();
     } else {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
