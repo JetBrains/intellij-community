@@ -132,7 +132,7 @@ public final class EditorHistoryManager implements ProjectComponent, JDOMExterna
     }
   }
 
-  private void updateHistoryEntry(final VirtualFile file, final boolean changeOrder){
+  private void updateHistoryEntry(final VirtualFile file, final boolean changeEntryOrderOnly){
     if (file == null){
       return;
     }
@@ -154,24 +154,24 @@ public final class EditorHistoryManager implements ProjectComponent, JDOMExterna
       return;
     }
 
-    boolean changed=false;
-    final FileEditorProvider [] providers = editorsWithProviders.getSecond();
-    //LOG.assertTrue(editors.length > 0);
-    for (int i = editors.length - 1; i >= 0; i--) {
-      final FileEditor           editor = editors   [i];
-      final FileEditorProvider provider = providers [i];
-      if (!editor.isValid()) {
-        // this can happen for example if file extension was changed
-        // and this method was called during correponding myEditor close up
-        continue;
-      }
+    if (!changeEntryOrderOnly) { // update entry state
+      final FileEditorProvider [] providers = editorsWithProviders.getSecond();
+      //LOG.assertTrue(editors.length > 0);
+      for (int i = editors.length - 1; i >= 0; i--) {
+        final FileEditor           editor = editors   [i];
+        final FileEditorProvider provider = providers [i];
+        if (!editor.isValid()) {
+          // this can happen for example if file extension was changed
+          // and this method was called during correponding myEditor close up
+          continue;
+        }
 
-      final FileEditorState oldState = entry.getState(provider);
-      final FileEditorState newState = editor.getState(FileEditorStateLevel.FULL);
-      LOG.assertTrue(newState != null);
-      if (!newState.equals(oldState)) {
-        changed = true;
-        entry.putState(provider, newState);
+        final FileEditorState oldState = entry.getState(provider);
+        final FileEditorState newState = editor.getState(FileEditorStateLevel.FULL);
+        LOG.assertTrue(newState != null);
+        if (!newState.equals(oldState)) {
+          entry.putState(provider, newState);
+        }
       }
     }
     final Pair <FileEditor, FileEditorProvider> selectedEditorWithProvider = editorManager.getSelectedEditorWithProvider(file);
@@ -180,7 +180,7 @@ public final class EditorHistoryManager implements ProjectComponent, JDOMExterna
       entry.mySelectedProvider = selectedEditorWithProvider.getSecond ();
       LOG.assertTrue(entry.mySelectedProvider != null);
 
-      if(changed || changeOrder){
+      if(changeEntryOrderOnly){
         myEntriesList.remove(entry);
         myEntriesList.add(entry);
       }
@@ -297,6 +297,7 @@ public final class EditorHistoryManager implements ProjectComponent, JDOMExterna
     }
 
     public void selectionChanged(final FileEditorManagerEvent event){
+      updateHistoryEntry(event.getOldFile(), false);
       updateHistoryEntry(event.getNewFile(), true);
     }
   }
