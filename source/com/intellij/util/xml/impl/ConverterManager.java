@@ -51,7 +51,7 @@ public class ConverterManager {
   @Nullable
   private Converter getDefaultConverter(final Class aClass) {
     Converter converter = myConvertersByClass.get(aClass);
-    if (converter == null && Enum.class.isAssignableFrom(aClass) && NamedEnum.class.isAssignableFrom(aClass)) {
+    if (converter == null && Enum.class.isAssignableFrom(aClass)) {
       converter = new EnumConverter(aClass);
       myConvertersByClass.put(aClass, converter);
     }

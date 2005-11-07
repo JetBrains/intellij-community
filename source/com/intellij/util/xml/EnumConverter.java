@@ -9,14 +9,20 @@ import java.util.Map;
 /**
  * @author peter
  */
-public class EnumConverter<T extends Enum&NamedEnum> implements Converter<T>{
+public class EnumConverter<T extends Enum> implements Converter<T>{
+  private final boolean myIsNamedEnum;
   private final Class<T> myClass;
   private final Map<String,T> myCachedElements = new HashMap<String, T>();
 
   public EnumConverter(final Class<T> aClass) {
+    myIsNamedEnum = NamedEnum.class.isAssignableFrom(aClass);
     myClass = aClass;
     for (T anEnum : aClass.getEnumConstants()) {
-      myCachedElements.put(anEnum.getValue(), anEnum);
+      if (myIsNamedEnum) {
+        myCachedElements.put(((NamedEnum)anEnum).getValue(), anEnum);
+      } else {
+        myCachedElements.put(anEnum.name(), anEnum);
+      }
     }
   }
 
@@ -29,6 +35,10 @@ public class EnumConverter<T extends Enum&NamedEnum> implements Converter<T>{
   }
 
   public String toString(final T t, final ConvertContext context) {
-    return t.getValue();
+    if (myIsNamedEnum) {
+      return ((NamedEnum)t).getValue();
+    } else {
+      return t.name();
+    }
   }
 }
