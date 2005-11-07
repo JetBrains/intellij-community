@@ -5,6 +5,7 @@ package com.intellij.util.xml;
 
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.impl.DomFileElementImpl;
+import com.intellij.util.xml.impl.MethodsMap;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -25,4 +26,5 @@ public interface DomElement {
 
   boolean isValid();
 
+  MethodsMap getMethodsMap();
 }

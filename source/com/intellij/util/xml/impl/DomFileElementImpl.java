@@ -7,8 +7,7 @@ import com.intellij.psi.PsiLock;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomFileElement;
+import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -96,5 +95,9 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
 
   public boolean isValid() {
     return true;
+  }
+
+  public MethodsMap getMethodsMap() {
+    return null;
   }
 }

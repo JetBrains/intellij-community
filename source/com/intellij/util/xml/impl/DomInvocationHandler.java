@@ -272,6 +272,11 @@ public abstract class DomInvocationHandler<T extends DomElement> implements Invo
     return StringUtil.getShortName(myClass) + " @" + hashCode();
   }
 
+  public MethodsMap getMethodsMap() {
+    myMethodsMap.buildMethodMaps(getFile());
+    return myMethodsMap;
+  }
+
   final void checkInitialized() {
     synchronized (PsiLock.LOCK) {
       if (myInitialized || myInitializing) return;

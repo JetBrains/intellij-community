@@ -40,7 +40,7 @@ public class MethodsMap {
     return integer == null ? 0 : (integer);
   }
 
-  Set<Map.Entry<Method, String>> getCollectionChildrenEntries() {
+  public Set<Map.Entry<Method, String>> getCollectionChildrenEntries() {
     return myCollectionChildrenGetterMethods.entrySet();
   }
 
@@ -48,7 +48,7 @@ public class MethodsMap {
     return myCollectionChildrenClasses.get(tagName);
   }
 
-  Set<Map.Entry<Method, Pair<String, Integer>>> getFixedChildrenEntries() {
+  public Set<Map.Entry<Method, Pair<String, Integer>>> getFixedChildrenEntries() {
     return myFixedChildrenMethods.entrySet();
   }
 
@@ -122,7 +122,7 @@ public class MethodsMap {
     return DomManagerImpl._getNameStrategy(file);
   }
 
-  private synchronized void buildMethodMaps(final XmlFile file) {
+  public synchronized void buildMethodMaps(final XmlFile file) {
     if (myFixedChildrenMethods != null) return;
     myFixedChildrenMethods = new HashMap<Method, Pair<String, Integer>>();
     myCollectionChildrenGetterMethods = new HashMap<Method, String>();
