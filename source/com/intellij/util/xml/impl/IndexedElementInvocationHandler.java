@@ -28,10 +28,10 @@ public class IndexedElementInvocationHandler<T extends DomElement> extends DomIn
     return myIndex;
   }
 
-  protected void setXmlTag(final XmlTag tag) throws IncorrectOperationException {
+  protected XmlTag setXmlTag(final XmlTag tag) throws IncorrectOperationException {
     final DomInvocationHandler parent = getParentHandler();
     parent.createFixedChildrenTags(getTagName(), myIndex);
-    parent.getXmlTag().add(tag);
+    return (XmlTag)parent.getXmlTag().add(tag);
   }
 
   public void undefine() {
@@ -47,7 +47,7 @@ public class IndexedElementInvocationHandler<T extends DomElement> extends DomIn
       XmlTag tag = getXmlTag();
       assert tag != null;
       if (subTags.length == myIndex + 1) {
-        myXmlTag = null;
+        cacheDomElement(null);
         tag.delete();
       } else {
         cacheDomElement((XmlTag) tag.replace(createEmptyTag()));
@@ -59,10 +59,6 @@ public class IndexedElementInvocationHandler<T extends DomElement> extends DomIn
       getManager().setChanging(changing);
     }
     fireUndefinedEvent();
-  }
-
-  protected XmlTag restoreTag(final String tagName) {
-    return findSubTag(getParent().getXmlTag(), tagName, myIndex);
   }
 
 }

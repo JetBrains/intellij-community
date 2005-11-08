@@ -309,12 +309,6 @@ public class DomManagerImpl extends DomManager implements ProjectComponent, XmlC
     final XmlTag tag = change.getTag();
     if (isTagValueChange(child)) {
       fireTagValueChanged(tag);
-    } else if (child instanceof XmlTag) {
-      XmlTag childTag = (XmlTag)child;
-      final DomInvocationHandler element = getCachedElement(tag);
-      if (element != null) {
-        //element.processChildTagAdded(childTag);
-      }
     }
   }
 
@@ -334,12 +328,6 @@ public class DomManagerImpl extends DomManager implements ProjectComponent, XmlC
     final XmlTagChild child = change.getChild();
     if (isTagValueChange(child, tag)) {
       fireTagValueChanged(tag);
-    } else if (child instanceof XmlTag) {
-      XmlTag childTag = (XmlTag)child;
-      final DomInvocationHandler element = getCachedElement(tag);
-      if (element != null) {
-        //element.processChildTagRemoved(childTag);
-      }
     }
   }
 

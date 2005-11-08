@@ -5,8 +5,8 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlDocument;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.xml.impl.DomInvocationHandler;
 import com.intellij.util.xml.DomElement;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,11 +33,8 @@ public class DomRootInvocationHandler<T extends DomElement> extends DomInvocatio
     return isValid() ? myParent : null;
   }
 
-  protected void setXmlTag(final XmlTag tag) throws IncorrectOperationException {
-    getFile().getDocument().replace(((XmlFile)tag.getContainingFile()).getDocument());
+  protected XmlTag setXmlTag(final XmlTag tag) throws IncorrectOperationException {
+    return ((XmlDocument)getFile().getDocument().replace(((XmlFile)tag.getContainingFile()).getDocument())).getRootTag();
   }
 
-  protected XmlTag restoreTag(final String tagName) {
-    return ((DomFileElementImpl)getParent()).getRootTag();
-  }
 }

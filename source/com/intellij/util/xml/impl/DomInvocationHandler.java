@@ -41,7 +41,7 @@ public abstract class DomInvocationHandler<T extends DomElement> implements Invo
   private final DomInvocationHandler myParent;
   private final DomManagerImpl myManager;
   @NotNull private final String myTagName;
-  protected XmlTag myXmlTag;
+  private XmlTag myXmlTag;
 
   private XmlFile myFile;
   private DomElement myProxy;
@@ -81,7 +81,7 @@ public abstract class DomInvocationHandler<T extends DomElement> implements Invo
   public DomInvocationHandler(final Class<T> aClass,
                               final XmlTag tag,
                               final DomInvocationHandler parent,
-                              @NotNull final String tagName,
+                              final String tagName,
                               DomManagerImpl manager) {
     myClass = aClass;
     myXmlTag = tag;
@@ -108,12 +108,11 @@ public abstract class DomInvocationHandler<T extends DomElement> implements Invo
   }
 
   public final XmlTag ensureTagExists() {
-    final XmlTag tag = getXmlTag();
-    if (tag != null) return tag;
+    if (myXmlTag != null) return myXmlTag;
 
     final boolean changing = myManager.setChanging(true);
     try {
-      setXmlTag(createEmptyTag());
+      cacheDomElement(setXmlTag(createEmptyTag()));
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
@@ -122,7 +121,7 @@ public abstract class DomInvocationHandler<T extends DomElement> implements Invo
       myManager.setChanging(changing);
       myManager.fireEvent(new ElementDefinedEvent(this));
     }
-    return getXmlTag();
+    return myXmlTag;
   }
 
   protected final XmlTag createEmptyTag() throws IncorrectOperationException {
@@ -166,7 +165,7 @@ public abstract class DomInvocationHandler<T extends DomElement> implements Invo
     myManager.fireEvent(new ElementDefinedEvent(getProxy()));
   }
 
-  protected abstract void setXmlTag(final XmlTag tag) throws IncorrectOperationException;
+  protected abstract XmlTag setXmlTag(final XmlTag tag) throws IncorrectOperationException;
 
   protected final String getTagName() {
     return myTagName;
@@ -333,16 +332,8 @@ public abstract class DomInvocationHandler<T extends DomElement> implements Invo
     return subTags.length <= index ? null : subTags[index];
   }
 
-  protected abstract XmlTag restoreTag(String tagName);
-
   @Nullable
   public final XmlTag getXmlTag() {
-    if (myXmlTag == null) {
-      cacheDomElement(restoreTag(myTagName));
-    }
-    if (myXmlTag != null) {
-      assert myXmlTag.isValid() : "Invalid tag: " + myXmlTag.getText();
-    }
     return myXmlTag;
   }
 
@@ -532,7 +523,7 @@ public abstract class DomInvocationHandler<T extends DomElement> implements Invo
       }
       for (int i = 0; i < changedElementsCount; i++) {
         final IndexedElementInvocationHandler child = fixedChildren[i];
-        if (child.myXmlTag != subTags[i]) {
+        if (child.getXmlTag() != subTags[i]) {
           events.add(new ElementChangedEvent(child.getProxy()));
         }
       }
@@ -540,7 +531,7 @@ public abstract class DomInvocationHandler<T extends DomElement> implements Invo
       for (int i = 0; i < newFixedCount; i++) {
         final XmlTag tag = subTags[i];
         final IndexedElementInvocationHandler fixedChild = fixedChildren[i];
-        if (fixedChild.myXmlTag != tag) {
+        if (fixedChild.getXmlTag() != tag) {
           DomManagerImpl.invalidateSubtree(tag, false);
           fixedChild.cacheDomElement(tag);
         }
