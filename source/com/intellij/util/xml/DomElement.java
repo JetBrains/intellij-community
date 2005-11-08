@@ -22,7 +22,7 @@ public interface DomElement {
 
   XmlTag ensureTagExists();
 
-  void undefine();
+  void undefine() throws IllegalAccessException, InstantiationException;
 
   boolean isValid();
 

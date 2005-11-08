@@ -3,14 +3,16 @@
  */
 package com.intellij.util.xml.impl;
 
+import com.intellij.util.xml.Convert;
+import com.intellij.util.xml.Converter;
+import com.intellij.util.xml.EnumConverter;
+import com.intellij.util.xml.PsiClassReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
-
-import com.intellij.util.xml.*;
 
 /**
  * @author peter
@@ -59,7 +61,7 @@ public class ConverterManager {
   }
 
   @NotNull
-  private Converter getConverter(final Class converterClass) throws InstantiationException, IllegalAccessException {
+  final Converter getConverter(final Class converterClass) throws InstantiationException, IllegalAccessException {
     Converter converter = getDefaultConverter(converterClass);
     if (converter == null) {
       converter = (Converter) converterClass.newInstance();

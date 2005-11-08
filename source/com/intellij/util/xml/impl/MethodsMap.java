@@ -26,7 +26,7 @@ import java.util.*;
 public class MethodsMap {
   private Class<? extends DomElement> myClass;
   private Map<Method, Pair<String, Integer>> myFixedChildrenMethods;
-  private Map<String, Integer> myFixedChildrenCounts = new HashMap<String, Integer>();
+  private Map<String, Integer> myFixedChildrenCounts;
   private Map<Method, String> myCollectionChildrenGetterMethods;
   private Map<Method, String> myCollectionChildrenAdditionMethods;
   private Map<String, Class<? extends DomElement>> myCollectionChildrenClasses;
@@ -62,7 +62,7 @@ public class MethodsMap {
   }
 
   @Nullable
-  private static Class<? extends DomElement> extractElementType(Type returnType) {
+  private static Class<? extends DomElement> extractCollectionElementType(Type returnType) {
     if (returnType instanceof ParameterizedType) {
       ParameterizedType parameterizedType = (ParameterizedType)returnType;
       final Type rawType = parameterizedType.getRawType();
@@ -124,9 +124,11 @@ public class MethodsMap {
 
   public synchronized void buildMethodMaps(final XmlFile file) {
     if (myFixedChildrenMethods != null) return;
+
     myFixedChildrenMethods = new HashMap<Method, Pair<String, Integer>>();
-    myCollectionChildrenGetterMethods = new HashMap<Method, String>();
     myFixedChildrenCounts = new HashMap<String, Integer>();
+
+    myCollectionChildrenGetterMethods = new HashMap<Method, String>();
     myCollectionChildrenAdditionMethods = new HashMap<Method, String>();
     myCollectionChildrenClasses = new HashMap<String, Class<? extends DomElement>>();
 
@@ -188,7 +190,7 @@ public class MethodsMap {
         }
       }
     }
-    final Class<? extends DomElement> aClass = extractElementType(method.getGenericReturnType());
+    final Class<? extends DomElement> aClass = extractCollectionElementType(method.getGenericReturnType());
     if (aClass != null) {
       final String qname = getSubTagNameForCollection(method, file);
       if (qname != null) {

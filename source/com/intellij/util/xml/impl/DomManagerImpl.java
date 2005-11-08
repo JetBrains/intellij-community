@@ -30,6 +30,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.lang.reflect.Type;
+import java.lang.reflect.ParameterizedType;
 
 /**
  * @author peter
@@ -42,7 +44,8 @@ public class DomManagerImpl extends DomManager implements ProjectComponent, XmlC
   private final List<DomEventListener> myListeners = new ArrayList<DomEventListener>();
   private final ConverterManager myConverterManager = new ConverterManager();
   private final Map<Class<? extends DomElement>,Class> myClass2ProxyClass = new HashMap<Class<? extends DomElement>, Class>();
-  private final Map<Class<? extends DomElement>,MethodsMap> myMethodsMaps = new HashMap<Class<? extends DomElement>, MethodsMap>();
+  private final Map<Type,MethodsMap> myMethodsMaps = new HashMap<Type, MethodsMap>();
+  private final Map<Type,InvocationCache> myInvocationCaches = new HashMap<Type, InvocationCache>();
   private final Map<Class<? extends DomElement>,ClassChooser> myClassChoosers = new HashMap<Class<? extends DomElement>, ClassChooser>();
   private DomEventListener[] myCachedListeners;
   private PomModelListener myXmlListener;
@@ -78,13 +81,32 @@ public class DomManagerImpl extends DomManager implements ProjectComponent, XmlC
     }
   }
 
-  final <T extends DomElement>MethodsMap getMethodsMap(final Class<T> aClass) {
-    MethodsMap methodsMap = myMethodsMaps.get(aClass);
+  final MethodsMap getMethodsMap(final Type type) {
+    MethodsMap methodsMap = myMethodsMaps.get(type);
     if (methodsMap == null) {
-      methodsMap = new MethodsMap(aClass);
-      myMethodsMaps.put(aClass, methodsMap);
+      if (type instanceof Class) {
+        methodsMap = new MethodsMap((Class<? extends DomElement>)type);
+        myMethodsMaps.put(type, methodsMap);
+      }
+      else if (type instanceof ParameterizedType) {
+        ParameterizedType parameterizedType = (ParameterizedType)type;
+        methodsMap = new MethodsMap((Class<? extends DomElement>)parameterizedType.getRawType());
+        myMethodsMaps.put(type, methodsMap);
+      }
+      else {
+        assert false : "Type not supported " + type;
+      }
     }
     return methodsMap;
+  }
+
+  final InvocationCache getInvocationCache(final Type type) {
+    InvocationCache invocationCache = myInvocationCaches.get(type);
+    if (invocationCache == null) {
+      invocationCache = new InvocationCache();
+      myInvocationCaches.put(type, invocationCache);
+    }
+    return invocationCache;
   }
 
   private Class getConcreteType(Class aClass, XmlTag tag) {

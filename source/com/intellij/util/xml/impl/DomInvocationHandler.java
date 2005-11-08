@@ -12,10 +12,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTagChild;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.xml.AttributeValue;
-import com.intellij.util.xml.Converter;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.TagValue;
+import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.*;
 import com.intellij.pom.xml.XmlChangeSet;
 import com.intellij.pom.xml.XmlChangeVisitorBase;
@@ -28,6 +25,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
+import java.lang.reflect.ParameterizedType;
 import java.util.*;
 
 /**
@@ -35,9 +34,8 @@ import java.util.*;
  */
 public abstract class DomInvocationHandler<T extends DomElement> implements InvocationHandler, DomElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.DomInvocationHandler");
-  private static final Map<Method, Invocation> ourInvocations = new HashMap<Method, Invocation>();
 
-  private final Class<T> myClass;
+  private final Type myType;
   private final DomInvocationHandler myParent;
   private final DomManagerImpl myManager;
   @NotNull private final String myTagName;
@@ -50,45 +48,20 @@ public abstract class DomInvocationHandler<T extends DomElement> implements Invo
   private final Map<Pair<String, Integer>, IndexedElementInvocationHandler> myFixedChildren = new HashMap<Pair<String, Integer>, IndexedElementInvocationHandler>();
   private final MethodsMap myMethodsMap;
   private boolean myInvalidated;
+  private InvocationCache myInvocationCache;
 
-  static {
-    for (final Method method : DomElement.class.getMethods()) {
-      ourInvocations.put(method, new Invocation() {
-        public Object invoke(DomInvocationHandler handler, Object[] args) throws Throwable {
-          return method.invoke(handler, args);
-        }
-      });
-    }
-    for (final Method method : Object.class.getMethods()) {
-      if ("equals".equals(method.getName())) {
-        ourInvocations.put(method, new Invocation() {
-          public Object invoke(DomInvocationHandler handler, Object[] args) throws Throwable {
-            return handler.getProxy() == args[0];
-          }
-        });
-      }
-      else {
-        ourInvocations.put(method, new Invocation() {
-          public Object invoke(DomInvocationHandler handler, Object[] args) throws Throwable {
-            return method.invoke(handler, args);
-          }
-        });
-      }
-    }
-  }
-
-
-  public DomInvocationHandler(final Class<T> aClass,
-                              final XmlTag tag,
-                              final DomInvocationHandler parent,
-                              final String tagName,
-                              DomManagerImpl manager) {
-    myClass = aClass;
+  protected DomInvocationHandler(final Type type,
+                                 final XmlTag tag,
+                                 final DomInvocationHandler parent,
+                                 final String tagName,
+                                 DomManagerImpl manager) {
+    myType = type;
     myXmlTag = tag;
     myParent = parent;
     myTagName = tagName;
     myManager = manager;
-    myMethodsMap = manager.getMethodsMap(aClass);
+    myMethodsMap = manager.getMethodsMap(type);
+    myInvocationCache = manager.getInvocationCache(type);
   }
 
   public DomFileElementImpl getRoot() {
@@ -117,6 +90,12 @@ public abstract class DomInvocationHandler<T extends DomElement> implements Invo
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
+    catch (IllegalAccessException e) {
+      LOG.error(e);
+    }
+    catch (InstantiationException e) {
+      LOG.error(e);
+    }
     finally {
       myManager.setChanging(changing);
       myManager.fireEvent(new ElementDefinedEvent(this));
@@ -136,7 +115,7 @@ public abstract class DomInvocationHandler<T extends DomElement> implements Invo
     return !myInvalidated;
   }
 
-  public void undefine() {
+  public void undefine() throws IllegalAccessException, InstantiationException {
     final XmlTag tag = getXmlTag();
     if (tag != null) {
       deleteTag(tag);
@@ -165,14 +144,14 @@ public abstract class DomInvocationHandler<T extends DomElement> implements Invo
     myManager.fireEvent(new ElementDefinedEvent(getProxy()));
   }
 
-  protected abstract XmlTag setXmlTag(final XmlTag tag) throws IncorrectOperationException;
+  protected abstract XmlTag setXmlTag(final XmlTag tag) throws IncorrectOperationException, IllegalAccessException, InstantiationException;
 
   protected final String getTagName() {
     return myTagName;
   }
 
   @NotNull
-  private Converter getConverter(final Method method, final boolean getter) throws IllegalAccessException, InstantiationException {
+  protected Converter getConverter(final Method method, final boolean getter) throws IllegalAccessException, InstantiationException {
     return myManager.getConverterManager().getConverter(method, getter);
   }
 
@@ -241,10 +220,10 @@ public abstract class DomInvocationHandler<T extends DomElement> implements Invo
   }
 
   public final Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-    Invocation invocation = ourInvocations.get(method);
+    Invocation invocation = myInvocationCache.getInvocation(method);
     if (invocation == null) {
       invocation = createInvocation(method);
-      ourInvocations.put(method, invocation);
+      myInvocationCache.putInvocation(method, invocation);
     }
     return invocation.invoke(this, args);
   }
@@ -273,7 +252,7 @@ public abstract class DomInvocationHandler<T extends DomElement> implements Invo
   }
 
   public String toString() {
-    return StringUtil.getShortName(myClass) + " @" + hashCode();
+    return StringUtil.getShortName(myType.toString()) + " @" + hashCode();
   }
 
   public MethodsMap getMethodsMap() {
@@ -281,7 +260,7 @@ public abstract class DomInvocationHandler<T extends DomElement> implements Invo
     return myMethodsMap;
   }
 
-  final void checkInitialized() {
+  final void checkInitialized() throws IllegalAccessException, InstantiationException {
     synchronized (PsiLock.LOCK) {
       if (myInitialized || myInitializing) return;
       myInitializing = true;
@@ -294,9 +273,9 @@ public abstract class DomInvocationHandler<T extends DomElement> implements Invo
           final String qname = pair.getFirst();
           final Integer index = pair.getSecond();
           XmlTag subTag = findSubTag(tag, qname, index);
-          final Class aClass = entry.getKey().getReturnType();
-          final IndexedElementInvocationHandler handler = new IndexedElementInvocationHandler(aClass, subTag, this, qname, index);
-          myManager.createDomElement(aClass, subTag, handler);
+          final Method method = entry.getKey();
+          final IndexedElementInvocationHandler handler = createIndexedChild(method, subTag, qname, index);
+          myManager.createDomElement(method.getReturnType(), subTag, handler);
           myFixedChildren.put(pair, handler);
           usedTags.add(subTag);
         }
@@ -318,6 +297,37 @@ public abstract class DomInvocationHandler<T extends DomElement> implements Invo
         myInitialized = true;
       }
     }
+  }
+
+  private IndexedElementInvocationHandler createIndexedChild(final Method method,
+                                                             final XmlTag subTag,
+                                                             final String qname, final Integer index) throws
+                                                                                                                         InstantiationException,
+                                                                                                                         IllegalAccessException {
+    Converter converter = getConverterForChild(method);
+    if (converter != null) {
+      return new GenericValueInvocationHandler(method.getGenericReturnType(), subTag, this, qname, index, converter);
+    }
+    return new IndexedElementInvocationHandler(method.getReturnType(), subTag, this, qname, index);
+  }
+
+  private Converter getConverterForChild(final Method method) throws InstantiationException, IllegalAccessException {
+    final Type genericReturnType = method.getGenericReturnType();
+    if (genericReturnType instanceof ParameterizedType) {
+      ParameterizedType parameterizedType = (ParameterizedType)genericReturnType;
+      if (parameterizedType.getRawType() == GenericValue.class) {
+        final Convert convertAnnotation = method.getAnnotation(Convert.class);
+        if (convertAnnotation != null) {
+          return myManager.getConverterManager().getConverter(convertAnnotation.value());
+        }
+
+        final Type[] arguments = parameterizedType.getActualTypeArguments();
+        if (arguments.length == 1 && arguments[0] instanceof Class) {
+          return myManager.getConverterManager().getConverter((Class)arguments[0]);
+        }
+      }
+    }
+    return null;
   }
 
   private DomElement createCollectionElement(final Class aClass, final XmlTag subTag) {
@@ -348,7 +358,8 @@ public abstract class DomInvocationHandler<T extends DomElement> implements Invo
     return myManager;
   }
 
-  protected final void createFixedChildrenTags(String tagName, int count) throws IncorrectOperationException {
+  protected final void createFixedChildrenTags(String tagName, int count) throws IncorrectOperationException, IllegalAccessException,
+                                                                                 InstantiationException {
     checkInitialized();
     final XmlTag tag = ensureTagExists();
     for (Map.Entry<Method, Pair<String, Integer>> entry : myMethodsMap.getFixedChildrenEntries()) {
@@ -364,7 +375,9 @@ public abstract class DomInvocationHandler<T extends DomElement> implements Invo
     }
   }
 
-  public final DomElement addChild(final String tagName, final Class aClass, int index) throws IncorrectOperationException {
+  public final DomElement addChild(final String tagName, final Class aClass, int index) throws IncorrectOperationException,
+                                                                                               IllegalAccessException,
+                                                                                               InstantiationException {
     createFixedChildrenTags(tagName, myMethodsMap.getFixedChildrenCount(tagName));
     return addCollectionElement(aClass, addEmptyTag(tagName, index));
   }

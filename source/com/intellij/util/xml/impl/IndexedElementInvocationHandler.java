@@ -8,6 +8,8 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.DomElement;
 
+import java.lang.reflect.Type;
+
 /**
  * @author peter
  */
@@ -15,7 +17,7 @@ public class IndexedElementInvocationHandler<T extends DomElement> extends DomIn
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.IndexedElementInvocationHandler");
   private final int myIndex;
 
-  public IndexedElementInvocationHandler(final Class<T> aClass,
+  public IndexedElementInvocationHandler(final Type aClass,
                                          final XmlTag tag,
                                          final DomInvocationHandler parent,
                                          final String tagName,
@@ -28,13 +30,13 @@ public class IndexedElementInvocationHandler<T extends DomElement> extends DomIn
     return myIndex;
   }
 
-  protected XmlTag setXmlTag(final XmlTag tag) throws IncorrectOperationException {
+  protected XmlTag setXmlTag(final XmlTag tag) throws IncorrectOperationException, IllegalAccessException, InstantiationException {
     final DomInvocationHandler parent = getParentHandler();
     parent.createFixedChildrenTags(getTagName(), myIndex);
     return (XmlTag)parent.getXmlTag().add(tag);
   }
 
-  public void undefine() {
+  public void undefine() throws IllegalAccessException, InstantiationException {
     final DomInvocationHandler parent = getParentHandler();
     parent.checkInitialized();
     final XmlTag[] subTags = parent.getXmlTag().findSubTags(getTagName());
