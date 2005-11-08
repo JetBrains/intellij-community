@@ -70,12 +70,12 @@ public interface PsiVariable extends PsiElement, PsiModifierListOwner, PsiNamedE
    */
   @Nullable Object computeConstantValue();
 
-  @NotNull @NonNls String getName();
+  @Nullable @NonNls String getName();
 
   /**
    * Returns the identifier declaring the name of the variable.
    *
    * @return the variable name identifier.
    */
-  @NotNull PsiIdentifier getNameIdentifier();
+  @Nullable PsiIdentifier getNameIdentifier();
 }
