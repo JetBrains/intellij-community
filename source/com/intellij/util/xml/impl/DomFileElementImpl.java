@@ -97,7 +97,8 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     return true;
   }
 
-  public MethodsMap getMethodsMap() {
+  public final DomMethodsInfo getMethodsInfo() {
     return null;
   }
+
 }

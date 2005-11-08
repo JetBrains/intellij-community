@@ -5,6 +5,7 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.DomElement;
@@ -23,7 +24,9 @@ import java.util.*;
 /**
  * @author peter
  */
-public class MethodsMap {
+public class MethodsMap implements DomMethodsInfo{
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.MethodsMap");
+
   private Class<? extends DomElement> myClass;
   private Map<Method, Pair<String, Integer>> myFixedChildrenMethods;
   private Map<String, Integer> myFixedChildrenCounts;
@@ -226,5 +229,24 @@ public class MethodsMap {
     }
 
     throw new UnsupportedOperationException("No implementation for method " + method.toString());
+  }
+
+  public Collection<Method> getFixedChildrenGetterMethods() {
+    return Collections.unmodifiableCollection(myFixedChildrenMethods.keySet());
+  }
+
+  public Collection<Method> getCollectionChildrenGetterMethods() {
+    return Collections.unmodifiableCollection(myCollectionChildrenGetterMethods.keySet());
+  }
+
+  public int getFixedChildIndex(Method method) {
+    final Pair<String, Integer> pair = myFixedChildrenMethods.get(method);
+    LOG.assertTrue(pair != null, "Should be fixed child getter method: " + method);
+    return pair.getSecond();
+  }
+
+  public String getTagName(Method method) {
+    final Pair<String, Integer> pair = myFixedChildrenMethods.get(method);
+    return pair != null ? pair.getFirst() : myCollectionChildrenGetterMethods.get(method);
   }
 }

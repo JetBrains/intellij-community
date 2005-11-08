@@ -115,6 +115,11 @@ public abstract class DomInvocationHandler<T extends DomElement> implements Invo
     return !myInvalidated;
   }
 
+  public final DomMethodsInfo getMethodsInfo() {
+    myMethodsMap.buildMethodMaps(getFile());
+    return myMethodsMap;
+  }
+
   public void undefine() throws IllegalAccessException, InstantiationException {
     final XmlTag tag = getXmlTag();
     if (tag != null) {
@@ -253,11 +258,6 @@ public abstract class DomInvocationHandler<T extends DomElement> implements Invo
 
   public String toString() {
     return StringUtil.getShortName(myType.toString()) + " @" + hashCode();
-  }
-
-  public MethodsMap getMethodsMap() {
-    myMethodsMap.buildMethodMaps(getFile());
-    return myMethodsMap;
   }
 
   final void checkInitialized() throws IllegalAccessException, InstantiationException {
