@@ -15,7 +15,7 @@ import java.util.List;
  * To change this template use Options | File Templates.
  */
 public class FilterElementProcessor implements PsiElementProcessor{
-  private final List myResults;
+  private final List<PsiElement> myResults;
   private final ElementFilter myFilter;
   private final PsiElementProcessor myProcessor;
 
@@ -53,7 +53,7 @@ public class FilterElementProcessor implements PsiElementProcessor{
     myResults.add(element);
   }
 
-  public List getResults(){
+  public List<PsiElement> getResults(){
     return myResults;
   }
 
