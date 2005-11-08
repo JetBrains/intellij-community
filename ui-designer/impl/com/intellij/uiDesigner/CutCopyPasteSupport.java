@@ -84,6 +84,9 @@ final class CutCopyPasteSupport implements CopyProvider, CutProvider, PasteProvi
 
   public void performPaste(final DataContext dataContext) {
     final String serializedComponents = getSerializedComponents();
+    if (serializedComponents == null) {
+      return;
+    }
 
     if (serializedComponents.equals(myRecentyCopiedString)) {
       myRecentyCopiedStringCount++;
@@ -99,19 +102,30 @@ final class CutCopyPasteSupport implements CopyProvider, CutProvider, PasteProvi
     loadComponentsToPaste(myEditor, serializedComponents, xs, ys, componentsToPaste);
 
     final RadRootContainer rootContainer = myEditor.getRootContainer();
-    FormEditingUtil.clearSelection(rootContainer);
-    for (int i = 0; i < componentsToPaste.size(); i++) {
-      final RadComponent component = componentsToPaste.get(i);
-      final int delta = myRecentyCopiedStringCount * 10;
-      component.setLocation(new Point(xs.get(i) + delta, ys.get(i) + delta));
-      rootContainer.addComponent(component);
+    final ArrayList<RadComponent> selectedComponents = FormEditingUtil.getSelectedComponents(myEditor);
 
-      FormEditingUtil.iterate(component, new FormEditingUtil.ComponentVisitor<RadComponent>() {
-        public boolean visit(final RadComponent c) {
-          c.setSelected(true);
-          return true;
-        }
-      });
+    if (selectedComponents.size() == 1 && selectedComponents.get(0).canDrop(selectedComponents.size())) {
+      RadComponent component = selectedComponents.get(0);
+      if (component instanceof RadContainer) {
+        RadContainer container = (RadContainer) component;
+        container.drop(componentsToPaste.toArray(new RadComponent[componentsToPaste.size()]));
+      }
+    }
+    else {
+      FormEditingUtil.clearSelection(rootContainer);
+      for (int i = 0; i < componentsToPaste.size(); i++) {
+        final RadComponent component = componentsToPaste.get(i);
+        final int delta = myRecentyCopiedStringCount * 10;
+        component.setLocation(new Point(xs.get(i) + delta, ys.get(i) + delta));
+        rootContainer.addComponent(component);
+
+        FormEditingUtil.iterate(component, new FormEditingUtil.ComponentVisitor<RadComponent>() {
+          public boolean visit(final RadComponent c) {
+            c.setSelected(true);
+            return true;
+          }
+        });
+      }
     }
 
     myEditor.refreshAndSave(true);
@@ -269,6 +283,7 @@ final class CutCopyPasteSupport implements CopyProvider, CutProvider, PasteProvi
       myDataProxy = data;
     }
 
+    @Nullable
     public Object getTransferData(final DataFlavor flavor) {
       if (!ourDataFlavor.equals(flavor)) {
         return null;
