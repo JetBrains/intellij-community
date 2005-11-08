@@ -4,7 +4,6 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.xml.impl.DomInvocationHandler;
 import com.intellij.util.xml.Converter;
 
 /**
@@ -14,6 +13,7 @@ public abstract class GetInvocation implements Invocation {
   private Converter myConverter;
 
   protected GetInvocation(final Converter converter) {
+    assert converter != null;
     myConverter = converter;
   }
 
