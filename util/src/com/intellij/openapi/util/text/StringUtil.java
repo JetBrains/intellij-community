@@ -706,26 +706,27 @@ public class StringUtil {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static String unpluralize(final String name) {
-    String res = null;
-    if (name.endsWith("ses") || name.endsWith("xes")) { //?
-      res = name.substring(0, name.length() - 2);
+    if (name.endsWith("sses") || name.endsWith("xes")) { //?
+      return name.substring(0, name.length() - 2);
     }
-    else {
-      if (name.endsWith("ies")) {
-        res = name.substring(0, name.length() - 3) + "y";
-      }
-      else {
-        if (endsWithChar(name, 's')) {
-          res = name.substring(0, name.length() - 1);
-        }
-        else {
-          if ("children".equals(name)) {
-            res = "child";
-          }
-        }
-      }
+
+    if (name.endsWith("ses")) {
+      return name.substring(0, name.length() - 1);
     }
-    return res;
+
+    if (name.endsWith("ies")) {
+      return name.substring(0, name.length() - 3) + "y";
+    }
+
+    if (endsWithChar(name, 's')) {
+      return name.substring(0, name.length() - 1);
+    }
+
+    if ("children".equals(name)) {
+      return "child";
+    }
+
+    return null;
   }
 
   public static boolean containsAlphaCharacters(String value) {
