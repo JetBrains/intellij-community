@@ -32,4 +32,6 @@ public abstract class DomManager {
   public abstract <T extends DomElement> void registerClassChooser(Class<T> aClass, ClassChooser<T> classChooser);
 
   public abstract <T extends DomElement> void unregisterClassChooser(Class<T> aClass);
+
+  public abstract ConverterManager getConverterManager();
 }

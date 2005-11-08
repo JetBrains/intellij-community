@@ -42,7 +42,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent, XmlC
   private static final Key<DomFileElementImpl> CACHED_FILE_ELEMENT = Key.create("CachedFileElement");
 
   private final List<DomEventListener> myListeners = new ArrayList<DomEventListener>();
-  private final ConverterManager myConverterManager = new ConverterManager();
+  private final ConverterManagerImpl myConverterManager = new ConverterManagerImpl();
   private final Map<Class<? extends DomElement>,Class> myClass2ProxyClass = new HashMap<Class<? extends DomElement>, Class>();
   private final Map<Type,MethodsMap> myMethodsMaps = new HashMap<Type, MethodsMap>();
   private final Map<Type,InvocationCache> myInvocationCaches = new HashMap<Type, InvocationCache>();
@@ -67,7 +67,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent, XmlC
     myListeners.remove(listener);
   }
 
-  public final ConverterManager getConverterManager() {
+  public final ConverterManagerImpl getConverterManager() {
     return myConverterManager;
   }
 

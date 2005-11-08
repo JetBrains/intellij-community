@@ -3,10 +3,7 @@
  */
 package com.intellij.util.xml.impl;
 
-import com.intellij.util.xml.Convert;
-import com.intellij.util.xml.Converter;
-import com.intellij.util.xml.EnumConverter;
-import com.intellij.util.xml.PsiClassReference;
+import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,17 +14,17 @@ import java.util.Map;
 /**
  * @author peter
  */
-public class ConverterManager {
+public class ConverterManagerImpl implements ConverterManager {
   private final Map<Method, Converter> myConvertersByMethod = new HashMap<Method, Converter>();
   private final Map<Class,Converter> myConvertersByClass = new HashMap<Class, Converter>();
 
-  public ConverterManager() {
-    myConvertersByClass.put(int.class, Converter.INTEGER_CONVERTER);
-    myConvertersByClass.put(Integer.class, Converter.INTEGER_CONVERTER);
-    myConvertersByClass.put(boolean.class, Converter.BOOLEAN_CONVERTER);
-    myConvertersByClass.put(Boolean.class, Converter.BOOLEAN_CONVERTER);
-    myConvertersByClass.put(String.class, Converter.EMPTY_CONVERTER);
-    myConvertersByClass.put(PsiClassReference.class, Converter.PSI_CLASS_REFERENCE_CONVERTER);
+  public ConverterManagerImpl() {
+    registerConverter(int.class, Converter.INTEGER_CONVERTER);
+    registerConverter(Integer.class, Converter.INTEGER_CONVERTER);
+    registerConverter(boolean.class, Converter.BOOLEAN_CONVERTER);
+    registerConverter(Boolean.class, Converter.BOOLEAN_CONVERTER);
+    registerConverter(String.class, Converter.EMPTY_CONVERTER);
+    registerConverter(PsiClassReference.class, Converter.PSI_CLASS_REFERENCE_CONVERTER);
   }
 
   @NotNull
@@ -55,19 +52,23 @@ public class ConverterManager {
     Converter converter = myConvertersByClass.get(aClass);
     if (converter == null && Enum.class.isAssignableFrom(aClass)) {
       converter = new EnumConverter(aClass);
-      myConvertersByClass.put(aClass, converter);
+      registerConverter(aClass, converter);
     }
     return converter;
   }
 
   @NotNull
-  final Converter getConverter(final Class converterClass) throws InstantiationException, IllegalAccessException {
+  public final Converter getConverter(final Class converterClass) throws InstantiationException, IllegalAccessException {
     Converter converter = getDefaultConverter(converterClass);
     if (converter == null) {
       converter = (Converter) converterClass.newInstance();
-      myConvertersByClass.put(converterClass, converter);
+      registerConverter(converterClass, converter);
     }
     return converter;
+  }
+
+  public final void registerConverter(final Class converterClass, final Converter converter) {
+    myConvertersByClass.put(converterClass, converter);
   }
 
 
