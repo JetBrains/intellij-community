@@ -536,7 +536,7 @@ public abstract class DomInvocationHandler<T extends DomElement> implements Invo
       }
       for (int i = 0; i < changedElementsCount; i++) {
         final IndexedElementInvocationHandler child = fixedChildren[i];
-        if (child.getXmlTag() != subTags[i]) {
+        if (child.getXmlTag() != subTags[i] || changedLocal.contains(child)) {
           events.add(new ElementChangedEvent(child.getProxy()));
         }
       }
@@ -544,7 +544,7 @@ public abstract class DomInvocationHandler<T extends DomElement> implements Invo
       for (int i = 0; i < newFixedCount; i++) {
         final XmlTag tag = subTags[i];
         final IndexedElementInvocationHandler fixedChild = fixedChildren[i];
-        if (fixedChild.getXmlTag() != tag) {
+        if (fixedChild.getXmlTag() != tag || changedLocal.contains(fixedChild)) {
           DomManagerImpl.invalidateSubtree(tag, false);
           fixedChild.cacheDomElement(tag);
         }
