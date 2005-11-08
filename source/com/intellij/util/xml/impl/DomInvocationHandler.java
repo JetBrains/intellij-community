@@ -10,23 +10,25 @@ import com.intellij.psi.PsiLock;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlTagChild;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.AttributeValue;
 import com.intellij.util.xml.Converter;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.TagValue;
-import com.intellij.util.xml.events.ElementDefinedEvent;
-import com.intellij.util.xml.events.ElementUndefinedEvent;
-import com.intellij.util.xml.events.CollectionElementAddedEvent;
+import com.intellij.util.xml.events.*;
+import com.intellij.pom.xml.XmlChangeSet;
+import com.intellij.pom.xml.XmlChangeVisitorBase;
+import com.intellij.pom.xml.events.XmlChange;
+import com.intellij.pom.xml.events.XmlTagChildAdd;
+import com.intellij.pom.xml.events.XmlTagChildChanged;
+import com.intellij.pom.xml.events.XmlTagChildRemoved;
 import net.sf.cglib.proxy.InvocationHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Arrays;
+import java.util.*;
 
 /**
  * @author peter
@@ -45,7 +47,7 @@ public abstract class DomInvocationHandler<T extends DomElement> implements Invo
   private DomElement myProxy;
   private boolean myInitialized = false;
   private boolean myInitializing = false;
-  private final Map<Pair<String, Integer>, DomInvocationHandler> myFixedChildren = new HashMap<Pair<String, Integer>, DomInvocationHandler>();
+  private final Map<Pair<String, Integer>, IndexedElementInvocationHandler> myFixedChildren = new HashMap<Pair<String, Integer>, IndexedElementInvocationHandler>();
   private final MethodsMap myMethodsMap;
   private boolean myInvalidated;
 
@@ -144,11 +146,14 @@ public abstract class DomInvocationHandler<T extends DomElement> implements Invo
   }
 
   protected final void deleteTag(final XmlTag tag) {
+    final boolean changing = myManager.setChanging(true);
     try {
       tag.delete();
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
+    } finally {
+      myManager.setChanging(changing);
     }
     myXmlTag = null;
   }
@@ -343,7 +348,6 @@ public abstract class DomInvocationHandler<T extends DomElement> implements Invo
 
   protected final void cacheDomElement(final XmlTag tag) {
     synchronized (PsiLock.LOCK) {
-      DomManagerImpl.setCachedElement(myXmlTag, null);
       myXmlTag = tag;
       DomManagerImpl.setCachedElement(tag, this);
     }
@@ -400,30 +404,173 @@ public abstract class DomInvocationHandler<T extends DomElement> implements Invo
     }
   }
 
-  public void processChildTagAdded(final XmlTag childTag) {
+  private Set<DomInvocationHandler> filterHandlers(Set<XmlTag> set, String qname) {
+    final HashSet<DomInvocationHandler> xmlTags = new HashSet<DomInvocationHandler>();
+    for (XmlTag tag : set) {
+      if (qname.equals(tag.getName())) {
+        final DomInvocationHandler cachedElement = DomManagerImpl.getCachedElement(tag);
+        if (cachedElement != null) {
+          xmlTags.add(cachedElement);
+        }
+      }
+    }
+    return xmlTags;
+  }
+
+  private Set<XmlTag> filterTags(Set<XmlTag> set, String qname) {
+    final HashSet<XmlTag> xmlTags = new HashSet<XmlTag>();
+    for (XmlTag tag : set) {
+      if (qname.equals(tag.getName())) {
+          xmlTags.add(tag);
+      }
+    }
+    return xmlTags;
+  }
+
+
+  public void processChildrenChange(XmlChangeSet changeSet) {
     synchronized (PsiLock.LOCK) {
       if (!myInitialized) return;
     }
+    final Set<XmlTag> addedTags = new HashSet<XmlTag>();
+    final Set<XmlTag> removedTags = new HashSet<XmlTag>();
+    final Set<XmlTag> changedTags = new HashSet<XmlTag>();
+    final Set<String> tagNames = new HashSet<String>();
+    final XmlChange[] changes = changeSet.getChanges();
+    for (XmlChange xmlChange : changes) {
+      xmlChange.accept(new XmlChangeVisitorBase() {
+        public void visitXmlTagChildAdd(final XmlTagChildAdd xmlTagChildAdd) {
+          final XmlTagChild child = xmlTagChildAdd.getChild();
+          if (child instanceof XmlTag) {
+            final XmlTag tag = (XmlTag)child;
+            assert !removedTags.contains(tag);
+            addedTags.add(tag);
+            tagNames.add(tag.getName());
+          }
+        }
 
-    final String qname = childTag.getName();
-    final XmlTag[] subTags = getXmlTag().findSubTags(qname);
-    int index = Arrays.asList(subTags).indexOf(childTag);
-    final int fixedCount = myMethodsMap.getFixedChildrenCount(qname);
-    if (index < fixedCount) {
-      int upper = Math.min(fixedCount + 1, subTags.length);
-      for (int i = index + 1; i < upper; i++) {
-        DomInvocationHandler handler = DomManagerImpl.getCachedElement(subTags[i]);
-        assert handler != null;
-        DomManagerImpl.invalidateSubtree(subTags[i], false);
-        handler.cacheDomElement(null);
-        handler.fireUndefinedEvent();
-        handler.cacheDomElement(subTags[i - 1]);
-        handler.fireDefinedEvent();
-      }
+        public void visitXmlTagChildChanged(final XmlTagChildChanged xmlTagChildChanged) {
+          final XmlTagChild child = xmlTagChildChanged.getChild();
+          if (child instanceof XmlTag) {
+            final XmlTag tag = (XmlTag)child;
+            changedTags.add(tag);
+            tagNames.add(tag.getName());
+          }
+        }
+
+        public void visitXmlTagChildRemoved(final XmlTagChildRemoved xmlTagChildRemoved) {
+          final XmlTagChild child = xmlTagChildRemoved.getChild();
+          if (child instanceof XmlTag) {
+            final XmlTag tag = (XmlTag)child;
+            assert !addedTags.contains(tag);
+            removedTags.add(tag);
+            tagNames.add(tag.getName());
+          }
+        }
+      });
     }
-    if (subTags.length > fixedCount) {
-      int newIndex = index >= fixedCount ? index : fixedCount;
-      addCollectionElement(myMethodsMap.getCollectionChildrenClass(qname), subTags[newIndex]);
+    changedTags.removeAll(addedTags);
+    changedTags.removeAll(removedTags);
+
+    final List<DomEvent> events = new ArrayList<DomEvent>();
+
+    for (String qname : tagNames) {
+      final Set<XmlTag> addedLocal = filterTags(addedTags, qname);
+      final Set<DomInvocationHandler> removedLocal = filterHandlers(removedTags, qname);
+      final Set<DomInvocationHandler> changedLocal = filterHandlers(changedTags, qname);
+      if (addedLocal.isEmpty() && removedLocal.isEmpty() && changedLocal.isEmpty()) continue;
+
+      final Set<DomInvocationHandler> removedCollection = new HashSet<DomInvocationHandler>();
+
+      final int fixedCount = myMethodsMap.getFixedChildrenCount(qname);
+      final IndexedElementInvocationHandler[] fixedChildren = new IndexedElementInvocationHandler[fixedCount];
+      final Map<DomInvocationHandler, Integer> undefinedChildren = new HashMap<DomInvocationHandler, Integer>();
+      for (Map.Entry<Pair<String, Integer>, IndexedElementInvocationHandler> entry : myFixedChildren.entrySet()) {
+        final Integer index = entry.getKey().getSecond();
+        final IndexedElementInvocationHandler handler = entry.getValue();
+        undefinedChildren.put(handler, index);
+        fixedChildren[index] = handler;
+      }
+
+      for (DomInvocationHandler handler : removedLocal) {
+        if (undefinedChildren.containsKey(handler)) {
+        }
+        else {
+          removedCollection.add(handler);
+        }
+      }
+      for (DomInvocationHandler handler : changedLocal) {
+        if (!undefinedChildren.containsKey(handler)) {
+          removedCollection.add(handler);
+        }
+      }
+      final XmlTag[] subTags = getXmlTag().findSubTags(qname);
+      final int newFixedCount = Math.min(subTags.length, fixedCount);
+      for (int i = 0; i < newFixedCount; i++) {
+        DomInvocationHandler cached = DomManagerImpl.getCachedElement(subTags[i]);
+        if (cached instanceof CollectionElementInvocationHandler) {
+          removedCollection.add(cached);
+        }
+      }
+
+      for (DomInvocationHandler handler : removedCollection) {
+        handler.invalidate();
+        events.add(new CollectionElementRemovedEvent(handler.getProxy(), getProxy(), qname));
+      }
+
+      int oldSubTagsLength = subTags.length - addedLocal.size() + removedLocal.size();
+      int oldFixedCount = Math.min(fixedCount, oldSubTagsLength);
+      int changedElementsCount = Math.min(newFixedCount, oldFixedCount);
+      if (newFixedCount > oldFixedCount) {
+        for (int i = oldFixedCount; i < newFixedCount; i++) {
+          events.add(new ElementDefinedEvent(fixedChildren[i].getProxy()));
+        }
+      } else if (newFixedCount < oldFixedCount) {
+        for (int i = newFixedCount; i < oldFixedCount; i++) {
+          events.add(new ElementUndefinedEvent(fixedChildren[i].getProxy()));
+        }
+      }
+      for (int i = 0; i < changedElementsCount; i++) {
+        final IndexedElementInvocationHandler child = fixedChildren[i];
+        if (child.myXmlTag != subTags[i]) {
+          events.add(new ElementChangedEvent(child.getProxy()));
+        }
+      }
+
+      for (int i = 0; i < newFixedCount; i++) {
+        final XmlTag tag = subTags[i];
+        final IndexedElementInvocationHandler fixedChild = fixedChildren[i];
+        if (fixedChild.myXmlTag != tag) {
+          DomManagerImpl.invalidateSubtree(tag, false);
+          fixedChild.cacheDomElement(tag);
+        }
+      }
+      for (int i = newFixedCount; i < fixedCount; i++) {
+        fixedChildren[i].cacheDomElement(null);
+      }
+
+      if (fixedCount < subTags.length) {
+        final int collectionSize = subTags.length - fixedCount;
+        final Class<? extends DomElement> aClass = myMethodsMap.getCollectionChildrenClass(qname);
+        for (int i = 0; i < collectionSize; i++) {
+          final XmlTag tag = subTags[i + fixedCount];
+          final DomInvocationHandler cachedElement = DomManagerImpl.getCachedElement(tag);
+          if (!(cachedElement instanceof CollectionElementInvocationHandler) || removedCollection.contains(cachedElement)) {
+            DomManagerImpl.invalidateSubtree(tag, false);
+            events.add(new CollectionElementAddedEvent(createCollectionElement(aClass, tag), qname));
+          }
+        }
+      }
+
+
+    }
+
+    for (DomEvent event : events) {
+      myManager.fireEvent(event);
     }
   }
+
+
+
+
 }

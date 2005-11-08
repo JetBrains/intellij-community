@@ -12,6 +12,7 @@ import com.intellij.pom.event.PomModelListener;
 import com.intellij.pom.xml.XmlAspect;
 import com.intellij.pom.xml.XmlChangeSet;
 import com.intellij.pom.xml.XmlChangeVisitor;
+import com.intellij.pom.xml.XmlChangeVisitorBase;
 import com.intellij.pom.xml.events.*;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.PsiElement;
@@ -28,10 +29,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author peter
@@ -95,8 +93,8 @@ public class DomManagerImpl extends DomManager implements ProjectComponent, XmlC
   }
 
   final DomElement createDomElement(final Class aClass,
-                                                     final XmlTag tag,
-                                                     final DomInvocationHandler handler) {
+                                    final XmlTag tag,
+                                    final DomInvocationHandler handler) {
     synchronized (PsiLock.LOCK) {
       try {
         Class clazz = getProxyClassFor(getConcreteType(aClass, tag));
@@ -137,8 +135,8 @@ public class DomManagerImpl extends DomManager implements ProjectComponent, XmlC
 
   @NotNull
   public final <T extends DomElement> DomFileElementImpl<T> getFileElement(final XmlFile file,
-                                                                 final Class<T> aClass,
-                                                                 String rootTagName) {
+                                                                           final Class<T> aClass,
+                                                                           String rootTagName) {
     synchronized (PsiLock.LOCK) {
       DomFileElementImpl<T> element = getCachedElement(file);
       if (element == null) {
@@ -206,8 +204,34 @@ public class DomManagerImpl extends DomManager implements ProjectComponent, XmlC
         if (myChanging) return;
         final XmlChangeSet changeSet = (XmlChangeSet) event.getChangeSet(xmlAspect);
         if (changeSet != null) {
+          boolean flag = false;
           for (XmlChange change : changeSet.getChanges()) {
             change.accept(DomManagerImpl.this);
+            if (!flag) {
+              flag = true;
+              change.accept(new XmlChangeVisitorBase(){
+              public void visitXmlTagChildAdd(final XmlTagChildAdd xmlTagChildAdd) {
+                final DomInvocationHandler element = getCachedElement(xmlTagChildAdd.getTag());
+                if (element != null) {
+                  element.processChildrenChange(changeSet);
+                }
+              }
+
+              public void visitXmlTagChildRemoved(final XmlTagChildRemoved xmlTagChildRemoved) {
+                final DomInvocationHandler element = getCachedElement(xmlTagChildRemoved.getTag());
+                if (element != null) {
+                  element.processChildrenChange(changeSet);
+                }
+              }
+
+              public void visitXmlTagChildChanged(final XmlTagChildChanged xmlTagChildChanged) {
+                final DomInvocationHandler element = getCachedElement(xmlTagChildChanged.getTag());
+                if (element != null) {
+                  element.processChildrenChange(changeSet);
+                }
+              }
+              });
+            }
           }
         }
       }
@@ -285,12 +309,11 @@ public class DomManagerImpl extends DomManager implements ProjectComponent, XmlC
     final XmlTag tag = change.getTag();
     if (isTagValueChange(child)) {
       fireTagValueChanged(tag);
-    }
-    if (child instanceof XmlTag) {
+    } else if (child instanceof XmlTag) {
       XmlTag childTag = (XmlTag)child;
       final DomInvocationHandler element = getCachedElement(tag);
       if (element != null) {
-        element.processChildTagAdded(childTag);
+        //element.processChildTagAdded(childTag);
       }
     }
   }
@@ -308,8 +331,15 @@ public class DomManagerImpl extends DomManager implements ProjectComponent, XmlC
 
   public final void visitXmlTagChildRemoved(final XmlTagChildRemoved change) {
     final XmlTag tag = change.getTag();
-    if (isTagValueChange(change.getChild(), tag)) {
+    final XmlTagChild child = change.getChild();
+    if (isTagValueChange(child, tag)) {
       fireTagValueChanged(tag);
+    } else if (child instanceof XmlTag) {
+      XmlTag childTag = (XmlTag)child;
+      final DomInvocationHandler element = getCachedElement(tag);
+      if (element != null) {
+        //element.processChildTagRemoved(childTag);
+      }
     }
   }
 

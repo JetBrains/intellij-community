@@ -24,6 +24,10 @@ public class IndexedElementInvocationHandler<T extends DomElement> extends DomIn
     myIndex = index;
   }
 
+  public final int getIndex() {
+    return myIndex;
+  }
+
   protected void setXmlTag(final XmlTag tag) throws IncorrectOperationException {
     final DomInvocationHandler parent = getParentHandler();
     parent.createFixedChildrenTags(getTagName(), myIndex);

@@ -3,7 +3,6 @@
  */
 package com.intellij.util.xml.events;
 
-import com.intellij.util.xml.events.DomEvent;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomEventVisitor;
 
@@ -13,13 +12,17 @@ import com.intellij.util.xml.DomEventVisitor;
 public class ElementChangedEvent implements DomEvent {
   private final DomElement myElement;
 
-  protected ElementChangedEvent(final DomElement element) {
+  public ElementChangedEvent(final DomElement element) {
     assert element != null;
     myElement = element;
   }
 
   public final DomElement getElement() {
     return myElement;
+  }
+
+  public String toString() {
+    return "Changed " + myElement;
   }
 
   public void accept(DomEventVisitor visitor) {

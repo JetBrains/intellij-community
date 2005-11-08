@@ -4,12 +4,11 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.xml.impl.DomInvocationHandler;
-import com.intellij.util.xml.impl.DomManagerImpl;
 import com.intellij.util.xml.DomElement;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * @author peter
@@ -29,12 +28,15 @@ public class GetCollectionChildInvocation implements Invocation {
 
     handler.checkInitialized();
     final XmlTag[] subTags = tag.findSubTags(myQname);
-    DomElement[] elements = new DomElement[subTags.length - myStartIndex];
+    if (subTags.length <= myStartIndex) return Collections.emptyList();
+
+    List<DomElement> elements = new ArrayList<DomElement>(subTags.length - myStartIndex);
     for (int i = myStartIndex; i < subTags.length; i++) {
-      final DomElement element = DomManagerImpl.getCachedElement(subTags[i]).getProxy();
-      assert element != null : "Null annotated element for " + tag.getText() + "; " + myQname + "; " + i;
-      elements[i - myStartIndex] = element;
+      final DomInvocationHandler element = DomManagerImpl.getCachedElement(subTags[i]);
+      if (element != null) {
+        elements.add(element.getProxy());
+      }
     }
-    return Arrays.asList(elements);
+    return Collections.unmodifiableList(elements);
   }
 }
