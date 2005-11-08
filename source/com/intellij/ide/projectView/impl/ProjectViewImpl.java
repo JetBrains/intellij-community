@@ -56,6 +56,7 @@ import com.intellij.util.Icons;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -246,8 +247,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   }
 
   private synchronized void doAddUninitializedPanes() {
-    for (int i = 0; i < myUninitializedPanes.size(); i++) {
-      AbstractProjectViewPane pane = myUninitializedPanes.get(i);
+    for (AbstractProjectViewPane pane : myUninitializedPanes) {
       doAddPane(pane);
     }
     createToolbarActions();
@@ -261,8 +261,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     for (int i = 0; i < myTabbedPane.getTabCount(); i++) {
       final JComponent component = myTabbedPane.getComponentAt(i);
       AbstractProjectViewPane pane = null;
-      for (int j = 0; j < initializedPanes.size(); j++) {
-        AbstractProjectViewPane nextPane = initializedPanes.get(j);
+      for (AbstractProjectViewPane nextPane : initializedPanes) {
         if (nextPane.getComponent() == component) {
           pane = nextPane;
           break;
@@ -323,8 +322,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     myTabbedPane.addChangeListener(new ChangeListener() {
       public void stateChanged(ChangeEvent e) {
         final Collection<AbstractProjectViewPane> panes = myId2Pane.values();
-        for (Iterator<AbstractProjectViewPane> iterator = panes.iterator(); iterator.hasNext();) {
-          AbstractProjectViewPane pane = iterator.next();
+        for (AbstractProjectViewPane pane : panes) {
           if (pane.getComponent() == myTabbedPane.getSelectedComponent()) {
             changeView(pane.getId());
             break;
@@ -377,8 +375,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     myActionGroup.add(new SortByTypeAction());
 
     final List<AbstractProjectViewPane> panes = new ArrayList<AbstractProjectViewPane>(myId2Pane.values());
-    for (int i = 0; i < panes.size(); i++) {
-      AbstractProjectViewPane projectViewPane = panes.get(i);
+    for (AbstractProjectViewPane projectViewPane : panes) {
       projectViewPane.addToolbarActions(myActionGroup);
     }
   }
@@ -615,6 +612,12 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     }
 
     final JList list = new JList(views.toArray(new Object[views.size()]));
+
+    if (viewToSelect != null) {
+      list.setSelectedValue(viewToSelect, true);
+    }
+    Dimension size = getComponent().getSize();
+    Point loc = getComponent().getLocationOnScreen();
     Runnable runnable = new Runnable() {
       public void run() {
         if (list.getSelectedIndex() < 0) return;
@@ -622,12 +625,6 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
         changeView(viewWrapper.myViewPane.getId());
       }
     };
-
-    if (viewToSelect != null) {
-      list.setSelectedValue(viewToSelect, true);
-    }
-    Dimension size = getComponent().getSize();
-    Point loc = getComponent().getLocationOnScreen();
     ListPopup popup = new ListPopup(" " + IdeBundle.message("title.popup.views") + " ", list, runnable, myProject);
     popup.show(loc.x + size.width / 2 - popup.getSize().width / 2, loc.y + size.height / 2 - popup.getSize().height / 2);
   }
@@ -789,7 +786,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
         return myIdeView;
       }
       if (DataConstantsEx.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
-        return getSelectedNodeElement() instanceof Module ? (DeleteProvider)myDeleteModuleProvider : myDeletePSIElementProvider;
+        return getSelectedNodeElement() instanceof Module ? myDeleteModuleProvider : myDeletePSIElementProvider;
       }
       if (DataConstantsEx.HELP_ID.equals(dataId)) {
         return HelpID.PROJECT_VIEWS;
@@ -1270,6 +1267,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
         myEditor = editor;
       }
 
+      @NotNull
       public Project getProject() {
         return myProject;
       }
@@ -1297,6 +1295,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
         return e;
       }
 
+      @NotNull
       public VirtualFile getVirtualFile() {
         return getPsiFile().getVirtualFile();
       }
@@ -1395,7 +1394,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     }
 
     private static int getClassPosition(final PsiClass aClass) {
-      if (aClass == null) {
+      if (aClass == null || !aClass.isValid()) {
         return 0;
       }
       int pos = ElementBase.getClassKind(aClass);

@@ -58,7 +58,7 @@ public class TreeState implements JDOMExternalizable {
     }
 
     public boolean matchedWithByIndex(NodeDescriptor nodeDescriptor) {
-      return Comparing.equal(myItemIndex, nodeDescriptor.getIndex());
+      return myItemIndex == nodeDescriptor.getIndex();
     }
 
     public boolean matchedWithByObject(NodeDescriptor nodeDescriptor) {
@@ -96,7 +96,7 @@ public class TreeState implements JDOMExternalizable {
     }
   }
 
-  private List<PathElement> readPath(final Element xmlPathElement) throws InvalidDataException {
+  private static List<PathElement> readPath(final Element xmlPathElement) throws InvalidDataException {
     final ArrayList<PathElement> result = new ArrayList<PathElement>();
     final List elements = xmlPathElement.getChildren(PATH_ELEMENT);
     for (final Object element : elements) {
@@ -120,7 +120,7 @@ public class TreeState implements JDOMExternalizable {
     }
   }
 
-  private void writeExternal(final Element pathXmlElement, final List<PathElement> path) throws WriteExternalException {
+  private static void writeExternal(final Element pathXmlElement, final List<PathElement> path) throws WriteExternalException {
     for (final PathElement aPath : path) {
       final Element pathXmlElementElement = new Element(PATH_ELEMENT);
       aPath.writeExternal(pathXmlElementElement);
@@ -135,7 +135,7 @@ public class TreeState implements JDOMExternalizable {
 
   private static List<List<PathElement>> createPaths(final JTree tree) {
     final ArrayList<List<PathElement>> result = new ArrayList<List<PathElement>>();
-    final java.util.List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(tree);
+    final List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(tree);
     for (final TreePath expandedPath : expandedPaths) {
       final List<PathElement> path = createPath(expandedPath);
       if (path != null) {
@@ -147,7 +147,7 @@ public class TreeState implements JDOMExternalizable {
 
   private static List<List<PathElement>> createExpandedPaths(JTree tree, final DefaultMutableTreeNode treeNode) {
     final ArrayList<List<PathElement>> result = new ArrayList<List<PathElement>>();
-    final java.util.List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(tree, new TreePath(treeNode.getPath()));
+    final List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(tree, new TreePath(treeNode.getPath()));
     for (final TreePath expandedPath : expandedPaths) {
       final List<PathElement> path = createPath(expandedPath);
       if (path != null) {
@@ -159,7 +159,7 @@ public class TreeState implements JDOMExternalizable {
 
   private static List<List<PathElement>> createSelectedPaths(JTree tree, final DefaultMutableTreeNode treeNode) {
     final ArrayList<List<PathElement>> result = new ArrayList<List<PathElement>>();
-    final java.util.List<TreePath> selectedPaths
+    final List<TreePath> selectedPaths
       = TreeUtil.collectSelectedPaths(tree, new TreePath(treeNode.getPath()));
     for (final TreePath expandedPath : selectedPaths) {
       final List<PathElement> path = createPath(expandedPath);
@@ -177,7 +177,7 @@ public class TreeState implements JDOMExternalizable {
       if (pathComponent instanceof DefaultMutableTreeNode) {
         final Object userObject = ((DefaultMutableTreeNode)pathComponent).getUserObject();
         if (userObject instanceof NodeDescriptor) {
-          final NodeDescriptor nodeDescriptor = ((NodeDescriptor)userObject);
+          final NodeDescriptor nodeDescriptor = (NodeDescriptor)userObject;
           //nodeDescriptor.update();
           result.add(new PathElement(getDescriptorKey(nodeDescriptor), getDescriptorType(nodeDescriptor), nodeDescriptor.getIndex(), nodeDescriptor));
         }
@@ -195,7 +195,7 @@ public class TreeState implements JDOMExternalizable {
   private static String getDescriptorKey(final NodeDescriptor nodeDescriptor) {
     if (nodeDescriptor instanceof AbstractTreeNode) {
       final Object value = ((AbstractTreeNode)nodeDescriptor).getValue();
-      if (value instanceof PsiElement) {
+      if (value instanceof PsiElement && ((PsiElement)value).isValid()) {
         // for PsiElements only since they define toString() correctly
         return value.toString();
       }
@@ -230,39 +230,39 @@ public class TreeState implements JDOMExternalizable {
   }
 
 
-  private void applyTo(final List<PathElement> path, final JTree tree) {
+  private static void applyTo(final List<PathElement> path, final JTree tree) {
     applyTo(0, path, tree.getModel().getRoot(), tree);
   }
 
-  private DefaultMutableTreeNode findMatchedChild(DefaultMutableTreeNode parent, PathElement pathElement) {
+  private static DefaultMutableTreeNode findMatchedChild(DefaultMutableTreeNode parent, PathElement pathElement) {
 
     for (int j = 0; j < parent.getChildCount(); j++) {
       final TreeNode child = parent.getChildAt(j);
       if (!(child instanceof DefaultMutableTreeNode)) continue;
-      final DefaultMutableTreeNode childNode = ((DefaultMutableTreeNode)child);
+      final DefaultMutableTreeNode childNode = (DefaultMutableTreeNode)child;
       final Object userObject = childNode.getUserObject();
       if (!(userObject instanceof NodeDescriptor)) continue;
-      final NodeDescriptor nodeDescriptor = ((NodeDescriptor)userObject);
+      final NodeDescriptor nodeDescriptor = (NodeDescriptor)userObject;
       if (pathElement.matchedWithByObject(nodeDescriptor)) return childNode;
     }
 
     for (int j = 0; j < parent.getChildCount(); j++) {
       final TreeNode child = parent.getChildAt(j);
       if (!(child instanceof DefaultMutableTreeNode)) continue;
-      final DefaultMutableTreeNode childNode = ((DefaultMutableTreeNode)child);
+      final DefaultMutableTreeNode childNode = (DefaultMutableTreeNode)child;
       final Object userObject = childNode.getUserObject();
       if (!(userObject instanceof NodeDescriptor)) continue;
-      final NodeDescriptor nodeDescriptor = ((NodeDescriptor)userObject);
+      final NodeDescriptor nodeDescriptor = (NodeDescriptor)userObject;
       if (pathElement.matchedWith(nodeDescriptor)) return childNode;
     }
 
     for (int j = 0; j < parent.getChildCount(); j++) {
       final TreeNode child = parent.getChildAt(j);
       if (!(child instanceof DefaultMutableTreeNode)) continue;
-      final DefaultMutableTreeNode childNode = ((DefaultMutableTreeNode)child);
+      final DefaultMutableTreeNode childNode = (DefaultMutableTreeNode)child;
       final Object userObject = childNode.getUserObject();
       if (!(userObject instanceof NodeDescriptor)) continue;
-      final NodeDescriptor nodeDescriptor = ((NodeDescriptor)userObject);
+      final NodeDescriptor nodeDescriptor = (NodeDescriptor)userObject;
       if (pathElement.matchedWithByIndex(nodeDescriptor)) return childNode;
     }
 
@@ -270,16 +270,16 @@ public class TreeState implements JDOMExternalizable {
 
   }
 
-  private boolean applyTo(final int positionInPath, final List<PathElement> path, final Object root, JTree tree) {
+  private static boolean applyTo(final int positionInPath, final List<PathElement> path, final Object root, JTree tree) {
     if (!(root instanceof DefaultMutableTreeNode)) return false;
 
-    final DefaultMutableTreeNode treeNode = ((DefaultMutableTreeNode)root);
+    final DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)root;
 
     final Object userObject = treeNode.getUserObject();
 
     if (!(userObject instanceof NodeDescriptor)) return false;
 
-    final NodeDescriptor nodeDescriptor = ((NodeDescriptor)userObject);
+    final NodeDescriptor nodeDescriptor = (NodeDescriptor)userObject;
 
     final PathElement pathElement = path.get(positionInPath);
 
@@ -306,10 +306,10 @@ public class TreeState implements JDOMExternalizable {
     return true;
   }
 
-  private void applySelectedTo(final int positionInPath, final List<PathElement> path, final Object root, JTree tree) {
+  private static void applySelectedTo(final int positionInPath, final List<PathElement> path, final Object root, JTree tree) {
     if (!(root instanceof DefaultMutableTreeNode)) return;
 
-    final DefaultMutableTreeNode treeNode = ((DefaultMutableTreeNode)root);
+    final DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)root;
 
     if (positionInPath == path.size()) {
       TreeUtil.selectPath(tree, new TreePath(treeNode.getPath()));
