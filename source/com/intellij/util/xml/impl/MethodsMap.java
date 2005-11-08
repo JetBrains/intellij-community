@@ -8,10 +8,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.SubTag;
-import com.intellij.util.xml.SubTagList;
-import com.intellij.util.xml.NameStrategy;
+import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +21,7 @@ import java.util.*;
 /**
  * @author peter
  */
-public class MethodsMap implements DomMethodsInfo{
+public class MethodsMap implements DomMethodsInfo {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.MethodsMap");
 
   private Class<? extends DomElement> myClass;

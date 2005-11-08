@@ -56,7 +56,7 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     synchronized (PsiLock.LOCK) {
       if (myRootValue == null) {
         final XmlTag tag = getRootTag();
-        final DomRootInvocationHandler<T> handler = new DomRootInvocationHandler<T>(myRootElementClass, tag, this, myRootTagName);
+        final DomRootInvocationHandler handler = new DomRootInvocationHandler(myRootElementClass, tag, this, myRootTagName);
         myRootValue = (T)myManager.createDomElement(myRootElementClass, tag, handler);
       }
       return myRootValue;

@@ -6,14 +6,13 @@ package com.intellij.util.xml.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.xml.DomElement;
 
 import java.lang.reflect.Type;
 
 /**
  * @author peter
  */
-public class IndexedElementInvocationHandler<T extends DomElement> extends DomInvocationHandler<T>{
+public class IndexedElementInvocationHandler extends DomInvocationHandler{
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.IndexedElementInvocationHandler");
   private final int myIndex;
 
@@ -38,8 +37,11 @@ public class IndexedElementInvocationHandler<T extends DomElement> extends DomIn
 
   public void undefine() throws IllegalAccessException, InstantiationException {
     final DomInvocationHandler parent = getParentHandler();
+    final XmlTag parentTag = parent.getXmlTag();
+    if (parentTag == null) return;
+
     parent.checkInitialized();
-    final XmlTag[] subTags = parent.getXmlTag().findSubTags(getTagName());
+    final XmlTag[] subTags = parentTag.findSubTags(getTagName());
     if (subTags.length <= myIndex) {
       return;
     }

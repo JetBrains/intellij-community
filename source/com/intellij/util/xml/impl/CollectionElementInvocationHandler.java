@@ -12,9 +12,9 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author peter
  */
-public class CollectionElementInvocationHandler<T extends DomElement> extends DomInvocationHandler<T>{
+public class CollectionElementInvocationHandler extends DomInvocationHandler{
 
-  public CollectionElementInvocationHandler(final Class<T> aClass,
+  public CollectionElementInvocationHandler(final Class aClass,
                                             @NotNull final XmlTag tag,
                                             final DomInvocationHandler parent) {
     super(aClass, tag, parent, tag.getName(), parent.getManager());

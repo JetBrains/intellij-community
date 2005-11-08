@@ -4,8 +4,6 @@
 package com.intellij.util.xml;
 
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.xml.impl.DomFileElementImpl;
-import com.intellij.util.xml.impl.DomMethodsInfo;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -16,7 +14,7 @@ public interface DomElement {
   @Nullable
   XmlTag getXmlTag();
 
-  DomFileElementImpl getRoot();
+  DomFileElement getRoot();
 
   DomElement getParent();
 

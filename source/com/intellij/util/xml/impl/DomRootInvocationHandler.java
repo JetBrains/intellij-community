@@ -13,12 +13,12 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author peter
  */
-public class DomRootInvocationHandler<T extends DomElement> extends DomInvocationHandler<T> {
+public class DomRootInvocationHandler extends DomInvocationHandler {
   private DomFileElementImpl myParent;
 
-  public DomRootInvocationHandler(final Class<T> aClass,
+  public DomRootInvocationHandler(final Class aClass,
                                   final XmlTag tag,
-                                  final DomFileElementImpl<T> fileElement,
+                                  final DomFileElementImpl fileElement,
                                   @NotNull final String tagName
   ) {
     super(aClass, tag, null, tagName, fileElement.getManager());
