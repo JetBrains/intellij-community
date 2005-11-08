@@ -437,7 +437,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
       public CachedValueProvider.Result<TypeDescriptor> compute() {
         final String name = tag.getAttributeValue("name");
         
-        if (name != null && !name.equals(XmlUtil.findLocalNameByQualifiedName(pair.first))) {
+        if (name != null && pair.first != null && !name.equals(XmlUtil.findLocalNameByQualifiedName(pair.first))) {
           myTypesMap.remove(pair);
           return new Result<TypeDescriptor>(null);
         }
