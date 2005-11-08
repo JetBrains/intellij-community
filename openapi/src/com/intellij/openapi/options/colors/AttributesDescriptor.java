@@ -17,19 +17,41 @@ package com.intellij.openapi.options.colors;
 
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 
+/**
+ * Describes a text attribute key the attributes for which can be configured in a custom
+ * colors and fonts page.
+ *
+ * @see ColorSettingsPage#getAttributeDescriptors()
+ */
 public final class AttributesDescriptor {
   private final TextAttributesKey myKey;
   private final String myDisplayName;
 
+  /**
+   * Creates an attribute descriptor with the specified name and text attributes key.
+   *
+   * @param displayName the name of the attribute shown in the colors list.
+   * @param key         the attributes key for which the colors are specified.
+   */
   public AttributesDescriptor(String displayName, TextAttributesKey key) {
     myKey = key;
     myDisplayName = displayName;
   }
 
+  /**
+   * Returns the attributes key for which the colors are specified.
+   *
+   * @return the attributes key.
+   */
   public TextAttributesKey getKey() {
     return myKey;
   }
 
+  /**
+   * Returns the name of the attribute shown in the colors list.
+   *
+   * @return the name of the attribute.
+   */
   public String getDisplayName() {
     return myDisplayName;
   }

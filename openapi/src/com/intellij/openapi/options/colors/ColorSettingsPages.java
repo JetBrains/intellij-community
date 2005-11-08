@@ -17,11 +17,30 @@ package com.intellij.openapi.options.colors;
 
 import com.intellij.openapi.application.ApplicationManager;
 
+/**
+ * Registry for custom pages shown in the "Colors and Fonts" settings dialog.
+ */
 public abstract class ColorSettingsPages {
+  /**
+   * Gets the global instance of the registry.
+   *
+   * @return the registry instance.
+   */
   public static ColorSettingsPages getInstance() {
     return ApplicationManager.getApplication().getComponent(ColorSettingsPages.class);
   }
 
+  /**
+   * Registers a custom page for the "Colors and Fonts" settings dialog.
+   *
+   * @param page the instance of the page to register.
+   */
   public abstract void registerPage(ColorSettingsPage page);
+
+  /**
+   * Returns the list of all registered pages in the "Colors and Fonts" dialog.
+   *
+   * @return the list of registered pages.
+   */
   public abstract ColorSettingsPage[] getRegisteredPages();
 }

@@ -17,6 +17,11 @@ package com.intellij.openapi.options.colors;
 
 import com.intellij.openapi.editor.colors.ColorKey;
 
+/**
+ * Describes a color which can be configured in a custom colors and fonts page.
+ *
+ * @see ColorSettingsPage#getColorDescriptors()
+ */
 public final class ColorDescriptor {
   public static final class Kind {
     public final static Kind BACKGROUND = new Kind();
@@ -28,20 +33,42 @@ public final class ColorDescriptor {
   private String myDisplayName;
   private ColorKey myKey;
 
+  /**
+   * Creates a color descriptor with the specified name and color key.
+   *
+   * @param displayName the name of the color shown in the colors list.
+   * @param key         the color key for which the color is specified.
+   * @param kind        the type of color corresponding to the color key (foreground or background).
+   */
   public ColorDescriptor(String displayName, ColorKey key, Kind kind) {
     myKind = kind;
     myDisplayName = displayName;
     myKey = key;
   }
 
+  /**
+   * Returns the type of color corresponding to the color key (foreground or background).
+   *
+   * @return the type of color.
+   */
   public Kind getKind() {
     return myKind;
   }
 
+  /**
+   * Returns the name of the color shown in the colors list.
+   *
+   * @return the name of the color.
+   */
   public String getDisplayName() {
     return myDisplayName;
   }
 
+  /**
+   * Returns the color key for which the color is specified.
+   *
+   * @return the color key.
+   */
   public ColorKey getKey() {
     return myKey;
   }
