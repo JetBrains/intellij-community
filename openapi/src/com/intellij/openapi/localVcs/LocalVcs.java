@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.localVcs;
 
-import com.intellij.openapi.components.SettingsSavingComponent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -30,8 +29,6 @@ public abstract class LocalVcs {
   }
 
   public abstract Project getProject();
-
-  public abstract VirtualFile[] getCoveredDirectories();
 
   public abstract String[] getRootPaths();
 
@@ -50,8 +47,6 @@ public abstract class LocalVcs {
   public abstract LvcsLabel addLabel(String name, String path);
 
   public abstract LvcsLabel addLabel(byte type, String name, String path);
-
-  public abstract LvcsAction startExternalChangesAction();
 
   public abstract LvcsAction startAction(String action, String path, boolean isExternalChanges);
 
