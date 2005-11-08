@@ -10,7 +10,6 @@ import java.awt.*;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.UnsupportedFlavorException;
-import java.awt.dnd.DropTargetDragEvent;
 import java.io.IOException;
 
 import javax.swing.*;
@@ -107,12 +106,6 @@ public class DraggedComponentList implements Transferable {
         }
       }
     }
-
-    /*
-
-    myEditor.refresh();
-    myLastPoint=e.getPoint();
-    */
   }
 
   public static DraggedComponentList pickupSelection(final GuiEditor editor, final int x, final int y) {
@@ -120,8 +113,7 @@ public class DraggedComponentList implements Transferable {
   }
 
   @Nullable
-  public static DraggedComponentList fromDropTargetDragEvent(final DropTargetDragEvent dtde) {
-    Transferable transferable = dtde.getTransferable();
+  public static DraggedComponentList fromTransferable(final Transferable transferable) {
     if (transferable.isDataFlavorSupported(ourDataFlavor)) {
       Object data;
       try {
