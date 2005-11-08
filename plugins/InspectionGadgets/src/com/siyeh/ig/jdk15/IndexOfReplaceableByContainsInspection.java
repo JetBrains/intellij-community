@@ -108,7 +108,6 @@ public class IndexOfReplaceableByContainsInspection
         final PsiExpression qualifierExpression = methodExpression
                 .getQualifierExpression();
         final PsiExpressionList argumentList = call.getArgumentList();
-        assert argumentList != null;
         final PsiExpression expression = argumentList.getExpressions()[0];
         @NonNls final String newExpressionText =
                 qualifierExpression.getText() + ".contains(" +
@@ -216,15 +215,12 @@ public class IndexOfReplaceableByContainsInspection
                 return false;
             }
             final PsiExpressionList argumentList = expression.getArgumentList();
-            if (argumentList == null) {
-                return false;
-            }
             final PsiExpression[] args = argumentList.getExpressions();
             if (args.length != 1) {
                 return false;
             }
             final PsiType type = args[0].getType();
-            if (!type.equalsToText("java.lang.String")) {
+            if (type != null && !type.equalsToText("java.lang.String")) {
                 return false;
             }
             final PsiExpression qualifier =
@@ -233,7 +229,7 @@ public class IndexOfReplaceableByContainsInspection
                 return false;
             }
             final PsiType qualifierType = qualifier.getType();
-            return qualifierType.equalsToText("java.lang.String");
+            return qualifierType != null && qualifierType.equalsToText("java.lang.String");
         }
     }
 }
