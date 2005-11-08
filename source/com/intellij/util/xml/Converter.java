@@ -53,29 +53,14 @@ public interface Converter<T> {
     }
   };
 
-  Converter<PsiClassReference> PSI_CLASS_REFERENCE_CONVERTER = new Converter<PsiClassReference>() {
-    public PsiClassReference fromString(final String s, final ConvertContext context) throws ConvertFormatException {
-      return new PsiClassReference() {
-        public final String getClassName() {
-          return s;
-        }
-
-        public final boolean hasClass() {
-          return getPsiClass() != null;
-        }
-
-        public final PsiClass getPsiClass() {
-          return context.findClass(getClassName());
-        }
-
-        public final String getValue() {
-          return s;
-        }
-      };
+  Converter<PsiClass> PSI_CLASS_CONVERTER = new Converter<PsiClass>() {
+    public PsiClass fromString(final String s, final ConvertContext context) throws ConvertFormatException {
+      return context.findClass(s);
     }
 
-    public String toString(final PsiClassReference t, final ConvertContext context) {
-      return t.getClassName();
+    public String toString(final PsiClass t, final ConvertContext context) {
+      return t.getQualifiedName();
     }
   };
+
 }

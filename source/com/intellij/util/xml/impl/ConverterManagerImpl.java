@@ -4,6 +4,7 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.util.xml.*;
+import com.intellij.psi.PsiClass;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +25,7 @@ public class ConverterManagerImpl implements ConverterManager {
     registerConverter(boolean.class, Converter.BOOLEAN_CONVERTER);
     registerConverter(Boolean.class, Converter.BOOLEAN_CONVERTER);
     registerConverter(String.class, Converter.EMPTY_CONVERTER);
-    registerConverter(PsiClassReference.class, Converter.PSI_CLASS_REFERENCE_CONVERTER);
+    registerConverter(PsiClass.class, Converter.PSI_CLASS_CONVERTER);
   }
 
   @NotNull
