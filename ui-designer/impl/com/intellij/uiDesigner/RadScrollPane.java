@@ -5,28 +5,39 @@ import com.intellij.uiDesigner.core.AbstractLayout;
 
 import javax.swing.*;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
 public final class RadScrollPane extends RadContainer{
   public static final Class COMPONENT_CLASS = JScrollPane.class;
-  
+
   public RadScrollPane(final Module module, final String id){
     super(module, COMPONENT_CLASS, id);
   }
 
+  @Nullable
   protected AbstractLayout createInitialLayout(){
     return null;
   }
 
   public boolean canDrop(final int x, final int y, final int componentCount){
+    return canDrop(componentCount);
+  }
+
+  public boolean canDrop(int componentCount) {
     return componentCount == 1 && getComponentCount() == 0;
   }
 
   public DropInfo drop(final int x, final int y, final RadComponent[] components, final int[] dx, final int[] dy){
     addComponent(components[0]);
     return new DropInfo(this, null, null);
+  }
+
+  public void drop(RadComponent[] components) {
+    addComponent(components [0]);
   }
 
   protected void addToDelegee(final RadComponent component){

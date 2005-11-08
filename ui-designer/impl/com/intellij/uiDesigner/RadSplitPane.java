@@ -33,7 +33,26 @@ public final class RadSplitPane extends RadContainer{
       component = getSplitPane().getRightComponent();
     }
     
+    return isEmptySplitComponent(component);
+  }
+
+  private boolean isEmptySplitComponent(final Component component) {
     return component == null || ((JComponent)component).getClientProperty(RadComponent.CLIENT_PROP_RAD_COMPONENT) == null;
+  }
+
+  public boolean canDrop(int componentCount) {
+    /*
+    TODO[yole]: support multi-drop (is it necessary?)
+    if (componentCount == 2) {
+      return isEmptySplitComponent(getSplitPane().getLeftComponent()) &&
+             isEmptySplitComponent(getSplitPane().getRightComponent());
+    }
+    */
+    if (componentCount == 1) {
+      return isEmptySplitComponent(getSplitPane().getLeftComponent()) ||
+             isEmptySplitComponent(getSplitPane().getRightComponent());
+    }
+    return false;
   }
 
   private boolean isLeft(final int x, final int y){
@@ -54,6 +73,13 @@ public final class RadSplitPane extends RadContainer{
     components[0].setCustomLayoutConstraints(isLeft(x,y) ? LwSplitPane.POSITION_LEFT  : LwSplitPane.POSITION_RIGHT);
     addComponent(components[0]);
     return new DropInfo(this, null, null);
+  }
+
+  public void drop(RadComponent[] components) {
+    components[0].setCustomLayoutConstraints(isEmptySplitComponent(getSplitPane().getLeftComponent())
+                                             ? LwSplitPane.POSITION_LEFT
+                                             : LwSplitPane.POSITION_RIGHT);
+    addComponent(components[0]);
   }
 
   protected void addToDelegee(final RadComponent component){

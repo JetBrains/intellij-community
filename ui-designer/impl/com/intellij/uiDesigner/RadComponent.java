@@ -49,7 +49,7 @@ public abstract class RadComponent implements IComponent {
   /**
    * Component id is unique per RadRootContainer.
    */
-  private final String myId;
+  @NotNull private final String myId;
   /**
    * @see #getBinding()
    */
@@ -120,7 +120,7 @@ public abstract class RadComponent implements IComponent {
   }
 
   /**
-   * @return module for the component. Never returns <code>null</code>.
+   * @return module for the component.
    */
   @NotNull
   public final Module getModule() {
@@ -151,8 +151,9 @@ public abstract class RadComponent implements IComponent {
   }
 
   /**
-   * @return the component's id. It is unique within the form. Never null.
+   * @return the component's id. It is unique within the form.
    */
+  @NotNull
   public final String getId(){
     return myId;
   }
@@ -168,7 +169,7 @@ public abstract class RadComponent implements IComponent {
 
   /**
    * @return Swing delegee component. The <code>RadComponent</code> has the same
-   * delegee during all its life. The method never returns <code>null</code>.
+   * delegee during all its life.
    */
   @NotNull
   public final JComponent getDelegee(){
@@ -187,10 +188,12 @@ public abstract class RadComponent implements IComponent {
    * any inplace property. Please not the method can return different
    * instances of the property for each invokation.
    */
+  @Nullable
   public Property getInplaceProperty(final int x, final int y){
     return getDefaultInplaceProperty(); 
   }
 
+  @Nullable
   public Property getDefaultInplaceProperty() {
     return Palette.getInstance(myModule.getProject()).getInplaceProperty(getComponentClass());
   }
@@ -255,7 +258,7 @@ public abstract class RadComponent implements IComponent {
   }
 
   /**
-   * @return component's constarints. The method never returns <code>null</code>.
+   * @return component's constarints.
    */
   @NotNull
   public final GridConstraints getConstraints(){
@@ -395,6 +398,7 @@ public abstract class RadComponent implements IComponent {
    * @param componentCount number of components to be dropped; always > 0
    */
   public abstract boolean canDrop(int x, int y, int componentCount);
+  public abstract boolean canDrop(int componentCount);
 
   public void processMouseEvent(final MouseEvent event) {}
 

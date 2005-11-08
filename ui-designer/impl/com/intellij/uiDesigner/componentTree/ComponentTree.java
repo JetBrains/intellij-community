@@ -26,10 +26,15 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.dnd.*;
+import java.awt.datatransfer.Transferable;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.HashMap;
+
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Anton Katilin
@@ -47,6 +52,7 @@ public final class ComponentTree extends Tree implements DataProvider {
 
   private final GuiEditor myEditor;
   private final QuickFixManager myQuickFixManager;
+  private RadComponent myDropTargetComponent = null;
 
   public ComponentTree(final GuiEditor editor) {
     super(new DefaultTreeModel(new DefaultMutableTreeNode()));
@@ -84,6 +90,18 @@ public final class ComponentTree extends Tree implements DataProvider {
       new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0)),
       this
     );
+
+    setDragEnabled(true);
+    setTransferHandler(new TransferHandler() {
+      public int getSourceActions(JComponent c) {
+        return DnDConstants.ACTION_COPY_OR_MOVE;
+      }
+
+      protected Transferable createTransferable(JComponent c) {
+        return DraggedComponentList.pickupSelection(myEditor);
+      }
+    });
+    setDropTarget(new DropTarget(this, new MyDropTargetListener()));
   }
 
   public void updateIntentionHintVisibility() {
@@ -97,9 +115,21 @@ public final class ComponentTree extends Tree implements DataProvider {
     myQuickFixManager.hideIntentionHint();
   }
 
+  @Nullable
   public String getToolTipText(final MouseEvent e) {
     final TreePath path = getPathForLocation(e.getX(), e.getY());
-    String text = null;
+    final RadComponent component = getComponentFromPath(path);
+    if (component != null) {
+      final ErrorInfo errorInfo = ErrorAnalyzer.getErrorForComponent(component);
+      if (errorInfo != null) {
+        return errorInfo.myDescription;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private RadComponent getComponentFromPath(TreePath path) {
     if (path != null) {
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
       LOG.assertTrue(node != null);
@@ -107,17 +137,14 @@ public final class ComponentTree extends Tree implements DataProvider {
       if (userObject instanceof ComponentPtrDescriptor) {
         final NodeDescriptor descriptor = (NodeDescriptor)userObject;
         final ComponentPtr ptr = (ComponentPtr)descriptor.getElement();
-        if (ptr.isValid()) {
+        if (ptr != null && ptr.isValid()) {
           final RadComponent component = ptr.getComponent();
           LOG.assertTrue(component != null);
-          final ErrorInfo errorInfo = ErrorAnalyzer.getErrorForComponent(component);
-          if (errorInfo != null) {
-            text = errorInfo.myDescription;
-          }
+          return component;
         }
       }
     }
-    return text;
+    return null;
   }
 
   /**
@@ -126,6 +153,7 @@ public final class ComponentTree extends Tree implements DataProvider {
    * @return first selected component. The method returns <code>null</code>
    *         if there is no selection in the tree.
    */
+  @Nullable
   public RadComponent getSelectedComponent() {
     final RadComponent[] selectedComponents = getSelectedComponents();
     return selectedComponents.length > 0 ? selectedComponents[0] : null;
@@ -142,13 +170,13 @@ public final class ComponentTree extends Tree implements DataProvider {
       return RadComponent.EMPTY_ARRAY;
     }
     final ArrayList<RadComponent> result = new ArrayList<RadComponent>(paths.length);
-    for (int i = 0; i < paths.length; i++) {
-      final DefaultMutableTreeNode node = (DefaultMutableTreeNode)paths[i].getLastPathComponent();
+    for (TreePath path : paths) {
+      final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
       LOG.assertTrue(node != null);
       if (node.getUserObject() instanceof ComponentPtrDescriptor) {
         final ComponentPtrDescriptor descriptor = (ComponentPtrDescriptor)node.getUserObject();
         final ComponentPtr ptr = (ComponentPtr)descriptor.getElement();
-        LOG.assertTrue(ptr.isValid());
+        LOG.assertTrue(ptr != null && ptr.isValid());
         result.add(ptr.getComponent());
       }
     }
@@ -190,9 +218,7 @@ public final class ComponentTree extends Tree implements DataProvider {
 
     final PsiField[] fields = aClass.getFields();
 
-    for (int i = 0; i < fields.length; i++) {
-      final PsiField field = fields[i];
-
+    for (final PsiField field : fields) {
       if (binding.equals(field.getName())) {
         return EditSourceUtil.getDescriptor(field);
       }
@@ -201,9 +227,9 @@ public final class ComponentTree extends Tree implements DataProvider {
     return null;
   }
 
-  private SimpleTextAttributes getAttribute(final SimpleTextAttributes attrs, final boolean error) {
+  private SimpleTextAttributes getAttribute(@NotNull final SimpleTextAttributes attrs, final boolean error) {
+    //noinspection ConstantConditions
     if (attrs == null) {
-      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("attrs cannot be null");
     }
     if (!error) {
@@ -229,7 +255,7 @@ public final class ComponentTree extends Tree implements DataProvider {
     myBindingAttributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, UIUtil.getTreeForeground());
     myClassAttributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, UIUtil.getTreeForeground());
     myPackageAttributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, Color.GRAY);
-    myUnknownAttributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN | SimpleTextAttributes.STYLE_WAVED, Color.RED);
+    myUnknownAttributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_WAVED, Color.RED);
   }
 
   private final class MyTreeCellRenderer extends ColoredTreeCellRenderer {
@@ -246,6 +272,7 @@ public final class ComponentTree extends Tree implements DataProvider {
       if (node.getUserObject() instanceof ComponentPtrDescriptor) {
         final ComponentPtrDescriptor descriptor = (ComponentPtrDescriptor)node.getUserObject();
         final ComponentPtr ptr = (ComponentPtr)descriptor.getElement();
+        LOG.assertTrue(ptr != null);
         final RadComponent component = ptr.getComponent();
         LOG.assertTrue(component != null);
 
@@ -316,7 +343,58 @@ public final class ComponentTree extends Tree implements DataProvider {
         else {
           setIcon(IconLoader.getIcon("/com/intellij/uiDesigner/icons/error-small.png"));
         }
+
+        if (component == myDropTargetComponent) {
+          setBorder(BorderFactory.createLineBorder(Color.BLUE, 2));
+        }
       }
+    }
+  }
+
+  private final class MyDropTargetListener extends DropTargetAdapter {
+    public void dragOver(DropTargetDragEvent dtde) {
+      RadComponent dropTargetComponent = null;
+      final DraggedComponentList dcl = DraggedComponentList.fromTransferable(dtde.getTransferable());
+      if (dcl != null) {
+        final TreePath path = getPathForLocation((int) dtde.getLocation().getX(),
+                                                 (int) dtde.getLocation().getY());
+        final RadComponent targetComponent = getComponentFromPath(path);
+        if (path != null && targetComponent != null && targetComponent.canDrop(dcl.getComponents().size())) {
+          dropTargetComponent = targetComponent;
+          dtde.acceptDrag(dtde.getDropAction());
+        }
+        else {
+          dtde.rejectDrag();
+        }
+      }
+      else {
+        dtde.rejectDrag();
+      }
+      if (dropTargetComponent != myDropTargetComponent) {
+        myDropTargetComponent = dropTargetComponent;
+        repaint();
+      }
+    }
+
+    public void dragExit(DropTargetEvent dte) {
+      myDropTargetComponent = null;
+      repaint();
+    }
+
+    public void drop(DropTargetDropEvent dtde) {
+      final DraggedComponentList dcl = DraggedComponentList.fromTransferable(dtde.getTransferable());
+      if (dcl != null) {
+        final TreePath path = getPathForLocation((int) dtde.getLocation().getX(),
+                                                 (int) dtde.getLocation().getY());
+        final RadComponent targetComponent = getComponentFromPath(path);
+        if (targetComponent != null && targetComponent instanceof RadContainer) {
+          RadContainer container = (RadContainer) targetComponent;
+          RadComponent[] components = dcl.getComponents().toArray(new RadComponent [dcl.getComponents().size()]);
+          container.drop(components);
+        }
+      }
+      myDropTargetComponent = null;
+      repaint();
     }
   }
 }

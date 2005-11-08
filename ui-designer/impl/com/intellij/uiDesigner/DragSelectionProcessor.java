@@ -138,17 +138,34 @@ public final class DragSelectionProcessor extends EventProcessor {
       DraggedComponentList dcl = DraggedComponentList.fromTransferable(dtde.getTransferable());
       if (dcl != null) {
         myDraggedComponentList = dcl;
-        processDragEnter(dcl);
+        processDragEnter(dcl, dtde.getLocation());
         dtde.acceptDrag(dtde.getDropAction());
         myLastPoint = dtde.getLocation();
       }
     }
 
-    private void processDragEnter(final DraggedComponentList draggedComponentList) {
+    private void processDragEnter(final DraggedComponentList draggedComponentList, final Point location) {
       // Remove components from their parents.
       final java.util.List<RadComponent> dragComponents = draggedComponentList.getComponents();
       for (final RadComponent c : dragComponents) {
         c.getParent().removeComponent(c);
+      }
+
+      Rectangle allBounds = null;
+      if (!draggedComponentList.hasDragDelta()) {
+        final RadContainer[] originalParents = draggedComponentList.getOriginalParents();
+        final Rectangle[] originalBounds = draggedComponentList.getOriginalBounds();
+        for(int i=0; i<originalParents.length; i++) {
+          Rectangle rc = SwingUtilities.convertRectangle(originalParents [i].getDelegee(),
+                                                         originalBounds [i],
+                                                         myEditor.getDragLayer());
+          if (allBounds == null) {
+            allBounds = rc;
+          }
+          else {
+            allBounds = allBounds.union(rc);
+          }
+        }
       }
 
       // Place selected components to the drag layer.
@@ -159,9 +176,15 @@ public final class DragSelectionProcessor extends EventProcessor {
           delegee.getLocation(),
           myEditor.getDragLayer()
         );
-        delegee.setLocation(point);
+        if (draggedComponentList.hasDragDelta()) {
+          delegee.setLocation((int) point.getX() + draggedComponentList.getDragDeltaX(),
+                              (int) point.getY() + draggedComponentList.getDragDeltaY());
+        }
+        else {
+          delegee.setLocation((int) (point.getX() - allBounds.getX() + location.getX()),
+                              (int) (point.getY() - allBounds.getY() + location.getY()));
+        }
         myEditor.getDragLayer().add(delegee);
-        c.shift(draggedComponentList.getDragDeltaX(), draggedComponentList.getDragDeltaY());
       }
     }
 

@@ -15,6 +15,10 @@ public class RadAtomicComponent extends RadComponent {
     return false;
   }
 
+  public final boolean canDrop(int componentCount) {
+    return false;
+  }
+
   public void write(final XmlWriter writer) {
     writer.startElement("component");
     try{

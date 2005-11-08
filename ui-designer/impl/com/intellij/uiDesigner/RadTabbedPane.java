@@ -12,6 +12,7 @@ import com.intellij.uiDesigner.propertyInspector.editors.string.StringEditor;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.plaf.TabbedPaneUI;
@@ -39,12 +40,20 @@ public final class RadTabbedPane extends RadContainer{
   }
 
   public boolean canDrop(final int x, final int y, final int componentCount){
+    return canDrop(componentCount);
+  }
+
+  public boolean canDrop(int componentCount) {
     return componentCount == 1;
   }
 
   public DropInfo drop(final int x, final int y, final RadComponent[] components, final int[] dx, final int[] dy){
     addComponent(components[0]);
     return new DropInfo(this, null, null);
+  }
+
+  public void drop(RadComponent[] components) {
+    addComponent(components [0]);
   }
 
   /**
@@ -66,7 +75,7 @@ public final class RadTabbedPane extends RadContainer{
     component.setCustomLayoutConstraints(null);
     tabbedPane.addTab(calcTabName(titleDescriptor), component.getDelegee());
     if (titleDescriptor != null) {
-      getIndex2Descriptor(this).put(new Integer(tabbedPane.getTabCount() - 1), titleDescriptor);
+      getIndex2Descriptor(this).put(tabbedPane.getTabCount() - 1, titleDescriptor);
     }
   }
 
@@ -90,7 +99,7 @@ public final class RadTabbedPane extends RadContainer{
       //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("cannot find tab for " + component);
     }
-    StringDescriptor titleDescriptor = getIndex2Descriptor(this).get(new Integer(i));
+    StringDescriptor titleDescriptor = getIndex2Descriptor(this).get(i);
     if (titleDescriptor == null) {
       titleDescriptor = StringDescriptor.create(tabbedPane.getTitleAt(i));
     }
@@ -171,7 +180,7 @@ public final class RadTabbedPane extends RadContainer{
       }
 
       final HashMap<Integer, StringDescriptor> index2Descriptor = getIndex2Descriptor(this);
-      final StringDescriptor tabTitleDescriptor = index2Descriptor.get(new Integer(i));
+      final StringDescriptor tabTitleDescriptor = index2Descriptor.get(i);
       if (tabTitleDescriptor != null) {
         writer.writeStringDescriptor(tabTitleDescriptor,
                                      UIFormXmlConstants.ATTRIBUTE_TITLE,
@@ -188,9 +197,7 @@ public final class RadTabbedPane extends RadContainer{
     }
   }
 
-  /**
-   * @return never returns <code>null</code>.
-   */
+  @NotNull
   private HashMap<Integer, StringDescriptor> getIndex2Descriptor(final RadComponent component){
     HashMap<Integer, StringDescriptor> index2Descriptor = (HashMap<Integer, StringDescriptor>)component.getClientProperty(CLIENT_PROP_INDEX_2_DESCRIPTOR);
     if(index2Descriptor == null){
@@ -215,7 +222,7 @@ public final class RadTabbedPane extends RadContainer{
 
     public Object getValue(final RadComponent component) {
       // 1. resource bundle
-      final StringDescriptor descriptor = getIndex2Descriptor(component).get(new Integer(myIndex));
+      final StringDescriptor descriptor = getIndex2Descriptor(component).get(myIndex);
       if(descriptor != null){
         return descriptor;
       }
@@ -229,10 +236,10 @@ public final class RadTabbedPane extends RadContainer{
       final StringDescriptor descriptor = (StringDescriptor)value;
       final HashMap<Integer, StringDescriptor> index2Descriptor = getIndex2Descriptor(component);
       if(descriptor == null || descriptor.getBundleName() == null){
-        index2Descriptor.remove(new Integer(myIndex));
+        index2Descriptor.remove(myIndex);
       }
       else{
-        index2Descriptor.put(new Integer(myIndex), descriptor);
+        index2Descriptor.put(myIndex, descriptor);
       }
 
       // 2. Apply real string value to JComponent peer

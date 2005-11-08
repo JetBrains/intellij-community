@@ -96,6 +96,7 @@ public class RadContainer extends RadComponent implements IContainer {
     return super.getInplaceEditorBounds(property, x, y);
   }
 
+  @Nullable
   protected AbstractLayout createInitialLayout(){
     return new XYLayoutManagerImpl();
   }
@@ -243,6 +244,13 @@ public class RadContainer extends RadComponent implements IContainer {
     }
   }
 
+  public boolean canDrop(int componentCount) {
+    if (isXY() || componentCount > 1) {
+      return false;
+    }
+    return getComponentAtGrid(0, 0) == null;
+  }
+
   @Nullable
   public RadComponent getComponentAtGrid(final int row, final int column) {
     // If the target cell is not empty does not allow drop.
@@ -308,7 +316,7 @@ public class RadContainer extends RadComponent implements IContainer {
     }
   }
 
-  public DropInfo dropIntoGrid(final RadComponent[] components, int row, int column) {
+  public final DropInfo dropIntoGrid(final RadComponent[] components, int row, int column) {
     final GridLayoutManager gridLayout = (GridLayoutManager)getLayout();
     assert components.length > 0;
     assert column + components.length <= gridLayout.getColumnCount();
@@ -339,8 +347,14 @@ public class RadContainer extends RadComponent implements IContainer {
     return new DropInfo(this, info.myContainer, info.myPreviousContainerSize);
   }
 
+  public void drop(RadComponent[] components) {
+    assert isGrid() && components.length == 1;
+    assert getComponentAtGrid(0, 0) == null;
+    dropIntoGrid(components, 0, 0);
+  }
+
   /**
-   * @return border's type. The method never return <code>null</code>.
+   * @return border's type.
    *
    * @see com.intellij.uiDesigner.shared.BorderType
    */
