@@ -11,11 +11,9 @@ import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.event.PomModelListener;
 import com.intellij.pom.xml.XmlAspect;
 import com.intellij.pom.xml.XmlChangeSet;
-import com.intellij.pom.xml.XmlChangeVisitor;
-import com.intellij.pom.xml.XmlChangeVisitorBase;
 import com.intellij.pom.xml.events.*;
-import com.intellij.psi.PsiLock;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLock;
 import com.intellij.psi.xml.*;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.AttributeValueChangeEvent;
@@ -29,14 +27,17 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
-import java.lang.reflect.Type;
 import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author peter
  */
-public class DomManagerImpl extends DomManager implements ProjectComponent, XmlChangeVisitor {
+public class DomManagerImpl extends DomManager implements ProjectComponent{
   private static final Key<NameStrategy> NAME_STRATEGY_KEY = Key.create("NameStrategy");
   private static final Key<DomInvocationHandler> CACHED_HANDLER = Key.create("CachedInvocationHandler");
   private static final Key<DomFileElementImpl> CACHED_FILE_ELEMENT = Key.create("CachedFileElement");
@@ -226,35 +227,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent, XmlC
         if (myChanging) return;
         final XmlChangeSet changeSet = (XmlChangeSet) event.getChangeSet(xmlAspect);
         if (changeSet != null) {
-          boolean flag = false;
-          for (XmlChange change : changeSet.getChanges()) {
-            change.accept(DomManagerImpl.this);
-            if (!flag) {
-              flag = true;
-              change.accept(new XmlChangeVisitorBase(){
-              public void visitXmlTagChildAdd(final XmlTagChildAdd xmlTagChildAdd) {
-                final DomInvocationHandler element = getCachedElement(xmlTagChildAdd.getTag());
-                if (element != null) {
-                  element.processChildrenChange(changeSet);
-                }
-              }
-
-              public void visitXmlTagChildRemoved(final XmlTagChildRemoved xmlTagChildRemoved) {
-                final DomInvocationHandler element = getCachedElement(xmlTagChildRemoved.getTag());
-                if (element != null) {
-                  element.processChildrenChange(changeSet);
-                }
-              }
-
-              public void visitXmlTagChildChanged(final XmlTagChildChanged xmlTagChildChanged) {
-                final DomInvocationHandler element = getCachedElement(xmlTagChildChanged.getTag());
-                if (element != null) {
-                  element.processChildrenChange(changeSet);
-                }
-              }
-              });
-            }
-          }
+          new ExternalChangeProcessor(changeSet).processChanges();
         }
       }
 
