@@ -220,7 +220,7 @@ public final class PreviewFormAction extends AnAction{
       FormEditingUtil.iterateStringDescriptors(
         rootContainer,
         new FormEditingUtil.StringDescriptorVisitor<LwComponent>() {
-          public boolean visit(final IComponent component, final StringDescriptor descriptor) {
+          public boolean visit(final LwComponent component, final StringDescriptor descriptor) {
             if (descriptor.getBundleName() != null) {
               bundleSet.add(descriptor.getBundleName());
             }

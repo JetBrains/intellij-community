@@ -56,9 +56,19 @@ public final class RadTabbedPane extends RadContainer{
     addComponent(components [0]);
   }
 
-  /**
-   * @return never returns <code>null</code>.
-   */
+  @Nullable
+  public Rectangle getDropFeedbackRectangle(final int x, final int y, final int componentCount) {
+    final JTabbedPane tabbedPane = getTabbedPane();
+    final TabbedPaneUI ui = tabbedPane.getUI();
+    if (tabbedPane.getTabCount() > 0) {
+      Rectangle rc = ui.getTabBounds(tabbedPane, tabbedPane.getTabCount()-1);
+      return new Rectangle(rc.x+rc.width, rc.y, 50, rc.height);
+    }
+    // approximate
+    return new Rectangle(0, 0, 50, tabbedPane.getFontMetrics(tabbedPane.getFont()).getHeight() + 8);
+  }
+
+  @NotNull
   private JTabbedPane getTabbedPane(){
     return (JTabbedPane)getDelegee();
   }

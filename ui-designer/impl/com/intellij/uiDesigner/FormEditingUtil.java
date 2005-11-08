@@ -314,8 +314,8 @@ public final class FormEditingUtil {
 
 
     return new Pair<Integer, Integer>(
-      new Integer(Util.eliminate(y, rowSpans, null)),
-      new Integer(Util.eliminate(x, colSpans, null))
+      Util.eliminate(y, rowSpans, null),
+      Util.eliminate(x, colSpans, null)
     );
   }
 
@@ -343,7 +343,7 @@ public final class FormEditingUtil {
       constraints.setColumn(x[i]);
       constraints.setColSpan(colSpans[i]);
     }
-    final GridLayoutManager gridLayoutManager = new GridLayoutManager(pair.first.intValue(), pair.second.intValue());
+    final GridLayoutManager gridLayoutManager = new GridLayoutManager(pair.first, pair.second);
 
     return gridLayoutManager;
   }
@@ -506,7 +506,7 @@ public final class FormEditingUtil {
       return false;
     }
 
-    final RadComponent componentAt = getRadComponentAt(editor, x, y);
+    final RadComponent componentAt = getRadContainerAt(editor, x, y, 0);
     if (componentAt == null) {
       return false;
     }
@@ -528,7 +528,8 @@ public final class FormEditingUtil {
       throw new IllegalArgumentException("cannot drop");
     }
 
-    final RadContainer targetContainer = (RadContainer)getRadComponentAt(editor, x, y);
+    final RadContainer targetContainer = getRadContainerAt(editor, x, y, 0);
+    assert targetContainer != null;
     final Point targetPoint = SwingUtilities.convertPoint(editor.getDragLayer(), x, y, targetContainer.getDelegee());
     return targetContainer.drop(targetPoint.x, targetPoint.y, components, dx, dy);
   }
@@ -667,8 +668,8 @@ public final class FormEditingUtil {
     boolean visit(Type component);
   }
 
-  public static interface StringDescriptorVisitor<Type extends IComponent> {
-    boolean visit(IComponent component, StringDescriptor descriptor);
+  public static interface StringDescriptorVisitor<T extends IComponent> {
+    boolean visit(T component, StringDescriptor descriptor);
   }
 
   /**

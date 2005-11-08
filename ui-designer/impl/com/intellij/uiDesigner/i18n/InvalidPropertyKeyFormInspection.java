@@ -128,7 +128,7 @@ public class InvalidPropertyKeyFormInspection implements FormInspectionTool, Fil
 
       final List<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>();
       FormEditingUtil.iterateStringDescriptors(rootContainer, new FormEditingUtil.StringDescriptorVisitor<LwComponent>() {
-        public boolean visit(final IComponent component, final StringDescriptor descriptor) {
+        public boolean visit(final LwComponent component, final StringDescriptor descriptor) {
           final ErrorInfo errorInfo = checkDescriptor(descriptor, module);
           if (errorInfo != null) {
             problems.add(manager.createProblemDescriptor(file, errorInfo.myDescription,

@@ -181,6 +181,7 @@ public final class DragSelectionProcessor extends EventProcessor {
                               (int) point.getY() + draggedComponentList.getDragDeltaY());
         }
         else {
+          assert allBounds != null;
           delegee.setLocation((int) (point.getX() - allBounds.getX() + location.getX()),
                               (int) (point.getY() - allBounds.getY() + location.getY()));
         }

@@ -400,6 +400,11 @@ public abstract class RadComponent implements IComponent {
   public abstract boolean canDrop(int x, int y, int componentCount);
   public abstract boolean canDrop(int componentCount);
 
+  @Nullable
+  public Rectangle getDropFeedbackRectangle(final int x, final int y, final int componentCount) {
+    return null;
+  }
+
   public void processMouseEvent(final MouseEvent event) {}
 
   /**

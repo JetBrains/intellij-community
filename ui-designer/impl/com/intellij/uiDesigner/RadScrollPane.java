@@ -7,6 +7,8 @@ import javax.swing.*;
 
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
+
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
@@ -38,6 +40,11 @@ public final class RadScrollPane extends RadContainer{
 
   public void drop(RadComponent[] components) {
     addComponent(components [0]);
+  }
+
+  @Nullable
+  public Rectangle getDropFeedbackRectangle(final int x, final int y, final int componentCount) {
+    return new Rectangle(0, 0, getWidth(), getHeight());
   }
 
   protected void addToDelegee(final RadComponent component){

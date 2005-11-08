@@ -7,32 +7,34 @@ import com.intellij.uiDesigner.lw.LwSplitPane;
 import javax.swing.*;
 import java.awt.*;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class RadSplitPane extends RadContainer{
-  public RadSplitPane(final Module module, final String id){
+public final class RadSplitPane extends RadContainer {
+  public RadSplitPane(final Module module, final String id) {
     super(module, JSplitPane.class, id);
   }
 
-  protected AbstractLayout createInitialLayout(){
+  protected AbstractLayout createInitialLayout() {
     return null;
   }
 
-  public boolean canDrop(final int x, final int y, final int componentCount){
+  public boolean canDrop(final int x, final int y, final int componentCount) {
     if (componentCount != 1) {
       return false;
     }
-    
+
     final Component component;
-    if (isLeft(x,y)) {
+    if (isLeft(x, y)) {
       component = getSplitPane().getLeftComponent();
     }
     else {
       component = getSplitPane().getRightComponent();
     }
-    
+
     return isEmptySplitComponent(component);
   }
 
@@ -55,22 +57,33 @@ public final class RadSplitPane extends RadContainer{
     return false;
   }
 
-  private boolean isLeft(final int x, final int y){
-    final JSplitPane splitPane = getSplitPane();
-    if (splitPane.getOrientation() == JSplitPane.VERTICAL_SPLIT) {
-      return y < splitPane.getHeight() / 2;
+  private boolean isLeft(final int x, final int y) {
+    if (getSplitPane().getOrientation() == JSplitPane.VERTICAL_SPLIT) {
+      return y < getDividerPos();
     }
     else {
-      return x < splitPane.getWidth() / 2;
+      return x < getDividerPos();
     }
   }
 
-  private JSplitPane getSplitPane(){
+  private int getDividerPos() {
+    final JSplitPane splitPane = getSplitPane();
+    int size = splitPane.getOrientation() == JSplitPane.VERTICAL_SPLIT ? splitPane.getHeight() : splitPane.getWidth();
+    if (splitPane.getDividerLocation() > splitPane.getDividerSize() &&
+        splitPane.getDividerLocation() < size - splitPane.getDividerSize()) {
+      return splitPane.getDividerLocation() + splitPane.getDividerSize() / 2;
+    }
+    else {
+      return size / 2;
+    }
+  }
+
+  private JSplitPane getSplitPane() {
     return (JSplitPane)getDelegee();
   }
 
-  public DropInfo drop(final int x, final int y, final RadComponent[] components, final int[] dx, final int[] dy){
-    components[0].setCustomLayoutConstraints(isLeft(x,y) ? LwSplitPane.POSITION_LEFT  : LwSplitPane.POSITION_RIGHT);
+  public DropInfo drop(final int x, final int y, final RadComponent[] components, final int[] dx, final int[] dy) {
+    components[0].setCustomLayoutConstraints(isLeft(x, y) ? LwSplitPane.POSITION_LEFT : LwSplitPane.POSITION_RIGHT);
     addComponent(components[0]);
     return new DropInfo(this, null, null);
   }
@@ -82,10 +95,28 @@ public final class RadSplitPane extends RadContainer{
     addComponent(components[0]);
   }
 
-  protected void addToDelegee(final RadComponent component){
+  @Nullable
+  public Rectangle getDropFeedbackRectangle(final int x, final int y, final int componentCount) {
+    final JSplitPane splitPane = getSplitPane();
+    int dividerPos = getDividerPos();
+    int dividerLeftPos = dividerPos - splitPane.getDividerSize()/2;
+    int dividerRightPos = dividerPos + splitPane.getDividerSize() - splitPane.getDividerSize()/2;
+    if (splitPane.getOrientation() == JSplitPane.VERTICAL_SPLIT) {
+      return isLeft(x, y)
+             ? new Rectangle(0, 0, getWidth(), dividerLeftPos)
+             : new Rectangle(0, dividerRightPos, getWidth(), getHeight() - dividerRightPos);
+    }
+    else {
+      return isLeft(x, y)
+             ? new Rectangle(0, 0, dividerLeftPos, getHeight())
+             : new Rectangle(dividerRightPos, 0, getWidth() - dividerRightPos, getHeight());
+    }
+  }
+
+  protected void addToDelegee(final RadComponent component) {
     final JSplitPane splitPane = getSplitPane();
     final JComponent delegee = component.getDelegee();
-    if (LwSplitPane.POSITION_LEFT.equals(component.getCustomLayoutConstraints())){
+    if (LwSplitPane.POSITION_LEFT.equals(component.getCustomLayoutConstraints())) {
       splitPane.setLeftComponent(delegee);
     }
     else {
@@ -95,7 +126,7 @@ public final class RadSplitPane extends RadContainer{
 
   public void write(final XmlWriter writer) {
     writer.startElement("splitpane");
-    try{
+    try {
       writeId(writer);
       writeBinding(writer);
 
@@ -106,22 +137,24 @@ public final class RadSplitPane extends RadContainer{
       // Margin and border
       writeBorder(writer);
       writeChildren(writer);
-    }finally{
+    }
+    finally {
       writer.endElement(); // scrollpane
     }
   }
 
   public void writeConstraints(final XmlWriter writer, final RadComponent child) {
     writer.startElement("splitpane");
-    try{
+    try {
       final String position = (String)child.getCustomLayoutConstraints();
       if (!LwSplitPane.POSITION_LEFT.equals(position) && !LwSplitPane.POSITION_RIGHT.equals(position)) {
         //noinspection HardCodedStringLiteral
         throw new IllegalStateException("invalid position: " + position);
       }
       writer.addAttribute("position", position);
-    }finally{
-      writer.endElement(); 
+    }
+    finally {
+      writer.endElement();
     }
   }
 }

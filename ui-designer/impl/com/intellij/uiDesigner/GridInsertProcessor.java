@@ -21,7 +21,7 @@ public class GridInsertProcessor {
 
   private static class InsertFeedbackPainter extends JPanel {
     private boolean myVertical = false;
-    private boolean myWholeCell = false;
+    private boolean myRectangular = false;
 
     public InsertFeedbackPainter() {
       setOpaque(false);
@@ -31,8 +31,8 @@ public class GridInsertProcessor {
       myVertical = vertical;
     }
 
-    public void setWholeCell(final boolean wholeCell) {
-      myWholeCell = wholeCell;
+    public void setRectangular(final boolean rectangular) {
+      myRectangular = rectangular;
     }
 
     protected void paintComponent(Graphics g) {
@@ -42,7 +42,7 @@ public class GridInsertProcessor {
       final Color savedColor = g2d.getColor();
       try {
         g2d.setColor(Color.BLUE);
-        if (myWholeCell) {
+        if (myRectangular) {
           g2d.setStroke(new BasicStroke(2.5f));
           // give space for stroke to be painted
           g2d.drawRect(1, 1, getWidth()-2, getHeight()-2);
@@ -239,17 +239,34 @@ public class GridInsertProcessor {
     if (insertLocation.getContainer() != null) {
       if (isDropInsertAllowed(insertLocation, componentCount)) {
         placeInsertFeedbackPainter(insertLocation, componentCount);
-        if (myInsertFeedbackPainter.getParent() == null) {
-          myEditor.getActiveDecorationLayer().add(myInsertFeedbackPainter);
-        }
-        myEditor.getActiveDecorationLayer().repaint();
+        addFeedbackPainter();
         return copyOnDrop ? DnDConstants.ACTION_COPY : DnDConstants.ACTION_MOVE;
       }
     }
-    removeFeedbackPainter();
-    if (FormEditingUtil.canDrop(myEditor, x, y, componentCount)) {
-      return copyOnDrop ? DnDConstants.ACTION_COPY : DnDConstants.ACTION_MOVE;
+    if (componentCount > 0) {
+      final RadContainer containerAt = FormEditingUtil.getRadContainerAt(myEditor, x, y, 0);
+      if (containerAt != null) {
+        final Point targetPoint = SwingUtilities.convertPoint(myEditor.getDragLayer(), x, y, containerAt.getDelegee());
+        if (containerAt.canDrop(targetPoint.x, targetPoint.y, componentCount)) {
+          Rectangle feedbackRect = containerAt.getDropFeedbackRectangle(targetPoint.x, targetPoint.y, componentCount);
+          if (feedbackRect != null) {
+            myInsertFeedbackPainter.setBounds(SwingUtilities.convertRectangle(containerAt.getDelegee(),
+                                               feedbackRect,
+                                               myEditor.getActiveDecorationLayer()));
+            myInsertFeedbackPainter.setRectangular(true);
+            addFeedbackPainter();
+          }
+          else {
+            removeFeedbackPainter();
+          }
+          return copyOnDrop ? DnDConstants.ACTION_COPY : DnDConstants.ACTION_MOVE;
+        }
+        else {
+          removeFeedbackPainter();
+        }
+      }
     }
+
     return DnDConstants.ACTION_NONE;
   }
 
@@ -263,7 +280,6 @@ public class GridInsertProcessor {
     }
   }
 
-
   public boolean isDropInsertAllowed(final GridInsertLocation insertLocation, final int componentCount) {
     if (insertLocation == null || insertLocation.getContainer() == null) {
       return false;
@@ -274,6 +290,13 @@ public class GridInsertProcessor {
     }
     final GridLayoutManager grid = ((GridLayoutManager)insertLocation.getContainer().getLayout());
     return insertLocation.getColumn() + componentCount - 1 < grid.getColumnCount();
+  }
+
+  private void addFeedbackPainter() {
+    if (myInsertFeedbackPainter.getParent() == null) {
+      myEditor.getActiveDecorationLayer().add(myInsertFeedbackPainter);
+    }
+    myEditor.getActiveDecorationLayer().repaint();
   }
 
   void removeFeedbackPainter() {
@@ -298,11 +321,11 @@ public class GridInsertProcessor {
                                                myEditor.getActiveDecorationLayer());
 
     if (insertLocation.getMode() == GridInsertMode.None) {
-      myInsertFeedbackPainter.setWholeCell(true);
+      myInsertFeedbackPainter.setRectangular(true);
       myInsertFeedbackPainter.setBounds(cellRect);
       }
     else {
-      myInsertFeedbackPainter.setWholeCell(false);
+      myInsertFeedbackPainter.setRectangular(false);
       myInsertFeedbackPainter.setVertical(insertLocation.getMode() == GridInsertMode.ColumnBefore ||
                                           insertLocation.getMode() == GridInsertMode.ColumnAfter);
 
