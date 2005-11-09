@@ -291,7 +291,7 @@ public final class IdeKeyEventDispatcher {
   }
 
   private boolean hasMnemonicInWindow(Component focusOwner, int keyCode) {
-    if (keyCode == KeyEvent.VK_ALT) return false; // Optimization
+    if (keyCode == KeyEvent.VK_ALT || keyCode == 0) return false; // Optimization
     final Container container = getContainer(focusOwner);
     return hasMnemonic(container, keyCode);
   }
