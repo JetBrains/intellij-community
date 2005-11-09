@@ -82,7 +82,17 @@ public class UserColorLookup implements DeferredUserLookupValue, LookupValueWith
   private static Color decodeColor(final String text) {
     Color myColorAtCaret = null;
     try {
-      myColorAtCaret = Color.decode("0x"+text.substring(1));
+      String s = text.substring(1);
+      
+      if (s.length() == 3) { // css color short hand
+        StringBuilder buf = new StringBuilder(6);
+        buf.append(s.charAt(0)).append(s.charAt(0));
+        buf.append(s.charAt(1)).append(s.charAt(1));
+        buf.append(s.charAt(2)).append(s.charAt(2));
+        
+        s = buf.toString();
+      }
+      myColorAtCaret = Color.decode("0x"+s);
     } catch(Exception ex) {}
     return myColorAtCaret;
   }
