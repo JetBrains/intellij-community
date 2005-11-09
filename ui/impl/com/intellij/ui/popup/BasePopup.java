@@ -260,7 +260,7 @@ public abstract class BasePopup implements ActionListener, ElementFilter, com.in
     final PopupFactory factory = PopupFactory.getSharedInstance();
     if (!SystemInfo.isWindows) {
       try {
-        final Method method = factory.getClass().getDeclaredMethod("setPopupType", int.class);
+        final Method method = PopupFactory.class.getDeclaredMethod("setPopupType", int.class);
         method.setAccessible(true);
         method.invoke(factory, 2);
       }
