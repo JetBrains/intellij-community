@@ -16,6 +16,7 @@
 package com.siyeh.ipp.fqnames;
 
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
@@ -32,7 +33,11 @@ class FullyQualifiedNamePredicate implements PsiElementPredicate{
 
         final PsiElement qualifier = ((PsiJavaCodeReferenceElement)element).getQualifier();
         if (qualifier instanceof PsiJavaCodeReferenceElement) {
-          return ((PsiJavaCodeReferenceElement)qualifier).resolve() instanceof PsiPackage;
+            final PsiElement resolved = ((PsiJavaCodeReferenceElement)qualifier).resolve();
+            if (resolved instanceof PsiPackage) return true;
+            if (resolved instanceof PsiClass) {
+              return CodeStyleSettingsManager.getSettings(element.getProject()).INSERT_INNER_CLASS_IMPORTS;
+            }
         }
         return false;
     }
