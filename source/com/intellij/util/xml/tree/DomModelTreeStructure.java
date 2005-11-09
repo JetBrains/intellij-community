@@ -1,20 +1,21 @@
 package com.intellij.util.xml.tree;
 
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomFileElement;
 import jetbrains.fabrique.ui.treeStructure.SimpleTreeStructure;
 
 public class DomModelTreeStructure extends SimpleTreeStructure {
-  private BaseDomElementNode myRoot;
+  private DomFileElement myFileElement;
 
-  public DomModelTreeStructure(DomElement rootElement) {
-    myRoot = createRoot(rootElement);
+  public DomModelTreeStructure(DomFileElement fileElement) {
+    myFileElement = fileElement;
   }
 
-  protected BaseDomElementNode createRoot(DomElement rootElement) {
-    return new BaseDomElementNode(rootElement);
+  protected BaseDomElementNode createRoot(DomFileElement rootElement) {
+    return new BaseDomElementNode(myFileElement.getRootElement());
   }
 
   public BaseDomElementNode getRootElement() {
-    return myRoot;
+    return createRoot(myFileElement);
   }
 }

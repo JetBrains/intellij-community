@@ -19,12 +19,9 @@ import javax.swing.tree.DefaultTreeModel;
 public class DomModelTreeView extends Wrapper {
   private SimpleTree myTree;
 
-  private DomElement myRootDomElement;
   private SimpleTreeBuilder myBuilder;
 
   public DomModelTreeView(Project project, DomElement rootElement) {
-    myRootDomElement = rootElement;
-
     myTree = new SimpleTree(new DefaultTreeModel(new DefaultMutableTreeNode()));
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
@@ -32,7 +29,7 @@ public class DomModelTreeView extends Wrapper {
     ToolTipManager.sharedInstance().registerComponent(myTree);
     TreeUtil.installActions(myTree);
 
-    final SimpleTreeStructure treeStructure = myRootDomElement != null ? getTreeStructure(myRootDomElement) : new SimpleTreeStructure() {
+    final SimpleTreeStructure treeStructure = rootElement != null ? getTreeStructure(rootElement) : new SimpleTreeStructure() {
       public Object getRootElement() {
         return null;
       }
@@ -47,13 +44,13 @@ public class DomModelTreeView extends Wrapper {
       public void eventOccured(DomEvent event) {
         super.eventOccured(event);
 
-        myBuilder.updateFromRoot();
+        myBuilder.updateFromRoot(true);
       }
     });
   }
 
   protected SimpleTreeStructure getTreeStructure(final DomElement rootDomElement) {
-    return new DomModelTreeStructure(rootDomElement);
+    return new DomModelTreeStructure(rootDomElement.getRoot());
   }
 
   public SimpleTreeBuilder getBuilder() {
