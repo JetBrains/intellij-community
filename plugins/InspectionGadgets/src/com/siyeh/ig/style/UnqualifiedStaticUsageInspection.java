@@ -189,7 +189,12 @@ public class UnqualifiedStaticUsageInspection extends ExpressionInspection {
             if(qualifierExpression != null){
                 return false;
             }
-            final PsiElement element = expression.resolve();
+
+            final JavaResolveResult resolveResult = expression.advancedResolve(false);
+            if (resolveResult.getCurrentFileResolveScope() instanceof PsiImportStaticStatement) {
+                return false;
+            }
+            final PsiElement element = resolveResult.getElement();
             if (!(element instanceof PsiField) && !(element instanceof PsiMethod)) {
                 return false;
             }
