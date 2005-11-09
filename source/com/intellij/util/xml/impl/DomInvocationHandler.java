@@ -114,6 +114,9 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   }
 
   public final boolean isValid() {
+    if (!myInvalidated && myXmlTag != null && !myXmlTag.isValid()) {
+      myInvalidated = true;
+    }
     return !myInvalidated;
   }
 

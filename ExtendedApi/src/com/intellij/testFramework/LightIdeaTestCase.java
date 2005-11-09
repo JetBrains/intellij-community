@@ -12,6 +12,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.ModuleListener;
@@ -31,6 +32,8 @@ import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -338,5 +341,13 @@ import org.jetbrains.annotations.NonNls;
       name = Character.toLowerCase(name.charAt(0)) + name.substring(1);
     }
     return name;
+  }
+
+  protected void commitDocument(final Document document) {
+    PsiDocumentManager.getInstance(getProject()).commitDocument(document);
+  }
+
+  protected Document getDocument(final XmlFile file) {
+    return PsiDocumentManager.getInstance(getProject()).getDocument(file);
   }
 }
