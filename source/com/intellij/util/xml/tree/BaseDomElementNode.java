@@ -13,7 +13,7 @@ import java.lang.reflect.Method;
 public class BaseDomElementNode extends AbstractDomElementNode {
   static final private Logger LOG = Logger.getInstance(DomModelTreeStructure.class.getName());
 
-  protected DomElement myDomlElement;
+  protected DomElement myDomElement;
   protected String myTagName;
 
   public BaseDomElementNode(final DomElement modelElement) {
@@ -23,21 +23,21 @@ public class BaseDomElementNode extends AbstractDomElementNode {
   public BaseDomElementNode(final DomElement modelElement, final String tagName, SimpleNode parent) {
     super(parent);
 
-    myDomlElement = modelElement;
+    myDomElement = modelElement;
     myTagName = tagName == null ? "unknown" : tagName;
    }
 
   public SimpleNode[] getChildren() {
     List<SimpleNode> children = new ArrayList();
 
-    final Collection<Method> methods = myDomlElement.getMethodsInfo().getFixedChildrenGetterMethods();
+    final Collection<Method> methods = myDomElement.getMethodsInfo().getFixedChildrenGetterMethods();
 
     for (Method method : methods) {
       try {
-        final Object result = method.invoke(myDomlElement, new Object[0]);
+        final Object result = method.invoke(myDomElement, new Object[0]);
 
         if (result instanceof DomElement) {
-          final String tagName = myDomlElement.getMethodsInfo().getTagName(method);
+          final String tagName = myDomElement.getMethodsInfo().getTagName(method);
 
           if (showGenericValues() && result instanceof GenericValue) {
              children.add(new GenericValueNode((GenericValue)result, tagName, this));
@@ -52,10 +52,10 @@ public class BaseDomElementNode extends AbstractDomElementNode {
       }
     }
 
-    final Collection<Method> collectionMethods = myDomlElement.getMethodsInfo().getCollectionChildrenGetterMethods();
+    final Collection<Method> collectionMethods = myDomElement.getMethodsInfo().getCollectionChildrenGetterMethods();
 
     for (Method method : collectionMethods) {
-      children.add(getDomElementsGroupNode(myDomlElement, method));
+      children.add(getDomElementsGroupNode(myDomElement, method));
     }
 
     AbstractDomElementNode[] childrenNodes = children.toArray(new AbstractDomElementNode[children.size()]);
