@@ -35,15 +35,11 @@ public class HorizontalList extends JPanel {
   private ArrayList<Object> myModel = new ArrayList<Object>();
   private ArrayList<JLabel> myList = new ArrayList<JLabel>();
 
-  private JButton myLeftButton = new JButton(IconLoader.getIcon("/general/splitLeft.png"));
-  private JButton myRightButton = new JButton(IconLoader.getIcon("/general/splitRight.png"));
-  {
-    myLeftButton.setBorder(null);
-    myRightButton.setBorder(null);
-  }
   private int myFirstIndex = 0;
   private int mySelectedIndex = -1;
 
+  private JButton myLeftButton = new JButton(IconLoader.getIcon("/general/splitLeft.png"));
+  private JButton myRightButton = new JButton(IconLoader.getIcon("/general/splitRight.png"));
 
   public HorizontalList() {
     this(new Object[0]);
@@ -53,30 +49,31 @@ public class HorizontalList extends JPanel {
     setLayout(new BorderLayout());
     setBackground(UIUtil.getListBackground());
     myModel.addAll(Arrays.asList(objects));
-
-    addFocusListener(new FocusListener() {
-      public void focusGained(FocusEvent e) {
-      }
-
-      public void focusLost(FocusEvent e) {
-        clearBorder();
-        mySelectedIndex = -1;
-      }
-    });
-
     myLeftButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
+        if (mySelectedIndex == -1 && !myModel.isEmpty()){
+          mySelectedIndex = myModel.size() - 1;
+          paintBorder();
+          myList.get(mySelectedIndex).requestFocusInWindow();
+        }
         scrollToVisible(1);
         shiftFocusToVisible(1);
       }
     });
+    myLeftButton.setBorder(null);
 
     myRightButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
+        if (mySelectedIndex == -1 && !myModel.isEmpty()){
+          mySelectedIndex = myModel.size() - 1;
+          paintBorder();
+          myList.get(mySelectedIndex).requestFocusInWindow();
+        }
         scrollToVisible(-1);
         shiftFocusToVisible(-1);
       }
     });
+    myRightButton.setBorder(null);
 
     registerKeyboardAction(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -101,7 +98,10 @@ public class HorizontalList extends JPanel {
     final ActionListener dblClickAction = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         if (mySelectedIndex != -1) {
-          getDoubleClickHandler(mySelectedIndex).run();
+          final Runnable doubleClickHandler = getDoubleClickHandler(mySelectedIndex);
+          if (doubleClickHandler != null) {
+            doubleClickHandler.run();
+          }
         }
       }
     };
@@ -224,7 +224,6 @@ public class HorizontalList extends JPanel {
 
 
   private void installActions(final int index) {
-    final Object object = myModel.get(index);
     final JLabel label = myList.get(index);
     final Runnable doubleClickHandler = getDoubleClickHandler(index);
     if (doubleClickHandler != null){
@@ -239,7 +238,7 @@ public class HorizontalList extends JPanel {
     if (ctrlClickHandler != null){
       label.addMouseListener(getMouseListener(new Condition<MouseEvent>() {
         public boolean value(final MouseEvent e) {
-          return !e.isConsumed() && !e.isPopupTrigger() && (SystemInfo.isMac && e.isMetaDown() || e.isControlDown());
+          return !e.isConsumed() && !e.isPopupTrigger() && ((SystemInfo.isMac && e.isMetaDown()) || (!SystemInfo.isMac && e.isControlDown()));
         }
       }, ctrlClickHandler, index));
     }
@@ -298,16 +297,29 @@ public class HorizontalList extends JPanel {
     GridBagConstraints gc = new GridBagConstraints(GridBagConstraints.RELATIVE, 1, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0,0,0,0),0,0);
     int width = 0;
     int widthToTheRight = 0;
-    final int wholeWidth = getWidth();
+    final JLabel toBeContLabel = new JLabel("...");
+    clearBorder(toBeContLabel);
+    final int additionalWidth = toBeContLabel.getFontMetrics(toBeContLabel.getFont()).stringWidth("...") + 6;
+    int wholeWidth = getWidth() - 2 * myLeftButton.getWidth();
     if (mySelectedIndex != -1) {
+      if (myFirstIndex > 0){
+        final JLabel preList = new JLabel("...");
+        clearBorder(preList);
+        scrollablePanel.add(preList, gc);
+        wholeWidth -= additionalWidth;
+      }
       for (int i = 0; i < myList.size(); i++) {
         final JLabel linkLabel = myList.get(i);
-        final int labelWidth = linkLabel.getFontMetrics(linkLabel.getFont()).stringWidth(linkLabel.getText());
+        final Icon icon = linkLabel.getIcon();
+        final int labelWidth = linkLabel.getFontMetrics(linkLabel.getFont()).stringWidth(linkLabel.getText()) + (icon != null ?  icon.getIconWidth() + linkLabel.getIconTextGap() : 0) + 6;
         width += labelWidth;
         if (i + 1 > myFirstIndex){
           widthToTheRight += labelWidth;
-          if ( widthToTheRight < wholeWidth ) {
+          if ( widthToTheRight < wholeWidth) {
             scrollablePanel.add(linkLabel, gc);
+          } else {
+            scrollablePanel.add(toBeContLabel, gc);
+            break;
           }
         }
       }
@@ -327,17 +339,18 @@ public class HorizontalList extends JPanel {
       installDottedBorder(preselected);
       for (int i = myModel.size() - 1; i >= 0; i--){
         final JLabel linkLabel = myList.get(i);
-        width += linkLabel.getFontMetrics(linkLabel.getFont()).stringWidth(linkLabel.getText());
-        if (width > wholeWidth){
-          myFirstIndex = i + 1;
-        } else {
-          if (i == 0) gc.insets.left = 0;
+        final Icon icon = linkLabel.getIcon();
+        width += linkLabel.getFontMetrics(linkLabel.getFont()).stringWidth(linkLabel.getText()) + (icon != null ?  icon.getIconWidth() + linkLabel.getIconTextGap() : 0) + 6;
+        if (width + additionalWidth < wholeWidth || (i == 0 && width < wholeWidth)){
           scrollablePanel.add(linkLabel, gc);
+        } else {
+          myFirstIndex = i + 1;
+          scrollablePanel.add(toBeContLabel, gc);
+          wholeWidth -= additionalWidth;
+          break;
         }
       }
     }
-
-
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(scrollablePanel);
     scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
@@ -346,11 +359,10 @@ public class HorizontalList extends JPanel {
     add(myLeftButton, BorderLayout.WEST);
     add(myRightButton, BorderLayout.EAST);
     revalidate();
-    repaint();
-    final boolean scrollBarVisible = width > wholeWidth;
+    final boolean scrollBarVisible = width >= wholeWidth;
     myLeftButton.setVisible(scrollBarVisible);
     myRightButton.setVisible(scrollBarVisible);
-    myLeftButton.setEnabled(widthToTheRight > wholeWidth && myFirstIndex < myModel.size() - 2);
+    myLeftButton.setEnabled(widthToTheRight >= wholeWidth && myFirstIndex < myModel.size() - 2);
     myRightButton.setEnabled(myFirstIndex > 0);
   }
 

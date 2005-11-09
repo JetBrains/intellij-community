@@ -171,6 +171,7 @@ public class IdeRootPane extends JRootPane{
 
   private void updateNavigationBarVisibility(){
     myNavigationBar.setVisible(myUISettings.SHOW_NAVIGATION_BAR);
+    myNavigationBar.updateState(myUISettings.SHOW_NAVIGATION_BAR);
   }
 
   public void installNavigationBar(final Project project) {
