@@ -1,11 +1,13 @@
-package com.intellij.uiDesigner;
+package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.RadComponent;
+import com.intellij.uiDesigner.RadRootContainer;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-
-import org.jetbrains.annotations.NotNull;
 
 /**
  * Decoration layer is over COMPONENT_LAYER (layer where all components are located).

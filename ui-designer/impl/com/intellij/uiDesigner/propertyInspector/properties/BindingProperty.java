@@ -8,7 +8,7 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.rename.RenameProcessor;
-import com.intellij.uiDesigner.GuiEditor;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.GuiEditorUtil;
 import com.intellij.uiDesigner.RadComponent;
 import com.intellij.uiDesigner.UIDesignerBundle;

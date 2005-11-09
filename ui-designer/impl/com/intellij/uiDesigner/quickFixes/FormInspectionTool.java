@@ -1,7 +1,7 @@
 package com.intellij.uiDesigner.quickFixes;
 
 import com.intellij.uiDesigner.ErrorInfo;
-import com.intellij.uiDesigner.GuiEditor;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.RadComponent;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;

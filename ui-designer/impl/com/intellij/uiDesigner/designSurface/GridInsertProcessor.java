@@ -1,7 +1,10 @@
-package com.intellij.uiDesigner;
+package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.uiDesigner.designSurface.FeedbackPainter;
+import com.intellij.uiDesigner.designSurface.GridInsertLocation;
+import com.intellij.uiDesigner.*;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;

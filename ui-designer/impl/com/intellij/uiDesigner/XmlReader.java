@@ -15,7 +15,7 @@ import java.text.MessageFormat;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-final class XmlReader {
+public final class XmlReader {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.XmlReader");
 
   /**

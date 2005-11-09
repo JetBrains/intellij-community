@@ -1,4 +1,4 @@
-package com.intellij.uiDesigner;
+package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -10,6 +10,9 @@ import com.intellij.uiDesigner.componentTree.ComponentSelectionListener;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditorAdapter;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
+import com.intellij.uiDesigner.RadComponent;
+import com.intellij.uiDesigner.FormEditingUtil;
 
 import javax.swing.*;
 import java.awt.*;

@@ -1,7 +1,10 @@
-package com.intellij.uiDesigner;
+package com.intellij.uiDesigner.designSurface;
 
-import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.RadComponent;
+import com.intellij.uiDesigner.RadContainer;
 import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,7 +16,7 @@ import java.util.ArrayList;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-final class Painter {
+public final class Painter {
   /**
    * This color is used to paint decoration of non selected components
    */

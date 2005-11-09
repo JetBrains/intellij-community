@@ -30,6 +30,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.compiler.CompileStatusNotification;
 import com.intellij.uiDesigner.*;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.compiler.CodeGenerator;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.*;

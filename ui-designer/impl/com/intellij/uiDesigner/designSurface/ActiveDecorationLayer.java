@@ -1,6 +1,7 @@
-package com.intellij.uiDesigner;
+package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import org.jetbrains.annotations.NotNull;
 

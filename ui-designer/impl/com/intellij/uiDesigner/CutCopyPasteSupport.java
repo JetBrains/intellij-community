@@ -9,6 +9,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.LwComponent;
 import com.intellij.uiDesigner.lw.LwContainer;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
 import gnu.trove.TIntArrayList;
 import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
@@ -26,7 +27,7 @@ import java.util.ArrayList;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-final class CutCopyPasteSupport implements CopyProvider, CutProvider, PasteProvider{
+public final class CutCopyPasteSupport implements CopyProvider, CutProvider, PasteProvider{
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.CutCopyPasteSupport");
   private static final SAXBuilder SAX_BUILDER = new SAXBuilder();
 

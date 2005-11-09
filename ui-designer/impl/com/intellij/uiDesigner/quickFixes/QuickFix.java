@@ -1,6 +1,6 @@
 package com.intellij.uiDesigner.quickFixes;
 
-import com.intellij.uiDesigner.GuiEditor;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
 
 /**
  * @author Anton Katilin

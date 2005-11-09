@@ -3,6 +3,8 @@ package com.intellij.uiDesigner;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.uiDesigner.componentTree.ComponentPtr;
 import com.intellij.uiDesigner.componentTree.ComponentSelectionListener;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Stack;
@@ -18,9 +20,9 @@ public final class SelectionState{
   /** We do not need to handle our own events */
   private boolean myInsideChange;
 
-  SelectionState(final GuiEditor editor) {
+  public SelectionState(@NotNull final GuiEditor editor) {
+    //noinspection ConstantConditions
     if (editor == null) {
-      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("editor cannot be null");
     }
     mySelectionHistory = new Stack<ComponentPtr[]>();

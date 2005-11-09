@@ -14,6 +14,8 @@ import com.intellij.uiDesigner.lw.*;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.shared.XYLayoutManager;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
+import com.intellij.uiDesigner.designSurface.Painter;
 
 import javax.swing.*;
 import java.awt.*;

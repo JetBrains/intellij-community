@@ -3,7 +3,7 @@ package com.intellij.uiDesigner.componentTree;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.RadComponent;
 import com.intellij.uiDesigner.RadContainer;
-import com.intellij.uiDesigner.GuiEditor;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
 
 /**
  * @author Anton Katilin

@@ -1,9 +1,10 @@
-package com.intellij.uiDesigner;
+package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.uiDesigner.componentTree.ComponentSelectionListener;
 import com.intellij.uiDesigner.palette.ComponentItem;
+import com.intellij.uiDesigner.*;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;

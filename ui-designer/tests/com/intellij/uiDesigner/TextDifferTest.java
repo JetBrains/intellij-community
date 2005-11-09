@@ -1,13 +1,14 @@
 package com.intellij.uiDesigner;
 
 import junit.framework.TestCase;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
 
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
 public final class TextDifferTest extends TestCase{
-  
+
   public void test1() {
     test("","",-1,-1,null);
     test("abcd","abcd",-1,-1,null);
@@ -28,7 +29,7 @@ public final class TextDifferTest extends TestCase{
     test("abba","abbba",3,3,"b");
     test("abba","ab1ba",2,2,"1");
   }
-  
+
   private static void test(final String oldText, final String newText, final int startOffset, final int endOffset, final String replacement) {
     final GuiEditor.ReplaceInfo replaceInfo = GuiEditor.findFragmentToChange(oldText, newText);
     assertEquals(startOffset, replaceInfo.getStartOffset());
@@ -39,5 +40,5 @@ public final class TextDifferTest extends TestCase{
       assertEquals(newText, oldText.substring(0, startOffset) + replacement + oldText.substring(endOffset));
     }
   }
-  
+
 }

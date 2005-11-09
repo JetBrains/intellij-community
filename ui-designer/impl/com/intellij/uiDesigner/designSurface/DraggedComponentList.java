@@ -1,20 +1,21 @@
-package com.intellij.uiDesigner;
+package com.intellij.uiDesigner.designSurface;
 
-import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.openapi.diagnostic.Logger;
-
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.ArrayList;
-import java.awt.*;
-import java.awt.datatransfer.Transferable;
-import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.UnsupportedFlavorException;
-import java.io.IOException;
+import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.RadComponent;
+import com.intellij.uiDesigner.RadContainer;
+import com.intellij.uiDesigner.core.GridConstraints;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-
-import org.jetbrains.annotations.Nullable;
+import java.awt.*;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 
 /**
  * Created by IntelliJ IDEA.

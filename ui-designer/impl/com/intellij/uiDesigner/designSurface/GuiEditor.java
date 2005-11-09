@@ -1,4 +1,4 @@
-package com.intellij.uiDesigner;
+package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.ide.DeleteProvider;
 import com.intellij.openapi.actionSystem.*;
@@ -27,12 +27,15 @@ import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.uiDesigner.palette.PalettePanel;
 import com.intellij.uiDesigner.propertyInspector.PropertyInspector;
+import com.intellij.uiDesigner.designSurface.ActiveDecorationLayer;
+import com.intellij.uiDesigner.designSurface.DragLayer;
+import com.intellij.uiDesigner.designSurface.GlassLayer;
+import com.intellij.uiDesigner.*;
 import com.intellij.util.Alarm;
 
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
 import java.awt.*;
-import java.util.EventListener;
 
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;

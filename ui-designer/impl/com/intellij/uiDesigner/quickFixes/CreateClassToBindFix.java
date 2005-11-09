@@ -12,12 +12,10 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.uiDesigner.GuiEditor;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.CommonBundle;
-
-import java.text.MessageFormat;
 
 /**
  * @author Anton Katilin

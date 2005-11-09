@@ -1,6 +1,6 @@
 package com.intellij.uiDesigner.actions;
 
-import com.intellij.uiDesigner.GuiEditor;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
 
 import java.awt.*;
 

@@ -1,4 +1,4 @@
-package com.intellij.uiDesigner;
+package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.uiDesigner.actions.*;

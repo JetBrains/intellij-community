@@ -1,8 +1,11 @@
-package com.intellij.uiDesigner;
+package com.intellij.uiDesigner.designSurface;
 
+import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.RadComponent;
+import com.intellij.uiDesigner.RadContainer;
 import com.intellij.uiDesigner.core.GridConstraints;
-import com.intellij.uiDesigner.core.Util;
 import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.uiDesigner.core.Util;
 
 import javax.swing.*;
 import java.awt.*;
@@ -13,7 +16,7 @@ import java.awt.event.MouseEvent;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class ResizeProcessor extends EventProcessor{
+public final class ResizeProcessor extends EventProcessor {
   private RadComponent myComponent;
   private int myResizeMask;
   private Point myLastPoint;

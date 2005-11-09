@@ -16,7 +16,7 @@ import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiManager;
-import com.intellij.uiDesigner.GuiEditor;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.RadComponent;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.quickFixes.QuickFix;

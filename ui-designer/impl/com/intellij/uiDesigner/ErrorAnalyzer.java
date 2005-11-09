@@ -9,10 +9,8 @@ import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.IContainer;
 import com.intellij.uiDesigner.lw.IRootContainer;
 import com.intellij.uiDesigner.quickFixes.*;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.ExtensionPoints;
 
 import java.util.ArrayList;

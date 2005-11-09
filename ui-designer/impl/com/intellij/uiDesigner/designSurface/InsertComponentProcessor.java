@@ -1,4 +1,4 @@
-package com.intellij.uiDesigner;
+package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -13,6 +13,11 @@ import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.palette.PalettePanel;
 import com.intellij.uiDesigner.quickFixes.CreateFieldFix;
+import com.intellij.uiDesigner.designSurface.EventProcessor;
+import com.intellij.uiDesigner.designSurface.GridInsertLocation;
+import com.intellij.uiDesigner.designSurface.GridInsertProcessor;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
+import com.intellij.uiDesigner.*;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -25,7 +30,7 @@ import java.awt.event.MouseEvent;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class InsertComponentProcessor extends EventProcessor{
+public final class InsertComponentProcessor extends EventProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.InsertComponentProcessor");
 
   private final GuiEditor myEditor;

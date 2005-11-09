@@ -6,7 +6,7 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.uiDesigner.ErrorAnalyzer;
 import com.intellij.uiDesigner.ErrorInfo;
 import com.intellij.uiDesigner.RadComponent;
-import com.intellij.uiDesigner.GuiEditor;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.quickFixes.QuickFixManager;
 
 import javax.swing.event.TreeSelectionEvent;

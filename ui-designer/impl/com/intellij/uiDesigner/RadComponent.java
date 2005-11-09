@@ -9,6 +9,7 @@ import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.propertyInspector.Property;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.util.ArrayUtil;
 
 import javax.swing.*;

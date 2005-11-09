@@ -2,7 +2,7 @@ package com.intellij.uiDesigner.propertyInspector;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.uiDesigner.ErrorInfo;
-import com.intellij.uiDesigner.GuiEditor;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.quickFixes.QuickFixManager;
 
 import javax.swing.event.ListSelectionEvent;

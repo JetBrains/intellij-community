@@ -8,7 +8,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.uiDesigner.GuiEditor;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.util.IncorrectOperationException;

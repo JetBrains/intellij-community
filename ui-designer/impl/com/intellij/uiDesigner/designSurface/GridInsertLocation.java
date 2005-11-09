@@ -1,4 +1,6 @@
-package com.intellij.uiDesigner;
+package com.intellij.uiDesigner.designSurface;
+
+import com.intellij.uiDesigner.RadContainer;
 
 import java.awt.*;
 

@@ -48,7 +48,7 @@ public class RadContainer extends RadComponent implements IContainer {
    */
   @Nullable private StringDescriptor myBorderTitle;
 
-  protected RadContainer(final Module module, final String id){
+  public RadContainer(final Module module, final String id){
     this(module, JPanel.class, id);
   }
 

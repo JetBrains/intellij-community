@@ -10,7 +10,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
-import com.intellij.uiDesigner.GuiEditor;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.CommonBundle;

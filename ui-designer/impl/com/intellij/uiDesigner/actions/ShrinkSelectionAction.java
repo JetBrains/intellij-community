@@ -5,7 +5,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.SelectionState;
-import com.intellij.uiDesigner.GuiEditor;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.GuiEditorUtil;
 import com.intellij.uiDesigner.componentTree.ComponentPtr;
 

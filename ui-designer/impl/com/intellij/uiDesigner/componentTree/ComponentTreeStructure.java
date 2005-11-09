@@ -3,7 +3,7 @@ package com.intellij.uiDesigner.componentTree;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.uiDesigner.GuiEditor;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.RadComponent;
 import com.intellij.uiDesigner.RadContainer;
 import com.intellij.uiDesigner.RadRootContainer;

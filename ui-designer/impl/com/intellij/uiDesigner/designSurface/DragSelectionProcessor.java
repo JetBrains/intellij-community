@@ -1,7 +1,9 @@
-package com.intellij.uiDesigner;
+package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.designSurface.DraggedComponentList;
+import com.intellij.uiDesigner.*;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 

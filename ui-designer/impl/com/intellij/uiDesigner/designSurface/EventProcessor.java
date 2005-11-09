@@ -1,4 +1,4 @@
-package com.intellij.uiDesigner;
+package com.intellij.uiDesigner.designSurface;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;

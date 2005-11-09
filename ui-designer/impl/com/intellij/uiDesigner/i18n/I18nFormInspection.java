@@ -3,6 +3,7 @@ package com.intellij.uiDesigner.i18n;
 import com.intellij.uiDesigner.quickFixes.FormInspectionTool;
 import com.intellij.uiDesigner.quickFixes.QuickFix;
 import com.intellij.uiDesigner.*;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.*;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;

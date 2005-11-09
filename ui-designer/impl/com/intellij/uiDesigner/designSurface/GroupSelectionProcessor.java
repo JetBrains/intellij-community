@@ -1,4 +1,8 @@
-package com.intellij.uiDesigner;
+package com.intellij.uiDesigner.designSurface;
+
+import com.intellij.uiDesigner.RadComponent;
+import com.intellij.uiDesigner.RadContainer;
+import com.intellij.uiDesigner.RadRootContainer;
 
 import javax.swing.*;
 import java.awt.*;
@@ -9,7 +13,7 @@ import java.awt.event.MouseEvent;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class GroupSelectionProcessor extends EventProcessor{
+public final class GroupSelectionProcessor extends EventProcessor {
   private final GuiEditor myEditor;
   private final RadContainer myContainer;
   private Point myStartPoint;

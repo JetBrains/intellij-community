@@ -8,7 +8,7 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.HeavyweightHint;
 import com.intellij.uiDesigner.ErrorInfo;
-import com.intellij.uiDesigner.GuiEditor;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
 import org.jetbrains.annotations.Nullable;

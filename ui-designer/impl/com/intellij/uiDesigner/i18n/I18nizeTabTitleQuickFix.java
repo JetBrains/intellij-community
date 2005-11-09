@@ -1,7 +1,7 @@
 package com.intellij.uiDesigner.i18n;
 
 import com.intellij.uiDesigner.lw.StringDescriptor;
-import com.intellij.uiDesigner.GuiEditor;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.RadComponent;
 import com.intellij.uiDesigner.RadTabbedPane;
 import com.intellij.uiDesigner.i18n.I18nizeFormQuickFix;
