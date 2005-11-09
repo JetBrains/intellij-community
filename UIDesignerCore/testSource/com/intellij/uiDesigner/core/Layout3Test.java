@@ -5,7 +5,7 @@ import junit.framework.TestCase;
 import javax.swing.*;
 import java.awt.*;
 
-public final class Test3 extends TestCase{
+public final class Layout3Test extends TestCase{
   public void test1() {
     final JPanel panel = new JPanel(new GridLayoutManager(2,1, new Insets(0,0,0,0), 0, 0));
 

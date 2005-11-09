@@ -5,7 +5,7 @@ import junit.framework.TestCase;
 import javax.swing.*;
 import java.awt.*;
 
-public final class Test8 extends TestCase{
+public final class Layout8Test extends TestCase{
   /**
    * label 1 (pref=100, min=10, can shrink, can grow) | label 2 (pref=100, min=10, can shrink)
    *                                            (can grow, want grow)

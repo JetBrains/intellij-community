@@ -6,7 +6,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
 
-public final class TestEmpty extends TestCase{
+public final class EmptyPanelTest extends TestCase{
   
   public void test1() {
     final GridLayoutManager layoutManager = new GridLayoutManager(2,3, new Insets(0,0,0,0), 0, 0);

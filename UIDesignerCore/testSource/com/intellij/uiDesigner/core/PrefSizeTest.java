@@ -5,7 +5,7 @@ import junit.framework.TestCase;
 import javax.swing.*;
 import java.awt.*;
 
-public final class TestPrefSize extends TestCase{
+public final class PrefSizeTest extends TestCase{
   /**
    * control(min size 110, pref size 120) control(min size 215, pref size 225)
    */ 

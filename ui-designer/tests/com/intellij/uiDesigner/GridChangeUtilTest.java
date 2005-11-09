@@ -7,7 +7,7 @@ import com.intellij.uiDesigner.core.GridLayoutManager;
 
 import java.awt.*;
 
-public final class TestGridChangeUtil extends LightIdeaTestCase{
+public final class GridChangeUtilTest extends LightIdeaTestCase{
   
   public void test_margins_and_gaps() {
     final Insets margin = new Insets(11,12,13,14);

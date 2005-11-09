@@ -5,7 +5,7 @@ import junit.framework.TestCase;
 import javax.swing.*;
 import java.awt.*;
 
-public final class TestEqualSizeCells extends TestCase{
+public final class EqualSizeCellsTest extends TestCase{
   /**
    * field1 | field2 | field3
    */ 

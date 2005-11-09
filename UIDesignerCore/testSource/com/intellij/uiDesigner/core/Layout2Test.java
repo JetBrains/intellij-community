@@ -5,7 +5,7 @@ import junit.framework.TestCase;
 import javax.swing.*;
 import java.awt.*;
 
-public final class Test2 extends TestCase{
+public final class Layout2Test extends TestCase{
   /**
    * button 1
    * <empty>

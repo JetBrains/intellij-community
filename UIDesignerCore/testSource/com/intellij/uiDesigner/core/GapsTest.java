@@ -5,7 +5,7 @@ import junit.framework.TestCase;
 import javax.swing.*;
 import java.awt.*;
 
-public final class TestGaps extends TestCase{
+public final class GapsTest extends TestCase{
   public void test1() {
     final JPanel panel = new JPanel(new GridLayoutManager(1,2, new Insets(0,0,0,0), 10, 0));
 

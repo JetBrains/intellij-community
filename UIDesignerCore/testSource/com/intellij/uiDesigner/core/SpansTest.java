@@ -5,7 +5,7 @@ import junit.framework.TestCase;
 import javax.swing.*;
 import java.awt.*;
 
-public final class TestSpans extends TestCase{
+public final class SpansTest extends TestCase{
   
   /**
    * button(can grow) | text field (want grow)

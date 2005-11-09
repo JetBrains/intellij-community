@@ -6,11 +6,11 @@ import junit.framework.TestCase;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class Test1 extends TestCase{
+public final class EliminateTest extends TestCase{
   public void test1() {
     // 11
     //  2
-    test(
+    doTest(
       new int[][]{
         {0, 2},
         {1, 1}
@@ -25,7 +25,7 @@ public final class Test1 extends TestCase{
   public void test2(){
     // 111
     //  2
-    test(
+    doTest(
       new int[][]{
         {0, 3},
         {1, 1}
@@ -40,7 +40,7 @@ public final class Test1 extends TestCase{
   public void test3(){
     // 11
     // 2
-    test(
+    doTest(
       new int[][]{
         {0,2},
         {0,1}
@@ -55,7 +55,7 @@ public final class Test1 extends TestCase{
   public void test4(){
     // 12
     // 33
-    test(
+    doTest(
       new int[][]{
         {0, 1},
         {1, 1},
@@ -72,7 +72,7 @@ public final class Test1 extends TestCase{
   public void test5(){
     // 112
     //  333
-    test(
+    doTest(
       new int[][]{
         {0, 2},
         {2, 1},
@@ -89,7 +89,7 @@ public final class Test1 extends TestCase{
   public void test7(){
     // 11 222
     //  3333
-    test(
+    doTest(
       new int[][]{
         {0, 2},
         {3, 3},
@@ -106,7 +106,7 @@ public final class Test1 extends TestCase{
   public void test8(){
     //   111
     // 222
-    test(
+    doTest(
       new int[][]{
         {2, 3},
         {0, 3}
@@ -121,7 +121,7 @@ public final class Test1 extends TestCase{
   public void test9(){
     // 1 22
     // 333
-    test(
+    doTest(
       new int[][]{
         {0, 1},
         {2, 2},
@@ -138,7 +138,7 @@ public final class Test1 extends TestCase{
   public void test9a(){
     // 122
     // 33
-    test(
+    doTest(
       new int[][]{
         {0, 1},
         {1, 2},
@@ -154,7 +154,7 @@ public final class Test1 extends TestCase{
 
   public void test10(){
     // 1 2
-    test(
+    doTest(
       new int[][]{
         {0, 1},
         {2, 1},
@@ -166,7 +166,7 @@ public final class Test1 extends TestCase{
     );
   }
 
-  private static void test(final int[][] src, final int[][] expected) {
+  private static void doTest(final int[][] src, final int[][] expected) {
     final int[] cells = new int[src.length];
     final int[] spans = new int[src.length];
     for (int i = 0; i < cells.length; i++) {

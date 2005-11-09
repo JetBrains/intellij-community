@@ -5,7 +5,7 @@ import junit.framework.TestCase;
 import javax.swing.*;
 import java.awt.*;
 
-public final class Test7 extends TestCase{
+public final class Layout7Test extends TestCase{
   /**
    * label | text field
    *    scroll pane

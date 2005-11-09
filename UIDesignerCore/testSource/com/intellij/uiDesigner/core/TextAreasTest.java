@@ -5,7 +5,7 @@ import junit.framework.TestCase;
 import javax.swing.*;
 import java.awt.*;
 
-public final class TestTextAreas extends TestCase{
+public final class TextAreasTest extends TestCase{
   /**
    * label   |    label
    * text area (span 2)

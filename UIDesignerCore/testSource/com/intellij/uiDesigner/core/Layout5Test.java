@@ -5,7 +5,7 @@ import junit.framework.TestCase;
 import javax.swing.*;
 import java.awt.*;
 
-public final class Test5 extends TestCase{
+public final class Layout5Test extends TestCase{
   
   
   public void test1() {
