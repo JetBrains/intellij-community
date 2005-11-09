@@ -3,9 +3,9 @@ package com.intellij.psi.impl.source.resolve.reference;
 import com.intellij.ant.impl.dom.impl.RegisterInPsi;
 import com.intellij.lang.properties.PropertiesReferenceProvider;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiLiteralExpression;
@@ -22,7 +22,6 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.*;
 import com.intellij.psi.xml.*;
 import com.intellij.xml.util.HtmlReferenceProvider;
 import com.intellij.xml.util.XmlUtil;
-import com.intellij.idea.LoggerFactory;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
@@ -120,6 +119,10 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
       ), getProviderByType(CLASS_REFERENCE_PROVIDER)
     );
 
+    final CustomizableReferenceProvider classReferenceProvider = (CustomizableReferenceProvider)getProviderByType(CLASS_REFERENCE_PROVIDER);
+    final CustomizingReferenceProvider qualifiedClassReferenceProvider = new CustomizingReferenceProvider(classReferenceProvider);
+    qualifiedClassReferenceProvider.addCustomization(JavaClassReferenceProvider.RESOLVE_QUALIFIED_CLASS_NAME, true);
+    
     registerXmlAttributeValueReferenceProvider(
       new String[]{"type"},
       new ScopeFilter(
@@ -139,7 +142,8 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
           ),
           2
         )
-      ), getProviderByType(CLASS_REFERENCE_PROVIDER)
+      ), 
+      qualifiedClassReferenceProvider
     );
 
     registerXmlAttributeValueReferenceProvider(
@@ -161,7 +165,8 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
           ),
           2
         )
-      ), getProviderByType(CLASS_REFERENCE_PROVIDER)
+      ), 
+      qualifiedClassReferenceProvider
     );
 
     registerXmlAttributeValueReferenceProvider(

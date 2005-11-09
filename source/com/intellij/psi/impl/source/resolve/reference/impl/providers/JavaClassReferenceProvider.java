@@ -1,15 +1,15 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.infos.ClassCandidateInfo;
 import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.source.resolve.ClassResolverProcessor;
 import com.intellij.psi.impl.source.resolve.reference.ElementManipulator;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
-import com.intellij.psi.impl.source.resolve.ClassResolverProcessor;
+import com.intellij.psi.infos.ClassCandidateInfo;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -23,6 +23,9 @@ import com.intellij.util.IncorrectOperationException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.
@@ -31,10 +34,16 @@ import java.util.List;
  * Time: 17:30:38
  * To change this template use Options | File Templates.
  */
-public class JavaClassReferenceProvider extends GenericReferenceProvider{
+public class JavaClassReferenceProvider extends GenericReferenceProvider implements CustomizableReferenceProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider");
   private static final char SEPARATOR = '.';
   private static final ReferenceType ourType = new ReferenceType(ReferenceType.JAVA_CLASS);
+
+  private @Nullable Map<CustomizationKey, Object> myOptions;
+
+  public static final CustomizationKey<Boolean> RESOLVE_QUALIFIED_CLASS_NAME = new CustomizationKey<Boolean>(
+    "Tells reference provider to process only qualified class references (e.g. not resolve String as java.lang.String)"
+  );
 
   public PsiReference[] getReferencesByElement(PsiElement element){
     return getReferencesByElement(element, ourType);
@@ -42,7 +51,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider{
 
   public PsiReference[] getReferencesByElement(PsiElement element, ReferenceType type){
       String text = element.getText();
-    
+
       if (element instanceof XmlAttributeValue) {
           final String valueString = ((XmlAttributeValue) element).getValue();
           int startOffset = StringUtil.startsWithChar(text, '"') ||
@@ -50,16 +59,16 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider{
           return getReferencesByString(valueString, element, type, startOffset);
       } else if (element instanceof XmlTag) {
         final XmlTagValue value = ((XmlTag)element).getValue();
-        
+
         if (value != null) {
           text = value.getText();
           final String trimmedText = text.trim();
-          
+
           return getReferencesByString(
-            trimmedText, 
-            element, 
-            type, 
-            value.getTextRange().getStartOffset() + text.indexOf(trimmedText) - element.getTextOffset() 
+            trimmedText,
+            element,
+            type,
+            value.getTextRange().getStartOffset() + text.indexOf(trimmedText) - element.getTextOffset()
           );
         }
       }
@@ -114,7 +123,12 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider{
     return cachedPackages;
   }
 
+  public void setOptions(@Nullable Map<CustomizationKey, Object> options) {
+    myOptions = options;
+  }
+
   protected class ReferenceSet{
+    private final @Nullable Map<CustomizationKey, Object> options = myOptions;
     private JavaReference[] myReferences;
     private final PsiElement myElement;
     private final int myStartInElement;
@@ -286,9 +300,12 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider{
       public JavaResolveResult advancedResolve(boolean incompleteCode) {
         if (!myElement.isValid()) return JavaResolveResult.EMPTY;
         String qName = getElement().getText().substring(getReference(0).getRangeInElement().getStartOffset(), getRangeInElement().getEndOffset());
+        
         if (myIndex == myReferences.length - 1) {
           final PsiClass aClass = myElement.getManager().findClass(qName, GlobalSearchScope.allScope(myElement.getProject()));
-          if (aClass != null) return new ClassCandidateInfo(aClass, PsiSubstitutor.EMPTY, false, false, myElement);
+          if (aClass != null) {
+            return new ClassCandidateInfo(aClass, PsiSubstitutor.EMPTY, false, false, myElement);
+          }
         }
         PsiElement resolveResult = myElement.getManager().findPackage(qName);
         if(resolveResult == null)
@@ -299,7 +316,22 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider{
           if(containingFile instanceof PsiJavaFile) {
             final ClassResolverProcessor processor = new ClassResolverProcessor(getCanonicalText(), myElement);
             containingFile.processDeclarations(processor, PsiSubstitutor.EMPTY, null, myElement);
-            if(processor.getResult().length == 1) return processor.getResult()[0];
+            if(processor.getResult().length == 1) {
+              final JavaResolveResult javaResolveResult = processor.getResult()[0];
+              
+              if (javaResolveResult != JavaResolveResult.EMPTY && options != null) {
+                final Boolean value = RESOLVE_QUALIFIED_CLASS_NAME.getValue(options);
+                if (value != null && value.booleanValue()) {
+                  final String qualifiedName = ((PsiClass)javaResolveResult.getElement()).getQualifiedName();
+  
+                  if (!qName.equals(qualifiedName)) {
+                    return JavaResolveResult.EMPTY;
+                  }
+                }
+              }
+              
+              return javaResolveResult;
+            }
           }
         }
         return resolveResult != null ?
