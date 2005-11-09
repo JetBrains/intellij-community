@@ -21,6 +21,8 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Stack;
 
+import org.jetbrains.annotations.NotNull;
+
 public class VirtualFileManagerImpl extends VirtualFileManagerEx implements ApplicationComponent {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.VirtualFileManagerImpl");
@@ -68,13 +70,9 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
   public void disposeComponent() {
   }
 
+  @NotNull
   public ProgressIndicator getRefreshIndicator() {
     return myRefreshIndicator;
-  }
-
-  // Used by Fabrique:
-  public void setRefreshIndicator(ProgressIndicator refreshIndicator) {
-    myRefreshIndicator = refreshIndicator;
   }
 
   private void registerFileSystem(VirtualFileSystem fileSystem) {

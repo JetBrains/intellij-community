@@ -9,20 +9,18 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.ex.ProvidedContent;
 import com.intellij.util.LocalTimeCounter;
-import com.intellij.util.concurrency.WorkerThread;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
 import java.io.*;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -85,7 +83,7 @@ public class VirtualFileImpl extends VirtualFile {
     }
   }
 
-  void setParent(VirtualFileImpl parent) {
+  private void setParent(VirtualFileImpl parent) {
     synchronized (ourFileSystem.LOCK) {
       myParent = parent;
     }
@@ -106,7 +104,7 @@ public class VirtualFileImpl extends VirtualFile {
   }
 
   private String getPath(char separatorChar) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
+    //ApplicationManager.getApplication().assertReadAccessAllowed();
 
     StringBuffer buffer = new StringBuffer(50);
     appendPath(buffer, separatorChar);
@@ -208,16 +206,12 @@ public class VirtualFileImpl extends VirtualFile {
 
   @Nullable
   public VirtualFile getParent() {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
-
     synchronized (ourFileSystem.LOCK) {
       return myParent;
     }
   }
 
   public VirtualFile[] getChildren() {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
-
     if (!isDirectory()) return null;
     synchronized (ourFileSystem.LOCK) {
       if (myChildren == null) {
@@ -528,10 +522,7 @@ public class VirtualFileImpl extends VirtualFile {
   }
 
   public void refresh(final boolean asynchronous, final boolean recursive, final Runnable postRunnable) {
-    if (asynchronous) {
-      ApplicationManager.getApplication().assertReadAccessAllowed();
-    }
-    else {
+    if (!asynchronous) {
       ApplicationManager.getApplication().assertWriteAccessAllowed();
     }
 
@@ -539,14 +530,6 @@ public class VirtualFileImpl extends VirtualFile {
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("VirtualFile.refresh():" + getPresentableUrl() + ", recursive = " + recursive + ", modalityState = " + modalityState);
-    }
-
-    final WorkerThread worker;
-    if (asynchronous) {
-      worker = new WorkerThread("Synchronize worker");
-    }
-    else {
-      worker = null;
     }
 
     final Runnable runnable = new Runnable() {
@@ -569,7 +552,7 @@ public class VirtualFileImpl extends VirtualFile {
           ourFileSystem.getManager().addEventToFireByRefresh(runnable, asynchronous, modalityState);
         }
         else {
-          ourFileSystem.refresh(VirtualFileImpl.this, recursive, true, worker, modalityState, asynchronous, false);
+          ourFileSystem.refresh(VirtualFileImpl.this, recursive, true, modalityState, asynchronous, false);
         }
       }
     };
@@ -586,28 +569,18 @@ public class VirtualFileImpl extends VirtualFile {
           LOG.info("Executing request:" + this);
 
           final ProgressIndicator indicator = ourFileSystem.getManager().getRefreshIndicator();
-          if (indicator != null) {
-            indicator.start();
-            indicator.setText(VfsBundle.message("file.synchronize.progress"));
-          }
+          indicator.start();
+          indicator.setText(VfsBundle.message("file.synchronize.progress"));
 
-          worker.start();
           ApplicationManager.getApplication().runReadAction(runnable);
-          worker.dispose(false);
-          try {
-            worker.join();
-          }
-          catch (InterruptedException e) {
-          }
 
-          if (indicator != null) {
-            indicator.stop();
-          }
+          indicator.stop();
 
           endTask.run();
         }
       };
-      ourFileSystem.getSynchronizeQueueAlarm().addRequest(runnable1, 0);
+
+      ourFileSystem.getSynchronizeExecutor().submit(runnable1);
     }
     else {
       runnable.run();
@@ -635,12 +608,18 @@ public class VirtualFileImpl extends VirtualFile {
     return (int)getPhysicalFile().length();
   }
 
-  // should not check if file exists - already checked
-  void refreshInternal(final boolean recursive, final WorkerThread worker, final ModalityState modalityState, final boolean forceRefresh) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
+  void refreshInternal(final boolean recursive,
+                       final ModalityState modalityState,
+                       final boolean forceRefresh,
+                       final boolean asynchronous) {
+    if (!asynchronous) {
+      ApplicationManager.getApplication().assertWriteAccessAllowed();
+    }
+
+    if (!isValid()) return;
 
     if (LOG.isDebugEnabled()) {
-      LOG.debug("refreshInternal recursive = " + recursive + " worker = " + worker + " " + myName);
+      LOG.debug("refreshInternal recursive = " + recursive + " asynchronous = " + asynchronous + " file = " + myName);
     }
 
     PhysicalFile physicalFile = getPhysicalFile();
@@ -663,7 +642,7 @@ public class VirtualFileImpl extends VirtualFile {
             ourFileSystem.fireFileCreated(null, newChild);
           }
         },
-        worker != null,
+        asynchronous,
         modalityState
       );
       return;
@@ -703,7 +682,7 @@ public class VirtualFileImpl extends VirtualFile {
                 }
               }
             },
-            worker != null,
+            asynchronous,
             modalityState
           );
         }
@@ -715,23 +694,7 @@ public class VirtualFileImpl extends VirtualFile {
         final VirtualFileImpl child = children[i];
         if (found[i]) {
           if (recursive) {
-            if (worker != null) {
-              worker.addTask(
-                new Runnable() {
-                  public void run() {
-                    Runnable action = new Runnable() {
-                      public void run() {
-                        child.refreshInternal(recursive, worker, modalityState, false);
-                      }
-                    };
-                    ApplicationManager.getApplication().runReadAction(action);
-                  }
-                }
-              );
-            }
-            else {
-              child.refreshInternal(recursive, null, modalityState, false);
-            }
+            child.refreshInternal(recursive, modalityState, false, asynchronous);
           }
         }
         else {
@@ -745,7 +708,7 @@ public class VirtualFileImpl extends VirtualFile {
                 }
               }
             },
-            worker != null,
+            asynchronous,
             modalityState
           );
         }
@@ -767,7 +730,7 @@ public class VirtualFileImpl extends VirtualFile {
                 ourFileSystem.fireContentsChanged(null, VirtualFileImpl.this, oldModificationStamp);
               }
             },
-            worker != null,
+            asynchronous,
             modalityState
           );
         }
@@ -793,7 +756,7 @@ public class VirtualFileImpl extends VirtualFile {
               );
             }
           },
-          worker != null,
+          asynchronous,
           modalityState
         );
       }
@@ -804,23 +767,28 @@ public class VirtualFileImpl extends VirtualFile {
   void addChild(VirtualFileImpl child) {
     getChildren(); // to initialize myChildren
 
-    VirtualFileImpl[] newChildren = new VirtualFileImpl[myChildren.length + 1];
-    System.arraycopy(myChildren, 0, newChildren, 0, myChildren.length);
-    newChildren[myChildren.length] = child;
-    myChildren = newChildren;
+    synchronized (ourFileSystem.LOCK) {
+      VirtualFileImpl[] newChildren = new VirtualFileImpl[myChildren.length + 1];
+      System.arraycopy(myChildren, 0, newChildren, 0, myChildren.length);
+      newChildren[myChildren.length] = child;
+      myChildren = newChildren;
+      child.setParent(this);
+    }
   }
 
   void removeChild(VirtualFileImpl child) {
     getChildren(); // to initialize myChildren
 
-    for (int i = 0; i < myChildren.length; i++) {
-      if (myChildren[i] == child) {
-        VirtualFileImpl[] newChildren = new VirtualFileImpl[myChildren.length - 1];
-        System.arraycopy(myChildren, 0, newChildren, 0, i);
-        System.arraycopy(myChildren, i + 1, newChildren, i, newChildren.length - i);
-        myChildren = newChildren;
-        child.myParent = null;
-        return;
+    synchronized (ourFileSystem.LOCK) {
+      for (int i = 0; i < myChildren.length; i++) {
+        if (myChildren[i] == child) {
+          VirtualFileImpl[] newChildren = new VirtualFileImpl[myChildren.length - 1];
+          System.arraycopy(myChildren, 0, newChildren, 0, i);
+          System.arraycopy(myChildren, i + 1, newChildren, i, newChildren.length - i);
+          myChildren = newChildren;
+          child.myParent = null;
+          return;
+        }
       }
     }
   }

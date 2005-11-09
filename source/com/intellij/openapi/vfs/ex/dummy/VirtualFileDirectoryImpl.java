@@ -11,7 +11,7 @@ import java.util.ArrayList;
  *
  */
 class VirtualFileDirectoryImpl extends VirtualFileImpl {
-  private ArrayList myChildren = new ArrayList();
+  private ArrayList<VirtualFileImpl> myChildren = new ArrayList<VirtualFileImpl>();
 
   public VirtualFileDirectoryImpl(DummyFileSystem fileSystem, VirtualFileDirectoryImpl parent, String name) {
     super(fileSystem, parent, name);
@@ -26,7 +26,7 @@ class VirtualFileDirectoryImpl extends VirtualFileImpl {
   }
 
   public VirtualFile[] getChildren() {
-    return (VirtualFile[])myChildren.toArray(new VirtualFile[myChildren.size()]);
+    return myChildren.toArray(new VirtualFile[myChildren.size()]);
   }
 
   public VirtualFile createChildDirectory(Object requestor, String name) throws IOException {

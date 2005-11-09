@@ -7,11 +7,11 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class VirtualFileManagerEx extends VirtualFileManager {
+  @NotNull
   public abstract ProgressIndicator getRefreshIndicator();
-  // Used by Fabrique:
-  public abstract void setRefreshIndicator(ProgressIndicator refreshIndicator);
 
   public abstract void addVirtualFileManagerListener(VirtualFileManagerListener listener);
   public abstract void removeVirtualFileManagerListener(VirtualFileManagerListener listener);
