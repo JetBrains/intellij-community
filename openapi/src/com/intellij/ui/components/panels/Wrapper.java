@@ -66,7 +66,7 @@ public class Wrapper extends JPanel {
     getTargetComponent().requestFocus();
   }
 
-  public final boolean requestFocusInWindow() {
+  public boolean requestFocusInWindow() {
     if (getTargetComponent() == this) {
       return super.requestFocusInWindow();
     }
