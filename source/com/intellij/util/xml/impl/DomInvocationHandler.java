@@ -122,6 +122,15 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     return myMethodsMap;
   }
 
+  public int getChildIndex(final DomElement child) {
+    for (Map.Entry<Pair<String, Integer>, IndexedElementInvocationHandler> entry : myFixedChildren.entrySet()) {
+      if (entry.getValue().getProxy().equals(child)) {
+        return entry.getKey().getSecond();
+      }
+    }
+    return -1;
+  }
+
   public void undefine() throws IllegalAccessException, InstantiationException {
     final XmlTag tag = getXmlTag();
     if (tag != null) {

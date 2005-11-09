@@ -94,11 +94,15 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
   }
 
   public boolean isValid() {
-    return true;
+    return myFile.isValid();
   }
 
   public final DomMethodsInfo getMethodsInfo() {
     return null;
+  }
+
+  public int getChildIndex(final DomElement child) {
+    return -1;
   }
 
 }

@@ -25,4 +25,6 @@ public interface DomElement {
   boolean isValid();
 
   DomMethodsInfo getMethodsInfo();
+
+  int getChildIndex(final DomElement child);
 }
