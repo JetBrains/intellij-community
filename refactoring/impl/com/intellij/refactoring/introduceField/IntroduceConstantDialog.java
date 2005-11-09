@@ -381,9 +381,11 @@ class IntroduceConstantDialog extends DialogWrapper {
 
   protected void doOKAction() {
     final String targetClassName = getTargetClassName();
+    PsiClass newClass = myParentClass;
+
     if (!"".equals (targetClassName)) {
       final PsiManager manager = PsiManager.getInstance(myProject);
-      final PsiClass  newClass = manager.findClass(targetClassName, GlobalSearchScope.projectScope(myProject));
+      newClass = manager.findClass(targetClassName, GlobalSearchScope.projectScope(myProject));
       if (newClass == null) {
         CommonRefactoringUtil.showErrorMessage(
                 IntroduceConstantHandler.REFACTORING_NAME,
@@ -410,7 +412,7 @@ class IntroduceConstantDialog extends DialogWrapper {
               myProject);
       return;
     }
-    PsiField oldField = myParentClass.findFieldByName(fieldName, true);
+    PsiField oldField = newClass.findFieldByName(fieldName, true);
 
     if (oldField != null) {
       int answer = Messages.showYesNoDialog(

@@ -44,8 +44,7 @@ public class MoveClassesOrPackagesUtil {
 
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(manager.getProject());
     PsiReference[] references = helper.findReferences(element, projectScope, false);
-    for (int i = 0; i < references.length; i++) {
-      PsiReference reference = references[i];
+    for (PsiReference reference : references) {
       TextRange range = reference.getRangeInElement();
       if (foundReferences.contains(reference)) continue;
       results.add(
@@ -139,8 +138,8 @@ public class MoveClassesOrPackagesUtil {
 
     final String newPackageQualifiedName = newPrefix + aPackage.getName();
 
-    for (int i = 0; i < usages.length; i++) {
-      MoveRenameUsageInfo usage = (MoveRenameUsageInfo)usages[i];
+    for (UsageInfo usage1 : usages) {
+      MoveRenameUsageInfo usage = (MoveRenameUsageInfo)usage1;
       LOG.assertTrue(usage.referencedElement instanceof PsiPackage);
       final PsiPackage oldPackage = (PsiPackage)usage.referencedElement;
       LOG.assertTrue(!"".equals(oldPackage.getName()));
@@ -150,8 +149,7 @@ public class MoveClassesOrPackagesUtil {
     // do actual move
     final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(aPackage.getProject());
     PsiDirectory[] dirs = aPackage.getDirectories(projectScope);
-    for (int i = 0; i < dirs.length; i++) {
-      PsiDirectory dir = dirs[i];
+    for (PsiDirectory dir : dirs) {
       final PsiDirectory targetDirectory = moveDestination.getTargetDirectory(dir);
       if (targetDirectory != null) {
         moveDirectoryRecursively(dir, targetDirectory);
@@ -159,9 +157,9 @@ public class MoveClassesOrPackagesUtil {
     }
 
     // rename all references
-    for (int i = 0; i < usages.length; i++) {
-      MoveRenameUsageInfo usage = (MoveRenameUsageInfo)usages[i];
-      if (!usage.getElement().isValid()) continue;
+    for (UsageInfo usage2 : usages) {
+      MoveRenameUsageInfo usage = (MoveRenameUsageInfo)usage2;
+      if (usage.getElement() == null) continue;
       PsiReference reference = usage.reference;
       if (reference != null) {
         final String newQName = targetPackages.get(usage);
@@ -190,7 +188,7 @@ public class MoveClassesOrPackagesUtil {
     final PsiPackage aPackage = dir.getPackage();
     if (aPackage != null) {
       final String sourcePackageName = aPackage.getName();
-      if (!targetName.equals(sourcePackageName)) {
+      if (!sourcePackageName.equals(targetName)) {
         targetName = sourcePackageName;
       }
     }
@@ -215,8 +213,7 @@ public class MoveClassesOrPackagesUtil {
     }
     else {
       final PsiFile[] files = dir.getFiles();
-      for (int i = 0; i < files.length; i++) {
-        PsiFile file = files[i];
+      for (PsiFile file : files) {
         try {
           subdirectoryInDest.checkAdd(file);
         }
@@ -227,8 +224,7 @@ public class MoveClassesOrPackagesUtil {
       }
 
       final PsiDirectory[] subdirectories = dir.getSubdirectories();
-      for (int i = 0; i < subdirectories.length; i++) {
-        PsiDirectory subdirectory = subdirectories[i];
+      for (PsiDirectory subdirectory : subdirectories) {
         if (!subdirectory.equals(subdirectoryInDest)) {
           moveDirectoryRecursively(subdirectory, subdirectoryInDest, movedPaths);
         }
@@ -267,8 +263,8 @@ public class MoveClassesOrPackagesUtil {
     }
 
     // rebind all references
-    for (int i = 0; i < usages.length; i++) {
-      MoveRenameUsageInfo usage = (MoveRenameUsageInfo)usages[i];
+    for (UsageInfo usage1 : usages) {
+      MoveRenameUsageInfo usage = (MoveRenameUsageInfo)usage1;
       if (usage.getElement() == null) continue;
       PsiReference reference = usage.reference;
       if (reference != null) {
@@ -371,12 +367,9 @@ public class MoveClassesOrPackagesUtil {
                                   Map<PsiDirectory, String> relativePathsToCreate) {
 
     sourceRoots:
-    for (int i = 0; i < contentSourceRoots.length; i++) {
-      VirtualFile root = contentSourceRoots[i];
-
+    for (VirtualFile root : contentSourceRoots) {
       final PsiDirectory[] directories = aPackage.getDirectories();
-      for (int j = 0; j < directories.length; j++) {
-        PsiDirectory directory = directories[j];
+      for (PsiDirectory directory : directories) {
         if (VfsUtil.isAncestor(root, directory.getVirtualFile(), false)) {
           targetDirectories.add(directory);
           continue sourceRoots;
@@ -405,7 +398,8 @@ public class MoveClassesOrPackagesUtil {
           }
           relativePathsToCreate.put(currentDirectory, postfix.toString());
           continue sourceRoots;
-        } else {
+        }
+        else {
           currentDirectory = subdirectory;
         }
       }

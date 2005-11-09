@@ -21,6 +21,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * Represents a Java package.
@@ -125,4 +126,8 @@ public interface PsiPackage extends PsiNamedElement, NavigationItem {
    * @return the array of virtual files for the source roots.
    */
   VirtualFile[] occursInPackagePrefixes();
+
+  @NotNull
+  @NonNls
+  String getName();
 }
