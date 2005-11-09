@@ -15,17 +15,19 @@
  */
 package com.intellij.ide.navigationToolbar;
 
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.popup.list.DottedBorder;
-import com.intellij.openapi.util.*;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
 import java.awt.*;
 import java.awt.event.*;
-
-import org.jetbrains.annotations.Nullable;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * User: anna
@@ -49,6 +51,7 @@ public class HorizontalList extends JPanel {
     setLayout(new BorderLayout());
     setBackground(UIUtil.getListBackground());
     myModel.addAll(Arrays.asList(objects));
+
     myLeftButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         if (mySelectedIndex == -1 && !myModel.isEmpty()){
@@ -238,7 +241,11 @@ public class HorizontalList extends JPanel {
     if (ctrlClickHandler != null){
       label.addMouseListener(getMouseListener(new Condition<MouseEvent>() {
         public boolean value(final MouseEvent e) {
-          return !e.isConsumed() && !e.isPopupTrigger() && ((SystemInfo.isMac && e.isMetaDown()) || (!SystemInfo.isMac && e.isControlDown()));
+          // You cannot distinguish between 3rd mouse button released with Meta down or not. See SunBug: 4029159
+          if (e.getID() != MouseEvent.MOUSE_PRESSED && SystemInfo.isMac) return false;
+
+          final int ex = e.getModifiersEx();
+          return !e.isConsumed() && !e.isPopupTrigger() && (ex & (SystemInfo.isMac ? InputEvent.META_DOWN_MASK : InputEvent.CTRL_DOWN_MASK)) != 0;
         }
       }, ctrlClickHandler, index));
     }
