@@ -4,17 +4,17 @@ import com.intellij.util.xml.DomElement;
 import jetbrains.fabrique.ui.treeStructure.SimpleTreeStructure;
 
 public class DomModelTreeStructure extends SimpleTreeStructure {
-  private SimpleDomElementNode myRoot;
+  private BaseDomElementNode myRoot;
 
   public DomModelTreeStructure(DomElement rootElement) {
     myRoot = createRoot(rootElement);
   }
 
-  protected SimpleDomElementNode createRoot(DomElement rootElement) {
-    return new SimpleDomElementNode(rootElement);
+  protected BaseDomElementNode createRoot(DomElement rootElement) {
+    return new BaseDomElementNode(rootElement);
   }
 
-  public SimpleDomElementNode getRootElement() {
+  public BaseDomElementNode getRootElement() {
     return myRoot;
   }
 }

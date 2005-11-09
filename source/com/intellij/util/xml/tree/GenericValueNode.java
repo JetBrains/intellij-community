@@ -4,7 +4,7 @@ import jetbrains.fabrique.ui.treeStructure.SimpleNode;
 import com.intellij.util.xml.GenericValue;
 import com.intellij.ui.SimpleTextAttributes;
 
-public class GenericValueNode extends DomElementNode {
+public class GenericValueNode extends AbstractDomElementNode {
   protected GenericValue myModelElement;
   protected String myTagName;
 

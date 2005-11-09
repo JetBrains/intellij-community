@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.ArrayList;
 import java.awt.*;
 
-public class DomElementsGroupNode extends DomElementNode {
+public class DomElementsGroupNode extends AbstractDomElementNode {
   Logger LOG = Logger.getInstance(DomModelTreeStructure.class.getName());
 
   private DomElement myModelElement;

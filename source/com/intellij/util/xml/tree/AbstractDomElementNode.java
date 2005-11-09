@@ -5,17 +5,17 @@ import com.intellij.util.xml.DomElement;
 
 import javax.swing.*;
 
-abstract public class DomElementNode extends SimpleNode {
-  protected DomElementNode() {
+abstract public class AbstractDomElementNode extends SimpleNode {
+  protected AbstractDomElementNode() {
     super();
   }
 
-  public DomElementNode(final SimpleNode parent) {
+  public AbstractDomElementNode(final SimpleNode parent) {
     super(parent);
   }
 
-  protected SimpleDomElementNode getDomElementNode(final DomElement domElement, final String tagName, final SimpleNode parentNode) {
-      return new SimpleDomElementNode(domElement, tagName, parentNode);
+  protected BaseDomElementNode getDomElementNode(final DomElement domElement, final String tagName, final SimpleNode parentNode) {
+      return new BaseDomElementNode(domElement, tagName, parentNode);
   };
 
   abstract public String getNodeName();
