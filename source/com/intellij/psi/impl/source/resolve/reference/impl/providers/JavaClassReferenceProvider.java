@@ -42,7 +42,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
   private @Nullable Map<CustomizationKey, Object> myOptions;
 
   public static final CustomizationKey<Boolean> RESOLVE_QUALIFIED_CLASS_NAME = new CustomizationKey<Boolean>(
-    "Tells reference provider to process only qualified class references (e.g. not resolve String as java.lang.String)"
+    PsiBundle.message("qualified.resolve.class.reference.provider.option")
   );
 
   public PsiReference[] getReferencesByElement(PsiElement element){
