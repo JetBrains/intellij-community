@@ -163,6 +163,7 @@ public class IdeFrame extends JFrame implements DataProvider {
 
   public void setProject(final Project project) {
     myProject = project;
+    myRootPane.installNavigationBar(project);
   }
 
   public Project getProject() {

@@ -291,6 +291,7 @@
       <group id="ViewMenu" popup="true">
         <action id="ViewToolBar" class="com.intellij.ide.actions.ViewToolbarAction"/>
         <action id="ViewStatusBar" class="com.intellij.ide.actions.ViewStatusBarAction"/>
+        <action id="ViewNavigationBar" class="com.intellij.ide.actions.ViewNavigationBarAction"/>
         <reference ref="EditorToggleShowWhitespaces"/>
         <reference ref="EditorToggleShowLineNumbers"/>
         <separator/>

@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.RecentProjectsManager;
+import com.intellij.ide.navigationToolbar.NavigationToolbarPanel;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.ui.customization.CustomizableActionsSchemas;
@@ -15,6 +16,7 @@ import com.intellij.openapi.wm.ex.ActionToolbarEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.impl.status.StatusBarImpl;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreen;
+import com.intellij.openapi.project.Project;
 
 import javax.swing.*;
 import java.awt.*;
@@ -33,6 +35,10 @@ public class IdeRootPane extends JRootPane{
    */
   private JComponent myToolbar;
   private StatusBarImpl myStatusBar;
+
+  private JPanel myNorthPanel = new JPanel(new BorderLayout());
+  private NavigationToolbarPanel myNavigationBar;
+
   /**
    * Current <code>ToolWindowsPane</code>. If there is no such pane then this field is null.
    */
@@ -49,10 +55,12 @@ public class IdeRootPane extends JRootPane{
     myUISettings = uiSettings;
 
     updateToolbar();
+    myContentPane.add(myNorthPanel, BorderLayout.NORTH);
 
     createStatusBar();
     updateStatusBarVisibility();
-    myContentPane.add(myStatusBar,BorderLayout.SOUTH);
+
+    myContentPane.add(myStatusBar, BorderLayout.SOUTH);
 
     myUISettingsListener=new MyUISettingsListenerImpl();
     setJMenuBar(new IdeMenuBar(myActionManager, dataManager, keymapManager));
@@ -117,10 +125,10 @@ public class IdeRootPane extends JRootPane{
 
   void updateToolbar() {
     if (myToolbar != null) {
-      myContentPane.remove(myToolbar);
+      myNorthPanel.remove(myToolbar);
     }
     myToolbar = createToolbar();
-    myContentPane.add(myToolbar,BorderLayout.NORTH);
+    myNorthPanel.add(myToolbar,BorderLayout.NORTH);
     updateToolbarVisibility();
     myContentPane.revalidate();
   }
@@ -149,6 +157,10 @@ public class IdeRootPane extends JRootPane{
     return myStatusBar;
   }
 
+  public NavigationToolbarPanel getNavigationBar(){
+    return myNavigationBar;
+  }
+
   private void updateToolbarVisibility(){
     myToolbar.setVisible(myUISettings.SHOW_MAIN_TOOLBAR);
   }
@@ -157,10 +169,26 @@ public class IdeRootPane extends JRootPane{
     myStatusBar.setVisible(myUISettings.SHOW_STATUS_BAR);
   }
 
+  private void updateNavigationBarVisibility(){
+    myNavigationBar.setVisible(myUISettings.SHOW_NAVIGATION_BAR);
+  }
+
+  public void installNavigationBar(final Project project) {
+    if (project != null) {
+      myNavigationBar = new NavigationToolbarPanel(project);
+      myNorthPanel.add(myNavigationBar, BorderLayout.SOUTH);
+      updateNavigationBarVisibility();
+    } else if (myNavigationBar != null) {
+      myNorthPanel.remove(myNavigationBar);
+      myNavigationBar = null;
+    }
+  }
+
   private final class MyUISettingsListenerImpl implements UISettingsListener{
     public final void uiSettingsChanged(final UISettings source){
       updateToolbarVisibility();
       updateStatusBarVisibility();
+      updateNavigationBarVisibility();
     }
   }
 }

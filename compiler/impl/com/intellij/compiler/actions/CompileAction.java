@@ -4,7 +4,7 @@ import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.fileTypes.FileType;
@@ -27,7 +27,7 @@ import java.util.List;
 public class CompileAction extends CompileActionBase {
   
   protected void doAction(DataContext dataContext, Project project) {
-    final Module module = (Module)dataContext.getData(DataConstantsEx.MODULE_CONTEXT);
+    final Module module = (Module)dataContext.getData(DataConstants.MODULE_CONTEXT);
     final boolean trackDependencies = CompilerWorkspaceConfiguration.getInstance(project).COMPILE_DEPENDENT_FILES;
     if (module != null) {
       CompilerManager.getInstance(project).compile(module, null, trackDependencies);
@@ -55,7 +55,7 @@ public class CompileAction extends CompileActionBase {
     }
 
     CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(project);
-    final Module module = (Module)dataContext.getData(DataConstantsEx.MODULE_CONTEXT);
+    final Module module = (Module)dataContext.getData(DataConstants.MODULE_CONTEXT);
 
     final VirtualFile[] files = getCompilableFiles(project, (VirtualFile[])dataContext.getData(DataConstants.VIRTUAL_FILE_ARRAY));
     if (module == null && files.length == 0) {

@@ -4,18 +4,18 @@
  */
 package com.intellij.ui.popup.list;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.popup.ListItemDescriptor;
-import com.intellij.peer.PeerFactory;
 import com.intellij.ui.components.panels.OpaquePanel;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 
+import org.jetbrains.annotations.NonNls;
+
 public class GroupedItemsListRenderer implements ListCellRenderer {
 
-  private final static Border ourSelectedBorder = new ListItemSelectionBorder();
+  private final static Border ourSelectedBorder = new DottedBorder(GroupedItemsListRenderer.SELECTED_FRAME_FOREGROUND);
   private final static Border ourBorder = BorderFactory.createEmptyBorder(1, 1, 1, 1);
   private ListSeparatorComponent mySeparatorComponent = new ListSeparatorComponent();
 
@@ -123,7 +123,8 @@ public class GroupedItemsListRenderer implements ListCellRenderer {
 
     ListSeparatorComponent() {
       setBorder(BorderFactory.createEmptyBorder(VGAP, 0, VGAP, 0));
-      setFont(UIManager.getFont("Label.font"));
+      @NonNls final String labelFont = "Label.font";
+      setFont(UIManager.getFont(labelFont));
       setFont(getFont().deriveFont(Font.BOLD));
     }
 
@@ -176,30 +177,6 @@ public class GroupedItemsListRenderer implements ListCellRenderer {
       myCaption = captionAboveOf;
     }
 
-  }
-
-  static class ListItemSelectionBorder implements Border {
-    private final Insets myInsets;
-
-    ListItemSelectionBorder() {
-      myInsets = new Insets(1, 1, 1, 1);
-    }
-
-    public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-      g.setColor(SELECTED_FRAME_FOREGROUND);
-
-      if (ApplicationManager.getApplication() != null) {
-        PeerFactory.getInstance().getUIHelper().drawDottedRectangle(g, x, y, x + width - 1, y + height - 1);
-      }
-    }
-
-    public Insets getBorderInsets(Component c) {
-      return myInsets;
-    }
-
-    public boolean isBorderOpaque() {
-      return true;
-    }
   }
 
 }

@@ -99,7 +99,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbarEx {
     return myLayoutPolicy;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public void setLayoutPolicy(final int layoutPolicy) {
     if (layoutPolicy != NOWRAP_LAYOUT_POLICY && layoutPolicy != WRAP_LAYOUT_POLICY) {
       throw new IllegalArgumentException("wrong layoutPolicy: " + layoutPolicy);
@@ -381,7 +380,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbarEx {
   /**
    * Calculates bounds of all the components in the toolbar
    */
-  @SuppressWarnings({"HardCodedStringLiteral"})
   private void calculateBounds() {
     // Ensure that myComponentBounds has enoungh elements
     final int componentCount = getComponentCount();
@@ -512,7 +510,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbarEx {
     revalidate();
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public void setMinimumButtonSize(final Dimension size) {
     if (size == null) {
       throw new IllegalArgumentException("size cannot be null");
@@ -528,7 +525,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbarEx {
     revalidate();
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public void setOrientation(final int orientation) {
     if (SwingConstants.HORIZONTAL != orientation && SwingConstants.VERTICAL != orientation) {
       throw new IllegalArgumentException("wrong orientation: " + orientation);
