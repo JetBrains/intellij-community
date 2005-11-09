@@ -41,21 +41,17 @@ public class HtmlCompletionData extends XmlCompletionData {
 
   protected HtmlCompletionData(boolean _caseInsensitive) {
     myCaseInsensitive = _caseInsensitive;
-    
-    if (myCaseInsensitive) {
-      // amp is not parsed in html separately
-      final CompletionVariant variant = new CompletionVariant(
-        new AndFilter(
-          new TokenTypeFilter(XmlTokenType.XML_DATA_CHARACTERS),
-          new TextStartFilter("&")
-        )
-      );
-      variant.includeScopeClass(XmlToken.class, true);
-      variant.addCompletion(new EntityRefGetter(), TailType.NONE);
-      variant.setInsertHandler(new EntityRefInsertHandler());
+  }
 
-      registerVariant(variant);
+  protected ElementFilter createXmlEntityCompletionFilter() {
+    if (isCaseInsensitive()) {
+      return new AndFilter(
+        new TokenTypeFilter(XmlTokenType.XML_DATA_CHARACTERS),
+        new TextStartFilter("&")
+      );
     }
+    
+    return super.createXmlEntityCompletionFilter();
   }
 
   private boolean equalNames(String str,String str2) {

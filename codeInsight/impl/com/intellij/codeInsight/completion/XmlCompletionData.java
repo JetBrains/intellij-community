@@ -78,8 +78,15 @@ public class XmlCompletionData extends CompletionData {
       registerVariant(variant);
     }
 
+    final ElementFilter entityCompletionFilter = createXmlEntityCompletionFilter();
+    
     {
-      final CompletionVariant variant = new CompletionVariant(new TokenTypeFilter(XmlTokenType.XML_DATA_CHARACTERS));
+      final CompletionVariant variant = new CompletionVariant(
+        new AndFilter(
+          new TokenTypeFilter(XmlTokenType.XML_DATA_CHARACTERS),
+          new NotFilter(entityCompletionFilter)
+        )
+      );
       variant.includeScopeClass(XmlToken.class, true);
       variant.addCompletion(new SimpleTagContentEnumerationValuesGetter(),TailType.NONE);
 
@@ -88,19 +95,23 @@ public class XmlCompletionData extends CompletionData {
 
     {
       final CompletionVariant variant = new CompletionVariant(
-        new AndFilter(
-          new LeftNeighbour(new TextFilter("&")),
-          new OrFilter(
-            new TokenTypeFilter(XmlTokenType.XML_DATA_CHARACTERS),
-            new TokenTypeFilter(XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN)
-          )
-        )
+        entityCompletionFilter
       );
       variant.includeScopeClass(XmlToken.class, true);
       variant.addCompletion(new EntityRefGetter());
       variant.setInsertHandler(new EntityRefInsertHandler());
       registerVariant(variant);
     }
+  }
+
+  protected ElementFilter createXmlEntityCompletionFilter() {
+    return new AndFilter(
+      new LeftNeighbour(new TextFilter("&")),
+      new OrFilter(
+        new TokenTypeFilter(XmlTokenType.XML_DATA_CHARACTERS),
+        new TokenTypeFilter(XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN)
+      )
+    );
   }
 
   protected XmlAttributeValueGetter getAttributeValueGetter() {
@@ -374,8 +385,7 @@ public class XmlCompletionData extends CompletionData {
           final XmlNSDescriptor nsDescriptor = descriptor.getNSDescriptor();
           final XmlFile descriptorFile = nsDescriptor != null ? nsDescriptor.getDescriptorFile():null;
 
-          // skip content of embedded dtd, its content will be inserted by word completion
-          if (descriptorFile != null && !descriptorFile.equals(parentOfType.getContainingFile())) {
+          if (descriptorFile != null) {
             final PsiElementProcessor processor = new PsiElementProcessor() {
               public boolean execute(final PsiElement element) {
                 if (element instanceof XmlEntityDecl) {
