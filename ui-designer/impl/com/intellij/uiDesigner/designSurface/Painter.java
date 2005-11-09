@@ -183,8 +183,8 @@ public final class Painter {
             vertSkippedLineSegments = new boolean[vertGridLines.length][height+4];
           }
           for(int col = constraints.getColumn()+1; col < constraints.getColumn() + constraints.getColSpan(); col++) {
-            for(int y=horzGridLines [constraints.getRow()]+1;
-                y<horzGridLines [constraints.getRow() + constraints.getRowSpan()]-1;
+            for(int y=horzGridLines [constraints.getRow()]+4;
+                y<horzGridLines [constraints.getRow() + constraints.getRowSpan()]-4;
                 y++) {
               vertSkippedLineSegments [col][y] = true;
             }
@@ -196,8 +196,8 @@ public final class Painter {
             horzSkippedLineSegments = new boolean[horzGridLines.length][width+4];
           }
           for(int row = constraints.getRow()+1; row < constraints.getRow() + constraints.getRowSpan(); row++) {
-            for(int x=vertGridLines [constraints.getColumn()]+1;
-                x<vertGridLines [constraints.getColumn() + constraints.getColSpan()]-1;
+            for(int x=vertGridLines [constraints.getColumn()]+4;
+                x<vertGridLines [constraints.getColumn() + constraints.getColSpan()]-4;
                 x++) {
               horzSkippedLineSegments [row][x] = true;
             }
