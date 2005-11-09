@@ -1,16 +1,13 @@
 
 package com.intellij.refactoring.util;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageViewUtil;
 import org.jetbrains.annotations.NonNls;
-
-import java.util.*;
 
 public class RefactoringMessageUtil {
 
