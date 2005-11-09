@@ -17,7 +17,7 @@ public class BaseDomElementNode extends AbstractDomElementNode {
   protected String myTagName;
 
   public BaseDomElementNode(final DomElement modelElement) {
-    this(modelElement, null, null);
+    this(modelElement, modelElement.getTagName(), null);
   }
 
   public BaseDomElementNode(final DomElement modelElement, final String tagName, SimpleNode parent) {
@@ -37,7 +37,7 @@ public class BaseDomElementNode extends AbstractDomElementNode {
         final Object result = method.invoke(myDomElement, new Object[0]);
 
         if (result instanceof DomElement) {
-          final String tagName = myDomElement.getMethodsInfo().getTagName(method);
+          final String tagName = ((DomElement)result).getTagName();
 
           if (showGenericValues() && result instanceof GenericValue) {
              children.add(new GenericValueNode((GenericValue)result, tagName, this));
@@ -92,6 +92,14 @@ public class BaseDomElementNode extends AbstractDomElementNode {
 
   public String getNodeName() {
     return getPropertyName(myTagName);
+  }
+
+  public String getTagName() {
+    return myTagName;
+  }
+
+  public DomElement getDomElement() {
+    return myDomElement;
   }
 
   protected Comparator<AbstractDomElementNode> getComparator() {

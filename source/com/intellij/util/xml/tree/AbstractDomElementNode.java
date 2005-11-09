@@ -20,6 +20,8 @@ abstract public class AbstractDomElementNode extends SimpleNode {
 
   abstract public String getNodeName();
 
+  abstract public String getTagName();
+
   public Icon getNodeIcon() {
     return null;
   };
@@ -28,4 +30,5 @@ abstract public class AbstractDomElementNode extends SimpleNode {
     //todo use name policy
     return tagName.replaceAll("-", " ");
   }
+
 }

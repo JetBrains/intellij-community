@@ -2,6 +2,7 @@ package com.intellij.util.xml.tree;
 
 import jetbrains.fabrique.ui.treeStructure.SimpleNode;
 import com.intellij.util.xml.GenericValue;
+import com.intellij.util.xml.DomElement;
 import com.intellij.ui.SimpleTextAttributes;
 
 public class GenericValueNode extends AbstractDomElementNode {
@@ -17,6 +18,14 @@ public class GenericValueNode extends AbstractDomElementNode {
 
   public String getNodeName() {
     return getPropertyName(myTagName);
+  }
+
+  public String getTagName() {
+    return myTagName;
+  }
+
+  public DomElement getDomElement() {
+    return myModelElement;
   }
 
   protected boolean doUpdate() {

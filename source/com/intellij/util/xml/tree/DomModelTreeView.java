@@ -36,6 +36,7 @@ public class DomModelTreeView extends Wrapper {
     };
 
     myBuilder = new SimpleTreeBuilder(myTree, (DefaultTreeModel) myTree.getModel(), treeStructure, WeightBasedComparator.INSTANCE);
+    myBuilder.setNodeDescriptorComparator(null);
     myBuilder.initRoot();
 
     add(myTree);

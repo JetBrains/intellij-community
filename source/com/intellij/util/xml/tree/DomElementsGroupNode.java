@@ -57,4 +57,8 @@ public class DomElementsGroupNode extends AbstractDomElementNode {
   public String getNodeName() {
     return getPropertyName(StringUtil.pluralize(myChildrenTagName));
   }
+
+  public String getTagName() {
+    return myChildrenTagName;
+  }
 }
