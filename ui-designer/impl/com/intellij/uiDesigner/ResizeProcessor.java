@@ -33,7 +33,7 @@ public final class ResizeProcessor extends EventProcessor{
     myComponent = component;
     myOriginalParent = component.getParent();
     myOriginalConstraints = component.getConstraints();
-    if (!component.getParent().isXY()) {
+    if (component.getParent().isGrid()) {
       Rectangle rc = SwingUtilities.convertRectangle(component.getParent().getDelegee(),
                                                      component.getBounds(),
                                                      myEditor.getDragLayer());
@@ -129,7 +129,7 @@ public final class ResizeProcessor extends EventProcessor{
       myLastPoint=e.getPoint();
     }
     else if (e.getID() == MouseEvent.MOUSE_RELEASED) {
-      if (!myOriginalParent.isXY()) {
+      if (myOriginalParent.isGrid()) {
         final Point point = SwingUtilities.convertPoint(myEditor.getDragLayer(), e.getX(), e.getY(), myOriginalParent.getDelegee());
         final GridLayoutManager grid = (GridLayoutManager)myOriginalParent.getLayout();
         Rectangle rcGrid = getGridSpanGridRect(grid, myOriginalConstraints, point, myResizeMask);

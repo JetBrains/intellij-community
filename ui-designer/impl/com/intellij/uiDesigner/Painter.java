@@ -1,6 +1,7 @@
 package com.intellij.uiDesigner;
 
 import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,6 +46,9 @@ final class Painter {
   private static final int SW = 6;
   private static final int W = 7;
 
+  private Painter() {
+  }
+
   public static void paintComponentDecoration(final GuiEditor editor, final RadComponent component, final Graphics g){
     // Collect selected components and paint decoration for non selected components
     final ArrayList<RadComponent> selection = new ArrayList<RadComponent>();
@@ -69,7 +73,7 @@ final class Painter {
           else{
             paintComponentBoundsImpl(editor, component, g);
           }
-          paintGridOutlineImpl(editor, component, g);
+          paintGridOutline(editor, component, g);
           if(parent != null){
             g.setClip(oldClip);
           }
@@ -132,9 +136,8 @@ final class Painter {
   /**
    * This method paints grid bounds for "grid" containers
    */
-  private static void paintGridOutlineImpl(final GuiEditor editor, final RadComponent component, final Graphics g){
+  public static void paintGridOutline(final GuiEditor editor, @NotNull final RadComponent component, final Graphics g){
     if (component == null) {
-      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("component cannot be null");
     }
     if (!(component instanceof RadContainer)){
@@ -165,22 +168,59 @@ final class Painter {
       // Horizontal lines
       final int width = component.getWidth();
       final int[] horzGridLines = gridLayout.getHorizontalGridLines();
+      final int height = component.getHeight();
+      final int[] vertGridLines = gridLayout.getVerticalGridLines();
+
+      boolean[][] horzSkippedLineSegments = null;
+      boolean[][] vertSkippedLineSegments = null;
+      for(RadComponent childComponent: container.getComponents()) {
+        final GridConstraints constraints = childComponent.getConstraints();
+        if (constraints.getColSpan() > 1) {
+          if (vertSkippedLineSegments == null) {
+            vertSkippedLineSegments = new boolean[vertGridLines.length][height+4];
+          }
+          for(int col = constraints.getColumn()+1; col < constraints.getColumn() + constraints.getColSpan(); col++) {
+            for(int y=horzGridLines [constraints.getRow()]+1;
+                y<horzGridLines [constraints.getRow() + constraints.getRowSpan()]-1;
+                y++) {
+              vertSkippedLineSegments [col][y] = true;
+            }
+          }
+
+        }
+        if (constraints.getRowSpan() > 1) {
+          if (horzSkippedLineSegments == null) {
+            horzSkippedLineSegments = new boolean[horzGridLines.length][width+4];
+          }
+          for(int row = constraints.getRow()+1; row < constraints.getRow() + constraints.getRowSpan(); row++) {
+            for(int x=vertGridLines [constraints.getColumn()]+1;
+                x<vertGridLines [constraints.getColumn() + constraints.getColSpan()]-1;
+                x++) {
+              horzSkippedLineSegments [row][x] = true;
+            }
+          }
+        }
+      }
+
+
       for (int i = 1; i < horzGridLines.length - 1; i++) {
         final int y = horzGridLines [i];
         // Draw dotted horizontal line
-        for(int x = 0; x < width; x+=4){
-          UIUtil.drawLine(g, x, y, Math.min(x + 2, width - 1), y);
+        for(int x = 0; x < width; x+=4) {
+          if (horzSkippedLineSegments == null || (!horzSkippedLineSegments[i][x] && !horzSkippedLineSegments[i][x+1] && !horzSkippedLineSegments[i][x+2])) {
+            UIUtil.drawLine(g, x, y, Math.min(x + 2, width - 1), y);
+          }
         }
       }
 
       // Vertical lines
-      final int height = component.getHeight();
-      final int[] vertGridLines = gridLayout.getVerticalGridLines();
       for (int i = 1; i < vertGridLines.length - 1; i++) {
         final int x = vertGridLines [i];
         // Draw dotted vertical line
-        for(int y = 0; y < height; y+=4){
-          UIUtil.drawLine(g, x, y, x, Math.min(y + 2, height - 1));
+        for(int y = 0; y < height; y+=4) {
+          if (vertSkippedLineSegments == null || (!vertSkippedLineSegments[i][y] && !vertSkippedLineSegments[i][y+1] && !vertSkippedLineSegments[i][y+2])) {
+            UIUtil.drawLine(g, x, y, x, Math.min(y + 2, height - 1));
+          }
         }
       }
     }finally{
@@ -199,9 +239,8 @@ final class Painter {
     if (component.isSelected()) {
       g.setColor(Color.BLUE);
       final Point[] points = getPoints(component.getWidth(), component.getHeight());
-      for (int i = 0; i < points.length; i++) {
-        final Point point = points[i];
-        g.fillRect(point.x - R, point.y - R, 2*R + 1, 2*R + 1);
+      for (final Point point : points) {
+        g.fillRect(point.x - R, point.y - R, 2 * R + 1, 2 * R + 1);
       }
     }
   }
@@ -211,6 +250,7 @@ final class Painter {
    * @param y in component's coord system
    */
   public static int getResizeMask(@NotNull final RadComponent component, final int x, final int y) {
+    //noinspection ConstantConditions
     if (component == null) {
       throw new IllegalArgumentException("component cannot be null");
     }
