@@ -165,7 +165,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
 
   protected abstract XmlTag setXmlTag(final XmlTag tag) throws IncorrectOperationException, IllegalAccessException, InstantiationException;
 
-  protected final String getTagName() {
+  public final String getTagName() {
     return myTagName;
   }
 

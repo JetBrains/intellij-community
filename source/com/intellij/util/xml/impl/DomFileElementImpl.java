@@ -101,6 +101,10 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     return null;
   }
 
+  public String getTagName() {
+    return null;
+  }
+
   public int getChildIndex(final DomElement child) {
     return -1;
   }

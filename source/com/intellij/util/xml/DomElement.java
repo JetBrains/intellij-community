@@ -26,5 +26,5 @@ public interface DomElement {
 
   DomMethodsInfo getMethodsInfo();
 
-  int getChildIndex(final DomElement child);
+  String getTagName();
 }
