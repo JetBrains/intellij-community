@@ -1,13 +1,12 @@
 package com.intellij.uiDesigner;
 
-import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.dnd.DnDConstants;
-
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.
@@ -19,122 +18,56 @@ import org.jetbrains.annotations.Nullable;
 public class GridInsertProcessor {
   private static final int INSERT_ARROW_SIZE = 3;
 
-  private static class InsertFeedbackPainter extends JPanel {
-    private boolean myVertical = false;
-    private boolean myRectangular = false;
-
-    public InsertFeedbackPainter() {
-      setOpaque(false);
-    }
-
-    public void setVertical(final boolean vertical) {
-      myVertical = vertical;
-    }
-
-    public void setRectangular(final boolean rectangular) {
-      myRectangular = rectangular;
-    }
-
-    protected void paintComponent(Graphics g) {
-      super.paintComponent(g);
-      Graphics2D g2d = (Graphics2D) g;
-      final Stroke savedStroke = g2d.getStroke();
-      final Color savedColor = g2d.getColor();
-      try {
-        g2d.setColor(Color.BLUE);
-        if (myRectangular) {
-          g2d.setStroke(new BasicStroke(2.5f));
-          // give space for stroke to be painted
-          g2d.drawRect(1, 1, getWidth()-2, getHeight()-2);
-        }
-        else if (myVertical) {
-          g2d.setStroke(new BasicStroke(1.5f));
-          int midX = getWidth()/2;
-          g2d.drawLine(0, 0, midX, INSERT_ARROW_SIZE);
-          g2d.drawLine(getWidth()-1, 0, midX, INSERT_ARROW_SIZE);
-          g2d.drawLine(midX, INSERT_ARROW_SIZE, midX, getHeight()-INSERT_ARROW_SIZE);
-          g2d.drawLine(0, getHeight()-1, midX, getHeight()-INSERT_ARROW_SIZE);
-          g2d.drawLine(getWidth()-1, getHeight()-1, midX, getHeight()-INSERT_ARROW_SIZE);
-        }
-        else {
-          g2d.setStroke(new BasicStroke(1.5f));
-          int midY = getHeight()/2;
-          g2d.drawLine(0, 0, INSERT_ARROW_SIZE, midY);
-          g2d.drawLine(0, getHeight()-1, INSERT_ARROW_SIZE, midY);
-          g2d.drawLine(INSERT_ARROW_SIZE, midY, getWidth()-INSERT_ARROW_SIZE, midY);
-          g2d.drawLine(getWidth()-1, 0, getWidth()-INSERT_ARROW_SIZE, midY);
-          g2d.drawLine(getWidth()-1, getHeight()-1, getWidth()-INSERT_ARROW_SIZE, midY);
-        }
-      }
-      finally {
-        g2d.setStroke(savedStroke);
-        g2d.setColor(savedColor);
-      }
+  private static class HorzInsertFeedbackPainter implements FeedbackPainter {
+    public void paintFeedback(Graphics2D g2d, Rectangle rc) {
+      g2d.setColor(Color.BLUE);
+      g2d.setStroke(new BasicStroke(1.5f));
+      int midY = (int)rc.getCenterY();
+      int right = rc.x + rc.width - 1;
+      int bottom = rc.y + rc.height - 1;
+      g2d.drawLine(rc.x, rc.y, GridInsertProcessor.INSERT_ARROW_SIZE, midY);
+      g2d.drawLine(rc.x, bottom, GridInsertProcessor.INSERT_ARROW_SIZE, midY);
+      g2d.drawLine(GridInsertProcessor.INSERT_ARROW_SIZE, midY,
+                   right - GridInsertProcessor.INSERT_ARROW_SIZE, midY);
+      g2d.drawLine(right, rc.y,
+                   rc.x+rc.width-GridInsertProcessor.INSERT_ARROW_SIZE, midY);
+      g2d.drawLine(right, bottom,
+                   right-GridInsertProcessor.INSERT_ARROW_SIZE, midY);
     }
   }
 
-  private InsertFeedbackPainter myInsertFeedbackPainter = new InsertFeedbackPainter();
-
-  enum GridInsertMode { None, RowBefore, RowAfter, ColumnBefore, ColumnAfter }
-
-  class GridInsertLocation {
-    private RadContainer myContainer;
-    private int myRow;
-    private int myColumn;
-    private Rectangle myCellRect;
-    private GridInsertMode myMode;
-
-    public GridInsertLocation(final GridInsertMode mode) {
-      myMode = mode;
-    }
-
-    public GridInsertLocation(final RadContainer container,
-                              final int row,
-                              final int column,
-                              final Rectangle cellRect,
-                              final GridInsertMode mode) {
-      myContainer = container;
-      myRow = row;
-      myColumn = column;
-      myCellRect = cellRect;
-      myMode = mode;
-    }
-
-    public GridInsertMode getMode() {
-      return myMode;
-    }
-
-    public int getRow() {
-      return myRow;
-    }
-
-    public int getColumn() {
-      return myColumn;
-    }
-
-    public RadContainer getContainer() {
-      return myContainer;
-    }
-
-    public Rectangle getCellRect() {
-      return myCellRect;
+  private static class VertInsertFeedbackPainter implements FeedbackPainter {
+    public void paintFeedback(Graphics2D g2d, Rectangle rc) {
+      g2d.setColor(Color.BLUE);
+      g2d.setStroke(new BasicStroke(1.5f));
+      int right = rc.x + rc.width - 1;
+      int bottom = rc.y + rc.height - 1;
+      int midX = (int) rc.getCenterX();
+      g2d.drawLine(rc.x, rc.y, midX, rc.y+GridInsertProcessor.INSERT_ARROW_SIZE);
+      g2d.drawLine(right, rc.y, midX, rc.y+GridInsertProcessor.INSERT_ARROW_SIZE);
+      g2d.drawLine(midX, rc.y+GridInsertProcessor.INSERT_ARROW_SIZE,
+                   midX, bottom-GridInsertProcessor.INSERT_ARROW_SIZE);
+      g2d.drawLine(rc.x, bottom, midX, bottom-GridInsertProcessor.INSERT_ARROW_SIZE);
+      g2d.drawLine(right, bottom, midX, bottom-GridInsertProcessor.INSERT_ARROW_SIZE);
     }
   }
 
   private GuiEditor myEditor;
+  private FeedbackPainter myHorzInsertFeedbackPainter = new HorzInsertFeedbackPainter();
+  private FeedbackPainter myVertInsertFeedbackPainter = new VertInsertFeedbackPainter();
 
   public GridInsertProcessor(final GuiEditor editor) {
     myEditor = editor;
   }
 
-  GridInsertLocation getGridInsertLocation(final int x, final int y, final int dragColumnDelta) {
+  static GridInsertLocation getGridInsertLocation(final GuiEditor editor, final int x, final int y, final int dragColumnDelta) {
     final int EPSILON = 4;
-    final RadContainer container = FormEditingUtil.getRadContainerAt(myEditor, x, y, EPSILON);
+    final RadContainer container = FormEditingUtil.getRadContainerAt(editor, x, y, EPSILON);
     if (container == null || !container.isGrid()) {
-      return new GridInsertLocation(GridInsertMode.None);
+      return new GridInsertLocation(GridInsertLocation.GridInsertMode.None);
     }
     final GridLayoutManager grid = (GridLayoutManager) container.getLayout();
-    final Point targetPoint = SwingUtilities.convertPoint(myEditor.getDragLayer(),
+    final Point targetPoint = SwingUtilities.convertPoint(editor.getDragLayer(),
                                                           x, y, container.getDelegee());
     int[] xs = grid.getXs();
     int[] ys = grid.getYs();
@@ -158,22 +91,22 @@ public class GridInsertProcessor {
       }
     }
 
-    GridInsertMode mode = GridInsertMode.None;
+    GridInsertLocation.GridInsertMode mode = GridInsertLocation.GridInsertMode.None;
 
     int dx = (int)(targetPoint.getX() - xs [col]);
     if (dx < EPSILON) {
-      mode = GridInsertMode.ColumnBefore;
+      mode = GridInsertLocation.GridInsertMode.ColumnBefore;
     }
     else if (widths [col] - dx < EPSILON) {
-      mode = GridInsertMode.ColumnAfter;
+      mode = GridInsertLocation.GridInsertMode.ColumnAfter;
     }
 
     int dy = (int)(targetPoint.getY() - ys [row]);
     if (dy < EPSILON) {
-      mode = GridInsertMode.RowBefore;
+      mode = GridInsertLocation.GridInsertMode.RowBefore;
     }
     else if (heights [row] - dy < EPSILON) {
-      mode = GridInsertMode.RowAfter;
+      mode = GridInsertLocation.GridInsertMode.RowAfter;
     }
 
     Rectangle cellRect = new Rectangle(vertGridLines [col],
@@ -182,7 +115,7 @@ public class GridInsertProcessor {
                                        horzGridLines [row+1]-horzGridLines [row]);
     // if a number of adjacent components have been selected and the component being dragged
     // is not the leftmost, we return the column in which the leftmost component should be dropped
-    if ((mode == GridInsertMode.RowBefore || mode == GridInsertMode.RowAfter) &&
+    if ((mode == GridInsertLocation.GridInsertMode.RowBefore || mode == GridInsertLocation.GridInsertMode.RowAfter) &&
         col >= dragColumnDelta) {
       col -= dragColumnDelta;
     }
@@ -235,11 +168,10 @@ public class GridInsertProcessor {
 
   public int processDragEvent(int x, int y, final boolean copyOnDrop, int componentCount,
                               final int dragColumnDelta) {
-    final GridInsertLocation insertLocation = getGridInsertLocation(x, y, dragColumnDelta);
+    final GridInsertLocation insertLocation = getGridInsertLocation(myEditor, x, y, dragColumnDelta);
     if (insertLocation.getContainer() != null) {
       if (isDropInsertAllowed(insertLocation, componentCount)) {
         placeInsertFeedbackPainter(insertLocation, componentCount);
-        addFeedbackPainter();
         return copyOnDrop ? DnDConstants.ACTION_COPY : DnDConstants.ACTION_MOVE;
       }
     }
@@ -250,19 +182,18 @@ public class GridInsertProcessor {
         if (containerAt.canDrop(targetPoint.x, targetPoint.y, componentCount)) {
           Rectangle feedbackRect = containerAt.getDropFeedbackRectangle(targetPoint.x, targetPoint.y, componentCount);
           if (feedbackRect != null) {
-            myInsertFeedbackPainter.setBounds(SwingUtilities.convertRectangle(containerAt.getDelegee(),
-                                               feedbackRect,
-                                               myEditor.getActiveDecorationLayer()));
-            myInsertFeedbackPainter.setRectangular(true);
-            addFeedbackPainter();
+            final Rectangle rc = SwingUtilities.convertRectangle(containerAt.getDelegee(),
+                                                                 feedbackRect,
+                                                                 myEditor.getActiveDecorationLayer());
+            myEditor.getActiveDecorationLayer().putFeedback(rc);
           }
           else {
-            removeFeedbackPainter();
+            myEditor.getActiveDecorationLayer().removeFeedback();
           }
           return copyOnDrop ? DnDConstants.ACTION_COPY : DnDConstants.ACTION_MOVE;
         }
         else {
-          removeFeedbackPainter();
+          myEditor.getActiveDecorationLayer().removeFeedback();
         }
       }
     }
@@ -284,26 +215,12 @@ public class GridInsertProcessor {
     if (insertLocation == null || insertLocation.getContainer() == null) {
       return false;
     }
-    if (insertLocation.getMode() == GridInsertMode.None) {
+    if (insertLocation.getMode() == GridInsertLocation.GridInsertMode.None) {
       return componentCount == 1 &&
              insertLocation.getContainer().getComponentAtGrid(insertLocation.getRow(), insertLocation.getColumn()) == null;
     }
     final GridLayoutManager grid = ((GridLayoutManager)insertLocation.getContainer().getLayout());
     return insertLocation.getColumn() + componentCount - 1 < grid.getColumnCount();
-  }
-
-  private void addFeedbackPainter() {
-    if (myInsertFeedbackPainter.getParent() == null) {
-      myEditor.getActiveDecorationLayer().add(myInsertFeedbackPainter);
-    }
-    myEditor.getActiveDecorationLayer().repaint();
-  }
-
-  void removeFeedbackPainter() {
-    if (myInsertFeedbackPainter.getParent() == myEditor.getActiveDecorationLayer()) {
-      myEditor.getActiveDecorationLayer().remove(myInsertFeedbackPainter);
-      myEditor.getActiveDecorationLayer().repaint();
-    }
   }
 
   private void placeInsertFeedbackPainter(final GridInsertLocation insertLocation, final int componentCount) {
@@ -320,37 +237,38 @@ public class GridInsertProcessor {
                                                cellRect,
                                                myEditor.getActiveDecorationLayer());
 
-    if (insertLocation.getMode() == GridInsertMode.None) {
-      myInsertFeedbackPainter.setRectangular(true);
-      myInsertFeedbackPainter.setBounds(cellRect);
-      }
-    else {
-      myInsertFeedbackPainter.setRectangular(false);
-      myInsertFeedbackPainter.setVertical(insertLocation.getMode() == GridInsertMode.ColumnBefore ||
-                                          insertLocation.getMode() == GridInsertMode.ColumnAfter);
+    FeedbackPainter painter = (insertLocation.getMode() == GridInsertLocation.GridInsertMode.ColumnBefore ||
+                               insertLocation.getMode() == GridInsertLocation.GridInsertMode.ColumnAfter)
+      ? myVertInsertFeedbackPainter
+      : myHorzInsertFeedbackPainter;
+    Rectangle rc;
 
-      int w=4;
-      switch(insertLocation.getMode()) {
-        case ColumnBefore:
-          myInsertFeedbackPainter.setBounds((int) cellRect.getMinX()-w, (int) cellRect.getMinY()-INSERT_ARROW_SIZE,
-                                            2*w, (int) cellRect.getHeight()+2*INSERT_ARROW_SIZE);
-          break;
+    int w=4;
+    switch (insertLocation.getMode()) {
+      case ColumnBefore:
+        rc = new Rectangle(cellRect.x - w, cellRect.y - INSERT_ARROW_SIZE,
+                           2 * w, cellRect.height + 2 * INSERT_ARROW_SIZE);
+        break;
 
-        case ColumnAfter:
-          myInsertFeedbackPainter.setBounds((int) cellRect.getMaxX()-w, (int) cellRect.getMinY()-INSERT_ARROW_SIZE,
-                                            2*w, (int) cellRect.getHeight()+2*INSERT_ARROW_SIZE);
-          break;
+      case ColumnAfter:
+        rc = new Rectangle((int)cellRect.getMaxX() - w, (int)cellRect.getMinY() - INSERT_ARROW_SIZE,
+                           2 * w, (int)cellRect.getHeight() + 2 * INSERT_ARROW_SIZE);
+        break;
 
-        case RowBefore:
-          myInsertFeedbackPainter.setBounds((int) cellRect.getMinX()-INSERT_ARROW_SIZE, (int) cellRect.getMinY()-w,
-                                            (int) cellRect.getWidth()+2*INSERT_ARROW_SIZE, 2*w);
-          break;
+      case RowBefore:
+        rc = new Rectangle((int)cellRect.getMinX() - INSERT_ARROW_SIZE, (int)cellRect.getMinY() - w,
+                           (int)cellRect.getWidth() + 2 * INSERT_ARROW_SIZE, 2 * w);
+        break;
 
-        case RowAfter:
-          myInsertFeedbackPainter.setBounds((int) cellRect.getMinX()-INSERT_ARROW_SIZE, (int) cellRect.getMaxY()-w,
-                                            (int) cellRect.getWidth()+2*INSERT_ARROW_SIZE, 2*w);
-          break;
-      }
+      case RowAfter:
+        rc = new Rectangle((int)cellRect.getMinX() - INSERT_ARROW_SIZE, (int)cellRect.getMaxY() - w,
+                           (int)cellRect.getWidth() + 2 * INSERT_ARROW_SIZE, 2 * w);
+        break;
+
+      default:
+        rc = cellRect;
+        painter = null;
     }
+    myEditor.getActiveDecorationLayer().putFeedback(rc, painter);
   }
 }

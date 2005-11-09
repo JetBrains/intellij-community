@@ -131,6 +131,17 @@ final class CutCopyPasteSupport implements CopyProvider, CutProvider, PasteProvi
     myEditor.refreshAndSave(true);
   }
 
+  @Nullable
+  public static ArrayList<RadComponent> deserializeComponents(final GuiEditor editor, final String serializedComponents) {
+    ArrayList<RadComponent> components = new ArrayList<RadComponent>();
+    TIntArrayList xs = new TIntArrayList();
+    TIntArrayList ys = new TIntArrayList();
+    if (!loadComponentsToPaste(editor, serializedComponents, xs, ys, components)) {
+      return null;
+    }
+    return components;
+  }
+
   public static boolean loadComponentsToPaste(final GuiEditor editor, final String serializedComponents,
                                               final TIntArrayList xs,
                                               final TIntArrayList ys,

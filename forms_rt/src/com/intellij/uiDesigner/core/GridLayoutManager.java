@@ -802,4 +802,38 @@ public final class GridLayoutManager extends AbstractLayout {
     result [myXs.length] = myXs [myXs.length-1] + myWidths [myXs.length-1];
     return result;
   }
+
+  public int getHorizontalGridLineNear(int y, int epsilon) {
+    return getGridLineNear(y, epsilon, getHorizontalGridLines());
+  }
+
+  public int getVerticalGridLineNear(int x, int epsilon) {
+    return getGridLineNear(x, epsilon, getVerticalGridLines());
+  }
+
+  private int getGridLineNear(final int coord, final int epsilon, final int[] gridLines) {
+    for(int col = 1; col <gridLines.length; col++) {
+      if (coord < gridLines [col]) {
+        if (coord - gridLines [col-1] < epsilon) {
+          return col-1;
+        }
+        if (gridLines [col] - coord < epsilon) {
+          return col;
+        }
+        return -1;
+      }
+    }
+    if (coord - gridLines [gridLines.length-1] < epsilon) {
+      return gridLines.length-1;
+    }
+    return -1;
+  }
+
+  public Rectangle getCellRangeRect(final int startRow, final int startCol, final int endRow, final int endCol) {
+    return new Rectangle(myXs[startCol],
+                         myYs[startRow],
+                         myXs[endCol] + myWidths[endCol] - myXs[startCol],
+                         myYs[endRow] + myHeights[endRow] - myYs[startRow]);
+
+  }
 }

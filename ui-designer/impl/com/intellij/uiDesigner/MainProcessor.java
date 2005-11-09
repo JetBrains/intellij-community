@@ -250,9 +250,7 @@ public final class MainProcessor extends EventProcessor{
     final int resizeMask = Painter.getResizeMask(component, point.x, point.y);
 
     if (resizeMask != 0) {
-      if (component.getParent().isXY()) {
-        myCurrentProcessor = new ResizeProcessor(myEditor, component, resizeMask);
-      }
+      myCurrentProcessor = new ResizeProcessor(myEditor, component, resizeMask);
     }
     else if (component instanceof RadRootContainer || ((component instanceof RadContainer) && e.isShiftDown())) {
       myCurrentProcessor = new GroupSelectionProcessor(myEditor, (RadContainer)component);

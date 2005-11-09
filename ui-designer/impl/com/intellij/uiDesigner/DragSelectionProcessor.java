@@ -3,16 +3,16 @@ package com.intellij.uiDesigner;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.dnd.*;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.awt.event.InputEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Anton Katilin
@@ -32,7 +32,6 @@ public final class DragSelectionProcessor extends EventProcessor {
 
   private boolean myDragStarted;
 
-  private final GridInsertProcessor myGridInsertProcessor;
   private final MyDragGestureRecognizer myDragGestureRecognizer;
   private final MyDragSourceListener myDragSourceListener = new MyDragSourceListener();
 
@@ -41,14 +40,14 @@ public final class DragSelectionProcessor extends EventProcessor {
     LOG.assertTrue(editor != null);
 
     myEditor = editor;
-    myGridInsertProcessor = new GridInsertProcessor(editor);
+    final GridInsertProcessor gridInsertProcessor = new GridInsertProcessor(editor);
     myDragGestureRecognizer = new MyDragGestureRecognizer(DragSource.getDefaultDragSource(),
                                                           myEditor.getActiveDecorationLayer(),
                                                           DnDConstants.ACTION_COPY_OR_MOVE);
 
     new DropTarget(myEditor.getActiveDecorationLayer(),
                    DnDConstants.ACTION_COPY_OR_MOVE,
-                   new MyDropTargetListener(myEditor, myGridInsertProcessor));
+                   new MyDropTargetListener(myEditor, gridInsertProcessor));
   }
 
   public boolean isDragActive() {
@@ -61,7 +60,7 @@ public final class DragSelectionProcessor extends EventProcessor {
     }
     // Try to drop selection at the point of mouse event.
     //cancelDrag();
-    myGridInsertProcessor.removeFeedbackPainter();
+    myEditor.getActiveDecorationLayer().removeFeedback();
     myEditor.repaintLayeredPane();
     return true;
   }
@@ -100,7 +99,7 @@ public final class DragSelectionProcessor extends EventProcessor {
     }
   }
 
-  private class MyDragGestureRecognizer extends DragGestureRecognizer {
+  private static class MyDragGestureRecognizer extends DragGestureRecognizer {
     public MyDragGestureRecognizer(DragSource ds, Component c, int sa) {
       super(ds, c, sa);
     }
@@ -146,7 +145,7 @@ public final class DragSelectionProcessor extends EventProcessor {
 
     private void processDragEnter(final DraggedComponentList draggedComponentList, final Point location) {
       // Remove components from their parents.
-      final java.util.List<RadComponent> dragComponents = draggedComponentList.getComponents();
+      final List<RadComponent> dragComponents = draggedComponentList.getComponents();
       for (final RadComponent c : dragComponents) {
         c.getParent().removeComponent(c);
       }
@@ -233,18 +232,18 @@ public final class DragSelectionProcessor extends EventProcessor {
     }
 
     private boolean processDrop(final DraggedComponentList dcl, final Point dropPoint, final int dropAction) {
-      myGridInsertProcessor.removeFeedbackPainter();
+      myEditor.getActiveDecorationLayer().removeFeedback();
       final int dropX = (int)dropPoint.getX();
       final int dropY = (int)dropPoint.getY();
       final int componentCount = dcl.getComponents().size();
-      GridInsertProcessor.GridInsertLocation location = myGridInsertProcessor.getGridInsertLocation(
-        dropX, dropY, dcl.getDragRelativeColumn());
+      GridInsertLocation location = GridInsertProcessor.getGridInsertLocation(
+        myEditor, dropX, dropY, dcl.getDragRelativeColumn());
       if (!myGridInsertProcessor.isDropInsertAllowed(location, componentCount)) {
         location = null;
       }
 
       if (!FormEditingUtil.canDrop(myEditor, dropX, dropY, componentCount) &&
-          (location == null || location.getMode() == GridInsertProcessor.GridInsertMode.None)) {
+          (location == null || location.getMode() == GridInsertLocation.GridInsertMode.None)) {
         return false;
       }
 
@@ -254,10 +253,10 @@ public final class DragSelectionProcessor extends EventProcessor {
         final String serializedComponents = CutCopyPasteSupport.serializeForCopy(myEditor, dcl.getComponents());
         cancelDrag(dcl);
 
-        TIntArrayList xs = new TIntArrayList();
-        TIntArrayList ys = new TIntArrayList();
-        droppedComponents = new ArrayList<RadComponent>();
-        CutCopyPasteSupport.loadComponentsToPaste(myEditor, serializedComponents, xs, ys, droppedComponents);
+        droppedComponents = CutCopyPasteSupport.deserializeComponents(myEditor, serializedComponents);
+        if (droppedComponents == null) {
+          return false;
+        }
       }
       else {
         droppedComponents = dcl.getComponents();
@@ -275,7 +274,7 @@ public final class DragSelectionProcessor extends EventProcessor {
       final GridConstraints[] originalConstraints = dcl.getOriginalConstraints();
       final RadContainer[] originalParents = dcl.getOriginalParents();
 
-      if (location != null && location.getMode() != GridInsertProcessor.GridInsertMode.None) {
+      if (location != null && location.getMode() != GridInsertLocation.GridInsertMode.None) {
         myGridInsertProcessor.processGridInsertOnDrop(location, components, originalConstraints);
       }
       else {

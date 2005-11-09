@@ -2,6 +2,7 @@ package com.intellij.uiDesigner;
 
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -209,9 +210,8 @@ final class Painter {
    * @param x in component's coord system
    * @param y in component's coord system
    */
-  public static int getResizeMask(final RadComponent component, final int x, final int y) {
+  public static int getResizeMask(@NotNull final RadComponent component, final int x, final int y) {
     if (component == null) {
-      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("component cannot be null");
     }
     if (component.getParent() == null || !component.isSelected()) {
@@ -219,9 +219,11 @@ final class Painter {
     }
 
     // only components in XY can be resized...
+    /*
     if (!component.getParent().isXY()) {
       return 0;
     }
+    */
 
     final int width=component.getWidth();
     final int height=component.getHeight();

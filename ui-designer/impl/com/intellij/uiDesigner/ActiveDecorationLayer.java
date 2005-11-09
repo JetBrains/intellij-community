@@ -2,6 +2,7 @@ package com.intellij.uiDesigner;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.uiDesigner.core.GridLayoutManager;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -28,8 +29,11 @@ final class ActiveDecorationLayer extends JComponent{
    * Cache of invalid items which can be reused later for better performance
    */
   private final ArrayList<ActiveSpot> myInvalidSpotCache;
+  private final FeedbackPainterPanel myFeedbackPainterPanel = new FeedbackPainterPanel();
+  private final RectangleFeedbackPainter myRectangleFeedbackPainter = new RectangleFeedbackPainter();
 
-  public ActiveDecorationLayer(final GuiEditor editor) {
+  public ActiveDecorationLayer(@NotNull final GuiEditor editor) {
+    //noinspection ConstantConditions
     LOG.assertTrue(editor != null);
 
     myEditor = editor;
@@ -125,8 +129,7 @@ final class ActiveDecorationLayer extends JComponent{
     );
 
     // Now we are ready to layout all horizontal items
-    for(Iterator<Map.Entry<RadContainer, ArrayList<ActiveSpot>>> i = myVerticalSpots.entrySet().iterator(); i.hasNext();){
-      final Map.Entry<RadContainer, ArrayList<ActiveSpot>> entry = i.next();
+    for (final Map.Entry<RadContainer, ArrayList<ActiveSpot>> entry : myVerticalSpots.entrySet()) {
       final RadContainer container = entry.getKey();
       LOG.assertTrue(container.isGrid());
       final GridLayoutManager layout = (GridLayoutManager)container.getLayout();
@@ -135,8 +138,8 @@ final class ActiveDecorationLayer extends JComponent{
       final int[] heights = layout.getHeights();
       final int[] ys = layout.getYs();
       final JComponent delegee = container.getDelegee();
-      final Point topLeftPoint = SwingUtilities.convertPoint(delegee, 0, 0, ActiveDecorationLayer.this);
-      for(int j = heights.length - 1; j >= 0; j--){
+      final Point topLeftPoint = SwingUtilities.convertPoint(delegee, 0, 0, this);
+      for (int j = heights.length - 1; j >= 0; j--) {
         final ActiveSpot spot = spots.get(j);
 
         spot.setContainer(container);
@@ -147,7 +150,7 @@ final class ActiveDecorationLayer extends JComponent{
 
         final Dimension prefSize = spot.getPreferredSize();
         final int width = prefSize.width;
-        final int shift = Math.max(0, heights[j] - prefSize.height)/2;
+        final int shift = Math.max(0, heights[j] - prefSize.height) / 2;
         spot.setBounds(
           topLeftPoint.x - width,
           topLeftPoint.y + ys[j] + shift,
@@ -221,8 +224,7 @@ final class ActiveDecorationLayer extends JComponent{
     );
 
     // Now we are ready to layout all horizontal items
-    for(Iterator<Map.Entry<RadContainer, ArrayList<ActiveSpot>>> i = myHorizontalSpots.entrySet().iterator(); i.hasNext();){
-      final Map.Entry<RadContainer, ArrayList<ActiveSpot>> entry = i.next();
+    for (final Map.Entry<RadContainer, ArrayList<ActiveSpot>> entry : myHorizontalSpots.entrySet()) {
       final RadContainer container = entry.getKey();
       LOG.assertTrue(container.isGrid());
       final GridLayoutManager layout = (GridLayoutManager)container.getLayout();
@@ -231,8 +233,8 @@ final class ActiveDecorationLayer extends JComponent{
       final int[] widths = layout.getWidths();
       final int[] xs = layout.getXs();
       final JComponent delegee = container.getDelegee();
-      final Point topLeftPoint = SwingUtilities.convertPoint(delegee, 0, 0, ActiveDecorationLayer.this);
-      for(int j = widths.length - 1; j >= 0; j--){
+      final Point topLeftPoint = SwingUtilities.convertPoint(delegee, 0, 0, this);
+      for (int j = widths.length - 1; j >= 0; j--) {
         final ActiveSpot spot = spots.get(j);
 
         spot.setContainer(container);
@@ -243,7 +245,7 @@ final class ActiveDecorationLayer extends JComponent{
 
         final Dimension prefSize = spot.getPreferredSize();
         final int height = prefSize.height;
-        final int shift = Math.max(0, widths[j] - prefSize.width)/2;
+        final int shift = Math.max(0, widths[j] - prefSize.width) / 2;
         spot.setBounds(
           topLeftPoint.x + xs[j] + shift,
           topLeftPoint.y - height,
@@ -263,5 +265,60 @@ final class ActiveDecorationLayer extends JComponent{
 
     // Paint active decorators
     paintChildren(g);
+  }
+
+  public void putFeedback(final Rectangle rc) {
+    putFeedback(rc, myRectangleFeedbackPainter);
+  }
+
+  public void putFeedback(final Rectangle rc, final FeedbackPainter feedbackPainter) {
+    myFeedbackPainterPanel.setBounds(rc);
+    myFeedbackPainterPanel.setPainter(feedbackPainter != null ? feedbackPainter : myRectangleFeedbackPainter);
+    if (myFeedbackPainterPanel.getParent() == null) {
+      add(myFeedbackPainterPanel);
+    }
+  }
+
+  public void removeFeedback() {
+    if (myFeedbackPainterPanel.getParent() == this) {
+      remove(myFeedbackPainterPanel);
+      repaint();
+    }
+  }
+
+  private static class RectangleFeedbackPainter implements FeedbackPainter {
+
+    public void paintFeedback(Graphics2D g2d, Rectangle rc) {
+      g2d.setColor(Color.BLUE);
+      g2d.setStroke(new BasicStroke(2.5f));
+      // give space for stroke to be painted
+      g2d.drawRect(rc.x+1, rc.y+1, rc.x+rc.width-2, rc.y+rc.height-2);
+    }
+  }
+
+  private static class FeedbackPainterPanel extends JPanel {
+    private FeedbackPainter myFeedbackPainter;
+
+    public FeedbackPainterPanel() {
+      setOpaque(false);
+    }
+
+    protected void paintComponent(Graphics g) {
+      super.paintComponent(g);
+      Graphics2D g2d = (Graphics2D) g;
+      final Stroke savedStroke = g2d.getStroke();
+      final Color savedColor = g2d.getColor();
+      try {
+        myFeedbackPainter.paintFeedback(g2d, new Rectangle(0, 0, getWidth(), getHeight()));
+      }
+      finally {
+        g2d.setStroke(savedStroke);
+        g2d.setColor(savedColor);
+      }
+    }
+
+    public void setPainter(final FeedbackPainter feedbackPainter) {
+      myFeedbackPainter = feedbackPainter;
+    }
   }
 }

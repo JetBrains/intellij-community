@@ -7,20 +7,19 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.core.Util;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.palette.PalettePanel;
 import com.intellij.uiDesigner.quickFixes.CreateFieldFix;
-import com.intellij.uiDesigner.compiler.Utils;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Anton Katilin
@@ -101,6 +100,7 @@ public final class InsertComponentProcessor extends EventProcessor{
     LOG.assertTrue(shortClassName.length() > 0);
 
     // Generate member name based on current code style
+    //noinspection ForLoopThatDoesntUseLoopVariable
     for(int i = 0; true; i++){
       final String nameCandidate = shortClassName + (i + 1);
       final String binding = CodeStyleManager.getInstance(editor.getProject()).propertyNameToVariableName(
@@ -201,7 +201,7 @@ public final class InsertComponentProcessor extends EventProcessor{
   }
 
   private void processMousePressed(final MouseEvent e) {
-    myGridInsertProcessor.removeFeedbackPainter();
+    myEditor.getActiveDecorationLayer().removeFeedback();
     final ComponentItem item = myPalette.getActiveItem();
     final String id = myEditor.generateId();
     if (JScrollPane.class.getName().equals(item.getClassName())) {
@@ -250,8 +250,8 @@ public final class InsertComponentProcessor extends EventProcessor{
     }
     myInsertedComponent.init(item);
 
-    final GridInsertProcessor.GridInsertLocation location = myGridInsertProcessor.getGridInsertLocation(e.getX(), e.getY(), 0);
-    if (FormEditingUtil.canDrop(myEditor, e.getX(), e.getY(), 1) || location.getMode() != GridInsertProcessor.GridInsertMode.None) {
+    final GridInsertLocation location = GridInsertProcessor.getGridInsertLocation(myEditor, e.getX(), e.getY(), 0);
+    if (FormEditingUtil.canDrop(myEditor, e.getX(), e.getY(), 1) || location.getMode() != GridInsertLocation.GridInsertMode.None) {
       CommandProcessor.getInstance().executeCommand(
         myEditor.getProject(),
         new Runnable(){
@@ -259,7 +259,7 @@ public final class InsertComponentProcessor extends EventProcessor{
             createBindingWhenDrop(myEditor, myInsertedComponent);
 
             final RadComponent[] components = new RadComponent[]{myInsertedComponent};
-            if (location.getMode() == GridInsertProcessor.GridInsertMode.None) {
+            if (location.getMode() == GridInsertLocation.GridInsertMode.None) {
               myDropInfo = FormEditingUtil.drop(myEditor, e.getX(), e.getY(), components, new int[]{0}, new int[]{0});
             }
             else {
@@ -300,7 +300,7 @@ public final class InsertComponentProcessor extends EventProcessor{
   }
 
   protected boolean cancelOperation() {
-    myGridInsertProcessor.removeFeedbackPainter();
+    myEditor.getActiveDecorationLayer().removeFeedback();
     return false;
   }
 
