@@ -9,6 +9,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.cls.ClsUtil;
 
+import java.util.Collection;
+
 public class ChangedRetentionPolicyDependencyProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.make.ChangedConstantsDependencyProcessor");
   private final Project myProject;
@@ -36,19 +38,20 @@ public class ChangedRetentionPolicyDependencyProcessor {
         try {
           final String qName = myDependencyCache.resolve(annotationQName);
           PsiClass[] classes = psiManager.findClasses(qName.replace('$', '.'), GlobalSearchScope.allScope(myProject));
-          for (int i = 0; i < classes.length; i++) {
-            final PsiClass aClass = classes[i];
+          for (final PsiClass aClass : classes) {
             if (!aClass.isAnnotationType()) {
               continue;
             }
-            final PsiReference[] references = mySearcher.findReferences(aClass, true);
-            for (int j = 0; j < references.length; j++) {
-              final PsiClass ownerClass = getOwnerClass(references[j].getElement());
+            final Collection<PsiReference> references = mySearcher.findReferences(aClass, true);
+            for (PsiReference reference : references) {
+              final PsiClass ownerClass = getOwnerClass(reference.getElement());
               if (ownerClass != null && !ownerClass.equals(aClass)) {
                 int qualifiedName = myDependencyCache.getSymbolTable().getId(ownerClass.getQualifiedName());
                 if (myDependencyCache.markClass(qualifiedName, false)) {
                   if (LOG.isDebugEnabled()) {
-                    LOG.debug("Marked dependent class "+myDependencyCache.resolve(qualifiedName) + "; reason: annotation's retention policy changed from SOURCE to CLASS or RUNTIME " + myDependencyCache.resolve(annotationQName));
+                    LOG.debug("Marked dependent class " + myDependencyCache.resolve(qualifiedName) +
+                              "; reason: annotation's retention policy changed from SOURCE to CLASS or RUNTIME " +
+                              myDependencyCache.resolve(annotationQName));
                   }
                 }
               }

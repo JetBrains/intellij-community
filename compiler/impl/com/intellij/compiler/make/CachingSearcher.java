@@ -2,12 +2,15 @@ package com.intellij.compiler.make;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.util.Query;
+import com.intellij.util.containers.HashMap;
 
+import java.util.Collection;
 import java.util.Map;
 
 /**
@@ -17,19 +20,20 @@ import java.util.Map;
  */
 public class CachingSearcher {
   private final Project myProject;
-  private final Map<Pair<PsiElement, Boolean>, PsiReference[]> myElementToReferencersMap = new com.intellij.util.containers.HashMap<Pair<PsiElement, Boolean>, PsiReference[]>();
-  private final PsiSearchHelper mySearchHelper;
+  private final Map<Pair<PsiElement, Boolean>, Collection<PsiReference>> myElementToReferencersMap = new HashMap<Pair<PsiElement, Boolean>, Collection<PsiReference>>();
 
   public CachingSearcher(Project project) {
     myProject = project;
-    mySearchHelper = PsiManager.getInstance(myProject).getSearchHelper();
   }
 
-  public PsiReference[] findReferences(PsiElement element, final boolean ignoreAccessScope) {
+  public Collection<PsiReference> findReferences(PsiElement element, final boolean ignoreAccessScope) {
     final Pair<PsiElement, Boolean> key = new Pair<PsiElement, Boolean>(element, ignoreAccessScope? Boolean.TRUE : Boolean.FALSE);
-    PsiReference[] psiReferences = myElementToReferencersMap.get(key);
+    Collection<PsiReference> psiReferences = myElementToReferencersMap.get(key);
     if (psiReferences == null) {
-      psiReferences = mySearchHelper.findReferences(element, GlobalSearchScope.projectScope(myProject), ignoreAccessScope);
+      GlobalSearchScope searchScope = GlobalSearchScope.projectScope(myProject);
+      searchScope = GlobalSearchScope.getScopeRestrictedByFileTypes(searchScope, StdFileTypes.JAVA);
+      final Query<PsiReference> query = ReferencesSearch.search(element, searchScope, ignoreAccessScope);
+      psiReferences = query.findAll();
       myElementToReferencersMap.put(key, psiReferences);
     }
     return psiReferences;

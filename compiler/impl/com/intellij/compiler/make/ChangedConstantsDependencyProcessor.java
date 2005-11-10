@@ -7,18 +7,17 @@ package com.intellij.compiler.make;
 import com.intellij.compiler.classParsing.FieldInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.util.PsiUtil;
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 public class ChangedConstantsDependencyProcessor {
@@ -48,18 +47,16 @@ public class ChangedConstantsDependencyProcessor {
         try {
           final String qName = myDependencyCache.resolve(myQName);
           PsiClass[] classes = psiManager.findClasses(qName.replace('$', '.'), GlobalSearchScope.allScope(myProject));
-          for (int i = 0; i < classes.length; i++) {
-            PsiClass aClass = classes[i];
+          for (PsiClass aClass : classes) {
             PsiField[] psiFields = aClass.getFields();
-            for (int idx = 0; idx < psiFields.length; idx++) {
-              PsiField psiField = psiFields[idx];
+            for (PsiField psiField : psiFields) {
               final FieldChangeInfo changeInfo = findChangeInfo(psiField);
               if (changeInfo != null) { // this field has been changed
                 processFieldChanged(psiField, aClass, changeInfo.isAccessibilityChange);
               }
             }
-            for (int idx = 0; idx < myRemovedFields.length; idx++) {
-              processFieldRemoved(myRemovedFields[idx].fieldInfo, aClass);
+            for (FieldChangeInfo removedField : myRemovedFields) {
+              processFieldRemoved(removedField.fieldInfo, aClass);
             }
           }
         }
@@ -94,8 +91,7 @@ public class ChangedConstantsDependencyProcessor {
     }
     final PsiSearchHelper psiSearchHelper = PsiManager.getInstance(myProject).getSearchHelper();
     PsiIdentifier[] identifiers = psiSearchHelper.findIdentifiers(myDependencyCache.resolve(info.getName()), searchScope, UsageSearchContext.IN_CODE);
-    for (int idx = 0; idx < identifiers.length; idx++) {
-      PsiIdentifier identifier = identifiers[idx];
+    for (PsiIdentifier identifier : identifiers) {
       PsiElement parent = identifier.getParent();
       if (parent instanceof PsiReferenceExpression) {
         PsiReferenceExpression refExpr = (PsiReferenceExpression)parent;
@@ -108,7 +104,8 @@ public class ChangedConstantsDependencyProcessor {
             // This will ensure the class was recompiled _after_ all the constants get their new values
             if (myDependencyCache.markClass(qualifiedName, true)) {
               if (LOG.isDebugEnabled()) {
-                LOG.debug("Mark dependent class "+ myDependencyCache.resolve(qualifiedName) + "; reason: some constants were removed from " + myDependencyCache.resolve(myQName));
+                LOG.debug("Mark dependent class " + myDependencyCache.resolve(qualifiedName) +
+                          "; reason: some constants were removed from " + myDependencyCache.resolve(myQName));
               }
             }
           }
@@ -121,14 +118,13 @@ public class ChangedConstantsDependencyProcessor {
     if (!isAccessibilityChange && field.hasModifierProperty(PsiModifier.PRIVATE)) {
       return; // optimization: don't need to search, cause may be used only in this class
     }
-    Set usages = new HashSet();
+    Set<PsiElement> usages = new HashSet<PsiElement>();
     addUsages(field, usages, isAccessibilityChange);
     if (LOG.isDebugEnabled()) {
       LOG.debug("++++++++++++++++++++++++++++++++++++++++++++++++");
       LOG.debug("Processing changed field: " + aClass.getQualifiedName() + "." + field.getName());
     }
-    for (Iterator it = usages.iterator(); it.hasNext();) {
-      PsiElement usage = (PsiElement)it.next();
+    for (final PsiElement usage : usages) {
       PsiClass ownerClass = getOwnerClass(usage);
       if (LOG.isDebugEnabled()) {
         if (ownerClass != null) {
@@ -147,7 +143,8 @@ public class ChangedConstantsDependencyProcessor {
         }
         if (myDependencyCache.markClass(qualifiedName, true)) {
           if (LOG.isDebugEnabled()) {
-            LOG.debug("Marked dependent class "+myDependencyCache.resolve(qualifiedName) + "; reason: constants changed in " + myDependencyCache.resolve(myQName));
+            LOG.debug("Marked dependent class " + myDependencyCache.resolve(qualifiedName) + "; reason: constants changed in " +
+                      myDependencyCache.resolve(myQName));
           }
         }
       }
@@ -157,8 +154,8 @@ public class ChangedConstantsDependencyProcessor {
     }
   }
 
-  private void addUsages(PsiField psiField, Collection usages, final boolean ignoreAccessScope) {
-    PsiReference[] references = mySearcher.findReferences(psiField, ignoreAccessScope)/*doFindReferences(searchHelper, psiField)*/;
+  private void addUsages(PsiField psiField, Collection<PsiElement> usages, final boolean ignoreAccessScope) {
+    Collection<PsiReference> references = mySearcher.findReferences(psiField, ignoreAccessScope)/*doFindReferences(searchHelper, psiField)*/;
     for (final PsiReference ref : references) {
       if (!(ref instanceof PsiReferenceExpression)) {
         continue;
@@ -210,8 +207,7 @@ public class ChangedConstantsDependencyProcessor {
 
   private FieldChangeInfo findChangeInfo(PsiField field) throws CacheCorruptedException {
     String name = field.getName();
-    for (int idx = 0; idx < myChangedFields.length; idx++) {
-      final FieldChangeInfo changeInfo = myChangedFields[idx];
+    for (final FieldChangeInfo changeInfo : myChangedFields) {
       if (name.equals(myDependencyCache.resolve(changeInfo.fieldInfo.getName()))) {
         return changeInfo;
       }
