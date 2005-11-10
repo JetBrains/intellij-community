@@ -43,10 +43,10 @@ public class GenericValueNode extends AbstractDomElementNode {
   }
 
   public SimpleNode[] getChildren() {
-    return new SimpleNode[0];
+    return NO_CHILDREN;
   }
 
   public Object[] getEqualityObjects() {
-    return new Object[0];
+    return NONE;
   }
 }

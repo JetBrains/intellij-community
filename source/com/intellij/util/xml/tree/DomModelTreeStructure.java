@@ -11,11 +11,11 @@ public class DomModelTreeStructure extends SimpleTreeStructure {
     myFileElement = fileElement;
   }
 
-  protected BaseDomElementNode createRoot(DomFileElement rootElement) {
-    return new BaseDomElementNode(myFileElement.getRootElement());
+  protected DomFileElementNode createRoot(DomFileElement rootElement) {
+    return new DomFileElementNode(myFileElement);
   }
 
-  public BaseDomElementNode getRootElement() {
+  public DomFileElementNode getRootElement() {
     return createRoot(myFileElement);
   }
 }

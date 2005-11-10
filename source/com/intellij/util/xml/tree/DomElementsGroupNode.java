@@ -26,6 +26,7 @@ public class DomElementsGroupNode extends AbstractDomElementNode {
   }
 
   public SimpleNode[] getChildren() {
+    if (!myModelElement.isValid()) return NO_CHILDREN;
     List<SimpleNode> children = new ArrayList();
     try {
       final List<? extends DomElement> objects = (List<? extends DomElement>)myMethod.invoke(myModelElement, new Object[0]);

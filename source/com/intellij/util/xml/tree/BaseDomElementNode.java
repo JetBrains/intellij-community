@@ -28,16 +28,21 @@ public class BaseDomElementNode extends AbstractDomElementNode {
    }
 
   public SimpleNode[] getChildren() {
-    List<SimpleNode> children = new ArrayList();
+    return doGetChildren(myDomElement);
+  }
 
-    final Collection<Method> methods = myDomElement.getMethodsInfo().getFixedChildrenGetterMethods();
+  protected SimpleNode[] doGetChildren(final DomElement domlElement) {
+    if (!domlElement.isValid()) return NO_CHILDREN;
+    List<SimpleNode> children = new ArrayList<SimpleNode>();
+
+    final Collection<Method> methods = domlElement.getMethodsInfo().getFixedChildrenGetterMethods();
 
     for (Method method : methods) {
       try {
-        final Object result = method.invoke(myDomElement, new Object[0]);
+        final Object result = method.invoke(domlElement, new Object[0]);
 
         if (result instanceof DomElement) {
-          final String tagName = ((DomElement)result).getTagName();
+          final String tagName = domlElement.getMethodsInfo().getTagName(method);
 
           if (showGenericValues() && result instanceof GenericValue) {
              children.add(new GenericValueNode((GenericValue)result, tagName, this));
@@ -52,10 +57,10 @@ public class BaseDomElementNode extends AbstractDomElementNode {
       }
     }
 
-    final Collection<Method> collectionMethods = myDomElement.getMethodsInfo().getCollectionChildrenGetterMethods();
+    final Collection<Method> collectionMethods = domlElement.getMethodsInfo().getCollectionChildrenGetterMethods();
 
     for (Method method : collectionMethods) {
-      children.add(getDomElementsGroupNode(myDomElement, method));
+      children.add(getDomElementsGroupNode(domlElement, method));
     }
 
     AbstractDomElementNode[] childrenNodes = children.toArray(new AbstractDomElementNode[children.size()]);
