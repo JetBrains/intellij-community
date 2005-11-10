@@ -3,20 +3,19 @@
  */
 package com.intellij.util.xml.ui;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiClass;
-import com.intellij.util.xml.GenericValue;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomMethodsInfo;
+import com.intellij.util.xml.GenericValue;
 import com.intellij.util.xml.impl.ui.BooleanControl;
+import com.intellij.util.xml.impl.ui.CollectionControl;
 import com.intellij.util.xml.impl.ui.PsiClassControl;
 import com.intellij.util.xml.impl.ui.StringControl;
-import com.intellij.util.xml.impl.ui.CollectionControl;
-import com.intellij.openapi.diagnostic.Logger;
 
 import java.lang.reflect.Method;
-import java.lang.reflect.Type;
 import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Type;
 
 /**
  * @author peter
@@ -52,18 +51,14 @@ public class DomUIFactory {
     try {
       return createControl((GenericValue)genericValueGetterMethod.invoke(parent), (Class)((ParameterizedType) genericReturnType).getActualTypeArguments()[0]);
     }
-    catch (IllegalAccessException e) {
-      LOG.error(e);
-    }
-    catch (InvocationTargetException e) {
-      LOG.error(e);
+    catch (Exception e) {
+      throw new RuntimeException(e);
     }
   }
 
   public static <T extends DomElement> CollectionControl<T> createCollectionControl(DomElement element, Class<T> aClass, String tagName) {
     final DomMethodsInfo methodsInfo = element.getMethodsInfo();
     final Method addMethod = methodsInfo.getCollectionAddMethod(tagName);
-    assert addMethod != null;
     final Method getMethod = methodsInfo.getCollectionGetMethod(tagName);
     return new CollectionControl<T>(element, getMethod, addMethod);
   }
