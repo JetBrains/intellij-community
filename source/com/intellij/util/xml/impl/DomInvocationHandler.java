@@ -25,7 +25,6 @@ import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * @author peter
@@ -78,8 +77,8 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     myInvalidated = true;
   }
 
-  final Set<Map.Entry<Pair<String, Integer>, IndexedElementInvocationHandler>> getFixedChildrenInfos() {
-    return myFixedChildren.entrySet();
+  IndexedElementInvocationHandler getFixedChild(String tagName, int index) {
+    return myFixedChildren.get(new Pair<String, Integer>(tagName, index));
   }
 
   public final XmlTag ensureTagExists() {
