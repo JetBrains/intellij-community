@@ -11,14 +11,18 @@ import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.codeInsight.daemon.Validator;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Mike
  */
-public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritableMetaData {
+public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritableMetaData, Validator {
   protected XmlTag myDescriptorTag;
   protected XmlNSDescriptor NSDescriptor;
+  private @Nullable Validator myValidator;
+
   @NonNls
   public static final String QUALIFIED_ATTR_VALUE = "qualified";
   @NonNls
@@ -49,7 +53,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
         final String namespacePrefix = tag.getPrefixByNamespace(namespace);
         if (namespacePrefix != null && namespacePrefix.length() > 0) {
           final XmlTag rootTag = ((XmlFile)myDescriptorTag.getContainingFile()).getDocument().getRootTag();
-          
+
           if (rootTag != null && NONQUALIFIED_ATTR_VALUE.equals(rootTag.getAttributeValue(ELEMENT_FORM_DEFAULT))) {
             value = XmlUtil.findLocalNameByQualifiedName(value);
           } else {
@@ -224,14 +228,14 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
     for (XmlElementDescriptor element1 : elements) {
       final XmlElementDescriptorImpl element = (XmlElementDescriptorImpl)element1;
       final String namespaceByContext = element.getNamespaceByContext(context);
-      
+
       if (element.getName().equals(localName)) {
         if ( namespace == null ||
              namespace.equals(namespaceByContext) ||
              namespaceByContext.equals(XmlUtil.EMPTY_URI)
            ) {
           return element;
-        } else if ((namespace == null || namespace.length() == 0) && 
+        } else if ((namespace == null || namespace.length() == 0) &&
                    element.getDefaultName().equals(localName)) {
           return element;
         }
@@ -287,5 +291,15 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
 
   public void setName(String name) throws IncorrectOperationException {
     NamedObjectDescriptor.setName(myDescriptorTag, name);
+  }
+
+  public void setValidator(final Validator validator) {
+    myValidator = validator;
+  }
+
+  public void validate(PsiElement context, ValidationHost host) {
+    if (myValidator != null) {
+      myValidator.validate(context, host);
+    }
   }
 }
