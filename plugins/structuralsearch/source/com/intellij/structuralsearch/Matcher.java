@@ -2,19 +2,16 @@ package com.intellij.structuralsearch;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.structuralsearch.impl.matcher.MatcherImpl;
-import com.intellij.structuralsearch.UnsupportedPatternException;
-import com.intellij.structuralsearch.MatchOptions;
-import com.intellij.structuralsearch.MatchResultSink;
 
-import java.util.*;
+import java.util.List;
 
 /**
  * This class makes program structure tree matching:
  */
 public class Matcher extends MatcherImpl {
 
-  public Matcher(Project _project) {
-    super(_project);
+  public Matcher(Project project) {
+    super(project);
   }
 
   /**

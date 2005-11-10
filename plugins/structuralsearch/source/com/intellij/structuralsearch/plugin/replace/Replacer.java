@@ -14,16 +14,16 @@ import java.util.List;
  * To change this template use File | Settings | File Templates.
  */
 public class Replacer extends ReplacerImpl {
-  public Replacer(Project _project, ReplaceOptions _options) {
-    super(_project,_options);
+  public Replacer(Project project, ReplaceOptions options) {
+    super(project,options);
   }
 
-  public String testReplace(String in, String what, String by, ReplaceOptions _options) {
-    return testReplace(in, what, by, _options,false);
+  public String testReplace(String in, String what, String by, ReplaceOptions options) {
+    return testReplace(in, what, by, options,false);
   }
 
-  public String testReplace(String in, String what, String by, ReplaceOptions _options, boolean filePattern) {
-    return super.testReplace(in, what, by, _options, filePattern);
+  public String testReplace(String in, String what, String by, ReplaceOptions options, boolean filePattern) {
+    return super.testReplace(in, what, by, options, filePattern);
   }
 
   public void replaceAll(final List<ReplacementInfo> resultPtrList) {

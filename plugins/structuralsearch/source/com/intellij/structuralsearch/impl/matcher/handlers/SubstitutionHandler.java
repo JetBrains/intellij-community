@@ -1,14 +1,13 @@
 package com.intellij.structuralsearch.impl.matcher.handlers;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.javadoc.PsiDocTag;
-import com.intellij.structuralsearch.plugin.util.SmartPsiPointer;
-import com.intellij.structuralsearch.impl.matcher.iterators.NodeIterator;
+import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.impl.matcher.MatchResultImpl;
 import com.intellij.structuralsearch.impl.matcher.MatchingVisitor;
-import com.intellij.structuralsearch.MatchResult;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.structuralsearch.impl.matcher.iterators.NodeIterator;
+import com.intellij.structuralsearch.plugin.util.SmartPsiPointer;
 
 import java.util.LinkedList;
 
@@ -108,7 +107,7 @@ public class SubstitutionHandler extends Handler {
         if (matchedOccurs >= size) {
           return false;
         }
-        result = (size==0)?result:(MatchResultImpl)result.getAllSons().get(matchedOccurs);
+        result = size == 0 ?result:(MatchResultImpl)result.getAllSons().get(matchedOccurs);
         // check if they are the same
         return validateOneMatch(match, start, end, result, context);
       }
@@ -122,7 +121,7 @@ public class SubstitutionHandler extends Handler {
     //MatchResult saveResult = context.getResult();
     //context.setResult(null);
 
-    boolean result = (matchHandler==null)?
+    boolean result = matchHandler == null ?
       context.getMatcher().match(node,match):
       matchHandler.match(node,match,context);
     //if (context.hasResult() && saveResult!=null) {
@@ -140,38 +139,38 @@ public class SubstitutionHandler extends Handler {
   public void addResult(PsiElement match,int start, int end,MatchContext context) {
     if (totalMatchedOccurs == -1) {
       final MatchResultImpl matchResult = context.getResult();
-      final MatchResultImpl substituion = matchResult.findSon(name);
+      final MatchResultImpl substitution = matchResult.findSon(name);
 
-      if (substituion == null) {
+      if (substitution == null) {
         matchResult.addSon( createMatch(match,start,end) );
       } else if (maxOccurs > 1) {
         final MatchResultImpl result = createMatch(match,start,end);
   
-        if (!substituion.isMultipleMatch()) {
+        if (!substitution.isMultipleMatch()) {
           // adding intermediate node to contain all multiple matches
           MatchResultImpl sonresult;
   
-          substituion.addSon(
+          substitution.addSon(
             sonresult = new MatchResultImpl(
-              substituion.getName(),
-              substituion.getMatchImage(),
-              substituion.getMatchRef(),
-              substituion.getStart(),
-              substituion.getEnd(),
+              substitution.getName(),
+              substitution.getMatchImage(),
+              substitution.getMatchRef(),
+              substitution.getStart(),
+              substitution.getEnd(),
               target
             )
           );
   
-          sonresult.setParent(substituion);
-          substituion.setMatchRef(
-            new SmartPsiPointer((match!=null)?match:null)
+          sonresult.setParent(substitution);
+          substitution.setMatchRef(
+            new SmartPsiPointer(match == null ? null : match)
           );
           
-          substituion.setMultipleMatch(true);
+          substitution.setMultipleMatch(true);
         }
   
-        result.setParent(substituion);
-        substituion.addSon( result );
+        result.setParent(substitution);
+        substitution.addSon( result );
       }
     }
   }
@@ -194,20 +193,18 @@ public class SubstitutionHandler extends Handler {
   }
 
   private MatchResultImpl createMatch(final PsiElement match, int start, int end) {
-    final String image = (match != null) ? MatchingVisitor.getText(match, start, end) : null;
+    final String image = match == null ? null : MatchingVisitor.getText(match, start, end);
     final SmartPsiPointer ref = new SmartPsiPointer(match);
-    
-    final MatchResultImpl result = (myNestedResult != null)? 
-      myNestedResult:
-      new MatchResultImpl(
-        name,
-        image,
-        ref,
-        start,
-        end,
-        target
-      );
-    
+
+    final MatchResultImpl result = myNestedResult == null ? new MatchResultImpl(
+      name,
+      image,
+      ref,
+      start,
+      end,
+      target
+    ) : myNestedResult;
+
     if (myNestedResult != null) {
       myNestedResult.setName( name );
       myNestedResult.setMatchImage( image );
@@ -225,23 +222,21 @@ public class SubstitutionHandler extends Handler {
     String text;
 
     if (element instanceof PsiNamedElement) {
-      text = ((PsiNamedElement) element).getName();
-    } else if (element instanceof PsiAnnotation) {
-      text = ((PsiAnnotation) element).getNameReferenceElement().getQualifiedName();
-    } else if (element instanceof PsiNameValuePair) {
-      text = ((PsiNameValuePair) element).getName();
-    } else {
+      text = ((PsiNamedElement)element).getName();
+    }
+    else if (element instanceof PsiAnnotation) {
+      PsiJavaCodeReferenceElement referenceElement = ((PsiAnnotation)element).getNameReferenceElement();
+      text = referenceElement == null ? null : referenceElement.getQualifiedName();
+    }
+    else if (element instanceof PsiNameValuePair) {
+      text = ((PsiNameValuePair)element).getName();
+    }
+    else {
       text = element.getText();
-      if (element instanceof PsiDocTag) {
-        // This for Ariadna
-        text = ((PsiDocTag)element).getName();
-      } else {
-        text = element.getText();
-        if (StringUtil.startsWithChar(text, '@')) {
-          text = text.substring(1);
-        }
-        if (StringUtil.endsWithChar(text, ';')) text = text.substring(0, text.length() - 1);
+      if (StringUtil.startsWithChar(text, '@')) {
+        text = text.substring(1);
       }
+      if (StringUtil.endsWithChar(text, ';')) text = text.substring(0, text.length() - 1);
     }
 
     if (text==null) text = element.getText();

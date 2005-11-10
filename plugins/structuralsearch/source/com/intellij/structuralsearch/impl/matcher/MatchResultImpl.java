@@ -1,14 +1,13 @@
 package com.intellij.structuralsearch.impl.matcher;
 
-import com.intellij.structuralsearch.plugin.util.SmartPsiPointer;
-import com.intellij.structuralsearch.MatchResult;
 import com.intellij.psi.PsiElement;
-
-import java.util.List;
-import java.util.LinkedList;
-import java.util.Iterator;
-
+import com.intellij.structuralsearch.MatchResult;
+import com.intellij.structuralsearch.plugin.util.SmartPsiPointer;
 import org.jetbrains.annotations.NonNls;
+
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Class describing the match result
@@ -32,17 +31,17 @@ public final class MatchResultImpl extends MatchResult {
   MatchResultImpl() {
   }
 
-  public MatchResultImpl(String _name, String image, SmartPsiPointer ref, boolean _target) {
-    this(_name,image,ref,0,-1,_target);
+  public MatchResultImpl(String name, String image, SmartPsiPointer ref, boolean target) {
+    this(name,image,ref,0,-1,target);
   }
 
-  public MatchResultImpl(String _name, String image, SmartPsiPointer ref, int _start, int _end,boolean _target) {
+  public MatchResultImpl(String name, String image, SmartPsiPointer ref, int start, int end,boolean target) {
     matchRef = ref;
-    name = _name;
+    this.name = name;
     matchImage = image;
-    target = _target;
-    start = _start;
-    end = _end;
+    this.target = target;
+    this.start = start;
+    this.end = end;
   }
 
   public String getMatchImage() {
@@ -65,7 +64,7 @@ public final class MatchResultImpl extends MatchResult {
   }
 
   public void setMatchRef(SmartPsiPointer matchStart) {
-    this.matchRef = matchStart;
+    matchRef = matchStart;
   }
 
   public String getName() {

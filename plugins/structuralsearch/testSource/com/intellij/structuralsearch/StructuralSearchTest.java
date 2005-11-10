@@ -1845,7 +1845,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     String s13 = "assert $exp$ != null : \"$exp$ is null\";";
 
     assertEquals(
-      "reference to substituion in comment",
+      "reference to substitution in comment",
       findMatchesCount(s12,s13),
       2
     );

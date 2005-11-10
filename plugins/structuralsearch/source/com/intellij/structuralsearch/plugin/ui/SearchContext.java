@@ -46,14 +46,11 @@ public final class SearchContext implements DataProvider, Cloneable {
     this.project = project;
   }
 
-  public void configureFromDataContext(DataContext _context) {
-    setProject(
-      (Project)_context.getData(DataConstants.PROJECT)
-    );
+  public void configureFromDataContext(DataContext context) {
+    setProject((Project)context.getData(DataConstants.PROJECT));
 
-    //noinspection HardCodedStringLiteral
-    setFile( (PsiFile) _context.getData("psi.File") );
-    setCurrentFile((VirtualFile) _context.getData(DataConstants.VIRTUAL_FILE));
+    setFile((PsiFile)context.getData(DataConstants.PSI_FILE));
+    setCurrentFile((VirtualFile)context.getData(DataConstants.VIRTUAL_FILE));
   }
 
   private final Editor selectedEditor() {

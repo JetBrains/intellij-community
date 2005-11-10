@@ -291,7 +291,7 @@ public class UIUtil {
     return getNavigationElement( result.getMatchRef().getElement() );
   }
 
-  static void invokeActionAnotherTime(Configuration config, SearchContext context) {
+  public static void invokeAction(Configuration config, SearchContext context) {
     if (config instanceof SearchConfiguration) {
       StructuralSearchAction.triggerAction(config,context);
     } else {

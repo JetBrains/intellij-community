@@ -198,7 +198,7 @@ public class ExistingTemplatesComponent {
     tree.setShowsRootHandles(true);
     tree.setDragEnabled(false);
     tree.setEditable(false);
-    tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
+    tree.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
 
     tree.setCellRenderer(new TreeCellRenderer());
 
@@ -234,7 +234,7 @@ public class ExistingTemplatesComponent {
     return panel;
   }
 
-  static ExistingTemplatesComponent getInstance(Project project) {
+  public static ExistingTemplatesComponent getInstance(Project project) {
     StructuralSearchPlugin plugin = StructuralSearchPlugin.getInstance(project);
 
     if (plugin.getExistingTemplatesComponent() == null) {

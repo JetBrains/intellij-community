@@ -1,8 +1,8 @@
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.template.impl.Variable;
 import com.intellij.codeInsight.hint.TooltipGroup;
+import com.intellij.codeInsight.template.impl.Variable;
 import com.intellij.find.FindProgressIndicator;
 import com.intellij.find.FindSettings;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
@@ -34,8 +34,6 @@ import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyAdapter;
@@ -53,7 +51,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
   protected Editor searchCriteriaEdit;
 
   // options of search scope
-  private ScopeChooserCombo combo;
+  private ScopeChooserCombo myScopeChooserCombo;
 
   private JCheckBox searchIncrementally;
   private JCheckBox recursiveMatching;
@@ -68,7 +66,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
   private JCheckBox openInNewTab;
   private Alarm myAlarm;
 
-  protected static final String USER_DEFINED = SSRBundle.message("new.template.defaultname");
+  public static final String USER_DEFINED = SSRBundle.message("new.template.defaultname");
   protected final ExistingTemplatesComponent existingTemplatesComponent;
 
   private boolean useLastConfiguration;
@@ -77,6 +75,31 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
   private static boolean ourUseMaxCount;
   @NonNls private static String ourFileType = "java";
   private static final TooltipGroup OUR_TOOLTIP_GROUP = new TooltipGroup("ssr.error.tooltip", 100);
+  private final boolean myShowScopePanel;
+  private final boolean myRunFindActionOnClose;
+
+  public SearchDialog(SearchContext searchContext) {
+    this(searchContext, true, true);
+  }
+
+  public SearchDialog(SearchContext searchContext, boolean showScope, boolean runFindActionOnClose) {
+    super(searchContext.getProject(), true);
+    myShowScopePanel = showScope;
+    myRunFindActionOnClose = runFindActionOnClose;
+    this.searchContext = (SearchContext)searchContext.clone();
+    setTitle(getDefaultTitle());
+    if (runFindActionOnClose) {
+      setOKButtonText(SSRBundle.message("ssdialog.find.botton"));
+      setOKButtonIcon(IconLoader.getIcon("/actions/find.png"));
+      getOKAction().putValue(Action.MNEMONIC_KEY, new Integer('F'));
+    }
+
+    existingTemplatesComponent = ExistingTemplatesComponent.getInstance(this.searchContext.getProject());
+    model = new SearchModel(createConfiguration());
+    myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+
+    init();
+  }
 
   protected UsageViewContext createUsageViewContext(Configuration configuration) {
     return new UsageViewContext(searchContext, configuration);
@@ -91,15 +114,10 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     return !searchCriteriaEdit.getDocument().getText().equals(configuration.getMatchOptions().getSearchPattern());
   }
 
-  private void setSearchPatternFromNode(final DefaultMutableTreeNode node) {
-    if (node == null) return;
-    final Object userObject = node.getUserObject();
 
-    if (userObject instanceof Configuration) {
-      Configuration config = (Configuration)userObject;
-      model.setShadowConfig(config);
-      setValuesFromConfig(config);
-    }
+  public void setSearchPattern(final Configuration config) {
+    model.setShadowConfig(config);
+    setValuesFromConfig(config);
   }
 
   protected Editor createEditor(final SearchContext searchContext) {
@@ -341,7 +359,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
         }
 
         public void actionPerformed(ActionEvent e) {
-          UIUtil.invokeActionAnotherTime(config, searchContext);
+          UIUtil.invokeAction(config, searchContext);
         }
       }
     );
@@ -380,28 +398,13 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
           context.getUsageView().close();
           SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-              UIUtil.invokeActionAnotherTime(context.getConfiguration(), searchContext);
+              UIUtil.invokeAction(context.getConfiguration(), searchContext);
             }
           });
         }
       },
       SSRBundle.message("edit.query.button.description")
     );
-  }
-
-  public SearchDialog(SearchContext searchContext) {
-    super(searchContext.getProject(), true);
-    this.searchContext = (SearchContext)searchContext.clone();
-    setTitle(getDefaultTitle());
-    setOKButtonText(SSRBundle.message("ssdialog.find.botton"));
-    setOKButtonIcon(IconLoader.getIcon("/actions/find.png"));
-    getOKAction().putValue(Action.MNEMONIC_KEY, new Integer('F'));
-
-    existingTemplatesComponent = ExistingTemplatesComponent.getInstance(this.searchContext.getProject());
-    model = new SearchModel(createConfiguration());
-    myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-
-    init();
   }
 
   protected String getDefaultTitle() {
@@ -445,27 +448,27 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     searchOptions.setLayout(new GridLayout(getRowsCount(), 1, 0, 0));
     searchOptions.setBorder(IdeBorderFactory.createTitledBorder(SSRBundle.message("ssdialog.options.group.border")));
 
-    JPanel scopePanel = new JPanel(new BorderLayout());
-    scopePanel.add(Box.createVerticalStrut(8), BorderLayout.NORTH);
-    JLabel label = new JLabel(SSRBundle.message("search.dialog.scope.label"));
-    scopePanel.add(label, BorderLayout.WEST);
-
-    scopePanel.add(
-      combo = new ScopeChooserCombo(
-        searchContext.getProject(),
-        true,
-        false,
-        isReplaceDialog() ? SSRBundle.message("default.replace.scope") : FindSettings.getInstance().getDefaultScopeName()
-      ),
-      BorderLayout.CENTER
+    myScopeChooserCombo = new ScopeChooserCombo(
+      searchContext.getProject(),
+      true,
+      false,
+      isReplaceDialog() ? SSRBundle.message("default.replace.scope") : FindSettings.getInstance().getDefaultScopeName()
     );
-    label.setLabelFor(combo.getComboBox());
-
     JPanel allOptions = new JPanel(new BorderLayout());
-    allOptions.add(
-      scopePanel,
-      BorderLayout.SOUTH
-    );
+    if (myShowScopePanel) {
+      JPanel scopePanel = new JPanel(new BorderLayout());
+      scopePanel.add(Box.createVerticalStrut(8), BorderLayout.NORTH);
+      JLabel label = new JLabel(SSRBundle.message("search.dialog.scope.label"));
+      scopePanel.add(label, BorderLayout.WEST);
+
+      scopePanel.add(myScopeChooserCombo, BorderLayout.CENTER);
+      label.setLabelFor(myScopeChooserCombo.getComboBox());
+
+      allOptions.add(
+        scopePanel,
+        BorderLayout.SOUTH
+      );
+    }
 
     buildOptions(searchOptions);
 
@@ -498,14 +501,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
         }
 
         public void actionPerformed(ActionEvent e) {
-          String name = Messages.showInputDialog(
-            searchContext.getProject(),
-            SSRBundle.message("template.name.button"),
-            SSRBundle.message("save.template.description.button"),
-            IconLoader.getIcon("/general/questionDialog.png"),
-            model.getShadowConfig() != null ? model.getShadowConfig().getName() : "",
-            null
-          );
+          String name = showSaveTemplateAsDialog();
           if (name != null) {
             model.getConfig().setName(name);
             setValuesToConfig(model.getConfig());
@@ -564,18 +560,17 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
           }
 
           public void actionPerformed(ActionEvent e) {
-            DialogWrapper wrapper = new SelectTemplateDialog(searchContext.getProject(), true, isReplaceDialog());
-            wrapper.show();
+            SelectTemplateDialog dialog = new SelectTemplateDialog(searchContext.getProject(), true, isReplaceDialog());
+            dialog.show();
 
-            if (wrapper.isOK()) {
-              int selection = existingTemplatesComponent.getHistoryList().getSelectedIndex();
-
-              if (selection != -1) {
-                setValuesFromConfig(
-                  (Configuration)existingTemplatesComponent.getHistoryList().getSelectedValue()
-                );
-                model.setShadowConfig(null);
-              }
+            if (!dialog.isOK()) {
+              return;
+            }
+            Configuration[] configurations = dialog.getSelectedConfigurations();
+            if (configurations.length == 1) {
+              Configuration configuration = configurations[0];
+              setValuesFromConfig(configuration);
+              model.setShadowConfig(null);
             }
           }
         }
@@ -594,14 +589,16 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
           }
 
           public void actionPerformed(ActionEvent e) {
-            DialogWrapper wrapper = new SelectTemplateDialog(searchContext.getProject(), false, isReplaceDialog());
-            wrapper.show();
+            SelectTemplateDialog dialog = new SelectTemplateDialog(searchContext.getProject(), false, isReplaceDialog());
+            dialog.show();
 
-            if (wrapper.isOK()) {
-              TreePath path = existingTemplatesComponent.getPatternTree().getSelectionPath();
-              if (path != null) {
-                setSearchPatternFromNode((DefaultMutableTreeNode)path.getLastPathComponent());
-              }
+            if (!dialog.isOK()) {
+              return;
+            }
+            Configuration[] configurations = dialog.getSelectedConfigurations();
+            if (configurations.length == 1) {
+              Configuration configuration = configurations[0];
+              setSearchPattern(configuration);
             }
           }
         }
@@ -609,6 +606,18 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     );
 
     return panel;
+  }
+
+  public String showSaveTemplateAsDialog() {
+    String name = Messages.showInputDialog(
+      searchContext.getProject(),
+      SSRBundle.message("template.name.button"),
+      SSRBundle.message("save.template.description.button"),
+      IconLoader.getIcon("/general/questionDialog.png"),
+      model.getShadowConfig() != null ? model.getShadowConfig().getName() : "",
+      null
+    );
+    return name;
   }
 
   protected boolean isReplaceDialog() {
@@ -658,15 +667,17 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
 
   // Performs ok action
   protected void doOKAction() {
-    SearchScope selectedScope = combo.getSelectedScope();
+    SearchScope selectedScope = getSelectedScope();
     if (selectedScope == null) return;
 
     boolean result = doValidate();
     if (!result) return;
 
     super.doOKAction();
+    if (!myRunFindActionOnClose) return;
+
     if (!isReplaceDialog()) {
-      FindSettings.getInstance().setDefaultScopeName(combo.getSelectedScopeName());
+      FindSettings.getInstance().setDefaultScopeName(selectedScope.getDisplayName());
     }
     ourOpenInNewTab = openInNewTab.isSelected();
 
@@ -686,13 +697,17 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
       runAction(model.getConfig(), searchContext);
     }
     catch (MalformedPatternException ex) {
-      Messages.showMessageDialog(
-        searchContext.getProject(),
-        SSRBundle.message("incorrect.pattern.message"),
-        SSRBundle.message("information.message.title"),
-        Messages.getInformationIcon()
-      );
+      showError("this.pattern.is.malformed.message", ex.getMessage());
     }
+  }
+
+  public Configuration getConfiguration() {
+    return model.getConfig();
+  }
+
+  private SearchScope getSelectedScope() {
+    SearchScope selectedScope = myScopeChooserCombo.getSelectedScope();
+    return selectedScope;
   }
 
   protected boolean doValidate() {
@@ -703,11 +718,11 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
       Matcher.validate(searchContext.getProject(), model.getConfig().getMatchOptions());
     }
     catch (MalformedPatternException ex) {
-      doMessage("this.pattern.is.malformed.message", ex.getMessage());
+      showError("this.pattern.is.malformed.message", ex.getMessage());
       result = false;
     }
     catch (UnsupportedPatternException ex) {
-      doMessage("this.pattern.is.unsupported.message");
+      showError("this.pattern.is.unsupported.message");
       result = false;
     }
 
@@ -715,8 +730,8 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     return result;
   }
 
-  protected void doMessage(@NonNls String messageId, Object... params) {
-    final int offset = searchCriteriaEdit.getCaretModel().getOffset();
+  protected void showError(@NonNls String messageId, Object... params) {
+    //final int offset = searchCriteriaEdit.getCaretModel().getOffset();
     //UIUtil.showTooltip(
     //  searchCriteriaEdit,
     //  offset,
@@ -725,11 +740,10 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     //  OUR_TOOLTIP_GROUP
     //);
 
-    Messages.showMessageDialog(
+    Messages.showErrorDialog(
       searchContext.getProject(),
       SSRBundle.message(messageId, params),
-      SSRBundle.message("information.message.title"),
-      Messages.getInformationIcon()
+      SSRBundle.message("information.message.title")
     );
   }
 
@@ -737,7 +751,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
 
     MatchOptions options = config.getMatchOptions();
 
-    options.setScope(combo.getSelectedScope());
+    options.setScope(myScopeChooserCombo.getSelectedScope());
     options.setLooseMatching(true);
     options.setRecursiveSearch(isRecursiveSearchEnabled() && recursiveMatching.isSelected());
     //options.setDistinct( distinctResults.isSelected() );

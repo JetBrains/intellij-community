@@ -16,25 +16,54 @@
 package com.intellij.structuralsearch.inspection;
 
 import com.intellij.codeInspection.*;
-import com.intellij.psi.PsiFile;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.structuralsearch.plugin.StructuralSearchPlugin;
-import com.intellij.structuralsearch.plugin.util.CollectingMatchResultSink;
-import com.intellij.structuralsearch.plugin.ui.Configuration;
-import com.intellij.structuralsearch.plugin.ui.actions.DoSearchAction;
+import com.intellij.psi.PsiFile;
 import com.intellij.structuralsearch.MatchResult;
+import com.intellij.structuralsearch.Matcher;
+import com.intellij.structuralsearch.impl.matcher.MatcherImpl;
+import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
+import com.intellij.structuralsearch.plugin.replace.Replacer;
+import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
+import com.intellij.structuralsearch.plugin.ui.Configuration;
+import com.intellij.structuralsearch.plugin.ui.ConfigurationManager;
+import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import javax.swing.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author cdr
  */
 public class SSBasedInspection extends LocalInspectionTool {
+  private List<Configuration> myConfigurations = new ArrayList<Configuration>();
+  private MatcherImpl.CompiledOptions compiledConfigurations;
+
   public SSBasedInspection() {
-    int i=0;
+  }
+
+  public void writeSettings(Element node) throws WriteExternalException {
+    ConfigurationManager.writeConfigurations(node, myConfigurations, Collections.<Configuration>emptyList());
+  }
+
+  public void readSettings(Element node) throws InvalidDataException {
+    myConfigurations.clear();
+    ConfigurationManager.readConfigurations(node, myConfigurations, new ArrayList<Configuration>());
+
+    SwingUtilities.invokeLater(new Runnable(){
+      public void run() {
+        precompileConfigurations();
+      }
+    });
   }
 
   public String getGroupDisplayName() {
@@ -42,7 +71,7 @@ public class SSBasedInspection extends LocalInspectionTool {
   }
 
   public String getDisplayName() {
-    return "SSR Inspection";
+    return "Structural Search Inspection";
   }
 
   @NonNls
@@ -52,36 +81,61 @@ public class SSBasedInspection extends LocalInspectionTool {
 
   @Nullable
   public ProblemDescriptor[] checkFile(PsiFile file, InspectionManager manager, boolean isOnTheFly) {
-    StructuralSearchPlugin searchPlugin = StructuralSearchPlugin.getInstance(file.getProject());
-    List<Configuration> configurations = new ArrayList<Configuration>(searchPlugin.getConfigurationManager().getConfigurations());
-    // todo: externalizing configs selected for inspection
-    for (int i = configurations.size()-1; i>=0;i--) {
-      Configuration configuration = configurations.get(i);
-      String name = configuration.getName();
-      //if (!name.startsWith("SSI")) configurations.remove(i);
+    Project project = file.getProject();
 
-      return performSearch(Collections.singleton(configuration), file, manager);
-    }
+    if (compiledConfigurations == null) return null;
+    Collection<Pair<MatchResult,Configuration>> matches = new Matcher(project).findMatchesInFile(compiledConfigurations, file);
 
-    return null;
-  }
-
-  private static ProblemDescriptor[] performSearch(final Collection<Configuration> configurations,
-                                            final PsiFile file,
-                                            final InspectionManager manager) {
-    Configuration configuration = configurations.iterator().next();
-    configuration.getMatchOptions().setScope(GlobalSearchScope.fileScope(file));
-    CollectingMatchResultSink sink = new CollectingMatchResultSink();
-    DoSearchAction.execute(file.getProject(), sink, configuration);
     List<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>();
-    List<MatchResult> matches = sink.getMatches();
-    for (MatchResult matchResult : matches) {
+    for (Pair<MatchResult,Configuration> pair : matches) {
+      MatchResult matchResult = pair.first;
+      Configuration configuration = pair.second;
       PsiElement element = matchResult.getMatch();
       String name = configuration.getName();
-      ProblemDescriptor problemDescriptor =
-        manager.createProblemDescriptor(element, name, (LocalQuickFix)null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+      LocalQuickFix fix = createQuickFix(project, matchResult, configuration);
+      ProblemDescriptor problemDescriptor = manager.createProblemDescriptor(element, name, fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
       problems.add(problemDescriptor);
     }
     return problems.toArray(new ProblemDescriptor[problems.size()]);
+  }
+
+  private LocalQuickFix createQuickFix(final Project project, final MatchResult matchResult, final Configuration configuration) {
+    if (!(configuration instanceof ReplaceConfiguration)) return null;
+    ReplaceConfiguration replaceConfiguration = (ReplaceConfiguration)configuration;
+    final Replacer replacer = new Replacer(project, replaceConfiguration.getOptions());
+    final ReplacementInfo replacementInfo = replacer.buildReplacement(matchResult);
+
+    return new LocalQuickFix() {
+      public String getName() {
+        return "Replace with '"+replacementInfo.getReplacement()+"'";
+      }
+
+      public void applyFix(Project project, ProblemDescriptor descriptor) {
+        replacer.replace(replacementInfo);
+      }
+
+      public String getFamilyName() {
+        return "Replace Structurally";
+      }
+    };
+  }
+
+  @Nullable
+  public JComponent createOptionsPanel() {
+    Project project = ProjectManager.getInstance().getOpenProjects()[0];
+    JPanel component = new SSBasedInspectionOptions(project, myConfigurations){
+      public void configurationsChanged() {
+        super.configurationsChanged();
+        precompileConfigurations();
+      }
+    }.getComponent();
+    return component;
+  }
+
+  // must be inside event dispatch
+  public void precompileConfigurations() {
+    Project project = ProjectManager.getInstance().getOpenProjects()[0];
+
+    compiledConfigurations = new Matcher(project).precompileOptions(myConfigurations);
   }
 }

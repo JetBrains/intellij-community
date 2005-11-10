@@ -241,6 +241,11 @@ public class ReplaceDialog extends SearchDialog {
     super(searchContext);
   }
 
+  public ReplaceDialog(SearchContext searchContext, boolean showScope, boolean runFindActionOnClose) {
+    super(searchContext, showScope, runFindActionOnClose);
+  }
+
+
   public Configuration createConfiguration() {
     ReplaceConfiguration configuration = new ReplaceConfiguration();
     configuration.setName(USER_DEFINED);
@@ -333,7 +338,7 @@ public class ReplaceDialog extends SearchDialog {
       );
     }
     catch (UnsupportedPatternException ex) {
-      doMessage("unsupported.replacement.pattern.message");
+      showError("unsupported.replacement.pattern.message");
       result = false;
     }
 

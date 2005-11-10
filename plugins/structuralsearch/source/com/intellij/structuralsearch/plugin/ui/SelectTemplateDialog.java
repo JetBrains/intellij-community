@@ -10,6 +10,7 @@ import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -19,6 +20,8 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.util.Collection;
+import java.util.ArrayList;
 
 /**
  * Created by IntelliJ IDEA.
@@ -27,13 +30,13 @@ import java.awt.*;
  * Time: 5:03:52 PM
  * To change this template use File | Settings | File Templates.
  */
-class SelectTemplateDialog extends DialogWrapper {
+public class SelectTemplateDialog extends DialogWrapper {
   private boolean showHistory;
   private Editor searchPatternEditor;
   private Editor replacePatternEditor;
   private boolean replace;
   private Project project;
-  protected final ExistingTemplatesComponent existingTemplatesComponent;
+  private final ExistingTemplatesComponent existingTemplatesComponent;
 
   private MySelectionListener selectionListener;
   private CardLayout myCardLayout;
@@ -41,7 +44,7 @@ class SelectTemplateDialog extends DialogWrapper {
   @NonNls private static final String PREVIEW_CARD = "Preview";
   @NonNls private static final String SELECT_TEMPLATE_CARD = "SelectCard";
 
-  SelectTemplateDialog(Project project, boolean showHistory, boolean replace) {
+  public SelectTemplateDialog(Project project, boolean showHistory, boolean replace) {
     super(project, false);
 
     this.project = project;
@@ -256,6 +259,29 @@ class SelectTemplateDialog extends DialogWrapper {
       );
 
       replacePatternEditor.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, configuration);
+    }
+  }
+
+  @NotNull public Configuration[] getSelectedConfigurations() {
+    if (showHistory) {
+      Object[] selectedValues = existingTemplatesComponent.getHistoryList().getSelectedValues();
+      return selectedValues == null ? new Configuration[0] : (Configuration[])selectedValues;
+    }
+    else {
+      TreePath[] paths = existingTemplatesComponent.getPatternTree().getSelectionModel().getSelectionPaths();
+      if (paths == null) {
+        return new Configuration[0];
+      }
+      Collection<Configuration> configurations = new ArrayList<Configuration>();
+      for (TreePath path : paths) {
+
+        DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
+        final Object userObject = node.getUserObject();
+        if (userObject instanceof Configuration) {
+          configurations.add((Configuration)userObject);
+        }
+      }
+      return configurations.toArray(new Configuration[configurations.size()]);
     }
   }
 }

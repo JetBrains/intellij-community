@@ -54,14 +54,14 @@ public class PatternCompiler {
       }
     };
 
-    if (!ApplicationManager.getApplication().isDispatchThread()) {
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      runnable.run();
+    }
+    else {
       ApplicationManager.getApplication().invokeAndWait(
         runnable,
         ModalityState.defaultModalityState()
       );
-    }
-    else {
-      runnable.run();
     }
 
     return result[0];
@@ -224,7 +224,7 @@ public class PatternCompiler {
         if (matchStatements.length==0) throw new MalformedPatternException();
         patternNode = matchStatements[0].getParent();
       } catch (IncorrectOperationException e) {
-        throw new MalformedPatternException();
+        throw new MalformedPatternException(e.getMessage());
       }
 
       NodeFilter filter = LexicalNodesFilter.getInstance();

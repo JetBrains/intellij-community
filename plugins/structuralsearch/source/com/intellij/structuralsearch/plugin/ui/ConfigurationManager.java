@@ -3,11 +3,9 @@ package com.intellij.structuralsearch.plugin.ui;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Collections;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -53,6 +51,12 @@ public class ConfigurationManager {
   }
 
   public void saveConfigurations(Element element) {
+    writeConfigurations(element, configurations, historyConfigurations);
+  }
+
+  public static void writeConfigurations(final Element element,
+                                   final Collection<Configuration> configurations,
+                                   final Collection<Configuration> historyConfigurations) {
     if (configurations != null) {
       for (final Configuration configuration : configurations) {
         saveConfiguration(element, configuration);
@@ -67,7 +71,7 @@ public class ConfigurationManager {
     }
   }
 
-  private static Element saveConfiguration(Element element, final Configuration config) {
+  public static Element saveConfiguration(Element element, final Configuration config) {
     Element infoElement = new Element(config instanceof SearchConfiguration ? SEARCH_TAG_NAME : REPLACE_TAG_NAME);
     element.addContent(infoElement);
     config.writeExternal(infoElement);
@@ -77,27 +81,44 @@ public class ConfigurationManager {
 
   public void loadConfigurations(Element element) {
     if (configurations != null) return;
+    ArrayList<Configuration> configurations = new ArrayList<Configuration>();
+    ArrayList<Configuration> historyConfigurations = new ArrayList<Configuration>();
+    readConfigurations(element, configurations, historyConfigurations);
+    for (Configuration configuration : historyConfigurations) {
+      addHistoryConfigurationToFront(configuration);
+    }
+    for (Configuration configuration : configurations) {
+      addConfiguration(configuration);
+    }
+    if (this.historyConfigurations != null) {
+      Collections.reverse(this.historyConfigurations);
+    }
+  }
+
+  public static void readConfigurations(final Element element, @NotNull Collection<Configuration> configurations, @NotNull Collection<Configuration> historyConfigurations) {
     List patterns = element.getChildren();
 
     if (patterns != null && patterns.size() > 0) {
       for (final Object pattern : patterns) {
         final Element childElement = (Element)pattern;
-        final Configuration config =
-          childElement.getName().equals(SEARCH_TAG_NAME) ? new SearchConfiguration() : new ReplaceConfiguration();
-
-        config.readExternal(childElement);
+        final Configuration config = readConfiguration(childElement);
 
         if (childElement.getAttribute(SAVE_HISTORY_ATTR_NAME) != null) {
-          addHistoryConfigurationToFront(config);
+          historyConfigurations.add(config);
         }
         else {
-          addConfiguration(config);
+          configurations.add(config);
         }
       }
-      if (historyConfigurations != null) {
-        Collections.reverse(historyConfigurations);
-      }
     }
+  }
+
+  public static Configuration readConfiguration(final Element childElement) {
+    final Configuration config =
+      childElement.getName().equals(SEARCH_TAG_NAME) ? new SearchConfiguration() : new ReplaceConfiguration();
+
+    config.readExternal(childElement);
+    return config;
   }
 
   public Collection<Configuration> getConfigurations() {

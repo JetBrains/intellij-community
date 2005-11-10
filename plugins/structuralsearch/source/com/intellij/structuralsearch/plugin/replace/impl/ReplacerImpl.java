@@ -38,43 +38,43 @@ public class ReplacerImpl {
   private ReplaceOptions options;
   private ReplacementContext context;
 
-  protected ReplacerImpl(Project _project, ReplaceOptions _options) {
-    project = _project;
-    options = _options;
+  protected ReplacerImpl(Project project, ReplaceOptions options) {
+    this.project = project;
+    this.options = options;
   }
 
-  protected String testReplace(String in, String what, String by, ReplaceOptions _options,boolean filePattern) {
-    options = _options;
-    options.getMatchOptions().setSearchPattern(what);
-    options.setReplacement(by);
+  protected String testReplace(String in, String what, String by, ReplaceOptions options,boolean filePattern) {
+    this.options = options;
+    this.options.getMatchOptions().setSearchPattern(what);
+    this.options.setReplacement(by);
     replacementBuilder=null;
     context = null;
 
-    options.getMatchOptions().clearVariableConstraints();
-    MatcherImplUtil.transform(options.getMatchOptions());
+    this.options.getMatchOptions().clearVariableConstraints();
+    MatcherImplUtil.transform(this.options.getMatchOptions());
 
     checkSupportedReplacementPattern(
       project,
-      options.getMatchOptions().getSearchPattern(),
+      this.options.getMatchOptions().getSearchPattern(),
       by,
-      options.getMatchOptions().getFileType()
+      this.options.getMatchOptions().getFileType()
     );
 
     Matcher matcher = new Matcher(project);
     try {
-      PsiElement[] elements = MatcherImplUtil.createTreeFromText(in,filePattern, options.getMatchOptions().getFileType(), project);
+      PsiElement[] elements = MatcherImplUtil.createTreeFromText(in,filePattern, this.options.getMatchOptions().getFileType(), project);
       PsiElement firstElement = elements[0];
       PsiElement lastElement = elements[elements.length-1];
       PsiElement parent = firstElement.getParent();
 
-      options.getMatchOptions().setScope(
+      this.options.getMatchOptions().setScope(
         new LocalSearchScope(parent)
       );
 
-      options.getMatchOptions().setResultIsContextMatch(true);
+      this.options.getMatchOptions().setResultIsContextMatch(true);
       CollectingMatchResultSink sink = new CollectingMatchResultSink();
 
-      matcher.testFindMatches(sink,options.getMatchOptions());
+      matcher.testFindMatches(sink,this.options.getMatchOptions());
 
       final List<ReplacementInfo> resultPtrList = new LinkedList<ReplacementInfo>();
 
@@ -85,17 +85,17 @@ public class ReplacerImpl {
       sink.getMatches().clear();
 
       int startOffset = firstElement.getTextOffset();
-      int endOffset = (filePattern)?0: parent.getTextLength() - (lastElement.getTextOffset() + lastElement.getTextLength());
+      int endOffset = filePattern ?0: parent.getTextLength() - (lastElement.getTextOffset() + lastElement.getTextLength());
 
       // get nodes from text may contain
       PsiElement prevSibling = firstElement.getPrevSibling();
       if (prevSibling instanceof PsiWhiteSpace) {
-        startOffset -= (prevSibling.getTextLength() - 1);
+        startOffset -= prevSibling.getTextLength() - 1;
       }
 
       PsiElement nextSibling = lastElement.getNextSibling();
       if (nextSibling instanceof PsiWhiteSpace) {
-        endOffset -= (nextSibling.getTextLength() - 1);
+        endOffset -= nextSibling.getTextLength() - 1;
       }
 
       replaceAll(resultPtrList);
@@ -117,10 +117,10 @@ public class ReplacerImpl {
     }
   }
 
-  protected void replace(ReplacementInfo _info) {
-    final ReplacementInfoImpl info = (ReplacementInfoImpl)_info;
-    final PsiElement element = (info.matchesPtrList.get(0)).getElement();
-    final String replacement = info.result;
+  protected void replace(ReplacementInfo info) {
+    final ReplacementInfoImpl replacementInfo = (ReplacementInfoImpl)info;
+    final PsiElement element = replacementInfo.matchesPtrList.get(0).getElement();
+    final String replacement = replacementInfo.result;
 
     if (element==null || !element.isWritable() || !element.isValid()) return;
 
@@ -134,204 +134,7 @@ public class ReplacerImpl {
           ApplicationManager.getApplication().runWriteAction(
             new Runnable() {
               public void run() {
-                boolean listContext = false;
-
-                try {
-                  PsiElement el = findRealSubstitutionElement(element);
-                  listContext = isListContext(el);
-
-                  final PsiElement[] statements = MatcherImplUtil.createTreeFromText(
-                    replacement,
-                    false,
-                    options.getMatchOptions().getFileType(),
-                    project
-                  );
-
-                  if (context == null) context = new ReplacementContext(options, project);
-                  context.replacementInfo = info;
-
-                  if (listContext) {
-                    if (statements.length > 1) {
-                      elementParent.addRangeBefore(statements[0],statements[statements.length-1],element);
-                    } else if (statements.length==1) {
-                      PsiElement replacement = getMatchExpr(statements[0]);
-
-                      handleModifierList(el, replacement, context);
-                      replacement = handleSymbolReplacemenent(replacement, el, context);
-
-                      if (replacement instanceof PsiTryStatement) {
-                        final List<PsiCodeBlock> unmatchedCatchBlocks = el.getUserData(MatcherImplUtil.UNMATCHED_CATCH_BLOCK_CONTENT_VAR_KEY);
-                        final List<PsiParameter> unmatchedCatchParams = el.getUserData(MatcherImplUtil.UNMATCHED_CATCH_PARAM_CONTENT_VAR_KEY);
-                        final PsiCatchSection[] catches = ((PsiTryStatement)replacement).getCatchSections();
-
-                        if (unmatchedCatchBlocks!=null && unmatchedCatchParams!=null) {
-                          for(int i = unmatchedCatchBlocks.size()-1; i >= 0; --i) {
-                            final PsiParameter parameter = unmatchedCatchParams.get(i);
-                            final PsiCatchSection catchSection = PsiManager.getInstance(project).getElementFactory().createCatchSection(
-                              (PsiClassType)parameter.getType(),
-                              parameter.getName(),
-                              null
-                            );
-
-                            catchSection.getCatchBlock().replace(
-                              unmatchedCatchBlocks.get(i)
-                            );
-                            replacement.addAfter(
-                              catchSection, catches[catches.length-1]
-                            );
-                          }
-                        }
-                      }
-
-                      elementParent.addBefore(replacement,element);
-                    }
-                  } else if (statements.length > 0) {
-                    int i = 0;
-                    while( true ) {
-                      if (!(statements[i] instanceof PsiComment ||
-                            statements[i] instanceof PsiWhiteSpace
-                      )
-                        ) {
-                        break;
-                      }
-                      ++i;
-                    }
-
-                    if (i != 0) {
-                      elementParent.addRangeBefore(statements[0],statements[i-1],el);
-                    }
-                    PsiElement replacement = getMatchExpr(statements[i]);
-
-                    if (replacement instanceof PsiStatement &&
-                        !(replacement.getLastChild() instanceof PsiJavaToken)
-                       ) {
-                      // assert w/o ;
-                      elementParent.addRangeBefore(replacement.getFirstChild(),replacement.getLastChild().getPrevSibling(),el);
-                      el.delete();
-                    } else {
-                      // preserve comments
-                      handleModifierList(el, replacement, context);
-
-                      if (replacement instanceof PsiClass) {
-                        // modifier list
-                        final PsiStatement[] searchStatements = context.getCodeBlock().getStatements();
-                        if (searchStatements.length > 0 &&
-                            searchStatements[0] instanceof PsiDeclarationStatement &&
-                            ((PsiDeclarationStatement)searchStatements[0]).getDeclaredElements()[0] instanceof PsiClass
-                           ) {
-                          final PsiClass replaceClazz = (PsiClass)replacement;
-                          final PsiClass queryClazz = (PsiClass)((PsiDeclarationStatement)searchStatements[0]).getDeclaredElements()[0];
-                          final PsiClass clazz = (PsiClass)el;
-
-                          if (replaceClazz.getExtendsList().getTextLength() == 0 &&
-                              queryClazz.getExtendsList().getTextLength() == 0 &&
-                              clazz.getExtendsList().getTextLength() != 0
-                              ) {
-                            replaceClazz.getExtendsList().addRange(
-                              clazz.getExtendsList().getFirstChild(),clazz.getExtendsList().getLastChild()
-                            );
-                          }
-
-                          if (replaceClazz.getImplementsList().getTextLength() == 0 &&
-                              queryClazz.getImplementsList().getTextLength() == 0 &&
-                              clazz.getImplementsList().getTextLength() != 0
-                              ) {
-                            replaceClazz.getImplementsList().addRange(
-                              clazz.getImplementsList().getFirstChild(),
-                              clazz.getImplementsList().getLastChild()
-                            );
-                          }
-
-                          if (replaceClazz.getTypeParameterList().getTextLength() == 0 &&
-                              queryClazz.getTypeParameterList().getTextLength() == 0 &&
-                              clazz.getTypeParameterList().getTextLength() != 0
-                              ) {
-                            // skip < and >
-                            replaceClazz.getTypeParameterList().replace(
-                              clazz.getTypeParameterList()
-                            );
-                          }
-                        }
-                      }
-
-                      replacement = handleSymbolReplacemenent(replacement, el, context);
-
-                      el.replace(replacement);
-                    }
-                  } else {
-                    el.delete();
-                  }
-
-                } catch(IncorrectOperationException ex) {
-                  ex.printStackTrace();
-                }
-
-                if (listContext) {
-                  for (SmartPsiElementPointer aMatchesPtrList : info.matchesPtrList) {
-                    try {
-                      PsiElement element = findRealSubstitutionElement(
-                        aMatchesPtrList.getElement()
-                      );
-                      element.delete();
-                      //PsiElement firstToDelete = element;
-                      //PsiElement lastToDelete = element;
-                      //final PsiElement prevSibling = element.getPrevSibling();
-                      //
-                      //if (prevSibling instanceof PsiWhiteSpace) {
-                      //  firstToDelete = prevSibling;
-                      //}
-                      //
-                      //final PsiElement nextSibling = element.getNextSibling();
-                      //if (nextSibling instanceof PsiWhiteSpace) {
-                      //  lastToDelete = nextSibling;
-                      //}
-
-                      //element.getParent().deleteChildRange(firstToDelete,lastToDelete);
-                    }
-                    catch (IncorrectOperationException ex) {
-                      ex.printStackTrace();
-                    }
-                  }
-                }
-
-                try {
-
-                  CodeStyleManager codeStyleManager = PsiManager.getInstance(project).getCodeStyleManager();
-                  final PsiFile containingFile = elementParent.getContainingFile();
-
-                  if (containingFile !=null) {
-                    if (options.isToShortenFQN()) {
-                      if (containingFile.getVirtualFile() != null) {
-                        PsiDocumentManager.getInstance(project).commitDocument(
-                          FileDocumentManager.getInstance().getDocument(containingFile.getVirtualFile())
-                        );
-                      }
-
-                      codeStyleManager.shortenClassReferences(
-                        containingFile,
-                        elementParent.getTextOffset(),
-                        elementParent.getTextOffset() + elementParent.getTextLength()
-                      );
-                    }
-
-                    if (options.isToReformatAccordingToStyle()) {
-                      if (containingFile.getVirtualFile() != null) {
-                        PsiDocumentManager.getInstance(project).commitDocument(
-                          FileDocumentManager.getInstance().getDocument(containingFile.getVirtualFile())
-                        );
-                      }
-
-                      codeStyleManager.reformatRange(
-                        containingFile,
-                        elementParent.getTextOffset(),
-                        elementParent.getTextOffset() + elementParent.getTextLength(),
-                        true
-                      );
-                    }
-                  }
-                } catch(IncorrectOperationException ex) {
-                  ex.printStackTrace();
-                }
+                doReplace(element, replacement, replacementInfo, elementParent);
               }
             }
           );
@@ -341,6 +144,210 @@ public class ReplacerImpl {
       "ssreplace",
       "test"
     );
+  }
+
+  private void doReplace(final PsiElement elementToReplace,
+                         final String replacementToMake,
+                         final ReplacementInfoImpl info,
+                         final PsiElement elementParent) {
+    boolean listContext = false;
+
+    try {
+      PsiElement el = findRealSubstitutionElement(elementToReplace);
+      listContext = isListContext(el);
+
+      final PsiElement[] statements = MatcherImplUtil.createTreeFromText(
+        replacementToMake,
+        false,
+        options.getMatchOptions().getFileType(),
+        project
+      );
+
+      if (context == null) context = new ReplacementContext(options, project);
+      context.replacementInfo = info;
+
+      if (listContext) {
+        if (statements.length > 1) {
+          elementParent.addRangeBefore(statements[0],statements[statements.length-1],elementToReplace);
+        } else if (statements.length==1) {
+          PsiElement replacement = getMatchExpr(statements[0]);
+
+          handleModifierList(el, replacement, context);
+          replacement = handleSymbolReplacemenent(replacement, el, context);
+
+          if (replacement instanceof PsiTryStatement) {
+            final List<PsiCodeBlock> unmatchedCatchBlocks = el.getUserData(MatcherImplUtil.UNMATCHED_CATCH_BLOCK_CONTENT_VAR_KEY);
+            final List<PsiParameter> unmatchedCatchParams = el.getUserData(MatcherImplUtil.UNMATCHED_CATCH_PARAM_CONTENT_VAR_KEY);
+            final PsiCatchSection[] catches = ((PsiTryStatement)replacement).getCatchSections();
+
+            if (unmatchedCatchBlocks!=null && unmatchedCatchParams!=null) {
+              for(int i = unmatchedCatchBlocks.size()-1; i >= 0; --i) {
+                final PsiParameter parameter = unmatchedCatchParams.get(i);
+                final PsiCatchSection catchSection = PsiManager.getInstance(project).getElementFactory().createCatchSection(
+                  (PsiClassType)parameter.getType(),
+                  parameter.getName(),
+                  null
+                );
+
+                catchSection.getCatchBlock().replace(
+                  unmatchedCatchBlocks.get(i)
+                );
+                replacement.addAfter(
+                  catchSection, catches[catches.length-1]
+                );
+              }
+            }
+          }
+
+          elementParent.addBefore(replacement,elementToReplace);
+        }
+      } else if (statements.length > 0) {
+        int i = 0;
+        while( true ) {
+          if (!(statements[i] instanceof PsiComment ||
+                statements[i] instanceof PsiWhiteSpace
+          )
+            ) {
+            break;
+          }
+          ++i;
+        }
+
+        if (i != 0) {
+          elementParent.addRangeBefore(statements[0],statements[i-1],el);
+        }
+        PsiElement replacement = getMatchExpr(statements[i]);
+
+        if (replacement instanceof PsiStatement &&
+            !(replacement.getLastChild() instanceof PsiJavaToken)
+           ) {
+          // assert w/o ;
+          elementParent.addRangeBefore(replacement.getFirstChild(),replacement.getLastChild().getPrevSibling(),el);
+          el.delete();
+        } else {
+          // preserve comments
+          handleModifierList(el, replacement, context);
+
+          if (replacement instanceof PsiClass) {
+            // modifier list
+            final PsiStatement[] searchStatements = context.getCodeBlock().getStatements();
+            if (searchStatements.length > 0 &&
+                searchStatements[0] instanceof PsiDeclarationStatement &&
+                ((PsiDeclarationStatement)searchStatements[0]).getDeclaredElements()[0] instanceof PsiClass
+               ) {
+              final PsiClass replaceClazz = (PsiClass)replacement;
+              final PsiClass queryClazz = (PsiClass)((PsiDeclarationStatement)searchStatements[0]).getDeclaredElements()[0];
+              final PsiClass clazz = (PsiClass)el;
+
+              if (replaceClazz.getExtendsList().getTextLength() == 0 &&
+                  queryClazz.getExtendsList().getTextLength() == 0 &&
+                  clazz.getExtendsList().getTextLength() != 0
+                  ) {
+                replaceClazz.getExtendsList().addRange(
+                  clazz.getExtendsList().getFirstChild(),clazz.getExtendsList().getLastChild()
+                );
+              }
+
+              if (replaceClazz.getImplementsList().getTextLength() == 0 &&
+                  queryClazz.getImplementsList().getTextLength() == 0 &&
+                  clazz.getImplementsList().getTextLength() != 0
+                  ) {
+                replaceClazz.getImplementsList().addRange(
+                  clazz.getImplementsList().getFirstChild(),
+                  clazz.getImplementsList().getLastChild()
+                );
+              }
+
+              if (replaceClazz.getTypeParameterList().getTextLength() == 0 &&
+                  queryClazz.getTypeParameterList().getTextLength() == 0 &&
+                  clazz.getTypeParameterList().getTextLength() != 0
+                  ) {
+                // skip < and >
+                replaceClazz.getTypeParameterList().replace(
+                  clazz.getTypeParameterList()
+                );
+              }
+            }
+          }
+
+          replacement = handleSymbolReplacemenent(replacement, el, context);
+
+          el.replace(replacement);
+        }
+      } else {
+        el.delete();
+      }
+
+    } catch(IncorrectOperationException ex) {
+      ex.printStackTrace();
+    }
+
+    if (listContext) {
+      for (SmartPsiElementPointer aMatchesPtrList : info.matchesPtrList) {
+        try {
+          PsiElement element = findRealSubstitutionElement(
+            aMatchesPtrList.getElement()
+          );
+          element.delete();
+          //PsiElement firstToDelete = element;
+          //PsiElement lastToDelete = element;
+          //final PsiElement prevSibling = element.getPrevSibling();
+          //
+          //if (prevSibling instanceof PsiWhiteSpace) {
+          //  firstToDelete = prevSibling;
+          //}
+          //
+          //final PsiElement nextSibling = element.getNextSibling();
+          //if (nextSibling instanceof PsiWhiteSpace) {
+          //  lastToDelete = nextSibling;
+          //}
+
+          //element.getParent().deleteChildRange(firstToDelete,lastToDelete);
+        }
+        catch (IncorrectOperationException ex) {
+          ex.printStackTrace();
+        }
+      }
+    }
+
+    try {
+
+      CodeStyleManager codeStyleManager = PsiManager.getInstance(project).getCodeStyleManager();
+      final PsiFile containingFile = elementParent.getContainingFile();
+
+      if (containingFile !=null) {
+        if (options.isToShortenFQN()) {
+          if (containingFile.getVirtualFile() != null) {
+            PsiDocumentManager.getInstance(project).commitDocument(
+              FileDocumentManager.getInstance().getDocument(containingFile.getVirtualFile())
+            );
+          }
+
+          codeStyleManager.shortenClassReferences(
+            containingFile,
+            elementParent.getTextOffset(),
+            elementParent.getTextOffset() + elementParent.getTextLength()
+          );
+        }
+
+        if (options.isToReformatAccordingToStyle()) {
+          if (containingFile.getVirtualFile() != null) {
+            PsiDocumentManager.getInstance(project).commitDocument(
+              FileDocumentManager.getInstance().getDocument(containingFile.getVirtualFile())
+            );
+          }
+
+          codeStyleManager.reformatRange(
+            containingFile,
+            elementParent.getTextOffset(),
+            elementParent.getTextOffset() + elementParent.getTextLength(),
+            true
+          );
+        }
+      }
+    } catch(IncorrectOperationException ex) {
+      ex.printStackTrace();
+    }
   }
 
   private static PsiElement handleSymbolReplacemenent(PsiElement replacement,
@@ -371,8 +378,7 @@ public class ReplacerImpl {
 
   private static void handleComments(final PsiElement el, final PsiElement replacement) throws IncorrectOperationException {
     if (el.getLastChild() instanceof PsiComment) {
-      PsiElement firstElementAfterStatementEnd;
-      firstElementAfterStatementEnd = el.getLastChild();
+      PsiElement firstElementAfterStatementEnd = el.getLastChild();
       for(PsiElement curElement=firstElementAfterStatementEnd.getPrevSibling();curElement!=null;curElement = curElement.getPrevSibling()) {
         if (!(curElement instanceof PsiWhiteSpace) && !(curElement instanceof PsiComment)) break;
         firstElementAfterStatementEnd = curElement;
@@ -560,7 +566,7 @@ public class ReplacerImpl {
 
         if (searchIsExpression!=replaceIsExpression) {
           throw new UnsupportedPatternException(
-            (searchIsExpression) ? SSRBundle.message("replacement.template.is.not.expression.error.message") :
+            searchIsExpression ? SSRBundle.message("replacement.template.is.not.expression.error.message") :
             SSRBundle.message("search.template.is.not.expression.error.message")
           );
         }
