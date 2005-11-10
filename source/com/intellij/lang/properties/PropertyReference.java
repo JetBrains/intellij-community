@@ -116,7 +116,7 @@ public class PropertyReference implements PsiPolyVariantReference {
     return variants.toArray(new Object[variants.size()]);
   }
 
-  private void addVariantsFromFile(final PropertiesFile propertiesFile, final Set<String> variants) {
+  private static void addVariantsFromFile(final PropertiesFile propertiesFile, final Set<String> variants) {
     if (propertiesFile == null) return;
     List<Property> properties = propertiesFile.getProperties();
     for (Property property : properties) {

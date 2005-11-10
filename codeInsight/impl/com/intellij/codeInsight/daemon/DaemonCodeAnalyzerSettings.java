@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionProfileManager;
+import com.intellij.codeInspection.ex.InspectionProfile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
@@ -49,7 +50,7 @@ public class DaemonCodeAnalyzerSettings implements NamedJDOMExternalizable, Clon
 
   private InspectionProfileImpl myInspectionProfile;
 
-  @NotNull public InspectionProfileImpl getInspectionProfile() {
+  @NotNull public InspectionProfile getInspectionProfile() {
     if (myInspectionProfile == null) {
       final InspectionProfileManager inspectionProfileManager = InspectionProfileManager.getInstance();
       final String[] avaliableProfileNames = inspectionProfileManager.getAvaliableProfileNames();
@@ -66,7 +67,7 @@ public class DaemonCodeAnalyzerSettings implements NamedJDOMExternalizable, Clon
     return myInspectionProfile;
   }
 
-  @NotNull public InspectionProfileImpl getInspectionProfile(PsiElement psiRoot) {
+  @NotNull public InspectionProfile getInspectionProfile(PsiElement psiRoot) {
     InspectionProfileImpl inspectionProfile = null;
     if (psiRoot != null) {
       final Pair<String, Boolean> inspectionProfilePair = HighlightingSettingsPerFile.getInstance(psiRoot.getProject())
@@ -123,7 +124,7 @@ public class DaemonCodeAnalyzerSettings implements NamedJDOMExternalizable, Clon
   public Object clone() {
     DaemonCodeAnalyzerSettings settings = new DaemonCodeAnalyzerSettings();
     InspectionProfileImpl inspectionProfile = new InspectionProfileImpl(PROFILE_COPY_NAME, InspectionProfileManager.getInstance());
-    inspectionProfile.copyFrom(getInspectionProfile());
+    inspectionProfile.copyFrom((InspectionProfileImpl)getInspectionProfile());
     settings.myInspectionProfile = inspectionProfile;
     settings.AUTOREPARSE_DELAY = AUTOREPARSE_DELAY;
     settings.SHOW_ADD_IMPORT_HINTS = SHOW_ADD_IMPORT_HINTS;

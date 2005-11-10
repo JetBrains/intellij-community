@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.*;
 import com.intellij.codeInsight.daemon.impl.EditInspectionToolsSettingsAction;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -10,7 +11,6 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.codeInsight.template.*;
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
 import com.intellij.jsp.impl.JspElementDescriptor;
@@ -166,12 +166,13 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
         if (tag instanceof HtmlTag && tag.getDescriptor() instanceof AnyXmlElementDescriptor) {
           final String name = tag.getName();
 
+          InspectionProfileImpl inspectionProfile = (InspectionProfileImpl)mySettings.getInspectionProfile(tag);
           reportOneTagProblem(
             tag,
             name,
             XmlErrorMessages.message("unknown.html.tag", name),
             null,
-            mySettings.getInspectionProfile(tag).getAdditionalHtmlTags(),
+            inspectionProfile.getAdditionalHtmlTags(),
             HighlightInfoType.CUSTOM_HTML_TAG,
             HighlightDisplayKey.CUSTOM_HTML_TAG
           );
@@ -395,7 +396,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
               attrName,
               localizedMessage,
               insertRequiredAttributeIntention,
-              mySettings.getInspectionProfile(tag).getAdditionalNotRequiredHtmlAttributes(),
+              ((InspectionProfileImpl)mySettings.getInspectionProfile(tag)).getAdditionalNotRequiredHtmlAttributes(),
               HighlightInfoType.REQUIRED_HTML_ATTRIBUTE,
               HighlightDisplayKey.REQUIRED_HTML_ATTRIBUTE
             );
@@ -577,7 +578,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     IntentionAction[] quickFixes;
 
     if (tag instanceof HtmlTag) {
-      final InspectionProfileImpl inspectionProfile = mySettings.getInspectionProfile(tag);
+      final InspectionProfileImpl inspectionProfile = (InspectionProfileImpl)mySettings.getInspectionProfile(tag);
       if(isAdditionallyDeclared(inspectionProfile.getAdditionalHtmlAttributes(),localName)) return;
       if (!inspectionProfile.isToolEnabled(HighlightDisplayKey.CUSTOM_HTML_ATTRIBUTE)) return;
       tagProblemInfoType = HighlightInfoType.CUSTOM_HTML_ATTRIBUTE;

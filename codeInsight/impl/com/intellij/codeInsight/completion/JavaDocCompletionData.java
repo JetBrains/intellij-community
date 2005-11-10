@@ -4,6 +4,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
@@ -121,8 +122,8 @@ public class JavaDocCompletionData extends CompletionData {
         ret.add(info.getName());
       }
 
-      final StringTokenizer tokenizer = new StringTokenizer(
-        DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(position).getAdditionalJavadocTags(), ", ");
+      InspectionProfileImpl inspectionProfile = (InspectionProfileImpl)DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(position);
+      final StringTokenizer tokenizer = new StringTokenizer(inspectionProfile.getAdditionalJavadocTags(), ", ");
       while (tokenizer.hasMoreTokens()) {
         ret.add(tokenizer.nextToken());
       }

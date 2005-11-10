@@ -16,15 +16,10 @@
 package com.intellij.ui;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
+import javax.swing.event.*;
 import javax.swing.table.TableModel;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
-import java.awt.event.ContainerEvent;
-import java.awt.event.ContainerListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.beans.PropertyChangeEvent;
@@ -74,14 +69,27 @@ public class UserActivityWatcher extends ComponentTreeWatcher {
   private void fireUIChanged() {
     myIsModified = true;
     UserActivityListener[] listeners = myListeners.toArray(new UserActivityListener[myListeners.size()]);
-    for (int i = 0; i < listeners.length; i++) {
-      UserActivityListener listener = listeners[i];
+    for (UserActivityListener listener : listeners) {
       listener.stateChanged();
     }
   }
 
   private final ItemListener myItemListener = new ItemListener() {
     public void itemStateChanged(ItemEvent e) {
+      fireUIChanged();
+    }
+  };
+
+  private final ListDataListener myListDataListener = new ListDataListener() {
+    public void intervalAdded(ListDataEvent e) {
+      fireUIChanged();
+    }
+
+    public void intervalRemoved(ListDataEvent e) {
+      fireUIChanged();
+    }
+
+    public void contentsChanged(ListDataEvent e) {
       fireUIChanged();
     }
   };
@@ -102,7 +110,9 @@ public class UserActivityWatcher extends ComponentTreeWatcher {
     else if (parentComponent instanceof ItemSelectable) {
       ((ItemSelectable)parentComponent).addItemListener(myItemListener);
     }
-
+    else if (parentComponent instanceof JList) {
+      ((JList)parentComponent).getModel().addListDataListener(myListDataListener);
+    }
     if (parentComponent instanceof JComboBox) {
       ComboBoxEditor editor = ((JComboBox)parentComponent).getEditor();
       if (editor != null) {

@@ -20,7 +20,6 @@ import org.jdom.Element;
 import sun.reflect.Reflection;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class JDOMExternalizableStringList extends ArrayList<String> implements JDOMExternalizable {
@@ -36,10 +35,9 @@ public class JDOMExternalizableStringList extends ArrayList<String> implements J
   public void readExternal(Element element) throws InvalidDataException {
     clear();
 
-    for (Iterator i = element.getChildren().iterator(); i.hasNext();) {
-      Element e = (Element)i.next();
-      if (ATTR_LIST.equals(e.getName())) {
-        Element listElement = e;
+    for (final Object o : element.getChildren()) {
+      Element listElement = (Element)o;
+      if (ATTR_LIST.equals(listElement.getName())) {
         String sizeString = listElement.getAttributeValue(ATTR_LISTSIZE);
         int listSize;
         try {
@@ -49,16 +47,15 @@ public class JDOMExternalizableStringList extends ArrayList<String> implements J
           throw new InvalidDataException("Size " + sizeString + " found. Must be integer!");
         }
         for (int j = 0; j < listSize; j++) {
-          this.add(null);
+          add(null);
         }
         final ClassLoader classLoader = Reflection.getCallerClass(2).getClassLoader();
-        for (Iterator listIterator = listElement.getChildren().iterator(); listIterator.hasNext();) {
-          Element listItemElement = (Element)listIterator.next();
+        for (final Object o1 : listElement.getChildren()) {
+          Element listItemElement = (Element)o1;
           if (!ATTR_ITEM.equals(listItemElement.getName())) {
             throw new InvalidDataException(
               "Unable to read list item. Unknown element found: " + listItemElement.getName());
           }
-          String listItem;
           String itemIndexString = listItemElement.getAttributeValue(ATTR_INDEX);
           String itemClassString = listItemElement.getAttributeValue(ATTR_CLASS);
           Class itemClass;
@@ -70,11 +67,11 @@ public class JDOMExternalizableStringList extends ArrayList<String> implements J
               "Unable to read list item: unable to load class: " + itemClassString + " \n" + ex.getMessage());
           }
 
-          listItem = listItemElement.getAttributeValue(ATTR_VALUE);
+          String listItem = listItemElement.getAttributeValue(ATTR_VALUE);
 
           LOG.assertTrue(String.class.equals(itemClass));
 
-          this.set(Integer.parseInt(itemIndexString), listItem);
+          set(Integer.parseInt(itemIndexString), listItem);
         }
       }
     }
@@ -86,7 +83,7 @@ public class JDOMExternalizableStringList extends ArrayList<String> implements J
     listElement.setAttribute(ATTR_LISTSIZE, Integer.toString(listSize));
     element.addContent(listElement);
     for (int i = 0; i < listSize; i++) {
-      String listItem = this.get(i);
+      String listItem = get(i);
       if (listItem != null) {
         Element itemElement = new Element(ATTR_ITEM);
         itemElement.setAttribute(ATTR_INDEX, Integer.toString(i));

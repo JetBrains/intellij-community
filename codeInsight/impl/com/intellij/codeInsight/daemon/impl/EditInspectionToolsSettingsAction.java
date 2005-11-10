@@ -52,7 +52,7 @@ public class EditInspectionToolsSettingsAction implements IntentionAction {
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    InspectionProfileImpl inspectionProfile = DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(file);
+    InspectionProfileImpl inspectionProfile = (InspectionProfileImpl)DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(file);
     editToolSettings(project, inspectionProfile, true);
   }
 

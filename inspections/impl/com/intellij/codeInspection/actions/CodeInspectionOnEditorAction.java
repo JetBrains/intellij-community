@@ -4,7 +4,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.InspectionProfile;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
@@ -32,7 +32,7 @@ public class CodeInspectionOnEditorAction extends AnAction {
     final InspectionManagerEx inspectionManagerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
     final AnalysisScope scope = new AnalysisScope(psiFile);
     inspectionManagerEx.setCurrentScope(scope);
-    final InspectionProfileImpl inspectionProfile = DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(psiFile);
+    final InspectionProfile inspectionProfile = DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(psiFile);
     inspectionManagerEx.setExternalProfile(inspectionProfile);
     inspectionManagerEx.doInspections(scope);
     ApplicationManager.getApplication().invokeLater(new Runnable() {

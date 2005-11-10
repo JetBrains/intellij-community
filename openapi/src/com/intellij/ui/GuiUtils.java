@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -35,7 +36,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.net.MalformedURLException;
-import java.util.Arrays;
 
 public class GuiUtils {
 
@@ -257,7 +257,7 @@ public class GuiUtils {
   }
 
   public static void enableChildren(Component container, boolean enabled, JComponent[] excludeComponents) {
-    if (excludeComponents != null && Arrays.asList(excludeComponents).contains(container)) return;
+    if (excludeComponents != null && ArrayUtil.find(excludeComponents, container) != -1) return;
     enableComponent(container, enabled);
     if (container instanceof Container) {
       final Component[] components = ((Container)container).getComponents();

@@ -11,7 +11,7 @@ import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.InspectionProfile;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
@@ -174,7 +174,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
 
   private void appendDescriptors(ProblemDescriptor[] problemDescriptors, LocalInspectionTool tool) {
     if (problemDescriptors == null) return;
-    InspectionProfileImpl inspectionProfile = DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(myFile);
+    InspectionProfile inspectionProfile = DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(myFile);
     boolean isError = inspectionProfile.getErrorLevel(HighlightDisplayKey.find(tool.getShortName())) == HighlightDisplayLevel.ERROR;
     for (ProblemDescriptor problemDescriptor : problemDescriptors) {
       ProgressManager.getInstance().checkCanceled();
@@ -214,7 +214,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       final HighlightInfoType level = myLevels.get(i);
 
       HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
-      InspectionProfileImpl inspectionProfile = DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(myFile);
+      InspectionProfile inspectionProfile = DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(myFile);
       if (!inspectionProfile.isToolEnabled(key)) continue;
       final boolean isError = inspectionProfile.getErrorLevel(key) == HighlightDisplayLevel.ERROR;
 
