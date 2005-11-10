@@ -90,7 +90,11 @@ public class BaseDomElementNode extends AbstractDomElementNode {
   protected boolean doUpdate() {
     setUniformIcon(getNodeIcon());
     clearColoredText();
-    addColoredFragment(getNodeName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    if (myDomElement.getXmlTag() != null) {
+      addColoredFragment(getNodeName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    } else {
+      addColoredFragment(getNodeName(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+    }
 
     return super.doUpdate();
   }
