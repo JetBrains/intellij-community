@@ -9,16 +9,16 @@ import com.intellij.psi.PsiClass;
  * @author peter
  */
 public interface Converter<T> {
-  T fromString(String s, final ConvertContext context) throws ConvertFormatException;
+  T fromString(String s, final ConvertContext context);
   String toString(T t, final ConvertContext context);
 
   Converter<Integer> INTEGER_CONVERTER = new Converter<Integer>() {
-    public Integer fromString(final String s, final ConvertContext context) throws ConvertFormatException {
+    public Integer fromString(final String s, final ConvertContext context) {
       try {
         return Integer.decode(s);
       }
-      catch (NumberFormatException e) {
-        throw new ConvertFormatException(s, Integer.class);
+      catch (Exception e) {
+        return null;
       }
     }
 
@@ -28,14 +28,14 @@ public interface Converter<T> {
   };
 
   Converter<Boolean> BOOLEAN_CONVERTER = new Converter<Boolean>() {
-    public Boolean fromString(final String s, final ConvertContext context) throws ConvertFormatException {
+    public Boolean fromString(final String s, final ConvertContext context) {
       if ("true".equalsIgnoreCase(s)) {
         return Boolean.TRUE;
       }
       if ("false".equalsIgnoreCase(s)) {
         return Boolean.FALSE;
       }
-      throw new ConvertFormatException(s, Boolean.class);
+      return null;
     }
 
     public String toString(final Boolean t, final ConvertContext context) {
@@ -44,7 +44,7 @@ public interface Converter<T> {
   };
 
   Converter<String> EMPTY_CONVERTER = new Converter<String>() {
-    public String fromString(final String s, final ConvertContext context) throws ConvertFormatException {
+    public String fromString(final String s, final ConvertContext context) {
       return s;
     }
 
@@ -54,7 +54,7 @@ public interface Converter<T> {
   };
 
   Converter<PsiClass> PSI_CLASS_CONVERTER = new Converter<PsiClass>() {
-    public PsiClass fromString(final String s, final ConvertContext context) throws ConvertFormatException {
+    public PsiClass fromString(final String s, final ConvertContext context) {
       return context.findClass(s);
     }
 

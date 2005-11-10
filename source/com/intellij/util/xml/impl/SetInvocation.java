@@ -33,8 +33,7 @@ public abstract class SetInvocation implements Invocation {
     try {
       final String oldValue = getValue(tag);
       if (args[0] == null) {
-        clearValue(tag);
-        manager.fireEvent(createEvent(handler, oldValue, null));
+        clearValue(oldValue, handler);
       } else {
         final String newValue = myConverter.toString(args[0], new ConvertContextImpl(handler));
         setValue(tag, newValue);
@@ -53,5 +52,6 @@ public abstract class SetInvocation implements Invocation {
 
   protected abstract void setValue(XmlTag tag, String value) throws IncorrectOperationException;
 
-  protected abstract void clearValue(XmlTag tag) throws IncorrectOperationException;
+  protected abstract void clearValue(final String oldValue, DomInvocationHandler handler) throws IncorrectOperationException, IllegalAccessException,
+                                                                          InstantiationException;
 }
