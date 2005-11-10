@@ -31,7 +31,6 @@ import com.intellij.refactoring.rename.naming.FormsRenamer;
 import com.intellij.refactoring.rename.naming.InheritorRenamer;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.*;
-import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
@@ -389,8 +388,8 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   }
 
 
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages, FindUsagesCommand refreshCommand) {
-    return new RenameViewDescriptor(myPrimaryElement, myAllRenames, mySearchInComments, mySearchTextOccurences, usages, refreshCommand);
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
+    return new RenameViewDescriptor(myPrimaryElement, myAllRenames, mySearchInComments, mySearchTextOccurences, usages);
   }
 
   @NotNull

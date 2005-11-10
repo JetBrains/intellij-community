@@ -6,11 +6,10 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
-import com.intellij.usageView.UsageViewBundle;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.THashSet;
 
@@ -24,7 +23,6 @@ class RenameViewDescriptor implements UsageViewDescriptor{
   private String myProcessedElementsHeader;
   private String myCodeReferencesText;
   private final String myHelpID;
-  private FindUsagesCommand myRefreshCommand;
   private PsiElement[] myElements;
 
   public RenameViewDescriptor(
@@ -32,15 +30,14 @@ class RenameViewDescriptor implements UsageViewDescriptor{
     LinkedHashMap<PsiElement, String> renamesMap,
     boolean isSearchInComments,
     boolean isSearchInNonJavaFiles,
-    UsageInfo[] usages,
-    FindUsagesCommand refreshCommand) {
+    UsageInfo[] usages
+  ) {
 
     myElements = renamesMap.keySet().toArray(new PsiElement[0]);
 
     mySearchInComments = isSearchInComments;
     mySearchInNonJavaFiles = isSearchInNonJavaFiles;
     myUsages = usages;
-    myRefreshCommand = refreshCommand;
 
     Set<String> processedElementsHeaders = new THashSet<String>();
     Set<String> codeReferences = new THashSet<String>();
@@ -74,14 +71,6 @@ class RenameViewDescriptor implements UsageViewDescriptor{
 
   public UsageInfo[] getUsages() {
     return myUsages;
-  }
-
-  public void refresh(PsiElement[] elements) {
-    myElements = elements;
-
-    if (myRefreshCommand != null) {
-      myUsages = myRefreshCommand.execute(elements);
-    }
   }
 
   public String getProcessedElementsHeader() {
@@ -123,10 +112,6 @@ class RenameViewDescriptor implements UsageViewDescriptor{
 
   public String getHelpID() {
     return myHelpID;
-  }
-
-  public boolean canRefresh() {
-    return myRefreshCommand != null;
   }
 
   public boolean willUsageBeChanged(UsageInfo usageInfo) {

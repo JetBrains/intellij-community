@@ -60,10 +60,6 @@ public interface UsageView extends Disposable {
   void addButtonToLowerPane(Runnable runnable, String text, char mnemonic);
   void addButtonToLowerPane(Runnable runnable, String text);
 
-  /**
-   * @deprecated please specify mnemonic by prefixing the mnenonic character with an ampersand (&& for Mac-specific ampersands)
-   */
-  void addPerformOperationAction(Runnable processRunnable, String commandName, String cannotMakeString, String shortDescription, char mnemonic);
   void addPerformOperationAction(Runnable processRunnable, String commandName, String cannotMakeString, String shortDescription);
 
   UsageViewPresentation getPresentation();

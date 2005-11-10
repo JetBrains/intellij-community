@@ -11,9 +11,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.ConflictsUtil;
-import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
@@ -38,8 +36,8 @@ class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
     myInlineThisOnly = isInlineThisOnly;
   }
 
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages, FindUsagesCommand refreshCommand) {
-    return new InlineViewDescriptor(myField, usages, refreshCommand);
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
+    return new InlineViewDescriptor(myField, usages);
   }
 
   protected UsageInfo[] findUsages() {

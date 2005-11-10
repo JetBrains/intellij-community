@@ -34,12 +34,6 @@ public interface UsageViewDescriptor {
    */
   UsageInfo[] getUsages();
 
-  /**
-   * refreshes the list of usages (usage search with the same parameters is performed)
-   * @param elements - a non-null array of elements to be refreshed
-   */
-  void refresh(PsiElement[] elements);
-
   String getProcessedElementsHeader();
 
   /**
@@ -60,8 +54,6 @@ public interface UsageViewDescriptor {
   boolean cancelAvailable();
 
   boolean isCancelInCommonGroup();
-
-  boolean canRefresh();
 
   boolean willUsageBeChanged(UsageInfo usageInfo);
 

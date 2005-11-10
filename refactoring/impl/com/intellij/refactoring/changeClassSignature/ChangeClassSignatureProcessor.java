@@ -9,7 +9,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.changeSignature.ChangeSignatureUtil;
-import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
@@ -44,8 +43,8 @@ public class ChangeClassSignatureProcessor extends BaseRefactoringProcessor {
     return ChangeClassSignatureDialog.REFACTORING_NAME;
   }
 
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages, FindUsagesCommand refreshCommand) {
-    return new ChangeClassSigntaureViewDescriptor(myClass, usages, refreshCommand);
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
+    return new ChangeClassSigntaureViewDescriptor(myClass, usages);
   }
 
   protected UsageInfo[] findUsages() {

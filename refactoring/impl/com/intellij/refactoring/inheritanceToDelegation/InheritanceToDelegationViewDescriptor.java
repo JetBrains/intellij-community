@@ -12,20 +12,13 @@ import com.intellij.usageView.UsageInfo;
 public class InheritanceToDelegationViewDescriptor extends UsageViewDescriptorAdapter {
   private PsiClass myClass;
 
-  public InheritanceToDelegationViewDescriptor(PsiClass aClass, UsageInfo[] usages, FindUsagesCommand refreshCommand) {
-    super(usages, refreshCommand);
+  public InheritanceToDelegationViewDescriptor(PsiClass aClass, UsageInfo[] usages) {
+    super(usages);
     myClass = aClass;
-  }
-
-  public boolean canRefresh() {
-    return false;
   }
 
   public PsiElement[] getElements() {
     return new PsiElement[] { myClass };
-  }
-
-  public void refresh(PsiElement[] elements) {
   }
 
   public String getProcessedElementsHeader() {

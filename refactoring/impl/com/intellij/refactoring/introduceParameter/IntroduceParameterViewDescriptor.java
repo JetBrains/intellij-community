@@ -8,22 +8,19 @@
  */
 package com.intellij.refactoring.introduceParameter;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.usageView.FindUsagesCommand;
+import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
 import com.intellij.usageView.UsageInfo;
 
 class IntroduceParameterViewDescriptor extends UsageViewDescriptorAdapter {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.makeMethodStatic.MakeMethodStaticViewDescriptor");
 
   private PsiMethod myMethodToSearchFor;
 
   public IntroduceParameterViewDescriptor(PsiMethod methodToSearchFor,
-                                          UsageInfo[] usages, FindUsagesCommand refreshCommand) {
-    super(usages, refreshCommand);
+                                          UsageInfo[] usages) {
+    super(usages);
     myMethodToSearchFor = methodToSearchFor;
 
   }
@@ -35,21 +32,6 @@ class IntroduceParameterViewDescriptor extends UsageViewDescriptorAdapter {
     return new PsiElement[]{myMethodToSearchFor};
   }
 
-
-  public void refresh(PsiElement[] elements) {
-    if(elements.length == 1 && elements[0] instanceof PsiMethod ) {
-      myMethodToSearchFor = (PsiMethod) elements[0];
-    }
-    else {
-      // should not happen
-      LOG.assertTrue(false);
-    }
-    refreshUsages(elements);
-  }
-
-  public boolean canRefresh() {
-    return false;
-  }
 
   public String getProcessedElementsHeader() {
     return RefactoringBundle.message("introduce.parameter.elements.header");

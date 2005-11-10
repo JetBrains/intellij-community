@@ -22,7 +22,6 @@ import com.intellij.refactoring.safeDelete.usageInfo.*;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
@@ -52,8 +51,8 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     mySearchNonJava = isSearchNonJava;
   }
 
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages, FindUsagesCommand refreshCommand) {
-    return new SafeDeleteUsageViewDescriptor(usages, refreshCommand, myElements, this);
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
+    return new SafeDeleteUsageViewDescriptor(usages, myElements);
   }
 
   void setElements(PsiElement[] elements) {
@@ -228,7 +227,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
       presentation
     );
     usageView.addPerformOperationAction(new RerunSafeDelete(myProject, myElements, usageView),
-                                        RefactoringBundle.message("retry.command"), null, RefactoringBundle.message("rerun.safe.delete"), 'r');
+                                        RefactoringBundle.message("retry.command"), null, RefactoringBundle.message("rerun.safe.delete"));
   }
 
   public PsiElement[] getElements() {

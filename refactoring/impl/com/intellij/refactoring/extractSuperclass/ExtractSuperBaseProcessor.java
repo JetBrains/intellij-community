@@ -11,7 +11,6 @@ import com.intellij.refactoring.turnRefsToSuper.TurnRefsToSuperProcessorBase;
 import com.intellij.refactoring.util.JavaDocPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
@@ -43,8 +42,8 @@ public abstract class ExtractSuperBaseProcessor extends TurnRefsToSuperProcessor
     myJavaDocPolicy = javaDocPolicy;
   }
 
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages, FindUsagesCommand refreshCommand) {
-    return new ExtractSuperClassViewDescriptor(usages, myTargetDirectory, myClass, myMemberInfos, refreshCommand);
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
+    return new ExtractSuperClassViewDescriptor(usages, myTargetDirectory, myClass, myMemberInfos);
   }
 
   protected boolean doesAnyExtractedInterfaceExtends(PsiClass aClass) {

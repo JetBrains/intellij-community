@@ -4,24 +4,21 @@
  */
 package com.intellij.refactoring.move.moveInner;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.usageView.*;
-import com.intellij.usageView.UsageViewBundle;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.usageView.UsageInfo;
+import com.intellij.usageView.UsageViewBundle;
+import com.intellij.usageView.UsageViewDescriptor;
 
 class MoveInnerViewDescriptor implements UsageViewDescriptor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.move.moveInner.MoveInnerViewDescriptor");
 
   private PsiClass myInnerClass;
   private UsageInfo[] myUsages;
-  private FindUsagesCommand myRefreshCommand;
 
-  public MoveInnerViewDescriptor(PsiClass innerClass, UsageInfo[] usages, FindUsagesCommand refreshCommand) {
+  public MoveInnerViewDescriptor(PsiClass innerClass, UsageInfo[] usages) {
     myInnerClass = innerClass;
     myUsages = usages;
-    myRefreshCommand = refreshCommand;
   }
 
   public PsiElement[] getElements() {
@@ -30,20 +27,6 @@ class MoveInnerViewDescriptor implements UsageViewDescriptor {
 
   public UsageInfo[] getUsages() {
     return myUsages;
-  }
-
-  public void refresh(PsiElement[] elements) {
-    // TODO
-    if (elements.length == 1 && elements[0] instanceof PsiClass) {
-      myInnerClass = (PsiClass)elements[0];
-    }
-    else {
-      // should not happen
-      LOG.assertTrue(false);
-    }
-    if (myRefreshCommand != null) {
-      myUsages = myRefreshCommand.execute(elements);
-    }
   }
 
   public String getProcessedElementsHeader() {
@@ -84,10 +67,6 @@ class MoveInnerViewDescriptor implements UsageViewDescriptor {
 
   public String getHelpID() {
     return "find.refactoringPreview";
-  }
-
-  public boolean canRefresh() {
-    return myRefreshCommand != null;
   }
 
   public boolean willUsageBeChanged(UsageInfo usageInfo) {

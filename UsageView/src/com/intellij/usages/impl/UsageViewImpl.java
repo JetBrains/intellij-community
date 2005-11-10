@@ -18,7 +18,6 @@ package com.intellij.usages.impl;
 import com.intellij.ide.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
@@ -79,7 +78,6 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   private Factory<UsageSearcher> myUsageSearcherFactory;
   private Project myProject;
 
-  private TreeExpander myTreeExpander;
   private boolean mySearchInProgress = true;
   private ExporterToTextFile myTextFileExporter;
   private Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
@@ -252,7 +250,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   }
 
   private AnAction[] createActions() {
-    myTreeExpander = new TreeExpander() {
+    final TreeExpander treeExpander = new TreeExpander() {
       public void expandAll() {
         UsageViewImpl.this.expandAll();
       }
@@ -276,10 +274,10 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
     final JComponent component = getComponent();
 
-    final AnAction collapseAllAction = actionsManager.createCollapseAllAction(myTreeExpander);
+    final AnAction collapseAllAction = actionsManager.createCollapseAllAction(treeExpander);
     collapseAllAction.registerCustomShortcutSet(collapseAllAction.getShortcutSet(), component);
 
-    final AnAction expandAllAction = actionsManager.createExpandAllAction(myTreeExpander);
+    final AnAction expandAllAction = actionsManager.createExpandAllAction(treeExpander);
     expandAllAction.registerCustomShortcutSet(expandAllAction.getShortcutSet(), component);
 
     scheduleDisposeOnClose(new Disposable() {
@@ -327,7 +325,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     Collections.sort(allUsages, new Comparator<Usage>() {
       public int compare(final Usage o1, final Usage o2) {
         if (o1 instanceof Comparable && o2 instanceof Comparable) {
-          return ((Comparable) o1).compareTo((Comparable) o2);
+          return ((Comparable<Usage>) o1).compareTo(o2);
         }
         return 0;
       }
@@ -384,8 +382,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       }
     }
     myTree.getSelectionModel().clearSelection();
-    for (Iterator<UsageState> it = states.iterator(); it.hasNext();) {
-      final UsageState usageState = it.next();
+    for (final UsageState usageState : states) {
       usageState.restore();
     }
   }
@@ -457,8 +454,6 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   }
 
   private void doReRun() {
-    final Application application = ApplicationManager.getApplication();
-
     final Runnable process = new Runnable() {
       public void run() {
         setSearchInProgress(true);
@@ -526,8 +521,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     synchronized (myUsagesToFlush) {
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
-          for (int i = 0; i < myUsagesToFlush.size(); i++) {
-            final Usage usage = myUsagesToFlush.get(i);
+          for (final Usage usage : myUsagesToFlush) {
             appendUsage(usage);
           }
         }
@@ -565,8 +559,8 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   }
 
   public void includeUsages(Usage[] usages) {
-    for (int i = 0; i < usages.length; i++) {
-      final UsageNode node = myUsageNodes.get(usages[i]);
+    for (Usage usage : usages) {
+      final UsageNode node = myUsageNodes.get(usage);
       if (node != null) {
         node.setUsageExcluded(false);
       }
@@ -575,8 +569,8 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   }
 
   public void excludeUsages(Usage[] usages) {
-    for (int i = 0; i < usages.length; i++) {
-      final UsageNode node = myUsageNodes.get(usages[i]);
+    for (Usage usage : usages) {
+      final UsageNode node = myUsageNodes.get(usage);
       if (node != null) {
         node.setUsageExcluded(true);
       }
@@ -589,8 +583,8 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
     List<TreePath> pathes = new LinkedList<TreePath>();
 
-    for (int i = 0; i < usages.length; i++) {
-      final UsageNode node = myUsageNodes.get(usages[i]);
+    for (Usage usage : usages) {
+      final UsageNode node = myUsageNodes.get(usage);
 
       if (node != null) {
         pathes.add(new TreePath(node.getPath()));
@@ -697,16 +691,6 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   public void addPerformOperationAction(final Runnable processRunnable,
                                         final String commandName,
                                         final String cannotMakeString,
-                                        String shortDescription,
-                                        char mnemonic) {
-
-    addButtonToLowerPane(new MyPerformOperationRunnable(cannotMakeString, processRunnable, commandName),
-                         shortDescription, mnemonic);
-  }
-
-  public void addPerformOperationAction(final Runnable processRunnable,
-                                        final String commandName,
-                                        final String cannotMakeString,
                                         String shortDescription) {
 
     addButtonToLowerPane(new MyPerformOperationRunnable(cannotMakeString, processRunnable, commandName),
@@ -714,8 +698,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   }
 
   private boolean allTargetsAreValid() {
-    for (int i = 0; i < myTargets.length; i++) {
-      UsageTarget target = myTargets[i];
+    for (UsageTarget target : myTargets) {
       if (!target.isValid()) {
         return false;
       }
@@ -743,8 +726,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   private Set<Usage> getReadOnlyUsages() {
     final Set<Usage> result = new HashSet<Usage>();
     final Set<Map.Entry<Usage,UsageNode>> usages = myUsageNodes.entrySet();
-    for (Iterator<Map.Entry<Usage,UsageNode>> i = usages.iterator(); i.hasNext();) {
-      Map.Entry<Usage,UsageNode> entry = i.next();
+    for (Map.Entry<Usage, UsageNode> entry : usages) {
       Usage usage = entry.getKey();
       UsageNode node = entry.getValue();
       if (node != null && !node.isExcluded() && usage.isReadOnly()) {
@@ -757,8 +739,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   private Set<VirtualFile> getReadOnlyUsagesFiles() {
     Set<Usage> usages = getReadOnlyUsages();
     Set<VirtualFile> result = new HashSet<VirtualFile>();
-    for (Iterator<Usage> i = usages.iterator(); i.hasNext();) {
-      Usage usage = i.next();
+    for (Usage usage : usages) {
       if (usage instanceof UsageInFile) {
         UsageInFile usageInFile = (UsageInFile)usage;
         result.add(usageInFile.getFile());
@@ -775,8 +756,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   public Set<Usage> getExcludedUsages() {
     Set<Usage> result = new HashSet<Usage>();
     Collection<UsageNode> usageNodes = myUsageNodes.values();
-    for (Iterator<UsageNode> i = usageNodes.iterator(); i.hasNext();) {
-      final UsageNode node = i.next();
+    for (final UsageNode node : usageNodes) {
       if (node == null) {
         continue;
       }
@@ -802,8 +782,8 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     if (leadSelectionPath == null || leadSelectionPath.length == 0) return null;
 
     final List<Node> result = new ArrayList<Node>();
-    for (int i = 0; i < leadSelectionPath.length; i++) {
-      final Object lastPathComponent = leadSelectionPath[i].getLastPathComponent();
+    for (TreePath comp : leadSelectionPath) {
+      final Object lastPathComponent = comp.getLastPathComponent();
       if (lastPathComponent instanceof Node) {
         final Node node = (Node)lastPathComponent;
         result.add(node);
@@ -852,8 +832,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     if (selectionPaths == null) return null;
 
     Set<UsageTarget> targets = new HashSet<UsageTarget>();
-    for (int i = 0; i < selectionPaths.length; i++) {
-      TreePath selectionPath = selectionPaths[i];
+    for (TreePath selectionPath : selectionPaths) {
       Object lastPathComponent = selectionPath.getLastPathComponent();
       if (lastPathComponent instanceof UsageTargetNode) {
         UsageTargetNode usageTargetNode = (UsageTargetNode)lastPathComponent;
@@ -885,8 +864,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       return null;
     }
     final ArrayList<Navigatable> result = new ArrayList<Navigatable>();
-    for (int i = 0; i < nodes.length; i++) {
-      final Node node = nodes[i];
+    for (final Node node : nodes) {
       if (!node.isDataValid()) {
         continue;
       }

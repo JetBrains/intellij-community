@@ -13,9 +13,7 @@ import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.MoveInstanceMembersUtil;
 import com.intellij.refactoring.move.moveMembers.MoveMembersProcessor;
-import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.*;
-import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
@@ -62,8 +60,8 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
     myNewVisibility = newVisibility;
   }
 
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages, FindUsagesCommand refreshCommand) {
-    return new MoveInstanceMethodViewDescriptor(usages, refreshCommand, myMethod, myTargetVariable, myTargetClass);
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
+    return new MoveInstanceMethodViewDescriptor(usages, myMethod, myTargetVariable, myTargetClass);
   }
 
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {

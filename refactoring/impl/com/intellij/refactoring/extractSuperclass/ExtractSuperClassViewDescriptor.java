@@ -3,10 +3,9 @@ package com.intellij.refactoring.extractSuperclass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
-import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
 
 /**
@@ -18,9 +17,9 @@ public class ExtractSuperClassViewDescriptor extends UsageViewDescriptorAdapter 
   public ExtractSuperClassViewDescriptor(UsageInfo[] usages,
                                          PsiDirectory targetDirectory,
                                          PsiClass subclass,
-                                         MemberInfo[] infos,
-                                         FindUsagesCommand refreshCommand) {
-    super(usages, refreshCommand);
+                                         MemberInfo[] infos
+  ) {
+    super(usages);
     myElements = new PsiElement[infos.length + 2];
     myElements[0] = subclass;
     myElements[1] = targetDirectory;
@@ -32,13 +31,6 @@ public class ExtractSuperClassViewDescriptor extends UsageViewDescriptorAdapter 
 
   public PsiElement[] getElements() {
     return myElements;
-  }
-
-  public void refresh(PsiElement[] elements) {
-    System.arraycopy(elements, 0, myElements, 0, elements.length);
-    if (myRefreshCommand != null) {
-      myUsages = myRefreshCommand.execute(elements);
-    }
   }
 
   public String getProcessedElementsHeader() {

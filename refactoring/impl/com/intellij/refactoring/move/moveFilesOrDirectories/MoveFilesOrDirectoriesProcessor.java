@@ -12,7 +12,6 @@ import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.move.MoveCallback;
-import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
@@ -48,13 +47,13 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
     myMoveCallback = moveCallback;
   }
 
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages, FindUsagesCommand refreshCommand) {
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
     PsiElement[] elements = new PsiElement[myElementsToMove.length];
     for (int idx = 0; idx < myElementsToMove.length; idx++) {
       elements[idx] = myElementsToMove[idx];
     }
     return new MoveFilesOrDirectoriesViewDescriptor(elements, mySearchInComments, mySearchInNonJavaFiles, myNewParent,
-                                                    usages, refreshCommand);
+                                                    usages);
   }
 
   protected UsageInfo[] findUsages() {

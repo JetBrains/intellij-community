@@ -1,27 +1,21 @@
 
 package com.intellij.refactoring.inline;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewBundle;
+import com.intellij.usageView.UsageViewDescriptor;
 
 class InlineViewDescriptor implements UsageViewDescriptor{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.inline.InlineViewDescriptor");
 
   private PsiElement myElement;
   private UsageInfo[] myUsages;
-  private FindUsagesCommand myRefreshCommand;
 
-  public InlineViewDescriptor(PsiElement element, UsageInfo[] usages, FindUsagesCommand refreshCommand) {
+  public InlineViewDescriptor(PsiElement element, UsageInfo[] usages) {
     myElement = element;
     myUsages = usages;
-    myRefreshCommand = refreshCommand;
   }
 
   public PsiElement[] getElements() {
@@ -30,25 +24,6 @@ class InlineViewDescriptor implements UsageViewDescriptor{
 
   public UsageInfo[] getUsages() {
     return myUsages;
-  }
-
-  public void refresh(PsiElement[] elements) {
-    if (elements.length == 1) {
-      if (elements[0] instanceof PsiMethod && myElement instanceof PsiMethod) {
-        myElement = elements[0];
-      } else if (elements[0] instanceof PsiField && myElement instanceof PsiField) {
-        myElement = elements[0];
-      } else {
-        LOG.assertTrue(false);
-      }
-    }
-    else {
-      // should not happen
-      LOG.assertTrue(false);
-    }
-    if (myRefreshCommand != null) {
-      myUsages = myRefreshCommand.execute(elements);
-    }
   }
 
   public String getProcessedElementsHeader() {
@@ -91,10 +66,6 @@ class InlineViewDescriptor implements UsageViewDescriptor{
 
   public String getHelpID() {
     return "find.refactoringPreview";
-  }
-
-  public boolean canRefresh() {
-    return myRefreshCommand != null;
   }
 
   public boolean willUsageBeChanged(UsageInfo usageInfo) {

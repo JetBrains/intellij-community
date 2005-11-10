@@ -20,7 +20,6 @@ import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor;
 import com.intellij.refactoring.util.classRefs.ClassInstanceScanner;
 import com.intellij.refactoring.util.classRefs.ClassReferenceScanner;
 import com.intellij.refactoring.util.classRefs.ClassReferenceSearchingScanner;
-import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
@@ -126,8 +125,8 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     return result;
   }
 
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages, FindUsagesCommand refreshCommand) {
-    return new InheritanceToDelegationViewDescriptor(myClass, usages, refreshCommand);
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
+    return new InheritanceToDelegationViewDescriptor(myClass, usages);
   }
 
   protected UsageInfo[] findUsages() {

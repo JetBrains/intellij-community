@@ -1,42 +1,24 @@
 package com.intellij.refactoring.memberPushDown;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewBundle;
+import com.intellij.usageView.UsageViewDescriptor;
 
 class PushDownUsageViewDescriptor implements UsageViewDescriptor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.memberPushDown.PushDownUsageViewDescriptor");
   private PsiClass myClass;
   private UsageInfo[] myUsages;
-  private FindUsagesCommand myRefreshCommand;
   private final String myProcessedElementsHeader = RefactoringBundle.message("push.down.members.elements.header");
 
-  public PushDownUsageViewDescriptor(PsiClass aClass, UsageInfo[] usages, FindUsagesCommand refreshComamnd) {
+  public PushDownUsageViewDescriptor(PsiClass aClass, UsageInfo[] usages) {
     myClass = aClass;
     myUsages = usages;
-    myRefreshCommand = refreshComamnd;
   }
 
   public UsageInfo[] getUsages() {
     return myUsages;
-  }
-
-  public void refresh(PsiElement[] elements) {
-    if (elements.length == 1 && elements[0] instanceof PsiClass) {
-      myClass = (PsiClass) elements[0];
-    }
-    else {
-      // should not happen
-      LOG.assertTrue(false);
-    }
-    if (myRefreshCommand != null) {
-      myUsages = myRefreshCommand.execute(elements);
-    }
   }
 
   public String getProcessedElementsHeader() {
@@ -76,10 +58,6 @@ class PushDownUsageViewDescriptor implements UsageViewDescriptor {
   }
 
   public boolean isCancelInCommonGroup() {
-    return false;
-  }
-
-  public boolean canRefresh() {
     return false;
   }
 

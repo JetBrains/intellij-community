@@ -17,12 +17,10 @@ class ChangeSignatureViewDescriptor implements UsageViewDescriptor {
   private PsiMethod myMethod;
   private UsageInfo[] myUsages;
   private final String myProcessedElementsHeader;
-  private FindUsagesCommand myRefreshCommand;
 
-  public ChangeSignatureViewDescriptor(PsiMethod method, UsageInfo[] usages, FindUsagesCommand refreshCommand) {
+  public ChangeSignatureViewDescriptor(PsiMethod method, UsageInfo[] usages) {
     myMethod = method;
     myUsages = usages;
-    myRefreshCommand = refreshCommand;
     myProcessedElementsHeader = UsageViewUtil.capitalize(RefactoringBundle.message("0.to.change.signature", UsageViewUtil.getType(method)));
   }
 
@@ -32,19 +30,6 @@ class ChangeSignatureViewDescriptor implements UsageViewDescriptor {
 
   public UsageInfo[] getUsages() {
     return myUsages;
-  }
-
-  public void refresh(PsiElement[] elements) {
-    if (elements.length == 1 && elements[0] instanceof PsiMethod) {
-      myMethod = (PsiMethod)elements[0];
-    }
-    else {
-      // should not happen
-      LOG.assertTrue(false);
-    }
-    if (myRefreshCommand != null) {
-      myUsages = myRefreshCommand.execute(elements);
-    }
   }
 
   public String getProcessedElementsHeader() {
@@ -86,10 +71,6 @@ class ChangeSignatureViewDescriptor implements UsageViewDescriptor {
 
   public String getHelpID() {
     return "find.refactoringPreview";
-  }
-
-  public boolean canRefresh() {
-    return true;
   }
 
   public boolean willUsageBeChanged(UsageInfo usageInfo) {

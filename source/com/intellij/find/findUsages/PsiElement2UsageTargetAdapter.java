@@ -106,8 +106,8 @@ public class PsiElement2UsageTargetAdapter implements UsageTarget {
     myPresentation.update();
   }
 
-  public static UsageTarget[] convert(PsiElement[] psiElements) {
-    UsageTarget[] targets = new UsageTarget[psiElements.length];
+  public static PsiElement2UsageTargetAdapter[] convert(PsiElement[] psiElements) {
+    PsiElement2UsageTargetAdapter[] targets = new PsiElement2UsageTargetAdapter[psiElements.length];
     for (int i = 0; i < targets.length; i++) {
       targets[i] = new PsiElement2UsageTargetAdapter(psiElements[i]);
     }

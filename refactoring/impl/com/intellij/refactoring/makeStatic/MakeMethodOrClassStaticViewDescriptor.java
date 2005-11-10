@@ -11,7 +11,6 @@ package com.intellij.refactoring.makeStatic;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMember;
-import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.*;
 import com.intellij.usageView.UsageViewBundle;
@@ -22,13 +21,11 @@ public class MakeMethodOrClassStaticViewDescriptor implements UsageViewDescripto
   private PsiMember myMember;
   private UsageInfo[] myUsages;
   private final String myProcessedElementsHeader;
-  private FindUsagesCommand myRefreshCommand;
 
   public MakeMethodOrClassStaticViewDescriptor(PsiMember member,
-                                               UsageInfo[] usages, FindUsagesCommand refreshCommand) {
+                                               UsageInfo[] usages) {
     myMember = member;
     myUsages = usages;
-    myRefreshCommand = refreshCommand;
     String who = UsageViewUtil.capitalize(UsageViewUtil.getType(myMember));
     myProcessedElementsHeader = RefactoringBundle.message("make.static.elements.header", who);
   }
@@ -41,19 +38,6 @@ public class MakeMethodOrClassStaticViewDescriptor implements UsageViewDescripto
     return myUsages;
   }
 
-
-  public void refresh(PsiElement[] elements) {
-    if (elements.length == 1 && elements[0] instanceof PsiMethod) {
-      myMember = (PsiMethod)elements[0];
-    }
-    else {
-      // should not happen
-      LOG.assertTrue(false);
-    }
-    if (myRefreshCommand != null) {
-      myUsages = myRefreshCommand.execute(elements);
-    }
-  }
 
   public String getProcessedElementsHeader() {
     return myProcessedElementsHeader;
@@ -89,10 +73,6 @@ public class MakeMethodOrClassStaticViewDescriptor implements UsageViewDescripto
 
   public boolean isCancelInCommonGroup() {
     return false;
-  }
-
-  public boolean canRefresh() {
-    return myRefreshCommand != null;
   }
 
   public boolean willUsageBeChanged(UsageInfo usageInfo) {

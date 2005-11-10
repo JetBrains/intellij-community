@@ -8,7 +8,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
@@ -16,7 +15,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.refactoring.RefactoringBundle;
 
 import java.util.ArrayList;
-import java.text.MessageFormat;
 
 public class TurnRefsToSuperProcessor extends TurnRefsToSuperProcessorBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.turnRefsToSuper.TurnRefsToSuperProcessor");
@@ -36,8 +34,8 @@ public class TurnRefsToSuperProcessor extends TurnRefsToSuperProcessorBase {
                                      UsageViewUtil.getDescriptiveName(myClass), UsageViewUtil.getDescriptiveName(mySuper));
   }
 
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages, FindUsagesCommand refreshCommand) {
-    return new RefsToSuperViewDescriptor(this, myClass, mySuper, usages, refreshCommand);
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
+    return new RefsToSuperViewDescriptor(this, myClass, mySuper, usages);
   }
 
   void setClasses(final PsiClass aClass, final PsiClass aSuper) {

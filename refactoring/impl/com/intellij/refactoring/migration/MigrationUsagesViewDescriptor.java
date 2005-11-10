@@ -34,10 +34,6 @@ class MigrationUsagesViewDescriptor implements UsageViewDescriptor {
     return myUsages;
   }
 
-  public void refresh(PsiElement[] elements) {
-    //No elements => no refresh
-  }
-
   public String getProcessedElementsHeader() {
     return null;
   }
@@ -81,10 +77,6 @@ class MigrationUsagesViewDescriptor implements UsageViewDescriptor {
 
   public String getHelpID() {
     return HelpID.MIGRATION;
-  }
-
-  public boolean canRefresh() {
-    return false;
   }
 
   public boolean willUsageBeChanged(UsageInfo usageInfo) {

@@ -14,7 +14,6 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.JavaDocPolicy;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
-import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
@@ -44,8 +43,8 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
     return PushDownHandler.REFACTORING_NAME;
   }
 
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages, FindUsagesCommand refreshCommand) {
-    return new PushDownUsageViewDescriptor(myClass, usages, refreshCommand);
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
+    return new PushDownUsageViewDescriptor(myClass, usages);
   }
 
   @NotNull

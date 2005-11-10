@@ -26,7 +26,6 @@ import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
@@ -73,8 +72,8 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     return RefactoringBundle.message("inline.method.command", myDescriptiveName);
   }
 
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages, FindUsagesCommand refreshCommand) {
-    return new InlineViewDescriptor(myMethod, usages, refreshCommand);
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
+    return new InlineViewDescriptor(myMethod, usages);
   }
 
   protected UsageInfo[] findUsages() {

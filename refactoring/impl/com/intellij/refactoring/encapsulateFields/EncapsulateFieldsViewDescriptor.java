@@ -4,20 +4,17 @@ package com.intellij.refactoring.encapsulateFields;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewBundle;
+import com.intellij.usageView.UsageViewDescriptor;
 
 class EncapsulateFieldsViewDescriptor implements UsageViewDescriptor {
   private PsiField[] myFields;
   private UsageInfo[] myUsages;
-  private FindUsagesCommand myRefreshCommand;
 
-  public EncapsulateFieldsViewDescriptor(PsiField[] fields, UsageInfo[] usages, FindUsagesCommand refreshCommand) {
+  public EncapsulateFieldsViewDescriptor(PsiField[] fields, UsageInfo[] usages) {
     myFields = fields;
     myUsages = usages;
-    myRefreshCommand = refreshCommand;
   }
 
   public String getProcessedElementsHeader() {
@@ -30,18 +27,6 @@ class EncapsulateFieldsViewDescriptor implements UsageViewDescriptor {
 
   public UsageInfo[] getUsages() {
     return myUsages;
-  }
-
-  public void refresh(PsiElement[] elements) {
-    if (elements.length > 1) {
-      myFields = new PsiField[elements.length];
-      for (int idx = 0; idx < elements.length; idx++) {
-        myFields[idx] = (PsiField)elements[idx];
-      }
-    }
-    if (myRefreshCommand != null) {
-      myUsages = myRefreshCommand.execute(elements);
-    }
   }
 
   public boolean isSearchInText() {
@@ -78,10 +63,6 @@ class EncapsulateFieldsViewDescriptor implements UsageViewDescriptor {
 
   public String getHelpID() {
     return "find.refactoringPreview";
-  }
-
-  public boolean canRefresh() {
-    return myRefreshCommand != null;
   }
 
   public boolean willUsageBeChanged(UsageInfo usageInfo) {

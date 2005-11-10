@@ -1,9 +1,10 @@
 package com.intellij.refactoring.replaceConstructorWithFactory;
 
-import com.intellij.psi.*;
-import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.usageView.FindUsagesCommand;
+import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
 import com.intellij.usageView.UsageInfo;
 
 /**
@@ -13,15 +14,15 @@ class ReplaceConstructorWithFactoryViewDescriptor extends UsageViewDescriptorAda
   private PsiMethod myConstructor;
   private PsiClass myClass;
 
-  public ReplaceConstructorWithFactoryViewDescriptor(UsageInfo[] usages, FindUsagesCommand refreshCommand,
+  public ReplaceConstructorWithFactoryViewDescriptor(UsageInfo[] usages,
                                                      PsiMethod constructor) {
-    super(usages, refreshCommand);
+    super(usages);
     myConstructor = constructor;
     myClass = null;
   }
 
-  public ReplaceConstructorWithFactoryViewDescriptor(UsageInfo[] usages, FindUsagesCommand refreshCommand, PsiClass aClass) {
-    super(usages, refreshCommand);
+  public ReplaceConstructorWithFactoryViewDescriptor(UsageInfo[] usages, PsiClass aClass) {
+    super(usages);
     myClass = aClass;
     myConstructor = null;
   }
@@ -32,17 +33,6 @@ class ReplaceConstructorWithFactoryViewDescriptor extends UsageViewDescriptorAda
     } else {
       return new PsiElement[] {myClass};
     }
-  }
-
-  public void refresh(PsiElement[] elements) {
-    if(elements[0] instanceof PsiMethod && ((PsiMethod) elements[0]).isConstructor()) {
-      myConstructor = (PsiMethod) elements[0];
-      myClass = null;
-    } else if(elements[0] instanceof PsiClass) {
-      myClass = (PsiClass) elements[0];
-      myConstructor = null;
-    }
-    refreshUsages(elements);
   }
 
   public String getProcessedElementsHeader() {

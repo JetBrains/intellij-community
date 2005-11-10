@@ -13,7 +13,6 @@ import com.intellij.refactoring.typeCook.deductive.builder.System;
 import com.intellij.refactoring.typeCook.deductive.builder.SystemBuilder;
 import com.intellij.refactoring.typeCook.deductive.resolver.Binding;
 import com.intellij.refactoring.typeCook.deductive.resolver.ResolverTree;
-import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import org.jetbrains.annotations.NotNull;
@@ -35,8 +34,8 @@ public class TypeCookProcessor extends BaseRefactoringProcessor {
     mySettings = settings;
   }
 
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages, FindUsagesCommand refreshCommand) {
-    return new TypeCookViewDescriptor(myElements, usages, refreshCommand);
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
+    return new TypeCookViewDescriptor(myElements, usages);
   }
 
   @NotNull

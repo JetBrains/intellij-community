@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
@@ -19,22 +20,22 @@ import com.intellij.refactoring.listeners.RefactoringListenerManager;
 import com.intellij.refactoring.listeners.impl.RefactoringListenerManagerImpl;
 import com.intellij.refactoring.listeners.impl.RefactoringTransaction;
 import com.intellij.refactoring.ui.ConflictsDialog;
-import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
 import java.util.Set;
+import java.util.Collection;
+import java.util.Arrays;
 
 public abstract class BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.BaseRefactoringProcessor");
@@ -55,7 +56,7 @@ public abstract class BaseRefactoringProcessor {
     myPrepareSuccessfulSwingThreadCallback = prepareSuccessfulCallback;
   }
 
-  protected abstract UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages, FindUsagesCommand refreshCommand);
+  protected abstract UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages);
 
   /**
    * Is called inside atomic action.
@@ -144,15 +145,31 @@ public abstract class BaseRefactoringProcessor {
     if (!myIsPreviewUsages) ensureFilesWritable(usages);
     boolean toPreview = isPreviewUsages(usages);
     if (toPreview) {
-      FindUsagesCommand findUsagesCommand = new FindUsagesCommand() {
-        public UsageInfo[] execute(PsiElement[] elementsToSearch) {
-          refreshElements(elementsToSearch);
-          findUsagesRunnable.run();
-          return refUsages.get();
-        }
+      UsageViewDescriptor descriptor = createUsageViewDescriptor(usages);
+
+      final PsiElement[] elements = descriptor.getElements();
+      final PsiElement2UsageTargetAdapter[] targets = PsiElement2UsageTargetAdapter.convert(elements);
+      Factory<UsageSearcher> factory = new Factory<UsageSearcher>() {
+        public UsageSearcher create() {
+          return new UsageSearcher() {
+            public void generate(final Processor<Usage> processor) {
+              for (int i = 0; i < elements.length; i++) {
+                elements[i] = targets[i].getElement();
+              }
+
+              refreshElements(elements);
+              findUsagesRunnable.run();
+              final Usage[] usages = UsageInfo2UsageAdapter.convert(refUsages.get());
+
+              for (Usage usage : usages) {
+                processor.process(usage);
+              }
+            }
+          };
+        };
       };
-      UsageViewDescriptor descriptor = createUsageViewDescriptor(usages, findUsagesCommand);
-      showUsageView(descriptor, isVariable(), isVariable());
+
+      showUsageView(descriptor, isVariable(), isVariable(), factory);
     } else {
       execute(usages);
     }
@@ -176,7 +193,8 @@ public abstract class BaseRefactoringProcessor {
           public void run() {
             ApplicationManager.getApplication().runWriteAction(new Runnable() {
               public void run() {
-                doRefactoring(usages, new HashSet<UsageInfo>());
+                Collection<Usage> usagesSet = Arrays.<Usage>asList(UsageInfo2UsageAdapter.convert(usages));
+                doRefactoring(usagesSet, new HashSet<Usage>());
               }
             });
           }
@@ -219,7 +237,10 @@ public abstract class BaseRefactoringProcessor {
     return presentation;
   }
 
-  private void showUsageView(final UsageViewDescriptor viewDescriptor, boolean showReadAccessIcon, boolean showWriteAccessIcon) {
+  private void showUsageView(final UsageViewDescriptor viewDescriptor,
+                             boolean showReadAccessIcon,
+                             boolean showWriteAccessIcon,
+                             final Factory<UsageSearcher> factory) {
     UsageViewManager viewManager = myProject.getComponent(UsageViewManager.class);
 
     final PsiElement[] initialElements = viewDescriptor.getElements();
@@ -228,12 +249,12 @@ public abstract class BaseRefactoringProcessor {
 
     final UsageViewPresentation presentation = createPresentation(viewDescriptor, usages);
 
-    final UsageView usageView = viewManager.showUsages(targets, usages, presentation);
+    final UsageView usageView = viewManager.showUsages(targets, usages, presentation, factory);
 
     final Runnable refactoringRunnable = new Runnable() {
       public void run() {
-        final Set<UsageInfo> excludedUsageInfos = getExcludedUsages(usageView);
-        doRefactoring(viewDescriptor.getUsages(), excludedUsageInfos);
+        final Set<Usage> excludedUsageInfos = getExcludedUsages(usageView);
+        doRefactoring(usageView.getUsages(), excludedUsageInfos);
       }
     };
 
@@ -242,42 +263,48 @@ public abstract class BaseRefactoringProcessor {
     usageView.addPerformOperationAction(refactoringRunnable, getCommandName(), canNotMakeString, RefactoringBundle.message("usageView.doAction"));
   }
 
-  private static Set<UsageInfo> getExcludedUsages(final UsageView usageView) {
+  private static Set<Usage> getExcludedUsages(final UsageView usageView) {
     Set<Usage> usages = usageView.getExcludedUsages();
 
-    Set<UsageInfo> excludedUsageInfos = new HashSet<UsageInfo>();
+    Set<Usage> excludedUsageInfos = new HashSet<Usage>();
     for (Usage usage : usages) {
       if (usage instanceof UsageInfo2UsageAdapter) {
-        excludedUsageInfos.add(((UsageInfo2UsageAdapter)usage).getUsageInfo());
+        excludedUsageInfos.add(usage);
       }
     }
     return excludedUsageInfos;
   }
 
-  private void doRefactoring(UsageInfo[] usages, Set<UsageInfo> excludedUsages) {
-    if (usages != null) {
-      ArrayList<UsageInfo> array = new ArrayList<UsageInfo>(Arrays.asList(usages));
-      array.removeAll(excludedUsages);
+  private void doRefactoring(Collection<Usage> usagesSet, Set<Usage> excludedUsages) {
+    final Set<UsageInfo> usageInfoSet = new HashSet<UsageInfo>();
+    if (usagesSet != null) {
+      usagesSet.removeAll(excludedUsages);
 
-      for (Iterator<UsageInfo> iterator = array.iterator(); iterator.hasNext();) {
-        final PsiElement element = iterator.next().getElement();
-        if (element == null || !element.isWritable()) iterator.remove();
+      for (final Usage usage : usagesSet) {
+        if (usage instanceof PsiElementUsage) {
+          final PsiElementUsage elementUsage = (PsiElementUsage)usage;
+          final PsiElement element = elementUsage.getElement();
+          if (element != null && element.isWritable()) {
+            usageInfoSet.add(((UsageInfo2UsageAdapter)elementUsage).getUsageInfo());
+          }
+        } else {
+          LOG.error("Unknown usage!");
+        }
       }
-      usages = array.toArray(new UsageInfo[array.size()]);
     }
 
     LvcsAction action = LvcsIntegration.checkinFilesBeforeRefactoring(myProject, getCommandName());
 
+    final UsageInfo[] usages = usageInfoSet.toArray(new UsageInfo[usageInfoSet.size()]);;
     try {
-      final UsageInfo[] _usages = usages;
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
           PsiDocumentManager.getInstance(myProject).commitAllDocuments();
           RefactoringListenerManagerImpl listenerManager =
               (RefactoringListenerManagerImpl) RefactoringListenerManager.getInstance(myProject);
           myTransaction = listenerManager.startTransaction();
-          Set<PsiJavaFile> touchedJavaFiles = getTouchedJavaFiles(_usages);
-          performRefactoring(_usages);
+          Set<PsiJavaFile> touchedJavaFiles = getTouchedJavaFiles(usages);
+          performRefactoring(usages);
           removeRedundantImports(touchedJavaFiles);
           myTransaction.commit();
           performPsiSpoilingRefactoring();

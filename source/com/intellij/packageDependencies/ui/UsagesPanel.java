@@ -109,7 +109,7 @@ public class UsagesPanel extends JPanel {
       UsageViewPresentation presentation = new UsageViewPresentation();
       presentation.setCodeUsagesString(myBuilder.getRootNodeNameInUsageView());
       myCurrentUsageView = myProject.getComponent(UsageViewManager.class).createUsageView(new UsageTarget[0],
-                                                                                           usages, presentation);
+                                                                                           usages, presentation, null);
       setToComponent(myCurrentUsageView.getComponent());
     }
     catch (ProcessCanceledException e) {

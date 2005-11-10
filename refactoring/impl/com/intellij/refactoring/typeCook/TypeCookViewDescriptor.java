@@ -2,20 +2,17 @@ package com.intellij.refactoring.typeCook;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewBundle;
+import com.intellij.usageView.UsageViewDescriptor;
 
 class TypeCookViewDescriptor implements UsageViewDescriptor {
   private PsiElement[] myElements;
   private UsageInfo[] myUsages;
-  private FindUsagesCommand myRefreshCommand;
 
-  public TypeCookViewDescriptor(PsiElement[] elements, UsageInfo[] usages, FindUsagesCommand refreshCommand) {
+  public TypeCookViewDescriptor(PsiElement[] elements, UsageInfo[] usages) {
     myElements = elements;
     myUsages = usages;
-    myRefreshCommand = refreshCommand;
   }
 
   public PsiElement[] getElements() {
@@ -24,12 +21,6 @@ class TypeCookViewDescriptor implements UsageViewDescriptor {
 
   public UsageInfo[] getUsages() {
     return myUsages;
-  }
-
-  public void refresh(PsiElement[] elements) {
-    if (myRefreshCommand != null) {
-      myUsages = myRefreshCommand.execute(elements);
-    }
   }
 
   public String getProcessedElementsHeader() {
@@ -70,10 +61,6 @@ class TypeCookViewDescriptor implements UsageViewDescriptor {
 
   public String getHelpID() {
     return "find.refactoringPreview";
-  }
-
-  public boolean canRefresh() {
-    return myRefreshCommand != null;
   }
 
   public boolean willUsageBeChanged(UsageInfo usageInfo) {

@@ -134,7 +134,7 @@ public class FindUsagesManager implements JDOMExternalizable{
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    JDOMExternalizer.write(element, "OPEN_NEW_TAB", myToOpenInNewTab? Boolean.TRUE : Boolean.FALSE);
+    JDOMExternalizer.write(element, "OPEN_NEW_TAB", myToOpenInNewTab);
   }
 
   private boolean findUsageInFile(FileEditor editor, FileSearchScope direction) {
@@ -595,29 +595,28 @@ public class FindUsagesManager implements JDOMExternalizable{
     String usagesString = "";
     String suffix = " " + FindBundle.message("find.usages.panel.title.separator") + " ";
     ArrayList<String> strings = new ArrayList<String>();
-    FindUsagesOptions localShownFindUsagesOptions = selectedOptions;
-    if ((selectedOptions.isUsages && localShownFindUsagesOptions.isUsages)
-        || (selectedOptions.isClassesUsages && localShownFindUsagesOptions.isClassesUsages)
-        || (selectedOptions.isMethodsUsages && localShownFindUsagesOptions.isMethodsUsages)
-        || (selectedOptions.isFieldsUsages && localShownFindUsagesOptions.isFieldsUsages)) {
+    if ((selectedOptions.isUsages && selectedOptions.isUsages)
+        || (selectedOptions.isClassesUsages && selectedOptions.isClassesUsages)
+        || (selectedOptions.isMethodsUsages && selectedOptions.isMethodsUsages)
+        || (selectedOptions.isFieldsUsages && selectedOptions.isFieldsUsages)) {
       strings.add(FindBundle.message("find.usages.panel.title.usages"));
     }
-    if (selectedOptions.isIncludeOverloadUsages && localShownFindUsagesOptions.isIncludeOverloadUsages) {
+    if (selectedOptions.isIncludeOverloadUsages && selectedOptions.isIncludeOverloadUsages) {
       strings.add(FindBundle.message("find.usages.panel.title.overloaded.methods.usages"));
     }
-    if ((selectedOptions.isDerivedClasses && localShownFindUsagesOptions.isDerivedClasses)) {
+    if ((selectedOptions.isDerivedClasses && selectedOptions.isDerivedClasses)) {
       strings.add(FindBundle.message("find.usages.panel.title.derived.classes"));
     }
-    if ((selectedOptions.isDerivedInterfaces && localShownFindUsagesOptions.isDerivedInterfaces)) {
+    if ((selectedOptions.isDerivedInterfaces && selectedOptions.isDerivedInterfaces)) {
       strings.add(FindBundle.message("find.usages.panel.title.derived.interfaces"));
     }
-    if ((selectedOptions.isImplementingClasses && localShownFindUsagesOptions.isImplementingClasses)) {
+    if ((selectedOptions.isImplementingClasses && selectedOptions.isImplementingClasses)) {
       strings.add(FindBundle.message("find.usages.panel.title.implementing.classes"));
     }
-    if ((selectedOptions.isImplementingMethods && localShownFindUsagesOptions.isImplementingMethods)) {
+    if ((selectedOptions.isImplementingMethods && selectedOptions.isImplementingMethods)) {
       strings.add(FindBundle.message("find.usages.panel.title.implementing.methods"));
     }
-    if ((selectedOptions.isOverridingMethods && localShownFindUsagesOptions.isOverridingMethods)) {
+    if ((selectedOptions.isOverridingMethods && selectedOptions.isOverridingMethods)) {
       strings.add(FindBundle.message("find.usages.panel.title.overriding.methods"));
     }
     if (strings.size() == 0) {

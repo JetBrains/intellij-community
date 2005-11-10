@@ -22,7 +22,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.IntroduceParameterRefactoring;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.*;
 import com.intellij.refactoring.util.javadoc.MethodJavaDocHelper;
 import com.intellij.refactoring.util.occurences.ExpressionOccurenceManager;
@@ -31,7 +30,6 @@ import com.intellij.refactoring.util.occurences.OccurenceManager;
 import com.intellij.refactoring.util.usageInfo.DefaultConstructorImplicitUsageInfo;
 import com.intellij.refactoring.util.usageInfo.DefaultConstructorUsageCollector;
 import com.intellij.refactoring.util.usageInfo.NoConstructorClassUsageInfo;
-import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
@@ -93,8 +91,8 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
     myManager = PsiManager.getInstance(project);
   }
 
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages, FindUsagesCommand refreshCommand) {
-    return new IntroduceParameterViewDescriptor(myMethodToSearchFor, usages, refreshCommand);
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
+    return new IntroduceParameterViewDescriptor(myMethodToSearchFor, usages);
   }
 
   public PsiType getForcedType() {

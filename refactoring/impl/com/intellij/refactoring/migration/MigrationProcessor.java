@@ -15,7 +15,6 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMigration;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 
@@ -34,7 +33,7 @@ class MigrationProcessor extends BaseRefactoringProcessor {
     myMigrationMap = migrationMap;
   }
 
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages, FindUsagesCommand refreshCommand) {
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
     return new MigrationUsagesViewDescriptor(myMigrationMap, false, usages);
   }
 

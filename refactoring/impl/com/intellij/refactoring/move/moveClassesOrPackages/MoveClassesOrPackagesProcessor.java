@@ -21,7 +21,6 @@ import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.util.*;
 import com.intellij.refactoring.util.classRefs.ClassInstanceScanner;
 import com.intellij.refactoring.util.classRefs.ClassReferenceScanner;
-import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
@@ -62,13 +61,13 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     myMoveCallback = moveCallback;
   }
 
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages, FindUsagesCommand refreshCommand) {
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
     PsiElement[] elements = new PsiElement[myElementsToMove.length];
     for (int idx = 0; idx < myElementsToMove.length; idx++) {
       elements[idx] = myElementsToMove[idx];
     }
     return new MoveClassesOrPackagesViewDescriptor(elements, mySearchInComments, mySearchInNonJavaFiles, myTargetPackage,
-                                                   usages, refreshCommand);
+                                                   usages);
   }
 
   public boolean isSearchInComments() {

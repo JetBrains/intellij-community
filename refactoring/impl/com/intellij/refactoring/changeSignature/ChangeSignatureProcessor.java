@@ -35,7 +35,6 @@ import com.intellij.refactoring.util.*;
 import com.intellij.refactoring.util.usageInfo.DefaultConstructorImplicitUsageInfo;
 import com.intellij.refactoring.util.usageInfo.DefaultConstructorUsageCollector;
 import com.intellij.refactoring.util.usageInfo.NoConstructorClassUsageInfo;
-import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
@@ -109,8 +108,8 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     LOG.assertTrue(myChangeInfo.getMethod().isValid());
   }
 
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages, FindUsagesCommand refreshCommand) {
-    return new ChangeSignatureViewDescriptor(myChangeInfo.getMethod(), usages, refreshCommand);
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
+    return new ChangeSignatureViewDescriptor(myChangeInfo.getMethod(), usages);
   }
 
   protected UsageInfo[] findUsages() {

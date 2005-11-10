@@ -5,26 +5,28 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
-import com.intellij.usageView.UsageViewBundle;
 
 class MoveFilesOrDirectoriesViewDescriptor implements UsageViewDescriptor {
   private PsiElement[] myElementsToMove;
   private final boolean mySearchInComments;
   private final boolean mySearchInNonJavaFiles;
   private UsageInfo[] myUsages;
-  private FindUsagesCommand myRefreshCommand;
   private String myProcessedElementsHeader;
   private String myCodeReferencesText;
   private final String myHelpID;
 
-  public MoveFilesOrDirectoriesViewDescriptor(PsiElement[] elementsToMove, boolean isSearchInComments, boolean searchInNonJavaFiles, PsiDirectory newParent, UsageInfo[] usages, FindUsagesCommand refreshCommand) {
+  public MoveFilesOrDirectoriesViewDescriptor(PsiElement[] elementsToMove,
+                                              boolean isSearchInComments,
+                                              boolean searchInNonJavaFiles,
+                                              PsiDirectory newParent,
+                                              UsageInfo[] usages
+  ) {
     myElementsToMove = elementsToMove;
     myUsages = usages;
-    myRefreshCommand = refreshCommand;
     mySearchInComments = isSearchInComments;
     mySearchInNonJavaFiles = searchInNonJavaFiles;
     if (elementsToMove.length == 1) {
@@ -52,16 +54,6 @@ class MoveFilesOrDirectoriesViewDescriptor implements UsageViewDescriptor {
 
   public UsageInfo[] getUsages() {
     return myUsages;
-  }
-
-  public void refresh(PsiElement[] elements) {
-    myElementsToMove = new PsiElement[elements.length];
-    for (int idx = 0; idx < elements.length; idx++) {
-      myElementsToMove[idx] = elements[idx];
-    }
-    if (myRefreshCommand != null) {
-      myUsages = myRefreshCommand.execute(elements);
-    }
   }
 
   public String getProcessedElementsHeader() {
@@ -103,10 +95,6 @@ class MoveFilesOrDirectoriesViewDescriptor implements UsageViewDescriptor {
 
   public String getHelpID() {
     return myHelpID;
-  }
-
-  public boolean canRefresh() {
-    return myRefreshCommand != null;
   }
 
   public boolean willUsageBeChanged(UsageInfo usageInfo) {

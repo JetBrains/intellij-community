@@ -11,11 +11,9 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.VisibilityUtil;
-import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
@@ -25,6 +23,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author dsl
@@ -64,17 +64,18 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
     return result;
   }
 
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages, FindUsagesCommand refreshCommand) {
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
     if (myConstructor != null) {
-      return new ReplaceConstructorWithFactoryViewDescriptor(usages, refreshCommand, myConstructor);
+      return new ReplaceConstructorWithFactoryViewDescriptor(usages, myConstructor);
     }
     else {
-      return new ReplaceConstructorWithFactoryViewDescriptor(usages, refreshCommand, myOriginalClass);
+      return new ReplaceConstructorWithFactoryViewDescriptor(usages, myOriginalClass);
     }
   }
 
   private List<PsiElement> myNonNewConstructorUsages;
 
+  @NotNull
   protected UsageInfo[] findUsages() {
     final PsiSearchHelper searchHelper = myManager.getSearchHelper();
     final PsiReference[] references;
@@ -151,7 +152,7 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
 
           if (PsiTreeUtil.isAncestor(containingClass, myTargetClass, true)) {
             String message = RefactoringBundle.message("constructor.being.refactored.is.used.in.initializer.of.0",
-              ConflictsUtil.getDescription(field, true), ConflictsUtil.getDescription(getConstructorContainingClass(), false));
+                                                       ConflictsUtil.getDescription(field, true), ConflictsUtil.getDescription(getConstructorContainingClass(), false));
             conflicts.add(message);
           }
         }

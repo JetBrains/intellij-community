@@ -10,8 +10,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.usageView.*;
+import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
+import com.intellij.usageView.UsageViewDescriptor;
+import com.intellij.usageView.UsageViewUtil;
 
 class MoveClassesOrPackagesViewDescriptor implements UsageViewDescriptor {
   private PsiElement[] myPsiElements;
@@ -20,7 +22,6 @@ class MoveClassesOrPackagesViewDescriptor implements UsageViewDescriptor {
   private PackageWrapper myTargetPackage;
   private String myNewParentPackageName;
   private UsageInfo[] myUsages;
-  private FindUsagesCommand myRefreshCommand;
   private String myProcessedElementsHeader;
   private String myCodeReferencesText;
   private final String myHelpID;
@@ -28,10 +29,9 @@ class MoveClassesOrPackagesViewDescriptor implements UsageViewDescriptor {
   public MoveClassesOrPackagesViewDescriptor(PsiElement[] psiElements,
                                              boolean isSearchInComments,
                                              boolean searchInNonJavaFiles, PackageWrapper newParent,
-                                             UsageInfo[] usages, FindUsagesCommand refreshCommand) {
+                                             UsageInfo[] usages) {
     myPsiElements = psiElements;
     myUsages = usages;
-    myRefreshCommand = refreshCommand;
     mySearchInComments = isSearchInComments;
     mySearchInNonJavaFiles = searchInNonJavaFiles;
     myTargetPackage = newParent;
@@ -58,16 +58,6 @@ class MoveClassesOrPackagesViewDescriptor implements UsageViewDescriptor {
 
   public UsageInfo[] getUsages() {
     return myUsages;
-  }
-
-  public void refresh(PsiElement[] elements) {
-    myPsiElements = new PsiElement[elements.length];
-    for (int idx = 0; idx < elements.length; idx++) {
-      myPsiElements[idx] = elements[idx];
-    }
-    if (myRefreshCommand != null) {
-      myUsages = myRefreshCommand.execute(elements);
-    }
   }
 
   public String getProcessedElementsHeader() {
@@ -109,10 +99,6 @@ class MoveClassesOrPackagesViewDescriptor implements UsageViewDescriptor {
 
   public String getHelpID() {
     return myHelpID;
-  }
-
-  public boolean canRefresh() {
-    return true;
   }
 
   public boolean willUsageBeChanged(UsageInfo usageInfo) {

@@ -5,7 +5,6 @@
 package com.intellij.refactoring.move.moveMembers;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewBundle;
@@ -14,12 +13,10 @@ import com.intellij.refactoring.RefactoringBundle;
 class MoveMemberViewDescriptor implements UsageViewDescriptor {
   private PsiElement[] myElementsToMove;
   private UsageInfo[] myUsages;
-  private FindUsagesCommand myRefreshCommand;
 
-  public MoveMemberViewDescriptor(PsiElement[] elementsToMove, UsageInfo[] usages, FindUsagesCommand refreshCommand) {
+  public MoveMemberViewDescriptor(PsiElement[] elementsToMove, UsageInfo[] usages) {
     myElementsToMove = elementsToMove;
     myUsages = usages;
-    myRefreshCommand = refreshCommand;
   }
 
   public PsiElement[] getElements() {
@@ -28,15 +25,6 @@ class MoveMemberViewDescriptor implements UsageViewDescriptor {
 
   public UsageInfo[] getUsages() {
     return myUsages;
-  }
-
-  public void refresh(PsiElement[] elements) {
-    for (int idx = 0; idx < elements.length; idx++) {
-      myElementsToMove[idx] = elements[idx];
-    }
-    if (myRefreshCommand != null) {
-      myUsages = myRefreshCommand.execute(elements);
-    }
   }
 
   public String getProcessedElementsHeader() {
@@ -77,10 +65,6 @@ class MoveMemberViewDescriptor implements UsageViewDescriptor {
 
   public String getHelpID() {
     return "find.refactoringPreview";
-  }
-
-  public boolean canRefresh() {
-    return myRefreshCommand != null;
   }
 
   public boolean willUsageBeChanged(UsageInfo usageInfo) {

@@ -17,7 +17,6 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.*;
-import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
@@ -45,12 +44,12 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     myDialog = dialog;
   }
 
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages, FindUsagesCommand refreshCommand) {
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
     PsiField[] fields = new PsiField[myFields.length];
     for (int idx = 0; idx < myFields.length; idx++) {
       fields[idx] = myFields[idx];
     }
-    return new EncapsulateFieldsViewDescriptor(fields, usages, refreshCommand);
+    return new EncapsulateFieldsViewDescriptor(fields, usages);
   }
 
   protected String getCommandName() {

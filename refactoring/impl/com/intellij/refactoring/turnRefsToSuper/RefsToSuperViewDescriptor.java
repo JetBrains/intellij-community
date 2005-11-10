@@ -12,14 +12,16 @@ class RefsToSuperViewDescriptor implements UsageViewDescriptor{
   private PsiClass myClass;
   private PsiClass mySuper;
   private UsageInfo[] myUsages;
-  private FindUsagesCommand myRefreshCommand;
 
-  public RefsToSuperViewDescriptor(TurnRefsToSuperProcessor processor, PsiClass aClass, PsiClass anInterface, UsageInfo[] usages, FindUsagesCommand refreshCommand) {
+  public RefsToSuperViewDescriptor(TurnRefsToSuperProcessor processor,
+                                   PsiClass aClass,
+                                   PsiClass anInterface,
+                                   UsageInfo[] usages
+  ) {
     myProcessor = processor;
     myClass = aClass;
     mySuper = anInterface;
     myUsages = usages;
-    myRefreshCommand = refreshCommand;
   }
 
   public PsiElement[] getElements() {
@@ -28,15 +30,6 @@ class RefsToSuperViewDescriptor implements UsageViewDescriptor{
 
   public UsageInfo[] getUsages() {
     return myUsages;
-  }
-
-  public void refresh(PsiElement[] elements) {
-    myClass = (PsiClass)elements[0];
-    mySuper = (PsiClass)elements[1];
-    myProcessor.setClasses(myClass, mySuper);
-    if (myRefreshCommand != null) {
-      myUsages = myRefreshCommand.execute(elements);
-    }
   }
 
   public String getProcessedElementsHeader() {
@@ -82,10 +75,6 @@ class RefsToSuperViewDescriptor implements UsageViewDescriptor{
 
   public String getHelpID() {
     return "find.refactoringPreview";
-  }
-
-  public boolean canRefresh() {
-    return myRefreshCommand != null;
   }
 
   public boolean willUsageBeChanged(UsageInfo usageInfo) {

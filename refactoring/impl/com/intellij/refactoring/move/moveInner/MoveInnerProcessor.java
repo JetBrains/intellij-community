@@ -28,7 +28,6 @@ import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackages
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.VisibilityUtil;
-import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
@@ -70,8 +69,8 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
     return RefactoringBundle.message("move.inner.class.command", myDescriptiveName);
   }
 
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages, FindUsagesCommand refreshCommand) {
-    return new MoveInnerViewDescriptor(myInnerClass, usages, refreshCommand);
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
+    return new MoveInnerViewDescriptor(myInnerClass, usages);
   }
 
   @NotNull
