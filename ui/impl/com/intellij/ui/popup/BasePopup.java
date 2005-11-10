@@ -21,6 +21,7 @@ import com.intellij.ui.popup.util.MnemonicsSearch;
 import com.intellij.ui.popup.util.SpeedSearch;
 import com.intellij.util.ui.BlockBorder;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -148,7 +149,7 @@ public abstract class BasePopup implements ActionListener, ElementFilter, com.in
     root.getStep().canceled();
   }
 
-  protected void goBack() {
+  public void goBack() {
     if (mySpeedSearch.isHoldingFilter()) {
       mySpeedSearch.reset();
       return;
@@ -328,7 +329,7 @@ public abstract class BasePopup implements ActionListener, ElementFilter, com.in
     }
   }
 
-  protected final void registerAction(String aActionName, int aKeyCode, int aModifier, Action aAction) {
+  public final void registerAction(@NonNls String aActionName, int aKeyCode, int aModifier, Action aAction) {
     getInputMap().put(KeyStroke.getKeyStroke(aKeyCode, aModifier), aActionName);
     getActionMap().put(aActionName, aAction);
   }

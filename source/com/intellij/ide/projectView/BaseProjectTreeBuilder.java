@@ -7,6 +7,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -102,7 +103,19 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
     if (isAlreadySelected(element)) {
       return;
     }
-    AbstractTreeNode node = select((AbstractTreeNode)getTreeStructure().getRootElement(), file, element);
+    AbstractTreeNode node = select((AbstractTreeNode)getTreeStructure().getRootElement(), file, element, new Condition<AbstractTreeNode>() {
+      public boolean value(final AbstractTreeNode object) {
+        return true;
+      }
+    });
+    TreeUtil.selectInTree(getNodeForElement(node), requestFocus, getTree());
+  }
+
+  public void selectInWidth(final Object element, final boolean requestFocus, final Condition<AbstractTreeNode> nonStopCondition) {
+    if (isAlreadySelected(element)) {
+      return;
+    }
+    AbstractTreeNode node = select((AbstractTreeNode)getTreeStructure().getRootElement(), null, element, nonStopCondition);
     TreeUtil.selectInTree(getNodeForElement(node), requestFocus, getTree());
   }
 
@@ -113,7 +126,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
     }
 
     for (TreePath selectionPath : selectionPaths) {
-      if (treePathContainsElement(selectionPath, element)) {
+      if (elementIsEqualTo(selectionPath.getLastPathComponent(), element)){
         return true;
       }
     }
@@ -147,11 +160,11 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
     }
   }
 
-  private AbstractTreeNode select(AbstractTreeNode current, VirtualFile file, Object element) {
+  private AbstractTreeNode select(AbstractTreeNode current, VirtualFile file, Object element, Condition<AbstractTreeNode> nonStopCondition) {
 
     if (current.canRepresent(element)) return current;
 
-    if (current instanceof ProjectViewNode && !(((ProjectViewNode)current).contains(file))) return null;
+    if (current instanceof ProjectViewNode && file != null && !(((ProjectViewNode)current).contains(file))) return null;
 
     DefaultMutableTreeNode currentNode = getNodeForElement(current);
 
@@ -159,20 +172,22 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
 
     List<AbstractTreeNode> kids = getOrBuildChildren(current);
     for (AbstractTreeNode node : kids) {
-      AbstractTreeNode result = select(node, file, element);
-      if (result != null) {
-        currentNode = getNodeForElement(current);
-        if (currentNode != null) {
-          final TreePath path = new TreePath(currentNode.getPath());
-          if (!getTree().isExpanded(path)) {
-            getTree().expandPath(path);
+      if (nonStopCondition.value(node)) {
+        AbstractTreeNode result = select(node, file, element, nonStopCondition);
+        if (result != null) {
+          currentNode = getNodeForElement(current);
+          if (currentNode != null) {
+            final TreePath path = new TreePath(currentNode.getPath());
+            if (!getTree().isExpanded(path)) {
+              getTree().expandPath(path);
+            }
           }
+          return result;
         }
-        return result;
-      }
-      else {
-        if (!expanded) {
-          hideChildrenFor(currentNode);
+        else {
+          if (!expanded) {
+            hideChildrenFor(currentNode);
+          }
         }
       }
     }

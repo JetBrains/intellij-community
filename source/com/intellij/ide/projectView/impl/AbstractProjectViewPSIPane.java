@@ -11,7 +11,7 @@ import com.intellij.ide.favoritesTreeView.FavoritesViewImpl;
 import com.intellij.ide.impl.ProjectViewSelectInTarget;
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.ProjectView;
-import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
+import com.intellij.ide.projectView.impl.nodes.*;
 import com.intellij.ide.ui.customization.CustomizableActionsSchemas;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -24,6 +24,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.Condition;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.TreeSpeedSearch;
@@ -176,6 +177,11 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
   }
 
   public final void selectModule(Module module, boolean requestFocus) {
+    myTreeBuilder.selectInWidth(module, requestFocus, new Condition<AbstractTreeNode>(){
+      public boolean value(final AbstractTreeNode node) {
+        return node instanceof AbstractModuleNode || node instanceof ModuleGroupNode || node instanceof AbstractProjectNode;
+      }
+    });
   }
 
   public final TreePath[] getSelectionPaths() {

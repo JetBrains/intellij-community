@@ -64,13 +64,20 @@ public class NamedLibraryElementNode extends ProjectViewNode<NamedLibraryElement
   }
 
   public static boolean orderEntryContainsFile(OrderEntry orderEntry, VirtualFile file) {
-    VirtualFile[] files = orderEntry.getFiles(OrderRootType.CLASSES);
-    for (VirtualFile virtualFile : files) {
-      boolean ancestor = VfsUtil.isAncestor(virtualFile, file, false);
-      if (ancestor) return true;
-    }
+    if (containsFileInOrderType(orderEntry, OrderRootType.CLASSES, file)) return true;
+    if (containsFileInOrderType(orderEntry, OrderRootType.SOURCES, file)) return true;
+    if (containsFileInOrderType(orderEntry, OrderRootType.JAVADOC, file)) return true;
 
     return false;
+  }
+
+  private static boolean containsFileInOrderType(final OrderEntry orderEntry, final OrderRootType orderType, final VirtualFile file) {
+    VirtualFile[] files = orderEntry.getFiles(orderType);
+    for (VirtualFile virtualFile : files) {
+      boolean ancestor = VfsUtil.isAncestor(virtualFile, file, false);
+      if (ancestor) return false;
+    }
+    return true;
   }
 
   public void update(PresentationData presentation) {

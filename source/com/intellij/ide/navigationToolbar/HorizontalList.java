@@ -42,6 +42,8 @@ public class HorizontalList extends JPanel {
 
   private JButton myLeftButton = new JButton(IconLoader.getIcon("/general/splitLeft.png"));
   private JButton myRightButton = new JButton(IconLoader.getIcon("/general/splitRight.png"));
+  private JPanel myScrollablePanel = new JPanel(new GridBagLayout());
+  private JScrollPane myScrollPane = ScrollPaneFactory.createScrollPane(myScrollablePanel);
 
   public HorizontalList() {
     this(new Object[0]);
@@ -50,6 +52,15 @@ public class HorizontalList extends JPanel {
   public HorizontalList(Object [] objects) {
     setLayout(new BorderLayout());
     setBackground(UIUtil.getListBackground());
+
+    myScrollablePanel.setBackground(UIUtil.getListBackground());
+    myScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+    myScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+
+    add(myScrollPane, BorderLayout.CENTER);
+    add(myLeftButton, BorderLayout.WEST);
+    add(myRightButton, BorderLayout.EAST);
+
     myModel.addAll(Arrays.asList(objects));
 
     myLeftButton.addActionListener(new ActionListener() {
@@ -80,13 +91,13 @@ public class HorizontalList extends JPanel {
 
     registerKeyboardAction(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        onFocusMoving(-1);
+        shiftFocus(-1);
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0), JComponent.WHEN_FOCUSED);
 
     registerKeyboardAction(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        onFocusMoving(1);
+        shiftFocus(1);
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0), JComponent.WHEN_FOCUSED);
 
@@ -111,11 +122,11 @@ public class HorizontalList extends JPanel {
     registerKeyboardAction(dblClickAction, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_FOCUSED);
     registerKeyboardAction(dblClickAction, KeyStroke.getKeyStroke(KeyEvent.VK_F4, 0), JComponent.WHEN_FOCUSED);
 
-    registerKeyboardAction(new AbstractAction() {
+    /*registerKeyboardAction(new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
         select();
       }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_K, KeyEvent.ALT_MASK), JComponent.WHEN_IN_FOCUSED_WINDOW);
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_K, KeyEvent.ALT_MASK), JComponent.WHEN_IN_FOCUSED_WINDOW);*/
 
     registerKeyboardAction(new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
@@ -142,7 +153,7 @@ public class HorizontalList extends JPanel {
 
   private void shiftFocusToVisible(int direction){
     while (mySelectedIndex != -1 && !myList.get(mySelectedIndex).isShowing()) {
-      onFocusMoving(direction);
+      shiftFocus(direction);
     }
   }
 
@@ -299,8 +310,9 @@ public class HorizontalList extends JPanel {
 
 
   private void paintComponent() {
-    JPanel scrollablePanel = new JPanel(new GridBagLayout());
-    scrollablePanel.setBackground(UIUtil.getListBackground());
+
+    myScrollablePanel.removeAll();
+    myScrollablePanel.revalidate();
     GridBagConstraints gc = new GridBagConstraints(GridBagConstraints.RELATIVE, 1, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0,0,0,0),0,0);
     int width = 0;
     int widthToTheRight = 0;
@@ -309,10 +321,11 @@ public class HorizontalList extends JPanel {
     final int additionalWidth = toBeContLabel.getFontMetrics(toBeContLabel.getFont()).stringWidth("...") + 6;
     int wholeWidth = getWidth() - 2 * myLeftButton.getWidth();
     if (mySelectedIndex != -1) {
+      myScrollablePanel.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT);
       if (myFirstIndex > 0){
         final JLabel preList = new JLabel("...");
         clearBorder(preList);
-        scrollablePanel.add(preList, gc);
+        myScrollablePanel.add(preList, gc);
         wholeWidth -= additionalWidth;
       }
       for (int i = 0; i < myList.size(); i++) {
@@ -323,22 +336,22 @@ public class HorizontalList extends JPanel {
         if (i + 1 > myFirstIndex){
           widthToTheRight += labelWidth;
           if ( widthToTheRight < wholeWidth) {
-            scrollablePanel.add(linkLabel, gc);
+            myScrollablePanel.add(linkLabel, gc);
           } else {
-            scrollablePanel.add(toBeContLabel, gc);
+            myScrollablePanel.add(toBeContLabel, gc);
             break;
           }
         }
       }
       gc.weightx = 1;
       gc.fill = GridBagConstraints.HORIZONTAL;
-      scrollablePanel.add(Box.createHorizontalBox(), gc);
+      myScrollablePanel.add(Box.createHorizontalBox(), gc);
     } else if (!myModel.isEmpty()){
-      scrollablePanel.setComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT);
+      myScrollablePanel.setComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT);
 
       gc.weightx = 1;
       gc.fill = GridBagConstraints.HORIZONTAL;
-      scrollablePanel.add(Box.createHorizontalBox(), gc);
+      myScrollablePanel.add(Box.createHorizontalBox(), gc);
 
       gc.weightx = 0;
       gc.fill = GridBagConstraints.NONE;
@@ -349,28 +362,23 @@ public class HorizontalList extends JPanel {
         final Icon icon = linkLabel.getIcon();
         width += linkLabel.getFontMetrics(linkLabel.getFont()).stringWidth(linkLabel.getText()) + (icon != null ?  icon.getIconWidth() + linkLabel.getIconTextGap() : 0) + 6;
         if (width + additionalWidth < wholeWidth || (i == 0 && width < wholeWidth)){
-          scrollablePanel.add(linkLabel, gc);
+          myScrollablePanel.add(linkLabel, gc);
         } else {
           myFirstIndex = i + 1;
-          scrollablePanel.add(toBeContLabel, gc);
+          myScrollablePanel.add(toBeContLabel, gc);
           wholeWidth -= additionalWidth;
           break;
         }
       }
     }
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(scrollablePanel);
-    scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-    scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
-    removeAll();
-    add(scrollPane, BorderLayout.CENTER);
-    add(myLeftButton, BorderLayout.WEST);
-    add(myRightButton, BorderLayout.EAST);
-    revalidate();
+
     final boolean scrollBarVisible = width >= wholeWidth;
     myLeftButton.setVisible(scrollBarVisible);
     myRightButton.setVisible(scrollBarVisible);
     myLeftButton.setEnabled(widthToTheRight >= wholeWidth && myFirstIndex < myModel.size() - 2);
     myRightButton.setEnabled(myFirstIndex > 0);
+    myScrollablePanel.revalidate();
+    myScrollablePanel.repaint();
   }
 
   public Dimension getPreferredSize() {
@@ -401,7 +409,7 @@ public class HorizontalList extends JPanel {
     }
   }
 
-  private void onFocusMoving(int direction){
+  protected void shiftFocus(int direction){
     clearBorder();
     mySelectedIndex = getIndexByMode(mySelectedIndex + direction);
     paintBorder();

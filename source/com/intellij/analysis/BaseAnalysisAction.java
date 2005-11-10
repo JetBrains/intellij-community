@@ -127,7 +127,7 @@ public abstract class BaseAnalysisAction extends AnAction {
     else if (psiTarget instanceof PsiPackage) {
       PsiPackage pack = (PsiPackage)psiTarget;
       PsiDirectory[] dirs = pack.getDirectories(GlobalSearchScope.projectScope(pack.getProject()));
-      if (dirs == null || dirs.length == 0) return null;
+      if (dirs.length == 0) return null;
       return new AnalysisScope(pack);
     }
     else if (psiTarget != null) {
