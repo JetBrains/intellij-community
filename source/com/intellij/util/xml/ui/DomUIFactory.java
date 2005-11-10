@@ -11,13 +11,18 @@ import com.intellij.util.xml.impl.ui.BooleanControl;
 import com.intellij.util.xml.impl.ui.PsiClassControl;
 import com.intellij.util.xml.impl.ui.StringControl;
 import com.intellij.util.xml.impl.ui.CollectionControl;
+import com.intellij.openapi.diagnostic.Logger;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.InvocationTargetException;
 
 /**
  * @author peter
  */
 public class DomUIFactory {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.ui.DomUIFactory");
 
   public static <T> DomUIControl createControl(GenericValue<T> element, Class<T> aClass) {
     try {
@@ -36,6 +41,22 @@ public class DomUIFactory {
     }
     catch (NoSuchMethodException e) {
       throw new RuntimeException(e);
+    }
+  }
+
+  public static DomUIControl createControl(DomElement parent, Method genericValueGetterMethod) {
+    final Type genericReturnType = genericValueGetterMethod.getGenericReturnType();
+    assert genericReturnType instanceof ParameterizedType;
+    assert ((ParameterizedType) genericReturnType).getRawType().equals(GenericValue.class);
+
+    try {
+      return createControl((GenericValue)genericValueGetterMethod.invoke(parent), (Class)((ParameterizedType) genericReturnType).getActualTypeArguments()[0]);
+    }
+    catch (IllegalAccessException e) {
+      LOG.error(e);
+    }
+    catch (InvocationTargetException e) {
+      LOG.error(e);
     }
   }
 
