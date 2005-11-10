@@ -27,4 +27,6 @@ public interface DomElement {
   DomMethodsInfo getMethodsInfo();
 
   String getTagName();
+
+  void acceptChildren(DomElementVisitor visitor);
 }

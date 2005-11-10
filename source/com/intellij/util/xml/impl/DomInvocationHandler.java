@@ -25,6 +25,7 @@ import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author peter
@@ -41,7 +42,6 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   private XmlFile myFile;
   private DomElement myProxy;
   private boolean myInitialized = false;
-  private boolean myInitializing = false;
   private final Map<Pair<String, Integer>, IndexedElementInvocationHandler> myFixedChildren = new HashMap<Pair<String, Integer>, IndexedElementInvocationHandler>();
   private final MethodsMap myMethodsMap;
   private boolean myInvalidated;
@@ -168,6 +168,32 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     return myTagName;
   }
 
+  public void acceptChildren(DomElementVisitor visitor) {
+    try {
+      checkInitialized();
+    }
+    catch (IllegalAccessException e) {
+      LOG.error(e);
+    }
+    catch (InstantiationException e) {
+      LOG.error(e);
+    }
+    Set<IndexedElementInvocationHandler> fixedChildren = new HashSet<IndexedElementInvocationHandler>();
+    for (IndexedElementInvocationHandler handler : myFixedChildren.values()) {
+      visitor.visitDomElement(handler.getProxy());
+      fixedChildren.add(handler);
+    }
+    final XmlTag tag = getXmlTag();
+    if (tag != null) {
+      for (XmlTag xmlTag : tag.getSubTags()) {
+        final DomInvocationHandler cachedElement = DomManagerImpl.getCachedElement(xmlTag);
+        if (cachedElement != null && !fixedChildren.contains(cachedElement)) {
+          visitor.visitDomElement(cachedElement.getProxy());
+        }
+      }
+    }
+  }
+
   @NotNull
   protected Converter getConverter(final Method method, final boolean getter) throws IllegalAccessException, InstantiationException {
     return myManager.getConverterManager().getConverter(method, getter);
@@ -275,8 +301,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
 
   final void checkInitialized() throws IllegalAccessException, InstantiationException {
     synchronized (PsiLock.LOCK) {
-      if (myInitialized || myInitializing) return;
-      myInitializing = true;
+      if (myInitialized) return;
       try {
         final HashSet<XmlTag> usedTags = new HashSet<XmlTag>();
 
@@ -306,7 +331,6 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
         }
       }
       finally {
-        myInitializing = false;
         myInitialized = true;
       }
     }

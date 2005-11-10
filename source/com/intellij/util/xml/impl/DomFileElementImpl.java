@@ -105,6 +105,10 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     return null;
   }
 
+  public void acceptChildren(DomElementVisitor visitor) {
+    visitor.visitDomElement(getRootElement());
+  }
+
   public int getChildIndex(final DomElement child) {
     return -1;
   }
