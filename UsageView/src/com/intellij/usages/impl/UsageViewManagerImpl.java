@@ -237,16 +237,16 @@ public class UsageViewManagerImpl extends UsageViewManager implements ProjectCom
           if (myUsageCount == 1 && !myProcessPresentation.isShowPanelIfOnlyOneUsage()) {
             myFirstUsage = usage;
           }
-          final UsageViewImpl usageView = myUsageViewRef.get();
+
           if (myUsageCount == 2 || (myProcessPresentation.isShowPanelIfOnlyOneUsage() && myUsageCount == 1)) {
             openView();
             if (myFirstUsage != null) {
-              usageView.appendUsageLater(myFirstUsage);
+              myUsageViewRef.get().appendUsageLater(myFirstUsage);
             }
-            usageView.appendUsageLater(usage);
+            myUsageViewRef.get().appendUsageLater(usage);
           }
           else if (myUsageCount > 2) {
-            usageView.appendUsageLater(usage);
+            myUsageViewRef.get().appendUsageLater(usage);
           }
 
           final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
