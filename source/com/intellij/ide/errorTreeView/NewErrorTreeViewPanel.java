@@ -10,7 +10,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ex.ActionToolbarEx;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.ui.PopupHandler;
@@ -44,8 +43,8 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     boolean isProcessStopped();
   }
 
-  private ActionToolbarEx myLeftToolbar;
-  private ActionToolbarEx myRightToolbar;
+  private ActionToolbar myLeftToolbar;
+  private ActionToolbar myRightToolbar;
   private TreeExpander myTreeExpander = new MyTreeExpander();
   private ExporterToTextFile myExporterToTextFile;
   protected Project myProject;
@@ -392,10 +391,10 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     JPanel toolbarPanel = new JPanel(new GridLayout(1, 2));
     final ActionManager actionManager = ActionManager.getInstance();
     myLeftToolbar =
-    (ActionToolbarEx)actionManager.createActionToolbar(ActionPlaces.COMPILER_MESSAGES_TOOLBAR, leftUpdateableActionGroup, false);
+    actionManager.createActionToolbar(ActionPlaces.COMPILER_MESSAGES_TOOLBAR, leftUpdateableActionGroup, false);
     toolbarPanel.add(myLeftToolbar.getComponent());
     myRightToolbar =
-    (ActionToolbarEx)actionManager.createActionToolbar(ActionPlaces.COMPILER_MESSAGES_TOOLBAR, rightUpdateableActionGroup, false);
+    actionManager.createActionToolbar(ActionPlaces.COMPILER_MESSAGES_TOOLBAR, rightUpdateableActionGroup, false);
     toolbarPanel.add(myRightToolbar.getComponent());
 
     return toolbarPanel;
@@ -443,8 +442,8 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
       if (canControlProcess()) {
         stopProcess();
       }
-      myLeftToolbar.updateActions();
-      myRightToolbar.updateActions();
+      myLeftToolbar.updateActionsImmediately();
+      myRightToolbar.updateActionsImmediately();
     }
 
     public void update(AnActionEvent event) {

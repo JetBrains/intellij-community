@@ -1,8 +1,8 @@
 package com.intellij.ide.todo;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.ide.TreeExpander;
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.*;
 import com.intellij.ide.todo.configurable.TodoConfigurable;
 import com.intellij.ide.todo.nodes.TodoDirNode;
@@ -22,7 +22,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ex.ActionToolbarEx;
 import com.intellij.openapi.wm.impl.VisibilityWatcher;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -571,7 +570,7 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
         this,
         presentation,
         ActionPlaces.TODO_VIEW_TOOLBAR,
-        ActionToolbarEx.DEFAULT_MINIMUM_BUTTON_SIZE
+        ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE
       );
       presentation.putClientProperty("button", button);
       return button;

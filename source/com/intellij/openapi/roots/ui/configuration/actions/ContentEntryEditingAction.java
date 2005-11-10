@@ -1,16 +1,11 @@
 package com.intellij.openapi.roots.ui.configuration.actions;
 
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
-import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.fileChooser.ex.FileNodeDescriptor;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ex.ActionToolbarEx;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -62,6 +57,6 @@ public abstract class ContentEntryEditingAction extends ToggleAction implements 
   }
 
   public JComponent createCustomComponent(Presentation presentation) {
-    return new ActionButtonWithText(this, presentation, ActionPlaces.UNKNOWN, ActionToolbarEx.DEFAULT_MINIMUM_BUTTON_SIZE);
+    return new ActionButtonWithText(this, presentation, ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
   }
 }

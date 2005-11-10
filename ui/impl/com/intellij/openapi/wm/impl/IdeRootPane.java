@@ -7,21 +7,16 @@ import com.intellij.ide.navigationToolbar.NavigationToolbarPanel;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.ui.customization.CustomizableActionsSchemas;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.KeymapManager;
-import com.intellij.openapi.wm.ex.ActionToolbarEx;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.impl.status.StatusBarImpl;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreen;
-import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Anton Katilin
@@ -139,12 +134,12 @@ public class IdeRootPane extends JRootPane{
 
   private JComponent createToolbar() {
     ActionGroup group = (ActionGroup)CustomizableActionsSchemas.getInstance().getCorrectedAction(IdeActions.GROUP_MAIN_TOOLBAR);
-    final ActionToolbarEx toolBar=(ActionToolbarEx)myActionManager.createActionToolbar(
+    final ActionToolbar toolBar= myActionManager.createActionToolbar(
       ActionPlaces.MAIN_TOOLBAR,
       group,
       true
     );
-    toolBar.setLayoutPolicy(ActionToolbarEx.WRAP_LAYOUT_POLICY);
+    toolBar.setLayoutPolicy(ActionToolbar.WRAP_LAYOUT_POLICY);
     return toolBar.getComponent();
   }
 

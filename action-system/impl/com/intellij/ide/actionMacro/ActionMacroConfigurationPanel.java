@@ -1,12 +1,12 @@
 package com.intellij.ide.actionMacro;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.ListUtil;
 import com.intellij.util.containers.HashSet;
-import com.intellij.ide.IdeBundle;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;

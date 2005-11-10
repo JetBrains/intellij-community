@@ -81,7 +81,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbarEx {
 
     setLayout(new BorderLayout());
     setOrientation(horizontal ? SwingConstants.HORIZONTAL : SwingConstants.VERTICAL);
-    updateActions();
+    updateActionsImmediately();
     //
     keymapManager.addKeymapManagerListener(new WeakKeymapManagerListener(keymapManager, myKeymapManagerListener));
     actionManager.addTimerListener(500, new WeakTimerListener(actionManager, myTimerListener));
@@ -109,7 +109,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbarEx {
   public void setButtonLook(final ActionButtonLook buttonLook) {
     myButtonLook = buttonLook;
     myVisibleActions.clear();
-    updateActions();
+    updateActionsImmediately();
   }
 
   public void paint(final Graphics g) {
@@ -145,7 +145,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbarEx {
   protected ActionButton createToolbarButton(final AnAction action) {
     if (action.displayTextInToolbar()) {
       return new ActionButtonWithText(action, myPresentationFactory.getPresentation(action), myPlace,
-                                      ActionToolbarEx.DEFAULT_MINIMUM_BUTTON_SIZE);
+                                      ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
     }
 
     final ActionButton actionButton = new ActionButton(action,
@@ -260,7 +260,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbarEx {
     // In this case we calculate bounds as it is a NOWRAP toolbar.
     if (getWidth() == 0 || getHeight() == 0) {
       final int oldLayoutPolicy = myLayoutPolicy;
-      myLayoutPolicy = ActionToolbarEx.NOWRAP_LAYOUT_POLICY;
+      myLayoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY;
       try {
         calculateBoundsNowrapImpl();
       }
@@ -498,7 +498,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbarEx {
         }
       }
 
-      updateActions();
+      updateActionsImmediately();
     }
   }
 
@@ -532,7 +532,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbarEx {
     myOrientation = orientation;
   }
 
-  public void updateActions() {
+  public void updateActionsImmediately() {
     myNewVisibleActions.clear();
     final DataContext dataContext = ((DataManagerImpl)myDataManager).getDataContextTest(this);
 

@@ -1,7 +1,7 @@
 package com.intellij.ide.actionMacro.actions;
 
-import com.intellij.ide.actionMacro.ActionMacroManager;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.actionMacro.ActionMacroManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;

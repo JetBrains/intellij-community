@@ -1,11 +1,11 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.ui.popup.IdePopup;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseWheelEvent;
 
 public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
   private static final Logger LOG = Logger.getInstance("com.intellij.ide.IdePopupManager");
@@ -25,7 +25,7 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
   public boolean dispatch(AWTEvent e) {
     LOG.assertTrue(isPopupActive());
 
-    if ((e instanceof KeyEvent) || (e instanceof MouseEvent) || (e instanceof MouseWheelEvent)) {
+    if (e instanceof KeyEvent || e instanceof MouseEvent) {
       return myActivePopup.dispatch(e);
     }
 

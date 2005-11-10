@@ -16,16 +16,78 @@
 package com.intellij.openapi.actionSystem;
 
 import javax.swing.*;
+import java.awt.*;
 
 /**
  * Represents a toolbar with a visual presentation.
  *
- * @see ActionManager#createActionToolbar(String, ActionGroup, boolean) 
+ * @see ActionManager#createActionToolbar(String, ActionGroup, boolean)
  */
 public interface ActionToolbar {
+  /**
+   * This is default layout policy for the toolbar. It defines that
+   * all toolbar component are in one row / column and they are not wrapped
+   * when toolbar is small
+   */
+  int NOWRAP_LAYOUT_POLICY = 0;
+  /**
+   * This is experimental layout policy which allow toolbar to
+   * wrap components in multiple rows.
+   */
+  int WRAP_LAYOUT_POLICY = 1;
+  /** This is default minimum size of the toolbar button */
+  Dimension DEFAULT_MINIMUM_BUTTON_SIZE = new Dimension(25, 25);
 
   /**
    * @return component which represents the tool bar on UI
    */
   JComponent getComponent();
+
+  /**
+   * @return current layout policy
+   * @see #NOWRAP_LAYOUT_POLICY
+   * @see #WRAP_LAYOUT_POLICY
+   */
+  int getLayoutPolicy();
+
+  /**
+   * Sets new component layout policy. Method accepts {@link #WRAP_LAYOUT_POLICY} and
+   * {@link #NOWRAP_LAYOUT_POLICY} values.
+   */
+  void setLayoutPolicy(int layoutPolicy);
+
+  /**
+   * If the valus is <code>true</code> then the all button on toolbar are
+   * the same size. It very useful when you create "Outlook" like toolbar.
+   * Currently this method can be considered as hot fix.
+   */
+  void adjustTheSameSize(boolean value);
+
+  /**
+   * Sets minimum size of toolbar button. By default all buttons
+   * at toolbar has 25x25 pixels size.
+   *
+   * @throws IllegalArgumentException
+   *          if <code>size</code>
+   *          is <code>null</code>
+   */
+  void setMinimumButtonSize(Dimension size);
+
+  /**
+   * Sets toolbar orientation
+   *
+   * @see javax.swing.SwingConstants#HORIZONTAL
+   * @see javax.swing.SwingConstants#VERTICAL
+   */
+  void setOrientation(int orientation);
+
+  /**
+   * @return maximum button height
+   */
+  int getMaxButtonHeight();
+
+  /**
+   * Forces update of the all actions in the toolbars. Actions, however, normally updated automatially every 500msec.
+   */
+  void updateActionsImmediately();
 }

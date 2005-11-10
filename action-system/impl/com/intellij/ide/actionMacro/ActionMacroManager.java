@@ -1,8 +1,8 @@
 package com.intellij.ide.actionMacro;
 
 import com.intellij.ide.DataManager;
-import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;

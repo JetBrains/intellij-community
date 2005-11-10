@@ -1,4 +1,4 @@
-package com.intellij.ide;
+package com.intellij.openapi.ui.popup;
 
 import java.awt.*;
 

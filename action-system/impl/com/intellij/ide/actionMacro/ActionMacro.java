@@ -1,5 +1,6 @@
 package com.intellij.ide.actionMacro;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
@@ -7,7 +8,6 @@ import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.ide.IdeBundle;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 

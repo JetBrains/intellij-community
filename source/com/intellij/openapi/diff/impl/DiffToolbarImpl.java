@@ -1,18 +1,14 @@
 package com.intellij.openapi.diff.impl;
 
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diff.DiffRequest;
 import com.intellij.openapi.diff.DiffToolbar;
-import com.intellij.openapi.wm.ex.ActionToolbarEx;
 
 import javax.swing.*;
 
 public class DiffToolbarImpl implements DiffToolbar {
   private final DefaultActionGroup myActionGroup  = new DefaultActionGroup();
-  private ActionToolbarEx myActionToolbar;
+  private ActionToolbar myActionToolbar;
 
   public void registerKeyboardActions(JComponent registerActionsTo) {
     AnAction[] actions = getAllActions();
@@ -45,7 +41,7 @@ public class DiffToolbarImpl implements DiffToolbar {
 
   public JComponent getComponent() {
     if (myActionToolbar == null)
-      myActionToolbar = (ActionToolbarEx)ActionManager.getInstance().
+      myActionToolbar = ActionManager.getInstance().
         createActionToolbar(ActionPlaces.UNKNOWN, myActionGroup, true);
     return myActionToolbar.getComponent();
   }
@@ -56,7 +52,7 @@ public class DiffToolbarImpl implements DiffToolbar {
   }
 
   private void updateToolbar() {
-    if (myActionToolbar != null) myActionToolbar.updateActions();
+    if (myActionToolbar != null) myActionToolbar.updateActionsImmediately();
   }
 
   public void addSeparator() {

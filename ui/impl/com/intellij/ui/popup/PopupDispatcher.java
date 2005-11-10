@@ -5,9 +5,9 @@
 package com.intellij.ui.popup;
 
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.IdePopup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.ui.popup.IdePopup;
 
 import javax.swing.*;
 import java.awt.*;

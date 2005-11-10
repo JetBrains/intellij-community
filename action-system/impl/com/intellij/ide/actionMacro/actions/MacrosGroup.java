@@ -1,13 +1,14 @@
 package com.intellij.ide.actionMacro.actions;
 
 import com.intellij.ide.actionMacro.ActionMacro;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.

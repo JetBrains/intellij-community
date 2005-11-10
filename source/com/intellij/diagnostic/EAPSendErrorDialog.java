@@ -1,11 +1,11 @@
 package com.intellij.diagnostic;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
-import com.intellij.openapi.keymap.ex.KeymapManagerEx;
+import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.util.net.HTTPProxySettingsDialog;
-import com.intellij.CommonBundle;
 
 import javax.swing.*;
 import javax.swing.event.UndoableEditEvent;
@@ -105,8 +105,8 @@ public class EAPSendErrorDialog extends DialogWrapper {
       }
     });
     Keymap keymap = myErrorDescriptionTextArea.getKeymap();
-    Shortcut [] undoShortcuts = KeymapManagerEx.getInstanceEx().getActiveKeymap().getShortcuts("$Undo");
-    Shortcut [] redoShortcuts = KeymapManagerEx.getInstanceEx().getActiveKeymap().getShortcuts("$Redo");
+    Shortcut [] undoShortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts("$Undo");
+    Shortcut [] redoShortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts("$Redo");
 
     //noinspection HardCodedStringLiteral
     Action undoAction = new AbstractAction ("Undo") {
@@ -124,15 +124,16 @@ public class EAPSendErrorDialog extends DialogWrapper {
       }
     };
 
-    for (int i = 0; i < undoShortcuts.length; i++) {
-      Shortcut undoShortcut = undoShortcuts[i];
-      if (undoShortcut instanceof KeyboardShortcut)
+    for (Shortcut undoShortcut : undoShortcuts) {
+      if (undoShortcut instanceof KeyboardShortcut) {
         keymap.addActionForKeyStroke(((KeyboardShortcut)undoShortcut).getFirstKeyStroke(), undoAction);
+      }
     }
-    for (int i = 0; i < redoShortcuts.length; i++) {
-      Shortcut redoShortcut = redoShortcuts[i];
-      if (redoShortcut instanceof KeyboardShortcut)
+
+    for (Shortcut redoShortcut : redoShortcuts) {
+      if (redoShortcut instanceof KeyboardShortcut) {
         keymap.addActionForKeyStroke(((KeyboardShortcut)redoShortcut).getFirstKeyStroke(), redoAction);
+      }
     }
 
     myErrorDescriptionTextArea.setKeymap(keymap);

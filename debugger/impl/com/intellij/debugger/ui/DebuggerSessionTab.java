@@ -38,7 +38,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.ex.ActionToolbarEx;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import com.intellij.peer.PeerFactory;
 import com.intellij.ui.content.*;
@@ -76,8 +75,8 @@ public class DebuggerSessionTab {
   private final ContentManager myViewsContentManager;
 
   private JPanel myToolBarPanel;
-  private ActionToolbarEx myFirstToolbar;
-  private ActionToolbarEx mySecondToolbar;
+  private ActionToolbar myFirstToolbar;
+  private ActionToolbar mySecondToolbar;
 
   /**
    * 4 debugger views
@@ -113,8 +112,8 @@ public class DebuggerSessionTab {
             case DebuggerSession.EVENT_DETACHED:
               DebuggerSettings settings = DebuggerSettings.getInstance();
 
-              myFirstToolbar.updateActions();
-              mySecondToolbar.updateActions();
+              myFirstToolbar.updateActionsImmediately();
+              mySecondToolbar.updateActionsImmediately();
 
               if (settings.HIDE_DEBUGGER_ON_PROCESS_TERMINATION) {
                 try {
@@ -327,7 +326,7 @@ public class DebuggerSessionTab {
     myWatchPanel.getWatchTree().getModel().addTreeModelListener(updater);
   }
 
-  private ActionToolbarEx createSecondToolbar() {
+  private ActionToolbar createSecondToolbar() {
     ActionManager actionManager = ActionManager.getInstance();
     DefaultActionGroup group = new DefaultActionGroup();
     AnAction action;
@@ -350,10 +349,10 @@ public class DebuggerSessionTab {
     action = actionManager.getAction(DebuggerActions.TOGGLE_STEP_SUSPEND_POLICY);
     if (action != null) group.add(action);
 
-    return (ActionToolbarEx)ActionManager.getInstance().createActionToolbar(ActionPlaces.DEBUGGER_TOOLBAR, group, false);
+    return ActionManager.getInstance().createActionToolbar(ActionPlaces.DEBUGGER_TOOLBAR, group, false);
   }
 
-  private ActionToolbarEx createFirstToolbar(RunContentDescriptor contentDescriptor, JComponent component) {
+  private ActionToolbar createFirstToolbar(RunContentDescriptor contentDescriptor, JComponent component) {
     DefaultActionGroup group = new DefaultActionGroup();
     ActionManager actionManager = ActionManager.getInstance();
 
@@ -373,7 +372,7 @@ public class DebuggerSessionTab {
     if (action != null) group.add(action);
     group.add(new CloseAction(myRunner, contentDescriptor, getProject()));
     group.add(new ContextHelpAction(myRunner.getInfo().getHelpId()));
-    return (ActionToolbarEx)ActionManager.getInstance().createActionToolbar(ActionPlaces.DEBUGGER_TOOLBAR, group, false);
+    return ActionManager.getInstance().createActionToolbar(ActionPlaces.DEBUGGER_TOOLBAR, group, false);
   }
 
   private Content findContent(Key key) {

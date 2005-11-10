@@ -16,7 +16,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 
 /**
@@ -32,13 +31,13 @@ public class IdeEventQueue extends EventQueue {
   private final Object myLock;
 
 // Overriden in Fabrique
-  protected final ArrayList myIdleListeners;
-  protected final ArrayList myActivityListeners;
+  protected final ArrayList<Runnable> myIdleListeners;
+  protected final ArrayList<Runnable> myActivityListeners;
   private final Alarm myIdleRequestsAlarm;
   private final Alarm myIdleTimeCounterAlarm;
   private long myIdleTime;
-  private final HashMap myListener2Request; // IdleListener -> MyFireIdleRequest
-  private final HashMap myListener2Timeout; // IdleListener -> java.lang.Integer
+  private final HashMap<Runnable, MyFireIdleRequest> myListener2Request; // IdleListener -> MyFireIdleRequest
+  private final HashMap<Runnable,Integer> myListener2Timeout; // IdleListener -> java.lang.Integer
 
 
   private final IdeKeyEventDispatcher myKeyEventDispatcher;
@@ -84,13 +83,13 @@ public class IdeEventQueue extends EventQueue {
 
   protected IdeEventQueue() {
     myLock = new Object();
-    myIdleListeners = new ArrayList(2);
-    myActivityListeners = new ArrayList(2);
+    myIdleListeners = new ArrayList<Runnable>(2);
+    myActivityListeners = new ArrayList<Runnable>(2);
     myIdleRequestsAlarm = new Alarm();
     myIdleTimeCounterAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
     addIdleTimeCounterRequest();
-    myListener2Request = new HashMap();
-    myListener2Timeout = new HashMap();
+    myListener2Request = new HashMap<Runnable, MyFireIdleRequest>();
+    myListener2Timeout = new HashMap<Runnable, Integer>();
     myKeyEventDispatcher = new IdeKeyEventDispatcher();
     myMouseEventDispatcher = new IdeMouseEventDispatcher();
     myPopupManager = new IdePopupManager();
@@ -176,7 +175,7 @@ public class IdeEventQueue extends EventQueue {
       myIdleListeners.add(runnable);
       final MyFireIdleRequest request = new MyFireIdleRequest(runnable);
       myListener2Request.put(runnable, request);
-      myListener2Timeout.put(runnable, new Integer(timeout));
+      myListener2Timeout.put(runnable, timeout);
       myIdleRequestsAlarm.addRequest(request, timeout);
     }
   }
@@ -187,11 +186,11 @@ public class IdeEventQueue extends EventQueue {
       final boolean wasRemoved = myIdleListeners.remove(runnable);
       LOG.assertTrue(wasRemoved, "unknown runnable: " + runnable);
 
-      final MyFireIdleRequest request = (MyFireIdleRequest)myListener2Request.remove(runnable);
+      final MyFireIdleRequest request = myListener2Request.remove(runnable);
       LOG.assertTrue(request != null);
       myIdleRequestsAlarm.cancelRequest(request);
 
-      final Integer timeout = (Integer)myListener2Timeout.remove(runnable);
+      final Integer timeout = myListener2Timeout.remove(runnable);
       LOG.assertTrue(timeout != null);
     }
   }
@@ -292,13 +291,12 @@ public class IdeEventQueue extends EventQueue {
     if ((e instanceof KeyEvent) || (e instanceof MouseEvent)) {
       synchronized (myLock) {
         myIdleRequestsAlarm.cancelAllRequests();
-        for (int i = 0; i < myIdleListeners.size(); i++) {
-          final Runnable runnable = (Runnable)myIdleListeners.get(i);
-          final MyFireIdleRequest request = (MyFireIdleRequest)myListener2Request.get(runnable);
-          LOG.assertTrue(request != null, "There is no request for " + runnable);
-          final Integer timeout = (Integer)myListener2Timeout.get(runnable);
+        for (Runnable idleListener : myIdleListeners) {
+          final MyFireIdleRequest request = myListener2Request.get(idleListener);
+          LOG.assertTrue(request != null, "There is no request for " + idleListener);
+          final Integer timeout = myListener2Timeout.get(idleListener);
           LOG.assertTrue(timeout != null);
-          myIdleRequestsAlarm.addRequest(request, timeout.intValue(), ModalityState.NON_MMODAL);
+          myIdleRequestsAlarm.addRequest(request, timeout, ModalityState.NON_MMODAL);
         }
 
         if (
@@ -309,9 +307,8 @@ public class IdeEventQueue extends EventQueue {
           MouseEvent.MOUSE_CLICKED == e.getID()
         ) {
           addIdleTimeCounterRequest();
-          for (int i = 0; i < myActivityListeners.size(); i++) {
-            final Runnable runnable = (Runnable)myActivityListeners.get(i);
-            runnable.run();
+          for (Runnable activityListener : myActivityListeners) {
+            activityListener.run();
           }
         }
       }
@@ -387,9 +384,9 @@ public class IdeEventQueue extends EventQueue {
     public void run() {
       myRunnable.run();
       synchronized (myLock) {
-        final Integer timeout = (Integer)myListener2Timeout.get(myRunnable);
+        final Integer timeout = myListener2Timeout.get(myRunnable);
         LOG.assertTrue(timeout != null);
-        myIdleRequestsAlarm.addRequest(this, timeout.intValue(), ModalityState.NON_MMODAL);
+        myIdleRequestsAlarm.addRequest(this, timeout, ModalityState.NON_MMODAL);
       }
     }
   }

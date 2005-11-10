@@ -14,7 +14,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.wm.ex.ActionToolbarEx;
 import com.intellij.ui.OrderPanel;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SpeedSearchBase;
@@ -90,7 +89,7 @@ public class PluginManagerMain {
   private PluginTable<PluginNode> availablePluginTable;
   //private PluginTable<PluginNode> cartTable;
 
-  private ActionToolbarEx toolbar;
+  private ActionToolbar toolbar;
 
   private CategoryNode root;
 
@@ -216,7 +215,7 @@ public class PluginManagerMain {
     myInstalledProvider = installedProvider;
     myCartProvider = cartProvider;
     myToolbarPanel.setLayout(new BorderLayout());
-    toolbar = (ActionToolbarEx)ActionManagerEx.getInstance().createActionToolbar("PluginManaer", getActionGroup(), true);
+    toolbar = ActionManagerEx.getInstance().createActionToolbar("PluginManaer", getActionGroup(), true);
 
     myToolbarPanel.add(toolbar.getComponent(), BorderLayout.WEST);
 
@@ -235,7 +234,7 @@ public class PluginManagerMain {
     installedPluginTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {
         pluginInfoUpdate(installedPluginTable.getSelectedObject());
-        toolbar.updateActions();
+        toolbar.updateActionsImmediately();
       }
     });
     PopupHandler.installUnknownPopupHandler(installedPluginTable, getActionGroup(), ActionManager.getInstance());
@@ -275,7 +274,7 @@ public class PluginManagerMain {
           pluginInfoUpdate(cartTable.getSelectedObject());
           */
         }
-        toolbar.updateActions();
+        toolbar.updateActionsImmediately();
       }
     });
 
@@ -435,7 +434,7 @@ public class PluginManagerMain {
         availablePluginTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
           public void valueChanged(ListSelectionEvent e) {
             pluginInfoUpdate(availablePluginTable.getSelectedObject());
-            toolbar.updateActions();
+            toolbar.updateActionsImmediately();
           }
         });
         ActionGroup group = getActionGroup();

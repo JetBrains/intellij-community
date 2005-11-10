@@ -8,7 +8,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ex.ActionToolbarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
@@ -350,7 +349,7 @@ public class JavaDocInfoComponent extends JPanel {
 
     private void updateControlState() {
         customizeElementLabel(myElement, myElementLabel);
-        ((ActionToolbarEx) myToolBar).updateActions(); // update faster
+        myToolBar.updateActionsImmediately(); // update faster
         setControlPanelVisible(true);//(!myBackStack.isEmpty() || !myForwardStack.isEmpty());
     }
 
