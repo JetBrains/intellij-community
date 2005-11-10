@@ -43,7 +43,7 @@ class JavacCompiler implements BackendCompiler {
       }
       final VirtualFile homeDirectory = jdk.getHomeDirectory();
       if (homeDirectory == null) {
-        Messages.showMessageDialog(myProject, CompilerBundle.message("javac.error.jdk.home.missing", jdk.getName()),
+        Messages.showMessageDialog(myProject, CompilerBundle.jdkHomeNotFoundMessage(jdk),
                                    CompilerBundle.message("compiler.javac.name"), Messages.getErrorIcon());
         return false;
       }

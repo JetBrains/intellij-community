@@ -98,7 +98,7 @@ public class OutputParserPool {
 
     final VirtualFile homeDirectory = jdk.getHomeDirectory();
     if (homeDirectory == null) {
-      throw new IllegalArgumentException(CompilerBundle.message("javac.error.jdk.home.missing", jdk.getName()));
+      throw new IllegalArgumentException(CompilerBundle.jdkHomeNotFoundMessage(jdk));
     }
 
     commandLine.add(jdk.getVMExecutablePath());

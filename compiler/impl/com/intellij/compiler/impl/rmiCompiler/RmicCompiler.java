@@ -259,7 +259,7 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
 
     final VirtualFile homeDirectory = jdk.getHomeDirectory();
     if (homeDirectory == null) {
-      throw new IllegalArgumentException(CompilerBundle.message("javac.error.jdk.home.missing", jdk.getName()));
+      throw new IllegalArgumentException(CompilerBundle.jdkHomeNotFoundMessage(jdk));
     }
     final String jdkPath = homeDirectory.getPath().replace('/', File.separatorChar);
 

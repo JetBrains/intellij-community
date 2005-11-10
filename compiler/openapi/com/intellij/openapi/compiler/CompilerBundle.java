@@ -16,6 +16,7 @@
 package com.intellij.openapi.compiler;
 
 import com.intellij.CommonBundle;
+import com.intellij.openapi.projectRoots.ProjectJdk;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.PropertyKey;
 
@@ -33,5 +34,9 @@ public class CompilerBundle {
 
   public static String message(@PropertyKey(resourceBundle = "messages.CompilerBundle") String key, Object... params) {
     return CommonBundle.message(ourBundle, key, params);
+  }
+
+  public static String jdkHomeNotFoundMessage(final ProjectJdk jdk) {
+    return message("javac.error.jdk.home.missing", jdk.getName(), jdk.getHomePath());
   }
 }
