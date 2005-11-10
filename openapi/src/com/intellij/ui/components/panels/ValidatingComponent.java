@@ -12,11 +12,11 @@ import java.awt.*;
  *
  * A label with possible error text is placed under validated component.
  */
-public abstract class ValidatingComponent extends NonOpaquePanel {
+public abstract class ValidatingComponent<T extends JComponent> extends NonOpaquePanel {
   private static final Font ERROR_FONT = UIManager.getFont("Label.font").deriveFont(Font.PLAIN, 10f);
 
   private final JLabel myErrorLabel;
-  private JComponent myMainComponent;
+  private T myMainComponent;
   private JLabel myLabel;
 
   protected ValidatingComponent() {
@@ -29,7 +29,7 @@ public abstract class ValidatingComponent extends NonOpaquePanel {
     add(myErrorLabel, BorderLayout.SOUTH);
   }
 
-  protected abstract JComponent createMainComponent();
+  protected abstract T createMainComponent();
 
   public void setErrorText(String errorText) {
     if ("".equals(errorText) || errorText == null) {
@@ -40,6 +40,10 @@ public abstract class ValidatingComponent extends NonOpaquePanel {
 
   public JLabel getErrorLabel() {
     return myErrorLabel;
+  }
+
+  public T getMainComponent() {
+    return myMainComponent;
   }
 
   public String  getErrorText() {

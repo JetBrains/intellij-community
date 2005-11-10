@@ -29,4 +29,6 @@ public interface DomElement {
   String getTagName();
 
   void acceptChildren(DomElementVisitor visitor);
+
+  DomManager getManager();
 }

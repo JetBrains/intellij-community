@@ -15,7 +15,7 @@ import javax.swing.event.DocumentEvent;
 
  * A textField with error label under it.
  */
-public class ValidatingTextField extends ValidatingComponent {
+public class ValidatingTextField extends ValidatingComponent<JTextField> {
   private final JTextField myTextField;
 
   public ValidatingTextField() {
@@ -26,7 +26,7 @@ public class ValidatingTextField extends ValidatingComponent {
     myTextField = textField;
     myTextField.getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(DocumentEvent e) {
-        String errorText = validateTextOnChange(getTextField().getText(), e);
+        String errorText = validateTextOnChange(getMainComponent().getText(), e);
         if (errorText != null) {
           setErrorText(errorText);
         }
@@ -34,16 +34,16 @@ public class ValidatingTextField extends ValidatingComponent {
     });
   }
 
-  protected JComponent createMainComponent() {
+  protected JTextField createMainComponent() {
     return myTextField;
   }
 
   public void requestFocus() {
-    getTextField().requestFocus();
+    getMainComponent().requestFocus();
   }
 
   public boolean requestFocusInWindow() {
-    return getTextField().requestFocusInWindow();
+    return getMainComponent().requestFocusInWindow();
   }
 
   /**
@@ -53,16 +53,12 @@ public class ValidatingTextField extends ValidatingComponent {
     return null;
   }
 
-  public JTextField getTextField() {
-    return myTextField;
-  }
-
   public String getText() {
-    return getTextField().getText();
+    return getMainComponent().getText();
   }
 
   public void setText(String text) {
-    getTextField().setText(text);
+    getMainComponent().setText(text);
   }
 
 }

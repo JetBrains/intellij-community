@@ -47,7 +47,7 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     return null;
   }
 
-  public DomManagerImpl getManager() {
+  public final DomManagerImpl getManager() {
     return myManager;
   }
 

@@ -5,6 +5,7 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.project.Project;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.PomModelAspect;
 import com.intellij.pom.event.PomModelEvent;
@@ -46,12 +47,14 @@ public class DomManagerImpl extends DomManager implements ProjectComponent{
   private final Map<Class<? extends DomElement>,ClassChooser> myClassChoosers = new HashMap<Class<? extends DomElement>, ClassChooser>();
   private DomEventListener[] myCachedListeners;
   private PomModelListener myXmlListener;
+  private Project myProject;
   private PomModel myPomModel;
   private boolean myChanging;
 
 
-  public DomManagerImpl(final PomModel pomModel) {
+  public DomManagerImpl(final PomModel pomModel, final Project project) {
     myPomModel = pomModel;
+    myProject = project;
   }
 
   public final void addDomEventListener(DomEventListener listener) {
@@ -136,6 +139,10 @@ public class DomManagerImpl extends DomManager implements ProjectComponent{
       myClass2ProxyClass.put(aClass, proxyClass);
     }
     return proxyClass;
+  }
+
+  public Project getProject() {
+    return myProject; 
   }
 
   public final void setNameStrategy(final XmlFile file, final NameStrategy strategy) {

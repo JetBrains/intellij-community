@@ -17,6 +17,8 @@ public abstract class DomManager {
     return project.getComponent(DomManager.class);
   }
 
+  public abstract Project getProject();
+
   public abstract void setNameStrategy(final XmlFile file, final NameStrategy strategy);
 
   @NotNull
