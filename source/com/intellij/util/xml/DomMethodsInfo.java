@@ -17,4 +17,7 @@ public interface DomMethodsInfo {
   int getFixedChildIndex(Method method);
 
   String getTagName(Method method);
+
+  Method getCollectionGetMethod(String tagName);
+  Method getCollectionAddMethod(String tagName);
 }

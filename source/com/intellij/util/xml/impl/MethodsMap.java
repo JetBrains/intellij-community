@@ -246,4 +246,22 @@ public class MethodsMap implements DomMethodsInfo {
     final Pair<String, Integer> pair = myFixedChildrenMethods.get(method);
     return pair != null ? pair.getFirst() : myCollectionChildrenGetterMethods.get(method);
   }
+
+  public Method getCollectionGetMethod(String tagName) {
+    for (Map.Entry<Method, String> entry : myCollectionChildrenGetterMethods.entrySet()) {
+      if (tagName.equals(entry.getValue())) {
+        return entry.getKey();
+      }
+    }
+    return null;
+  }
+
+  public Method getCollectionAddMethod(String tagName) {
+    for (Map.Entry<Method, String> entry : myCollectionChildrenAdditionMethods.entrySet()) {
+      if (tagName.equals(entry.getValue())) {
+        return entry.getKey();
+      }
+    }
+    return null;
+  }
 }
