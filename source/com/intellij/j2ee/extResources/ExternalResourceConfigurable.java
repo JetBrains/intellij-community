@@ -1,7 +1,7 @@
 package com.intellij.j2ee.extResources;
 
-import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
 import com.intellij.j2ee.J2EEBundle;
+import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.util.IconLoader;
@@ -12,13 +12,14 @@ import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 public class ExternalResourceConfigurable extends BaseConfigurable implements ApplicationComponent {
   private JPanel myPanel;
-  private ArrayList myPairs;
-  private ArrayList myIgnoredUrls;
-  private AddEditRemovePanel myExtPanel;
-  private AddEditRemovePanel myIgnorePanel;
+  private List<EditLocationDialog.Pair> myPairs;
+  private List<String> myIgnoredUrls;
+  private AddEditRemovePanel<EditLocationDialog.Pair> myExtPanel;
+  private AddEditRemovePanel<String> myIgnorePanel;
 
   public ExternalResourceConfigurable() {
   }
@@ -35,21 +36,21 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Ap
   public JComponent createComponent() {
     myPanel = new JPanel(new GridBagLayout()){
       public Dimension getPreferredSize() {
-        return new Dimension(700, 400);    
+        return new Dimension(700, 400);
       }
     };
 
-    myExtPanel = new AddEditRemovePanel(J2EEBundle.message("label.edit.external.resource.configure.external.resources"), new ExtUrlsTableModel(), myPairs) {
-      protected Object addItem() {
+    myExtPanel = new AddEditRemovePanel<EditLocationDialog.Pair>(J2EEBundle.message("label.edit.external.resource.configure.external.resources"), new ExtUrlsTableModel(), myPairs) {
+      protected EditLocationDialog.Pair addItem() {
         return addExtLocation();
       }
 
-      protected boolean removeItem(Object o) {
+      protected boolean removeItem(EditLocationDialog.Pair o) {
         setModified(true);
         return true;
       }
 
-      protected Object editItem(Object o) {
+      protected EditLocationDialog.Pair editItem(EditLocationDialog.Pair o) {
         return editExtLocation(o);
       }
 
@@ -68,17 +69,17 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Ap
 
     myExtPanel.setRenderer(1, new PathRenderer());
 
-    myIgnorePanel = new AddEditRemovePanel(J2EEBundle.message("label.edit.external.resource.configure.ignored.resources"), new IgnoredUrlsModel(), myIgnoredUrls) {
-      protected Object addItem() {
+    myIgnorePanel = new AddEditRemovePanel<String>(J2EEBundle.message("label.edit.external.resource.configure.ignored.resources"), new IgnoredUrlsModel(), myIgnoredUrls) {
+      protected String addItem() {
         return addIgnoreLocation();
       }
 
-      protected boolean removeItem(Object o) {
+      protected boolean removeItem(String o) {
         setModified(true);
         return true;
       }
 
-      protected Object editItem(Object o) {
+      protected String editItem(String o) {
         return editIgnoreLocation(o);
       }
 
@@ -121,7 +122,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Ap
   }
 
   public void reset() {
-    myPairs = new ArrayList();
+    myPairs = new ArrayList<EditLocationDialog.Pair>();
     ExternalResourceManagerEx manager = ExternalResourceManagerEx.getInstanceEx();
 
     String[] urls = manager.getAvailableUrls();
@@ -132,7 +133,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Ap
 
     Collections.sort(myPairs);
 
-    myIgnoredUrls = new ArrayList();
+    myIgnoredUrls = new ArrayList<String>();
     final String[] ignoredResources = manager.getIgnoredResources();
     for (String ignoredResource : ignoredResources) {
       myIgnoredUrls.add(ignoredResource);
@@ -154,7 +155,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Ap
     return "preferences.externalResources";
   }
 
-  private Object addExtLocation() {
+  private EditLocationDialog.Pair addExtLocation() {
     EditLocationDialog dialog = new EditLocationDialog(null, true);
     dialog.show();
     if (!dialog.isOK()) return null;
@@ -162,7 +163,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Ap
     return dialog.getPair();
   }
 
-  private Object editExtLocation(Object o) {
+  private EditLocationDialog.Pair editExtLocation(Object o) {
     EditLocationDialog dialog = new EditLocationDialog(null, true);
     final EditLocationDialog.Pair pair = (EditLocationDialog.Pair)o;
     dialog.init(pair.myName, pair.myLocation);
@@ -172,7 +173,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Ap
     return dialog.getPair();
   }
 
-  private Object addIgnoreLocation() {
+  private String addIgnoreLocation() {
     EditLocationDialog dialog = new EditLocationDialog(null, false);
     dialog.show();
     if (!dialog.isOK()) return null;
@@ -180,7 +181,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Ap
     return dialog.getPair().myName;
   }
 
-  private Object editIgnoreLocation(Object o) {
+  private String editIgnoreLocation(Object o) {
     EditLocationDialog dialog = new EditLocationDialog(null, false);
     dialog.init(o.toString(), o.toString());
     dialog.show();
@@ -192,7 +193,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Ap
   public void editUri() {
     myExtPanel.doEdit();
   }
-  
+
   public String getComponentName() {
     return "ExternalResourceConfigurable";
   }

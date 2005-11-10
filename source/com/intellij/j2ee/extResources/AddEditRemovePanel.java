@@ -19,17 +19,16 @@ import java.util.List;
 /**
  * @author mike
  */
-public abstract class AddEditRemovePanel extends PanelWithButtons {
- JPanel myPanel;
+public abstract class AddEditRemovePanel<T> extends PanelWithButtons {
   private JTable myTable;
   private JButton myAddButton;
   private JButton myEditButton;
   private JButton myRemoveButton;
   private TableModel myModel;
-  private List myData;
+  private List<T> myData;
   private AbstractTableModel myTableModel;
 
-  public AddEditRemovePanel(String labelText, TableModel model, List data) {
+  public AddEditRemovePanel(String labelText, TableModel<T> model, List<T> data) {
     myModel = model;
     myData = data;
 
@@ -80,9 +79,7 @@ public abstract class AddEditRemovePanel extends PanelWithButtons {
       }
     });
 
-    JScrollPane scrollpane = ScrollPaneFactory.createScrollPane(myTable);
-
-    return scrollpane;
+    return ScrollPaneFactory.createScrollPane(myTable);
   }
 
   protected JButton[] createButtons(){
@@ -117,7 +114,7 @@ public abstract class AddEditRemovePanel extends PanelWithButtons {
   }
 
   protected void doAdd() {
-    Object o = addItem();
+    T o = addItem();
     if (o == null) return;
 
     myData.add(o);
@@ -126,9 +123,9 @@ public abstract class AddEditRemovePanel extends PanelWithButtons {
     myTable.setRowSelectionInterval(index, index);
   }
 
-  protected abstract Object addItem();
-  protected abstract boolean removeItem(Object o);
-  protected abstract Object editItem(Object o);
+  protected abstract T addItem();
+  protected abstract boolean removeItem(T o);
+  protected abstract T editItem(T o);
 
   protected abstract char getRemoveMnemonic();
   protected abstract char getEditMnemonic();
@@ -136,7 +133,7 @@ public abstract class AddEditRemovePanel extends PanelWithButtons {
 
   protected void doEdit() {
     int selected = myTable.getSelectedRow();
-    Object o = editItem(myData.get(selected));
+    T o = editItem(myData.get(selected));
     if (o != null) myData.set(selected, o);
 
     myTableModel.fireTableRowsUpdated(selected, selected);
@@ -164,7 +161,7 @@ public abstract class AddEditRemovePanel extends PanelWithButtons {
     }   
   }
 
-  public void setData(java.util.List data) {
+  public void setData(java.util.List<T> data) {
     myData = data;
     myTableModel.fireTableDataChanged();
   }
@@ -187,9 +184,9 @@ public abstract class AddEditRemovePanel extends PanelWithButtons {
     }
   }
   
-  public static interface TableModel {
+  public static interface TableModel<T> {
     int getColumnCount();
     String getColumnName(int columnIndex);
-    Object getField(Object o, int columnIndex);
+    T getField(T o, int columnIndex);
    }
 }
