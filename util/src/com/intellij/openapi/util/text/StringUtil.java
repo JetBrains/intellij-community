@@ -722,8 +722,12 @@ public class StringUtil {
       return name.substring(0, name.length() - 1);
     }
 
-    if ("children".equals(name)) {
-      return "child";
+    if (name.endsWith("children")) {
+      return name.substring(0, name.length() - "children".length()) + "child";
+    }
+
+    if (name.endsWith("Children") && name.length() > "Children".length()) {
+      return name.substring(0, name.length() - "Children".length()) + "Child";
     }
 
     return null;
