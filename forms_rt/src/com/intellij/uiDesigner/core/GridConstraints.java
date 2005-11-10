@@ -325,4 +325,21 @@ public final class GridConstraints implements Cloneable {
     result = 29 * result + (myMaximumSize != null ? myMaximumSize.hashCode() : 0);
     return result;
   }
+
+  public int getCell(final boolean isRow){
+    return isRow ? getRow() : getColumn();
+  }
+
+  public void setCell(final boolean isRow, final int value) {
+    if (isRow) {
+      setRow(value);
+    }
+    else {
+      setColumn(value);
+    }
+  }
+
+  public int getSpan(final boolean isRow){
+    return isRow ? getRowSpan() : getColSpan();
+  }
 }

@@ -14,10 +14,11 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.psi.*;
+import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.componentTree.ComponentSelectionListener;
 import com.intellij.uiDesigner.componentTree.ComponentTree;
@@ -27,18 +28,13 @@ import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.uiDesigner.palette.PalettePanel;
 import com.intellij.uiDesigner.propertyInspector.PropertyInspector;
-import com.intellij.uiDesigner.designSurface.ActiveDecorationLayer;
-import com.intellij.uiDesigner.designSurface.DragLayer;
-import com.intellij.uiDesigner.designSurface.GlassLayer;
-import com.intellij.uiDesigner.*;
 import com.intellij.util.Alarm;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
 import java.awt.*;
-
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * <code>GuiEditor</code> is a panel with border layout. It has palette at the north,
@@ -256,6 +252,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
     myPalettePanel = new PalettePanel(this);
     mainPaneAndToolbar.add(myPalettePanel, BorderLayout.NORTH);
     myProcessor = new MainProcessor(this);
+    new MergeCellsToolbar(this);
 
     // PSI listener to restart error highlighter
     myPsiTreeChangeListener = new MyPsiTreeChangeListener();
@@ -473,7 +470,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
   /**
    * Adds specified hierarchy change listener
    */
-  public void addHierarchyChangleListener(final HierarchyChangeListener l) {
+  public void addHierarchyChangeListener(final HierarchyChangeListener l) {
     LOG.assertTrue(l != null);
     myListenerList.add(HierarchyChangeListener.class, l);
   }

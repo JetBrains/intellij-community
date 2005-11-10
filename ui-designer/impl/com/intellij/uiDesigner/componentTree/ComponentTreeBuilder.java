@@ -47,7 +47,7 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder{
     syncSelection();
 
     myTree.getSelectionModel().addTreeSelectionListener(new MyTreeSelectionListener());
-    editor.addHierarchyChangleListener(new MyHierarchyChangeListener());
+    editor.addHierarchyChangeListener(new MyHierarchyChangeListener());
   }
 
   private ComponentTreeStructure getComponentTreeStructure(){

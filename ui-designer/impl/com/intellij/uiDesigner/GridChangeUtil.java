@@ -83,7 +83,7 @@ public final class GridChangeUtil {
   }
 
   public static void adjustConstraintsOnInsert(final GridConstraints constraints, final boolean isRow, final int beforeIndex) {
-    if (getCell(constraints, isRow) >= beforeIndex) {
+    if (constraints.getCell(isRow) >= beforeIndex) {
       addToCell(constraints, isRow, 1);
     }
     else if (isCellInsideComponent(constraints, isRow, beforeIndex)) {
@@ -106,7 +106,7 @@ public final class GridChangeUtil {
     for (int i=grid.getComponentCount() - 1; i >= 0; i--){
       final GridConstraints constraints = grid.getComponent(i).getConstraints();
 
-      if (getCell(constraints, isRow) > cellIndex) {
+      if (constraints.getCell(isRow) > cellIndex) {
         // component starts after the cell being splitted - move it
         addToCell(constraints, isRow, 1);
       }
@@ -139,8 +139,8 @@ public final class GridChangeUtil {
 
     for (int i = 0; i < grid.getComponentCount(); i++) {
       final GridConstraints constraints = grid.getComponent(i).getConstraints();
-      final int cell = getCell(constraints, isRow);
-      final int span = getSpan(constraints, isRow);
+      final int cell = constraints.getCell(isRow);
+      final int span = constraints.getSpan(isRow);
 
       if (mustBeEmpty) {
         if (cellIndex >= cell && cellIndex < cell+span) {
@@ -176,7 +176,7 @@ public final class GridChangeUtil {
     for (int i=grid.getComponentCount() - 1; i >= 0; i--){
       final GridConstraints constraints = grid.getComponent(i).getConstraints();
 
-      if (getCell(constraints, isRow) > cellIndex) {
+      if (constraints.getCell(isRow) > cellIndex) {
         // component starts after the cell being deleted - move it
         addToCell(constraints, isRow, -1);
       }
@@ -191,8 +191,8 @@ public final class GridChangeUtil {
 
 
   private static boolean isCellInsideComponent(final GridConstraints constraints, final boolean isRow, final int cellIndex) {
-    final int cell = getCell(constraints, isRow);
-    final int span = getSpan(constraints, isRow);
+    final int cell = constraints.getCell(isRow);
+    final int span = constraints.getSpan(isRow);
     return cell <= cellIndex && cellIndex <= cell + span - 1;
   }
   
@@ -224,14 +224,6 @@ public final class GridChangeUtil {
     newLayout.setHGap(oldLayout.getHGap());
     newLayout.setVGap(oldLayout.getVGap());
     return newLayout;
-  }
-
-  private static int getSpan(final GridConstraints constraints, final boolean isRow){
-    return isRow ? constraints.getRowSpan() : constraints.getColSpan();
-  }
-
-  private static int getCell(final GridConstraints constraints, final boolean isRow){
-    return isRow ? constraints.getRow() : constraints.getColumn();
   }
 
   private static void addToCell(final GridConstraints constraints, final boolean isRow, final int delta){

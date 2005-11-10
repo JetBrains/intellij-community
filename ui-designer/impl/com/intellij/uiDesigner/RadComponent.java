@@ -1,16 +1,19 @@
 package com.intellij.uiDesigner;
 
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.Util;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.propertyInspector.Property;
-import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -19,10 +22,6 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.lang.reflect.Constructor;
 import java.util.HashSet;
-
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Anton Katilin
@@ -44,8 +43,13 @@ public abstract class RadComponent implements IComponent {
   /**
    * Whether the component selected or not. Value is java.lang.Boolean
    */
-  @NonNls
-  public static final String PROP_SELECTED="selected";
+  @NonNls public static final String PROP_SELECTED="selected";
+
+  /**
+   * Change notification for this property is fired when the constraints of a component
+   * change.
+   */
+  @NonNls public static final String PROP_CONSTRAINTS = "constraints";
 
   /**
    * Component id is unique per RadRootContainer.
@@ -471,5 +475,9 @@ public abstract class RadComponent implements IComponent {
     }finally{
       writer.endElement(); // properties
     }
+  }
+
+  public void fireConstraintsChanged(GridConstraints oldConstraints) {
+    firePropertyChanged(PROP_CONSTRAINTS, oldConstraints, myConstraints);
   }
 }

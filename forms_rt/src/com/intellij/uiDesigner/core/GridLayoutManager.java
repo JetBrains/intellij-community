@@ -836,4 +836,18 @@ public final class GridLayoutManager extends AbstractLayout {
                          myYs[endRow] + myHeights[endRow] - myYs[startRow]);
 
   }
+
+  public Rectangle getCellRangeGridlineRect(final int startRow, final int startCol, final int endRow, final int endCol) {
+    int[] horzGridLines = getHorizontalGridLines();
+    int[] vertGridLines = getVerticalGridLines();
+
+    return new Rectangle(vertGridLines [startCol],
+                         horzGridLines [startRow],
+                         vertGridLines [endCol+1] - vertGridLines [startCol],
+                         horzGridLines [endRow+1] - horzGridLines [startRow]);
+
+  }
+  public int getCellCount(final boolean isRow) {
+    return isRow ? getRowCount() : getColumnCount();
+  }
 }

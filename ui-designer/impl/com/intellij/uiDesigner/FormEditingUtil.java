@@ -10,12 +10,14 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Util;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
+import com.intellij.uiDesigner.designSurface.Painter;
 import com.intellij.uiDesigner.lw.*;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.shared.XYLayoutManager;
-import com.intellij.uiDesigner.designSurface.GuiEditor;
-import com.intellij.uiDesigner.designSurface.Painter;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -23,9 +25,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
-
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Anton Katilin
@@ -42,6 +41,9 @@ public final class FormEditingUtil {
    * TODO[anton,vova]: most likely should be equal to "xy grid step" when available
    */
   private static final int GRID_TREMOR = 5;
+
+  private FormEditingUtil() {
+  }
 
   public static void breakGrid(final GuiEditor editor) {
     final ArrayList<RadComponent> selection = getSelectedComponents(editor);
@@ -345,7 +347,7 @@ public final class FormEditingUtil {
       constraints.setColumn(x[i]);
       constraints.setColSpan(colSpans[i]);
     }
-    final GridLayoutManager gridLayoutManager = new GridLayoutManager(pair.first, pair.second);
+    final GridLayoutManager gridLayoutManager = new GridLayoutManager(pair.first.intValue(), pair.second.intValue());
 
     return gridLayoutManager;
   }
