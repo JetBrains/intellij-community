@@ -25,6 +25,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.Matcher;
+import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.impl.matcher.MatcherImpl;
 import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
 import com.intellij.structuralsearch.plugin.replace.Replacer;
@@ -48,9 +49,6 @@ public class SSBasedInspection extends LocalInspectionTool {
   private List<Configuration> myConfigurations = new ArrayList<Configuration>();
   private MatcherImpl.CompiledOptions compiledConfigurations;
 
-  public SSBasedInspection() {
-  }
-
   public void writeSettings(Element node) throws WriteExternalException {
     ConfigurationManager.writeConfigurations(node, myConfigurations, Collections.<Configuration>emptyList());
   }
@@ -67,11 +65,11 @@ public class SSBasedInspection extends LocalInspectionTool {
   }
 
   public String getGroupDisplayName() {
-    return "General";
+    return InspectionsBundle.message("inspection.general.tools.group.name");
   }
 
   public String getDisplayName() {
-    return "Structural Search Inspection";
+    return SSRBundle.message("SSRInspection.display.name");
   }
 
   @NonNls
@@ -99,7 +97,7 @@ public class SSBasedInspection extends LocalInspectionTool {
     return problems.toArray(new ProblemDescriptor[problems.size()]);
   }
 
-  private LocalQuickFix createQuickFix(final Project project, final MatchResult matchResult, final Configuration configuration) {
+  private static LocalQuickFix createQuickFix(final Project project, final MatchResult matchResult, final Configuration configuration) {
     if (!(configuration instanceof ReplaceConfiguration)) return null;
     ReplaceConfiguration replaceConfiguration = (ReplaceConfiguration)configuration;
     final Replacer replacer = new Replacer(project, replaceConfiguration.getOptions());
@@ -107,7 +105,7 @@ public class SSBasedInspection extends LocalInspectionTool {
 
     return new LocalQuickFix() {
       public String getName() {
-        return "Replace with '"+replacementInfo.getReplacement()+"'";
+        return SSRBundle.message("SSRInspection.replace.with", replacementInfo.getReplacement());
       }
 
       public void applyFix(Project project, ProblemDescriptor descriptor) {
@@ -115,15 +113,14 @@ public class SSBasedInspection extends LocalInspectionTool {
       }
 
       public String getFamilyName() {
-        return "Replace Structurally";
+        return SSRBundle.message("SSRInspection.family.name");
       }
     };
   }
 
   @Nullable
   public JComponent createOptionsPanel() {
-    Project project = ProjectManager.getInstance().getOpenProjects()[0];
-    JPanel component = new SSBasedInspectionOptions(project, myConfigurations){
+    JPanel component = new SSBasedInspectionOptions(myConfigurations){
       public void configurationsChanged() {
         super.configurationsChanged();
         precompileConfigurations();

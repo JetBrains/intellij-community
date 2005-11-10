@@ -119,13 +119,6 @@ public class MatcherImpl {
     }
   }
 
-  private static class MySink extends CollectingMatchResultSink {
-    private Configuration configuration;
-
-    public MySink(final Configuration configuration) {
-      this.configuration = configuration;
-    }
-  }
   public Collection<Pair<MatchResult, Configuration>> findMatchesInFile(CompiledOptions compiledOptions, PsiFile psiFile) {
     LocalSearchScope scope = new LocalSearchScope(psiFile);
     List<Pair<MatchResult, Configuration>> result = new ArrayList<Pair<MatchResult, Configuration>>();
@@ -138,7 +131,7 @@ public class MatcherImpl {
       matchContext.setOptions(options);
       matchContext.setPattern(context.getPattern());
       visitor.setMatchContext(matchContext);
-      MySink sink = new MySink(configuration);
+      CollectingMatchResultSink sink = new CollectingMatchResultSink();
       matchContext.setSink(
         new MatchConstraintsSink(
           sink,

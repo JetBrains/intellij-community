@@ -19,23 +19,22 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.project.Project;
+import com.intellij.structuralsearch.plugin.replace.ui.ReplaceDialog;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
+import com.intellij.structuralsearch.plugin.ui.SearchConfiguration;
 import com.intellij.structuralsearch.plugin.ui.SearchContext;
 import com.intellij.structuralsearch.plugin.ui.SearchDialog;
-import com.intellij.structuralsearch.plugin.ui.SearchConfiguration;
-import com.intellij.structuralsearch.plugin.replace.ui.ReplaceDialog;
 
 import javax.swing.*;
+import javax.swing.event.ListDataEvent;
+import javax.swing.event.ListDataListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.event.ListDataListener;
-import javax.swing.event.ListDataEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.List;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * @author cdr
@@ -52,8 +51,7 @@ public class SSBasedInspectionOptions {
   // for externalization
   private final List<Configuration> myConfigurations;
 
-  public SSBasedInspectionOptions(final Project project,
-                                  final List<Configuration> configurations) {
+  public SSBasedInspectionOptions(final List<Configuration> configurations) {
     myConfigurations = configurations;
     myTemplatesList.setModel(new MyListModel());
     myTemplatesList.setCellRenderer(new DefaultListCellRenderer() {
