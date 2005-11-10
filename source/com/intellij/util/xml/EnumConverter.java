@@ -16,11 +16,11 @@ public class EnumConverter<T extends Enum> implements Converter<T>{
   public EnumConverter(final Class<T> aClass) {
     myIsNamedEnum = NamedEnum.class.isAssignableFrom(aClass);
     for (T anEnum : aClass.getEnumConstants()) {
-      myCachedElements.put(getValue(anEnum), anEnum);
+      myCachedElements.put(getStringValue(anEnum), anEnum);
     }
   }
 
-  private String getValue(final T anEnum) {
+  private String getStringValue(final T anEnum) {
     return myIsNamedEnum ? ((NamedEnum)anEnum).getValue() : anEnum.name();
   }
 
@@ -29,6 +29,6 @@ public class EnumConverter<T extends Enum> implements Converter<T>{
   }
 
   public String toString(final T t, final ConvertContext context) {
-    return getValue(t);
+    return getStringValue(t);
   }
 }

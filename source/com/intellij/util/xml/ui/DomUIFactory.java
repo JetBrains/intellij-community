@@ -8,10 +8,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomMethodsInfo;
 import com.intellij.util.xml.GenericValue;
-import com.intellij.util.xml.impl.ui.BooleanControl;
-import com.intellij.util.xml.impl.ui.CollectionControl;
-import com.intellij.util.xml.impl.ui.PsiClassControl;
-import com.intellij.util.xml.impl.ui.StringControl;
+import com.intellij.util.xml.impl.ui.*;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
@@ -35,6 +32,8 @@ public class DomUIFactory {
         return new StringControl(element, getValueMethod, setValueMethod);
       } else if (aClass.equals(PsiClass.class)) {
         return new PsiClassControl(element, getStringMethod, setStringMethod);
+      } else if (Enum.class.isAssignableFrom(aClass)) {
+        return new EnumControl(element, aClass, getStringMethod, setStringMethod);
       }
       throw new IllegalArgumentException("Not supported: " + aClass);
     }
