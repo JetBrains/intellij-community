@@ -15,6 +15,7 @@
  */
 package com.intellij.uiDesigner.core;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
 
@@ -66,6 +67,14 @@ public final class GridLayoutManager extends AbstractLayout {
 
   private boolean mySameSizeHorizontally;
   private boolean mySameSizeVertically;
+
+  /**
+   * Key for accessing client property which is set on the root Swing component of the design-time component
+   * hierarchy.
+   */
+  public static Object DESIGN_TIME_ROOT = new Object();
+
+  private static final int DESIGN_TIME_INSET = 2;
 
   public GridLayoutManager(final int rowCount, final int columnCount) {
     if (columnCount < 1) {
@@ -285,10 +294,22 @@ public final class GridLayoutManager extends AbstractLayout {
   }
 
   private Dimension getTotalGap(final Container container, final DimensionInfo hInfo, final DimensionInfo vInfo) {
-    final Insets insets = container.getInsets();
+    final Insets insets = getInsets(container);
     return new Dimension(
       insets.left + insets.right + countGap(hInfo, 0, hInfo.getCellCount()) + myMargin.left + myMargin.right,
       insets.top + insets.bottom + countGap(vInfo, 0, vInfo.getCellCount()) + myMargin.top + myMargin.bottom);
+  }
+
+  private Insets getInsets(Container container) {
+    final Insets insets = container.getInsets();
+    while(container != null) {
+      if (container instanceof JComponent && ((JComponent) container).getClientProperty(DESIGN_TIME_ROOT) != null) {
+        return new Insets(insets.top+DESIGN_TIME_INSET, insets.left+DESIGN_TIME_INSET,
+                          insets.bottom+DESIGN_TIME_INSET, insets.right+DESIGN_TIME_INSET);
+      }
+      container = container.getParent();
+    }
+    return insets;
   }
 
   private static int countGap(final DimensionInfo info, final int startCell, final int cellCount) {
@@ -388,7 +409,7 @@ public final class GridLayoutManager extends AbstractLayout {
       }
     }
 
-    final Insets insets = container.getInsets();
+    final Insets insets = getInsets(container);
 
     // Calculate rows' bounds
     int y = insets.top + myMargin.top;

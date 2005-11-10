@@ -24,6 +24,7 @@ import com.intellij.uiDesigner.componentTree.ComponentSelectionListener;
 import com.intellij.uiDesigner.componentTree.ComponentTree;
 import com.intellij.uiDesigner.componentTree.ComponentTreeBuilder;
 import com.intellij.uiDesigner.core.Util;
+import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.uiDesigner.palette.PalettePanel;
@@ -409,6 +410,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
    * @return the topmost <code>UiConainer</code> which in the root of
    *         component hierarchy. This method never returns <code>null</code>.
    */
+  @NotNull
   public RadRootContainer getRootContainer() {
     return myRootContainer;
   }
@@ -600,6 +602,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
     }
     myRootContainer = rootContainer;
     myLayeredPane.add(myRootContainer.getDelegee(), LAYER_COMPONENT);
+    myRootContainer.getDelegee().putClientProperty(GridLayoutManager.DESIGN_TIME_ROOT, Boolean.TRUE);
 
     fireHierarchyChanged();
   }
