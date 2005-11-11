@@ -29,6 +29,10 @@ public class DomUtil {
     return null;
   }
 
+  public static boolean isGenericValueType(Type type) {
+    return extractParameterClassFromGenericType(type) != null;
+  }
+
   public static Class<?> getClassFromGenericType(final Type genericType, final Type classType) {
     if (genericType instanceof TypeVariable) {
       TypeVariable typeVariable = (TypeVariable)genericType;
