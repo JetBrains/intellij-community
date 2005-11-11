@@ -14,12 +14,12 @@ import com.intellij.usageView.UsageInfo;
 public class ExtractSuperClassViewDescriptor extends UsageViewDescriptorAdapter {
   final PsiElement[] myElements;
 
-  public ExtractSuperClassViewDescriptor(UsageInfo[] usages,
-                                         PsiDirectory targetDirectory,
-                                         PsiClass subclass,
-                                         MemberInfo[] infos
+  public ExtractSuperClassViewDescriptor(
+    PsiDirectory targetDirectory,
+    PsiClass subclass,
+    MemberInfo[] infos
   ) {
-    super(usages);
+    super();
     myElements = new PsiElement[infos.length + 2];
     myElements[0] = subclass;
     myElements[1] = targetDirectory;

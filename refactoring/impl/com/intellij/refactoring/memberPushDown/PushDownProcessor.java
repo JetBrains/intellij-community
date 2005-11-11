@@ -44,7 +44,7 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
   }
 
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
-    return new PushDownUsageViewDescriptor(myClass, usages);
+    return new PushDownUsageViewDescriptor(myClass);
   }
 
   @NotNull

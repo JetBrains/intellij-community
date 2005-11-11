@@ -44,7 +44,7 @@ public class ChangeClassSignatureProcessor extends BaseRefactoringProcessor {
   }
 
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
-    return new ChangeClassSigntaureViewDescriptor(myClass, usages);
+    return new ChangeClassSigntaureViewDescriptor(myClass);
   }
 
   protected UsageInfo[] findUsages() {

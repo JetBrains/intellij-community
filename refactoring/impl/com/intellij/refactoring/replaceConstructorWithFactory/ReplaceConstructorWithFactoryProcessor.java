@@ -66,10 +66,10 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
 
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
     if (myConstructor != null) {
-      return new ReplaceConstructorWithFactoryViewDescriptor(usages, myConstructor);
+      return new ReplaceConstructorWithFactoryViewDescriptor(myConstructor);
     }
     else {
-      return new ReplaceConstructorWithFactoryViewDescriptor(usages, myOriginalClass);
+      return new ReplaceConstructorWithFactoryViewDescriptor(myOriginalClass);
     }
   }
 

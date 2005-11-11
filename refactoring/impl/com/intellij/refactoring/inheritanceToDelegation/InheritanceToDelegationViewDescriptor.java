@@ -1,10 +1,9 @@
 package com.intellij.refactoring.inheritanceToDelegation;
 
-import com.intellij.psi.*;
-import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.usageView.FindUsagesCommand;
-import com.intellij.usageView.UsageInfo;
+import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
 
 /**
  * @author dsl
@@ -12,8 +11,8 @@ import com.intellij.usageView.UsageInfo;
 public class InheritanceToDelegationViewDescriptor extends UsageViewDescriptorAdapter {
   private PsiClass myClass;
 
-  public InheritanceToDelegationViewDescriptor(PsiClass aClass, UsageInfo[] usages) {
-    super(usages);
+  public InheritanceToDelegationViewDescriptor(PsiClass aClass) {
+    super();
     myClass = aClass;
   }
 

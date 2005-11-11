@@ -14,12 +14,10 @@ import com.intellij.usageView.UsageViewBundle;
 class MigrationUsagesViewDescriptor implements UsageViewDescriptor {
   private boolean isSearchInComments;
   private MigrationMap myMigrationMap;
-  private UsageInfo[] myUsages;
 
-  public MigrationUsagesViewDescriptor(MigrationMap migrationMap, boolean isSearchInComments, UsageInfo[] usages) {
+  public MigrationUsagesViewDescriptor(MigrationMap migrationMap, boolean isSearchInComments) {
     myMigrationMap = migrationMap;
     this.isSearchInComments = isSearchInComments;
-    myUsages = usages;
   }
 
   public MigrationMap getMigrationMap() {
@@ -28,10 +26,6 @@ class MigrationUsagesViewDescriptor implements UsageViewDescriptor {
 
   public PsiElement[] getElements() {
     return PsiElement.EMPTY_ARRAY;
-  }
-
-  public UsageInfo[] getUsages() {
-    return myUsages;
   }
 
   public String getProcessedElementsHeader() {

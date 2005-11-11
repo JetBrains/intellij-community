@@ -14,7 +14,6 @@ class MoveFilesOrDirectoriesViewDescriptor implements UsageViewDescriptor {
   private PsiElement[] myElementsToMove;
   private final boolean mySearchInComments;
   private final boolean mySearchInNonJavaFiles;
-  private UsageInfo[] myUsages;
   private String myProcessedElementsHeader;
   private String myCodeReferencesText;
   private final String myHelpID;
@@ -22,11 +21,9 @@ class MoveFilesOrDirectoriesViewDescriptor implements UsageViewDescriptor {
   public MoveFilesOrDirectoriesViewDescriptor(PsiElement[] elementsToMove,
                                               boolean isSearchInComments,
                                               boolean searchInNonJavaFiles,
-                                              PsiDirectory newParent,
-                                              UsageInfo[] usages
+                                              PsiDirectory newParent
   ) {
     myElementsToMove = elementsToMove;
-    myUsages = usages;
     mySearchInComments = isSearchInComments;
     mySearchInNonJavaFiles = searchInNonJavaFiles;
     if (elementsToMove.length == 1) {
@@ -50,10 +47,6 @@ class MoveFilesOrDirectoriesViewDescriptor implements UsageViewDescriptor {
 
   public PsiElement[] getElements() {
     return myElementsToMove;
-  }
-
-  public UsageInfo[] getUsages() {
-    return myUsages;
   }
 
   public String getProcessedElementsHeader() {

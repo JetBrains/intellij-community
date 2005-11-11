@@ -4,32 +4,26 @@
  */
 package com.intellij.refactoring.changeSignature;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.usageView.*;
+import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
+import com.intellij.usageView.UsageViewDescriptor;
+import com.intellij.usageView.UsageViewUtil;
 
 class ChangeSignatureViewDescriptor implements UsageViewDescriptor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.changeSignature.ChangeSignatureViewDescriptor");
 
   private PsiMethod myMethod;
-  private UsageInfo[] myUsages;
   private final String myProcessedElementsHeader;
 
-  public ChangeSignatureViewDescriptor(PsiMethod method, UsageInfo[] usages) {
+  public ChangeSignatureViewDescriptor(PsiMethod method) {
     myMethod = method;
-    myUsages = usages;
     myProcessedElementsHeader = UsageViewUtil.capitalize(RefactoringBundle.message("0.to.change.signature", UsageViewUtil.getType(method)));
   }
 
   public PsiElement[] getElements() {
     return new PsiElement[] {myMethod};
-  }
-
-  public UsageInfo[] getUsages() {
-    return myUsages;
   }
 
   public String getProcessedElementsHeader() {

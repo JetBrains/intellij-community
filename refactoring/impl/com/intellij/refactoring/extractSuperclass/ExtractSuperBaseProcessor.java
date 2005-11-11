@@ -43,7 +43,7 @@ public abstract class ExtractSuperBaseProcessor extends TurnRefsToSuperProcessor
   }
 
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
-    return new ExtractSuperClassViewDescriptor(usages, myTargetDirectory, myClass, myMemberInfos);
+    return new ExtractSuperClassViewDescriptor(myTargetDirectory, myClass, myMemberInfos);
   }
 
   protected boolean doesAnyExtractedInterfaceExtends(PsiClass aClass) {

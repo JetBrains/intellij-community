@@ -52,7 +52,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
   }
 
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
-    return new SafeDeleteUsageViewDescriptor(usages, myElements);
+    return new SafeDeleteUsageViewDescriptor(myElements);
   }
 
   void setElements(PsiElement[] elements) {

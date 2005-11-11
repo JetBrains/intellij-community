@@ -5,7 +5,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
-import com.intellij.usageView.UsageInfo;
 
 /**
  * @author dsl
@@ -14,15 +13,15 @@ class ReplaceConstructorWithFactoryViewDescriptor extends UsageViewDescriptorAda
   private PsiMethod myConstructor;
   private PsiClass myClass;
 
-  public ReplaceConstructorWithFactoryViewDescriptor(UsageInfo[] usages,
-                                                     PsiMethod constructor) {
-    super(usages);
+  public ReplaceConstructorWithFactoryViewDescriptor(
+    PsiMethod constructor) {
+    super();
     myConstructor = constructor;
     myClass = null;
   }
 
-  public ReplaceConstructorWithFactoryViewDescriptor(UsageInfo[] usages, PsiClass aClass) {
-    super(usages);
+  public ReplaceConstructorWithFactoryViewDescriptor(PsiClass aClass) {
+    super();
     myClass = aClass;
     myConstructor = null;
   }

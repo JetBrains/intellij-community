@@ -61,7 +61,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
   }
 
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
-    return new MoveInstanceMethodViewDescriptor(usages, myMethod, myTargetVariable, myTargetClass);
+    return new MoveInstanceMethodViewDescriptor(myMethod, myTargetVariable, myTargetClass);
   }
 
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {

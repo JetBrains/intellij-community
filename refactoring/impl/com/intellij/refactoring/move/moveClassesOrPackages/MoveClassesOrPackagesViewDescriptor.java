@@ -21,17 +21,15 @@ class MoveClassesOrPackagesViewDescriptor implements UsageViewDescriptor {
   private final boolean mySearchInNonJavaFiles;
   private PackageWrapper myTargetPackage;
   private String myNewParentPackageName;
-  private UsageInfo[] myUsages;
   private String myProcessedElementsHeader;
   private String myCodeReferencesText;
   private final String myHelpID;
 
   public MoveClassesOrPackagesViewDescriptor(PsiElement[] psiElements,
                                              boolean isSearchInComments,
-                                             boolean searchInNonJavaFiles, PackageWrapper newParent,
-                                             UsageInfo[] usages) {
+                                             boolean searchInNonJavaFiles, PackageWrapper newParent
+  ) {
     myPsiElements = psiElements;
-    myUsages = usages;
     mySearchInComments = isSearchInComments;
     mySearchInNonJavaFiles = searchInNonJavaFiles;
     myTargetPackage = newParent;
@@ -54,10 +52,6 @@ class MoveClassesOrPackagesViewDescriptor implements UsageViewDescriptor {
 
   public PsiElement[] getElements() {
     return myPsiElements;
-  }
-
-  public UsageInfo[] getUsages() {
-    return myUsages;
   }
 
   public String getProcessedElementsHeader() {

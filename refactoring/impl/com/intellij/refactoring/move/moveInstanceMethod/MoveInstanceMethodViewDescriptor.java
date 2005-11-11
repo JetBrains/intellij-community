@@ -6,7 +6,6 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiVariable;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
-import com.intellij.usageView.UsageInfo;
 
 /**
  * @author dsl
@@ -16,11 +15,11 @@ public class MoveInstanceMethodViewDescriptor extends UsageViewDescriptorAdapter
   private PsiVariable myTargetVariable;
   private PsiClass myTargetClass;
 
-  public MoveInstanceMethodViewDescriptor(UsageInfo[] usages,
-                                          PsiMethod method,
-                                          PsiVariable targetVariable,
-                                          PsiClass targetClass) {
-    super(usages);
+  public MoveInstanceMethodViewDescriptor(
+    PsiMethod method,
+    PsiVariable targetVariable,
+    PsiClass targetClass) {
+    super();
     myMethod = method;
     myTargetVariable = targetVariable;
     myTargetClass = targetClass;

@@ -66,8 +66,8 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     for (int idx = 0; idx < myElementsToMove.length; idx++) {
       elements[idx] = myElementsToMove[idx];
     }
-    return new MoveClassesOrPackagesViewDescriptor(elements, mySearchInComments, mySearchInNonJavaFiles, myTargetPackage,
-                                                   usages);
+    return new MoveClassesOrPackagesViewDescriptor(elements, mySearchInComments, mySearchInNonJavaFiles, myTargetPackage
+    );
   }
 
   public boolean isSearchInComments() {

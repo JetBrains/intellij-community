@@ -64,7 +64,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
   }
 
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
-    return new MoveInstanceMethodViewDescriptor(usages, myMethod, myTargetParameter, myTargetClass);
+    return new MoveInstanceMethodViewDescriptor(myMethod, myTargetParameter, myTargetClass);
   }
 
   protected void refreshElements(PsiElement[] elements) {

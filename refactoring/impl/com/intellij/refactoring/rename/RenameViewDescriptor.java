@@ -19,7 +19,6 @@ import java.util.Set;
 class RenameViewDescriptor implements UsageViewDescriptor{
   private final boolean mySearchInComments;
   private final boolean mySearchInNonJavaFiles;
-  private UsageInfo[] myUsages;
   private String myProcessedElementsHeader;
   private String myCodeReferencesText;
   private final String myHelpID;
@@ -29,15 +28,13 @@ class RenameViewDescriptor implements UsageViewDescriptor{
     PsiElement primaryElement,
     LinkedHashMap<PsiElement, String> renamesMap,
     boolean isSearchInComments,
-    boolean isSearchInNonJavaFiles,
-    UsageInfo[] usages
+    boolean isSearchInNonJavaFiles
   ) {
 
     myElements = renamesMap.keySet().toArray(new PsiElement[0]);
 
     mySearchInComments = isSearchInComments;
     mySearchInNonJavaFiles = isSearchInNonJavaFiles;
-    myUsages = usages;
 
     Set<String> processedElementsHeaders = new THashSet<String>();
     Set<String> codeReferences = new THashSet<String>();
@@ -67,10 +64,6 @@ class RenameViewDescriptor implements UsageViewDescriptor{
 
   public PsiElement[] getElements() {
     return myElements;
-  }
-
-  public UsageInfo[] getUsages() {
-    return myUsages;
   }
 
   public String getProcessedElementsHeader() {

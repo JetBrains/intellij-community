@@ -12,19 +12,13 @@ import com.intellij.refactoring.RefactoringBundle;
 
 class MoveMemberViewDescriptor implements UsageViewDescriptor {
   private PsiElement[] myElementsToMove;
-  private UsageInfo[] myUsages;
 
-  public MoveMemberViewDescriptor(PsiElement[] elementsToMove, UsageInfo[] usages) {
+  public MoveMemberViewDescriptor(PsiElement[] elementsToMove) {
     myElementsToMove = elementsToMove;
-    myUsages = usages;
   }
 
   public PsiElement[] getElements() {
     return myElementsToMove;
-  }
-
-  public UsageInfo[] getUsages() {
-    return myUsages;
   }
 
   public String getProcessedElementsHeader() {

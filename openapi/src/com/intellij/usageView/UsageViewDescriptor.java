@@ -29,11 +29,6 @@ public interface UsageViewDescriptor {
    */
   PsiElement[] getElements();
 
-  /**
-   * @return usages to be shown
-   */
-  UsageInfo[] getUsages();
-
   String getProcessedElementsHeader();
 
   /**

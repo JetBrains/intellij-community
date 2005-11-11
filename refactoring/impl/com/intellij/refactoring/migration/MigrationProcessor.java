@@ -34,7 +34,7 @@ class MigrationProcessor extends BaseRefactoringProcessor {
   }
 
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
-    return new MigrationUsagesViewDescriptor(myMigrationMap, false, usages);
+    return new MigrationUsagesViewDescriptor(myMigrationMap, false);
   }
 
   private PsiMigration startMigration(final PsiManager psiManager) {

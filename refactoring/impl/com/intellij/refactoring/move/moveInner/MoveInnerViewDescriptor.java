@@ -14,19 +14,13 @@ import com.intellij.usageView.UsageViewDescriptor;
 class MoveInnerViewDescriptor implements UsageViewDescriptor {
 
   private PsiClass myInnerClass;
-  private UsageInfo[] myUsages;
 
-  public MoveInnerViewDescriptor(PsiClass innerClass, UsageInfo[] usages) {
+  public MoveInnerViewDescriptor(PsiClass innerClass) {
     myInnerClass = innerClass;
-    myUsages = usages;
   }
 
   public PsiElement[] getElements() {
     return new PsiElement[] {myInnerClass};
-  }
-
-  public UsageInfo[] getUsages() {
-    return myUsages;
   }
 
   public String getProcessedElementsHeader() {

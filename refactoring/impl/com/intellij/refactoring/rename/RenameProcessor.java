@@ -389,7 +389,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
 
 
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
-    return new RenameViewDescriptor(myPrimaryElement, myAllRenames, mySearchInComments, mySearchTextOccurences, usages);
+    return new RenameViewDescriptor(myPrimaryElement, myAllRenames, mySearchInComments, mySearchTextOccurences);
   }
 
   @NotNull

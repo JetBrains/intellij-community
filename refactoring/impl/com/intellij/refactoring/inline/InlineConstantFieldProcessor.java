@@ -37,7 +37,7 @@ class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
   }
 
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
-    return new InlineViewDescriptor(myField, usages);
+    return new InlineViewDescriptor(myField);
   }
 
   protected UsageInfo[] findUsages() {

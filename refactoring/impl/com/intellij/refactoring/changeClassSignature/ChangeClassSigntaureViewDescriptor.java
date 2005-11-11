@@ -3,8 +3,6 @@ package com.intellij.refactoring.changeClassSignature;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
-import com.intellij.usageView.FindUsagesCommand;
-import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewUtil;
 
 /**
@@ -13,8 +11,8 @@ import com.intellij.usageView.UsageViewUtil;
 public class ChangeClassSigntaureViewDescriptor extends UsageViewDescriptorAdapter {
   private PsiClass myClass;
 
-  public ChangeClassSigntaureViewDescriptor(PsiClass aClass, UsageInfo[] usages) {
-    super(usages);
+  public ChangeClassSigntaureViewDescriptor(PsiClass aClass) {
+    super();
     myClass = aClass;
   }
 

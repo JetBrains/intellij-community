@@ -8,28 +8,19 @@ import com.intellij.usageView.UsageViewBundle;
 import com.intellij.refactoring.RefactoringBundle;
 
 class RefsToSuperViewDescriptor implements UsageViewDescriptor{
-  private final TurnRefsToSuperProcessor myProcessor;
   private PsiClass myClass;
   private PsiClass mySuper;
-  private UsageInfo[] myUsages;
 
-  public RefsToSuperViewDescriptor(TurnRefsToSuperProcessor processor,
-                                   PsiClass aClass,
-                                   PsiClass anInterface,
-                                   UsageInfo[] usages
+  public RefsToSuperViewDescriptor(
+    PsiClass aClass,
+    PsiClass anInterface
   ) {
-    myProcessor = processor;
     myClass = aClass;
     mySuper = anInterface;
-    myUsages = usages;
   }
 
   public PsiElement[] getElements() {
     return new PsiElement[] {myClass, mySuper};
-  }
-
-  public UsageInfo[] getUsages() {
-    return myUsages;
   }
 
   public String getProcessedElementsHeader() {

@@ -35,7 +35,7 @@ public class TurnRefsToSuperProcessor extends TurnRefsToSuperProcessorBase {
   }
 
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
-    return new RefsToSuperViewDescriptor(this, myClass, mySuper, usages);
+    return new RefsToSuperViewDescriptor(myClass, mySuper);
   }
 
   void setClasses(final PsiClass aClass, final PsiClass aSuper) {

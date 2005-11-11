@@ -11,19 +11,13 @@ import com.intellij.usageView.UsageViewDescriptor;
 class InlineViewDescriptor implements UsageViewDescriptor{
 
   private PsiElement myElement;
-  private UsageInfo[] myUsages;
 
-  public InlineViewDescriptor(PsiElement element, UsageInfo[] usages) {
+  public InlineViewDescriptor(PsiElement element) {
     myElement = element;
-    myUsages = usages;
   }
 
   public PsiElement[] getElements() {
     return new PsiElement[] {myElement};
-  }
-
-  public UsageInfo[] getUsages() {
-    return myUsages;
   }
 
   public String getProcessedElementsHeader() {

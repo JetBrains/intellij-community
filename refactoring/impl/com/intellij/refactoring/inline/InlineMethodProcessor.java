@@ -73,7 +73,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   }
 
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
-    return new InlineViewDescriptor(myMethod, usages);
+    return new InlineViewDescriptor(myMethod);
   }
 
   protected UsageInfo[] findUsages() {

@@ -169,7 +169,7 @@ public abstract class BaseRefactoringProcessor {
         };
       };
 
-      showUsageView(descriptor, isVariable(), isVariable(), factory);
+      showUsageView(descriptor, isVariable(), isVariable(), factory, usages);
     } else {
       execute(usages);
     }
@@ -240,12 +240,12 @@ public abstract class BaseRefactoringProcessor {
   private void showUsageView(final UsageViewDescriptor viewDescriptor,
                              boolean showReadAccessIcon,
                              boolean showWriteAccessIcon,
-                             final Factory<UsageSearcher> factory) {
+                             final Factory<UsageSearcher> factory, final UsageInfo[] usageInfos) {
     UsageViewManager viewManager = myProject.getComponent(UsageViewManager.class);
 
     final PsiElement[] initialElements = viewDescriptor.getElements();
     final UsageTarget[] targets = PsiElement2UsageTargetAdapter.convert(initialElements);
-    final Usage[] usages = UsageInfo2UsageAdapter.convert(viewDescriptor.getUsages());
+    final Usage[] usages = UsageInfo2UsageAdapter.convert(usageInfos);
 
     final UsageViewPresentation presentation = createPresentation(viewDescriptor, usages);
 

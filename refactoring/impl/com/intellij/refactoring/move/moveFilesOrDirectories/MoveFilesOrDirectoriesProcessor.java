@@ -52,8 +52,8 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
     for (int idx = 0; idx < myElementsToMove.length; idx++) {
       elements[idx] = myElementsToMove[idx];
     }
-    return new MoveFilesOrDirectoriesViewDescriptor(elements, mySearchInComments, mySearchInNonJavaFiles, myNewParent,
-                                                    usages);
+    return new MoveFilesOrDirectoriesViewDescriptor(elements, mySearchInComments, mySearchInNonJavaFiles, myNewParent
+    );
   }
 
   protected UsageInfo[] findUsages() {

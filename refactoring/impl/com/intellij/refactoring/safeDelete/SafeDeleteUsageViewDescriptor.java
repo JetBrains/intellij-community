@@ -12,10 +12,10 @@ import com.intellij.usageView.UsageViewBundle;
 public class SafeDeleteUsageViewDescriptor extends UsageViewDescriptorAdapter {
   private final PsiElement[] myElementsToDelete;
 
-  public SafeDeleteUsageViewDescriptor(UsageInfo[] usages,
-                                       PsiElement[] elementsToDelete
+  public SafeDeleteUsageViewDescriptor(
+    PsiElement[] elementsToDelete
   ) {
-    super(usages);
+    super();
     myElementsToDelete = elementsToDelete;
   }
 

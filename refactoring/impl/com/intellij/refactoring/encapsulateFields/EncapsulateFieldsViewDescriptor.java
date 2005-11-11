@@ -10,11 +10,9 @@ import com.intellij.usageView.UsageViewDescriptor;
 
 class EncapsulateFieldsViewDescriptor implements UsageViewDescriptor {
   private PsiField[] myFields;
-  private UsageInfo[] myUsages;
 
-  public EncapsulateFieldsViewDescriptor(PsiField[] fields, UsageInfo[] usages) {
+  public EncapsulateFieldsViewDescriptor(PsiField[] fields) {
     myFields = fields;
-    myUsages = usages;
   }
 
   public String getProcessedElementsHeader() {
@@ -23,10 +21,6 @@ class EncapsulateFieldsViewDescriptor implements UsageViewDescriptor {
 
   public PsiElement[] getElements() {
     return myFields;
-  }
-
-  public UsageInfo[] getUsages() {
-    return myUsages;
   }
 
   public boolean isSearchInText() {

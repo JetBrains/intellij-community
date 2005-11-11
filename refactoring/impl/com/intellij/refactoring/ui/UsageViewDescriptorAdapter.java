@@ -9,18 +9,6 @@ import com.intellij.usageView.UsageViewDescriptor;
  * @author dsl
  */
 public abstract class UsageViewDescriptorAdapter implements UsageViewDescriptor {
-  protected UsageInfo[] myUsages;
-
-  public UsageViewDescriptorAdapter(UsageInfo[] usages) {
-    myUsages = usages;
-  }
-
-
-
-  public UsageInfo[] getUsages() {
-    return myUsages;
-  }
-
   public boolean isSearchInText() {
     return false;
   }

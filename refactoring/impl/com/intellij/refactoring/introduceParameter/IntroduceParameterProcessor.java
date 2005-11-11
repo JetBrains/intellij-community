@@ -92,7 +92,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
   }
 
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
-    return new IntroduceParameterViewDescriptor(myMethodToSearchFor, usages);
+    return new IntroduceParameterViewDescriptor(myMethodToSearchFor);
   }
 
   public PsiType getForcedType() {

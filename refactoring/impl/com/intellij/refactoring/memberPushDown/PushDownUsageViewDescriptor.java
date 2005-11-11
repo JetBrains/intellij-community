@@ -9,16 +9,10 @@ import com.intellij.usageView.UsageViewDescriptor;
 
 class PushDownUsageViewDescriptor implements UsageViewDescriptor {
   private PsiClass myClass;
-  private UsageInfo[] myUsages;
   private final String myProcessedElementsHeader = RefactoringBundle.message("push.down.members.elements.header");
 
-  public PushDownUsageViewDescriptor(PsiClass aClass, UsageInfo[] usages) {
+  public PushDownUsageViewDescriptor(PsiClass aClass) {
     myClass = aClass;
-    myUsages = usages;
-  }
-
-  public UsageInfo[] getUsages() {
-    return myUsages;
   }
 
   public String getProcessedElementsHeader() {

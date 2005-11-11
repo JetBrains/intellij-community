@@ -70,7 +70,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
   }
 
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
-    return new MoveInnerViewDescriptor(myInnerClass, usages);
+    return new MoveInnerViewDescriptor(myInnerClass);
   }
 
   @NotNull

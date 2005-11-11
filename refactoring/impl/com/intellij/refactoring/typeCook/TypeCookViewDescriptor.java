@@ -8,19 +8,13 @@ import com.intellij.usageView.UsageViewDescriptor;
 
 class TypeCookViewDescriptor implements UsageViewDescriptor {
   private PsiElement[] myElements;
-  private UsageInfo[] myUsages;
 
-  public TypeCookViewDescriptor(PsiElement[] elements, UsageInfo[] usages) {
+  public TypeCookViewDescriptor(PsiElement[] elements) {
     myElements = elements;
-    myUsages = usages;
   }
 
   public PsiElement[] getElements() {
     return myElements;
-  }
-
-  public UsageInfo[] getUsages() {
-    return myUsages;
   }
 
   public String getProcessedElementsHeader() {

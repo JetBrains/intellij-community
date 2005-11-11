@@ -46,7 +46,7 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
 
 
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
-    return new MakeMethodOrClassStaticViewDescriptor(myMember, usages);
+    return new MakeMethodOrClassStaticViewDescriptor(myMember);
   }
 
   protected final boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {

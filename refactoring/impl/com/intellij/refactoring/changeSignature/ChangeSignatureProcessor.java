@@ -109,7 +109,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
   }
 
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
-    return new ChangeSignatureViewDescriptor(myChangeInfo.getMethod(), usages);
+    return new ChangeSignatureViewDescriptor(myChangeInfo.getMethod());
   }
 
   protected UsageInfo[] findUsages() {

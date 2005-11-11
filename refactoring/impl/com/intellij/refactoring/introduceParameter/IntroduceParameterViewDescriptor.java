@@ -12,15 +12,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
-import com.intellij.usageView.UsageInfo;
 
 class IntroduceParameterViewDescriptor extends UsageViewDescriptorAdapter {
 
   private PsiMethod myMethodToSearchFor;
 
-  public IntroduceParameterViewDescriptor(PsiMethod methodToSearchFor,
-                                          UsageInfo[] usages) {
-    super(usages);
+  public IntroduceParameterViewDescriptor(PsiMethod methodToSearchFor
+  ) {
+    super();
     myMethodToSearchFor = methodToSearchFor;
 
   }

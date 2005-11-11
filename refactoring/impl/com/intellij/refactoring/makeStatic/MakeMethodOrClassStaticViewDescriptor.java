@@ -8,34 +8,28 @@
  */
 package com.intellij.refactoring.makeStatic;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMember;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.usageView.*;
+import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
+import com.intellij.usageView.UsageViewDescriptor;
+import com.intellij.usageView.UsageViewUtil;
 
 public class MakeMethodOrClassStaticViewDescriptor implements UsageViewDescriptor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.makeMethodStatic.MakeMethodStaticViewDescriptor");
 
   private PsiMember myMember;
-  private UsageInfo[] myUsages;
   private final String myProcessedElementsHeader;
 
-  public MakeMethodOrClassStaticViewDescriptor(PsiMember member,
-                                               UsageInfo[] usages) {
+  public MakeMethodOrClassStaticViewDescriptor(PsiMember member
+  ) {
     myMember = member;
-    myUsages = usages;
     String who = UsageViewUtil.capitalize(UsageViewUtil.getType(myMember));
     myProcessedElementsHeader = RefactoringBundle.message("make.static.elements.header", who);
   }
 
   public PsiElement[] getElements() {
     return new PsiElement[]{myMember};
-  }
-
-  public UsageInfo[] getUsages() {
-    return myUsages;
   }
 
 

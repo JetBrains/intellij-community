@@ -49,7 +49,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     for (int idx = 0; idx < myFields.length; idx++) {
       fields[idx] = myFields[idx];
     }
-    return new EncapsulateFieldsViewDescriptor(fields, usages);
+    return new EncapsulateFieldsViewDescriptor(fields);
   }
 
   protected String getCommandName() {
