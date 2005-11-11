@@ -50,11 +50,11 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler{
     try {
       XmlTag tag = getXmlTag();
       assert tag != null;
+      detach(false);
       if (subTags.length == myIndex + 1) {
-        cacheDomElement(null);
         tag.delete();
       } else {
-        cacheDomElement((XmlTag) tag.replace(createEmptyTag()));
+        attach((XmlTag) tag.replace(createEmptyTag()));
       }
     }
     catch (IncorrectOperationException e) {

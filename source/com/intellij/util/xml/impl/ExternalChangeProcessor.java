@@ -8,10 +8,10 @@ import com.intellij.pom.xml.XmlChangeVisitor;
 import com.intellij.pom.xml.events.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.util.xml.events.ContentsChangedEvent;
+import com.intellij.util.xml.events.ElementChangedEvent;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -55,6 +55,7 @@ public class ExternalChangeProcessor implements XmlChangeVisitor {
 
   private final TagChangeSet getChangeSet(XmlTag tag) {
     assert !myDocumentChanged;
+    assert tag != null;
     TagChangeSet changeSet = myChangeSets.get(tag);
     if (changeSet == null) {
       DomInvocationHandler handler = DomManagerImpl.getCachedElement(tag);
@@ -77,12 +78,13 @@ public class ExternalChangeProcessor implements XmlChangeVisitor {
     myDocumentChanged = true;
     final DomFileElementImpl element = DomManagerImpl.getCachedElement((XmlFile)change.getDocument().getContainingFile());
     if (element != null) {
+      final DomInvocationHandler rootHandler = element.getRootHandler();
+      rootHandler.detach(false);
       final XmlTag rootTag = element.getRootTag();
       if (rootTag != null) {
-        DomManagerImpl.invalidateSubtree(rootTag, true);
+        rootHandler.attach(rootTag);
       }
-      element.invalidateRoot();
-      element.getManager().fireEvent(new ContentsChangedEvent(element));
+      element.getManager().fireEvent(new ElementChangedEvent(element.getRootElement()));
     }
   }
 

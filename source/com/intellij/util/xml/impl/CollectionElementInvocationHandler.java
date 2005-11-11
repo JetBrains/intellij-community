@@ -26,8 +26,9 @@ public class CollectionElementInvocationHandler extends DomInvocationHandler{
 
   public final void undefine() {
     final DomElement parent = getParent();
-    invalidate();
-    deleteTag(getXmlTag());
+    final XmlTag tag = getXmlTag();
+    detach(true);
+    deleteTag(tag);
     getManager().fireEvent(new CollectionElementRemovedEvent(getProxy(), parent, getTagName()));
   }
 

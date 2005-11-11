@@ -22,10 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author peter
@@ -73,10 +70,6 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     return myParent;
   }
 
-  final void invalidate() {
-    myInvalidated = true;
-  }
-
   IndexedElementInvocationHandler getFixedChild(String tagName, int index) {
     return myFixedChildren.get(new Pair<String, Integer>(tagName, index));
   }
@@ -86,7 +79,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
 
     final boolean changing = myManager.setChanging(true);
     try {
-      cacheDomElement(setXmlTag(createEmptyTag()));
+      attach(setXmlTag(createEmptyTag()));
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
@@ -169,29 +162,30 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   }
 
   public void acceptChildren(DomElementVisitor visitor) {
-    try {
-      checkInitialized();
-    }
-    catch (IllegalAccessException e) {
-      LOG.error(e);
-    }
-    catch (InstantiationException e) {
-      LOG.error(e);
-    }
-    Set<IndexedElementInvocationHandler> fixedChildren = new HashSet<IndexedElementInvocationHandler>();
-    for (IndexedElementInvocationHandler handler : myFixedChildren.values()) {
+    for (DomInvocationHandler handler : getAllChildren()) {
       visitor.visitDomElement(handler.getProxy());
-      fixedChildren.add(handler);
     }
+  }
+
+  private Collection<DomInvocationHandler> getAllChildren() {
+    checkInitialized();
+    Set<DomInvocationHandler> result = new HashSet<DomInvocationHandler>(myFixedChildren.values());
+    result.addAll(getCollectionChildren(result));
+    return result;
+  }
+
+  private List<CollectionElementInvocationHandler> getCollectionChildren(final Set<DomInvocationHandler> fixedChildren) {
+    final List<CollectionElementInvocationHandler> collectionChildren = new ArrayList<CollectionElementInvocationHandler>();
     final XmlTag tag = getXmlTag();
     if (tag != null) {
       for (XmlTag xmlTag : tag.getSubTags()) {
         final DomInvocationHandler cachedElement = DomManagerImpl.getCachedElement(xmlTag);
         if (cachedElement != null && !fixedChildren.contains(cachedElement)) {
-          visitor.visitDomElement(cachedElement.getProxy());
+          collectionChildren.add((CollectionElementInvocationHandler)cachedElement);
         }
       }
     }
+    return collectionChildren;
   }
 
   @NotNull
@@ -299,7 +293,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     return StringUtil.getShortName(myType.toString()) + " @" + hashCode();
   }
 
-  final void checkInitialized() throws IllegalAccessException, InstantiationException {
+  final void checkInitialized() {
     synchronized (PsiLock.LOCK) {
       if (myInitialized) return;
       try {
@@ -308,13 +302,8 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
         final XmlTag tag = getXmlTag();
         for (Map.Entry<Method, Pair<String, Integer>> entry : myMethodsMap.getFixedChildrenEntries()) {
           final Pair<String, Integer> pair = entry.getValue();
-          final String qname = pair.getFirst();
-          final Integer index = pair.getSecond();
-          XmlTag subTag = findSubTag(tag, qname, index);
-          final Method method = entry.getKey();
-          final IndexedElementInvocationHandler handler = createIndexedChild(method, subTag, qname, index);
-          myManager.createDomElement(method.getReturnType(), subTag, handler);
-          myFixedChildren.put(pair, handler);
+          final XmlTag subTag = findSubTag(tag, pair.getFirst(), pair.getSecond());
+          getOrCreateIndexedChild(entry.getKey(), subTag, pair);
           usedTags.add(subTag);
         }
 
@@ -336,11 +325,21 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     }
   }
 
+  private IndexedElementInvocationHandler getOrCreateIndexedChild(final Method method, final XmlTag subTag, final Pair<String, Integer> pair) {
+    IndexedElementInvocationHandler handler = myFixedChildren.get(pair);
+    if (handler == null) {
+      handler = createIndexedChild(method, subTag, pair.getFirst(), pair.getSecond());
+      myFixedChildren.put(pair, handler);
+      myManager.createDomElement(method.getReturnType(), subTag, handler);
+    } else {
+      handler.attach(subTag);
+    }
+    return handler;
+  }
+
   private IndexedElementInvocationHandler createIndexedChild(final Method method,
                                                              final XmlTag subTag,
-                                                             final String qname, final Integer index) throws
-                                                                                                      InstantiationException,
-                                                                                                      IllegalAccessException {
+                                                             final String qname, final Integer index) {
     Converter converter = getConverterForChild(method);
     if (converter != null) {
       return new GenericValueInvocationHandler(method.getGenericReturnType(), subTag, this, qname, index, converter);
@@ -348,21 +347,29 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     return new IndexedElementInvocationHandler(method.getReturnType(), subTag, this, qname, index);
   }
 
-  private Converter getConverterForChild(final Method method) throws InstantiationException, IllegalAccessException {
-    final Type genericReturnType = method.getGenericReturnType();
-    if (genericReturnType instanceof ParameterizedType) {
-      ParameterizedType parameterizedType = (ParameterizedType)genericReturnType;
-      if (parameterizedType.getRawType() == GenericValue.class) {
-        final Convert convertAnnotation = method.getAnnotation(Convert.class);
-        if (convertAnnotation != null) {
-          return myManager.getConverterManager().getConverter(convertAnnotation.value());
-        }
+  private Converter getConverterForChild(final Method method) {
+    try {
+      final Type genericReturnType = method.getGenericReturnType();
+      if (genericReturnType instanceof ParameterizedType) {
+        ParameterizedType parameterizedType = (ParameterizedType)genericReturnType;
+        if (parameterizedType.getRawType() == GenericValue.class) {
+          final Convert convertAnnotation = method.getAnnotation(Convert.class);
+          if (convertAnnotation != null) {
+            return myManager.getConverterManager().getConverter(convertAnnotation.value());
+          }
 
-        final Type[] arguments = parameterizedType.getActualTypeArguments();
-        if (arguments.length == 1 && arguments[0] instanceof Class) {
-          return myManager.getConverterManager().getConverter((Class)arguments[0]);
+          final Type[] arguments = parameterizedType.getActualTypeArguments();
+          if (arguments.length == 1 && arguments[0] instanceof Class) {
+            return myManager.getConverterManager().getConverter((Class)arguments[0]);
+          }
         }
       }
+    }
+    catch (InstantiationException e) {
+      LOG.error(e);
+    }
+    catch (IllegalAccessException e) {
+      LOG.error(e);
     }
     return null;
   }
@@ -384,7 +391,27 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     return myXmlTag;
   }
 
-  protected final void cacheDomElement(final XmlTag tag) {
+  protected final void detach(boolean invalidate) {
+    synchronized (PsiLock.LOCK) {
+      if (myXmlTag == null) return;
+      myInvalidated = invalidate;
+      if (myInitialized) {
+        Set<DomInvocationHandler> fixedChildren = new HashSet<DomInvocationHandler>(myFixedChildren.values());
+        for (DomInvocationHandler handler : fixedChildren) {
+          handler.detach(invalidate);
+        }
+        for (CollectionElementInvocationHandler handler : getCollectionChildren(fixedChildren)) {
+          handler.detach(true);
+        }
+      }
+
+      myInitialized = false;
+      DomManagerImpl.setCachedElement(myXmlTag, null);
+      myXmlTag = null;
+    }
+  }
+
+  protected final void attach(@NotNull final XmlTag tag) {
     synchronized (PsiLock.LOCK) {
       myXmlTag = tag;
       DomManagerImpl.setCachedElement(tag, this);
@@ -395,8 +422,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     return myManager;
   }
 
-  protected final void createFixedChildrenTags(String tagName, int count) throws IncorrectOperationException, IllegalAccessException,
-                                                                                 InstantiationException {
+  protected final void createFixedChildrenTags(String tagName, int count) throws IncorrectOperationException {
     checkInitialized();
     final XmlTag tag = ensureTagExists();
     for (Map.Entry<Method, Pair<String, Integer>> entry : myMethodsMap.getFixedChildrenEntries()) {
@@ -412,9 +438,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     }
   }
 
-  public final DomElement addChild(final String tagName, final Class aClass, int index) throws IncorrectOperationException,
-                                                                                               IllegalAccessException,
-                                                                                               InstantiationException {
+  public final DomElement addChild(final String tagName, final Class aClass, int index) throws IncorrectOperationException {
     createFixedChildrenTags(tagName, myMethodsMap.getFixedChildrenCount(tagName));
     return addCollectionElement(aClass, addEmptyTag(tagName, index));
   }

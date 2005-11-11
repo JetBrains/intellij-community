@@ -245,17 +245,4 @@ public class DomManagerImpl extends DomManager implements ProjectComponent{
     myPomModel.removeModelListener(myXmlListener);
   }
 
-  static void invalidateSubtree(final XmlTag root, final boolean invalidateRoot) {
-    final DomInvocationHandler element = getCachedElement(root);
-    if (element != null) {
-      setCachedElement(root, null);
-      if (invalidateRoot) {
-        element.invalidate();
-      }
-      for (XmlTag tag : root.getSubTags()) {
-        invalidateSubtree(tag, true);
-      }
-    }
-  }
-
 }

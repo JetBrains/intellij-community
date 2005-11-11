@@ -19,7 +19,7 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
   private final Class<T> myRootElementClass;
   private final String myRootTagName;
   private final DomManagerImpl myManager;
-  private T myRootValue;
+  private DomInvocationHandler myRootHandler;
 
   protected DomFileElementImpl(final XmlFile file,
                                final Class<T> rootElementClass,
@@ -53,19 +53,17 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
 
   @NotNull
   public T getRootElement() {
-    synchronized (PsiLock.LOCK) {
-      if (myRootValue == null) {
-        final XmlTag tag = getRootTag();
-        final DomRootInvocationHandler handler = new DomRootInvocationHandler(myRootElementClass, tag, this, myRootTagName);
-        myRootValue = (T)myManager.createDomElement(myRootElementClass, tag, handler);
-      }
-      return myRootValue;
-    }
+    return (T)getRootHandler().getProxy();
   }
 
-  void invalidateRoot() {
+  protected final DomInvocationHandler getRootHandler() {
     synchronized (PsiLock.LOCK) {
-      myRootValue = null;
+      if (myRootHandler == null) {
+        final XmlTag tag = getRootTag();
+        myRootHandler = new DomRootInvocationHandler(myRootElementClass, tag, this, myRootTagName);
+        myManager.createDomElement(myRootElementClass, tag, myRootHandler);
+      }
+      return myRootHandler;
     }
   }
 
