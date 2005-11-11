@@ -7,6 +7,8 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.reflect.DomMethodsInfo;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Type;
+
 /**
  * @author peter
  */
@@ -32,4 +34,6 @@ public interface DomElement {
   void acceptChildren(DomElementVisitor visitor);
 
   DomManager getManager();
+
+  Type getDomElementType();
 }

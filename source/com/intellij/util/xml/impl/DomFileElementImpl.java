@@ -12,6 +12,8 @@ import com.intellij.util.xml.reflect.DomMethodsInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Type;
+
 /**
  * @author peter
  */
@@ -50,6 +52,10 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
 
   public final DomManagerImpl getManager() {
     return myManager;
+  }
+
+  public final Type getDomElementType() {
+    return getClass();
   }
 
   @NotNull

@@ -74,6 +74,10 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     return myFixedChildren.get(new Pair<String, Integer>(tagName, index));
   }
 
+  public final Type getDomElementType() {
+    return myType;
+  }
+
   public final XmlTag ensureTagExists() {
     if (myXmlTag != null) return myXmlTag;
 
