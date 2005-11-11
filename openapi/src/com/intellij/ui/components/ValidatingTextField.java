@@ -32,6 +32,7 @@ public class ValidatingTextField extends ValidatingComponent<JTextField> {
         }
       }
     });
+    doInitialize();
   }
 
   protected JTextField createMainComponent() {

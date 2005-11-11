@@ -15,13 +15,15 @@ import java.awt.*;
 public abstract class ValidatingComponent<T extends JComponent> extends NonOpaquePanel {
   private static final Font ERROR_FONT = UIManager.getFont("Label.font").deriveFont(Font.PLAIN, 10f);
 
-  private final JLabel myErrorLabel;
+  private JLabel myErrorLabel;
   private T myMainComponent;
   private JLabel myLabel;
 
   protected ValidatingComponent() {
     setLayout(new BorderLayout());
+  }
 
+  public final void doInitialize() {
     myErrorLabel = createErrorLabel();
     myMainComponent = createMainComponent();
 

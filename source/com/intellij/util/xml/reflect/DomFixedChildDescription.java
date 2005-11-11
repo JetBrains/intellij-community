@@ -8,7 +8,7 @@ import java.lang.reflect.Method;
 /**
  * @author peter
  */
-public interface DomFixedChildDescription extends DomChildDescription{
+public interface DomFixedChildDescription extends DomChildrenDescription {
   int getCount();
   Method getGetterMethod(int index);
 }

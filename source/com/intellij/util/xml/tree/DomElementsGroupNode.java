@@ -62,4 +62,8 @@ public class DomElementsGroupNode extends AbstractDomElementNode {
   public String getTagName() {
     return myChildrenTagName;
   }
+
+  public DomElement getDomElement() {
+    return myModelElement;
+  }
 }

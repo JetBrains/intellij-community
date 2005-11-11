@@ -27,7 +27,7 @@ public interface DomMethodsInfo {
   Method getCollectionIndexedAddMethod(String tagName);
 
   @NotNull
-  List<DomChildDescription> getChildrenDescriptions();
+  List<DomChildrenDescription> getChildrenDescriptions();
 
   @Nullable
   DomFixedChildDescription getFixedChildDescription(String tagName);

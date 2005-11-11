@@ -11,8 +11,8 @@ import java.util.List;
 /**
  * @author peter
  */
-public interface DomChildDescription {
+public interface DomChildrenDescription {
   String getTagName();
-  List<DomElement> getChildren(DomElement element);
+  List<DomElement> getValues(DomElement element);
   Type getType();
 }

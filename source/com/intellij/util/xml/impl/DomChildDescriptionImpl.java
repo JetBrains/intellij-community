@@ -3,14 +3,14 @@
  */
 package com.intellij.util.xml.impl;
 
-import com.intellij.util.xml.reflect.DomChildDescription;
+import com.intellij.util.xml.reflect.DomChildrenDescription;
 
 import java.lang.reflect.Type;
 
 /**
  * @author peter
  */
-public abstract class DomChildDescriptionImpl implements DomChildDescription {
+public abstract class DomChildDescriptionImpl implements DomChildrenDescription {
   private final String myTagName;
   private final Type myType;
 

@@ -22,17 +22,20 @@ public class DomUIFactory {
 
   public static <T> DomUIControl createControl(GenericValue<T> element, Class<T> aClass) {
     try {
-      final Method getValueMethod = aClass.getMethod("getValue");
-      final Method setValueMethod = aClass.getMethod("setValue", aClass);
-      final Method getStringMethod = aClass.getMethod("getStringValue");
-      final Method setStringMethod = aClass.getMethod("setStringValue", aClass);
+      final Method getValueMethod = GenericValue.class.getMethod("getValue");
+      final Method setValueMethod = findMethod(GenericValue.class, "setValue");
+      final Method getStringMethod = GenericValue.class.getMethod("getStringValue");
+      final Method setStringMethod = findMethod(GenericValue.class, "setStringValue");
       if (aClass.equals(boolean.class) || aClass.equals(Boolean.class)) {
         return new BooleanControl(element, getValueMethod, setValueMethod);
-      } else if (aClass.equals(String.class)) {
+      }
+      else if (aClass.equals(String.class)) {
         return new StringControl(element, getValueMethod, setValueMethod);
-      } else if (aClass.equals(PsiClass.class)) {
+      }
+      else if (aClass.equals(PsiClass.class)) {
         return new PsiClassControl(element, getStringMethod, setStringMethod);
-      } else if (Enum.class.isAssignableFrom(aClass)) {
+      }
+      else if (Enum.class.isAssignableFrom(aClass)) {
         return new EnumControl(element, aClass, getStringMethod, setStringMethod);
       }
       throw new IllegalArgumentException("Not supported: " + aClass);
@@ -40,15 +43,28 @@ public class DomUIFactory {
     catch (NoSuchMethodException e) {
       throw new RuntimeException(e);
     }
+
+
+  }
+
+  private static Method findMethod(Class clazz, String methodName) {
+    final Method[] methods = clazz.getMethods();
+    for (Method method : methods) {
+      if (methodName.equals(method.getName())) {
+        return method;
+      }
+    }
+    return null;
   }
 
   public static DomUIControl createControl(DomElement parent, Method genericValueGetterMethod) {
     final Type genericReturnType = genericValueGetterMethod.getGenericReturnType();
     assert genericReturnType instanceof ParameterizedType;
-    assert ((ParameterizedType) genericReturnType).getRawType().equals(GenericValue.class);
+    assert ((ParameterizedType)genericReturnType).getRawType().equals(GenericValue.class);
 
     try {
-      return createControl((GenericValue)genericValueGetterMethod.invoke(parent), (Class)((ParameterizedType) genericReturnType).getActualTypeArguments()[0]);
+      return createControl((GenericValue)genericValueGetterMethod.invoke(parent),
+                           (Class)((ParameterizedType)genericReturnType).getActualTypeArguments()[0]);
     }
     catch (Exception e) {
       throw new RuntimeException(e);

@@ -8,7 +8,7 @@ import java.lang.reflect.Method;
 /**
  * @author peter
  */
-public interface DomCollectionChildDescription extends DomChildDescription{
+public interface DomCollectionChildDescription extends DomChildrenDescription {
   Method getGetterMethod();
   Method getIndexedAdderMethod();
   Method getAdderMethod();

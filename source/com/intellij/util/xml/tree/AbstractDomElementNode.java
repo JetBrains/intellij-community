@@ -18,6 +18,8 @@ abstract public class AbstractDomElementNode extends SimpleNode {
       return new BaseDomElementNode(domElement, tagName, parentNode);
   };
 
+  abstract public DomElement getDomElement();
+
   abstract public String getNodeName();
 
   abstract public String getTagName();

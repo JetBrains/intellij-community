@@ -10,7 +10,7 @@ import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomMethodsInfo;
-import com.intellij.util.xml.reflect.DomChildDescription;
+import com.intellij.util.xml.reflect.DomChildrenDescription;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import org.jetbrains.annotations.NotNull;
@@ -296,8 +296,8 @@ public class MethodsMap implements DomMethodsInfo {
   }
 
   @NotNull
-  public List<DomChildDescription> getChildrenDescriptions() {
-    final ArrayList<DomChildDescription> result = new ArrayList<DomChildDescription>();
+  public List<DomChildrenDescription> getChildrenDescriptions() {
+    final ArrayList<DomChildrenDescription> result = new ArrayList<DomChildrenDescription>();
     for (String s : myFixedChildrenCounts.keySet()) {
       result.add(getFixedChildDescription(s));
     }

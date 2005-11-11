@@ -58,5 +58,8 @@ public class DomModelTreeView extends Wrapper {
     return myBuilder;
   }
 
+  public SimpleTree getTree() {
+    return myTree;
+  }
 }
 
