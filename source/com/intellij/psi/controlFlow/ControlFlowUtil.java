@@ -1033,9 +1033,11 @@ public class ControlFlowUtil {
           CallInstruction callInstruction = (CallInstruction) instructions[returnOffset - 1];
           // check if we inside procedure but 'return offset' stack is empty, so
           // we should push back to 'return offset' stack
-          if (callInstruction.procBegin <= offset && offset < callInstruction.procEnd + 2
-              && (callInstruction.stack.size() == 0 || callInstruction.stack.peekReturnOffset() != returnOffset)) {
-            callInstruction.stack.push(returnOffset, callInstruction);
+          synchronized (callInstruction.stack) {
+            if (callInstruction.procBegin <= offset && offset < callInstruction.procEnd + 2
+                && (callInstruction.stack.size() == 0 || callInstruction.stack.peekReturnOffset() != returnOffset)) {
+              callInstruction.stack.push(returnOffset, callInstruction);
+            }
           }
         }
 

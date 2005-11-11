@@ -19,7 +19,9 @@ public class CallInstruction extends GoToInstruction {
   }
 
   public void execute(int returnOffset) {
-    stack.push(returnOffset, this);
+    synchronized (stack) {
+      stack.push(returnOffset, this);
+    }
   }
 
   public void accept(ControlFlowInstructionVisitor visitor, int offset, int nextOffset) {

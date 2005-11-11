@@ -6,12 +6,12 @@ import com.intellij.openapi.diagnostic.Logger;
 public class ReturnInstruction extends GoToInstruction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.controlFlow.ReturnInstruction");
 
-  public final ControlFlowStack stack;
+  private final ControlFlowStack myStack;
   private CallInstruction myCallInstruction;
 
   public ReturnInstruction(int offset, ControlFlowStack stack, CallInstruction callInstruction) {
     super(offset, ControlFlow.JUMP_ROLE_GOTO_END, false);
-    this.stack = stack;
+    myStack = stack;
     myCallInstruction = callInstruction;
   }
 
@@ -20,14 +20,16 @@ public class ReturnInstruction extends GoToInstruction {
   }
 
   public int execute(boolean pushBack) {
-    int jumpTo = -1;
-    if (stack.size() != 0) {
-      jumpTo = stack.pop(pushBack);
+    synchronized (myStack) {
+      int jumpTo = -1;
+      if (myStack.size() != 0) {
+        jumpTo = myStack.pop(pushBack);
+      }
+      if (offset != 0) {
+        jumpTo = offset;
+      }
+      return jumpTo;
     }
-    if (offset != 0) {
-      jumpTo = offset;
-    }
-    return jumpTo;
   }
 
   public int[] getPossibleReturnOffsets() {

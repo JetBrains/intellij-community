@@ -17,7 +17,6 @@ class ControlFlowImpl implements ControlFlow {
   private TObjectIntHashMap<PsiElement> myElementToStartOffsetMap = new TObjectIntHashMap<PsiElement>();
   private TObjectIntHashMap<PsiElement> myElementToEndOffsetMap = new TObjectIntHashMap<PsiElement>();
   private List<PsiElement> myElementsForInstructions = new ArrayList<PsiElement>();
-  ControlFlowStack myStack = new ControlFlowStack();
   private boolean myConstantConditionOccurred;
 
   private Stack<PsiElement> myElementStack = new Stack<PsiElement>();
