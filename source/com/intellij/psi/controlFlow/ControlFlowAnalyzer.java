@@ -379,7 +379,7 @@ public class ControlFlowAnalyzer extends PsiElementVisitor {
   }
 
   private void emitEmptyInstruction() {
-    myCurrentFlow.addInstruction(new EmptyInstruction());
+    myCurrentFlow.addInstruction(EmptyInstruction.INSTANCE);
   }
 
   public void visitJspFile(JspFile file) {

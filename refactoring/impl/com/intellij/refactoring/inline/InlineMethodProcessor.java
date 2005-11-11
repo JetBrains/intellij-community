@@ -1056,7 +1056,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
         offset++;
       }
       LOG.assertTrue(instructions[offset] instanceof GoToInstruction);
-      instructions[offset] = new EmptyInstruction();
+      instructions[offset] = EmptyInstruction.INSTANCE;
     }
 
     for (PsiReturnStatement aReturn : returns) {
