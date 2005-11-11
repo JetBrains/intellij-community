@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.*;
 
@@ -353,21 +352,15 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
 
   private Converter getConverterForChild(final Method method) {
     try {
-      final Type genericReturnType = method.getGenericReturnType();
-      if (genericReturnType instanceof ParameterizedType) {
-        ParameterizedType parameterizedType = (ParameterizedType)genericReturnType;
-        if (parameterizedType.getRawType() == GenericValue.class) {
-          final Convert convertAnnotation = method.getAnnotation(Convert.class);
-          if (convertAnnotation != null) {
-            return myManager.getConverterManager().getConverter(convertAnnotation.value());
-          }
+      final Class aClass = DomUtil.extractParameterClassFromGenericType(method.getGenericReturnType());
+      if (aClass == null) return null;
 
-          final Type[] arguments = parameterizedType.getActualTypeArguments();
-          if (arguments.length == 1 && arguments[0] instanceof Class) {
-            return myManager.getConverterManager().getConverter((Class)arguments[0]);
-          }
-        }
+      final Convert convertAnnotation = method.getAnnotation(Convert.class);
+      if (convertAnnotation != null) {
+        return myManager.getConverterManager().getConverter(convertAnnotation.value());
       }
+
+      return myManager.getConverterManager().getConverter(aClass);
     }
     catch (InstantiationException e) {
       LOG.error(e);
