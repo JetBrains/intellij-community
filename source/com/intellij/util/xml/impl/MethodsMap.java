@@ -9,6 +9,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.*;
+import com.intellij.util.xml.reflect.DomMethodsInfo;
+import com.intellij.util.xml.reflect.DomChildDescription;
+import com.intellij.util.xml.reflect.DomCollectionChildDescription;
+import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -259,9 +263,63 @@ public class MethodsMap implements DomMethodsInfo {
   public Method getCollectionAddMethod(String tagName) {
     for (Map.Entry<Method, String> entry : myCollectionChildrenAdditionMethods.entrySet()) {
       if (tagName.equals(entry.getValue())) {
-        return entry.getKey();
+        final Method method = entry.getKey();
+        if (method.getParameterTypes().length == 0) {
+          return method;
+        }
       }
     }
     return null;
+  }
+
+  public Method getCollectionIndexedAddMethod(String tagName) {
+    for (Map.Entry<Method, String> entry : myCollectionChildrenAdditionMethods.entrySet()) {
+      if (tagName.equals(entry.getValue())) {
+        final Method method = entry.getKey();
+        if (method.getParameterTypes().length == 1) {
+          return method;
+        }
+      }
+    }
+    return null;
+  }
+
+  public Method[] getFixedChildrenGetterMethods(String tagName) {
+    final Method[] methods = new Method[getFixedChildrenCount(tagName)];
+    for (Map.Entry<Method, Pair<String, Integer>> entry : myFixedChildrenMethods.entrySet()) {
+      final Pair<String, Integer> pair = entry.getValue();
+      if (tagName.equals(pair.getFirst())) {
+        methods[pair.getSecond()] = entry.getKey();
+      }
+    }
+    return methods;
+  }
+
+  @NotNull
+  public List<DomChildDescription> getChildrenDescriptions() {
+    final ArrayList<DomChildDescription> result = new ArrayList<DomChildDescription>();
+    for (String s : myFixedChildrenCounts.keySet()) {
+      result.add(getFixedChildDescription(s));
+    }
+    for (String s : myCollectionChildrenClasses.keySet()) {
+      result.add(getCollectionChildDescription(s));
+    }
+    return result;
+  }
+
+  @Nullable
+  public DomFixedChildDescription getFixedChildDescription(String tagName) {
+    return new FixedChildDescriptionImpl(tagName,
+                                         getFixedChildrenCount(tagName),
+                                         getFixedChildrenGetterMethods(tagName));
+  }
+
+  @Nullable
+  public DomCollectionChildDescription getCollectionChildDescription(String tagName) {
+    return new CollectionChildDescriptionImpl(tagName,
+                                              getCollectionChildrenClass(tagName),
+                                              getCollectionGetMethod(tagName),
+                                              getCollectionAddMethod(tagName),
+                                              getCollectionIndexedAddMethod(tagName));
   }
 }

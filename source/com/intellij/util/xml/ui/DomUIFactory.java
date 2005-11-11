@@ -6,7 +6,7 @@ package com.intellij.util.xml.ui;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiClass;
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomMethodsInfo;
+import com.intellij.util.xml.reflect.DomMethodsInfo;
 import com.intellij.util.xml.GenericValue;
 import com.intellij.util.xml.impl.ui.*;
 

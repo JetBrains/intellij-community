@@ -4,6 +4,7 @@
 package com.intellij.util.xml;
 
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.xml.reflect.DomMethodsInfo;
 import org.jetbrains.annotations.Nullable;
 
 /**
