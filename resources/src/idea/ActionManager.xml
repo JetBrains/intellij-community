@@ -118,6 +118,9 @@
     <action id="FullyExpandTreeNode" class="com.intellij.ide.actions.tree.FullyExpandTreeNodeAction"/>
 
     <group id="J2EEGenerateGroup">
+      <action id="CreatePersistenceUnit" class="com.intellij.j2ee15.module.view.persistence.actions.CreatePersistenceUnitAction"/>
+
+
       <action id="CreateSessionBean" class="com.intellij.j2ee.module.view.ejb.actions.CreateSessionBeanAction" icon="/nodes/ejbSession.png"/>
       <action id="CreateContainerManagedEntityBeanAction" class="com.intellij.j2ee.module.view.ejb.actions.CreateCMPEntityBeanAction" icon="/nodes/ejbEntity.png"/>
       <action id="CreateBeanManagedEntityBeanAction" class="com.intellij.j2ee.module.view.ejb.actions.CreateBMPEntityBeanAction" icon="/nodes/ejbEntity.png"/>
