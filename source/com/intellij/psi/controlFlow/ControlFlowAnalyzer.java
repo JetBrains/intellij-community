@@ -29,29 +29,6 @@ public class ControlFlowAnalyzer extends PsiElementVisitor {
   private List<PsiClassType> myCheckedExceptions = new ArrayList<PsiClassType>();
   private Map<PsiElement, ControlFlow> myRegisteredSubControlFlows = new THashMap<PsiElement, ControlFlow>();
 
-  private static class StatementStack {
-    private List<PsiElement> myStatements = new ArrayList<PsiElement>();
-    private TIntArrayList myAtStart = new TIntArrayList();
-
-    void popStatement() {
-      myAtStart.remove(myAtStart.size() - 1);
-      myStatements.remove(myStatements.size() - 1);
-    }
-
-    PsiElement peekElement() {
-      return myStatements.get(myStatements.size() - 1);
-    }
-
-    boolean peekAtStart() {
-      return myAtStart.get(myAtStart.size() - 1) == 1;
-    }
-
-    void pushStatement(PsiElement statement, boolean atStart) {
-      myStatements.add(statement);
-      myAtStart.add(atStart ? 1 : 0);
-    }
-  }
-
   // element to jump to from inner (sub)expression in "jump to begin" situation.
   // E.g. we should to jump to "then" branch if condition expression evaluated to true inside if statement
   StatementStack myStartStatementStack = new StatementStack();
@@ -76,7 +53,84 @@ public class ControlFlowAnalyzer extends PsiElementVisitor {
   // map: PsiElement element -> TIntArrayList instructionOffsetsToPatch with getEndOffset(element)
   private Map<PsiElement,TIntArrayList> offsetsAddElementEnd = new THashMap<PsiElement, TIntArrayList>();
 
-  TIntArrayList getEmptyIntArray() {
+
+  public ControlFlowAnalyzer(PsiElement codeFragment, ControlFlowPolicy policy) {
+    this(codeFragment, policy, true);
+  }
+
+  public ControlFlowAnalyzer(PsiElement codeFragment, ControlFlowPolicy policy, boolean enabledShortCircuit) {
+    // by default, do not evaluate constant conditions inside if
+    this(codeFragment, policy, enabledShortCircuit, false);
+  }
+
+  public ControlFlowAnalyzer(PsiElement codeFragment,
+                             ControlFlowPolicy policy,
+                             boolean enabledShortCircuit,
+                             boolean evaluateConstantIfConfition) {
+    this (codeFragment, policy, enabledShortCircuit, evaluateConstantIfConfition, false);
+  }
+
+  public ControlFlowAnalyzer(PsiElement codeFragment,
+                             ControlFlowPolicy policy,
+                             boolean enabledShortCircuit,
+                             boolean evaluateConstantIfConfition,
+                             boolean assignmentTargetsAreElements) {
+    myCodeFragment = codeFragment;
+    myPolicy = policy;
+    myEnabledShortCircuit = enabledShortCircuit;
+    myEvaluateConstantIfConfition = evaluateConstantIfConfition;
+    myAssignmentTargetsAreElements = assignmentTargetsAreElements;
+  }
+
+
+  public ControlFlow buildControlFlow() throws AnalysisCanceledException {
+
+    // push guard outer statement offsets in case when nested expression is incorrect
+    myStartJumpRoles.add(ControlFlow.JUMP_ROLE_GOTO_END);
+    myEndJumpRoles.add(ControlFlow.JUMP_ROLE_GOTO_END);
+
+    myCurrentFlow = new ControlFlowImpl();
+
+    // guard elements
+    myStartStatementStack.pushStatement(myCodeFragment, false);
+    myEndStatementStack.pushStatement(myCodeFragment, false);
+
+    try {
+      myCodeFragment.accept(this);
+      cleanupNonPatchedInstructionOffsets();
+    }
+    catch (AnalysisCanceledSoftException e) {
+      flushCreatedSubFlows();
+      throw new AnalysisCanceledException(e.getErrorElement());
+    }
+
+    return myCurrentFlow;
+  }
+
+  private static class StatementStack {
+    private List<PsiElement> myStatements = new ArrayList<PsiElement>();
+    private TIntArrayList myAtStart = new TIntArrayList();
+
+    void popStatement() {
+      myAtStart.remove(myAtStart.size() - 1);
+      myStatements.remove(myStatements.size() - 1);
+    }
+
+    PsiElement peekElement() {
+      return myStatements.get(myStatements.size() - 1);
+    }
+
+    boolean peekAtStart() {
+      return myAtStart.get(myAtStart.size() - 1) == 1;
+    }
+
+    void pushStatement(PsiElement statement, boolean atStart) {
+      myStatements.add(statement);
+      myAtStart.add(atStart ? 1 : 0);
+    }
+  }
+
+  private TIntArrayList getEmptyIntArray() {
     final int size = intArrayPool.size();
     if (size == 0) {
       return new TIntArrayList(1);
@@ -141,60 +195,6 @@ public class ControlFlowAnalyzer extends PsiElementVisitor {
     for (TIntArrayList offsets : offsetsAddElementEnd.values()) {
       patchInstructionOffsets(offsets, myCurrentFlow.getEndOffset(myCodeFragment));
     }
-  }
-
-
-  public ControlFlowAnalyzer(PsiElement codeFragment, ControlFlowPolicy policy) {
-    this(codeFragment, policy, true);
-  }
-
-  public ControlFlowAnalyzer(PsiElement codeFragment, ControlFlowPolicy policy, boolean enabledShortCircuit) {
-    // by default, do not evaluate constant conditions inside if
-    this(codeFragment, policy, enabledShortCircuit, false);
-  }
-
-  public ControlFlowAnalyzer(PsiElement codeFragment,
-                             ControlFlowPolicy policy,
-                             boolean enabledShortCircuit,
-                             boolean evaluateConstantIfConfition) {
-    this (codeFragment, policy, enabledShortCircuit, evaluateConstantIfConfition, false);
-  }
-
-  public ControlFlowAnalyzer(PsiElement codeFragment,
-                             ControlFlowPolicy policy,
-                             boolean enabledShortCircuit,
-                             boolean evaluateConstantIfConfition,
-                             boolean assignmentTargetsAreElements) {
-    myCodeFragment = codeFragment;
-    myPolicy = policy;
-    myEnabledShortCircuit = enabledShortCircuit;
-    myEvaluateConstantIfConfition = evaluateConstantIfConfition;
-    myAssignmentTargetsAreElements = assignmentTargetsAreElements;
-  }
-
-
-  public ControlFlow buildControlFlow() throws AnalysisCanceledException {
-
-    // push guard outer statement offsets in case when nested expression is incorrect
-    myStartJumpRoles.add(ControlFlow.JUMP_ROLE_GOTO_END);
-    myEndJumpRoles.add(ControlFlow.JUMP_ROLE_GOTO_END);
-
-    myCurrentFlow = new ControlFlowImpl();
-
-    // guard elements
-    myStartStatementStack.pushStatement(myCodeFragment, false);
-    myEndStatementStack.pushStatement(myCodeFragment, false);
-
-    try {
-      myCodeFragment.accept(this);
-      cleanupNonPatchedInstructionOffsets();
-    }
-    catch (AnalysisCanceledSoftException e) {
-      flushCreatedSubFlows();
-      throw new AnalysisCanceledException(e.getErrorElement());
-    }
-
-    return myCurrentFlow;
   }
 
   private void flushCreatedSubFlows() {
@@ -484,7 +484,7 @@ public class ControlFlowAnalyzer extends PsiElementVisitor {
           myStartStatementStack.popStatement();
           myEndStatementStack.popStatement();
         }
-        if ((element instanceof PsiLocalVariable && initializer != null)
+        if (element instanceof PsiLocalVariable && initializer != null
             || element instanceof PsiField) {
           if (element instanceof PsiLocalVariable && !myPolicy.isLocalVariableAccepted((PsiLocalVariable)element)) continue;
 
@@ -554,7 +554,7 @@ public class ControlFlowAnalyzer extends PsiElementVisitor {
   public void visitExpressionStatement(PsiExpressionStatement statement) {
     startElement(statement);
     final PsiExpression expression = statement.getExpression();
-    if (expression != null) expression.accept(this);
+    expression.accept(this);
 
     for (int i = myCheckedExceptions.size() - 1; i >= 0; i--) {
       PsiClassType exception = myCheckedExceptions.get(i);
@@ -601,7 +601,7 @@ public class ControlFlowAnalyzer extends PsiElementVisitor {
 
     Object loopCondition = statement.getManager().getConstantEvaluationHelper().computeConstantExpression(condition);
     if (loopCondition instanceof Boolean || condition == null) {
-      boolean value = condition == null ? true : ((Boolean)loopCondition).booleanValue();
+      boolean value = condition == null || ((Boolean)loopCondition).booleanValue();
       if (value) {
         emitEmptyInstruction();
       }
@@ -653,10 +653,8 @@ public class ControlFlowAnalyzer extends PsiElementVisitor {
     addElementOffsetLater(statement, false);
 
     final PsiParameter iterationParameter = statement.getIterationParameter();
-    if (iterationParameter != null) {
-      if (myPolicy.isParameterAccepted(iterationParameter)) {
-        generateWriteInstruction(iterationParameter);
-      }
+    if (myPolicy.isParameterAccepted(iterationParameter)) {
+      generateWriteInstruction(iterationParameter);
     }
     if (body != null) {
       body.accept(this);
@@ -900,7 +898,7 @@ public class ControlFlowAnalyzer extends PsiElementVisitor {
         element = blocks.get(i);
         BranchingInstruction instruction = i == blocks.size() - 1
                                            ? new ThrowToInstruction(0)
-                                           : (BranchingInstruction)new ConditionalThrowToInstruction(0);
+                                           : new ConditionalThrowToInstruction(0);
         myCurrentFlow.addInstruction(instruction);
         instruction.offset = -1; // -1 to init catch param
         addElementOffsetLater(element, true);
@@ -1184,8 +1182,11 @@ public class ControlFlowAnalyzer extends PsiElementVisitor {
   public void visitArrayAccessExpression(PsiArrayAccessExpression expression) {
     startElement(expression);
 
-    if (expression.getArrayExpression() != null) expression.getArrayExpression().accept(this);
-    if (expression.getIndexExpression() != null) expression.getIndexExpression().accept(this);
+    expression.getArrayExpression().accept(this);
+    final PsiExpression indexExpression = expression.getIndexExpression();
+    if (indexExpression != null) {
+      indexExpression.accept(this);
+    }
 
     finishElement(expression);
   }
@@ -1254,58 +1255,57 @@ public class ControlFlowAnalyzer extends PsiElementVisitor {
     lOperand.accept(this);
 
     PsiConstantEvaluationHelper evalHelper = expression.getManager().getConstantEvaluationHelper();
-    if (expression.getOperationSign() != null) {
-      IElementType signTokenType = expression.getOperationSign().getTokenType();
-      if (signTokenType == JavaTokenType.ANDAND) {
-        if (myEnabledShortCircuit) {
-          final Object exprValue = evalHelper.computeConstantExpression(lOperand);
-          if (exprValue instanceof Boolean) {
-            myCurrentFlow.setConstantConditionOccurred(true);
-          }
-          if (calculateConstantExpression(expression) && exprValue instanceof Boolean) {
-            if (!((Boolean)exprValue).booleanValue()) {
-              myCurrentFlow.addInstruction(new GoToInstruction(0, myEndJumpRoles.get(myEndJumpRoles.size() - 1)));
-              addElementOffsetLater(myEndStatementStack.peekElement(), myEndStatementStack.peekAtStart());
-            }
-          }
-          else {
-            myCurrentFlow.addInstruction(new ConditionalGoToInstruction(0, myEndJumpRoles.get(myEndJumpRoles.size() - 1)));
+    IElementType signTokenType = expression.getOperationSign().getTokenType();
+    if (signTokenType == JavaTokenType.ANDAND) {
+      if (myEnabledShortCircuit) {
+        final Object exprValue = evalHelper.computeConstantExpression(lOperand);
+        if (exprValue instanceof Boolean) {
+          myCurrentFlow.setConstantConditionOccurred(true);
+        }
+        if (calculateConstantExpression(expression) && exprValue instanceof Boolean) {
+          if (!((Boolean)exprValue).booleanValue()) {
+            myCurrentFlow.addInstruction(new GoToInstruction(0, myEndJumpRoles.get(myEndJumpRoles.size() - 1)));
             addElementOffsetLater(myEndStatementStack.peekElement(), myEndStatementStack.peekAtStart());
           }
         }
         else {
-          Instruction instruction = new ConditionalGoToInstruction(0);
-          myCurrentFlow.addInstruction(instruction);
-          addElementOffsetLater(expression, false);
+          myCurrentFlow.addInstruction(new ConditionalGoToInstruction(0, myEndJumpRoles.get(myEndJumpRoles.size() - 1)));
+          addElementOffsetLater(myEndStatementStack.peekElement(), myEndStatementStack.peekAtStart());
         }
       }
-      else if (signTokenType == JavaTokenType.OROR) {
-        if (myEnabledShortCircuit) {
-          final Object exprValue = evalHelper.computeConstantExpression(lOperand);
-          if (exprValue instanceof Boolean) {
-            myCurrentFlow.setConstantConditionOccurred(true);
-          }
-          if (calculateConstantExpression(expression) && exprValue instanceof Boolean) {
-            if (((Boolean)exprValue).booleanValue()) {
-              myCurrentFlow.addInstruction(new GoToInstruction(0, myStartJumpRoles.get(myStartJumpRoles.size() - 1)));
-              addElementOffsetLater(myStartStatementStack.peekElement(), myStartStatementStack.peekAtStart());
-            }
-          }
-          else {
-            myCurrentFlow.addInstruction(new ConditionalGoToInstruction(0, myStartJumpRoles.get(myStartJumpRoles.size() - 1)));
+      else {
+        Instruction instruction = new ConditionalGoToInstruction(0);
+        myCurrentFlow.addInstruction(instruction);
+        addElementOffsetLater(expression, false);
+      }
+    }
+    else if (signTokenType == JavaTokenType.OROR) {
+      if (myEnabledShortCircuit) {
+        final Object exprValue = evalHelper.computeConstantExpression(lOperand);
+        if (exprValue instanceof Boolean) {
+          myCurrentFlow.setConstantConditionOccurred(true);
+        }
+        if (calculateConstantExpression(expression) && exprValue instanceof Boolean) {
+          if (((Boolean)exprValue).booleanValue()) {
+            myCurrentFlow.addInstruction(new GoToInstruction(0, myStartJumpRoles.get(myStartJumpRoles.size() - 1)));
             addElementOffsetLater(myStartStatementStack.peekElement(), myStartStatementStack.peekAtStart());
           }
         }
         else {
-          Instruction instruction = new ConditionalGoToInstruction(0);
-          myCurrentFlow.addInstruction(instruction);
-          addElementOffsetLater(expression, false);
+          myCurrentFlow.addInstruction(new ConditionalGoToInstruction(0, myStartJumpRoles.get(myStartJumpRoles.size() - 1)));
+          addElementOffsetLater(myStartStatementStack.peekElement(), myStartStatementStack.peekAtStart());
         }
+      }
+      else {
+        Instruction instruction = new ConditionalGoToInstruction(0);
+        myCurrentFlow.addInstruction(instruction);
+        addElementOffsetLater(expression, false);
       }
     }
 
-    if (expression.getROperand() != null) {
-      expression.getROperand().accept(this);
+    final PsiExpression rOperand = expression.getROperand();
+    if (rOperand != null) {
+      rOperand.accept(this);
     }
 
     finishElement(expression);
@@ -1357,7 +1357,7 @@ public class ControlFlowAnalyzer extends PsiElementVisitor {
     startElement(expression);
 
     final PsiExpression operand = expression.getOperand();
-    if (operand != null) operand.accept(this);
+    operand.accept(this);
 
     finishElement(expression);
   }
@@ -1371,9 +1371,9 @@ public class ControlFlowAnalyzer extends PsiElementVisitor {
     startElement(expression);
 
     final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-    if (methodExpression != null) methodExpression.accept(this);
+    methodExpression.accept(this);
     final PsiExpressionList argumentList = expression.getArgumentList();
-    if (argumentList != null) argumentList.accept(this);
+    argumentList.accept(this);
     // just to increase counter - there is some executable code here
     emitEmptyInstruction();
 
@@ -1409,7 +1409,7 @@ public class ControlFlowAnalyzer extends PsiElementVisitor {
 
     String op = expression.getOperationSign().getText();
     PsiExpression operand = expression.getOperand();
-    if (operand != null) operand.accept(this);
+    operand.accept(this);
     if (op.equals("++") || op.equals("--")) {
       if (operand instanceof PsiReferenceExpression) {
         PsiVariable variable = getUsedVariable((PsiReferenceExpression)operand);
