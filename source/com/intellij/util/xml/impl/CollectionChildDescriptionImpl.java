@@ -39,7 +39,7 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
     return myIndexedAdderMethod;
   }
 
-  public List<DomElement> getValues(final DomElement element) {
+  public List<? extends DomElement> getValues(final DomElement element) {
     try {
       return (List<DomElement>)myGetterMethod.invoke(element);
     }

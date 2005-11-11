@@ -36,7 +36,7 @@ public class FixedChildDescriptionImpl extends DomChildDescriptionImpl implement
     return myCount;
   }
 
-  public List<DomElement> getValues(final DomElement element) {
+  public List<? extends DomElement> getValues(final DomElement element) {
     final ArrayList<DomElement> result = new ArrayList<DomElement>();
     for (Method method : myGetterMethods) {
       if (method != null) {

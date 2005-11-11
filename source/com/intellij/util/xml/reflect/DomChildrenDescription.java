@@ -13,6 +13,6 @@ import java.util.List;
  */
 public interface DomChildrenDescription {
   String getTagName();
-  List<DomElement> getValues(DomElement element);
+  List<? extends DomElement> getValues(DomElement element);
   Type getType();
 }

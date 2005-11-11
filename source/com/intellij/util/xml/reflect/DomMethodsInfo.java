@@ -22,10 +22,6 @@ public interface DomMethodsInfo {
 
   String getTagName(Method method);
 
-  Method getCollectionGetMethod(String tagName);
-  Method getCollectionAddMethod(String tagName);
-  Method getCollectionIndexedAddMethod(String tagName);
-
   @NotNull
   List<DomChildrenDescription> getChildrenDescriptions();
 

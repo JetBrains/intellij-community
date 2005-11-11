@@ -5,10 +5,10 @@ package com.intellij.util.xml.ui;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.GenericValue;
 import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.GenericValue;
 import com.intellij.util.xml.impl.ui.*;
-import com.intellij.util.xml.reflect.DomMethodsInfo;
+import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
@@ -18,7 +18,7 @@ import java.lang.reflect.Type;
  */
 public class DomUIFactory {
 
-  public static <T> DomUIControl createControl(GenericValue<T> element) {
+  public static DomUIControl createControl(GenericValue element) {
     try {
       Type type = DomUtil.extractParameterClassFromGenericType(element.getDomElementType());
       final Method getValueMethod = GenericValue.class.getMethod("getValue");
@@ -34,7 +34,7 @@ public class DomUIFactory {
       else if (type.equals(PsiClass.class)) {
         return new PsiClassControl(element, getStringMethod, setStringMethod);
       }
-      else if (type instanceof Class && Enum.class.isAssignableFrom((Class<?>)type)) {
+      else if (type instanceof Class && Enum.class.isAssignableFrom((Class)type)) {
         return new EnumControl(element, (Class)type, getStringMethod, setStringMethod);
       }
       throw new IllegalArgumentException("Not supported: " + type);
@@ -56,10 +56,9 @@ public class DomUIFactory {
     return null;
   }
 
-  public static <T extends DomElement> CollectionControl<T> createCollectionControl(DomElement element, String tagName) {
-    final DomMethodsInfo methodsInfo = element.getMethodsInfo();
-    final Method addMethod = methodsInfo.getCollectionAddMethod(tagName);
-    final Method getMethod = methodsInfo.getCollectionGetMethod(tagName);
+  public static <T extends DomElement> CollectionControl<T> createCollectionControl(DomElement element, DomCollectionChildDescription description) {
+    final Method addMethod = description.getAdderMethod();
+    final Method getMethod = description.getGetterMethod();
     return new CollectionControl<T>(element, getMethod, addMethod);
   }
 
