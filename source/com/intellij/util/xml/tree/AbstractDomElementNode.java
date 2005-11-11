@@ -14,7 +14,7 @@ abstract public class AbstractDomElementNode extends SimpleNode {
     super(parent);
   }
 
-  protected BaseDomElementNode getDomElementNode(final DomElement domElement, final String tagName, final SimpleNode parentNode) {
+  protected SimpleNode getDomElementNode(final DomElement domElement, final String tagName, final SimpleNode parentNode) {
       return new BaseDomElementNode(domElement, tagName, parentNode);
   };
 
