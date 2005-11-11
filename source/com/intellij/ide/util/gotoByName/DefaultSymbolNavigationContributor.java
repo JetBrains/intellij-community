@@ -101,19 +101,16 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
     return list.toArray(new PsiMethod[list.size()]);
   }
 
-  private static class MyComparator implements Comparator{
+  private static class MyComparator implements Comparator<PsiModifierListOwner>{
     public static final MyComparator INSTANCE = new MyComparator();
 
     private final GotoSymbolCellRenderer myRenderer = new GotoSymbolCellRenderer();
 
-    public int compare(Object o1, Object o2) {
-      if (o1 == o2) return 0;
+    public int compare(PsiModifierListOwner element1, PsiModifierListOwner element2) {
+      if (element1 == element2) return 0;
 
-      PsiElement element1 = (PsiElement)o1;
-      PsiElement element2 = (PsiElement)o2;
-
-      PsiModifierList modifierList1 = ((PsiModifierListOwner)element1).getModifierList();
-      PsiModifierList modifierList2 = ((PsiModifierListOwner)element2).getModifierList();
+      PsiModifierList modifierList1 = element1.getModifierList();
+      PsiModifierList modifierList2 = element2.getModifierList();
       int level1 = PsiUtil.getAccessLevel(modifierList1);
       int level2 = PsiUtil.getAccessLevel(modifierList2);
       if (level1 != level2) return level2 - level1;
