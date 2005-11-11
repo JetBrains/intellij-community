@@ -8,6 +8,7 @@ import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.*;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.propertyInspector.properties.IntroStringProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.BorderProperty;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
@@ -38,9 +39,11 @@ import java.util.ArrayList;
  * To change this template use File | Settings | File Templates.
  */
 public class I18nFormInspection implements FormInspectionTool, FileCheckingInspection {
+  private static BorderProperty myBorderProperty = new BorderProperty();
+
   public boolean isActive(PsiElement psiRoot) {
     final InspectionProfile profile = DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(psiRoot);
-    HighlightDisplayKey key = HighlightDisplayKey.find("H");
+    HighlightDisplayKey key = HighlightDisplayKey.find("HardCodedStringLiteral");
     if (key == null) {
       return false;
     }
@@ -48,9 +51,10 @@ public class I18nFormInspection implements FormInspectionTool, FileCheckingInspe
   }
 
   @Nullable
-  public ErrorInfo checkComponent(GuiEditor editor, RadComponent component) {
+  public ErrorInfo[] checkComponent(GuiEditor editor, RadComponent component) {
     final Palette palette = Palette.getInstance(editor.getProject());
     IntrospectedProperty[] props = palette.getIntrospectedProperties(component.getComponentClass());
+    List<ErrorInfo> result = null;
     for(IntrospectedProperty prop: props) {
       if (component.isMarkedAsModified(prop) && prop instanceof IntroStringProperty) {
         StringDescriptor descriptor = (StringDescriptor) prop.getValue(component);
@@ -60,9 +64,11 @@ public class I18nFormInspection implements FormInspectionTool, FileCheckingInspe
                              component.getComponentClassName(), prop.getName())) {
             continue;
           }
-          return new ErrorInfo(CodeInsightBundle.message("inspection.i18n.message.general"),
-                               new QuickFix[] { new I18nizeFormPropertyQuickFix(editor,
-                                                                                CodeInsightBundle.message("inspection.i18n.quickfix"), component, prop) });
+          if (result == null) {
+            result = new ArrayList<ErrorInfo>();
+          }
+          result.add(new ErrorInfo(prop.getName(), CodeInsightBundle.message("inspection.i18n.message.general"),
+                                   new QuickFix[] { new I18nizeFormPropertyQuickFix(editor, CodeInsightBundle.message("inspection.i18n.quickfix"), component, prop) }));
         }
       }
     }
@@ -71,8 +77,11 @@ public class I18nFormInspection implements FormInspectionTool, FileCheckingInspe
       RadContainer container = (RadContainer) component;
       StringDescriptor descriptor = container.getBorderTitle();
       if (descriptor != null && isHardCodedStringDescriptor(descriptor)) {
-        return new ErrorInfo(CodeInsightBundle.message("inspection.i18n.message.general"),
-                             new QuickFix[] { new I18nizeFormBorderQuickFix(editor, CodeInsightBundle.message("inspection.i18n.quickfix"), container) });
+        if (result == null) {
+          result = new ArrayList<ErrorInfo>();
+        }
+        result.add(new ErrorInfo(myBorderProperty.getName(), CodeInsightBundle.message("inspection.i18n.message.general"),
+                             new QuickFix[] { new I18nizeFormBorderQuickFix(editor, CodeInsightBundle.message("inspection.i18n.quickfix"), container) }));
       }
     }
 
@@ -80,12 +89,15 @@ public class I18nFormInspection implements FormInspectionTool, FileCheckingInspe
       RadTabbedPane parentTabbedPane = (RadTabbedPane) component.getParent();
       final StringDescriptor descriptor = parentTabbedPane.getChildTitle(component);
       if (descriptor != null && isHardCodedStringDescriptor(descriptor)) {
-        return new ErrorInfo(CodeInsightBundle.message("inspection.i18n.message.general"),
-                             new QuickFix[] { new I18nizeTabTitleQuickFix(editor, CodeInsightBundle.message("inspection.i18n.quickfix"), component) });
+        if (result == null) {
+          result = new ArrayList<ErrorInfo>();
+        }
+        result.add(new ErrorInfo(null, CodeInsightBundle.message("inspection.i18n.message.general"),
+                             new QuickFix[] { new I18nizeTabTitleQuickFix(editor, CodeInsightBundle.message("inspection.i18n.quickfix"), component) }));
       }
     }
 
-    return null;
+    return result == null ? null : result.toArray(new ErrorInfo[result.size()]);
   }
 
   private boolean isHardCodedStringDescriptor(final StringDescriptor descriptor) {
@@ -100,7 +112,7 @@ public class I18nFormInspection implements FormInspectionTool, FileCheckingInspe
   private static boolean isSetterNonNls(final Project project, final GlobalSearchScope searchScope,
                                         final String componentClassName, final String propertyName) {
     PsiClass componentClass = PsiManager.getInstance(project).findClass(componentClassName, searchScope);
-    if (componentClass == null) {
+    if (componentClass == null) {   
       return false;
     }
     PsiMethod setter = PropertyUtil.findPropertySetter(componentClass, propertyName, false, true);

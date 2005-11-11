@@ -3,7 +3,6 @@ package com.intellij.uiDesigner.propertyInspector;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.util.ui.EmptyIcon;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.ui.Messages;
@@ -20,13 +19,15 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TableUtil;
 import com.intellij.uiDesigner.*;
-import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.actions.ShowJavadocAction;
 import com.intellij.uiDesigner.componentTree.ComponentTree;
 import com.intellij.uiDesigner.core.AbstractLayout;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.propertyInspector.properties.*;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.Table;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -43,8 +44,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.EventObject;
 import java.util.HashSet;
-
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Anton Katilin
@@ -599,6 +598,17 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     }
     else if(myBindingProperty.equals(property)){
       errorInfo = (ErrorInfo)myComponent.getClientProperty(ErrorAnalyzer.CLIENT_PROP_BINDING_ERROR);
+    }
+    else {
+      ArrayList<ErrorInfo> errors = (ArrayList<ErrorInfo>) myComponent.getClientProperty(ErrorAnalyzer.CLIENT_PROP_ERROR_ARRAY);
+      if (errors != null) {
+        for(ErrorInfo err: errors) {
+          if (property.getName().equals(err.getPropertyName())) {
+            errorInfo = err;
+            break;
+          }
+        }
+      }
     }
     return errorInfo;
   }

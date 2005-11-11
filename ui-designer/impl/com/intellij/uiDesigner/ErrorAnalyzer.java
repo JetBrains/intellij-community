@@ -1,25 +1,25 @@
 package com.intellij.uiDesigner;
 
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ExtensionPoints;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.IContainer;
 import com.intellij.uiDesigner.lw.IRootContainer;
 import com.intellij.uiDesigner.quickFixes.*;
-import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.ExtensionPoints;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import java.util.Collections;
 
 /**
  * @author Anton Katilin
@@ -38,11 +38,11 @@ public final class ErrorAnalyzer {
    */
   @NonNls
   public static final String CLIENT_PROP_BINDING_ERROR = "bindingError";
-  /**
-   * Value {@link ErrorInfo}
-   */
-  @NonNls
-  public static final String CLIENT_PROP_GENERAL_ERROR = "generalError";
+
+  @NonNls public static final String CLIENT_PROP_ERROR_ARRAY = "errorArray";
+
+  private ErrorAnalyzer() {
+  }
 
   public static void analyzeErrors(final GuiEditor editor, final IRootContainer rootContainer){
     analyzeErrors(editor.getModule(), editor.getFile(), editor, rootContainer);
@@ -71,7 +71,7 @@ public final class ErrorAnalyzer {
       psiClass = FormEditingUtil.findClassToBind(module, classToBind);
       if(psiClass == null){
         final QuickFix[] fixes = editor != null ? new QuickFix[]{new CreateClassToBindFix(editor, classToBind)} : QuickFix.EMPTY_ARRAY;
-        final ErrorInfo errorInfo = new ErrorInfo(UIDesignerBundle.message("error.class.does.not.exist", classToBind),
+        final ErrorInfo errorInfo = new ErrorInfo(null, UIDesignerBundle.message("error.class.does.not.exist", classToBind),
                                                   fixes);
         rootContainer.putClientProperty(CLIENT_PROP_CLASS_TO_BIND_ERROR, errorInfo);
       }
@@ -116,7 +116,7 @@ public final class ErrorAnalyzer {
               component.putClientProperty(
                CLIENT_PROP_BINDING_ERROR,
                new ErrorInfo(
-                 UIDesignerBundle.message("error.no.field.in.class", binding, classToBind),
+                 null, UIDesignerBundle.message("error.no.field.in.class", binding, classToBind),
                  fixes
                )
               );
@@ -126,7 +126,7 @@ public final class ErrorAnalyzer {
               component.putClientProperty(
                 CLIENT_PROP_BINDING_ERROR,
                 new ErrorInfo(
-                  UIDesignerBundle.message("error.cant.bind.to.static", binding),
+                  null, UIDesignerBundle.message("error.cant.bind.to.static", binding),
                   QuickFix.EMPTY_ARRAY
                 )
               );
@@ -154,7 +154,7 @@ public final class ErrorAnalyzer {
                 component.putClientProperty(
                   CLIENT_PROP_BINDING_ERROR,
                   new ErrorInfo(
-                    UIDesignerBundle.message("error.bind.incompatible.types", fieldType.getPresentableText(), className),
+                    null, UIDesignerBundle.message("error.bind.incompatible.types", fieldType.getPresentableText(), className),
                     fixes
                   )
                 );
@@ -170,7 +170,7 @@ public final class ErrorAnalyzer {
             component.putClientProperty(
               CLIENT_PROP_BINDING_ERROR,
               new ErrorInfo(
-                UIDesignerBundle.message("error.binding.already.exists", binding),
+                null, UIDesignerBundle.message("error.binding.already.exists", binding),
                 QuickFix.EMPTY_ARRAY
               )
             );
@@ -190,7 +190,7 @@ public final class ErrorAnalyzer {
       new FormEditingUtil.ComponentVisitor<IComponent>() {
         public boolean visit(final IComponent component) {
           // Clear previous error (if any)
-          component.putClientProperty(CLIENT_PROP_GENERAL_ERROR, null);
+          component.putClientProperty(CLIENT_PROP_ERROR_ARRAY, null);
 
           if(!(component instanceof IContainer)){
             return true;
@@ -201,21 +201,16 @@ public final class ErrorAnalyzer {
             final IRootContainer rootContainer = (IRootContainer)container;
             if(rootContainer.getComponentCount() > 1){
               // TODO[vova] implement
-              component.putClientProperty(
-                CLIENT_PROP_GENERAL_ERROR,
-                new ErrorInfo(
-                  UIDesignerBundle.message("error.multiple.toplevel.components"),
-                  QuickFix.EMPTY_ARRAY
-                )
-              );
+              putError(component, new ErrorInfo(
+                null, UIDesignerBundle.message("error.multiple.toplevel.components"),
+                QuickFix.EMPTY_ARRAY
+              ));
             }
           }
           else if(container.isXY() && container.getComponentCount() > 0){
             // TODO[vova] implement
-            component.putClientProperty(
-              CLIENT_PROP_GENERAL_ERROR,
-              new ErrorInfo(
-                UIDesignerBundle.message("error.panel.not.laid.out"),
+            putError(component, new ErrorInfo(
+                null, UIDesignerBundle.message("error.panel.not.laid.out"),
                 QuickFix.EMPTY_ARRAY
               )
             );
@@ -237,18 +232,21 @@ public final class ErrorAnalyzer {
           }
         }
 
-        if (formInspectionTools.size() > 0) {
+        if (formInspectionTools.size() > 0 && editor != null) {
           FormEditingUtil.iterate(
             rootContainer,
             new FormEditingUtil.ComponentVisitor<RadComponent>() {
               public boolean visit(final RadComponent component) {
-                if (component.getClientProperty(CLIENT_PROP_GENERAL_ERROR) == null) {
-                  for(FormInspectionTool tool: formInspectionTools) {
-                    ErrorInfo errorInfo = tool.checkComponent(editor, component);
-                    if (errorInfo != null) {
-                      component.putClientProperty(CLIENT_PROP_GENERAL_ERROR, errorInfo);
-                      break;
+                for(FormInspectionTool tool: formInspectionTools) {
+                  ErrorInfo[] errorInfos = tool.checkComponent(editor, component);
+                  if (errorInfos != null) {
+                    ArrayList<ErrorInfo> errorList = (ArrayList<ErrorInfo>)component.getClientProperty(CLIENT_PROP_ERROR_ARRAY);
+                    if (errorList == null) {
+                      errorList = new ArrayList<ErrorInfo>();
+                      component.putClientProperty(CLIENT_PROP_ERROR_ARRAY, errorList);
                     }
+                    Collections.addAll(errorList, errorInfos);
+                    break;
                   }
                 }
                 return true;
@@ -261,6 +259,16 @@ public final class ErrorAnalyzer {
     catch (Exception e) {
       LOG.error(e);
     }
+  }
+
+  private static void putError(final IComponent component, final ErrorInfo errorInfo) {
+    ArrayList<ErrorInfo> errorList = (ArrayList<ErrorInfo>)component.getClientProperty(CLIENT_PROP_ERROR_ARRAY);
+    if (errorList == null) {
+      errorList = new ArrayList<ErrorInfo>();
+      component.putClientProperty(CLIENT_PROP_ERROR_ARRAY, errorList);
+    }
+
+    errorList.add(errorInfo);
   }
 
   /**
@@ -289,9 +297,9 @@ public final class ErrorAnalyzer {
 
     // General error
     {
-      final ErrorInfo errorInfo = (ErrorInfo)component.getClientProperty(CLIENT_PROP_GENERAL_ERROR);
-      if(errorInfo != null){
-        return errorInfo;
+      final ArrayList<ErrorInfo> errorInfo = (ArrayList<ErrorInfo>)component.getClientProperty(CLIENT_PROP_ERROR_ARRAY);
+      if(errorInfo != null && errorInfo.size() > 0){
+        return errorInfo.get(0);
       }
     }
 

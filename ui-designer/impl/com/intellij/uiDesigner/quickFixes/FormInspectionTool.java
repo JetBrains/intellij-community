@@ -5,6 +5,7 @@ import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.RadComponent;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by IntelliJ IDEA.
@@ -15,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface FormInspectionTool {
   @Nullable
-  ErrorInfo checkComponent(GuiEditor editor, RadComponent component);
+  ErrorInfo[] checkComponent(@NotNull GuiEditor editor, @NotNull RadComponent component);
 
   boolean isActive(PsiElement psiRoot);
 }

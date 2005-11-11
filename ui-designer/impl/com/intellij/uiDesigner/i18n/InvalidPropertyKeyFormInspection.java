@@ -10,6 +10,7 @@ import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.uiDesigner.lw.LwComponent;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.propertyInspector.properties.IntroStringProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.BorderProperty;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.ModuleUtil;
@@ -41,17 +42,23 @@ import java.util.ArrayList;
  * To change this template use File | Settings | File Templates.
  */
 public class InvalidPropertyKeyFormInspection implements FormInspectionTool, FileCheckingInspection {
+  private static BorderProperty myBorderProperty = new BorderProperty();
+
   @Nullable
-  public ErrorInfo checkComponent(GuiEditor editor, RadComponent component) {
+  public ErrorInfo[] checkComponent(GuiEditor editor, RadComponent component) {
     final Palette palette = Palette.getInstance(editor.getProject());
     IntrospectedProperty[] props = palette.getIntrospectedProperties(component.getComponentClass());
+    List<ErrorInfo> result = null;
     for(IntrospectedProperty prop: props) {
       if (component.isMarkedAsModified(prop) && prop instanceof IntroStringProperty) {
         StringDescriptor descriptor = (StringDescriptor) prop.getValue(component);
         if (descriptor != null) {
-          ErrorInfo errInfo = checkDescriptor(descriptor, editor.getModule());
+          ErrorInfo errInfo = checkDescriptor(prop.getName(), descriptor, editor.getModule());
           if (errInfo != null) {
-            return errInfo;
+            if (result == null) {
+               result = new ArrayList<ErrorInfo>();
+            }
+            result.add(errInfo);
           }
         }
       }
@@ -61,9 +68,12 @@ public class InvalidPropertyKeyFormInspection implements FormInspectionTool, Fil
       RadContainer container = (RadContainer) component;
       StringDescriptor descriptor = container.getBorderTitle();
       if (descriptor != null) {
-        ErrorInfo errInfo = checkDescriptor(descriptor, editor.getModule());
+        ErrorInfo errInfo = checkDescriptor(myBorderProperty.getName(), descriptor, editor.getModule());
         if (errInfo != null) {
-          return errInfo;
+          if (result == null) {
+             result = new ArrayList<ErrorInfo>();
+          }
+          result.add(errInfo);
         }
       }
     }
@@ -72,13 +82,16 @@ public class InvalidPropertyKeyFormInspection implements FormInspectionTool, Fil
       RadTabbedPane parentTabbedPane = (RadTabbedPane) component.getParent();
       final StringDescriptor descriptor = parentTabbedPane.getChildTitle(component);
       if (descriptor != null) {
-        ErrorInfo errInfo = checkDescriptor(descriptor, editor.getModule());
+        ErrorInfo errInfo = checkDescriptor(null, descriptor, editor.getModule());
         if (errInfo != null) {
-          return errInfo;
+          if (result == null) {
+             result = new ArrayList<ErrorInfo>();
+          }
+          result.add(errInfo);
         }
       }
     }
-    return null;
+    return result == null ? null : result.toArray(new ErrorInfo[result.size()]);
   }
 
   public boolean isActive(PsiElement psiRoot) {
@@ -91,22 +104,36 @@ public class InvalidPropertyKeyFormInspection implements FormInspectionTool, Fil
   }
 
   @Nullable
-  private ErrorInfo checkDescriptor(final StringDescriptor descriptor, final Module module) {
+  private ErrorInfo checkDescriptor(final String propName, final StringDescriptor descriptor, final Module module) {
     final String bundleName = descriptor.getBundleName();
     final String key = descriptor.getKey();
     if (bundleName == null && key == null) return null;
-    if (bundleName == null) return new ErrorInfo(
-      CodeInsightBundle.message("inspection.invalid.property.in.form.quickfix.error.bundle.not.specified"), new QuickFix[0]);
-    if (key == null) return new ErrorInfo(
-      CodeInsightBundle.message("inspection.invalid.property.in.form.quickfix.error.property.key.not.specified"), new QuickFix[0]);
+    if (bundleName == null) {
+      return new ErrorInfo(propName,
+                           CodeInsightBundle.message("inspection.invalid.property.in.form.quickfix.error.bundle.not.specified"),
+                           QuickFix.EMPTY_ARRAY);
+    }
+
+    if (key == null) {
+      return new ErrorInfo(propName,
+                           CodeInsightBundle.message("inspection.invalid.property.in.form.quickfix.error.property.key.not.specified"),
+                           QuickFix.EMPTY_ARRAY);
+    }
+
 
     PropertiesFile bundle = PropertiesUtil.getPropertiesFile(bundleName, module);
-    if (bundle == null) return new ErrorInfo(
-      CodeInsightBundle.message("inspection.invalid.property.in.form.quickfix.error.bundle.not.found", bundle), new QuickFix[0]);
+    if (bundle == null) {
+      return new ErrorInfo(propName,
+                           CodeInsightBundle.message("inspection.invalid.property.in.form.quickfix.error.bundle.not.found", bundle),
+                           QuickFix.EMPTY_ARRAY);
+    }
+
 
     final Property property = bundle.findPropertyByKey(key);
     if (property == null) {
-      return new ErrorInfo(CodeInsightBundle.message("inspection.invalid.property.in.form.quickfix.error.key.not.found", key, bundleName), new QuickFix[0]);
+      return new ErrorInfo(propName,
+                           CodeInsightBundle.message("inspection.invalid.property.in.form.quickfix.error.key.not.found", key, bundleName),
+                           QuickFix.EMPTY_ARRAY);
     }
     return null;
   }
@@ -129,7 +156,7 @@ public class InvalidPropertyKeyFormInspection implements FormInspectionTool, Fil
       final List<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>();
       FormEditingUtil.iterateStringDescriptors(rootContainer, new FormEditingUtil.StringDescriptorVisitor<LwComponent>() {
         public boolean visit(final LwComponent component, final StringDescriptor descriptor) {
-          final ErrorInfo errorInfo = checkDescriptor(descriptor, module);
+          final ErrorInfo errorInfo = checkDescriptor(null, descriptor, module);
           if (errorInfo != null) {
             problems.add(manager.createProblemDescriptor(file, errorInfo.myDescription,
                                                          (LocalQuickFix) null,
