@@ -16,7 +16,6 @@
 package com.intellij.usageView;
 
 import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.NonNls;
 
 public interface UsageViewDescriptor {
   String OCCURRENCE_WORD= UsageViewBundle.message("terms.occurrence");
@@ -31,28 +30,8 @@ public interface UsageViewDescriptor {
 
   String getProcessedElementsHeader();
 
-  /**
-   * @return true if search is also performed in strings/comments or non-java files
-   */
-  boolean isSearchInText();
-
-  boolean toMarkInvalidOrReadonlyUsages();
-
   String getCodeReferencesText(int usagesCount, int filesCount);
-
-  String getCodeReferencesWord();
 
   String getCommentReferencesText(int usagesCount, int filesCount);
 
-  String getCommentReferencesWord();
-
-  boolean cancelAvailable();
-
-  boolean isCancelInCommonGroup();
-
-  boolean willUsageBeChanged(UsageInfo usageInfo);
-
-  @NonNls String getHelpID();
-
-  boolean canFilterMethods();
 }

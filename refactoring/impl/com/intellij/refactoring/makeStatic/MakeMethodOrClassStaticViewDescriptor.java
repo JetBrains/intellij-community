@@ -11,7 +11,6 @@ package com.intellij.refactoring.makeStatic;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMember;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
@@ -37,26 +36,6 @@ public class MakeMethodOrClassStaticViewDescriptor implements UsageViewDescripto
     return myProcessedElementsHeader;
   }
 
-  public boolean isSearchInText() {
-    return false;
-  }
-
-  public boolean toMarkInvalidOrReadonlyUsages() {
-    return true;
-  }
-
-  public String getCodeReferencesWord(){
-    return REFERENCE_WORD;
-  }
-
-  public String getCommentReferencesWord(){
-    return null;
-  }
-
-  public boolean cancelAvailable() {
-    return true;
-  }
-
   public String getCodeReferencesText(int usagesCount, int filesCount) {
     return RefactoringBundle.message("references.to.be.changed", UsageViewBundle.getReferencesString(usagesCount, filesCount));
   }
@@ -65,19 +44,4 @@ public class MakeMethodOrClassStaticViewDescriptor implements UsageViewDescripto
     return null;
   }
 
-  public boolean isCancelInCommonGroup() {
-    return false;
-  }
-
-  public boolean willUsageBeChanged(UsageInfo usageInfo) {
-    return true;
-  }
-
-  public String getHelpID() {
-    return "find.refactoringPreview";
-  }
-
-  public boolean canFilterMethods() {
-    return true;
-  }
 }

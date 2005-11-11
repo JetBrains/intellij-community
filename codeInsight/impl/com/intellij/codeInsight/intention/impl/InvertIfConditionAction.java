@@ -10,6 +10,7 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightServicesUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -17,19 +18,11 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.controlFlow.*;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 
 public class InvertIfConditionAction extends BaseIntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.InvertIfConditionAction");
-
-  private static IElementType[] ourTokenMap = new IElementType[]{
-    JavaTokenType.EQEQ, JavaTokenType.NE,
-    JavaTokenType.LT, JavaTokenType.GE,
-    JavaTokenType.LE, JavaTokenType.GT,
-    JavaTokenType.OROR, JavaTokenType.ANDAND
-  };
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
     int offset = editor.getCaretModel().getOffset();
@@ -79,7 +72,7 @@ public class InvertIfConditionAction extends BaseIntentionAction {
 
     setupBranches(ifStatement, controlFlow);
     if (condition != null) {
-      ifStatement.getCondition().replace(invertCondition(condition));
+      ifStatement.getCondition().replace(CodeInsightServicesUtil.invertCondition(condition));
     }
 
     formatIf(ifStatement);
@@ -342,88 +335,6 @@ public class InvertIfConditionAction extends BaseIntentionAction {
     }
 
     return endOffset;
-  }
-
-  private PsiExpression invertCondition(PsiExpression condition) throws IncorrectOperationException {
-    PsiElementFactory factory = condition.getManager().getElementFactory();
-
-    if (condition instanceof PsiBinaryExpression) {
-      PsiBinaryExpression expression = (PsiBinaryExpression) condition;
-      PsiJavaToken operationSign = expression.getOperationSign();
-      for (int i = 0; i < ourTokenMap.length; i++) {
-        IElementType tokenType = ourTokenMap[i];
-        if (operationSign.getTokenType() == tokenType) {
-          expression = (PsiBinaryExpression)expression.copy();
-          expression.getOperationSign().replace(createOperationToken(factory, ourTokenMap[i + (i % 2 == 0 ? 1 : -1)]));
-          if (tokenType == JavaTokenType.OROR || tokenType == JavaTokenType.ANDAND) {
-            expression.getLOperand().replace(invertCondition(expression.getLOperand()));
-            expression.getROperand().replace(invertCondition(expression.getROperand()));
-          }
-          return expression;
-        }
-      }
-    } else if (condition instanceof PsiPrefixExpression) {
-      PsiPrefixExpression expression = (PsiPrefixExpression) condition;
-      PsiJavaToken operationSign = expression.getOperationSign();
-      if (operationSign.getTokenType() == JavaTokenType.EXCL) {
-        PsiExpression operand = expression.getOperand();
-        if (operand instanceof PsiParenthesizedExpression) {
-          operand = ((PsiParenthesizedExpression) operand).getExpression();
-        }
-        return operand;
-      }
-    }
-
-    if (condition instanceof PsiParenthesizedExpression) {
-      PsiExpression operand = ((PsiParenthesizedExpression) condition).getExpression();
-      operand.replace(invertCondition(operand));
-      return condition;
-    }
-
-    PsiPrefixExpression result = (PsiPrefixExpression)factory.createExpressionFromText("!(a)", null);
-    if (!(condition instanceof PsiBinaryExpression)) {
-      result.getOperand().replace(condition);
-    } else {
-      PsiParenthesizedExpression e = (PsiParenthesizedExpression) result.getOperand();
-      e.getExpression().replace(condition);
-    }
-
-    return result;
-  }
-
-  private PsiElement createOperationToken(PsiElementFactory factory, IElementType tokenType) throws IncorrectOperationException {
-    final String s;
-    if (tokenType == JavaTokenType.EQEQ) {
-      s = "==";
-    }
-    else if (tokenType == JavaTokenType.NE) {
-      s = "!=";
-    }
-    else if (tokenType == JavaTokenType.LT) {
-      s = "<";
-    }
-    else if (tokenType == JavaTokenType.LE) {
-      s = "<=";
-    }
-    else if (tokenType == JavaTokenType.GT) {
-      s = ">";
-    }
-    else if (tokenType == JavaTokenType.GE) {
-      s = ">=";
-    }
-    else if (tokenType == JavaTokenType.ANDAND) {
-      s = "&&";
-    }
-    else if (tokenType == JavaTokenType.OROR) {
-      s = "||";
-    }
-    else {
-      LOG.error("Unknown token type");
-      s = "==";
-    }
-
-    PsiBinaryExpression expression = (PsiBinaryExpression) factory.createExpressionFromText("a" + s + "b", null);
-    return expression.getOperationSign();
   }
 
 }

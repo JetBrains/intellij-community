@@ -5,9 +5,7 @@
 package com.intellij.refactoring.migration;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewBundle;
 
@@ -32,29 +30,9 @@ class MigrationUsagesViewDescriptor implements UsageViewDescriptor {
     return null;
   }
 
-  public boolean isSearchInText() {
-    return isSearchInComments;
-  }
-
-  public boolean toMarkInvalidOrReadonlyUsages() {
-    return true;
-  }
-
-  public String getCodeReferencesWord(){
-    return REFERENCE_WORD;
-  }
-
-  public String getCommentReferencesWord(){
-    return null;
-  }
-
-  public boolean cancelAvailable() {
-    return true;
-  }
-
   public String getCodeReferencesText(int usagesCount, int filesCount) {
     return RefactoringBundle.message("references.in.code.to.elements.from.migration.map", myMigrationMap.getName(),
-                                          UsageViewBundle.getReferencesString(usagesCount, filesCount));
+                                     UsageViewBundle.getReferencesString(usagesCount, filesCount));
   }
 
   public String getCommentReferencesText(int usagesCount, int filesCount) {
@@ -65,19 +43,4 @@ class MigrationUsagesViewDescriptor implements UsageViewDescriptor {
     return RefactoringBundle.message("press.the.do.migrate.button", myMigrationMap.getName());
   }
 
-  public boolean isCancelInCommonGroup() {
-    return false;
-  }
-
-  public String getHelpID() {
-    return HelpID.MIGRATION;
-  }
-
-  public boolean willUsageBeChanged(UsageInfo usageInfo) {
-    return true;
-  }
-
-  public boolean canFilterMethods() {
-    return true;
-  }
 }

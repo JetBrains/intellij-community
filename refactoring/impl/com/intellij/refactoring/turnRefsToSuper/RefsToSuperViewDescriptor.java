@@ -27,26 +27,6 @@ class RefsToSuperViewDescriptor implements UsageViewDescriptor{
     return null;
   }
 
-  public boolean isSearchInText() {
-    return false;
-  }
-
-  public boolean toMarkInvalidOrReadonlyUsages() {
-    return true;
-  }
-
-  public String getCodeReferencesWord(){
-    return REFERENCE_WORD;
-  }
-
-  public String getCommentReferencesWord(){
-    return null;
-  }
-
-  public boolean cancelAvailable() {
-    return true;
-  }
-
   public String getCodeReferencesText(int usagesCount, int filesCount) {
     StringBuffer buffer = new StringBuffer();
     buffer.append(RefactoringBundle.message("references.to.0.to.be.replaced.with.references.to.1",
@@ -60,19 +40,4 @@ class RefsToSuperViewDescriptor implements UsageViewDescriptor{
     return null;
   }
 
-  public boolean isCancelInCommonGroup() {
-    return false;
-  }
-
-  public String getHelpID() {
-    return "find.refactoringPreview";
-  }
-
-  public boolean willUsageBeChanged(UsageInfo usageInfo) {
-    return true;
-  }
-
-  public boolean canFilterMethods() {
-    return true;
-  }
 }

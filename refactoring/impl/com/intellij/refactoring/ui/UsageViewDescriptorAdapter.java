@@ -1,7 +1,6 @@
 package com.intellij.refactoring.ui;
 
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewDescriptor;
 
@@ -9,33 +8,6 @@ import com.intellij.usageView.UsageViewDescriptor;
  * @author dsl
  */
 public abstract class UsageViewDescriptorAdapter implements UsageViewDescriptor {
-  public boolean isSearchInText() {
-    return false;
-  }
-
-  public boolean toMarkInvalidOrReadonlyUsages() {
-    return true;
-  }
-
-  public String getCodeReferencesWord(){
-    return REFERENCE_WORD;
-  }
-
-  public String getCommentReferencesWord(){
-    return null;
-  }
-
-  public boolean isCancelInCommonGroup() {
-    return false;
-  }
-
-  public boolean cancelAvailable() {
-    return true;
-  }
-
-  public boolean willUsageBeChanged(UsageInfo usageInfo) {
-    return true;
-  }
 
   public String getCodeReferencesText(int usagesCount, int filesCount) {
     return RefactoringBundle.message("references.to.be.changed", UsageViewBundle.getReferencesString(usagesCount, filesCount));
@@ -45,11 +17,4 @@ public abstract class UsageViewDescriptorAdapter implements UsageViewDescriptor 
     return null;
   }
 
-  public String getHelpID() {
-    return "find.refactoringPreview";
-  }
-
-  public boolean canFilterMethods() {
-    return true;
-  }
 }

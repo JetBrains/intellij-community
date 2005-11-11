@@ -5,7 +5,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
@@ -53,26 +52,6 @@ class MoveFilesOrDirectoriesViewDescriptor implements UsageViewDescriptor {
     return myProcessedElementsHeader;
   }
 
-  public boolean isSearchInText() {
-    return mySearchInComments || mySearchInNonJavaFiles;
-  }
-
-  public boolean toMarkInvalidOrReadonlyUsages() {
-    return true;
-  }
-
-  public String getCodeReferencesWord(){
-    return REFERENCE_WORD;
-  }
-
-  public String getCommentReferencesWord(){
-    return OCCURRENCE_WORD;
-  }
-
-  public boolean cancelAvailable() {
-    return true;
-  }
-
   public String getCodeReferencesText(int usagesCount, int filesCount) {
     return myCodeReferencesText + UsageViewBundle.getReferencesString(usagesCount, filesCount);
   }
@@ -82,19 +61,4 @@ class MoveFilesOrDirectoriesViewDescriptor implements UsageViewDescriptor {
                                      UsageViewBundle.getOccurencesString(usagesCount, filesCount));
   }
 
-  public boolean isCancelInCommonGroup() {
-    return false;
-  }
-
-  public String getHelpID() {
-    return myHelpID;
-  }
-
-  public boolean willUsageBeChanged(UsageInfo usageInfo) {
-    return true;
-  }
-
-  public boolean canFilterMethods() {
-    return true;
-  }
 }

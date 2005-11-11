@@ -451,6 +451,7 @@
         <separator/>
         <action id="ExtractMethod" class="com.intellij.refactoring.actions.ExtractMethodAction"/>
         <action id="MethodDuplicates" class="com.intellij.refactoring.actions.MethodDuplicatesAction"/>
+        <action id="InvertBooleanMethod" class="com.intellij.refactoring.actions.InvertBooleanMethodAction"/>
         <action id="IntroduceVariable" class="com.intellij.refactoring.actions.IntroduceVariableAction"/>
         <action id="IntroduceField" class="com.intellij.refactoring.actions.IntroduceFieldAction"/>
         <action id="IntroduceConstant" class="com.intellij.refactoring.actions.IntroduceConstantAction"/>
