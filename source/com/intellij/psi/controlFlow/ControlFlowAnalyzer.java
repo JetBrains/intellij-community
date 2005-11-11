@@ -30,10 +30,10 @@ public class ControlFlowAnalyzer extends PsiElementVisitor {
   private Map<PsiElement, ControlFlow> myRegisteredSubControlFlows = new THashMap<PsiElement, ControlFlow>();
 
   // element to jump to from inner (sub)expression in "jump to begin" situation.
-  // E.g. we should to jump to "then" branch if condition expression evaluated to true inside if statement
+  // E.g. we should jump to "then" branch if condition expression evaluated to true inside if statement
   StatementStack myStartStatementStack = new StatementStack();
   // element to jump to from inner (sub)expression in "jump to end" situation.
-  // E.g. we should to jump to "else" branch if condition expression evaluated to false inside if statement
+  // E.g. we should jump to "else" branch if condition expression evaluated to false inside if statement
   StatementStack myEndStatementStack = new StatementStack();
 
   private IntArrayList myStartJumpRoles = new IntArrayList();
@@ -687,10 +687,14 @@ public class ControlFlowAnalyzer extends PsiElementVisitor {
       myStartStatementStack.pushStatement(statement, false);
     }
     else {
-      myStartStatementStack.pushStatement(thenBranch,
-                                          true);
+      myStartStatementStack.pushStatement(thenBranch, true);
     }
-    if (elseBranch == null) myEndStatementStack.pushStatement(statement, false); else myEndStatementStack.pushStatement(elseBranch, true);
+    if (elseBranch == null) {
+      myEndStatementStack.pushStatement(statement, false);
+    }
+    else {
+      myEndStatementStack.pushStatement(elseBranch, true);
+    }
 
     myEndJumpRoles.add(elseBranch == null ? ControlFlow.JUMP_ROLE_GOTO_END : ControlFlow.JUMP_ROLE_GOTO_ELSE);
     myStartJumpRoles.add(thenBranch == null ? ControlFlow.JUMP_ROLE_GOTO_END : ControlFlow.JUMP_ROLE_GOTO_THEN);
@@ -1425,19 +1429,32 @@ public class ControlFlowAnalyzer extends PsiElementVisitor {
   public void visitPrefixExpression(PsiPrefixExpression expression) {
     startElement(expression);
 
-    String op = expression.getOperationSign().getText();
     PsiExpression operand = expression.getOperand();
     if (operand != null) {
-      operand.accept(this);
-      if (op.equals("++") || op.equals("--")) {
-        if (operand instanceof PsiReferenceExpression) {
-          PsiVariable variable = getUsedVariable((PsiReferenceExpression)operand);
-          if (variable != null) {
-            generateWriteInstruction(variable);
-          }
-        }
+      IElementType operationSign = expression.getOperationSign().getTokenType();
+      if (operationSign == JavaTokenType.EXCL) {
+        // negation inverts jump targets
+        PsiElement topStartStatement = myStartStatementStack.peekElement();
+        boolean topAtStart = myStartStatementStack.peekAtStart();
+        myStartStatementStack.pushStatement(myEndStatementStack.peekElement(), myEndStatementStack.peekAtStart());
+        myEndStatementStack.pushStatement(topStartStatement, topAtStart);
       }
 
+      operand.accept(this);
+
+      if (operationSign == JavaTokenType.EXCL) {
+        // negation inverts jump targets
+        myStartStatementStack.popStatement();
+        myEndStatementStack.popStatement();
+      }
+
+      if (operand instanceof PsiReferenceExpression &&
+          (operationSign == JavaTokenType.PLUSPLUS || operationSign == JavaTokenType.MINUSMINUS)) {
+        PsiVariable variable = getUsedVariable((PsiReferenceExpression)operand);
+        if (variable != null) {
+          generateWriteInstruction(variable);
+        }
+      }
     }
 
     finishElement(expression);
