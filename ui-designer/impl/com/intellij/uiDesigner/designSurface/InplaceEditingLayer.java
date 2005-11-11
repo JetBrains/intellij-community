@@ -6,22 +6,20 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
+import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.RadComponent;
 import com.intellij.uiDesigner.componentTree.ComponentSelectionListener;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditorAdapter;
-import com.intellij.uiDesigner.designSurface.GuiEditor;
-import com.intellij.uiDesigner.RadComponent;
-import com.intellij.uiDesigner.FormEditingUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.FocusEvent;
-import java.awt.event.MouseEvent;
 import java.awt.event.KeyEvent;
-
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import java.awt.event.MouseEvent;
 
 /**
  * @author Anton Katilin
@@ -126,7 +124,7 @@ public final class InplaceEditingLayer extends JComponent{
     final Point p = SwingUtilities.convertPoint(this, x, y, inplaceComponent.getDelegee());
     final Property inplaceProperty = inplaceComponent.getInplaceProperty(p.x, p.y);
     if (inplaceProperty != null) {
-      final Rectangle bounds = inplaceComponent.getInplaceEditorBounds(myInplaceProperty, p.x, p.y);
+      final Rectangle bounds = inplaceComponent.getInplaceEditorBounds(inplaceProperty, p.x, p.y);
       startInplaceEditing(inplaceComponent, inplaceProperty, bounds, true);
     }
   }
