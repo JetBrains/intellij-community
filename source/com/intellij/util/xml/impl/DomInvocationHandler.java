@@ -32,7 +32,8 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   private final Type myType;
   private final DomInvocationHandler myParent;
   private final DomManagerImpl myManager;
-  @NotNull private final String myTagName;
+  private final String myTagName;
+  private final Converter myGenericConverter;
   private XmlTag myXmlTag;
 
   private XmlFile myFile;
@@ -47,7 +48,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
                                  final XmlTag tag,
                                  final DomInvocationHandler parent,
                                  final String tagName,
-                                 DomManagerImpl manager) {
+                                 DomManagerImpl manager, final Converter genericConverter) {
     myType = type;
     myXmlTag = tag;
     myParent = parent;
@@ -55,6 +56,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     myManager = manager;
     myMethodsMap = manager.getMethodsMap(type);
     myInvocationCache = manager.getInvocationCache(type);
+    myGenericConverter = genericConverter;
   }
 
   public DomFileElementImpl getRoot() {
@@ -192,8 +194,8 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   }
 
   @NotNull
-  protected Converter getConverter(final Method method, final boolean getter) throws IllegalAccessException, InstantiationException {
-    return myManager.getConverterManager().getConverter(method, getter);
+  protected final Converter getConverter(final Method method, final boolean getter) throws IllegalAccessException, InstantiationException {
+    return myManager.getConverterManager().getConverter(method, getter, myType, myGenericConverter);
   }
 
   public final DomElement getProxy() {
@@ -315,7 +317,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
             String qname = entry.getValue();
             for (XmlTag subTag : tag.findSubTags(qname)) {
               if (!usedTags.contains(subTag)) {
-                createCollectionElement(myMethodsMap.getCollectionChildrenClass(qname), subTag);
+                createCollectionElement(myMethodsMap.getCollectionChildrenType(qname), subTag);
                 usedTags.add(subTag);
               }
             }
@@ -333,7 +335,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     if (handler == null) {
       handler = createIndexedChild(method, subTag, pair.getFirst(), pair.getSecond());
       myFixedChildren.put(pair, handler);
-      myManager.createDomElement(method.getReturnType(), subTag, handler);
+      myManager.createDomElement(handler);
     } else {
       handler.attach(subTag);
     }
@@ -342,12 +344,10 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
 
   private IndexedElementInvocationHandler createIndexedChild(final Method method,
                                                              final XmlTag subTag,
-                                                             final String qname, final Integer index) {
+                                                             final String qname,
+                                                             final Integer index) {
     Converter converter = getConverterForChild(method);
-    if (converter != null) {
-      return new GenericValueInvocationHandler(method.getGenericReturnType(), subTag, this, qname, index, converter);
-    }
-    return new IndexedElementInvocationHandler(method.getReturnType(), subTag, this, qname, index);
+    return new IndexedElementInvocationHandler(method.getGenericReturnType(), subTag, this, qname, index, converter);
   }
 
   private Converter getConverterForChild(final Method method) {
@@ -371,8 +371,8 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     return null;
   }
 
-  DomElement createCollectionElement(final Class aClass, final XmlTag subTag) {
-    return myManager.createDomElement(aClass, subTag, new CollectionElementInvocationHandler(aClass, subTag, this));
+  final DomElement createCollectionElement(final Type type, final XmlTag subTag) {
+    return myManager.createDomElement(new CollectionElementInvocationHandler(type, subTag, this));
   }
 
   protected final XmlTag findSubTag(final XmlTag tag, final String qname, final int index) {
@@ -435,13 +435,13 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     }
   }
 
-  public final DomElement addChild(final String tagName, final Class aClass, int index) throws IncorrectOperationException {
+  public final DomElement addChild(final String tagName, final Type type, int index) throws IncorrectOperationException {
     createFixedChildrenTags(tagName, myMethodsMap.getFixedChildrenCount(tagName));
-    return addCollectionElement(aClass, addEmptyTag(tagName, index));
+    return addCollectionElement(type, addEmptyTag(tagName, index));
   }
 
-  private DomElement addCollectionElement(final Class aClass, final XmlTag tag) {
-    final DomElement element = createCollectionElement(aClass, tag);
+  private DomElement addCollectionElement(final Type type, final XmlTag tag) {
+    final DomElement element = createCollectionElement(type, tag);
     myManager.fireEvent(new CollectionElementAddedEvent(element, tag.getName()));
     return element;
   }

@@ -34,17 +34,17 @@ import java.util.Map;
 /**
  * @author peter
  */
-public class DomManagerImpl extends DomManager implements ProjectComponent{
+public class DomManagerImpl extends DomManager implements ProjectComponent {
   private static final Key<NameStrategy> NAME_STRATEGY_KEY = Key.create("NameStrategy");
   private static final Key<DomInvocationHandler> CACHED_HANDLER = Key.create("CachedInvocationHandler");
   private static final Key<DomFileElementImpl> CACHED_FILE_ELEMENT = Key.create("CachedFileElement");
 
   private final List<DomEventListener> myListeners = new ArrayList<DomEventListener>();
   private final ConverterManagerImpl myConverterManager = new ConverterManagerImpl();
-  private final Map<Class<? extends DomElement>,Class> myClass2ProxyClass = new HashMap<Class<? extends DomElement>, Class>();
-  private final Map<Type,MethodsMap> myMethodsMaps = new HashMap<Type, MethodsMap>();
-  private final Map<Type,InvocationCache> myInvocationCaches = new HashMap<Type, InvocationCache>();
-  private final Map<Class<? extends DomElement>,ClassChooser> myClassChoosers = new HashMap<Class<? extends DomElement>, ClassChooser>();
+  private final Map<Class<? extends DomElement>, Class> myClass2ProxyClass = new HashMap<Class<? extends DomElement>, Class>();
+  private final Map<Type, MethodsMap> myMethodsMaps = new HashMap<Type, MethodsMap>();
+  private final Map<Type, InvocationCache> myInvocationCaches = new HashMap<Type, InvocationCache>();
+  private final Map<Class<? extends DomElement>, ClassChooser> myClassChoosers = new HashMap<Class<? extends DomElement>, ClassChooser>();
   private DomEventListener[] myCachedListeners;
   private PomModelListener myXmlListener;
   private Project myProject;
@@ -114,19 +114,20 @@ public class DomManagerImpl extends DomManager implements ProjectComponent{
     return classChooser == null ? aClass : classChooser.chooseClass(tag);
   }
 
-  final DomElement createDomElement(final Class aClass,
-                                    final XmlTag tag,
-                                    final DomInvocationHandler handler) {
+  final DomElement createDomElement(final DomInvocationHandler handler) {
     synchronized (PsiLock.LOCK) {
       try {
-        Class clazz = getProxyClassFor(getConcreteType(aClass, tag));
-        final DomElement element = (DomElement) clazz.getConstructor(InvocationHandler.class).newInstance(handler);
+        XmlTag tag = handler.getXmlTag();
+        Class clazz = getProxyClassFor(getConcreteType(DomUtil.getRawType(handler.getDomElementType()), tag));
+        final DomElement element = (DomElement)clazz.getConstructor(InvocationHandler.class).newInstance(handler);
         handler.setProxy(element);
         setCachedElement(tag, handler);
         return element;
-      } catch (RuntimeException e) {
+      }
+      catch (RuntimeException e) {
         throw e;
-      } catch (Exception e) {
+      }
+      catch (Exception e) {
         throw new CodeGenerationException(e);
       }
     }
@@ -142,7 +143,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent{
   }
 
   public Project getProject() {
-    return myProject; 
+    return myProject;
   }
 
   public final void setNameStrategy(final XmlFile file, final NameStrategy strategy) {
@@ -228,7 +229,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent{
     myXmlListener = new PomModelListener() {
       public void modelChanged(PomModelEvent event) {
         if (myChanging) return;
-        final XmlChangeSet changeSet = (XmlChangeSet) event.getChangeSet(xmlAspect);
+        final XmlChangeSet changeSet = (XmlChangeSet)event.getChangeSet(xmlAspect);
         if (changeSet != null) {
           new ExternalChangeProcessor(changeSet).processChanges();
         }

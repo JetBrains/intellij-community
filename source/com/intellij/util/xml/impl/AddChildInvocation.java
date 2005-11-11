@@ -6,16 +6,18 @@ package com.intellij.util.xml.impl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.j2ee.j2eeDom.xmlData.ReadOnlyDeploymentDescriptorModificationException;
 
+import java.lang.reflect.Type;
+
 /**
  * @author peter
  */
 public class AddChildInvocation implements Invocation{
-  private Class myClass;
+  private Type myType;
   private String myTagName;
   private int myStartIndex;
 
-  public AddChildInvocation(final Class aClass, final String tagName, final int startIndex) {
-    myClass = aClass;
+  public AddChildInvocation(final Type type, final String tagName, final int startIndex) {
+    myType = type;
     myTagName = tagName;
     myStartIndex = startIndex;
   }
@@ -26,6 +28,6 @@ public class AddChildInvocation implements Invocation{
       throw new ReadOnlyDeploymentDescriptorModificationException(virtualFile);
     }
     int index = args.length == 0 ? Integer.MAX_VALUE : myStartIndex + (Integer)args[0];
-    return handler.addChild(myTagName, myClass, index);
+    return handler.addChild(myTagName, myType, index);
   }
 }

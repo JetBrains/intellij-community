@@ -21,7 +21,7 @@ public class DomRootInvocationHandler extends DomInvocationHandler {
                                   final DomFileElementImpl fileElement,
                                   @NotNull final String tagName
   ) {
-    super(aClass, tag, null, tagName, fileElement.getManager());
+    super(aClass, tag, null, tagName, fileElement.getManager(), null);
     myParent = fileElement;
   }
 

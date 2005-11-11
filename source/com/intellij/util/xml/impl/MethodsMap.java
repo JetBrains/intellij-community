@@ -17,9 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.lang.reflect.WildcardType;
 import java.util.*;
 
 /**
@@ -33,7 +31,7 @@ public class MethodsMap implements DomMethodsInfo {
   private Map<String, Integer> myFixedChildrenCounts;
   private Map<Method, String> myCollectionChildrenGetterMethods;
   private Map<Method, String> myCollectionChildrenAdditionMethods;
-  private Map<String, Class<? extends DomElement>> myCollectionChildrenClasses;
+  private Map<String, Type> myCollectionChildrenClasses;
 
   public MethodsMap(final Class<? extends DomElement> aClass) {
     myClass = aClass;
@@ -48,7 +46,7 @@ public class MethodsMap implements DomMethodsInfo {
     return myCollectionChildrenGetterMethods.entrySet();
   }
 
-  Class<? extends DomElement> getCollectionChildrenClass(String tagName) {
+  Type getCollectionChildrenType(String tagName) {
     return myCollectionChildrenClasses.get(tagName);
   }
 
@@ -63,33 +61,6 @@ public class MethodsMap implements DomMethodsInfo {
   private boolean isCoreMethod(final Method method) {
     final Class<?> declaringClass = method.getDeclaringClass();
     return Object.class.equals(declaringClass) || DomElement.class.equals(declaringClass);
-  }
-
-  @Nullable
-  private static Class<? extends DomElement> extractCollectionElementType(Type returnType) {
-    if (returnType instanceof ParameterizedType) {
-      ParameterizedType parameterizedType = (ParameterizedType)returnType;
-      final Type rawType = parameterizedType.getRawType();
-      if (rawType instanceof Class) {
-        final Class<?> rawClass = (Class<?>)rawType;
-        if (List.class.isAssignableFrom(rawClass) || Collection.class.equals(rawClass)) {
-          final Type[] arguments = parameterizedType.getActualTypeArguments();
-          if (arguments.length == 1) {
-            final Type argument = arguments[0];
-            if (argument instanceof WildcardType) {
-              final Type[] upperBounds = ((WildcardType)argument).getUpperBounds();
-              if (upperBounds.length == 1 && isDomElement(upperBounds[0])) {
-                return (Class<? extends DomElement>)upperBounds[0];
-              }
-            }
-            else if (isDomElement(argument)) {
-              return (Class<? extends DomElement>)argument;
-            }
-          }
-        }
-      }
-    }
-    return null;
   }
 
   @Nullable
@@ -134,7 +105,7 @@ public class MethodsMap implements DomMethodsInfo {
 
     myCollectionChildrenGetterMethods = new HashMap<Method, String>();
     myCollectionChildrenAdditionMethods = new HashMap<Method, String>();
-    myCollectionChildrenClasses = new HashMap<String, Class<? extends DomElement>>();
+    myCollectionChildrenClasses = new HashMap<String, Type>();
 
     for (Method method : myClass.getMethods()) {
       if (!isCoreMethod(method)) {
@@ -156,8 +127,8 @@ public class MethodsMap implements DomMethodsInfo {
     final String tagName = extractTagName(method, "add", file);
     if (tagName == null) return false;
 
-    final Class<? extends DomElement> childrenClass = getCollectionChildrenClass(tagName);
-    if (childrenClass == null || !childrenClass.isAssignableFrom(method.getReturnType())) return false;
+    final Type childrenClass = getCollectionChildrenType(tagName);
+    if (childrenClass == null || !DomUtil.getRawType(childrenClass).isAssignableFrom(method.getReturnType())) return false;
 
     final Class<?>[] parameterTypes = method.getParameterTypes();
     if (parameterTypes.length > 1) return false;
@@ -178,8 +149,7 @@ public class MethodsMap implements DomMethodsInfo {
   }
 
   private void processGetterMethod(final Method method, final XmlFile file) {
-    final Class<?> returnType = method.getReturnType();
-    if (isDomElement(returnType)) {
+    if (DomUtil.isDomElement(method.getReturnType())) {
       final String qname = getSubTagName(method, file);
       if (qname != null) {
         int index = 0;
@@ -192,24 +162,18 @@ public class MethodsMap implements DomMethodsInfo {
         if (integer == null || integer < index + 1) {
           myFixedChildrenCounts.put(qname, index + 1);
         }
+        return;
       }
     }
-    final Class<? extends DomElement> aClass = extractCollectionElementType(method.getGenericReturnType());
-    if (aClass != null) {
+
+    final Type type = DomUtil.extractCollectionElementType(method.getGenericReturnType());
+    if (type != null) {
       final String qname = getSubTagNameForCollection(method, file);
       if (qname != null) {
-        myCollectionChildrenClasses.put(qname, aClass);
+        myCollectionChildrenClasses.put(qname, type);
         myCollectionChildrenGetterMethods.put(method, qname);
       }
     }
-  }
-
-  private static boolean isDomElement(final Type type) {
-    return type instanceof Class && isDomElement((Class)type);
-  }
-
-  private static boolean isDomElement(final Class type) {
-    return DomElement.class.isAssignableFrom(type);
   }
 
   public Invocation createInvocation(final XmlFile file, final Method method) {
@@ -226,7 +190,7 @@ public class MethodsMap implements DomMethodsInfo {
 
     qname = myCollectionChildrenAdditionMethods.get(method);
     if (qname != null) {
-      return new AddChildInvocation(method.getReturnType(), qname, getFixedChildrenCount(qname));
+      return new AddChildInvocation(method.getGenericReturnType(), qname, getFixedChildrenCount(qname));
     }
 
     throw new UnsupportedOperationException("No implementation for method " + method.toString());
@@ -317,7 +281,7 @@ public class MethodsMap implements DomMethodsInfo {
   @Nullable
   public DomCollectionChildDescription getCollectionChildDescription(String tagName) {
     return new CollectionChildDescriptionImpl(tagName,
-                                              getCollectionChildrenClass(tagName),
+                                              getCollectionChildrenType(tagName),
                                               getCollectionGetMethod(tagName),
                                               getCollectionAddMethod(tagName),
                                               getCollectionIndexedAddMethod(tagName));

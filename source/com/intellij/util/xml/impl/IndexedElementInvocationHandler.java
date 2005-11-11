@@ -6,6 +6,7 @@ package com.intellij.util.xml.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.xml.Converter;
 
 import java.lang.reflect.Type;
 
@@ -20,8 +21,9 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler{
                                          final XmlTag tag,
                                          final DomInvocationHandler parent,
                                          final String tagName,
-                                         final int index) {
-    super(aClass, tag, parent, tagName, parent.getManager());
+                                         final int index,
+                                         final Converter genericConverter) {
+    super(aClass, tag, parent, tagName, parent.getManager(), genericConverter);
     myIndex = index;
   }
 

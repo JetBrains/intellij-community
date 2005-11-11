@@ -5,10 +5,12 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.util.xml.*;
 import com.intellij.psi.PsiClass;
+import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -16,7 +18,7 @@ import java.util.Map;
  * @author peter
  */
 public class ConverterManagerImpl implements ConverterManager {
-  private final Map<Method, Converter> myConvertersByMethod = new HashMap<Method, Converter>();
+  private final Map<Pair<Type,Method>, Converter> myConvertersByMethod = new HashMap<Pair<Type, Method>, Converter>();
   private final Map<Class,Converter> myConvertersByClass = new HashMap<Class, Converter>();
 
   public ConverterManagerImpl() {
@@ -28,9 +30,9 @@ public class ConverterManagerImpl implements ConverterManager {
     registerConverter(PsiClass.class, Converter.PSI_CLASS_CONVERTER);
   }
 
-  @NotNull
-  final Converter getConverter(Method method, final boolean getter) throws IllegalAccessException, InstantiationException {
-    Converter converter = myConvertersByMethod.get(method);
+  final Converter getConverter(Method method, final boolean getter, Type classType, Converter genericConverter) throws IllegalAccessException, InstantiationException {
+    final Pair<Type, Method> pair = new Pair<Type, Method>(classType, method);
+    Converter converter = myConvertersByMethod.get(pair);
     if (converter != null) {
       return converter;
     }
@@ -40,12 +42,32 @@ public class ConverterManagerImpl implements ConverterManager {
       converter = getConverter(convert.value());
     }
     else {
-      final Class<?> aClass = getter ? method.getReturnType() : method.getParameterTypes()[0];
-      converter = getDefaultConverter(aClass);
-      assert converter != null: "No converter specified: String<->" + aClass.getName();
+      converter = _getConverter(method, getter, classType, genericConverter);
     }
-    myConvertersByMethod.put(method, converter);
+    myConvertersByMethod.put(pair, converter);
     return converter;
+  }
+
+  private Converter _getConverter(final Method method, final boolean getter, final Type classType, Converter genericConverter) {
+    final Converter converter;
+    Class<?> aClass = DomUtil.getClassFromGenericType(getter ? method.getGenericReturnType() : method.getGenericParameterTypes()[0], classType);
+    if (aClass == null) {
+      aClass = getter ? method.getReturnType() : method.getParameterTypes()[0];
+    } else if (genericConverter != null) {
+      return genericConverter;
+    }
+    converter = getDefaultConverter(aClass);
+    assert converter != null: "No converter specified: String<->" + aClass.getName();
+    return converter;
+  }
+
+  private Class<?> getConverterClass(final Method method, final boolean getter, final Type classType) {
+    Class<?> aClass =
+      DomUtil.getClassFromGenericType(getter ? method.getGenericReturnType() : method.getGenericParameterTypes()[0], classType);
+    if (aClass == null) {
+      return getter ? method.getReturnType() : method.getParameterTypes()[0];
+    }
+    return aClass;
   }
 
   @Nullable

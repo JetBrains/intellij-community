@@ -68,7 +68,7 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
       if (myRootHandler == null) {
         final XmlTag tag = getRootTag();
         myRootHandler = new DomRootInvocationHandler(myRootElementClass, tag, this, myRootTagName);
-        myManager.createDomElement(myRootElementClass, tag, myRootHandler);
+        myManager.createDomElement(myRootHandler);
       }
       return myRootHandler;
     }
