@@ -127,7 +127,7 @@ public interface PsiPackage extends PsiNamedElement, NavigationItem {
    */
   VirtualFile[] occursInPackagePrefixes();
 
-  @NotNull
+  @Nullable // default package 
   @NonNls
   String getName();
 }
