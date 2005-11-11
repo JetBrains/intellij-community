@@ -299,7 +299,4 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
     return myManager;
   }
 
-  public void forceRefreshFile(VirtualFile file) {
-    forceRefreshFiles(false, file);
-  }
 }

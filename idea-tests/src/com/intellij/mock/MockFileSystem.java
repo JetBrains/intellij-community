@@ -82,7 +82,4 @@ public class MockFileSystem extends VirtualFileSystem {
       return getUrl();
     }
   }
-  public void forceRefreshFile(VirtualFile file) {
-    forceRefreshFiles(false, file);
-  }
 }

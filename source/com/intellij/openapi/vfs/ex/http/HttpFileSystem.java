@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class HttpFileSystem extends VirtualFileSystem implements ApplicationComponent {
 
@@ -44,6 +45,7 @@ public class HttpFileSystem extends VirtualFileSystem implements ApplicationComp
     return "HttpFileSystem";
   }
 
-  public void forceRefreshFile(VirtualFile file) {
+  public void forceRefreshFiles(final boolean asynchronous, @NotNull VirtualFile... files) {
+
   }
 }

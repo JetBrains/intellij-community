@@ -863,7 +863,4 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
     }
   }
 
-  public void forceRefreshFile(VirtualFile file) {
-    forceRefreshFiles(false, file);
-  }
 }

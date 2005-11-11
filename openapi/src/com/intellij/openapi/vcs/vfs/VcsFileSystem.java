@@ -81,6 +81,4 @@ public class VcsFileSystem extends VirtualFileSystem implements ApplicationCompo
 
   public void forceRefreshFiles(final boolean asynchronous, VirtualFile... files) {
   }
-  public void forceRefreshFile(VirtualFile file) {
-  }
 }

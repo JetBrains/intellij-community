@@ -237,8 +237,6 @@ public abstract class VirtualFileSystem {
     return myCachedFileListeners;
   }
 
-  public abstract void forceRefreshFile(VirtualFile file);
-
   /**
    * Reloads files from disk regardless of their changed timestamp/contents
    *
@@ -246,9 +244,5 @@ public abstract class VirtualFileSystem {
    * @param files        the list of files to refresh (must not contain directories).
    * @since 5.0.2
    */
-  public void forceRefreshFiles(final boolean asynchronous, @NotNull VirtualFile... files) {
-    for (VirtualFile file : files) {
-      forceRefreshFile(file);
-    }
-  }
+  public abstract void forceRefreshFiles(final boolean asynchronous, @NotNull VirtualFile... files);
 }
