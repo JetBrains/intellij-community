@@ -45,8 +45,11 @@ public class MakeStaticUtil {
             }
           }
           else {
-            if (isPartOf(member.getContainingClass(), containingClass)) {
-              classRefs.add(new InternalUsageInfo(element, member));
+            final PsiClass memberContainingClass = member.getContainingClass();
+            if (!(originalMember instanceof PsiClass) || !isPartOf(memberContainingClass, (PsiClass)originalMember)) {
+              if (isPartOf(memberContainingClass, containingClass)) {
+                classRefs.add(new InternalUsageInfo(element, member));
+              }
             }
           }
         }

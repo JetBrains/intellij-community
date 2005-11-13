@@ -1,10 +1,5 @@
-/*
- * Created by IntelliJ IDEA.
- * User: dsl
- * Date: 17.04.2002
- * Time: 12:58:09
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
+/**
+ * @author ven
  */
 package com.intellij.refactoring;
 
@@ -27,6 +22,8 @@ public class MakeClassStaticTest extends CodeInsightTestCase {
   public void testSimpleWithFields() throws Exception { performWithFields(); }
 
   public void testQualifiedThisInSibling() throws Exception { perform(true); }
+
+  public void testIDEADEV3247() throws Exception { perform(true); }
 
   private void perform(boolean addClassParameter) throws Exception {
     configureByFile(TEST_ROOT + getTestName(true) + ".java");
