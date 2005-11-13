@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -20,6 +21,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.*;
+import java.util.HashMap;
+import java.util.Map;
 
 public class VirtualFileImpl extends VirtualFile {
 
@@ -650,22 +653,20 @@ public class VirtualFileImpl extends VirtualFile {
       PhysicalFile[] files = physicalFile.listFiles();
 
       final boolean[] found = new boolean[myChildren.length];
+      final Map<String, Pair<VirtualFile, Integer>> childrenMap =
+        new HashMap<String, Pair<VirtualFile, Integer>>((int)((double)myChildren.length * 1.5), (float)0.6);
+      {
+        for (int i = 0; i < myChildren.length; i++) {
+          final VirtualFileImpl child = myChildren[i];
+          childrenMap.put(child.getName(), new Pair<VirtualFile, Integer>(child, i));
+        }
+      }
 
       VirtualFileImpl[] children = myChildren;
-      for (int i = 0; i < files.length; i++) {
-        final PhysicalFile file = files[i];
+      for (final PhysicalFile file : files) {
         final String name = file.getName();
-        int index = -1;
-        if (children[i].myName.equals(name)) {
-          index = i;
-        } else {
-          for (int j = 0; j < children.length; j++) {
-            VirtualFileImpl child = myChildren[j];
-            if (child.myName.equals(name)) index = j;
-          }
-        }
-
-        if (index < 0) {
+        final Pair<VirtualFile, Integer> pair = childrenMap.get(name);
+        if (pair == null) {
           ourFileSystem.getManager().addEventToFireByRefresh(
             new Runnable() {
               public void run() {
@@ -686,7 +687,7 @@ public class VirtualFileImpl extends VirtualFile {
           );
         }
         else {
-          found[index] = true;
+          found[pair.getSecond()] = true;
         }
       }
       for (int i = 0; i < children.length; i++) {
