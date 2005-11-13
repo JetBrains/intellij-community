@@ -13,6 +13,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -96,8 +97,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
     final PsiSearchHelper helper = manager.getSearchHelper();
     final List<UsageInfo> usagesList = new ArrayList<UsageInfo>();
     for (PsiMember member : myMembersToMove) {
-      PsiReference[] refs = helper.findReferences(member, GlobalSearchScope.projectScope(myProject), false);
-      for (PsiReference psiReference : refs) {
+      for (PsiReference psiReference : ReferencesSearch.search(member).findAll()) {
         PsiElement ref = psiReference.getElement();
         if (ref instanceof PsiReferenceExpression) {
           PsiReferenceExpression refExpr = (PsiReferenceExpression)ref;
@@ -385,10 +385,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
         || (newVisibility != null && PsiModifier.PUBLIC.equals(newVisibility));
       if (!isMemberPublic) {
         PsiManager manager = member.getManager();
-        PsiSearchHelper helper = manager.getSearchHelper();
-        GlobalSearchScope projectScope = GlobalSearchScope.projectScope(manager.getProject());
-        PsiReference[] references = helper.findReferences(member, projectScope, false);
-        for (PsiReference psiReference : references) {
+        for (PsiReference psiReference : ReferencesSearch.search(member).findAll()) {
           PsiElement ref = psiReference.getElement();
           if (!RefactoringHierarchyUtil.willBeInTargetClass(ref, membersToMove, targetClass, false)) {
             if (!manager.getResolveHelper().isAccessible(member, modifierList, ref, null, null)) {
