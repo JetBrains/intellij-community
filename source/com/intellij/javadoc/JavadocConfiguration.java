@@ -248,7 +248,7 @@ public class JavadocConfiguration implements RunProfile, JDOMExternalizable{
       ProcessTerminatedListener.attach(handler, myProject, JavadocBundle.message("javadoc.generate.exited"));
       handler.addProcessListener(new ProcessAdapter() {
         public void processTerminated(ProcessEvent event) {
-          if (!handler.isProcessTerminating() && OPEN_IN_BROWSER) {
+          if (handler.isProcessTerminating() && OPEN_IN_BROWSER) {
             String url = OUTPUT_DIRECTORY + File.separator + INDEX_HTML;
             if (new File(url).exists() && event.getExitCode() == 0) {
               BrowserUtil.launchBrowser(url);
