@@ -3,29 +3,10 @@
  */
 package com.intellij.util.xml;
 
-import com.intellij.psi.codeStyle.NameUtil;
-import com.intellij.openapi.util.text.StringUtil;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 
-/**
- * @author peter
- */
-public interface NameStrategy {
-  String convertName(String propertyName);
-
-  NameStrategy HYPHEN_STRATEGY = new NameStrategy() {
-    public String convertName(String propertyName) {
-      final String[] words = NameUtil.nameToWords(propertyName);
-      for (int i = 0; i < words.length; i++) {
-        words[i] = StringUtil.decapitalize(words[i]);
-      }
-      return StringUtil.join(words, "-");
-    }
-  };
-
-  NameStrategy JAVA_STRATEGY = new NameStrategy() {
-    public String convertName(String propertyName) {
-      return StringUtil.decapitalize(propertyName);
-    }
-  };
-
+@Retention(RetentionPolicy.RUNTIME)
+public @interface NameStrategy {
+  Class value();
 }

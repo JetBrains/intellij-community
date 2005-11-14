@@ -36,4 +36,6 @@ public interface DomElement {
   DomManager getManager();
 
   Type getDomElementType();
+
+  DomNameStrategy getNameStrategy();
 }

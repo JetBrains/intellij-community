@@ -62,6 +62,10 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     return getClass();
   }
 
+  public DomNameStrategy getNameStrategy() {
+    return getRootHandler().getNameStrategy();
+  }
+
   @NotNull
   public T getRootElement() {
     return (T)getRootHandler().getProxy();

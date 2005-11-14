@@ -57,9 +57,7 @@ public class DomUIFactory {
   }
 
   public static <T extends DomElement> CollectionControl<T> createCollectionControl(DomElement element, DomCollectionChildDescription description) {
-    final Method addMethod = description.getAdderMethod();
-    final Method getMethod = description.getGetterMethod();
-    return new CollectionControl<T>(element, getMethod, addMethod);
+    return new CollectionControl<T>(element, description);
   }
 
 }

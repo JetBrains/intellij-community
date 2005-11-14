@@ -64,28 +64,28 @@ public class MethodsMap implements DomMethodsInfo {
   }
 
   @Nullable
-  private String getSubTagName(final Method method, final XmlFile file) {
+  private String getSubTagName(final Method method) {
     final SubTag subTagAnnotation = method.getAnnotation(SubTag.class);
     if (subTagAnnotation == null || StringUtil.isEmpty(subTagAnnotation.value())) {
-      return getNameFromMethod(method, file);
+      return getNameFromMethod(method);
     }
     return subTagAnnotation.value();
   }
 
   @Nullable
-  private String getSubTagNameForCollection(final Method method, final XmlFile file) {
+  private String getSubTagNameForCollection(final Method method) {
     final SubTagList subTagList = method.getAnnotation(SubTagList.class);
     if (subTagList == null || StringUtil.isEmpty(subTagList.value())) {
       final String propertyName = getPropertyName(method);
-      return propertyName != null ? getNameStrategy(file).convertName(StringUtil.unpluralize(propertyName)) : null;
+      return propertyName != null ? getNameStrategy().convertName(StringUtil.unpluralize(propertyName)) : null;
     }
     return subTagList.value();
   }
 
   @Nullable
-  private String getNameFromMethod(final Method method, final XmlFile file) {
+  private String getNameFromMethod(final Method method) {
     final String propertyName = getPropertyName(method);
-    return propertyName == null ? null : getNameStrategy(file).convertName(propertyName);
+    return propertyName == null ? null : getNameStrategy().convertName(propertyName);
   }
 
   private static String getPropertyName(Method method) {
@@ -93,8 +93,9 @@ public class MethodsMap implements DomMethodsInfo {
   }
 
   @NotNull
-  private NameStrategy getNameStrategy(XmlFile file) {
-    return DomManagerImpl._getNameStrategy(file);
+  private DomNameStrategy getNameStrategy() {
+    final DomNameStrategy strategy = DomUtil.getDomNameStrategy(DomUtil.getRawType(myClass));
+    return strategy == null ? DomNameStrategy.HYPHEN_STRATEGY : strategy;
   }
 
   public synchronized void buildMethodMaps(final XmlFile file) {
@@ -110,21 +111,21 @@ public class MethodsMap implements DomMethodsInfo {
     for (Method method : myClass.getMethods()) {
       if (!isCoreMethod(method)) {
         if (DomInvocationHandler.isGetter(method)) {
-          processGetterMethod(method, file);
+          processGetterMethod(method);
         }
       }
     }
     for (Method method : myClass.getMethods()) {
       if (!isCoreMethod(method)) {
-        if (isAddMethod(method, file)) {
-          myCollectionChildrenAdditionMethods.put(method, extractTagName(method, "add", file));
+        if (isAddMethod(method)) {
+          myCollectionChildrenAdditionMethods.put(method, extractTagName(method, "add"));
         }
       }
     }
   }
 
-  private boolean isAddMethod(Method method, XmlFile file) {
-    final String tagName = extractTagName(method, "add", file);
+  private boolean isAddMethod(Method method) {
+    final String tagName = extractTagName(method, "add");
     if (tagName == null) return false;
 
     final Type childrenClass = getCollectionChildrenType(tagName);
@@ -135,7 +136,7 @@ public class MethodsMap implements DomMethodsInfo {
     return parameterTypes.length == 0 || parameterTypes[0] == int.class;
   }
 
-  private String extractTagName(Method method, String prefix, XmlFile file) {
+  private String extractTagName(Method method, String prefix) {
     final String name = method.getName();
     if (!name.startsWith(prefix)) return null;
 
@@ -144,13 +145,13 @@ public class MethodsMap implements DomMethodsInfo {
       return subTagAnnotation.value();
     }
 
-    final String tagName = getNameStrategy(file).convertName(name.substring(prefix.length()));
+    final String tagName = getNameStrategy().convertName(name.substring(prefix.length()));
     return StringUtil.isEmpty(tagName) ? null : tagName;
   }
 
-  private void processGetterMethod(final Method method, final XmlFile file) {
+  private void processGetterMethod(final Method method) {
     if (DomUtil.isDomElement(method.getReturnType())) {
-      final String qname = getSubTagName(method, file);
+      final String qname = getSubTagName(method);
       if (qname != null) {
         int index = 0;
         final SubTag subTagAnnotation = method.getAnnotation(SubTag.class);
@@ -168,7 +169,7 @@ public class MethodsMap implements DomMethodsInfo {
 
     final Type type = DomUtil.extractCollectionElementType(method.getGenericReturnType());
     if (type != null) {
-      final String qname = getSubTagNameForCollection(method, file);
+      final String qname = getSubTagNameForCollection(method);
       if (qname != null) {
         myCollectionChildrenClasses.put(qname, type);
         myCollectionChildrenGetterMethods.put(method, qname);
@@ -273,9 +274,11 @@ public class MethodsMap implements DomMethodsInfo {
 
   @Nullable
   public DomFixedChildDescription getFixedChildDescription(String tagName) {
+    final Method[] getterMethods = getFixedChildrenGetterMethods(tagName);
     return new FixedChildDescriptionImpl(tagName,
+                                         getterMethods[0].getGenericReturnType(),
                                          getFixedChildrenCount(tagName),
-                                         getFixedChildrenGetterMethods(tagName));
+                                         getterMethods);
   }
 
   @Nullable

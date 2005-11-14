@@ -3,6 +3,8 @@
  */
 package com.intellij.util.xml.reflect;
 
+import com.intellij.util.xml.DomElement;
+
 import java.lang.reflect.Method;
 
 /**
@@ -12,4 +14,7 @@ public interface DomCollectionChildDescription extends DomChildrenDescription {
   Method getGetterMethod();
   Method getIndexedAdderMethod();
   Method getAdderMethod();
+
+  DomElement addValue(DomElement element);
+  DomElement addValue(DomElement element, int index);
 }

@@ -4,11 +4,14 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomNameStrategy;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Arrays;
@@ -21,8 +24,8 @@ public class FixedChildDescriptionImpl extends DomChildDescriptionImpl implement
   private final Method[] myGetterMethods;
   private final int myCount;
 
-  public FixedChildDescriptionImpl(final String tagName, final int count, final Method[] getterMethods) {
-    super(tagName, getterMethods[0].getGenericReturnType());
+  public FixedChildDescriptionImpl(final String tagName, final Type type, final int count, final Method[] getterMethods) {
+    super(tagName, type);
     assert getterMethods.length == count;
     myCount = count;
     myGetterMethods = getterMethods;
@@ -52,6 +55,10 @@ public class FixedChildDescriptionImpl extends DomChildDescriptionImpl implement
       }
     }
     return result;
+  }
+
+  public String getCommonPresentableName(DomNameStrategy strategy) {
+    return StringUtil.capitalizeWords(strategy.splitIntoWords(getTagName()), true);
   }
 
   public boolean equals(final Object o) {

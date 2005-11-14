@@ -35,7 +35,7 @@ import java.util.Map;
  * @author peter
  */
 public class DomManagerImpl extends DomManager implements ProjectComponent {
-  private static final Key<NameStrategy> NAME_STRATEGY_KEY = Key.create("NameStrategy");
+  private static final Key<DomNameStrategy> NAME_STRATEGY_KEY = Key.create("NameStrategy");
   private static final Key<DomInvocationHandler> CACHED_HANDLER = Key.create("CachedInvocationHandler");
   private static final Key<DomFileElementImpl> CACHED_FILE_ELEMENT = Key.create("CachedFileElement");
 
@@ -146,18 +146,8 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     return myProject;
   }
 
-  public final void setNameStrategy(final XmlFile file, final NameStrategy strategy) {
+  public final void setNameStrategy(final XmlFile file, final DomNameStrategy strategy) {
     file.putUserData(NAME_STRATEGY_KEY, strategy);
-  }
-
-  @NotNull
-  public final NameStrategy getNameStrategy(final XmlFile file) {
-    return _getNameStrategy(file);
-  }
-
-  protected static NameStrategy _getNameStrategy(final XmlFile file) {
-    final NameStrategy strategy = file.getUserData(NAME_STRATEGY_KEY);
-    return strategy == null ? NameStrategy.HYPHEN_STRATEGY : strategy;
   }
 
   @NotNull

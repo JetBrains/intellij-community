@@ -3,19 +3,22 @@
  */
 package com.intellij.util.xml;
 
+import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Type;
 import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
-import java.util.List;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author peter
  */
 public class DomUtil {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.DomUtil");
+
   public static Class extractParameterClassFromGenericType(Type type) {
     if (type instanceof ParameterizedType) {
       ParameterizedType parameterizedType = (ParameterizedType)type;
@@ -100,4 +103,30 @@ public class DomUtil {
   public static boolean isDomElement(final Type type) {
     return type instanceof Class && DomElement.class.isAssignableFrom((Class)type);
   }
+
+  public static DomNameStrategy getDomNameStrategy(final Class<?> rawType) {
+    final NameStrategy annotation = rawType.getAnnotation(NameStrategy.class);
+    if (annotation != null) {
+      final Class aClass = annotation.value();
+      if (HyphenNameStrategy.class.equals(aClass)) return DomNameStrategy.HYPHEN_STRATEGY;
+      if (JavaNameStrategy.class.equals(aClass)) return DomNameStrategy.JAVA_STRATEGY;
+      try {
+        return (DomNameStrategy)aClass.newInstance();
+      }
+      catch (InstantiationException e) {
+        LOG.error(e);
+      }
+      catch (IllegalAccessException e) {
+        LOG.error(e);
+      }
+    }
+    for (Class aClass : rawType.getInterfaces()) {
+      final DomNameStrategy strategy = getDomNameStrategy(aClass);
+      if (strategy != null) {
+        return strategy;
+      }
+    }
+    return null;
+  }
+
 }

@@ -4,7 +4,9 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomNameStrategy;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
+import com.intellij.openapi.util.text.StringUtil;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
@@ -31,6 +33,24 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
     return myAdderMethod;
   }
 
+  public DomElement addValue(DomElement element) {
+    try {
+      return (DomElement)myAdderMethod.invoke(element);
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public DomElement addValue(DomElement element, int index) {
+    try {
+      return (DomElement)myIndexedAdderMethod.invoke(element, index);
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   public Method getGetterMethod() {
     return myGetterMethod;
   }
@@ -46,6 +66,10 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
     catch (Exception e) {
       throw new RuntimeException(e);
     }
+  }
+
+  public String getCommonPresentableName(DomNameStrategy strategy) {
+    return StringUtil.capitalizeWords(StringUtil.pluralize(strategy.splitIntoWords(getTagName())), true);
   }
 
   public boolean equals(final Object o) {
@@ -71,4 +95,5 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
     result = 29 * result + (myIndexedAdderMethod != null ? myIndexedAdderMethod.hashCode() : 0);
     return result;
   }
+
 }

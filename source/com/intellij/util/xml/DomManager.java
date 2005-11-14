@@ -19,11 +19,6 @@ public abstract class DomManager {
 
   public abstract Project getProject();
 
-  public abstract void setNameStrategy(final XmlFile file, final NameStrategy strategy);
-
-  @NotNull
-  public abstract NameStrategy getNameStrategy(final XmlFile file);
-
   @NotNull
   public abstract <T extends DomElement> DomFileElementImpl<T> getFileElement(XmlFile file, Class<T> aClass, String rootTagName);
 

@@ -4,6 +4,9 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.util.xml.reflect.DomChildrenDescription;
+import com.intellij.util.xml.DomNameStrategy;
+import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.DomElement;
 
 import java.lang.reflect.Type;
 
@@ -27,6 +30,15 @@ public abstract class DomChildDescriptionImpl implements DomChildrenDescription 
     return myType;
   }
 
+  public final String getCommonPresentableName(DomElement parent) {
+    return getCommonPresentableName(getDomNameStrategy(parent));
+  }
+
+  public DomNameStrategy getDomNameStrategy(DomElement parent) {
+    final DomNameStrategy strategy = DomUtil.getDomNameStrategy(DomUtil.getRawType(myType));
+    return strategy == null ? parent.getNameStrategy() : strategy;
+  }
+
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -45,4 +57,5 @@ public abstract class DomChildDescriptionImpl implements DomChildrenDescription 
     result = 29 * result + (myType != null ? myType.hashCode() : 0);
     return result;
   }
+
 }

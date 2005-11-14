@@ -139,6 +139,10 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     }
   }
 
+  public DomInvocationHandler getDomInvocationHandler() {
+    return this;
+  }
+
   protected final void deleteTag(final XmlTag tag) {
     final boolean changing = myManager.setChanging(true);
     try {
@@ -227,7 +231,17 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
       return null;
     }
 
-    return myManager.getNameStrategy(getFile()).convertName(propertyName);
+    return getNameStrategy().convertName(propertyName);
+  }
+
+  public final DomNameStrategy getNameStrategy() {
+    final Class<?> rawType = DomUtil.getRawType(myType);
+    final DomNameStrategy strategy = DomUtil.getDomNameStrategy(rawType);
+    if (strategy != null) {
+      return strategy;
+    }
+    final DomInvocationHandler parent = getParentHandler();
+    return parent != null ? parent.getNameStrategy() : DomNameStrategy.HYPHEN_STRATEGY;
   }
 
   private Invocation createInvocation(final Method method) throws IllegalAccessException, InstantiationException {

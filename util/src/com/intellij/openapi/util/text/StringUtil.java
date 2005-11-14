@@ -406,20 +406,21 @@ public class StringUtil {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static String pluralize(@NotNull String suggestion) {
+    if (suggestion.endsWith("Child") || suggestion.endsWith("child")) {
+      return suggestion + "ren";
+    }
+
     if (StringUtil.endsWithChar(suggestion, 's') || StringUtil.endsWithChar(suggestion, 'x') ||
         suggestion.endsWith("ch")) {
-      suggestion += "es";
+      return suggestion + "es";
     }
-    else {
-      int len = suggestion.length();
-      if (StringUtil.endsWithChar(suggestion, 'y') && len > 1 && !isVowel(suggestion.charAt(len - 2))) {
-        suggestion = suggestion.substring(0, len - 1) + "ies";
-      }
-      else {
-        suggestion += "s";
-      }
+
+    int len = suggestion.length();
+    if (StringUtil.endsWithChar(suggestion, 'y') && len > 1 && !isVowel(suggestion.charAt(len - 2))) {
+      return suggestion.substring(0, len - 1) + "ies";
     }
-    return suggestion;
+
+    return suggestion + "s";
   }
 
   public static String capitalizeWords(@NotNull String text, boolean allWords) {
