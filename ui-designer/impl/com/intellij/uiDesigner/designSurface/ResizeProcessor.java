@@ -2,8 +2,10 @@ package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.uiDesigner.RadComponent;
 import com.intellij.uiDesigner.RadContainer;
+import com.intellij.uiDesigner.propertyInspector.properties.PreferredSizeProperty;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.Util;
+import com.intellij.openapi.diagnostic.Logger;
 
 import javax.swing.*;
 import java.awt.*;
@@ -15,6 +17,8 @@ import java.awt.event.MouseEvent;
  * @author Vladimir Kondratyev
  */
 public final class ResizeProcessor extends EventProcessor {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.designSurface.ResizeProcessor");
+
   private RadComponent myComponent;
   private int myResizeMask;
   private Point myLastPoint;
@@ -22,6 +26,7 @@ public final class ResizeProcessor extends EventProcessor {
   private Rectangle myOriginalBounds;
   private RadContainer myOriginalParent;
   private final GuiEditor myEditor;
+  private PreferredSizeProperty myPreferredSizeProperty = new PreferredSizeProperty();
 
   public ResizeProcessor(final GuiEditor editor, final RadComponent component, final int resizeMask){
     myEditor = editor;
@@ -119,6 +124,19 @@ public final class ResizeProcessor extends EventProcessor {
     }
     else if (e.getID() == MouseEvent.MOUSE_RELEASED) {
       if (myOriginalParent.isGrid()) {
+        Dimension preferredSize = new Dimension(-1, -1);
+        if ((myResizeMask & (Painter.WEST_MASK | Painter.EAST_MASK)) != 0) {
+          preferredSize.width= myComponent.getWidth();
+        }
+        if ((myResizeMask & (Painter.NORTH_MASK | Painter.SOUTH_MASK)) != 0) {
+          preferredSize.height= myComponent.getHeight();
+        }
+        try {
+          myPreferredSizeProperty.setValue(myComponent, preferredSize);
+        }
+        catch (Exception e1) {
+          LOG.error(e1);
+        }
         myOriginalParent.addComponent(myComponent);
       }
       myEditor.getActiveDecorationLayer().removeFeedback();
