@@ -103,7 +103,7 @@ public class VirtualFileImpl extends VirtualFile {
   private String getPath(char separatorChar) {
     //ApplicationManager.getApplication().assertReadAccessAllowed();
 
-    StringBuilder buffer = new StringBuilder(50);
+    StringBuilder buffer = new StringBuilder(150);
     synchronized (ourFileSystem.LOCK) {
       appendPath(buffer, separatorChar);
     }
