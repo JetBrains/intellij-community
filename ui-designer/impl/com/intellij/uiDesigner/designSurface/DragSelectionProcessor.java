@@ -65,6 +65,7 @@ public final class DragSelectionProcessor extends EventProcessor {
     }
     // Try to drop selection at the point of mouse event.
     //cancelDrag();
+    myEditor.setDesignTimeInsets(2);
     myEditor.getActiveDecorationLayer().removeFeedback();
     myEditor.repaintLayeredPane();
     return true;
@@ -123,9 +124,20 @@ public final class DragSelectionProcessor extends EventProcessor {
   }
 
   private class MyDragSourceListener extends DragSourceAdapter {
+    public void dropActionChanged(DragSourceDragEvent dsde) {
+      final int shiftDownMask = (dsde.getGestureModifiersEx() & KeyEvent.SHIFT_DOWN_MASK);
+      if (shiftDownMask != 0) {
+        myEditor.setDesignTimeInsets(12);
+      }
+      else {
+        myEditor.setDesignTimeInsets(2);
+      }
+    }
+
     public void dragDropEnd(DragSourceDropEvent dsde) {
       myDragStarted = false;
       myUseDragDelta = false;
+      myEditor.setDesignTimeInsets(2);
     }
   }
 
@@ -226,6 +238,7 @@ public final class DragSelectionProcessor extends EventProcessor {
       if (myDraggedComponentList != null) {
         cancelDrag(myDraggedComponentList);
         myDraggedComponentList = null;
+        myEditor.setDesignTimeInsets(2);
       }
     }
 

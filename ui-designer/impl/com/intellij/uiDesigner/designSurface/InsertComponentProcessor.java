@@ -251,6 +251,8 @@ public final class InsertComponentProcessor extends EventProcessor {
     }
     myInsertedComponent.init(item);
 
+    myEditor.setDesignTimeInsets(2);
+
     final GridInsertLocation location = GridInsertProcessor.getGridInsertLocation(myEditor, e.getX(), e.getY(), 0);
     if (FormEditingUtil.canDrop(myEditor, e.getX(), e.getY(), 1) || location.getMode() != GridInsertLocation.GridInsertMode.None) {
       CommandProcessor.getInstance().executeCommand(
@@ -309,6 +311,7 @@ public final class InsertComponentProcessor extends EventProcessor {
   }
 
   protected boolean cancelOperation() {
+    myEditor.setDesignTimeInsets(2);
     myEditor.getActiveDecorationLayer().removeFeedback();
     return false;
   }

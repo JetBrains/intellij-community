@@ -599,10 +599,27 @@ public final class GuiEditor extends JPanel implements DataProvider {
       myLayeredPane.remove(myRootContainer.getDelegee());
     }
     myRootContainer = rootContainer;
-    myRootContainer.getDelegee().putClientProperty(GridLayoutManager.DESIGN_TIME_ROOT, Boolean.TRUE);
+    setDesignTimeInsets(2);
     myLayeredPane.add(myRootContainer.getDelegee(), LAYER_COMPONENT);
 
     fireHierarchyChanged();
+  }
+
+  public void setDesignTimeInsets(final int insets) {
+    Integer oldInsets = (Integer) myRootContainer.getDelegee().getClientProperty(GridLayoutManager.DESIGN_TIME_INSETS);
+    if (oldInsets == null || oldInsets.intValue() != insets) {
+      myRootContainer.getDelegee().putClientProperty(GridLayoutManager.DESIGN_TIME_INSETS, new Integer(insets));
+      revalidateRecursive(myRootContainer.getDelegee());
+    }
+  }
+
+  private void revalidateRecursive(final JComponent component) {
+    for(Component child: component.getComponents()) {
+      if (child instanceof JComponent) {
+        revalidateRecursive((JComponent)child);
+      }
+    }
+    component.revalidate();
   }
 
   /**

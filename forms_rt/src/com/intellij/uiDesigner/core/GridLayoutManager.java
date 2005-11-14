@@ -70,11 +70,9 @@ public final class GridLayoutManager extends AbstractLayout {
 
   /**
    * Key for accessing client property which is set on the root Swing component of the design-time component
-   * hierarchy.
+   * hierarchy and specifies the value of extra insets added to all components.
    */
-  public static Object DESIGN_TIME_ROOT = new Object();
-
-  private static final int DESIGN_TIME_INSET = 2;
+  public static Object DESIGN_TIME_INSETS = new Object();
 
   public GridLayoutManager(final int rowCount, final int columnCount) {
     if (columnCount < 1) {
@@ -303,9 +301,14 @@ public final class GridLayoutManager extends AbstractLayout {
   private Insets getInsets(Container container) {
     final Insets insets = container.getInsets();
     while(container != null) {
-      if (container instanceof JComponent && ((JComponent) container).getClientProperty(DESIGN_TIME_ROOT) != null) {
-        return new Insets(insets.top+DESIGN_TIME_INSET, insets.left+DESIGN_TIME_INSET,
-                          insets.bottom+DESIGN_TIME_INSET, insets.right+DESIGN_TIME_INSET);
+      if (container instanceof JComponent) {
+        Integer designTimeInsets = (Integer)((JComponent) container).getClientProperty(DESIGN_TIME_INSETS);
+        if (designTimeInsets != null) {
+          int insetsValue = designTimeInsets.intValue();
+          return new Insets(insets.top+insetsValue, insets.left+insetsValue,
+                            insets.bottom+insetsValue, insets.right+insetsValue);
+
+        }
       }
       container = container.getParent();
     }

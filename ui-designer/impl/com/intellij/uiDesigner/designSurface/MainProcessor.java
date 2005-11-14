@@ -37,6 +37,17 @@ public final class MainProcessor extends EventProcessor{
   }
 
   protected void processKeyEvent(final KeyEvent e){
+    if (e.getKeyCode() == KeyEvent.VK_SHIFT) {
+      if (e.getID() == KeyEvent.KEY_PRESSED) {
+        if ((myCurrentProcessor != null && myCurrentProcessor.isDragActive()) ||
+            (myEditor.getPalettePanel().getActiveItem() != null && myCurrentProcessor != myInsertComponentProcessor)) {
+          myEditor.setDesignTimeInsets(12);
+        }
+      }
+      else {
+        myEditor.setDesignTimeInsets(2);
+      }
+    }
     if (myCurrentProcessor != null) {
       myCurrentProcessor.processKeyEvent(e);
     }
@@ -228,7 +239,7 @@ public final class MainProcessor extends EventProcessor{
 
     final ComponentItem selectedItem = myEditor.getPalettePanel().getActiveItem();
     if (selectedItem != null) {
-      myInsertComponentProcessor.setSticky(e.isControlDown() || e.isShiftDown());
+      myInsertComponentProcessor.setSticky(e.isControlDown());
       myCurrentProcessor = myInsertComponentProcessor;
       return;
     }
