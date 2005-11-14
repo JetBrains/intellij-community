@@ -103,17 +103,17 @@ public class VirtualFileImpl extends VirtualFile {
   private String getPath(char separatorChar) {
     //ApplicationManager.getApplication().assertReadAccessAllowed();
 
-    StringBuffer buffer = new StringBuffer(50);
-    appendPath(buffer, separatorChar);
+    StringBuilder buffer = new StringBuilder(50);
+    synchronized (ourFileSystem.LOCK) {
+      appendPath(buffer, separatorChar);
+    }
 
     return buffer.toString();
   }
 
-  private void appendPath(StringBuffer buffer, char separatorChar) {
-    synchronized (ourFileSystem.LOCK) {
-      if (myParent != null) {
-        myParent.appendPath(buffer, separatorChar);
-      }
+  private void appendPath(StringBuilder buffer, char separatorChar) {
+    if (myParent != null) {
+      myParent.appendPath(buffer, separatorChar);
     }
 
     if (buffer.length() != 0 && buffer.charAt(buffer.length() - 1) != separatorChar) {
