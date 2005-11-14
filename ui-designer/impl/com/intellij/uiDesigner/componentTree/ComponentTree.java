@@ -5,6 +5,10 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.HighlighterColors;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.ui.ColoredTreeCellRenderer;
@@ -12,15 +16,21 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeToolTipHandler;
 import com.intellij.uiDesigner.*;
+import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.IntroStringProperty;
+import com.intellij.uiDesigner.lw.StringDescriptor;
+import com.intellij.uiDesigner.actions.StartInplaceEditingAction;
 import com.intellij.uiDesigner.designSurface.DraggedComponentList;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
-import com.intellij.uiDesigner.actions.StartInplaceEditingAction;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.quickFixes.QuickFixManager;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.plaf.TreeUI;
@@ -28,15 +38,12 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.dnd.*;
 import java.awt.datatransfer.Transferable;
+import java.awt.dnd.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.HashMap;
-
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Anton Katilin
@@ -49,20 +56,23 @@ public final class ComponentTree extends Tree implements DataProvider {
   private SimpleTextAttributes myClassAttributes; // exists only for performance reason
   private SimpleTextAttributes myPackageAttributes; // exists only for performance reason
   private SimpleTextAttributes myUnknownAttributes; // exists only for performance reason
+  private SimpleTextAttributes myTitleAttributes; // exists only for performance reason
 
   private HashMap<SimpleTextAttributes, SimpleTextAttributes> myAttr2errAttr; // exists only for performance reason
 
   private final GuiEditor myEditor;
+  private final Palette myPalette;
   private final QuickFixManager myQuickFixManager;
   private RadComponent myDropTargetComponent = null;
 
-  public ComponentTree(final GuiEditor editor) {
+  public ComponentTree(@NotNull final GuiEditor editor) {
     super(new DefaultTreeModel(new DefaultMutableTreeNode()));
+    //noinspection ConstantConditions
     if (editor == null) {
-      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("editor cannot be null");
     }
     myEditor = editor;
+    myPalette = Palette.getInstance(editor.getProject());
 
     setCellRenderer(new MyTreeCellRenderer());
     setRootVisible(false);
@@ -254,13 +264,19 @@ public final class ComponentTree extends Tree implements DataProvider {
     // problem is that setUI is invoked by constructor of superclass.
     myAttr2errAttr = new HashMap<SimpleTextAttributes, SimpleTextAttributes>();
 
+    final EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
+    final TextAttributes attributes = globalScheme.getAttributes(HighlighterColors.JAVA_STRING);
+
     myBindingAttributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, UIUtil.getTreeForeground());
     myClassAttributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, UIUtil.getTreeForeground());
     myPackageAttributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, Color.GRAY);
+    myTitleAttributes =new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, attributes.getForegroundColor());
     myUnknownAttributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_WAVED, Color.RED);
   }
 
   private final class MyTreeCellRenderer extends ColoredTreeCellRenderer {
+    @NonNls private static final String SWING_PACKAGE = "javax.swing";
+
     public void customizeCellRenderer(
       final JTree tree,
       final Object value,
@@ -281,11 +297,22 @@ public final class ComponentTree extends Tree implements DataProvider {
         final boolean error = ErrorAnalyzer.getErrorForComponent(component) != null;
 
         // Text
+        boolean hasText = false;
         final String binding = component.getBinding();
         if (binding != null) {
           append(binding, getAttribute(myBindingAttributes, error));
-          append(" ", getAttribute(myClassAttributes, error));
+          append(" : ", getAttribute(myClassAttributes, error));
+          hasText = true;
         }
+        else {
+          String componentTitle = getComponentTitle(component);
+          if (componentTitle != null) {
+            append(componentTitle, getAttribute(myTitleAttributes, error));
+            append(" : ", getAttribute(myClassAttributes, error));
+            hasText = true;
+          }
+        }
+
 
         final Class componentClass = component.getComponentClass();
         final String componentClassName = componentClass.getName();
@@ -319,14 +346,18 @@ public final class ComponentTree extends Tree implements DataProvider {
             packageName = aPackage.getName();
           }
 
+          SimpleTextAttributes classAttributes = hasText ? myPackageAttributes : myClassAttributes;
+
           if (packageName != null) {
-            append(componentClassName.substring(packageName.length() + 1), getAttribute(myClassAttributes, error));
-            append(" (", getAttribute(myPackageAttributes, error));
-            append(packageName, getAttribute(myPackageAttributes, error));
-            append(")", getAttribute(myPackageAttributes, error));
+            append(componentClassName.substring(packageName.length() + 1), getAttribute(classAttributes, error));
+            if (!packageName.equals(SWING_PACKAGE)) {
+              append(" (", getAttribute(myPackageAttributes, error));
+              append(packageName, getAttribute(myPackageAttributes, error));
+              append(")", getAttribute(myPackageAttributes, error));
+            }
           }
           else {
-            append(componentClassName, getAttribute(myClassAttributes, error));
+            append(componentClassName, getAttribute(classAttributes, error));
           }
         }
 
@@ -350,6 +381,41 @@ public final class ComponentTree extends Tree implements DataProvider {
           setBorder(BorderFactory.createLineBorder(Color.BLUE, 2));
         }
       }
+    }
+
+    private String getComponentTitle(final RadComponent component) {
+      IntrospectedProperty[] props = myPalette.getIntrospectedProperties(component.getComponentClass());
+      for(IntrospectedProperty prop: props) {
+        if (prop.getName().equals(SwingProperties.TEXT) && prop instanceof IntroStringProperty) {
+          StringDescriptor value = (StringDescriptor) prop.getValue(component);
+          if (value != null) {
+            return "\"" + value.getResolvedValue() + "\"";
+          }
+        }
+      }
+
+      if (component instanceof RadContainer) {
+        RadContainer container = (RadContainer) component;
+        StringDescriptor descriptor = container.getBorderTitle();
+        if (descriptor != null) {
+          if (descriptor.getResolvedValue() == null) {
+            descriptor.setResolvedValue(ReferenceUtil.resolve(component.getModule(), descriptor));
+          }
+          return "\"" + descriptor.getResolvedValue() + "\"";
+        }
+      }
+
+      if (component.getParent() instanceof RadTabbedPane) {
+        RadTabbedPane parentTabbedPane = (RadTabbedPane) component.getParent();
+        final StringDescriptor descriptor = parentTabbedPane.getChildTitle(component);
+        if (descriptor != null) {
+          if (descriptor.getResolvedValue() == null) {
+            descriptor.setResolvedValue(ReferenceUtil.resolve(component.getModule(), descriptor));
+          }
+          return "\"" + descriptor.getResolvedValue() + "\"";
+        }
+      }
+      return null;
     }
   }
 
