@@ -87,7 +87,7 @@ public class VirtualFileImpl extends VirtualFile {
   }
 
   PhysicalFile getPhysicalFile() {
-    String path = getPath(File.separatorChar);
+    String path = getPath(File.separatorChar, 1024);
     return new IoFile(path);
   }
 
@@ -97,30 +97,33 @@ public class VirtualFileImpl extends VirtualFile {
   }
 
   public String getPath() {
-    return getPath('/');
+    return getPath('/', 1024);
   }
 
-  private String getPath(char separatorChar) {
+  private String getPath(char separatorChar, int bufferLength) {
     //ApplicationManager.getApplication().assertReadAccessAllowed();
-
-    StringBuilder buffer = new StringBuilder(150);
-    synchronized (ourFileSystem.LOCK) {
-      appendPath(buffer, separatorChar);
+    try {
+      char[] buffer = new char[bufferLength];
+      int length = 0;
+      synchronized (ourFileSystem.LOCK) {
+        length = appendPath(buffer, separatorChar, 0);
+      }
+      return StringFactory.createStringFromConstantArray(buffer, 0, length);
     }
-
-    return buffer.toString();
+    catch(ArrayIndexOutOfBoundsException aiob) {
+      return getPath(separatorChar, bufferLength * 2);
+    }
   }
 
-  private void appendPath(StringBuilder buffer, char separatorChar) {
-    if (myParent != null) {
-      myParent.appendPath(buffer, separatorChar);
-    }
+  private int appendPath(char[] buffer, char separatorChar, int currentLength) {
+    if (myParent != null)
+      currentLength = myParent.appendPath(buffer, separatorChar, 0);
 
-    if (buffer.length() != 0 && buffer.charAt(buffer.length() - 1) != separatorChar) {
-      buffer.append(separatorChar);
-    }
-
-    buffer.append(myName);
+    if (currentLength > 0 && buffer[currentLength - 1] != separatorChar)
+      buffer[currentLength++] = separatorChar;
+    final int nameLength = myName.length();
+    myName.getChars(0, nameLength, buffer, currentLength);
+    return currentLength + nameLength;
   }
 
   @NotNull
