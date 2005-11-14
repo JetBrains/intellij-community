@@ -46,7 +46,12 @@ public final class MainProcessor extends EventProcessor{
         final RadComponent component = selection.get(0);
         final InplaceEditingLayer inplaceLayer = myEditor.getInplaceEditingLayer();
         inplaceLayer.startInplaceEditing(component, component.getDefaultInplaceProperty(), null, false);
-        inplaceLayer.dispatchEditorEvent(e);
+        try {
+          new Robot().keyPress(e.getKeyCode());
+        }
+        catch (AWTException e1) {
+          LOG.error(e1);
+        }
       }
     }
   }

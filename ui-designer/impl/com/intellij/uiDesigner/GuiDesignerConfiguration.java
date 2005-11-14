@@ -24,6 +24,8 @@ public final class GuiDesignerConfiguration implements ProjectComponent, JDOMExt
   
   public boolean COPY_FORMS_RUNTIME_TO_OUTPUT = true;
 
+  public boolean IRIDA_LAYOUT_MODE = false;
+
   public void projectOpened() {}
 
   public void projectClosed() {}

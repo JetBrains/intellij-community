@@ -3,6 +3,8 @@ package com.intellij.uiDesigner;
 import com.intellij.openapi.module.Module;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.IRootContainer;
+import com.intellij.uiDesigner.core.AbstractLayout;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Anton Katilin
@@ -64,5 +66,10 @@ public final class RadRootContainer extends RadContainer implements IRootContain
     }finally{
       writer.endElement(); // form
     }
+  }
+
+  @Override @Nullable
+  protected AbstractLayout createInitialLayout() {
+    return new XYLayoutManagerImpl();
   }
 }

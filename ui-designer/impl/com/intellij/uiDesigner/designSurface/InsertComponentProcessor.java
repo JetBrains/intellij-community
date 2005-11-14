@@ -7,17 +7,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.core.Util;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.palette.PalettePanel;
 import com.intellij.uiDesigner.quickFixes.CreateFieldFix;
-import com.intellij.uiDesigner.designSurface.EventProcessor;
-import com.intellij.uiDesigner.designSurface.GridInsertLocation;
-import com.intellij.uiDesigner.designSurface.GridInsertProcessor;
-import com.intellij.uiDesigner.designSurface.GuiEditor;
-import com.intellij.uiDesigner.*;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -291,6 +287,14 @@ public final class InsertComponentProcessor extends EventProcessor {
               }
               Util.adjustSize(myInsertedComponent.getDelegee(), myInsertedComponent.getConstraints(), myInitialSize);
               myInsertedComponent.setSize(myInitialSize);
+            }
+
+            if (!GuiDesignerConfiguration.getInstance(myEditor.getProject()).IRIDA_LAYOUT_MODE &&
+                myInsertedComponent.getParent() instanceof RadRootContainer &&
+                myInsertedComponent instanceof RadAtomicComponent) {
+              FormEditingUtil.convertToGrid(myEditor);
+              FormEditingUtil.clearSelection(myEditor.getRootContainer());
+              myInsertedComponent.setSelected(true);
             }
 
             myEditor.refresh();

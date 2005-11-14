@@ -275,8 +275,9 @@ final class ActiveDecorationLayer extends JComponent{
   public void putFeedback(final Rectangle rc, final FeedbackPainter feedbackPainter) {
     myFeedbackPainterPanel.setBounds(rc);
     myFeedbackPainterPanel.setPainter(feedbackPainter != null ? feedbackPainter : myRectangleFeedbackPainter);
-    if (myFeedbackPainterPanel.getParent() == null) {
+    if (myFeedbackPainterPanel.getParent() != this) {
       add(myFeedbackPainterPanel);
+      repaint();
     }
   }
 

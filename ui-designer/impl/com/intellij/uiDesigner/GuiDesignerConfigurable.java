@@ -1,5 +1,6 @@
 package com.intellij.uiDesigner;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ProjectComponent;
@@ -26,7 +27,6 @@ import com.intellij.uiDesigner.palette.GroupItem;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.CommonBundle;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -39,7 +39,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.text.MessageFormat;
 
 /**
  * @author Anton Katilin
@@ -95,7 +94,7 @@ public final class GuiDesignerConfigurable implements Configurable, ProjectCompo
     return wrapper.getComponent();
   }
 
-  private boolean isPalatteModified(){
+  private boolean isPaletteModified(){
     final ArrayList<GroupItem> oldGroups = Palette.getInstance(myProject).getGroups();
     final ArrayList<GroupItem> newGroups = getGroupsFromTree();
 
@@ -127,13 +126,16 @@ public final class GuiDesignerConfigurable implements Configurable, ProjectCompo
     if (myGeneralUI.myChkCopyFormsRuntime.isSelected() != configuration.COPY_FORMS_RUNTIME_TO_OUTPUT) {
       return true;
     }
+    if (myGeneralUI.myIridaCompatibleLayout.isSelected() != configuration.IRIDA_LAYOUT_MODE) {
+      return true;
+    }
 
     if (configuration.INSTRUMENT_CLASSES != myGeneralUI.myRbInstrumentClasses.isSelected()) {
       return true;
     }
 
     // compare palettes
-    if(isPalatteModified()){
+    if(isPaletteModified()){
       return true;
     }
 
@@ -158,6 +160,7 @@ public final class GuiDesignerConfigurable implements Configurable, ProjectCompo
     progressWindow.start();
 
     GuiDesignerConfiguration.getInstance(myProject).COPY_FORMS_RUNTIME_TO_OUTPUT = myGeneralUI.myChkCopyFormsRuntime.isSelected();
+    GuiDesignerConfiguration.getInstance(myProject).IRIDA_LAYOUT_MODE = myGeneralUI.myIridaCompatibleLayout.isSelected();
 
     // We have to store value of the radio button here because myGeneralUI will be cleared
     // just after apply is invoked (applyImpl is invoked later)
@@ -165,7 +168,7 @@ public final class GuiDesignerConfigurable implements Configurable, ProjectCompo
     ApplicationManager.getApplication().invokeLater(new MyApplyRunnable(progressWindow, instrumentClasses), progressWindow.getModalityState());
 
     /*Set new palette if it was modified*/
-    if(isPalatteModified()){
+    if(isPaletteModified()){
       final ArrayList<GroupItem> groupList = getGroupsFromTree();
       final ArrayList<GroupItem> clonedGroupList = new ArrayList<GroupItem>();
       for(int i = 0; i < groupList.size(); i++){
@@ -190,6 +193,7 @@ public final class GuiDesignerConfigurable implements Configurable, ProjectCompo
       myGeneralUI.myRbInstrumentSources.setSelected(true);
     }
     myGeneralUI.myChkCopyFormsRuntime.setSelected(configuration.COPY_FORMS_RUNTIME_TO_OUTPUT);
+    myGeneralUI.myIridaCompatibleLayout.setSelected(configuration.IRIDA_LAYOUT_MODE);
 
     /*palette*/
     final DefaultTreeModel model = buildModel(Palette.getInstance(myProject));
@@ -526,6 +530,7 @@ public final class GuiDesignerConfigurable implements Configurable, ProjectCompo
     public JRadioButton myRbInstrumentClasses;
     public JRadioButton myRbInstrumentSources;
     public JCheckBox myChkCopyFormsRuntime;
+    private JCheckBox myIridaCompatibleLayout;
 
     public MyGeneralUI() {
       final ButtonGroup group = new ButtonGroup();

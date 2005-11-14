@@ -1,10 +1,8 @@
 package com.intellij.uiDesigner.designSurface;
 
+import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
-import com.intellij.uiDesigner.designSurface.FeedbackPainter;
-import com.intellij.uiDesigner.designSurface.GridInsertLocation;
-import com.intellij.uiDesigner.*;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -64,8 +62,23 @@ public class GridInsertProcessor {
   }
 
   static GridInsertLocation getGridInsertLocation(final GuiEditor editor, final int x, final int y, final int dragColumnDelta) {
-    final int EPSILON = 4;
-    final RadContainer container = FormEditingUtil.getRadContainerAt(editor, x, y, EPSILON);
+    int EPSILON = 4;
+    RadContainer container = FormEditingUtil.getRadContainerAt(editor, x, y, EPSILON);
+    // to facilitate initial component adding, increase stickiness if there is one container at top level
+    if (container instanceof RadRootContainer && editor.getRootContainer().getComponentCount() == 1) {
+      final RadComponent singleComponent = editor.getRootContainer().getComponents()[0];
+      if (singleComponent instanceof RadContainer) {
+        Rectangle rc = singleComponent.getDelegee().getBounds();
+        rc.grow(EPSILON*2, EPSILON*2);
+        final Point pnt = SwingUtilities.convertPoint(editor.getDragLayer(),
+                                                              x, y, editor.getRootContainer().getDelegee());
+        if (rc.contains(pnt)) {
+          container = (RadContainer) singleComponent;
+          EPSILON *= 2;
+        }
+      }
+    }
+
     if (container == null || !container.isGrid()) {
       return new GridInsertLocation(GridInsertLocation.GridInsertMode.None);
     }
@@ -80,7 +93,8 @@ public class GridInsertProcessor {
     int[] horzGridLines = grid.getHorizontalGridLines();
     int[] vertGridLines = grid.getVerticalGridLines();
 
-    int row=ys.length-1, col=xs.length-1;
+    int row=ys.length-1;
+    int col=xs.length-1;
     for(int i=0; i<xs.length; i++) {
       if (targetPoint.getX() < xs [i]+widths [i]) {
         col=i;
@@ -132,6 +146,7 @@ public class GridInsertProcessor {
     int row = location.getRow();
     int col = location.getColumn();
     RadContainer container = location.getContainer();
+    //noinspection EnumSwitchStatementWhichMissesCases
     switch(location.getMode()) {
       case RowBefore:
         GridChangeUtil.insertRowBefore(container, row);
@@ -247,6 +262,7 @@ public class GridInsertProcessor {
     Rectangle rc;
 
     int w=4;
+    //noinspection EnumSwitchStatementWhichMissesCases
     switch (insertLocation.getMode()) {
       case ColumnBefore:
         rc = new Rectangle(cellRect.x - w, cellRect.y - INSERT_ARROW_SIZE,

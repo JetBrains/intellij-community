@@ -61,6 +61,7 @@ public class RadContainer extends RadComponent implements IContainer {
     // By default container doesn't have any special border
     setBorderType(BorderType.NONE);
 
+    //noinspection OverriddenMethodCallInConstructor
     final AbstractLayout initialLayout = createInitialLayout();
     if (initialLayout != null){
       getDelegee().setLayout(initialLayout);
@@ -97,8 +98,11 @@ public class RadContainer extends RadComponent implements IContainer {
   }
 
   @Nullable
-  protected AbstractLayout createInitialLayout(){
-    return new XYLayoutManagerImpl();
+  protected AbstractLayout createInitialLayout() {
+    if (GuiDesignerConfiguration.getInstance(getModule().getProject()).IRIDA_LAYOUT_MODE) {
+      return new XYLayoutManagerImpl();
+    }
+    return new GridLayoutManager(1, 1);
   }
 
   public final LayoutManager getLayout(){
