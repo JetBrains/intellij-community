@@ -136,7 +136,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
   private Class getProxyClassFor(final Class<? extends DomElement> aClass) {
     Class proxyClass = myClass2ProxyClass.get(aClass);
     if (proxyClass == null) {
-      proxyClass = Proxy.getProxyClass(null, new Class[]{aClass});
+      proxyClass = Proxy.getProxyClass(null, new Class[]{aClass, DomProxy.class});
       myClass2ProxyClass.put(aClass, proxyClass);
     }
     return proxyClass;

@@ -17,7 +17,7 @@ public interface DomElement {
   @Nullable
   XmlTag getXmlTag();
 
-  DomFileElement getRoot();
+  DomFileElement<?> getRoot();
 
   DomElement getParent();
 
@@ -38,4 +38,6 @@ public interface DomElement {
   Type getDomElementType();
 
   DomNameStrategy getNameStrategy();
+
+  String getCommonPresentableName();
 }

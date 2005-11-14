@@ -9,18 +9,64 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomMethodsInfo;
+import com.intellij.util.xml.reflect.DomChildrenDescription;
+import com.intellij.util.xml.reflect.DomFixedChildDescription;
+import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
-import java.util.Map;
-import java.util.HashMap;
+import java.lang.reflect.Method;
+import java.util.*;
 
 /**
  * @author peter
  */
 public class DomFileElementImpl<T extends DomElement> implements DomFileElement<T> {
+  private static final DomMethodsInfo MOCK_DOM_METHODS_INFO = new DomMethodsInfo() {
+      public Collection<Method> getFixedChildrenGetterMethods() {
+        return Collections.emptyList();
+      }
+
+      public Collection<Method> getCollectionChildrenGetterMethods() {
+        return Collections.emptyList();
+      }
+
+      public int getFixedChildIndex(Method method) {
+        return 0;
+      }
+
+      public String getTagName(Method method) {
+        return "NO TAG NAME";
+      }
+
+      @NotNull
+      public List<DomChildrenDescription> getChildrenDescriptions() {
+        return Collections.emptyList();
+      }
+
+    @NotNull
+    public List<DomFixedChildDescription> getFixedChildrenDescriptions() {
+      return Collections.emptyList();
+    }
+
+    @NotNull
+    public List<DomCollectionChildDescription> getCollectionChildrenDescriptions() {
+      return Collections.emptyList();
+    }
+
+    @Nullable
+    public DomFixedChildDescription getFixedChildDescription(String tagName) {
+      return null;
+    }
+
+      @Nullable
+      public DomCollectionChildDescription getCollectionChildDescription(String tagName) {
+        return null;
+      }
+    };
+
   private final XmlFile myFile;
   private final Class<T> myRootElementClass;
   private final String myRootTagName;
@@ -64,6 +110,10 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
 
   public DomNameStrategy getNameStrategy() {
     return getRootHandler().getNameStrategy();
+  }
+
+  public String getCommonPresentableName() {
+    return "<ROOT>";
   }
 
   @NotNull
@@ -111,7 +161,7 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
   }
 
   public final DomMethodsInfo getMethodsInfo() {
-    return null;
+    return MOCK_DOM_METHODS_INFO;
   }
 
   public String getTagName() {

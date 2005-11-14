@@ -14,10 +14,6 @@ abstract public class AbstractDomElementNode extends SimpleNode {
     super(parent);
   }
 
-  protected SimpleNode getDomElementNode(final DomElement domElement, final String tagName, final SimpleNode parentNode) {
-      return new BaseDomElementNode(domElement, tagName, parentNode);
-  };
-
   abstract public DomElement getDomElement();
 
   abstract public String getNodeName();
@@ -26,11 +22,10 @@ abstract public class AbstractDomElementNode extends SimpleNode {
 
   public Icon getNodeIcon() {
     return null;
-  };
+  }
 
-  protected String getPropertyName(String tagName) {
-    //todo use name policy
-    return tagName.replaceAll("-", " ");
+  protected String getPropertyName() {
+    return getDomElement().getCommonPresentableName();
   }
 
 }

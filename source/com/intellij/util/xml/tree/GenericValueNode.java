@@ -9,15 +9,15 @@ public class GenericValueNode extends AbstractDomElementNode {
   protected GenericValue myModelElement;
   protected String myTagName;
 
-  public GenericValueNode(final GenericValue modelElement, final String tagName, SimpleNode parent) {
+  public GenericValueNode(final GenericValue modelElement, SimpleNode parent) {
     super(parent);
 
     myModelElement = modelElement;
-    myTagName = tagName == null ? "unknown" : tagName;
+    myTagName = modelElement.getTagName();
    }
 
   public String getNodeName() {
-    return getPropertyName(myTagName);
+    return getPropertyName();
   }
 
   public String getTagName() {

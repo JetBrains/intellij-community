@@ -3,10 +3,11 @@
  */
 package com.intellij.util.xml.impl;
 
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomNameStrategy;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
-import com.intellij.openapi.util.text.StringUtil;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
@@ -17,16 +18,19 @@ import java.util.List;
  */
 public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl implements DomCollectionChildDescription {
   private final Method myGetterMethod, myAdderMethod, myIndexedAdderMethod;
+  private final int myStartIndex;
 
   public CollectionChildDescriptionImpl(final String tagName,
                                         final Type type,
                                         final Method getterMethod,
                                         final Method adderMethod,
-                                        final Method indexedAdderMethod) {
+                                        final Method indexedAdderMethod,
+                                        final int startIndex) {
     super(tagName, type);
     myAdderMethod = adderMethod;
     myGetterMethod = getterMethod;
     myIndexedAdderMethod = indexedAdderMethod;
+    myStartIndex = startIndex;
   }
 
   public Method getAdderMethod() {
@@ -34,21 +38,20 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
   }
 
   public DomElement addValue(DomElement element) {
+    return addChild(element, Integer.MAX_VALUE);
+  }
+
+  private DomElement addChild(final DomElement element, final int index) {
     try {
-      return (DomElement)myAdderMethod.invoke(element);
+      return ((DomProxy) element).getDomInvocationHandler().addChild(getTagName(), getType(), index);
     }
-    catch (Exception e) {
+    catch (IncorrectOperationException e) {
       throw new RuntimeException(e);
     }
   }
 
   public DomElement addValue(DomElement element, int index) {
-    try {
-      return (DomElement)myIndexedAdderMethod.invoke(element, index);
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+    return addChild(element, index + myStartIndex);
   }
 
   public Method getGetterMethod() {

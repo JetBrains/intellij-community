@@ -263,9 +263,23 @@ public class MethodsMap implements DomMethodsInfo {
   @NotNull
   public List<DomChildrenDescription> getChildrenDescriptions() {
     final ArrayList<DomChildrenDescription> result = new ArrayList<DomChildrenDescription>();
+    result.addAll(getFixedChildrenDescriptions());
+    result.addAll(getCollectionChildrenDescriptions());
+    return result;
+  }
+
+  @NotNull
+  public List<DomFixedChildDescription> getFixedChildrenDescriptions() {
+    final ArrayList<DomFixedChildDescription> result = new ArrayList<DomFixedChildDescription>();
     for (String s : myFixedChildrenCounts.keySet()) {
       result.add(getFixedChildDescription(s));
     }
+    return result;
+  }
+
+  @NotNull
+  public List<DomCollectionChildDescription> getCollectionChildrenDescriptions() {
+    final ArrayList<DomCollectionChildDescription> result = new ArrayList<DomCollectionChildDescription>();
     for (String s : myCollectionChildrenClasses.keySet()) {
       result.add(getCollectionChildDescription(s));
     }
@@ -287,6 +301,7 @@ public class MethodsMap implements DomMethodsInfo {
                                               getCollectionChildrenType(tagName),
                                               getCollectionGetMethod(tagName),
                                               getCollectionAddMethod(tagName),
-                                              getCollectionIndexedAddMethod(tagName));
+                                              getCollectionIndexedAddMethod(tagName),
+                                              getFixedChildrenCount(tagName));
   }
 }

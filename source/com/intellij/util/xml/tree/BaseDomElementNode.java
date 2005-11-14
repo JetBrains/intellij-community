@@ -1,84 +1,72 @@
 package com.intellij.util.xml.tree;
 
-import jetbrains.fabrique.ui.treeStructure.SimpleNode;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericValue;
+import com.intellij.util.xml.reflect.DomCollectionChildDescription;
+import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import com.intellij.util.xml.ui.DomElementsPresentation;
+import jetbrains.fabrique.ui.treeStructure.SimpleNode;
 
-import java.util.*;
-import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
 
 
 public class BaseDomElementNode extends AbstractDomElementNode {
   public static final Key<Comparator> COMPARATOR_KEY = Key.create("COMPARATOR_KEY");
 
-  static final private Logger LOG = Logger.getInstance(DomModelTreeStructure.class.getName());
-
   protected DomElement myDomElement;
   protected String myTagName;
 
   public BaseDomElementNode(final DomElement modelElement) {
-    this(modelElement, modelElement.getTagName(), null);
+    this(modelElement, null);
   }
 
-  public BaseDomElementNode(final DomElement modelElement, final String tagName, SimpleNode parent) {
+  public BaseDomElementNode(final DomElement modelElement, SimpleNode parent) {
     super(parent);
 
     myDomElement = modelElement;
-    myTagName = tagName == null ? "unknown" : tagName;
+    myTagName = modelElement.getTagName();
    }
 
   public SimpleNode[] getChildren() {
     return doGetChildren(myDomElement);
   }
 
-  protected SimpleNode[] doGetChildren(final DomElement domlElement) {
-    if (!domlElement.isValid()) return NO_CHILDREN;
+  protected final SimpleNode[] doGetChildren(final DomElement element) {
+    if (!element.isValid()) return NO_CHILDREN;
+
     List<SimpleNode> children = new ArrayList<SimpleNode>();
 
-    final Collection<Method> methods = domlElement.getMethodsInfo().getFixedChildrenGetterMethods();
-
-    for (Method method : methods) {
-      try {
-        final Object result = method.invoke(domlElement, new Object[0]);
-
-        if (result instanceof DomElement) {
-          final String tagName = domlElement.getMethodsInfo().getTagName(method);
-
-          if (showGenericValues() && result instanceof GenericValue) {
-             children.add(new GenericValueNode((GenericValue)result, tagName, this));
-          } else {
-
-            children.add(getDomElementNode((DomElement)result, tagName, this));
-          }
+    for (DomFixedChildDescription description : element.getMethodsInfo().getFixedChildrenDescriptions()) {
+      final List<? extends DomElement> values = description.getValues(element);
+      if (showGenericValues() && GenericValue.class.equals(description.getType())) {
+        for (DomElement domElement : values) {
+          children.add(new GenericValueNode((GenericValue)domElement, this));
         }
-      }
-      catch (Throwable e) {
-        LOG.error(e);
+      } else {
+        for (DomElement domElement : values) {
+          children.add(new BaseDomElementNode(domElement, this));
+        }
       }
     }
 
-    final Collection<Method> collectionMethods = domlElement.getMethodsInfo().getCollectionChildrenGetterMethods();
-
-    for (Method method : collectionMethods) {
-      children.add(getDomElementsGroupNode(domlElement, method));
+    final List<DomCollectionChildDescription> collectionChildrenDescriptions = element.getMethodsInfo().getCollectionChildrenDescriptions();
+    for (DomCollectionChildDescription description : collectionChildrenDescriptions) {
+      children.add(new DomElementsGroupNode(element, description));
     }
 
     AbstractDomElementNode[] childrenNodes = children.toArray(new AbstractDomElementNode[children.size()]);
 
-    final Comparator<AbstractDomElementNode> comparator = getComparator();
+    final Comparator<AbstractDomElementNode> comparator = myDomElement.getRoot().getUserData(COMPARATOR_KEY);
     if (comparator != null) {
       Arrays.sort(childrenNodes, comparator);
     }
 
     return childrenNodes;
-  }
-
-  protected DomElementsGroupNode getDomElementsGroupNode(final DomElement domElement, final Method method) {
-    return new DomElementsGroupNode(domElement, method);
   }
 
   protected boolean showGenericValues() {
@@ -102,27 +90,19 @@ public class BaseDomElementNode extends AbstractDomElementNode {
   }
 
   public String getNodeName() {
-    final DomElementsPresentation presentation = (DomElementsPresentation)myDomElement.getRoot().getUserData(DomElementsPresentation.DOM_ELEMENTS_PRESENTATION);
+    final DomElementsPresentation presentation = myDomElement.getRoot().getUserData(DomElementsPresentation.DOM_ELEMENTS_PRESENTATION);
     if (presentation != null && presentation.getPresentationName(myDomElement) != null ) {
         return presentation.getPresentationName(myDomElement);
     }
-
-    return getPropertyName(myTagName);
+    return getPropertyName();
   }
 
   public String getTagName() {
     return myTagName;
   }
 
-  public DomElement getDomElement() {
+  public final DomElement getDomElement() {
     return myDomElement;
-  }
-
-  protected Comparator<AbstractDomElementNode> getComparator() {
-    final Object comparator = myDomElement.getRoot().getUserData(COMPARATOR_KEY);
-    if(comparator instanceof Comparator) return  (Comparator)comparator;
-
-    return null;
   }
 
   public boolean isAutoExpandNode() {

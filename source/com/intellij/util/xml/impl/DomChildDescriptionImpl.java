@@ -30,7 +30,7 @@ public abstract class DomChildDescriptionImpl implements DomChildrenDescription 
     return myType;
   }
 
-  public final String getCommonPresentableName(DomElement parent) {
+  public String getCommonPresentableName(DomElement parent) {
     return getCommonPresentableName(getDomNameStrategy(parent));
   }
 

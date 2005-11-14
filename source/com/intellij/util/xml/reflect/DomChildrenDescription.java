@@ -14,7 +14,7 @@ import java.util.List;
  */
 public interface DomChildrenDescription {
   String getTagName();
-  List<? extends DomElement> getValues(DomElement element);
+  List<? extends DomElement> getValues(DomElement parent);
   Type getType();
   String getCommonPresentableName(DomNameStrategy strategy);
   String getCommonPresentableName(DomElement parent);

@@ -25,6 +25,12 @@ public interface DomMethodsInfo {
   @NotNull
   List<DomChildrenDescription> getChildrenDescriptions();
 
+  @NotNull
+  List<DomFixedChildDescription> getFixedChildrenDescriptions();
+
+  @NotNull
+  List<DomCollectionChildDescription> getCollectionChildrenDescriptions();
+
   @Nullable
   DomFixedChildDescription getFixedChildDescription(String tagName);
 

@@ -1,43 +1,33 @@
 package com.intellij.util.xml.tree;
 
-import jetbrains.fabrique.ui.treeStructure.SimpleNode;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.reflect.DomCollectionChildDescription;
+import jetbrains.fabrique.ui.treeStructure.SimpleNode;
 
-import java.lang.reflect.Method;
-import java.util.List;
-import java.util.ArrayList;
 import java.awt.*;
+import java.util.List;
 
 public class DomElementsGroupNode extends AbstractDomElementNode {
-  final private static Logger LOG = Logger.getInstance(DomModelTreeStructure.class.getName());
-
   private DomElement myModelElement;
-  private Method myMethod;
   private String myChildrenTagName;
+  private DomCollectionChildDescription myChildDescription;
 
-  public DomElementsGroupNode(final DomElement modelElement, Method method) {
+  public DomElementsGroupNode(final DomElement modelElement, DomCollectionChildDescription description) {
     myModelElement = modelElement;
-    myMethod = method;
-
-    myChildrenTagName = modelElement.getMethodsInfo().getTagName(method);
+    myChildDescription = description;
+    myChildrenTagName = description.getTagName();
   }
 
   public SimpleNode[] getChildren() {
     if (!myModelElement.isValid()) return NO_CHILDREN;
-    List<SimpleNode> children = new ArrayList();
-    try {
-      final List<? extends DomElement> objects = (List<? extends DomElement>)myMethod.invoke(myModelElement, new Object[0]);
-      for (DomElement domElement : objects) {
-        children.add(getDomElementNode(domElement, myChildrenTagName, this));
-      }
+
+    final List<? extends DomElement> domChildren = myChildDescription.getValues(myModelElement);
+    final SimpleNode[] simpleNodes = new SimpleNode[domChildren.size()];
+    for (int i = 0; i < domChildren.size(); i++) {
+      simpleNodes[i] = new BaseDomElementNode(domChildren.get(i), (SimpleNode)this);
     }
-    catch (Exception e) {
-      LOG.error(e);
-    }
-    return children.toArray(new SimpleNode[children.size()]);
+    return simpleNodes;
   }
 
   public Object[] getEqualityObjects() {
@@ -56,7 +46,7 @@ public class DomElementsGroupNode extends AbstractDomElementNode {
   }
 
   public String getNodeName() {
-    return getPropertyName(StringUtil.pluralize(myChildrenTagName));
+    return myChildDescription.getCommonPresentableName(myModelElement);
   }
 
   public String getTagName() {

@@ -17,14 +17,13 @@ public class InvocationCache {
   private final Map<Method, Invocation> myInvocations = new HashMap<Method, Invocation>();
 
   static {
-    for (final Method method : DomElement.class.getMethods()) {
-      ourCoreInvocations.put(method, new Invocation() {
-        public Object invoke(DomInvocationHandler handler, Object[] args) throws Throwable {
-          return method.invoke(handler, args);
-        }
-      });
-    }
-    for (final Method method : Object.class.getMethods()) {
+    addCoreInvocations(DomElement.class);
+    addCoreInvocations(DomProxy.class);
+    addCoreInvocations(Object.class);
+  }
+
+  private static void addCoreInvocations(final Class<?> aClass) {
+    for (final Method method : aClass.getDeclaredMethods()) {
       if ("equals".equals(method.getName())) {
         ourCoreInvocations.put(method, new Invocation() {
           public Object invoke(DomInvocationHandler handler, Object[] args) throws Throwable {

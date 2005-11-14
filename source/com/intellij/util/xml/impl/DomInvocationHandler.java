@@ -26,7 +26,7 @@ import java.util.*;
 /**
  * @author peter
  */
-public abstract class DomInvocationHandler implements InvocationHandler, DomElement {
+public abstract class DomInvocationHandler implements InvocationHandler, DomElement, DomProxy {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.DomInvocationHandler");
 
   private final Type myType;
@@ -244,6 +244,10 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     return parent != null ? parent.getNameStrategy() : DomNameStrategy.HYPHEN_STRATEGY;
   }
 
+  public String getCommonPresentableName() {
+    return StringUtil.capitalizeWords(getNameStrategy().splitIntoWords(getTagName()), true);
+  }
+
   private Invocation createInvocation(final Method method) throws IllegalAccessException, InstantiationException {
     boolean getter = isGetter(method);
     boolean setter = method.getName().startsWith("set") && method.getParameterTypes().length == 1 && method.getReturnType() == void.class;
@@ -253,7 +257,8 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
       final Converter converter = getConverter(method, getter);
       if (getter) {
         return new GetAttributeValueInvocation(converter, attributeName);
-      } else if (setter) {
+      }
+      if (setter) {
         return new SetAttributeValueInvocation(converter, attributeName);
       }
     }

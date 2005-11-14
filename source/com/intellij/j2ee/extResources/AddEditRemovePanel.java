@@ -187,6 +187,6 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons {
   public static interface TableModel<T> {
     int getColumnCount();
     String getColumnName(int columnIndex);
-    T getField(T o, int columnIndex);
+    Object getField(T o, int columnIndex);
    }
 }
