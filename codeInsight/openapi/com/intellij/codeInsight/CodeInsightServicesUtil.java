@@ -34,8 +34,6 @@ public class CodeInsightServicesUtil {
   };
 
   public static PsiExpression invertCondition(PsiExpression booleanExpression) throws IncorrectOperationException {
-    if (!PsiType.BOOLEAN.equals(booleanExpression.getType())) throw new IllegalArgumentException("the type of expression needs to be boolean");
-
     PsiElementFactory factory = booleanExpression.getManager().getElementFactory();
 
     if (booleanExpression instanceof PsiBinaryExpression) {
