@@ -265,7 +265,16 @@ public class SelectTemplateDialog extends DialogWrapper {
   @NotNull public Configuration[] getSelectedConfigurations() {
     if (showHistory) {
       Object[] selectedValues = existingTemplatesComponent.getHistoryList().getSelectedValues();
-      return selectedValues == null ? new Configuration[0] : (Configuration[])selectedValues;
+      if (selectedValues == null) {
+        return new Configuration[0];
+      }
+      Collection<Configuration> configurations = new ArrayList<Configuration>();
+      for (Object selectedValue : selectedValues) {
+        if (selectedValue instanceof Configuration) {
+          configurations.add((Configuration)selectedValue);
+        }
+      }
+      return configurations.toArray(new Configuration[configurations.size()]);
     }
     else {
       TreePath[] paths = existingTemplatesComponent.getPatternTree().getSelectionModel().getSelectionPaths();
