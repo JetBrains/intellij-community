@@ -305,7 +305,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
     if (isEditable()) {
       return true;
     }
-    final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(getProject()).ensureFilesWritable(new VirtualFile[]{myFile});
+    final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(getProject()).ensureFilesWritable(myFile);
     return !status.hasReadonlyFiles();
   }
 
@@ -333,7 +333,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
    */
   public void refreshErrors() {
     // Collect errors
-    ErrorAnalyzer.analyzeErrors(GuiEditor.this, myRootContainer);
+    ErrorAnalyzer.analyzeErrors(this, myRootContainer);
     if (isShowing()) {
       //  ComponentTree
       myComponentTree.hideIntentionHint();
@@ -567,7 +567,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
     }
 
     int endOffset = oldLength;
-    for (; ;) {
+    while (true) {
       if (endOffset <= startOffset) {
         break;
       }
