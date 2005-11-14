@@ -120,7 +120,7 @@ public class VirtualFileImpl extends VirtualFile {
       buffer.append(separatorChar);
     }
 
-    buffer.append(myName.replace('/', separatorChar));
+    buffer.append(myName);
   }
 
   @NotNull
