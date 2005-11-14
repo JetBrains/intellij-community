@@ -21,6 +21,12 @@ public class GenericDebuggerRunnerSettings implements JDOMExternalizable, Debugg
   public boolean LOCAL = true;
 
   public GenericDebuggerRunnerSettings() {
+    try {
+      DEBUG_PORT = DebuggerUtils.getInstance().findAvailableDebugAddress(DebuggerSettings.SOCKET_TRANSPORT == TRANSPORT);
+    }
+    catch (ExecutionException e) {
+      DEBUG_PORT = "";
+    }
   }
 
   public String getDebugPort() {
