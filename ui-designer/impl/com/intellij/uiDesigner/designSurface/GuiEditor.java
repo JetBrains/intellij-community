@@ -601,8 +601,8 @@ public final class GuiEditor extends JPanel implements DataProvider {
       myLayeredPane.remove(myRootContainer.getDelegee());
     }
     myRootContainer = rootContainer;
-    myLayeredPane.add(myRootContainer.getDelegee(), LAYER_COMPONENT);
     myRootContainer.getDelegee().putClientProperty(GridLayoutManager.DESIGN_TIME_ROOT, Boolean.TRUE);
+    myLayeredPane.add(myRootContainer.getDelegee(), LAYER_COMPONENT);
 
     fireHierarchyChanged();
   }
