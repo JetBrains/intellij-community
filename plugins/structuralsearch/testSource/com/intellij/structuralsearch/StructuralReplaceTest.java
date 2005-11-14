@@ -1183,6 +1183,46 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
       actualResult
     );
   }
+  
+  public void testClassReplacement5() {
+    final String actualResult;
+    String s1 = "public class X {\n" +
+                "    /**\n" +
+                "     * zzz\n" +
+                "     */\n" +
+                "    void f() {\n" +
+                "\n" +
+                "    }\n" +
+                "}";
+
+    String s2 = "class 'c {\n" +
+                "    /**\n" +
+                "     * zzz\n" +
+                "     */\n" +
+                "    void f(){}\n" +
+                "}";
+    String s3 = "class $c$ {\n" +
+                "    /**\n" +
+                "     * ppp\n" +
+                "     */\n" +
+                "    void f(){}\n" +
+                "}";
+
+    String expectedResult = "public class X {\n" +
+                            "    /**\n" +
+                            "     * ppp\n" +
+                            "     */\n" +
+                            "    void f(){}\n" +
+                            "}";
+
+    actualResult = replacer.testReplace(s1,s2,s3,options, true);
+
+    assertEquals(
+      "Not preserving comment if it is present",
+      expectedResult,
+      actualResult
+    );
+  }
 
   public void testClassReplacement2() {
     final String actualResult;

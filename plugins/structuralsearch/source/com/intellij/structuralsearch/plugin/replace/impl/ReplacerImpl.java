@@ -481,7 +481,9 @@ public class ReplacerImpl {
 
       handleComments(originalNamedElement, replacementNamedElement);
       
-      if (comment!=null && replacementNamedElement instanceof PsiDocCommentOwner) {
+      if (comment!=null && replacementNamedElement instanceof PsiDocCommentOwner &&
+          !(replacementNamedElement.getFirstChild() instanceof PsiDocComment)
+         ) {
         replacementNamedElement.addBefore(
           comment,
           replacementNamedElement.getFirstChild()
