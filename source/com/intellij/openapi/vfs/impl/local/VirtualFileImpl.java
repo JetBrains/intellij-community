@@ -116,13 +116,16 @@ public class VirtualFileImpl extends VirtualFile {
   }
 
   private int appendPath(char[] buffer, char separatorChar, int currentLength) {
+    String name = myName;
     if (myParent != null)
       currentLength = myParent.appendPath(buffer, separatorChar, 0);
+    else name = name.replace('/', separatorChar); // root may contain '/' char
 
     if (currentLength > 0 && buffer[currentLength - 1] != separatorChar)
       buffer[currentLength++] = separatorChar;
-    final int nameLength = myName.length();
-    myName.replace('/', separatorChar).getChars(0, nameLength, buffer, currentLength);
+    final int nameLength = name.length();
+
+    name.getChars(0, nameLength, buffer, currentLength);
     return currentLength + nameLength;
   }
 
