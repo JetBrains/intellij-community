@@ -2,15 +2,19 @@ package com.intellij.util.xml.tree;
 
 import jetbrains.fabrique.ui.treeStructure.SimpleNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Key;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericValue;
+import com.intellij.util.xml.ui.DomElementsPresentation;
 
 import java.util.*;
 import java.lang.reflect.Method;
 
 
 public class BaseDomElementNode extends AbstractDomElementNode {
+  public static final Key<Comparator> COMPARATOR_KEY = Key.create("COMPARATOR_KEY");
+
   static final private Logger LOG = Logger.getInstance(DomModelTreeStructure.class.getName());
 
   protected DomElement myDomElement;
@@ -64,8 +68,10 @@ public class BaseDomElementNode extends AbstractDomElementNode {
     }
 
     AbstractDomElementNode[] childrenNodes = children.toArray(new AbstractDomElementNode[children.size()]);
-    if (showOrdered()) {
-      Arrays.sort(childrenNodes, getComparator());
+
+    final Comparator<AbstractDomElementNode> comparator = getComparator();
+    if (comparator != null) {
+      Arrays.sort(childrenNodes, comparator);
     }
 
     return childrenNodes;
@@ -73,10 +79,6 @@ public class BaseDomElementNode extends AbstractDomElementNode {
 
   protected DomElementsGroupNode getDomElementsGroupNode(final DomElement domElement, final Method method) {
     return new DomElementsGroupNode(domElement, method);
-  }
-
-  protected boolean showOrdered() {
-    return true;
   }
 
   protected boolean showGenericValues() {
@@ -100,6 +102,11 @@ public class BaseDomElementNode extends AbstractDomElementNode {
   }
 
   public String getNodeName() {
+    final DomElementsPresentation presentation = (DomElementsPresentation)myDomElement.getRoot().getUserData(DomElementsPresentation.DOM_ELEMENTS_PRESENTATION);
+    if (presentation != null && presentation.getPresentationName(myDomElement) != null ) {
+        return presentation.getPresentationName(myDomElement);
+    }
+
     return getPropertyName(myTagName);
   }
 
@@ -112,11 +119,10 @@ public class BaseDomElementNode extends AbstractDomElementNode {
   }
 
   protected Comparator<AbstractDomElementNode> getComparator() {
-    return new Comparator<AbstractDomElementNode>() {
-      public int compare(final AbstractDomElementNode node1, final AbstractDomElementNode node2) {
-        return node1.getNodeName().toLowerCase().compareTo(node2.getNodeName().toLowerCase());
-      }
-    };
+    final Object comparator = myDomElement.getRoot().getUserData(COMPARATOR_KEY);
+    if(comparator instanceof Comparator) return  (Comparator)comparator;
+
+    return null;
   }
 
   public boolean isAutoExpandNode() {
