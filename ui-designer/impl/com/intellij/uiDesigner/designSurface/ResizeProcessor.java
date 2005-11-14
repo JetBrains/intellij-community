@@ -22,11 +22,13 @@ public final class ResizeProcessor extends EventProcessor {
   private RadComponent myComponent;
   private int myResizeMask;
   private Point myLastPoint;
+  private Point myPressPoint;
   private Rectangle myBounds;
   private Rectangle myOriginalBounds;
   private RadContainer myOriginalParent;
   private final GuiEditor myEditor;
   private PreferredSizeProperty myPreferredSizeProperty = new PreferredSizeProperty();
+  private boolean doResize = false;
 
   public ResizeProcessor(final GuiEditor editor, final RadComponent component, final int resizeMask){
     myEditor = editor;
@@ -54,12 +56,18 @@ public final class ResizeProcessor extends EventProcessor {
   protected void processMouseEvent(final MouseEvent e){
     if (e.getID() == MouseEvent.MOUSE_PRESSED) {
       myLastPoint = e.getPoint();
+      myPressPoint = myLastPoint;
       myBounds = myComponent.getBounds();
       myOriginalBounds = new Rectangle(myBounds);
     }
     else if(e.getID()==MouseEvent.MOUSE_DRAGGED){
       final int dx = e.getX() - myLastPoint.x;
       final int dy = e.getY() - myLastPoint.y;
+
+      if ((Math.abs(e.getX() - myPressPoint.getX()) > DragSelectionProcessor.TREMOR ||
+           Math.abs(e.getY() - myPressPoint.getY()) > DragSelectionProcessor.TREMOR)) {
+        doResize = true;
+      }
 
       final GridConstraints constraints = myComponent.getConstraints();
 
@@ -124,18 +132,20 @@ public final class ResizeProcessor extends EventProcessor {
     }
     else if (e.getID() == MouseEvent.MOUSE_RELEASED) {
       if (myOriginalParent.isGrid()) {
-        Dimension preferredSize = new Dimension(-1, -1);
-        if ((myResizeMask & (Painter.WEST_MASK | Painter.EAST_MASK)) != 0) {
-          preferredSize.width= myComponent.getWidth();
-        }
-        if ((myResizeMask & (Painter.NORTH_MASK | Painter.SOUTH_MASK)) != 0) {
-          preferredSize.height= myComponent.getHeight();
-        }
-        try {
-          myPreferredSizeProperty.setValue(myComponent, preferredSize);
-        }
-        catch (Exception e1) {
-          LOG.error(e1);
+        if (doResize) {
+          Dimension preferredSize = (Dimension) myPreferredSizeProperty.getValue(myComponent);
+          if ((myResizeMask & (Painter.WEST_MASK | Painter.EAST_MASK)) != 0) {
+            preferredSize.width= myComponent.getWidth();
+          }
+          if ((myResizeMask & (Painter.NORTH_MASK | Painter.SOUTH_MASK)) != 0) {
+            preferredSize.height= myComponent.getHeight();
+          }
+          try {
+            myPreferredSizeProperty.setValue(myComponent, preferredSize);
+          }
+          catch (Exception e1) {
+            LOG.error(e1);
+          }
         }
         myOriginalParent.addComponent(myComponent);
       }

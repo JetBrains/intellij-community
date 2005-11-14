@@ -28,7 +28,7 @@ public final class DragSelectionProcessor extends EventProcessor {
   /**
    * We have not start drag/cancel drop if mouse pointer trembles in small area
    */
-  private static final int TREMOR = 3;
+  public static final int TREMOR = 3;
 
   private final GuiEditor myEditor;
 
