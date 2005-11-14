@@ -289,7 +289,8 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
       return returnType != void.class;
     }
     if (name.startsWith("is")) {
-      return returnType.equals(boolean.class) || returnType.equals(Boolean.class);
+      return returnType.equals(boolean.class) || Boolean.class.equals(returnType)
+             || Boolean.class.equals(DomUtil.extractParameterClassFromGenericType(method.getGenericReturnType()));
     }
     return false;
   }
