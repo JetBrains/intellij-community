@@ -1,9 +1,11 @@
 package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.uiDesigner.CutCopyPasteSupport;
+import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.RadComponent;
+import com.intellij.uiDesigner.RadContainer;
 import com.intellij.uiDesigner.core.GridConstraints;
-import com.intellij.uiDesigner.designSurface.DraggedComponentList;
-import com.intellij.uiDesigner.*;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,7 +23,7 @@ import java.util.List;
  * @author Vladimir Kondratyev
  */
 public final class DragSelectionProcessor extends EventProcessor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.DragSelectionProcessor");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.designSurface.DragSelectionProcessor");
 
   /**
    * We have not start drag/cancel drop if mouse pointer trembles in small area
@@ -33,6 +35,7 @@ public final class DragSelectionProcessor extends EventProcessor {
   private Point myPressPoint;
 
   private boolean myDragStarted;
+  private boolean myUseDragDelta = false;
 
   private final MyDragGestureRecognizer myDragGestureRecognizer;
   private final MyDragSourceListener myDragSourceListener = new MyDragSourceListener();
@@ -93,6 +96,7 @@ public final class DragSelectionProcessor extends EventProcessor {
                                                       myPressPoint, eventList);
 
           myDragStarted = true;
+          myUseDragDelta = true;
           dge.startDrag(null,
                         DraggedComponentList.pickupSelection(myEditor, e.getX(), e.getY()),
                         myDragSourceListener);
@@ -121,10 +125,11 @@ public final class DragSelectionProcessor extends EventProcessor {
   private class MyDragSourceListener extends DragSourceAdapter {
     public void dragDropEnd(DragSourceDropEvent dsde) {
       myDragStarted = false;
+      myUseDragDelta = false;
     }
   }
 
-  private static class MyDropTargetListener implements DropTargetListener {
+  private class MyDropTargetListener implements DropTargetListener {
     private DraggedComponentList myDraggedComponentList;
     private Point myLastPoint;
     private final GuiEditor myEditor;
@@ -153,7 +158,7 @@ public final class DragSelectionProcessor extends EventProcessor {
       }
 
       Rectangle allBounds = null;
-      if (!draggedComponentList.hasDragDelta()) {
+      if (!draggedComponentList.hasDragDelta() || !myUseDragDelta) {
         final RadContainer[] originalParents = draggedComponentList.getOriginalParents();
         final Rectangle[] originalBounds = draggedComponentList.getOriginalBounds();
         for(int i=0; i<originalParents.length; i++) {
@@ -177,7 +182,7 @@ public final class DragSelectionProcessor extends EventProcessor {
           delegee.getLocation(),
           myEditor.getDragLayer()
         );
-        if (draggedComponentList.hasDragDelta()) {
+        if (draggedComponentList.hasDragDelta() && myUseDragDelta) {
           delegee.setLocation((int) point.getX() + draggedComponentList.getDragDeltaX(),
                               (int) point.getY() + draggedComponentList.getDragDeltaY());
         }
@@ -217,6 +222,7 @@ public final class DragSelectionProcessor extends EventProcessor {
     }
 
     public void dragExit(DropTargetEvent dte) {
+      myUseDragDelta = false;
       if (myDraggedComponentList != null) {
         cancelDrag(myDraggedComponentList);
         myDraggedComponentList = null;
