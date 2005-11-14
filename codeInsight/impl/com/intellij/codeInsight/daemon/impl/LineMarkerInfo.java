@@ -15,6 +15,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -53,6 +54,7 @@ public class LineMarkerInfo {
   public GutterIconRenderer createGutterRenderer() {
     if (myIcon == null) return null;
     return new GutterIconRenderer() {
+      @NotNull
       public Icon getIcon() {
         return myIcon;
       }
@@ -173,9 +175,8 @@ public class LineMarkerInfo {
     }
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   private static String composeText(PsiElement[] elements, String start, String formatPattern) {
-    StringBuffer result = new StringBuffer();
+    @NonNls StringBuffer result = new StringBuffer();
     result.append("<html><body>");
     result.append(start);
     Set<String> names = new LinkedHashSet<String>();
@@ -196,7 +197,7 @@ public class LineMarkerInfo {
       names.add(descr);
     }
 
-    String sep = "";
+    @NonNls String sep = "";
     for (String name : names) {
       result.append(sep);
       sep = "<br>";

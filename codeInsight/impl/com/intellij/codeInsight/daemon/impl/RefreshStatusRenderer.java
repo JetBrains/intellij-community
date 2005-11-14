@@ -47,19 +47,20 @@ public class RefreshStatusRenderer implements ErrorStripeRenderer {
   }
 
   protected DaemonCodeAnalyzerStatus getDaemonCodeAnalyzerStatus() {
-    DaemonCodeAnalyzerStatus status = new DaemonCodeAnalyzerStatus();
     if (myFile == null || !myHighlighter.isHighlightingAvailable(myFile)) return null;
 
     ArrayList<String> noInspectionRoots = new ArrayList<String>();
     ArrayList<String> noHighlightingRoots = new ArrayList<String>();
     final PsiFile[] roots = myFile.getPsiRoots();
     for (PsiFile file : roots) {
-      if (!HighlightUtil.isRootHighlighted(file)){
+      if (!HighlightUtil.isRootHighlighted(file)) {
         noHighlightingRoots.add(file.getLanguage().getID());
-      } else if (!HighlightUtil.isRootInspected(file)){
+      }
+      else if (!HighlightUtil.isRootInspected(file)) {
         noInspectionRoots.add(file.getLanguage().getID());
       }
     }
+    DaemonCodeAnalyzerStatus status = new DaemonCodeAnalyzerStatus();
     status.noInspectionRoots = noInspectionRoots.isEmpty() ? null : noInspectionRoots.toArray(new String[noInspectionRoots.size()]);
     status.noHighlightingRoots = noHighlightingRoots.isEmpty() ? null : noHighlightingRoots.toArray(new String[noHighlightingRoots.size()]);
     status.rootsNumber = roots.length;
@@ -128,7 +129,7 @@ public class RefreshStatusRenderer implements ErrorStripeRenderer {
     }
   }
 
-  private String getMessageByRoots(String [] roots, int rootsNumber, @NonNls String prefix){
+  private static String getMessageByRoots(String [] roots, int rootsNumber, @NonNls String prefix){
     if (roots != null) {
       final int length = roots.length;
       if (length > 0){
