@@ -110,7 +110,7 @@ public abstract class PsiManager implements UserDataHolder {
    * @param qualifiedName the full-qualified name of the package to find.
    * @return the PSI package, or null if no package with such name is found.
    */
-  public abstract @Nullable PsiPackage findPackage(@NotNull String qualifiedName);
+  public abstract @Nullable PsiPackage findPackage(@NonNls @NotNull String qualifiedName);
 
   /**
    * Checks if the specified two PSI elements (possibly invalid) represent the same source element

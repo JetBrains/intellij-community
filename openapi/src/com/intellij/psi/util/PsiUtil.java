@@ -38,7 +38,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
-import java.util.regex.Pattern;
 
 public final class PsiUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.PsiUtil");
@@ -230,7 +229,7 @@ public final class PsiUtil {
   }
 
   /**
-   * @deprecated Use {@link PsiManager#isInProject(com.intellij.psi.PsiElement)}
+   * @deprecated Use {@link PsiManager#isInProject(PsiElement)}
    */
   public static boolean isInProject(PsiElement element) {
     return element.getManager().isInProject(element);
@@ -322,7 +321,7 @@ public final class PsiUtil {
         codeBlock = ((PsiCatchSection)declarationScope).getCatchBlock();
       }
       else if (declarationScope instanceof PsiForeachStatement) {
-        codeBlock = (((PsiForeachStatement)declarationScope)).getBody();
+        codeBlock = ((PsiForeachStatement)declarationScope).getBody();
       }
       else if (declarationScope instanceof PsiMethod) {
         codeBlock = ((PsiMethod)declarationScope).getBody();
@@ -483,8 +482,6 @@ public final class PsiUtil {
     }
     return psiElement;
   }
-
-  private static final Key<Pattern> REGEXP_IN_TYPE_NAME_PATTERN = Key.create("REGEXP_IN_TYPE_NAME_PATTERN");
 
   @Nullable
   public static PsiClass resolveClassInType(PsiType type) {
@@ -680,7 +677,7 @@ public final class PsiUtil {
   }
 
   @Nullable
-  public static PsiClass getTopLevelClass(PsiElement element) {
+  public static PsiClass getTopLevelClass(@NotNull PsiElement element) {
     final PsiFile file = element.getContainingFile();
     if (file instanceof PsiJavaFile) {
       final PsiClass[] classes = ((PsiJavaFile)file).getClasses();
