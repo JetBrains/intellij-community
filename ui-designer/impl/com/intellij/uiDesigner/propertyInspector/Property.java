@@ -100,4 +100,8 @@ public abstract class Property {
    * In this case property is not editable.
    */
   public abstract PropertyEditor getEditor();
+
+  public boolean appliesTo(RadComponent component) {
+    return true;
+  }
 }

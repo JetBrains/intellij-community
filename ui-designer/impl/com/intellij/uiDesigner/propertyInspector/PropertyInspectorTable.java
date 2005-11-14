@@ -439,10 +439,10 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
           result.add(myFillProperty);
           result.add(myAnchorProperty);
         }
-        if (!isHSpacer){
+        if (myRowSpanProperty.appliesTo(component)){
           result.add(myRowSpanProperty);
         }
-        if (!isVSpacer){
+        if (myColumnSpanProperty.appliesTo(component)){
           result.add(myColumnSpanProperty);
         }
         result.add(myMinimumSizeProperty);
