@@ -122,7 +122,7 @@ public class VirtualFileImpl extends VirtualFile {
     if (currentLength > 0 && buffer[currentLength - 1] != separatorChar)
       buffer[currentLength++] = separatorChar;
     final int nameLength = myName.length();
-    myName.getChars(0, nameLength, buffer, currentLength);
+    myName.replace('/', separatorChar).getChars(0, nameLength, buffer, currentLength);
     return currentLength + nameLength;
   }
 
