@@ -41,6 +41,7 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
     private ByteArrayOutputStream myContent = null;
     private byte[] myBinaryContent = null;
     @NonNls private static final String TEXT_MESSAGE_TAG = "text";
+    private boolean myLastTagIsText = false;
 
     public boolean isEmpty() {
       return myContent == null && myBinaryContent == null;
@@ -50,12 +51,16 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
       if (myBinaryContent != null) {
         return myBinaryContent;
       } else {
+        if (!myLastTagIsText && myContent.size() > 0) {
+          myContent.write('\n');
+        }
         return myContent.toByteArray();
       }
     }
 
     public void messageSent(final byte[] byteMessage, final boolean tagged) {
       if (myContent == null) myContent = new ByteArrayOutputStream();
+      myLastTagIsText = false;
       if (tagged) {
         String tagType = readTagTypeFrom(byteMessage);
         if (tagType != null) {
@@ -65,7 +70,7 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
               myContent.write('\n');
             }
             myContent.write(byteMessage, textStartPosition + 1, byteMessage.length - textStartPosition - 1);
-
+            myLastTagIsText = true;
           }
         }
       } else {
