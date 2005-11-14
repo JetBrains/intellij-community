@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentAdapter;
@@ -23,6 +24,7 @@ import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.componentTree.ComponentSelectionListener;
 import com.intellij.uiDesigner.componentTree.ComponentTree;
 import com.intellij.uiDesigner.componentTree.ComponentTreeBuilder;
+import com.intellij.uiDesigner.componentTree.ComponentPtr;
 import com.intellij.uiDesigner.core.Util;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
@@ -200,17 +202,13 @@ public final class GuiEditor extends JPanel implements DataProvider {
 
     // We need to synchronize GUI editor with the document
     final Alarm alarm = new Alarm();
-    final Runnable request = new Runnable() {
-      public void run() {
-        PsiDocumentManager.getInstance(module.getProject()).commitDocument(myDocument);
-        readFromFile();
-      }
-    };
     myDocumentListener = new DocumentAdapter() {
       public void documentChanged(final DocumentEvent e) {
         if (!myInsideChange) {
+          UndoManager undoManager = UndoManager.getInstance(module.getProject());
           alarm.cancelAllRequests();
-          alarm.addRequest(request, 100/*any arbitrary delay*/, ModalityState.stateForComponent(GuiEditor.this));
+          alarm.addRequest(new MySynchronizeRequest(module, undoManager.isUndoInProgress() || undoManager.isRedoInProgress()),
+                           100/*any arbitrary delay*/, ModalityState.stateForComponent(GuiEditor.this));
         }
       }
     };
@@ -220,7 +218,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
     myDocument.addDocumentListener(myDocumentListener);
 
     // Read form from file
-    readFromFile();
+    readFromFile(false);
 
     // Tree with component hierarchy and property editor at the left
     // It's important that ComponentTree is initializing after the
@@ -609,9 +607,15 @@ public final class GuiEditor extends JPanel implements DataProvider {
 
   /**
    * Creates and sets new <code>RadRootContainer</code>
+   * @param keepSelection if true, the GUI designer tries to preserve the selection state after reload.
    */
-  private void readFromFile() {
+  private void readFromFile(final boolean keepSelection) {
     try {
+      ComponentPtr[] selection = null;
+      if (keepSelection) {
+        selection = SelectionState.getSelection(this);
+      }
+
       final String text = myDocument.getText();
 
       final ClassLoader classLoader = LoaderFactory.getInstance(myModule.getProject()).getLoader(myFile);
@@ -619,6 +623,9 @@ public final class GuiEditor extends JPanel implements DataProvider {
       final LwRootContainer rootContainer = Utils.getRootContainer(text, new CompiledClassPropertiesProvider(classLoader));
       final RadRootContainer container = XmlReader.createRoot(myModule, rootContainer, classLoader);
       setRootContainer(container);
+      if (keepSelection) {
+        SelectionState.restoreSelection(this, selection);
+      }
       myCardLayout.show(this, CARD_VALID);
       refresh();
     }
@@ -806,6 +813,21 @@ public final class GuiEditor extends JPanel implements DataProvider {
       if (aClass != null) {
         refreshErrors();
       }
+    }
+  }
+
+  private class MySynchronizeRequest implements Runnable {
+    private final Module myModule;
+    private final boolean myKeepSelection;
+
+    public MySynchronizeRequest(final Module module, final boolean keepSelection) {
+      myModule = module;
+      myKeepSelection = keepSelection;
+    }
+
+    public void run() {
+      PsiDocumentManager.getInstance(myModule.getProject()).commitDocument(myDocument);
+      readFromFile(myKeepSelection);
     }
   }
 }

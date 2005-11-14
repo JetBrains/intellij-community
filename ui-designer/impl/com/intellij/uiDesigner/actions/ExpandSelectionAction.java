@@ -19,10 +19,12 @@ import java.util.Stack;
  */
 public final class ExpandSelectionAction extends AnAction{
   /** Invoked by reflection */
+  @SuppressWarnings({"RedundantNoArgConstructor"})
   public ExpandSelectionAction() {}
 
   public void actionPerformed(final AnActionEvent e) {
     final GuiEditor editor = GuiEditorUtil.getEditorFromContext(e.getDataContext());
+    assert editor != null;
     final SelectionState selectionState = editor.getSelectionState();
     selectionState.setInsideChange(true);
 
@@ -58,7 +60,7 @@ public final class ExpandSelectionAction extends AnAction{
       }
 
       // Store new selection
-      history.push(SelectionState.getPtrs(editor));
+      history.push(SelectionState.getSelection(editor));
     }finally{
       selectionState.setInsideChange(false);
     }

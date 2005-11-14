@@ -43,13 +43,24 @@ public final class SelectionState{
     return mySelectionHistory;
   }
 
-  public static ComponentPtr[] getPtrs(final GuiEditor editor){
+  public static ComponentPtr[] getSelection(final GuiEditor editor){
     final ArrayList<RadComponent> selection = FormEditingUtil.getAllSelectedComponents(editor);
     final ComponentPtr[] ptrs = new ComponentPtr[selection.size()];
     for(int i = selection.size() - 1; i >= 0; i--){
       ptrs[i] = new ComponentPtr(editor, selection.get(i));
     }
     return ptrs;
+  }
+
+  public static void restoreSelection(final GuiEditor editor, final ComponentPtr[] ptrs) {
+    FormEditingUtil.clearSelection(editor.getRootContainer());
+    for(int i = ptrs.length - 1; i >= 0; i--){
+      final ComponentPtr ptr = ptrs[i];
+      ptr.validate();
+      if(ptr.isValid()){
+        ptr.getComponent().setSelected(true);
+      }
+    }
   }
 
   private final class MyComponentSelectionListener implements ComponentSelectionListener{
@@ -59,7 +70,7 @@ public final class SelectionState{
         return;
       }
       mySelectionHistory.clear();
-      mySelectionHistory.push(getPtrs(source));
+      mySelectionHistory.push(getSelection(source));
     }
   }
 
