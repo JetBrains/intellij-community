@@ -9,10 +9,13 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomMethodsInfo;
+import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
+import java.util.Map;
+import java.util.HashMap;
 
 /**
  * @author peter
@@ -23,6 +26,7 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
   private final String myRootTagName;
   private final DomManagerImpl myManager;
   private DomInvocationHandler myRootHandler;
+  private Map<Key,Object> myUserData = new HashMap<Key, Object>();
 
   protected DomFileElementImpl(final XmlFile file,
                                final Class<T> rootElementClass,
@@ -118,4 +122,11 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     return -1;
   }
 
+  public <T> T getUserData(Key<T> key) {
+    return (T)myUserData.get(key);
+  }
+
+  public <T> void putUserData(Key<T> key, T value) {
+    myUserData.put(key, value);
+  }
 }
