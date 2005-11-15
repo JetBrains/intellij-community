@@ -224,13 +224,11 @@ public abstract class AbstractTreeBuilder {
     }
   }
 
-// Made non-final for Fabrique
   public void updateFromRoot() {
     updateSubtree(myRootNode);
   }
 
-// Made non-final for Fabrique
-  protected void updateSubtree(DefaultMutableTreeNode node) {
+  protected final void updateSubtree(DefaultMutableTreeNode node) {
     if (!(node.getUserObject() instanceof NodeDescriptor)) return;
     final TreeState treeState = TreeState.createOn(myTree, node);
     updateNode(node);
@@ -238,7 +236,6 @@ public abstract class AbstractTreeBuilder {
     treeState.applyTo(myTree, node);
   }
 
-// Made non-final for Fabrique
   protected void updateNode(DefaultMutableTreeNode node) {
     if (!(node.getUserObject() instanceof NodeDescriptor)) return;
     NodeDescriptor descriptor = (NodeDescriptor)node.getUserObject();
