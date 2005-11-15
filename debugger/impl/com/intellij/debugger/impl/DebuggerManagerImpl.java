@@ -386,7 +386,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
 
   public static RemoteConnection createDebugParameters(final JavaParameters parameters, GenericDebuggerRunnerSettings settings, boolean checkValidity)
     throws ExecutionException {
-    return createDebugParameters(parameters, false, settings.getTransport(), settings.DEBUG_PORT, checkValidity);
+    return createDebugParameters(parameters, settings.LOCAL, settings.getTransport(), settings.DEBUG_PORT, checkValidity);
 
   }
 
