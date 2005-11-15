@@ -122,28 +122,32 @@ public final class InsertComponentProcessor extends EventProcessor {
    */
   public static void createBindingWhenDrop(final GuiEditor editor, final RadComponent insertedComponent) {
     if(isInputComponent(insertedComponent)){
-      // Now if the inserted component is a input control, we need to automatically create binding
-      final String binding = suggestBinding(editor, insertedComponent.getComponentClassName());
-      insertedComponent.setBinding(binding);
+      doCreateBindingWhenDrop(editor, insertedComponent);
+    }
+  }
 
-      // Try to create field in the corresponding bound class
-      final String classToBind = editor.getRootContainer().getClassToBind();
-      if(classToBind != null){
-        final PsiClass aClass = FormEditingUtil.findClassToBind(editor.getModule(), classToBind);
-        if(aClass != null){
-          ApplicationManager.getApplication().runWriteAction(
-            new Runnable() {
-              public void run() {
-                CreateFieldFix.runImpl(editor,
-                                       aClass,
-                                       insertedComponent.getComponentClassName(),
-                                       binding,
-                                       false // silently skip all errors (if any)
-                );
-              }
+  private static void doCreateBindingWhenDrop(final GuiEditor editor, final RadComponent insertedComponent) {
+    // Now if the inserted component is a input control, we need to automatically create binding
+    final String binding = suggestBinding(editor, insertedComponent.getComponentClassName());
+    insertedComponent.setBinding(binding);
+
+    // Try to create field in the corresponding bound class
+    final String classToBind = editor.getRootContainer().getClassToBind();
+    if(classToBind != null){
+      final PsiClass aClass = FormEditingUtil.findClassToBind(editor.getModule(), classToBind);
+      if(aClass != null){
+        ApplicationManager.getApplication().runWriteAction(
+          new Runnable() {
+            public void run() {
+              CreateFieldFix.runImpl(editor,
+                                     aClass,
+                                     insertedComponent.getComponentClassName(),
+                                     binding,
+                                     false // silently skip all errors (if any)
+              );
             }
-          );
-        }
+          }
+        );
       }
     }
   }
@@ -231,6 +235,7 @@ public final class InsertComponentProcessor extends EventProcessor {
           myInsertedComponent = new RadAtomicComponent(myEditor.getModule(), aClass, id);
         }
         catch (final Exception exc) {
+          //noinspection NonConstantStringShouldBeStringBuffer
           String errorDescription = Utils.validateJComponentClass(loader, item.getClassName());
           if (errorDescription == null) {
             errorDescription = UIDesignerBundle.message("error.class.cannot.be.instantiated", item.getClassName());
@@ -299,14 +304,30 @@ public final class InsertComponentProcessor extends EventProcessor {
               myInsertedComponent.setSelected(true);
             }
 
+            checkBindTopLevelPanel();
+
             myEditor.refresh();
 
             myInitialPoint = e.getPoint();
           }
+
         },
         null,
         null
       );
+    }
+  }
+
+  private void checkBindTopLevelPanel() {
+    if (myEditor.getRootContainer().getComponentCount() == 1) {
+      final RadComponent component = myEditor.getRootContainer().getComponent(0);
+      if (component.getBinding() == null) {
+        if (component == myInsertedComponent ||
+            (component instanceof RadContainer && ((RadContainer) component).getComponentCount() == 1 &&
+             component == myInsertedComponent.getParent())) {
+          doCreateBindingWhenDrop(myEditor, component);
+        }
+      }
     }
   }
 
