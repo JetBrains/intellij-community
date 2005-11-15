@@ -18,8 +18,8 @@ import java.util.List;
 public class BaseDomElementNode extends AbstractDomElementNode {
   public static final Key<Comparator> COMPARATOR_KEY = Key.create("COMPARATOR_KEY");
 
-  protected DomElement myDomElement;
-  protected String myTagName;
+  private final DomElement myDomElement;
+  private final String myTagName;
 
   public BaseDomElementNode(final DomElement modelElement) {
     this(modelElement, null);
@@ -74,10 +74,12 @@ public class BaseDomElementNode extends AbstractDomElementNode {
   }
 
   public Object[] getEqualityObjects() {
-    return NONE;
+    return new Object[]{myDomElement};
   }
 
   protected boolean doUpdate() {
+    if (!myDomElement.isValid()) return true;
+
     setUniformIcon(getNodeIcon());
     clearColoredText();
     if (myDomElement.getXmlTag() != null) {

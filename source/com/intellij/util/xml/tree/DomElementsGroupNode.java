@@ -25,13 +25,13 @@ public class DomElementsGroupNode extends AbstractDomElementNode {
     final List<? extends DomElement> domChildren = myChildDescription.getValues(myModelElement);
     final SimpleNode[] simpleNodes = new SimpleNode[domChildren.size()];
     for (int i = 0; i < domChildren.size(); i++) {
-      simpleNodes[i] = new BaseDomElementNode(domChildren.get(i), (SimpleNode)this);
+      simpleNodes[i] = new BaseDomElementNode(domChildren.get(i), this);
     }
     return simpleNodes;
   }
 
   public Object[] getEqualityObjects() {
-    return new Object[0];
+    return new Object[]{myModelElement, myChildrenTagName};
   }
 
   protected boolean doUpdate() {

@@ -1,27 +1,27 @@
 package com.intellij.util.xml.tree;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.util.xml.DomManager;
-import com.intellij.util.xml.DomEventListener;
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomEventListener;
+import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.events.DomEvent;
 import jetbrains.fabrique.ui.treeStructure.SimpleTree;
 import jetbrains.fabrique.ui.treeStructure.SimpleTreeBuilder;
-import jetbrains.fabrique.ui.treeStructure.WeightBasedComparator;
 import jetbrains.fabrique.ui.treeStructure.SimpleTreeStructure;
+import jetbrains.fabrique.ui.treeStructure.WeightBasedComparator;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 
 public class DomModelTreeView extends Wrapper {
-  private SimpleTree myTree;
+  private final SimpleTree myTree;
+  private final SimpleTreeBuilder myBuilder;
+  private DomManager myDomManager;
+  private DomEventListener myDomEventListener;
 
-  private SimpleTreeBuilder myBuilder;
-
-  public DomModelTreeView(Project project, DomElement rootElement) {
+  public DomModelTreeView(DomElement rootElement) {
     myTree = new SimpleTree(new DefaultTreeModel(new DefaultMutableTreeNode()));
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
@@ -41,13 +41,19 @@ public class DomModelTreeView extends Wrapper {
 
     add(myTree);
 
-    DomManager.getDomManager(project).addDomEventListener(new DomEventListener() {
+    myDomEventListener = new DomEventListener() {
       public void eventOccured(DomEvent event) {
-        super.eventOccured(event);
-
-        myBuilder.updateFromRoot(true);
+        final Runnable runnable = new Runnable() {
+          public void run() {
+            myBuilder.updateFromRoot(true);
+          }
+        };
+        runnable.run();
+        //ApplicationManager.getApplication().invokeLater(runnable);
       }
-    });
+    };
+    myDomManager = rootElement.getManager();
+    myDomManager.addDomEventListener(myDomEventListener);
   }
 
   protected SimpleTreeStructure getTreeStructure(final DomElement rootDomElement) {
@@ -56,6 +62,10 @@ public class DomModelTreeView extends Wrapper {
 
   public SimpleTreeBuilder getBuilder() {
     return myBuilder;
+  }
+
+  public void dispose() {
+    myDomManager.removeDomEventListener(myDomEventListener);
   }
 
   public SimpleTree getTree() {

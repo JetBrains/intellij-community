@@ -9,8 +9,10 @@ import com.intellij.util.xml.DomElement;
  * @author peter
  */
 public interface DomEditorManager {
-  void openDomElementEditor(DomElement domElement);
+  void openDomElementEditor(DomElement domElement) ;
   DomElement getCurrentEditedElement();
   void selectNotify();
   void deselectNotify();
+
+  void commitCurrentEditor();
 }
