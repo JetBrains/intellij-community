@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NonNls;
 import java.util.*;
 
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.util.ArrayUtil;
 
 /**
  * Created by IntelliJ IDEA.
@@ -144,7 +145,7 @@ public class HtmlDescriptorsTable {
       }
     } catch (Exception ex) {
       ex.printStackTrace();
-      ourHtmlTagNames = new String[0];
+      ourHtmlTagNames = ArrayUtil.EMPTY_STRING_ARRAY;
     }
   }
 

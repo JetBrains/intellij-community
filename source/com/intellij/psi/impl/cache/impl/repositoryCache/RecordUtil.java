@@ -37,10 +37,8 @@ public class RecordUtil {
   private RecordUtil() {}
 
   private static final Ref<ArrayList<PsiClass>> ourList = new Ref<ArrayList<PsiClass>>();
-  private static final int[] ourEmptyIntArray = new int[0];
   private static final String[][] ourEmptyStringStringArray = new String[0][];
   private static final TypeInfo[] ourEmptyTypeArray = new TypeInfo[0];
-  private static boolean[] ourEmptyBooleanArray = new boolean[0];
 
   public static List<PsiClass> getInnerClasses(PsiElement psiElement) {
     ourList.set(null);
@@ -126,7 +124,7 @@ public class RecordUtil {
   }
 
   static int[] createIntArray(int size) {
-    if (size == 0) return ourEmptyIntArray;
+    if (size == 0) return ArrayUtil.EMPTY_INT_ARRAY;
     return new int[size];
   }
 
@@ -141,7 +139,7 @@ public class RecordUtil {
   }
 
   static boolean[] createBooleanArray(int size) {
-    if (size == 0) return ourEmptyBooleanArray;
+    if (size == 0) return ArrayUtil.EMPTY_BOOLEAN_ARRAY;
     return new boolean[size];
   }
 
@@ -196,12 +194,12 @@ public class RecordUtil {
 
 
   private static int packModifiers(PsiElement psiElement) {
-    int packed = 0;
     PsiModifierList psiModifierList = null;
 
     if (psiElement instanceof PsiModifierListOwner) {
       psiModifierList = ((PsiModifierListOwner)psiElement).getModifierList();
     }
+    int packed = 0;
 
     if (psiModifierList != null) {
       if (psiModifierList.hasModifierProperty(PsiModifier.ABSTRACT)) {
@@ -443,7 +441,7 @@ public class RecordUtil {
       return;
     }
 
-    view.arrayCount = ((flags & 1) != 0 ? record.readByte() : 0);
+    view.arrayCount = (flags & 1) != 0 ? record.readByte() : 0;
     view.isEllipsis = (flags & 2) != 0;
     if (tag == 0x00) {
       view.text = readNAME(record, nameStore);
@@ -466,7 +464,6 @@ public class RecordUtil {
 
     final boolean isEllipsis = type instanceof PsiEllipsisType;
     int arrayCount = type.getArrayDimensions();
-    type = type.getDeepComponentType();
 
     while (typeElement.getFirstChild() instanceof PsiTypeElement) {
       typeElement = (PsiTypeElement)typeElement.getFirstChild();
@@ -477,7 +474,7 @@ public class RecordUtil {
                   : typeElement.getText();
     int frequentIndex = ourFrequentTypeIndex.get(text);
     LOG.assertTrue(frequentIndex == 0 || frequentIndex < 16);
-    int flags = (arrayCount == 0 ? 0 : 1);
+    int flags = arrayCount == 0 ? 0 : 1;
     if (isEllipsis) flags |= 2;
     if (frequentIndex != 0) {
       record.writeByte((flags << 6) | 0x01 | (frequentIndex << 2));
@@ -570,7 +567,7 @@ public class RecordUtil {
       return val;
     }
 
-    for (int res = (val - 192), sh = 6; ; sh += 7) {
+    for (int res = val - 192, sh = 6; ; sh += 7) {
       int next = record.readUnsignedByte();
       res |= (next & 0x7F) << sh;
       if ((next & 0x80) == 0) {

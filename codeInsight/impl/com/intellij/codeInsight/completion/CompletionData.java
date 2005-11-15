@@ -131,7 +131,7 @@ public class CompletionData {
     }
     PsiElement parent = PsiTreeUtil.getParentOfType(var, PsiCodeBlock.class);
     if(parent == null) parent = PsiTreeUtil.getParentOfType(var, PsiMethod.class);
-    LookupItemUtil.addLookupItems(set, CompletionUtil.getUnserolvedReferences(parent, false), context.prefix);
+    LookupItemUtil.addLookupItems(set, CompletionUtil.getUnresolvedReferences(parent, false), context.prefix);
     LookupItemUtil.addLookupItems(set, StatisticsManager.getInstance().getNameSuggestions(var.getType(), StatisticsManager.getContext(var), context.prefix), context.prefix);
 
     return new NamePreferencePolicy(suggestedNameInfo);
@@ -171,7 +171,7 @@ public class CompletionData {
     }
 
     LookupItemUtil.addLookupItems(set, StatisticsManager.getInstance().getNameSuggestions(var.getType(), StatisticsManager.getContext(var), prefix), prefix);
-    LookupItemUtil.addLookupItems(set, CompletionUtil.getUnserolvedReferences(var.getParent(), false), context.prefix);
+    LookupItemUtil.addLookupItems(set, CompletionUtil.getUnresolvedReferences(var.getParent(), false), context.prefix);
 
     return new NamePreferencePolicy(suggestedNameInfo);
   }
@@ -186,7 +186,7 @@ public class CompletionData {
       }
     }
 
-    LookupItemUtil.addLookupItems(set, CompletionUtil.getUnserolvedReferences(element.getParent(), true), context.prefix);
+    LookupItemUtil.addLookupItems(set, CompletionUtil.getUnresolvedReferences(element.getParent(), true), context.prefix);
     if(!((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.PRIVATE)){
       LookupItemUtil.addLookupItems(set, CompletionUtil.getOverides((PsiClass)element.getParent(), PsiUtil.getTypeByPsiElement(element)), context.prefix);
       LookupItemUtil.addLookupItems(set, CompletionUtil.getImplements((PsiClass)element.getParent(), PsiUtil.getTypeByPsiElement(element)), context.prefix);

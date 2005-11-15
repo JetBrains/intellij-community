@@ -34,6 +34,7 @@ import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ArrayUtil;
 import org.apache.oro.text.regex.MalformedPatternException;
 import org.apache.oro.text.regex.Pattern;
 import org.apache.oro.text.regex.Perl5Compiler;
@@ -378,8 +379,8 @@ public class CompletionUtil {
     return type;
   }
 
-  public static String[] getUnserolvedReferences(final PsiElement parentOfType, final boolean referenceOnMethod) {
-    if(parentOfType != null && parentOfType.getTextLength() > MAX_SCOPE_SIZE_TO_SEARCH_UNRESOLVED) return new String[0];
+  public static String[] getUnresolvedReferences(final PsiElement parentOfType, final boolean referenceOnMethod) {
+    if(parentOfType != null && parentOfType.getTextLength() > MAX_SCOPE_SIZE_TO_SEARCH_UNRESOLVED) return ArrayUtil.EMPTY_STRING_ARRAY;
     final List<String> unresolvedRefs = new ArrayList<String>();
     
     if (parentOfType != null) {

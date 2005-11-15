@@ -12,6 +12,7 @@ import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.PsiElementBase;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -101,7 +102,7 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
 
   @NotNull
   public String[] getImplicitlyImportedPackages() {
-    return new String[0];// TODO throw new InsupportedOperationException()
+    return ArrayUtil.EMPTY_STRING_ARRAY;// TODO throw new InsupportedOperationException()
   }
 
   @NotNull

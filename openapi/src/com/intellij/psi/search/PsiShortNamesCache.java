@@ -21,6 +21,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Allows to retrieve files and Java classes, methods and fields in a project by
@@ -41,14 +42,14 @@ public interface PsiShortNamesCache {
    * @param name the name of the files to find.
    * @return the list of files in the project which have the specified name.
    */
-  PsiFile[] getFilesByName(String name);
+  @NotNull PsiFile[] getFilesByName(String name);
 
   /**
    * Returns the list of names of all files in the project.
    *
    * @return the list of all file names in the project.
    */
-  String [] getAllFileNames();
+  @NotNull String [] getAllFileNames();
 
   /**
    * Returns the list of all classes with the specified name in the specified scope.
@@ -57,7 +58,7 @@ public interface PsiShortNamesCache {
    * @param scope the scope in which classes are searched.
    * @return the list of found classes.
    */
-  PsiClass[] getClassesByName(String name, GlobalSearchScope scope);
+  @NotNull PsiClass[] getClassesByName(String name, GlobalSearchScope scope);
 
   /**
    * Returns the list of names of all classes in the project and
@@ -67,7 +68,7 @@ public interface PsiShortNamesCache {
    *                          otherwise, only the project is searched.
    * @return the list of all class names.
    */
-  String  [] getAllClassNames(boolean searchInLibraries);
+  @NotNull String[] getAllClassNames(boolean searchInLibraries);
 
   /**
    * Adds the names of all classes in the project and (optionally) libraries
@@ -86,7 +87,7 @@ public interface PsiShortNamesCache {
    * @param scope the scope in which methods are searched.
    * @return the list of found methods.
    */
-  PsiMethod[] getMethodsByName(@NonNls String name, GlobalSearchScope scope);
+  @NotNull PsiMethod[] getMethodsByName(@NonNls String name, GlobalSearchScope scope);
 
   /**
    * Returns the list of names of all methods in the project and
@@ -96,7 +97,7 @@ public interface PsiShortNamesCache {
    *                          otherwise, only the project is searched.
    * @return the list of all method names.
    */
-  String   [] getAllMethodNames(boolean searchInLibraries);
+  @NotNull String   [] getAllMethodNames(boolean searchInLibraries);
 
   /**
    * Adds the names of all methods in the project and (optionally) libraries
@@ -115,7 +116,7 @@ public interface PsiShortNamesCache {
    * @param scope the scope in which fields are searched.
    * @return the list of found fields.
    */
-  PsiField[] getFieldsByName (String name, GlobalSearchScope scope);
+  @NotNull PsiField[] getFieldsByName (String name, GlobalSearchScope scope);
 
   /**
    * Returns the list of names of all fields in the project and
@@ -125,7 +126,7 @@ public interface PsiShortNamesCache {
    *                          otherwise, only the project is searched.
    * @return the list of all field names.
    */
-  String  [] getAllFieldNames(boolean searchInLibraries);
+  @NotNull String  [] getAllFieldNames(boolean searchInLibraries);
 
   /**
    * Adds the names of all methods in the project and (optionally) libraries

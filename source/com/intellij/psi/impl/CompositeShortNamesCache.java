@@ -37,9 +37,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.HashSet;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -59,6 +60,7 @@ public class CompositeShortNamesCache implements PsiShortNamesCache {
     }
   }
 
+  @NotNull
   public PsiFile[] getFilesByName(String name) {
     Merger<PsiFile> merger = new Merger<PsiFile>();
     for (PsiShortNamesCache cache : myCaches) {
@@ -68,6 +70,7 @@ public class CompositeShortNamesCache implements PsiShortNamesCache {
     return result != null ? result : PsiFile.EMPTY_ARRAY;
   }
 
+  @NotNull
   public String[] getAllFileNames() {
     Merger<String> merger = new Merger<String>();
     for (PsiShortNamesCache cache : myCaches) {
@@ -77,6 +80,7 @@ public class CompositeShortNamesCache implements PsiShortNamesCache {
     return result != null ? result : ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
+  @NotNull
   public PsiClass[] getClassesByName(String name, GlobalSearchScope scope) {
     Merger<PsiClass> merger = new Merger<PsiClass>();
     for (PsiShortNamesCache cache : myCaches) {
@@ -86,6 +90,7 @@ public class CompositeShortNamesCache implements PsiShortNamesCache {
     return result != null ? result : PsiClass.EMPTY_ARRAY;
   }
 
+  @NotNull
   public String[] getAllClassNames(boolean searchInLibraries) {
     Merger<String> merger = new Merger<String>();
     for (PsiShortNamesCache cache : myCaches) {
@@ -101,6 +106,7 @@ public class CompositeShortNamesCache implements PsiShortNamesCache {
     }
   }
 
+  @NotNull
   public PsiMethod[] getMethodsByName(String name, GlobalSearchScope scope) {
     Merger<PsiMethod> merger = new Merger<PsiMethod>();
     for (PsiShortNamesCache cache : myCaches) {
@@ -110,6 +116,7 @@ public class CompositeShortNamesCache implements PsiShortNamesCache {
     return result != null ? result : PsiMethod.EMPTY_ARRAY;
   }
 
+  @NotNull
   public String[] getAllMethodNames(boolean searchInLibraries) {
     Merger<String> merger = new Merger<String>();
     for (PsiShortNamesCache cache : myCaches) {
@@ -125,6 +132,7 @@ public class CompositeShortNamesCache implements PsiShortNamesCache {
     }
   }
 
+  @NotNull
   public PsiField[] getFieldsByName(String name, GlobalSearchScope scope) {
     Merger<PsiField> merger = new Merger<PsiField>();
     for (PsiShortNamesCache cache : myCaches) {
@@ -134,6 +142,7 @@ public class CompositeShortNamesCache implements PsiShortNamesCache {
     return result != null ? result : PsiField.EMPTY_ARRAY;
   }
 
+  @NotNull
   public String[] getAllFieldNames(boolean searchInLibraries) {
     Merger<String> merger = new Merger<String>();
     for (PsiShortNamesCache cache : myCaches) {
