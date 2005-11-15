@@ -1,7 +1,6 @@
 package com.intellij.openapi.command.impl;
 
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.fileEditor.FileEditor;
 
