@@ -20,6 +20,7 @@ import java.awt.*;
  */
 class PassiveDecorationLayer extends JComponent{
   @NotNull private final GuiEditor myEditor;
+  private static Icon ourDragIcon;
 
   public PassiveDecorationLayer(@NotNull final GuiEditor editor) {
     //noinspection ConstantConditions
@@ -53,7 +54,7 @@ class PassiveDecorationLayer extends JComponent{
             Painter.paintSelectionDecoration(component, g);
             // Over selection we have to paint dragger
             if (component.hasDragger()){
-              final Icon icon = IconLoader.getIcon("/com/intellij/uiDesigner/icons/drag.png");
+              final Icon icon = getDragIcon();
               icon.paintIcon(PassiveDecorationLayer.this, g, - icon.getIconWidth(), - icon.getIconHeight());
             }
           }finally{
@@ -63,6 +64,13 @@ class PassiveDecorationLayer extends JComponent{
         }
       }
     );
+  }
+
+  private static Icon getDragIcon() {
+    if (ourDragIcon == null) {
+      ourDragIcon = IconLoader.getIcon("/com/intellij/uiDesigner/icons/drag.png");
+    }
+    return ourDragIcon;   
   }
 
   public void paint(final Graphics g){

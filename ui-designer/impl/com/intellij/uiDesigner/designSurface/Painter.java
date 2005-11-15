@@ -151,6 +151,15 @@ public final class Painter {
       return;
     }
 
+    // performance: don't paint grid outline in drag layer
+    Container parent = component.getDelegee().getParent();
+    while (parent != null) {
+      if (parent == editor.getDragLayer()) {
+        return;
+      }
+      parent = parent.getParent();
+    }
+
     final Point point = SwingUtilities.convertPoint(
       component.getDelegee(),
       0,
