@@ -366,6 +366,14 @@ public final class FormEditingUtil {
       boolean wasSelected = component.isSelected();
       final RadContainer parent = component.getParent();
 
+      boolean wasPackedHorz = false;
+      boolean wasPackedVert = false;
+      if (parent.getParent() != null && parent.getParent().isXY()) {
+        final Dimension minSize = parent.getMinimumSize();
+        wasPackedHorz = (parent.getWidth() == minSize.width);
+        wasPackedVert = (parent.getHeight() == minSize.height);
+      }
+
       GridConstraints delConstraints = parent.isGrid() ? component.getConstraints() : null;
 
       int index = parent.indexOfComponent(component);
@@ -383,6 +391,18 @@ public final class FormEditingUtil {
       }
       if (delConstraints != null) {
         deleteEmptyGridCells(parent, delConstraints);
+      }
+
+      if (wasPackedHorz || wasPackedVert) {
+        final Dimension minSize = parent.getMinimumSize();
+        Dimension newSize = new Dimension(parent.getWidth(), parent.getHeight());
+        if (wasPackedHorz) {
+          newSize.width = minSize.width;
+        }
+        if (wasPackedVert) {
+          newSize.height = minSize.height;
+        }
+        parent.setSize(newSize);
       }
     }
 

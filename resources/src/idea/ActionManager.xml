@@ -1249,6 +1249,7 @@
       <action id="GuiDesigner.LayOutVertically" class="com.intellij.uiDesigner.actions.LayOutVerticallyAction" icon="/com/intellij/uiDesigner/icons/vertical.png"/>
       <action id="GuiDesigner.LayOutInGrid" class="com.intellij.uiDesigner.actions.LayOutInAGridAction" icon="/com/intellij/uiDesigner/icons/grid.png"/>
       <action id="GuiDesigner.BreakLayout" class="com.intellij.uiDesigner.actions.BreakLayoutAction" icon="/com/intellij/uiDesigner/icons/break.png"/>
+      <action id="GuiDesigner.Pack" class="com.intellij.uiDesigner.actions.PackAction"/>
       <separator/>
       <reference ref="EditSource"/>
       <action id="GuiDesigner.ExpandSelection" class="com.intellij.uiDesigner.actions.ExpandSelectionAction"/>
