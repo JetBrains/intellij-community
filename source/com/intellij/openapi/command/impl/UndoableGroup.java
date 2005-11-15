@@ -140,9 +140,8 @@ class UndoableGroup {
 
   public Collection<DocumentReference> getAffectedDocuments() {
     Set<DocumentReference> result = new HashSet<DocumentReference>();
-    for (Iterator iterator = myActions.iterator(); iterator.hasNext();) {
-      UndoableAction action = (UndoableAction) iterator.next();
-      result.addAll(new ArrayList(Arrays.asList(action.getAffectedDocuments())));
+    for (UndoableAction action : myActions) {
+      result.addAll(Arrays.asList(action.getAffectedDocuments()));
     }
     return result;
   }
@@ -164,9 +163,8 @@ class UndoableGroup {
   }
 
   public void dispose() {
-    for (Iterator each = myActions.iterator(); each.hasNext();) {
-      UndoableAction undoableAction = (UndoableAction) each.next();
-      if (undoableAction instanceof Disposable) ((Disposable) undoableAction).dispose();
+    for (UndoableAction undoableAction : myActions) {
+      if (undoableAction instanceof Disposable) ((Disposable)undoableAction).dispose();
 
     }
   }
