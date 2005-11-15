@@ -3,6 +3,7 @@ package com.intellij.uiDesigner.designSurface;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.RadComponent;
 import com.intellij.uiDesigner.RadContainer;
+import com.intellij.uiDesigner.shared.BorderType;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.util.ui.UIUtil;
@@ -114,6 +115,10 @@ public final class Painter {
       throw new IllegalArgumentException("component cannot be null");
     }
     if (!(component instanceof RadContainer)){
+      return;
+    }
+    RadContainer container = (RadContainer) component;
+    if (container.getBorderTitle() != null || container.getBorderType() != BorderType.NONE) {
       return;
     }
     final Point point = SwingUtilities.convertPoint(
