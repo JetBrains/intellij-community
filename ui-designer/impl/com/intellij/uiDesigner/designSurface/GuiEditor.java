@@ -622,6 +622,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
       }
     }
     component.revalidate();
+    component.repaint();
   }
 
   /**

@@ -26,6 +26,9 @@ public final class Painter {
    * This color is used to paint decoration of selected components
    */
   private static final Color SELECTED_BOUNDARY_COLOR = new Color(8, 8, 108);
+
+  private static final Color HIGHLIGHTED_BOUNDARY_COLOR = Color.RED;
+
   /**
    * This color is used to paint grid cell for selected container
    */
@@ -111,14 +114,16 @@ public final class Painter {
    */
   private static void paintComponentBoundsImpl(final GuiEditor editor, final RadComponent component, final Graphics g){
     if (component == null) {
-      //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("component cannot be null");
     }
     if (!(component instanceof RadContainer)){
       return;
     }
+
+    boolean highlightBoundaries = (getDesignTimeInsets(component) > 2);
+
     RadContainer container = (RadContainer) component;
-    if (container.getBorderTitle() != null || container.getBorderType() != BorderType.NONE) {
+    if (!highlightBoundaries && (container.getBorderTitle() != null || container.getBorderType() != BorderType.NONE)) {
       return;
     }
     final Point point = SwingUtilities.convertPoint(
@@ -129,7 +134,10 @@ public final class Painter {
     );
     g.translate(point.x, point.y);
     try{
-      if (component.isSelected()) {
+      if (highlightBoundaries) {
+        g.setColor(HIGHLIGHTED_BOUNDARY_COLOR);
+      }
+      else if (component.isSelected()) {
         g.setColor(SELECTED_BOUNDARY_COLOR);
       }
       else {
@@ -139,6 +147,17 @@ public final class Painter {
     }finally{
       g.translate(-point.x, -point.y);
     }
+  }
+
+  private static int getDesignTimeInsets(RadComponent component) {
+    while(component != null) {
+      Integer designTimeInsets = (Integer)component.getDelegee().getClientProperty(GridLayoutManager.DESIGN_TIME_INSETS);
+      if (designTimeInsets != null) {
+        return designTimeInsets.intValue();
+      }
+      component = component.getParent();
+    }
+    return 0;
   }
 
   /**
