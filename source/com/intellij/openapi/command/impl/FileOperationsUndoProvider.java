@@ -274,10 +274,9 @@ class FileOperationsUndoProvider implements VirtualFileListener, LocalVcsItemsLo
   @Nullable
   private LvcsRevision getCurrentRevision(String filePath, boolean isDir) {
     LocalVcs vcs = getLocalVcs();
-    LvcsObject lvcsFile = isDir ? (LvcsObject)vcs.findDirectory(filePath, true) : vcs.findFile(filePath, true);
+    LvcsObject lvcsFile = isDir ? vcs.findDirectory(filePath, true) : vcs.findFile(filePath, true);
     if (lvcsFile == null) return null;
-    LvcsRevision revision = lvcsFile.getRevision();
-    return revision;
+    return lvcsFile.getRevision();
   }
 
   private LocalVcs getLocalVcs() {
