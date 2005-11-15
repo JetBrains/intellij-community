@@ -1,5 +1,6 @@
 package com.intellij.openapi.command.impl;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.DocumentReferenceByDocument;
@@ -16,11 +17,9 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.CommonBundle;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.LinkedList;
 
 /**
@@ -34,7 +33,7 @@ abstract class UndoOrRedo {
   public UndoOrRedo(UndoManagerImpl manager, FileEditor editor) {
     myManager = manager;
     myEditor = editor;
-    myUndoableGroup = (UndoableGroup)getStack().getLast();
+    myUndoableGroup = getStack().getLast();
   }
 
   protected abstract UndoRedoStacksHolder getStackHolder();
@@ -54,8 +53,7 @@ abstract class UndoOrRedo {
   private Collection<Document> collectReadOnlyDocuments() {
     Collection<DocumentReference> affectedDocument = myUndoableGroup.getAffectedDocuments();
     Collection<Document> readOnlyDocs = new ArrayList<Document>();
-    for (Iterator<DocumentReference> iterator = affectedDocument.iterator(); iterator.hasNext();) {
-      DocumentReference ref = iterator.next();
+    for (DocumentReference ref : affectedDocument) {
       if (ref instanceof DocumentReferenceByDocument) {
         Document doc = ref.getDocument();
         if (doc != null && !doc.isWritable()) readOnlyDocs.add(doc);
@@ -67,8 +65,7 @@ abstract class UndoOrRedo {
   private Collection<VirtualFile> collectReadOnlyAffectedFiles() {
     Collection<DocumentReference> affectedDocument = myUndoableGroup.getAffectedDocuments();
     Collection<VirtualFile> readOnlyFiles = new ArrayList<VirtualFile>();
-    for (Iterator each = affectedDocument.iterator(); each.hasNext();) {
-      DocumentReference documentReference = (DocumentReference)each.next();
+    for (DocumentReference documentReference : affectedDocument) {
       VirtualFile file = documentReference.getFile();
       if ((file != null) && file.isValid() && !file.isWritable()) {
         readOnlyFiles.add(file);
@@ -111,8 +108,7 @@ abstract class UndoOrRedo {
 
     Collection<Document> readOnlyDocuments = collectReadOnlyDocuments();
     if (!readOnlyDocuments.isEmpty()) {
-      for (Iterator<Document> iterator = readOnlyDocuments.iterator(); iterator.hasNext();) {
-        Document document = iterator.next();
+      for (Document document : readOnlyDocuments) {
         document.fireReadOnlyModificationAttempt();
       }
       return;
@@ -128,8 +124,8 @@ abstract class UndoOrRedo {
 
   private boolean containsNonUndoableActions() {
     final UndoableAction[] actions = myUndoableGroup.getActions();
-    for (int i = 0; i < actions.length; i++) {
-      if (actions[i] instanceof NonUndoableAction) return true;
+    for (UndoableAction action : actions) {
+      if (action instanceof NonUndoableAction) return true;
     }
     return false;
   }
@@ -176,9 +172,8 @@ abstract class UndoOrRedo {
     protected abstract String getActionName(String commandName);
 
     private void addLastToReverseStacks() {
-      Collection stacks = getStacks(getReverseStackHolder());
-      for (Iterator i = stacks.iterator(); i.hasNext();) {
-        LinkedList linkedList = (LinkedList)i.next();
+      Collection<LinkedList<UndoableGroup>> stacks = getStacks(getReverseStackHolder());
+      for (LinkedList<UndoableGroup> linkedList : stacks) {
         linkedList.addLast(myUndoableGroup);
       }
       if (myUndoableGroup.isComplex()) {
@@ -191,8 +186,7 @@ abstract class UndoOrRedo {
   }
 
   private void removeLastFromMyStacks() {
-    for (Iterator i = getStacks().iterator(); i.hasNext();) {
-      LinkedList linkedList = (LinkedList)i.next();
+    for (LinkedList<UndoableGroup> linkedList : getStacks()) {
       linkedList.removeLast();
     }
     if (myUndoableGroup.isComplex()) {
@@ -210,8 +204,7 @@ abstract class UndoOrRedo {
   }
 
   private boolean containsAnotherChanges() {
-    for (Iterator<LinkedList> each = getStacks().iterator(); each.hasNext();) {
-      LinkedList linkedList = each.next();
+    for (LinkedList<UndoableGroup> linkedList : getStacks()) {
       if (linkedList.isEmpty()) continue;
       if (!linkedList.getLast().equals(myUndoableGroup)) return true;
     }
@@ -219,20 +212,20 @@ abstract class UndoOrRedo {
 
   }
 
-  private Collection<LinkedList> getStacks() {
+  private Collection<LinkedList<UndoableGroup>> getStacks() {
     return getStacks(getStackHolder());
   }
 
-  private Collection<LinkedList> getStacks(UndoRedoStacksHolder stackHolder) {
-    ArrayList<LinkedList> result = new ArrayList<LinkedList>();
-    for (Iterator<DocumentReference> i = getDocumentsReferences().iterator(); i.hasNext();) {
-      result.add(stackHolder.getStack(i.next()));
+  private Collection<LinkedList<UndoableGroup>> getStacks(UndoRedoStacksHolder stackHolder) {
+    ArrayList<LinkedList<UndoableGroup>> result = new ArrayList<LinkedList<UndoableGroup>>();
+    for (final DocumentReference documentReference : getDocumentsReferences()) {
+      result.add(stackHolder.getStack(documentReference));
     }
     return result;
   }
 
 
-  private LinkedList getStack() {
+  private LinkedList<UndoableGroup> getStack() {
     if (myEditor == null) {
       return getStackHolder().getGlobalStack();
     }
@@ -240,8 +233,7 @@ abstract class UndoOrRedo {
       long recentDocumentTimeStamp = -1;
       LinkedList<UndoableGroup> result = null;
       Document[] documents = TextEditorProvider.getDocuments(myEditor);
-      for (int i = 0; i < documents.length; i++) {
-        Document document = documents[i];
+      for (Document document : documents) {
         LinkedList<UndoableGroup> stack = getStackHolder().getStack(document);
         if (!stack.isEmpty()) {
           long modificationStamp = document.getModificationStamp();
