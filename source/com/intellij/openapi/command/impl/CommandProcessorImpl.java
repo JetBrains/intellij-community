@@ -187,8 +187,7 @@ public class CommandProcessorImpl extends CommandProcessorEx implements Applicat
   private void fireCommandStarted() {
     CommandEvent event = new CommandEvent(this, myCurrentCommand.myCommand, myCurrentCommand.myProject, myCurrentCommand.myUndoConfirmationPolicy);
     CommandListener[] listeners = myListeners.toArray(new CommandListener[myListeners.size()]);
-    for (int i = 0; i < listeners.length; i++) {
-      CommandListener listener = listeners[i];
+    for (CommandListener listener : listeners) {
       try {
         listener.commandStarted(event);
       }
@@ -202,8 +201,7 @@ public class CommandProcessorImpl extends CommandProcessorEx implements Applicat
     CommandEvent event = new CommandEvent(this, myCurrentCommand.myCommand, myCurrentCommand.myName,
                                           myCurrentCommand.myGroupId, myCurrentCommand.myProject, myCurrentCommand.myUndoConfirmationPolicy);
     CommandListener[] listeners = myListeners.toArray(new CommandListener[myListeners.size()]);
-    for (int i = 0; i < listeners.length; i++) {
-      CommandListener listener = listeners[i];
+    for (CommandListener listener : listeners) {
       try {
         listener.beforeCommandFinished(event);
       }
@@ -217,8 +215,7 @@ public class CommandProcessorImpl extends CommandProcessorEx implements Applicat
     CommandEvent event = new CommandEvent(this, myCurrentCommand.myCommand, myCurrentCommand.myName,
                                           myCurrentCommand.myGroupId, myCurrentCommand.myProject, myCurrentCommand.myUndoConfirmationPolicy);
     CommandListener[] listeners = myListeners.toArray(new CommandListener[myListeners.size()]);
-    for (int i = 0; i < listeners.length; i++) {
-      CommandListener listener = listeners[i];
+    for (CommandListener listener : listeners) {
       try {
         listener.commandFinished(event);
       }
@@ -230,8 +227,7 @@ public class CommandProcessorImpl extends CommandProcessorEx implements Applicat
 
   private void fireUndoTransparentStarted() {
     CommandListener[] listeners = myListeners.toArray(new CommandListener[myListeners.size()]);
-    for (int i = 0; i < listeners.length; i++) {
-      CommandListener listener = listeners[i];
+    for (CommandListener listener : listeners) {
       try {
         listener.undoTransparentActionStarted();
       }
@@ -243,8 +239,7 @@ public class CommandProcessorImpl extends CommandProcessorEx implements Applicat
 
   private void fireUndoTransparentFinished() {
     CommandListener[] listeners = myListeners.toArray(new CommandListener[myListeners.size()]);
-    for (int i = 0; i < listeners.length; i++) {
-      CommandListener listener = listeners[i];
+    for (CommandListener listener : listeners) {
       try {
         listener.undoTransparentActionFinished();
       }
