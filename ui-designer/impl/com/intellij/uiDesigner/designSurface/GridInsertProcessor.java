@@ -238,7 +238,50 @@ public class GridInsertProcessor {
              insertLocation.getContainer().getComponentAtGrid(insertLocation.getRow(), insertLocation.getColumn()) == null;
     }
     final GridLayoutManager grid = ((GridLayoutManager)insertLocation.getContainer().getLayout());
+    if (isInsertInsideComponent(insertLocation)) {
+      return false;
+    }
+
+    if (insertLocation.isColumnInsert()) {
+      return componentCount == 1;
+    }
     return insertLocation.getColumn() + componentCount - 1 < grid.getColumnCount();
+  }
+
+  private boolean isInsertInsideComponent(final GridInsertLocation insertLocation) {
+    if (insertLocation.isColumnInsert()) {
+      int endColumn = (insertLocation.getMode() == GridInsertLocation.GridInsertMode.ColumnAfter)
+                      ? insertLocation.getColumn()+1 : insertLocation.getColumn();
+      int row = insertLocation.getRow();
+      for(int col = 0; col<endColumn; col++) {
+        RadComponent component = insertLocation.getContainer().getComponentAtGrid(row, col);
+        if (component != null) {
+          GridConstraints constraints = component.getConstraints();
+          if (constraints.getColumn() + constraints.getColSpan() > endColumn &&
+              constraints.getColSpan() > 1) {
+            return true;
+          }
+        }
+      }
+      return false;
+    }
+    else if (insertLocation.isRowInsert()) {
+      int endRow = (insertLocation.getMode() == GridInsertLocation.GridInsertMode.RowAfter)
+                    ? insertLocation.getRow()+1 : insertLocation.getRow();
+      int col = insertLocation.getColumn();
+      for(int row = 0; row<endRow; row++) {
+        RadComponent component = insertLocation.getContainer().getComponentAtGrid(row, col);
+        if (component != null) {
+          GridConstraints constraints = component.getConstraints();
+          if (constraints.getRow() + constraints.getRowSpan() > endRow &&
+              constraints.getRowSpan() > 1) {
+            return true;
+          }
+        }
+      }
+      return false;
+    }
+    return false;
   }
 
   private void placeInsertFeedbackPainter(final GridInsertLocation insertLocation, final int componentCount) {
@@ -257,8 +300,8 @@ public class GridInsertProcessor {
 
     FeedbackPainter painter = (insertLocation.getMode() == GridInsertLocation.GridInsertMode.ColumnBefore ||
                                insertLocation.getMode() == GridInsertLocation.GridInsertMode.ColumnAfter)
-      ? myVertInsertFeedbackPainter
-      : myHorzInsertFeedbackPainter;
+                              ? myVertInsertFeedbackPainter
+                              : myHorzInsertFeedbackPainter;
     Rectangle rc;
 
     int w=4;

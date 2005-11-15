@@ -269,6 +269,11 @@ public class RadContainer extends RadComponent implements IContainer {
     return getComponentAtGrid(0, 0) == null;
   }
 
+
+  public RadComponent getComponentAtGrid(boolean rowFirst, int coord1, int coord2) {
+    return rowFirst ? getComponentAtGrid(coord1, coord2) : getComponentAtGrid(coord2, coord1);
+  }
+
   @Nullable
   public RadComponent getComponentAtGrid(final int row, final int column) {
     // If the target cell is not empty does not allow drop.

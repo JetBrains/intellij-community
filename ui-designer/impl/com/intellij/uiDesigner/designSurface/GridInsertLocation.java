@@ -54,5 +54,13 @@ class GridInsertLocation {
     return myCellRect;
   }
 
+  public boolean isColumnInsert() {
+    return getMode() == GridInsertMode.ColumnAfter || getMode() == GridInsertMode.ColumnBefore;
+  }
+
+  public boolean isRowInsert() {
+    return getMode() == GridInsertMode.RowAfter || getMode() == GridInsertMode.RowBefore;
+  }
+
   enum GridInsertMode { None, RowBefore, RowAfter, ColumnBefore, ColumnAfter }
 }
