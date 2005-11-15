@@ -24,35 +24,35 @@ import java.util.List;
 /**
  * author: lesya
  */
-public class CompositeCommitable implements Commitable {
-  private List<Commitable> myComponents = new ArrayList<Commitable>();
+public class CompositeCommittable implements Committable {
+  private List<Committable> myComponents = new ArrayList<Committable>();
 
-  public void addComponent(Commitable panel) {
+  public void addComponent(Committable panel) {
     myComponents.add(panel);
   }
 
   public void commit() throws ReadOnlyDeploymentDescriptorModificationException {
     for (Iterator iterator = myComponents.iterator(); iterator.hasNext();) {
-      ((Commitable)iterator.next()).commit();
+      ((Committable)iterator.next()).commit();
     }
   }
 
   public void reset() {
     for (Iterator iterator = myComponents.iterator(); iterator.hasNext();) {
-      ((Commitable)iterator.next()).reset();
+      ((Committable)iterator.next()).reset();
     }
   }
 
   public void dispose() {
     for (Iterator iterator = myComponents.iterator(); iterator.hasNext();) {
-      ((Commitable)iterator.next()).dispose();
+      ((Committable)iterator.next()).dispose();
     }
   }
 
   public List<Warning> getWarnings() {
     ArrayList<Warning> result = new ArrayList<Warning>();
     for (Iterator iterator = myComponents.iterator(); iterator.hasNext();) {
-      List<Warning> warnings = ((Commitable)iterator.next()).getWarnings();
+      List<Warning> warnings = ((Committable)iterator.next()).getWarnings();
       if (warnings != null) {
         result.addAll(warnings);
       }

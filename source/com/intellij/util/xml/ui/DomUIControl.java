@@ -3,7 +3,7 @@
  */
 package com.intellij.util.xml.ui;
 
-import com.intellij.j2ee.ui.CommitablePanel;
+import com.intellij.j2ee.ui.CommittablePanel;
 import com.intellij.util.xml.DomElement;
 
 import javax.swing.*;
@@ -11,7 +11,7 @@ import javax.swing.*;
 /**
  * @author peter
  */
-public interface DomUIControl extends CommitablePanel {
+public interface DomUIControl extends CommittablePanel {
 
   DomElement getDomElement();
 
