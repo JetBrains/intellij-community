@@ -56,7 +56,8 @@ public final class MainProcessor extends EventProcessor{
       if (selection.size() > 0) {
         final RadComponent component = selection.get(0);
         final InplaceEditingLayer inplaceLayer = myEditor.getInplaceEditingLayer();
-        inplaceLayer.startInplaceEditing(component, component.getDefaultInplaceProperty(), null, false);
+        inplaceLayer.startInplaceEditing(component, component.getDefaultInplaceProperty(),
+                                         component.getDefaultInplaceEditorBounds(), false);
         try {
           new Robot().keyPress(e.getKeyCode());
         }

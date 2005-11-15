@@ -83,18 +83,32 @@ public class RadContainer extends RadComponent implements IContainer {
     return new MyBorderTitleProperty();
   }
 
+  @Override @Nullable
+  public Property getDefaultInplaceProperty() {
+    return new MyBorderTitleProperty();
+  }
+
+  @Override @Nullable
+  public Rectangle getDefaultInplaceEditorBounds() {
+    return getBorderInPlaceEditorBounds(new MyBorderTitleProperty());
+  }
+
   public Rectangle getInplaceEditorBounds(final Property property, final int x, final int y) {
     if(property instanceof MyBorderTitleProperty){ // If this is our property
-      final MyBorderTitleProperty _property = (MyBorderTitleProperty)property;
-      final Insets insets = getDelegee().getInsets();
-      return new Rectangle(
-        insets.left,
-        0,
-        getWidth() - insets.left - insets.right,
-        _property.getPreferredSize().height
-      );
+      return getBorderInPlaceEditorBounds(property);
     }
     return super.getInplaceEditorBounds(property, x, y);
+  }
+
+  private Rectangle getBorderInPlaceEditorBounds(final Property property) {
+    final MyBorderTitleProperty _property = (MyBorderTitleProperty)property;
+    final Insets insets = getDelegee().getInsets();
+    return new Rectangle(
+      insets.left,
+      0,
+      getWidth() - insets.left - insets.right,
+      _property.getPreferredSize().height
+    );
   }
 
   @Nullable

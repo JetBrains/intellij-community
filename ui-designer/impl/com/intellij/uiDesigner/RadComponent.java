@@ -203,6 +203,11 @@ public abstract class RadComponent implements IComponent {
     return Palette.getInstance(myModule.getProject()).getInplaceProperty(getComponentClass());
   }
 
+  @Nullable
+  public Rectangle getDefaultInplaceEditorBounds() {
+    return null;
+  }
+
   /**
    * Sometime bounds of the inplace editor depends on the point where
    * user invoked inplace editor.

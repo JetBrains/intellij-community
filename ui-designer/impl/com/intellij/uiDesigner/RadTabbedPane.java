@@ -128,6 +128,11 @@ public final class RadTabbedPane extends RadContainer{
     return index != -1 ? new MyTitleProperty(index) : null;
   }
 
+  @Override @Nullable
+  public Property getDefaultInplaceProperty() {
+    return null;
+  }
+
   public Rectangle getInplaceEditorBounds(final Property property, final int x, final int y) {
     final JTabbedPane tabbedPane = getTabbedPane();
     final TabbedPaneUI ui = tabbedPane.getUI();

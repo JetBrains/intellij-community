@@ -29,7 +29,8 @@ public final class StartInplaceEditingAction extends AnAction{
     final ArrayList<RadComponent> selection = FormEditingUtil.getAllSelectedComponents(myEditor);
     final RadComponent component = selection.get(0);
     final Property defaultInplaceProperty = component.getDefaultInplaceProperty();
-    myEditor.getInplaceEditingLayer().startInplaceEditing(component, defaultInplaceProperty, null, true);
+    myEditor.getInplaceEditingLayer().startInplaceEditing(component, defaultInplaceProperty,
+                                                          component.getDefaultInplaceEditorBounds(), true);
   }
 
   public void update(final AnActionEvent e) {
