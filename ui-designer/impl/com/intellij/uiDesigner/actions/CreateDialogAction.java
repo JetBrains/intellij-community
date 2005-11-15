@@ -14,8 +14,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.SuggestedNameInfo;
-import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.uiDesigner.UIDesignerBundle;
@@ -130,7 +128,7 @@ public final class CreateDialogAction extends CreateElementActionBase {
     result.append("public " + className + "(){\n");
     result.append("setContentPane(contentPane);\n");
     result.append("setModal(true);\n");
-    result.append("getRootPane().setDefaultButton(buttonOK);\n");
+    result.append("getMainComponent().setDefaultButton(buttonOK);\n");
 
     if (generateOK) {
       result.append("\n");
