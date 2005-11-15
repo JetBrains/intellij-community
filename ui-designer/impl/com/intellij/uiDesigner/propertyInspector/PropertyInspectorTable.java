@@ -291,6 +291,14 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
 
     focusedInputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE,0),"cancel");
     ancestorInputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE,0),"cancel");
+
+    actionMap.put("expandCurrent", new MyExpandCurrentAction(true));
+    focusedInputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ADD,0),"expandCurrent");
+    ancestorInputMap.remove(KeyStroke.getKeyStroke(KeyEvent.VK_ADD,0));
+
+    actionMap.put("collapseCurrent", new MyExpandCurrentAction(false));
+    focusedInputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_SUBTRACT,0),"collapseCurrent");
+    ancestorInputMap.remove(KeyStroke.getKeyStroke(KeyEvent.VK_SUBTRACT,0));
   }
 
   public void setValueAt(final Object aValue, final int row, final int column) {
@@ -997,6 +1005,34 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
         }
       }else{
         startEditing(selectedRow);
+      }
+    }
+  }
+
+  private class MyExpandCurrentAction extends AbstractAction {
+    private boolean myExpand;
+
+    public MyExpandCurrentAction(final boolean expand) {
+      myExpand = expand;
+    }
+
+    public void actionPerformed(ActionEvent e) {
+      final int selectedRow=getSelectedRow();
+      if(isEditing() || selectedRow==-1){
+        return;
+      }
+      final Property property=myProperties.get(selectedRow);
+      if(property.getChildren().length>0) {
+        if (myExpand) {
+          if (!myExpandedProperties.contains(property)) {
+            expandProperty(selectedRow);
+          }
+        }
+        else {
+          if (myExpandedProperties.contains(property)) {
+            collapseProperty(selectedRow);
+          }
+        }
       }
     }
   }
