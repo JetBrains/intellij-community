@@ -25,7 +25,7 @@ public class PsiImplUtil {
   private PsiImplUtil() {
   }
 
-  public static PsiMethod[] getConstructors(PsiClass aClass) {
+  @NotNull public static PsiMethod[] getConstructors(PsiClass aClass) {
     final List<PsiMethod> constructorsList = new ArrayList<PsiMethod>();
     final PsiMethod[] methods = aClass.getMethods();
     for (final PsiMethod method : methods) {
@@ -92,7 +92,7 @@ public class PsiImplUtil {
     return -1;
   }
 
-  public static Object[] getReferenceVariantsByFilter(PsiJavaCodeReferenceElement reference,
+  @NotNull public static Object[] getReferenceVariantsByFilter(PsiJavaCodeReferenceElement reference,
                                                       ElementFilter filter) {
     FilterScopeProcessor processor = new FilterScopeProcessor(filter, reference);
     PsiScopesUtil.resolveAndWalk(processor, reference, null, true);
@@ -122,13 +122,13 @@ public class PsiImplUtil {
     return typeParameterList != null && typeParameterList.getTypeParameters().length != 0;
   }
 
-  public static PsiType[] typesByReferenceParameterList(final PsiReferenceParameterList parameterList) {
+  @NotNull public static PsiType[] typesByReferenceParameterList(final PsiReferenceParameterList parameterList) {
     PsiTypeElement[] typeElements = parameterList.getTypeParameterElements();
 
     return typesByTypeElements(typeElements);
   }
 
-  public static PsiType[] typesByTypeElements(PsiTypeElement[] typeElements) {
+  @NotNull public static PsiType[] typesByTypeElements(PsiTypeElement[] typeElements) {
     PsiType[] types = new PsiType[typeElements.length];
     for(int i = 0; i < types.length; i++){
       types[i] = typeElements[i].getType();

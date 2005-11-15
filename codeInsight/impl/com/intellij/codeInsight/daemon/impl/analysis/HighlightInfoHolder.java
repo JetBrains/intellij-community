@@ -56,6 +56,8 @@ public class HighlightInfoHolder extends ArrayList<HighlightInfo> {
   }
 
   public void clear() {
+    if (!writable) throw new UnsupportedOperationException("Update highlight holder after visit finished; "+this);
+
     myErrorCount = 0;
     myWarningCount = 0;
     myInfoCount = 0;

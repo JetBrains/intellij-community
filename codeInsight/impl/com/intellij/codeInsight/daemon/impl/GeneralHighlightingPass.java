@@ -229,6 +229,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
           }
 
           holder.setWritable(true);
+          holder.clear();
           for (HighlightVisitor visitor : visitors) {
             visitor.visit(element, holder);
           }
@@ -243,7 +244,6 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
               skipParentsSet.add(element.getParent());
             }
           }
-          holder.clear();
         }
       }
     });

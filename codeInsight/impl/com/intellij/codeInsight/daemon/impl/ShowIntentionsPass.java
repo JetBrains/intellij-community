@@ -284,7 +284,8 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     }
     if (availableClasses.size() == 0) return false;
 
-    int refTypeArgsLength = ref.getParameterList().getTypeArguments().length;
+    PsiReferenceParameterList parameterList = ref.getParameterList();
+    int refTypeArgsLength = parameterList == null ? 0 : parameterList.getTypeArguments().length;
     if (availableClasses.size() > 0 && refTypeArgsLength != 0) {
       List<PsiClass> typeArgMatched = new ArrayList<PsiClass>(availableClasses);
       // try to reduce suggestions based on type argument list
