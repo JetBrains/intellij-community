@@ -43,13 +43,7 @@ public class DomModelTreeView extends Wrapper {
 
     myDomEventListener = new DomEventListener() {
       public void eventOccured(DomEvent event) {
-        final Runnable runnable = new Runnable() {
-          public void run() {
-            myBuilder.updateFromRoot(true);
-          }
-        };
-        runnable.run();
-        //ApplicationManager.getApplication().invokeLater(runnable);
+        myBuilder.updateFromRoot(true);
       }
     };
     myDomManager = rootElement.getManager();

@@ -88,7 +88,7 @@ public class BaseDomElementNode extends AbstractDomElementNode {
       addColoredFragment(getNodeName(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
     }
 
-    return super.doUpdate();
+    return true;
   }
 
   public String getNodeName() {

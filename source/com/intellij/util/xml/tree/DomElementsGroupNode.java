@@ -42,7 +42,7 @@ public class DomElementsGroupNode extends AbstractDomElementNode {
     final int childrenCount = getChildren().length;
     addColoredFragment(" (" + childrenCount + ')', new SimpleTextAttributes(Font.ITALIC, Color.gray));
 
-    return super.doUpdate();
+    return true;
   }
 
   public String getNodeName() {
