@@ -6,6 +6,6 @@ package com.intellij.util;
 /**
  * @author max
  */
-public interface Function<Source, Target> {
-  Target fun(Source s);
+public interface Function<Dom, Img> {
+  Img fun(Dom s);
 }
