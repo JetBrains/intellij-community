@@ -152,6 +152,8 @@ public final class GuiEditor extends JPanel implements DataProvider {
   @NotNull private final GlassLayer myGlassLayer;
   private ActiveDecorationLayer myActiveDecorationLayer;
 
+  private boolean myShowGrid = true;
+
   /**
    * @param file file to be edited
    * @throws java.lang.IllegalArgumentException
@@ -710,6 +712,17 @@ public final class GuiEditor extends JPanel implements DataProvider {
     final GuiEditor uiEditor = (GuiEditor)SwingUtilities.getAncestorOfClass(GuiEditor.class, component.getDelegee());
     if (uiEditor != null) {
       uiEditor.repaintLayeredPane();
+    }
+  }
+
+  public boolean isShowGrid() {
+    return myShowGrid;
+  }
+
+  public void setShowGrid(final boolean showGrid) {
+    if (myShowGrid != showGrid) {
+      myShowGrid = showGrid;
+      repaint();
     }
   }
 

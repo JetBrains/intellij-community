@@ -145,6 +145,9 @@ public final class Painter {
    * This method paints grid bounds for "grid" containers
    */
   public static void paintGridOutline(final GuiEditor editor, @NotNull final RadComponent component, final Graphics g){
+    if (!editor.isShowGrid()) {
+      return;
+    }
     if (component == null) {
       throw new IllegalArgumentException("component cannot be null");
     }
