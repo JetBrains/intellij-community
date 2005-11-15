@@ -211,6 +211,7 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder{
       myInsideChange++;
       try{
         FormEditingUtil.clearSelection(myEditor.getRootContainer());
+        boolean hasComponentInTab = false;
         for(int i = paths.length - 1; i >= 0; i--){
           final DefaultMutableTreeNode lastComponent=(DefaultMutableTreeNode)paths[i].getLastPathComponent();
           LOG.assertTrue(lastComponent!=null);
@@ -224,9 +225,12 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder{
           }
 
           final ComponentPtr ptr=(ComponentPtr)descriptor.getElement();
-          if(ptr.isValid()){
+          if(ptr != null && ptr.isValid()){
             final RadComponent component=ptr.getComponent();
             LOG.assertTrue(component!=null);
+            if (!hasComponentInTab) {
+              hasComponentInTab = selectComponentTab(component);
+            }
             component.setSelected(true);
           }
         }
@@ -236,6 +240,20 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder{
       }finally{
         myInsideChange--;
       }
+    }
+
+    private boolean selectComponentTab(final RadComponent component) {
+      boolean hasTab = false;
+      RadContainer parent = component.getParent();
+      while(parent != null) {
+        if (parent.getParent() instanceof RadTabbedPane) {
+          RadTabbedPane tabbedPane = (RadTabbedPane) parent.getParent();
+          tabbedPane.selectTab(parent);
+          hasTab = true;
+        }
+        parent = parent.getParent();
+      }
+      return hasTab;
     }
   }
 }

@@ -218,6 +218,14 @@ public final class RadTabbedPane extends RadContainer{
     return index2Descriptor;
   }
 
+  public void selectTab(final RadComponent component) {
+    final JTabbedPane tabbedPane = getTabbedPane();
+    int index = tabbedPane.indexOfComponent(component.getDelegee());
+    if (index >= 0) {
+      tabbedPane.setSelectedIndex(index);
+    }
+  }
+
   private final class MyTitleProperty extends Property{
     /**
      * Index of tab which title should be edited
