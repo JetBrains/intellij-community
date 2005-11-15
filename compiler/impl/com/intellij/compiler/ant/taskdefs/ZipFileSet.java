@@ -1,8 +1,9 @@
 package com.intellij.compiler.ant.taskdefs;
 
+import com.intellij.compiler.ant.Tag;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.compiler.ant.Tag;
+import com.intellij.openapi.util.text.StringUtil;
 
 import java.io.File;
 
@@ -14,12 +15,19 @@ public class ZipFileSet extends Tag{
   public ZipFileSet(String fileOrDir, final String relativePath, boolean isDir) {
     super("zipfileset", new Pair[] {
       pair(isDir ? "dir" : "file", fileOrDir),
-      pair("prefix", isDir ? relativePath : makeFilePrefix(relativePath))});
+      pair("prefix", prefix(isDir, relativePath))});
   }
 
-  private static String makeFilePrefix(final String fileName) {
-    final String parent = new File(fileName).getParent();
-    if (parent == null) return "";
-    return FileUtil.toSystemIndependentName(parent);
+  private static String prefix(final boolean isDir, final String relativePath) {
+    String path;
+    if (isDir) {
+      path = relativePath;
+    }
+    else {
+      final String parent = new File(relativePath).getParent();
+      path = parent == null ? "" : FileUtil.toSystemIndependentName(parent);
+    }
+    return path == null ? null : StringUtil.trimStart(path, "/");
   }
+
 }
