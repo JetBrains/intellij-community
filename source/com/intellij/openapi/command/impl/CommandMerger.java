@@ -62,8 +62,7 @@ class CommandMerger {
   private boolean affectsMultipleDocs() {
     if (myAffectedDocuments.size() < 2) return false;
     int count = 0;
-    for (Iterator<DocumentReference> iterator = myAffectedDocuments.iterator(); iterator.hasNext();) {
-      DocumentReference docRef = iterator.next();
+    for (DocumentReference docRef : myAffectedDocuments) {
       if (docRef.getFile() != null) {
         count++;
       }
@@ -130,8 +129,7 @@ class CommandMerger {
   }
 
   private void addToAllStacks(UndoableGroup commandInfo) {
-    for (Iterator<DocumentReference> iterator = myAffectedDocuments.iterator(); iterator.hasNext();) {
-      DocumentReference document = iterator.next();
+    for (DocumentReference document : myAffectedDocuments) {
       myManager.getUndoStacksHolder().addToLocalStack(document, commandInfo);
     }
 
@@ -150,10 +148,9 @@ class CommandMerger {
   }
 
   public boolean isEmpty(DocumentReference doc) {
-    for (int i = 0; i < myCurrentActions.size(); i++) {
-      UndoableAction action = myCurrentActions.get(i);
-      if (new HashSet(Arrays.asList(action.getAffectedDocuments())).contains(doc)) {
-        return false;
+    for (UndoableAction action : myCurrentActions) {
+      for (DocumentReference document : action.getAffectedDocuments()) {
+        if (document.equals(doc)) return false;
       }
     }
 
