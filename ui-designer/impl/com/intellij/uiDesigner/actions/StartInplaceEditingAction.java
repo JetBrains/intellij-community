@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.RadComponent;
+import com.intellij.uiDesigner.propertyInspector.Property;
 
 import java.util.ArrayList;
 
@@ -27,11 +28,8 @@ public final class StartInplaceEditingAction extends AnAction{
   public void actionPerformed(final AnActionEvent e) {
     final ArrayList<RadComponent> selection = FormEditingUtil.getAllSelectedComponents(myEditor);
     final RadComponent component = selection.get(0);
-
-    final int x = component.getX() + component.getWidth() / 2; // central X point
-    final int y = component.getY() + component.getHeight() / 2; // central Y point
-
-    myEditor.getInplaceEditingLayer().startInplaceEditing(x, y);
+    final Property defaultInplaceProperty = component.getDefaultInplaceProperty();
+    myEditor.getInplaceEditingLayer().startInplaceEditing(component, defaultInplaceProperty, null, true);
   }
 
   public void update(final AnActionEvent e) {
@@ -46,8 +44,6 @@ public final class StartInplaceEditingAction extends AnAction{
 
     // Selected component should have "inplace" property
     final RadComponent component = selection.get(0);
-    final int x = component.getX() + component.getWidth() / 2; // central X point
-    final int y = component.getY() + component.getHeight() / 2; // central Y point
-    presentation.setEnabled(component.getInplaceProperty(x, y) != null);
+    presentation.setEnabled(component.getDefaultInplaceProperty() != null);
   }
 }
