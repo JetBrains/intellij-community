@@ -318,8 +318,8 @@ public final class FormEditingUtil {
 
 
     return new Pair<Integer, Integer>(
-      Util.eliminate(y, rowSpans, null),
-      Util.eliminate(x, colSpans, null)
+      new Integer(Util.eliminate(y, rowSpans, null)),
+      new Integer(Util.eliminate(x, colSpans, null))
     );
   }
 
@@ -390,12 +390,12 @@ public final class FormEditingUtil {
   }
 
   public static void deleteEmptyGridCells(final RadContainer parent, final GridConstraints delConstraints) {
-    for(int row=delConstraints.getRow(); row<delConstraints.getRow() + delConstraints.getRowSpan(); row++) {
+    for(int row=delConstraints.getRow() + delConstraints.getRowSpan()-1; row >= delConstraints.getRow(); row--) {
       if (GridChangeUtil.isRowEmpty(parent, row)) {
         GridChangeUtil.deleteRow(parent, row);
       }
     }
-    for(int col=delConstraints.getColumn(); col<delConstraints.getColumn() + delConstraints.getColSpan(); col++) {
+    for(int col=delConstraints.getColumn() + delConstraints.getColSpan()-1; col >= delConstraints.getColumn(); col--) {
       if (GridChangeUtil.isColumnEmpty(parent, col)) {
         GridChangeUtil.deleteColumn(parent, col);
       }
@@ -638,7 +638,7 @@ public final class FormEditingUtil {
       }
     );
 
-    return bindingExists.get();
+    return bindingExists.get().booleanValue();
   }
 
   @Nullable
