@@ -64,8 +64,7 @@ class DocumentEditingUndoProvider {
     private boolean allEditorsAreViewersFor(Document document) {
       Editor[] editors = EditorFactory.getInstance().getEditors(document);
       if (editors.length == 0) return false;
-      for (int i = 0; i < editors.length; i++) {
-        Editor editor = editors[i];
+      for (Editor editor : editors) {
         if (!editor.isViewer()) return false;
       }
       return true;
