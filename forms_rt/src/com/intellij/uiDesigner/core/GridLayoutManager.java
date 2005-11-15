@@ -809,7 +809,7 @@ public final class GridLayoutManager extends AbstractLayout {
 
   public int[] getHorizontalGridLines() {
     int[] result = new int [myYs.length+1];
-    result [0] = 0;
+    result [0] = myYs [0];
     for(int i=0; i<myYs.length-1; i++) {
       result [i+1] = (myYs[i] + myHeights[i] + myYs[i + 1]) / 2;
     }
@@ -819,7 +819,7 @@ public final class GridLayoutManager extends AbstractLayout {
 
   public int[] getVerticalGridLines() {
     int[] result = new int [myXs.length+1];
-    result [0] = 0;
+    result [0] = myXs [0];
     for(int i=0; i<myXs.length-1; i++) {
       result [i+1] = (myXs[i] + myWidths[i] + myXs[i + 1]) / 2;
     }
