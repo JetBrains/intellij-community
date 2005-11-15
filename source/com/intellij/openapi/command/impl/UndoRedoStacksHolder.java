@@ -10,7 +10,6 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Set;
 
@@ -64,8 +63,7 @@ class UndoRedoStacksHolder {
   }
 
   private void clear(LinkedList<UndoableGroup> stack) {
-    for (Iterator each = stack.iterator(); each.hasNext();) {
-      UndoableGroup undoableGroup = (UndoableGroup)each.next();
+    for (UndoableGroup undoableGroup : stack) {
       undoableGroup.dispose();
     }
     stack.clear();
@@ -87,18 +85,18 @@ class UndoRedoStacksHolder {
     addToStack(getGlobalStack(), commandInfo, UndoManagerImpl.GLOBAL_UNDO_LIMIT);
   }
 
-  private void addToStack(LinkedList stack, UndoableGroup commandInfo, int limit) {
+  private void addToStack(LinkedList<UndoableGroup> stack, UndoableGroup commandInfo, int limit) {
     stack.addLast(commandInfo);
     while (stack.size() > limit) {
-      UndoableGroup undoableGroup = (UndoableGroup)stack.removeFirst();
+      UndoableGroup undoableGroup = stack.removeFirst();
       undoableGroup.dispose();
     }
   }
 
   public void clearEditorStack(FileEditor editor) {
     Document[] documents = TextEditorProvider.getDocuments(editor);
-    for (int i = 0; i < documents.length; i++) {
-      clear(getStack(DocumentReferenceByDocument.createDocumentReference(documents[i])));
+    for (Document document : documents) {
+      clear(getStack(DocumentReferenceByDocument.createDocumentReference(document)));
     }
 
   }
@@ -109,8 +107,7 @@ class UndoRedoStacksHolder {
 
   public Set<DocumentReference> getDocsInGlobalQueue() {
     HashSet<DocumentReference> result = new HashSet<DocumentReference>();
-    for (Iterator<UndoableGroup> iterator = getGlobalStack().iterator(); iterator.hasNext();) {
-      UndoableGroup group = iterator.next();
+    for (UndoableGroup group : getGlobalStack()) {
       result.addAll(group.getAffectedDocuments());
     }
     return result;
@@ -124,8 +121,7 @@ class UndoRedoStacksHolder {
 
   public Collection<DocumentReference> getGlobalStackAffectedDocuments() {
     Collection<DocumentReference> result = new HashSet<DocumentReference>();
-    for (Iterator each = myGlobalStack.iterator(); each.hasNext();) {
-      UndoableGroup undoableGroup = (UndoableGroup)each.next();
+    for (UndoableGroup undoableGroup : myGlobalStack) {
       result.addAll(undoableGroup.getAffectedDocuments());
     }
     return result;
