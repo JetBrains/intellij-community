@@ -61,7 +61,6 @@ public final class ComponentTree extends Tree implements DataProvider {
   private HashMap<SimpleTextAttributes, SimpleTextAttributes> myAttr2errAttr; // exists only for performance reason
 
   private final GuiEditor myEditor;
-  private final Palette myPalette;
   private final QuickFixManager myQuickFixManager;
   private RadComponent myDropTargetComponent = null;
 
@@ -72,7 +71,6 @@ public final class ComponentTree extends Tree implements DataProvider {
       throw new IllegalArgumentException("editor cannot be null");
     }
     myEditor = editor;
-    myPalette = Palette.getInstance(editor.getProject());
 
     setCellRenderer(new MyTreeCellRenderer());
     setRootVisible(false);
@@ -274,6 +272,45 @@ public final class ComponentTree extends Tree implements DataProvider {
     myUnknownAttributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_WAVED, Color.RED);
   }
 
+  public static String getComponentTitle(final RadComponent component) {
+    Palette palette = Palette.getInstance(component.getModule().getProject());
+    IntrospectedProperty[] props = palette.getIntrospectedProperties(component.getComponentClass());
+    for(IntrospectedProperty prop: props) {
+      if (prop.getName().equals(SwingProperties.TEXT) && prop instanceof IntroStringProperty) {
+        StringDescriptor value = (StringDescriptor) prop.getValue(component);
+        if (value != null) {
+          return "\"" + value.getResolvedValue() + "\"";
+        }
+      }
+    }
+
+    if (component instanceof RadContainer) {
+      RadContainer container = (RadContainer) component;
+      StringDescriptor descriptor = container.getBorderTitle();
+      if (descriptor != null) {
+        if (descriptor.getResolvedValue() == null) {
+          descriptor.setResolvedValue(ReferenceUtil.resolve(component.getModule(), descriptor));
+        }
+        return "\"" + descriptor.getResolvedValue() + "\"";
+      }
+    }
+
+    if (component.getParent() instanceof RadTabbedPane) {
+      RadTabbedPane parentTabbedPane = (RadTabbedPane) component.getParent();
+      final StringDescriptor descriptor = parentTabbedPane.getChildTitle(component);
+      if (descriptor != null) {
+        if (descriptor.getResolvedValue() == null) {
+          descriptor.setResolvedValue(ReferenceUtil.resolve(component.getModule(), descriptor));
+        }
+        return "\"" + descriptor.getResolvedValue() + "\"";
+      }
+      else {
+        parentTabbedPane.getChildTitle(component);
+      }
+    }
+    return null;
+  }
+
   private final class MyTreeCellRenderer extends ColoredTreeCellRenderer {
     @NonNls private static final String SWING_PACKAGE = "javax.swing";
 
@@ -381,41 +418,6 @@ public final class ComponentTree extends Tree implements DataProvider {
           setBorder(BorderFactory.createLineBorder(Color.BLUE, 2));
         }
       }
-    }
-
-    private String getComponentTitle(final RadComponent component) {
-      IntrospectedProperty[] props = myPalette.getIntrospectedProperties(component.getComponentClass());
-      for(IntrospectedProperty prop: props) {
-        if (prop.getName().equals(SwingProperties.TEXT) && prop instanceof IntroStringProperty) {
-          StringDescriptor value = (StringDescriptor) prop.getValue(component);
-          if (value != null) {
-            return "\"" + value.getResolvedValue() + "\"";
-          }
-        }
-      }
-
-      if (component instanceof RadContainer) {
-        RadContainer container = (RadContainer) component;
-        StringDescriptor descriptor = container.getBorderTitle();
-        if (descriptor != null) {
-          if (descriptor.getResolvedValue() == null) {
-            descriptor.setResolvedValue(ReferenceUtil.resolve(component.getModule(), descriptor));
-          }
-          return "\"" + descriptor.getResolvedValue() + "\"";
-        }
-      }
-
-      if (component.getParent() instanceof RadTabbedPane) {
-        RadTabbedPane parentTabbedPane = (RadTabbedPane) component.getParent();
-        final StringDescriptor descriptor = parentTabbedPane.getChildTitle(component);
-        if (descriptor != null) {
-          if (descriptor.getResolvedValue() == null) {
-            descriptor.setResolvedValue(ReferenceUtil.resolve(component.getModule(), descriptor));
-          }
-          return "\"" + descriptor.getResolvedValue() + "\"";
-        }
-      }
-      return null;
     }
   }
 

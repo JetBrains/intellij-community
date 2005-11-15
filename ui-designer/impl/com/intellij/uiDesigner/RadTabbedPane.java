@@ -85,7 +85,7 @@ public final class RadTabbedPane extends RadContainer{
     component.setCustomLayoutConstraints(null);
     tabbedPane.addTab(calcTabName(titleDescriptor), component.getDelegee());
     if (titleDescriptor != null) {
-      getIndex2Descriptor(this).put(tabbedPane.getTabCount() - 1, titleDescriptor);
+      getIndex2Descriptor(this).put(new Integer(tabbedPane.getTabCount() - 1), titleDescriptor);
     }
   }
 
@@ -109,7 +109,7 @@ public final class RadTabbedPane extends RadContainer{
       //noinspection HardCodedStringLiteral
       throw new IllegalArgumentException("cannot find tab for " + component);
     }
-    StringDescriptor titleDescriptor = getIndex2Descriptor(this).get(i);
+    StringDescriptor titleDescriptor = getIndex2Descriptor(this).get(new Integer(i));
     if (titleDescriptor == null) {
       titleDescriptor = StringDescriptor.create(tabbedPane.getTitleAt(i));
     }
@@ -142,7 +142,8 @@ public final class RadTabbedPane extends RadContainer{
     final JComponent delegee = component.getDelegee();
     final JTabbedPane tabbedPane = getTabbedPane();
     int index = tabbedPane.indexOfComponent(delegee);
-    return getIndex2Descriptor(this).get(index);
+    final HashMap<Integer, StringDescriptor> index2DescriptorMap = getIndex2Descriptor(this);
+    return index2DescriptorMap.get(new Integer(index));
   }
 
   public void setChildTitle(RadComponent component, StringDescriptor title) throws Exception {
@@ -190,7 +191,7 @@ public final class RadTabbedPane extends RadContainer{
       }
 
       final HashMap<Integer, StringDescriptor> index2Descriptor = getIndex2Descriptor(this);
-      final StringDescriptor tabTitleDescriptor = index2Descriptor.get(i);
+      final StringDescriptor tabTitleDescriptor = index2Descriptor.get(new Integer(i));
       if (tabTitleDescriptor != null) {
         writer.writeStringDescriptor(tabTitleDescriptor,
                                      UIFormXmlConstants.ATTRIBUTE_TITLE,
@@ -232,7 +233,7 @@ public final class RadTabbedPane extends RadContainer{
 
     public Object getValue(final RadComponent component) {
       // 1. resource bundle
-      final StringDescriptor descriptor = getIndex2Descriptor(component).get(myIndex);
+      final StringDescriptor descriptor = getIndex2Descriptor(component).get(new Integer(myIndex));
       if(descriptor != null){
         return descriptor;
       }
@@ -245,11 +246,11 @@ public final class RadTabbedPane extends RadContainer{
       // 1. Put value into map
       final StringDescriptor descriptor = (StringDescriptor)value;
       final HashMap<Integer, StringDescriptor> index2Descriptor = getIndex2Descriptor(component);
-      if(descriptor == null || descriptor.getBundleName() == null){
-        index2Descriptor.remove(myIndex);
+      if(descriptor == null){
+        index2Descriptor.remove(new Integer(myIndex));
       }
       else{
-        index2Descriptor.put(myIndex, descriptor);
+        index2Descriptor.put(new Integer(myIndex), descriptor);
       }
 
       // 2. Apply real string value to JComponent peer

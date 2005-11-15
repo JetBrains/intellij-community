@@ -7,6 +7,7 @@ import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.RadComponent;
 import com.intellij.uiDesigner.RadContainer;
 import com.intellij.uiDesigner.RadRootContainer;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Anton Katilin
@@ -79,6 +80,7 @@ final class ComponentTreeStructure extends AbstractTreeStructure{
     }
   }
 
+  @NotNull
   public NodeDescriptor createDescriptor(final Object element,final NodeDescriptor parentDescriptor){
     if(element==myRootElement){
       return new RootDescriptor(parentDescriptor,myRootElement);
