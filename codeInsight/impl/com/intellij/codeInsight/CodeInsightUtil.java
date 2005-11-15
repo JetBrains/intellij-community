@@ -26,6 +26,7 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -55,7 +56,7 @@ public class CodeInsightUtil {
     return expression;
   }
 
-  public static PsiElement[] findStatementsInRange(PsiFile file, int startOffset, int endOffset) {
+  @NotNull public static PsiElement[] findStatementsInRange(PsiFile file, int startOffset, int endOffset) {
     PsiElement element1 = file.findElementAt(startOffset);
     PsiElement element2 = file.findElementAt(endOffset - 1);
     if (element1 instanceof PsiWhiteSpace) {
@@ -66,9 +67,10 @@ public class CodeInsightUtil {
       endOffset = element2.getTextRange().getStartOffset();
       element2 = file.findElementAt(endOffset - 1);
     }
-    if (element1 == null || element2 == null) return null;
+    if (element1 == null || element2 == null) return PsiElement.EMPTY_ARRAY;
 
     PsiElement parent = PsiTreeUtil.findCommonParent(element1, element2);
+    if (parent == null) return PsiElement.EMPTY_ARRAY;
     while (true) {
       if (parent instanceof PsiStatement) {
         parent = parent.getParent();
@@ -77,20 +79,23 @@ public class CodeInsightUtil {
       if (parent instanceof PsiCodeBlock) break;
       if (parent instanceof JspFile) break;
       if (parent instanceof PsiCodeFragment) break;
-      if (parent instanceof PsiFile) return null;
+      if (parent instanceof PsiFile) return PsiElement.EMPTY_ARRAY;
       parent = parent.getParent();
     }
 
-
-    while (!element1.getParent().equals(parent)) {
-      element1 = element1.getParent();
+    if (!parent.equals(element1)) {
+      while (!parent.equals(element1.getParent())) {
+        element1 = element1.getParent();
+      }
     }
-    if (startOffset != element1.getTextRange().getStartOffset()) return null;
+    if (startOffset != element1.getTextRange().getStartOffset()) return PsiElement.EMPTY_ARRAY;
 
-    while (!element2.getParent().equals(parent)) {
-      element2 = element2.getParent();
+    if (!parent.equals(element2)) {
+      while (!parent.equals(element2.getParent())) {
+        element2 = element2.getParent();
+      }
     }
-    if (endOffset != element2.getTextRange().getEndOffset()) return null;
+    if (endOffset != element2.getTextRange().getEndOffset()) return PsiElement.EMPTY_ARRAY;
 
     if (parent instanceof PsiCodeBlock && parent.getParent() instanceof PsiBlockStatement
         && element1 == ((PsiCodeBlock)parent).getLBrace()
@@ -123,7 +128,7 @@ public class CodeInsightUtil {
       if (!(element instanceof PsiStatement
             || element instanceof PsiWhiteSpace
             || element instanceof PsiComment)) {
-        return null;
+        return PsiElement.EMPTY_ARRAY;
       }
     }
 
@@ -143,7 +148,7 @@ public class CodeInsightUtil {
       }
       public void visitComposite(CompositeElement composite) {
         ChameleonTransforming.transformChildren(composite);
-        for (TreeElement child = (TreeElement)composite.getFirstChildNode(); child != null; child = child.getTreeNext()) {
+        for (TreeElement child = composite.getFirstChildNode(); child != null; child = child.getTreeNext()) {
           if (offset > endOffset) break;
           int start = offset;
           child.acceptTree(this);

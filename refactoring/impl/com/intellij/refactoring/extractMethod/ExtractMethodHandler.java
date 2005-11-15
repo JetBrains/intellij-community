@@ -2,8 +2,8 @@ package com.intellij.refactoring.extractMethod;
 
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,8 +20,8 @@ import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.duplicates.DuplicatesImpl;
 import com.intellij.util.IncorrectOperationException;
 
@@ -39,7 +39,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler {
     int endOffset = editor.getSelectionModel().getSelectionEnd();
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-    
+
     PsiElement[] elements;
     PsiExpression expr = CodeInsightUtil.findExpressionInRange(file, startOffset, endOffset);
     if (expr != null) {
@@ -51,7 +51,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler {
     invokeOnElements(elements, project, file, editor);
   }
 
-  private void invokeOnElements(final PsiElement[] elements, final Project project, final PsiFile file, final Editor editor) {
+  private static void invokeOnElements(final PsiElement[] elements, final Project project, final PsiFile file, final Editor editor) {
     if (elements == null || elements.length == 0) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("selected.block.should.represent.a.set.of.statements.or.an.expression"));
       CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.EXTRACT_METHOD, project);
@@ -93,8 +93,8 @@ public class ExtractMethodHandler implements RefactoringActionHandler {
                     ApplicationManager.getApplication().runWriteAction(action);
                   }
                 },
-                REFACTORING_NAME,
-                null
+            REFACTORING_NAME,
+            null
         );
 
         DuplicatesImpl.processDuplicates(processor, project, editor, REFACTORING_NAME);
@@ -107,9 +107,9 @@ public class ExtractMethodHandler implements RefactoringActionHandler {
   }
 
   public static void highlightPrepareError(PrepareFailedException e,
-                                                     PsiFile file,
-                                                     Editor editor,
-                                                     final Project project) {
+                                           PsiFile file,
+                                           Editor editor,
+                                           final Project project) {
     if (e.getFile() == file) {
       final TextRange textRange = e.getTextRange();
       final HighlightManager highlightManager = HighlightManager.getInstance(project);

@@ -59,7 +59,7 @@ class StatementMover extends LineMover {
     final int startOffset = editor.logicalPositionToOffset(new LogicalPosition(range.startLine, 0));
     final int endOffset = editor.logicalPositionToOffset(new LogicalPosition(range.endLine+1, 0));
     final PsiElement[] statements = CodeInsightUtil.findStatementsInRange(file, startOffset, endOffset);
-    if (statements == null || statements.length == 0) return false;
+    if (statements.length == 0) return false;
     range.firstElement = statements[0];
     range.lastElement = statements[statements.length-1];
     if (!checkMovingInsideOutside(file, editor, range, myIsDown)) {

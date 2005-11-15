@@ -139,7 +139,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
             fileEditorManager.getSelectedTextEditor().getSelectionModel().getSelectionEnd()
           );
 
-          if (elements != null) {
+          if (elements.length != 0) {
             model.addElement(new ScopeDescriptor(new LocalSearchScope(elements, IdeBundle.message("scope.selection"))));
           }
         }
@@ -151,7 +151,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
     if (selectedUsageView != null && !selectedUsageView.isSearchInProgress()) {
       final Set<Usage> usages = selectedUsageView.getUsages();
       if (usages != null) {
-        final java.util.List<PsiElement> results = new ArrayList<PsiElement>(usages.size());
+        final List<PsiElement> results = new ArrayList<PsiElement>(usages.size());
 
         if (myPrevSearchFiles) {
           final Set<VirtualFile> files = new HashSet<VirtualFile>();

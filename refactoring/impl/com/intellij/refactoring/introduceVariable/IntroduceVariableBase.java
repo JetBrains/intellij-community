@@ -54,7 +54,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     PsiExpression tempExpr = CodeInsightUtil.findExpressionInRange(file, startOffset, endOffset);
     if (tempExpr == null) {
       PsiElement[] statements = CodeInsightUtil.findStatementsInRange(file, startOffset, endOffset);
-      if (statements != null && statements.length == 1 && statements[0] instanceof PsiExpressionStatement) {
+      if (statements.length == 1 && statements[0] instanceof PsiExpressionStatement) {
         tempExpr = ((PsiExpressionStatement) statements[0]).getExpression();
       }
     }
@@ -250,7 +250,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
               if (occurrence.equals(expr)) {
                 occurrence = expr1;
               }
-              if (occurrence instanceof PsiExpression) {
+              if (occurrence != null) {
                 occurrence = RefactoringUtil.outermostParenthesizedExpression((PsiExpression)occurrence);
               }
               if (replaceWrite || !RefactoringUtil.isAssignmentLHS(occurrence)) {

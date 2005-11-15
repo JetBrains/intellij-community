@@ -64,13 +64,14 @@ public class ElementToWorkOn {
 
     if (expr == null && localVar == null) {
       PsiElement[] statements = CodeInsightUtil.findStatementsInRange(file, startOffset, endOffset);
-      if (statements != null && statements.length == 1 && statements[0] instanceof PsiExpressionStatement) {
-        expr = ((PsiExpressionStatement) statements[0]).getExpression();
-      } else if (statements != null && statements.length == 1 && statements[0] instanceof PsiDeclarationStatement) {
-        PsiDeclarationStatement decl = (PsiDeclarationStatement) statements[0];
+      if (statements.length == 1 && statements[0] instanceof PsiExpressionStatement) {
+        expr = ((PsiExpressionStatement)statements[0]).getExpression();
+      }
+      else if (statements.length == 1 && statements[0] instanceof PsiDeclarationStatement) {
+        PsiDeclarationStatement decl = (PsiDeclarationStatement)statements[0];
         PsiElement[] declaredElements = decl.getDeclaredElements();
         if (declaredElements.length == 1 && declaredElements[0] instanceof PsiLocalVariable) {
-          localVar = (PsiLocalVariable) declaredElements[0];
+          localVar = (PsiLocalVariable)declaredElements[0];
         }
       }
     }

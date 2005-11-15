@@ -150,7 +150,7 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     } else {
       elements = CodeInsightUtil.findStatementsInRange(file, startOffset, endOffset);
     }
-    assertTrue(elements != null && elements.length > 0);
+    assertTrue(elements.length > 0);
 
     final ExtractMethodProcessor processor = new ExtractMethodProcessor(project, editor, elements,
             null, "Extract Method", "newMethod", null
