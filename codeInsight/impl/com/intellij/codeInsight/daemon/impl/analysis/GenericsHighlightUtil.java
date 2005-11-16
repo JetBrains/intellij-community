@@ -475,7 +475,10 @@ public abstract class GenericsHighlightUtil {
       return false;
     }
 
-    LOG.assertTrue(exprType instanceof PsiClassType && castType instanceof PsiClassType, "Invalid types: castType =" + castType + ", exprType=" + exprType);
+    boolean isValidType = exprType instanceof PsiClassType && castType instanceof PsiClassType;
+    if (!isValidType) {
+      LOG.assertTrue(false, "Invalid types: castType =" + castType + ", exprType=" + exprType);
+    }
     PsiClassType.ClassResolveResult resolveResult1 = ((PsiClassType)exprType).resolveGenerics();
     PsiClassType.ClassResolveResult resolveResult2 = ((PsiClassType)castType).resolveGenerics();
     PsiClass aClass = resolveResult1.getElement();

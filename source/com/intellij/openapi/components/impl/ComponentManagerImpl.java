@@ -465,7 +465,9 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       Element root = ourDescriptorToRootMap.get(descriptor);
       if (root == null) {
         InputStream inputStream = DecodeDefaultsUtil.getDefaultsInputStream(this, descriptor);
-        LOG.assertTrue(inputStream != null, "Defaults not found:" + descriptor);
+        if (inputStream == null) {
+          LOG.assertTrue(false, "Defaults not found:" + descriptor);
+        }
         final Document document = JDOMUtil.loadDocument(inputStream);
         inputStream.close();
 

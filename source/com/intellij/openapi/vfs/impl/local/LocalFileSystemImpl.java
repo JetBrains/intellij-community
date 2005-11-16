@@ -813,12 +813,16 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
   }
 
   public void registerAuxiliaryFileOperationsHandler(LocalFileOperationsHandler handler) {
-    LOG.assertTrue(!myHandlers.contains(handler), "Handler " + handler + " already registered.");
+    if (myHandlers.contains(handler)) {
+      LOG.error("Handler " + handler + " already registered.");
+    }
     myHandlers.add(handler);
   }
 
   public void unregisterAuxiliaryFileOperationsHandler(LocalFileOperationsHandler handler) {
-    LOG.assertTrue(myHandlers.remove(handler), "Handler" + handler + " haven't been registered or already unregistered.");
+    if (!myHandlers.remove(handler)) {
+      LOG.error("Handler" + handler + " haven't been registered or already unregistered.");
+    }
   }
 
   public boolean auxDelete(VirtualFile file) throws IOException {

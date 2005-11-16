@@ -328,7 +328,9 @@ public class RunContentManagerImpl implements RunContentManager {
 
   private ContentManager getContentManagerForRunner(final RunnerInfo runnerInfo) {
     final ContentManager contentManager = myToolwindowIdToContentManagerMap.get(runnerInfo.getToolWindowId());
-    LOG.assertTrue(contentManager != null, "Runner " + runnerInfo.getId() + " is not registered");
+    if (contentManager == null) {
+      LOG.error("Runner " + runnerInfo.getId() + " is not registered");
+    }
     return contentManager;
   }
 

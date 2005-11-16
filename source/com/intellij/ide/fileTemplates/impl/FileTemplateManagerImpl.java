@@ -134,7 +134,9 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
     ensureTemplatesAreLoaded();
     LOG.assertTrue(name != null);
     LOG.assertTrue(name.length() > 0);
-    LOG.assertTrue(myTemplates.findByName(name) == null, "Duplicate template " + name);
+    if (myTemplates.findByName(name) != null) {
+      LOG.error("Duplicate template " + name);
+    }
 
     FileTemplate fileTemplate = new FileTemplateImpl("", name, extension);
     myTemplates.addTemplate(fileTemplate);
@@ -187,7 +189,9 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
     if (!templatesPath.exists()) {
       if (create) {
         final boolean created = templatesPath.mkdirs();
-        LOG.assertTrue(created, "Cannot create directory: " + templatesPath.getAbsolutePath());
+        if (!created) {
+          LOG.error("Cannot create directory: " + templatesPath.getAbsolutePath());
+        }
       }
     }
     return templatesPath;
@@ -257,8 +261,9 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
       if (extension.equals("html")) {
         continue;
       }
-      LOG.assertTrue(extension.equals(DEFAULT_TEMPLATE_EXTENSION),
-                     file.toString() + " should have *." + DEFAULT_TEMPLATE_EXTENSION + " extension!");
+      if (!extension.equals(DEFAULT_TEMPLATE_EXTENSION)) {
+        LOG.error(file.toString() + " should have *." + DEFAULT_TEMPLATE_EXTENSION + " extension!");
+      }
       extension = myTypeManager.getExtension(name);
       name = name.substring(0, name.length() - extension.length() - 1);                   //name="NewClass"   extension="java"
       FileTemplate aTemplate = myTemplates.findByName(name);
@@ -269,7 +274,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
       }
       VirtualFile description = getDescriptionForTemplate(file);
       if (description != null) {
-        ((FileTemplateImpl) aTemplate).setDescription(description);
+        ((FileTemplateImpl)aTemplate).setDescription(description);
       }
       /*else{
         ((FileTemplateImpl)aTemplate).setDescription(myDefaultDescription);

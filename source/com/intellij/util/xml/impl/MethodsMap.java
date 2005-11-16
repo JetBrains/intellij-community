@@ -207,7 +207,9 @@ public class MethodsMap implements DomMethodsInfo {
 
   public int getFixedChildIndex(Method method) {
     final Pair<String, Integer> pair = myFixedChildrenMethods.get(method);
-    LOG.assertTrue(pair != null, "Should be fixed child getter method: " + method);
+    if (pair == null) {
+      LOG.error("Should be fixed child getter method: " + method);
+    }
     return pair.getSecond();
   }
 

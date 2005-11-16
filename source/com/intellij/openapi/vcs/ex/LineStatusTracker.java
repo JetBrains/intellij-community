@@ -358,8 +358,10 @@ public class LineStatusTracker implements EditorColorsListener {
         myRanges.addAll(newChangedRanges);
         myRanges.addAll(rangesAfterChange);
 
-        LOG.assertTrue(myHighlighterCount == myRanges.size(),
-                       "Highlighters: " + myHighlighterCount + ", ranges: " + myRanges.size());
+        if (myHighlighterCount != myRanges.size()) {
+          LOG.assertTrue(false,
+                         "Highlighters: " + myHighlighterCount + ", ranges: " + myRanges.size());
+        }
 
         myRanges = mergeRanges(myRanges);
 
@@ -368,8 +370,10 @@ public class LineStatusTracker implements EditorColorsListener {
 
         }
 
-        LOG.assertTrue(myHighlighterCount == myRanges.size(),
-                       "Highlighters: " + myHighlighterCount + ", ranges: " + myRanges.size());
+        if (myHighlighterCount != myRanges.size()) {
+          LOG.assertTrue(false,
+                         "Highlighters: " + myHighlighterCount + ", ranges: " + myRanges.size());
+        }
       }
 
     }

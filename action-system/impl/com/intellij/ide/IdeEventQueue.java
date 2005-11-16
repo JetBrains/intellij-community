@@ -184,7 +184,9 @@ public class IdeEventQueue extends EventQueue {
     LOG.assertTrue(runnable != null);
     synchronized (myLock) {
       final boolean wasRemoved = myIdleListeners.remove(runnable);
-      LOG.assertTrue(wasRemoved, "unknown runnable: " + runnable);
+      if (!wasRemoved) {
+        LOG.assertTrue(false, "unknown runnable: " + runnable);
+      }
 
       final MyFireIdleRequest request = myListener2Request.remove(runnable);
       LOG.assertTrue(request != null);
@@ -206,7 +208,9 @@ public class IdeEventQueue extends EventQueue {
     LOG.assertTrue(runnable != null);
     synchronized (myLock) {
       final boolean wasRemoved = myActivityListeners.remove(runnable);
-      LOG.assertTrue(wasRemoved, "unknown runnable: " + runnable);
+      if (!wasRemoved) {
+        LOG.assertTrue(false, "unknown runnable: " + runnable);
+      }
     }
   }
 
@@ -293,7 +297,9 @@ public class IdeEventQueue extends EventQueue {
         myIdleRequestsAlarm.cancelAllRequests();
         for (Runnable idleListener : myIdleListeners) {
           final MyFireIdleRequest request = myListener2Request.get(idleListener);
-          LOG.assertTrue(request != null, "There is no request for " + idleListener);
+          if (request == null) {
+            LOG.assertTrue(false, "There is no request for " + idleListener);
+          }
           final Integer timeout = myListener2Timeout.get(idleListener);
           LOG.assertTrue(timeout != null);
           myIdleRequestsAlarm.addRequest(request, timeout, ModalityState.NON_MMODAL);

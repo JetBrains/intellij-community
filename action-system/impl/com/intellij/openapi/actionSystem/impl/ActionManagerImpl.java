@@ -19,8 +19,6 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
@@ -693,7 +691,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
   }
 
   private static void assertActionIsGroupOrStub(final AnAction action) {
-    LOG.assertTrue(action instanceof ActionGroup || action instanceof ActionStub, "Action : "+action + "; class: "+action.getClass());
+    if (!(action instanceof ActionGroup || action instanceof ActionStub)) {
+      LOG.assertTrue(false, "Action : "+action + "; class: "+action.getClass());
+    }
   }
 
   public void registerAction(String actionId, AnAction action, PluginId pluginId) {
@@ -853,7 +853,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
 
     public void removeTimerListener(TimerListener listener){
       final boolean removed = myTimerListeners.remove(listener);
-      LOG.assertTrue(removed, "Unknown listener " + listener);
+      if (!removed) {
+        LOG.assertTrue(false, "Unknown listener " + listener);
+      }
     }
 
     public void actionPerformed(ActionEvent e) {

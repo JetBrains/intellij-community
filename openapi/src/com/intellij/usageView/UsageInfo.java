@@ -51,7 +51,9 @@ public class UsageInfo {
     mySmartPointer = SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element);
 
     TextRange range = element.getTextRange();
-    LOG.assertTrue(range != null, "text range null for " + element);
+    if (range == null) {
+      LOG.assertTrue(false, "text range null for " + element);
+    }
     this.startOffset = element.getTextOffset() - range.getStartOffset();
     this.endOffset = range.getEndOffset() - range.getStartOffset();
 

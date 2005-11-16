@@ -134,9 +134,11 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
     removeBlockSelection();
     Document doc = myEditor.getDocument();
 
-    if (!(startOffset >= 0 && startOffset <= doc.getTextLength() && endOffset >= 0 && endOffset <= doc.getTextLength())) {
-      LOG.assertTrue(startOffset >= 0 && startOffset <= doc.getTextLength(), "Wrong startOffset: " + startOffset);
-      LOG.assertTrue(endOffset >= 0 && endOffset <= doc.getTextLength(), "Wrong endOffset: " + endOffset);
+    if (startOffset < 0 || startOffset > doc.getTextLength()) {
+      LOG.assertTrue(false, "Wrong startOffset: " + startOffset);
+    }
+    if (endOffset < 0 || endOffset > doc.getTextLength()) {
+      LOG.assertTrue(false, "Wrong endOffset: " + endOffset);
     }
 
     myLastSelectionStart = startOffset;

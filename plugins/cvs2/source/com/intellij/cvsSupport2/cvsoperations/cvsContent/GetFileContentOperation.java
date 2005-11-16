@@ -183,7 +183,9 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
   }
 
   private synchronized byte[] loadFileBytes() {
-    LOG.assertTrue(myState == LOADING, "state = " + String.valueOf(myState));
+    if (myState != LOADING) {
+      LOG.error("state = " + String.valueOf(myState));
+    }
     if (myReader.isEmpty()) {
       myState = DELETED;
       return null;

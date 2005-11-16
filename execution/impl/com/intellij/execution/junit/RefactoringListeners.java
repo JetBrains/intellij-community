@@ -149,7 +149,9 @@ public class RefactoringListeners {
       myModule = ExecutionUtil.findModule(aClass);
       final String classQName = aClass.getQualifiedName();
       final String classPackageQName = myContainingPackage.getQualifiedName();
-      LOG.assertTrue(classQName.startsWith(classPackageQName), classQName + " in package: " + classPackageQName);
+      if (!classQName.startsWith(classPackageQName)) {
+        LOG.error(classQName + " in package: " + classPackageQName);
+      }
       final String inpackageName = classQName.substring(classPackageQName.length());
       if (StringUtil.startsWithChar(inpackageName, '.'))
         myInpackageName = inpackageName.substring(1);

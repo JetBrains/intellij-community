@@ -1,5 +1,7 @@
 package com.intellij.ide.actions;
 
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,8 +13,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.FieldPanel;
-import com.intellij.ide.util.ElementsChooser;
-import com.intellij.ide.IdeBundle;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -21,8 +22,6 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.*;
 import java.util.List;
-
-import org.jetbrains.annotations.NonNls;
 
 public class ChooseComponentsToExportDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.ChooseComponentsToExportDialog");

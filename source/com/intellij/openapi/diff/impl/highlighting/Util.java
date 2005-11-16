@@ -56,8 +56,9 @@ public class Util {
   static DiffFragment[] splitByLines(DiffFragment fragment) {
     String[] lines1 = splitByLines(fragment.getText1());
     String[] lines2 = splitByLines(fragment.getText2());
-    if (lines1 != null && lines2 != null)
-      LOG.assertTrue(lines1.length == lines2.length, "1:<" + fragment.getText1() + "> 2:<" + fragment.getText2() + ">");
+    if (lines1 != null && lines2 != null && lines1.length != lines2.length) {
+      LOG.assertTrue(false, "1:<" + fragment.getText1() + "> 2:<" + fragment.getText2() + ">");
+    }
     int length = lines1 == null ? lines2.length : lines1.length;
     DiffFragment[] lines = new DiffFragment[length];
     for (int i = 0; i < lines.length; i++) {

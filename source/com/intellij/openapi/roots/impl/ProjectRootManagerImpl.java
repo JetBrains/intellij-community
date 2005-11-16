@@ -29,9 +29,8 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.pom.java.LanguageLevel;
@@ -373,7 +372,9 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
         myIsRootsChangedOnDemandStartedButNotDemanded = false;
       }
       else {
-        LOG.assertTrue(myRootsChangeCounter == 1, "myRootsChangedCounter = " + myRootsChangeCounter);
+        if (myRootsChangeCounter != 1) {
+          LOG.assertTrue(false, "myRootsChangedCounter = " + myRootsChangeCounter);
+        }
         myIsRootsChangedOnDemandStartedButNotDemanded = false;
         rootsChanged(false);
       }

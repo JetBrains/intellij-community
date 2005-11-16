@@ -38,6 +38,15 @@ public class StringUtil {
     return replace(text, oldS, newS, true);
   }
 
+  public static void replaceChar(@NotNull char[] buffer, char oldChar, char newChar, int start, int end) {
+    for (int i = start; i < end; i++) {
+      char c = buffer[i];
+      if (c == oldChar) {
+        buffer[i] = newChar;
+      }
+    }
+  }
+
   public static String replace(@NotNull String text, @NotNull String oldS, @Nullable String newS, boolean ignoreCase) {
     if (text.length() < oldS.length()) return text;
 

@@ -90,7 +90,9 @@ public class LineBlocks {
 
   private int transform(int location, Interval[] domain, Interval[] range) {
     if (domain.length == 0) {
-      LOG.assertTrue(range.length == 0, "" + range.length);
+      if (range.length != 0) {
+        LOG.error("" + range.length);
+      }
       return location;
     }
     int count = getIntervals(FragmentSide.SIDE1).length;

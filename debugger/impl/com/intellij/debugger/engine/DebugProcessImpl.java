@@ -195,7 +195,9 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   protected void commitVM(VirtualMachine vm) {
-    LOG.assertTrue(isInInitialState(), "State is invalid " + myState);
+    if (!isInInitialState()) {
+      LOG.assertTrue(false, "State is invalid " + myState);
+    }
     DebuggerManagerThreadImpl.assertIsManagerThread();
     myPositionManager = createPositionManager();
     if (LOG.isDebugEnabled()) {
@@ -253,7 +255,9 @@ public abstract class DebugProcessImpl implements DebugProcess {
       }
       if(myConnection.isServerMode()) {
         ListeningConnector connector = (ListeningConnector)findConnector(SOCKET_LISTENING_CONNECTOR_NAME);
-        LOG.assertTrue(connector != null, "Cannot find connector: " + SOCKET_LISTENING_CONNECTOR_NAME);
+        if (connector == null) {
+          LOG.error("Cannot find connector: " + SOCKET_LISTENING_CONNECTOR_NAME);
+        }
         connector.stopListening(arguments);
       }
       else {

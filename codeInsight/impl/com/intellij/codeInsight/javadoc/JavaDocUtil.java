@@ -249,10 +249,7 @@ public class JavaDocUtil {
 
     String packageName = ((PsiJavaFile)aClass.getContainingFile()).getPackageName();
 
-    LOG.assertTrue(packageName != null, "packageName==null");
     if (packageName.length() == 0) return qName;
-
-    LOG.assertTrue(packageName.length() >= 0, "Ctrl-Mouse: class is " + aClass.getQualifiedName());
 
     String shortName = packageName.length() < qName.length() ? qName.substring(packageName.length() + 1) : qName;
 

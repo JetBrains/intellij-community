@@ -133,7 +133,9 @@ public class FileReferenceSet {
   public Collection<PsiElement> getDefaultContexts(PsiElement element) {
     Project project = element.getProject();
     PsiFile file = element.getContainingFile();
-    LOG.assertTrue(file != null, "Invalid element: " + element);
+    if (file == null) {
+      LOG.assertTrue(false, "Invalid element: " + element);
+    }
 
     if (!file.isPhysical()) file = file.getOriginalFile();
     if (file == null) return Collections.emptyList();

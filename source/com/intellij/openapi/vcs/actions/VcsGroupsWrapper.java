@@ -64,14 +64,14 @@ public class VcsGroupsWrapper extends DefaultActionGroup {
                                                                          0));
       for (int i = 0; i < children.length; i++) {
         AnAction child = children[i];
-        LOG.assertTrue(child instanceof StandardVcsGroup,
-                       "Any version control group should extends com.intellij.openapi.vcs.actions.StandardVcsGroup class. Groupd class: " +
-                       child.getClass().getName() +
-                       ", group ID: " +
-                       ActionManager.getInstance().getId(child));
-        if (child instanceof StandardVcsGroup) {
-          validChildren.add(child);
+        if (!(child instanceof StandardVcsGroup)) {
+          LOG.assertTrue(false,
+                         "Any version control group should extends com.intellij.openapi.vcs.actions.StandardVcsGroup class. Groupd class: " +
+                         child.getClass().getName() +
+                         ", group ID: " +
+                         ActionManager.getInstance().getId(child));
         }
+        validChildren.add(child);
       }
 
       myChildren = validChildren.toArray(new AnAction[validChildren.size()]);

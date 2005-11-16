@@ -65,7 +65,9 @@ public final class ObjectTree {
 
     ObjectNode eachParent = childNode.getParent();
     while (eachParent != null) {
-      LOG.assertTrue(eachParent.getObject() != child, child + " was already added as a child of: " + eachParent);
+      if (eachParent.getObject() == child) {
+        LOG.assertTrue(false, child + " was already added as a child of: " + eachParent);
+      }
       eachParent = eachParent.getParent();
     }
   }

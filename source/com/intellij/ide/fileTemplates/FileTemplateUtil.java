@@ -75,16 +75,19 @@ public class FileTemplateUtil{
    * \\$qqq -> qqq
    * ${qqq} -> qqq
    */
-  private static String referenceToAttribute(String attrib, boolean includeDummies){
-    while (attrib.startsWith("\\\\")){
+  private static String referenceToAttribute(String attrib, boolean includeDummies) {
+    while (attrib.startsWith("\\\\")) {
       attrib = attrib.substring(2);
     }
-    if (attrib.startsWith("\\$")){
+    if (attrib.startsWith("\\$")) {
       if (includeDummies) {
         attrib = attrib.substring(1);
-      } else return null;
+      }
+      else return null;
     }
-    LOG.assertTrue(StringUtil.startsWithChar(attrib, '$'), "Invalid attribute: " + attrib);
+    if (!StringUtil.startsWithChar(attrib, '$')) {
+      LOG.error("Invalid attribute: " + attrib);
+    }
     attrib = attrib.substring(1);
     if (StringUtil.startsWithChar(attrib, '{')) {
       String cleanAttribute = null;

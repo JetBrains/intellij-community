@@ -804,7 +804,9 @@ public class TypeConversionUtil {
     else {
       substitutor = getSuperClassSubstitutorInner(superClass, derivedClass, derivedSubstitutor, visited, manager);
     }
-    LOG.assertTrue(substitutor != null, "Not inheritor: " + derivedClass + " super: " + superClass);
+    if (substitutor == null) {
+      LOG.assertTrue(false, "Not inheritor: " + derivedClass + " super: " + superClass);
+    }
     return substitutor;
   }
 

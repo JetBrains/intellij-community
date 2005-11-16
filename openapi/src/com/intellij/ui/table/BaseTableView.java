@@ -93,8 +93,10 @@ public abstract class BaseTableView extends Table {
       storage.put(widthPropertyName(i), String.valueOf(column.getWidth()));
       final int modelIndex = column.getModelIndex();
       storage.put(orderPropertyName(i), String.valueOf(modelIndex));
-      LOG.assertTrue(!storedColumns[modelIndex],
-                     "columnCount: " + columnCount + " current: " + i + " modelINdex: " + modelIndex);
+      if (storedColumns[modelIndex]) {
+        LOG.assertTrue(false,
+                       "columnCount: " + columnCount + " current: " + i + " modelINdex: " + modelIndex);
+      }
       storedColumns[modelIndex] = true;
     }
   }

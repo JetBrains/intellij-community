@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsBundle;
@@ -104,9 +105,9 @@ public class VirtualFileImpl extends VirtualFile {
     //ApplicationManager.getApplication().assertReadAccessAllowed();
     try {
       char[] buffer = new char[bufferLength];
-      int length = 0;
+      int length;
       synchronized (ourFileSystem.LOCK) {
-        length = appendPath(buffer, separatorChar, 0);
+        length = appendPath(buffer, separatorChar);
       }
       return StringFactory.createStringFromConstantArray(buffer, 0, length);
     }
@@ -115,18 +116,22 @@ public class VirtualFileImpl extends VirtualFile {
     }
   }
 
-  private int appendPath(char[] buffer, char separatorChar, int currentLength) {
-    String name = myName;
-    if (myParent != null)
-      currentLength = myParent.appendPath(buffer, separatorChar, 0);
-    else name = name.replace('/', separatorChar); // root may contain '/' char
+  private int appendPath(char[] buffer, char separatorChar) {
+    int currentLength = myParent == null ? 0 : myParent.appendPath(buffer, separatorChar);
 
-    if (currentLength > 0 && buffer[currentLength - 1] != separatorChar)
+    if (currentLength > 0 && buffer[currentLength - 1] != separatorChar) {
       buffer[currentLength++] = separatorChar;
+    }
+
+    String name = myName;
     final int nameLength = name.length();
 
     name.getChars(0, nameLength, buffer, currentLength);
-    return currentLength + nameLength;
+    int newLength = currentLength + nameLength;
+    if (currentLength == 0) {
+      StringUtil.replaceChar(buffer, '/', separatorChar, currentLength, newLength); // root may contain '/' char
+    }
+    return newLength;
   }
 
   @NotNull

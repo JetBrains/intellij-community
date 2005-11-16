@@ -60,10 +60,11 @@ public class DiffDivider extends JComponent {
     myPaint = new DiffDividerPaint(sides, myLeftSide);
     myEditors[0] = sides.getEditor(FragmentSide.SIDE1);
     myEditors[1] = sides.getEditor(FragmentSide.SIDE2);
-    LOG.assertTrue((myEditors[0] != null) && (myEditors[1] != null),
-                   String.valueOf(myEditors[1]) + " " + String.valueOf(myEditors[1]));
-    for (int i = 0; i < myEditors.length; i++) {
-      Editor editor = myEditors[i];
+    if (myEditors[0] == null || myEditors[1] == null) {
+      LOG.assertTrue(false,
+                     String.valueOf(myEditors[1]) + " " + String.valueOf(myEditors[1]));
+    }
+    for (Editor editor : myEditors) {
       editor.getScrollingModel().addVisibleAreaListener(myVisibleAreaListener);
     }
   }
