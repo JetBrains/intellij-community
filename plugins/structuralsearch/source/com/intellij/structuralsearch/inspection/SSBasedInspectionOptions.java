@@ -24,6 +24,7 @@ import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.SearchConfiguration;
 import com.intellij.structuralsearch.plugin.ui.SearchContext;
 import com.intellij.structuralsearch.plugin.ui.SearchDialog;
+import org.jdom.Element;
 
 import javax.swing.*;
 import javax.swing.event.ListDataEvent;
@@ -120,6 +121,13 @@ public class SSBasedInspectionOptions {
         dialog.setValuesFromConfig(configuration);
         dialog.setUseLastConfiguration(true);
         dialog.show();
+        if (!dialog.isOK()) {
+          return;
+        }
+        Configuration newConfiguration = dialog.getConfiguration();
+        Element temp = new Element("temp");
+        newConfiguration.writeExternal(temp);
+        configuration.readExternal(temp);
       }
     });
     myRemoveButton.addActionListener(new ActionListener() {
