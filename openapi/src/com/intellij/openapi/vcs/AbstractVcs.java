@@ -36,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
  * @see ModuleLevelVcsManager 
  */
 public abstract class AbstractVcs {
-
+  
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.AbstractVcs");
 
   protected final Project myProject;
