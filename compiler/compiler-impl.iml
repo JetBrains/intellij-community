@@ -19,6 +19,7 @@
     <orderEntry type="module" module-name="action-system-openapi" />
     <orderEntry type="module" module-name="ui-openapi" />
     <orderEntry type="module" module-name="idea_rt" />
+    <orderEntry type="module" module-name="action-system-impl" />
     <orderEntryProperties />
   </component>
   <component name="copyright">
