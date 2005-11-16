@@ -21,7 +21,7 @@ public class PluginClassLoader extends IdeaClassLoader{
   private final PluginId myPluginId;
   private final File myLibDirectory;
 
-  public PluginClassLoader(List urls, ClassLoader[] parents, PluginId pluginId, File pluginRoot) {
+  public PluginClassLoader(List<URL> urls, ClassLoader[] parents, PluginId pluginId, File pluginRoot) {
     super(urls, null);
     myParents = parents;
     myPluginId = pluginId;
@@ -41,9 +41,9 @@ public class PluginClassLoader extends IdeaClassLoader{
         PluginManager.addPluginClass(c.getName(), myPluginId);
       }
       catch (ClassNotFoundException e) {
-        for (int idx = 0; idx < myParents.length; idx++) {
+        for (ClassLoader parent : myParents) {
           try {
-            c = myParents[idx].loadClass(name);
+            c = parent.loadClass(name);
             break;
           }
           catch (ClassNotFoundException ignoreAndContinue) {
@@ -67,8 +67,8 @@ public class PluginClassLoader extends IdeaClassLoader{
     if (resource != null) {
       return resource;
     }
-    for (int idx = 0; idx < myParents.length; idx++) {
-      final URL parentResource = fetchResource(myParents[idx], name);
+    for (ClassLoader parent : myParents) {
+      final URL parentResource = fetchResource(parent, name);
       if (parentResource != null) {
         return parentResource;
       }
@@ -76,13 +76,13 @@ public class PluginClassLoader extends IdeaClassLoader{
     return null;
   }
 
-  public Enumeration findResources(final String name) throws IOException {
+  public Enumeration<URL> findResources(final String name) throws IOException {
     final Enumeration[] resources = new Enumeration[myParents.length + 1];
     resources[0] = super.findResources(name);
     for (int idx = 0; idx < myParents.length; idx++) {
       resources[idx + 1] = fetchResources(myParents[idx], name);
     }
-    return new CompoundEnumeration(resources);
+    return new CompoundEnumeration<URL>(resources);
   }
 
   protected String findLibrary(String libName) {
@@ -99,7 +99,7 @@ public class PluginClassLoader extends IdeaClassLoader{
     try {
       //noinspection HardCodedStringLiteral
       final Method findResourceMethod = getFindResourceMethod(cl.getClass(), "findResource");
-      return (URL)findResourceMethod.invoke(cl, new Object[] {resourceName});
+      return (URL)findResourceMethod.invoke(cl, resourceName);
     }
     catch (Exception e) {
       e.printStackTrace();
@@ -115,7 +115,7 @@ public class PluginClassLoader extends IdeaClassLoader{
       if (findResourceMethod == null) {
         return null;
       }
-      return (Enumeration)findResourceMethod.invoke(cl, new Object[] {resourceName});
+      return (Enumeration)findResourceMethod.invoke(cl, resourceName);
     }
     catch (Exception e) {
       e.printStackTrace();
@@ -125,7 +125,7 @@ public class PluginClassLoader extends IdeaClassLoader{
 
   private Method getFindResourceMethod(final Class clClass, final String methodName) {
     try {
-      final Method declaredMethod = clClass.getDeclaredMethod(methodName, new Class[]{String.class});
+      final Method declaredMethod = clClass.getDeclaredMethod(methodName, String.class);
       declaredMethod.setAccessible(true);
       return declaredMethod;
     }
