@@ -306,6 +306,12 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       myImplementation.clear();
     }
+    try {
+      myImplementation.close();
+    }
+    catch (IOException e) {
+      LOG.error(e);
+    }
   }
 
   public VirtualFileListener getVirtualFileListener() {
@@ -378,12 +384,10 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: finished()");
     }
-
     LOG.assertTrue(myAction != null, action.getName());
     myImplementation.addLabelImpl(LvcsLabel.TYPE_AFTER_ACTION, "", action.getPath(), action.getName());
     myAction = null;
     saveInternal(EXTERNAL_CHANGES_ACTION.equals(action.getName()));
-    //save();
   }
 
   private void commitAllUnsavedDocuments() {
@@ -404,7 +408,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
         Charset charset = file.getCharset();
         LOG.assertTrue(charset != null);
         myImplementation.commitFile(lvcsFile.getRevision(),
-                              unsavedDocument.getText().getBytes(charset.name()));
+                                    unsavedDocument.getText().getBytes(charset.name()));
       }
       catch (UnsupportedEncodingException e) {
         LOG.error(e);
@@ -486,7 +490,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
       progress.pushState();
       progress.setText(LocalVcsBundle.message("progress.text.clearing.local.history"));
     }
-    myImplementation.clear();
+    myImplementation.clearAndRecreate();
     if (progress != null) {
       progress.popState();
     }
