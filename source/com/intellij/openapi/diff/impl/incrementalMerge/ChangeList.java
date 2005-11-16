@@ -22,13 +22,11 @@ public class ChangeList {
   private final Parent myParent;
   private final ArrayList<Listener> myListeners = new ArrayList<Listener>();
   private ArrayList<Change> myChanges;
-  private long myModificationStamp;
 
   public ChangeList(Document base, Document version, Parent parent) {
     myDocuments[0] = base;
     myDocuments[1] = version;
     myParent = parent;
-    myModificationStamp = calcTimestamp();
   }
 
   public void addListener(Listener listener) {
@@ -56,7 +54,6 @@ public class ChangeList {
       LOG.assertTrue(change.isValid());
     }
     myChanges = new ArrayList<Change>(changes);
-    myModificationStamp = calcTimestamp();
   }
 
   public Project getProject() { return myParent.getProject(); }
@@ -71,10 +68,6 @@ public class ChangeList {
     Collections.sort(changes, CHANGE_ORDER);
     result.setChanges(changes);
     return result;
-  }
-
-  private long calcTimestamp() {
-    return Math.max(myDocuments[0].getModificationStamp(), myDocuments[1].getModificationStamp());
   }
 
   public void setMarkup(final Editor base, final Editor version) {
@@ -193,7 +186,6 @@ public class ChangeList {
   }
 
   public LineBlocks getLineBlocks() {
-    if (myModificationStamp != calcTimestamp()) return LineBlocks.EMPTY;
     return LineBlocks.fromChanges(myChanges);
   }
 

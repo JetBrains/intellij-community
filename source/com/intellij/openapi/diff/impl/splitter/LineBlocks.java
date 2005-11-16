@@ -158,6 +158,7 @@ public class LineBlocks {
     //int prevEnd2 = 0;
     for (Iterator<Change> iterator = changes.iterator(); iterator.hasNext();) {
       Change change = iterator.next();
+      if (!change.isValid()) continue;
       int start1 = change.getChangeSide(FragmentSide.SIDE1).getStartLine();
       int start2 = change.getChangeSide(FragmentSide.SIDE2).getStartLine();
       //if (start1 != prevEnd1 || start2 != prevEnd2) {
