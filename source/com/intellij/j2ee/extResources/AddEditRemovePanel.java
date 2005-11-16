@@ -82,8 +82,11 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons {
     return ScrollPaneFactory.createScrollPane(myTable);
   }
 
+  protected boolean showEditButton() {
+    return true;
+  }
+
   protected JButton[] createButtons(){
-//    myAddPatternButton = new JButton("Add...");
     myAddButton.addActionListener(
       new ActionListener() {
         public void actionPerformed(ActionEvent e){
@@ -92,7 +95,6 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons {
       }
     );
 
-//    myEditButton = new JButton("Edit");
     myEditButton.addActionListener(
       new ActionListener() {
         public void actionPerformed(ActionEvent e){
@@ -101,7 +103,6 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons {
       }
     );
 
-//    myRemoveButton = new JButton("Remove");
     myRemoveButton.addActionListener(
       new ActionListener() {
         public void actionPerformed(ActionEvent e){
@@ -110,6 +111,9 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons {
       }
     );
 
+    if (!showEditButton()) {
+      return new JButton[]{myAddButton, myRemoveButton};
+    }
     return new JButton[]{myAddButton, myEditButton, myRemoveButton};
   }
 
