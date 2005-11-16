@@ -44,15 +44,18 @@ public abstract class DescriptorProviderInspection extends InspectionTool {
     myProblemElements.put(refElement, descriptions);
     for (ProblemDescriptor description : descriptions) {
       myProblemToElements.put(description, refElement);
-      final LocalQuickFix[] fixes = description.getFixes();
-      if (fixes != null) {
-        Set<LocalQuickFix> localQuickFixes = myQuickFixActions.get(refElement);
-        if (localQuickFixes == null) {
-          localQuickFixes = new java.util.HashSet<LocalQuickFix>();
-          myQuickFixActions.put(refElement, localQuickFixes);
-        }
-        localQuickFixes.addAll(Arrays.asList(fixes));
+      collectQuickFixes(description.getFixes(), refElement);
+    }
+  }
+
+  private void collectQuickFixes(final LocalQuickFix[] fixes, final RefElement refElement) {
+    if (fixes != null) {
+      Set<LocalQuickFix> localQuickFixes = myQuickFixActions.get(refElement);
+      if (localQuickFixes == null) {
+        localQuickFixes = new java.util.HashSet<LocalQuickFix>();
+        myQuickFixActions.put(refElement, localQuickFixes);
       }
+      localQuickFixes.addAll(Arrays.asList(fixes));
     }
   }
 
@@ -77,20 +80,15 @@ public abstract class DescriptorProviderInspection extends InspectionTool {
       if (descriptors != null) {
         ArrayList<ProblemDescriptor> newDescriptors = new ArrayList<ProblemDescriptor>(Arrays.asList(descriptors));
         newDescriptors.remove(problem);
+        myQuickFixActions.put(refElement, null);
         if (newDescriptors.size() > 0) {
           myProblemElements.put(refElement, newDescriptors.toArray(new ProblemDescriptor[newDescriptors.size()]));
+          for (ProblemDescriptor descriptor : newDescriptors) {
+            collectQuickFixes(descriptor.getFixes(), refElement);
+          }
         }
         else {
           myProblemElements.remove(refElement);
-        }
-      }
-    }
-    if (idx == -1){
-      myQuickFixActions.put(refElement, null);
-    } else {
-      if (localQuickFixes != null && fixes != null){
-        if (fixes.length > idx){
-          localQuickFixes.remove(fixes[idx]);
         }
       }
     }
