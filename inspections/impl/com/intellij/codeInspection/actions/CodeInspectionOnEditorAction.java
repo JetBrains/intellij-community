@@ -2,6 +2,7 @@ package com.intellij.codeInspection.actions;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionProfile;
@@ -46,6 +47,6 @@ public class CodeInspectionOnEditorAction extends AnAction {
     final DataContext dataContext = e.getDataContext();
     final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
     final PsiFile psiFile = (PsiFile)dataContext.getData(DataConstants.PSI_FILE);
-    e.getPresentation().setEnabled(project != null && psiFile != null);
+    e.getPresentation().setEnabled(project != null && psiFile != null  && DaemonCodeAnalyzer.getInstance(project).isHighlightingAvailable(psiFile));
   }
 }
