@@ -265,7 +265,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
       public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
         PsiElement resolved = reference.resolve();
         if (resolved instanceof PsiMember &&
-            PsiTreeUtil.isAncestor(myOuterClass, resolved, true) &&
+            PsiTreeUtil.isAncestor(myInnerClass, resolved, true) &&
             becomesInaccessible(((PsiMember)resolved))) {
           final PsiElement container = ConflictsUtil.getContainer(reference);
           HashSet<PsiElement> containerSet = reported.get(resolved);
