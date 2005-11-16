@@ -75,6 +75,7 @@ public class XmlResourceResolver implements XMLEntityResolver {
 
           if (baseFile == null) {
             if (myFile != null) {
+              // Find relative to myFile
               File workingFile = new File("");
               String workingDir = workingFile.getAbsoluteFile().getAbsolutePath().replace(File.separatorChar, '/');
               String id = StringUtil.replace(baseSystemId, workingDir, myFile.getVirtualFile().getParent().getPath());
@@ -124,6 +125,17 @@ public class XmlResourceResolver implements XMLEntityResolver {
             if (relativeFile != null) {
               psiFile = PsiManager.getInstance(myProject).findFile(relativeFile);
               if (psiFile != null) break;
+            }
+          }
+        }
+
+        if (psiFile == null && systemId != null && baseSystemId == null) { // try to find just by url
+          final String resourceLocation = ExternalResourceManagerEx.getInstance().getResourceLocation(systemId);
+          if (!resourceLocation.equals(systemId)) {
+            VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(resourceLocation);
+
+            if (file != null) {
+              psiFile = PsiManager.getInstance(myProject).findFile(file);
             }
           }
         }
