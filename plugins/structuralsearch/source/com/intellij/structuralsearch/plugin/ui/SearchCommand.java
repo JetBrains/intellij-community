@@ -84,7 +84,13 @@ public class SearchCommand {
                 end = newend;
               }
             }
-            info = new UsageInfo(parent,start - parent.getTextOffset(),end - parent.getTextOffset());
+
+            int startOffset = start - parent.getTextOffset();
+            final PsiElement firstChild = parent.getFirstChild();
+            if (firstChild != null && firstChild.getTextOffset() < parent.getTextOffset()) {
+              startOffset = start - firstChild.getTextOffset();
+            }
+            info = new UsageInfo(parent,startOffset,end - parent.getTextOffset());
           } else {
             PsiElement element = result.getMatch();
             info = new UsageInfo(
