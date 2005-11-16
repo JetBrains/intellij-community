@@ -259,7 +259,7 @@ public final class InsertComponentProcessor extends EventProcessor {
     myEditor.setDesignTimeInsets(2);
 
     final GridInsertLocation location = GridInsertProcessor.getGridInsertLocation(myEditor, e.getX(), e.getY(), 0);
-    if (FormEditingUtil.canDrop(myEditor, e.getX(), e.getY(), 1) || location.getMode() != GridInsertLocation.GridInsertMode.None) {
+    if (FormEditingUtil.canDrop(myEditor, e.getX(), e.getY(), 1) || location.getMode() != GridInsertMode.None) {
       CommandProcessor.getInstance().executeCommand(
         myEditor.getProject(),
         new Runnable(){
@@ -267,7 +267,7 @@ public final class InsertComponentProcessor extends EventProcessor {
             createBindingWhenDrop(myEditor, myInsertedComponent);
 
             final RadComponent[] components = new RadComponent[]{myInsertedComponent};
-            if (location.getMode() == GridInsertLocation.GridInsertMode.None) {
+            if (location.getMode() == GridInsertMode.None) {
               myDropInfo = FormEditingUtil.drop(myEditor, e.getX(), e.getY(), components, new int[]{0}, new int[]{0});
             }
             else {

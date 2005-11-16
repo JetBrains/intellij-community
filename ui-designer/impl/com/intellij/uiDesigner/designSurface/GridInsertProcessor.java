@@ -18,6 +18,7 @@ import java.awt.dnd.DnDConstants;
  */
 public class GridInsertProcessor {
   private static final int INSERT_ARROW_SIZE = 3;
+  private static final int INSERT_RECT_MIN_SIZE = 15;  // should be larger than the insets increase on Shift
 
   private static class HorzInsertFeedbackPainter implements FeedbackPainter {
     public void paintFeedback(Graphics2D g2d, Rectangle rc) {
@@ -80,7 +81,7 @@ public class GridInsertProcessor {
     }
 
     if (container == null || !container.isGrid()) {
-      return new GridInsertLocation(GridInsertLocation.GridInsertMode.None);
+      return new GridInsertLocation(GridInsertMode.None);
     }
     final GridLayoutManager grid = (GridLayoutManager) container.getLayout();
     final Point targetPoint = SwingUtilities.convertPoint(editor.getDragLayer(),
@@ -108,31 +109,57 @@ public class GridInsertProcessor {
       }
     }
 
-    GridInsertLocation.GridInsertMode mode = GridInsertLocation.GridInsertMode.None;
-
-    int dx = (int)(targetPoint.getX() - xs [col]);
-    if (dx < EPSILON) {
-      mode = GridInsertLocation.GridInsertMode.ColumnBefore;
-    }
-    else if (widths [col] - dx < EPSILON) {
-      mode = GridInsertLocation.GridInsertMode.ColumnAfter;
-    }
+    GridInsertMode mode = GridInsertMode.None;
 
     int dy = (int)(targetPoint.getY() - ys [row]);
     if (dy < EPSILON) {
-      mode = GridInsertLocation.GridInsertMode.RowBefore;
+      mode = GridInsertMode.RowBefore;
     }
     else if (heights [row] - dy < EPSILON) {
-      mode = GridInsertLocation.GridInsertMode.RowAfter;
+      mode = GridInsertMode.RowAfter;
+    }
+
+    int dx = (int)(targetPoint.getX() - xs [col]);
+    if (dx < EPSILON) {
+      mode = GridInsertMode.ColumnBefore;
+    }
+    else if (widths [col] - dx < EPSILON) {
+      mode = GridInsertMode.ColumnAfter;
+    }
+
+    final int cellWidth = vertGridLines[col + 1] - vertGridLines[col];
+    final int cellHeight = horzGridLines[row + 1] - horzGridLines[row];
+    if (mode == GridInsertMode.None) {
+      RadComponent component = container.getComponentAtGrid(row, col);
+      if (component != null) {
+        Rectangle rc = component.getBounds();
+        rc.translate(-xs [col], -ys [row]);
+
+        int right = rc.x + rc.width + INSERT_RECT_MIN_SIZE;
+        int bottom = rc.y + rc.height + INSERT_RECT_MIN_SIZE;
+
+        if (dy < rc.y - INSERT_RECT_MIN_SIZE) {
+          mode = GridInsertMode.RowBefore;
+        }
+        else if (dy > bottom && dy < cellHeight) {
+          mode = GridInsertMode.RowAfter;
+        }
+        if (dx < rc.x - INSERT_RECT_MIN_SIZE) {
+          mode = GridInsertMode.ColumnBefore;
+        }
+        else if (dx > right && dx < cellWidth) {
+          mode = GridInsertMode.ColumnAfter;
+        }
+      }
     }
 
     Rectangle cellRect = new Rectangle(vertGridLines [col],
                                        horzGridLines [row],
-                                       vertGridLines [col+1]-vertGridLines [col],
-                                       horzGridLines [row+1]-horzGridLines [row]);
+                                       cellWidth,
+                                       cellHeight);
     // if a number of adjacent components have been selected and the component being dragged
     // is not the leftmost, we return the column in which the leftmost component should be dropped
-    if ((mode == GridInsertLocation.GridInsertMode.RowBefore || mode == GridInsertLocation.GridInsertMode.RowAfter) &&
+    if ((mode == GridInsertMode.RowBefore || mode == GridInsertMode.RowAfter) &&
         col >= dragColumnDelta) {
       col -= dragColumnDelta;
     }
@@ -233,7 +260,7 @@ public class GridInsertProcessor {
     if (insertLocation == null || insertLocation.getContainer() == null) {
       return false;
     }
-    if (insertLocation.getMode() == GridInsertLocation.GridInsertMode.None) {
+    if (insertLocation.getMode() == GridInsertMode.None) {
       return componentCount == 1 &&
              insertLocation.getContainer().getComponentAtGrid(insertLocation.getRow(), insertLocation.getColumn()) == null;
     }
@@ -250,7 +277,7 @@ public class GridInsertProcessor {
 
   private boolean isInsertInsideComponent(final GridInsertLocation insertLocation) {
     if (insertLocation.isColumnInsert()) {
-      int endColumn = (insertLocation.getMode() == GridInsertLocation.GridInsertMode.ColumnAfter)
+      int endColumn = (insertLocation.getMode() == GridInsertMode.ColumnAfter)
                       ? insertLocation.getColumn()+1 : insertLocation.getColumn();
       int row = insertLocation.getRow();
       for(int col = 0; col<endColumn; col++) {
@@ -266,7 +293,7 @@ public class GridInsertProcessor {
       return false;
     }
     else if (insertLocation.isRowInsert()) {
-      int endRow = (insertLocation.getMode() == GridInsertLocation.GridInsertMode.RowAfter)
+      int endRow = (insertLocation.getMode() == GridInsertMode.RowAfter)
                     ? insertLocation.getRow()+1 : insertLocation.getRow();
       int col = insertLocation.getColumn();
       for(int row = 0; row<endRow; row++) {
@@ -286,27 +313,69 @@ public class GridInsertProcessor {
 
   private void placeInsertFeedbackPainter(final GridInsertLocation insertLocation, final int componentCount) {
     Rectangle cellRect = insertLocation.getCellRect();
+    final int insertCol = insertLocation.getColumn();
+    final int insertRow = insertLocation.getRow();
+    final GridInsertMode insertMode = insertLocation.getMode();
+
     if (componentCount > 1) {
-      int lastCol = insertLocation.getColumn() + componentCount - 1;
+      int lastCol = insertCol + componentCount - 1;
       final GridLayoutManager layoutManager = (GridLayoutManager) insertLocation.getContainer().getLayout();
       int[] xs = layoutManager.getXs();
       int[] widths = layoutManager.getWidths();
-      cellRect.setBounds(xs [insertLocation.getColumn()], (int) cellRect.getY(),
-                         xs [lastCol] + widths [lastCol] - xs [insertLocation.getColumn()], (int)cellRect.getHeight());
+      cellRect.setBounds(xs [insertCol], (int) cellRect.getY(),
+                         xs [lastCol] + widths [lastCol] - xs [insertCol], (int)cellRect.getHeight());
     }
-    cellRect = SwingUtilities.convertRectangle(insertLocation.getContainer().getDelegee(),
-                                               cellRect,
-                                               myEditor.getActiveDecorationLayer());
 
-    FeedbackPainter painter = (insertLocation.getMode() == GridInsertLocation.GridInsertMode.ColumnBefore ||
-                               insertLocation.getMode() == GridInsertLocation.GridInsertMode.ColumnAfter)
+    FeedbackPainter painter = (insertMode == GridInsertMode.ColumnBefore ||
+                               insertMode == GridInsertMode.ColumnAfter)
                               ? myVertInsertFeedbackPainter
                               : myHorzInsertFeedbackPainter;
     Rectangle rc;
 
+    Rectangle rcFeedback = null;
+    if (componentCount == 1 && insertMode != GridInsertMode.None) {
+      RadComponent component = insertLocation.getContainer().getComponentAtGrid(insertRow, insertCol);
+      if (component != null) {
+        Rectangle bounds = component.getBounds();
+        final GridLayoutManager layoutManager = (GridLayoutManager) insertLocation.getContainer().getLayout();
+        int[] vGridLines = layoutManager.getVerticalGridLines();
+        int[] hGridLines = layoutManager.getHorizontalGridLines();
+        int cellWidth = vGridLines [insertCol+1] - vGridLines [insertCol];
+        int cellHeight = hGridLines [insertRow+1] - hGridLines [insertRow];
+        bounds.translate(-vGridLines [insertCol], -hGridLines [insertRow]);
+
+        int spaceToRight = vGridLines [insertCol+1] - vGridLines [insertCol] - (bounds.x + bounds.width);
+        int spaceBelow = hGridLines [insertRow+1] - hGridLines [insertRow] - (bounds.y + bounds.height);
+        if (insertMode == GridInsertMode.RowBefore && bounds.y > INSERT_RECT_MIN_SIZE) {
+          rcFeedback = new Rectangle(0, 0, cellWidth, bounds.y);
+        }
+        else if (insertMode == GridInsertMode.RowAfter && spaceBelow > INSERT_RECT_MIN_SIZE) {
+          rcFeedback = new Rectangle(0, bounds.y + bounds.height, cellWidth, spaceBelow);
+        }
+        else if (insertMode == GridInsertMode.ColumnBefore && bounds.x > INSERT_RECT_MIN_SIZE) {
+          rcFeedback = new Rectangle(0, 0, bounds.x, cellHeight);
+        }
+        else if (insertMode == GridInsertMode.ColumnAfter && spaceToRight > INSERT_RECT_MIN_SIZE) {
+          rcFeedback = new Rectangle(bounds.x + bounds.width, 0, spaceToRight, cellHeight);
+        }
+
+        if (rcFeedback != null) {
+          rcFeedback.translate(vGridLines [insertCol], hGridLines [insertRow]);
+          rcFeedback = SwingUtilities.convertRectangle(insertLocation.getContainer().getDelegee(),
+                                                       rcFeedback,
+                                                       myEditor.getActiveDecorationLayer());
+          myEditor.getActiveDecorationLayer().putFeedback(rcFeedback);
+          return;
+        }
+      }
+    }
+
+    cellRect = SwingUtilities.convertRectangle(insertLocation.getContainer().getDelegee(),
+                                               cellRect,
+                                               myEditor.getActiveDecorationLayer());
     int w=4;
     //noinspection EnumSwitchStatementWhichMissesCases
-    switch (insertLocation.getMode()) {
+    switch (insertMode) {
       case ColumnBefore:
         rc = new Rectangle(cellRect.x - w, cellRect.y - INSERT_ARROW_SIZE,
                            2 * w, cellRect.height + 2 * INSERT_ARROW_SIZE);

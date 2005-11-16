@@ -264,7 +264,7 @@ public final class DragSelectionProcessor extends EventProcessor {
       }
 
       if (!FormEditingUtil.canDrop(myEditor, dropX, dropY, componentCount) &&
-          (location == null || location.getMode() == GridInsertLocation.GridInsertMode.None)) {
+          (location == null || location.getMode() == GridInsertMode.None)) {
         return false;
       }
 
@@ -295,7 +295,7 @@ public final class DragSelectionProcessor extends EventProcessor {
       final GridConstraints[] originalConstraints = dcl.getOriginalConstraints();
       final RadContainer[] originalParents = dcl.getOriginalParents();
 
-      if (location != null && location.getMode() != GridInsertLocation.GridInsertMode.None) {
+      if (location != null && location.getMode() != GridInsertMode.None) {
         myGridInsertProcessor.processGridInsertOnDrop(location, components, originalConstraints);
       }
       else {
