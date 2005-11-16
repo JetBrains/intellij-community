@@ -92,7 +92,7 @@ public class TestAll implements Test {
                 Thread currentThread = getCurrentThread();
                 if (!mySavingMemorySnapshot) {
                   if (secondsSpent > (IdeaTestCase.ourTestTime * myLastTestTestMethodCount)) {
-                    System.out.println("Interrupting current Test (out of time)! Seconds spent = " + secondsSpent);
+                    System.out.println("Interrupting current Test (out of time)! Test class: "+ myLastTestClass +" Seconds spent = " + secondsSpent);
                     myInterruptedByOutOfTime = true;
                     if (currentThread != null) {
                       currentThread.interrupt();
