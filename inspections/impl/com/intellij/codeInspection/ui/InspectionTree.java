@@ -127,7 +127,7 @@ public class InspectionTree extends Tree {
     if (node instanceof ProblemDescriptionNode) {
       out.add(((ProblemDescriptionNode)node).getElement());
     }
-    else if (node instanceof InspectionTreeNode) {
+    else if (node instanceof InspectionNode) {
       final Enumeration children = node.children();
       while (children.hasMoreElements()) {
         InspectionTreeNode child = (InspectionTreeNode)children.nextElement();
