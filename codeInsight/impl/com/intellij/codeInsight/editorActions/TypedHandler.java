@@ -442,7 +442,9 @@ public class TypedHandler implements TypedActionHandler {
 
     // TODO: handle it with insertAfterLParen(...)
     if (!JspxCompletionData.isJavaContext(elementAt) &&
-        elementAt.getText().equals("${")
+        ( elementAt.getText().equals("${") ||
+          elementAt.getText().equals("#{")
+        )
         ) {
       editor.getDocument().insertString(offset, "}");
       return true;
