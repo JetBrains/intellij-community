@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
@@ -29,10 +30,7 @@ public class MethodOnlyUsedFromInnerClassInspection extends MethodInspection {
 
     String text = null;
     boolean anonymousClass = false;
-
-    public String getDisplayName() {
-        return "private method only used from inner class";
-    }
+    boolean anonymousExtends = false;
 
     public String getGroupDisplayName() {
         return GroupNames.ABSTRACTION_GROUP_NAME;
@@ -41,11 +39,12 @@ public class MethodOnlyUsedFromInnerClassInspection extends MethodInspection {
     @Nullable
     protected String buildErrorString(PsiElement location) {
         if (anonymousClass) {
-            return "Method <code>#ref()</code>#loc is only used from an "
-                    + "anonymous class" + text;
+          if (anonymousExtends) {
+            return InspectionGadgetsBundle.message("method.only.used.from.inner.class.problem.descriptor.anonymous.extending", text);
+          }
+          return InspectionGadgetsBundle.message("method.only.used.from.inner.class.problem.descriptor.anonymous.implementing", text);
         }
-        return "Method <code>#ref()</code>#loc is only used from inner"
-                + " class <code>" + text + "</code>";
+        return InspectionGadgetsBundle.message("method.only.used.from.inner.class.problem.descriptor", text);
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -58,7 +57,7 @@ public class MethodOnlyUsedFromInnerClassInspection extends MethodInspection {
         public void visitMethod(PsiMethod method) {
             super.visitMethod(method);
             if (!method.hasModifierProperty(PsiModifier.PRIVATE) ||
-                    method.isConstructor()) {
+                method.isConstructor()) {
                 return;
             }
             final PsiManager manager = method.getManager();
@@ -78,8 +77,8 @@ public class MethodOnlyUsedFromInnerClassInspection extends MethodInspection {
             final PsiClass firstReferenceClass =
                     ClassUtils.getContainingClass(firstElement);
             if (firstReferenceClass == null ||
-                    !PsiTreeUtil.isAncestor(containingClass,
-                                            firstReferenceClass, true)) {
+                !PsiTreeUtil.isAncestor(containingClass,
+                                        firstReferenceClass, true)) {
                 return;
             }
             for (int i = 1; i < references.length; i++) {
@@ -98,15 +97,15 @@ public class MethodOnlyUsedFromInnerClassInspection extends MethodInspection {
                 final PsiClass superClass;
                 if (interfaces.length == 1) {
                     superClass = interfaces[0];
-                    text = " implementing <code>" + superClass.getName() +
-		                    "</code>";
+                    anonymousExtends = false;
+                    text = superClass.getName();
                 } else {
                     superClass = firstReferenceClass.getSuperClass();
                     if (superClass == null) {
                         return;
                     }
-                    text = " extending <code>" + superClass.getName() +
-		                    "</code>";
+                    anonymousExtends = true;
+                    text = superClass.getName();
                 }
 
                 anonymousClass = true;
