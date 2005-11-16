@@ -177,6 +177,7 @@ public class TestAll implements Test {
                         totalTests +
                         " tests run");
         testResult.stop();
+        return;
       }
       else if (myInterruptedByOutOfTime) {
         addErrorMessage(testResult,
@@ -184,6 +185,7 @@ public class TestAll implements Test {
                         totalTests +
                         " tests run");
         testResult.stop();
+        return;
       }
     }
 
