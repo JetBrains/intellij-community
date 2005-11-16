@@ -170,14 +170,14 @@ public class IdeRootPane extends JRootPane{
   }
 
   public void installNavigationBar(final Project project) {
-    if (project != null) {
-      myNavigationBar = new NavigationToolbarPanel(project);
-      myNorthPanel.add(myNavigationBar, BorderLayout.SOUTH);
-      updateNavigationBarVisibility();
-    } else if (myNavigationBar != null) {
-      myNorthPanel.remove(myNavigationBar);
-      myNavigationBar = null;
-    }
+    myNavigationBar = new NavigationToolbarPanel(project);
+    myNorthPanel.add(myNavigationBar, BorderLayout.SOUTH);
+    updateNavigationBarVisibility();
+  }
+
+  public void deinstallNavigationBar(){
+    myNorthPanel.remove(myNavigationBar);
+    myNavigationBar = null;
   }
 
   private final class MyUISettingsListenerImpl implements UISettingsListener{

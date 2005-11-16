@@ -21,6 +21,7 @@ import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.impl.status.StatusBarImpl;
 import com.intellij.openapi.MnemonicHelper;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -163,7 +164,15 @@ public class IdeFrame extends JFrame implements DataProvider {
 
   public void setProject(final Project project) {
     myProject = project;
-    myRootPane.installNavigationBar(project);
+    if (myProject != null) {
+      StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable(){
+        public void run() {
+          myRootPane.installNavigationBar(project);
+        }
+      });
+    } else {
+      myRootPane.deinstallNavigationBar();
+    }
   }
 
   public Project getProject() {

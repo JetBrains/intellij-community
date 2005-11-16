@@ -232,6 +232,8 @@ public class PopupFactoryImpl extends JBPopupFactory implements ApplicationCompo
           break;
         }
       }
+    } else if (focusOwner instanceof PopupOwner){
+      popupMenuPoint = ((PopupOwner)focusOwner).getBestPopupPosition();
     }
     // TODO[vova] add usability for JTable
     if (popupMenuPoint == null) {
