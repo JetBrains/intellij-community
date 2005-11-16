@@ -1,6 +1,5 @@
 package com.intellij.uiDesigner;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.Util;
@@ -28,8 +27,6 @@ import java.util.HashSet;
  * @author Vladimir Kondratyev
  */
 public abstract class RadComponent implements IComponent {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.RadComponent");
-
   /**
    * Shared instance of empty array of RadComponenets
    */
@@ -87,6 +84,7 @@ public abstract class RadComponent implements IComponent {
   private final HashSet<String> myModifiedPropertyNames;
 
   private boolean myHasDragger;
+  private boolean myResizing;
 
   /**
    * Creates new <code>RadComponent</code> with the specified
@@ -97,13 +95,6 @@ public abstract class RadComponent implements IComponent {
    * should be a unique atring inside the form.
    */
   public RadComponent(@NotNull final Module module, @NotNull final Class aClass, @NotNull final String id){
-    //noinspection ConstantConditions
-    LOG.assertTrue(module != null);
-    //noinspection ConstantConditions
-    LOG.assertTrue(aClass != null);
-    //noinspection ConstantConditions
-    LOG.assertTrue(id != null);
-
     myModule = module;
     myClass = aClass;
     myId = id;
@@ -136,9 +127,7 @@ public abstract class RadComponent implements IComponent {
    * Initializes introspected properties into default values and
    * sets default component's constraints.
    */
-  public final void init(final ComponentItem item) {
-    LOG.assertTrue(item != null);
-
+  public final void init(@NotNull final ComponentItem item) {
     final IntrospectedProperty[] properties = Palette.getInstance(myModule.getProject()).getIntrospectedProperties(myClass);
     for (final IntrospectedProperty property : properties) {
       final Object initialValue = item.getInitialValue(property);
@@ -219,8 +208,7 @@ public abstract class RadComponent implements IComponent {
    * designer.  Designer can use or not this rectangle.
    */
   @Nullable
-  public Rectangle getInplaceEditorBounds(final Property property, final int x, final int y){
-    LOG.assertTrue(property != null);
+  public Rectangle getInplaceEditorBounds(@NotNull final Property property, final int x, final int y){
     return null;
   }
 
@@ -250,6 +238,14 @@ public abstract class RadComponent implements IComponent {
     myHasDragger = hasDragger;
   }
 
+  public boolean isResizing() {
+    return myResizing;
+  }
+
+  public void setResizing(final boolean resizing) {
+    myResizing = resizing;
+  }
+
   public final void addPropertyChangeListener(final PropertyChangeListener l){
     myChangeSupport.addPropertyChangeListener(l);
   }
@@ -259,11 +255,10 @@ public abstract class RadComponent implements IComponent {
   }
 
   protected final void firePropertyChanged(
-    final String propertyName,
+    @NotNull final String propertyName,
     final Object oldValue,
     final Object newValue
   ){
-    LOG.assertTrue(propertyName != null);
     myChangeSupport.firePropertyChange(propertyName, oldValue, newValue);
   }
 
@@ -298,16 +293,14 @@ public abstract class RadComponent implements IComponent {
   /**
    * @see JComponent#getClientProperty(Object)
    */
-  public final Object getClientProperty(final Object key){
-    LOG.assertTrue(key != null);
+  public final Object getClientProperty(@NotNull final Object key){
     return myDelegee.getClientProperty(key);
   }
 
   /**
    * @see JComponent#putClientProperty(Object, Object)
    */
-  public final void putClientProperty(final Object key, final Object value){
-    LOG.assertTrue(key != null);
+  public final void putClientProperty(@NotNull final Object key, final Object value){
     myDelegee.putClientProperty(key, value);
   }
 

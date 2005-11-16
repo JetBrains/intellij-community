@@ -34,9 +34,6 @@ final class ActiveDecorationLayer extends JComponent{
   private final RectangleFeedbackPainter myRectangleFeedbackPainter = new RectangleFeedbackPainter();
 
   public ActiveDecorationLayer(@NotNull final GuiEditor editor) {
-    //noinspection ConstantConditions
-    LOG.assertTrue(editor != null);
-
     myEditor = editor;
     myHorizontalSpots = new HashMap<RadContainer, ArrayList<ActiveSpot>>();
     myVerticalSpots = new HashMap<RadContainer, ArrayList<ActiveSpot>>();
@@ -68,6 +65,10 @@ final class ActiveDecorationLayer extends JComponent{
     myInvalidSpotCache.add(spot);
   }
 
+  private boolean needsActiveSpots(final RadContainer container) {
+    return container.hasDragger() && container.isGrid() && !container.isResizing();
+  }
+
   /**
    * Layouts all items in horizontal dimension
    */
@@ -78,7 +79,7 @@ final class ActiveDecorationLayer extends JComponent{
       final Map.Entry<RadContainer, ArrayList<ActiveSpot>> entry = i.next();
       final RadContainer container = (RadContainer)FormEditingUtil.findComponent(rootContainer, entry.getKey().getId());
       final ArrayList<ActiveSpot> spots = entry.getValue();
-      if(container == null || !container.hasDragger() || !container.isGrid()){
+      if(container == null || !needsActiveSpots(container)){
         // If RadContainer was deleted or breaked we need to invalidate all spots
         for(int j = spots.size() - 1; j >= 0; j--){
           disposeSpot(spots.get(j));
@@ -113,7 +114,7 @@ final class ActiveDecorationLayer extends JComponent{
             return true;
           }
           final RadContainer container = (RadContainer)component;
-          if(!container.isGrid() || !container.hasDragger() || myVerticalSpots.containsKey(container)){
+          if(myVerticalSpots.containsKey(container) || !needsActiveSpots(container)) {
             return true;
           }
 
@@ -173,7 +174,7 @@ final class ActiveDecorationLayer extends JComponent{
       final Map.Entry<RadContainer, ArrayList<ActiveSpot>> entry = i.next();
       final RadContainer container = (RadContainer)FormEditingUtil.findComponent(rootContainer, entry.getKey().getId());
       final ArrayList<ActiveSpot> spots = entry.getValue();
-      if(container == null || !container.hasDragger() || !container.isGrid()){
+      if(container == null || !needsActiveSpots(container)){
         // If RadContainer was deleted or breaked we need to invalidate all spots
         for(int j = spots.size() - 1; j >= 0; j--){
           disposeSpot(spots.get(j));
@@ -208,7 +209,7 @@ final class ActiveDecorationLayer extends JComponent{
             return true;
           }
           final RadContainer container = (RadContainer)component;
-          if(!container.isGrid() || !container.hasDragger() || myHorizontalSpots.containsKey(container)){
+          if(myHorizontalSpots.containsKey(container) || !needsActiveSpots(container)) {
             return true;
           }
 

@@ -37,6 +37,7 @@ public final class ResizeProcessor extends EventProcessor {
     }
 
     myComponent = component;
+    myComponent.setResizing(true);
     myOriginalParent = component.getParent();
     if (component.getParent().isGrid()) {
       Rectangle rc = SwingUtilities.convertRectangle(component.getParent().getDelegee(),
@@ -149,6 +150,7 @@ public final class ResizeProcessor extends EventProcessor {
         }
         myOriginalParent.addComponent(myComponent);
       }
+      myComponent.setResizing(false);
       myEditor.getActiveDecorationLayer().removeFeedback();
       myEditor.refreshAndSave(true);
     }
@@ -164,6 +166,7 @@ public final class ResizeProcessor extends EventProcessor {
     if (myOriginalParent != null) {
       myOriginalParent.addComponent(myComponent);
     }
+    myComponent.setResizing(false);
     myEditor.refresh();
     return true;
   }
