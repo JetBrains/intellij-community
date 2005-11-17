@@ -9,17 +9,20 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.xml.util.XmlUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.util.*;
+import java.net.URL;
 
 /**
  * @author mike
  */
 public class ExternalResourceManagerImpl extends ExternalResourceManagerEx implements JDOMExternalizable, ApplicationComponent, ModificationTracker {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.j2ee.openapi.impl.ExternalResourceManagerImpl");
 
   @NonNls private static final String J2EE_1_3 = "http://java.sun.com/dtd/";
   @NonNls private static final String J2EE_1_2 = "http://java.sun.com/j2ee/dtds/";
@@ -102,7 +105,10 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   }
 
   private static String getFile(String name, Class klass) {
-    String path = FileUtil.unquote(klass.getResource(name).toString());
+    final URL resource = klass.getResource(name);
+    if (resource == null) return null;
+    
+    String path = FileUtil.unquote(resource.toString());
     // this is done by FileUtil for windows
     path = path.replace('\\','/');
     return path;
@@ -122,7 +128,13 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   }
 
   public void addStdResource(String resource, String fileName, Class klass) {
-    myStdResources.put(resource, getFile(fileName, klass));
+    final String file = getFile(fileName, klass);
+    if (file != null) {
+      myStdResources.put(resource, file);
+    }
+    else {
+      LOG.info("Cannot find standard resource. filename:" + fileName + " klass=" + klass);
+    }
   }
 
   public String getResourceLocation(String url) {
