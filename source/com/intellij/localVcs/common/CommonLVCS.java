@@ -301,11 +301,15 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     }
     LOG.info("enter: shutdown()");
     save();
+    close();
     myImplementation.clearLabels();
-    myIsLocked = false;
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      myImplementation.clear();
+      clear();
     }
+  }
+
+  public void close() {
+    myIsLocked = false;
     try {
       myImplementation.close();
     }
