@@ -79,6 +79,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     clearCaches();
   }
 
+  @NotNull
   public PsiClass[] getClasses() {
     if (myCachedClasses == null){
       if (getTreeElement() != null || getRepositoryId() < 0){
@@ -102,6 +103,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     return (PsiPackageStatement)calcTreeElement().findChildByRoleAsPsiElement(ChildRole.PACKAGE_STATEMENT);
   }
 
+  @NotNull
   public String getPackageName(){
     if (myCachedPackageName == null){
       if (getTreeElement() != null || getRepositoryId() < 0){
@@ -120,6 +122,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     return myCachedPackageName;
   }
 
+  @NotNull
   public PsiImportList getImportList() {
     if (getRepositoryId() >= 0){
       if (myRepositoryImportList == null){
@@ -348,45 +351,42 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
       if(rootPackage != null) rootPackage.processDeclarations(processor, substitutor, null, place);
     }
 
-
     // todo[dsl] class processing
     final PsiImportList importList = getImportList();
-    if (importList != null) {
-      final PsiImportStaticStatement[] importStaticStatements = importList.getImportStaticStatements();
-      if (importStaticStatements.length > 0) {
-        final StaticImportFilteringProcessor staticImportProcessor = new StaticImportFilteringProcessor(processor, null);
+    final PsiImportStaticStatement[] importStaticStatements = importList.getImportStaticStatements();
+    if (importStaticStatements.length > 0) {
+      final StaticImportFilteringProcessor staticImportProcessor = new StaticImportFilteringProcessor(processor, null);
 
-        // single member processing
-        for (PsiImportStaticStatement importStaticStatement : importStaticStatements) {
-          if (!importStaticStatement.isOnDemand()) {
-            final String referenceName = importStaticStatement.getReferenceName();
-            final PsiClass targetElement = importStaticStatement.resolveTargetClass();
-            if (targetElement != null) {
-              staticImportProcessor.setNameToFilter(referenceName);
-              staticImportProcessor.handleEvent(PsiScopeProcessor.Event.SET_CURRENT_FILE_CONTEXT, importStaticStatement);
-              final boolean result = targetElement.processDeclarations(staticImportProcessor, substitutor, lastParent, place);
-              if (!result) return false;
-            }
+      // single member processing
+      for (PsiImportStaticStatement importStaticStatement : importStaticStatements) {
+        if (!importStaticStatement.isOnDemand()) {
+          final String referenceName = importStaticStatement.getReferenceName();
+          final PsiClass targetElement = importStaticStatement.resolveTargetClass();
+          if (targetElement != null) {
+            staticImportProcessor.setNameToFilter(referenceName);
+            staticImportProcessor.handleEvent(PsiScopeProcessor.Event.SET_CURRENT_FILE_CONTEXT, importStaticStatement);
+            final boolean result = targetElement.processDeclarations(staticImportProcessor, substitutor, lastParent, place);
+            if (!result) return false;
           }
         }
-
-        // on-demand processing
-        for (PsiImportStaticStatement importStaticStatement : importStaticStatements) {
-          if (importStaticStatement.isOnDemand()) {
-            final PsiClass targetElement = importStaticStatement.resolveTargetClass();
-            if (targetElement != null) {
-              staticImportProcessor.setNameToFilter(null);
-              staticImportProcessor.handleEvent(PsiScopeProcessor.Event.SET_CURRENT_FILE_CONTEXT, importStaticStatement);
-              staticImportProcessor.handleEvent(PsiScopeProcessor.Event.BEGIN_GROUP, null);
-              final boolean result = targetElement.processDeclarations(staticImportProcessor, substitutor, lastParent, place);
-              staticImportProcessor.handleEvent(PsiScopeProcessor.Event.END_GROUP, null);
-              if (!result) return false;
-            }
-          }
-        }
-
-        staticImportProcessor.handleEvent(PsiScopeProcessor.Event.SET_CURRENT_FILE_CONTEXT, null);
       }
+
+      // on-demand processing
+      for (PsiImportStaticStatement importStaticStatement : importStaticStatements) {
+        if (importStaticStatement.isOnDemand()) {
+          final PsiClass targetElement = importStaticStatement.resolveTargetClass();
+          if (targetElement != null) {
+            staticImportProcessor.setNameToFilter(null);
+            staticImportProcessor.handleEvent(PsiScopeProcessor.Event.SET_CURRENT_FILE_CONTEXT, importStaticStatement);
+            staticImportProcessor.handleEvent(PsiScopeProcessor.Event.BEGIN_GROUP, null);
+            final boolean result = targetElement.processDeclarations(staticImportProcessor, substitutor, lastParent, place);
+            staticImportProcessor.handleEvent(PsiScopeProcessor.Event.END_GROUP, null);
+            if (!result) return false;
+          }
+        }
+      }
+
+      staticImportProcessor.handleEvent(PsiScopeProcessor.Event.SET_CURRENT_FILE_CONTEXT, null);
     }
 
     return true;
@@ -414,7 +414,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
 
   private JavaResolveResult[] getGuess(final String name){
     final Map<String,SoftReference<JavaResolveResult[]>> guessForFile = myGuessCache.get(this);
-    final Reference<JavaResolveResult[]> ref = guessForFile != null ? (Reference<JavaResolveResult[]>)guessForFile.get(name) : null;
+    final Reference<JavaResolveResult[]> ref = guessForFile != null ? guessForFile.get(name) : null;
 
     return ref != null ? ref.get() : null;
   }
