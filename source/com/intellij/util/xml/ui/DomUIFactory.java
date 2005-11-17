@@ -70,10 +70,18 @@ public class DomUIFactory {
 
   public static DomUIControl createCollectionControl(DomElement element, DomCollectionChildDescription description) {
     final Class aClass = DomUtil.extractParameterClassFromGenericType(description.getType());
-    if (String.class.equals(aClass)) {
-      return new StringCollectionControl(element, description);
-    } else if (PsiClass.class.equals(aClass)) {
-      return new PsiClassCollectionControl(element, description);
+    if (aClass != null) {
+      final String presentableName = description.getCommonPresentableName(element);
+
+      if (String.class.equals(aClass)) {
+        return new DomCollectionControl<GenericValue<String>>(element, description, new StringColumnInfo(presentableName));
+      }
+
+      if (PsiClass.class.equals(aClass)) {
+        return new DomCollectionControl<GenericValue<PsiClass>>(element, description, new PsiClassColumnInfo(presentableName, element));
+      }
+
+      assert false : "Type not supported: " + aClass;
     }
 
     return new CollectionControl(element, description);
