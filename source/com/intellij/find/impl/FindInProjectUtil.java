@@ -304,7 +304,7 @@ public class FindInProjectUtil {
   private static Collection<PsiFile> getFilesToSearchInReadAction(final FindModel findModel, final Project project, final PsiDirectory psiDirectory) {
     Module module = findModel.getModuleName() == null ? null : ModuleManager.getInstance(project).findModuleByName(findModel.getModuleName());
     final FileIndex fileIndex = module == null ?
-                                (FileIndex)ProjectRootManager.getInstance(project).getFileIndex() :
+                                ProjectRootManager.getInstance(project).getFileIndex() :
                                 ModuleRootManager.getInstance(module).getFileIndex();
 
     final Pattern fileMaskRegExp = createFileMaskRegExp(findModel);
