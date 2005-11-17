@@ -10,7 +10,11 @@ import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.GenericValue;
 import com.intellij.util.xml.impl.ui.*;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
+import com.intellij.util.ui.ColumnInfo;
 
+import javax.swing.table.TableCellEditor;
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 
@@ -68,23 +72,46 @@ public class DomUIFactory {
     return null;
   }
 
+  private static TableCellEditor createCellEditor(DomElement element, Class type) {
+    if (String.class.equals(type)) {
+      return new DefaultCellEditor(removeBorder(new JTextField()));
+    }
+
+    if (PsiClass.class.equals(type)) {
+      return new PsiClassTableCellEditor(element);
+    }
+
+    if (Enum.class.equals(type)) {
+      return new DefaultCellEditor(removeBorder(EnumControl.createEnumComboBox(type)));
+    }
+
+    assert false : "Type not supported: " + type;
+    return null;
+  }
+
+  private static <T extends JComponent> T removeBorder(final T component) {
+    component.setBorder(new EmptyBorder(0, 0, 0, 0));
+    return component;
+  }
+
   public static DomUIControl createCollectionControl(DomElement element, DomCollectionChildDescription description) {
     final Class aClass = DomUtil.extractParameterClassFromGenericType(description.getType());
     if (aClass != null) {
-      final String presentableName = description.getCommonPresentableName(element);
-
-      if (String.class.equals(aClass)) {
-        return new DomCollectionControl<GenericValue<String>>(element, description, new StringColumnInfo(presentableName));
-      }
-
-      if (PsiClass.class.equals(aClass)) {
-        return new DomCollectionControl<GenericValue<PsiClass>>(element, description, new PsiClassColumnInfo(presentableName, element));
-      }
-
-      assert false : "Type not supported: " + aClass;
+      return new DomCollectionControl<GenericValue<?>>(element, description, createColumnInfo(description, element, aClass));
     }
 
     return new CollectionControl(element, description);
+  }
+
+  private static ColumnInfo createColumnInfo(final DomCollectionChildDescription description,
+                                                         final DomElement element,
+                                                         final Class aClass) {
+    final String presentableName = description.getCommonPresentableName(element);
+    if (Boolean.class.equals(aClass) || boolean.class.equals(aClass)) {
+      return new BooleanColumnInfo(presentableName);
+    }
+
+    return new GenericValueColumnInfo(presentableName, aClass, createCellEditor(element, aClass));
   }
 
 }
