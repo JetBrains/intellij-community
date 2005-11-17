@@ -21,6 +21,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.structuralsearch.MatchResult;
@@ -57,7 +58,8 @@ public class SSBasedInspection extends LocalInspectionTool {
     myConfigurations.clear();
     ConfigurationManager.readConfigurations(node, myConfigurations, new ArrayList<Configuration>());
 
-    SwingUtilities.invokeLater(new Runnable(){
+    Project project = ProjectManager.getInstance().getOpenProjects()[0];
+    StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
       public void run() {
         precompileConfigurations();
       }
