@@ -9,6 +9,8 @@ import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.*;
@@ -179,6 +181,7 @@ final class ReplacementBuilder extends PsiRecursiveElementVisitor {
   private int handleSubstitution(final ParameterInfo info, MatchResult match, StringBuffer result, int offset) {
     if (info.name.equals(match.getName())) {
       String replacementString = match.getMatchImage();
+      boolean forceAddingNewLine = false;
 
       if (match.getAllSons().size() > 0 && !match.isScopeMatch()) {
         // compound matches
@@ -226,18 +229,27 @@ final class ReplacementBuilder extends PsiRecursiveElementVisitor {
 
             buf.append(r.getMatchImage());
             removeExtraSemicolon(info, r, buf);
+            forceAddingNewLine = r.getMatch() instanceof PsiComment;
           }
         }
 
         replacementString = buf.toString();
       } else {
-        StringBuffer buf = new StringBuffer(replacementString);
+        StringBuffer buf = new StringBuffer();
+        if (info.statementContext) {
+          forceAddingNewLine = match.getMatch() instanceof PsiComment;
+        }
+        buf.append(replacementString);
         removeExtraSemicolon(info, match, buf);
         replacementString = buf.toString();
       }
 
       offset = insertSubstitution(result,offset,info,replacementString);
       offset = removeExtraSemicolon2(info, offset, result,match);
+      if (forceAddingNewLine && info.statementContext) {
+        result.insert(info.startIndex+offset+1,'\n');
+        offset ++;
+      }
     }
     return offset;
   }
@@ -246,11 +258,16 @@ final class ReplacementBuilder extends PsiRecursiveElementVisitor {
     if (info.statementContext) {
       int index = offset+info.startIndex;
       if (result.charAt(index)==';' &&
-          ( ( result.charAt(index-1)=='}' &&
+          ( match == null ||
+            ( result.charAt(index-1)=='}' &&
               !(match.getMatch() instanceof PsiDeclarationStatement) // array init in dcl
             ) ||
-            ( match == null
-            )
+            ( !match.isMultipleMatch() &&
+              match.getMatch() instanceof PsiComment
+            ) ||
+            ( match.isMultipleMatch() &&
+              match.getAllSons().get( match.getAllSons().size() - 1 ).getMatch() instanceof PsiComment
+            ) 
            )   
          ) {
         result.deleteCharAt(index);
@@ -270,7 +287,10 @@ final class ReplacementBuilder extends PsiRecursiveElementVisitor {
           r.getMatchImage().charAt(r.getMatchImage().length()-1)==';' &&
           ( element instanceof PsiReturnStatement ||
             element instanceof PsiDeclarationStatement ||
-            element instanceof PsiAssertStatement
+            element instanceof PsiAssertStatement ||
+            false //( element instanceof PsiComment &&
+            //  ((PsiComment)element).getTokenType() == JavaTokenType.END_OF_LINE_COMMENT
+            //)
           )
          ) {
         // contains extra ;

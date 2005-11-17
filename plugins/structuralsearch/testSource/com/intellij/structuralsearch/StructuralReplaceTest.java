@@ -1224,6 +1224,73 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     );
   }
 
+  public void testClassReplacement6() {
+    String actualResult;
+    String s1 = "public class X {\n" +
+                "   /**\n" +
+                "    * zzz\n" +
+                "    */\n" +
+                "   private void f(int i) {\n" +
+                "       //s\n" +
+                "   }\n" +
+                "}";
+    String s1_2 = "public class X {\n" +
+                "   /**\n" +
+                "    * zzz\n" +
+                "    */\n" +
+                "   private void f(int i) {\n" +
+                "       int a = 1;\n" +
+                "       //s\n" +
+                "   }\n" +
+                "}";
+
+    String s2 = "class 'c {\n" +
+                "   /**\n" +
+                "    * zzz\n" +
+                "    */\n" +
+                "   void f('t 'p){'s+;}\n" +
+                "}";
+    String s3 = "class $c$ {\n" +
+                "   /**\n" +
+                "    * ppp\n" +
+                "    */\n" +
+                "   void f($t$ $p$){$s$;}\n" +
+                "}";
+
+    String expectedResult = "    public class X {\n" +
+                            "       /**\n" +
+                            "        * ppp\n" +
+                            "        */\n" +
+                            "       private void f(int i){//s\n" +
+                            "    }\n" +
+                            "    }";
+
+    actualResult = replacer.testReplace(s1,s2,s3,options);
+
+    assertEquals(
+      "Correct class replacement",
+      expectedResult,
+      actualResult
+    );
+
+    String expectedResult2 = "    public class X {\n" +
+                            "       /**\n" +
+                            "        * ppp\n" +
+                            "        */\n" +
+                            "       private void f(int i){int a = 1;\n" +
+                            "           //s\n" +
+                            "    }\n" +
+                            "    }";
+
+    actualResult = replacer.testReplace(s1_2,s2,s3,options);
+
+    assertEquals(
+      "Correct class replacement, 2",
+      expectedResult2,
+      actualResult
+    );
+  }
+
   public void testClassReplacement2() {
     final String actualResult;
     String s40 = "class A {\n" +
