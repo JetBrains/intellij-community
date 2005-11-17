@@ -11,10 +11,12 @@ import com.intellij.execution.filters.TextConsoleBuidlerFactory;
 import com.intellij.execution.runners.JavaProgramRunner;
 import com.intellij.execution.runners.RunStrategy;
 import com.intellij.execution.runners.RunnerInfo;
-import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.PropertiesUtil;
+import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.compiler.CompileStatusNotification;
+import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -27,13 +29,16 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.compiler.CompilerManager;
-import com.intellij.openapi.compiler.CompileStatusNotification;
-import com.intellij.uiDesigner.*;
-import com.intellij.uiDesigner.designSurface.GuiEditor;
+import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.GuiEditorUtil;
+import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.compiler.CodeGenerator;
 import com.intellij.uiDesigner.compiler.Utils;
-import com.intellij.uiDesigner.lw.*;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
+import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
+import com.intellij.uiDesigner.lw.LwComponent;
+import com.intellij.uiDesigner.lw.LwRootContainer;
+import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.make.CopyResourcesUtil;
 import com.intellij.uiDesigner.make.Form2ByteCodeCompiler;
 import com.intellij.util.BcelUtils;
@@ -194,6 +199,10 @@ public final class PreviewFormAction extends AnAction{
         }
         CopyResourcesUtil.copyProperties(tempPath, RUNTIME_BUNDLE_PREFIX + locale.getLanguage() + RUNTIME_BUNDLE_EXTENSION);
 
+        /*
+        final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, loader, new GridLayoutCodeGenerator());
+        codeGenerator.patchFile(tempFile);
+        */
         final CodeGenerator codeGenerator = new CodeGenerator(rootContainer, tempFile, loader);
         codeGenerator.patch();
         final String[] errors = codeGenerator.getErrors();
