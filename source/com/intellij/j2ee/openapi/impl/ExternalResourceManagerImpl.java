@@ -24,7 +24,10 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   @NonNls private static final String J2EE_1_3 = "http://java.sun.com/dtd/";
   @NonNls private static final String J2EE_1_2 = "http://java.sun.com/j2ee/dtds/";
   @NonNls private static final String J2EE_NS = "http://java.sun.com/xml/ns/j2ee/";
+  @NonNls private static final String JAVAEE_NS = "http://java.sun.com/xml/ns/javaee/";
   @NonNls private static final String IBM_NS = "http://www.ibm.com/webservices/xsd/";
+  @NonNls private static final String PERSISTENCE_NS = "http://java.sun.com/xml/ns/persistence";
+  @NonNls private static final String PERSISTENCE_ORM_NS = "http://java.sun.com/xml/ns/persistence_ORM";
 
   private Map<String, String> myResources = new com.intellij.util.containers.HashMap<String, String>();
   private Set<String> myIgnoredResources = new HashSet<String>();
@@ -80,6 +83,15 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     addInternalResource(J2EE_NS + "application-client_1_4.xsd","application-client_1_4.xsd");
     addInternalResource(J2EE_NS + "application_1_4.xsd","application_1_4.xsd");
     addInternalResource(J2EE_NS + "web-jsptaglibrary_2_0.xsd","web-jsptaglibrary_2_0.xsd");
+
+    addInternalResource(JAVAEE_NS + "javaee_5.xsd","javaee_5.xsd");
+    addInternalResource(JAVAEE_NS + "javaee_web_services_client_1_2.xsd","javaee_web_services_client_1_2.xsd");
+    addInternalResource(JAVAEE_NS + "application_5.xsd","application_5.xsd");
+    addInternalResource(JAVAEE_NS + "ejb-jar_3_0.xsd","ejb-jar_3_0.xsd");
+
+    addInternalResource(PERSISTENCE_NS,"persistence.xsd");
+    addInternalResource(PERSISTENCE_ORM_NS,"persistence_ORM.xsd");
+
 
     // Plugins DTDs // stathik
     addInternalResource("http://plugins.intellij.net/plugin.dtd",
