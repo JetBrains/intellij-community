@@ -18,6 +18,7 @@ package com.intellij.structuralsearch.inspection;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
@@ -58,12 +59,23 @@ public class SSBasedInspection extends LocalInspectionTool {
     myConfigurations.clear();
     ConfigurationManager.readConfigurations(node, myConfigurations, new ArrayList<Configuration>());
 
-    Project project = ProjectManager.getInstance().getOpenProjects()[0];
-    StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
-      public void run() {
-        precompileConfigurations();
-      }
-    });
+    Project[] projects = ProjectManager.getInstance().getOpenProjects();
+    if (projects.length == 0) {
+      ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerAdapter() {
+        public void projectOpened(Project project) {
+          ProjectManager.getInstance().removeProjectManagerListener(this);
+          precompileConfigurations(project);
+        }
+      });
+    }
+    else {
+      final Project project = projects[0];
+      StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
+        public void run() {
+          precompileConfigurations(project);
+        }
+      });
+    }
   }
 
   public String getGroupDisplayName() {
@@ -125,16 +137,15 @@ public class SSBasedInspection extends LocalInspectionTool {
     JPanel component = new SSBasedInspectionOptions(myConfigurations){
       public void configurationsChanged() {
         super.configurationsChanged();
-        precompileConfigurations();
+        Project[] projects = ProjectManager.getInstance().getOpenProjects();
+        precompileConfigurations(projects[0]);
       }
     }.getComponent();
     return component;
   }
 
   // must be inside event dispatch
-  public void precompileConfigurations() {
-    Project project = ProjectManager.getInstance().getOpenProjects()[0];
-
+  public void precompileConfigurations(final Project project) {
     compiledConfigurations = new Matcher(project).precompileOptions(myConfigurations);
   }
 }
