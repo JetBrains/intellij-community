@@ -322,7 +322,9 @@ public class PluginManager {
     try {
       final String homePath = PathManager.getHomePath();
       final ClassLoader classLoader = PluginManager.class.getClassLoader();
-      final ArrayList<URL> urls = (ArrayList<URL>)classLoader.getClass().getDeclaredMethod("getUrls").invoke(classLoader);
+      final Class<? extends ClassLoader> aClass = classLoader.getClass();
+      if (!aClass.getName().equals(IdeaClassLoader.class.getName())) return;
+      final ArrayList<URL> urls = (ArrayList<URL>)aClass.getDeclaredMethod("getUrls").invoke(classLoader);
       for (URL url : urls) {
         final String protocol = url.getProtocol();
         if ("file".equals(protocol)) {

@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
 import com.intellij.CommonBundle;
+import com.intellij.xml.util.XmlUtil;
 import com.sun.jdi.ReferenceType;
 import org.jdom.Element;
 
@@ -194,13 +195,13 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
       //noinspection HardCodedStringLiteral
       buf.append("&nbsp;<br>&nbsp;");
       buf.append(DebuggerBundle.message("breakpoint.property.name.log.expression")).append(": ");
-      buf.append(getLogMessage());
+      buf.append(XmlUtil.escapeString(getLogMessage().getText()));
     }
-    if (CONDITION_ENABLED && (getCondition() != null && !"".equals(getCondition()))) {
+    if (CONDITION_ENABLED && (getCondition() != null && !"".equals(getCondition().getText()))) {
       //noinspection HardCodedStringLiteral
       buf.append("&nbsp;<br>&nbsp;");
       buf.append(DebuggerBundle.message("breakpoint.property.name.condition")).append(": ");
-      buf.append(getCondition());
+      buf.append(XmlUtil.escapeString(getCondition().getText()));
     }
     if (COUNT_FILTER_ENABLED) {
       //noinspection HardCodedStringLiteral
@@ -321,7 +322,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
         setupGutterRenderer();
       }
       else {
-        DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().removeBreakpoint(BreakpointWithHighlighter.this);
+        DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().removeBreakpoint(this);
       }
     }
   }
@@ -337,9 +338,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
               public void run() {
                 if (highlighter.isValid()) {
                   MarkupModel markupModel = highlighter.getDocument().getMarkupModel(myProject);
-                  if (markupModel != null) {
-                    markupModel.removeHighlighter(highlighter);
-                  }
+                  markupModel.removeHighlighter(highlighter);
                   //we should delete it here, so gutter will not fire events to deleted breakpoint
                   BreakpointWithHighlighter.super.delete();
                 }
@@ -354,7 +353,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
     if (getHighlighter() == null || !getHighlighter().isValid()) {
       return false;
     }
-    return (document.equals(getHighlighter().getDocument()) && getSourcePosition().getLine() == document.getLineNumber(offset));
+    return document.equals(getHighlighter().getDocument()) && getSourcePosition().getLine() == document.getLineNumber(offset);
   }
 
   protected void reload(PsiFile psiFile) {
