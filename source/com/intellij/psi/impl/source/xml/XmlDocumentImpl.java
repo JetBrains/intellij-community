@@ -4,6 +4,7 @@ import com.intellij.ant.impl.dom.xmlBridge.AntDOMNSDescriptor;
 import com.intellij.j2ee.ExternalResourceManager;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.impl.PomTransactionBase;
@@ -96,17 +97,25 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
       if(cachedValue != null) return cachedValue.getValue();
       else return null;
     }
-    defaultDescriptorsCache.put(namespace, null);
-    final CachedValueImpl<XmlNSDescriptor> value =
-      new CachedValueImpl<XmlNSDescriptor>(getManager(), new CachedValueProvider<XmlNSDescriptor>() {
-        public Result<XmlNSDescriptor> compute() {
-          final XmlNSDescriptor defaultNSDescriptorInner = getDefaultNSDescriptorInner(namespace, strict);
-          return new Result<XmlNSDescriptor>(defaultNSDescriptorInner,
-                                             defaultNSDescriptorInner != null ? defaultNSDescriptorInner.getDependences() : new Object[0]);
-        }
-      }, false);
-    final XmlNSDescriptor defaultNSDescriptor = value.getValue();
-    defaultDescriptorsCache.put(namespace, value);
+
+    final XmlNSDescriptor defaultNSDescriptor;
+    try {
+      defaultDescriptorsCache.put(namespace, null);
+      final CachedValueImpl<XmlNSDescriptor> value =
+        new CachedValueImpl<XmlNSDescriptor>(getManager(), new CachedValueProvider<XmlNSDescriptor>() {
+          public Result<XmlNSDescriptor> compute() {
+            final XmlNSDescriptor defaultNSDescriptorInner = getDefaultNSDescriptorInner(namespace, strict);
+            return new Result<XmlNSDescriptor>(defaultNSDescriptorInner,
+                                               defaultNSDescriptorInner != null ? defaultNSDescriptorInner.getDependences() : new Object[0]);
+          }
+        }, false);
+      defaultNSDescriptor = value.getValue();
+      defaultDescriptorsCache.put(namespace, value);
+    }
+    catch(ProcessCanceledException ex) {
+      defaultDescriptorsCache.remove(namespace);
+      throw ex;
+    }
     return defaultNSDescriptor;
   }
 
