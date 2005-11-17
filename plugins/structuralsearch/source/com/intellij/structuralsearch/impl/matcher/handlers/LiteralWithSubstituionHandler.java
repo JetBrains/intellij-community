@@ -39,7 +39,7 @@ public class LiteralWithSubstituionHandler extends Handler {
         SubstitutionHandler handler = handlers.get(i);
 
         if (!handler.handle(matchedNode,offset + matcher.start(i+1), offset + matcher.end(i+1),context)) {
-          continue;
+          return false;
         }
       }
       return true;

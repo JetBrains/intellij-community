@@ -1789,8 +1789,8 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     assertEquals(
       "Comment matching, 2",
-      findMatchesCount(s1,s2_2),
-      3
+      3,
+      findMatchesCount(s1,s2_2)
     );
 
     assertEquals(
@@ -1850,15 +1850,55 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       2
     );
 
-    String s14 = "\" (some text with specifal chars)\"," +
+    String s14 = "\"(some text with special chars)\"," +
                  "\" some\"," +
                  "\"(some)\"";
-    String s15 = "\"('a:[regexw( some )]\"";
+    String s15 = "\"('a:[regexw( some )])\"";
 
     assertEquals(
       "meta char in literal",
-      findMatchesCount(s14,s15),
-      2
+      2,
+      findMatchesCount(s14,s15)
+    );
+
+    String s16 = "/**\n" +
+                 "* Created by IntelliJ IDEA.\n" +
+                 "* User: cdr\n" +
+                 "* Date: Nov 15, 2005\n" +
+                 "* Time: 4:23:29 PM\n" +
+                 "* To change this template use File | Settings | File Templates.\n" +
+                 "*/\n" +
+                 "public class Y {\n" +
+                 "}";
+    String s17 = "/**\n" +
+                 "* Created by IntelliJ IDEA.\n" +
+                 "* User: '_USER\n" +
+                 "* Date: '_DATE\n" +
+                 "* Time: '_TIME\n" +
+                 "* To change this template use File | Settings | File Templates.\n" +
+                 "*/\n" +
+                 "class 'c {\n" +
+                 "}";
+    assertEquals(
+      "complete comment match",
+      1,
+      findMatchesCount(s16,s17,true)
+    );
+
+    String s18 = "public class A {\n" +
+                 "   private void f(int i) {\n" +
+                 "       int g=0; //sss\n" +
+                 "   }\n" +
+                 "}";
+    String s19 = "class $c$ {\n" +
+                 "   $type$ $f$($t$ $p$){\n" +
+                 "       $s$; // sss\n" +
+                 "   }\n" +
+                 "}";
+    assertEquals(
+      "statement match with comment",
+      1,
+      findMatchesCount(s18,s19)
     );
   }
 
@@ -1998,7 +2038,6 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     String s112 = "'Instance?:[exprtype( B )].getManager();";
     assertEquals("caring about missing qualifier type", 2, findMatchesCount(s111,s112));
 
-    // a) custom modifiers
     // b) hierarchy navigation support
     // c) or search support
     // d) contains support
@@ -2017,7 +2056,6 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     // @todo proper regexp support
 
     // @todo define strict equality of the matches
-
     // @todo search for field selection retrieves packages also
   }
 

@@ -50,11 +50,13 @@ public class MatchingVisitor extends PsiElementVisitor {
       return;
     }
 
-    String str = (String) comment.getUserData(CompiledPattern.HANDLER_KEY);
-    if (str!=null) {
+    final Object userData = comment.getUserData(CompiledPattern.HANDLER_KEY);
+
+    if (userData instanceof String) {
+      String str = (String) userData;
       int end = comment2.getTextLength();
 
-      if (comment.getTokenType() == JavaTokenType.C_STYLE_COMMENT) {
+      if (((PsiComment)comment2).getTokenType() == JavaTokenType.C_STYLE_COMMENT) {
         end -= 2;
       }
       result = ((SubstitutionHandler)matchContext.getPattern().getHandler(str)).handle(
@@ -63,6 +65,8 @@ public class MatchingVisitor extends PsiElementVisitor {
         end,
         matchContext
       );
+    } else if (userData instanceof Handler) {
+      result = ((Handler)userData).match(comment,comment2,matchContext);
     } else {
       result = comment.getText().equals(comment2.getText());
     }

@@ -28,7 +28,7 @@ public abstract class Handler {
    * @return true if matching was successfull and false otherwise
    */
   public boolean match(PsiElement patternNode,PsiElement matchedNode, int start, int end, MatchContext context) {
-    return match(patternNode,matchedNode,0,-1,context);
+    return match(patternNode,matchedNode,context);
   }
 
   /**

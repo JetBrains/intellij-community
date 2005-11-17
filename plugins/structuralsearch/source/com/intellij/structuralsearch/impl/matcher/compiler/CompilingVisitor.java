@@ -26,6 +26,7 @@ import com.intellij.structuralsearch.impl.matcher.strategies.*;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.GenericHashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -132,13 +133,14 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
   public void visitComment(PsiComment comment) {
     super.visitComment(comment);
 
-    Matcher matcher = pattern.matcher(comment.getText());
+    final String text = comment.getText();
+    Matcher matcher = pattern.matcher(text);
     boolean matches = false;
     if (!matcher.matches()) {
-      matcher = pattern2.matcher(comment.getText());
+      matcher = pattern2.matcher(text);
 
       if (!matcher.matches()) {
-        matcher = pattern3.matcher(comment.getText());
+        matcher = pattern3.matcher(text);
       } else {
         matches = true;
       }
@@ -164,20 +166,28 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
       if (context.findMatchingFiles) {
         RegExpPredicate predicate = getSimpleRegExpPredicate( handler );
         if (!IsNotSuitablePredicate(predicate, handler)) {
-          processTokenizedName(predicate.getRegExp(),true,false,true,false);
+          processTokenizedName(predicate.getRegExp(),true, PatternKind.COMMENT);
         }
       }
 
       matches = true;
     }
 
-    if (!matches && context.findMatchingFiles) {
-      processTokenizedName(comment.getText(),true,false,true,false);
+    if (!matches) {
+      Handler handler = processPatternStringWithFragments(text, PatternKind.COMMENT);
+      if (handler != null) comment.putUserData(CompiledPattern.HANDLER_KEY,handler);
+      if (context.findMatchingFiles) {
+        processTokenizedName(text,true, PatternKind.COMMENT);
+      }
     }
   }
 
   private static Pattern alternativePattern = Pattern.compile("^\\((.+)\\)$");
-  private void processTokenizedName(String name,boolean skipComments,boolean code, boolean comments, boolean literals) {
+  enum PatternKind {
+    LITERAL, COMMENT, CODE
+  }
+
+  private void processTokenizedName(String name,boolean skipComments,PatternKind kind) {
     WordTokenizer tokenizer = new WordTokenizer(name);
     for(Iterator<String> i=tokenizer.iterator();i.hasNext();) {
       String nextToken = i.next();
@@ -191,10 +201,10 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
       if (matcher.matches()) {
         StringTokenizer alternatives = new StringTokenizer(matcher.group(1),"|");
         while(alternatives.hasMoreTokens()) {
-          addFilesToSearchForGivenWord(alternatives.nextToken(),!alternatives.hasMoreTokens(),code,comments,literals);
+          addFilesToSearchForGivenWord(alternatives.nextToken(),!alternatives.hasMoreTokens(),kind);
         }
       } else {
-        addFilesToSearchForGivenWord(nextToken,true,code,comments,literals);
+        addFilesToSearchForGivenWord(nextToken,true,kind);
       }
     }
   }
@@ -243,77 +253,95 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
   @NonNls private static final String SUBSTITUTION_PATTERN_STR = "\\b(__\\$_\\w+)\\b";
   static Pattern substitutionPattern = Pattern.compile(SUBSTITUTION_PATTERN_STR);
 
+  private @Nullable Handler processPatternStringWithFragments(String pattern, PatternKind kind) {
+    String content;
+
+    if (kind == PatternKind.LITERAL) {
+      content = pattern.substring(1,pattern.length()-1);
+    } else if (kind == PatternKind.COMMENT) {
+      content = pattern;
+    } else {
+      return null;
+    }
+
+    StringBuffer buf = new StringBuffer(content.length());
+    Matcher matcher = substitutionPattern.matcher(content);
+    List<SubstitutionHandler> handlers = null;
+    int start = 0;
+    String word;
+    boolean hasLiteralContent = false;
+
+    SubstitutionHandler handler = null;
+    while(matcher.find()) {
+      if(handlers==null) handlers = new LinkedList<SubstitutionHandler>();
+      handler = (SubstitutionHandler)context.pattern.getHandler(matcher.group(1));
+      if (handler != null) handlers.add( handler );
+
+      word = content.substring(start,matcher.start());
+
+      if (word.length() > 0) {
+        buf.append( shieldSpecialChars(word) );
+        hasLiteralContent = true;
+
+        if (context.findMatchingFiles) {
+          processTokenizedName(word,false,kind);
+        }
+      }
+
+      RegExpPredicate predicate = getSimpleRegExpPredicate( handler );
+
+      if (predicate == null || !predicate.isWholeWords())  buf.append("(.*?)");
+      else {
+        buf.append(".*?\\b(").append(predicate.getRegExp()).append(")\\b.*?");
+      }
+
+      if (context.findMatchingFiles) {
+        if (!IsNotSuitablePredicate(predicate, handler)) {
+          processTokenizedName(predicate.getRegExp(),false,kind);
+        }
+      }
+
+      start = matcher.end();
+    }
+
+    word = content.substring(start,content.length());
+
+    if (word.length() > 0) {
+      hasLiteralContent = true;
+      buf.append( shieldSpecialChars(word) );
+
+      if (context.findMatchingFiles) {
+        processTokenizedName(word,false,kind);
+      }
+    }
+
+    if (hasLiteralContent) {
+      if (kind == PatternKind.LITERAL) {
+        buf.insert(0, "\"");
+        buf.append("\"");
+      }
+      buf.append("$");
+    }
+
+    if (handlers!=null) {
+      return (hasLiteralContent)?(Handler)new LiteralWithSubstituionHandler(
+        buf.toString(),
+        handlers
+      ):
+       handler;
+    }
+
+    return null;
+  }
+
   public void visitLiteralExpression(PsiLiteralExpression expression) {
     String value = expression.getText();
 
     if (value.length() > 2 && value.charAt(0)=='"' && value.charAt(value.length()-1)=='"') {
-      String content = value.substring(1,value.length()-1);
+      @Nullable Handler handler = processPatternStringWithFragments(value, PatternKind.LITERAL);
 
-      StringBuffer buf = new StringBuffer(content.length());
-      Matcher matcher = substitutionPattern.matcher(content);
-      List<SubstitutionHandler> handlers = null;
-      int start = 0;
-      String word;
-      boolean hasLiteralContent = false;
-
-      SubstitutionHandler handler = null;
-      while(matcher.find()) {
-        if(handlers==null) handlers = new LinkedList<SubstitutionHandler>();
-        handler = (SubstitutionHandler)context.pattern.getHandler(matcher.group(1));
-        if (handler != null) handlers.add( handler );
-
-        word = content.substring(start,matcher.start());
-
-        if (word.length() > 0) {
-          buf.append( shieldSpecialChars(word) );
-          hasLiteralContent = true;
-
-          if (context.findMatchingFiles) {
-            processTokenizedName(word,false,false,false,true);
-          }
-        }
-
-        RegExpPredicate predicate = getSimpleRegExpPredicate( handler );
-        //if (predicate!=null) {
-        //  buf.append( "(" + predicate.getRegExp() + ")" );
-        //} else {
-          buf.append("(.*?)");
-        //}
-
-        if (context.findMatchingFiles) {
-          if (!IsNotSuitablePredicate(predicate, handler)) {
-            String refname = predicate.getRegExp();
-            processTokenizedName(refname,false,false,false,true);
-          }
-        }
-
-        start = matcher.end();
-      }
-
-      word = content.substring(start,content.length());
-
-      if (word.length() > 0) {
-        hasLiteralContent = true;
-        buf.append( shieldSpecialChars(word) );
-
-        if (context.findMatchingFiles) {
-          processTokenizedName(word,false,false,false,true);
-        }
-      }
-
-      if (hasLiteralContent) {
-        buf.append("$");
-      }
-
-      if (handlers!=null) {
-        expression.putUserData(
-          CompiledPattern.HANDLER_KEY,
-          (hasLiteralContent)?(Handler)new LiteralWithSubstituionHandler(
-            buf.toString(),
-            handlers
-          ):
-           handler
-        );
+      if (handler!=null) {
+        expression.putUserData( CompiledPattern.HANDLER_KEY,handler);
       }
     }
     super.visitLiteralExpression(expression);
@@ -435,7 +463,7 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
   }
 
   private void addFilesToSearchForGivenWord(String refname, boolean endTransaction) {
-    addFilesToSearchForGivenWord(refname,endTransaction,true,false,false);
+    addFilesToSearchForGivenWord(refname,endTransaction, PatternKind.CODE);
   }
 
   private static Set<String> ourReservedWords = new HashSet<String>(
@@ -443,19 +471,19 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
   );
   
   
-  private void addFilesToSearchForGivenWord(String refname, boolean endTransaction,boolean code, boolean comments, boolean literals) {
+  private void addFilesToSearchForGivenWord(String refname, boolean endTransaction,PatternKind kind) {
     if(ourReservedWords.contains(refname)) return; // skip our special annotations !!!
       
     boolean addedSomething = false;
 
-    if (code && context.scanned.get(refname)==null) {
+    if (kind == PatternKind.CODE && context.scanned.get(refname)==null) {
       context.helper.processAllFilesWithWord(refname,
                                              (GlobalSearchScope)context.options.getScope(),
                                              new MyFileProcessor(), true);
 
       context.scanned.put( refname, refname );
       addedSomething  = true;
-    } else if (comments && context.scannedComments.get(refname)==null) {
+    } else if (kind == PatternKind.COMMENT && context.scannedComments.get(refname)==null) {
       context.helper.processAllFilesWithWordInComments(refname,
                                                        (GlobalSearchScope)context.options.getScope(),
                                                        new MyFileProcessor()
@@ -463,7 +491,7 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
 
       context.scannedComments.put( refname, refname );
       addedSomething  = true;
-    } else if (literals && context.scannedLiterals.get(refname)==null) {
+    } else if (kind == PatternKind.LITERAL && context.scannedLiterals.get(refname)==null) {
       context.helper.processAllFilesWithWordInLiterals(refname,
                                                        (GlobalSearchScope)context.options.getScope(),
                                                        new MyFileProcessor());
@@ -671,6 +699,14 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
     }
 
     super.visitExpressionStatement(expr);
+
+    //if (expr.getExpression() instanceof PsiReferenceExpression &&
+    //    (context.pattern.isRealTypedVar(expr.getExpression()))) {
+    //  // search for statement
+    //  SubstitutionHandler handler = (SubstitutionHandler) context.pattern.getHandler(expr.getExpression());
+    //  handler.setFilter( new StatementFilter() );
+    //  handler.setMatchHandler( new StatementHandler() );
+    //}
   }
 
   public void visitElement(PsiElement element) {

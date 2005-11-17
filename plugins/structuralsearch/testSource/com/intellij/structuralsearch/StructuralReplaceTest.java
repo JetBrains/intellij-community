@@ -54,17 +54,17 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
 
     actualResult = replacer.testReplace(s7,s8,s9,options);
 
-    //assertEquals(
-    //  "string literal replacement 3",
-    //  expectedResult3,
-    //  actualResult
-    //);
+    assertEquals(
+      "string literal replacement 3",
+      expectedResult3,
+      actualResult
+    );
 
     String s10 = "configureByFile(path + \"1.html\");\n" +
                  "    checkResultByFile(path + \"1_after.html\");\n" +
                  "    checkResultByFile(path + \"1_after2.html\");\n" +
                  "    checkResultByFile(path + \"1_after3.html\");";
-    String s11 = "\"$a$.html\"";
+    String s11 = "\"'a.html\"";
     String s12 = "\"$a$.\"+ext";
     String expectedResult4 = "configureByFile(path + (\"1.\"+ext));\n" +
                              "    checkResultByFile(path + (\"1_after.\"+ext));\n" +

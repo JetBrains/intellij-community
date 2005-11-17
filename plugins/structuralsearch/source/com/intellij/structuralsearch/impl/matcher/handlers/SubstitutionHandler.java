@@ -84,7 +84,7 @@ public class SubstitutionHandler extends Handler {
 
   public boolean validate(final PsiElement match, int start, int end, MatchContext context) {
     if (predicate!=null) {
-      if(!predicate.match(null,match,context)) return false;
+      if(!predicate.match(null,match,start,end,context)) return false;
     }
 
     if (maxOccurs==0) {
@@ -237,6 +237,10 @@ public class SubstitutionHandler extends Handler {
         text = text.substring(1);
       }
       if (StringUtil.endsWithChar(text, ';')) text = text.substring(0, text.length() - 1);
+      else if (element instanceof PsiExpressionStatement) {
+        int i = text.indexOf(';');
+        if (i != -1) text = text.substring(0,i);
+      }
     }
 
     if (text==null) text = element.getText();

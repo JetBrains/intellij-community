@@ -125,17 +125,17 @@ public final class RegExpPredicate extends Handler {
       text = ((PsiReferenceExpression)matchedNode).getReferenceNameElement().getText();
     } else if (matchedNode instanceof PsiLiteralExpression) {
       text = matchedNode.getText();
-      if (text.length()>2 && text.charAt(0)=='"' && text.charAt(text.length()-1)=='"') {
-        text = text.substring(1,text.length()-1);
-      }
+      //if (text.length()>2 && text.charAt(0)=='"' && text.charAt(text.length()-1)=='"') {
+      //  text = text.substring(1,text.length()-1);
+      //}
     } else if (matchedNode instanceof XmlAttributeValue) {
       text = matchedNode.getText();
-      if (text.length()>2 &&
-          ( (text.charAt(0)=='"' && text.charAt(text.length()-1)=='"') ||
-            (text.charAt(0)=='\'' && text.charAt(text.length()-1)=='\'')
-          )) {
-        text = text.substring(1,text.length()-1);
-      }
+      //if (text.length()>2 &&
+      //    ( (text.charAt(0)=='"' && text.charAt(text.length()-1)=='"') ||
+      //      (text.charAt(0)=='\'' && text.charAt(text.length()-1)=='\'')
+      //    )) {
+      //  text = text.substring(1,text.length()-1);
+      //}
     } else {
       text = SubstitutionHandler.getTypedVarString(matchedNode);
     }
@@ -181,5 +181,9 @@ public final class RegExpPredicate extends Handler {
   public void setMultiline(boolean b) {
     multiline = b;
     compilePattern();
+  }
+
+  public boolean isWholeWords() {
+    return wholeWords;
   }
 }

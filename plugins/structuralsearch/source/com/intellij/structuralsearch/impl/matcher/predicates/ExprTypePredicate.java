@@ -23,7 +23,11 @@ public class ExprTypePredicate extends Handler {
     withinHierarchy = _withinHierarchy;
   }
 
-  public boolean match(PsiElement node, PsiElement match, MatchContext context) {
+  public boolean match(PsiElement patternNode, PsiElement matchedNode, MatchContext context) {
+    return match(patternNode, matchedNode, 0, -1, context);
+  }
+
+  public boolean match(PsiElement node, PsiElement match, int start, int end, MatchContext context) {
     if (match instanceof PsiIdentifier) {
       // since we pickup tokens
       match = match.getParent();
