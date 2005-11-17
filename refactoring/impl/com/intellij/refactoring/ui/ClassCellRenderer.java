@@ -38,33 +38,35 @@ public class ClassCellRenderer extends DefaultListCellRenderer {
           boolean cellHasFocus) {
     super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
 
-    PsiClass aClass = (PsiClass) value;
-    setText(getClassText(aClass));
-
-    final int flags;
-    if (myShowReadOnly) {
-      flags = Iconable.ICON_FLAG_READ_STATUS | Iconable.ICON_FLAG_VISIBILITY;
-    } else {
-      flags = Iconable.ICON_FLAG_VISIBILITY;
-    }
-    Icon icon = aClass.getIcon(flags);
-    if(icon != null) setIcon(icon);
-    return this;
+    return customizeRenderer(this, value, myShowReadOnly);
   }
 
-  static String getClassText(PsiClass aClass) {
-    String qualifiedName = aClass.getQualifiedName();
-    String text;
-    if (qualifiedName != null) {
-      text = qualifiedName;
-    } else {
-      String name = aClass.getName();
-      if (name != null) {
-        text = name;
-      } else {
-        text = RefactoringBundle.message("anonymous.class.text");
-      }
+  public static JLabel customizeRenderer(final JLabel cellRendererComponent, final Object value, final boolean showReadOnly) {
+    PsiClass aClass = (PsiClass) value;
+    cellRendererComponent.setText(getClassText(aClass));
+
+    int flags = Iconable.ICON_FLAG_VISIBILITY;
+    if (showReadOnly) {
+      flags |= Iconable.ICON_FLAG_READ_STATUS;
     }
-    return text;
+    Icon icon = aClass.getIcon(flags);
+    if(icon != null) {
+      cellRendererComponent.setIcon(icon);
+    }
+    return cellRendererComponent;
+  }
+
+  private static String getClassText(PsiClass aClass) {
+    String qualifiedName = aClass.getQualifiedName();
+    if (qualifiedName != null) {
+      return qualifiedName;
+    }
+
+    String name = aClass.getName();
+    if (name != null) {
+      return name;
+    }
+
+    return RefactoringBundle.message("anonymous.class.text");
   }
 }

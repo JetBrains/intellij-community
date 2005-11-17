@@ -4,6 +4,7 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.psi.PsiLock;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -114,6 +115,10 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
 
   public String getCommonPresentableName() {
     return "<ROOT>";
+  }
+
+  public GlobalSearchScope getResolveScope() {
+    return myFile.getResolveScope();
   }
 
   @NotNull

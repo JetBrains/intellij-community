@@ -27,7 +27,7 @@ public class ReferenceEditorWithBrowseButton extends ComponentWithBrowseButton<E
     myToAcceptClasses = toAcceptClasses;
   }
 
-  private static Document createDocument(final String text, PsiManager manager, boolean isClassesAccepted) {
+  public static Document createDocument(final String text, PsiManager manager, boolean isClassesAccepted) {
     PsiPackage defaultPackage = manager.findPackage("");
     final PsiCodeFragment fragment = manager.getElementFactory().createReferenceCodeFragment(text, defaultPackage, true, isClassesAccepted);
     fragment.setEverythingAcessible(true);

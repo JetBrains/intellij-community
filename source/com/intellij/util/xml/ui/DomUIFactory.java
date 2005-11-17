@@ -3,13 +3,13 @@
  */
 package com.intellij.util.xml.ui;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiClass;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.GenericValue;
 import com.intellij.util.xml.impl.ui.*;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
-import com.intellij.openapi.diagnostic.Logger;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
@@ -68,12 +68,15 @@ public class DomUIFactory {
     return null;
   }
 
-  public static <T extends DomElement> CollectionControl<T> createCollectionControl(DomElement element, DomCollectionChildDescription description) {
+  public static DomUIControl createCollectionControl(DomElement element, DomCollectionChildDescription description) {
     final Class aClass = DomUtil.extractParameterClassFromGenericType(description.getType());
-    if (aClass != null) {
-      return new GenericValueCollectionControl(element, description, createGenericValueControl(aClass, null));
+    if (String.class.equals(aClass)) {
+      return new StringCollectionControl(element, description);
+    } else if (PsiClass.class.equals(aClass)) {
+      return new PsiClassCollectionControl(element, description);
     }
-    return new CollectionControl<T>(element, description);
+
+    return new CollectionControl(element, description);
   }
 
 }

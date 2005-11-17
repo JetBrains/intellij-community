@@ -1,6 +1,5 @@
 package com.intellij.ide.util;
 
-import com.intellij.ide.IconUtilEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.roots.*;
@@ -27,7 +26,7 @@ public class PsiElementModuleRenderer extends DefaultListCellRenderer{
     boolean cellHasFocus) {
     final Component listCellRendererComponent = super.getListCellRendererComponent(list, value, index, isSelected,
                                                                                    cellHasFocus);
-    customizeCellRenderer(list, value, index, isSelected, cellHasFocus);
+    customizeCellRenderer(value, index, isSelected, cellHasFocus);
     return listCellRendererComponent;
   }
 
@@ -36,12 +35,11 @@ public class PsiElementModuleRenderer extends DefaultListCellRenderer{
   }
 
   protected void customizeCellRenderer(
-    JList list,
     Object value,
     int index,
     boolean selected,
     boolean hasFocus
-    ) {
+  ) {
     if (value instanceof PsiElement) {
       PsiElement element = (PsiElement)value;
       if (element.isValid()) {

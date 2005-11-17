@@ -82,10 +82,6 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons {
     return ScrollPaneFactory.createScrollPane(myTable);
   }
 
-  protected boolean showEditButton() {
-    return true;
-  }
-
   protected JButton[] createButtons(){
     myAddButton.addActionListener(
       new ActionListener() {
@@ -111,9 +107,6 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons {
       }
     );
 
-    if (!showEditButton()) {
-      return new JButton[]{myAddButton, myRemoveButton};
-    }
     return new JButton[]{myAddButton, myEditButton, myRemoveButton};
   }
 
@@ -130,10 +123,6 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons {
   protected abstract T addItem();
   protected abstract boolean removeItem(T o);
   protected abstract T editItem(T o);
-
-  protected abstract char getRemoveMnemonic();
-  protected abstract char getEditMnemonic();
-  protected abstract char getAddMnemonic();
 
   protected void doEdit() {
     int selected = myTable.getSelectedRow();

@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiLock;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -244,8 +245,12 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     return parent != null ? parent.getNameStrategy() : DomNameStrategy.HYPHEN_STRATEGY;
   }
 
-  public String getCommonPresentableName() {
+  public final String getCommonPresentableName() {
     return StringUtil.capitalizeWords(getNameStrategy().splitIntoWords(getTagName()), true);
+  }
+
+  public final GlobalSearchScope getResolveScope() {
+    return getRoot().getResolveScope();
   }
 
   private Invocation createInvocation(final Method method) throws IllegalAccessException, InstantiationException {
