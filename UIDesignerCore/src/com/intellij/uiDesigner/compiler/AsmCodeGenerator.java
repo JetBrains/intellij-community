@@ -148,7 +148,6 @@ public class AsmCodeGenerator {
       super(cv);
     }
 
-    @Override
     public void visit(final int version,
                       final int access,
                       final String name,
@@ -160,7 +159,6 @@ public class AsmCodeGenerator {
       mySuperName = superName;
     }
 
-    @Override
     public MethodVisitor visitMethod(final int access,
                                      final String name,
                                      final String desc,
@@ -177,14 +175,12 @@ public class AsmCodeGenerator {
       return methodVisitor;
     }
 
-    @Override
     public FieldVisitor visitField(final int access, final String name, final String desc, final String signature, final Object value) {
       myFieldDescMap.put(name, desc);
       myFieldAccessMap.put(name, new Integer(access));
       return super.visitField(access, name, desc, signature, value);
     }
 
-    @Override
     public void visitEnd() {
       Method method = Method.getMethod("void " + CodeGenerator.SETUP_METHOD_NAME + " ()");
       GeneratorAdapter adapter = new GeneratorAdapter(Opcodes.ACC_PRIVATE, method, null, null, cv);
@@ -270,7 +266,6 @@ public class AsmCodeGenerator {
       mySuperName = superName;
     }
 
-    @Override
     public void visitMethodInsn(final int opcode, final String owner, final String name, final String desc) {
       super.visitMethodInsn(opcode, owner, name, desc);
       if (opcode == Opcodes.INVOKESPECIAL && name.equals(CONSTRUCTOR_NAME)) {
