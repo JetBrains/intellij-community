@@ -42,7 +42,14 @@ public class PropertyFileGenerator extends Generator{
         if (jdk.getHomeDirectory() == null) {
           continue;
         }
-        final File homeDir = VfsUtil.virtualToIoFile(jdk.getHomeDirectory());
+        final File home = VfsUtil.virtualToIoFile(jdk.getHomeDirectory());
+        File homeDir;
+        try {
+          homeDir = home.getCanonicalFile();
+        }
+        catch (IOException e) {
+          homeDir = home;
+        }
         addProperty(BuildProperties.getJdkHomeProperty(jdk.getName()), homeDir.getPath().replace(File.separatorChar, '/'));
       }
     }

@@ -6,6 +6,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
 
 import java.io.File;
+import java.io.IOException;
 
 /**
  * @author Eugene Zhuravlev
@@ -32,7 +33,14 @@ public class GenerationUtils {
       return substitutedPath;
     }
     if (baseDir != null) {
-      final String relativepath = FileUtil.getRelativePath(baseDir, new File(path));
+      File base;
+      try {
+        base = baseDir.getCanonicalFile();
+      }
+      catch (IOException e) {
+        base = baseDir;
+      }
+      final String relativepath = FileUtil.getRelativePath(base, new File(path));
       if (relativepath != null) {
         final boolean shouldUseAbsolutePath = useAbsolutePathsForOuterPaths && relativepath.indexOf("..") >= 0;
         if (!shouldUseAbsolutePath) {

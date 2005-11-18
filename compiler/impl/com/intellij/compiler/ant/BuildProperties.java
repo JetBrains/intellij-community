@@ -1,8 +1,13 @@
 package com.intellij.compiler.ant;
 
 import com.intellij.compiler.JavacSettings;
-import com.intellij.compiler.ant.taskdefs.*;
+import com.intellij.compiler.ant.taskdefs.FileSet;
+import com.intellij.compiler.ant.taskdefs.Include;
+import com.intellij.compiler.ant.taskdefs.Path;
+import com.intellij.compiler.ant.taskdefs.Property;
 import com.intellij.j2ee.serverInstances.ApplicationServersManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -18,14 +23,12 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.compiler.CompilerBundle;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Eugene Zhuravlev
@@ -124,7 +127,14 @@ public class BuildProperties extends CompositeGenerator {
         if (jdk.getHomeDirectory() == null) {
           continue;
         }
-        final File homeDir = VfsUtil.virtualToIoFile(jdk.getHomeDirectory());
+        final File home = VfsUtil.virtualToIoFile(jdk.getHomeDirectory());
+        File homeDir;
+        try {
+          homeDir = home.getCanonicalFile();
+        }
+        catch (IOException e) {
+          homeDir = home;
+        }
         final String jdkName = jdk.getName();
         final String jdkHomeProperty = getJdkHomeProperty(jdkName);
         final FileSet fileSet = new FileSet(propertyRef(jdkHomeProperty));
