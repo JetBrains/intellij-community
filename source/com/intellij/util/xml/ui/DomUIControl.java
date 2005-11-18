@@ -17,4 +17,5 @@ public interface DomUIControl extends CommittablePanel {
 
   JComponent getBoundComponent();
 
+  void bind(JComponent component);
 }

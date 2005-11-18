@@ -4,6 +4,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericValue;
+import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import com.intellij.util.xml.ui.DomElementsPresentation;
@@ -17,6 +18,7 @@ import java.util.List;
 
 public class BaseDomElementNode extends AbstractDomElementNode {
   public static final Key<Comparator> COMPARATOR_KEY = Key.create("COMPARATOR_KEY");
+  public static final Key<Boolean> SHOW_PROPERTIES_KEY = Key.create("SHOW_PROPERTIES_KEY");
 
   private final DomElement myDomElement;
   private final String myTagName;
@@ -30,7 +32,7 @@ public class BaseDomElementNode extends AbstractDomElementNode {
 
     myDomElement = modelElement;
     myTagName = modelElement.getXmlElementName();
-   }
+  }
 
   public SimpleNode[] getChildren() {
     return doGetChildren(myDomElement);
@@ -43,11 +45,14 @@ public class BaseDomElementNode extends AbstractDomElementNode {
 
     for (DomFixedChildDescription description : element.getGenericInfo().getFixedChildrenDescriptions()) {
       final List<? extends DomElement> values = description.getValues(element);
-      if (showGenericValues() && GenericValue.class.equals(description.getType())) {
-        for (DomElement domElement : values) {
-          children.add(new GenericValueNode((GenericValue)domElement, this));
+      if (DomUtil.isGenericValueType(description.getType())) {
+        if (showGenericValues()) {
+          for (DomElement domElement : values) {
+            children.add(new GenericValueNode((GenericValue)domElement, this));
+          }
         }
-      } else {
+      }
+      else {
         for (DomElement domElement : values) {
           children.add(new BaseDomElementNode(domElement, this));
         }
@@ -70,7 +75,7 @@ public class BaseDomElementNode extends AbstractDomElementNode {
   }
 
   protected boolean showGenericValues() {
-    return true;
+    return myDomElement.getRoot().getUserData(SHOW_PROPERTIES_KEY);
   }
 
   public Object[] getEqualityObjects() {
@@ -84,7 +89,8 @@ public class BaseDomElementNode extends AbstractDomElementNode {
     clearColoredText();
     if (myDomElement.getXmlTag() != null) {
       addColoredFragment(getNodeName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-    } else {
+    }
+    else {
       addColoredFragment(getNodeName(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
     }
 
@@ -93,8 +99,8 @@ public class BaseDomElementNode extends AbstractDomElementNode {
 
   public String getNodeName() {
     final DomElementsPresentation presentation = myDomElement.getRoot().getUserData(DomElementsPresentation.DOM_ELEMENTS_PRESENTATION);
-    if (presentation != null && presentation.getPresentationName(myDomElement) != null ) {
-        return presentation.getPresentationName(myDomElement);
+    if (presentation != null && presentation.getPresentationName(myDomElement) != null) {
+      return presentation.getPresentationName(myDomElement);
     }
     return getPropertyName();
   }
