@@ -9,6 +9,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
@@ -120,22 +121,18 @@ public class XmlResourceResolver implements XMLEntityResolver {
           
           for(String path:myExternalResourcesMap.values()) {
             VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(path);
+            if (file == null) continue;
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("Finding "+relativePath+" relative to:"+file.getPath());
+            }
             final VirtualFile relativeFile = VfsUtil.findRelativeFile(relativePath, file);
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("Found "+(relativeFile != null ? relativeFile.getPath():"null"));
+            }
 
             if (relativeFile != null) {
               psiFile = PsiManager.getInstance(myProject).findFile(relativeFile);
               if (psiFile != null) break;
-            }
-          }
-        }
-
-        if (psiFile == null && systemId != null && baseSystemId == null) { // try to find just by url
-          final String resourceLocation = ExternalResourceManagerEx.getInstance().getResourceLocation(systemId);
-          if (!resourceLocation.equals(systemId)) {
-            VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(resourceLocation);
-
-            if (file != null) {
-              psiFile = PsiManager.getInstance(myProject).findFile(file);
             }
           }
         }

@@ -123,10 +123,17 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
   }
 
   public VirtualFile findFileByPath(String path) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("In jar file system:"+path);
+    }
     int index = path.lastIndexOf(JAR_SEPARATOR);
     if (index < 0) return null;
     String jarPath = path.substring(0, index);
     String relPath = path.substring(index + JAR_SEPARATOR.length());
+
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("In jar file system, relpath:"+relPath);
+    }
 
     synchronized (LOCK) {
       JarFileInfo info = myPathToFileInfoMap.get(jarPath);
