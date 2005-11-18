@@ -123,6 +123,8 @@ public class XmlResourceResolver implements XMLEntityResolver {
           );
 
           if (relativePath.equals(systemId)) {
+            // on Windows systemId consisting of idea install path could become encoded DOS short name (e.g. idea%7f1.504)
+            // I am not aware how to get such name from 'workingDir' so let just pickup filename from there
             relativePath = systemId.substring(systemId.lastIndexOf('/') + 1);
           }
 
