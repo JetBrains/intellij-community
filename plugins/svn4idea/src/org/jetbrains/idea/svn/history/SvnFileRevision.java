@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -105,7 +106,7 @@ public class SvnFileRevision implements VcsFileRevision {
       myContent = contents.toByteArray();
     }
     else {
-      myContent = new byte[0];
+      myContent = ArrayUtil.EMPTY_BYTE_ARRAY;
     }
   }
 

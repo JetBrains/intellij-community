@@ -45,6 +45,7 @@ import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.util.Key;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.idea.svn.annotate.SvnAnnotationProvider;
 import org.jetbrains.idea.svn.checkin.SvnCheckinEnvironment;
 import org.jetbrains.idea.svn.history.SvnHistoryProvider;
@@ -472,7 +473,7 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
 
     public void log(String message, byte[] data) {
       if (myLoggingEnabled) {
-        myLog.info(message + " : " + new String(data == null ? new byte[0] : data));
+        myLog.info(message + " : " + new String(data == null ? ArrayUtil.EMPTY_BYTE_ARRAY : data));
       }
     }
 

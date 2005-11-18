@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.merge.MergeData;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 import org.tmatesoft.svn.core.wc.SVNInfo;
@@ -85,7 +86,7 @@ public class SvnMergeProvider implements MergeProvider {
 
   private byte[] readFile(File workingFile) {
     if (workingFile == null) {
-      return new byte[0];
+      return ArrayUtil.EMPTY_BYTE_ARRAY;
     }
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     InputStream is = null;
@@ -98,10 +99,10 @@ public class SvnMergeProvider implements MergeProvider {
       bos.close();
     }
     catch (FileNotFoundException e) {
-      return new byte[0];
+      return ArrayUtil.EMPTY_BYTE_ARRAY;
     }
     catch (IOException e) {
-      return new byte[0];
+      return ArrayUtil.EMPTY_BYTE_ARRAY;
     }
     finally {
       if (is != null) {
