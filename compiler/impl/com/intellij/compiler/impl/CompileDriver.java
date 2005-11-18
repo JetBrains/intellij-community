@@ -170,15 +170,16 @@ public class CompileDriver {
     int version = -1;
     try {
       final File versionFile = new File(myCachesDirectoryPath, VERSION_FILE_NAME);
-      if (versionFile.exists()) {
-        DataInputStream in = new DataInputStream(new FileInputStream(versionFile));
-        try {
-          version = in.readInt();
-        }
-        finally {
-          in.close();
-        }
+      DataInputStream in = new DataInputStream(new FileInputStream(versionFile));
+      try {
+        version = in.readInt();
       }
+      finally {
+        in.close();
+      }
+    }
+    catch (FileNotFoundException e) {
+      // ignore
     }
     catch (IOException e) {
       LOG.info(e);  // may happen in case of IDEA crashed and the file is not written properly
@@ -191,9 +192,7 @@ public class CompileDriver {
     final File statusFile = new File(myCachesDirectoryPath, VERSION_FILE_NAME);
     final File lockFile = new File(myCachesDirectoryPath, LOCK_FILE_NAME);
     try {
-      if (!statusFile.exists()) {
-        statusFile.createNewFile();
-      }
+      statusFile.createNewFile();
       DataOutputStream out = new DataOutputStream(new FileOutputStream(statusFile));
       try {
         out.writeInt(status.CACHE_FORMAT_VERSION);

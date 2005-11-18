@@ -4,13 +4,12 @@ import com.intellij.compiler.SymbolTable;
 import com.intellij.compiler.classParsing.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.cls.ClsFormatException;
 import gnu.trove.*;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.*;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Eugene Zhuravlev
@@ -935,9 +934,7 @@ public class Cache {
   }
 
   private void writeIndexMap(TIntIntHashMap map, File indexFile) throws IOException {
-    if (!indexFile.exists()) {
-      indexFile.createNewFile();
-    }
+    indexFile.createNewFile();
     final DataOutputStream stream = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(indexFile)));
     try {
       stream.writeInt(map.size());
@@ -965,19 +962,24 @@ public class Cache {
   }
 
   private void readIndexMap(TIntIntHashMap map, File indexFile) throws IOException {
-    if (indexFile.exists()) {
-      DataInputStream stream = new DataInputStream(new ByteArrayInputStream(FileUtil.loadFileBytes(indexFile)));
-      try {
-        int size = stream.readInt();
-        while (size-- > 0) {
-          final int qName = stream.readInt();
-          final int id = stream.readInt();
-          map.put(qName, id);
-        }
+    byte[] bytes;
+    try {
+      bytes = FileUtil.loadFileBytes(indexFile);
+    }
+    catch (FileNotFoundException e) {
+      return;
+    }
+    DataInputStream stream = new DataInputStream(new ByteArrayInputStream(bytes));
+    try {
+      int size = stream.readInt();
+      while (size-- > 0) {
+        final int qName = stream.readInt();
+        final int id = stream.readInt();
+        map.put(qName, id);
       }
-      finally {
-        stream.close();
-      }
+    }
+    finally {
+      stream.close();
     }
   }
 

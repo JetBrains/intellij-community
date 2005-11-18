@@ -464,7 +464,7 @@ public class DependencyCache {
           if (myClassesWithSourceRemoved.contains(qName)){ // no recompiled class file, check whether the classfile exists
             isSourceDeleted = true;
           }
-          else if (!(new File(getCache().getPath(oldInfoId)).exists())) {
+          else if (!new File(getCache().getPath(oldInfoId)).exists()) {
             final String qualifiedName = resolve(qName);
             final String sourceFileName = getCache().getSourceFileName(oldInfoId);
             final boolean markAsRemovedSource = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
@@ -616,9 +616,7 @@ public class DependencyCache {
         // [jeka] switched off
         //compactSymbolTable(mySymbolTable);
         final File symbolTableFile = new File(mySymbolTableFilePath);
-        if (!symbolTableFile.exists()) {
-          symbolTableFile.createNewFile();
-        }
+        symbolTableFile.createNewFile();
 
         DataOutputStream symTableStream = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(symbolTableFile)));
         try {
@@ -668,7 +666,7 @@ public class DependencyCache {
     SymbolTable symbolTable = null;
     File symbolTableFile = new File(mySymbolTableFilePath);
     try {
-      if (symbolTableFile.exists()) {
+      try {
         final byte[] buf = FileUtil.loadFileBytes(symbolTableFile);
         DataInputStream stream = new DataInputStream(new ByteArrayInputStream(buf));
         try {
@@ -681,7 +679,7 @@ public class DependencyCache {
           stream.close();
         }
       }
-      else {
+      catch (FileNotFoundException e) {
         symbolTable = new SymbolTable();
       }
     }

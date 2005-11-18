@@ -15,19 +15,18 @@
  */
 package com.intellij.openapi.util.io;
 
-import com.intellij.Patches;
 import com.intellij.CommonBundle;
+import com.intellij.Patches;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.*;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.jetbrains.annotations.NonNls;
 
 public class FileUtil {
   private static final byte[] BUFFER = new byte[1024 * 20];
@@ -219,8 +218,6 @@ public class FileUtil {
   }
 
   private static File renameToTempFile(File file) {
-    if (!file.exists()) return null;
-
     File parent = file.getParentFile();
 
     File tempFile;

@@ -454,11 +454,16 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
     public void updateState() {
       myState = new RemoteClassValidityState(
         myOutputClassFile.getTimeStamp(),
-        myStub.exists()? myStub.lastModified() : -1L,
-        mySkel.exists()? mySkel.lastModified() : -1L,
-        myTie.exists()? myTie.lastModified() : -1L
+        getTimestamp(myStub),
+        getTimestamp(mySkel),
+        getTimestamp(myTie)
       );
 
+    }
+
+    private long getTimestamp(File file) {
+      long l = file.lastModified();
+      return l == 0 ? -1L : l;
     }
 
     public void deleteGeneratedFiles() {
