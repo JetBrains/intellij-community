@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.compiler;
 
+import org.jetbrains.annotations.Nullable;
+
 
 /**
  * A tag interface indicating that the compiler will package the compiled Java classes.
@@ -32,5 +34,5 @@ public interface PackagingCompiler extends FileProcessingCompiler{
    * @param url     the URL of a file in the output directory which will be recompiled.
    * @param state   the validity state of the file specified by <code>url</code>.
    */
-  void processOutdatedItem(CompileContext context, String url, ValidityState state);
+  void processOutdatedItem(CompileContext context, String url, @Nullable ValidityState state);
 }

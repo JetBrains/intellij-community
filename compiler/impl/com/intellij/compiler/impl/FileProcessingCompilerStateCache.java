@@ -9,6 +9,7 @@ import com.intellij.openapi.compiler.ValidityState;
 import com.intellij.openapi.compiler.ValidityStateFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 
@@ -24,7 +25,10 @@ public class FileProcessingCompilerStateCache {
 
       public void write(MyState state, DataOutputStream stream) throws IOException {
         stream.writeLong(state.getTimestamp());
-        state.getExtState().save(stream);
+        final ValidityState extState = state.getExtState();
+        if (extState != null) {
+          extState.save(stream);
+        }
       }
     };
   }
@@ -71,7 +75,7 @@ public class FileProcessingCompilerStateCache {
     private final long myTimestamp;
     private final ValidityState myExtState;
 
-    public MyState(long timestamp, ValidityState extState) {
+    public MyState(long timestamp, @Nullable ValidityState extState) {
       myTimestamp = timestamp;
       myExtState = extState;
     }
@@ -80,7 +84,7 @@ public class FileProcessingCompilerStateCache {
       return myTimestamp;
     }
 
-    public ValidityState getExtState() {
+    public @Nullable ValidityState getExtState() {
       return myExtState;
     }
   }

@@ -20,6 +20,8 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.io.IOUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -28,8 +30,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.jetbrains.annotations.NotNull;
-
 /**
  * Compiler which copies the compiled files to a different directory.
  */
@@ -37,9 +37,11 @@ public abstract class CopyingCompiler implements PackagingCompiler{
   public abstract VirtualFile[] getFilesToCopy(CompileContext context);
   public abstract String getDestinationPath(VirtualFile sourceFile);
 
-  public final void processOutdatedItem(CompileContext context, String url, ValidityState state) {
-    final String destinationPath = ((DestinationFileInfo)state).getDestinationPath();
-    new File(destinationPath).delete();
+  public final void processOutdatedItem(CompileContext context, String url, @Nullable ValidityState state) {
+    if (state != null) {
+      final String destinationPath = ((DestinationFileInfo)state).getDestinationPath();
+      new File(destinationPath).delete();
+    }
   }
 
   @NotNull

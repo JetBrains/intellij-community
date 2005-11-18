@@ -3,6 +3,7 @@ package com.intellij.compiler.impl;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.FileProcessingCompiler;
 import com.intellij.openapi.compiler.ValidityState;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene Zhuravlev
@@ -34,5 +35,5 @@ public class FileProcessingCompilerAdapter {
     return myCompiler;
   }
 
-  public void processOutdatedItem(CompileContext context, String url, ValidityState state){}
+  public void processOutdatedItem(CompileContext context, String url, @Nullable ValidityState state){}
 }
