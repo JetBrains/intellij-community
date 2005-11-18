@@ -27,7 +27,7 @@ public class SmartPsiPointer {
       }
 
       file = element.getContainingFile().getVirtualFile();
-      offset = element.getTextOffset();
+      offset = element.getTextRange().getStartOffset();
       length = element.getTextLength();
     }
     setElement(element);

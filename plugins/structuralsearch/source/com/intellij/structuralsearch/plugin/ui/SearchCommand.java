@@ -18,8 +18,6 @@ import com.intellij.usages.Usage;
 import com.intellij.usages.UsageInfo2UsageAdapter;
 import com.intellij.util.Processor;
 
-import java.util.Iterator;
-
 /**
  * Created by IntelliJ IDEA.
  * User: Maxim.Mossienko
@@ -73,24 +71,23 @@ public class SearchCommand {
             int end = -1;
             PsiElement parent = result.getMatchRef().getElement().getParent();
 
-            for(Iterator i=((MatchResultImpl)result).getMatches().iterator();i.hasNext();) {
-              PsiElement el = ((MatchResult)i.next()).getMatchRef().getElement();
-              if (start==-1 || start > el.getTextOffset()) {
-                start = el.getTextOffset();
+            for (final MatchResult matchResult : ((MatchResultImpl)result).getMatches()) {
+              PsiElement el = matchResult.getMatchRef().getElement();
+              final int elementStart = el.getTextRange().getStartOffset();
+
+              if (start == -1 || start > elementStart) {
+                start = elementStart;
               }
-              final int newend = el.getTextOffset() + el.getTextLength();
+              final int newend = elementStart + el.getTextLength();
 
               if (newend > end) {
                 end = newend;
               }
             }
 
-            int startOffset = start - parent.getTextOffset();
-            final PsiElement firstChild = parent.getFirstChild();
-            if (firstChild != null && firstChild.getTextOffset() < parent.getTextOffset()) {
-              startOffset = start - firstChild.getTextOffset();
-            }
-            info = new UsageInfo(parent,startOffset,end - parent.getTextOffset());
+            final int parentStart = parent.getTextRange().getStartOffset();
+            int startOffset = start - parentStart;
+            info = new UsageInfo(parent,startOffset,end - parentStart);
           } else {
             PsiElement element = result.getMatch();
             info = new UsageInfo(

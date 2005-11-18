@@ -226,9 +226,9 @@ public final class NavigateSearchResultsDialog extends DialogBase implements Mat
 
       if (pointer==null) {
         pointer = ptr;
-        start = element.getTextOffset();
+        start = element.getTextRange().getStartOffset();
       }
-      end = element.getTextOffset() + element.getTextLength();
+      end = element.getTextRange().getEndOffset();
     }
 
     if (replaceButton!=null) {

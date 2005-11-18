@@ -84,8 +84,8 @@ public class ReplacerImpl {
 
       sink.getMatches().clear();
 
-      int startOffset = firstElement.getTextOffset();
-      int endOffset = filePattern ?0: parent.getTextLength() - (lastElement.getTextOffset() + lastElement.getTextLength());
+      int startOffset = firstElement.getTextRange().getStartOffset();
+      int endOffset = filePattern ?0: parent.getTextLength() - (lastElement.getTextRange().getEndOffset());
 
       // get nodes from text may contain
       PsiElement prevSibling = firstElement.getPrevSibling();
@@ -316,6 +316,7 @@ public class ReplacerImpl {
       final PsiFile containingFile = elementParent.getContainingFile();
 
       if (containingFile !=null) {
+
         if (options.isToShortenFQN()) {
           if (containingFile.getVirtualFile() != null) {
             PsiDocumentManager.getInstance(project).commitDocument(
@@ -323,10 +324,12 @@ public class ReplacerImpl {
             );
           }
 
+          final int paretOffset = elementParent.getTextRange().getStartOffset();
+
           codeStyleManager.shortenClassReferences(
             containingFile,
-            elementParent.getTextOffset(),
-            elementParent.getTextOffset() + elementParent.getTextLength()
+            paretOffset,
+            paretOffset + elementParent.getTextLength()
           );
         }
 
@@ -337,10 +340,11 @@ public class ReplacerImpl {
             );
           }
 
+          final int paretOffset = elementParent.getTextRange().getStartOffset();
           codeStyleManager.reformatRange(
             containingFile,
-            elementParent.getTextOffset(),
-            elementParent.getTextOffset() + elementParent.getTextLength(),
+            paretOffset,
+            paretOffset + elementParent.getTextLength(),
             true
           );
         }

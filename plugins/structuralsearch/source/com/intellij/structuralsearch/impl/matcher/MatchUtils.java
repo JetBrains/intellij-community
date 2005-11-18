@@ -20,25 +20,6 @@ public class MatchUtils {
     );
   }
 
-  public static boolean within(PsiElement element, int start, int end) {
-    if (element == null) return false;
-
-    int elementOffset = element.getTextOffset();
-    if (element instanceof PsiNamedElement) {
-      PsiElement el;
-      // for method or class its start is just connection of the nameelement, so
-      // change it accordingly
-      for(el = element.getFirstChild();
-          el!=null && !(el instanceof PsiModifierList);
-          el = el.getNextSibling()
-         );
-      if (el!=null) elementOffset = el.getTextOffset();
-    }
-
-    return (elementOffset >= start) &&
-           (end >= elementOffset + element.getTextLength());
-  }
-
   public static PsiElement getReferencedElement(final PsiElement element) {
     if (element instanceof PsiReference) {
       return ((PsiReference)element).resolve();
