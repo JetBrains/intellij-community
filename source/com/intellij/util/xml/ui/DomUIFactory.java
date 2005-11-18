@@ -95,23 +95,23 @@ public class DomUIFactory {
   }
 
   public static DomUIControl createCollectionControl(DomElement element, DomCollectionChildDescription description) {
+    final ColumnInfo columnInfo = createColumnInfo(description, element);
     final Class aClass = DomUtil.extractParameterClassFromGenericType(description.getType());
-    if (aClass != null) {
-      return new DomCollectionControl<GenericValue<?>>(element, description, createColumnInfo(description, element, aClass));
-    }
-
-    return new CollectionControl(element, description);
+    return new DomCollectionControl<GenericValue<?>>(element, description, aClass == null, columnInfo);
   }
 
   private static ColumnInfo createColumnInfo(final DomCollectionChildDescription description,
-                                                         final DomElement element,
-                                                         final Class aClass) {
+                                             final DomElement element) {
     final String presentableName = description.getCommonPresentableName(element);
-    if (Boolean.class.equals(aClass) || boolean.class.equals(aClass)) {
-      return new BooleanColumnInfo(presentableName);
+    final Class aClass = DomUtil.extractParameterClassFromGenericType(description.getType());
+    if (aClass != null) {
+      if (Boolean.class.equals(aClass) || boolean.class.equals(aClass)) {
+        return new BooleanColumnInfo(presentableName);
+      }
+
+      return new GenericValueColumnInfo(presentableName, aClass, createCellEditor(element, aClass));
     }
 
-    return new GenericValueColumnInfo(presentableName, aClass, createCellEditor(element, aClass));
+    return new StringColumnInfo(presentableName);
   }
-
 }
