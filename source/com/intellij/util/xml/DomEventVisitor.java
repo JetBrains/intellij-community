@@ -17,8 +17,6 @@ public interface DomEventVisitor {
 
   void visitElementChangedEvent(final ElementChangedEvent event);
 
-  void visitAttributeValueChangeEvent(final AttributeValueChangeEvent event);
-
   void visitCollectionElementAddedEvent(final CollectionElementAddedEvent event);
 
   void visitCollectionElementRemovedEvent(final CollectionElementRemovedEvent event);

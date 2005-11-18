@@ -12,10 +12,6 @@ public abstract class DomChangeListener extends DomEventListener{
 
   protected abstract void elementChanged(DomElement element);
 
-  public final void attributeValueChanged(AttributeValueChangeEvent event) {
-    elementChanged(event.getElement());
-  }
-
   public final void childAdded(CollectionElementAddedEvent event) {
     elementChanged(event.getParent());
   }

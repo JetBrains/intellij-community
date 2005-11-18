@@ -58,7 +58,7 @@ public class FixedChildDescriptionImpl extends DomChildDescriptionImpl implement
   }
 
   public String getCommonPresentableName(DomNameStrategy strategy) {
-    return StringUtil.capitalizeWords(strategy.splitIntoWords(getTagName()), true);
+    return StringUtil.capitalizeWords(strategy.splitIntoWords(getXmlElementName()), true);
   }
 
   public boolean equals(final Object o) {

@@ -16,7 +16,7 @@ public class DomElementsGroupNode extends AbstractDomElementNode {
   public DomElementsGroupNode(final DomElement modelElement, DomCollectionChildDescription description) {
     myModelElement = modelElement;
     myChildDescription = description;
-    myChildrenTagName = description.getTagName();
+    myChildrenTagName = description.getXmlElementName();
   }
 
   public SimpleNode[] getChildren() {

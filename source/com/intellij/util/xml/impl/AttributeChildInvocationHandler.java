@@ -17,6 +17,8 @@ import java.lang.reflect.Type;
  */
 public class AttributeChildInvocationHandler extends DomInvocationHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.AttributeChildInvocationHandler");
+  private boolean myWasDefined;
+
   protected AttributeChildInvocationHandler(final Type type,
                                             final XmlTag tag,
                                             final DomInvocationHandler parent,
@@ -24,6 +26,9 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler {
                                             final DomManagerImpl manager,
                                             final Converter genericConverter) {
     super(type, tag, parent, attributeName, manager, genericConverter);
+    if (tag != null && tag.getAttributeValue(attributeName) != null) {
+      myWasDefined = true;
+    }
   }
 
   protected final XmlTag setXmlTag(final XmlTag tag) {
@@ -31,6 +36,14 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler {
   }
 
   protected void cacheInTag(final XmlTag tag) {
+  }
+
+  public boolean wasDefined() {
+    return myWasDefined;
+  }
+
+  public void setDefined(final boolean wasDefined) {
+    myWasDefined = wasDefined;
   }
 
   protected void removeFromCache() {
@@ -49,6 +62,7 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler {
     if (tag != null) {
       try {
         tag.setAttribute(getXmlElementName(), null);
+        setDefined(false);
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);

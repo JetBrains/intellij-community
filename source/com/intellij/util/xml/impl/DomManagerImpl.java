@@ -82,7 +82,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     }
   }
 
-  final MethodsMap getMethodsMap(final Type type) {
+  public final MethodsMap getGenericInfo(final Type type) {
     MethodsMap methodsMap = myMethodsMaps.get(type);
     if (methodsMap == null) {
       if (type instanceof Class) {

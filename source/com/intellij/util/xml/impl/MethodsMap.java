@@ -8,10 +8,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.*;
-import com.intellij.util.xml.reflect.DomChildrenDescription;
-import com.intellij.util.xml.reflect.DomCollectionChildDescription;
-import com.intellij.util.xml.reflect.DomFixedChildDescription;
-import com.intellij.util.xml.reflect.DomGenericInfo;
+import com.intellij.util.xml.reflect.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,7 +27,9 @@ public class MethodsMap implements DomGenericInfo {
   private final Map<Method, String> myCollectionChildrenAdditionMethods = new HashMap<Method, String>();
   private final Map<String, Type> myCollectionChildrenClasses = new HashMap<String, Type>();
   private final Map<Method, String> myAttributeChildrenMethods = new HashMap<Method, String>();
+  private boolean myValueElement;
   private boolean myInitialized;
+
 
   public MethodsMap(final Class<? extends DomElement> aClass) {
     myClass = aClass;
@@ -105,14 +104,14 @@ public class MethodsMap implements DomGenericInfo {
     return strategy == null ? DomNameStrategy.HYPHEN_STRATEGY : strategy;
   }
 
-  public final synchronized void buildMethodMaps(final XmlFile file) {
+  public final synchronized void buildMethodMaps() {
     if (myInitialized) return;
 
     myInitialized = true;
 
     for (Method method : myClass.getMethods()) {
       if (!isCoreMethod(method)) {
-        if (DomInvocationHandler.isGetter(method)) {
+        if (DomUtil.isGetter(method)) {
           processGetterMethod(method);
         }
       }
@@ -152,6 +151,11 @@ public class MethodsMap implements DomGenericInfo {
   }
 
   private void processGetterMethod(final Method method) {
+    if (DomUtil.isTagValueGetter(method)) {
+      myValueElement = true;
+      return;
+    }
+
     final boolean isAttributeMethod = method.getReturnType().equals(DomAttributeValue.class);
     final Attribute annotation = method.getAnnotation(Attribute.class);
     if (annotation != null) {
@@ -193,7 +197,7 @@ public class MethodsMap implements DomGenericInfo {
   }
 
   public final Invocation createInvocation(final XmlFile file, final Method method) {
-    buildMethodMaps(file);
+    buildMethodMaps();
 
     if (myAttributeChildrenMethods.containsKey(method)) {
       return new GetAttributeChildInvocation(method);
@@ -217,8 +221,13 @@ public class MethodsMap implements DomGenericInfo {
   }
 
   private Method getCollectionGetMethod(String tagName) {
-    for (Map.Entry<Method, String> entry : myCollectionChildrenGetterMethods.entrySet()) {
-      if (tagName.equals(entry.getValue())) {
+    return findGetterMethod(myCollectionChildrenGetterMethods, tagName);
+  }
+
+  private Method findGetterMethod(final Map<Method, String> map, final String xmlElementName) {
+    buildMethodMaps();
+    for (Map.Entry<Method, String> entry : map.entrySet()) {
+      if (xmlElementName.equals(entry.getValue())) {
         return entry.getKey();
       }
     }
@@ -251,6 +260,7 @@ public class MethodsMap implements DomGenericInfo {
   @NotNull
   public List<DomChildrenDescription> getChildrenDescriptions() {
     final ArrayList<DomChildrenDescription> result = new ArrayList<DomChildrenDescription>();
+    result.addAll(getAttributeChildrenDescriptions());
     result.addAll(getFixedChildrenDescriptions());
     result.addAll(getCollectionChildrenDescriptions());
     return result;
@@ -258,6 +268,7 @@ public class MethodsMap implements DomGenericInfo {
 
   @NotNull
   public List<DomFixedChildDescription> getFixedChildrenDescriptions() {
+    buildMethodMaps();
     final ArrayList<DomFixedChildDescription> result = new ArrayList<DomFixedChildDescription>();
     for (String s : myFixedChildrenCounts.keySet()) {
       result.add(getFixedChildDescription(s));
@@ -267,6 +278,7 @@ public class MethodsMap implements DomGenericInfo {
 
   @NotNull
   public List<DomCollectionChildDescription> getCollectionChildrenDescriptions() {
+    buildMethodMaps();
     final ArrayList<DomCollectionChildDescription> result = new ArrayList<DomCollectionChildDescription>();
     for (String s : myCollectionChildrenClasses.keySet()) {
       result.add(getCollectionChildDescription(s));
@@ -276,6 +288,7 @@ public class MethodsMap implements DomGenericInfo {
 
   @Nullable
   public DomFixedChildDescription getFixedChildDescription(String tagName) {
+    buildMethodMaps();
     final Method[] getterMethods = getFixedChildrenGetterMethods(tagName);
     return new FixedChildDescriptionImpl(tagName,
                                          getterMethods[0].getGenericReturnType(),
@@ -285,11 +298,31 @@ public class MethodsMap implements DomGenericInfo {
 
   @Nullable
   public DomCollectionChildDescription getCollectionChildDescription(String tagName) {
+    buildMethodMaps();
     return new CollectionChildDescriptionImpl(tagName,
                                               getCollectionChildrenType(tagName),
                                               getCollectionGetMethod(tagName),
                                               getCollectionAddMethod(tagName, 0),
                                               getCollectionAddMethod(tagName, 1),
                                               getFixedChildrenCount(tagName));
+  }
+
+  @Nullable
+  public DomAttributeChildDescription getAttributeChildDescription(String attributeName) {
+    return new AttributeChildDescriptionImpl(attributeName, findGetterMethod(myAttributeChildrenMethods, attributeName));
+  }
+
+  public boolean isTagValueElement() {
+    buildMethodMaps();
+    return myValueElement;
+  }
+
+  @NotNull
+  public List<DomAttributeChildDescription> getAttributeChildrenDescriptions() {
+    final ArrayList<DomAttributeChildDescription> result = new ArrayList<DomAttributeChildDescription>();
+    for (Map.Entry<Method, String> entry : myAttributeChildrenMethods.entrySet()) {
+      result.add(new AttributeChildDescriptionImpl(entry.getValue(), entry.getKey()));
+    }
+    return result;
   }
 }

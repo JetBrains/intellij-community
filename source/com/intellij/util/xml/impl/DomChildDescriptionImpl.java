@@ -22,7 +22,7 @@ public abstract class DomChildDescriptionImpl implements DomChildrenDescription 
     myType = type;
   }
 
-  public String getTagName() {
+  public String getXmlElementName() {
     return myTagName;
   }
 

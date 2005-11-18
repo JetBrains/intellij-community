@@ -28,7 +28,7 @@ public interface DomElement {
 
   boolean isValid();
 
-  DomGenericInfo getMethodsInfo();
+  DomGenericInfo getGenericInfo();
 
   String getXmlElementName();
 

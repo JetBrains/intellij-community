@@ -13,9 +13,6 @@ public abstract class DomEventListener implements DomEventVisitor{
   public void valueChanged(TagValueChangeEvent event) {
   }
 
-  public void attributeValueChanged(AttributeValueChangeEvent event) {
-  }
-
   public void elementDefined(ElementDefinedEvent event) {
   }
 
@@ -49,10 +46,6 @@ public abstract class DomEventListener implements DomEventVisitor{
 
   public final void visitElementChangedEvent(final ElementChangedEvent event) {
     elementChanged(event);
-  }
-
-  public final void visitAttributeValueChangeEvent(final AttributeValueChangeEvent event) {
-    attributeValueChanged(event);
   }
 
   public final void visitCollectionElementAddedEvent(final CollectionElementAddedEvent event) {

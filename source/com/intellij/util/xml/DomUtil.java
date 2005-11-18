@@ -6,10 +6,7 @@ package com.intellij.util.xml;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.lang.reflect.TypeVariable;
-import java.lang.reflect.WildcardType;
+import java.lang.reflect.*;
 import java.util.Collection;
 import java.util.List;
 
@@ -128,4 +125,23 @@ public class DomUtil {
     return null;
   }
 
+  public static boolean isTagValueGetter(final Method method) {
+    return isGetter(method) && (method.getAnnotation(TagValue.class) != null || "getValue".equals(method.getName()));
+  }
+
+  public static boolean isGetter(final Method method) {
+    final String name = method.getName();
+    if (method.getParameterTypes().length != 0) {
+      return false;
+    }
+    final Class<?> returnType = method.getReturnType();
+    if (name.startsWith("get")) {
+      return returnType != void.class;
+    }
+    if (name.startsWith("is")) {
+      return returnType.equals(boolean.class) || Boolean.class.equals(returnType)
+             || Boolean.class.equals(extractParameterClassFromGenericType(method.getGenericReturnType()));
+    }
+    return false;
+  }
 }

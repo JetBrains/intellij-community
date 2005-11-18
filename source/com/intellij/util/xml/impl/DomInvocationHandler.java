@@ -56,7 +56,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     myParent = parent;
     myTagName = tagName;
     myManager = manager;
-    myMethodsMap = manager.getMethodsMap(type);
+    myMethodsMap = manager.getGenericInfo(type);
     myInvocationCache = manager.getInvocationCache(type);
     myGenericConverter = genericConverter;
   }
@@ -119,8 +119,8 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     return !myInvalidated;
   }
 
-  public final MethodsMap getMethodsInfo() {
-    myMethodsMap.buildMethodMaps(getFile());
+  public final MethodsMap getGenericInfo() {
+    myMethodsMap.buildMethodMaps();
     return myMethodsMap;
   }
 
@@ -235,13 +235,12 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   }
 
   protected final Invocation createInvocation(final Method method) throws IllegalAccessException, InstantiationException {
-    final TagValue tagValue = method.getAnnotation(TagValue.class);
-    if (isGetter(method) && (tagValue != null || "getValue".equals(method.getName()))) {
+    if (DomUtil.isTagValueGetter(method)) {
       return createGetValueInvocation(getConverter(method, true));
     }
 
     boolean setter = method.getName().startsWith("set") && method.getParameterTypes().length == 1 && method.getReturnType() == void.class;
-    if (setter && (tagValue != null || "setValue".equals(method.getName()))) {
+    if (setter && (method.getAnnotation(TagValue.class) != null || "setValue".equals(method.getName()))) {
       return createSetValueInvocation(getConverter(method, false));
     }
 
@@ -264,8 +263,8 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   }
 
   @NotNull
-  final DomInvocationHandler getAttributeChild(final Method method) {
-    final DomInvocationHandler domElement = myAttributeChildren.get(myMethodsMap.getAttributeName(method));
+  final AttributeChildInvocationHandler getAttributeChild(final Method method) {
+    final AttributeChildInvocationHandler domElement = myAttributeChildren.get(myMethodsMap.getAttributeName(method));
     assert domElement != null : method.toString();
     return domElement;
   }
@@ -285,22 +284,6 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
 
   static String getTagValue(final XmlTag tag) {
     return tag.getValue().getText();
-  }
-
-  static boolean isGetter(final Method method) {
-    final String name = method.getName();
-    if (method.getParameterTypes().length != 0) {
-      return false;
-    }
-    final Class<?> returnType = method.getReturnType();
-    if (name.startsWith("get")) {
-      return returnType != void.class;
-    }
-    if (name.startsWith("is")) {
-      return returnType.equals(boolean.class) || Boolean.class.equals(returnType)
-             || Boolean.class.equals(DomUtil.extractParameterClassFromGenericType(method.getGenericReturnType()));
-    }
-    return false;
   }
 
   public final String toString() {

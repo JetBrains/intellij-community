@@ -22,9 +22,19 @@ public interface DomGenericInfo {
   @NotNull
   List<DomCollectionChildDescription> getCollectionChildrenDescriptions();
 
+  @NotNull
+  List<DomAttributeChildDescription> getAttributeChildrenDescriptions();
+
   @Nullable
   DomFixedChildDescription getFixedChildDescription(String tagName);
 
   @Nullable
   DomCollectionChildDescription getCollectionChildDescription(String tagName);
+
+  @Nullable
+  DomAttributeChildDescription getAttributeChildDescription(String attributeName);
+
+  boolean isTagValueElement();
+
+
 }

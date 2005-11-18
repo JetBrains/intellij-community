@@ -13,7 +13,7 @@ import java.util.List;
  * @author peter
  */
 public interface DomChildrenDescription {
-  String getTagName();
+  String getXmlElementName();
   List<? extends DomElement> getValues(DomElement parent);
   Type getType();
   String getCommonPresentableName(DomNameStrategy strategy);

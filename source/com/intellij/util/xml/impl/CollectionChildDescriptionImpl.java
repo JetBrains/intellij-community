@@ -43,7 +43,7 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
 
   private DomElement addChild(final DomElement element, final int index) {
     try {
-      return ((DomProxy) element).getDomInvocationHandler().addChild(getTagName(), getType(), index);
+      return ((DomProxy) element).getDomInvocationHandler().addChild(getXmlElementName(), getType(), index);
     }
     catch (IncorrectOperationException e) {
       throw new RuntimeException(e);
@@ -72,7 +72,7 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
   }
 
   public String getCommonPresentableName(DomNameStrategy strategy) {
-    return StringUtil.capitalizeWords(StringUtil.pluralize(strategy.splitIntoWords(getTagName())), true);
+    return StringUtil.capitalizeWords(StringUtil.pluralize(strategy.splitIntoWords(getXmlElementName())), true);
   }
 
   public boolean equals(final Object o) {

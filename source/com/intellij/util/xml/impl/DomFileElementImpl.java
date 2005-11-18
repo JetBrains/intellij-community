@@ -9,10 +9,7 @@ import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.*;
-import com.intellij.util.xml.reflect.DomGenericInfo;
-import com.intellij.util.xml.reflect.DomChildrenDescription;
-import com.intellij.util.xml.reflect.DomFixedChildDescription;
-import com.intellij.util.xml.reflect.DomCollectionChildDescription;
+import com.intellij.util.xml.reflect.*;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,27 +22,27 @@ import java.util.*;
  * @author peter
  */
 public class DomFileElementImpl<T extends DomElement> implements DomFileElement<T> {
-  private static final DomGenericInfo MOCK_DOM_GENERIC_INFO = new DomGenericInfo() {
-      public Collection<Method> getFixedChildrenGetterMethods() {
-        return Collections.emptyList();
-      }
+  private static final DomGenericInfo EMPTY_DOM_GENERIC_INFO = new DomGenericInfo() {
+    public Collection<Method> getFixedChildrenGetterMethods() {
+      return Collections.emptyList();
+    }
 
-      public Collection<Method> getCollectionChildrenGetterMethods() {
-        return Collections.emptyList();
-      }
+    public Collection<Method> getCollectionChildrenGetterMethods() {
+      return Collections.emptyList();
+    }
 
-      public int getFixedChildIndex(Method method) {
-        return 0;
-      }
+    public int getFixedChildIndex(Method method) {
+      return 0;
+    }
 
-      public String getTagName(Method method) {
-        return "NO TAG NAME";
-      }
+    public String getTagName(Method method) {
+      return "NO TAG NAME";
+    }
 
-      @NotNull
-      public List<DomChildrenDescription> getChildrenDescriptions() {
-        return Collections.emptyList();
-      }
+    @NotNull
+    public List<DomChildrenDescription> getChildrenDescriptions() {
+      return Collections.emptyList();
+    }
 
     @NotNull
     public List<DomFixedChildDescription> getFixedChildrenDescriptions() {
@@ -57,16 +54,29 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
       return Collections.emptyList();
     }
 
+    @NotNull
+    public List<DomAttributeChildDescription> getAttributeChildrenDescriptions() {
+      return Collections.emptyList();
+    }
+
+    public boolean isTagValueElement() {
+      return false;
+    }
+
     @Nullable
     public DomFixedChildDescription getFixedChildDescription(String tagName) {
       return null;
     }
 
-      @Nullable
-      public DomCollectionChildDescription getCollectionChildDescription(String tagName) {
-        return null;
-      }
-    };
+    @Nullable
+    public DomCollectionChildDescription getCollectionChildDescription(String tagName) {
+      return null;
+    }
+
+    public DomAttributeChildDescription getAttributeChildDescription(String attributeName) {
+      return null;
+    }
+  };
 
   private final XmlFile myFile;
   private final Class<T> myRootElementClass;
@@ -165,8 +175,8 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     return myFile.isValid();
   }
 
-  public final DomGenericInfo getMethodsInfo() {
-    return MOCK_DOM_GENERIC_INFO;
+  public final DomGenericInfo getGenericInfo() {
+    return EMPTY_DOM_GENERIC_INFO;
   }
 
   public String getXmlElementName() {

@@ -41,7 +41,7 @@ public class BaseDomElementNode extends AbstractDomElementNode {
 
     List<SimpleNode> children = new ArrayList<SimpleNode>();
 
-    for (DomFixedChildDescription description : element.getMethodsInfo().getFixedChildrenDescriptions()) {
+    for (DomFixedChildDescription description : element.getGenericInfo().getFixedChildrenDescriptions()) {
       final List<? extends DomElement> values = description.getValues(element);
       if (showGenericValues() && GenericValue.class.equals(description.getType())) {
         for (DomElement domElement : values) {
@@ -54,7 +54,7 @@ public class BaseDomElementNode extends AbstractDomElementNode {
       }
     }
 
-    final List<DomCollectionChildDescription> collectionChildrenDescriptions = element.getMethodsInfo().getCollectionChildrenDescriptions();
+    final List<DomCollectionChildDescription> collectionChildrenDescriptions = element.getGenericInfo().getCollectionChildrenDescriptions();
     for (DomCollectionChildDescription description : collectionChildrenDescriptions) {
       children.add(new DomElementsGroupNode(element, description));
     }
