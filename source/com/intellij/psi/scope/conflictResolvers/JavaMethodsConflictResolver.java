@@ -7,6 +7,7 @@ import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.openapi.util.Comparing;
 
 import java.util.List;
 import java.util.Iterator;
@@ -72,7 +73,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
 outer:
       for(int i = 0; i < conflictsCount; i++){
         final CandidateInfo method = conflictsArray[i];
-        // check overloading
+        // check overriding
         for (final CandidateInfo info : conflicts) {
           if (info == method) break;
           // candidates should go in order of class hierarchy traversal
@@ -200,7 +201,7 @@ outer:
         return false;
       }
     }
-    return true;
+    return Comparing.equal(method1.getReturnType(), method2.getReturnType());
   }
 
   private int isMoreSpecific(final MethodCandidateInfo info1, final MethodCandidateInfo info2) {
