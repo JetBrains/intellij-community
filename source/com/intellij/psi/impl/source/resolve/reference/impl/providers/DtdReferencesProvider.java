@@ -12,6 +12,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.impl.dtd.XmlNSDescriptorImpl;
@@ -144,7 +145,7 @@ public class DtdReferencesProvider implements PsiReferenceProvider {
     }
 
     public Object[] getVariants() {
-      return new Object[0];
+      return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
 
     public boolean isSoft() {

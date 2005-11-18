@@ -9,6 +9,7 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import com.intellij.CvsBundle;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -21,7 +22,7 @@ public class CvsRevisionNumber implements VcsRevisionNumber {
   private final int[] mySubRevisions;
   private final DateOrRevisionSettings myDateOrRevision;
 
-  public static CvsRevisionNumber CURRENT = new CvsRevisionNumber(CvsBundle.message("current.file.revision.name"), new int[0]) {
+  public static CvsRevisionNumber CURRENT = new CvsRevisionNumber(CvsBundle.message("current.file.revision.name"), ArrayUtil.EMPTY_INT_ARRAY) {
     protected int compareToCvsRevisionNumber(CvsRevisionNumber other) {
       return 1;
     }
@@ -31,7 +32,7 @@ public class CvsRevisionNumber implements VcsRevisionNumber {
     }
   };
 
-  public static CvsRevisionNumber EMPTY = new CvsRevisionNumber("", new int[0]) {
+  public static CvsRevisionNumber EMPTY = new CvsRevisionNumber("", ArrayUtil.EMPTY_INT_ARRAY) {
     protected int compareToCvsRevisionNumber(CvsRevisionNumber other) {
       return -1;
     }

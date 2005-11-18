@@ -12,22 +12,21 @@ import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.cls.ClsUtil;
 import gnu.trove.TIntHashSet;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.*;
 import java.rmi.Remote;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Set;
-
-import org.jetbrains.annotations.NonNls;
 
 public class DependencyCache {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.make.DependencyCache");
@@ -387,7 +386,7 @@ public class DependencyCache {
       return ids;
     }
     catch (SignatureParsingException e) {
-      return new int[0];
+      return ArrayUtil.EMPTY_INT_ARRAY;
     }
   }
 

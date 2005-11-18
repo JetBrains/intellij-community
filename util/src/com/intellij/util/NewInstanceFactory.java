@@ -42,7 +42,7 @@ public class NewInstanceFactory<T> implements Factory<T> {
 
   public static <T> Factory<T> fromClass(final Class<T> clazz) {
     try {
-      return new NewInstanceFactory<T>(clazz.getConstructor(new Class[0]), ArrayUtil.EMPTY_OBJECT_ARRAY);
+      return new NewInstanceFactory<T>(clazz.getConstructor(ArrayUtil.EMPTY_CLASS_ARRAY), ArrayUtil.EMPTY_OBJECT_ARRAY);
     }
     catch (NoSuchMethodException e) {
       return new Factory<T>() {

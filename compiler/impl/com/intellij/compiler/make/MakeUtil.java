@@ -24,7 +24,6 @@ public class MakeUtil {
   }
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.make.MakeUtil");
-  public static final int[] EMPTY_INT_ARRAY = new int[0];
 
 
   public static VirtualFile getSourceRoot(CompileContext context, Module module, VirtualFile file) {

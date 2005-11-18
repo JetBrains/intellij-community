@@ -5,18 +5,18 @@
 package com.intellij.compiler.classParsing;
 
 import com.intellij.compiler.SymbolTable;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.compiler.CompilerBundle;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.cls.BytePointer;
 import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.cls.ClsUtil;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.jetbrains.annotations.NonNls;
 
 public class ClassFileReader {
   private File myFile;
@@ -366,7 +366,7 @@ public class ClassFileReader {
         myData = FileUtil.loadFileBytes(myFile);
       }
       catch(IOException e){
-        myData = new byte[0];
+        myData = ArrayUtil.EMPTY_BYTE_ARRAY;
       }
     }
     return myData;

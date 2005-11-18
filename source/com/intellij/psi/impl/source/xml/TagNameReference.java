@@ -17,6 +17,7 @@ import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.util.HtmlUtil;
@@ -132,10 +133,9 @@ class TagNameReference implements PsiReference {
         }
       }
       final String name = element.getName();
-      if(name == null && (fromJspTree == null || fromJspTree.getName() == null)) return new Object[0];
+      if(name == null && (fromJspTree == null || fromJspTree.getName() == null)) return ArrayUtil.EMPTY_OBJECT_ARRAY;
       if(fromJspTree == null || fromJspTree.getName() == null) return new Object[]{name};
       if(name != null) return new Object[]{name, fromJspTree.getName()};
-      if(name != null) return new Object[]{fromJspTree.getName()};
     }
     final Map<String, XmlElementDescriptor> descriptorsMap = new HashMap<String, XmlElementDescriptor>();
 

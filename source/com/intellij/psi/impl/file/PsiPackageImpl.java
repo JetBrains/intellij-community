@@ -34,6 +34,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -257,7 +258,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
 
   @NotNull
   public char[] textToCharArray() {
-    return new char[0]; // TODO throw new InsupportedOperationException()
+    return ArrayUtil.EMPTY_CHAR_ARRAY; // TODO throw new InsupportedOperationException()
   }
 
   public boolean textMatches(CharSequence text) {

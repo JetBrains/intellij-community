@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.vcs.history;
 
+import com.intellij.util.ArrayUtil;
+
 import java.util.Date;
 
 public interface VcsFileRevision extends VcsFileContent {
@@ -43,7 +45,7 @@ public interface VcsFileRevision extends VcsFileContent {
     }
 
     public byte[] getContent(){
-      return new byte[0];
+      return ArrayUtil.EMPTY_BYTE_ARRAY;
     }
 
     public int compareTo(VcsFileRevision vcsFileRevision) {

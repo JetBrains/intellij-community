@@ -599,7 +599,7 @@ public class PluginManager {
         if (antClassLoaderClass.isInstance(loader)) {
           //noinspection HardCodedStringLiteral
           final String classpath =
-            (String)antClassLoaderClass.getDeclaredMethod("getClasspath", new Class[0]).invoke(loader, ArrayUtil.EMPTY_OBJECT_ARRAY);
+            (String)antClassLoaderClass.getDeclaredMethod("getClasspath", ArrayUtil.EMPTY_CLASS_ARRAY).invoke(loader, ArrayUtil.EMPTY_OBJECT_ARRAY);
           final StringTokenizer tokenizer = new StringTokenizer(classpath, File.separator, false);
           while (tokenizer.hasMoreTokens()) {
             final String token = tokenizer.nextToken();

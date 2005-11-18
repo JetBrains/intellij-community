@@ -15,6 +15,8 @@
  */
 package com.intellij.ui;
 
+import com.intellij.util.ArrayUtil;
+
 import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.table.TableModel;
@@ -99,7 +101,7 @@ public class UserActivityWatcher extends ComponentTreeWatcher {
   }
 
   public UserActivityWatcher() {
-    this(new Class[0]);
+    this(ArrayUtil.EMPTY_CLASS_ARRAY);
 
   }
 

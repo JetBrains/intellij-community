@@ -5,12 +5,13 @@ import com.intellij.ide.highlighter.custom.tokens.TokenParser;
 import com.intellij.lexer.LexerBase;
 import com.intellij.psi.CustomHighlighterTokenType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.ArrayUtil;
 
 /**
  * @author dsl
  */
 public abstract class AbstractCustomLexer extends LexerBase {
-  protected char[] myBuffer = new char[0];
+  protected char[] myBuffer = ArrayUtil.EMPTY_CHAR_ARRAY;
   protected int myStartOffset = 0;
   protected int myEndOffset = 0;
   private static final short START_STATE = (short) 0;

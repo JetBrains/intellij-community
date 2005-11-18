@@ -12,6 +12,7 @@ import com.intellij.cvsSupport2.history.CvsRevisionNumber;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.CvsBundle;
+import com.intellij.util.ArrayUtil;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.command.Command;
 import org.netbeans.lib.cvsclient.command.checkout.CheckoutCommand;
@@ -200,7 +201,7 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
     super.gotEntry(abstractFileObject, entry);
     if (entry == null) {
       myState = DELETED;
-      myFileBytes = new byte[0];
+      myFileBytes = ArrayUtil.EMPTY_BYTE_ARRAY;
     }
     else {
       myRevision = entry.getRevision();

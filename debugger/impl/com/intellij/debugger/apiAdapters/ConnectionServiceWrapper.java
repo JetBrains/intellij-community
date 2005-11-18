@@ -2,6 +2,7 @@ package com.intellij.debugger.apiAdapters;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.ArrayUtil;
 import com.sun.jdi.Bootstrap;
 import com.sun.jdi.VMDisconnectedException;
 import com.sun.jdi.VirtualMachine;
@@ -39,8 +40,8 @@ public class ConnectionServiceWrapper {
   public void close() throws IOException {
     try {
       //noinspection HardCodedStringLiteral
-      final Method method = myDelegateClass.getMethod("close", new Class[0]);
-      method.invoke(myConnection, new Object[0]);
+      final Method method = myDelegateClass.getMethod("close", ArrayUtil.EMPTY_CLASS_ARRAY);
+      method.invoke(myConnection, ArrayUtil.EMPTY_OBJECT_ARRAY);
     }
     catch (NoSuchMethodException e) {
       LOG.error(e);

@@ -37,7 +37,7 @@ public class TransportServiceWrapper {
                                                       InvocationTargetException,
                                                       InstantiationException {
     myDelegateClass = delegateClass;
-    final Constructor constructor = delegateClass.getDeclaredConstructor(new Class[0]);
+    final Constructor constructor = delegateClass.getDeclaredConstructor(ArrayUtil.EMPTY_CLASS_ARRAY);
     constructor.setAccessible(true);
     myDelegateObject = constructor.newInstance(ArrayUtil.EMPTY_OBJECT_ARRAY);
   }
@@ -79,9 +79,9 @@ public class TransportServiceWrapper {
   public String startListening() throws IOException {
     try {
       //noinspection HardCodedStringLiteral
-      final Method method = myDelegateClass.getMethod("startListening", new Class[0]);
+      final Method method = myDelegateClass.getMethod("startListening", ArrayUtil.EMPTY_CLASS_ARRAY);
       method.setAccessible(true);
-      final Object rv = method.invoke(myDelegateObject, new Object[0]);
+      final Object rv = method.invoke(myDelegateObject, ArrayUtil.EMPTY_OBJECT_ARRAY);
       // important! do not cast to string cause return types differ in jdk 1.4 and jdk 1.5
       final String strValue = rv.toString();
       myListenAddresses.put(strValue, rv);

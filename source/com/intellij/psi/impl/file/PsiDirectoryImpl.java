@@ -34,6 +34,7 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -262,7 +263,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
 
   @NotNull
   public char[] textToCharArray() {
-    return new char[0]; // TODO throw new InsupportedOperationException()
+    return ArrayUtil.EMPTY_CHAR_ARRAY; // TODO throw new InsupportedOperationException()
   }
 
   public boolean textMatches(CharSequence text) {

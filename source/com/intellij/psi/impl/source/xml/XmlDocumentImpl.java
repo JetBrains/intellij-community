@@ -25,6 +25,7 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.util.XmlNSDescriptorSequence;
 import com.intellij.xml.util.XmlUtil;
@@ -106,7 +107,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
           public Result<XmlNSDescriptor> compute() {
             final XmlNSDescriptor defaultNSDescriptorInner = getDefaultNSDescriptorInner(namespace, strict);
             return new Result<XmlNSDescriptor>(defaultNSDescriptorInner,
-                                               defaultNSDescriptorInner != null ? defaultNSDescriptorInner.getDependences() : new Object[0]);
+                                               defaultNSDescriptorInner != null ? defaultNSDescriptorInner.getDependences() : ArrayUtil.EMPTY_OBJECT_ARRAY);
           }
         }, false);
       defaultNSDescriptor = value.getValue();

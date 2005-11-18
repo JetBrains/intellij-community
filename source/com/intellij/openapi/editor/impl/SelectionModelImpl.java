@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.ClipboardOwner;
@@ -36,7 +37,6 @@ import java.util.ArrayList;
 
 public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.SelectionModelImpl");
-  private static final int[] EMPTY_INTS_ARRAY = new int[0];
 
   private ArrayList<SelectionListener> mySelectionListeners = new ArrayList<SelectionListener>();
   private MyRangeMarker mySelectionMarker = null;
@@ -310,7 +310,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
       return new int[]{getSelectionStart()};
     }
     if (!hasBlockSelection()) {
-      return EMPTY_INTS_ARRAY;
+      return ArrayUtil.EMPTY_INT_ARRAY;
     }
 
     int lineCount = Math.abs(myBlockEnd.line - myBlockStart.line) + 1;
@@ -332,7 +332,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
     }
 
     if (!hasBlockSelection()) {
-      return EMPTY_INTS_ARRAY;
+      return ArrayUtil.EMPTY_INT_ARRAY;
     }
 
     int lineCount = Math.abs(myBlockEnd.line - myBlockStart.line) + 1;

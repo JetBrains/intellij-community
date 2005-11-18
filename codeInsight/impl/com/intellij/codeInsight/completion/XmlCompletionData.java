@@ -27,6 +27,7 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
@@ -406,7 +407,7 @@ public class XmlCompletionData extends CompletionData {
           }
         }
       }
-      return new Object[0];
+      return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
   }
 

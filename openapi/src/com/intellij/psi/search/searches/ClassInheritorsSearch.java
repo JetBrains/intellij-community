@@ -14,8 +14,9 @@ import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import com.intellij.util.QueryExecutor;
 import com.intellij.util.QueryFactory;
+import gnu.trove.THashSet;
 
-import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * @author max
@@ -42,7 +43,7 @@ public class ClassInheritorsSearch extends QueryFactory<PsiClass, ClassInheritor
                            PsiBundle.message("psi.search.inheritors.progress"));
         }
 
-        ArrayList<PsiClass> processed = new ArrayList<PsiClass>();
+        Collection<PsiClass> processed = new THashSet<PsiClass>();
         processed.add(baseClass);
         boolean result = processInheritors(consumer,
                                            baseClass,
@@ -112,7 +113,7 @@ public class ClassInheritorsSearch extends QueryFactory<PsiClass, ClassInheritor
                                            final PsiClass baseClass,
                                            final SearchScope searchScope,
                                            final boolean checkDeep,
-                                           final ArrayList<PsiClass> processed,
+                                           final Collection<PsiClass> processed,
                                            final boolean checkInheritance) {
     LOG.assertTrue(searchScope != null);
 
@@ -130,8 +131,7 @@ public class ClassInheritorsSearch extends QueryFactory<PsiClass, ClassInheritor
         if (checkInheritance || (checkDeep && !(candidate instanceof PsiAnonymousClass))) {
           if (!candidate.isInheritor(baseClass, false)) return true;
 
-          if (processed.contains(candidate)) return true;
-          processed.add(candidate);
+          if (!processed.add(candidate)) return true;
         }
 
         if (candidate instanceof PsiAnonymousClass) {

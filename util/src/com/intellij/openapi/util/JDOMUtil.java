@@ -16,6 +16,7 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.ArrayUtil;
 import org.jdom.Attribute;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -115,7 +116,7 @@ public class JDOMUtil {
         public InputSource resolveEntity(String publicId,
                                          String systemId)
           throws SAXException, IOException {
-          return new InputSource(new CharArrayReader(new char[0]));
+          return new InputSource(new CharArrayReader(ArrayUtil.EMPTY_CHAR_ARRAY));
         }
       });
     }

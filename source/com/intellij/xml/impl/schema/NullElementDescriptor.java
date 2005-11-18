@@ -11,6 +11,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.util.ArrayUtil;
 
 public class NullElementDescriptor implements XmlElementDescriptor {
   private static final NullElementDescriptor INSTANCE = new NullElementDescriptor();
@@ -83,6 +84,6 @@ public class NullElementDescriptor implements XmlElementDescriptor {
   }
 
   public Object[] getDependences() {
-    return new Object[0];
+    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 }

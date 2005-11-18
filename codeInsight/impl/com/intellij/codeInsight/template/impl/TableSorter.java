@@ -19,6 +19,7 @@ package com.intellij.codeInsight.template.impl;
  */
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.ArrayUtil;
 
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
@@ -44,7 +45,7 @@ public class TableSorter extends TableMap {
   }
 
   public TableSorter() {
-    indexes = new int[0]; // for consistency
+    indexes = ArrayUtil.EMPTY_INT_ARRAY; // for consistency
   }
 
   public TableSorter(TableModel model) {

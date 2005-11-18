@@ -22,6 +22,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.util.ArrayUtil;
 
 import java.io.IOException;
 
@@ -81,7 +82,7 @@ public class VcsVirtualFile extends AbstractVcsVirtualFile {
           vcsFileSystem.fireBeforeFileDeletion(this, VcsVirtualFile.this);
         }
       });
-      myContent = new byte[0];
+      myContent = ArrayUtil.EMPTY_BYTE_ARRAY;
       setRevision("0");
 
       Messages.showMessageDialog(

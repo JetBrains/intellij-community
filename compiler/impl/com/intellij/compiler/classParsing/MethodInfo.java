@@ -6,20 +6,19 @@ package com.intellij.compiler.classParsing;
 
 import com.intellij.compiler.SymbolTable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.cls.ClsUtil;
 import gnu.trove.TIntHashSet;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import org.jetbrains.annotations.NonNls;
-
 public class MethodInfo extends MemberInfo {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.classParsing.MethodInfo");
 
-  private static final int[] EMPTY_INT_ARRAY = new int[0];
   private static final int[] EXCEPTION_INFO_UNAVAILABLE = new int[0];
   public static final MethodInfo[] EMPTY_ARRAY = new MethodInfo[0];
 
@@ -54,7 +53,7 @@ public class MethodInfo extends MemberInfo {
                     final AnnotationConstantValue[][] runtimeInvisibleParameterAnnotations, ConstantValue annotationDefault) {
 
     super(name, descriptor, genericSignature, flags, runtimeVisibleAnnotations, runtimeInvisibleAnnotations);
-    myThrownExceptions = exceptions != null? exceptions : EMPTY_INT_ARRAY;
+    myThrownExceptions = exceptions != null? exceptions : ArrayUtil.EMPTY_INT_ARRAY;
     myIsConstructor = isConstructor;
     myRuntimeVisibleParameterAnnotations = runtimeVisibleParameterAnnotations; // todo: pass as parameter
     myRuntimeInvisibleParameterAnnotations = runtimeInvisibleParameterAnnotations;
@@ -69,7 +68,7 @@ public class MethodInfo extends MemberInfo {
       myThrownExceptions = EXCEPTION_INFO_UNAVAILABLE;
     }
     else if (count == 0) {
-      myThrownExceptions = EMPTY_INT_ARRAY;
+      myThrownExceptions = ArrayUtil.EMPTY_INT_ARRAY;
     }
     else {
       myThrownExceptions = new int[count];

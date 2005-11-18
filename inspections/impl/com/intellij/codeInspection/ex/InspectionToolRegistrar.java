@@ -85,7 +85,7 @@ public class InspectionToolRegistrar implements ApplicationComponent, JDOMExtern
 
   private static LocalInspectionTool instantiateLocalTool(Class toolClass) {
     try {
-      Constructor constructor = toolClass.getDeclaredConstructor(new Class[0]);
+      Constructor constructor = toolClass.getDeclaredConstructor(ArrayUtil.EMPTY_CLASS_ARRAY);
       Object[] args = ArrayUtil.EMPTY_OBJECT_ARRAY;
       return (LocalInspectionTool) constructor.newInstance(args);
     } catch (NoSuchMethodException e) {
@@ -106,10 +106,9 @@ public class InspectionToolRegistrar implements ApplicationComponent, JDOMExtern
 
   private static InspectionTool instantiateTool(Class toolClass) {
     try {
-      Constructor constructor = toolClass.getDeclaredConstructor(new Class[0]);
-      Object[] args = ArrayUtil.EMPTY_OBJECT_ARRAY;
+      Constructor constructor = toolClass.getDeclaredConstructor(ArrayUtil.EMPTY_CLASS_ARRAY);
       constructor.setAccessible(true);
-      return (InspectionTool) constructor.newInstance(args);
+      return (InspectionTool) constructor.newInstance(ArrayUtil.EMPTY_OBJECT_ARRAY);
     } catch (SecurityException e) {
       LOG.error(e);
     } catch (NoSuchMethodException e) {

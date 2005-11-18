@@ -21,6 +21,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.popup.list.DottedBorder;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -46,7 +47,7 @@ public class HorizontalList extends JPanel {
   private JScrollPane myScrollPane = ScrollPaneFactory.createScrollPane(myScrollablePanel);
 
   public HorizontalList() {
-    this(new Object[0]);
+    this(ArrayUtil.EMPTY_OBJECT_ARRAY);
   }
 
   public HorizontalList(Object [] objects) {

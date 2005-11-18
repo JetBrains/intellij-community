@@ -17,6 +17,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.*;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,7 +49,7 @@ public class MethodCallInstruction extends Instruction {
       }
     }
     else {
-      myParametersNotNull = new boolean[0];
+      myParametersNotNull = ArrayUtil.EMPTY_BOOLEAN_ARRAY;
     }
     myType = myCall.getType();
 

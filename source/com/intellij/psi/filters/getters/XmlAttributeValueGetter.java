@@ -3,13 +3,11 @@ package com.intellij.psi.filters.getters;
 import com.intellij.codeInsight.completion.CompletionContext;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.jsp.JspFile;
-import com.intellij.psi.impl.source.jsp.jspJava.JspDirective;
-import com.intellij.psi.impl.source.jsp.tagLibrary.TldUtil;
 import com.intellij.psi.filters.ContextGetter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 
 /**
@@ -31,7 +29,7 @@ public class XmlAttributeValueGetter implements ContextGetter {
     if(context != null) {
       context = PsiTreeUtil.getParentOfType(context, XmlAttribute.class);
       if (context == null) {
-        context = PsiTreeUtil.getParentOfType(_context, XmlAttributeValue.class);  
+        context = PsiTreeUtil.getParentOfType(_context, XmlAttributeValue.class);
       }
     }
 
@@ -40,24 +38,24 @@ public class XmlAttributeValueGetter implements ContextGetter {
 
       if(descriptor != null) {
         String[] values = descriptor.getEnumeratedValues();
-        
+
         if(values == null || values.length==0) {
           values = addSpecificCompletions(context);
-        } 
-        
+        }
+
         if(values == null || values.length==0) {
           final PsiReference[] references = ((XmlAttribute)context).getValueElement().getReferences();
           if (references.length == 0) return getAllWordsFromDocument(context,completionContext);
-          if (values == null) return new Object[0];
+          if (values == null) return ArrayUtil.EMPTY_OBJECT_ARRAY;
         }
         return values;
       }
     }
-    
+
     if (context.getReferences().length == 0) {
       return getAllWordsFromDocument(context, completionContext);
     } else {
-      return new Object[0];
+      return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
   }
 

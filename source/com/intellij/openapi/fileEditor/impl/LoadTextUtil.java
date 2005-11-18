@@ -3,6 +3,7 @@ package com.intellij.openapi.fileEditor.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.text.CharArrayCharSequence;
+import com.intellij.util.ArrayUtil;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -10,13 +11,11 @@ import java.io.Reader;
 public final class LoadTextUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.LoadTextUtil");
 
-  private static final char[] EMPTY_CHAR_ARRAY = new char[0];
-
   private static char[] ourSharedBuffer = new char[50000];
   private static final Object OUR_SHARED_BUFFER_LOCK = new Object();
 
   public static CharSequence loadText(VirtualFile file, String[] detectedLineSeparator){
-    CharSequence chars = new CharArrayCharSequence(EMPTY_CHAR_ARRAY);
+    CharSequence chars = new CharArrayCharSequence(ArrayUtil.EMPTY_CHAR_ARRAY);
     if (!file.isDirectory()) {
       synchronized (OUR_SHARED_BUFFER_LOCK) {
         Reader reader = null;

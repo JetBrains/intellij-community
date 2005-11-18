@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs.ex.dummy;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.LocalTimeCounter;
+import com.intellij.util.ArrayUtil;
 
 import java.io.*;
 
@@ -10,7 +11,7 @@ import java.io.*;
  *
  */
 class VirtualFileDataImpl extends VirtualFileImpl {
-  private byte[] myContents = new byte[0];
+  private byte[] myContents = ArrayUtil.EMPTY_BYTE_ARRAY;
   private long myModificationStamp = LocalTimeCounter.currentTime();
 
   public VirtualFileDataImpl(DummyFileSystem fileSystem, VirtualFileDirectoryImpl parent, String name) {

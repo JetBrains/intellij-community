@@ -14,6 +14,7 @@ import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
@@ -78,7 +79,7 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
     }
 
     public Object[] getVariants() {
-      return new Object[0];
+      return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
 
     public boolean isSoft() {

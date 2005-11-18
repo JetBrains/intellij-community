@@ -5,6 +5,7 @@ package com.intellij.openapi;
 
 import com.intellij.ui.ComponentTreeWatcher;
 import com.intellij.util.ui.DialogUtil;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -33,7 +34,7 @@ public class MnemonicHelper extends ComponentTreeWatcher {
   @NonNls public static final String TEXT_CHANGED_PROPERTY = "text";
 
   public MnemonicHelper() {
-    super(new Class[0]);
+    super(ArrayUtil.EMPTY_CLASS_ARRAY);
   }
 
   protected void processComponent(Component parentComponent) {

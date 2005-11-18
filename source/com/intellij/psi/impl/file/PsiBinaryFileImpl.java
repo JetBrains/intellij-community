@@ -162,7 +162,7 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
 
   @NotNull
   public char[] textToCharArray() {
-    return new char[0]; // TODO throw new InsupportedOperationException()
+    return ArrayUtil.EMPTY_CHAR_ARRAY; // TODO throw new InsupportedOperationException()
   }
 
   public boolean textMatches(CharSequence text) {

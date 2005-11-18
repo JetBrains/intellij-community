@@ -6,6 +6,7 @@ import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.xml.XmlAttributeDescriptor;
+import com.intellij.util.ArrayUtil;
 
 /**
  * Created by IntelliJ IDEA.
@@ -85,6 +86,6 @@ public class HtmlAttributeDescriptorImpl implements XmlAttributeDescriptor {
   }
 
   public Object[] getDependences() {
-    return new Object[0];  //To change body of implemented methods use File | Settings | File Templates.
+    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 }

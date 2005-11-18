@@ -104,7 +104,7 @@ public abstract class RadComponent implements IComponent {
     myModifiedPropertyNames = new HashSet<String>();
 
     try {
-      final Constructor constructor = myClass.getConstructor(new Class[0]);
+      final Constructor constructor = myClass.getConstructor(ArrayUtil.EMPTY_CLASS_ARRAY);
       constructor.setAccessible(true);
       myDelegee = (JComponent)constructor.newInstance(ArrayUtil.EMPTY_OBJECT_ARRAY);
     }

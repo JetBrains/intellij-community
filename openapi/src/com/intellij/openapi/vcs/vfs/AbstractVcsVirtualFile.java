@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.vfs;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.util.ArrayUtil;
 
 import java.io.*;
 
@@ -29,7 +30,6 @@ public abstract class AbstractVcsVirtualFile extends VirtualFile {
   private final VirtualFile myParent;
   protected int myModificationStamp = 0;
   private final VirtualFileSystem myFileSystem;
-  private static final byte[] EMPTY_BUF = new byte[0];
   protected static final String COULD_NOT_IMPLEMENT_MESSAGE = VcsBundle.message("exception.text.internal.errror.could.not.implement.method");
 
   protected AbstractVcsVirtualFile(String path, VirtualFileSystem fileSystem) {
@@ -109,7 +109,7 @@ public abstract class AbstractVcsVirtualFile extends VirtualFile {
     if (buf != null) {
       return new ByteArrayInputStream(buf);
     } else {
-      return new ByteArrayInputStream(EMPTY_BUF);
+      return new ByteArrayInputStream(ArrayUtil.EMPTY_BYTE_ARRAY);
     }
   }
 

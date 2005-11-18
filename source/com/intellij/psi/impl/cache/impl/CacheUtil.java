@@ -13,6 +13,7 @@ import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.ArrayUtil;
 
 import java.io.IOException;
 
@@ -52,7 +53,7 @@ public class CacheUtil {
             text = LoadTextUtil.loadText(content.getBytes(), new String[1]);
           }
           catch (IOException e) {
-            text = new CharArrayCharSequence(new char[0]);
+            text = new CharArrayCharSequence(ArrayUtil.EMPTY_CHAR_ARRAY);
           }
         }
 

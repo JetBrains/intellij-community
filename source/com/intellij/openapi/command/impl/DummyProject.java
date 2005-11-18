@@ -52,7 +52,7 @@ public class DummyProject extends UserDataHolderBase implements Project {
   }
 
   public Class[] getComponentInterfaces() {
-    return new Class[0];
+    return ArrayUtil.EMPTY_CLASS_ARRAY;
   }
 
   public boolean hasComponent(Class interfaceClass) {
