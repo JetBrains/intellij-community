@@ -76,7 +76,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     }
     else if (candidates.size() > 1) {
       PsiElement[] elements = candidates.toArray(new PsiElement[candidates.size()]);
-      String title = CodeInsightBundle.message("declaration.navigation.title", ((PsiNamedElement)elements[0]).getName());
+      String title = CodeInsightBundle.message("declaration.navigation.title", elements[0] instanceof PsiNamedElement ? ((PsiNamedElement)elements[0]).getName():elements[0].getText());
       ListPopup listPopup = NavigationUtil.getPsiElementPopup(elements, title, project);
       LogicalPosition caretPosition = editor.getCaretModel().getLogicalPosition();
       Point caretLocation = editor.logicalPositionToXY(caretPosition);

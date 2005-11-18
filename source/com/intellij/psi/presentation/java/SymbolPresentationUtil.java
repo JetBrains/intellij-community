@@ -50,7 +50,9 @@ public class SymbolPresentationUtil {
         PsiFormatUtil.SHOW_TYPE
       );
     }
-    return ((PsiNamedElement)element).getName();
+
+    if (element instanceof PsiNamedElement) return ((PsiNamedElement)element).getName();
+    return element.getText();
   }
 
   public static String getSymbolContainerText(PsiElement element) {
