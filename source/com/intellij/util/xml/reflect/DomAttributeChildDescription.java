@@ -3,7 +3,7 @@
  */
 package com.intellij.util.xml.reflect;
 
-import com.intellij.util.xml.DomAttributeValue;
+import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.DomElement;
 
 import java.lang.reflect.Method;
@@ -12,7 +12,7 @@ import java.lang.reflect.Method;
  * @author peter
  */
 public interface DomAttributeChildDescription extends DomChildrenDescription{
-  DomAttributeValue getDomAttributeValue(DomElement parent);
+  GenericAttributeValue getDomAttributeValue(DomElement parent);
 
   Method getGetterMethod();
 }

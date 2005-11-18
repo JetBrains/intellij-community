@@ -31,7 +31,7 @@ public class DomUtil {
   }
 
   private static boolean isGenericValue(final Type rawType) {
-    return rawType == GenericValue.class || rawType == DomAttributeValue.class;
+    return rawType == GenericValue.class || rawType == GenericAttributeValue.class;
   }
 
   public static boolean isGenericValueType(Type type) {

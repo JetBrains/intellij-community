@@ -8,6 +8,6 @@ import com.intellij.psi.xml.XmlAttribute;
 /**
  * @author peter
  */
-public interface DomAttributeValue<T> extends GenericValue<T>{
+public interface GenericAttributeValue<T> extends GenericValue<T>{
   XmlAttribute getXmlAttribute();
 }

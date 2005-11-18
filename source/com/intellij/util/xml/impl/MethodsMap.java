@@ -156,10 +156,10 @@ public class MethodsMap implements DomGenericInfo {
       return;
     }
 
-    final boolean isAttributeMethod = method.getReturnType().equals(DomAttributeValue.class);
+    final boolean isAttributeMethod = method.getReturnType().equals(GenericAttributeValue.class);
     final Attribute annotation = method.getAnnotation(Attribute.class);
     if (annotation != null) {
-      assert isAttributeMethod : method + " should return " + DomAttributeValue.class;
+      assert isAttributeMethod : method + " should return " + GenericAttributeValue.class;
     }
     if (isAttributeMethod) {
       final String s = annotation == null ? null : annotation.value();

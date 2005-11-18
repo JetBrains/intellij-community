@@ -3,7 +3,7 @@
  */
 package com.intellij.util.xml.impl;
 
-import com.intellij.util.xml.DomAttributeValue;
+import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomNameStrategy;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
@@ -35,9 +35,9 @@ public class AttributeChildDescriptionImpl extends DomChildDescriptionImpl imple
     throw new UnsupportedOperationException("Method getCommonPresentableName is not yet implemented in " + getClass().getName());
   }
 
-  public DomAttributeValue getDomAttributeValue(DomElement parent) {
+  public GenericAttributeValue getDomAttributeValue(DomElement parent) {
     try {
-      return (DomAttributeValue)myGetterMethod.invoke(parent);
+      return (GenericAttributeValue)myGetterMethod.invoke(parent);
     }
     catch (Exception e) {
       throw new RuntimeException(e);
