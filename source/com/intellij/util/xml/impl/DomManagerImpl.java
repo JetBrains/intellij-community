@@ -4,8 +4,8 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.PomModelAspect;
 import com.intellij.pom.event.PomModelEvent;
@@ -13,6 +13,7 @@ import com.intellij.pom.event.PomModelListener;
 import com.intellij.pom.xml.XmlAspect;
 import com.intellij.pom.xml.XmlChangeSet;
 import com.intellij.psi.PsiLock;
+import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.*;
@@ -121,7 +122,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
         Class clazz = getProxyClassFor(getConcreteType(DomUtil.getRawType(handler.getDomElementType()), tag));
         final DomElement element = (DomElement)clazz.getConstructor(InvocationHandler.class).newInstance(handler);
         handler.setProxy(element);
-        setCachedElement(tag, handler);
+        handler.attach(tag);
         return element;
       }
       catch (RuntimeException e) {
@@ -180,8 +181,8 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
   }
 
   @Nullable
-  public static DomInvocationHandler getCachedElement(final XmlTag tag) {
-    return tag.getUserData(CACHED_HANDLER);
+  public static DomInvocationHandler getCachedElement(final XmlElement xmlElement) {
+    return xmlElement.getUserData(CACHED_HANDLER);
   }
 
   @NonNls

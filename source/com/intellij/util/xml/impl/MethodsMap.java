@@ -5,14 +5,13 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.*;
-import com.intellij.util.xml.reflect.DomGenericInfo;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
+import com.intellij.util.xml.reflect.DomGenericInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,14 +23,14 @@ import java.util.*;
  * @author peter
  */
 public class MethodsMap implements DomGenericInfo {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.MethodsMap");
-
-  private Class<? extends DomElement> myClass;
-  private Map<Method, Pair<String, Integer>> myFixedChildrenMethods;
-  private Map<String, Integer> myFixedChildrenCounts;
-  private Map<Method, String> myCollectionChildrenGetterMethods;
-  private Map<Method, String> myCollectionChildrenAdditionMethods;
-  private Map<String, Type> myCollectionChildrenClasses;
+  private final Class<? extends DomElement> myClass;
+  private final Map<Method, Pair<String, Integer>> myFixedChildrenMethods = new HashMap<Method, Pair<String, Integer>>();
+  private final Map<String, Integer> myFixedChildrenCounts = new HashMap<String, Integer>();
+  private final Map<Method, String> myCollectionChildrenGetterMethods = new HashMap<Method, String>();
+  private final Map<Method, String> myCollectionChildrenAdditionMethods = new HashMap<Method, String>();
+  private final Map<String, Type> myCollectionChildrenClasses = new HashMap<String, Type>();
+  private final Map<Method, String> myAttributeChildrenMethods = new HashMap<Method, String>();
+  private boolean myInitialized;
 
   public MethodsMap(final Class<? extends DomElement> aClass) {
     myClass = aClass;
@@ -42,20 +41,28 @@ public class MethodsMap implements DomGenericInfo {
     return integer == null ? 0 : (integer);
   }
 
-  public Set<Map.Entry<Method, String>> getCollectionChildrenEntries() {
+  final Set<Map.Entry<Method, String>> getCollectionChildrenEntries() {
     return myCollectionChildrenGetterMethods.entrySet();
   }
 
-  Type getCollectionChildrenType(String tagName) {
+  final Type getCollectionChildrenType(String tagName) {
     return myCollectionChildrenClasses.get(tagName);
   }
 
-  public Set<Map.Entry<Method, Pair<String, Integer>>> getFixedChildrenEntries() {
+  final Set<Map.Entry<Method, String>> getAttributeChildrenEntries() {
+    return myAttributeChildrenMethods.entrySet();
+  }
+
+  final Set<Map.Entry<Method, Pair<String, Integer>>> getFixedChildrenEntries() {
     return myFixedChildrenMethods.entrySet();
   }
 
-  Pair<String, Integer> getFixedChildInfo(Method method) {
+  final Pair<String, Integer> getFixedChildInfo(Method method) {
     return myFixedChildrenMethods.get(method);
+  }
+
+  final String getAttributeName(Method method) {
+    return myAttributeChildrenMethods.get(method);
   }
 
   private boolean isCoreMethod(final Method method) {
@@ -98,15 +105,10 @@ public class MethodsMap implements DomGenericInfo {
     return strategy == null ? DomNameStrategy.HYPHEN_STRATEGY : strategy;
   }
 
-  public synchronized void buildMethodMaps(final XmlFile file) {
-    if (myFixedChildrenMethods != null) return;
+  public final synchronized void buildMethodMaps(final XmlFile file) {
+    if (myInitialized) return;
 
-    myFixedChildrenMethods = new HashMap<Method, Pair<String, Integer>>();
-    myFixedChildrenCounts = new HashMap<String, Integer>();
-
-    myCollectionChildrenGetterMethods = new HashMap<Method, String>();
-    myCollectionChildrenAdditionMethods = new HashMap<Method, String>();
-    myCollectionChildrenClasses = new HashMap<String, Type>();
+    myInitialized = true;
 
     for (Method method : myClass.getMethods()) {
       if (!isCoreMethod(method)) {
@@ -150,6 +152,19 @@ public class MethodsMap implements DomGenericInfo {
   }
 
   private void processGetterMethod(final Method method) {
+    final boolean isAttributeMethod = method.getReturnType().equals(DomAttributeValue.class);
+    final Attribute annotation = method.getAnnotation(Attribute.class);
+    if (annotation != null) {
+      assert isAttributeMethod : method + " should return " + DomAttributeValue.class;
+    }
+    if (isAttributeMethod) {
+      final String s = annotation == null ? null : annotation.value();
+      String attributeName = StringUtil.isEmpty(s) ? getNameFromMethod(method): s;
+      assert StringUtil.isNotEmpty(attributeName) : "Can't guess attribute name from method name: " + method.getName();
+      myAttributeChildrenMethods.put(method, attributeName);
+      return;
+    }
+
     if (DomUtil.isDomElement(method.getReturnType())) {
       final String qname = getSubTagName(method);
       if (qname != null) {
@@ -177,8 +192,12 @@ public class MethodsMap implements DomGenericInfo {
     }
   }
 
-  public Invocation createInvocation(final XmlFile file, final Method method) {
+  public final Invocation createInvocation(final XmlFile file, final Method method) {
     buildMethodMaps(file);
+
+    if (myAttributeChildrenMethods.containsKey(method)) {
+      return new GetAttributeChildInvocation(method);
+    }
 
     if (myFixedChildrenMethods.containsKey(method)) {
       return new GetFixedChildInvocation(method);
@@ -197,28 +216,7 @@ public class MethodsMap implements DomGenericInfo {
     throw new UnsupportedOperationException("No implementation for method " + method.toString());
   }
 
-  public Collection<Method> getFixedChildrenGetterMethods() {
-    return Collections.unmodifiableCollection(myFixedChildrenMethods.keySet());
-  }
-
-  public Collection<Method> getCollectionChildrenGetterMethods() {
-    return Collections.unmodifiableCollection(myCollectionChildrenGetterMethods.keySet());
-  }
-
-  public int getFixedChildIndex(Method method) {
-    final Pair<String, Integer> pair = myFixedChildrenMethods.get(method);
-    if (pair == null) {
-      LOG.error("Should be fixed child getter method: " + method);
-    }
-    return pair.getSecond();
-  }
-
-  public String getTagName(Method method) {
-    final Pair<String, Integer> pair = myFixedChildrenMethods.get(method);
-    return pair != null ? pair.getFirst() : myCollectionChildrenGetterMethods.get(method);
-  }
-
-  public Method getCollectionGetMethod(String tagName) {
+  private Method getCollectionGetMethod(String tagName) {
     for (Map.Entry<Method, String> entry : myCollectionChildrenGetterMethods.entrySet()) {
       if (tagName.equals(entry.getValue())) {
         return entry.getKey();
@@ -227,11 +225,11 @@ public class MethodsMap implements DomGenericInfo {
     return null;
   }
 
-  public Method getCollectionAddMethod(String tagName) {
+  private Method getCollectionAddMethod(final String tagName, final int parameterCount) {
     for (Map.Entry<Method, String> entry : myCollectionChildrenAdditionMethods.entrySet()) {
       if (tagName.equals(entry.getValue())) {
         final Method method = entry.getKey();
-        if (method.getParameterTypes().length == 0) {
+        if (method.getParameterTypes().length == parameterCount) {
           return method;
         }
       }
@@ -239,19 +237,7 @@ public class MethodsMap implements DomGenericInfo {
     return null;
   }
 
-  public Method getCollectionIndexedAddMethod(String tagName) {
-    for (Map.Entry<Method, String> entry : myCollectionChildrenAdditionMethods.entrySet()) {
-      if (tagName.equals(entry.getValue())) {
-        final Method method = entry.getKey();
-        if (method.getParameterTypes().length == 1) {
-          return method;
-        }
-      }
-    }
-    return null;
-  }
-
-  public Method[] getFixedChildrenGetterMethods(String tagName) {
+  private Method[] getFixedChildrenGetterMethods(String tagName) {
     final Method[] methods = new Method[getFixedChildrenCount(tagName)];
     for (Map.Entry<Method, Pair<String, Integer>> entry : myFixedChildrenMethods.entrySet()) {
       final Pair<String, Integer> pair = entry.getValue();
@@ -302,8 +288,8 @@ public class MethodsMap implements DomGenericInfo {
     return new CollectionChildDescriptionImpl(tagName,
                                               getCollectionChildrenType(tagName),
                                               getCollectionGetMethod(tagName),
-                                              getCollectionAddMethod(tagName),
-                                              getCollectionIndexedAddMethod(tagName),
+                                              getCollectionAddMethod(tagName, 0),
+                                              getCollectionAddMethod(tagName, 1),
                                               getFixedChildrenCount(tagName));
   }
 }

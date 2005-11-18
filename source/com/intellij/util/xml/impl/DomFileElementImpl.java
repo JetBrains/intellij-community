@@ -169,7 +169,7 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     return MOCK_DOM_GENERIC_INFO;
   }
 
-  public String getTagName() {
+  public String getXmlElementName() {
     return null;
   }
 

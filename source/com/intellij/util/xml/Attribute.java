@@ -9,7 +9,7 @@ import java.lang.annotation.Target;
 import java.lang.annotation.ElementType;
 
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE})
-public @interface NameStrategy {
-  Class value();
+@Target({ElementType.METHOD})
+public @interface Attribute {
+  String value() default "";
 }

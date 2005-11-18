@@ -4,6 +4,8 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomAttributeValue;
+import com.intellij.psi.xml.XmlTag;
 
 import java.lang.reflect.Method;
 import java.util.Map;
@@ -20,6 +22,17 @@ public class InvocationCache {
     addCoreInvocations(DomElement.class);
     addCoreInvocations(DomProxy.class);
     addCoreInvocations(Object.class);
+    try {
+      ourCoreInvocations.put(DomAttributeValue.class.getMethod("getXmlAttribute"), new Invocation() {
+          public final Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
+            final XmlTag tag = handler.getXmlTag();
+            return tag != null ? tag.getAttribute(handler.getXmlElementName(), null) : null;
+          }
+        });
+    }
+    catch (NoSuchMethodException e) {
+      throw new AssertionError();
+    }
   }
 
   private static void addCoreInvocations(final Class<?> aClass) {

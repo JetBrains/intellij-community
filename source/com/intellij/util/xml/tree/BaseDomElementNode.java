@@ -29,7 +29,7 @@ public class BaseDomElementNode extends AbstractDomElementNode {
     super(parent);
 
     myDomElement = modelElement;
-    myTagName = modelElement.getTagName();
+    myTagName = modelElement.getXmlElementName();
    }
 
   public SimpleNode[] getChildren() {

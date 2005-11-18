@@ -8,7 +8,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
@@ -41,6 +40,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   private DomElement myProxy;
   private boolean myInitialized = false;
   private final Map<Pair<String, Integer>, IndexedElementInvocationHandler> myFixedChildren = new HashMap<Pair<String, Integer>, IndexedElementInvocationHandler>();
+  private final Map<String, AttributeChildInvocationHandler> myAttributeChildren = new HashMap<String, AttributeChildInvocationHandler>();
   private final MethodsMap myMethodsMap;
   private boolean myInvalidated;
   private InvocationCache myInvocationCache;
@@ -49,7 +49,8 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
                                  final XmlTag tag,
                                  final DomInvocationHandler parent,
                                  final String tagName,
-                                 DomManagerImpl manager, final Converter genericConverter) {
+                                 final DomManagerImpl manager,
+                                 final Converter genericConverter) {
     myType = type;
     myXmlTag = tag;
     myParent = parent;
@@ -72,7 +73,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     return myParent;
   }
 
-  IndexedElementInvocationHandler getFixedChild(String tagName, int index) {
+  final IndexedElementInvocationHandler getFixedChild(String tagName, int index) {
     return myFixedChildren.get(new Pair<String, Integer>(tagName, index));
   }
 
@@ -80,7 +81,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     return myType;
   }
 
-  public final XmlTag ensureTagExists() {
+  public XmlTag ensureTagExists() {
     if (myXmlTag != null) return myXmlTag;
 
     final boolean changing = myManager.setChanging(true);
@@ -123,24 +124,20 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     return myMethodsMap;
   }
 
-  public int getChildIndex(final DomElement child) {
-    for (Map.Entry<Pair<String, Integer>, IndexedElementInvocationHandler> entry : myFixedChildren.entrySet()) {
-      if (entry.getValue().getProxy().equals(child)) {
-        return entry.getKey().getSecond();
+  public void undefine() {
+    try {
+      final XmlTag tag = getXmlTag();
+      if (tag != null) {
+        deleteTag(tag);
+        fireUndefinedEvent();
       }
     }
-    return -1;
-  }
-
-  public void undefine() throws IllegalAccessException, InstantiationException {
-    final XmlTag tag = getXmlTag();
-    if (tag != null) {
-      deleteTag(tag);
-      fireUndefinedEvent();
+    catch (Exception e) {
+      LOG.error(e);
     }
   }
 
-  public DomInvocationHandler getDomInvocationHandler() {
+  public final DomInvocationHandler getDomInvocationHandler() {
     return this;
   }
 
@@ -167,11 +164,11 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
 
   protected abstract XmlTag setXmlTag(final XmlTag tag) throws IncorrectOperationException, IllegalAccessException, InstantiationException;
 
-  public final String getTagName() {
+  public final String getXmlElementName() {
     return myTagName;
   }
 
-  public void acceptChildren(DomElementVisitor visitor) {
+  public final void acceptChildren(DomElementVisitor visitor) {
     for (DomInvocationHandler handler : getAllChildren()) {
       visitor.visitDomElement(handler.getProxy());
     }
@@ -212,27 +209,11 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   }
 
   @NotNull
-  protected XmlFile getFile() {
+  protected final XmlFile getFile() {
     if (myFile == null) {
       myFile = getRoot().getFile();
     }
     return myFile;
-  }
-
-  @Nullable
-  private String guessAttributeName(Method method) {
-    final AttributeValue attributeValue = method.getAnnotation(AttributeValue.class);
-    if (attributeValue == null) return null;
-
-    if (StringUtil.isNotEmpty(attributeValue.value())) {
-      return attributeValue.value();
-    }
-    final String propertyName = PropertyUtil.getPropertyName(method.getName());
-    if (StringUtil.isEmpty(propertyName)) {
-      return null;
-    }
-
-    return getNameStrategy().convertName(propertyName);
   }
 
   public final DomNameStrategy getNameStrategy() {
@@ -246,42 +227,45 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   }
 
   public final String getCommonPresentableName() {
-    return StringUtil.capitalizeWords(getNameStrategy().splitIntoWords(getTagName()), true);
+    return StringUtil.capitalizeWords(getNameStrategy().splitIntoWords(getXmlElementName()), true);
   }
 
   public final GlobalSearchScope getResolveScope() {
     return getRoot().getResolveScope();
   }
 
-  private Invocation createInvocation(final Method method) throws IllegalAccessException, InstantiationException {
-    boolean getter = isGetter(method);
-    boolean setter = method.getName().startsWith("set") && method.getParameterTypes().length == 1 && method.getReturnType() == void.class;
-
-    final String attributeName = guessAttributeName(method);
-    if (attributeName != null) {
-      final Converter converter = getConverter(method, getter);
-      if (getter) {
-        return new GetAttributeValueInvocation(converter, attributeName);
-      }
-      if (setter) {
-        return new SetAttributeValueInvocation(converter, attributeName);
-      }
-    }
-
+  protected final Invocation createInvocation(final Method method) throws IllegalAccessException, InstantiationException {
     final TagValue tagValue = method.getAnnotation(TagValue.class);
-    if (getter && (tagValue != null || "getValue".equals(method.getName()))) {
-      return new GetValueInvocation(getConverter(method, true));
+    if (isGetter(method) && (tagValue != null || "getValue".equals(method.getName()))) {
+      return createGetValueInvocation(getConverter(method, true));
     }
-    else if (setter && (tagValue != null || "setValue".equals(method.getName()))) {
-      return new SetValueInvocation(getConverter(method, false));
+
+    boolean setter = method.getName().startsWith("set") && method.getParameterTypes().length == 1 && method.getReturnType() == void.class;
+    if (setter && (tagValue != null || "setValue".equals(method.getName()))) {
+      return createSetValueInvocation(getConverter(method, false));
     }
 
     return myMethodsMap.createInvocation(getFile(), method);
   }
 
+  protected Invocation createSetValueInvocation(final Converter converter) {
+    return new SetValueInvocation(converter);
+  }
+
+  protected Invocation createGetValueInvocation(final Converter converter) {
+    return new GetValueInvocation(converter);
+  }
+
   @NotNull
   final DomInvocationHandler getFixedChild(final Method method) {
     final DomInvocationHandler domElement = myFixedChildren.get(myMethodsMap.getFixedChildInfo(method));
+    assert domElement != null : method.toString();
+    return domElement;
+  }
+
+  @NotNull
+  final DomInvocationHandler getAttributeChild(final Method method) {
+    final DomInvocationHandler domElement = myAttributeChildren.get(myMethodsMap.getAttributeName(method));
     assert domElement != null : method.toString();
     return domElement;
   }
@@ -319,16 +303,20 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     return false;
   }
 
-  public String toString() {
-    return StringUtil.getShortName(myType.toString()) + " @" + hashCode();
+  public final String toString() {
+    return myType.toString() + " @" + hashCode();
   }
 
   final void checkInitialized() {
+    assert isValid();
     synchronized (PsiLock.LOCK) {
       if (myInitialized) return;
       try {
-        final HashSet<XmlTag> usedTags = new HashSet<XmlTag>();
+        for (Map.Entry<Method, String> entry : myMethodsMap.getAttributeChildrenEntries()) {
+          getOrCreateAttributeChild(entry.getKey(), entry.getValue());
+        }
 
+        final HashSet<XmlTag> usedTags = new HashSet<XmlTag>();
         final XmlTag tag = getXmlTag();
         for (Map.Entry<Method, Pair<String, Integer>> entry : myMethodsMap.getFixedChildrenEntries()) {
           final Pair<String, Integer> pair = entry.getValue();
@@ -353,6 +341,14 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
         myInitialized = true;
       }
     }
+  }
+
+  private void getOrCreateAttributeChild(final Method method, final String attributeName) {
+    final AttributeChildInvocationHandler handler = new AttributeChildInvocationHandler(method.getGenericReturnType(), getXmlTag(), this,
+                                                                                        attributeName, myManager,
+                                                                                        getConverterForChild(method));
+    myManager.createDomElement(handler);
+    myAttributeChildren.put(handler.getXmlElementName(), handler);
   }
 
   private IndexedElementInvocationHandler getOrCreateIndexedChild(final Method method, final XmlTag subTag, final Pair<String, Integer> pair) {
@@ -409,7 +405,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   }
 
   @Nullable
-  public final XmlTag getXmlTag() {
+  public XmlTag getXmlTag() {
     return myXmlTag;
   }
 
@@ -428,16 +424,24 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
       }
 
       myInitialized = false;
-      DomManagerImpl.setCachedElement(myXmlTag, null);
+      removeFromCache();
       myXmlTag = null;
     }
+  }
+
+  protected void removeFromCache() {
+    DomManagerImpl.setCachedElement(myXmlTag, null);
   }
 
   protected final void attach(@NotNull final XmlTag tag) {
     synchronized (PsiLock.LOCK) {
       myXmlTag = tag;
-      DomManagerImpl.setCachedElement(tag, this);
+      cacheInTag(tag);
     }
+  }
+
+  protected void cacheInTag(final XmlTag tag) {
+    DomManagerImpl.setCachedElement(tag, this);
   }
 
   public final DomManagerImpl getManager() {
@@ -491,7 +495,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     }
   }
 
-  public boolean isInitialized() {
+  public final boolean isInitialized() {
     synchronized (PsiLock.LOCK) {
       return myInitialized;
     }

@@ -61,15 +61,6 @@ public class ConverterManagerImpl implements ConverterManager {
     return converter;
   }
 
-  private Class<?> getConverterClass(final Method method, final boolean getter, final Type classType) {
-    Class<?> aClass =
-      DomUtil.getClassFromGenericType(getter ? method.getGenericReturnType() : method.getGenericParameterTypes()[0], classType);
-    if (aClass == null) {
-      return getter ? method.getReturnType() : method.getParameterTypes()[0];
-    }
-    return aClass;
-  }
-
   @Nullable
   private Converter getDefaultConverter(final Class aClass) {
     Converter converter = myConvertersByClass.get(aClass);

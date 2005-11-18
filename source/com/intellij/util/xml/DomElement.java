@@ -24,13 +24,13 @@ public interface DomElement {
 
   XmlTag ensureTagExists();
 
-  void undefine() throws IllegalAccessException, InstantiationException;
+  void undefine();
 
   boolean isValid();
 
   DomGenericInfo getMethodsInfo();
 
-  String getTagName();
+  String getXmlElementName();
 
   void acceptChildren(DomElementVisitor visitor);
 

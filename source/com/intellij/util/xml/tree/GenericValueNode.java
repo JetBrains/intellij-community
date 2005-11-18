@@ -13,7 +13,7 @@ public class GenericValueNode extends AbstractDomElementNode {
     super(parent);
 
     myModelElement = modelElement;
-    myTagName = modelElement.getTagName();
+    myTagName = modelElement.getXmlElementName();
    }
 
   public String getNodeName() {

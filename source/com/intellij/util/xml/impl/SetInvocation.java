@@ -3,12 +3,12 @@
  */
 package com.intellij.util.xml.impl;
 
+import com.intellij.j2ee.j2eeDom.xmlData.ReadOnlyDeploymentDescriptorModificationException;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.Converter;
-import com.intellij.util.xml.events.DomChangeEvent;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.j2ee.j2eeDom.xmlData.ReadOnlyDeploymentDescriptorModificationException;
+import com.intellij.util.xml.events.DomEvent;
 
 /**
  * @author peter
@@ -31,10 +31,10 @@ public abstract class SetInvocation implements Invocation {
     final DomManagerImpl manager = handler.getManager();
     final boolean changing = manager.setChanging(true);
     try {
-      final String oldValue = getValue(tag);
       if (args[0] == null) {
-        clearValue(oldValue, handler);
+        handler.undefine();
       } else {
+        final String oldValue = getValue(tag);
         final String newValue = myConverter.toString(args[0], new ConvertContextImpl(handler));
         setValue(tag, newValue);
         manager.fireEvent(createEvent(handler, oldValue, newValue));
@@ -48,10 +48,8 @@ public abstract class SetInvocation implements Invocation {
 
   protected abstract String getValue(XmlTag tag);
 
-  protected abstract DomChangeEvent createEvent(DomInvocationHandler handler, String oldValue, String newValue);
+  protected abstract DomEvent createEvent(DomInvocationHandler handler, String oldValue, String newValue);
 
   protected abstract void setValue(XmlTag tag, String value) throws IncorrectOperationException;
 
-  protected abstract void clearValue(final String oldValue, DomInvocationHandler handler) throws IncorrectOperationException, IllegalAccessException,
-                                                                          InstantiationException;
 }

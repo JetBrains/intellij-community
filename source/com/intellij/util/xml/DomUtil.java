@@ -22,7 +22,8 @@ public class DomUtil {
   public static Class extractParameterClassFromGenericType(Type type) {
     if (type instanceof ParameterizedType) {
       ParameterizedType parameterizedType = (ParameterizedType)type;
-      if (parameterizedType.getRawType() == GenericValue.class) {
+      final Type rawType = parameterizedType.getRawType();
+      if (isGenericValue(rawType)) {
         final Type[] arguments = parameterizedType.getActualTypeArguments();
         if (arguments.length == 1 && arguments[0] instanceof Class) {
           return (Class)arguments[0];
@@ -32,25 +33,23 @@ public class DomUtil {
     return null;
   }
 
+  private static boolean isGenericValue(final Type rawType) {
+    return rawType == GenericValue.class || rawType == DomAttributeValue.class;
+  }
+
   public static boolean isGenericValueType(Type type) {
     return extractParameterClassFromGenericType(type) != null;
   }
 
   public static Class<?> getClassFromGenericType(final Type genericType, final Type classType) {
-    if (genericType instanceof TypeVariable) {
-      TypeVariable typeVariable = (TypeVariable)genericType;
-      if (classType instanceof ParameterizedType) {
-        ParameterizedType parameterizedType = (ParameterizedType)classType;
-        if (parameterizedType.getRawType() == GenericValue.class) {
-          final Type[] arguments = parameterizedType.getActualTypeArguments();
-          final Type rawType = parameterizedType.getRawType();
-          if (rawType instanceof Class) {
-            Class aClass = (Class)rawType;
-            final TypeVariable[] typeParameters = aClass.getTypeParameters();
-            if (typeParameters.length ==1 && typeParameters[0].equals(typeVariable) && arguments[0] instanceof Class) {
-              return (Class)arguments[0];
-            }
-          }
+    if (genericType instanceof TypeVariable && classType instanceof ParameterizedType) {
+      ParameterizedType parameterizedType = (ParameterizedType)classType;
+      final Type rawType = parameterizedType.getRawType();
+      if (isGenericValue(rawType)) {
+        final Type[] arguments = parameterizedType.getActualTypeArguments();
+        final TypeVariable[] typeParameters = ((Class)rawType).getTypeParameters();
+        if (typeParameters.length == 1 && arguments[0] instanceof Class) {
+          return (Class)arguments[0];
         }
       }
     }

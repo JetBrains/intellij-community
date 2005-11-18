@@ -33,17 +33,17 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler{
 
   protected XmlTag setXmlTag(final XmlTag tag) throws IncorrectOperationException, IllegalAccessException, InstantiationException {
     final DomInvocationHandler parent = getParentHandler();
-    parent.createFixedChildrenTags(getTagName(), myIndex);
+    parent.createFixedChildrenTags(getXmlElementName(), myIndex);
     return (XmlTag)parent.getXmlTag().add(tag);
   }
 
-  public void undefine() throws IllegalAccessException, InstantiationException {
+  public void undefine() {
     final DomInvocationHandler parent = getParentHandler();
     final XmlTag parentTag = parent.getXmlTag();
     if (parentTag == null) return;
 
     parent.checkInitialized();
-    final XmlTag[] subTags = parentTag.findSubTags(getTagName());
+    final XmlTag[] subTags = parentTag.findSubTags(getXmlElementName());
     if (subTags.length <= myIndex) {
       return;
     }
