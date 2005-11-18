@@ -35,6 +35,7 @@ public class GenerationUtils {
     if (baseDir != null) {
       File base;
       try {
+        // use canonical paths in order to resolve symlinks
         base = baseDir.getCanonicalFile();
       }
       catch (IOException e) {

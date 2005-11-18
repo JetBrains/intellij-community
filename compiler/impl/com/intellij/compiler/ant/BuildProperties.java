@@ -130,6 +130,7 @@ public class BuildProperties extends CompositeGenerator {
         final File home = VfsUtil.virtualToIoFile(jdk.getHomeDirectory());
         File homeDir;
         try {
+          // use canonical path in order to resolve symlinks
           homeDir = home.getCanonicalFile();
         }
         catch (IOException e) {
