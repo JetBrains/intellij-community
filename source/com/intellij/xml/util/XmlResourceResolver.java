@@ -9,7 +9,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
@@ -58,8 +57,9 @@ public class XmlResourceResolver implements XMLEntityResolver {
   
   public PsiFile resolve(final String baseSystemId, final String systemId) {
     if (LOG.isDebugEnabled()) {
-      LOG.debug("enter: resolveEntity(baseSystemId='" + baseSystemId + "' systemId='" + systemId + "')");
+      LOG.debug("enter: resolveEntity(baseSystemId='" + baseSystemId + "' systemId='" + systemId + "," + super.toString() + "')");
     }
+
     if (systemId == null) return null;
     if (myStopOnUnDeclaredResource &&
         ExternalResourceManagerEx.getInstanceEx().isIgnoredResource(systemId)) {
@@ -109,6 +109,9 @@ public class XmlResourceResolver implements XMLEntityResolver {
           psiFile = XmlUtil.findXmlFile(baseFile,fullUrl);
         }
 
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("before relative file checking:"+psiFile+","+systemId+","+ baseSystemId+")");
+        }
         if (psiFile == null && systemId != null && baseSystemId == null) { // entity file
           File workingFile = new File("");
           String workingDir = workingFile.getAbsoluteFile().getAbsolutePath().replace(File.separatorChar, '/') + "/";
@@ -118,8 +121,19 @@ public class XmlResourceResolver implements XMLEntityResolver {
             workingDir,
             ""
           );
-          
+
+          if (relativePath.equals(systemId)) {
+            relativePath = systemId.substring(systemId.lastIndexOf('/') + 1);
+          }
+
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("next to relative file checking:"+relativePath+","+myExternalResourcesMap.size()+")");
+          }
+
           for(String path:myExternalResourcesMap.values()) {
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("Finding file by url:" + path);
+            }
             VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(path);
             if (file == null) continue;
             if (LOG.isDebugEnabled()) {
@@ -146,7 +160,13 @@ public class XmlResourceResolver implements XMLEntityResolver {
     ApplicationManager.getApplication().runReadAction(action);
 
     final PsiFile psiFile = result[0];
-    if (psiFile != null) myExternalResourcesMap.put(systemId,psiFile.getVirtualFile().getUrl());
+    if (psiFile != null) {
+      final String url = psiFile.getVirtualFile().getUrl();
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Adding external resource ref:"+systemId+","+url+","+super.toString());
+      }
+      myExternalResourcesMap.put(systemId,url);
+    }
     return psiFile;
   }
 
