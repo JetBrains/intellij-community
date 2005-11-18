@@ -9,7 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.*;
-import com.intellij.util.xml.reflect.DomMethodsInfo;
+import com.intellij.util.xml.reflect.DomGenericInfo;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
@@ -23,7 +23,7 @@ import java.util.*;
 /**
  * @author peter
  */
-public class MethodsMap implements DomMethodsInfo {
+public class MethodsMap implements DomGenericInfo {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.MethodsMap");
 
   private Class<? extends DomElement> myClass;

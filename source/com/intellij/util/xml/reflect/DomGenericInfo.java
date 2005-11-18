@@ -3,24 +3,15 @@
  */
 package com.intellij.util.xml.reflect;
 
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Method;
-import java.util.Collection;
 import java.util.List;
 
 /**
  * @author peter
  */
-public interface DomMethodsInfo {
-
-  Collection<Method> getFixedChildrenGetterMethods();
-  Collection<Method> getCollectionChildrenGetterMethods();
-
-  int getFixedChildIndex(Method method);
-
-  String getTagName(Method method);
+public interface DomGenericInfo {
 
   @NotNull
   List<DomChildrenDescription> getChildrenDescriptions();

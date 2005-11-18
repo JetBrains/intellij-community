@@ -9,7 +9,7 @@ import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.*;
-import com.intellij.util.xml.reflect.DomMethodsInfo;
+import com.intellij.util.xml.reflect.DomGenericInfo;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
@@ -25,7 +25,7 @@ import java.util.*;
  * @author peter
  */
 public class DomFileElementImpl<T extends DomElement> implements DomFileElement<T> {
-  private static final DomMethodsInfo MOCK_DOM_METHODS_INFO = new DomMethodsInfo() {
+  private static final DomGenericInfo MOCK_DOM_GENERIC_INFO = new DomGenericInfo() {
       public Collection<Method> getFixedChildrenGetterMethods() {
         return Collections.emptyList();
       }
@@ -165,8 +165,8 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     return myFile.isValid();
   }
 
-  public final DomMethodsInfo getMethodsInfo() {
-    return MOCK_DOM_METHODS_INFO;
+  public final DomGenericInfo getMethodsInfo() {
+    return MOCK_DOM_GENERIC_INFO;
   }
 
   public String getTagName() {
