@@ -44,7 +44,6 @@ public class HighlightMethodUtil {
                                      HighlightUtil.formatClass(method2.getContainingClass()));
   }
 
-  //used by Fabrique
   //@top
   public static HighlightInfo checkMethodWeakerPrivileges(MethodSignatureBackedByPsiMethod methodSignature,
                                                           List<? extends MethodSignatureBackedByPsiMethod> superMethodSignatures,
@@ -87,7 +86,6 @@ public class HighlightMethodUtil {
     return null;
   }
 
-  //used by Fabrique
   //@top
   public static HighlightInfo checkMethodIncompatibleReturnType(MethodSignatureBackedByPsiMethod methodSignature,
                                                                 List<? extends MethodSignatureBackedByPsiMethod> superMethodSignatures,
@@ -97,6 +95,7 @@ public class HighlightMethodUtil {
     PsiClass aClass = method.getContainingClass();
     if (aClass == null) return null;
     for (MethodSignatureBackedByPsiMethod superMethodSignature : superMethodSignatures) {
+      if (!MethodSignatureUtil.isSubsignature(superMethodSignature, methodSignature)) continue;
       PsiMethod superMethod = superMethodSignature.getMethod();
       PsiType superReturnType = superMethodSignature.getSubstitutor().substitute(superMethod.getReturnType());
       if (returnType == null || superReturnType == null || method == superMethod) continue;
@@ -194,7 +193,6 @@ public class HighlightMethodUtil {
     return null;
   }
 
-  //used by Fabrique
   //@top
   public static HighlightInfo checkMethodIncompatibleThrows(MethodSignatureBackedByPsiMethod methodSignature,
                                                             List<? extends MethodSignatureBackedByPsiMethod> superMethodSignatures,

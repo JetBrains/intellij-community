@@ -264,6 +264,7 @@ public abstract class GenericsHighlightUtil {
 
     for (HierarchicalMethodSignature signature : signaturesWithSupers) {
       PsiMethod method = signature.getMethod();
+      if (method.hasModifierProperty(PsiModifier.STATIC)) continue;
       MethodSignature signatureToErase = method.getSignature(PsiSubstitutor.EMPTY);
       MethodSignatureBackedByPsiMethod sameErasure = sameErasureMethods.get(signatureToErase);
       if (sameErasure != null) {
