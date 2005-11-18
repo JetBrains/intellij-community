@@ -147,7 +147,7 @@ public final class CreateDialogAction extends CreateElementActionBase {
       result.append("onCancel();");
       result.append("}});\n");
       result.append("\n");
-      result.append(UIDesignerBundle.message("comment.call.onCancel.cross"));
+      result.append(UIDesignerBundle.message("comment.call.onCancel.cross")).append("\n");
       result.append("setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);\n");
       result.append("addWindowListener(new java.awt.event.WindowAdapter() {\n");
       result.append("  public void windowClosing(java.awt.event.WindowEvent e) {\n");
@@ -155,7 +155,7 @@ public final class CreateDialogAction extends CreateElementActionBase {
       result.append("  }\n");
       result.append("});\n");
       result.append("\n");
-      result.append(UIDesignerBundle.message("comment.call.onCancel.escape"));
+      result.append(UIDesignerBundle.message("comment.call.onCancel.escape")).append("\n");
       result.append("contentPane.registerKeyboardAction(");
       result.append("  new java.awt.event.ActionListener() {");
       result.append("    public void actionPerformed(java.awt.event.ActionEvent e) {");
@@ -172,7 +172,7 @@ public final class CreateDialogAction extends CreateElementActionBase {
     if (generateOK) {
       result.append("\n");
       result.append("private void onOK(){\n");
-      result.append(UIDesignerBundle.message("comment.onok"));
+      result.append(UIDesignerBundle.message("comment.onok")).append("\n");
       result.append("dispose();\n");
       result.append("}\n");
     }
@@ -180,7 +180,7 @@ public final class CreateDialogAction extends CreateElementActionBase {
     if (generateCancel) {
       result.append("\n");
       result.append("private void onCancel(){\n");
-      result.append(UIDesignerBundle.message("comment.oncancel"));
+      result.append(UIDesignerBundle.message("comment.oncancel")).append("\n");
       result.append("dispose();\n");
       result.append("}\n");
     }
