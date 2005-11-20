@@ -25,6 +25,8 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.*;
 
+import org.jetbrains.annotations.NotNull;
+
 public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.DocumentImpl");
 
@@ -178,8 +180,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   public RangeMarker getOffsetGuard(int offset) {
-    for (int i = 0; i < myGuardedBlocks.size(); i++) {
-      RangeMarker block = myGuardedBlocks.get(i);
+    for (RangeMarker block : myGuardedBlocks) {
       if (offsetInRange(offset, block.getStartOffset(), block.getEndOffset())) return block;
     }
 
@@ -187,8 +188,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   public RangeMarker getRangeGuard(int start, int end) {
-    for (int i = 0; i < myGuardedBlocks.size(); i++) {
-      RangeMarker block = myGuardedBlocks.get(i);
+    for (RangeMarker block : myGuardedBlocks) {
       if (rangeIntersect(start, end, block.getStartOffset(), block.getEndOffset())) return block;
     }
 
@@ -554,6 +554,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     }
   }
 
+  @NotNull
   public MarkupModel getMarkupModel(Project project) {
     return getMarkupModel(project, true);
   }
@@ -591,7 +592,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   public void setCyclicBufferSize(int bufferSize) {
-    final CharArray charArray = bufferSize == 0 ? (CharArray)new CharArray() {
+    final CharArray charArray = bufferSize == 0 ? new CharArray() {
       protected DocumentEvent beforeChangedUpdate(int offset, CharSequence oldString, CharSequence newString) {
         return DocumentImpl.this.beforeChangedUpdate(offset, oldString, newString);
       }
