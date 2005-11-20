@@ -34,6 +34,7 @@ public class CompilerUIConfigurable implements Configurable {
   private JRadioButton myDoNotDeploy;
   private JRadioButton myDeploy;
   private JRadioButton myShowDialog;
+  private JCheckBox myCbAssertNotNull;
 
   public CompilerUIConfigurable(final Project project) {
     myProject = project;
@@ -75,6 +76,7 @@ public class CompilerUIConfigurable implements Configurable {
     myCbCloseMessageViewOnSuccess.setSelected(workspaceConfiguration.CLOSE_MESSAGE_VIEW_IF_SUCCESS);
     myCbCompileDependent.setSelected(workspaceConfiguration.COMPILE_DEPENDENT_FILES);
     myCbClearOutputDirectory.setSelected(workspaceConfiguration.CLEAR_OUTPUT_DIRECTORY);
+    myCbAssertNotNull.setSelected(workspaceConfiguration.ASSERT_NOT_NULL);
 
     configuration.convertPatterns();
 
@@ -115,6 +117,7 @@ public class CompilerUIConfigurable implements Configurable {
     workspaceConfiguration.CLOSE_MESSAGE_VIEW_IF_SUCCESS = myCbCloseMessageViewOnSuccess.isSelected();
     workspaceConfiguration.COMPILE_DEPENDENT_FILES = myCbCompileDependent.isSelected();
     workspaceConfiguration.CLEAR_OUTPUT_DIRECTORY = myCbClearOutputDirectory.isSelected();
+    workspaceConfiguration.ASSERT_NOT_NULL = myCbAssertNotNull.isSelected();
 
     configuration.removeResourceFilePatterns();
     String extensionString = myResourcePatternsField.getText().trim();
@@ -168,6 +171,7 @@ public class CompilerUIConfigurable implements Configurable {
     isModified |= ComparingUtils.isModified(myCbCompileInBackground, workspaceConfiguration.COMPILE_IN_BACKGROUND);
     isModified |= ComparingUtils.isModified(myCbCloseMessageViewOnSuccess, workspaceConfiguration.CLOSE_MESSAGE_VIEW_IF_SUCCESS);
     isModified |= ComparingUtils.isModified(myCbCompileDependent, workspaceConfiguration.COMPILE_DEPENDENT_FILES);
+    isModified |= ComparingUtils.isModified(myCbAssertNotNull, workspaceConfiguration.ASSERT_NOT_NULL);
 
     final CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(myProject);
     isModified |= ComparingUtils.isModified(myCbClearOutputDirectory, workspaceConfiguration.CLEAR_OUTPUT_DIRECTORY);
