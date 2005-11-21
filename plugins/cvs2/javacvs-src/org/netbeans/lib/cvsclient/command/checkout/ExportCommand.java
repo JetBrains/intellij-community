@@ -14,9 +14,12 @@
  *****************************************************************************/
 package org.netbeans.lib.cvsclient.command.checkout;
 
+import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.IClientEnvironment;
 import org.netbeans.lib.cvsclient.IRequestProcessor;
-import org.netbeans.lib.cvsclient.command.*;
+import org.netbeans.lib.cvsclient.command.AbstractCommand;
+import org.netbeans.lib.cvsclient.command.CommandException;
+import org.netbeans.lib.cvsclient.command.KeywordSubstitution;
 import org.netbeans.lib.cvsclient.event.ICvsListenerRegistry;
 import org.netbeans.lib.cvsclient.event.IEventSender;
 import org.netbeans.lib.cvsclient.file.AbstractFileObject;
@@ -27,10 +30,8 @@ import org.netbeans.lib.cvsclient.progress.sending.DummyRequestsProgressHandler;
 import org.netbeans.lib.cvsclient.request.CommandRequest;
 import org.netbeans.lib.cvsclient.request.ExpandModulesRequest;
 import org.netbeans.lib.cvsclient.request.Requests;
-import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -48,7 +49,6 @@ public final class ExportCommand extends AbstractCommand {
 	// Fields =================================================================
 
 	private final List modules = new ArrayList();
-	private boolean useHeadIfNotFound;
 	private String updateByDate;
 	private String updateByRevisionOrTag;
 	private String alternativeCheckoutDirectory;
@@ -84,7 +84,6 @@ public final class ExportCommand extends AbstractCommand {
 	public void resetCvsCommand() {
 		super.resetCvsCommand();
 		setRecursive(true);
-		setUseHeadIfNotFound(false);
 		setUpdateByDate(null);
 		setUpdateByRevisionOrTag(null);
 		setKeywordSubstitution(null);
@@ -122,14 +121,6 @@ public final class ExportCommand extends AbstractCommand {
 
 	public void setAlternativeCheckoutDirectory(String alternativeCheckoutDirectory) {
 		this.alternativeCheckoutDirectory = alternativeCheckoutDirectory;
-	}
-
-	private boolean isUseHeadIfNotFound() {
-		return useHeadIfNotFound;
-	}
-
-	public void setUseHeadIfNotFound(boolean useHeadIfNotFound) {
-		this.useHeadIfNotFound = useHeadIfNotFound;
 	}
 
 	private String getUpdateByDate() {
@@ -178,19 +169,6 @@ public final class ExportCommand extends AbstractCommand {
 		// command and send modified files to the server.
 		processExistingModules(expandedModules, clientEnvironment);
 
-		final ICvsFiles cvsFiles;
-		try {
-			if (getFileObjects().getFileObjects().size() > 0) {
-				cvsFiles = scanFileSystem(getFileObjects(), clientEnvironment);
-			}
-			else {
-				cvsFiles = null;
-			}
-		}
-		catch (IOException ex) {
-			throw new IOCommandException(ex);
-		}
-
 		final Requests requests;
 		requests = new Requests(CommandRequest.EXPORT, clientEnvironment);
 		if (getAlternativeCheckoutDirectory() != null) {
@@ -198,13 +176,9 @@ public final class ExportCommand extends AbstractCommand {
 			requests.addArgumentRequest(getAlternativeCheckoutDirectory());
 		}
 		requests.addArgumentRequest(!isRecursive(), "-l");
-		requests.addArgumentRequest(isUseHeadIfNotFound(), "-f");
 		requests.addArgumentRequest(getUpdateByDate(), "-D");
 		requests.addArgumentRequest(getUpdateByRevisionOrTag(), "-r");
 		requests.addArgumentRequest(getKeywordSubstitution(), "-k");
-		if (cvsFiles != null) {
-			addFileRequests(cvsFiles, requests, clientEnvironment);
-		}
 		addModuleArguments(requests);
 		requests.addLocalPathDirectoryRequest();
 
@@ -254,9 +228,6 @@ public final class ExportCommand extends AbstractCommand {
 		@NonNls final StringBuffer cvsArguments = new StringBuffer();
 		if (!isRecursive()) {
 			cvsArguments.append("-l ");
-		}
-		if (isUseHeadIfNotFound()) {
-			cvsArguments.append("-f ");
 		}
 		if (getKeywordSubstitution() != null) {
 			cvsArguments.append("-k");

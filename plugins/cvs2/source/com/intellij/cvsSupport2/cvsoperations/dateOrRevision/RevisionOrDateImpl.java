@@ -77,8 +77,7 @@ public class RevisionOrDateImpl implements RevisionOrDate {
 
   public void setForCommand(Command command) {
     CommandWrapper wrapper = new CommandWrapper(command);
-    wrapper.setUpdateByRevision(myStickyTag == null && myStickyDate == null ? "HEAD" : myStickyTag);
-    wrapper.setUpdateByDate(myStickyDate);
+    wrapper.setUpdateByRevisionOrDate(myStickyTag, myStickyDate);
   }
 
   private void lookupDirectory(VirtualFile directory) {

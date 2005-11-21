@@ -15,21 +15,16 @@ public class CommandWrapper {
     myCommand = command;
   }
 
-  public void setUpdateByRevision(String revision){
+  public void setUpdateByRevisionOrDate(String revision, final String date){
     if (isCheckoutCommand()){
       asCheckoutCommand().setUpdateByRevisionOrTag(revision);
-    } else if (isUpdateCommand()){
-      asUpdateCommand().setUpdateByRevisionOrTag(revision);
-    } else if (isExportCommand()) {
-      asExportCommand().setUpdateByRevisionOrTag(revision);
-    }
-  }
-
-  public void setUpdateByDate(String date){
-    if (isCheckoutCommand()){
       asCheckoutCommand().setUpdateByDate(date);
     } else if (isUpdateCommand()){
+      asUpdateCommand().setUpdateByRevisionOrTag(revision);
       asUpdateCommand().setUpdateByDate(date);
+    } else if (isExportCommand()) {
+      asExportCommand().setUpdateByRevisionOrTag(revision == null && date == null ? "HEAD" : revision);
+      asExportCommand().setUpdateByDate(date);
     }
   }
 

@@ -42,7 +42,7 @@ public class SimpleRevision implements RevisionOrDate {
   }
 
   public void setForCommand(Command command) {
-    new CommandWrapper(command).setUpdateByRevision(myRevision);
+    new CommandWrapper(command).setUpdateByRevisionOrDate(myRevision, null);
   }
 
   public CvsRevisionNumber getCvsRevisionNumber() {
