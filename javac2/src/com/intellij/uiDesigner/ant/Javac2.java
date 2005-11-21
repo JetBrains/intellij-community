@@ -86,7 +86,7 @@ public final class Javac2 extends Javac{
 
       final HashMap class2form = new HashMap();
 
-      formLoop: for (int i = 0; i < formsToInstrument.size(); i++) {
+      for (int i = 0; i < formsToInstrument.size(); i++) {
         final File formFile = (File)formsToInstrument.get(i);
 
         log("compiling form " + formFile.getAbsolutePath(), Project.MSG_VERBOSE);
@@ -133,7 +133,7 @@ public final class Javac2 extends Javac{
         File classFile = getClassFile(name);
         if (classFile == null) {
           log(formFile.getAbsolutePath() + ": Class to bind does not exist: " + classToBind, Project.MSG_WARN);
-          continue formLoop;
+          continue;
         }
 
         final File alreadyProcessedForm = (File)class2form.get(classToBind);
