@@ -1,2 +1,2 @@
 #!/bin/sh
-. ./idea.sh inspect $*
+./idea.sh inspect $*
