@@ -75,7 +75,8 @@ public class BaseDomElementNode extends AbstractDomElementNode {
   }
 
   protected boolean showGenericValues() {
-    return myDomElement.getRoot().getUserData(SHOW_PROPERTIES_KEY);
+    final Boolean showProperties = myDomElement.getRoot().getUserData(SHOW_PROPERTIES_KEY);
+    return showProperties == null ? false: showProperties;
   }
 
   public Object[] getEqualityObjects() {

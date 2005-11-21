@@ -72,7 +72,9 @@ public class DomModelTreeView extends Wrapper {
       }
 
       public boolean isSelected(AnActionEvent e) {
-        return myRootElement.getRoot().getUserData(BaseDomElementNode.SHOW_PROPERTIES_KEY);
+        final Boolean showGenericValues = myRootElement.getRoot().getUserData(BaseDomElementNode.SHOW_PROPERTIES_KEY);
+
+        return showGenericValues == null ? false: showGenericValues;
       }
 
       public void setSelected(AnActionEvent e, boolean state) {
