@@ -6,7 +6,7 @@ package com.intellij.util.xml;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.impl.DomFileElementImpl;
-import com.intellij.util.xml.impl.MethodsMap;
+import com.intellij.util.xml.impl.GenericInfoImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Type;
@@ -35,6 +35,6 @@ public abstract class DomManager {
 
   public abstract ConverterManager getConverterManager();
 
-  public abstract MethodsMap getGenericInfo(Type type);
+  public abstract GenericInfoImpl getGenericInfo(Type type);
 
 }

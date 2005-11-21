@@ -43,9 +43,9 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
   private final List<DomEventListener> myListeners = new ArrayList<DomEventListener>();
   private final ConverterManagerImpl myConverterManager = new ConverterManagerImpl();
   private final Map<Class<? extends DomElement>, Class> myClass2ProxyClass = new HashMap<Class<? extends DomElement>, Class>();
-  private final Map<Type, MethodsMap> myMethodsMaps = new HashMap<Type, MethodsMap>();
+  private final Map<Type, GenericInfoImpl> myMethodsMaps = new HashMap<Type, GenericInfoImpl>();
   private final Map<Type, InvocationCache> myInvocationCaches = new HashMap<Type, InvocationCache>();
-  private final Map<Class<? extends DomElement>, ClassChooser> myClassChoosers = new HashMap<Class<? extends DomElement>, ClassChooser>();
+  private final Map<Class, ClassChooser> myClassChoosers = new HashMap<Class, ClassChooser>();
   private DomEventListener[] myCachedListeners;
   private PomModelListener myXmlListener;
   private Project myProject;
@@ -82,23 +82,23 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     }
   }
 
-  public final MethodsMap getGenericInfo(final Type type) {
-    MethodsMap methodsMap = myMethodsMaps.get(type);
-    if (methodsMap == null) {
+  public final GenericInfoImpl getGenericInfo(final Type type) {
+    GenericInfoImpl genericInfoImpl = myMethodsMaps.get(type);
+    if (genericInfoImpl == null) {
       if (type instanceof Class) {
-        methodsMap = new MethodsMap((Class<? extends DomElement>)type);
-        myMethodsMaps.put(type, methodsMap);
+        genericInfoImpl = new GenericInfoImpl((Class<? extends DomElement>)type);
+        myMethodsMaps.put(type, genericInfoImpl);
       }
       else if (type instanceof ParameterizedType) {
         ParameterizedType parameterizedType = (ParameterizedType)type;
-        methodsMap = new MethodsMap((Class<? extends DomElement>)parameterizedType.getRawType());
-        myMethodsMaps.put(type, methodsMap);
+        genericInfoImpl = new GenericInfoImpl((Class<? extends DomElement>)parameterizedType.getRawType());
+        myMethodsMaps.put(type, genericInfoImpl);
       }
       else {
         assert false : "Type not supported " + type;
       }
     }
-    return methodsMap;
+    return genericInfoImpl;
   }
 
   final InvocationCache getInvocationCache(final Type type) {
@@ -110,16 +110,25 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     return invocationCache;
   }
 
-  private Class getConcreteType(Class aClass, XmlTag tag) {
+  public final ClassChooser getClassChooser(final Type type) {
+    final Class aClass = DomUtil.getRawType(type);
     final ClassChooser classChooser = myClassChoosers.get(aClass);
-    return classChooser == null ? aClass : classChooser.chooseClass(tag);
+    return classChooser != null ? classChooser : new ClassChooser() {
+      public Class chooseClass(final XmlTag tag) {
+        return aClass;
+      }
+
+      public void distinguishTag(final XmlTag tag, final Class aClass) {
+      }
+    };
   }
 
   final DomElement createDomElement(final DomInvocationHandler handler) {
     synchronized (PsiLock.LOCK) {
       try {
         XmlTag tag = handler.getXmlTag();
-        Class clazz = getProxyClassFor(getConcreteType(DomUtil.getRawType(handler.getDomElementType()), tag));
+        final ClassChooser classChooser = getClassChooser(DomUtil.getRawType(handler.getDomElementType()));
+        Class clazz = getProxyClassFor(classChooser.chooseClass(tag));
         final DomElement element = (DomElement)clazz.getConstructor(InvocationHandler.class).newInstance(handler);
         handler.setProxy(element);
         handler.attach(tag);

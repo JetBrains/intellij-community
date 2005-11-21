@@ -18,19 +18,38 @@ import java.util.List;
  */
 public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl implements DomCollectionChildDescription {
   private final Method myGetterMethod, myAdderMethod, myIndexedAdderMethod;
+  private final Method myClassAdderMethod, myIndexedClassAdderMethod, myInvertedIndexedClassAdderMethod;
   private final int myStartIndex;
 
   public CollectionChildDescriptionImpl(final String tagName,
                                         final Type type,
-                                        final Method getterMethod,
                                         final Method adderMethod,
+                                        final Method classAdderMethod,
+                                        final Method getterMethod,
                                         final Method indexedAdderMethod,
+                                        final Method indexedClassAdderMethod,
+                                        final Method invertedIndexedClassAdderMethod,
                                         final int startIndex) {
     super(tagName, type);
     myAdderMethod = adderMethod;
+    myClassAdderMethod = classAdderMethod;
     myGetterMethod = getterMethod;
     myIndexedAdderMethod = indexedAdderMethod;
+    myIndexedClassAdderMethod = indexedClassAdderMethod;
+    myInvertedIndexedClassAdderMethod = invertedIndexedClassAdderMethod;
     myStartIndex = startIndex;
+  }
+
+  public Method getClassAdderMethod() {
+    return myClassAdderMethod;
+  }
+
+  public Method getIndexedClassAdderMethod() {
+    return myIndexedClassAdderMethod;
+  }
+
+  public Method getInvertedIndexedClassAdderMethod() {
+    return myInvertedIndexedClassAdderMethod;
   }
 
   public Method getAdderMethod() {
@@ -82,9 +101,21 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
 
     final CollectionChildDescriptionImpl that = (CollectionChildDescriptionImpl)o;
 
+    if (myStartIndex != that.myStartIndex) return false;
     if (myAdderMethod != null ? !myAdderMethod.equals(that.myAdderMethod) : that.myAdderMethod != null) return false;
+    if (myClassAdderMethod != null ? !myClassAdderMethod.equals(that.myClassAdderMethod) : that.myClassAdderMethod != null) return false;
     if (myGetterMethod != null ? !myGetterMethod.equals(that.myGetterMethod) : that.myGetterMethod != null) return false;
     if (myIndexedAdderMethod != null ? !myIndexedAdderMethod.equals(that.myIndexedAdderMethod) : that.myIndexedAdderMethod != null) {
+      return false;
+    }
+    if (myIndexedClassAdderMethod != null
+        ? !myIndexedClassAdderMethod.equals(that.myIndexedClassAdderMethod)
+        : that.myIndexedClassAdderMethod != null) {
+      return false;
+    }
+    if (myInvertedIndexedClassAdderMethod != null
+        ? !myInvertedIndexedClassAdderMethod.equals(that.myInvertedIndexedClassAdderMethod)
+        : that.myInvertedIndexedClassAdderMethod != null) {
       return false;
     }
 
@@ -96,6 +127,10 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
     result = 29 * result + (myGetterMethod != null ? myGetterMethod.hashCode() : 0);
     result = 29 * result + (myAdderMethod != null ? myAdderMethod.hashCode() : 0);
     result = 29 * result + (myIndexedAdderMethod != null ? myIndexedAdderMethod.hashCode() : 0);
+    result = 29 * result + (myClassAdderMethod != null ? myClassAdderMethod.hashCode() : 0);
+    result = 29 * result + (myIndexedClassAdderMethod != null ? myIndexedClassAdderMethod.hashCode() : 0);
+    result = 29 * result + (myInvertedIndexedClassAdderMethod != null ? myInvertedIndexedClassAdderMethod.hashCode() : 0);
+    result = 29 * result + myStartIndex;
     return result;
   }
 

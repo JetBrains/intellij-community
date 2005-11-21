@@ -5,11 +5,11 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.*;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,8 +20,7 @@ import java.util.*;
 /**
  * @author peter
  */
-public class MethodsMap implements DomGenericInfo {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.MethodsMap");
+public class GenericInfoImpl implements DomGenericInfo {
   private final Class<? extends DomElement> myClass;
   private final Map<Method, Pair<String, Integer>> myFixedChildrenMethods = new HashMap<Method, Pair<String, Integer>>();
   private final Map<String, Integer> myFixedChildrenCounts = new HashMap<String, Integer>();
@@ -31,9 +30,10 @@ public class MethodsMap implements DomGenericInfo {
   private final Map<Method, String> myAttributeChildrenMethods = new HashMap<Method, String>();
   private boolean myValueElement;
   private boolean myInitialized;
+  private static final HashSet ADDER_PARAMETER_TYPES = new HashSet(Arrays.asList(Class.class, int.class));
 
 
-  public MethodsMap(final Class<? extends DomElement> aClass) {
+  public GenericInfoImpl(final Class<? extends DomElement> aClass) {
     myClass = aClass;
   }
 
@@ -134,9 +134,7 @@ public class MethodsMap implements DomGenericInfo {
     final Type childrenClass = getCollectionChildrenType(tagName);
     if (childrenClass == null || !DomUtil.getRawType(childrenClass).isAssignableFrom(method.getReturnType())) return false;
 
-    final Class<?>[] parameterTypes = method.getParameterTypes();
-    if (parameterTypes.length > 1) return false;
-    return parameterTypes.length == 0 || parameterTypes[0] == int.class;
+    return ADDER_PARAMETER_TYPES.containsAll(Arrays.asList(method.getParameterTypes()));
   }
 
   private String extractTagName(Method method, String prefix) {
@@ -216,24 +214,64 @@ public class MethodsMap implements DomGenericInfo {
 
     qname = myCollectionChildrenAdditionMethods.get(method);
     if (qname != null) {
-      final Distinguish annotation = method.getAnnotation(Distinguish.class);
-      Distinguisher distinguisher = null;
-      if (annotation != null) {
-        try {
-          distinguisher = annotation.value().newInstance();
-        }
-        catch (Exception e) {
-          LOG.error(e);
-        }
-      }
-      return new AddChildInvocation(method.getGenericReturnType(), qname, getFixedChildrenCount(qname), distinguisher);
+      return new AddChildInvocation(getTypeGetter(method),
+                                    getIndexGetter(method, getFixedChildrenCount(qname)),
+                                    qname,
+                                    myCollectionChildrenClasses.get(qname));
     }
 
     throw new UnsupportedOperationException("No implementation for method " + method.toString());
   }
 
-  private Method getCollectionGetMethod(String tagName) {
-    return findGetterMethod(myCollectionChildrenGetterMethods, tagName);
+  private Function<Object[],Class> getTypeGetter(final Method method) {
+    final Class<?>[] parameterTypes = method.getParameterTypes();
+    if (parameterTypes.length >= 1 && parameterTypes[0].equals(Class.class)) {
+      return new Function<Object[], Class>() {
+        public Class fun(final Object[] s) {
+          return (Class)s[0];
+        }
+      };
+    }
+
+    if (parameterTypes.length == 2 && parameterTypes[1].equals(Class.class)) {
+      return new Function<Object[], Class>() {
+        public Class fun(final Object[] s) {
+          return (Class)s[1];
+        }
+      };
+    }
+
+    return new Function<Object[], Class>() {
+      public Class fun(final Object[] s) {
+        return method.getReturnType();
+      }
+    };
+  }
+
+
+  private Function<Object[],Integer> getIndexGetter(final Method method, final int startIndex) {
+    final Class<?>[] parameterTypes = method.getParameterTypes();
+    if (parameterTypes.length >= 1 && parameterTypes[0].equals(int.class)) {
+      return new Function<Object[], Integer>() {
+        public Integer fun(final Object[] s) {
+          return (Integer)s[0] + startIndex;
+        }
+      };
+    }
+
+    if (parameterTypes.length == 2 && parameterTypes[1].equals(int.class)) {
+      return new Function<Object[], Integer>() {
+        public Integer fun(final Object[] s) {
+          return (Integer)s[1] + startIndex;
+        }
+      };
+    }
+
+    return new Function<Object[], Integer>() {
+      public Integer fun(final Object[] s) {
+        return Integer.MAX_VALUE;
+      }
+    };
   }
 
   private Method findGetterMethod(final Map<Method, String> map, final String xmlElementName) {
@@ -246,11 +284,11 @@ public class MethodsMap implements DomGenericInfo {
     return null;
   }
 
-  private Method getCollectionAddMethod(final String tagName, final int parameterCount) {
+  private Method getCollectionAddMethod(final String tagName, Class... parameterTypes) {
     for (Map.Entry<Method, String> entry : myCollectionChildrenAdditionMethods.entrySet()) {
       if (tagName.equals(entry.getValue())) {
         final Method method = entry.getKey();
-        if (method.getParameterTypes().length == parameterCount) {
+        if (Arrays.equals(parameterTypes, method.getParameterTypes())) {
           return method;
         }
       }
@@ -313,9 +351,12 @@ public class MethodsMap implements DomGenericInfo {
     buildMethodMaps();
     return new CollectionChildDescriptionImpl(tagName,
                                               getCollectionChildrenType(tagName),
-                                              getCollectionGetMethod(tagName),
-                                              getCollectionAddMethod(tagName, 0),
-                                              getCollectionAddMethod(tagName, 1),
+                                              getCollectionAddMethod(tagName),
+                                              getCollectionAddMethod(tagName, Class.class),
+                                              findGetterMethod(myCollectionChildrenGetterMethods, tagName),
+                                              getCollectionAddMethod(tagName, int.class),
+                                              getCollectionAddMethod(tagName, Class.class, int.class),
+                                              getCollectionAddMethod(tagName, int.class, Class.class),
                                               getFixedChildrenCount(tagName));
   }
 

@@ -3,10 +3,11 @@
  */
 package com.intellij.util.xml.impl;
 
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.j2ee.j2eeDom.xmlData.ReadOnlyDeploymentDescriptorModificationException;
-import com.intellij.util.xml.Distinguisher;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Function;
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomUtil;
 
 import java.lang.reflect.Type;
 
@@ -14,16 +15,19 @@ import java.lang.reflect.Type;
  * @author peter
  */
 public class AddChildInvocation implements Invocation{
-  private Type myType;
-  private String myTagName;
-  private int myStartIndex;
-  private final Distinguisher myDistinguisher;
+  private final String myTagName;
+  private final Type myType;
+  private final Function<Object[],Integer> myIndexGetter;
+  private final Function<Object[],Class> myClassGetter;
 
-  public AddChildInvocation(final Type type, final String tagName, final int startIndex, final Distinguisher distinguisher) {
-    myType = type;
+  public AddChildInvocation(final Function<Object[], Class> classGetter,
+                            final Function<Object[], Integer> indexGetter,
+                            final String tagName,
+                            final Type type) {
+    myClassGetter = classGetter;
+    myIndexGetter = indexGetter;
     myTagName = tagName;
-    myStartIndex = startIndex;
-    myDistinguisher = distinguisher;
+    myType = type;
   }
 
   public Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
@@ -31,17 +35,9 @@ public class AddChildInvocation implements Invocation{
     if (virtualFile != null && !virtualFile.isWritable()) {
       throw new ReadOnlyDeploymentDescriptorModificationException(virtualFile);
     }
-    int index = args.length == 0 ? Integer.MAX_VALUE : myStartIndex + (Integer)args[0];
-    final DomElement domElement = handler.addChild(myTagName, myType, index);
-    if (myDistinguisher != null) {
-      final boolean b = handler.getManager().setChanging(true);
-      try {
-        myDistinguisher.distinguish(domElement.getXmlTag());
-      }
-      finally {
-        handler.getManager().setChanging(b);
-      }
-    }
+    final Class type = myClassGetter.fun(args);
+    final DomElement domElement = handler.addChild(myTagName, type, myIndexGetter.fun(args));
+    handler.getManager().getClassChooser(myType).distinguishTag(domElement.getXmlTag(), DomUtil.getRawType(type));
     return domElement;
   }
 }
