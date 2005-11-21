@@ -15,6 +15,9 @@ import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.lang.Language;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 public class MockPsiManager extends PsiManager {
   public Project getProject() {
@@ -31,6 +34,14 @@ public class MockPsiManager extends PsiManager {
 
   public PsiFile findFile(VirtualFile file) {
     return null;
+  }
+
+  public @Nullable PsiFile findFile(@NotNull VirtualFile file, @NotNull Language aspect) {
+    return null;
+  }
+
+  public @NotNull Language[] getKnownAspects(@NotNull VirtualFile file) {
+    return new Language[0];
   }
 
   public PsiDirectory findDirectory(VirtualFile file) {

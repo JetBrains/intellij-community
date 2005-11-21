@@ -3,6 +3,7 @@ package com.intellij.psi.impl.file.impl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.lang.Language;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -32,4 +33,6 @@ public interface FileManager {
   Collection<String> getNonTrivialPackagePrefixes();
 
   void cleanupForNextTest();
+
+  PsiFile findFile(VirtualFile file, Language aspect);
 }

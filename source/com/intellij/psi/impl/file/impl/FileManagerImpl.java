@@ -19,6 +19,7 @@ import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.local.VirtualFileImpl;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerConfiguration;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -54,16 +55,16 @@ public class FileManagerImpl implements FileManager {
   private final FileTypeManager myFileTypeManager;
 
   private final ProjectRootManager myProjectRootManager;
-  private ProjectFileIndex myProjectFileIndex;
-  private RootManager myRootManager;
+  private ProjectFileIndex myProjectFileIndex = null;
+  private RootManager myRootManager = null;
 
   private HashMap<VirtualFile, PsiDirectory> myVFileToPsiDirMap = new HashMap<VirtualFile, PsiDirectory>();
-  private WeakValueHashMap<VirtualFile,PsiFile> myVFileToPsiFileMap = new WeakValueHashMap<VirtualFile, PsiFile>(); // VirtualFile --> PsiFile
+  private WeakValueHashMap<FileCacheEntry,PsiFile> myVFileToPsiFileMap = new WeakValueHashMap<FileCacheEntry, PsiFile>(); // VirtualFile --> PsiFile
 
-  private VirtualFileListener myVirtualFileListener;
-  private FileDocumentManagerListener myFileDocumentManagerListener;
-  private ModuleRootListener myModuleRootListener;
-  private FileTypeListener myFileTypeListener;
+  private VirtualFileListener myVirtualFileListener = null;
+  private FileDocumentManagerListener myFileDocumentManagerListener = null;
+  private ModuleRootListener myModuleRootListener = null;
+  private FileTypeListener myFileTypeListener = null;
   private boolean myInitialized = false;
   private boolean myDisposed = false;
   private boolean myUseRepository = true;
@@ -71,7 +72,7 @@ public class FileManagerImpl implements FileManager {
   private HashMap<GlobalSearchScope, PsiClass> myCachedObjectClassMap = null;
 
   private Map<String,PsiClass> myNameToClassMap = new HashMap<String, PsiClass>(); // used only in mode without repository
-  private HashSet<String> myNontrivialPackagePrefixes;
+  private HashSet<String> myNontrivialPackagePrefixes = null;
   private final VirtualFileManager myVirtualFileManager;
   private final FileDocumentManager myFileDocumentManager;
   private static final @NonNls String JAVA_EXTENSION = ".java";
@@ -105,13 +106,41 @@ public class FileManagerImpl implements FileManager {
 
   private static int maxIntellisenseFileSize() {
     final String maxSizeS = System.getProperty(MAX_INTELLISENSE_SIZE_PROPERTY);
-    final int maxSize = maxSizeS != null ? Integer.parseInt(maxSizeS) * 1024 : -1;
-    return maxSize;
+    return maxSizeS != null ? Integer.parseInt(maxSizeS) * 1024 : -1;
   }
 
   public void cleanupForNextTest() {
     myVFileToPsiFileMap.clear();
     myVFileToPsiDirMap.clear();
+  }
+
+  public PsiFile findFile(VirtualFile file, Language aspect) {
+    final ProjectEx project = (ProjectEx)myManager.getProject();
+    if (project.isDummy() || project.isDefault()) return null;
+
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+    if (file == null) {
+      LOG.assertTrue(false);
+      return null;
+    }
+    if (!file.isValid()) {
+      LOG.assertTrue(false, "Invalid file: " + file);
+    }
+
+    dispatchPendingEvents();
+
+    synchronized (PsiLock.LOCK) {
+
+      final FileCacheEntry key = new FileCacheEntry(file, aspect);
+      PsiFile psiFile = myVFileToPsiFileMap.get(key);
+      if (psiFile != null) return psiFile;
+
+      psiFile = createPsiFile(file, aspect);
+      if (psiFile == null) return null;
+
+      myVFileToPsiFileMap.put(key, psiFile);
+      return psiFile;
+    }
   }
 
   public void runStartupActivity() {
@@ -144,7 +173,7 @@ public class FileManagerImpl implements FileManager {
           clearNonRepositoryMaps();
         }
 
-        final PsiFile psiFile = myVFileToPsiFileMap.get(file);
+        final PsiFile psiFile = getCachedPsiFileInner(file);
         if (psiFile != null) {
           ApplicationManager.getApplication().runWriteAction(
             new PsiExternalChangeAction() {
@@ -202,10 +231,11 @@ public class FileManagerImpl implements FileManager {
 
   // for tests
   public void checkConsistency() {
-    Map<VirtualFile, PsiFile> fileToPsiFileMap = myVFileToPsiFileMap;
-    myVFileToPsiFileMap = new WeakValueHashMap<VirtualFile, PsiFile>();
-    for (VirtualFile vFile : fileToPsiFileMap.keySet()) {
-      PsiFile psiFile = fileToPsiFileMap.get(vFile);
+    Map<FileCacheEntry, PsiFile> fileToPsiFileMap = myVFileToPsiFileMap;
+    myVFileToPsiFileMap = new WeakValueHashMap<FileCacheEntry, PsiFile>();
+    for (FileCacheEntry fileCacheEntry : fileToPsiFileMap.keySet()) {
+      final VirtualFile vFile = fileCacheEntry.getFirst();
+      final PsiFile psiFile = fileToPsiFileMap.get(fileCacheEntry);
 
       LOG.assertTrue(vFile.isValid());
       PsiFile psiFile1 = findFile(vFile);
@@ -248,13 +278,13 @@ public class FileManagerImpl implements FileManager {
     dispatchPendingEvents();
 
     synchronized (PsiLock.LOCK) {
-      PsiFile psiFile = myVFileToPsiFileMap.get(vFile);
+      PsiFile psiFile = getCachedPsiFileInner(vFile);
       if (psiFile != null) return psiFile;
 
       psiFile = createPsiFile(vFile, vFile.getName());
       if (psiFile == null) return null;
 
-      myVFileToPsiFileMap.put(vFile, psiFile);
+      cachePsiFile(vFile, psiFile);
       return psiFile;
     }
   }
@@ -268,7 +298,7 @@ public class FileManagerImpl implements FileManager {
     dispatchPendingEvents();
 
     synchronized (PsiLock.LOCK) {
-      return myVFileToPsiFileMap.get(vFile);
+      return getCachedPsiFileInner(vFile);
     }
   }
 
@@ -371,6 +401,24 @@ public class FileManagerImpl implements FileManager {
       }
     }
     return myNontrivialPackagePrefixes;
+  }
+
+  private PsiFile createPsiFile(VirtualFile vFile, Language lang) {
+    if (vFile.isDirectory()) return null;
+    VirtualFile parent = vFile.getParent();
+    if (parent == null) return null;
+    PsiDirectory psiDir = findDirectory(parent); // need to cache parent directory - used for firing events
+    if (psiDir == null) return null;
+
+    final Project project = myManager.getProject();
+
+    if (lang == StdLanguages.JAVA || !isTooLarge(vFile)) {
+      final ParserDefinition parserDefinition = lang.getParserDefinition();
+      if (parserDefinition != null) {
+        return parserDefinition.createFile(project, vFile);
+      }
+    }
+    return null;
   }
 
   private PsiFile createPsiFile(VirtualFile vFile, String name) {
@@ -652,6 +700,18 @@ public class FileManagerImpl implements FileManager {
     return bestClass;
   }
 
+  public PsiFile getCachedPsiFileInner(VirtualFile file) {
+    return myVFileToPsiFileMap.get(new FileCacheEntry(file, Language.ANY));
+  }
+
+  private void cachePsiFile(VirtualFile vFile, PsiFile psiFile) {
+    final FileCacheEntry key = new FileCacheEntry(vFile, Language.ANY);
+    if(psiFile != null)
+      myVFileToPsiFileMap.put(key, psiFile);
+    else
+      myVFileToPsiFileMap.remove(key);
+  }
+
   private void removeInvalidFilesAndDirs(boolean useFind) {
     com.intellij.util.containers.HashMap<VirtualFile, PsiDirectory> fileToPsiDirMap = myVFileToPsiDirMap;
     if (useFind) {
@@ -673,12 +733,13 @@ public class FileManagerImpl implements FileManager {
     myVFileToPsiDirMap = fileToPsiDirMap;
 
     // note: important to update directories map first - findFile uses findDirectory!
-    WeakValueHashMap<VirtualFile,PsiFile> fileToPsiFileMap = myVFileToPsiFileMap;
+    WeakValueHashMap<FileCacheEntry ,PsiFile> fileToPsiFileMap = myVFileToPsiFileMap;
     if (useFind) {
-      myVFileToPsiFileMap = new WeakValueHashMap<VirtualFile, PsiFile>();
+      myVFileToPsiFileMap = new WeakValueHashMap<FileCacheEntry, PsiFile>();
     }
-    for (Iterator<VirtualFile> iterator = fileToPsiFileMap.keySet().iterator(); iterator.hasNext();) {
-      VirtualFile vFile = iterator.next();
+    for (Iterator<FileCacheEntry> iterator = fileToPsiFileMap.keySet().iterator(); iterator.hasNext();) {
+      final FileCacheEntry fileCacheEntry = iterator.next();
+      VirtualFile vFile = fileCacheEntry.getFirst();
 
       if (!vFile.isValid()) {
         iterator.remove();
@@ -686,7 +747,7 @@ public class FileManagerImpl implements FileManager {
       }
 
       if (useFind) {
-        PsiFile psiFile = fileToPsiFileMap.get(vFile);
+        PsiFile psiFile = fileToPsiFileMap.get(fileCacheEntry);
         if (psiFile == null) { // soft ref. collected
           iterator.remove();
           continue;
@@ -697,10 +758,8 @@ public class FileManagerImpl implements FileManager {
           continue;
         }
 
-        if (!psiFile1.getClass().equals(psiFile.getClass())) {
+        if (!psiFile1.getClass().equals(psiFile.getClass()))
           iterator.remove();
-          continue;
-        }
       }
     }
     myVFileToPsiFileMap = fileToPsiFileMap;
@@ -844,9 +903,9 @@ public class FileManagerImpl implements FileManager {
       final PsiDirectory parentDir = myVFileToPsiDirMap.get(event.getParent());
 
       if (!event.isDirectory()) {
-        final PsiFile psiFile = myVFileToPsiFileMap.get(vFile);
+        final PsiFile psiFile = getCachedPsiFileInner(vFile);
         if (psiFile != null) {
-          myVFileToPsiFileMap.remove(vFile);
+          cachePsiFile(vFile, null);
 
           if (parentDir != null) {
             ApplicationManager.getApplication().runWriteAction(
@@ -953,7 +1012,7 @@ public class FileManagerImpl implements FileManager {
               }
             }
             else if (VirtualFile.PROP_WRITABLE.equals(propertyName)) {
-              PsiFile psiFile = myVFileToPsiFileMap.get(vFile);
+              PsiFile psiFile = getCachedPsiFileInner(vFile);
               if (psiFile == null) return;
 
               treeEvent.setElement(psiFile);
@@ -1030,12 +1089,12 @@ public class FileManagerImpl implements FileManager {
                 }
               }
               else {
-                PsiFile psiFile = myVFileToPsiFileMap.get(vFile);
+                PsiFile psiFile = getCachedPsiFileInner(vFile);
 
                 if (psiFile != null) {
                   PsiFile psiFile1 = createPsiFile(vFile, vFile.getName());
                   if (psiFile1 == null) {
-                    myVFileToPsiFileMap.remove(vFile);
+                    cachePsiFile(vFile, null);
 
                     treeEvent.setChild(psiFile);
                     myManager.childRemoved(treeEvent);
@@ -1043,7 +1102,7 @@ public class FileManagerImpl implements FileManager {
                   else if (!psiFile1.getClass().equals(psiFile.getClass()) ||
                            psiFile1.getFileType() != myFileTypeManager.getFileTypeByFileName((String)event.getOldValue())
                           ) {
-                    myVFileToPsiFileMap.remove(vFile);
+                    cachePsiFile(vFile, null);
 
                     treeEvent.setOldChild(psiFile);
                     treeEvent.setNewChild(psiFile1);
@@ -1067,7 +1126,7 @@ public class FileManagerImpl implements FileManager {
               }
             }
             else if (VirtualFile.PROP_WRITABLE.equals(propertyName)) {
-              PsiFile psiFile = myVFileToPsiFileMap.get(vFile);
+              PsiFile psiFile = getCachedPsiFileInner(vFile);
               if (psiFile == null) return;
 
               treeEvent.setElement(psiFile);
@@ -1143,7 +1202,7 @@ public class FileManagerImpl implements FileManager {
       final PsiDirectory newParentDir = findDirectory(event.getNewParent());
       if (oldParentDir == null && newParentDir == null) return;
 
-      final PsiElement oldElement = vFile.isDirectory() ? (PsiElement)myVFileToPsiDirMap.get(vFile) : myVFileToPsiFileMap.get(vFile);
+      final PsiElement oldElement = vFile.isDirectory() ? (PsiElement)myVFileToPsiDirMap.get(vFile) : getCachedPsiFileInner(vFile);
       removeInvalidFilesAndDirs(true);
       final PsiElement newElement = vFile.isDirectory() ? (PsiElement)findDirectory(vFile) : findFile(vFile);
       if (oldElement == null && newElement == null) return;
@@ -1207,7 +1266,7 @@ public class FileManagerImpl implements FileManager {
         }
       }
       else {
-        myVFileToPsiFileMap.remove(vFile);
+        cachePsiFile(vFile, null);
       }
     }
   }
@@ -1269,11 +1328,11 @@ public class FileManagerImpl implements FileManager {
   @SuppressWarnings({"HardCodedStringLiteral"})
   public void dumpFilesWithContentLoaded(Writer out) throws IOException {
     out.write("Files with content loaded cached in FileManagerImpl:\n");
-    Set<VirtualFile> vFiles = myVFileToPsiFileMap.keySet();
-    for (VirtualFile vFile : vFiles) {
-      PsiFile psiFile = myVFileToPsiFileMap.get(vFile);
+    Set<FileCacheEntry> vFiles = myVFileToPsiFileMap.keySet();
+    for (FileCacheEntry fileCacheEntry : vFiles) {
+      final PsiFile psiFile = myVFileToPsiFileMap.get(fileCacheEntry);
       if (psiFile instanceof PsiFileImpl && ((PsiFileImpl)psiFile).isContentsLoaded()) {
-        out.write(vFile.getPresentableUrl());
+        out.write(fileCacheEntry.getFirst().getPresentableUrl());
         out.write("\n");
       }
     }
@@ -1300,6 +1359,37 @@ public class FileManagerImpl implements FileManager {
 
     public boolean isSearchInLibraries() {
       return true;
+    }
+  }
+
+  public static class FileCacheEntry {
+    public final VirtualFile first;
+    public final Language second;
+
+    public FileCacheEntry(VirtualFile first, Language second) {
+      this.first = first;
+      this.second = second;
+    }
+
+    public VirtualFile getFirst() {
+      return first;
+    }
+
+    public Language getSecond() {
+      return second;
+    }
+
+    public boolean equals(Object o){
+      return o instanceof FileCacheEntry && Comparing.equal(first, ((FileCacheEntry)o).first)
+             && (Comparing.equal(second, ((FileCacheEntry)o).second) || second == Language.ANY || ((FileCacheEntry)o).second == Language.ANY);
+    }
+
+    public int hashCode(){
+      return first.hashCode();
+    }
+
+    public String toString() {
+      return "<" + first + "," + second + ">";
     }
   }
 }

@@ -53,6 +53,7 @@ import com.intellij.psi.xml.XmlElementDecl;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
+import com.intellij.lang.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -480,6 +481,18 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
 
   public PsiFile findFile(VirtualFile file) {
     return myFileManager.findFile(file);
+  }
+
+  public
+  @Nullable
+  PsiFile findFile(@NotNull VirtualFile file, @NotNull Language aspect) {
+    return myFileManager.findFile(file, aspect);
+  }
+
+  public
+  @NotNull
+  Language[] getKnownAspects(@NotNull VirtualFile file) {
+    return new Language[0];
   }
 
   public void cleanupForNextTest() {
