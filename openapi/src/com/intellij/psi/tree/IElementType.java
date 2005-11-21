@@ -19,6 +19,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -79,7 +80,7 @@ public class IElementType {
    * @param language  the language with which the element type is associated.
    */
 
-  public IElementType(@NotNull @NonNls String debugName, @NotNull Language language) {
+  public IElementType(@NotNull @NonNls String debugName, @Nullable Language language) {
     this(debugName, language, true);
   }
 
