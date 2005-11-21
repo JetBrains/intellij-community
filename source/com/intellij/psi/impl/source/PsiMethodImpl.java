@@ -111,14 +111,17 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
     return PsiSuperMethodImplUtil.findSuperMethods(this);
   }
 
+  @NotNull
   public PsiMethod[] findSuperMethods(boolean checkAccess) {
     return PsiSuperMethodImplUtil.findSuperMethods(this, checkAccess);
   }
 
+  @NotNull
   public PsiMethod[] findSuperMethods(PsiClass parentClass) {
     return PsiSuperMethodImplUtil.findSuperMethods(this, parentClass);
   }
 
+  @NotNull
   public List<MethodSignatureBackedByPsiMethod> findSuperMethodSignaturesIncludingStatic(boolean checkAccess) {
     return PsiSuperMethodImplUtil.findSuperMethodSignaturesIncludingStatic(this, checkAccess);
   }
@@ -211,6 +214,7 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
     }
   }
 
+  @NotNull
   public PsiModifierList getModifierList() {
     if (getRepositoryId() >= 0){
       if (myRepositoryModifierList == null){
@@ -227,6 +231,7 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
     return getModifierList().hasModifierProperty(name);
   }
 
+  @NotNull
   public PsiParameterList getParameterList() {
     if (getRepositoryId() >= 0){
       if (myRepositoryParameterList == null){
@@ -239,6 +244,7 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
     }
   }
 
+  @NotNull
   public PsiReferenceList getThrowsList() {
     if (getRepositoryId() >= 0){
       if (myRepositoryThrowsList == null){
@@ -331,6 +337,7 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
 
   }
 
+  @NotNull
   public MethodSignature getSignature(PsiSubstitutor substitutor){
     return MethodSignatureBackedByPsiMethod.create(this, substitutor);
   }

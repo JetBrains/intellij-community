@@ -74,6 +74,7 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
     }
   }
 
+  @NotNull
   public PsiElement[] getChildren() {
     PsiDocComment docComment = getDocComment();
     PsiModifierList modifierList = getModifierList();
@@ -135,18 +136,22 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
                return myNameIdentifier;
   }
 
+  @NotNull
   public PsiMethod[] findSuperMethods() {
     return PsiSuperMethodImplUtil.findSuperMethods(this);
   }
 
+  @NotNull
   public PsiMethod[] findSuperMethods(boolean checkAccess) {
     return PsiSuperMethodImplUtil.findSuperMethods(this, checkAccess);
   }
 
+  @NotNull
   public PsiMethod[] findSuperMethods(PsiClass parentClass) {
     return PsiSuperMethodImplUtil.findSuperMethods(this, parentClass);
   }
 
+  @NotNull
   public List<MethodSignatureBackedByPsiMethod> findSuperMethodSignaturesIncludingStatic(boolean checkAccess) {
     return PsiSuperMethodImplUtil.findSuperMethodSignaturesIncludingStatic(this, checkAccess);
   }
@@ -255,6 +260,7 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
     return typeElement == null ? null : typeElement.getType();
   }
 
+  @NotNull
   public PsiModifierList getModifierList() {
     synchronized (PsiLock.LOCK) {
       if (myModifierList == null) {
@@ -464,6 +470,7 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
     }
   }
 
+  @NotNull
   public PsiReferenceList getThrowsList() {
     synchronized (PsiLock.LOCK) {
       if (myThrowsList == null) {
@@ -661,6 +668,7 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
       return myIsVarArgs.booleanValue();
     }
 
+  @NotNull
   public MethodSignature getSignature(PsiSubstitutor substitutor) {
     return MethodSignatureBackedByPsiMethod.create(this, substitutor);
   }

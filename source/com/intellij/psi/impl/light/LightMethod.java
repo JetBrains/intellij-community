@@ -63,6 +63,7 @@ public class LightMethod extends LightElement implements PsiMethod {
     return myMethod.hasModifierProperty(name);
   }
 
+  @NotNull
   public PsiModifierList getModifierList() {
     return myMethod.getModifierList();
   }
@@ -75,10 +76,12 @@ public class LightMethod extends LightElement implements PsiMethod {
     return myMethod.getReturnTypeElement();
   }
 
+  @NotNull
   public PsiParameterList getParameterList() {
     return myMethod.getParameterList();
   }
 
+  @NotNull
   public PsiReferenceList getThrowsList() {
     return myMethod.getThrowsList();
   }
@@ -95,6 +98,7 @@ public class LightMethod extends LightElement implements PsiMethod {
     return myMethod.isVarArgs();
   }
 
+  @NotNull
   public MethodSignature getSignature(PsiSubstitutor substitutor) {
     return myMethod.getSignature(substitutor);
   }
@@ -103,18 +107,22 @@ public class LightMethod extends LightElement implements PsiMethod {
     return myMethod.getNameIdentifier();
   }
 
+  @NotNull
   public PsiMethod[] findSuperMethods() {
     return myMethod.findSuperMethods();
   }
 
+  @NotNull
   public PsiMethod[] findSuperMethods(boolean checkAccess) {
     return myMethod.findSuperMethods(checkAccess);
   }
 
+  @NotNull
   public PsiMethod[] findSuperMethods(PsiClass parentClass) {
     return myMethod.findSuperMethods(parentClass);
   }
 
+  @NotNull
   public List<MethodSignatureBackedByPsiMethod> findSuperMethodSignaturesIncludingStatic(boolean checkAccess) {
     return myMethod.findSuperMethodSignaturesIncludingStatic(checkAccess);
   }
