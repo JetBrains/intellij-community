@@ -23,6 +23,8 @@ import javax.swing.*;
 import java.beans.PropertyChangeListener;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Anton Katilin
@@ -60,13 +62,14 @@ public interface FileEditor extends UserDataHolder {
   /**
    * @return editor's internal state. Method should never return <code>null</code>.
    */
+  @NotNull
   FileEditorState getState(FileEditorStateLevel level);
 
   /**
    * Applies given state to the editor.
    * @param state cannot be null
    */
-  void setState(FileEditorState state);
+  void setState(@NotNull FileEditorState state);
 
   /**
    * @return whether the editor's content is modified in comparision with its file. 
@@ -109,6 +112,7 @@ public interface FileEditor extends UserDataHolder {
    * @return highlighter object to perform background analysis and highlighting activities.
    * Return <code>null</code> if no background highlighting activity necessary for this file editor.
    */
+  @Nullable
   BackgroundEditorHighlighter getBackgroundHighlighter();
 
   /**
@@ -117,5 +121,6 @@ public interface FileEditor extends UserDataHolder {
    */
   FileEditorLocation getCurrentLocation();
 
+  @Nullable
   StructureViewBuilder getStructureViewBuilder();
 }
