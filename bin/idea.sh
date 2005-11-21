@@ -39,11 +39,6 @@ REQUIRED_JVM_ARGS="-Xbootclasspath/p:../lib/boot.jar: $IDEA_PROPERTIES_PROPERTY"
 JVM_ARGS=`cat $IDEA_HOME/bin/idea.vmoptions | tr '\n' ' '`
 JVM_ARGS="$JVM_ARGS $REQUIRED_JVM_ARGS"
 
-while [ $# -gt 0 ]; do
-  args="$args $1"
-  shift
-done
-
 CLASSPATH=../lib/idea.jar
 CLASSPATH=$CLASSPATH:../lib/openapi.jar
 CLASSPATH=$CLASSPATH:../lib/jdom.jar
@@ -58,4 +53,4 @@ LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH
 
 cd $IDEA_BIN_HOME
-exec $IDEA_JDK/bin/java $JVM_ARGS $IDEA_MAIN_CLASS_NAME $args
+exec $IDEA_JDK/bin/java $JVM_ARGS $IDEA_MAIN_CLASS_NAME $*
