@@ -251,8 +251,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
     DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
     if (!(node.getUserObject() instanceof FileNodeDescriptor)) return null;
     FileNodeDescriptor descriptor = (FileNodeDescriptor)node.getUserObject();
-    final VirtualFile file = descriptor.getElement().getFile();
-    return file;
+    return descriptor.getElement().getFile();
   }
 
   public VirtualFile[] getSelectedFiles() {
@@ -293,8 +292,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
     if (roots.size() == 0) {
       return true;
     }
-    for (int i = 0; i < roots.size(); i++) {
-      VirtualFile root = roots.get(i);
+    for (VirtualFile root : roots) {
       if (VfsUtil.isAncestor(root, file, false)) {
         return true;
       }

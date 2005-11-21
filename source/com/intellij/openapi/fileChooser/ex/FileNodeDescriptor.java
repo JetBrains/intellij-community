@@ -10,6 +10,8 @@ import com.intellij.ui.SimpleTextAttributes;
 
 import javax.swing.*;
 
+import org.jetbrains.annotations.NotNull;
+
 public class FileNodeDescriptor extends NodeDescriptor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.chooser.FileNodeDescriptor");
 
@@ -46,6 +48,7 @@ public class FileNodeDescriptor extends NodeDescriptor {
     return changed;
   }
 
+  @NotNull
   public final FileElement getElement() {
     return myDescriptor;
   }
