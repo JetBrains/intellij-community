@@ -5,6 +5,7 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.*;
@@ -20,6 +21,7 @@ import java.util.*;
  * @author peter
  */
 public class MethodsMap implements DomGenericInfo {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.MethodsMap");
   private final Class<? extends DomElement> myClass;
   private final Map<Method, Pair<String, Integer>> myFixedChildrenMethods = new HashMap<Method, Pair<String, Integer>>();
   private final Map<String, Integer> myFixedChildrenCounts = new HashMap<String, Integer>();
@@ -214,7 +216,17 @@ public class MethodsMap implements DomGenericInfo {
 
     qname = myCollectionChildrenAdditionMethods.get(method);
     if (qname != null) {
-      return new AddChildInvocation(method.getGenericReturnType(), qname, getFixedChildrenCount(qname));
+      final Distinguish annotation = method.getAnnotation(Distinguish.class);
+      Distinguisher distinguisher = null;
+      if (annotation != null) {
+        try {
+          distinguisher = annotation.value().newInstance();
+        }
+        catch (Exception e) {
+          LOG.error(e);
+        }
+      }
+      return new AddChildInvocation(method.getGenericReturnType(), qname, getFixedChildrenCount(qname), distinguisher);
     }
 
     throw new UnsupportedOperationException("No implementation for method " + method.toString());
