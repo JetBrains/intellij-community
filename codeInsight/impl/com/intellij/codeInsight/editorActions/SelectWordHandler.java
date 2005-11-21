@@ -80,9 +80,17 @@ public class SelectWordHandler extends EditorActionHandler {
     }
 
     while (element instanceof PsiWhiteSpace) {
-      if (element.getNextSibling() == null) {
-        element = element.getParent();
-        continue;
+      nextParent: while (element.getNextSibling() == null) {
+        final PsiElement parent = element.getParent();
+        final PsiElement[] children = parent.getChildren();
+
+        if (children[children.length - 1] == element) {
+          element = parent;
+        }
+        else {
+          element = parent;
+          break nextParent;
+        }
       }
 
       element = element.getNextSibling();
