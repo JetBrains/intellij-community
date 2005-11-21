@@ -8,6 +8,7 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class ClsParameterImpl extends ClsElementImpl implements PsiParameter, ClsModifierListOwner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsParameterImpl");
@@ -178,6 +179,7 @@ public class ClsParameterImpl extends ClsElementImpl implements PsiParameter, Cl
     return "PsiParameter";
   }
 
+  @NotNull
   public PsiElement getDeclarationScope() {
     // only method parameters exist in compiled code
     return getParent().getParent();

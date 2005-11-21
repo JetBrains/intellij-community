@@ -129,6 +129,7 @@ public class PsiParameterImpl extends IndexedRepositoryPsiElement implements Psi
     return "PsiParameter:" + getName();
   }
 
+  @NotNull
   public PsiElement getDeclarationScope() {
     final PsiElement parent = getParent();
     if (parent instanceof PsiParameterList){

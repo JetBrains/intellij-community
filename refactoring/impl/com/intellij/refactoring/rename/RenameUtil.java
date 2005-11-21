@@ -13,6 +13,7 @@ import com.intellij.psi.meta.PsiWritableMetaData;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -64,7 +65,7 @@ public class RenameUtil {
       }
     }
     else {
-      PsiReference[] refs = helper.findReferences(element, projectScope, false);
+      Collection<PsiReference> refs = ReferencesSearch.search(element).findAll();
       final ClassCollisionsDetector classCollisionsDetector;
       if (element instanceof PsiClass) {
         classCollisionsDetector = new ClassCollisionsDetector((PsiClass)element);
@@ -74,16 +75,18 @@ public class RenameUtil {
       }
       for (PsiReference ref : refs) {
         PsiElement referenceElement = ref.getElement();
-        result.add(
-          new MoveRenameUsageInfo(referenceElement, ref, ref.getRangeInElement().getStartOffset(),
-                                  ref.getRangeInElement().getEndOffset(), element,
-                                  referenceElement instanceof XmlElement));
-        if (classCollisionsDetector == null) {
-          addLocalsCollisions(element, referenceElement, newName, result, allRenames);
-        }
-        else {
+        result.add(new MoveRenameUsageInfo(referenceElement, ref, ref.getRangeInElement().getStartOffset(),
+                                           ref.getRangeInElement().getEndOffset(), element,
+                                           referenceElement instanceof XmlElement));
+
+
+        if (element instanceof PsiClass) {
           classCollisionsDetector.addClassCollisions(referenceElement, newName, result);
         }
+      }
+
+      if (element instanceof PsiVariable) {
+        addLocalsCollisions(element, newName, result, allRenames);
       }
     }
 
@@ -143,7 +146,7 @@ public class RenameUtil {
     if (virtualFiles.length > 0) {
       message.append(RefactoringBundle.message("package.occurs.in.package.prefixes.of.the.following.source.folders.n", qualifiedName));
       for (final VirtualFile virtualFile : virtualFiles) {
-        message.append(virtualFile.getPresentableUrl() + "\n");
+        message.append(virtualFile.getPresentableUrl()).append("\n");
       }
       message.append(RefactoringBundle.message("these.package.prefixes.will.be.changed"));
     }
@@ -160,17 +163,14 @@ public class RenameUtil {
     }
 
     public void addClassCollisions(PsiElement referenceElement, String newName, List<UsageInfo> results) {
-      final PsiClass renamedClass = myRenamedClass;
       final PsiResolveHelper resolveHelper = referenceElement.getManager().getResolveHelper();
-      final PsiSearchHelper searchHelper = referenceElement.getManager().getSearchHelper();
       final PsiClass aClass = resolveHelper.resolveReferencedClass(newName, referenceElement);
       if (aClass == null) return;
       final PsiFile containingFile = referenceElement.getContainingFile();
       final String text = referenceElement.getText();
       if (Comparing.equal(myRenamedClassQualifiedName, removeSpaces(text))) return;
       if (myProcessedFiles.contains(containingFile)) return;
-      final PsiReference[] references = searchHelper.findReferences(aClass, new LocalSearchScope(containingFile),
-                                                                    false);
+      final Collection<PsiReference> references = ReferencesSearch.search(aClass, new LocalSearchScope(containingFile)).findAll();
       for (PsiReference reference : references) {
         final PsiElement collisionReferenceElement = reference.getElement();
         if (collisionReferenceElement instanceof PsiJavaCodeReferenceElement) {
@@ -178,15 +178,15 @@ public class RenameUtil {
           if (!(parent instanceof PsiImportStatement)) {
             if (aClass.getQualifiedName() != null) {
               results.add(new ClassHidesImportedClassUsageInfo((PsiJavaCodeReferenceElement)collisionReferenceElement,
-                                                               renamedClass, aClass));
+                                                               myRenamedClass, aClass));
             }
             else {
               results.add(new ClassHidesUnqualifiableClassUsageInfo((PsiJavaCodeReferenceElement)collisionReferenceElement,
-                                                                    renamedClass, aClass));
+                                                                    myRenamedClass, aClass));
             }
           }
           else {
-            results.add(new CollidingClassImportUsageInfo((PsiImportStatement)parent, renamedClass));
+            results.add(new CollidingClassImportUsageInfo((PsiImportStatement)parent, myRenamedClass));
           }
         }
       }
@@ -377,11 +377,13 @@ public class RenameUtil {
   }
 
 
-  private static void addLocalsCollisions(PsiElement element, PsiElement ref,
-                                          String newName, List<UsageInfo> results, final Map<? extends PsiElement, String> allRenames) {
+  private static void addLocalsCollisions(final PsiElement element,
+                                          final String newName,
+                                          final List<UsageInfo> results,
+                                          final Map<? extends PsiElement, String> allRenames) {
     if (!(element instanceof PsiLocalVariable) && !(element instanceof PsiParameter)) return;
 
-    PsiClass containingClass = PsiTreeUtil.getParentOfType(ref, PsiClass.class);
+    PsiClass containingClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
     if (containingClass == null) return;
 
 
@@ -394,18 +396,33 @@ public class RenameUtil {
     }
 
     LOG.assertTrue(scopeElement != null);
+    final LocalSearchScope scope = new LocalSearchScope((scopeElement));
 
-    PsiField field = findFieldByName(containingClass, newName, allRenames);
+    scopeElement.accept(new PsiRecursiveElementVisitor() {
+      public void visitClass(PsiClass aClass) {
+        addLocalCollsionsInClass(aClass, newName, allRenames, scope, results, element);
+      }
+    });
+
+
+    addLocalCollsionsInClass(containingClass, newName, allRenames, scope, results, element);
+  }
+
+  private static void addLocalCollsionsInClass(final PsiClass aClass,
+                                               final String newName,
+                                               final Map<? extends PsiElement, String> allRenames,
+                                               final LocalSearchScope scope,
+                                               final List<UsageInfo> results, final PsiElement element) {
+    PsiField field = findFieldByName(aClass, newName, allRenames);
     if (field == null) return;
 
-    PsiSearchHelper helper = ref.getManager().getSearchHelper();
-    PsiReference[] collidingRefs = helper.findReferences(field, new LocalSearchScope(scopeElement), false);
-    for (PsiReference collidingRef1 : collidingRefs) {
-      PsiElement collidingRef = collidingRef1.getElement();
+    Collection<PsiReference> collidingRefs = ReferencesSearch.search(field, scope).findAll();
+    for (PsiReference collidingRef : collidingRefs) {
+      PsiElement collidingRefElement = collidingRef.getElement();
 
-      if (collidingRef instanceof PsiReferenceExpression
-          && ((PsiReferenceExpression)collidingRef).getQualifierExpression() == null) {
-        results.add(new LocalHidesFieldUsageInfo(collidingRef, element));
+      if (collidingRefElement instanceof PsiReferenceExpression
+          && ((PsiReferenceExpression)collidingRefElement).getQualifierExpression() == null) {
+        results.add(new LocalHidesFieldUsageInfo(collidingRefElement, element));
       }
     }
   }

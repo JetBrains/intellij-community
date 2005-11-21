@@ -576,7 +576,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
         final JavaResolveResult adv = oldRef.advancedResolve(false);
         final PsiElement scope = getClassContainingResolve (adv);
         final PsiClass clss = PsiTreeUtil.getParentOfType (oldExpr, PsiClass.class);
-        if (PsiTreeUtil.isAncestor (clss, scope, false)) {
+        if (clss != null && scope != null && PsiTreeUtil.isAncestor (clss, scope, false)) {
 
           final PsiElement subj = adv.getElement ();
 

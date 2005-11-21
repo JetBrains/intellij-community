@@ -32,6 +32,7 @@ public interface PsiParameter extends PsiVariable {
    *
    * @return the declaration scope for the parameter.
    */
+  @NotNull
   PsiElement getDeclarationScope();
 
   /**
