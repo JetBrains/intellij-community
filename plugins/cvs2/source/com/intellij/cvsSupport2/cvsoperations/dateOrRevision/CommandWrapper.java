@@ -3,6 +3,7 @@ package com.intellij.cvsSupport2.cvsoperations.dateOrRevision;
 import org.netbeans.lib.cvsclient.command.Command;
 import org.netbeans.lib.cvsclient.command.update.UpdateCommand;
 import org.netbeans.lib.cvsclient.command.checkout.CheckoutCommand;
+import org.netbeans.lib.cvsclient.command.checkout.ExportCommand;
 
 /**
  * author: lesya
@@ -19,6 +20,8 @@ public class CommandWrapper {
       asCheckoutCommand().setUpdateByRevisionOrTag(revision);
     } else if (isUpdateCommand()){
       asUpdateCommand().setUpdateByRevisionOrTag(revision);
+    } else if (isExportCommand()) {
+      asExportCommand().setUpdateByRevisionOrTag(revision);
     }
   }
 
@@ -38,6 +41,10 @@ public class CommandWrapper {
     return ((CheckoutCommand)myCommand);
   }
 
+  private ExportCommand asExportCommand() {
+    return ((ExportCommand)myCommand);
+  }
+
   private boolean isUpdateCommand() {
     return myCommand instanceof UpdateCommand;
   }
@@ -45,4 +52,9 @@ public class CommandWrapper {
   private boolean isCheckoutCommand() {
     return myCommand instanceof CheckoutCommand;
   }
+
+  private boolean isExportCommand() {
+    return myCommand instanceof ExportCommand;
+  }
+
 }

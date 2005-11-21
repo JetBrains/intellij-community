@@ -28,6 +28,7 @@ public final class CommandRequest extends ResponseExpectingRequest {
         public static final CommandRequest ADMIN = new CommandRequest("admin");
         public static final CommandRequest ANNOTATE = new CommandRequest("annotate");
         public static final CommandRequest CHECKOUT = new CommandRequest("co");
+        public static final CommandRequest EXPORT = new CommandRequest("export");
         public static final CommandRequest COMMIT = new CommandRequest("ci");
         public static final CommandRequest EDITORS = new CommandRequest("editors");
         public static final CommandRequest IMPORT = new CommandRequest("import");

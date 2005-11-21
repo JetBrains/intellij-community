@@ -1,5 +1,7 @@
 package com.intellij.cvsSupport2.cvsoperations.cvsContent;
 
+import com.intellij.CvsBundle;
+import com.intellij.util.text.LineReader;
 import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.connections.CvsRootProvider;
@@ -8,93 +10,27 @@ import com.intellij.cvsSupport2.cvsoperations.common.LocalPathIndifferentOperati
 import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.RevisionOrDate;
 import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.RevisionOrDateImpl;
 import com.intellij.cvsSupport2.errorHandling.CannotFindCvsRootException;
+import com.intellij.cvsSupport2.errorHandling.CvsException;
 import com.intellij.cvsSupport2.history.CvsRevisionNumber;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.CvsBundle;
-import com.intellij.util.ArrayUtil;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.command.Command;
-import org.netbeans.lib.cvsclient.command.checkout.CheckoutCommand;
+import org.netbeans.lib.cvsclient.command.checkout.ExportCommand;
 import org.netbeans.lib.cvsclient.file.FileObject;
-import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 
-@SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
 public class GetFileContentOperation extends LocalPathIndifferentOperation {
-  public String getRevisionString() {
-    if (myCvsRevisionNumber != null) {
-      return myCvsRevisionNumber.asString();
-    } else if (myRevisionOrDate != null){
-      return myRevisionOrDate.toString();
-    } else {
-      return CvsBundle.message("cvs.unknown.revision.presentation");
-    }
-  }
-
-  @NonNls private static final String VERS_PREFIX = "VERS:";
-
-  public static class FileContentReader {
-    private ByteArrayOutputStream myContent = null;
-    private byte[] myBinaryContent = null;
-    @NonNls private static final String TEXT_MESSAGE_TAG = "text";
-    private boolean myLastTagIsText = false;
-
-    public boolean isEmpty() {
-      return myContent == null && myBinaryContent == null;
-    }
-
-    public byte[] getReadContent() {
-      if (myBinaryContent != null) {
-        return myBinaryContent;
-      } else {
-        if (!myLastTagIsText && myContent.size() > 0) {
-          myContent.write('\n');
-        }
-        return myContent.toByteArray();
-      }
-    }
-
-    public void messageSent(final byte[] byteMessage, final boolean tagged) {
-      if (myContent == null) myContent = new ByteArrayOutputStream();
-      myLastTagIsText = false;
-      if (tagged) {
-        String tagType = readTagTypeFrom(byteMessage);
-        if (tagType != null) {
-          if (TEXT_MESSAGE_TAG.equals(tagType)) {
-            final int textStartPosition = tagType.length();
-            if (myContent.size() > 0) {
-              myContent.write('\n');
-            }
-            myContent.write(byteMessage, textStartPosition + 1, byteMessage.length - textStartPosition - 1);
-            myLastTagIsText = true;
-          }
-        }
-      } else {
-        if (myContent.size() > 0) {
-          myContent.write('\n');
-        }
-        myContent.write(byteMessage, 0, byteMessage.length);
-      }
-    }
-
-    private String readTagTypeFrom(final byte[] byteMessage) {
-      final StringBuffer result = new StringBuffer();
-      for (byte b : byteMessage) {
-        if (b == ' ') return result.toString();
-        result.append((char)b);
-      }
-      return null;
-    }
-
-    public void binaryMessageSent(final byte[] bytes) {
-      myBinaryContent = bytes;
-    }
-  }
 
   private final static byte NOT_LOADED = 0;
   private final static byte FILE_NOT_FOUND = 1;
@@ -104,12 +40,12 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
 
   private byte myState = NOT_LOADED;
 
-  private final FileContentReader myReader = new FileContentReader();
-
   private byte[] myFileBytes = null;
   private String myRevision;
   private String myModuleName;
+  private File myTempDirectory;
   private CvsRootProvider myRoot;
+  private final boolean myFileIsBinary;
   private CvsRevisionNumber myCvsRevisionNumber;
   private RevisionOrDate myRevisionOrDate;
 
@@ -117,9 +53,7 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
     throws CannotFindCvsRootException {
     File ioFile = CvsVfsUtil.getFileFor(file);
     return new GetFileContentOperation(new File(getPathInRepository(file)),
-                                       CvsRootProvider.createOn(ioFile),
-                                       revisionOrDate
-    );
+                                       CvsRootProvider.createOn(ioFile), revisionOrDate);
   }
 
   public static GetFileContentOperation createForFile(VirtualFile file) throws CannotFindCvsRootException {
@@ -133,6 +67,7 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
     myRevisionOrDate = revisionOrDate;
     myRoot = CvsRootProvider.createOn(null, environment);
     myModuleName = cvsFile.getPath().replace(File.separatorChar, '/');
+    myFileIsBinary = FileTypeManager.getInstance().getFileTypeByFileName(cvsFile.getName()).isBinary();
     myCvsRevisionNumber = myRevisionOrDate.getCvsRevisionNumber();
   }
 
@@ -140,26 +75,45 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
     return CvsUtil.getModuleName(file);
   }
 
-  @SuppressWarnings({"RefusedBequest"})
-  protected Collection getAllCvsRoots() {
+  protected synchronized Collection getAllCvsRoots() {
     return Collections.singleton(myRoot);
   }
 
-  protected Command createCommand(CvsRootProvider root, CvsExecutionEnvironment cvsExecutionEnvironment) {
+  public synchronized String getRevisionString() {
+    if (myCvsRevisionNumber != null) {
+      return myCvsRevisionNumber.asString();
+    } else if (myRevisionOrDate != null){
+      return myRevisionOrDate.toString();
+    } else {
+      return CvsBundle.message("cvs.unknown.revision.presentation");
+    }
+  }
+
+  protected synchronized Command createCommand(CvsRootProvider root, CvsExecutionEnvironment cvsExecutionEnvironment) {
     myState = LOADING;
-    myRoot.changeAdminRootTo(new File("."));
-    myRoot.changeLocalRootTo(new File("."));
-    CheckoutCommand command = new CheckoutCommand();
+    try {
+      myTempDirectory = FileUtil.createTempDirectory("checkout", "cvs");
+      myTempDirectory.deleteOnExit();
+      LOG.assertTrue(myTempDirectory.isDirectory());
+    }
+    catch (IOException e) {
+      cvsExecutionEnvironment.getErrorProcessor().addError(new CvsException("Could not create temp directory:"
+                                                                            + e.getLocalizedMessage(), root.getCvsRootAsString())
+                                                           );
+      return null;
+    }
+    myRoot.changeLocalRootTo(myTempDirectory);
+    myRoot.changeAdminRootTo(myTempDirectory);
+    ExportCommand command = new ExportCommand();
     command.setRecursive(false);
     command.addModule(myModuleName);
-    command.setPrintToOutput(true);
 
     myRevisionOrDate.setForCommand(command);
 
     return command;
   }
 
-  public String getRevision() {
+  public synchronized String getRevision() {
     if (!isLoaded()) {
       return myRevisionOrDate.getRevision();
     }
@@ -176,7 +130,7 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
     return myFileBytes;
   }
 
-  public boolean isDeleted() {
+  public synchronized boolean isDeleted() {
     if (myState == LOADING) {
       getFileBytes();
     }
@@ -184,24 +138,72 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
   }
 
   private synchronized byte[] loadFileBytes() {
-    if (myState != LOADING) {
-      LOG.error("state = " + String.valueOf(myState));
+    try {
+      LOG.assertTrue(myState == LOADING, "state = " + String.valueOf(myState));
+      LOG.assertTrue(myTempDirectory != null);
+      LOG.assertTrue(myTempDirectory.isDirectory());
+      File file = getFile();
+      if (!file.isFile()) {
+        myState = FILE_NOT_FOUND;
+        return new byte[0];
+      }
+      else {
+        myState = SUCCESSFULLY_LOADED;
+      }
+      if (myFileIsBinary) {
+        return loadBinaryContent(file);
+      }
+      else {
+        return loadTextContent(file);
+      }
     }
-    if (myReader.isEmpty()) {
-      myState = DELETED;
-      return null;
+    catch (IOException e) {
+      LOG.error(e);
+      return new byte[0];
     }
-    else {
-      myState = SUCCESSFULLY_LOADED;
-      return myReader.getReadContent();
+    finally {
+      delete(myTempDirectory);
     }
   }
 
-  public void gotEntry(FileObject abstractFileObject, Entry entry) {
-    super.gotEntry(abstractFileObject, entry);
+  private File getFile() {
+    return new File(myTempDirectory, myModuleName);
+  }
+
+  private void delete(File fileToDelete) {
+    if (fileToDelete == null) return;
+    if (!fileToDelete.exists()) return;
+    File[] files = fileToDelete.listFiles();
+    if (files != null) {
+      for (File file : files) {
+        delete(file);
+      }
+    }
+    if (!FileUtil.delete(fileToDelete)) fileToDelete.deleteOnExit();
+  }
+
+  private byte[] loadTextContent(File file) throws IOException {
+    //noinspection IOResourceOpenedButNotSafelyClosed
+    List<byte[]> lines = new LineReader().readLines(new FileInputStream(file));
+    ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+    for (Iterator<byte[]> each = lines.iterator(); each.hasNext();) {
+      byte[] bytes = each.next();
+      buffer.write(bytes);
+      if (each.hasNext()) buffer.write('\n');
+    }
+    buffer.flush();
+    return buffer.toByteArray();
+  }
+
+  private byte[] loadBinaryContent(File file) throws IOException {
+    return FileUtil.loadFileBytes(file);
+  }
+
+  public synchronized void gotEntry(FileObject abstractFileObject, Entry entry) {
     if (entry == null) {
       myState = DELETED;
-      myFileBytes = ArrayUtil.EMPTY_BYTE_ARRAY;
+      myFileBytes = new byte[0];
+      delete(myTempDirectory);
     }
     else {
       myRevision = entry.getRevision();
@@ -209,37 +211,21 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
     }
   }
 
-  public boolean fileNotFound() {
+  public synchronized boolean fileNotFound() {
     getFileBytes();
     return myState == FILE_NOT_FOUND;
   }
 
-  public boolean isLoaded() {
+  public synchronized boolean isLoaded() {
     return myState != NOT_LOADED;
   }
 
-  public CvsRevisionNumber getRevisionNumber() {
+  public synchronized CvsRevisionNumber getRevisionNumber() {
     LOG.assertTrue(myCvsRevisionNumber != null);
     return myCvsRevisionNumber;
   }
 
   protected String getOperationName() {
     return "checkout";
-  }
-
-  public void messageSent(String message, final byte[] byteMessage, boolean error, boolean tagged) {
-    super.messageSent(message, byteMessage, error, tagged);
-    if (!error) {
-      myReader.messageSent(byteMessage, tagged);
-    } else if (message.startsWith(VERS_PREFIX)) {
-      final String version = message.substring(5).trim();
-      myRevision = version;
-      myCvsRevisionNumber = new CvsRevisionNumber(version);
-    }
-  }
-
-  public void binaryMessageSent(final byte[] bytes) {
-    super.binaryMessageSent(bytes);
-    myReader.binaryMessageSent(bytes);
   }
 }

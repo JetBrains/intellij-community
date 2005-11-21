@@ -49,7 +49,7 @@ public class ComparableVcsRevisionOnOperation implements VcsFileRevision {
         throw result.composeError();
       }
       if (isDeleted()){
-throw new VcsException(CvsBundle.message("message.text.revision.was.deleted.from.repository", myOperation.getRevisionString()));
+        throw new VcsException(CvsBundle.message("message.text.revision.was.deleted.from.repository", myOperation.getRevisionString()));
       }
     }
   }
