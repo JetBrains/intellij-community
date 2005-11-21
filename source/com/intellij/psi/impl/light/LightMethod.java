@@ -49,6 +49,7 @@ public class LightMethod extends LightElement implements PsiMethod {
     return myMethod.setName(name);
   }
 
+  @NotNull
   public String getName() {
     return myMethod.getName();
   }

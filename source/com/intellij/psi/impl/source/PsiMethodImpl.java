@@ -1,6 +1,5 @@
 package com.intellij.psi.impl.source;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.java.PomMethod;
@@ -15,7 +14,6 @@ import com.intellij.psi.impl.source.tree.java.PsiTypeParameterListImpl;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.util.IncorrectOperationException;
@@ -134,6 +132,7 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
     return null;
   }
 
+  @NotNull
   public String getName() {
     if (myCachedName == null){
       if (getTreeElement() != null){

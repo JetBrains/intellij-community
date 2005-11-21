@@ -160,6 +160,7 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
     return null;
   }
 
+  @NotNull
   public String getName() {
     if (myName == null) {
     synchronized (PsiLock.LOCK) {
