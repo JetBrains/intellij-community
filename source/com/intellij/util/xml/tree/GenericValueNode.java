@@ -1,15 +1,15 @@
 package com.intellij.util.xml.tree;
 
 import jetbrains.fabrique.ui.treeStructure.SimpleNode;
-import com.intellij.util.xml.GenericValue;
+import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.DomElement;
 import com.intellij.ui.SimpleTextAttributes;
 
 public class GenericValueNode extends AbstractDomElementNode {
-  protected GenericValue myModelElement;
+  protected GenericDomValue myModelElement;
   protected String myTagName;
 
-  public GenericValueNode(final GenericValue modelElement, SimpleNode parent) {
+  public GenericValueNode(final GenericDomValue modelElement, SimpleNode parent) {
     super(parent);
 
     myModelElement = modelElement;

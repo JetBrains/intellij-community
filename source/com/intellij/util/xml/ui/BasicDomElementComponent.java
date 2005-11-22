@@ -4,7 +4,7 @@ import com.intellij.j2ee.j2eeDom.xmlData.ReadOnlyDeploymentDescriptorModificatio
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
-import com.intellij.util.xml.GenericValue;
+import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.ui.DomUIFactory;
 import com.intellij.util.xml.ui.DomUIControl;
 import com.intellij.util.xml.ui.AbstractDomElementComponent;
@@ -34,7 +34,7 @@ public abstract class BasicDomElementComponent extends AbstractDomElementCompone
       final JComponent boundComponent = getBoundComponent(description);
       if (boundComponent != null) {
         if (description instanceof DomFixedChildDescription && DomUtil.isGenericValueType(description.getType())) {
-          final java.util.List<GenericValue> values = (java.util.List<GenericValue>)description.getValues(getDomElement());
+          final java.util.List<GenericDomValue> values = (java.util.List<GenericDomValue>)description.getValues(getDomElement());
           if (values.size() == 1) {
             final DomUIControl control = DomUIFactory.createControl(values.get(0));
 

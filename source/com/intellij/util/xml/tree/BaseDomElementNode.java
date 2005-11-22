@@ -3,7 +3,7 @@ package com.intellij.util.xml.tree;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.GenericValue;
+import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
@@ -48,7 +48,7 @@ public class BaseDomElementNode extends AbstractDomElementNode {
       if (DomUtil.isGenericValueType(description.getType())) {
         if (showGenericValues()) {
           for (DomElement domElement : values) {
-            children.add(new GenericValueNode((GenericValue)domElement, this));
+            children.add(new GenericValueNode((GenericDomValue)domElement, this));
           }
         }
       }

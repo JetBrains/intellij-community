@@ -7,7 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiClass;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
-import com.intellij.util.xml.GenericValue;
+import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.impl.ui.*;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.ui.ColumnInfo;
@@ -31,10 +31,10 @@ public class DomUIFactory {
   static {
     LOG = Logger.getInstance("#com.intellij.util.xml.ui.DomUIFactory");
     try {
-      GET_VALUE_METHOD = GenericValue.class.getMethod("getValue");
-      GET_STRING_METHOD = GenericValue.class.getMethod("getStringValue");
-      SET_VALUE_METHOD = findMethod(GenericValue.class, "setValue");
-      SET_STRING_METHOD = findMethod(GenericValue.class, "setStringValue");
+      GET_VALUE_METHOD = GenericDomValue.class.getMethod("getValue");
+      GET_STRING_METHOD = GenericDomValue.class.getMethod("getStringValue");
+      SET_VALUE_METHOD = findMethod(GenericDomValue.class, "setValue");
+      SET_STRING_METHOD = findMethod(GenericDomValue.class, "setStringValue");
     }
     catch (NoSuchMethodException e) {
       LOG.error(e);
@@ -42,11 +42,11 @@ public class DomUIFactory {
   }
 
 
-  public static DomUIControl createControl(GenericValue element) {
+  public static DomUIControl createControl(GenericDomValue element) {
     return createGenericValueControl(DomUtil.extractParameterClassFromGenericType(element.getDomElementType()), element);
   }
 
-  private static BaseControl createGenericValueControl(final Type type, final GenericValue element) {
+  private static BaseControl createGenericValueControl(final Type type, final GenericDomValue element) {
     if (type.equals(boolean.class) || type.equals(Boolean.class)) {
       return new BooleanControl(element, GET_VALUE_METHOD, SET_VALUE_METHOD);
     }
@@ -97,7 +97,7 @@ public class DomUIFactory {
   public static DomUIControl createCollectionControl(DomElement element, DomCollectionChildDescription description) {
     final ColumnInfo columnInfo = createColumnInfo(description, element);
     final Class aClass = DomUtil.extractParameterClassFromGenericType(description.getType());
-    return new DomCollectionControl<GenericValue<?>>(element, description, aClass == null, columnInfo);
+    return new DomCollectionControl<GenericDomValue<?>>(element, description, aClass == null, columnInfo);
   }
 
   private static ColumnInfo createColumnInfo(final DomCollectionChildDescription description,

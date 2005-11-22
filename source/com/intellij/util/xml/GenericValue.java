@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author peter
  */
-public interface GenericValue<T> extends DomElement{
+public interface GenericValue<T> {
 
   @TagValue
   @Nullable
