@@ -1,6 +1,7 @@
 package com.intellij.testFramework;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
+import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.idea.IdeaLogger;
@@ -34,6 +35,7 @@ import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.psi.PsiDocumentManager;
 import junit.framework.TestCase;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -44,9 +46,9 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
-
-import org.jetbrains.annotations.NonNls;
+import java.util.Map;
 
 /**
  * @author mike
@@ -72,6 +74,7 @@ import org.jetbrains.annotations.NonNls;
   public static final long DEFAULT_TEST_TIME = 300L;
   public static long ourTestTime = DEFAULT_TEST_TIME;
   private static final MyThreadGroup MY_THREAD_GROUP = new MyThreadGroup();
+  private Map<String, LocalInspectionTool> myAvailableTools = new HashMap<String, LocalInspectionTool>();
   protected long getTimeRequired() {
     return DEFAULT_TEST_TIME;
   }
@@ -112,7 +115,30 @@ import org.jetbrains.annotations.NonNls;
 
     setUpProject();
 
-    DaemonCodeAnalyzerSettings.getInstance().setInspectionProfile(InspectionProfileImpl.EMPTY_PROFILE);
+    final LocalInspectionTool[] tools = configureLocalInspectionTools();
+    for (LocalInspectionTool tool : tools) {
+      myAvailableTools.put(tool.getShortName(), tool);
+    }
+
+    DaemonCodeAnalyzerSettings.getInstance().setInspectionProfile(new InspectionProfileImpl("Configurable"){
+      public LocalInspectionTool[] getHighlightingLocalInspectionTools() {
+        final Collection<LocalInspectionTool> tools = myAvailableTools.values();
+        return tools.toArray(new LocalInspectionTool[tools.size()]);
+      }
+    });
+
+  }
+
+  protected void enableInspectionTool(LocalInspectionTool tool){
+    myAvailableTools.put(tool.getShortName(), tool);
+  }
+
+  protected void disableInspectionTool(String shortName){
+    myAvailableTools.remove(shortName);
+  }
+
+  protected LocalInspectionTool[] configureLocalInspectionTools() {
+    return new LocalInspectionTool[0];
   }
 
   protected void setUpProject() throws IOException {

@@ -1,14 +1,12 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.*;
 import static com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor.DO_NOT_VALIDATE_KEY;
 import com.intellij.codeInsight.daemon.impl.analysis.annotator.EjbHighlightVisitor;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.SetupJDKFix;
-import com.intellij.j2ee.ejb.EjbUtil;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.Annotator;
@@ -23,9 +21,7 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.jsp.jspJava.JspExpression;
 import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
-import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.jsp.el.ELExpressionHolder;
 import com.intellij.psi.util.MethodSignature;
@@ -56,7 +52,6 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   private RefCountHolder myRefCountHolder;
 
   private final XmlHighlightVisitor myXmlVisitor;
-  private final JavadocHighlightVisitor myJavadocVisitor;
   private EjbHighlightVisitor myEjbHighlightVisitor;
   private Boolean runEjbHighlighting;
   // map codeBlock->List of PsiReferenceExpression of uninitailized final variables
@@ -87,7 +82,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     mySettings = settings;
 
     myXmlVisitor = new XmlHighlightVisitor(settings);
-    myJavadocVisitor = new JavadocHighlightVisitor(settings);
+
 
     myResolveHelper = manager.getResolveHelper();
   }
@@ -102,7 +97,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
       LOG.assertTrue(element.isValid());
     }
     element.accept(this);
-    if (!myHolder.hasErrorResults()) {
+   /* if (!myHolder.hasErrorResults()) {
       if (runEjbHighlighting == null) {
         runEjbHighlighting = Boolean.valueOf(EjbUtil.getEjbModuleProperties(element) != null);
       }
@@ -114,7 +109,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
         convertAnnotationsToHighlightInfos();
         myEjbHighlightVisitor.clearResults();
       }
-    }
+    }*/
   }
 
   public void init() {
@@ -164,7 +159,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   public void visitAssignmentExpression(PsiAssignmentExpression assignment) {
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkAssignmentCompatibleTypes(assignment));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkAssignmentOperatorApplicable(assignment));
-    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkSillyAssignment(assignment));
+    //if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkSillyAssignment(assignment));
     if (!myHolder.hasErrorResults()) visitExpression(assignment);
   }
 
@@ -184,7 +179,6 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     super.visitClass(aClass);
     if (aClass instanceof JspClass) return;
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkInterfaceMultipleInheritance(aClass));
-    if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkMissingPackageStatement(aClass));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkDuplicateTopLevelClass(aClass));
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkEnumMustNotBeLocal(aClass));
   }
@@ -229,33 +223,6 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
 
   public void visitDocComment(PsiDocComment comment) {
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkUnclosedComment(comment));
-    if (!mySettings.getInspectionProfile(comment).isToolEnabled(HighlightDisplayKey.JAVADOC_ERROR)) return;
-    if (!myHolder.hasErrorResults()) {
-      comment.accept(myJavadocVisitor);
-      myHolder.add(myJavadocVisitor.getResult());
-      myJavadocVisitor.clearResult();
-    }
-  }
-
-  public void visitDocTag(PsiDocTag tag) {
-    if (!mySettings.getInspectionProfile(tag).isToolEnabled(HighlightDisplayKey.JAVADOC_ERROR)) return;
-    tag.accept(myJavadocVisitor);
-    myHolder.add(myJavadocVisitor.getResult());
-    myJavadocVisitor.clearResult();
-  }
-
-  public void visitDocToken(PsiDocToken token) {
-    if (!mySettings.getInspectionProfile(token).isToolEnabled(HighlightDisplayKey.JAVADOC_ERROR)) return;
-    token.accept(myJavadocVisitor);
-    myHolder.add(myJavadocVisitor.getResult());
-    myJavadocVisitor.clearResult();
-  }
-
-  public void visitDocTagValue(PsiDocTagValue value) {
-    if (!mySettings.getInspectionProfile(value).isToolEnabled(HighlightDisplayKey.JAVADOC_ERROR)) return;
-    value.accept(myJavadocVisitor);
-    myHolder.add(myJavadocVisitor.getResult());
-    myJavadocVisitor.clearResult();
   }
 
   public void visitErrorElement(PsiErrorElement element) {
@@ -264,8 +231,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     HighlightInfoType errorType;
 
     if (PsiTreeUtil.getParentOfType(element, PsiDocComment.class) != null) {
-      errorType = HighlightInfoType.JAVADOC_ERROR;
-      if (!mySettings.getInspectionProfile(element).isToolEnabled(HighlightDisplayKey.JAVADOC_ERROR)) return;
+      return;
     }
     else {
       errorType = HighlightInfoType.ERROR;
@@ -558,7 +524,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
         if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkMethodIncompatibleReturnType(methodSignature, superMethodSignatures, true));
         if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkMethodIncompatibleThrows(methodSignature, superMethodSignatures, true));
         if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkMethodOverridesFinal(methodSignature, superMethodSignatures));
-        if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkMethodOverridesDeprecated(methodSignature, superMethodSignatures, mySettings));
+//        if (!myHolder.hasErrorResults()) myHolder.add(DeprecationInspection.checkMethodOverridesDeprecated(methodSignature, superMethodSignatures, mySettings));
         if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkUncheckedOverriding(method, superMethodSignatures));
       }
       PsiClass aClass = method.getContainingClass();
@@ -612,7 +578,6 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
 
   public void visitPackageStatement(PsiPackageStatement statement) {
     super.visitPackageStatement(statement);
-    if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkPackageNameConformsToDirectoryName(statement));
     myHolder.add(AnnotationsHighlightUtil.checkPackageAnnotationContainingFile(statement));
   }
 
@@ -710,10 +675,10 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkAbstractInstantiation(ref));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkExtendsDuplicate(ref, resolved));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkExceptionAlreadyCaught(ref, resolved));
-    if (!myHolder.hasErrorResults()) {
-      myHolder.add(HighlightUtil.checkDeprecated(resolved, ref.getReferenceNameElement(), DaemonCodeAnalyzerSettings.getInstance()));
-    }
-    if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkExceptionsNeverThrown(ref));
+    /*if (!myHolder.hasErrorResults()) {
+      myHolder.add(DeprecationInspection.checkDeprecated(resolved, ref.getReferenceNameElement(), DaemonCodeAnalyzerSettings.getInstance()));
+    }*/
+    //if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkExceptionsNeverThrown(ref));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkClassExtendsForeignInnerClass(ref, resolved));
     if (!myHolder.hasErrorResults()) {
       myHolder.add(GenericsHighlightUtil.checkParameterizedReferenceTypeArguments(resolved, ref, result.getSubstitutor()));
@@ -808,7 +773,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
       myHolder.add(HighlightUtil.checkIllegalForwardReferenceToField(expression, (PsiField)resolved));
     }
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkConstructorCallMustBeFirstStatement(expression));
-    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkAccessStaticMemberViaInstanceReference(expression, result));
+    //if (!myHolder.hasErrorResults()) myHolder.add(AccessStaticViaInstance.checkAccessStaticMemberViaInstanceReference(expression, result));
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkAccessStaticFieldFromEnumConstructor(expression, result));
   }
 

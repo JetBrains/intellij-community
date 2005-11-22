@@ -5,7 +5,6 @@ import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.reference.RefUtil;
 import com.intellij.codeInspection.ui.InspectionPackageNode;
 import com.intellij.codeInspection.ui.InspectionTreeNode;
-import com.intellij.codeInspection.ui.RefElementNode;
 import com.intellij.codeInspection.util.RefFilter;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;

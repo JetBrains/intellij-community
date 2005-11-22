@@ -5,12 +5,9 @@
  */
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.ClassUtil;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
-import com.intellij.codeInsight.daemon.impl.EditInspectionToolsSettingsAction;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.RefCountHolder;
@@ -446,72 +443,7 @@ public class HighlightClassUtil {
     return checkCannotInheritFromFinal(baseClass, aClass.getBaseClassReference());
   }
 
-  //@top
-  public static HighlightInfo checkPackageNameConformsToDirectoryName(PsiPackageStatement statement) {
-    if (!DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(statement).isToolEnabled(HighlightDisplayKey.WRONG_PACKAGE_STATEMENT)) {
-      return null;
-    }
 
-    // does not work in tests since CodeInsightTestCase copies file into temporary location
-    if (ApplicationManager.getApplication().isUnitTestMode()) return null;
-    PsiJavaFile file = (PsiJavaFile)statement.getContainingFile();
-    PsiDirectory directory = file.getContainingDirectory();
-    if (directory == null) return null;
-    PsiPackage dirPackage = directory.getPackage();
-    if (dirPackage == null) return null;
-    PsiPackage classPackage = (PsiPackage)statement.getPackageReference().resolve();
-    if (!Comparing.equal(dirPackage.getQualifiedName(), statement.getPackageReference().getText(), true)) {
-      String description = JavaErrorMessages.message("package.name.file.path.mismatch",
-                                                     statement.getPackageReference().getText(),
-                                                     dirPackage.getQualifiedName());
-
-      HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.WRONG_PACKAGE_STATEMENT,
-                                                                      statement,
-                                                                      description);
-      if (classPackage != null) QuickFixAction.registerQuickFixAction(highlightInfo, new MoveToPackageFix(file, classPackage), null);
-       List<IntentionAction> options = new ArrayList<IntentionAction>();
-       options.add(new EditInspectionToolsSettingsAction(HighlightDisplayKey.WRONG_PACKAGE_STATEMENT));
-       QuickFixAction.registerQuickFixAction(highlightInfo, new AdjustPackageNameFix(file, statement, dirPackage), options);
-       return highlightInfo;
-    }
-    return null;
-  }
-
-  //@top
-  public static HighlightInfo checkMissingPackageStatement(PsiClass aClass) {
-    if (!DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(aClass).isToolEnabled(HighlightDisplayKey.WRONG_PACKAGE_STATEMENT)) {
-      return null;
-    }
-
-    // does not work in tests since CodeInsightTestCase copies file into temporary location
-    if (ApplicationManager.getApplication().isUnitTestMode()) return null;
-    PsiFile file = aClass.getContainingFile();
-    if (!(file instanceof PsiJavaFile)) return null;
-    PsiJavaFile javaFile = (PsiJavaFile)file;
-    // highlight the first class in the file only
-    PsiClass[] classes = javaFile.getClasses();
-    if (classes.length == 0 || !aClass.getManager().areElementsEquivalent(aClass, classes[0])) return null;
-    PsiDirectory directory = javaFile.getContainingDirectory();
-    if (directory == null) return null;
-    PsiPackage dirPackage = directory.getPackage();
-    if (dirPackage == null) return null;
-    PsiPackageStatement packageStatement = javaFile.getPackageStatement();
-
-    String packageName = dirPackage.getQualifiedName();
-    if (!Comparing.strEqual(packageName, "", true) && packageStatement == null) {
-      String description = JavaErrorMessages.message("missing.package.statement", packageName);
-      TextRange textRange = ClassUtil.getClassDeclarationTextRange(aClass);
-
-      HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.WRONG_PACKAGE_STATEMENT,
-                                                                      textRange,
-                                                                      description);
-      List<IntentionAction> options = new ArrayList<IntentionAction>();
-      options.add(new EditInspectionToolsSettingsAction(HighlightDisplayKey.WRONG_PACKAGE_STATEMENT));
-      QuickFixAction.registerQuickFixAction(highlightInfo, new AdjustPackageNameFix(javaFile, null, dirPackage), options);
-      return highlightInfo;
-    }
-    return null;
-  }
 
   //@top
   private static String checkDefaultConstructorThrowsException(PsiMethod constructor, PsiClassType[] handledExceptions) {

@@ -19,6 +19,7 @@ import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -229,7 +230,8 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
       return showAddImportHint(myEditor, (PsiJavaCodeReferenceElement)element);
     }
     else if (info.type == HighlightInfoType.JAVADOC_WRONG_REF) {
-      if (DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(myFile).getErrorLevel(HighlightDisplayKey.JAVADOC_ERROR) ==
+      final HighlightDisplayKey javadocKey = HighlightDisplayKey.find(JavaDocLocalInspection.SHORT_NAME);
+      if (DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(myFile).getErrorLevel(javadocKey) ==
           HighlightDisplayLevel.ERROR) {
         return showAddImportHint(myEditor, (PsiJavaCodeReferenceElement)element);
       }

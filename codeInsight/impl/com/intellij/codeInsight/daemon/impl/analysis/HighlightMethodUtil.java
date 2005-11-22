@@ -5,17 +5,15 @@
  */
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeInsight.*;
+import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
-import com.intellij.codeInsight.daemon.impl.*;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.RefCountHolder;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.codeInsight.intention.IntentionManager;
-import com.intellij.codeInsight.intention.EmptyIntentionAction;
-import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
@@ -27,7 +25,9 @@ import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.text.MessageFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 public class HighlightMethodUtil {
   private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
@@ -278,66 +278,6 @@ public class HighlightMethodUtil {
   }
 
   //@top
-  static HighlightInfo checkExceptionsNeverThrown(PsiJavaCodeReferenceElement referenceElement) {
-    if (!DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(referenceElement).isToolEnabled(HighlightDisplayKey.UNUSED_THROWS_DECL)) {
-      return null;
-    }
-    if (!(referenceElement.getParent() instanceof PsiReferenceList)) return null;
-    PsiReferenceList referenceList = (PsiReferenceList)referenceElement.getParent();
-    if (!(referenceList.getParent() instanceof PsiMethod)) return null;
-    PsiMethod method = (PsiMethod)referenceList.getParent();
-    if (referenceList != method.getThrowsList()) return null;
-    if (!InspectionManagerEx.isToCheckMember(method, HighlightDisplayKey.UNUSED_THROWS_DECL.getID())) return null;
-    PsiClass aClass = method.getContainingClass();
-    if (aClass == null) return null;
-
-    PsiManager manager = referenceElement.getManager();
-    PsiClassType exceptionType = manager.getElementFactory().createType(referenceElement);
-    if (ExceptionUtil.isUncheckedExceptionOrSuperclass(exceptionType)) return null;
-
-    PsiCodeBlock body = method.getBody();
-    if (body == null) return null;
-
-    PsiModifierList modifierList = method.getModifierList();
-    PsiClass containingClass = method.getContainingClass();
-    if (!modifierList.hasModifierProperty(PsiModifier.PRIVATE)
-        && !modifierList.hasModifierProperty(PsiModifier.STATIC)
-        && !modifierList.hasModifierProperty(PsiModifier.FINAL)
-        && !method.isConstructor()
-        && !(containingClass instanceof PsiAnonymousClass)
-        && !(containingClass != null && containingClass.hasModifierProperty(PsiModifier.FINAL))) {
-      return null;
-    }
-
-    PsiClassType[] types = ExceptionUtil.collectUnhandledExceptions(body, method);
-    Collection<PsiClassType> unhandled = new HashSet<PsiClassType>(Arrays.asList(types));
-    if (method.isConstructor()) {
-      // there may be field initializer throwing exception
-      // that exception must be caught in the constructor
-      PsiField[] fields = aClass.getFields();
-      for (final PsiField field : fields) {
-        if (field.hasModifierProperty(PsiModifier.STATIC)) continue;
-        PsiExpression initializer = field.getInitializer();
-        if (initializer == null) continue;
-        unhandled.addAll(Arrays.asList(ExceptionUtil.collectUnhandledExceptions(initializer, field)));
-      }
-    }
-
-    for (PsiClassType unhandledException : unhandled) {
-      if (unhandledException.isAssignableFrom(exceptionType) ||
-          exceptionType.isAssignableFrom(unhandledException)) {
-        return null;
-      }
-    }
-
-    String description = JavaErrorMessages.message("exception.is.never.thrown", HighlightUtil.formatType(exceptionType));
-    HighlightInfo errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.UNUSED_THROWS_DECL, referenceElement, description);
-    List<IntentionAction> options = IntentionManager.getInstance(method.getProject()).getStandardIntentionOptions(HighlightDisplayKey.UNUSED_THROWS_DECL,method.getBody());
-    QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createMethodThrowsFix(method, exceptionType, false, false), options);
-    return errorResult;
-  }
-
-  //@top
   public static HighlightInfo checkMethodCall(PsiMethodCallExpression methodCall,
                                               PsiResolveHelper resolveHelper) {
     PsiExpressionList list = methodCall.getArgumentList();
@@ -420,10 +360,10 @@ public class HighlightMethodUtil {
         }
       }
     }
-    if (highlightInfo == null) {
+   /* if (highlightInfo == null) {
       highlightInfo =
-      HighlightUtil.checkDeprecated(element, referenceToMethod.getReferenceNameElement(), DaemonCodeAnalyzerSettings.getInstance());
-    }
+      DeprecationInspection.checkDeprecated(element, referenceToMethod.getReferenceNameElement());
+    }*/
     if (highlightInfo == null) {
       highlightInfo =
       GenericsHighlightUtil.checkParameterizedReferenceTypeArguments(element, referenceToMethod, resolveResult.getSubstitutor());
@@ -1022,35 +962,6 @@ public class HighlightMethodUtil {
   }
 
   //@top
-  static HighlightInfo checkMethodOverridesDeprecated(MethodSignatureBackedByPsiMethod methodSignature,
-                                                      List<MethodSignatureBackedByPsiMethod> superMethodSignatures,
-                                                      DaemonCodeAnalyzerSettings settings) {
-    PsiMethod method = methodSignature.getMethod();
-    if (!settings.getInspectionProfile(method).isToolEnabled(HighlightDisplayKey.DEPRECATED_SYMBOL)) return null;
-    if (!InspectionManagerEx.isToCheckMember(method, HighlightDisplayKey.DEPRECATED_SYMBOL.getID())) return null;
-    PsiElement methodName = method.getNameIdentifier();
-    for (MethodSignatureBackedByPsiMethod superMethodSignature : superMethodSignatures) {
-      PsiMethod superMethod = superMethodSignature.getMethod();
-      PsiClass aClass = superMethod.getContainingClass();
-      if (aClass == null) continue;
-      // do not show deprecated warning for class implementing deprecated methods
-      if (!aClass.isDeprecated() && superMethod.hasModifierProperty(PsiModifier.ABSTRACT)) continue;
-      if (superMethod.isDeprecated()) {
-        String description = JavaErrorMessages.message("overrides.deprecated.method",
-                                                       HighlightMessageUtil.getSymbolName(aClass, PsiSubstitutor.EMPTY));
-        HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.DEPRECATED, methodName, description);
-        List<IntentionAction> options = IntentionManager.getInstance(method.getProject()).getStandardIntentionOptions(HighlightDisplayKey.DEPRECATED_SYMBOL,method);
-        QuickFixAction
-          .registerQuickFixAction(highlightInfo,
-                                  new EmptyIntentionAction(HighlightDisplayKey.getDisplayNameByKey(HighlightDisplayKey.DEPRECATED_SYMBOL),
-                                                                                              options), options);
-        return highlightInfo;
-      }
-    }
-    return null;
-  }
-
-  //@top
   public static HighlightInfo checkConstructorHandleSuperClassExceptions(PsiMethod method) {
     if (!method.isConstructor()) {
       return null;
@@ -1222,9 +1133,9 @@ public class HighlightMethodUtil {
           }
           if (highlightInfo != null) return highlightInfo;
 
-          if (classReference != null) {
-            return HighlightUtil.checkDeprecated(constructor, classReference, settings);
-          }
+          /*if (classReference != null) {
+            return DeprecationInspection.checkDeprecated(constructor, classReference);
+          }*/
         }
       }
     }

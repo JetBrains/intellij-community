@@ -1,18 +1,12 @@
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.analysis.AnalysisScope;
-import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.j2ee.J2EERolesUtil;
 import com.intellij.j2ee.ejb.EjbUtil;
 import com.intellij.j2ee.ejb.role.EjbImplMethodRole;
@@ -22,6 +16,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
@@ -32,10 +27,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.packageDependencies.DependencyRule;
-import com.intellij.packageDependencies.DependencyValidationManager;
-import com.intellij.packageDependencies.ForwardDependenciesBuilder;
 import com.intellij.packageDependencies.ui.DependencyConfigurable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
@@ -271,39 +263,9 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
                                                              todoItem.getPattern().getAttributes().getTextAttributes());
       list.add(info);
     }
-    collectDependencyProblems(list);
     return list;
   }
 
-  private void collectDependencyProblems(final List<HighlightInfo> list) {
-    if (myUpdateAll && myFile instanceof PsiJavaFile && myFile.isPhysical() && myFile.getVirtualFile() != null &&
-        mySettings.getInspectionProfile(myFile).isToolEnabled(HighlightDisplayKey.ILLEGAL_DEPENDENCY)) {
-
-      final DependencyValidationManager validationManager = DependencyValidationManager.getInstance(myProject);
-      if (!validationManager.hasRules()) return;
-
-      DependenciesBuilder builder = new ForwardDependenciesBuilder(myProject, new AnalysisScope(myFile));
-      builder.analyzeFileDependencies(myFile, new DependenciesBuilder.DependencyProcessor() {
-        public void process(PsiElement place, PsiElement dependency) {
-          PsiFile dependencyFile = dependency.getContainingFile();
-          if (dependencyFile != null && dependencyFile.isPhysical() && dependencyFile.getVirtualFile() != null) {
-            DependencyRule[] rules = validationManager.getViolatorDependencyRules(myFile, dependencyFile);
-            if (rules.length > 0) {
-              if (InspectionManagerEx.inspectionResultSuppressed(place, HighlightDisplayKey.ILLEGAL_DEPENDENCY.getID())) return;
-              HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ILLEGAL_DEPENDENCY, place,
-                                                                     InspectionsBundle.message("illegal.dependency.violated.rule.message",
-                                                                                               rules[0].getDisplayText()));
-              if (info != null) {
-                list.add(info);
-                List<IntentionAction> options = IntentionManager.getInstance(myProject).getStandardIntentionOptions(HighlightDisplayKey.ILLEGAL_DEPENDENCY,place);
-                QuickFixAction.registerQuickFixAction(info, new EditDependencyRulesAction(rules[0]), options);
-              }
-            }
-          }
-        }
-      });
-    }
-  }
 
   private Collection<LineMarkerInfo> collectLineMarkers(PsiElement[] elements) throws ProcessCanceledException {
     ApplicationManager.getApplication().assertReadAccessAllowed();

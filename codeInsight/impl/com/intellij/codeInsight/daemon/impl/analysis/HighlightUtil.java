@@ -6,26 +6,17 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
-import com.intellij.codeInsight.daemon.impl.EditInspectionToolsSettingsAction;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
-import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.CodeInsightColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -1586,52 +1577,6 @@ public class HighlightUtil {
 
 
   @Nullable
-  public static HighlightInfo checkSillyAssignment(PsiAssignmentExpression assignment) {
-    if (!DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(assignment).isToolEnabled(HighlightDisplayKey.SILLY_ASSIGNMENT)) {
-      return null;
-    }
-    if (InspectionManagerEx.inspectionResultSuppressed(assignment, HighlightDisplayKey.SILLY_ASSIGNMENT.getID())) return null;
-
-    if (assignment.getOperationSign().getTokenType() != JavaTokenType.EQ) return null;
-    PsiExpression lExpression = assignment.getLExpression();
-    PsiExpression rExpression = assignment.getRExpression();
-    if (rExpression == null) return null;
-    lExpression = PsiUtil.deparenthesizeExpression(lExpression);
-    rExpression = PsiUtil.deparenthesizeExpression(rExpression);
-    if (!(lExpression instanceof PsiReferenceExpression) || !(rExpression instanceof PsiReferenceExpression)) return null;
-    PsiReferenceExpression lRef = (PsiReferenceExpression)lExpression;
-    PsiReferenceExpression rRef = (PsiReferenceExpression)rExpression;
-    PsiManager manager = assignment.getManager();
-    if (!sameInstanceReferences(lRef, rRef, manager)) return null;
-    HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.SILLY_ASSIGNMENT,
-                                                                    assignment,
-                                                                    JavaErrorMessages.message("assignment.to.itself"));
-    List<IntentionAction> options = IntentionManager.getInstance(assignment.getProject()).getStandardIntentionOptions(HighlightDisplayKey.SILLY_ASSIGNMENT,assignment);
-    QuickFixAction.registerQuickFixAction(highlightInfo, new EmptyIntentionAction(HighlightDisplayKey.getDisplayNameByKey(HighlightDisplayKey.SILLY_ASSIGNMENT), options), options);
-    return highlightInfo;
-  }
-
-  /**
-   * @return true if both expressions resolve to the same variable/class or field in the same instance of the class
-   */
-  private static boolean sameInstanceReferences(PsiReferenceExpression lRef, PsiReferenceExpression rRef, PsiManager manager) {
-    PsiElement lResolved = lRef.resolve();
-    PsiElement rResolved = rRef.resolve();
-    if (!manager.areElementsEquivalent(lResolved, rResolved)) return false;
-
-    PsiExpression lQualifier = lRef.getQualifierExpression();
-    PsiExpression rQualifier = rRef.getQualifierExpression();
-    if (lQualifier instanceof PsiReferenceExpression && rQualifier instanceof PsiReferenceExpression) {
-      return sameInstanceReferences((PsiReferenceExpression)lQualifier, (PsiReferenceExpression)rQualifier, manager);
-    }
-    if (Comparing.equal(lQualifier, rQualifier)) return true;
-    boolean lThis = lQualifier == null || lQualifier instanceof PsiThisExpression;
-    boolean rThis = rQualifier == null || rQualifier instanceof PsiThisExpression;
-    return lThis && rThis;
-  }
-
-
-  @Nullable
   public static HighlightInfo checkExceptionAlreadyCaught(PsiJavaCodeReferenceElement element, PsiElement resolved) {
     if (!(resolved instanceof PsiClass)) return null;
     PsiClass catchClass = (PsiClass)resolved;
@@ -1866,33 +1811,6 @@ public class HighlightUtil {
     return null;
   }
 
-  @Nullable
-  static HighlightInfo checkAccessStaticMemberViaInstanceReference(PsiReferenceExpression expr, JavaResolveResult result) {
-    PsiElement resolved = result.getElement();
-    if (!DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(expr).isToolEnabled(HighlightDisplayKey.ACCESS_STATIC_VIA_INSTANCE)) {
-      return null;
-    }
-    if (InspectionManagerEx.inspectionResultSuppressed(expr, HighlightDisplayKey.ACCESS_STATIC_VIA_INSTANCE.getID())) return null;
-
-    if (!(resolved instanceof PsiMember)) return null;
-    PsiExpression qualifierExpression = expr.getQualifierExpression();
-    if (qualifierExpression == null) return null;
-    if (qualifierExpression instanceof PsiReferenceExpression
-        && ((PsiReferenceExpression)qualifierExpression).resolve() instanceof PsiClass) {
-      return null;
-    }
-    if (!((PsiMember)resolved).hasModifierProperty(PsiModifier.STATIC)) return null;
-
-    String description = JavaErrorMessages.message("static.member.accessed.via.instance.reference",
-                                                   formatType(qualifierExpression.getType()),
-                                                   HighlightMessageUtil.getSymbolName(resolved, result.getSubstitutor()));
-
-    HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ACCESS_STATIC_VIA_INSTANCE, expr, description);
-    List<IntentionAction> options = IntentionManager.getInstance(expr.getProject()).getStandardIntentionOptions(HighlightDisplayKey.ACCESS_STATIC_VIA_INSTANCE,expr);
-    QuickFixAction.registerQuickFixAction(highlightInfo, new AccessStaticViaInstanceFix(expr, result), options);
-    return highlightInfo;
-  }
-
   @SuppressWarnings({"HardCodedStringLiteral"})
   private static String redIfNotMatch(PsiType type, boolean matches) {
     if (matches) return getFQName(type, false);
@@ -1970,11 +1888,7 @@ public class HighlightUtil {
         HighlightInfoType type = HighlightInfoType.WRONG_REF;
         List<IntentionAction> options = new ArrayList<IntentionAction>();
         if (PsiTreeUtil.getParentOfType(ref, PsiDocComment.class) != null) {
-          if (!DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(ref).isToolEnabled(HighlightDisplayKey.JAVADOC_ERROR)) {
-            return null;
-          }
-          type = HighlightInfoType.JAVADOC_WRONG_REF;
-          options.add(new EditInspectionToolsSettingsAction(HighlightDisplayKey.JAVADOC_ERROR));
+          return null;
         }
 
         PsiElement parent = PsiTreeUtil.getParentOfType(ref, PsiNewExpression.class, PsiMethod.class);
@@ -2071,26 +1985,6 @@ public class HighlightUtil {
   }
 
 
-  @Nullable
-  public static HighlightInfo checkDeprecated(PsiElement refElement,
-                                              PsiElement elementToHighlight,
-                                              DaemonCodeAnalyzerSettings settings) {
-    if (!settings.getInspectionProfile(elementToHighlight).isToolEnabled(HighlightDisplayKey.DEPRECATED_SYMBOL)) return null;
-    if (!(refElement instanceof PsiDocCommentOwner)) return null;
-    if (!((PsiDocCommentOwner)refElement).isDeprecated()) return null;
-
-    if (InspectionManagerEx.inspectionResultSuppressed(elementToHighlight, HighlightDisplayKey.DEPRECATED_SYMBOL.getID())) return null;
-
-    String description = JavaErrorMessages.message("deprecated.symbol",
-                                                   HighlightMessageUtil.getSymbolName(refElement, PsiSubstitutor.EMPTY));
-
-    TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.DEPRECATED_ATTRIBUTES);
-    HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.DEPRECATED, elementToHighlight.getTextRange(), description,attributes);
-    List<IntentionAction> options = IntentionManager.getInstance(elementToHighlight.getProject()).getStandardIntentionOptions(HighlightDisplayKey.DEPRECATED_SYMBOL,elementToHighlight);
-    QuickFixAction.registerQuickFixAction(highlightInfo, new EmptyIntentionAction(HighlightDisplayKey.getDisplayNameByKey(HighlightDisplayKey.DEPRECATED_SYMBOL), options), options);
-    return highlightInfo;
-  }
-
   public static boolean isRootHighlighted(final PsiElement psiRoot) {
     final HighlightingSettingsPerFile component = HighlightingSettingsPerFile.getInstance(psiRoot.getProject());
     if(component == null) return true;
@@ -2165,12 +2059,28 @@ public class HighlightUtil {
     return info;
   }
 
+  public static PsiElement findPsiAtOffset(final PsiFile psiFile, final int textOffset){
+    PsiElement psiElem = psiFile.findElementAt(textOffset);
+
+    while (psiElem != null) {
+      if (psiElem instanceof PsiClass ||
+          psiElem instanceof PsiMethod ||
+          psiElem instanceof PsiField ||
+          psiElem instanceof PsiParameter) {
+        return psiElem.getTextOffset() == textOffset ? psiElem : null;
+      }
+
+      psiElem = psiElem.getParent();
+    }
+    return null;
+  }
+
   private static HighlightInfoType convertType(Annotation annotation) {
     ProblemHighlightType type = annotation.getHighlightType();
     if (type == ProblemHighlightType.LIKE_UNUSED_SYMBOL) return HighlightInfoType.UNUSED_SYMBOL;
     if (type == ProblemHighlightType.LIKE_UNKNOWN_SYMBOL) return HighlightInfoType.WRONG_REF;
     if (type == ProblemHighlightType.LIKE_DEPRECATED) return HighlightInfoType.DEPRECATED;
-    if (type == ProblemHighlightType.J2EE_PROBLEM) return annotation.getSeverity() == HighlightSeverity.ERROR ? HighlightInfoType.EJB_ERROR : annotation.getSeverity() == HighlightSeverity.WARNING ? HighlightInfoType.EJB_WARNING : HighlightInfoType.INFORMATION;
+    if (type == ProblemHighlightType.J2EE_PROBLEM) return annotation.getSeverity() == HighlightSeverity.ERROR ? HighlightInfoType.ERROR : annotation.getSeverity() == HighlightSeverity.WARNING ? HighlightInfoType.WARNING : HighlightInfoType.INFORMATION;
     return annotation.getSeverity() == HighlightSeverity.ERROR ? HighlightInfoType.ERROR :
            annotation.getSeverity() == HighlightSeverity.WARNING ? HighlightInfoType.WARNING :
            HighlightInfoType.INFORMATION;

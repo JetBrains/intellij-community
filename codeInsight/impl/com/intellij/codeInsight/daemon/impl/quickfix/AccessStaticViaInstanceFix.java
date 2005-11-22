@@ -1,19 +1,18 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 
-public class AccessStaticViaInstanceFix implements IntentionAction {
+public class AccessStaticViaInstanceFix implements LocalQuickFix {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.AccessStaticViaInstanceFix");
 
   private final PsiReferenceExpression myExpression;
@@ -26,7 +25,7 @@ public class AccessStaticViaInstanceFix implements IntentionAction {
     myResult = result;
   }
 
-  public String getText() {
+  public String getName() {
     PsiClass aClass = myMember.getContainingClass();
     return QuickFixBundle.message("access.static.via.class.reference.text",
                                   HighlightMessageUtil.getSymbolName(myMember, myResult.getSubstitutor()),
@@ -38,21 +37,11 @@ public class AccessStaticViaInstanceFix implements IntentionAction {
     return QuickFixBundle.message("access.static.via.class.reference.family");
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
-    return myExpression != null
-           && myExpression.isValid()
-           && myExpression.getManager().isInProject(myExpression)
-           && myMember != null
-           && myMember.isValid()
-           && myMember.getContainingClass() != null
-           && PsiUtil.isAccessible(myMember.getContainingClass(), myExpression, myMember.getContainingClass());
-  }
-
-  public void invoke(Project project, Editor editor, PsiFile file) {
+  public void applyFix(Project project, ProblemDescriptor descriptor) {
     if (!CodeInsightUtil.prepareFileForWrite(myExpression.getContainingFile())) return;
     try {
       PsiExpression qualifierExpression = myExpression.getQualifierExpression();
-      PsiElementFactory factory = file.getManager().getElementFactory();
+      PsiElementFactory factory = PsiManager.getInstance(project).getElementFactory();
       if (qualifierExpression instanceof PsiThisExpression &&
           ((PsiThisExpression) qualifierExpression).getQualifier() == null) {
         // this.field -> field
@@ -68,7 +57,7 @@ public class AccessStaticViaInstanceFix implements IntentionAction {
         qualifierExpression.replace(factory.createReferenceExpression(myMember.getContainingClass()));
       }
 
-      UndoManager.getInstance(file.getProject()).markDocumentForUndo(file);
+      UndoManager.getInstance(project).markDocumentForUndo(myMember.getContainingFile());
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);

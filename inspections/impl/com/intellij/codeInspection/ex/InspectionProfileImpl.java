@@ -19,8 +19,8 @@ import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -209,25 +209,6 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
       return true;
     }
 
-    if (key == HighlightDisplayKey.UNKNOWN_JAVADOC_TAG &&
-        !myBaseProfile.getAdditionalJavadocTags().equals(getAdditionalJavadocTags())) {
-      return true;
-    }
-
-    if (key == HighlightDisplayKey.CUSTOM_HTML_TAG &&
-        !myBaseProfile.getAdditionalHtmlTags().equals(getAdditionalHtmlTags())) {
-      return true;
-    }
-
-    if (key == HighlightDisplayKey.CUSTOM_HTML_ATTRIBUTE &&
-        !myBaseProfile.getAdditionalHtmlAttributes().equals(getAdditionalHtmlAttributes())) {
-      return true;
-    }
-
-    if (key == HighlightDisplayKey.REQUIRED_HTML_ATTRIBUTE &&
-        !myBaseProfile.getAdditionalNotRequiredHtmlAttributes().equals(getAdditionalNotRequiredHtmlAttributes())) {
-      return true;
-    }
 
     if (!toolsSettings) {
       myDisplayLevelMap.put(key, myBaseProfile.getToolState(key));
@@ -295,23 +276,8 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
   }
 
   private void setDefaultErrorLevels() {
-    myDisplayLevelMap.put(HighlightDisplayKey.DEPRECATED_SYMBOL, new ToolState(HighlightDisplayLevel.WARNING));
     myDisplayLevelMap.put(HighlightDisplayKey.UNUSED_IMPORT, new ToolState(HighlightDisplayLevel.WARNING));
     myDisplayLevelMap.put(HighlightDisplayKey.UNUSED_SYMBOL, new ToolState(HighlightDisplayLevel.WARNING));
-    myDisplayLevelMap.put(HighlightDisplayKey.UNUSED_THROWS_DECL, new ToolState(HighlightDisplayLevel.WARNING));
-    myDisplayLevelMap.put(HighlightDisplayKey.SILLY_ASSIGNMENT, new ToolState(HighlightDisplayLevel.WARNING));
-    myDisplayLevelMap.put(HighlightDisplayKey.ACCESS_STATIC_VIA_INSTANCE, new ToolState(HighlightDisplayLevel.WARNING));
-    myDisplayLevelMap.put(HighlightDisplayKey.WRONG_PACKAGE_STATEMENT, new ToolState(HighlightDisplayLevel.WARNING));
-    myDisplayLevelMap.put(HighlightDisplayKey.JAVADOC_ERROR, new ToolState(HighlightDisplayLevel.ERROR));
-    myDisplayLevelMap.put(HighlightDisplayKey.UNKNOWN_JAVADOC_TAG, new ToolState(HighlightDisplayLevel.ERROR));
-
-    myDisplayLevelMap.put(HighlightDisplayKey.CUSTOM_HTML_TAG, new ToolState(HighlightDisplayLevel.WARNING));
-    myDisplayLevelMap.put(HighlightDisplayKey.CUSTOM_HTML_ATTRIBUTE, new ToolState(HighlightDisplayLevel.WARNING));
-    myDisplayLevelMap.put(HighlightDisplayKey.REQUIRED_HTML_ATTRIBUTE, new ToolState(HighlightDisplayLevel.WARNING));
-
-    myDisplayLevelMap.put(HighlightDisplayKey.EJB_ERROR, new ToolState(HighlightDisplayLevel.ERROR));
-    myDisplayLevelMap.put(HighlightDisplayKey.EJB_WARNING, new ToolState(HighlightDisplayLevel.WARNING));
-    myDisplayLevelMap.put(HighlightDisplayKey.ILLEGAL_DEPENDENCY, new ToolState(HighlightDisplayLevel.WARNING));
     myDisplayLevelMap.put(HighlightDisplayKey.UNCHECKED_WARNING, new ToolState(HighlightDisplayLevel.WARNING));
   }
 

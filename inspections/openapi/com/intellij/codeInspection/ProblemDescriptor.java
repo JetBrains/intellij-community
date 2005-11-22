@@ -26,4 +26,5 @@ public interface ProblemDescriptor {
   int getLineNumber();
   LocalQuickFix[] getFixes();
   ProblemHighlightType getHighlightType();
+  boolean isAfterEndOfLine();
 }

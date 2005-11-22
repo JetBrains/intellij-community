@@ -2,6 +2,7 @@ package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.LocalInspectionsPass;
 import com.intellij.codeInsight.daemon.impl.PostHighlightingPass;
 import com.intellij.mock.MockProgressInidicator;
 import com.intellij.openapi.editor.Document;
@@ -58,8 +59,13 @@ public abstract class LightDaemonAnalyzerTestCase extends LightCodeInsightTestCa
     action2.doCollectInformation(new MockProgressInidicator());
     Collection<HighlightInfo> highlights2 = action2.getHighlights();
 
+    LocalInspectionsPass action3 = new LocalInspectionsPass(getProject(), getFile(), document, 0, getFile().getTextLength());
+    action3.doCollectInformation(new MockProgressInidicator());
+    Collection<HighlightInfo> highlights3 = action3.getHighlights();
+
     HashSet<HighlightInfo> result = new HashSet<HighlightInfo>(highlights1);
     result.addAll(highlights2);
+    result.addAll(highlights3);
     return result;
   }
 }

@@ -3,11 +3,16 @@ package com.intellij.codeInspection.ex;
 import com.intellij.codeInsight.i18n.I18nInspection;
 import com.intellij.codeInsight.i18n.InvalidPropertyKeyInspection;
 import com.intellij.codeInspection.InspectionToolProvider;
-import com.intellij.codeInspection.dependencyViolation.DependencyViolationInspection;
+import com.intellij.codeInspection.accessStaticViaInstance.AccessStaticViaInstance;
+import com.intellij.codeInspection.dependencyViolation.DependencyInspection;
 import com.intellij.codeInspection.duplicatePropertyInspection.DuplicatePropertyInspection;
 import com.intellij.codeInspection.duplicateStringLiteral.DuplicateStringLiteralInspection;
+import com.intellij.codeInspection.htmlInspections.HtmlStyleLocalInspection;
 import com.intellij.codeInspection.nullable.NullableStuffInspection;
+import com.intellij.codeInspection.sillyAssignment.SillyAssignmentInspection;
+import com.intellij.codeInspection.unneededThrows.UnusedThrowsDeclaration;
 import com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspection;
+import com.intellij.codeInspection.wrongPackageStatement.WrongPackageStatementInspection;
 import com.intellij.lang.properties.UnusedMessageFormatParameterInspection;
 import com.intellij.lang.properties.UnusedPropertyInspection;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -48,7 +53,7 @@ public class StandardInspectionToolsProvider implements InspectionToolProvider, 
       com.intellij.codeInspection.miscGenerics.SuspiciousCollectionsMethodCallsInspection.class,
       com.intellij.codeInspection.localCanBeFinal.LocalCanBeFinal.class,
 
-      com.intellij.codeInspection.javaDoc.JavaDocInspection.class,
+      com.intellij.codeInspection.javaDoc.JavaDocLocalInspection.class,
       com.intellij.codeInspection.deprecation.DeprecationInspection.class,
       com.intellij.codeInspection.equalsAndHashcode.EqualsAndHashcode.class,
       com.intellij.codeInspection.ejb.EJBInspection.class,
@@ -59,14 +64,20 @@ public class StandardInspectionToolsProvider implements InspectionToolProvider, 
       InvalidPropertyKeyInspection.class,
       UnusedPropertyInspection.class,
 
-      DependencyViolationInspection.class,
+      DependencyInspection.class,
       FieldCanBeLocalInspection.class,
       NullableStuffInspection.class,
 
       DuplicateStringLiteralInspection.class,
       DuplicatePropertyInspection.class,
       UnusedMessageFormatParameterInspection.class,
-      CheckImageSizeInspection.class
+      CheckImageSizeInspection.class,
+      WrongPackageStatementInspection.class,
+      DependencyInspection.class,
+      SillyAssignmentInspection.class,
+      UnusedThrowsDeclaration.class,
+      AccessStaticViaInstance.class,
+      HtmlStyleLocalInspection.class
       };
   }
 }

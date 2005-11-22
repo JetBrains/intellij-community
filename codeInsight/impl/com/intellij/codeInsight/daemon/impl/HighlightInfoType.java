@@ -1,12 +1,14 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInspection.deprecation.DeprecationInspection;
+import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.HighlighterColors;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.psi.PsiElement;
 
@@ -17,29 +19,16 @@ public interface HighlightInfoType {
   HighlightInfoType ASPECT_ERROR = new HighlightInfoTypeImpl(HighlightSeverity.ERROR, CodeInsightColors.ERRORS_ATTRIBUTES);
   HighlightInfoType ASPECT_WARNING = new HighlightInfoTypeImpl(HighlightSeverity.WARNING, CodeInsightColors.WARNINGS_ATTRIBUTES);
 
-  HighlightInfoType EJB_ERROR = new HighlightInfoTypeSeverityByKeyAttrBySeverity(HighlightDisplayKey.EJB_ERROR);
-  HighlightInfoType EJB_WARNING = new HighlightInfoTypeSeverityByKeyAttrBySeverity(HighlightDisplayKey.EJB_WARNING);
-
-  HighlightInfoType ILLEGAL_DEPENDENCY = new HighlightInfoTypeSeverityByKeyAttrBySeverity(HighlightDisplayKey.ILLEGAL_DEPENDENCY);
   HighlightInfoType UNCHECKED_WARNING = new HighlightInfoTypeSeverityByKeyAttrBySeverity(HighlightDisplayKey.UNCHECKED_WARNING);
 
   HighlightInfoType WRONG_ELEMENT_NAME = new HighlightInfoTypeImpl(HighlightSeverity.ERROR, CodeInsightColors.ERRORS_ATTRIBUTES);
 
   HighlightInfoType UNUSED_SYMBOL = new HighlightInfoTypeSeverityByKey(HighlightDisplayKey.UNUSED_SYMBOL, CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES);
-  HighlightInfoType UNUSED_THROWS_DECL = new HighlightInfoTypeSeverityByKey(HighlightDisplayKey.UNUSED_THROWS_DECL, CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES);
   HighlightInfoType UNUSED_IMPORT = new HighlightInfoTypeSeverityByKey(HighlightDisplayKey.UNUSED_IMPORT, CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES);
-  HighlightInfoType DEPRECATED = new HighlightInfoTypeSeverityByKey(HighlightDisplayKey.DEPRECATED_SYMBOL, CodeInsightColors.DEPRECATED_ATTRIBUTES);
-  HighlightInfoType WRONG_PACKAGE_STATEMENT = new HighlightInfoTypeSeverityByKeyAttrBySeverity(HighlightDisplayKey.WRONG_PACKAGE_STATEMENT);
-  HighlightInfoType SILLY_ASSIGNMENT = new HighlightInfoTypeSeverityByKey(HighlightDisplayKey.SILLY_ASSIGNMENT, CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES);
-  HighlightInfoType ACCESS_STATIC_VIA_INSTANCE = new HighlightInfoTypeSeverityByKeyAttrBySeverity(HighlightDisplayKey.ACCESS_STATIC_VIA_INSTANCE);
+  HighlightInfoType DEPRECATED = new HighlightInfoTypeSeverityByKey(HighlightDisplayKey.find(DeprecationInspection.SHORT_NAME), CodeInsightColors.DEPRECATED_ATTRIBUTES);
 
-  HighlightInfoType JAVADOC_WRONG_REF = new HighlightInfoTypeSeverityByKey(HighlightDisplayKey.JAVADOC_ERROR, CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES);
-  HighlightInfoType JAVADOC_ERROR = new HighlightInfoTypeSeverityByKeyAttrBySeverity(HighlightDisplayKey.JAVADOC_ERROR);
-  HighlightInfoType UNKNOWN_JAVADOC_TAG = new HighlightInfoTypeSeverityByKeyAttrBySeverity(HighlightDisplayKey.UNKNOWN_JAVADOC_TAG);
+  HighlightInfoType JAVADOC_WRONG_REF = new HighlightInfoTypeSeverityByKey(HighlightDisplayKey.find(JavaDocLocalInspection.SHORT_NAME), CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES);
 
-  HighlightInfoType CUSTOM_HTML_TAG = new HighlightInfoTypeSeverityByKeyAttrBySeverity(HighlightDisplayKey.CUSTOM_HTML_TAG);
-  HighlightInfoType CUSTOM_HTML_ATTRIBUTE = new HighlightInfoTypeSeverityByKeyAttrBySeverity(HighlightDisplayKey.CUSTOM_HTML_ATTRIBUTE);
-  HighlightInfoType REQUIRED_HTML_ATTRIBUTE = new HighlightInfoTypeSeverityByKeyAttrBySeverity(HighlightDisplayKey.REQUIRED_HTML_ATTRIBUTE);
 
   /** @fabrique */
   HighlightInfoType LOCAL_VARIABLE = new HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, CodeInsightColors.LOCAL_VARIABLE_ATTRIBUTES);

@@ -664,7 +664,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
       if (psiElement != null && psiElement.isValid()) {
         if (!psiElement.isWritable()) {
           final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(myProject)
-            .ensureFilesWritable(new VirtualFile[]{psiElement.getContainingFile().getVirtualFile()});
+            .ensureFilesWritable(psiElement.getContainingFile().getVirtualFile());
           if (operationStatus.hasReadonlyFiles()) {
             return;
           }

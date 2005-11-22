@@ -28,6 +28,7 @@ class ExpectedHighlightingData {
   private static final String WARNING_MARKER = "warning";
   private static final String INFO_MARKER = "info";
   private static final String END_LINE_HIGHLIGHT_MARKER = "EOLError";
+  private static final String END_LINE_WARNING_MARKER = "EOLWarning";
 
   static class ExpectedHighlightingSet {
     public final String marker;
@@ -54,6 +55,7 @@ class ExpectedHighlightingData {
     highlightingTypes.put(WARNING_MARKER, new ExpectedHighlightingSet(WARNING_MARKER, HighlightInfoType.UNUSED_SYMBOL, HighlightSeverity.WARNING, false, checkWarnings));
     highlightingTypes.put(INFO_MARKER, new ExpectedHighlightingSet(INFO_MARKER, HighlightInfoType.TODO, HighlightSeverity.INFORMATION, false, checkInfos));
     highlightingTypes.put(END_LINE_HIGHLIGHT_MARKER, new ExpectedHighlightingSet(END_LINE_HIGHLIGHT_MARKER, HighlightInfoType.ERROR, HighlightSeverity.ERROR, true, true));
+    highlightingTypes.put(END_LINE_WARNING_MARKER, new ExpectedHighlightingSet(END_LINE_WARNING_MARKER, HighlightInfoType.WARNING, HighlightSeverity.WARNING, true, checkWarnings));
     extractExpectedHighlightsSet(document);
   }
 

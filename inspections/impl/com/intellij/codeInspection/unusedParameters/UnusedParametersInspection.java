@@ -9,14 +9,14 @@
 package com.intellij.codeInspection.unusedParameters;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.reference.RefMethod;
 import com.intellij.codeInspection.reference.RefParameter;
-import com.intellij.codeInspection.util.RefFilter;
 import com.intellij.codeInspection.util.XMLExportUtl;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.IconLoader;
@@ -26,13 +26,11 @@ import com.intellij.psi.search.PsiReferenceProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfo;
-import com.intellij.codeInsight.daemon.GroupNames;
 import org.jdom.Element;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
-import java.text.MessageFormat;
 
 public class UnusedParametersInspection extends FilteringInspectionTool {
   private UnusedParametersFilter myFilter;

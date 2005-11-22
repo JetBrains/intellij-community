@@ -36,6 +36,7 @@ public abstract class InspectionManager {
 
   public abstract ProblemDescriptor createProblemDescriptor(PsiElement psiElement, String descriptionTemplate, LocalQuickFix[] fixes, ProblemHighlightType highlightType);
 
+  public abstract ProblemDescriptor createProblemDescriptor(PsiElement psiElement, String descriptionTemplate, LocalQuickFix[] fixes, ProblemHighlightType highlightType, boolean isAfterEndOfLine);
 
   public abstract Project getProject();
 }

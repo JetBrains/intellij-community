@@ -1,6 +1,5 @@
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -8,12 +7,13 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -77,6 +77,19 @@ public class HighlightInfo {
     int end = range.getEndOffset();
     return createHighlightInfo(type, start, end, description, toolTip);
   }
+
+  public static HighlightInfo createHighlightInfo(HighlightInfoType type, @NotNull PsiElement element, String description, String toolTip, boolean isEndOfLine) {
+    if (isEndOfLine){
+      TextRange range = element.getTextRange();
+      int end = range.getEndOffset();
+      final HighlightInfo highlightInfo = createHighlightInfo(type, end - 1, end, description, toolTip);
+      highlightInfo.isAfterEndOfLine = true;
+      return highlightInfo;
+    } else {
+      return createHighlightInfo(type, element, description, toolTip);
+    }
+  }
+
 
   public static HighlightInfo createHighlightInfo(HighlightInfoType type, int start, int end, String description, String toolTip) {
     HighlightInfoFilter[] filters = getFilters();

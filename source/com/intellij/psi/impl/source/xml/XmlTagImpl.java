@@ -393,6 +393,13 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     return null;
   }
 
+
+  public PsiElement getNavigationElement() {
+    final ASTNode startTag = XmlChildRole.START_TAG_NAME_FINDER.findChild(this);
+    return startTag != null ? startTag.getPsi() : null;
+  }
+
+
   public String getNamespace() {
     return getNamespaceByPrefix(getNamespacePrefix());
   }

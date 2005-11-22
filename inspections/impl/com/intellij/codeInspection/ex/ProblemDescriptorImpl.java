@@ -22,8 +22,9 @@ public class ProblemDescriptorImpl implements ProblemDescriptor {
   private final String myDescriptionTemplate;
   private final LocalQuickFix[] myFixes;
   private ProblemHighlightType myHighlightType;
+  private boolean myAfterEndOfLine;
 
-  public ProblemDescriptorImpl(PsiElement psiElement, String descriptionTemplate, LocalQuickFix[] fixes, ProblemHighlightType highlightType) {
+  public ProblemDescriptorImpl(PsiElement psiElement, String descriptionTemplate, LocalQuickFix[] fixes, ProblemHighlightType highlightType, boolean isAfterEndOfLine) {
     LOG.assertTrue(psiElement.isValid());
     LOG.assertTrue(psiElement.isPhysical());
 
@@ -43,6 +44,7 @@ public class ProblemDescriptorImpl implements ProblemDescriptor {
     final Project project = psiElement.getProject();
     mySmartPointer = SmartPointerManager.getInstance(project).createLazyPointer(psiElement);
     myDescriptionTemplate = descriptionTemplate;
+    myAfterEndOfLine = isAfterEndOfLine;
   }
 
   public PsiElement getPsiElement() {
@@ -64,6 +66,10 @@ public class ProblemDescriptorImpl implements ProblemDescriptor {
 
   public ProblemHighlightType getHighlightType() {
     return myHighlightType;
+  }
+
+  public boolean isAfterEndOfLine() {
+    return myAfterEndOfLine;
   }
 
   public String getDescriptionTemplate() {

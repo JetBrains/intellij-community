@@ -1,6 +1,7 @@
 package com.intellij.testFramework;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
+import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
@@ -10,9 +11,9 @@ import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.ModuleListener;
@@ -30,21 +31,23 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.IncorrectOperationException;
 import junit.framework.TestCase;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.io.IOException;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
-
-import org.jetbrains.annotations.NonNls;
+import java.util.Map;
 
 /**
  * A testcase that provides IDEA application and project. Note both are reused for each test run in the session so
@@ -66,6 +69,8 @@ import org.jetbrains.annotations.NonNls;
   private static VirtualFile ourSourceRoot;
   private static TestCase ourTestCase = null;
   public static Thread ourTestThread;
+
+  private Map<String, LocalInspectionTool> myAvailableTools = new HashMap<String, LocalInspectionTool>();
 
   /**
    * @return Project to be used in tests for example for project components retrieval.
@@ -199,12 +204,35 @@ import org.jetbrains.annotations.NonNls;
       initProject();
     }
 
-    DaemonCodeAnalyzerSettings.getInstance().setInspectionProfile(InspectionProfileImpl.EMPTY_PROFILE);
+    final LocalInspectionTool[] tools = configureLocalInspectionTools();
+    for (LocalInspectionTool tool : tools) {
+      myAvailableTools.put(tool.getShortName(), tool);
+    }
+
+    DaemonCodeAnalyzerSettings.getInstance().setInspectionProfile(new InspectionProfileImpl("Configurable"){
+      public LocalInspectionTool[] getHighlightingLocalInspectionTools() {
+        final Collection<LocalInspectionTool> tools = myAvailableTools.values();
+        return tools.toArray(new LocalInspectionTool[tools.size()]);
+      }
+    });
 
     assertFalse(getPsiManager().isDisposed());
 
     CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(new CodeStyleSettings());
 
+  }
+
+
+  protected void enableInspectionTool(LocalInspectionTool tool){
+    myAvailableTools.put(tool.getShortName(), tool);
+  }
+
+  protected void disableInspectionTool(String shortName){
+    myAvailableTools.remove(shortName);
+  }
+
+  protected LocalInspectionTool[] configureLocalInspectionTools() {
+    return new LocalInspectionTool[0];
   }
 
   protected void tearDown() throws Exception {

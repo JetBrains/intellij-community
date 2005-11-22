@@ -10,6 +10,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.actions.IntentionQuickFixWrapper;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionProfile;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
@@ -156,14 +157,18 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       String message = renderDescriptionMessage(problemDescriptor);
       PsiElement psiElement = problemDescriptor.getPsiElement();
       HighlightInfo highlightInfo =
-        HighlightInfo.createHighlightInfo(HighlightInfoType.WARNING, psiElement, message, message);
+        HighlightInfo.createHighlightInfo(HighlightInfoType.WARNING, psiElement, message, message, problemDescriptor.isAfterEndOfLine());
       highlights.add(highlightInfo);
       LocalInspectionTool tool = myTools.get(i);
       List<IntentionAction> options = getStandardIntentionOptions(tool, psiElement);
       final LocalQuickFix[] fixes = problemDescriptor.getFixes();
       if (fixes != null && fixes.length > 0) {
-        for (int k = 0; k < problemDescriptor.getFixes().length; k++) {
-          QuickFixAction.registerQuickFixAction(highlightInfo, new QuickFixWrapper(problemDescriptor, k), options);
+        for (int k = 0; k < fixes.length; k++) {
+          if (fixes[k] instanceof IntentionQuickFixWrapper){
+            QuickFixAction.registerQuickFixAction(highlightInfo, ((IntentionQuickFixWrapper)fixes[k]).getIntentionAction(), options);
+          } else {
+            QuickFixAction.registerQuickFixAction(highlightInfo, new QuickFixWrapper(problemDescriptor, k), options);
+          }
         }
       } else {
         QuickFixAction.registerQuickFixAction(highlightInfo, new EmptyIntentionAction(tool.getDisplayName(), options), options);
@@ -230,13 +235,17 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       };
       String plainMessage = XmlUtil.unescape(message.replaceAll("<[^>]*>", ""));
       @NonNls String tooltip = "<html><body>" + XmlUtil.escapeString(message) + "</body></html>";
-      HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(type, psiElement, plainMessage, tooltip);
+      HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(type, psiElement, plainMessage, tooltip, descriptor.isAfterEndOfLine());
       infos.add(highlightInfo);
       List<IntentionAction> options = getStandardIntentionOptions(tool, psiElement);
       final LocalQuickFix[] fixes = descriptor.getFixes();
       if (fixes != null && fixes.length > 0) {
         for (int k = 0; k < fixes.length; k++) {
-          QuickFixAction.registerQuickFixAction(highlightInfo, new QuickFixWrapper(descriptor, k), options);
+          if (fixes[k] instanceof IntentionQuickFixWrapper){
+            QuickFixAction.registerQuickFixAction(highlightInfo, ((IntentionQuickFixWrapper)fixes[k]).getIntentionAction(), options);
+          } else {
+            QuickFixAction.registerQuickFixAction(highlightInfo, new QuickFixWrapper(descriptor, k), options);
+          }
         }
       } else {
         QuickFixAction.registerQuickFixAction(highlightInfo, new EmptyIntentionAction(tool.getDisplayName(), options), options);

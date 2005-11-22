@@ -1,6 +1,7 @@
 package com.intellij.codeInspection;
 
-import com.intellij.codeInspection.javaDoc.JavaDocInspection;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
 
 /**
  * Created by IntelliJ IDEA.
@@ -10,16 +11,15 @@ import com.intellij.codeInspection.javaDoc.JavaDocInspection;
  * To change this template use File | Settings | File Templates.
  */
 public class JavaDocInspectionTest extends InspectionTestCase {
-  private JavaDocInspection myTool;
-
+  private LocalInspectionToolWrapper myWrapper;
   protected void setUp() throws Exception {
     super.setUp();
-    myTool = new JavaDocInspection();
-    myTool.initialize(getManager());
+    myWrapper = new LocalInspectionToolWrapper(new JavaDocLocalInspection());
+    myWrapper.initialize(getManager());
   }
 
   private void doTest() throws Exception {
-    doTest("javaDocInspection/" + getTestName(false), myTool);
+    doTest("javaDocInspection/" + getTestName(false), myWrapper);
   }
 
   public void testDuplicateParam() throws Exception {
