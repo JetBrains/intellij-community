@@ -12,6 +12,9 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.HtmlUtil;
 
 import java.util.List;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.ArrayList;
 
 /**
  * Created by IntelliJ IDEA.
@@ -29,37 +32,53 @@ public class MatcherImplUtil {
     PatternCompiler.transformOldPattern(options);
   }
 
-  public static PsiElement[] createTreeFromText(String text, boolean file, FileType fileType, Project project) throws IncorrectOperationException {
+  public enum TreeContext {
+    File, Block, Class
+  }
+  public static PsiElement[] createTreeFromText(String text, TreeContext context, FileType fileType, Project project) throws IncorrectOperationException {
     PsiElementFactory elementFactory = PsiManager.getInstance(project).getElementFactory();
-    if (fileType == StdFileTypes.XML || 
-        fileType == StdFileTypes.HTML ||
-        fileType == StdFileTypes.JSP ||
-        fileType == StdFileTypes.JSPX ||
-        fileType == StdFileTypes.XHTML
-      ) {
+    if (fileType != StdFileTypes.JAVA) {
       final PsiFile fileFromText = elementFactory.createFileFromText("dummy." + fileType.getDefaultExtension(), "<QQQ>\n" + text + "\n</QQQ>");
+
       return HtmlUtil.getRealXmlDocument(((XmlFile)fileFromText).getDocument()).getRootTag().getSubTags();
-    } else {
-      PsiElement element = (file)?
-        (PsiElement)elementFactory.createFileFromText("__$$__.java",text):
-        elementFactory.createStatementFromText("{\n"+ text + "\n}",null);
+    } else if (fileType == StdFileTypes.JAVA) {
+      PsiElement[] result = PsiElement.EMPTY_ARRAY;
 
-      PsiElement[] result;
-
-      if (!file) {
+      if (context == TreeContext.Block) {
+        PsiElement element = elementFactory.createStatementFromText("{\n"+ text + "\n}", null);
         result = ((PsiBlockStatement)element).getCodeBlock().getChildren();
-        if (result.length > 4) {
-          PsiElement[] newresult = new PsiElement[result.length-4];
-          System.arraycopy(result,2,newresult,0,result.length-4);
+        final int extraChildCount = 4;
+
+        if (result.length > extraChildCount) {
+          PsiElement[] newresult = new PsiElement[result.length-extraChildCount];
+          final int extraChildStart = 2;
+          System.arraycopy(result,extraChildStart,newresult,0,result.length-extraChildCount);
           result = newresult;
         } else {
           result = PsiElement.EMPTY_ARRAY;
         }
+
+      } else if (context == TreeContext.Class) {
+        PsiElement element = elementFactory.createStatementFromText("class A {\n"+ text + "\n}", null);
+        PsiClass clazz = (PsiClass)((PsiDeclarationStatement)element).getDeclaredElements()[0];
+        PsiElement startChild = clazz.getLBrace();
+        if (startChild != null) startChild = startChild.getNextSibling();
+
+        PsiElement endChild = clazz.getRBrace();
+        if (endChild != null) endChild = endChild.getPrevSibling();
+
+        List<PsiElement> resultElementsList = new ArrayList<PsiElement>(3);
+        for(PsiElement el = startChild.getNextSibling(); el != endChild && el != null; el = el.getNextSibling()) {
+          resultElementsList.add( el );
+        }
+
+        result = resultElementsList.toArray(new PsiElement[resultElementsList.size()]);
       } else {
-        result = element.getChildren();
+        result = elementFactory.createFileFromText("__dummy.java",text).getChildren();
       }
 
       return result;
     }
+    return PsiElement.EMPTY_ARRAY;
   }
 }

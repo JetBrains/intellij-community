@@ -1291,6 +1291,71 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     );
   }
 
+  public void testClassReplacement7() {
+    String s1 = "/**\n" +
+                "* Created by IntelliJ IDEA.\n" +
+                "* User: cdr\n" +
+                "* Date: Nov 15, 2005\n" +
+                "* Time: 4:23:29 PM\n" +
+                "* To change this template use File | Settings | File Templates.\n" +
+                "*/\n" +
+                "public class CC {\n" +
+                "   void f() {\n" +
+                "   }\n" +
+                "}";
+    String s2 = "/**\n" +
+                "* Created by IntelliJ IDEA.\n" +
+                "* User: 'USER\n" +
+                "* Date: 'DATE\n" +
+                "* Time: 'TIME\n" +
+                "* To change this template use File | Settings | File Templates.\n" +
+                "*/\n" +
+                "class 'c {\n" +
+                "  'other*\n" +
+                "}";
+    String s3 = "/**\n" +
+                "* by: $USER$\n" +
+                "*/\n" +
+                "class $c$ {\n" +
+                "  $other$\n" +
+                "}";
+    String expectedResult = "/**\n" +
+                            "* by: cdr\n" +
+                            "*/\n" +
+                            "public class CC {\n" +
+                            "  void f() {\n" +
+                            "   }\n" +
+                            "}";
+
+    actualResult = replacer.testReplace(s1,s2,s3,options,true);
+
+    assertEquals(
+      "Class with comment replacement",
+      expectedResult,
+      actualResult
+    );
+  }
+
+  public void testClassReplacement8() {
+    String s1 = "public class CC {\n" +
+                "   /** AAA*/ int b = 1; // comment\n" +
+                "}";
+    String s2 = "int b = 1;";
+    String s3 = "long c = 2;";
+    String expectedResult = "public class CC {\n" +
+                            "    /** AAA*/\n" +
+                            "    long c = 2;// comment\n" +
+                            "}";
+
+    actualResult = replacer.testReplace(s1,s2,s3,options,true);
+
+    assertEquals(
+      "Class field replacement with simple pattern",
+      expectedResult,
+      actualResult
+    );
+  }
+
   public void testClassReplacement2() {
     final String actualResult;
     String s40 = "class A {\n" +

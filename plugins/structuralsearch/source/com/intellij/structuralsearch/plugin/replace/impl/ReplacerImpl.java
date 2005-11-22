@@ -62,7 +62,12 @@ public class ReplacerImpl {
 
     Matcher matcher = new Matcher(project);
     try {
-      PsiElement[] elements = MatcherImplUtil.createTreeFromText(in,filePattern, this.options.getMatchOptions().getFileType(), project);
+      PsiElement[] elements = MatcherImplUtil.createTreeFromText(
+        in,
+        filePattern ? MatcherImplUtil.TreeContext.File : MatcherImplUtil.TreeContext.Block,
+        this.options.getMatchOptions().getFileType(),
+        project
+      );
       PsiElement firstElement = elements[0];
       PsiElement lastElement = elements[elements.length-1];
       PsiElement parent = firstElement.getParent();
@@ -153,18 +158,21 @@ public class ReplacerImpl {
     boolean listContext = false;
 
     try {
+      if (context == null) context = new ReplacementContext(options, project);
+      context.replacementInfo = info;
+
       PsiElement el = findRealSubstitutionElement(elementToReplace);
       listContext = isListContext(el);
 
-      final PsiElement[] statements = MatcherImplUtil.createTreeFromText(
+      PsiElement[] statements = MatcherImplUtil.createTreeFromText(
         replacementToMake,
-        false,
+        el instanceof PsiMember && !isSymbolReplacement(el, context)?
+          MatcherImplUtil.TreeContext.Class :
+          MatcherImplUtil.TreeContext.Block,
         options.getMatchOptions().getFileType(),
         project
       );
 
-      if (context == null) context = new ReplacementContext(options, project);
-      context.replacementInfo = info;
 
       if (listContext) {
         if (statements.length > 1) {
@@ -354,45 +362,69 @@ public class ReplacerImpl {
     }
   }
 
-  private static PsiElement handleSymbolReplacemenent(PsiElement replacement,
-                                                      final PsiElement el,
-                                                      ReplacementContext context) throws IncorrectOperationException {
-    if (replacement instanceof PsiReferenceExpression &&
-        ((PsiReferenceExpression)replacement).getQualifierExpression() == null
-        ) {
-      final PsiStatement[] searchStatements = context.getCodeBlock().getStatements();
-      if (searchStatements.length > 0 &&
-          searchStatements[0] instanceof PsiExpressionStatement) {
-        final PsiExpression expression = ((PsiExpressionStatement)searchStatements[0]).getExpression();
+  private static PsiNamedElement getSymbolReplacementTarget(final PsiElement el,ReplacementContext context) throws IncorrectOperationException {
+    if (context.options.getMatchOptions().getFileType() != StdFileTypes.JAVA) return null; //?
+    final PsiStatement[] searchStatements = context.getCodeBlock().getStatements();
+    if (searchStatements.length > 0 &&
+        searchStatements[0] instanceof PsiExpressionStatement) {
+      final PsiExpression expression = ((PsiExpressionStatement)searchStatements[0]).getExpression();
 
-        if (expression instanceof PsiReferenceExpression &&
-            ((PsiReferenceExpression)expression).getQualifierExpression() == null
-           ) {
-          // looks like symbol replacements, namely replace AAA by BBB, so lets do the best
-          if (el instanceof PsiNamedElement) {
-            PsiElement oldReplacement = replacement;
-            replacement = el.copy();
-            ((PsiNamedElement)replacement).setName(oldReplacement.getText());
-          }
+      if (expression instanceof PsiReferenceExpression &&
+          ((PsiReferenceExpression)expression).getQualifierExpression() == null
+         ) {
+        // looks like symbol replacements, namely replace AAA by BBB, so lets do the best
+        if (el instanceof PsiNamedElement) {
+          return (PsiNamedElement)el;
         }
       }
     }
+
+    return null;
+  }
+  private static boolean isSymbolReplacement(final PsiElement el,ReplacementContext context) throws IncorrectOperationException {
+    return getSymbolReplacementTarget(el, context) != null;
+  }
+
+  private static PsiElement handleSymbolReplacemenent(PsiElement replacement,
+                                                      final PsiElement el,
+                                                      ReplacementContext context) throws IncorrectOperationException {
+    PsiNamedElement nameElement = getSymbolReplacementTarget(el, context);
+    if (nameElement != null) {
+      PsiElement oldReplacement = replacement;
+      replacement = el.copy();
+      ((PsiNamedElement)replacement).setName(oldReplacement.getText());
+    }
+
     return replacement;
   }
 
-  private static void handleComments(final PsiElement el, final PsiElement replacement) throws IncorrectOperationException {
-    if (el.getLastChild() instanceof PsiComment) {
-      PsiElement firstElementAfterStatementEnd = el.getLastChild();
+  private static void handleComments(final PsiElement el, final PsiElement replacement, ReplacementContext context) throws IncorrectOperationException {
+    ReplacementInfoImpl replacementInfo = context.replacementInfo;
+    if (replacementInfo.elementToVariableNameMap == null) {
+      replacementInfo.elementToVariableNameMap = new HashMap<PsiElement, String>(1);
+      Map<String, MatchResult> variableMap = replacementInfo.variableMap;
+      if (variableMap != null) {
+        for(String name:variableMap.keySet()) {
+          fill(name,replacementInfo.variableMap.get(name),replacementInfo.elementToVariableNameMap);
+        }
+      }
+    }
+
+    PsiElement lastChild = el.getLastChild();
+    if (lastChild instanceof PsiComment &&
+        replacementInfo.elementToVariableNameMap.get(lastChild) == null) {
+      PsiElement firstElementAfterStatementEnd = lastChild;
       for(PsiElement curElement=firstElementAfterStatementEnd.getPrevSibling();curElement!=null;curElement = curElement.getPrevSibling()) {
         if (!(curElement instanceof PsiWhiteSpace) && !(curElement instanceof PsiComment)) break;
         firstElementAfterStatementEnd = curElement;
       }
-      replacement.addRangeAfter(firstElementAfterStatementEnd,el.getLastChild(),replacement.getLastChild());
+      replacement.addRangeAfter(firstElementAfterStatementEnd,lastChild,replacement.getLastChild());
     }
 
     final PsiElement firstChild = el.getFirstChild();
     if (firstChild instanceof PsiComment &&
-        !(firstChild instanceof PsiDocComment)
+        !(firstChild instanceof PsiDocComment) &&
+        replacementInfo.elementToVariableNameMap.get(firstChild) == null
         ) {
       PsiElement lastElementBeforeStatementStart = firstChild;
 
@@ -400,7 +432,18 @@ public class ReplacerImpl {
         if (!(curElement instanceof PsiWhiteSpace) && !(curElement instanceof PsiComment)) break;
         lastElementBeforeStatementStart = curElement;
       }
-      replacement.addRangeBefore(el.getFirstChild(),lastElementBeforeStatementStart,replacement.getFirstChild());
+      replacement.addRangeBefore(firstChild,lastElementBeforeStatementStart,replacement.getFirstChild());
+    }
+  }
+
+  private static void fill(final String name, final MatchResult matchResult, final Map<PsiElement, String> elementToVariableNameMap) {
+    boolean b = matchResult.isMultipleMatch() || matchResult.isScopeMatch();
+    if(matchResult.hasSons() && b) {
+      for(MatchResult r:matchResult.getAllSons()) {
+        fill(name, r, elementToVariableNameMap);
+      }
+    } else if (!b && matchResult.getMatchRef() != null)  {
+      elementToVariableNameMap.put(matchResult.getMatch(),name);
     }
   }
 
@@ -414,11 +457,11 @@ public class ReplacerImpl {
 
     private void handleNamedElement(final PsiNamedElement named) {
       String name = named.getName();
-      
+
       if (ReplacementBuilder.isTypedVariable(name)) {
         name = name.substring(1,name.length()-1);
       }
-      
+
       if (!namedElements.containsKey(name)) namedElements.put(name,named);
       named.acceptChildren(this);
     }
@@ -462,7 +505,7 @@ public class ReplacerImpl {
     collector.namedElements.clear();
 
     if (originalNamedElements.size() == 0 && replacedNamedElements.size() == 0) {
-      handleComments(el, replacement);
+      handleComments(el, replacement,context);
       return;
     }
     
@@ -477,13 +520,16 @@ public class ReplacerImpl {
     for(String name:originalNamedElements.keySet()) {
       PsiNamedElement originalNamedElement = originalNamedElements.get(name);
       PsiNamedElement replacementNamedElement = replacedNamedElements.get(name);
+      if (replacementNamedElement == null && originalNamedElements.size() == 1 && replacedNamedElements.size() == 1) {
+        replacementNamedElement = replacedNamedElements.entrySet().iterator().next().getValue();
+      }
       PsiDocComment comment = null;
 
       if (originalNamedElement instanceof PsiDocCommentOwner) {
         comment = ((PsiDocCommentOwner)originalNamedElement).getDocComment();
       }
 
-      handleComments(originalNamedElement, replacementNamedElement);
+      if (replacementNamedElement != null) handleComments(originalNamedElement, replacementNamedElement,context);
       
       if (comment!=null && replacementNamedElement instanceof PsiDocCommentOwner &&
           !(replacementNamedElement.getFirstChild() instanceof PsiDocComment)
@@ -550,7 +596,12 @@ public class ReplacerImpl {
       }
 
       if (fileType==StdFileTypes.JAVA) {
-        PsiElement[] statements = MatcherImplUtil.createTreeFromText(search, false, fileType, project);
+        PsiElement[] statements = MatcherImplUtil.createTreeFromText(
+          search,
+          MatcherImplUtil.TreeContext.Block,
+          fileType,
+          project
+        );
         boolean searchIsExpression = false;
 
         for (PsiElement statement : statements) {
@@ -560,7 +611,12 @@ public class ReplacerImpl {
           }
         }
 
-        PsiElement[] statements2 = MatcherImplUtil.createTreeFromText(replacement, false, fileType, project);
+        PsiElement[] statements2 = MatcherImplUtil.createTreeFromText(
+          replacement,
+          MatcherImplUtil.TreeContext.Block,
+          fileType,
+          project
+        );
         boolean replaceIsExpression = false;
 
         for (PsiElement statement : statements2) {
@@ -638,10 +694,27 @@ public class ReplacerImpl {
     SmartPointerManager manager = SmartPointerManager.getInstance(project);
 
     if (MatchResult.MULTI_LINE_MATCH.equals(result.getName())) {
-      for(Iterator i=result.getSons();i.hasNext();) {
-        final MatchResult r = (MatchResult)i.next();
+      for(Iterator<MatchResult> i=result.getSons();i.hasNext();) {
+        final MatchResult r = i.next();
+
         if (MatchResult.LINE_MATCH.equals(r.getName())) {
-          l.add( manager.createSmartPsiElementPointer(r.getMatchRef().getElement()) );
+          PsiElement element = r.getMatchRef().getElement();
+
+          if (element instanceof PsiDocComment) { // doc comment is not collapsed when created in block
+            if (i.hasNext()) {
+              MatchResult matchResult = i.next();
+
+              if (MatchResult.LINE_MATCH.equals(matchResult.getName()) &&
+                  matchResult.getMatch() instanceof PsiMember
+                 ) {
+                element = matchResult.getMatch();
+              } else {
+                l.add( manager.createSmartPsiElementPointer(element) );
+                element = matchResult.getMatch();
+              }
+            }
+          }
+          l.add( manager.createSmartPsiElementPointer(element) );
         }
       }
     } else {

@@ -166,7 +166,7 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
       if (context.findMatchingFiles) {
         RegExpPredicate predicate = getSimpleRegExpPredicate( handler );
         if (!IsNotSuitablePredicate(predicate, handler)) {
-          processTokenizedName(predicate.getRegExp(),true, PatternKind.COMMENT);
+          processTokenizedName(predicate.getRegExp(),true, OccurenceKind.COMMENT);
         }
       }
 
@@ -174,20 +174,17 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
     }
 
     if (!matches) {
-      Handler handler = processPatternStringWithFragments(text, PatternKind.COMMENT);
+      Handler handler = processPatternStringWithFragments(text, OccurenceKind.COMMENT);
       if (handler != null) comment.putUserData(CompiledPattern.HANDLER_KEY,handler);
-      if (context.findMatchingFiles) {
-        processTokenizedName(text,true, PatternKind.COMMENT);
-      }
     }
   }
 
   private static Pattern alternativePattern = Pattern.compile("^\\((.+)\\)$");
-  enum PatternKind {
+  enum OccurenceKind {
     LITERAL, COMMENT, CODE
   }
 
-  private void processTokenizedName(String name,boolean skipComments,PatternKind kind) {
+  private void processTokenizedName(String name,boolean skipComments,OccurenceKind kind) {
     WordTokenizer tokenizer = new WordTokenizer(name);
     for(Iterator<String> i=tokenizer.iterator();i.hasNext();) {
       String nextToken = i.next();
@@ -253,12 +250,12 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
   @NonNls private static final String SUBSTITUTION_PATTERN_STR = "\\b(__\\$_\\w+)\\b";
   static Pattern substitutionPattern = Pattern.compile(SUBSTITUTION_PATTERN_STR);
 
-  private @Nullable Handler processPatternStringWithFragments(String pattern, PatternKind kind) {
+  private @Nullable Handler processPatternStringWithFragments(String pattern, OccurenceKind kind) {
     String content;
 
-    if (kind == PatternKind.LITERAL) {
+    if (kind == OccurenceKind.LITERAL) {
       content = pattern.substring(1,pattern.length()-1);
-    } else if (kind == PatternKind.COMMENT) {
+    } else if (kind == OccurenceKind.COMMENT) {
       content = pattern;
     } else {
       return null;
@@ -316,7 +313,7 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
     }
 
     if (hasLiteralContent) {
-      if (kind == PatternKind.LITERAL) {
+      if (kind == OccurenceKind.LITERAL) {
         buf.insert(0, "\"");
         buf.append("\"");
       }
@@ -338,7 +335,7 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
     String value = expression.getText();
 
     if (value.length() > 2 && value.charAt(0)=='"' && value.charAt(value.length()-1)=='"') {
-      @Nullable Handler handler = processPatternStringWithFragments(value, PatternKind.LITERAL);
+      @Nullable Handler handler = processPatternStringWithFragments(value, OccurenceKind.LITERAL);
 
       if (handler!=null) {
         expression.putUserData( CompiledPattern.HANDLER_KEY,handler);
@@ -434,7 +431,7 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
 
       if(handler.isStrictSubtype() || handler.isSubtype()) {
         List classes = buildDescendants(refname,handler.isSubtype());
-        
+
         for (final Object aClass : classes) {
           final PsiClass clazz = (PsiClass)aClass;
           String text;
@@ -463,27 +460,27 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
   }
 
   private void addFilesToSearchForGivenWord(String refname, boolean endTransaction) {
-    addFilesToSearchForGivenWord(refname,endTransaction, PatternKind.CODE);
+    addFilesToSearchForGivenWord(refname,endTransaction, OccurenceKind.CODE);
   }
 
   private static Set<String> ourReservedWords = new HashSet<String>(
     Arrays.asList(MODIFIER_ANNOTATION_NAME,INSTANCE_MODIFIER_NAME,PACKAGE_LOCAL_MODIFIER_NAME)
   );
-  
-  
-  private void addFilesToSearchForGivenWord(String refname, boolean endTransaction,PatternKind kind) {
+
+
+  private void addFilesToSearchForGivenWord(String refname, boolean endTransaction,OccurenceKind kind) {
     if(ourReservedWords.contains(refname)) return; // skip our special annotations !!!
-      
+
     boolean addedSomething = false;
 
-    if (kind == PatternKind.CODE && context.scanned.get(refname)==null) {
+    if (kind == OccurenceKind.CODE && context.scanned.get(refname)==null) {
       context.helper.processAllFilesWithWord(refname,
                                              (GlobalSearchScope)context.options.getScope(),
                                              new MyFileProcessor(), true);
 
       context.scanned.put( refname, refname );
       addedSomething  = true;
-    } else if (kind == PatternKind.COMMENT && context.scannedComments.get(refname)==null) {
+    } else if (kind == OccurenceKind.COMMENT && context.scannedComments.get(refname)==null) {
       context.helper.processAllFilesWithWordInComments(refname,
                                                        (GlobalSearchScope)context.options.getScope(),
                                                        new MyFileProcessor()
@@ -491,7 +488,7 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
 
       context.scannedComments.put( refname, refname );
       addedSomething  = true;
-    } else if (kind == PatternKind.LITERAL && context.scannedLiterals.get(refname)==null) {
+    } else if (kind == OccurenceKind.LITERAL && context.scannedLiterals.get(refname)==null) {
       context.helper.processAllFilesWithWordInLiterals(refname,
                                                        (GlobalSearchScope)context.options.getScope(),
                                                        new MyFileProcessor());

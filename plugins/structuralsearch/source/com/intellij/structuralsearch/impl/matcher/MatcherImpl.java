@@ -338,7 +338,12 @@ public class MatcherImpl {
     CollectingMatchResultSink sink = new CollectingMatchResultSink();
 
     try {
-      PsiElement[] elements = MatcherImplUtil.createTreeFromText(source, filePattern, options.getFileType(), project);
+      PsiElement[] elements = MatcherImplUtil.createTreeFromText(
+        source,
+        filePattern ? MatcherImplUtil.TreeContext.File : MatcherImplUtil.TreeContext.Block, 
+        options.getFileType(),
+        project
+      );
 
       options.setSearchPattern(pattern);
       options.setScope( new LocalSearchScope(elements) );

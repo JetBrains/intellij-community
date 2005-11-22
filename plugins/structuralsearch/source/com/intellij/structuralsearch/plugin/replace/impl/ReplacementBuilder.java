@@ -1,16 +1,14 @@
 package com.intellij.structuralsearch.plugin.replace.impl;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.structuralsearch.MatchResult;
-import com.intellij.structuralsearch.MalformedPatternException;
-import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.JavaElementType;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.structuralsearch.MalformedPatternException;
+import com.intellij.structuralsearch.MatchResult;
+import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.*;
@@ -102,7 +100,12 @@ final class ReplacementBuilder extends PsiRecursiveElementVisitor {
     }
 
     try {
-      final PsiElement[] elements = MatcherImplUtil.createTreeFromText(_replacement, false, fileType, project);
+      final PsiElement[] elements = MatcherImplUtil.createTreeFromText(
+        _replacement,
+        MatcherImplUtil.TreeContext.Block,
+        fileType,
+        project
+      );
       if (elements.length > 0) {
         final PsiElement patternNode = elements[0].getParent();
         patternNode.accept(this);

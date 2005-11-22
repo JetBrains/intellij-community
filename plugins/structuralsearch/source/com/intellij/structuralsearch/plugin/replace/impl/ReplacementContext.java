@@ -29,7 +29,7 @@ class ReplacementContext {
       PsiCodeBlock search;
       search = (PsiCodeBlock)MatcherImplUtil.createTreeFromText(
         options.getMatchOptions().getSearchPattern(),
-        false,
+        MatcherImplUtil.TreeContext.Block, 
         options.getMatchOptions().getFileType(),
         project
       )[0].getParent();
