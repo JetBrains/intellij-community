@@ -3,6 +3,8 @@
  */
 package com.intellij.util.xml.reflect;
 
+import com.intellij.util.xml.DomElement;
+
 import java.lang.reflect.Method;
 
 /**
@@ -11,4 +13,5 @@ import java.lang.reflect.Method;
 public interface DomFixedChildDescription extends DomChildrenDescription {
   int getCount();
   Method getGetterMethod(int index);
+  void initConcreteClass(final DomElement parent, final Class<? extends DomElement> aClass);
 }

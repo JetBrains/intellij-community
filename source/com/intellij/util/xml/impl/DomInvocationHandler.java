@@ -42,6 +42,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   private final Map<Pair<String, Integer>, IndexedElementInvocationHandler> myFixedChildren = new HashMap<Pair<String, Integer>, IndexedElementInvocationHandler>();
   private final Map<String, AttributeChildInvocationHandler> myAttributeChildren = new HashMap<String, AttributeChildInvocationHandler>();
   private final GenericInfoImpl myGenericInfoImpl;
+  private final Map<String, Class> myFixedChildrenClasses = new HashMap<String, Class>();
   private boolean myInvalidated;
   private InvocationCache myInvocationCache;
 
@@ -351,7 +352,11 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
                                                              final String qname,
                                                              final Integer index) {
     Converter converter = getConverterForChild(method);
-    return new IndexedElementInvocationHandler(method.getGenericReturnType(), subTag, this, qname, index, converter);
+    Type type = method.getGenericReturnType();
+    if (myFixedChildrenClasses.containsKey(qname)) {
+      type = myFixedChildrenClasses.get(qname);
+    }
+    return new IndexedElementInvocationHandler(type, subTag, this, qname, index, converter);
   }
 
   private Converter getConverterForChild(final Method method) {
@@ -484,4 +489,11 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     }
   }
 
+  public void setFixedChildClass(final String tagName, final Class<? extends DomElement> aClass) {
+    synchronized (PsiLock.LOCK) {
+      assert !myInitialized;
+      myFixedChildrenClasses.put(tagName, aClass);
+    }
+  }
 }
+
