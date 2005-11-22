@@ -24,6 +24,7 @@ import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -32,19 +33,14 @@ import java.util.regex.PatternSyntaxException;
 
 public class MalformedRegexInspection extends ExpressionInspection{
     /** @noinspection StaticCollection*/
-    private static final Set<String> regexMethodNames = new HashSet<String>(5);
+    @NonNls private static final Set<String> regexMethodNames = new HashSet<String>(5);
 
     static
     {
-      //noinspection HardCodedStringLiteral
       regexMethodNames.add("compile");
-      //noinspection HardCodedStringLiteral
       regexMethodNames.add("matches");
-      //noinspection HardCodedStringLiteral
       regexMethodNames.add("replaceFirst");
-      //noinspection HardCodedStringLiteral
       regexMethodNames.add("replaceAll");
-      //noinspection HardCodedStringLiteral
       regexMethodNames.add("split");
     }
 
