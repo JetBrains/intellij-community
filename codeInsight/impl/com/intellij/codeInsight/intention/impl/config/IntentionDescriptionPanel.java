@@ -33,7 +33,9 @@ public class IntentionDescriptionPanel {
 
   public void reset(IntentionActionMetaData actionMetaData)  {
     try {
-      myDescriptionBrowser.setText(ResourceUtil.loadText(actionMetaData.getDescription()));
+      final URL url = actionMetaData.getDescription();
+      final String description = url != null ? ResourceUtil.loadText(url) : CodeInsightBundle.message("under.construction.string");
+      myDescriptionBrowser.setText(description);
       myDescriptionBrowser.setPreferredSize(new Dimension(20, 20));
 
       showUsages(myBeforePanel, myBeforeUsagePanels, actionMetaData.getExampleUsagesBefore());

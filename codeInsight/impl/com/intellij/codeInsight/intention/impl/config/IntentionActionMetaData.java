@@ -74,7 +74,9 @@ public final class IntentionActionMetaData {
   public URL getDescription() {
     if(myDescription == null){
       try {
-        myDescription = new URL(getDirURL().toExternalForm() + "/" + DESCRIPTION_FILE_NAME);
+        final URL dirURL = getDirURL();
+        if (dirURL == null) return null;
+        myDescription = new URL(dirURL.toExternalForm() + "/" + DESCRIPTION_FILE_NAME);
       }
       catch (MalformedURLException e) {
         LOG.error(e);
