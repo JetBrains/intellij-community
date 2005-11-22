@@ -14,10 +14,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.MethodSignature;
-import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
@@ -383,8 +380,8 @@ public class RenameUtil {
                                           final Map<? extends PsiElement, String> allRenames) {
     if (!(element instanceof PsiLocalVariable) && !(element instanceof PsiParameter)) return;
 
-    PsiClass containingClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
-    if (containingClass == null) return;
+    PsiClass toplevel = PsiUtil.getTopLevelClass(element);
+    if (toplevel == null) return;
 
 
     PsiElement scopeElement;
@@ -399,32 +396,20 @@ public class RenameUtil {
     final LocalSearchScope scope = new LocalSearchScope((scopeElement));
 
     scopeElement.accept(new PsiRecursiveElementVisitor() {
-      public void visitClass(PsiClass aClass) {
-        addLocalCollsionsInClass(aClass, newName, allRenames, scope, results, element);
+      public void visitReferenceExpression(PsiReferenceExpression expression) {
+        super.visitReferenceExpression(expression);
+        if (!expression.isQualified()) {
+          final PsiElement resolved = expression.resolve();
+          if (resolved instanceof PsiField) {
+            final PsiField field = (PsiField)resolved;
+            String fieldNewName = allRenames.containsKey(field) ? allRenames.get(field) : field.getName();
+            if (newName.equals(fieldNewName)) {
+              results.add(new LocalHidesFieldUsageInfo(expression, element));
+            }
+          }
+        }
       }
     });
-
-
-    addLocalCollsionsInClass(containingClass, newName, allRenames, scope, results, element);
-  }
-
-  private static void addLocalCollsionsInClass(final PsiClass aClass,
-                                               final String newName,
-                                               final Map<? extends PsiElement, String> allRenames,
-                                               final LocalSearchScope scope,
-                                               final List<UsageInfo> results, final PsiElement element) {
-    PsiField field = findFieldByName(aClass, newName, allRenames);
-    if (field == null) return;
-
-    Collection<PsiReference> collidingRefs = ReferencesSearch.search(field, scope).findAll();
-    for (PsiReference collidingRef : collidingRefs) {
-      PsiElement collidingRefElement = collidingRef.getElement();
-
-      if (collidingRefElement instanceof PsiReferenceExpression
-          && ((PsiReferenceExpression)collidingRefElement).getQualifierExpression() == null) {
-        results.add(new LocalHidesFieldUsageInfo(collidingRefElement, element));
-      }
-    }
   }
 
   private static PsiField findFieldByName(final PsiClass containingClass,
