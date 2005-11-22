@@ -17,14 +17,13 @@ package com.intellij.psi;
 
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NonNls;
 
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * Service for validating and parsing Java identifiers.
@@ -88,6 +87,7 @@ public abstract class PsiNameHelper {
           count--;
           lessPos = i;
           break;
+        case '@':
         case '.':
           if (count == 0) return new String(chars, i + 1, lessPos - (i + 1)).trim();
           break;

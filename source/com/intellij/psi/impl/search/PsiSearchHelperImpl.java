@@ -66,6 +66,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     OverridingMethodsSearch.INSTANCE.registerExecutor(new EjbOverridingMethodSearcher());
 
     MethodReferencesSearch.INSTANCE.registerExecutor(new MethodUsagesSearcher());
+
+    AnnotatedMembersSearch.INSTANCE.registerExecutor(new AnnotatedMembersSearcher());
   }
 
   @NotNull
