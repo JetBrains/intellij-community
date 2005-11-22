@@ -5,6 +5,7 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.*;
@@ -15,12 +16,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
+import java.lang.reflect.Array;
 import java.util.*;
 
 /**
  * @author peter
  */
 public class GenericInfoImpl implements DomGenericInfo {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.GenericInfoImpl");
   private final Class<? extends DomElement> myClass;
   private final Map<Method, Pair<String, Integer>> myFixedChildrenMethods = new HashMap<Method, Pair<String, Integer>>();
   private final Map<String, Integer> myFixedChildrenCounts = new HashMap<String, Integer>();
@@ -199,6 +202,27 @@ public class GenericInfoImpl implements DomGenericInfo {
   public final Invocation createInvocation(final XmlFile file, final Method method) {
     buildMethodMaps();
 
+    final CustomMethod annotation = method.getAnnotation(CustomMethod.class);
+    if (annotation != null) {
+      final Class aClass = annotation.value();
+      final String methodName = annotation.methodName() != null ? annotation.methodName() : method.getName();
+      final Class[] newParameterTypes = insertFirst(DomElement.class, (Class[])method.getParameterTypes());
+      try {
+        final Method staticMethod = aClass.getMethod(methodName, newParameterTypes);
+        final Class<?> returnType1 = method.getReturnType();
+        final Class<?> returnType2 = staticMethod.getReturnType();
+        assert returnType1.isAssignableFrom(returnType2) : returnType1 + " " + returnType2;
+        return new Invocation() {
+          public Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
+            return staticMethod.invoke(null, insertFirst(handler.getProxy(), args));
+          }
+        };
+      }
+      catch (NoSuchMethodException e) {
+        LOG.error(e);
+      }
+    }
+
     if (myAttributeChildrenMethods.containsKey(method)) {
       return new GetAttributeChildInvocation(method);
     }
@@ -221,6 +245,13 @@ public class GenericInfoImpl implements DomGenericInfo {
     }
 
     throw new UnsupportedOperationException("No implementation for method " + method.toString());
+  }
+
+  private <T> T[] insertFirst(final T element, final T[] parameterTypes) {
+    final List<T> types = new ArrayList<T>();
+    types.add(element);
+    types.addAll(Arrays.asList(parameterTypes));
+    return types.toArray((T[])Array.newInstance(parameterTypes.getClass().getComponentType(), types.size()));
   }
 
   private Function<Object[],Class> getTypeGetter(final Method method) {
