@@ -6,7 +6,9 @@ package com.intellij.util.xml.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.xml.ClassChooserManager;
 import com.intellij.util.xml.Converter;
+import com.intellij.util.xml.DomUtil;
 
 import java.lang.reflect.Type;
 
@@ -34,7 +36,12 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler{
   protected XmlTag setXmlTag(final XmlTag tag) throws IncorrectOperationException, IllegalAccessException, InstantiationException {
     final DomInvocationHandler parent = getParentHandler();
     parent.createFixedChildrenTags(getXmlElementName(), myIndex);
-    return (XmlTag)parent.getXmlTag().add(tag);
+    final XmlTag newTag = (XmlTag)parent.getXmlTag().add(tag);
+    if (getParentHandler().getFixedChildrenClass(tag.getName()) != null) {
+      final Type type = getParentHandler().getGenericInfo().getFixedChildDescription(getXmlElementName()).getType();
+      ClassChooserManager.getClassChooser(type).distinguishTag(newTag, DomUtil.getRawType(getDomElementType()));
+    }
+    return newTag;
   }
 
   public void undefine() {

@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.ClassChooserManager;
 
 import java.lang.reflect.Type;
 
@@ -37,7 +38,13 @@ public class AddChildInvocation implements Invocation{
     }
     final Class type = myClassGetter.fun(args);
     final DomElement domElement = handler.addChild(myTagName, type, myIndexGetter.fun(args));
-    handler.getManager().getClassChooser(myType).distinguishTag(domElement.getXmlTag(), DomUtil.getRawType(type));
+    final boolean b = handler.getManager().setChanging(true);
+    try {
+      ClassChooserManager.getClassChooser(myType).distinguishTag(domElement.getXmlTag(), DomUtil.getRawType(type));
+    }
+    finally {
+      handler.getManager().setChanging(b);
+    }
     return domElement;
   }
 }

@@ -354,9 +354,13 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     Converter converter = getConverterForChild(method);
     Type type = method.getGenericReturnType();
     if (myFixedChildrenClasses.containsKey(qname)) {
-      type = myFixedChildrenClasses.get(qname);
+      type = getFixedChildrenClass(qname);
     }
     return new IndexedElementInvocationHandler(type, subTag, this, qname, index, converter);
+  }
+
+  protected final Class getFixedChildrenClass(final String tagName) {
+    return myFixedChildrenClasses.get(tagName);
   }
 
   private Converter getConverterForChild(final Method method) {
