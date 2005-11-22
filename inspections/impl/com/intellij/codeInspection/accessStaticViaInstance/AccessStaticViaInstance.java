@@ -37,7 +37,7 @@ public class AccessStaticViaInstance extends LocalInspectionTool {
   }
 
   public String getDisplayName() {
-    return "Local static";
+    return InspectionsBundle.message("access.static.via.instance");
   }
 
   @NonNls

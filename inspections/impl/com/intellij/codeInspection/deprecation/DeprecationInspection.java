@@ -6,6 +6,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
@@ -16,7 +17,7 @@ import java.util.Set;
  * @author max
  */
 public class DeprecationInspection extends LocalInspectionTool {
-  public static final String SHORT_NAME = "Deprecation";
+  @NonNls public static final String SHORT_NAME = "Deprecation";
 
   @Nullable
   public ProblemDescriptor[] checkMethod(PsiMethod method, InspectionManager manager, boolean isOnTheFly) {

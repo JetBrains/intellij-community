@@ -15,19 +15,17 @@
  */
 package com.intellij.codeInspection.unneededThrows;
 
-import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInspection.*;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -47,7 +45,7 @@ public class UnusedThrowsDeclaration extends LocalInspectionTool {
   }
 
   public String getDisplayName() {
-    return "unused throws";
+    return InspectionsBundle.message("unused.throws.declaration");
   }
 
   @NonNls
