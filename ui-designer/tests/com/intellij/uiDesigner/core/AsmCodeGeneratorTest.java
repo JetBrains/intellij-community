@@ -10,9 +10,14 @@ import com.intellij.uiDesigner.lw.LwRootContainer;
 import junit.framework.TestCase;
 
 import javax.swing.*;
+import javax.swing.border.TitledBorder;
+import javax.swing.border.EtchedBorder;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.InputStream;
+import java.io.ByteArrayInputStream;
 import java.lang.reflect.Field;
+import java.nio.charset.Charset;
 
 /**
  * Created by IntelliJ IDEA.
@@ -113,9 +118,78 @@ public class AsmCodeGeneratorTest extends TestCase {
     assertEquals(1, gridLayout.getColumnCount());
   }
 
+  public void testGridConstraints() throws Exception {
+    JComponent rootComponent = getInstrumentedRootComponent("TestGridConstraints.form", "BindingTest.class");
+    assertEquals(1, rootComponent.getComponentCount());
+    GridLayoutManager gridLayout = (GridLayoutManager) rootComponent.getLayout();
+    final GridConstraints constraints = gridLayout.getConstraints(0);
+    assertEquals(1, constraints.getColSpan());
+    assertEquals(1, constraints.getRowSpan());
+  }
+
+  public void testIntProperty() throws Exception {
+    JComponent rootComponent = getInstrumentedRootComponent("TestIntProperty.form", "BindingTest.class");
+    assertEquals(1, rootComponent.getComponentCount());
+    JTextField textField = (JTextField) rootComponent.getComponent(0);
+    assertEquals(37, textField.getColumns());
+    assertEquals(false, textField.isEnabled());
+  }
+
+  public void testDoubleProperty() throws Exception {
+    JSplitPane splitPane = (JSplitPane)getInstrumentedRootComponent("TestDoubleProperty.form", "BindingTest.class");
+    assertEquals(0.1f, splitPane.getResizeWeight(), 0.001f);
+  }
+
+  public void testStringProperty() throws Exception {
+    JComponent rootComponent = getInstrumentedRootComponent("TestGridConstraints.form", "BindingTest.class");
+    JButton btn = (JButton) rootComponent.getComponent(0);
+    assertEquals("MyTestButton", btn.getText());
+  }
+
+  public void testSplitPane() throws Exception {
+    JSplitPane splitPane = (JSplitPane)getInstrumentedRootComponent("TestSplitPane.form", "BindingTest.class");
+    assertTrue(splitPane.getLeftComponent() instanceof JLabel);
+    assertTrue(splitPane.getRightComponent() instanceof JCheckBox);
+  }
+
+  public void testTabbedPane() throws Exception {
+    JTabbedPane tabbedPane = (JTabbedPane) getInstrumentedRootComponent("TestTabbedPane.form", "BindingTest.class");
+    assertEquals(2, tabbedPane.getTabCount());
+    assertEquals("First", tabbedPane.getTitleAt(0));
+    assertEquals("Test Value", tabbedPane.getTitleAt(1));
+    assertTrue(tabbedPane.getComponentAt(0) instanceof JLabel);
+    assertTrue(tabbedPane.getComponentAt(1) instanceof JButton);
+  }
+
+  public void testScrollPane() throws Exception {
+    JScrollPane scrollPane = (JScrollPane)getInstrumentedRootComponent("TestScrollPane.form", "BindingTest.class");
+    assertTrue(scrollPane.getViewport().getView() instanceof JList);
+  }
+
+  public void testBorder() throws Exception {
+    JPanel panel = (JPanel) getInstrumentedRootComponent("TestBorder.form", "BindingTest.class");
+    assertTrue(panel.getBorder() instanceof TitledBorder);
+    TitledBorder border = (TitledBorder) panel.getBorder();
+    assertEquals("BorderTitle", border.getTitle());
+    assertTrue(border.getBorder() instanceof EtchedBorder);
+  }
+
   private class MyClassLoader extends ClassLoader {
+    private byte[] myTestProperties = Charset.defaultCharset().encode("test=Test Value").array();
+
     public Class doDefineClass(String name, byte[] data) {
       return defineClass(name, data, 0, data.length);
+    }
+
+    public Class<?> loadClass(String name) throws ClassNotFoundException {
+      return super.loadClass(name);
+    }
+
+    public InputStream getResourceAsStream(String name) {
+      if (name.equals("TestProperties.properties")) {
+        return new ByteArrayInputStream(myTestProperties);
+      }
+      return super.getResourceAsStream(name);
     }
   }
 }

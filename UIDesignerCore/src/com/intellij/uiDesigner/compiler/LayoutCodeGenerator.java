@@ -17,8 +17,7 @@ package com.intellij.uiDesigner.compiler;
 
 import com.intellij.uiDesigner.lw.LwComponent;
 import org.objectweb.asm.commons.GeneratorAdapter;
-import org.objectweb.asm.commons.Method;
-import org.objectweb.asm.Type;
+import org.objectweb.asm.Opcodes;
 
 import java.awt.*;
 
@@ -31,15 +30,16 @@ import java.awt.*;
  */
 public abstract class LayoutCodeGenerator {
   public abstract void generateContainerLayout(final LwComponent lwComponent, final GeneratorAdapter generator, final int componentLocal);
+  public abstract void generateComponentLayout(final LwComponent lwComponent, final GeneratorAdapter generator, final int componentLocal,
+                                               final int parentLocal);
 
-  protected void newInsets(final GeneratorAdapter generator, final Insets insets) {
-    final Type insetsType = Type.getType(Insets.class);
-    generator.newInstance(insetsType);
-    generator.dup();
-    generator.push(insets.top);
-    generator.push(insets.left);
-    generator.push(insets.bottom);
-    generator.push(insets.right);
-    generator.invokeConstructor(insetsType, Method.getMethod("void <init>(int,int,int,int)"));
+  protected void newDimensionOrNull(final GeneratorAdapter generator, final Dimension dimension) {
+    if (dimension.width == -1 && dimension.height == -1) {
+      generator.visitInsn(Opcodes.ACONST_NULL);
+    }
+    else {
+      AsmCodeGenerator.pushPropValue(generator, "java.awt.Dimension", dimension);
+    }
   }
+
 }

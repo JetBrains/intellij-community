@@ -15,16 +15,24 @@
  */
 package com.intellij.uiDesigner.compiler;
 
-import com.intellij.uiDesigner.lw.LwComponent;
-import com.intellij.uiDesigner.lw.LwRootContainer;
+import com.intellij.uiDesigner.lw.*;
+import com.intellij.uiDesigner.shared.BorderType;
 import org.objectweb.asm.*;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.GeneratorAdapter;
 import org.objectweb.asm.commons.Method;
+import org.apache.bcel.generic.*;
+import org.apache.bcel.Constants;
 
+import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.border.TitledBorder;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.ResourceBundle;
+import java.awt.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -43,6 +51,19 @@ public class AsmCodeGenerator {
   private static final String CONSTRUCTOR_NAME = "<init>";
   private String myClassToBind;
   private byte[] myPatchedData;
+
+  private static Map myComponentLayoutCodeGenerators = new HashMap();
+  private static Map myPropertyCodeGenerators = new HashMap();
+
+  static {
+    myComponentLayoutCodeGenerators.put(LwSplitPane.class, new SplitPaneLayoutCodeGenerator());
+    myComponentLayoutCodeGenerators.put(LwTabbedPane.class, new TabbedPaneLayoutCodeGenerator());
+    myComponentLayoutCodeGenerators.put(LwScrollPane.class, new ScrollPaneLayoutCodeGenerator());
+
+    myPropertyCodeGenerators.put("java.lang.String", new StringPropertyCodeGenerator());
+    myPropertyCodeGenerators.put("java.awt.Dimension", new DimensionPropertyCodeGenerator());
+    myPropertyCodeGenerators.put("java.awt.Insets", new InsetsPropertyCodeGenerator());
+  }
 
   public AsmCodeGenerator(final LwRootContainer rootContainer,
                           final ClassLoader loader,
@@ -138,6 +159,14 @@ public class AsmCodeGenerator {
     return myPatchedData;
   }
 
+  static void pushPropValue(GeneratorAdapter generator, String propertyClass, Object value) {
+    PropertyCodeGenerator codeGen = (PropertyCodeGenerator)myPropertyCodeGenerators.get(propertyClass);
+    if (codeGen == null) {
+      throw new RuntimeException("Unknown property class " + propertyClass);
+    }
+    codeGen.generatePushValue(generator, value);
+  }
+
   private class FormClassVisitor extends ClassAdapter {
     private String myClassName;
     private String mySuperName;
@@ -190,7 +219,7 @@ public class AsmCodeGenerator {
 
     private void buildSetupMethod(final GeneratorAdapter generator) {
       try {
-        generateSetupCodeForComponent((LwComponent)myRootContainer.getComponent(0), generator);
+        generateSetupCodeForComponent((LwComponent)myRootContainer.getComponent(0), generator, -1);
       }
       catch (CodeGenerationException e) {
         myErrors.add(e.getMessage());
@@ -200,7 +229,8 @@ public class AsmCodeGenerator {
     }
 
     private void generateSetupCodeForComponent(final LwComponent lwComponent,
-                                               final GeneratorAdapter generator) throws CodeGenerationException {
+                                               final GeneratorAdapter generator,
+                                               final int parentLocal) throws CodeGenerationException {
       Class componentClass = FormByteCodeGenerator.getComponentClass(lwComponent, myLoader);
       final Type componentType = Type.getType(componentClass);
       final int componentLocal = generator.newLocal(componentType);
@@ -211,7 +241,70 @@ public class AsmCodeGenerator {
 
       generateFieldBinding(lwComponent, componentClass, generator, componentLocal);
 
-      myLayoutCodeGenerator.generateContainerLayout(lwComponent, generator, componentLocal);
+      getComponentCodeGenerator(lwComponent).generateContainerLayout(lwComponent, generator, componentLocal);
+
+      generateComponentProperties(lwComponent, componentType, generator, componentLocal);
+
+      // add component to parent
+      if (!(lwComponent.getParent() instanceof LwRootContainer)) {
+        getComponentCodeGenerator(lwComponent.getParent()).generateComponentLayout(lwComponent, generator, componentLocal, parentLocal);
+      }
+
+      if (lwComponent instanceof LwContainer) {
+        LwContainer container = (LwContainer) lwComponent;
+
+        generateBorder(container, generator, componentLocal);
+
+        for(int i=0; i<container.getComponentCount(); i++) {
+          generateSetupCodeForComponent((LwComponent) container.getComponent(i), generator, componentLocal);
+        }
+      }
+    }
+
+    private LayoutCodeGenerator getComponentCodeGenerator(final LwComponent lwComponent) {
+      LayoutCodeGenerator generator = (LayoutCodeGenerator) myComponentLayoutCodeGenerators.get(lwComponent.getClass());
+      if (generator != null) {
+        return generator;
+      }
+      return myLayoutCodeGenerator;
+    }
+
+    private void generateComponentProperties(final LwComponent lwComponent,
+                                             final Type componentType,
+                                             final GeneratorAdapter generator,
+                                             final int componentLocal) {
+      // introspected properties
+      final LwIntrospectedProperty[] introspectedProperties = lwComponent.getAssignedIntrospectedProperties();
+      for (int i = 0; i < introspectedProperties.length; i++) {
+        final LwIntrospectedProperty property = introspectedProperties[i];
+        generator.loadLocal(componentLocal);
+
+        Object value = lwComponent.getPropertyValue(property);
+        Method setterMethod;
+        final String propertyClass = property.getPropertyClassName();
+        if (propertyClass.equals(Integer.class.getName())) {
+          generator.push(((Integer) value).intValue());
+          setterMethod = Method.getMethod("void " + property.getWriteMethodName() + "(int)");
+        }
+        else if (propertyClass.equals(Boolean.class.getName())) {
+          generator.push(((Boolean) value).booleanValue());
+          setterMethod = Method.getMethod("void " + property.getWriteMethodName() + "(boolean)");
+        }
+        else if (propertyClass.equals(Double.class.getName())) {
+          generator.push(((Double) value).doubleValue());
+          setterMethod = Method.getMethod("void " + property.getWriteMethodName() + "(double)");
+        }
+        else {
+          PropertyCodeGenerator propGen = (PropertyCodeGenerator) myPropertyCodeGenerators.get(propertyClass);
+          if (propGen == null) {
+            continue;
+          }
+          propGen.generatePushValue(generator, value);
+          setterMethod = Method.getMethod("void " + property.getWriteMethodName() + "(" + propertyClass + ")");
+        }
+
+        generator.invokeVirtual(componentType, setterMethod);
+      }
     }
 
     private void generateFieldBinding(final LwComponent lwComponent,
@@ -251,6 +344,38 @@ public class AsmCodeGenerator {
         generator.loadThis();
         generator.loadLocal(componentLocal);
         generator.putField(Type.getType("L" + myClassName + ";"), binding, fieldType);
+      }
+    }
+
+    private void generateBorder(final LwContainer container, final GeneratorAdapter generator, final int componentLocal) {
+      final BorderType borderType = container.getBorderType();
+      final StringDescriptor borderTitle = container.getBorderTitle();
+      final String borderFactoryMethodName = borderType.getBorderFactoryMethodName();
+
+      final boolean borderNone = borderType.equals(BorderType.NONE);
+      if (!borderNone || borderTitle != null) {
+        // object to invoke setBorder
+        generator.loadLocal(componentLocal);
+
+        if (!borderNone) {
+          generator.invokeStatic(Type.getType(BorderFactory.class),
+                                 new Method(borderFactoryMethodName, Type.getType(Border.class), new Type[0]));
+          AsmCodeGenerator.pushPropValue(generator, "java.lang.String", borderTitle);
+          // use BorderFactory.createTitledBorder(Border, String)
+          generator.invokeStatic(Type.getType(BorderFactory.class),
+                                 Method.getMethod("javax.swing.border.TitledBorder createTitledBorder(javax.swing.border.Border,java.lang.String)"));
+        }
+        else {
+          // use BorderFactory.createTitledBorder(String)
+          AsmCodeGenerator.pushPropValue(generator, "java.lang.String", borderTitle);
+          // use BorderFactory.createTitledBorder(Border, String)
+          generator.invokeStatic(Type.getType(BorderFactory.class),
+                                 Method.getMethod("javax.swing.border.TitledBorder createTitledBorder(java.lang.String)"));
+        }
+
+        // set border
+        generator.invokeVirtual(Type.getType(JComponent.class),
+                                Method.getMethod("void setBorder(javax.swing.border.Border)"));
       }
     }
   }

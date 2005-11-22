@@ -16,6 +16,7 @@
 package com.intellij.uiDesigner.compiler;
 
 import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.lw.LwComponent;
 import com.intellij.uiDesigner.lw.LwContainer;
 import org.objectweb.asm.Type;
@@ -47,7 +48,7 @@ public class GridLayoutCodeGenerator extends LayoutCodeGenerator {
         generator.dup();
         generator.push(layout.getRowCount());
         generator.push(layout.getColumnCount());
-        newInsets(generator, layout.getMargin());
+        AsmCodeGenerator.pushPropValue(generator, "java.awt.Insets", layout.getMargin());
         generator.push(layout.getHGap());
         generator.push(layout.getVGap());
         generator.push(layout.isSameSizeHorizontally());
@@ -58,4 +59,37 @@ public class GridLayoutCodeGenerator extends LayoutCodeGenerator {
       }
     }
   }
+
+  public void generateComponentLayout(final LwComponent lwComponent,
+                                      final GeneratorAdapter generator,
+                                      final int componentLocal,
+                                      final int parentLocal) {
+    generator.loadLocal(parentLocal);
+    generator.loadLocal(componentLocal);
+    addNewGridConstraints(generator, lwComponent);
+    generator.invokeVirtual(Type.getType(Container.class), Method.getMethod("void add(java.awt.Component,java.lang.Object)"));
+  }
+
+  private void addNewGridConstraints(final GeneratorAdapter generator, final LwComponent lwComponent) {
+    final GridConstraints constraints = lwComponent.getConstraints();
+
+    final Type gridConstraintsType = Type.getType(GridConstraints.class);
+    generator.newInstance(gridConstraintsType);
+    generator.dup();
+    generator.push(constraints.getRow());
+    generator.push(constraints.getColumn());
+    generator.push(constraints.getRowSpan());
+    generator.push(constraints.getColSpan());
+    generator.push(constraints.getAnchor());
+    generator.push(constraints.getFill());
+    generator.push(constraints.getHSizePolicy());
+    generator.push(constraints.getVSizePolicy());
+    newDimensionOrNull(generator, constraints.myMinimumSize);
+    newDimensionOrNull(generator, constraints.myPreferredSize);
+    newDimensionOrNull(generator, constraints.myMaximumSize);
+
+    generator.invokeConstructor(gridConstraintsType,
+                                Method.getMethod("void <init> (int,int,int,int,int,int,int,int,java.awt.Dimension,java.awt.Dimension,java.awt.Dimension)"));
+  }
+
 }
