@@ -154,6 +154,10 @@ public class GenericInfoImpl implements DomGenericInfo {
   }
 
   private void processGetterMethod(final Method method) {
+    if (method.getAnnotation(PropertyAccessor.class) != null || method.getAnnotation(CustomMethod.class) != null) {
+      return;
+    }
+
     if (DomUtil.isTagValueGetter(method)) {
       myValueElement = true;
       return;
@@ -202,25 +206,14 @@ public class GenericInfoImpl implements DomGenericInfo {
   public final Invocation createInvocation(final XmlFile file, final Method method) {
     buildMethodMaps();
 
-    final CustomMethod annotation = method.getAnnotation(CustomMethod.class);
-    if (annotation != null) {
-      final Class aClass = annotation.value();
-      final String methodName = annotation.methodName() != null ? annotation.methodName() : method.getName();
-      final Class[] newParameterTypes = insertFirst(DomElement.class, (Class[])method.getParameterTypes());
-      try {
-        final Method staticMethod = aClass.getMethod(methodName, newParameterTypes);
-        final Class<?> returnType1 = method.getReturnType();
-        final Class<?> returnType2 = staticMethod.getReturnType();
-        assert returnType1.isAssignableFrom(returnType2) : returnType1 + " " + returnType2;
-        return new Invocation() {
-          public Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
-            return staticMethod.invoke(null, insertFirst(handler.getProxy(), args));
-          }
-        };
-      }
-      catch (NoSuchMethodException e) {
-        LOG.error(e);
-      }
+    final CustomMethod customMethod = method.getAnnotation(CustomMethod.class);
+    if (customMethod != null) {
+      return createCustomMethodInvocation(customMethod, method);
+    }
+
+    final PropertyAccessor accessor = method.getAnnotation(PropertyAccessor.class);
+    if (accessor != null) {
+      return createPropertyAccessorInvocation(accessor);
     }
 
     if (myAttributeChildrenMethods.containsKey(method)) {
@@ -245,6 +238,62 @@ public class GenericInfoImpl implements DomGenericInfo {
     }
 
     throw new UnsupportedOperationException("No implementation for method " + method.toString());
+  }
+
+  private Invocation createPropertyAccessorInvocation(final PropertyAccessor accessor) {
+    final String[] names = accessor.value();
+    final Method[] methods = new Method[names.length];
+    Class aClass = myClass;
+    for (int i = 0; i < names.length; i++) {
+      methods[i] = findGetter(aClass, names[i]);
+      aClass = methods[i].getReturnType();
+    }
+    return new Invocation() {
+      public Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
+        Object object = handler.getProxy();
+        for (Method method : methods) {
+          object = method.invoke(object);
+        }
+        return object;
+      }
+    };
+  }
+
+  private Invocation createCustomMethodInvocation(final CustomMethod customMethod, final Method method) {
+    final Class aClass = customMethod.value();
+    final String methodName = customMethod.methodName() != null ? customMethod.methodName() : method.getName();
+    final Class[] newParameterTypes = insertFirst(DomElement.class, (Class[])method.getParameterTypes());
+    try {
+      final Method staticMethod = aClass.getMethod(methodName, newParameterTypes);
+      final Class<?> returnType1 = method.getReturnType();
+      final Class<?> returnType2 = staticMethod.getReturnType();
+      assert returnType1.isAssignableFrom(returnType2) : returnType1 + " " + returnType2;
+      return new Invocation() {
+        public Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
+          return staticMethod.invoke(null, insertFirst(handler.getProxy(), args));
+        }
+      };
+    }
+    catch (NoSuchMethodException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private Method findGetter(Class aClass, String propertyName) {
+    final String capitalized = StringUtil.capitalize(propertyName);
+    try {
+      return aClass.getMethod("get" + capitalized);
+    }
+    catch (NoSuchMethodException e) {
+      final Method method;
+      try {
+        method = aClass.getMethod("is" + capitalized);
+        return DomUtil.canHaveIsPropertyGetterPrefix(method.getGenericReturnType()) ? method : null;
+      }
+      catch (NoSuchMethodException e1) {
+        return null;
+      }
+    }
   }
 
   private <T> T[] insertFirst(final T element, final T[] parameterTypes) {

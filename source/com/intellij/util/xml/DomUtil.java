@@ -139,9 +139,13 @@ public class DomUtil {
       return returnType != void.class;
     }
     if (name.startsWith("is")) {
-      return returnType.equals(boolean.class) || Boolean.class.equals(returnType)
-             || Boolean.class.equals(extractParameterClassFromGenericType(method.getGenericReturnType()));
+      return canHaveIsPropertyGetterPrefix(method.getGenericReturnType());
     }
     return false;
+  }
+
+  public static boolean canHaveIsPropertyGetterPrefix(final Type type) {
+    return boolean.class.equals(type) || Boolean.class.equals(type)
+           || Boolean.class.equals(extractParameterClassFromGenericType(type));
   }
 }
