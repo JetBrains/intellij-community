@@ -180,9 +180,13 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     return myTagName;
   }
 
+  public void accept(final DomElementVisitor visitor) {
+    DomUtil.tryAccept(visitor, DomUtil.getRawType(myType), getProxy());
+  }
+
   public final void acceptChildren(DomElementVisitor visitor) {
     for (DomInvocationHandler handler : getAllChildren()) {
-      visitor.visitDomElement(handler.getProxy());
+      handler.accept(visitor);
     }
   }
 

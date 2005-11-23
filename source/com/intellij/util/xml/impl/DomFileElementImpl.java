@@ -183,8 +183,12 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     return null;
   }
 
+  public void accept(final DomElementVisitor visitor) {
+    DomUtil.tryAccept(visitor, DomFileElement.class, this);
+  }
+
   public void acceptChildren(DomElementVisitor visitor) {
-    visitor.visitDomElement(getRootElement());
+    getRootHandler().accept(visitor);
   }
 
   public int getChildIndex(final DomElement child) {

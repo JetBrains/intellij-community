@@ -32,6 +32,8 @@ public interface DomElement {
 
   String getXmlElementName();
 
+  void accept(final DomElementVisitor visitor);
+
   void acceptChildren(DomElementVisitor visitor);
 
   DomManager getManager();

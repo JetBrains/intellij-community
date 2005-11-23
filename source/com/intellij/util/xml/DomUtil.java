@@ -148,4 +148,32 @@ public class DomUtil {
     return boolean.class.equals(type) || Boolean.class.equals(type)
            || Boolean.class.equals(extractParameterClassFromGenericType(type));
   }
+
+  public final static void tryAccept(final DomElementVisitor visitor, final Class aClass, DomElement proxy) {
+    try {
+      tryInvoke(visitor, "visit" + aClass.getSimpleName(), aClass, proxy);
+    }
+    catch (NoSuchMethodException e) {
+      try {
+        tryInvoke(visitor, "visit", aClass, proxy);
+      }
+      catch (NoSuchMethodException e1) {
+        for (Class aClass1 : aClass.getInterfaces()) {
+          tryAccept(visitor, aClass1, proxy);
+        }
+      }
+    }
+  }
+
+  private static void tryInvoke(final DomElementVisitor visitor, final String name, final Class aClass, DomElement proxy) throws NoSuchMethodException {
+    try {
+      visitor.getClass().getDeclaredMethod(name, aClass).invoke(visitor, proxy);
+    }
+    catch (IllegalAccessException e) {
+      LOG.error(e);
+    }
+    catch (InvocationTargetException e) {
+      LOG.error(e);
+    }
+  }
 }
