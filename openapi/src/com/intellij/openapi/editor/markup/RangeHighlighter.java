@@ -16,10 +16,10 @@
 package com.intellij.openapi.editor.markup;
 
 import com.intellij.openapi.editor.RangeMarker;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a range of text in the document which has specific markup (special text attributes,
@@ -186,17 +186,16 @@ public interface RangeHighlighter extends RangeMarker {
   /**
    * Sets the filter which can disable the highlighter in specific editor instances.
    *
-   * @param filter the filter controlling the highlighter availability, or null if the
+   * @param filter the filter controlling the highlighter availability, or MarkupEditorFilter.EMPTY if
    * highlighter is available in all editors.
    */
-  void setEditorFilter(@Nullable MarkupEditorFilter filter);
+  void setEditorFilter(@NotNull MarkupEditorFilter filter);
 
   /**
    * Gets the filter which can disable the highlighter in specific editor instances.
    *
-   * @return the filter controlling the highlighter availability, or null if the
-   * highlighter is available in all editors.
+   * @return the filter controlling the highlighter availability. Default availability is controlled by MarkupEditorFilter.EMPTY
    */
-  @Nullable
+  @NotNull
   MarkupEditorFilter getEditorFilter();
 }

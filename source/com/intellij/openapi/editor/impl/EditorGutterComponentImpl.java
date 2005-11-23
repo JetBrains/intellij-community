@@ -25,10 +25,11 @@ import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
+import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TIntProcedure;
@@ -278,10 +279,13 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   private void processRangeHighlighters(RangeHighlighterProcessor p, int startOffset, int endOffset) {
-    final MarkupModelImpl docMarkup = (MarkupModelImpl)myEditor.getDocument().getMarkupModel(myEditor.myProject);
-    Iterator docHighlighters = docMarkup == null ? null : docMarkup.getHighlighterList().getHighlighterIterator();
-    Iterator editorHighlighters = ((MarkupModelImpl)myEditor.getMarkupModel()).getHighlighterList()
-      .getHighlighterIterator();
+    final MarkupModelEx docMarkup = (MarkupModelEx)myEditor.getDocument().getMarkupModel(myEditor.myProject);
+    final HighlighterList docList = docMarkup.getHighlighterList();
+    Iterator docHighlighters = docList != null ? docList.getHighlighterIterator() : null;
+
+    final MarkupModelEx editorMarkup = (MarkupModelEx)myEditor.getMarkupModel();
+    final HighlighterList editorList = editorMarkup.getHighlighterList();
+    Iterator editorHighlighters = editorList != null ? editorList.getHighlighterIterator() : null;
 
     RangeHighlighterImpl lastDocHighlighter = null;
     RangeHighlighterImpl lastEditorHighlighter = null;
@@ -326,6 +330,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         lastEditorHighlighter = null;
       }
 
+      assert lowerHighlighter != null;
       if (!lowerHighlighter.isValid()) continue;
 
       int startLineIndex = lowerHighlighter.getDocument().getLineNumber(startOffset);
@@ -479,7 +484,9 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     Rectangle rect = getLineRendererRect(highlighter);
 
     if (rect != null) {
-      highlighter.getLineMarkerRenderer().paint(myEditor, g, rect);
+      final LineMarkerRenderer lineMarkerRenderer = highlighter.getLineMarkerRenderer();
+      assert lineMarkerRenderer != null;
+      lineMarkerRenderer.paint(myEditor, g, rect);
     }
   }
 
@@ -514,8 +521,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     int y = myEditor.logicalPositionToXY(new LogicalPosition(line, 0)).y;
 
     int x = getLineMarkerAreaOffset() + 1;
-    for (int i = 0; i < row.size(); i++) {
-      GutterIconRenderer r = row.get(i);
+    for (GutterIconRenderer r : row) {
       Icon icon = r.getIcon();
       if (r.getAlignment() == GutterIconRenderer.Alignment.LEFT) {
         processor.process(x, y + getTextAlignmentShift(icon), r);
@@ -532,8 +538,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     int leftSize = x - getLineMarkerAreaOffset();
 
     x = getLineMarkerAreaOffset() + myIconsAreaWidth;
-    for (int i = 0; i < row.size(); i++) {
-      GutterIconRenderer r = row.get(i);
+    for (GutterIconRenderer r : row) {
       if (r.getAlignment() == GutterIconRenderer.Alignment.RIGHT) {
         Icon icon = r.getIcon();
         x -= icon.getIconWidth();
@@ -547,8 +552,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     if (middleCount > 0) {
       middleSize -= GAP_BETWEEN_ICONS;
       x = getLineMarkerAreaOffset() + leftSize + (myIconsAreaWidth - leftSize - rightSize - middleSize) / 2;
-      for (int i = 0; i < row.size(); i++) {
-        GutterIconRenderer r = row.get(i);
+      for (GutterIconRenderer r : row) {
         if (r.getAlignment() == GutterIconRenderer.Alignment.CENTER) {
           Icon icon = r.getIcon();
           processor.process(x, y + getTextAlignmentShift(icon), r);
@@ -963,8 +967,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     int current = getAnnotationsAreaOffset();
     if (clickPoint.x < current) return null;
     for (int i = 0; i < myTextAnnotationGutterSizes.size(); i++) {
-      final int size = myTextAnnotationGutterSizes.get(i);
-      current += size;
+      current += myTextAnnotationGutterSizes.get(i);
       if (clickPoint.x <= current) return myTextAnnotationGutters.get(i);
     }
 
@@ -1051,8 +1054,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   public void closeAllAnnotations() {
-    for (int i = 0; i < myTextAnnotationGutters.size(); i++) {
-      TextAnnotationGutterProvider provider = myTextAnnotationGutters.get(i);
+    for (TextAnnotationGutterProvider provider : myTextAnnotationGutters) {
       provider.gutterClosed();
     }
 
@@ -1134,8 +1136,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   public void dispose() {
-    for (int j = 0; j < myTextAnnotationGutters.size(); j++) {
-      TextAnnotationGutterProvider gutterProvider = myTextAnnotationGutters.get(j);
+    for (TextAnnotationGutterProvider gutterProvider : myTextAnnotationGutters) {
       gutterProvider.gutterClosed();
     }
     myProviderToListener.clear();
@@ -1175,8 +1176,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
               public boolean isDataFlavorSupported(DataFlavor flavor) {
                 DataFlavor[] flavors = getTransferDataFlavors();
-                for (int i = 0; i < flavors.length; i++) {
-                  if (flavor.equals(flavors[i])) {
+                for (DataFlavor flavor1 : flavors) {
+                  if (flavor.equals(flavor1)) {
                     return true;
                   }
                 }
@@ -1188,7 +1189,9 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
               }
             }, dragSourceListener);
           }
-          catch (InvalidDnDOperationException idoe) {}
+          catch (InvalidDnDOperationException idoe) {
+            // OK, can't dnd
+          }
         }
 
       }
@@ -1227,7 +1230,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
 
     public void dragDropEnd(DragSourceDropEvent dsde) {
-      if(dsde.getDropSuccess() == false) return;
+      if(!dsde.getDropSuccess()) return;
 
        if(dsde.getDropAction() == DnDConstants.ACTION_MOVE) {
          myGutterDraggableObject.removeSelf();

@@ -29,7 +29,15 @@ public class PsiTreeUtil {
   private static final Key<Integer> INDEX = Key.create("PsiTreeUtil.copyElements.INDEX");
   private static final Key<Object> MARKER = Key.create("PsiTreeUtil.copyElements.INDEX");
 
-  public static boolean isAncestor(@NotNull PsiElement ancestor, @NotNull PsiElement element, boolean strict) {
+  /**
+   * Checks wheter one element in the psi tree is under another.
+   * @param ancestor parent candidate. <code>false</code> will be returned if ancestor is null.
+   * @param element child candidate
+   * @param strict whether return true if ancestor and parent are the same.
+   * @return true if element has ancestor as its parent somewhere in the hierarchy and false otherwise.
+   */
+  public static boolean isAncestor(@Nullable PsiElement ancestor, @NotNull PsiElement element, boolean strict) {
+    if (ancestor == null) return false;
     PsiElement parent = strict ? element.getParent() : element;
     while (true) {
       if (parent == null) return false;

@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.ex.HighlighterIterator;
+import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.markup.*;
 
 import java.awt.*;
@@ -60,19 +61,21 @@ public class IterationState {
     LOG.assertTrue(myStartOffset <= myEnd);
     myHighlighterIterator = editor.getHighlighter().createIterator(start);
 
-    HighlighterList viewHighlighterList = ((MarkupModelImpl)editor.getMarkupModel()).getHighlighterList();
-    int longestViewHighlighterLength = viewHighlighterList.getLongestHighlighterLength();
-    myViewHighlighters = viewHighlighterList.getSortedHighlighters();
+    HighlighterList editorList = ((MarkupModelEx)editor.getMarkupModel()).getHighlighterList();
 
-    final MarkupModelImpl docMarkup = ((MarkupModelImpl)editor.getDocument().getMarkupModel(editor.myProject));
-    // docMarkup can be null if editor is released or project is disposed.
-    myDocumentHighlighters = docMarkup != null
-                             ? docMarkup.getHighlighterList().getSortedHighlighters()
+    int longestViewHighlighterLength = editorList == null ? 0 : editorList.getLongestHighlighterLength();
+    myViewHighlighters = editorList == null ? null : editorList.getSortedHighlighters();
+
+    final MarkupModelEx docMarkup = ((MarkupModelEx)editor.getDocument().getMarkupModel(editor.myProject));
+
+    final HighlighterList docList = docMarkup.getHighlighterList();
+    myDocumentHighlighters = docList != null
+                             ? docList.getSortedHighlighters()
                              : new ArrayList<RangeHighlighterImpl>();
 
-    int longestDocHighlighterLength = docMarkup != null
-                             ? docMarkup.getHighlighterList().getLongestHighlighterLength()
-                             : 0;
+    int longestDocHighlighterLength = docList != null
+                                      ? docList.getLongestHighlighterLength()
+                                      : 0;
 
     hasSelection = useCaretAndSelection && editor.getSelectionModel().hasSelection();
     mySelectionStart = hasSelection ? editor.getSelectionModel().getSelectionStart() : -1;
@@ -216,8 +219,7 @@ public class IterationState {
   private int getGuardedBlockEnd(int start) {
     java.util.List<RangeMarker> blocks = myDocument.getGuardedBlocks();
     int min = myEnd;
-    for (int i = 0; i < blocks.size(); i++) {
-      RangeMarker block = blocks.get(i);
+    for (RangeMarker block : blocks) {
       if (block.getStartOffset() > start) {
         min = Math.min(min, block.getStartOffset());
       }
@@ -293,8 +295,8 @@ public class IterationState {
     }
     else if (myCurrentHighlighters.size() > 0) {
       ArrayList<RangeHighlighterImpl> copy = new ArrayList<RangeHighlighterImpl>(myCurrentHighlighters.size());
-      for (int i = 0; i < myCurrentHighlighters.size(); i++) {
-        highlighter = myCurrentHighlighters.get(i);
+      for (RangeHighlighterImpl current : myCurrentHighlighters) {
+        highlighter = current;
         if (highlighter.getAffectedAreaEndOffset() > myStartOffset) {
           copy.add(highlighter);
         }
@@ -331,8 +333,7 @@ public class IterationState {
   private int getSegmentHighlightersEnd() {
     int end = myEnd;
 
-    for (int i = 0; i < myCurrentHighlighters.size(); i++) {
-      RangeHighlighterImpl highlighter = myCurrentHighlighters.get(i);
+    for (RangeHighlighterImpl highlighter : myCurrentHighlighters) {
       if (highlighter.getAffectedAreaEndOffset() < end) {
         end = highlighter.getAffectedAreaEndOffset();
       }
@@ -380,8 +381,7 @@ public class IterationState {
 
     myCachedAttributesList.clear();
 
-    for (int i = 0; i < myCurrentHighlighters.size(); i++) {
-      RangeHighlighterImpl highlighter = myCurrentHighlighters.get(i);
+    for (RangeHighlighterImpl highlighter : myCurrentHighlighters) {
       if (selection != null && highlighter.getLayer() < HighlighterLayer.SELECTION) {
         myCachedAttributesList.add(selection);
         selection = null;
@@ -425,24 +425,22 @@ public class IterationState {
     EffectType effectType = EffectType.BOXED;
     int fontType = 0;
 
-    for (int i = 0; i < myCachedAttributesList.size(); i++) {
-      TextAttributes textAttributes = myCachedAttributesList.get(i);
-
+    for (TextAttributes attrs : myCachedAttributesList) {
       if (fore == null) {
-        fore = ifDiffers(textAttributes.getForegroundColor(), myDefaultForeground);
+        fore = ifDiffers(attrs.getForegroundColor(), myDefaultForeground);
       }
 
       if (back == null) {
-        back = ifDiffers(textAttributes.getBackgroundColor(), myDefaultBackground);
+        back = ifDiffers(attrs.getBackgroundColor(), myDefaultBackground);
       }
 
       if (fontType == 0) {
-        fontType = textAttributes.getFontType();
+        fontType = attrs.getFontType();
       }
 
       if (effect == null) {
-        effect = textAttributes.getEffectColor();
-        effectType = textAttributes.getEffectType();
+        effect = attrs.getEffectColor();
+        effectType = attrs.getEffectType();
       }
     }
 
@@ -494,15 +492,15 @@ public class IterationState {
       });
     }
 
-    for (int i = 0; i < myCurrentHighlighters.size(); i++) {
-      RangeHighlighterImpl highlighter = myCurrentHighlighters.get(i);
-
+    for (RangeHighlighterImpl highlighter : myCurrentHighlighters) {
       if (caret != null && highlighter.getLayer() < HighlighterLayer.CARET_ROW) {
         return caret;
       }
 
       if (highlighter.getTargetArea() != HighlighterTargetArea.LINES_IN_RANGE
-        || myDocument.getLineNumber(highlighter.getEndOffset()) < myDocument.getLineCount() - 1) continue;
+          || myDocument.getLineNumber(highlighter.getEndOffset()) < myDocument.getLineCount() - 1) {
+        continue;
+      }
 
       TextAttributes textAttributes = highlighter.getTextAttributes();
       if (textAttributes != null) {

@@ -108,9 +108,9 @@ public class UsageTypeGroupingRule implements UsageGroupingRule {
 
     PsiMethod psiMethod = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
     if (psiMethod != null) {
-      if (PsiTreeUtil.isAncestor(psiMethod.getReturnTypeElement(), element, true)) return UsageType.CLASS_METHOD_RETURN_TYPE;
+      final PsiTypeElement retType = psiMethod.getReturnTypeElement();
+      if (retType != null && PsiTreeUtil.isAncestor(retType, element, true)) return UsageType.CLASS_METHOD_RETURN_TYPE;
     }
-
 
     return null;
   }

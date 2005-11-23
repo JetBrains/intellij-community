@@ -8,10 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.ex.EditReadOnlyListener;
-import com.intellij.openapi.editor.ex.LineIterator;
-import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
+import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.project.Project;
@@ -20,12 +17,11 @@ import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.CoModifiableList;
 import com.intellij.util.containers.WeakList;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.*;
-
-import org.jetbrains.annotations.NotNull;
 
 public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.DocumentImpl");
@@ -43,7 +39,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private HashMap<Project, MarkupModel> myProjectToMarkupModelMap = new HashMap<Project, MarkupModel>();
   private PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
 
-  private MarkupModelImpl myMarkupModel;
+  private MarkupModelEx myMarkupModel;
   private DocumentListener[] myCachedDocumentListeners;
   private List<EditReadOnlyListener> myReadOnlyListeners = new ArrayList<EditReadOnlyListener>(1);
 
@@ -550,7 +546,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   public void removeMarkupModel(Project project) {
     MarkupModel model = myProjectToMarkupModelMap.remove(project);
     if (model != null) {
-      ((MarkupModelImpl)model).dispose();
+      ((MarkupModelEx)model).dispose();
     }
   }
 
@@ -575,7 +571,9 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       return myMarkupModel;
     }
 
-    if (DocumentMarkupModelManager.getInstance(project).isDisposed()) return null;
+    if (DocumentMarkupModelManager.getInstance(project).isDisposed()) {
+      return new EmptyMarkupModel(this);
+    }
 
     MarkupModel model = myProjectToMarkupModelMap.get(project);
     if (create && model == null) {

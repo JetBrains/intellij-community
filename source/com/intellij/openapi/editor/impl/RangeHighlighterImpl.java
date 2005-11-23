@@ -4,14 +4,16 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.util.Key;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
 /**
+ * Implementation of the markup element for the editor and document.
  * @author max
  */
 public class RangeHighlighterImpl implements RangeHighlighterEx {
-  private MarkupModelImpl myModel;
+  private MarkupModel myModel;
   private int myLayer;
   private HighlighterTargetArea myTargetArea;
   private TextAttributes myTextAttributes;
@@ -27,19 +29,19 @@ public class RangeHighlighterImpl implements RangeHighlighterEx {
   private MarkupEditorFilter myFilter = MarkupEditorFilter.EMPTY;
 
   RangeHighlighterImpl(MarkupModel model,
-                              int start,
-                              int end,
-                              int layer,
-                              HighlighterTargetArea target,
-                              TextAttributes textAttributes,
-                              boolean persistent) {
+                       int start,
+                       int end,
+                       int layer,
+                       HighlighterTargetArea target,
+                       TextAttributes textAttributes,
+                       boolean persistent) {
     myRangeMarker = persistent
                     ? new PersistentLineMarker(model.getDocument(), start)
                     : new RangeMarkerImpl(model.getDocument(), start, end);
     myTextAttributes = textAttributes;
     myTargetArea = target;
     myLayer = layer;
-    myModel = (MarkupModelImpl)model;
+    myModel = model;
     if (textAttributes != null) {
       myErrorStripeColor = textAttributes.getErrorStripeColor();
     }
@@ -137,6 +139,7 @@ public class RangeHighlighterImpl implements RangeHighlighterEx {
     myFilter = filter;
   }
 
+  @NotNull
   public MarkupEditorFilter getEditorFilter() {
     return myFilter;
   }
@@ -150,7 +153,9 @@ public class RangeHighlighterImpl implements RangeHighlighterEx {
   }
 
   private void fireChanged() {
-    myModel.fireSegmentHighlighterChanged(this);
+    if (myModel instanceof MarkupModelImpl) {
+      ((MarkupModelImpl)myModel).fireSegmentHighlighterChanged(this);
+    }
   }
 
   public int getStartOffset() {
@@ -169,6 +174,7 @@ public class RangeHighlighterImpl implements RangeHighlighterEx {
     return myRangeMarker.isValid();
   }
 
+  @NotNull
   public Document getDocument() {
     return myRangeMarker.getDocument();
   }
