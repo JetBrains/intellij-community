@@ -6,6 +6,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
@@ -22,7 +23,13 @@ public class CommonRefactoringUtil {
   public static String htmlEmphasize(String text) {
     @NonNls final String header = "<b><code>";
     @NonNls final String footer = "</code></b>";
-    return new StringBuilder().append(header).append(text).append(footer).toString();
+    StringBuilder builder = StringBuilderSpinAllocator.alloc();
+    try {
+      return builder.append(header).append(text).append(footer).toString();
+    }
+    finally {
+      StringBuilderSpinAllocator.dispose(builder);
+    }
   }
 
   public static boolean checkReadOnlyStatus(Project project, PsiElement element) {
@@ -33,7 +40,7 @@ public class CommonRefactoringUtil {
     return checkReadOnlyStatus(Collections.singleton(element), project, messagePrefix, false);
   }
 
-  public static boolean checkReadOnlyStatusRecursively (Project project, Collection<PsiElement> element) {
+  public static boolean checkReadOnlyStatusRecursively(Project project, Collection<PsiElement> element) {
     return checkReadOnlyStatus(element, project, RefactoringBundle.message("refactoring.cannot.be.performed"), true);
   }
 
@@ -41,7 +48,7 @@ public class CommonRefactoringUtil {
                                              Project project,
                                              final String messagePrefix,
                                              boolean recursively
-    ) {
+  ) {
     //Not writable, but could be checked out
     final List<VirtualFile> readonly = new ArrayList<VirtualFile>();
     //Those located in jars
