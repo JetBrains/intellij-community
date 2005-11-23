@@ -16,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
+import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 /**
@@ -256,19 +257,37 @@ public class GenericInfoImpl implements DomGenericInfo {
     final Method[] methods = new Method[names.length];
     Class aClass = myClass;
     for (int i = 0; i < names.length; i++) {
-      methods[i] = findGetter(aClass, names[i]);
-      aClass = methods[i].getReturnType();
+      final Method getter = findGetter(aClass, names[i]);
+      assert getter != null : "Couldn't find getter for property " + names[i] + " in class " + aClass;
+      methods[i] = getter;
+      aClass = getter.getReturnType();
+      if (List.class.isAssignableFrom(aClass)) {
+        aClass = DomUtil.getRawType(DomUtil.extractCollectionElementType(getter.getGenericReturnType()));
+      }
     }
+    final int lastElement = methods.length - 1;
     return new Invocation() {
-      public Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
-        Object object = handler.getProxy();
-        for (Method method : methods) {
-          object = method.invoke(object);
+      public final Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
+        return invoke(0, handler.getProxy());
+      }
+
+      private Object invoke(final int i, final Object object) throws IllegalAccessException, InvocationTargetException {
+        final Object o = methods[i].invoke(object);
+        if (i == lastElement) return o;
+
+        if (o instanceof List) {
+          List result = new ArrayList();
+          for (Object o1 : (List)o) {
+            result.add(invoke(i+1, o1));
+          }
+          return result;
         }
-        return object;
+        return invoke(i+1, o);
       }
     };
   }
+
+
 
   private Method findImplementationMethod(String methodName, Class[] paramTypes) {
     for (Class aClass : myImplementationClasses.keySet()) {
