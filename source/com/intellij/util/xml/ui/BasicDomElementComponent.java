@@ -2,6 +2,7 @@ package com.intellij.util.xml.ui;
 
 import com.intellij.j2ee.j2eeDom.xmlData.ReadOnlyDeploymentDescriptorModificationException;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.GenericDomValue;
@@ -100,6 +101,13 @@ public abstract class BasicDomElementComponent extends AbstractDomElementCompone
   private String convertFieldName(String propertyName, final DomChildrenDescription description) {
     if (propertyName.startsWith("my")) propertyName = propertyName.substring(2);
 
-    return description.getDomNameStrategy(getDomElement()).convertName(propertyName);
+    String convertedName = description.getDomNameStrategy(getDomElement()).convertName(propertyName);
+
+    if (description instanceof DomCollectionChildDescription) {
+      final String unpluralizedStr = StringUtil.unpluralize(convertedName);
+
+      if(unpluralizedStr != null) return unpluralizedStr;
+    }
+    return convertedName;
   }
 }
