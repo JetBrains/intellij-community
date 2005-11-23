@@ -161,10 +161,6 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     return attributeDescr == null ? descr.getAttributeDescriptor(getName()) : attributeDescr;
   }
 
-  public PsiElement getNavigationElement() {
-    return getNameElement();
-  }
-
   private class MyPsiReference implements PsiReference {
     private final XmlElementDescriptor myDescr;
 
