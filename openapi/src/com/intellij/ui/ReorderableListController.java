@@ -128,9 +128,9 @@ public abstract class ReorderableListController <T> {
 
     public abstract CustomActionDescription.BaseAction createAction(JComponent component);
 
-    <W> BaseAction createAction(final ActionBehaviour<W> behaviour) {
+    BaseAction createAction(final ActionBehaviour behaviour) {
       return myShowText ?
-             new CustomActionDescription<W>.ActionWithText(getActionName(), null, getActionIcon(), behaviour) :
+             new ActionWithText(this, getActionName(), null, getActionIcon(), behaviour) :
              new BaseAction(this, getActionName(), null, getActionIcon(), behaviour);
     }
 
@@ -164,12 +164,12 @@ public abstract class ReorderableListController <T> {
       }
     }
 
-    protected class ActionWithText extends BaseAction  {
-      public ActionWithText(final String text,
-                     final String description,
-                     final Icon icon,
-                     final ActionBehaviour<V> behaviour) {
-        super(CustomActionDescription.this, text, description, icon, behaviour);
+    private static class ActionWithText<V> extends BaseAction  {
+      public ActionWithText(final CustomActionDescription<V> customActionDescription, final String text,
+                            final String description,
+                            final Icon icon,
+                            final ActionBehaviour<V> behaviour) {
+        super(customActionDescription, text, description, icon, behaviour);
       }
 
       public boolean displayTextInToolbar() {
