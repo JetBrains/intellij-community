@@ -174,7 +174,8 @@ public final class Javac2 extends Javac{
     //NotNull instrumentation
     final File destdir = getDestdir();
     final File[] files = destdir.listFiles();
-    for (File file : files) {
+    for (int i = 0; i < files.length; i++) {
+      File file = files[i];
       final String name = file.getName();
       if (name.endsWith(".class")) {
         final String path = file.getPath();
