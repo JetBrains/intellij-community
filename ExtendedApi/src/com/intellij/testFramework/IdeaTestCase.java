@@ -1,6 +1,8 @@
 package com.intellij.testFramework;
 
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
@@ -124,6 +126,15 @@ import java.util.Map;
       public LocalInspectionTool[] getHighlightingLocalInspectionTools() {
         final Collection<LocalInspectionTool> tools = myAvailableTools.values();
         return tools.toArray(new LocalInspectionTool[tools.size()]);
+      }
+
+      public boolean isToolEnabled(HighlightDisplayKey key) {
+        return myAvailableTools.containsKey(key.toString());
+      }
+
+      public HighlightDisplayLevel getErrorLevel(HighlightDisplayKey key) {
+        final LocalInspectionTool localInspectionTool = myAvailableTools.get(key);
+        return localInspectionTool != null ? localInspectionTool.getDefaultLevel() : HighlightDisplayLevel.DO_NOT_SHOW;
       }
     });
 

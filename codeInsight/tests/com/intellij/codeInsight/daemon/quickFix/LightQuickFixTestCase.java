@@ -3,12 +3,10 @@ package com.intellij.codeInsight.daemon.quickFix;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.LocalInspectionsPass;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
-import com.intellij.mock.MockProgressInidicator;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -17,6 +15,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -26,8 +25,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.jetbrains.annotations.NonNls;
 
 public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase {
   protected boolean shouldBeAvailableAfterExecution() {
@@ -174,12 +171,4 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     settings.setInspectionProfile(localProfile);
   }
 
-   protected Collection<HighlightInfo> doHighlighting() {
-    final Collection<HighlightInfo> highlights1 = super.doHighlighting();
-    LocalInspectionsPass action2 = new LocalInspectionsPass(getProject(), getFile(), getEditor().getDocument(), 0, getFile().getTextLength());
-    action2.doCollectInformation(new MockProgressInidicator());
-    Collection<HighlightInfo> highlights2 = action2.getHighlights();
-    highlights1.addAll(highlights2);
-    return highlights1;
-  }
 }
