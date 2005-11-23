@@ -287,7 +287,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
               } else {
                 rangeForActionInStartTagName = startTagNameToken.getTextRange();
               }
-              
+
               QuickFixAction.registerQuickFixAction(highlightInfo, rangeForActionInStartTagName, intentionAction, null);
               QuickFixAction.registerQuickFixAction(highlightInfo, rangeForActionInStartTagName, intentionAction2, null);
             }
@@ -322,7 +322,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
       final XmlElementDescriptor parentDescriptor = parentTag.getDescriptor();
 
       if (parentDescriptor != null) {
-        elementDescriptor = parentDescriptor.getElementDescriptor(tag);
+        elementDescriptor = tag instanceof JspDirective ? tag.getDescriptor() : parentDescriptor.getElementDescriptor(tag);
       }
 
       if (parentDescriptor != null &&
@@ -709,7 +709,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     XmlFile xmlFile = XmlUtil.findXmlFile(xmlDoctype.getContainingFile(), uri);
     if (xmlFile == null) {
       final TextRange textRange = xmlDoctype.getDtdUrlElement().getTextRange();
-      
+
       reportURIProblem(textRange.getStartOffset() + 1,textRange.getEndOffset() - 1);
     }
   }
