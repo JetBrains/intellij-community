@@ -184,8 +184,7 @@ public final class MethodHierarchyTreeStructure extends HierarchyTreeStructure {
   }
 
   private boolean shouldHideClass(final PsiClass psiClass) {
-    final PsiMethod method = getMethod(psiClass, false);
-    if (method != null) {
+    if (getMethod(psiClass, false) != null) {
       return false;
     }
 

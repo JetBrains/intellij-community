@@ -60,14 +60,14 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     ReferencesSearch.INSTANCE.registerExecutor(new ConstructorReferencesSearcher());
 
     DirectClassInheritorsSearch.INSTANCE.registerExecutor(new JavaDirectInheritorsSearcher());
-    DirectClassInheritorsSearch.INSTANCE.registerExecutor(new EjbDirectInhertiorsSearcher());
 
     OverridingMethodsSearch.INSTANCE.registerExecutor(new JavaOverridingMethodsSearcher());
-    OverridingMethodsSearch.INSTANCE.registerExecutor(new EjbOverridingMethodSearcher());
 
     MethodReferencesSearch.INSTANCE.registerExecutor(new MethodUsagesSearcher());
 
     AnnotatedMembersSearch.INSTANCE.registerExecutor(new AnnotatedMembersSearcher());
+
+    SuperMethodsSearch.SUPER_METHODS_SEARCH_INSTANCE.registerExecutor(new MethodSuperSearcher());
   }
 
   @NotNull
