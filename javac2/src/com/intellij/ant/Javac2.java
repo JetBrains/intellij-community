@@ -15,10 +15,13 @@
  */
 package com.intellij.ant;
 
-import com.intellij.uiDesigner.compiler.*;
+import com.intellij.compiler.notNullVerification.NotNullVerifyingInstrumenter;
+import com.intellij.uiDesigner.compiler.AlienFormFileException;
+import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
+import com.intellij.uiDesigner.compiler.GridLayoutCodeGenerator;
+import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
-import com.intellij.compiler.notNullVerification.NotNullVerifyingInstrumenter;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.taskdefs.Javac;
@@ -30,7 +33,10 @@ import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.StringTokenizer;
 
 public final class Javac2 extends Javac{
   private ArrayList myFormFiles;
@@ -64,12 +70,11 @@ public final class Javac2 extends Javac{
     }
 
     classPathBuffer.append(File.pathSeparator);
-    //classPathBuffer.append(ClassPath.getClassPath());
+    classPathBuffer.append(getInternalClassPath());
 
     final String classPath = classPathBuffer.toString();
     log("classpath=" + classPath, Project.MSG_INFO);
 
-    //initBcel(new ClassPath(classPath));
     final ClassLoader loader;
     try {
       loader = createClassLoader(classPath);
@@ -185,6 +190,59 @@ public final class Javac2 extends Javac{
         catch (IOException e) {
           log("Failed to instrument @NotNull assertion: " + e.getMessage());
         }
+      }
+    }
+  }
+
+  private String getInternalClassPath() {
+    String class_path = System.getProperty("java.class.path");
+    String boot_path  = System.getProperty("sun.boot.class.path");
+    String ext_path   = System.getProperty("java.ext.dirs");
+
+    ArrayList list = new ArrayList();
+
+    getPathComponents(class_path, list);
+    getPathComponents(boot_path, list);
+
+    ArrayList dirs = new ArrayList();
+    getPathComponents(ext_path, dirs);
+
+    for(Iterator e = dirs.iterator(); e.hasNext(); ) {
+      File     ext_dir    = new File((String)e.next());
+      String[] extensions = ext_dir.list(new FilenameFilter() {
+        public boolean accept(File dir, String name) {
+          name = name.toLowerCase();
+          return name.endsWith(".zip") || name.endsWith(".jar");
+        }
+      });
+
+      if(extensions != null)
+        for(int i=0; i < extensions.length; i++)
+          list.add(ext_path + File.separatorChar + extensions[i]);
+    }
+
+    StringBuffer buf = new StringBuffer();
+
+    for(Iterator e = list.iterator(); e.hasNext(); ) {
+      buf.append((String)e.next());
+
+      if(e.hasNext())
+        buf.append(File.pathSeparatorChar);
+    }
+
+    return buf.toString().intern();
+  }
+
+  private static final void getPathComponents(String path, ArrayList list) {
+    if(path != null) {
+      StringTokenizer tok = new StringTokenizer(path, File.pathSeparator);
+
+      while(tok.hasMoreTokens()) {
+        String name = tok.nextToken();
+        File   file = new File(name);
+
+	if(file.exists())
+	  list.add(name);
       }
     }
   }
