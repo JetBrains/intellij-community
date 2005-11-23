@@ -136,6 +136,15 @@ public class IdeaLogger extends Logger {
     myLogger.info(message, t);
   }
 
+  public void warn(@NonNls String message, Throwable t) {
+    if (t == null) {
+      myLogger.warn(message);
+    }
+    else {
+      myLogger.warn(message, t);
+    }
+  }
+
   public static void setApplicationInfoProvider(ApplicationInfoProvider aProvider) {
     ourApplicationInfoProvider = aProvider;
   }

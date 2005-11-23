@@ -6,6 +6,7 @@ package com.intellij.testFramework;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.jetbrains.annotations.NonNls;
 
 public class TestLogger extends com.intellij.openapi.diagnostic.Logger {
   private org.apache.log4j.Logger myLogger;
@@ -36,6 +37,15 @@ public class TestLogger extends com.intellij.openapi.diagnostic.Logger {
 
   public void info(String message, Throwable t) {
     myLogger.info(message, t);
+  }
+
+  public void warn(@NonNls String message, Throwable t) {
+    if (t == null) {
+      myLogger.warn(message);
+    }
+    else {
+      myLogger.warn(message, t);
+    }
   }
 
   public void setLevel(Level level) {

@@ -59,11 +59,18 @@ public abstract class Logger {
     error("", t, ArrayUtil.EMPTY_STRING_ARRAY);
   }
 
+  public void warn(@NonNls String message) {
+    warn(message, null);
+  }
+
+
   public abstract void error(@NonNls String message, Throwable t, @NonNls String... details);
 
   public abstract void info(@NonNls String message);
 
   public abstract void info(@NonNls String message, Throwable t);
+
+  public abstract void warn(@NonNls String message, Throwable t);
 
   public void info(Throwable t) {
     info("", t);
