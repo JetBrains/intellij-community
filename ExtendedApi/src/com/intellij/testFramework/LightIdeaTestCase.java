@@ -208,7 +208,7 @@ import java.util.Map;
 
     final LocalInspectionTool[] tools = configureLocalInspectionTools();
     for (LocalInspectionTool tool : tools) {
-      myAvailableTools.put(tool.getShortName(), tool);
+      enableInspectionTool(tool);
     }
 
     DaemonCodeAnalyzerSettings.getInstance().setInspectionProfile(new InspectionProfileImpl("Configurable"){
@@ -218,12 +218,12 @@ import java.util.Map;
       }
 
       public boolean isToolEnabled(HighlightDisplayKey key) {
-        return myAvailableTools.containsKey(key.toString());
+        return myAvailableTools.containsKey(key.toString()) || isNonInspectionHighlighting(key);
       }
 
       public HighlightDisplayLevel getErrorLevel(HighlightDisplayKey key) {
         final LocalInspectionTool localInspectionTool = myAvailableTools.get(key);
-        return localInspectionTool != null ? localInspectionTool.getDefaultLevel() : HighlightDisplayLevel.DO_NOT_SHOW;
+        return localInspectionTool != null ? localInspectionTool.getDefaultLevel() : HighlightDisplayLevel.WARNING;
       }
 
     });
@@ -236,7 +236,12 @@ import java.util.Map;
 
 
   protected void enableInspectionTool(LocalInspectionTool tool){
-    myAvailableTools.put(tool.getShortName(), tool);
+    final String shortName = tool.getShortName();
+    final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
+    if (key == null){
+      HighlightDisplayKey.register(shortName, tool.getDisplayName(), tool.getID());
+    }
+    myAvailableTools.put(shortName, tool);
   }
 
   protected void disableInspectionTool(String shortName){

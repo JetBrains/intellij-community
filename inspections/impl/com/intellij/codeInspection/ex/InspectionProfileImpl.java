@@ -281,6 +281,12 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
     myDisplayLevelMap.put(HighlightDisplayKey.UNCHECKED_WARNING, new ToolState(HighlightDisplayLevel.WARNING));
   }
 
+  protected boolean isNonInspectionHighlighting(HighlightDisplayKey key){
+    return key == HighlightDisplayKey.UNUSED_IMPORT ||
+           key == HighlightDisplayKey.UNUSED_SYMBOL ||
+           key == HighlightDisplayKey.UNCHECKED_WARNING;                                          
+  }
+
   public String getName() {
     return myName;
   }
