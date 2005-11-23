@@ -23,7 +23,6 @@ public class StringPropertyCodeGenerator extends PropertyCodeGenerator {
   private final Method myGetBundleMethod = Method.getMethod("java.util.ResourceBundle getBundle(java.lang.String)");
   private final Method myGetStringMethod = Method.getMethod("java.lang.String getString(java.lang.String)");
 
-  @Override
   public boolean generateCustomSetValue(final LwComponent lwComponent,
                                         final Class componentClass,
                                         final LwIntrospectedProperty property,
