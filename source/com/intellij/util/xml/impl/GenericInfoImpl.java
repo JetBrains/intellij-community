@@ -337,27 +337,27 @@ public class GenericInfoImpl implements DomGenericInfo {
     return types.toArray((T[])Array.newInstance(parameterTypes.getClass().getComponentType(), types.size()));
   }
 
-  private Function<Object[],Class> getTypeGetter(final Method method) {
+  private Function<Object[],Type> getTypeGetter(final Method method) {
     final Class<?>[] parameterTypes = method.getParameterTypes();
     if (parameterTypes.length >= 1 && parameterTypes[0].equals(Class.class)) {
-      return new Function<Object[], Class>() {
-        public Class fun(final Object[] s) {
-          return (Class)s[0];
+      return new Function<Object[], Type>() {
+        public Type fun(final Object[] s) {
+          return (Type)s[0];
         }
       };
     }
 
     if (parameterTypes.length == 2 && parameterTypes[1].equals(Class.class)) {
-      return new Function<Object[], Class>() {
-        public Class fun(final Object[] s) {
-          return (Class)s[1];
+      return new Function<Object[], Type>() {
+        public Type fun(final Object[] s) {
+          return (Type)s[1];
         }
       };
     }
 
-    return new Function<Object[], Class>() {
-      public Class fun(final Object[] s) {
-        return method.getReturnType();
+    return new Function<Object[], Type>() {
+      public Type fun(final Object[] s) {
+        return method.getGenericReturnType();
       }
     };
   }

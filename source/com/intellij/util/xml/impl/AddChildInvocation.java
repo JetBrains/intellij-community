@@ -19,9 +19,9 @@ public class AddChildInvocation implements Invocation{
   private final String myTagName;
   private final Type myType;
   private final Function<Object[],Integer> myIndexGetter;
-  private final Function<Object[],Class> myClassGetter;
+  private final Function<Object[], Type> myClassGetter;
 
-  public AddChildInvocation(final Function<Object[], Class> classGetter,
+  public AddChildInvocation(final Function<Object[], Type> classGetter,
                             final Function<Object[], Integer> indexGetter,
                             final String tagName,
                             final Type type) {
@@ -36,7 +36,7 @@ public class AddChildInvocation implements Invocation{
     if (virtualFile != null && !virtualFile.isWritable()) {
       throw new ReadOnlyDeploymentDescriptorModificationException(virtualFile);
     }
-    final Class type = myClassGetter.fun(args);
+    final Type type = myClassGetter.fun(args);
     final DomElement domElement = handler.addChild(myTagName, type, myIndexGetter.fun(args));
     final boolean b = handler.getManager().setChanging(true);
     try {
