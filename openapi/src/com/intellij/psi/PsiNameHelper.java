@@ -80,17 +80,22 @@ public abstract class PsiNameHelper {
     for (int i = chars.length - 1; i >= 0; i--) {
       final char aChar = chars[i];
       switch (aChar) {
+        case ')':
         case '>':
           count++;
           break;
+
+        case '(':
         case '<':
           count--;
           lessPos = i;
           break;
+
         case '@':
         case '.':
           if (count == 0) return new String(chars, i + 1, lessPos - (i + 1)).trim();
           break;
+
         default:
           if (count == 0) {
             if (Character.isWhitespace(aChar)) {
