@@ -62,9 +62,13 @@ public class SSBasedInspection extends LocalInspectionTool {
     Project[] projects = ProjectManager.getInstance().getOpenProjects();
     if (projects.length == 0) {
       ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerAdapter() {
-        public void projectOpened(Project project) {
+        public void projectOpened(final Project project) {
           ProjectManager.getInstance().removeProjectManagerListener(this);
-          precompileConfigurations(project);
+          StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
+            public void run() {
+              precompileConfigurations(project);
+            }
+          });
         }
       });
     }
