@@ -19,6 +19,7 @@ import net.sf.cglib.proxy.InvocationHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.*;
@@ -34,6 +35,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   private final DomManagerImpl myManager;
   private final String myTagName;
   private final Converter myGenericConverter;
+  private Object myImplementation = null;
   private XmlTag myXmlTag;
 
   private XmlFile myFile;
@@ -60,6 +62,20 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     myGenericInfoImpl = manager.getGenericInfo(type);
     myInvocationCache = manager.getInvocationCache(type);
     myGenericConverter = genericConverter;
+  }
+
+  private final Constructor getImplementationConstructor(Class aClass) {
+    try {
+      return aClass.getConstructor();
+    }
+    catch (NoSuchMethodException e) {
+      try {
+        return aClass.getConstructor(DomElement.class);
+      }
+      catch (NoSuchMethodException e1) {
+        throw new RuntimeException(e1);
+      }
+    }
   }
 
   public DomFileElementImpl getRoot() {
@@ -209,6 +225,11 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     myProxy = proxy;
   }
 
+  public Object getImplementation() {
+    checkInitialized();
+    return myImplementation;
+  }
+
   @NotNull
   protected final XmlFile getFile() {
     if (myFile == null) {
@@ -318,6 +339,25 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
                 usedTags.add(subTag);
               }
             }
+          }
+        }
+
+        final Implementation annotation = DomUtil.getRawType(myType).getAnnotation(Implementation.class);
+        if (annotation != null) {
+          final Class aClass = annotation.value();
+          try {
+            myImplementation = aClass.getConstructor().newInstance();
+          }
+          catch (NoSuchMethodException e) {
+            try {
+              myImplementation = aClass.getConstructor(DomElement.class).newInstance(myProxy);
+            }
+            catch (Exception e1) {
+              throw new AssertionError(e1);
+            }
+          }
+          catch (Exception e) {
+            throw new AssertionError(e);
           }
         }
       }

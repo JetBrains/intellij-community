@@ -5,25 +5,23 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.util.Function;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.*;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
-import java.lang.reflect.Array;
 import java.util.*;
 
 /**
  * @author peter
  */
 public class GenericInfoImpl implements DomGenericInfo {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.GenericInfoImpl");
   private final Class<? extends DomElement> myClass;
   private final Map<Method, Pair<String, Integer>> myFixedChildrenMethods = new HashMap<Method, Pair<String, Integer>>();
   private final Map<String, Integer> myFixedChildrenCounts = new HashMap<String, Integer>();
@@ -33,7 +31,7 @@ public class GenericInfoImpl implements DomGenericInfo {
   private final Map<Method, String> myAttributeChildrenMethods = new HashMap<Method, String>();
   private boolean myValueElement;
   private boolean myInitialized;
-  private static final HashSet ADDER_PARAMETER_TYPES = new HashSet(Arrays.asList(Class.class, int.class));
+  private static final HashSet ADDER_PARAMETER_TYPES = new HashSet<Class>(Arrays.asList(Class.class, int.class));
 
 
   public GenericInfoImpl(final Class<? extends DomElement> aClass) {
@@ -261,9 +259,21 @@ public class GenericInfoImpl implements DomGenericInfo {
 
   private Invocation createCustomMethodInvocation(final CustomMethod customMethod, final Method method) {
     final Class aClass = customMethod.value();
-    final String methodName = customMethod.methodName() != null ? customMethod.methodName() : method.getName();
-    final Class[] newParameterTypes = insertFirst(DomElement.class, (Class[])method.getParameterTypes());
+    final String methodName = StringUtil.isNotEmpty(customMethod.methodName()) ? customMethod.methodName() : method.getName();
     try {
+      if (void.class.equals(aClass)) {
+        final Implementation implementation = myClass.getAnnotation(Implementation.class);
+        assert implementation != null;
+        final Method instanceMethod = implementation.value().getMethod(methodName, method.getParameterTypes());
+        return new Invocation() {
+          public Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
+            return instanceMethod.invoke(handler.getImplementation(), args);
+          }
+        };
+      }
+
+
+      final Class[] newParameterTypes = insertFirst(DomElement.class, (Class[])method.getParameterTypes());
       final Method staticMethod = aClass.getMethod(methodName, newParameterTypes);
       final Class<?> returnType1 = method.getReturnType();
       final Class<?> returnType2 = staticMethod.getReturnType();
@@ -275,7 +285,7 @@ public class GenericInfoImpl implements DomGenericInfo {
       };
     }
     catch (NoSuchMethodException e) {
-      throw new RuntimeException(e);
+      throw new AssertionError(e);
     }
   }
 

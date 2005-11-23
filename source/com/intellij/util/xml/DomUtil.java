@@ -53,7 +53,7 @@ public class DomUtil {
     return null;
   }
 
-  public static Class getRawType(Type type) {
+  public static Class<?> getRawType(Type type) {
     if (type instanceof Class) {
       return (Class)type;
     }
