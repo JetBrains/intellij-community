@@ -67,7 +67,7 @@ public final class Javac2 extends Javac{
     //classPathBuffer.append(ClassPath.getClassPath());
 
     final String classPath = classPathBuffer.toString();
-    log("classpath=" + classPath, Project.MSG_VERBOSE);
+    log("classpath=" + classPath, Project.MSG_INFO);
 
     //initBcel(new ClassPath(classPath));
     final ClassLoader loader;
