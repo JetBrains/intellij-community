@@ -151,7 +151,7 @@ public class AssignmentToForLoopParameterInspection
         private static boolean isInForStatementBody(PsiExpression expression,
                                                     PsiForStatement statement) {
             final PsiStatement body = statement.getBody();
-            return PsiTreeUtil.isAncestor(body, expression, true);
+            return body != null && PsiTreeUtil.isAncestor(body, expression, true);
         }
     }
 }
