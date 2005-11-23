@@ -1,7 +1,6 @@
 package com.intellij.compiler.notNullVerification;
 
 import gnu.trove.TIntArrayList;
-import org.jetbrains.annotations.NonNls;
 import org.objectweb.asm.*;
 
 /**
@@ -39,7 +38,7 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter {
 
       public AnnotationVisitor visitParameterAnnotation(
         final int parameter,
-        @NonNls final String anno,
+        final String anno,
         final boolean visible) {
         AnnotationVisitor av;
         av = mv.visitParameterAnnotation(parameter,
@@ -51,7 +50,7 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter {
         return av;
       }
 
-      public AnnotationVisitor visitAnnotation(@NonNls String anno,
+      public AnnotationVisitor visitAnnotation(String anno,
                                                boolean isRuntime) {
         final AnnotationVisitor av = mv.visitAnnotation(anno, isRuntime);
         if (anno.equals("Lorg/jetbrains/annotations/NotNull;")) {
@@ -85,8 +84,8 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter {
       }
 
       private void generateConditionalThrow(final String descr) {
-        @NonNls String c = "java/lang/AssertionError";
-        @NonNls String d = "(Ljava/lang/Object;)V";
+        String c = "java/lang/AssertionError";
+        String d = "(Ljava/lang/Object;)V";
         Label end = new Label();
         mv.visitJumpInsn(Opcodes.IFNONNULL, end);
 
