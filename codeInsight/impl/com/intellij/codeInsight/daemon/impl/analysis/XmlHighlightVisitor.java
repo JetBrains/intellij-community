@@ -485,7 +485,11 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
     String name = attribute.getName();
 
-    if (attributeDescriptor != null) {
+    if (attributeDescriptor == null) {
+      final String localizedMessage = XmlErrorMessages.message("attribute.is.not.allowed.here", name);
+      reportAttributeProblem(tag, attribute, localizedMessage);
+    }
+    else {
       checkDuplicateAttribute(tag, attribute);
 
       if (tag instanceof HtmlTag &&
