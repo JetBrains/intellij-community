@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
 <project name="InspectionGadgets" default="compile">
-    <taskdef name="javac2" classname="com.intellij.uiDesigner.ant.Javac2" classpathref="project.class.path"/>
+    <taskdef name="javac2" classname="com.intellij.ant.Javac2" classpathref="project.class.path"/>
     <property name="src.dir" value="src"/>
     <property name="idea.dir" value="c:/IntelliJ IDEA 5.0"/>
     <property name="idea.plugin.dir" value="C:\Documents and Settings\dgriffith\.IntelliJIdea50\config\plugins"/>
