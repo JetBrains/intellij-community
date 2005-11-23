@@ -13,7 +13,7 @@ import java.awt.*;
  * Time: 17:46:41
  * To change this template use File | Settings | File Templates.
  */
-public class InsetsPropertyCodeGenerator implements PropertyCodeGenerator {
+public class InsetsPropertyCodeGenerator extends PropertyCodeGenerator {
   private final Type myInsetsType = Type.getType(Insets.class);
 
   public void generatePushValue(final GeneratorAdapter generator, final Object value) {

@@ -174,8 +174,24 @@ public class AsmCodeGeneratorTest extends TestCase {
     assertTrue(border.getBorder() instanceof EtchedBorder);
   }
 
+  public void testMnemonic() throws Exception {
+    JPanel panel = (JPanel) getInstrumentedRootComponent("TestMnemonics.form", "BindingTest.class");
+    JLabel label = (JLabel) panel.getComponent(0);
+    assertEquals("Mnemonic", label.getText());
+    assertEquals('M', label.getDisplayedMnemonic());
+    assertEquals(3, label.getDisplayedMnemonicIndex());
+  }
+
+  public void testMnemonicFromProperty() throws Exception {
+    JPanel panel = (JPanel) getInstrumentedRootComponent("TestMnemonicsProperty.form", "BindingTest.class");
+    JLabel label = (JLabel) panel.getComponent(0);
+    assertEquals("Mnemonic", label.getText());
+    assertEquals('M', label.getDisplayedMnemonic());
+    assertEquals(3, label.getDisplayedMnemonicIndex());
+  }
+
   private class MyClassLoader extends ClassLoader {
-    private byte[] myTestProperties = Charset.defaultCharset().encode("test=Test Value").array();
+    private byte[] myTestProperties = Charset.defaultCharset().encode("test=Test Value\nmnemonic=Mne&monic").array();
 
     public Class doDefineClass(String name, byte[] data) {
       return defineClass(name, data, 0, data.length);

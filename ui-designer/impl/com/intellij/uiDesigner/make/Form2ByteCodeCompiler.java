@@ -20,12 +20,11 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.uiDesigner.GuiDesignerConfiguration;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.compiler.AlienFormFileException;
-import com.intellij.uiDesigner.compiler.CodeGenerator;
+import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
+import com.intellij.uiDesigner.compiler.GridLayoutCodeGenerator;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
-import com.intellij.util.BcelUtils;
-import org.apache.bcel.util.ClassPath;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInputStream;
@@ -282,47 +281,41 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
             }
           }
 
-          BcelUtils.initBcel(new ClassPath(classPath));
-          try {
-            final ArrayList<MyInstrumentationItem> list = module2itemsList.get(module);
+          final ArrayList<MyInstrumentationItem> list = module2itemsList.get(module);
 
-            for (int i = 0; i < list.size(); i++) {
-              context.getProgressIndicator().setFraction((double)(++formsProcessed) / ((double)items.length));
+          for (int i = 0; i < list.size(); i++) {
+            context.getProgressIndicator().setFraction((double)(++formsProcessed) / ((double)items.length));
 
-              final MyInstrumentationItem item = list.get(i);
+            final MyInstrumentationItem item = list.get(i);
 
-              final VirtualFile formFile = item.getFormFile();
+            final VirtualFile formFile = item.getFormFile();
 
-              final Document doc = FileDocumentManager.getInstance().getDocument(formFile);
-              final LwRootContainer rootContainer;
-              try {
-                rootContainer = Utils.getRootContainer(doc.getText(), new CompiledClassPropertiesProvider(loader));
-              }
-              catch (Exception e) {
-                addError(context, UIDesignerBundle.message("error.cannot.process.form.file", e), formFile);
-                continue;
-              }
-
-              final File classFile = VfsUtil.virtualToIoFile(item.getFile());
-              LOG.assertTrue(classFile.exists(), classFile.getPath());
-
-              final CodeGenerator codeGenerator = new CodeGenerator(rootContainer, classFile, loader);
-              codeGenerator.patch();
-              final String[] errors = codeGenerator.getErrors();
-              final String[] warnings = codeGenerator.getWarnings();
-              for (int j = 0; j < warnings.length; j++) {
-                addWarning(context, warnings[j], formFile);
-              }
-              for (int j = 0; j < errors.length; j++) {
-                addError(context, errors[j], formFile);
-              }
-              if (errors.length == 0) {
-                compiledItems.add(item);
-              }
+            final Document doc = FileDocumentManager.getInstance().getDocument(formFile);
+            final LwRootContainer rootContainer;
+            try {
+              rootContainer = Utils.getRootContainer(doc.getText(), new CompiledClassPropertiesProvider(loader));
             }
-          }
-          finally {
-            BcelUtils.disposeBcel();
+            catch (Exception e) {
+              addError(context, UIDesignerBundle.message("error.cannot.process.form.file", e), formFile);
+              continue;
+            }
+
+            final File classFile = VfsUtil.virtualToIoFile(item.getFile());
+            LOG.assertTrue(classFile.exists(), classFile.getPath());
+
+            final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, loader, new GridLayoutCodeGenerator());
+            codeGenerator.patchFile(classFile);
+            final String[] errors = codeGenerator.getErrors();
+            final String[] warnings = codeGenerator.getWarnings();
+            for (int j = 0; j < warnings.length; j++) {
+              addWarning(context, warnings[j], formFile);
+            }
+            for (int j = 0; j < errors.length; j++) {
+              addError(context, errors[j], formFile);
+            }
+            if (errors.length == 0) {
+              compiledItems.add(item);
+            }
           }
         }
       }

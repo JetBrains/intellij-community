@@ -28,7 +28,7 @@ import java.awt.*;
  * Time: 13:34:07
  * To change this template use File | Settings | File Templates.
  */
-public class RectanglePropertyCodeGenerator implements PropertyCodeGenerator {
+public class RectanglePropertyCodeGenerator extends PropertyCodeGenerator {
   private static Type myRectangleType = Type.getType(Rectangle.class);
 
   public void generatePushValue(final GeneratorAdapter generator, final Object value) {

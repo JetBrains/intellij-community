@@ -48,6 +48,7 @@ public class AsmCodeGenerator {
 
   private static Map myComponentLayoutCodeGenerators = new HashMap();
   private static Map myPropertyCodeGenerators = new HashMap();
+  public static final String SETUP_METHOD_NAME = "$$$setupUI$$$";
 
   static {
     myComponentLayoutCodeGenerators.put(LwSplitPane.class, new SplitPaneLayoutCodeGenerator());
@@ -123,7 +124,7 @@ public class AsmCodeGenerator {
       return null;
     }
 
-    if (FormByteCodeGenerator.containsNotEmptyPanelsWithXYLayout((LwComponent)myRootContainer.getComponent(0))) {
+    if (containsNotEmptyPanelsWithXYLayout((LwComponent)myRootContainer.getComponent(0))) {
       myErrors.add("There are non empty panels with XY layout. Please lay them out in a grid.");
       return null;
     }
@@ -162,6 +163,34 @@ public class AsmCodeGenerator {
     codeGen.generatePushValue(generator, value);
   }
 
+  static boolean containsNotEmptyPanelsWithXYLayout(final LwComponent component) {
+    if (!(component instanceof LwContainer)) {
+      return false;
+    }
+    final LwContainer container = (LwContainer)component;
+    if (container.getComponentCount() == 0){
+      return false;
+    }
+    if (container.isXY()){
+      return true;
+    }
+    for (int i=0; i < container.getComponentCount(); i++){
+      if (containsNotEmptyPanelsWithXYLayout((LwComponent)container.getComponent(i))) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  static Class getComponentClass(final LwComponent component, final ClassLoader classLoader) throws CodeGenerationException{
+    try {
+      return Class.forName(component.getComponentClassName(), false, classLoader);
+    }
+    catch (ClassNotFoundException e) {
+      throw new CodeGenerationException("Class not found: " + component.getComponentClassName());
+    }
+  }
+
   private class FormClassVisitor extends ClassAdapter {
     private String myClassName;
     private String mySuperName;
@@ -189,7 +218,7 @@ public class AsmCodeGenerator {
                                      final String signature,
                                      final String[] exceptions) {
 
-      if (name.equals(CodeGenerator.SETUP_METHOD_NAME)) {
+      if (name.equals(SETUP_METHOD_NAME)) {
         return null;
       }
       final MethodVisitor methodVisitor = super.visitMethod(access, name, desc, signature, exceptions);
@@ -206,7 +235,7 @@ public class AsmCodeGenerator {
     }
 
     public void visitEnd() {
-      Method method = Method.getMethod("void " + CodeGenerator.SETUP_METHOD_NAME + " ()");
+      Method method = Method.getMethod("void " + SETUP_METHOD_NAME + " ()");
       GeneratorAdapter adapter = new GeneratorAdapter(Opcodes.ACC_PRIVATE, method, null, null, cv);
       buildSetupMethod(adapter);
       super.visitEnd();
@@ -226,7 +255,7 @@ public class AsmCodeGenerator {
     private void generateSetupCodeForComponent(final LwComponent lwComponent,
                                                final GeneratorAdapter generator,
                                                final int parentLocal) throws CodeGenerationException {
-      Class componentClass = FormByteCodeGenerator.getComponentClass(lwComponent, myLoader);
+      Class componentClass = getComponentClass(lwComponent, myLoader);
       final Type componentType = Type.getType(componentClass);
       final int componentLocal = generator.newLocal(componentType);
       generator.newInstance(componentType);
@@ -267,38 +296,47 @@ public class AsmCodeGenerator {
     private void generateComponentProperties(final LwComponent lwComponent,
                                              final Type componentType,
                                              final GeneratorAdapter generator,
-                                             final int componentLocal) {
+                                             final int componentLocal) throws CodeGenerationException {
+      final Class componentClass = getComponentClass(lwComponent, myLoader);
       // introspected properties
       final LwIntrospectedProperty[] introspectedProperties = lwComponent.getAssignedIntrospectedProperties();
       for (int i = 0; i < introspectedProperties.length; i++) {
         final LwIntrospectedProperty property = introspectedProperties[i];
+        final String propertyClass = property.getPropertyClassName();
+        final PropertyCodeGenerator propGen = (PropertyCodeGenerator) myPropertyCodeGenerators.get(propertyClass);
+
+
+        if (propGen != null && propGen.generateCustomSetValue(lwComponent, componentClass, property,
+                                                              generator, componentLocal)) {
+          continue;
+        }
+
         generator.loadLocal(componentLocal);
 
         Object value = lwComponent.getPropertyValue(property);
-        Method setterMethod;
-        final String propertyClass = property.getPropertyClassName();
+        Type setterArgType;
         if (propertyClass.equals(Integer.class.getName())) {
           generator.push(((Integer) value).intValue());
-          setterMethod = Method.getMethod("void " + property.getWriteMethodName() + "(int)");
+          setterArgType = Type.INT_TYPE;
         }
         else if (propertyClass.equals(Boolean.class.getName())) {
           generator.push(((Boolean) value).booleanValue());
-          setterMethod = Method.getMethod("void " + property.getWriteMethodName() + "(boolean)");
+          setterArgType = Type.BOOLEAN_TYPE;
         }
         else if (propertyClass.equals(Double.class.getName())) {
           generator.push(((Double) value).doubleValue());
-          setterMethod = Method.getMethod("void " + property.getWriteMethodName() + "(double)");
+          setterArgType = Type.DOUBLE_TYPE;
         }
         else {
-          PropertyCodeGenerator propGen = (PropertyCodeGenerator) myPropertyCodeGenerators.get(propertyClass);
           if (propGen == null) {
             continue;
           }
           propGen.generatePushValue(generator, value);
-          setterMethod = Method.getMethod("void " + property.getWriteMethodName() + "(" + propertyClass + ")");
+          setterArgType = Type.getType("L" + propertyClass.replace('.', '/') + ";");
         }
 
-        generator.invokeVirtual(componentType, setterMethod);
+        generator.invokeVirtual(componentType, new Method(property.getWriteMethodName(),
+                                                          Type.VOID_TYPE, new Type[] { setterArgType } ));
       }
     }
 
@@ -395,7 +433,7 @@ public class AsmCodeGenerator {
         }
         if (owner.equals(mySuperName) && !callsSelfConstructor) {
           mv.visitVarInsn(Opcodes.ALOAD, 0);
-          mv.visitMethodInsn(Opcodes.INVOKESPECIAL, myClassName, CodeGenerator.SETUP_METHOD_NAME, "()V");
+          mv.visitMethodInsn(Opcodes.INVOKESPECIAL, myClassName, SETUP_METHOD_NAME, "()V");
         }
       }
     }

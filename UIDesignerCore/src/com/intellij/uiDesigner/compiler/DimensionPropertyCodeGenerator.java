@@ -13,7 +13,7 @@ import java.awt.*;
  * Time: 17:43:00
  * To change this template use File | Settings | File Templates.
  */
-public class DimensionPropertyCodeGenerator implements PropertyCodeGenerator {
+public class DimensionPropertyCodeGenerator extends PropertyCodeGenerator {
   private final Type myDimensionType = Type.getType(Dimension.class);
 
   public void generatePushValue(final GeneratorAdapter generator, final Object value) {

@@ -42,10 +42,8 @@ import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.make.CopyResourcesUtil;
 import com.intellij.uiDesigner.make.Form2ByteCodeCompiler;
-import com.intellij.util.BcelUtils;
 import com.intellij.util.PathsList;
 import com.intellij.util.containers.HashSet;
-import org.apache.bcel.util.ClassPath;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -135,140 +133,133 @@ public final class PreviewFormAction extends AnAction{
       tempPath;
     final ClassLoader loader = Form2ByteCodeCompiler.createClassLoader(classPath);
 
-    com.intellij.util.BcelUtils.initBcel(new ClassPath(classPath));
-
+    final Document doc = FileDocumentManager.getInstance().getDocument(formFile);
+    final LwRootContainer rootContainer;
     try {
-      final Document doc = FileDocumentManager.getInstance().getDocument(formFile);
-      final LwRootContainer rootContainer;
-      try {
-        rootContainer = Utils.getRootContainer(doc.getText(), new CompiledClassPropertiesProvider(loader));
-      }
-      catch (Exception e) {
-        Messages.showErrorDialog(
-          module.getProject(),
-          UIDesignerBundle.message("error.cannot.read.form", formFile.getPath().replace('/', File.separatorChar), e.getMessage()),
-          CommonBundle.getErrorTitle()
-        );
-        return;
-      }
-
-      if (rootContainer.getComponentCount() == 0) {
-        Messages.showErrorDialog(
-          module.getProject(),
-          UIDesignerBundle.message("error.cannot.preview.empty.form", formFile.getPath().replace('/', File.separatorChar)),
-          CommonBundle.getErrorTitle()
-        );
-        return;
-      }
-
-      // 1. Prepare form to preview. We have to change container so that it has only one binding.
-      rootContainer.setClassToBind(CLASS_TO_BIND_NAME);
-      FormEditingUtil.iterate(
-        rootContainer,
-        new FormEditingUtil.ComponentVisitor<LwComponent>() {
-          public boolean visit(final LwComponent iComponent) {
-            iComponent.setBinding(null);
-            return true;
-          }
-        }
+      rootContainer = Utils.getRootContainer(doc.getText(), new CompiledClassPropertiesProvider(loader));
+    }
+    catch (Exception e) {
+      Messages.showErrorDialog(
+        module.getProject(),
+        UIDesignerBundle.message("error.cannot.read.form", formFile.getPath().replace('/', File.separatorChar), e.getMessage()),
+        CommonBundle.getErrorTitle()
       );
-      if (rootContainer.getComponentCount() == 1) {
-        //noinspection HardCodedStringLiteral
-        ((LwComponent)rootContainer.getComponent(0)).setBinding("myComponent");
+      return;
+    }
+
+    if (rootContainer.getComponentCount() == 0) {
+      Messages.showErrorDialog(
+        module.getProject(),
+        UIDesignerBundle.message("error.cannot.preview.empty.form", formFile.getPath().replace('/', File.separatorChar)),
+        CommonBundle.getErrorTitle()
+      );
+      return;
+    }
+
+    // 1. Prepare form to preview. We have to change container so that it has only one binding.
+    rootContainer.setClassToBind(CLASS_TO_BIND_NAME);
+    FormEditingUtil.iterate(
+      rootContainer,
+      new FormEditingUtil.ComponentVisitor<LwComponent>() {
+        public boolean visit(final LwComponent iComponent) {
+          iComponent.setBinding(null);
+          return true;
+        }
       }
+    );
+    if (rootContainer.getComponentCount() == 1) {
+      //noinspection HardCodedStringLiteral
+      ((LwComponent)rootContainer.getComponent(0)).setBinding("myComponent");
+    }
 
-      // 2. Copy previewer class and all its superclasses into TEMP directory and instrument it.
-      try {
-        final File tempFile = CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_NAME, true);
-        CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_NAME + "$1", true);
-        //noinspection HardCodedStringLiteral
-        CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_NAME + "$MyWindowListener", true);
-        //noinspection HardCodedStringLiteral
-        CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_NAME + "$MyExitAction", true);
-        //noinspection HardCodedStringLiteral
-        CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_NAME + "$MyPackAction", true);
-        //noinspection HardCodedStringLiteral
-        CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_NAME + "$MySetLafAction", true);
+    // 2. Copy previewer class and all its superclasses into TEMP directory and instrument it.
+    try {
+      final File tempFile = CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_NAME, true);
+      CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_NAME + "$1", true);
+      //noinspection HardCodedStringLiteral
+      CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_NAME + "$MyWindowListener", true);
+      //noinspection HardCodedStringLiteral
+      CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_NAME + "$MyExitAction", true);
+      //noinspection HardCodedStringLiteral
+      CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_NAME + "$MyPackAction", true);
+      //noinspection HardCodedStringLiteral
+      CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_NAME + "$MySetLafAction", true);
 
-        Locale locale = Locale.getDefault();
-        if (locale.getCountry().length() > 0 && locale.getLanguage().length() > 0) {
-          CopyResourcesUtil.copyProperties(tempPath, RUNTIME_BUNDLE_PREFIX + locale.getLanguage() +
-                                                     "_" + locale.getCountry() + RUNTIME_BUNDLE_EXTENSION);
-        }
-        if (locale.getLanguage().length() > 0) {
-          CopyResourcesUtil.copyProperties(tempPath, RUNTIME_BUNDLE_PREFIX + locale.getLanguage() + RUNTIME_BUNDLE_EXTENSION);
-        }
+      Locale locale = Locale.getDefault();
+      if (locale.getCountry().length() > 0 && locale.getLanguage().length() > 0) {
+        CopyResourcesUtil.copyProperties(tempPath, RUNTIME_BUNDLE_PREFIX + locale.getLanguage() +
+                                                   "_" + locale.getCountry() + RUNTIME_BUNDLE_EXTENSION);
+      }
+      if (locale.getLanguage().length() > 0) {
         CopyResourcesUtil.copyProperties(tempPath, RUNTIME_BUNDLE_PREFIX + locale.getLanguage() + RUNTIME_BUNDLE_EXTENSION);
-
-        final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, loader, new GridLayoutCodeGenerator());
-        codeGenerator.patchFile(tempFile);
-        /*
-        final CodeGenerator codeGenerator = new CodeGenerator(rootContainer, tempFile, loader);
-        codeGenerator.patch();
-        */
-        final String[] errors = codeGenerator.getErrors();
-        if(errors.length != 0){
-          Messages.showErrorDialog(
-            module.getProject(),
-            UIDesignerBundle.message("error.cannot.preview.form", formFile.getPath().replace('/', File.separatorChar), errors[0]),
-            CommonBundle.getErrorTitle()
-          );
-          return;
-        }
       }
-      catch (Exception e) {
+      CopyResourcesUtil.copyProperties(tempPath, RUNTIME_BUNDLE_PREFIX + locale.getLanguage() + RUNTIME_BUNDLE_EXTENSION);
+
+      final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, loader, new GridLayoutCodeGenerator());
+      codeGenerator.patchFile(tempFile);
+      /*
+      final CodeGenerator codeGenerator = new CodeGenerator(rootContainer, tempFile, loader);
+      codeGenerator.patch();
+      */
+      final String[] errors = codeGenerator.getErrors();
+      if(errors.length != 0){
         Messages.showErrorDialog(
           module.getProject(),
-          UIDesignerBundle.message("error.cannot.preview.form", formFile.getPath().replace('/', File.separatorChar),
-                               (e.getMessage() != null ? e.getMessage() : e.toString())),
+          UIDesignerBundle.message("error.cannot.preview.form", formFile.getPath().replace('/', File.separatorChar), errors[0]),
           CommonBundle.getErrorTitle()
         );
         return;
-      }
-
-      // 2.5. Copy up-to-date properties files to the output directory.
-      final HashSet<String> bundleSet = new HashSet<String>();
-      FormEditingUtil.iterateStringDescriptors(
-        rootContainer,
-        new FormEditingUtil.StringDescriptorVisitor<LwComponent>() {
-          public boolean visit(final LwComponent component, final StringDescriptor descriptor) {
-            if (descriptor.getBundleName() != null) {
-              bundleSet.add(descriptor.getBundleName());
-            }
-            return true;
-          }
-        });
-
-      if (bundleSet.size() > 0) {
-        HashSet<VirtualFile> virtualFiles = new HashSet<VirtualFile>();
-        HashSet<Module> modules = new HashSet<Module>();
-        for(String bundleName: bundleSet) {
-          PropertiesFile basePropFile = PropertiesUtil.getPropertiesFile(bundleName, module);
-          if (basePropFile != null) {
-            ResourceBundle resBundle = basePropFile.getResourceBundle();
-            for(PropertiesFile propFile: resBundle.getPropertiesFiles(module.getProject())) {
-              virtualFiles.add(propFile.getVirtualFile());
-              modules.add(ModuleUtil.getModuleForFile(module.getProject(), propFile.getVirtualFile()));
-            }
-          }
-        }
-        FileSetCompileScope scope = new FileSetCompileScope(virtualFiles.toArray(new VirtualFile[] {}),
-                                                            modules.toArray(new Module[] {}));
-
-        CompilerManager.getInstance(module.getProject()).make(scope, new CompileStatusNotification() {
-          public void finished(boolean aborted, int errors, int warnings) {
-            if (!aborted && errors == 0) {
-              runPreviewProcess(tempPath, sources, module, formFile, dataContext);
-            }
-          }
-        });
-      }
-      else {
-        runPreviewProcess(tempPath, sources, module, formFile, dataContext);
       }
     }
-    finally {
-      BcelUtils.disposeBcel();
+    catch (Exception e) {
+      Messages.showErrorDialog(
+        module.getProject(),
+        UIDesignerBundle.message("error.cannot.preview.form", formFile.getPath().replace('/', File.separatorChar),
+                             (e.getMessage() != null ? e.getMessage() : e.toString())),
+        CommonBundle.getErrorTitle()
+      );
+      return;
+    }
+
+    // 2.5. Copy up-to-date properties files to the output directory.
+    final HashSet<String> bundleSet = new HashSet<String>();
+    FormEditingUtil.iterateStringDescriptors(
+      rootContainer,
+      new FormEditingUtil.StringDescriptorVisitor<LwComponent>() {
+        public boolean visit(final LwComponent component, final StringDescriptor descriptor) {
+          if (descriptor.getBundleName() != null) {
+            bundleSet.add(descriptor.getBundleName());
+          }
+          return true;
+        }
+      });
+
+    if (bundleSet.size() > 0) {
+      HashSet<VirtualFile> virtualFiles = new HashSet<VirtualFile>();
+      HashSet<Module> modules = new HashSet<Module>();
+      for(String bundleName: bundleSet) {
+        PropertiesFile basePropFile = PropertiesUtil.getPropertiesFile(bundleName, module);
+        if (basePropFile != null) {
+          ResourceBundle resBundle = basePropFile.getResourceBundle();
+          for(PropertiesFile propFile: resBundle.getPropertiesFiles(module.getProject())) {
+            virtualFiles.add(propFile.getVirtualFile());
+            modules.add(ModuleUtil.getModuleForFile(module.getProject(), propFile.getVirtualFile()));
+          }
+        }
+      }
+      FileSetCompileScope scope = new FileSetCompileScope(virtualFiles.toArray(new VirtualFile[] {}),
+                                                          modules.toArray(new Module[] {}));
+
+      CompilerManager.getInstance(module.getProject()).make(scope, new CompileStatusNotification() {
+        public void finished(boolean aborted, int errors, int warnings) {
+          if (!aborted && errors == 0) {
+            runPreviewProcess(tempPath, sources, module, formFile, dataContext);
+          }
+        }
+      });
+    }
+    else {
+      runPreviewProcess(tempPath, sources, module, formFile, dataContext);
     }
   }
 
