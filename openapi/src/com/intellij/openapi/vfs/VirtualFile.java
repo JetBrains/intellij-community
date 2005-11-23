@@ -393,14 +393,12 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
     final Reader reader;
 
     FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(this);
-    if (fileType != null) {
-      String charsetName = fileType.getCharset(this);
-      if (charsetName != null) {
-        myCharset = Charset.forName(charsetName);
-        reader = new BufferedReader(new InputStreamReader(stream, myCharset));
-        skipUTF8BOM(reader);
-        return reader;
-      }
+    String charsetName = fileType.getCharset(this);
+    if (charsetName != null) {
+      myCharset = Charset.forName(charsetName);
+      reader = new BufferedReader(new InputStreamReader(stream, myCharset));
+      skipUTF8BOM(reader);
+      return reader;
     }
 
     CharsetSettings settings = CharsetSettings.getInstance();
@@ -432,7 +430,7 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
   private void skipUTF8BOM(final Reader reader) throws IOException {
     if (Patches.SUN_BUG_ID_4508058) {
       //noinspection HardCodedStringLiteral
-      if (myCharset != null && myCharset.name().indexOf("UTF-8") >= 0) {
+      if (myCharset != null && myCharset.name().contains("UTF-8")) {
         reader.mark(1);
         char c = (char)reader.read();
         if (c == '\uFEFF') {

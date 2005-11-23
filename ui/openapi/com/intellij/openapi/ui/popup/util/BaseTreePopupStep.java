@@ -55,7 +55,7 @@ public class BaseTreePopupStep<T> extends BaseStep<T> implements TreePopupStep<T
   public void canceled() {
   }
 
-  public String getTextFor(Object value) {
+  public String getTextFor(T value) {
     return value.toString();
   }
 

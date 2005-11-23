@@ -2,18 +2,21 @@ package com.intellij.compiler.impl.javaCompiler;
 
 import com.intellij.compiler.OutputParser;
 import com.intellij.openapi.compiler.CompileContext;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
 interface BackendCompiler {
-  OutputParser createOutputParser();
-
-  String[] createStartupCommand(ModuleChunk chunk, CompileContext context, String outputPath)
-    throws IOException, IllegalArgumentException;
+  @Nullable OutputParser createErrorParser(final String outputDir);
+  @Nullable OutputParser createOutputParser(final String outputDir);
 
   boolean checkCompiler();
+
+  @NotNull Process launchProcess(
+    final ModuleChunk chunk,
+    final String outputDir,
+    final CompileContext compileContext) throws IOException;
 
   void processTerminated();
 }

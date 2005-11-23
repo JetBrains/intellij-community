@@ -28,15 +28,10 @@ public class JavacOutputParser extends OutputParser {
     myTabSize = CodeStyleSettingsManager.getSettings(project).getTabSize(StdFileTypes.JAVA);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       // emulate patterns setup if 'embedded' javac is used (javac is started not via JavacRunner)
-      //noinspection HardCodedStringLiteral
       addJavacPattern(JavacResourcesReader.MSG_PARSING_STARTED + JavacResourcesReader.CATEGORY_VALUE_DIVIDER + "[parsing started {0}]");
-      //noinspection HardCodedStringLiteral
       addJavacPattern(JavacResourcesReader.MSG_PARSING_COMPLETED + JavacResourcesReader.CATEGORY_VALUE_DIVIDER + "[parsing completed {0}ms]");
-      //noinspection HardCodedStringLiteral
       addJavacPattern(JavacResourcesReader.MSG_LOADING + JavacResourcesReader.CATEGORY_VALUE_DIVIDER + "[loading {0}]");
-      //noinspection HardCodedStringLiteral
       addJavacPattern(JavacResourcesReader.MSG_CHECKING + JavacResourcesReader.CATEGORY_VALUE_DIVIDER + "[checking {0}]");
-      //noinspection HardCodedStringLiteral
       addJavacPattern(JavacResourcesReader.MSG_WROTE + JavacResourcesReader.CATEGORY_VALUE_DIVIDER + "[wrote {0}]");
     }
   }
@@ -44,7 +39,7 @@ public class JavacOutputParser extends OutputParser {
   public boolean processMessageLine(Callback callback) {
     if (super.processMessageLine(callback)) {
       return true;
-    }
+    }                                              
     final String line = callback.getCurrentLine();
     if (line == null) {
       return false;
@@ -67,18 +62,15 @@ public class JavacOutputParser extends OutputParser {
     }
 
     if (colonIndex1 >= 0){ // looks like found something like file path
-      String part1 = line.substring(0, colonIndex1).trim();
-      //noinspection HardCodedStringLiteral
+      @NonNls String part1 = line.substring(0, colonIndex1).trim();
       if(part1.equalsIgnoreCase("error")) { // jikes
         addMessage(callback, CompilerMessageCategory.ERROR, line.substring(colonIndex1));
         return true;
       }
-      //noinspection HardCodedStringLiteral
       if(part1.equalsIgnoreCase("warning")) {
         addMessage(callback, CompilerMessageCategory.WARNING, line.substring(colonIndex1));
         return true;
       }
-      //noinspection HardCodedStringLiteral
       if(part1.equals("javac")) {
         addMessage(callback, CompilerMessageCategory.ERROR, line);
         return true;
@@ -107,7 +99,7 @@ public class JavacOutputParser extends OutputParser {
 
           List<String> messages = new ArrayList<String>();
           messages.add(message);
-          int colNum = 0;
+          int colNum;
           String prevLine = null;
           do{
             final String nextLine = callback.getNextLine();
@@ -116,7 +108,7 @@ public class JavacOutputParser extends OutputParser {
             }
             if (nextLine.trim().equals("^")){
               final int fakeColNum = nextLine.indexOf('^') + 1;
-              final CharSequence chars = (prevLine != null)? prevLine : line;
+              final CharSequence chars = prevLine == null ? line : prevLine;
               final int offsetColNum = EditorUtil.calcOffset(null, chars, 0, chars.length(), fakeColNum, 8);
               colNum = EditorUtil.calcColumnNumber(null, chars,0, offsetColNum, myTabSize);
               break;
@@ -164,9 +156,8 @@ public class JavacOutputParser extends OutputParser {
     final String line1 = messages.get(1);
     final int colonIndex = line1.indexOf(':');
     if (colonIndex > 0){
-      String part1 = line1.substring(0, colonIndex).trim();
+      @NonNls String part1 = line1.substring(0, colonIndex).trim();
       // jikes
-      //noinspection HardCodedStringLiteral
       if ("symbol".equals(part1)){
         String symbol = line1.substring(colonIndex + 1).trim();
         messages.remove(1);
@@ -179,7 +170,7 @@ public class JavacOutputParser extends OutputParser {
     return messages;
   }
 
-  private void addJavacPattern(final String line) {
+  private void addJavacPattern(@NonNls final String line) {
     final int dividerIndex = line.indexOf(JavacResourcesReader.CATEGORY_VALUE_DIVIDER);
     final String category = line.substring(0, dividerIndex);
     final String resourceBundleValue = line.substring(dividerIndex + 1);
@@ -219,9 +210,9 @@ public class JavacOutputParser extends OutputParser {
   /**
    * made public for Tests, do not use this method directly
    */
-  public static Matcher createMatcher(final String resourceBundleValue) {
-    //noinspection HardCodedStringLiteral
-    final String regexp = resourceBundleValue.replaceAll("([\\[\\]\\(\\)\\.\\*])", "\\\\$1").replaceAll("\\{\\d+\\}", "(.+)");
+  public static Matcher createMatcher(@NonNls final String resourceBundleValue) {
+    @NonNls String regexp = resourceBundleValue.replaceAll("([\\[\\]\\(\\)\\.\\*])", "\\\\$1");
+    regexp = regexp.replaceAll("\\{\\d+\\}", "(.+)");
     return Pattern.compile(regexp, Pattern.CASE_INSENSITIVE).matcher("");
   }
 

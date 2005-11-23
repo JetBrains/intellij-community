@@ -83,8 +83,8 @@ public abstract class SimpleNode extends NodeDescriptor implements ComparableObj
         final boolean result = doUpdate();
         myName = getName();
 
-        if (this instanceof DeletableNode) {
-          DeletableNode deletableNode = (DeletableNode) this;
+        if (SimpleNode.this instanceof DeletableNode) {
+          DeletableNode deletableNode = (DeletableNode) SimpleNode.this;
           if (deletableNode.isReadOnly()) {
             makeIconsReadOnly();
           }

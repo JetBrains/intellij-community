@@ -20,6 +20,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 
@@ -32,44 +33,43 @@ import java.io.File;
  * @author Eugene Zhuravlev
  *         Date: Sep 24, 2005
  */
-@SuppressWarnings({"HardCodedStringLiteral"})
 public class ParserActionJikes extends ParserAction{
+  @NonNls private static final String JAVA_EXTENSION = ".java";
 
-  public boolean execute(String line, final OutputParser.Callback callback) {
-    if (StringUtil.startsWithChar(line, '[') && StringUtil.endsWithChar(line, ']')){
-      if (line.startsWith("[parsing started")){ // javac
-        String filePath = line.substring("[parsing started".length(), line.length() - 1).trim();
-        processParsingMessage(callback, filePath.replace(File.separatorChar, '/'));
-      }
-      else if (line.startsWith("[parsed") && line.indexOf(".java") >= 0) { // javac version 1.2.2
-        //noinspection HardCodedStringLiteral
-        int index = line.indexOf(".java");
-        String filePath = line.substring("[parsed".length(), index + ".java".length()).trim();
-        processParsingMessage(callback, filePath.replace(File.separatorChar, '/'));
-      }
-      else if (line.startsWith("[read") && line.endsWith(".java]")){ // jikes
-        String filePath = line.substring("[read".length(), line.length() - 1).trim();
-        processParsingMessage(callback, filePath.replace(File.separatorChar, '/'));
-      }
-      else if (line.startsWith("[parsing completed")){
-      }
-      else if (line.startsWith("[loading") || line.startsWith("[loaded") || line.startsWith("[read")){
-        callback.setProgressText(CompilerBundle.message("progress.loading.classes"));
-      }
-      else if (line.startsWith("[checking")){
-        String className = line.substring("[checking".length(), line.length() - 1).trim();
-        callback.setProgressText(CompilerBundle.message("progress.compiling.class", className));
-      }
-      else if (line.startsWith("[wrote") || line.startsWith("[write")){
-        String filePath = line.substring("[wrote".length(), line.length() - 1).trim();
-        processParsingMessage(callback, filePath.replace(File.separatorChar, '/'));
-      }
-      return true;
+  public boolean execute(@NonNls String line, final OutputParser.Callback callback) {
+    if (!StringUtil.startsWithChar(line, '[') || !StringUtil.endsWithChar(line, ']')) {
+      return false;
     }
-    return false;
+    if (line.startsWith("[parsing started")){ // javac
+      String filePath = line.substring("[parsing started".length(), line.length() - 1).trim();
+      processParsingMessage(callback, filePath.replace(File.separatorChar, '/'));
+    }
+    else if (line.startsWith("[parsed") && line.contains(JAVA_EXTENSION)) { // javac version 1.2.2
+      int index = line.indexOf(JAVA_EXTENSION);
+      String filePath = line.substring("[parsed".length(), index + JAVA_EXTENSION.length()).trim();
+      processParsingMessage(callback, filePath.replace(File.separatorChar, '/'));
+    }
+    else if (line.startsWith("[read") && line.endsWith(".java]")){ // jikes
+      String filePath = line.substring("[read".length(), line.length() - 1).trim();
+      processParsingMessage(callback, filePath.replace(File.separatorChar, '/'));
+    }
+    else if (line.startsWith("[parsing completed")){
+    }
+    else if (line.startsWith("[loading") || line.startsWith("[loaded") || line.startsWith("[read")){
+      callback.setProgressText(CompilerBundle.message("progress.loading.classes"));
+    }
+    else if (line.startsWith("[checking")){
+      String className = line.substring("[checking".length(), line.length() - 1).trim();
+      callback.setProgressText(CompilerBundle.message("progress.compiling.class", className));
+    }
+    else if (line.startsWith("[wrote") || line.startsWith("[write")){
+      String filePath = line.substring("[wrote".length(), line.length() - 1).trim();
+      processParsingMessage(callback, filePath.replace(File.separatorChar, '/'));
+    }
+    return true;
   }
 
-  private void processParsingMessage(final OutputParser.Callback callback, final String filePath) {
+  private static void processParsingMessage(final OutputParser.Callback callback, @NonNls final String filePath) {
     int index = filePath.lastIndexOf('/');
     final String name = index >= 0 ? filePath.substring(index + 1) : filePath;
 

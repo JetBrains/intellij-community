@@ -4,6 +4,7 @@ import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -11,13 +12,19 @@ import java.util.StringTokenizer;
 
 public class JikesOutputParser extends OutputParser {
   private JikesSettings myJikesSettings;
+  @NonNls private static final String JAVA_FILE_MSG_TAIL = ".java:";
+  @NonNls private static final String CAUTION = "Caution";
+  @NonNls private static final String WARNING = "Warning";
+  @NonNls private static final String ERROR = "Error";
+  @NonNls private static final String SEMANTIC_WARNING = "Semantic Warning";
+  @NonNls private static final String SEMANTIC_ERROR = "Semantic Error";
+  @NonNls private static final String ENTER_TO_CONTINUE_REGEXP = ".*Enter\\s+to\\s+continue.*";
 
   public JikesOutputParser(Project project) {
     myJikesSettings = JikesSettings.getInstance(project);
     myParserActions.add(new ParserActionJikes());
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public boolean processMessageLine(Callback callback) {
     if (super.processMessageLine(callback)) {
       return true;
@@ -31,15 +38,15 @@ public class JikesOutputParser extends OutputParser {
     }
 //sae
     if (myJikesSettings.IS_EMACS_ERRORS_MODE) {
-      int colNum;
-      int lineNum;
 
       String filePath = "";
-      if (line.indexOf(".java:") > 5) filePath = line.substring(0, line.indexOf(".java:") + 5);
+      final int tailIndex = line.indexOf(JAVA_FILE_MSG_TAIL);
+      if (tailIndex > 5) filePath = line.substring(0, tailIndex + 5);
       filePath = filePath.replace(File.separatorChar, '/');
       final String url = VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, filePath);
-      if (line.indexOf(".java:") > 6) {
-        line = line.substring(line.indexOf(".java:") + 6);
+      if (tailIndex > 6) {
+        line = line.substring(tailIndex + 6);
+        int lineNum;
 
 //second token = start line
         StringTokenizer tokenizer = new StringTokenizer(line, ":");
@@ -55,6 +62,7 @@ public class JikesOutputParser extends OutputParser {
         }
 //thrd token = start column
         token = tokenizer.nextToken();
+        int colNum;
         try {
           colNum = Integer.parseInt(token);
         }
@@ -67,22 +75,21 @@ public class JikesOutputParser extends OutputParser {
         tokenizer.nextToken();
 // 6 error type
         CompilerMessageCategory category = CompilerMessageCategory.INFORMATION;
-        ArrayList<String> messages = new ArrayList<String>();
-        String message;
         token = tokenizer.nextToken().trim();
-        if ("Caution".equalsIgnoreCase(token)) {
+        if (CAUTION.equalsIgnoreCase(token)) {
           category = CompilerMessageCategory.WARNING;
         }
-        else if ("Warning".equalsIgnoreCase(token) || "Semantic Warning".equalsIgnoreCase(token)) { // Semantic errors/warnings were introduced in jikes 1.18
+        else if (WARNING.equalsIgnoreCase(token) || SEMANTIC_WARNING.equalsIgnoreCase(token)) { // Semantic errors/warnings were introduced in jikes 1.18
           category = CompilerMessageCategory.WARNING;
         }
-        else if ("Error".equalsIgnoreCase(token) || "Semantic Error".equalsIgnoreCase(token)) {
+        else if (ERROR.equalsIgnoreCase(token) || SEMANTIC_ERROR.equalsIgnoreCase(token)) {
           category = CompilerMessageCategory.ERROR;
         }
 
-        message = token;
+        String message = token;
         message = message.concat("  ");
         message = message.concat(tokenizer.nextToken(""));
+        ArrayList<String> messages = new ArrayList<String>();
         messages.add(message);
 
         if (colNum > 0 && messages.size() > 0) {
@@ -101,7 +108,7 @@ public class JikesOutputParser extends OutputParser {
 //--sae
 
 //Enter to continue
-    if (!(line.matches(".*Enter\\s+to\\s+continue.*"))) {
+    if (!line.matches(ENTER_TO_CONTINUE_REGEXP)) {
       addMessage(callback, CompilerMessageCategory.INFORMATION, line);
     }
     return true;

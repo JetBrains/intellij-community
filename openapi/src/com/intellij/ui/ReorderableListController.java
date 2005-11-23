@@ -15,13 +15,12 @@
  */
 package com.intellij.ui;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.containers.Convertor;
-import com.intellij.execution.ExecutionBundle;
 
 import javax.swing.*;
 import java.util.*;
@@ -112,27 +111,27 @@ public abstract class ReorderableListController <T> {
     void afterActionPerformed(T change);
   }
 
-  public static abstract class CustomActionDescription <T> extends ActionDescription {
-    private final ArrayList<ActionNotification<T>> myPostHandlers = new ArrayList<ActionNotification<T>>(1);
+  public static abstract class CustomActionDescription <V> extends ActionDescription {
+    private final ArrayList<ActionNotification<V>> myPostHandlers = new ArrayList<ActionNotification<V>>(1);
     private boolean myShowText = false;
 
-    public void addPostHandler(final ActionNotification<T> runnable) {
+    public void addPostHandler(final ActionNotification<V> runnable) {
       myPostHandlers.add(runnable);
     }
 
-    protected void runPostHandlers(final T change) {
-      for (Iterator<ActionNotification<T>> iterator = myPostHandlers.iterator(); iterator.hasNext();) {
-        final ActionNotification<T> runnable = iterator.next();
+    protected void runPostHandlers(final V change) {
+      for (Iterator<ActionNotification<V>> iterator = myPostHandlers.iterator(); iterator.hasNext();) {
+        final ActionNotification<V> runnable = iterator.next();
         runnable.afterActionPerformed(change);
       }
     }
 
-    public abstract BaseAction createAction(JComponent component);
+    public abstract CustomActionDescription.BaseAction createAction(JComponent component);
 
-    protected BaseAction createAction(final ActionBehaviour<T> behaviour) {
+    <W> BaseAction createAction(final ActionBehaviour<W> behaviour) {
       return myShowText ?
-             new ActionWithText(getActionName(), null, getActionIcon(), behaviour) :
-             new BaseAction(getActionName(), null, getActionIcon(), behaviour);
+             new CustomActionDescription<W>.ActionWithText(getActionName(), null, getActionIcon(), behaviour) :
+             new BaseAction(this, getActionName(), null, getActionIcon(), behaviour);
     }
 
     protected abstract Icon getActionIcon();
@@ -143,18 +142,21 @@ public abstract class ReorderableListController <T> {
       myShowText = showText;
     }
 
-    protected class BaseAction extends AnAction {
-      private final ActionBehaviour<T> myBehaviour;
+    protected static class BaseAction<V> extends AnAction {
+      private final ActionBehaviour<V> myBehaviour;
+      private CustomActionDescription<V> myCustomActionDescription;
 
-      public BaseAction(final String text, final String description, final Icon icon, final ActionBehaviour<T> behaviour) {
+      public BaseAction(final CustomActionDescription<V> customActionDescription,
+                        final String text, final String description, final Icon icon, final ActionBehaviour<V> behaviour) {
         super(text, description, icon);
         myBehaviour = behaviour;
+        this.myCustomActionDescription = customActionDescription;
       }
 
       public void actionPerformed(final AnActionEvent e) {
-        final T change = myBehaviour.performAction(e);
+        final V change = myBehaviour.performAction(e);
         if (change == null) return;
-        runPostHandlers(change);
+        myCustomActionDescription.runPostHandlers(change);
       }
 
       public void update(final AnActionEvent e) {
@@ -166,8 +168,8 @@ public abstract class ReorderableListController <T> {
       public ActionWithText(final String text,
                      final String description,
                      final Icon icon,
-                     final ActionBehaviour<T> behaviour) {
-        super(text, description, icon, behaviour);
+                     final ActionBehaviour<V> behaviour) {
+        super(CustomActionDescription.this, text, description, icon, behaviour);
       }
 
       public boolean displayTextInToolbar() {

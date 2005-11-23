@@ -58,7 +58,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
     myProject = project;
   }
 
-  public OperationStatus ensureFilesWritable(VirtualFile[] files) {
+  public OperationStatus ensureFilesWritable(VirtualFile... files) {
     if (files.length == 0) {
       return new OperationStatus(VirtualFile.EMPTY_ARRAY, VirtualFile.EMPTY_ARRAY);
     }

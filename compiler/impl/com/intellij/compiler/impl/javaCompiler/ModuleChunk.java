@@ -33,8 +33,7 @@ public class ModuleChunk extends Chunk<Module> {
   public ModuleChunk(CompileContext context, Chunk<Module> chunk, Map<Module, Set<VirtualFile>> moduleToFilesMap) {
     super(chunk.getNodes());
     myContext = context;
-    for (Iterator<Module> it = chunk.getNodes().iterator(); it.hasNext();) {
-      final Module module = it.next();
+    for (final Module module : chunk.getNodes()) {
       final Set<VirtualFile> set = moduleToFilesMap.get(module);
       if (set != null && set.size() > 0) {
         myModuleToFilesMap.put(module, set.toArray(new VirtualFile[set.size()]));
@@ -67,14 +66,13 @@ public class ModuleChunk extends Chunk<Module> {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
 
     final List<VirtualFile> filesToCompile = new ArrayList<VirtualFile>();
-    for (Iterator<Module> it = modules.iterator(); it.hasNext();) {
-      final VirtualFile[] moduleCompilableFiles = getFilesToCompile(it.next());
+    for (final Module module : modules) {
+      final VirtualFile[] moduleCompilableFiles = getFilesToCompile(module);
       if (mySourcesFilter == ALL_SOURCES) {
         filesToCompile.addAll(Arrays.asList(moduleCompilableFiles));
       }
       else {
-        for (int idx = 0; idx < moduleCompilableFiles.length; idx++) {
-          final VirtualFile file = moduleCompilableFiles[idx];
+        for (final VirtualFile file : moduleCompilableFiles) {
           if (mySourcesFilter == TEST_SOURCES) {
             if (fileIndex.isInTestSourceContent(file)) {
               filesToCompile.add(file);
@@ -107,8 +105,7 @@ public class ModuleChunk extends Chunk<Module> {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         final VirtualFile[] roots = getAllSourceRoots();
-        for (int idx = 0; idx < roots.length; idx++) {
-          final VirtualFile root = roots[idx];
+        for (final VirtualFile root : roots) {
           if (mySourcesFilter != ALL_SOURCES) {
             if (fileIndex.isInTestSourceContent(root)) {
               if ((mySourcesFilter & TEST_SOURCES) == 0) {
@@ -134,8 +131,7 @@ public class ModuleChunk extends Chunk<Module> {
   private VirtualFile[] getAllSourceRoots() {
     final Set<Module> modules = getNodes();
     Set<VirtualFile> roots = new HashSet<VirtualFile>();
-    for (Iterator<Module> it = modules.iterator(); it.hasNext();) {
-      final Module module = it.next();
+    for (final Module module : modules) {
       roots.addAll(Arrays.asList(myContext.getSourceRoots(module)));
     }
     return roots.toArray(new VirtualFile[roots.size()]);
@@ -184,7 +180,7 @@ public class ModuleChunk extends Chunk<Module> {
     return convertToStringPath(cpFiles);
   }
 
-  private String convertToStringPath(final OrderedSet<VirtualFile> cpFiles) {
+  private static String convertToStringPath(final OrderedSet<VirtualFile> cpFiles) {
     final StringBuffer classpathBuffer = new StringBuffer();
     for (final VirtualFile file : cpFiles) {
       final String path = PathUtil.getLocalPath(file);
@@ -217,8 +213,7 @@ public class ModuleChunk extends Chunk<Module> {
     final VirtualFile[] filteredRoots = getSourceRoots();
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
-        for (int idx = 0; idx < filteredRoots.length; idx++) {
-          VirtualFile root = filteredRoots[idx];
+        for (VirtualFile root : filteredRoots) {
           if (buffer.length() > 0) {
             buffer.append(File.pathSeparatorChar);
           }

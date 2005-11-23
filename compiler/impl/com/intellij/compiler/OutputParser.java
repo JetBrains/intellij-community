@@ -2,6 +2,7 @@ package com.intellij.compiler;
 
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,12 +11,12 @@ public abstract class OutputParser {
   protected final List<ParserAction> myParserActions = new ArrayList<ParserAction>(10);
 
   public static interface Callback {
-    String getNextLine();
-    String getCurrentLine();
+    @NonNls String getNextLine();        
+    @NonNls String getCurrentLine();
     void setProgressText(String text);
-    void fileProcessed(String path);
-    void fileGenerated(String path);
-    void message(CompilerMessageCategory category, String message, String url, int lineNum, int columnNum);
+    void fileProcessed(@NonNls String path);
+    void fileGenerated(@NonNls String path);
+    void message(CompilerMessageCategory category, String message, @NonNls String url, int lineNum, int columnNum);
   }
 
   public boolean processMessageLine(Callback callback) {
@@ -37,13 +38,16 @@ public abstract class OutputParser {
     return false;
   }
 
-  protected void addMessage(Callback callback, CompilerMessageCategory type, String message) {
+  protected static void addMessage(Callback callback, CompilerMessageCategory type, String message) {
     if(message == null || message.trim().length() == 0) return;
     addMessage(callback, type, message, null, -1, -1);
   }
 
-  protected void addMessage(Callback callback, CompilerMessageCategory type, String text, String url, int line, int column){
+  protected static void addMessage(Callback callback, CompilerMessageCategory type, String text, String url, int line, int column){
     callback.message(type, text, url, line, column);
   }
 
+  public boolean isTrimLines() {
+    return true;
+  }
 }

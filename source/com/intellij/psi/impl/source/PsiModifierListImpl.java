@@ -71,7 +71,16 @@ public class PsiModifierListImpl extends SlaveRepositoryPsiElement implements Ps
   }
 
   public boolean hasModifierProperty(String name){
-    if (getTreeElement() != null){
+    if (getTreeElement() == null) {
+      long repositoryId = getRepositoryId();
+      if (myCachedModifiers < 0){
+        myCachedModifiers = ((DeclarationView)getRepositoryManager().getItemView(repositoryId)).getModifiers(repositoryId);
+      }
+      int flag = NAME_TO_MODIFIER_FLAG_MAP.get(name);
+      LOG.assertTrue(flag != 0);
+      return (myCachedModifiers & flag) != 0;
+    }
+    else {
       IElementType type = NAME_TO_KEYWORD_TYPE_MAP.get(name);
 
       PsiElement parent = getParent();
@@ -163,15 +172,6 @@ public class PsiModifierListImpl extends SlaveRepositoryPsiElement implements Ps
 
       ASTNode treeElement = calcTreeElement();
       return TreeUtil.findChild(treeElement, type) != null;
-    }
-    else{
-      long repositoryId = getRepositoryId();
-      if (myCachedModifiers < 0){
-        myCachedModifiers = ((DeclarationView)getRepositoryManager().getItemView(repositoryId)).getModifiers(repositoryId);
-      }
-      int flag = NAME_TO_MODIFIER_FLAG_MAP.get(name);
-      LOG.assertTrue(flag != 0);
-      return (myCachedModifiers & flag) != 0;
     }
   }
 

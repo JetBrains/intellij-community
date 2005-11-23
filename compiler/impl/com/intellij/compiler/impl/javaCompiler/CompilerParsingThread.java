@@ -11,8 +11,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * @author Eugene Zhuravlev
@@ -24,6 +22,7 @@ public abstract class CompilerParsingThread extends Thread implements OutputPars
   private Reader myCompilerOutStreamReader;
   private Process myProcess;
   private OutputParser myOutputParser;
+  private final boolean myTrimLines;
   private boolean mySkipLF = false;
   private Throwable myError = null;
   private final boolean myIsUnitTestMode;
@@ -31,11 +30,12 @@ public abstract class CompilerParsingThread extends Thread implements OutputPars
   private String myLastReadLine = null;
 
 
-  public CompilerParsingThread(Process process, OutputParser outputParser, final boolean readErrorStream) {
+  public CompilerParsingThread(Process process, OutputParser outputParser, final boolean readErrorStream, boolean trimLines) {
     //noinspection HardCodedStringLiteral
     super("CompilerParsingThread");
     myProcess = process;
     myOutputParser = outputParser;
+    myTrimLines = trimLines;
     myCompilerOutStreamReader = new BufferedReader(new InputStreamReader(readErrorStream? process.getErrorStream() : process.getInputStream()), 16384);
     myIsUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
   }
@@ -46,7 +46,7 @@ public abstract class CompilerParsingThread extends Thread implements OutputPars
         if (!myIsUnitTestMode && myProcess == null) {
           break;
         }
-        if (isCancelled()) {
+        if (isCanceled()) {
           break;
         }
         if (!myOutputParser.processMessageLine(this)) {
@@ -90,12 +90,12 @@ public abstract class CompilerParsingThread extends Thread implements OutputPars
         myLastReadLine = null;
       }
       else {
-        myLastReadLine = line != null ? line.trim() : null;
+        myLastReadLine = line == null ? null : myTrimLines ? line.trim() : line;
       }
     }
     catch(IOException e) {
+      LOG.error(e);
       if (LOG.isDebugEnabled()) {
-        LOG.debug(e);
       }
       myLastReadLine = null;
     }
@@ -122,7 +122,7 @@ public abstract class CompilerParsingThread extends Thread implements OutputPars
 
   public abstract void message(CompilerMessageCategory category, String message, String url, int lineNum, int columnNum);
 
-  protected abstract boolean isCancelled();
+  protected abstract boolean isCanceled();
 
   protected abstract void processCompiledClass(final String classFileToProcess) throws CacheCorruptedException;
 

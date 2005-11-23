@@ -15,6 +15,8 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Represents a PSI element which has a list of modifiers (public/private/protected/etc.)
  * and annotations.
@@ -35,5 +37,5 @@ public interface PsiModifierListOwner extends PsiElement {
    * @param name the name of the modifier to check.
    * @return true if the element has the modifier, false otherwise
    */
-  boolean hasModifierProperty(String name);
+  boolean hasModifierProperty(@NotNull String name);
 }

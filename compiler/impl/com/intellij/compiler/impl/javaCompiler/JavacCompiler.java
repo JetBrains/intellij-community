@@ -21,14 +21,23 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.rt.compiler.JavacRunner;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.util.*;
 
-class JavacCompiler implements BackendCompiler {
+class JavacCompiler extends ExternalCompiler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.javaCompiler.JavacCompiler");
   private Project myProject;
   private final List<File> myTempFiles = new ArrayList<File>();
+  @NonNls private static final String JAVAC_MAIN_CLASS_OLD = "sun.tools.javac.Main";
+  @NonNls public static final String JAVAC_MAIN_CLASS = "com.sun.tools.javac.Main";
+
+  public JavacCompiler(Project project) {
+    myProject = project;
+  }
 
   public boolean checkCompiler() {
     final Module[] modules = ModuleManager.getInstance(myProject).getModules();
@@ -77,14 +86,15 @@ class JavacCompiler implements BackendCompiler {
     return true;
   }
 
-  public JavacCompiler(Project project) {
-    myProject = project;
-  }
-
-  public OutputParser createOutputParser() {
+  public OutputParser createErrorParser(final String outputDir) {
     return new JavacOutputParser(myProject);
   }
 
+  public OutputParser createOutputParser(final String outputDir) {
+    return null;
+  }
+
+  @NotNull
   public String[] createStartupCommand(final ModuleChunk chunk, final CompileContext context, final String outputPath)
     throws IOException, IllegalArgumentException {
 
@@ -118,7 +128,7 @@ class JavacCompiler implements BackendCompiler {
     return commandLine.toArray(new String[commandLine.size()]);
   }
 
-  private void _createStartupCommand(final ModuleChunk chunk, final ArrayList<String> commandLine, final String outputPath) throws IOException {
+  private void _createStartupCommand(final ModuleChunk chunk, @NonNls final ArrayList<String> commandLine, final String outputPath) throws IOException {
     final ProjectJdk jdk = getJdkForStartupCommand(chunk);
     final String versionString = jdk.getVersionString();
     if (versionString == null || "".equals(versionString)) {
@@ -137,17 +147,14 @@ class JavacCompiler implements BackendCompiler {
 
     commandLine.add(vmExePath);
     if (isVersion1_1 || isVersion1_0) {
-      //noinspection HardCodedStringLiteral
       commandLine.add("-mx" + javacSettings.MAXIMUM_HEAP_SIZE + "m");
     }
     else {
-      //noinspection HardCodedStringLiteral
       commandLine.add("-Xmx" + javacSettings.MAXIMUM_HEAP_SIZE + "m");
     }
 
     CompilerUtil.addLocaleOptions(commandLine, false);
 
-    //noinspection HardCodedStringLiteral
     commandLine.add("-classpath");
 
     if (isVersion1_0) {
@@ -155,37 +162,33 @@ class JavacCompiler implements BackendCompiler {
     }
     else {
       commandLine.add(jdk.getToolsPath() + File.pathSeparator + PathUtilEx.getIdeaRtJarPath());
-      commandLine.add(com.intellij.rt.compiler.JavacRunner.class.getName());
+      commandLine.add(JavacRunner.class.getName());
       commandLine.add("\"" + versionString + "\"");
     }
 
     if (isVersion1_2 || isVersion1_1 || isVersion1_0) {
-      commandLine.add("sun.tools.javac.Main");
+      commandLine.add(JAVAC_MAIN_CLASS_OLD);
     }
     else {
-      commandLine.add("com.sun.tools.javac.Main");
+      commandLine.add(JAVAC_MAIN_CLASS);
     }
 
     final LanguageLevel applicableLanguageLevel = getApplicableLanguageLevel(versionString);
     if (applicableLanguageLevel.equals(LanguageLevel.JDK_1_5)) {
-      //noinspection HardCodedStringLiteral
       commandLine.add("-source");
       commandLine.add("1.5");
     }
     else if (applicableLanguageLevel.equals(LanguageLevel.JDK_1_4)) {
-      //noinspection HardCodedStringLiteral
       commandLine.add("-source");
       commandLine.add("1.4");
     }
     else if (applicableLanguageLevel.equals(LanguageLevel.JDK_1_3)) {
       if (isVersion1_4 || isVersion1_5) {
-        //noinspection HardCodedStringLiteral
         commandLine.add("-source");
         commandLine.add("1.3");
       }
     }
 
-    //noinspection HardCodedStringLiteral
     commandLine.add("-verbose");
 
     final String cp = chunk.getCompilationClasspath();
@@ -198,27 +201,21 @@ class JavacCompiler implements BackendCompiler {
     else {
       classPath = cp;
 
-      //noinspection HardCodedStringLiteral
       commandLine.add("-bootclasspath");
       // important: need to quote boot classpath if path to jdk contain spaces
-      //noinspection HardCodedStringLiteral
       addClassPathValue(jdk, false, commandLine, CompilerUtil.quotePath(bootCp), "javac_bootcp");
     }
 
-    //noinspection HardCodedStringLiteral
     commandLine.add("-classpath");
-    //noinspection HardCodedStringLiteral
     addClassPathValue(jdk, isVersion1_0, commandLine, classPath, "javac_cp");
 
     if (!isVersion1_1 && !isVersion1_0) {
-      //noinspection HardCodedStringLiteral
       commandLine.add("-sourcepath");
       // this way we tell the compiler that the sourcepath is "empty". However, javac thinks that sourcepath is 'new File("")'
       // this may cause problems if we have java code in IDEA working directory
       commandLine.add("\"\"");
     }
 
-    //noinspection HardCodedStringLiteral
     commandLine.add("-d");
     commandLine.add(outputPath.replace('/', File.separatorChar));
 
@@ -279,7 +276,7 @@ class JavacCompiler implements BackendCompiler {
                                  final boolean isVersion1_0,
                                  final ArrayList<String> commandLine,
                                  final String cpString,
-                                 final String tempFileName) throws IOException {
+                                 @NonNls final String tempFileName) throws IOException {
     // must include output path to classpath, otherwise javac will compile all dependent files no matter were they compiled before or not
     if (isVersion1_0) {
       commandLine.add(jdk.getToolsPath() + File.pathSeparator + cpString);
@@ -330,13 +327,13 @@ class JavacCompiler implements BackendCompiler {
   }
 
   private static boolean isOfVersion(String versionString, String checkedVersion) {
-    return versionString.indexOf(checkedVersion) > -1;
+    return versionString.contains(checkedVersion);
   }
 
   public void processTerminated() {
     if (myTempFiles.size() > 0) {
-      for (Iterator it = myTempFiles.iterator(); it.hasNext();) {
-        FileUtil.delete((File)it.next());
+      for (final File myTempFile : myTempFiles) {
+        FileUtil.delete(myTempFile);
       }
       myTempFiles.clear();
     }

@@ -27,7 +27,7 @@ public class CompilerUtil {
   public static String quotePath(String path) {
     if(path != null && path.indexOf(' ') != -1) {
       path = path.replaceAll("\\\\", "\\\\\\\\");
-      path = "\"" + path + "\"";
+      path = '"' + path + '"';
     }
     return path;
   }
@@ -164,13 +164,13 @@ public class CompilerUtil {
     final String country = System.getProperty("user.country");
     if (country != null) {
       //noinspection HardCodedStringLiteral
-      commandLine.add((launcherUsed? "-J" : "") + "-Duser.country" + country);
+      commandLine.add((launcherUsed? "-J" : "") + "-Duser.country=" + country);
     }
     //noinspection HardCodedStringLiteral
     final String region = System.getProperty("user.region");
     if (region != null) {
       //noinspection HardCodedStringLiteral
-      commandLine.add((launcherUsed? "-J" : "") + "-Duser.region" + region);
+      commandLine.add((launcherUsed? "-J" : "") + "-Duser.region=" + region);
     }
   }
 }

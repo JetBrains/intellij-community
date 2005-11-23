@@ -15,6 +15,8 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -23,7 +25,7 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.StringTokenizer;
 
-class JikesCompiler implements BackendCompiler {
+class JikesCompiler extends ExternalCompiler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.JikesHandler");
   private Project myProject;
   private File myTempFile;
@@ -72,18 +74,24 @@ class JikesCompiler implements BackendCompiler {
     ShowSettingsUtil.getInstance().editConfigurable(myProject, CompilerConfigurable.getInstance(myProject));
   }
 
-  public String getCompilerPath() {
+  private String getCompilerPath() {
     return JikesSettings.getInstance(myProject).JIKES_PATH.replace('/', File.separatorChar);
   }
 
-  public OutputParser createOutputParser() {
+  public OutputParser createErrorParser(final String outputDir) {
     return new JikesOutputParser(myProject);
   }
 
+  @Nullable
+  public OutputParser createOutputParser(final String outputDir) {
+    return null;
+  }
+
+  @NotNull
   public String[] createStartupCommand(final ModuleChunk chunk, final CompileContext context, final String outputPath)
     throws IOException {
 
-    final ArrayList commandLine = new ArrayList();
+    final ArrayList<String> commandLine = new ArrayList<String>();
     final IOException[] ex = new IOException[]{null};
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
@@ -98,10 +106,10 @@ class JikesCompiler implements BackendCompiler {
     if (ex[0] != null) {
       throw ex[0];
     }
-    return (String[])commandLine.toArray(new String[commandLine.size()]);
+    return commandLine.toArray(new String[commandLine.size()]);
   }
 
-  private void _createStartupCommand(final ModuleChunk chunk, final ArrayList commandLine, final String outputPath) throws IOException {
+  private void _createStartupCommand(final ModuleChunk chunk, final ArrayList<String> commandLine, final String outputPath) throws IOException {
 
     //noinspection HardCodedStringLiteral
     myTempFile = File.createTempFile("jikes", ".tmp");
@@ -110,8 +118,8 @@ class JikesCompiler implements BackendCompiler {
     final VirtualFile[] files = chunk.getFilesToCompile();
     PrintWriter writer = new PrintWriter(new FileWriter(myTempFile));
     try {
-      for (int i = 0; i < files.length; i++) {
-        writer.println(files[i].getPath());
+      for (VirtualFile file : files) {
+        writer.println(file.getPath());
       }
     }
     finally {
@@ -156,7 +164,7 @@ class JikesCompiler implements BackendCompiler {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  private void setupSourceVersion(final ModuleChunk chunk, final ArrayList commandLine) {
+  private void setupSourceVersion(final ModuleChunk chunk, final ArrayList<String> commandLine) {
     final ProjectJdk jdk = chunk.getJdk();
     final String versionString = jdk.getVersionString();
 
@@ -197,7 +205,7 @@ class JikesCompiler implements BackendCompiler {
   }
 
   private static boolean isOfVersion(String versionString, String checkedVersion) {
-    return versionString.indexOf(checkedVersion) > -1;
+    return versionString.contains(checkedVersion);
   }
 }
 

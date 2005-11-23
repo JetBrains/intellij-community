@@ -15,18 +15,16 @@
  */
 package com.intellij.compiler;
 
+import com.intellij.openapi.compiler.CompilerBundle;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.compiler.CompilerBundle;
-import com.intellij.openapi.diagnostic.Logger;
 
 import java.util.regex.Matcher;
 
-import org.jetbrains.annotations.NotNull;
-
 /**
- * @author Eugene Zhuravlev
+ * @author Eugene Zhuravlev              
  *         Date: Sep 14, 2005
  */
 public class FilePathActionJavac extends JavacParserAction {
@@ -36,7 +34,7 @@ public class FilePathActionJavac extends JavacParserAction {
     super(matcher);
   }
 
-  protected void doExecute(final @NotNull String filePath, final OutputParser.Callback callback) {
+  protected void doExecute(final String filePath, final OutputParser.Callback callback) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Process parsing message: " + filePath);
     }

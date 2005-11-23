@@ -47,7 +47,7 @@ public abstract class IntentionManager implements ProjectComponent {
    */
   public abstract IntentionAction[] getIntentionActions();
 
-  public abstract void registerIntentionAndMetaData(IntentionAction action, String[] category);
+  public abstract void registerIntentionAndMetaData(IntentionAction action, String... category);
 
   /**
    * @deprecated custom directory name causes problem with internationalization of inspection descriptions.

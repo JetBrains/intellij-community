@@ -4,6 +4,7 @@ import com.intellij.compiler.OutputParser;
 import com.intellij.compiler.RmicSettings;
 import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.compiler.impl.javaCompiler.CompilerParsingThread;
+import com.intellij.compiler.impl.javaCompiler.CompilerParsingThreadImpl;
 import com.intellij.compiler.make.Cache;
 import com.intellij.compiler.make.CacheCorruptedException;
 import com.intellij.compiler.make.CacheUtils;
@@ -27,6 +28,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -111,10 +113,10 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
     return items.toArray(new ProcessingItem[items.size()]);
   }
 
-  public ProcessingItem createProcessingItem(final Module module,
+  public static ProcessingItem createProcessingItem(final Module module,
                                              final VirtualFile outputClassFile,
                                              final VirtualFile outputDir,
-                                             final boolean remoteObject, String qName) throws CacheCorruptedException {
+                                             final boolean remoteObject, String qName) {
     final RmicProcessingItem item = new RmicProcessingItem(
       module, outputClassFile, new File(outputDir.getPath()), qName
     );
@@ -130,20 +132,20 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
     progressIndicator.pushState();
     try {
       progressIndicator.setText(CompilerBundle.message("progress.generating.rmi.stubs"));
-      final List<ProcessingItem> processed = new ArrayList<ProcessingItem>();
       final Map<Pair<Module, File>, List<RmicProcessingItem>> sortedByModuleAndOutputPath = new HashMap<Pair<Module,File>, List<RmicProcessingItem>>();
-      for (int idx = 0; idx < items.length; idx++) {
-        final RmicProcessingItem item = (RmicProcessingItem)items[idx];
+      for (ProcessingItem item1 : items) {
+        final RmicProcessingItem item = (RmicProcessingItem)item1;
         final Pair<Module, File> moduleOutputPair = new Pair<Module, File>(item.getModule(), item.getOutputDir());
         List<RmicProcessingItem> dirItems = sortedByModuleAndOutputPath.get(moduleOutputPair);
-        if (dirItems ==  null) {
+        if (dirItems == null) {
           dirItems = new ArrayList<RmicProcessingItem>();
           sortedByModuleAndOutputPath.put(moduleOutputPair, dirItems);
         }
         dirItems.add(item);
       }
+      final List<ProcessingItem> processed = new ArrayList<ProcessingItem>();
 
-      final OutputParserPool parserPool = new OutputParserPool(myProject, context);
+      final JavacOutputParserPool parserPool = new JavacOutputParserPool(myProject, context);
 
       for (final Pair<Module, File> pair : sortedByModuleAndOutputPath.keySet()) {
         if (progressIndicator.isCanceled()) {
@@ -189,7 +191,7 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
   }
 
   private RmicProcessingItem[] invokeRmic(final CompileContext context,
-                                          final OutputParserPool parserPool, final Module module,
+                                          final JavacOutputParserPool parserPool, final Module module,
                                           final List<RmicProcessingItem> dirItems,
                                           final File outputDir
   ) throws IOException{
@@ -220,22 +222,11 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
     }
 
     // obtain parser before running the process because configuring parser may involve starting another process
-    final OutputParser outputParser = parserPool.getOutputParser(jdk);
+    final OutputParser outputParser = parserPool.getJavacOutputParser(jdk);
 
     final Process process = Runtime.getRuntime().exec(cmdLine);
     final Set<RmicProcessingItem> successfullyCompiledItems = new HashSet<RmicProcessingItem>();
-    final CompilerParsingThread parsingThread = new CompilerParsingThread(process, outputParser, false) {
-      public void setProgressText(String text) {
-        context.getProgressIndicator().setText(text);
-      }
-      public void message(CompilerMessageCategory category, String message, String url, int lineNum, int columnNum) {
-        context.addMessage(category, message, url, lineNum, columnNum);
-      }
-      protected boolean isCancelled() {
-        return context.getProgressIndicator().isCanceled();
-      }
-      public void fileProcessed(String path) {
-      }
+    final CompilerParsingThread parsingThread = new CompilerParsingThreadImpl(process, context, outputParser, false, true) {
       protected void processCompiledClass(String classFileToProcess) {
         final RmicProcessingItem item = pathToItemMap.get(classFileToProcess.replace(File.separatorChar, '/'));
         if (item != null) {
@@ -254,7 +245,6 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
 
   // todo: Module -> ModuleChunk
   private String[] createStartupCommand(final Module module, final String outputPath, final RmicProcessingItem[] items) {
-    final List<String> commandLine = new ArrayList<String>();
     final ProjectJdk jdk = ModuleRootManager.getInstance(module).getJdk();
 
     final VirtualFile homeDirectory = jdk.getHomeDirectory();
@@ -263,24 +253,21 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
     }
     final String jdkPath = homeDirectory.getPath().replace('/', File.separatorChar);
 
-    //noinspection HardCodedStringLiteral
-    final String compilerPath = jdkPath + File.separator + "bin" + File.separator + "rmic";
+    @NonNls final String compilerPath = jdkPath + File.separator + "bin" + File.separator + "rmic";
 
+    @NonNls final List<String> commandLine = new ArrayList<String>();
     commandLine.add(compilerPath);
 
     CompilerUtil.addLocaleOptions(commandLine, true);
 
-    //noinspection HardCodedStringLiteral
     commandLine.add("-verbose");
 
     commandLine.addAll(Arrays.asList(RmicSettings.getInstance(myProject).getOptions()));
 
-    //noinspection HardCodedStringLiteral
     commandLine.add("-classpath");
 
     commandLine.add(CompilerPathsEx.getCompilationClasspath(module));
 
-    //noinspection HardCodedStringLiteral
     commandLine.add("-d");
 
     commandLine.add(outputPath);
@@ -443,6 +430,7 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
       myIsRemoteObject = isRemote;
     }
 
+    @NotNull
     public VirtualFile getFile() {
       return myOutputClassFile;
     }
@@ -461,7 +449,7 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
 
     }
 
-    private long getTimestamp(File file) {
+    private static long getTimestamp(File file) {
       long l = file.lastModified();
       return l == 0 ? -1L : l;
     }
