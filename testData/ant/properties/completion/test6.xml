@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <project name="IDEA Build" default="all_dist" basedir=".">
 
-  <taskdef name="javac2" classname="com.intellij.uiDesigner.ant.Javac2"/>
+  <taskdef name="javac2" classname="com.intellij.ant.Javac2"/>
   <buildnumber/>
   <target name="next-build-prepare">
     <condition property="build.completed">
