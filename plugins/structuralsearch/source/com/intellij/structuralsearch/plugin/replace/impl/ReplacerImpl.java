@@ -478,6 +478,8 @@ public class ReplacerImpl {
   private static void handleModifierList(final PsiElement el,
                                          final PsiElement replacement,
                                          final ReplacementContext context) throws IncorrectOperationException {
+    // We want to copy all comments, including doc comments and modifier lists
+    // that are present in matched nodes but not present in search/replace
     Map<String,String> newNameToSearchPatternNameMap = new HashMap<String, String>(1);
     final Map<String, MatchResult> variableMap = context.replacementInfo.variableMap;
     
@@ -520,6 +522,10 @@ public class ReplacerImpl {
     for(String name:originalNamedElements.keySet()) {
       PsiNamedElement originalNamedElement = originalNamedElements.get(name);
       PsiNamedElement replacementNamedElement = replacedNamedElements.get(name);
+      String key = newNameToSearchPatternNameMap.get(name);
+      if (key == null) key = name;
+      PsiNamedElement searchNamedElement = searchedNamedElements.get(key);
+
       if (replacementNamedElement == null && originalNamedElements.size() == 1 && replacedNamedElements.size() == 1) {
         replacementNamedElement = replacedNamedElements.entrySet().iterator().next().getValue();
       }
@@ -529,7 +535,9 @@ public class ReplacerImpl {
         comment = ((PsiDocCommentOwner)originalNamedElement).getDocComment();
       }
 
-      if (replacementNamedElement != null) handleComments(originalNamedElement, replacementNamedElement,context);
+      if (replacementNamedElement != null && searchNamedElement != null) {
+        handleComments(originalNamedElement, replacementNamedElement,context);
+      }
       
       if (comment!=null && replacementNamedElement instanceof PsiDocCommentOwner &&
           !(replacementNamedElement.getFirstChild() instanceof PsiDocComment)
@@ -544,9 +552,6 @@ public class ReplacerImpl {
           replacementNamedElement instanceof PsiModifierListOwner
          )  {
         PsiModifierList modifierList = ((PsiModifierListOwner)originalNamedElements.get(name)).getModifierList();
-        String key = newNameToSearchPatternNameMap.get(name);
-        if (key == null) key = name;
-        PsiNamedElement searchNamedElement = searchedNamedElements.get(key);
         
         if (searchNamedElement instanceof PsiModifierListOwner && 
             ((PsiModifierListOwner)searchNamedElement).getModifierList().getTextLength() == 0 &&

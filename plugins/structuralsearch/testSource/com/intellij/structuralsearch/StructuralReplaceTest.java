@@ -1300,6 +1300,9 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                 "* To change this template use File | Settings | File Templates.\n" +
                 "*/\n" +
                 "public class CC {\n" +
+                "   /** My Comment */ int a = 3; // aaa\n" +
+                "   // bbb\n" +
+                "   long c = 2;\n" +
                 "   void f() {\n" +
                 "   }\n" +
                 "}";
@@ -1323,7 +1326,10 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                             "* by: cdr\n" +
                             "*/\n" +
                             "public class CC {\n" +
-                            "  void f() {\n" +
+                            "  /** My Comment */ int a = 3; // aaa\n" +
+                            "// bbb\n" +
+                            "   long c = 2;\n" +
+                            "void f() {\n" +
                             "   }\n" +
                             "}";
 
