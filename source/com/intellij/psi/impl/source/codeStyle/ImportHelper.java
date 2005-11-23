@@ -573,6 +573,22 @@ public class ImportHelper{
         }
 
         if (refElement != null) {
+          //Add names imported statically
+          if (referenceElement != null) {
+            PsiElement currentFileResolveScope = resolveResult.getCurrentFileResolveScope();
+            if (currentFileResolveScope instanceof PsiImportStaticStatement) {
+              PsiImportStaticStatement importStaticStatement = (PsiImportStaticStatement)currentFileResolveScope;
+              String name = importStaticStatement.getImportReference().getCanonicalText();
+              if (importStaticStatement.isOnDemand()) {
+                String refName = referenceElement.getReferenceName();
+                if (refName != null) name = name + "." + refName;
+              }
+              names.add(name);
+              namesToImportStaticly.add(name);
+              continue;
+            }
+          }
+
           if (refElement instanceof PsiClass) {
             PsiClass refClass = (PsiClass)refElement;
             PsiElement parent = refClass.getParent();
@@ -584,19 +600,6 @@ public class ImportHelper{
             String qName = refClass.getQualifiedName();
             if (hasPackage(qName, thisPackageName)) continue;
             names.add(qName);
-          }
-          else if(referenceElement != null) {
-            PsiElement currentFileResolveScope = resolveResult.getCurrentFileResolveScope();
-            if (currentFileResolveScope instanceof PsiImportStaticStatement) {
-              PsiImportStaticStatement importStaticStatement = (PsiImportStaticStatement)currentFileResolveScope;
-              String name = importStaticStatement.getImportReference().getCanonicalText();
-              if (importStaticStatement.isOnDemand()) {
-                String refName = referenceElement.getReferenceName();
-                if (refName != null) name = name + "." + refName;
-              }
-              names.add(name);
-              namesToImportStaticly.add(name);
-            }
           }
         }
       }
