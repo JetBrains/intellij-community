@@ -136,7 +136,7 @@ import java.util.Map;
       }
 
       public HighlightDisplayLevel getErrorLevel(HighlightDisplayKey key) {
-        final LocalInspectionTool localInspectionTool = myAvailableTools.get(key);
+        final LocalInspectionTool localInspectionTool = myAvailableTools.get(key.toString());
         return localInspectionTool != null ? localInspectionTool.getDefaultLevel() : HighlightDisplayLevel.WARNING;
       }
 

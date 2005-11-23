@@ -157,7 +157,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       String message = renderDescriptionMessage(problemDescriptor);
       PsiElement psiElement = problemDescriptor.getPsiElement();
       HighlightInfo highlightInfo =
-        HighlightInfo.createHighlightInfo(HighlightInfoType.WARNING, psiElement, message, message, problemDescriptor.isAfterEndOfLine());
+        HighlightInfo.createHighlightInfo(myLevels.get(i), psiElement, message, message, problemDescriptor.isAfterEndOfLine());
       highlights.add(highlightInfo);
       LocalInspectionTool tool = myTools.get(i);
       List<IntentionAction> options = getStandardIntentionOptions(tool, psiElement);
