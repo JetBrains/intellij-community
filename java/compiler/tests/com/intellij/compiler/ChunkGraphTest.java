@@ -16,6 +16,7 @@ import java.util.*;
  * @author Eugene Zhuravlev
  *         Date: Sep 27, 2004
  */
+@SuppressWarnings({"HardCodedStringLiteral"})
 public class ChunkGraphTest extends TestCase{
 
   public void testGraph1() {
