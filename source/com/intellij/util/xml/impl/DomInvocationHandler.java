@@ -19,7 +19,6 @@ import net.sf.cglib.proxy.InvocationHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.*;
@@ -35,7 +34,6 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   private final DomManagerImpl myManager;
   private final String myTagName;
   private final Converter myGenericConverter;
-  private Object myImplementation = null;
   private XmlTag myXmlTag;
 
   private XmlFile myFile;
@@ -45,6 +43,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   private final Map<String, AttributeChildInvocationHandler> myAttributeChildren = new HashMap<String, AttributeChildInvocationHandler>();
   private final GenericInfoImpl myGenericInfoImpl;
   private final Map<String, Class> myFixedChildrenClasses = new HashMap<String, Class>();
+  private final Map<Class, Object> myImplementations = new HashMap<Class, Object>();
   private boolean myInvalidated;
   private InvocationCache myInvocationCache;
 
@@ -64,17 +63,13 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     myGenericConverter = genericConverter;
   }
 
-  private final Constructor getImplementationConstructor(Class aClass) {
-    try {
-      return aClass.getConstructor();
+  private final void createImplementations(Class<?> interfaceClass) {
+    final Implementation annotation = interfaceClass.getAnnotation(Implementation.class);
+    if (annotation != null) {
+      myImplementations.put(interfaceClass, createImplementation(annotation.value()));
     }
-    catch (NoSuchMethodException e) {
-      try {
-        return aClass.getConstructor(DomElement.class);
-      }
-      catch (NoSuchMethodException e1) {
-        throw new RuntimeException(e1);
-      }
+    for (Class aClass1 : interfaceClass.getInterfaces()) {
+      createImplementations(aClass1);
     }
   }
 
@@ -225,9 +220,9 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     myProxy = proxy;
   }
 
-  public Object getImplementation() {
+  public Object getImplementation(Class interfaceClass) {
     checkInitialized();
-    return myImplementation;
+    return myImplementations.get(interfaceClass);
   }
 
   @NotNull
@@ -342,28 +337,28 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
           }
         }
 
-        final Implementation annotation = DomUtil.getRawType(myType).getAnnotation(Implementation.class);
-        if (annotation != null) {
-          final Class aClass = annotation.value();
-          try {
-            myImplementation = aClass.getConstructor().newInstance();
-          }
-          catch (NoSuchMethodException e) {
-            try {
-              myImplementation = aClass.getConstructor(DomElement.class).newInstance(myProxy);
-            }
-            catch (Exception e1) {
-              throw new AssertionError(e1);
-            }
-          }
-          catch (Exception e) {
-            throw new AssertionError(e);
-          }
-        }
+        createImplementations(DomUtil.getRawType(myType));
       }
       finally {
         myInitialized = true;
       }
+    }
+  }
+
+  private final Object createImplementation(Class aClass) {
+    try {
+      return aClass.getConstructor().newInstance();
+    }
+    catch (NoSuchMethodException e) {
+      try {
+        return aClass.getConstructor(DomElement.class).newInstance(myProxy);
+      }
+      catch (Exception e1) {
+        throw new AssertionError(aClass.getName() + " should have either empty or <init>(DomElement) constructor");
+      }
+    }
+    catch (Exception e) {
+      throw new AssertionError(e);
     }
   }
 

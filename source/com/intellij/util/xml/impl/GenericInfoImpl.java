@@ -29,6 +29,7 @@ public class GenericInfoImpl implements DomGenericInfo {
   private final Map<Method, String> myCollectionChildrenAdditionMethods = new HashMap<Method, String>();
   private final Map<String, Type> myCollectionChildrenClasses = new HashMap<String, Type>();
   private final Map<Method, String> myAttributeChildrenMethods = new HashMap<Method, String>();
+  private final Map<Class, Class> myImplementationClasses = new HashMap<Class, Class>();
   private boolean myValueElement;
   private boolean myInitialized;
   private static final HashSet ADDER_PARAMETER_TYPES = new HashSet<Class>(Arrays.asList(Class.class, int.class));
@@ -107,10 +108,22 @@ public class GenericInfoImpl implements DomGenericInfo {
     return strategy == null ? DomNameStrategy.HYPHEN_STRATEGY : strategy;
   }
 
+  private void collectImplementations(Class<?> interfaceClass) {
+    final Implementation annotation = interfaceClass.getAnnotation(Implementation.class);
+    if (annotation != null) {
+      myImplementationClasses.put(annotation.value(), interfaceClass);
+    }
+    for (Class aClass1 : interfaceClass.getInterfaces()) {
+      collectImplementations(aClass1);
+    }
+  }
+
   public final synchronized void buildMethodMaps() {
     if (myInitialized) return;
 
     myInitialized = true;
+
+    collectImplementations(myClass);
 
     for (Method method : myClass.getMethods()) {
       if (!isCoreMethod(method)) {
@@ -257,22 +270,33 @@ public class GenericInfoImpl implements DomGenericInfo {
     };
   }
 
+  private Method findImplementationMethod(String methodName, Class[] paramTypes) {
+    for (Class aClass : myImplementationClasses.keySet()) {
+      try {
+        return aClass.getMethod(methodName, paramTypes);
+      }
+      catch (NoSuchMethodException e) {
+      }
+    }
+    return null;
+  }
+
   private Invocation createCustomMethodInvocation(final CustomMethod customMethod, final Method method) {
     final Class aClass = customMethod.value();
     final String methodName = StringUtil.isNotEmpty(customMethod.methodName()) ? customMethod.methodName() : method.getName();
+
+    if (void.class.equals(aClass)) {
+      final Method implementationMethod = findImplementationMethod(methodName, method.getParameterTypes());
+      assert implementationMethod != null;
+      final Class interfaceClass = myImplementationClasses.get(implementationMethod.getDeclaringClass());
+      return new Invocation() {
+        public Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
+          return implementationMethod.invoke(handler.getImplementation(interfaceClass), args);
+        }
+      };
+    }
+
     try {
-      if (void.class.equals(aClass)) {
-        final Implementation implementation = myClass.getAnnotation(Implementation.class);
-        assert implementation != null;
-        final Method instanceMethod = implementation.value().getMethod(methodName, method.getParameterTypes());
-        return new Invocation() {
-          public Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
-            return instanceMethod.invoke(handler.getImplementation(), args);
-          }
-        };
-      }
-
-
       final Class[] newParameterTypes = insertFirst(DomElement.class, (Class[])method.getParameterTypes());
       final Method staticMethod = aClass.getMethod(methodName, newParameterTypes);
       final Class<?> returnType1 = method.getReturnType();
