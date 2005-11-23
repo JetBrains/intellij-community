@@ -8,6 +8,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.jsp.jspXml.JspXmlRootTag;
+import com.intellij.psi.impl.source.jsp.jspJava.JspDirective;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.meta.PsiMetaOwner;
@@ -26,7 +27,7 @@ import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 
-class TagNameReference implements PsiReference {
+public class TagNameReference implements PsiReference {
   private final boolean myStartTagFlag;
   private final ASTNode myNameElement;
   @NonNls protected static final String TAG_EXTENSION = ".tag";
@@ -106,6 +107,8 @@ class TagNameReference implements PsiReference {
   public Object[] getVariants(){
     final List<XmlElementDescriptor> variants = new ArrayList<XmlElementDescriptor>();
     final XmlTag element = getElement();
+    if (element instanceof JspDirective) return EMPTY_ARRAY;
+    
     if(!myStartTagFlag){
       XmlTag fromJspTree = null;
       final PsiFile containingFile = element.getContainingFile();
