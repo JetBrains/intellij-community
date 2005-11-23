@@ -18,21 +18,15 @@ package com.intellij.uiDesigner.compiler;
 import com.intellij.uiDesigner.lw.*;
 import com.intellij.uiDesigner.shared.BorderType;
 import org.objectweb.asm.*;
-import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.GeneratorAdapter;
 import org.objectweb.asm.commons.Method;
-import org.apache.bcel.generic.*;
-import org.apache.bcel.Constants;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.border.TitledBorder;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.ResourceBundle;
-import java.awt.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -63,6 +57,7 @@ public class AsmCodeGenerator {
     myPropertyCodeGenerators.put("java.lang.String", new StringPropertyCodeGenerator());
     myPropertyCodeGenerators.put("java.awt.Dimension", new DimensionPropertyCodeGenerator());
     myPropertyCodeGenerators.put("java.awt.Insets", new InsetsPropertyCodeGenerator());
+    myPropertyCodeGenerators.put("java.awt.Rectangle", new RectanglePropertyCodeGenerator());
   }
 
   public AsmCodeGenerator(final LwRootContainer rootContainer,
