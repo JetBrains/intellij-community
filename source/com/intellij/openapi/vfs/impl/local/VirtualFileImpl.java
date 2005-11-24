@@ -15,7 +15,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.ex.ProvidedContent;
 import com.intellij.util.LocalTimeCounter;
-import com.intellij.util.io.PersistentTrie;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,11 +25,11 @@ import java.io.*;
 public class VirtualFileImpl extends VirtualFile {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.local.VirtualFileImpl");
+
   private static final LocalFileSystemImpl ourFileSystem = (LocalFileSystemImpl)LocalFileSystem.getInstance();
 
-  private final PersistentTrie myNameTrie;
   private VirtualFileImpl myParent;
-  private int myNameIndex;
+  private String myName;
   private VirtualFileImpl[] myChildren = null;  // null, if not defined yet
   private boolean myDirectoryFlag;
   private Boolean myWritableFlag = null; // null, if not defined yet
@@ -49,13 +48,12 @@ public class VirtualFileImpl extends VirtualFile {
     PhysicalFile file,
     boolean isDirectory
   ) {
-    myNameTrie = ApplicationManager.getApplication().getComponent(PersistentTrie.class);
     myParent = parent;
-    myDirectoryFlag = isDirectory;
     setName(file.getName());
-    if (getName().length() == 0) {
+    if (myName.length() == 0) {
       LOG.error("file:" + file.getPath());
     }
+    myDirectoryFlag = isDirectory;
     if (!myDirectoryFlag) {
       myTimeStamp = file.lastModified();
     }
@@ -63,19 +61,18 @@ public class VirtualFileImpl extends VirtualFile {
 
   //for constructing roots
   VirtualFileImpl(String path) {
-    myNameTrie = ApplicationManager.getApplication().getComponent(PersistentTrie.class);
     int lastSlash = path.lastIndexOf('/');
     LOG.assertTrue(lastSlash >= 0);
     if (lastSlash == path.length() - 1) { // 'c:/' or '/'
-      myDirectoryFlag = true;
       setName(path);
+      myDirectoryFlag = true;
     }
     else {
+      setName(path.substring(lastSlash + 1));
       String systemPath = path.replace('/', File.separatorChar);
       myDirectoryFlag = new IoFile(systemPath).isDirectory();
-      setName(path.substring(lastSlash + 1));
     }
-    LOG.assertTrue(getName().length() > 0);
+    LOG.assertTrue(myName.length() > 0);
   }
 
   boolean areChildrenCached() {
@@ -114,7 +111,7 @@ public class VirtualFileImpl extends VirtualFile {
       }
       return StringFactory.createStringFromConstantArray(buffer, 0, length);
     }
-    catch (ArrayIndexOutOfBoundsException aiob) {
+    catch(ArrayIndexOutOfBoundsException aiob) {
       return getPath(separatorChar, bufferLength * 2);
     }
   }
@@ -126,7 +123,7 @@ public class VirtualFileImpl extends VirtualFile {
       buffer[currentLength++] = separatorChar;
     }
 
-    String name = getName();
+    String name = myName;
     final int nameLength = name.length();
 
     name.getChars(0, nameLength, buffer, currentLength);
@@ -139,18 +136,7 @@ public class VirtualFileImpl extends VirtualFile {
 
   @NotNull
   public String getName() {
-    try {
-      if (myDirectoryFlag) {
-        return myNameTrie.getStringByIndex(myNameIndex);
-      }
-      else {
-        return myNameTrie.getReversedStringByIndex(myNameIndex);
-      }
-    }
-    catch (IOException e) {
-      LOG.error(e);
-    }
-    return "";
+    return myName;
   }
 
   public String getPresentableName() {
@@ -165,7 +151,7 @@ public class VirtualFileImpl extends VirtualFile {
     if (getParent() == null) {
       return;
     }
-    if (getName().equals(newName)) {
+    if (myName.equals(newName)) {
       return;
     }
 
@@ -175,9 +161,9 @@ public class VirtualFileImpl extends VirtualFile {
 
     final boolean auxCommand = ourFileSystem.auxRename(this, newName);
 
-    ourFileSystem.fireBeforePropertyChange(requestor, this, PROP_NAME, getName(), newName);
+    ourFileSystem.fireBeforePropertyChange(requestor, this, PROP_NAME, myName, newName);
 
-    String oldName = getName();
+    String oldName = myName;
     if (!auxCommand) {
       PhysicalFile file = getPhysicalFile();
       setName(newName);
@@ -191,7 +177,7 @@ public class VirtualFileImpl extends VirtualFile {
       setName(newName);
     }
 
-    ourFileSystem.firePropertyChanged(requestor, this, PROP_NAME, oldName, getName());
+    ourFileSystem.firePropertyChanged(requestor, this, PROP_NAME, oldName, myName);
   }
 
   public boolean isWritable() {
@@ -345,7 +331,7 @@ public class VirtualFileImpl extends VirtualFile {
     }
 
     parent.removeChild(this);
-    ourFileSystem.fireFileDeleted(requestor, this, getName(), isDirectory, parent);
+    ourFileSystem.fireFileDeleted(requestor, this, myName, isDirectory, parent);
 
     if (auxCommand && isDirectory && physicalFile.exists()) {
       // Some auxHandlers refuse to delete directories actually as per version controls like CVS or SVN.
@@ -567,7 +553,7 @@ public class VirtualFileImpl extends VirtualFile {
               if (parent != null) {
                 ourFileSystem.fireBeforeFileDeletion(null, VirtualFileImpl.this);
                 parent.removeChild(VirtualFileImpl.this);
-                ourFileSystem.fireFileDeleted(null, VirtualFileImpl.this, getName(), myDirectoryFlag, parent);
+                ourFileSystem.fireFileDeleted(null, VirtualFileImpl.this, myName, myDirectoryFlag, parent);
               }
             }
           };
@@ -641,7 +627,7 @@ public class VirtualFileImpl extends VirtualFile {
     if (!isValid()) return;
 
     if (LOG.isDebugEnabled()) {
-      LOG.debug("refreshInternal recursive = " + recursive + " asynchronous = " + asynchronous + " file = " + getName());
+      LOG.debug("refreshInternal recursive = " + recursive + " asynchronous = " + asynchronous + " file = " + myName);
     }
 
     PhysicalFile physicalFile = getPhysicalFile();
@@ -658,7 +644,7 @@ public class VirtualFileImpl extends VirtualFile {
 
             ourFileSystem.fireBeforeFileDeletion(null, VirtualFileImpl.this);
             parent.removeChild(VirtualFileImpl.this);
-            ourFileSystem.fireFileDeleted(null, VirtualFileImpl.this, getName(), myDirectoryFlag, parent);
+            ourFileSystem.fireFileDeleted(null, VirtualFileImpl.this, myName, myDirectoryFlag, parent);
             VirtualFileImpl newChild = new VirtualFileImpl(parent, _physicalFile, isDirectory);
             parent.addChild(newChild);
             ourFileSystem.fireFileCreated(null, newChild);
@@ -681,13 +667,12 @@ public class VirtualFileImpl extends VirtualFile {
         final PhysicalFile file = files[i];
         final String name = file.getName();
         int index = -1;
-        if (i < children.length && children[i].getName().equals(name)) {
+        if (i < children.length && children[i].myName.equals(name)) {
           index = i;
-        }
-        else {
+        } else {
           for (int j = 0; j < children.length; j++) {
             VirtualFileImpl child = myChildren[j];
-            if (child.getName().equals(name)) index = j;
+            if (child.myName.equals(name)) index = j;
           }
         }
 
@@ -729,7 +714,7 @@ public class VirtualFileImpl extends VirtualFile {
                 if (child.isValid()) {
                   ourFileSystem.fireBeforeFileDeletion(null, child);
                   removeChild(child);
-                  ourFileSystem.fireFileDeleted(null, child, child.getName(), child.myDirectoryFlag, VirtualFileImpl.this);
+                  ourFileSystem.fireFileDeleted(null, child, child.myName, child.myDirectoryFlag, VirtualFileImpl.this);
                 }
               }
             },
@@ -829,16 +814,6 @@ public class VirtualFileImpl extends VirtualFile {
   }
 
   private void setName(String name) {
-    try {
-      if (myDirectoryFlag) {
-        myNameIndex = myNameTrie.addString(name);
-      }
-      else {
-        myNameIndex = myNameTrie.addReversedString(name);
-      }
-    }
-    catch (IOException e) {
-      LOG.error(e);
-    }
+    myName = name;
   }
 }
