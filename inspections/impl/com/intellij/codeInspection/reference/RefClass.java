@@ -252,7 +252,7 @@ public class RefClass extends RefElement {
             flow = ControlFlow.EMPTY;
           }
           PsiVariable[] ssaVariables = ControlFlowUtil.getSSAVariables(flow, false);
-          PsiVariable[] writtenVariables = ControlFlowUtil.getWrittenVariables(flow, 0, flow.getSize());
+          PsiVariable[] writtenVariables = ControlFlowUtil.getWrittenVariables(flow, 0, flow.getSize(), false);
           for (int j = 0; j < ssaVariables.length; j++) {
             PsiVariable psiVariable = writtenVariables[j];
             if (allFields.contains(psiVariable)) {
@@ -291,7 +291,7 @@ public class RefClass extends RefElement {
                 flow = ControlFlow.EMPTY;
               }
 
-              PsiVariable[] writtenVariables = ControlFlowUtil.getWrittenVariables(flow, 0, flow.getSize());
+              PsiVariable[] writtenVariables = ControlFlowUtil.getWrittenVariables(flow, 0, flow.getSize(), false);
               for (int j = 0; j < writtenVariables.length; j++) {
                 PsiVariable psiVariable = writtenVariables[j];
                 if (instanceInitializerInitializedFields.contains(psiVariable)) {

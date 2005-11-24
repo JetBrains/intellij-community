@@ -57,7 +57,7 @@ public class ControlFlowUtil {
   public static PsiVariable[] getSSAVariables(ControlFlow flow, int from, int to,
                                               boolean reportVarsIfNonInitializingPathExists) {
     Instruction[] instructions = flow.getInstructions();
-    PsiVariable[] writtenVariables = getWrittenVariables(flow, from, to);
+    PsiVariable[] writtenVariables = getWrittenVariables(flow, from, to, false);
     ArrayList<PsiVariable> result = new ArrayList<PsiVariable>(1);
 
     variables:
@@ -180,12 +180,13 @@ public class ControlFlowUtil {
     return array.toArray(new PsiVariable[array.size()]);
   }
 
-  public static PsiVariable[] getWrittenVariables(ControlFlow flow, int start, int end) {
+  public static PsiVariable[] getWrittenVariables(ControlFlow flow, int start, int end, final boolean ignoreNotReachingWrites) {
     Set<PsiVariable> set = new HashSet<PsiVariable>();
     Instruction[] instructions = flow.getInstructions();
     for (int i = start; i < end; i++) {
       Instruction instruction = instructions[i];
-      if (instruction instanceof WriteVariableInstruction && isInstructionReachable(flow, end, i)) {
+      if (instruction instanceof WriteVariableInstruction &&
+          (!ignoreNotReachingWrites || isInstructionReachable(flow, end, i))) {
           set.add(((WriteVariableInstruction)instruction).variable);
         }
     }
@@ -232,7 +233,7 @@ public class ControlFlowUtil {
   }
 
   public static PsiVariable[] getOutputVariables(ControlFlow flow, int start, int end, int[] exitPoints) {
-    PsiVariable[] writtenVariables = ControlFlowUtil.getWrittenVariables(flow, start, end);
+    PsiVariable[] writtenVariables = ControlFlowUtil.getWrittenVariables(flow, start, end, true);
     ArrayList<PsiVariable> array = new ArrayList<PsiVariable>();
     for (PsiVariable variable : writtenVariables) {
       for (int exitPoint : exitPoints) {

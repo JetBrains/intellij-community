@@ -94,7 +94,7 @@ public class LocalCanBeFinal extends BaseLocalInspectionTool {
     int start = flow.getStartOffset(body);
     int end = flow.getEndOffset(body);
 
-    PsiVariable[] writtenVariables = ControlFlowUtil.getWrittenVariables(flow, start, end);
+    PsiVariable[] writtenVariables = ControlFlowUtil.getWrittenVariables(flow, start, end, false);
     final HashSet<PsiVariable> ssaVarsSet = new HashSet<PsiVariable>();
     body.accept(new PsiRecursiveElementVisitor() {
       public void visitCodeBlock(PsiCodeBlock block) {
