@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 public final class RadRootContainer extends RadContainer implements IRootContainer{
   private String myClassToBind;
   private String myMainComponentBinding;
+  private String myLayoutManager;
 
   public RadRootContainer(final Module module, final Class aClass, final String id){
     super(module, aClass, id);
@@ -50,6 +51,10 @@ public final class RadRootContainer extends RadContainer implements IRootContain
     myMainComponentBinding = mainComponentBinding;
   }
 
+  public void setLayoutManager(final String layoutManager) {
+    myLayoutManager = layoutManager;
+  }
+
   public void write(final XmlWriter writer) {
     writer.startElement("form", Utils.FORM_NAMESPACE);
     try{
@@ -62,6 +67,9 @@ public final class RadRootContainer extends RadContainer implements IRootContain
       if (mainComponentBinding != null) {
         writer.addAttribute("stored-main-component-binding", mainComponentBinding);
       }
+      if (myLayoutManager != null) {
+        writer.addAttribute("layout-manager", myLayoutManager);
+      }
       writeChildrenImpl(writer);
     }finally{
       writer.endElement(); // form
@@ -72,4 +80,5 @@ public final class RadRootContainer extends RadContainer implements IRootContain
   protected AbstractLayout createInitialLayout() {
     return new XYLayoutManagerImpl();
   }
+
 }

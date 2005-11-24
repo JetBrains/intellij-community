@@ -18,7 +18,6 @@ package com.intellij.ant;
 import com.intellij.compiler.notNullVerification.NotNullVerifyingInstrumenter;
 import com.intellij.uiDesigner.compiler.AlienFormFileException;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
-import com.intellij.uiDesigner.compiler.GridLayoutCodeGenerator;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
@@ -147,7 +146,7 @@ public final class Javac2 extends Javac{
       }
       class2form.put(classToBind, formFile);
 
-      final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, loader, new GridLayoutCodeGenerator());
+      final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, loader);
       codeGenerator.patchFile(classFile);
       final String[] warnings = codeGenerator.getWarnings();
 

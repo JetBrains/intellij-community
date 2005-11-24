@@ -21,7 +21,6 @@ import com.intellij.uiDesigner.GuiDesignerConfiguration;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.compiler.AlienFormFileException;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
-import com.intellij.uiDesigner.compiler.GridLayoutCodeGenerator;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
@@ -303,7 +302,7 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
             final File classFile = VfsUtil.virtualToIoFile(item.getFile());
             LOG.assertTrue(classFile.exists(), classFile.getPath());
 
-            final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, loader, new GridLayoutCodeGenerator());
+            final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, loader);
             codeGenerator.patchFile(classFile);
             final String[] errors = codeGenerator.getErrors();
             final String[] warnings = codeGenerator.getWarnings();

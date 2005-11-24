@@ -162,6 +162,7 @@ public final class XmlReader {
       final LwRootContainer lwRootContainer = (LwRootContainer)lwComponent;
       radRootContainer.setClassToBind(lwRootContainer.getClassToBind());
       radRootContainer.setMainComponentBinding(lwRootContainer.getMainComponentBinding());
+      radRootContainer.setLayoutManager(lwRootContainer.getLayoutManager());
     }
 
     return component;

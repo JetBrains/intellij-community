@@ -33,7 +33,6 @@ import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.GuiEditorUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
-import com.intellij.uiDesigner.compiler.GridLayoutCodeGenerator;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
@@ -195,7 +194,7 @@ public final class PreviewFormAction extends AnAction{
       }
       CopyResourcesUtil.copyProperties(tempPath, RUNTIME_BUNDLE_PREFIX + locale.getLanguage() + RUNTIME_BUNDLE_EXTENSION);
 
-      final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, loader, new GridLayoutCodeGenerator());
+      final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, loader);
       codeGenerator.patchFile(tempFile);
       /*
       final CodeGenerator codeGenerator = new CodeGenerator(rootContainer, tempFile, loader);

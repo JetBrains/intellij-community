@@ -62,8 +62,7 @@ public class AsmCodeGenerator {
   }
 
   public AsmCodeGenerator(final LwRootContainer rootContainer,
-                          final ClassLoader loader,
-                          final LayoutCodeGenerator layoutCodeGenerator) {
+                          final ClassLoader loader) {
     if (loader == null){
       throw new IllegalArgumentException("loader cannot be null");
     }
@@ -72,7 +71,6 @@ public class AsmCodeGenerator {
     }
     myRootContainer = rootContainer;
     myLoader = loader;
-    myLayoutCodeGenerator = layoutCodeGenerator;
 
     myErrors = new ArrayList();
     myWarnings = new ArrayList();
@@ -127,6 +125,13 @@ public class AsmCodeGenerator {
     if (containsNotEmptyPanelsWithXYLayout((LwComponent)myRootContainer.getComponent(0))) {
       myErrors.add("There are non empty panels with XY layout. Please lay them out in a grid.");
       return null;
+    }
+
+    if ("GridBagLayout".equals(myRootContainer.getLayoutManager())) {
+      myLayoutCodeGenerator = new GridBagLayoutCodeGenerator();
+    }
+    else {
+      myLayoutCodeGenerator = new GridLayoutCodeGenerator();
     }
 
     ClassReader reader = null;

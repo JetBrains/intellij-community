@@ -4,18 +4,18 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 import com.intellij.uiDesigner.compiler.Utils;
-import com.intellij.uiDesigner.compiler.GridLayoutCodeGenerator;
 import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import junit.framework.TestCase;
 
 import javax.swing.*;
-import javax.swing.border.TitledBorder;
 import javax.swing.border.EtchedBorder;
+import javax.swing.border.TitledBorder;
+import java.awt.*;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
-import java.io.ByteArrayInputStream;
 import java.lang.reflect.Field;
 import java.nio.charset.Charset;
 
@@ -35,7 +35,7 @@ public class AsmCodeGeneratorTest extends TestCase {
     final ClassLoader classLoader = getClass().getClassLoader();
     final CompiledClassPropertiesProvider provider = new CompiledClassPropertiesProvider(classLoader);
     final LwRootContainer rootContainer = Utils.getRootContainer(formData, provider);
-    final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, classLoader, new GridLayoutCodeGenerator());
+    final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, classLoader);
     final FileInputStream classStream = new FileInputStream(classPath);
     try {
       codeGenerator.patchClass(classStream);
@@ -188,6 +188,18 @@ public class AsmCodeGeneratorTest extends TestCase {
     assertEquals("Mnemonic", label.getText());
     assertEquals('M', label.getDisplayedMnemonic());
     assertEquals(3, label.getDisplayedMnemonicIndex());
+  }
+
+  public void testGridBagLayout() throws Exception {
+    JPanel panel = (JPanel) getInstrumentedRootComponent("TestGridBag.form", "BindingTest.class");
+    assertTrue(panel.getLayout() instanceof GridBagLayout);
+    GridBagLayout gridBag = (GridBagLayout) panel.getLayout();
+    JButton btn = (JButton) panel.getComponent(0);
+    GridBagConstraints gbc = gridBag.getConstraints(btn);
+    assertNotNull(gbc);
+    assertEquals(2, gbc.gridheight);
+    assertEquals(2, gbc.gridwidth);
+    assertEquals(1.0, gbc.weightx, 0.01);
   }
 
   private class MyClassLoader extends ClassLoader {
