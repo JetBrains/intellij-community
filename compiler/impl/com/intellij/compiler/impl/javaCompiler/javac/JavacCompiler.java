@@ -1,10 +1,10 @@
-package com.intellij.compiler.impl.javaCompiler;
+package com.intellij.compiler.impl.javaCompiler.javac;
 
 import com.intellij.compiler.CompilerConfiguration;
-import com.intellij.compiler.JavacOutputParser;
-import com.intellij.compiler.JavacSettings;
 import com.intellij.compiler.OutputParser;
 import com.intellij.compiler.impl.CompilerUtil;
+import com.intellij.compiler.impl.javaCompiler.ExternalCompiler;
+import com.intellij.compiler.impl.javaCompiler.ModuleChunk;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerBundle;
@@ -20,6 +20,7 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.rt.compiler.JavacRunner;
 import org.jetbrains.annotations.NonNls;
@@ -28,8 +29,8 @@ import org.jetbrains.annotations.NotNull;
 import java.io.*;
 import java.util.*;
 
-class JavacCompiler extends ExternalCompiler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.javaCompiler.JavacCompiler");
+public class JavacCompiler extends ExternalCompiler {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.javaCompiler.javac.JavacCompiler");
   private Project myProject;
   private final List<File> myTempFiles = new ArrayList<File>();
   @NonNls private static final String JAVAC_MAIN_CLASS_OLD = "sun.tools.javac.Main";
@@ -84,6 +85,23 @@ class JavacCompiler extends ExternalCompiler {
     }
 
     return true;
+  }
+
+  @NotNull
+  @NonNls
+  public String getId() // used for externalization
+  {
+    return "JAVAC";
+  }
+
+  @NotNull
+  public String getPresentableName() {
+    return "Javac";
+  }
+
+  @NotNull
+  public Configurable createConfigurable() {
+    return new JavacConfigurable(JavacSettings.getInstance(myProject));
   }
 
   public OutputParser createErrorParser(final String outputDir) {
@@ -221,15 +239,13 @@ class JavacCompiler extends ExternalCompiler {
 
     StringTokenizer tokenizer = new StringTokenizer(javacSettings.getOptionsString(), " ");
     while (tokenizer.hasMoreTokens()) {
-      String token = tokenizer.nextToken();
+      @NonNls String token = tokenizer.nextToken();
       if (isVersion1_0) {
-        //noinspection HardCodedStringLiteral
         if ("-deprecation".equals(token)) {
           continue; // not supported for this version
         }
       }
       if (isVersion1_0 || isVersion1_1 || isVersion1_2 || isVersion1_3 || isVersion1_4) {
-        //noinspection HardCodedStringLiteral
         if ("-Xlint".equals(token)) {
           continue; // not supported in these versions
         }
@@ -330,7 +346,7 @@ class JavacCompiler extends ExternalCompiler {
     return versionString.contains(checkedVersion);
   }
 
-  public void processTerminated() {
+  public void compileFinished() {
     if (myTempFiles.size() > 0) {
       for (final File myTempFile : myTempFiles) {
         FileUtil.delete(myTempFile);

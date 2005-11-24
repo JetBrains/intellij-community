@@ -534,7 +534,7 @@ public class BackendCompilerWrapper {
         -1
       );
     }
-    myCompiler.processTerminated();
+    myCompiler.compileFinished();
     final VirtualFile[] sourceRoots = chunk.getSourceRoots();
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {

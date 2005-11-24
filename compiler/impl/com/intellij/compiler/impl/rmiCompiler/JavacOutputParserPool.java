@@ -15,7 +15,7 @@
  */
 package com.intellij.compiler.impl.rmiCompiler;
 
-import com.intellij.compiler.JavacOutputParser;
+import com.intellij.compiler.impl.javaCompiler.javac.JavacOutputParser;
 import com.intellij.compiler.OutputParser;
 import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.compiler.impl.javaCompiler.CompilerParsingThread;

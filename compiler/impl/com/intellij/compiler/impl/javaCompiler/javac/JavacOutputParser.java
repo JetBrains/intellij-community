@@ -1,5 +1,6 @@
-package com.intellij.compiler;
+package com.intellij.compiler.impl.javaCompiler.javac;
 
+import com.intellij.compiler.OutputParser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
@@ -216,4 +217,7 @@ public class JavacOutputParser extends OutputParser {
     return Pattern.compile(regexp, Pattern.CASE_INSENSITIVE).matcher("");
   }
 
+  public boolean isTrimLines() {
+    return false;
+  }
 }

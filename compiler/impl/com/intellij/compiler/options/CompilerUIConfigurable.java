@@ -47,8 +47,9 @@ public class CompilerUIConfigurable implements Configurable {
     myExcludeTablePanel.add(myExcludeFromCompilePanel, BorderLayout.CENTER);
 
     myTabbedPanePanel.setLayout(new BorderLayout());
+    CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(project);
+    myJavaCompilersTab = new JavaCompilersTab(project,compilerConfiguration.getRegisteredJavaCompilers(), compilerConfiguration.getDefaultCompiler());
     final TabbedPaneWrapper tabbedPane = new TabbedPaneWrapper();
-    myJavaCompilersTab = new JavaCompilersTab(project);
     tabbedPane.addTab(CompilerBundle.message("java.compiler.description"), myJavaCompilersTab.createComponent());
     myRmicConfigurable = new RmicConfigurable(RmicSettings.getInstance(project));
     tabbedPane.addTab(CompilerBundle.message("rmi.compiler.description"), myRmicConfigurable.createComponent());

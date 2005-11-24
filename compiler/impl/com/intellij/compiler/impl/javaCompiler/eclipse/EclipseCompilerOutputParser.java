@@ -1,11 +1,13 @@
-package com.intellij.compiler;
+package com.intellij.compiler.impl.javaCompiler.eclipse;
 
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.project.Project;
+import com.intellij.compiler.OutputParser;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.io.File;
 
 public class EclipseCompilerOutputParser extends OutputParser {
   private final String myOutputDir;
@@ -56,7 +58,7 @@ public class EclipseCompilerOutputParser extends OutputParser {
       Matcher matcher = pattern.matcher(line.substring("[writing ".length()));
       matcher.matches();
       String path = matcher.group(1);
-      String absPath = myOutputDir + "/" + path;
+      String absPath = myOutputDir + File.separatorChar + path;
       callback.setProgressText("Writing "+absPath);
       callback.fileGenerated(absPath);
       return true;

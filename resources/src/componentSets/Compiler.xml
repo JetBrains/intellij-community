@@ -14,16 +14,17 @@
       <option name="workspace" value="true"/>
     </component>
     <component>
-      <interface-class>com.intellij.compiler.JavacSettings</interface-class>
-      <implementation-class>com.intellij.compiler.JavacSettings</implementation-class>
+      <implementation-class>com.intellij.compiler.impl.javaCompiler.javac.JavacSettings</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompilerSettings</implementation-class>
     </component>
     <component>
       <interface-class>com.intellij.compiler.RmicSettings</interface-class>
       <implementation-class>com.intellij.compiler.RmicSettings</implementation-class>
     </component>
     <component>
-      <interface-class>com.intellij.compiler.JikesSettings</interface-class>
-      <implementation-class>com.intellij.compiler.JikesSettings</implementation-class>
+      <implementation-class>com.intellij.compiler.impl.javaCompiler.jikes.JikesSettings</implementation-class>
     </component>
   </project-components>
 </components>

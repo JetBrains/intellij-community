@@ -1,8 +1,7 @@
 package com.intellij.compiler.options;
 
 import com.intellij.compiler.CompilerConfiguration;
-import com.intellij.compiler.JavacSettings;
-import com.intellij.compiler.JikesSettings;
+import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -12,6 +11,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Collection;
+import java.util.ArrayList;
+import java.util.Vector;
 
 /**
  * @author Eugene Zhuravlev
@@ -20,43 +22,43 @@ import java.awt.event.ActionListener;
 public class JavaCompilersTab implements Configurable{
   private JPanel myPanel;
   private JPanel myContentPanel;
+  private JComboBox myCompiler;
   private CardLayout myCardLayout;
-  private JRadioButton myRbSetJavacCompiler;
-  private JRadioButton myRbSetJikesCompiler;
 
-  private String myDefaultCompiler;
-  private JikesConfigurable myJikesConfigurable;
-  private JavacConfigurable myJavacConfigurable;
+  private BackendCompiler myDefaultCompiler;
+  private BackendCompiler mySelectedCompiler;
   private CompilerConfiguration myCompilerConfiguration;
+  private final Collection<Configurable> myConfigurables;
 
-  public JavaCompilersTab(final Project project) {
+  public JavaCompilersTab(final Project project, Collection<BackendCompiler> compilers, BackendCompiler defaultCompiler) {
+    myDefaultCompiler = defaultCompiler;
     myCompilerConfiguration = CompilerConfiguration.getInstance(project);
-    myJavacConfigurable = new JavacConfigurable(JavacSettings.getInstance(project));
-    myJikesConfigurable = new JikesConfigurable(JikesSettings.getInstance(project));
+    myConfigurables = new ArrayList<Configurable>(compilers.size());
 
     myCardLayout = new CardLayout();
     myContentPanel.setLayout(myCardLayout);
-    myContentPanel.add(myJavacConfigurable.createComponent(), CompilerConfiguration.JAVAC);
-    myContentPanel.add(myJikesConfigurable.createComponent(), CompilerConfiguration.JIKES);
 
-    final ButtonGroup group = new ButtonGroup();
-    group.add(myRbSetJavacCompiler);
-    group.add(myRbSetJikesCompiler);
-    myRbSetJavacCompiler.addActionListener(
-      new ActionListener(){
-        public void actionPerformed(ActionEvent e) {
-          setDefaultCompiler(CompilerConfiguration.JAVAC);
-        }
-      }
-    );
+    for (BackendCompiler compiler : compilers) {
+      Configurable configurable = compiler.createConfigurable();
+      myConfigurables.add(configurable);
 
-    myRbSetJikesCompiler.addActionListener(
-      new ActionListener(){
-        public void actionPerformed(ActionEvent e) {
-          setDefaultCompiler(CompilerConfiguration.JIKES);
-        }
+      myContentPanel.add(configurable.createComponent(), compiler.getId());
+    }
+    myCompiler.setModel(new DefaultComboBoxModel(new Vector(compilers)));
+    myCompiler.setRenderer(new DefaultListCellRenderer(){
+      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+        JLabel component = (JLabel)super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        component.setText(((BackendCompiler)value).getPresentableName());
+        return component;
       }
-    );
+    });
+    myCompiler.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        BackendCompiler compiler = (BackendCompiler)myCompiler.getSelectedItem();
+        if (compiler == null) return;
+        selectCompiler(compiler);
+      }
+    });
   }
 
   public String getDisplayName() {
@@ -76,36 +78,41 @@ public class JavaCompilersTab implements Configurable{
   }
 
   public boolean isModified() {
-    return myJavacConfigurable.isModified() || myJikesConfigurable.isModified() || !Comparing.equal(myDefaultCompiler, myCompilerConfiguration.getDefaultCompiler());
+    if (!Comparing.equal(mySelectedCompiler, myCompilerConfiguration.getDefaultCompiler())) {
+      return true;
+    }
+    for (Configurable configurable : myConfigurables) {
+      if (configurable.isModified()) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public void apply() throws ConfigurationException {
-    myJavacConfigurable.apply();
-    myJikesConfigurable.apply();
-    myCompilerConfiguration.setDefaultCompiler(myDefaultCompiler);
+    for (Configurable configurable : myConfigurables) {
+      configurable.apply();
+    }
+    myCompilerConfiguration.setDefaultCompiler(mySelectedCompiler);
   }
 
   public void reset() {
-    myJavacConfigurable.reset();
-    myJikesConfigurable.reset();
-    setDefaultCompiler(myCompilerConfiguration.getDefaultCompiler());
+    for (Configurable configurable : myConfigurables) {
+      configurable.reset();
+    }
+    selectCompiler(myCompilerConfiguration.getDefaultCompiler());
   }
 
   public void disposeUIResources() {
   }
 
-  private void setDefaultCompiler(String compiler) {
+  private void selectCompiler(BackendCompiler compiler) {
     if(compiler == null) {
-      compiler = CompilerConfiguration.JAVAC;
+      compiler = myDefaultCompiler;
     }
-    if(CompilerConfiguration.JAVAC.equals(compiler)) {
-      myRbSetJavacCompiler.setSelected(true);
-    }
-    else if(CompilerConfiguration.JIKES.equals(compiler)) {
-      myRbSetJikesCompiler.setSelected(true);
-    }
-    myDefaultCompiler = compiler;
-    myCardLayout.show(myContentPanel, compiler);
+    myCompiler.setSelectedItem(compiler);
+    mySelectedCompiler = compiler;
+    myCardLayout.show(myContentPanel, compiler.getId());
     myContentPanel.revalidate();
     myContentPanel.repaint();
   }

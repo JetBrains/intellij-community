@@ -13,13 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.compiler;
+package com.intellij.compiler.impl.javaCompiler.jikes;
 
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.compiler.ParserAction;
+import com.intellij.compiler.OutputParser;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -33,7 +35,7 @@ import java.io.File;
  * @author Eugene Zhuravlev
  *         Date: Sep 24, 2005
  */
-public class ParserActionJikes extends ParserAction{
+public class ParserActionJikes extends ParserAction {
   @NonNls private static final String JAVA_EXTENSION = ".java";
 
   public boolean execute(@NonNls String line, final OutputParser.Callback callback) {

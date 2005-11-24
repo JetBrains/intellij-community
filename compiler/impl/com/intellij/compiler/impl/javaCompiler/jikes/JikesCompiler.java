@@ -1,14 +1,15 @@
-package com.intellij.compiler.impl.javaCompiler;
+package com.intellij.compiler.impl.javaCompiler.jikes;
 
-import com.intellij.compiler.JikesOutputParser;
-import com.intellij.compiler.JikesSettings;
 import com.intellij.compiler.OutputParser;
+import com.intellij.compiler.impl.javaCompiler.ExternalCompiler;
+import com.intellij.compiler.impl.javaCompiler.ModuleChunk;
 import com.intellij.compiler.options.CompilerConfigurable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
@@ -17,6 +18,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -25,7 +27,7 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.StringTokenizer;
 
-class JikesCompiler extends ExternalCompiler {
+public class JikesCompiler extends ExternalCompiler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.JikesHandler");
   private Project myProject;
   private File myTempFile;
@@ -76,6 +78,23 @@ class JikesCompiler extends ExternalCompiler {
 
   private String getCompilerPath() {
     return JikesSettings.getInstance(myProject).JIKES_PATH.replace('/', File.separatorChar);
+  }
+
+  @NotNull
+  @NonNls
+  public String getId() // used for externalization
+  {
+    return "JIKES";
+  }
+
+  @NotNull
+  public String getPresentableName() {
+    return "Jikes";
+  }
+
+  @NotNull
+  public Configurable createConfigurable() {
+    return new JikesConfigurable(JikesSettings.getInstance(myProject));
   }
 
   public OutputParser createErrorParser(final String outputDir) {
@@ -197,7 +216,7 @@ class JikesCompiler extends ExternalCompiler {
     return languageLevel;
   }
 
-  public void processTerminated() {
+  public void compileFinished() {
     if (myTempFile != null) {
       myTempFile.delete();
       myTempFile = null;

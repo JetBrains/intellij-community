@@ -13,9 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.compiler;
+package com.intellij.compiler.impl.javaCompiler.javac;
 
 import com.intellij.openapi.compiler.CompilerBundle;
+import com.intellij.compiler.impl.javaCompiler.javac.JavacParserAction;
+import com.intellij.compiler.OutputParser;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.regex.Matcher;

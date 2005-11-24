@@ -1,9 +1,10 @@
-package com.intellij.compiler;
+package com.intellij.compiler.impl.javaCompiler.jikes;
 
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.compiler.OutputParser;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;

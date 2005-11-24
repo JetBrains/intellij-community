@@ -1,6 +1,7 @@
-package com.intellij.compiler.options;
+package com.intellij.compiler.impl.javaCompiler.jikes;
 
-import com.intellij.compiler.JikesSettings;
+import com.intellij.compiler.impl.javaCompiler.jikes.JikesSettings;
+import com.intellij.compiler.options.ComparingUtils;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;

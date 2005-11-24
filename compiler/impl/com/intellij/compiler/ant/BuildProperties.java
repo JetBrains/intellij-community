@@ -1,6 +1,6 @@
 package com.intellij.compiler.ant;
 
-import com.intellij.compiler.JavacSettings;
+import com.intellij.compiler.impl.javaCompiler.javac.JavacSettings;
 import com.intellij.compiler.ant.taskdefs.FileSet;
 import com.intellij.compiler.ant.taskdefs.Include;
 import com.intellij.compiler.ant.taskdefs.Path;

@@ -13,13 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.compiler;
+package com.intellij.compiler.impl.javaCompiler.javac;
 
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.compiler.impl.javaCompiler.javac.JavacParserAction;
+import com.intellij.compiler.OutputParser;
 
 import java.util.regex.Matcher;
 
@@ -28,7 +30,7 @@ import java.util.regex.Matcher;
  *         Date: Sep 14, 2005
  */
 public class FilePathActionJavac extends JavacParserAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.FilePathActionJavac");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.javaCompiler.javac.FilePathActionJavac");
 
   public FilePathActionJavac(final Matcher matcher) {
     super(matcher);

@@ -1,10 +1,16 @@
-package com.intellij.compiler;
+package com.intellij.compiler.impl.javaCompiler.eclipse;
 
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.editor.Document;
+import com.intellij.compiler.OutputParser;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.regex.Matcher;
@@ -70,35 +76,35 @@ public class EclipseCompilerErrorParser extends OutputParser {
       int col = indentWhiteSpace.length();
       final String offendingCode = codeSnippet.substring(col-1);
 
-      //int colFromFile = ApplicationManager.getApplication().runReadAction(new Computable<Integer>() {
-      //  public Integer compute() {
-      //    int index = -1;
-      //    VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
-      //    Document document = file == null ? null : FileDocumentManager.getInstance().getDocument(file);
-      //    if (document != null) {
-      //      // line is one-based
-      //      int docLine = line == 0 ? 0 : line-1;
-      //      int startOffset = document.getLineStartOffset(docLine);
-      //      int endOffset = document.getLineEndOffset(docLine);
-      //      String lineText = document.getText().substring(startOffset, endOffset);
-      //      index = lineText.indexOf(offendingCode);
-      //      if (index == -1) {
-      //        for (index = 0; index < lineText.length(); index++) {
-      //          if (!Character.isWhitespace(lineText.charAt(index))) break;
-      //        }
-      //        if (index == lineText.length()) index = -1;
-      //      }
-      //      // to one-based
-      //      if (index != -1) {
-      //        index++;
-      //      }
-      //    }
-      //    return index;
-      //  }
-      //}).intValue();
-      //if (colFromFile != -1) {
-      //  col = colFromFile;
-      //}
+      int colFromFile = ApplicationManager.getApplication().runReadAction(new Computable<Integer>() {
+        public Integer compute() {
+          int index = -1;
+          VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
+          Document document = file == null ? null : FileDocumentManager.getInstance().getDocument(file);
+          if (document != null) {
+            // line is one-based
+            int docLine = line == 0 ? 0 : line-1;
+            int startOffset = document.getLineStartOffset(docLine);
+            int endOffset = document.getLineEndOffset(docLine);
+            String lineText = document.getText().substring(startOffset, endOffset);
+            index = lineText.indexOf(offendingCode);
+            if (index == -1) {
+              for (index = 0; index < lineText.length(); index++) {
+                if (!Character.isWhitespace(lineText.charAt(index))) break;
+              }
+              if (index == lineText.length()) index = -1;
+            }
+            // to one-based
+            if (index != -1) {
+              index++;
+            }
+          }
+          return index;
+        }
+      }).intValue();
+      if (colFromFile != -1) {
+        col = colFromFile;
+      }
       callback.message(messageCategory, message, url, line, col);
     }
     else {

@@ -42,12 +42,6 @@ public class CompilerManagerImpl extends CompilerManager implements ProjectCompo
     //
     //addCompiler(new DummyTransformingCompiler()); // this one is for testing purposes only
     //addCompiler(new DummySourceGeneratingCompiler(myProject)); // this one is for testing purposes only
-    /*
-    if (!ApplicationManagerEx.getApplicationEx().isUnitTestMode()) {
-      addCompiler(new AspectInstanceCompiler(myProject));
-      addCompiler(new AspectWeaver(myProject));
-    }
-    */
   }
 
   public void initComponent() { }
@@ -65,13 +59,12 @@ public class CompilerManagerImpl extends CompilerManager implements ProjectCompo
 
   public Compiler[] getCompilers(Class compilerClass) {
     final List<Compiler> compilers = new ArrayList<Compiler>(myCompilers.size());
-    for (Iterator<Compiler> it = myCompilers.iterator(); it.hasNext();) {
-      final Compiler item = it.next();
+    for (final Compiler item : myCompilers) {
       if (compilerClass.isAssignableFrom(item.getClass())) {
         compilers.add(item);
       }
     }
-    return (Compiler[])compilers.toArray(new Compiler[compilers.size()]);
+    return compilers.toArray(new Compiler[compilers.size()]);
   }
 
   public void addCompilableFileType(FileType type) {
@@ -95,7 +88,7 @@ public class CompilerManagerImpl extends CompilerManager implements ProjectCompo
   }
 
   public CompileTask[] getBeforeTasks() {
-    return (CompileTask[])myBeforeTasks.toArray(new CompileTask[myBeforeTasks.size()]);
+    return myBeforeTasks.toArray(new CompileTask[myBeforeTasks.size()]);
   }
 
   public CompileTask[] getAfterTasks() {
@@ -181,15 +174,15 @@ public class CompilerManagerImpl extends CompilerManager implements ProjectCompo
   }
 
   public static String[] getPathsToDelete() {
-    return (String[])ourDeletedPaths.toArray(new String[ourDeletedPaths.size()]);
+    return ourDeletedPaths.toArray(new String[ourDeletedPaths.size()]);
   }
 
   public static String[] getPathsToRecompile() {
-    return (String[])ourRecompiledPaths.toArray(new String[ourRecompiledPaths.size()]);
+    return ourRecompiledPaths.toArray(new String[ourRecompiledPaths.size()]);
   }
 
   public static String[] getPathsToCompile() {
-    return (String[])ourCompiledPaths.toArray(new String[ourCompiledPaths.size()]);
+    return ourCompiledPaths.toArray(new String[ourCompiledPaths.size()]);
   }
 
   public static void clearPathsToCompile() {

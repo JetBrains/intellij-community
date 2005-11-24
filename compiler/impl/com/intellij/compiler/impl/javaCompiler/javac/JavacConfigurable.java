@@ -1,9 +1,9 @@
-package com.intellij.compiler.options;
+package com.intellij.compiler.impl.javaCompiler.javac;
 
-import com.intellij.compiler.JavacSettings;
+import com.intellij.compiler.options.ComparingUtils;
+import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.ui.RawCommandLineEditor;
 
 import javax.swing.*;

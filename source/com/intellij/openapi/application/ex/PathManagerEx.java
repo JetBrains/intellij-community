@@ -9,16 +9,19 @@
 package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.application.PathManager;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 
-import org.jetbrains.annotations.NonNls;
-
 public class PathManagerEx {
   @NonNls private static final String TESTDATA_DIRECTORY = "testData";
+  @NonNls private static final String RT_DIRECTORY = "rt";
 
   public static String getTestDataPath() {
     return PathManager.getHomePath() + File.separatorChar + TESTDATA_DIRECTORY;
+  }
+  public static String getLibRtPath() {
+    return PathManager.getLibPath() + File.separatorChar + RT_DIRECTORY;
   }
 
   public static String getPluginTempPath () {
