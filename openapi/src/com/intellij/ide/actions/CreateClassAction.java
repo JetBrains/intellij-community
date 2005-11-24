@@ -1,12 +1,11 @@
 package com.intellij.ide.actions;
 
-import com.intellij.ide.IdeView;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeView;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -47,11 +46,11 @@ public class CreateClassAction extends CreateElementActionBase {
     Project project = (Project)dataContext.getData(DataConstants.PROJECT);
     Presentation presentation = e.getPresentation();
     if (presentation.isEnabled()) {
-      IdeView view = (IdeView)dataContext.getData(DataConstantsEx.IDE_VIEW);
+      IdeView view = (IdeView)dataContext.getData(DataConstants.IDE_VIEW);
+      assert view != null;
       ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
       PsiDirectory[] dirs = view.getDirectories();
-      for (int i = 0; i < dirs.length; i++) {
-        PsiDirectory dir = dirs[i];
+      for (PsiDirectory dir : dirs) {
         if (projectFileIndex.isInSourceContent(dir.getVirtualFile()) && dir.getPackage() != null) {
           return;
         }

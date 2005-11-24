@@ -6,4 +6,5 @@ import com.intellij.psi.PsiElement;
 public interface IdeView {
   void selectElement(PsiElement element);
   PsiDirectory[] getDirectories();
+  PsiDirectory getOrChooseDirectory();
 }

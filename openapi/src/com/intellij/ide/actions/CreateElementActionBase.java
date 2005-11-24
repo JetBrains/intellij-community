@@ -1,10 +1,9 @@
 package com.intellij.ide.actions;
 
-import com.intellij.ide.IdeView;
+import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.util.PackageUtil;
+import com.intellij.ide.IdeView;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.localVcs.LocalVcs;
@@ -15,11 +14,9 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.CommonBundle;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
-
-import org.jetbrains.annotations.NonNls;
 
 public abstract class CreateElementActionBase extends AnAction {
   protected CreateElementActionBase(String text, String description, Icon icon) {
@@ -47,19 +44,19 @@ public abstract class CreateElementActionBase extends AnAction {
   public final void actionPerformed(final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
 
-    final IdeView view = (IdeView) dataContext.getData(DataConstantsEx.IDE_VIEW);
+    final IdeView view = (IdeView)dataContext.getData(DataConstants.IDE_VIEW);
     if (view == null) {
       return;
     }
 
-    final Project project = (Project) dataContext.getData(DataConstants.PROJECT);
+    final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
 
-    final PsiDirectory dir = PackageUtil.getOrChooseDirectory(view);
+    final PsiDirectory dir = view.getOrChooseDirectory();
     if (dir == null) return;
     final PsiElement[] createdElements = invokeDialog(project, dir);
 
-    for (int i = 0; i < createdElements.length; i++) {
-      view.selectElement(createdElements[i]);
+    for (PsiElement createdElement : createdElements) {
+      view.selectElement(createdElement);
     }
   }
 
@@ -67,14 +64,14 @@ public abstract class CreateElementActionBase extends AnAction {
     final DataContext dataContext = e.getDataContext();
     final Presentation presentation = e.getPresentation();
 
-    final Project project = (Project) dataContext.getData(DataConstants.PROJECT);
+    final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
     if (project == null) {
       presentation.setVisible(false);
       presentation.setEnabled(false);
       return;
     }
 
-    final IdeView view = (IdeView) dataContext.getData(DataConstantsEx.IDE_VIEW);
+    final IdeView view = (IdeView)dataContext.getData(DataConstants.IDE_VIEW);
     if (view == null || view.getDirectories().length == 0) {
       presentation.setVisible(false);
       presentation.setEnabled(false);
@@ -118,12 +115,13 @@ public abstract class CreateElementActionBase extends AnAction {
 
       try {
         checkBeforeCreate(inputString, myDirectory);
-      } catch (IncorrectOperationException e) {
+      }
+      catch (IncorrectOperationException e) {
         Messages.showMessageDialog(
-            myProject,
-            filterMessage(e.getMessage()),
-            getErrorTitle(),
-            Messages.getErrorIcon()
+          myProject,
+          filterMessage(e.getMessage()),
+          getErrorTitle(),
+          Messages.getErrorIcon()
         );
         return false;
       }
@@ -140,10 +138,11 @@ public abstract class CreateElementActionBase extends AnAction {
               try {
                 action = lvcs.startAction(getActionName(myDirectory, inputString), "", false);
                 myCreatedElements = create(inputString, myDirectory);
-              } catch (Exception ex) {
+              }
+              catch (Exception ex) {
                 exception[0] = ex;
-                return;
-              } finally {
+              }
+              finally {
                 action.finish();
               }
             }
@@ -153,12 +152,12 @@ public abstract class CreateElementActionBase extends AnAction {
       };
       CommandProcessor.getInstance().executeCommand(myProject, command, getCommandName(), null);
 
-      if (exception[0] != null){
+      if (exception[0] != null) {
         Messages.showMessageDialog(
-            myProject,
-            filterMessage(exception[0].getMessage()),
-            getErrorTitle(),
-            Messages.getErrorIcon()
+          myProject,
+          filterMessage(exception[0].getMessage()),
+          getErrorTitle(),
+          Messages.getErrorIcon()
         );
 
       }
