@@ -17,7 +17,7 @@ public class MethodSuperSearcher implements QueryExecutor<PsiMethod, SuperMethod
     final PsiClass psiClass = queryParameters.getPsiClass();
     final PsiMethod[] methods = psiClass.findMethodsBySignature(queryParameters.getMethod(), queryParameters.isCheckBases());
     for (PsiMethod psiMethod : methods) {
-      consumer.process(psiMethod);
+      if (!consumer.process(psiMethod)) return false;
     }
     return true;
   }
