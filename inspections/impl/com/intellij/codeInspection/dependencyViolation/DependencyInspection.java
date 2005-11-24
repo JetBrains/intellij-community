@@ -18,6 +18,7 @@ package com.intellij.codeInspection.dependencyViolation;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.codeInspection.ex.Descriptor;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
@@ -40,10 +41,10 @@ import java.util.ArrayList;
  * User: anna
  * Date: Feb 6, 2005
  */
-public class DependencyInspection extends LocalInspectionTool{
+public class DependencyInspection extends BaseLocalInspectionTool {
 
   public static final String GROUP_DISPLAY_NAME = "";
-  public static final String DISPLAY_NAME = "Local dependencies";
+  public static final String DISPLAY_NAME = InspectionsBundle.message("illegal.package.dependencies");
   @NonNls public static final String SHORT_NAME = "Dependency";
 
   public String getGroupDisplayName() {

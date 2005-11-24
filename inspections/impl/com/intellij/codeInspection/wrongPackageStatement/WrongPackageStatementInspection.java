@@ -96,7 +96,7 @@ public class WrongPackageStatementInspection extends LocalInspectionTool {
   }
 
   public String getDisplayName() {
-    return "Wrong package statement";
+    return InspectionsBundle.message("wrong.package.statement");
   }
 
   @NonNls
