@@ -20,6 +20,7 @@ import com.intellij.codeInspection.equalsAndHashcode.EqualsAndHashcode;
 import com.intellij.codeInspection.htmlInspections.HtmlStyleLocalInspection;
 import com.intellij.codeInspection.java15api.Java15APIUsageInspection;
 import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
+import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
 import com.intellij.codeInspection.localCanBeFinal.LocalCanBeFinal;
 import com.intellij.codeInspection.miscGenerics.RedundantArrayForVarargsCallInspection;
 import com.intellij.codeInspection.miscGenerics.RedundantTypeArgsInspection;
@@ -77,6 +78,7 @@ public class StandardInspectionToolsProvider implements InspectionToolProvider, 
       LocalCanBeFinal.class,
 
       JavaDocLocalInspection.class,
+      JavaDocReferenceInspection.class,
       DeprecationInspection.class,
       EqualsAndHashcode.class,
 

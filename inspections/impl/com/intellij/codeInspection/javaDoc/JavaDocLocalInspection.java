@@ -6,6 +6,7 @@ package com.intellij.codeInspection.javaDoc;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
 import com.intellij.codeInspection.reference.RefUtil;
 import com.intellij.j2ee.J2EERolesUtil;
@@ -38,7 +39,7 @@ import javax.swing.text.Document;
 import java.awt.*;
 import java.util.*;
 
-public class JavaDocLocalInspection extends LocalInspectionTool {
+public class JavaDocLocalInspection extends BaseLocalInspectionTool {
   private static final String REQUIRED_JAVADOC_IS_ABSENT = InspectionsBundle.message("inspection.javadoc.problem.descriptor");
 
   @NonNls private static final String NONE = "none";
@@ -56,8 +57,10 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
     ourUniqueTags.add("serialData");
   }
 
+  public boolean myCheckPeriodInJavadoc = false;
+
   public static class Options implements JDOMExternalizable {
-    public String ACCESS_JAVADOC_REQUIRED_FOR = JavaDocLocalInspection.NONE;
+    public String ACCESS_JAVADOC_REQUIRED_FOR = NONE;
     public String REQUIRED_TAGS = "";
 
     public Options() {
@@ -315,21 +318,21 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
       if ("author".equals(tag.getName())) {
         if (JavaDocLocalInspection.extractTagDescription(tag).length() == 0) {
           if (problems == null) problems = new ArrayList<ProblemDescriptor>();
-          problems.add(createDescriptor(elementToHighlight, InspectionsBundle.message("inspection.javadoc.problem.descriptor5", "<code>@author</code> ")));
+          problems.add(createDescriptor(elementToHighlight, InspectionsBundle.message("inspection.javadoc.problem.descriptor5")));
         }
       }
       else
         if ("version".equals(tag.getName())) {
           if (JavaDocLocalInspection.extractTagDescription(tag).length() == 0) {
             if (problems == null) problems = new ArrayList<ProblemDescriptor>();
-            problems.add(createDescriptor(elementToHighlight, InspectionsBundle.message("inspection.javadoc.problem.descriptor6", "<code>@version</code>")));
+            problems.add(createDescriptor(elementToHighlight, InspectionsBundle.message("inspection.javadoc.problem.descriptor6")));
           }
         }
         else
           if ("since".equals(tag.getName())) {
             if (JavaDocLocalInspection.extractTagDescription(tag).length() == 0) {
               if (problems == null) problems = new ArrayList<ProblemDescriptor>();
-              problems.add(createDescriptor(elementToHighlight, InspectionsBundle.message("inspection.javadoc.problem.descriptor7", "<code>@since</code> ")));
+              problems.add(createDescriptor(elementToHighlight, InspectionsBundle.message("inspection.javadoc.problem.descriptor7")));
             }
           }
     }
@@ -535,6 +538,7 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
   private ArrayList<ProblemDescriptor> checkForPeriodInDoc(PsiElement psiElement,
                                                            PsiDocComment docComment,
                                                            ArrayList<ProblemDescriptor> problems) {
+    if (!myCheckPeriodInJavadoc) return problems;
     PsiDocTag[] tags = docComment.getTags();
     int dotIndex = docComment.getText().indexOf('.');
     int tagOffset = tags.length == 0 ? 0 : tags[0].getTextOffset();
@@ -550,9 +554,8 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
     return problems;
   }
 
-  private ArrayList<ProblemDescriptor> getTagValuesProblems(PsiElement context, PsiDocTag[] tags) {
-    ArrayList<ProblemDescriptor> problems = null;
-
+  private ArrayList<ProblemDescriptor> getTagValuesProblems(PsiDocCommentOwner context, PsiDocTag[] tags) {
+    final ArrayList<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>();
     nextTag:
     for (PsiDocTag tag : tags) {
       final JavadocManager manager = tag.getManager().getJavadocManager();
@@ -564,8 +567,6 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
         while (tokenizer.hasMoreTokens()) {
           if (tagName.equals(tokenizer.nextToken())) continue nextTag;
         }
-
-        if (problems == null) problems = new ArrayList<ProblemDescriptor>();
 
         if (tagInfo == null){
           problems.add(createDescriptor(tag.getNameElement(), InspectionsBundle.message("inspection.javadoc.problem.descriptor10", "<code>" + tagName + "</code>"), new AddUnknownTagToCustoms(tag)));
@@ -580,93 +581,64 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
       if (info != null && !info.isValidInContext(context)) continue;
       String message = info == null ? null : info.checkTagValue(value);
 
-      if (message == null && value != null && value.getReference() != null) {
-        PsiElement element = value.getReference().resolve();
+      final PsiReference reference = value != null ? value.getReference() : null;
+      if (message == null && reference != null) {
+        PsiElement element = reference.resolve();
         if (element == null) {
           final int textOffset = value.getTextOffset();
 
           if (textOffset == value.getTextRange().getEndOffset()) {
-            message = InspectionsBundle.message("inspection.javadoc.problem.descriptor9");
-          }
-          else {
-            message = InspectionsBundle.message("inspection.javadoc.problem.descriptor8", "<code>" + new String(value.getContainingFile().textToCharArray(),
-                                                                                                                textOffset,
-                                                                                                                value.getTextRange().getEndOffset() - textOffset) + "</code>");
+            problems.add(InspectionManager.getInstance(tag.getProject()).createProblemDescriptor(tag, InspectionsBundle.message("inspection.javadoc.problem.descriptor9"), null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, true));
           }
         }
       }
 
       if (message != null) {
-        if (problems == null) problems = new ArrayList<ProblemDescriptor>();
-        problems.add(createDescriptor(tag.getValueElement(), message));
-      }
-
-      final String[] refMessage = new String[]{null};
-      final PsiJavaCodeReferenceElement[] references = new PsiJavaCodeReferenceElement[]{null};
-      tag.accept(new PsiElementVisitor() {
-        public void visitReferenceExpression(PsiReferenceExpression expression) {
-          visitElement(expression);
+        final PsiDocTagValue valueElement = tag.getValueElement();
+        if (valueElement == null){
+          problems.add(InspectionManager.getInstance(tag.getProject()).createProblemDescriptor(tag, InspectionsBundle.message("inspection.javadoc.method.problem.descriptor1", "<code>" + tag.getName() + "</code>"), null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, true));
+        } else {
+          problems.add(createDescriptor(valueElement, message));
         }
-
-        public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
-          super.visitReferenceElement(reference);
-          PsiElement resolved = reference.resolve();
-          if (resolved == null) {
-            refMessage[0] = InspectionsBundle.message("inspection.javadoc.problem.descriptor8", "<code>" + reference.getText() + "</code>");
-            references[0] = reference;
-          }
-        }
-
-        public void visitElement(PsiElement element) {
-          PsiElement[] children = element.getChildren();
-          for (PsiElement child : children) {
-            child.accept(this);
-          }
-        }
-      });
-
-      if (refMessage[0] != null) {
-        if (problems == null) problems = new ArrayList<ProblemDescriptor>();
-        problems.add(createDescriptor(references[0], refMessage[0]));
       }
     }
 
-    return problems;
+    return problems.isEmpty() ? null : problems;
   }
 
   private boolean isTagRequired(PsiElement context, @NonNls String tag) {
     if (context instanceof PsiClass) {
       if (PsiTreeUtil.getParentOfType(context, PsiClass.class) != null) {
-        return JavaDocLocalInspection.isTagRequired(INNER_CLASS_OPTIONS, tag);
+        return isTagRequired(INNER_CLASS_OPTIONS, tag);
       }
 
-      return JavaDocLocalInspection.isTagRequired(TOP_LEVEL_CLASS_OPTIONS, tag);
+      return isTagRequired(TOP_LEVEL_CLASS_OPTIONS, tag);
     }
 
     if (context instanceof PsiMethod) {
-      return JavaDocLocalInspection.isTagRequired(METHOD_OPTIONS, tag);
+      return isTagRequired(METHOD_OPTIONS, tag);
     }
 
     if (context instanceof PsiField) {
-      return JavaDocLocalInspection.isTagRequired(FIELD_OPTIONS, tag);
+      return isTagRequired(FIELD_OPTIONS, tag);
     }
 
     return false;
   }
 
-  private static boolean isTagRequired(JavaDocLocalInspection.Options options, String tag) {
+  private static boolean isTagRequired(Options options, String tag) {
     return options.REQUIRED_TAGS.indexOf(tag) != -1;
   }
 
   private boolean isJavaDocRequired(PsiModifierListOwner psiElement) {
-    int actualAccess = JavaDocLocalInspection.getAccessNumber(RefUtil.getAccessModifier(psiElement));
+    int actualAccess = getAccessNumber(RefUtil.getAccessModifier(psiElement));
     if (psiElement instanceof PsiClass) {
       PsiClass psiClass = (PsiClass)psiElement;
       if (PsiTreeUtil.getParentOfType(psiClass, PsiClass.class) != null) {
-        return actualAccess <= JavaDocLocalInspection.getAccessNumber(INNER_CLASS_OPTIONS.ACCESS_JAVADOC_REQUIRED_FOR);
+        return actualAccess <= getAccessNumber(INNER_CLASS_OPTIONS.ACCESS_JAVADOC_REQUIRED_FOR);
       }
 
-      return actualAccess <= JavaDocLocalInspection.getAccessNumber(TOP_LEVEL_CLASS_OPTIONS.ACCESS_JAVADOC_REQUIRED_FOR);
+      return actualAccess <= getAccessNumber(TOP_LEVEL_CLASS_OPTIONS.ACCESS_JAVADOC_REQUIRED_FOR);
     }
 
     if (psiElement instanceof PsiMethod) {
@@ -676,7 +648,7 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
         psiElement = PsiTreeUtil.getParentOfType(psiElement, PsiClass.class);
       }
 
-      return actualAccess <= JavaDocLocalInspection.getAccessNumber(METHOD_OPTIONS.ACCESS_JAVADOC_REQUIRED_FOR);
+      return actualAccess <= getAccessNumber(METHOD_OPTIONS.ACCESS_JAVADOC_REQUIRED_FOR);
     }
 
     if (psiElement instanceof PsiField) {
@@ -686,7 +658,7 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
         psiElement = PsiTreeUtil.getParentOfType(psiElement, PsiClass.class);
       }
 
-      return actualAccess <= JavaDocLocalInspection.getAccessNumber(FIELD_OPTIONS.ACCESS_JAVADOC_REQUIRED_FOR);
+      return actualAccess <= getAccessNumber(FIELD_OPTIONS.ACCESS_JAVADOC_REQUIRED_FOR);
     }
 
     return false;
@@ -717,22 +689,26 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
       }
       else if ("throws".equals(tag.getName()) || "exception".equals(tag.getName())) {
         PsiDocTagValue value = tag.getValueElement();
-        if (value.getFirstChild() != null && value.getFirstChild().getFirstChild() != null &&
-            value.getFirstChild().getFirstChild() instanceof PsiJavaCodeReferenceElement) {
-          PsiJavaCodeReferenceElement refElement = (PsiJavaCodeReferenceElement) value.getFirstChild().getFirstChild();
-          PsiElement element = refElement.resolve();
-          if (element != null && element instanceof PsiClass) {
-            String fqName = ((PsiClass) element).getQualifiedName();
-            if (documentedExceptions == null) {
-              documentedExceptions = new HashSet<String>();
-            }
-            if (documentedExceptions.contains(fqName)) {
-              if (problems == null) {
-                problems = new ArrayList<ProblemDescriptor>();
+        if (value != null) {
+          final PsiElement firstChild = value.getFirstChild();
+          if (firstChild != null && firstChild.getFirstChild() instanceof PsiJavaCodeReferenceElement) {
+            PsiJavaCodeReferenceElement refElement = (PsiJavaCodeReferenceElement) firstChild.getFirstChild();
+            if (refElement != null) {
+              PsiElement element = refElement.resolve();
+              if (element != null && element instanceof PsiClass) {
+                String fqName = ((PsiClass) element).getQualifiedName();
+                if (documentedExceptions == null) {
+                  documentedExceptions = new HashSet<String>();
+                }
+                if (documentedExceptions.contains(fqName)) {
+                  if (problems == null) {
+                    problems = new ArrayList<ProblemDescriptor>();
+                  }
+                  problems.add(createDescriptor(tag, InspectionsBundle.message("inspection.javadoc.problem.duplicate.throws", fqName)));
+                }
+                documentedExceptions.add(fqName);
               }
-              problems.add(createDescriptor(tag, InspectionsBundle.message("inspection.javadoc.problem.duplicate.throws", fqName)));
             }
-            documentedExceptions.add(fqName);
           }
         }
       }
@@ -772,10 +748,6 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
 
   public String getShortName() {
     return SHORT_NAME;
-  }
-
-  public boolean isEnabledByDefault() {
-    return true;
   }
 
   private class AddUnknownTagToCustoms implements LocalQuickFix {

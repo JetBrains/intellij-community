@@ -4,7 +4,6 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.*;
 import static com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor.DO_NOT_VALIDATE_KEY;
-import com.intellij.codeInsight.daemon.impl.analysis.annotator.EjbHighlightVisitor;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.SetupJDKFix;
 import com.intellij.lang.Language;
@@ -17,6 +16,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
+import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.jsp.jspJava.JspExpression;
 import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
@@ -52,8 +52,6 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   private RefCountHolder myRefCountHolder;
 
   private final XmlHighlightVisitor myXmlVisitor;
-  private EjbHighlightVisitor myEjbHighlightVisitor;
-  private Boolean runEjbHighlighting;
   // map codeBlock->List of PsiReferenceExpression of uninitailized final variables
   private final Map<PsiElement, Collection<PsiReferenceExpression>> myUninitializedVarProblems = Collections.synchronizedMap(new THashMap<PsiElement, Collection<PsiReferenceExpression>>());
   // map codeBlock->List of PsiReferenceExpression of extra initailization of final variable
@@ -83,7 +81,6 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
 
     myXmlVisitor = new XmlHighlightVisitor(settings);
 
-
     myResolveHelper = manager.getResolveHelper();
   }
 
@@ -97,19 +94,6 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
       LOG.assertTrue(element.isValid());
     }
     element.accept(this);
-   /* if (!myHolder.hasErrorResults()) {
-      if (runEjbHighlighting == null) {
-        runEjbHighlighting = Boolean.valueOf(EjbUtil.getEjbModuleProperties(element) != null);
-      }
-      if (runEjbHighlighting.booleanValue()) {
-        if (myEjbHighlightVisitor == null) {
-          myEjbHighlightVisitor = new EjbHighlightVisitor(myAnnotationHolder);
-        }
-        element.accept(myEjbHighlightVisitor);
-        convertAnnotationsToHighlightInfos();
-        myEjbHighlightVisitor.clearResults();
-      }
-    }*/
   }
 
   public void init() {
@@ -159,7 +143,6 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   public void visitAssignmentExpression(PsiAssignmentExpression assignment) {
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkAssignmentCompatibleTypes(assignment));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkAssignmentOperatorApplicable(assignment));
-    //if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkSillyAssignment(assignment));
     if (!myHolder.hasErrorResults()) visitExpression(assignment);
   }
 
@@ -223,6 +206,21 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
 
   public void visitDocComment(PsiDocComment comment) {
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkUnclosedComment(comment));
+  }
+
+  public void visitDocTagValue(PsiDocTagValue value) {
+    if (value.getReference() != null) {
+      PsiReference reference = value.getReference();
+      if (reference != null) {
+        PsiElement element = reference.resolve();
+        if (element instanceof PsiMethod) {
+          myHolder.add(HighlightNamesUtil.highlightMethodName((PsiMethod)element, ((PsiDocMethodOrFieldRef)value).getNameElement(), false));
+        }
+        else if (element instanceof PsiParameter) {
+          myHolder.add(HighlightNamesUtil.highlightVariable((PsiVariable)element, value.getNavigationElement()));
+        }
+      }
+    }
   }
 
   public void visitErrorElement(PsiErrorElement element) {
