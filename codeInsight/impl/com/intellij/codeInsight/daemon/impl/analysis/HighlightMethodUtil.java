@@ -137,7 +137,7 @@ public class HighlightMethodUtil {
       substitutedSuperReturnType = TypeConversionUtil.erasure(superReturnType);
     }
 
-    if (returnType.equals(superReturnType)) return null;
+    if (returnType.equals(substitutedSuperReturnType)) return null;
     if (returnType.getDeepComponentType() instanceof PsiClassType &&
         substitutedSuperReturnType.getDeepComponentType() instanceof PsiClassType) {
       if (returnType.equals(TypeConversionUtil.erasure(superReturnType))) return null;
