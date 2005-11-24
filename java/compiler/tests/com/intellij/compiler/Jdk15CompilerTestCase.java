@@ -2,6 +2,7 @@ package com.intellij.compiler;
 
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
+import com.intellij.compiler.impl.javaCompiler.javac.JavacSettings;
 
 import java.io.File;
 

@@ -15,6 +15,8 @@
  */
 package com.intellij.compiler;
 
+import com.intellij.compiler.impl.javaCompiler.javac.JavacParserAction;
+import com.intellij.compiler.impl.javaCompiler.javac.JavacOutputParser;
 import junit.framework.TestCase;
 
 import java.util.ResourceBundle;
