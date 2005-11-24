@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.Degenerator;
 import com.intellij.util.PathUtil;
 import com.intellij.util.io.ZipUtil;
 import com.intellij.j2ee.make.impl.MakeUtilImpl;
@@ -74,7 +73,6 @@ public class J2EEModuleBuildInstructionImpl extends BuildInstructionBase impleme
     catch (Exception e) {
       if (e instanceof IOException) throw (IOException)e;
       if (e instanceof RuntimeException) throw (RuntimeException)e;
-      Degenerator.unableToDegenerateMarker();
     }
   }
 
@@ -145,7 +143,6 @@ public class J2EEModuleBuildInstructionImpl extends BuildInstructionBase impleme
     catch (Exception e) {
       if (e instanceof IOException) throw (IOException)e;
       if (e instanceof RuntimeException) throw (RuntimeException)e;
-      Degenerator.unableToDegenerateMarker();
     }
   }
 
@@ -176,7 +173,6 @@ public class J2EEModuleBuildInstructionImpl extends BuildInstructionBase impleme
     catch (Exception e) {
       if (e instanceof IOException) throw (IOException)e;
       if (e instanceof RuntimeException) throw (RuntimeException)e;
-      Degenerator.unableToDegenerateMarker();
     }
     finally {
       jarOutputStream.close();

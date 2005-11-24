@@ -1,7 +1,7 @@
 package com.intellij.ide.util;
 
-import com.intellij.ide.IdeView;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeView;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,7 +20,6 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.PsiRootPackageType;
 import com.intellij.util.ActionRunner;
-import com.intellij.util.Degenerator;
 import com.intellij.util.IncorrectOperationException;
 
 import java.io.File;
@@ -138,8 +137,7 @@ public class PackageUtil {
       if (!ModuleUtil.checkSourceRootsConfigured(module)) return null;
       final VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots();
       List<PsiDirectory> directoryList = new ArrayList<PsiDirectory>();
-      for (int i = 0; i < sourceRoots.length; i++) {
-        VirtualFile sourceRoot = sourceRoots[i];
+      for (VirtualFile sourceRoot : sourceRoots) {
         final PsiDirectory directory = PsiManager.getInstance(project).findDirectory(sourceRoot);
         if (directory != null) {
           directoryList.add(directory);
@@ -189,9 +187,7 @@ public class PackageUtil {
             throw (RuntimeException)e;
           }
           LOG.error(e);
-          Degenerator.unableToDegenerateMarker();
         }
-
       }
       else {
         psiDirectory = foundExistingDirectory;
@@ -208,8 +204,7 @@ public class PackageUtil {
     final ModuleFileIndex moduleFileIndex = moduleRootManager.getFileIndex();
     final VirtualFile[] directories = moduleFileIndex.getDirectoriesByPackageName(packageName, false);
     List<PsiDirectory> moduleDirectoryList = new ArrayList<PsiDirectory>();
-    for (int i = 0; i < directories.length; i++) {
-      VirtualFile directory = directories[i];
+    for (VirtualFile directory : directories) {
       moduleDirectoryList.add(manager.findDirectory(directory));
     }
 
@@ -233,8 +228,7 @@ public class PackageUtil {
 
   private static boolean isWritablePackage(PsiPackage aPackage) {
     PsiDirectory[] directories = aPackage.getDirectories();
-    for (int i = 0; i < directories.length; i++) {
-      PsiDirectory directory = directories[i];
+    for (PsiDirectory directory : directories) {
       if (directory.isValid() && directory.isWritable()) {
         return true;
       }
@@ -243,8 +237,8 @@ public class PackageUtil {
   }
 
   private static PsiDirectory getWritableDirectory(VirtualFile[] vFiles, PsiManager manager) {
-    for (int i = 0; i < vFiles.length; i++) {
-      PsiDirectory directory = manager.findDirectory(vFiles[i]);
+    for (VirtualFile vFile : vFiles) {
+      PsiDirectory directory = manager.findDirectory(vFile);
       if (directory != null && directory.isValid() && directory.isWritable()) {
         return directory;
       }
@@ -288,8 +282,7 @@ public class PackageUtil {
     ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
 
     ArrayList<PsiDirectory> possibleDirs = new ArrayList<PsiDirectory>();
-    for (int i = 0; i < packageDirectories.length; i++) {
-      PsiDirectory dir = packageDirectories[i];
+    for (PsiDirectory dir : packageDirectories) {
       if (!dir.isValid()) continue;
       if (!dir.isWritable()) continue;
       if (possibleDirs.contains(dir)) continue;

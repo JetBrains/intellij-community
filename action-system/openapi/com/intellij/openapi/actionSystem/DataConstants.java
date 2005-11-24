@@ -126,4 +126,8 @@ public interface DataConstants {
    */
   @NonNls String CONTEXT_COMPONENT = "contextComponent";
 
+  /**
+   * Returns com.intellij.ide.IdeView (one of project, packages, commander or favorites view).
+   */
+  @NonNls String IDE_VIEW = "IDEView";
 }

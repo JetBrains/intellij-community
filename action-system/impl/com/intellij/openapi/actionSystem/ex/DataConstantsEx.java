@@ -37,10 +37,6 @@ public interface DataConstantsEx extends DataConstants {
    */
   @NonNls String PASTE_PROVIDER = "pasteProvider";
   /**
-   * Returns com.intellij.ide.IdeView
-   */
-  @NonNls String IDE_VIEW = "IDEView";
-  /**
    * Returns com.intellij.ide.DeleteProvider
    */
   @NonNls String DELETE_ELEMENT_PROVIDER = "deleteElementProvider";

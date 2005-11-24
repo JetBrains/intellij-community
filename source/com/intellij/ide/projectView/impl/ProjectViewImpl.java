@@ -927,6 +927,10 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
 
       return PsiDirectory.EMPTY_ARRAY;
     }
+
+    public PsiDirectory getOrChooseDirectory() {
+      return com.intellij.ide.util.PackageUtil.getOrChooseDirectory(this);
+    }
   }
 
   public void selectPsiElement(PsiElement element, boolean requestFocus) {

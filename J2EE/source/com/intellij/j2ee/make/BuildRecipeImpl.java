@@ -4,7 +4,6 @@
 package com.intellij.j2ee.make;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.util.Degenerator;
 import com.intellij.j2ee.J2EEBundle;
 
 import java.io.File;
@@ -33,7 +32,6 @@ public class BuildRecipeImpl implements BuildRecipe {
       if (e instanceof RuntimeException) {
         throw (RuntimeException)e;
       }
-      Degenerator.unableToDegenerateMarker();
       return false;
     }
   }

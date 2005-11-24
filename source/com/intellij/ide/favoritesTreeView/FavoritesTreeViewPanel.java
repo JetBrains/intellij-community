@@ -36,6 +36,7 @@ import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -47,8 +48,6 @@ import java.awt.dnd.*;
 import java.awt.event.*;
 import java.util.*;
 import java.util.List;
-
-import org.jetbrains.annotations.NonNls;
 
 public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
   @NonNls
@@ -724,6 +723,10 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
     public PsiDirectory[] getDirectories() {
       PsiDirectory directory = getDirectory();
       return directory == null ? PsiDirectory.EMPTY_ARRAY : new PsiDirectory[]{directory};
+    }
+
+    public PsiDirectory getOrChooseDirectory() {
+      return com.intellij.ide.util.PackageUtil.getOrChooseDirectory(this);
     }
   }
 

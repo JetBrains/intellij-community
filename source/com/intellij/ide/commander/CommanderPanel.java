@@ -573,5 +573,9 @@ public class CommanderPanel extends JPanel {
       PsiDirectory directory = getDirectory();
       return directory == null ? PsiDirectory.EMPTY_ARRAY : new PsiDirectory[] {directory};
     }
+
+    public PsiDirectory getOrChooseDirectory() {
+      return com.intellij.ide.util.PackageUtil.getOrChooseDirectory(this);
+    }
   }
 }
