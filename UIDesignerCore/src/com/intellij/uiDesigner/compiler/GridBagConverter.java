@@ -28,8 +28,8 @@ import java.util.Iterator;
  * Date: 24.11.2005
  * Time: 12:56:00
  * To change this template use File | Settings | File Templates.
+ * @noinspection ForLoopReplaceableByForEach, unchecked
  */
-@SuppressWarnings({"ForLoopReplaceableByForEach", "unchecked"})
 public class GridBagConverter {
   private ArrayList myComponents = new ArrayList();
   private ArrayList myConstraints = new ArrayList();
