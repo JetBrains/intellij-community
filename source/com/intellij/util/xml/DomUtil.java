@@ -167,7 +167,9 @@ public class DomUtil {
 
   private static void tryInvoke(final DomElementVisitor visitor, final String name, final Class aClass, DomElement proxy) throws NoSuchMethodException {
     try {
-      visitor.getClass().getDeclaredMethod(name, aClass).invoke(visitor, proxy);
+      final Method method = visitor.getClass().getMethod(name, aClass);
+      method.setAccessible(true);
+      method.invoke(visitor, proxy);
     }
     catch (IllegalAccessException e) {
       LOG.error(e);

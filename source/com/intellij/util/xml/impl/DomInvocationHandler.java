@@ -316,6 +316,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     synchronized (PsiLock.LOCK) {
       if (myInitialized) return;
       try {
+        myGenericInfoImpl.buildMethodMaps();
         for (Map.Entry<Method, String> entry : myGenericInfoImpl.getAttributeChildrenEntries()) {
           getOrCreateAttributeChild(entry.getKey(), entry.getValue());
         }
