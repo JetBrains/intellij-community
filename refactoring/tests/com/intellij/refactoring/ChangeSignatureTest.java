@@ -37,10 +37,6 @@ public class ChangeSignatureTest extends CodeInsightTestCase {
     }, false);
   }
 
-  private Project getProject() {
-    return myProject;
-  }
-
   public void testGenericTypesInOldParameters() throws Exception {
     doTest(null, null, null, new GenParams() {
       public ParameterInfo[] genParams(PsiMethod method) throws IncorrectOperationException {

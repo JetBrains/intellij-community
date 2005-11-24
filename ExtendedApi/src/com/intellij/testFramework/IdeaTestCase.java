@@ -38,6 +38,7 @@ import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiManager;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
 
@@ -148,6 +149,18 @@ import java.util.Map;
       }
     });
 
+  }
+
+  public Project getProject() {
+    return myProject;
+  }
+
+  public final PsiManager getPsiManager() {
+    return PsiManager.getInstance(myProject);
+  }
+
+  public Module getModule() {
+    return myModule;
   }
 
   protected void enableInspectionTool(LocalInspectionTool tool){
