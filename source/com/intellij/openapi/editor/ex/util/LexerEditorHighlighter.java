@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.ex.HighlighterIterator;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.parsing.jsp.JspHighlightLexer;
@@ -37,6 +38,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   private SyntaxHighlighter myHighlighter;
   private EditorColorsScheme myScheme;
   private int myInitialState;
+  public static final Key<Integer> CHANGED_TOKEN_START_OFFSET = Key.create("CHANGED_TOKEN_START_OFFSET");
 
   public LexerEditorHighlighter(SyntaxHighlighter highlighter, EditorColorsScheme scheme) {
     myScheme = scheme;
@@ -80,6 +82,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
 
   public synchronized void documentChanged(DocumentEvent e) {
     Document document = e.getDocument();
+
     if(myLexer instanceof JspHighlightLexer && myEditor != null && myEditor.getProject() != null){
       final PsiDocumentManager instance = PsiDocumentManager.getInstance(myEditor.getProject());
       final PsiFile psiFile = instance.getPsiFile(document);
@@ -107,10 +110,6 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     int newEndOffset = e.getOffset() + e.getNewLength();
 
     myLexer.start(CharArrayUtil.fromSequence(text), startOffset, text.length(), myInitialState);
-    SegmentArrayWithData insertSegments = new SegmentArrayWithData();
-    int oldEndIndex = -1;
-    int insertSegmentCount = 0;
-    int repaintEnd = -1;
 
     int lastTokenStart = -1;
     int lastLexerState = -1;
@@ -122,7 +121,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
       int lexerState = myLexer.getState();
 
       if (tokenStart == lastTokenStart && lexerState == lastLexerState) {
-        throw new IllegalStateException("Error while updating lexer: " + e + " document text: " + e.getDocument().getText());
+        throw new IllegalStateException("Error while updating lexer: " + e + " document text: " + document.getText());
       }
 
       int tokenEnd = myLexer.getTokenEnd();
@@ -139,13 +138,17 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     }
 
     startOffset = mySegments.getSegmentStart(startIndex);
+    int repaintEnd = -1;
+    int insertSegmentCount = 0;
+    int oldEndIndex = -1;
+    SegmentArrayWithData insertSegments = new SegmentArrayWithData();
 
     while(myLexer.getTokenType() != null) {
       int tokenStart = myLexer.getTokenStart();
       int lexerState = myLexer.getState();
 
       if (tokenStart == lastTokenStart && lexerState == lastLexerState) {
-        throw new IllegalStateException("Error while updating lexer: " + e + " document text: " + e.getDocument().getText());
+        throw new IllegalStateException("Error while updating lexer: " + e + " document text: " + document.getText());
       }
 
       lastTokenStart = tokenStart;
@@ -187,11 +190,26 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     if (oldEndIndex < 0){
       oldEndIndex = mySegments.getSegmentCount();
     }
+    int changedIndex = changedOffsetIndex(startIndex, oldEndIndex, insertSegments);
     mySegments.shiftSegments(oldEndIndex, shift);
     mySegments.remove(startIndex, oldEndIndex);
     mySegments.insert(insertSegments, startIndex);
+    synchronized (document) {
+      int tokenStartOffset;
+      if (changedIndex == -1) {
+        tokenStartOffset = -1;
+      }
+      else {
+        tokenStartOffset = mySegments.getSegmentStart(changedIndex);
+        Integer oldTokenStartOffset = document.getUserData(CHANGED_TOKEN_START_OFFSET);
+        if (oldTokenStartOffset != null && oldTokenStartOffset.intValue() != tokenStartOffset) {
+          tokenStartOffset = -1;
+        }
+      }
+      document.putUserData(CHANGED_TOKEN_START_OFFSET, new Integer(tokenStartOffset));
+    }
 
-    int lastDocOffset = e.getDocument().getTextLength();
+    int lastDocOffset = document.getTextLength();
     checkUpdateCorrect(lastDocOffset);
 
     if (insertSegmentCount == 0 ||
@@ -202,13 +220,31 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     ((EditorEx) myEditor).repaint(startOffset, repaintEnd);
   }
 
-  public void beforeDocumentChange(DocumentEvent event) {}
+  // -1 means data has been changed
+  private int changedOffsetIndex(final int startIndex, final int endIndex, final SegmentArrayWithData insertSegments) {
+    if (endIndex - startIndex != insertSegments.getSegmentCount()) return -1;
+    int changedIndex = -1;
+    for (int i = startIndex; i < endIndex; i++) {
+      short oldData = mySegments.getSegmentData(i);
+      int insertIndex = i - startIndex;
+      short newData = insertSegments.getSegmentData(insertIndex);
+      if (oldData != newData) return -1;
+      if (mySegments.getSegmentStart(i) != insertSegments.getSegmentStart(insertIndex)
+          || mySegments.getSegmentEnd(i) != insertSegments.getSegmentEnd(insertIndex)) {
+        changedIndex = i;
+      }
+    }
+    return changedIndex;
+  }
+
+  public void beforeDocumentChange(DocumentEvent event) {
+  }
 
   public int getPriority() {
     return 2;
   }
 
-  private boolean segmentsEqual(SegmentArrayWithData a1, int idx1, SegmentArrayWithData a2, int idx2, final int offsetShift) {
+  private static boolean segmentsEqual(SegmentArrayWithData a1, int idx1, SegmentArrayWithData a2, int idx2, final int offsetShift) {
     return a1.getSegmentStart(idx1) + offsetShift == a2.getSegmentStart(idx2) &&
            a1.getSegmentEnd(idx1) + offsetShift == a2.getSegmentEnd(idx2) &&
            a1.getSegmentData(idx1) == a2.getSegmentData(idx2);
@@ -224,16 +260,16 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   }
 
   public void setText(CharSequence text) {
-    int startOffset = 0;
     char[] chars = CharArrayUtil.fromSequence(text);
     if(myLexer instanceof JspHighlightLexer && myEditor != null && myEditor.getProject() != null){
       final PsiDocumentManager instance = PsiDocumentManager.getInstance(myEditor.getProject());
       final PsiFile psiFile = instance.getPsiFile(myEditor.getDocument());
       if(psiFile instanceof JspFile) ((JspHighlightLexer)myLexer).setBaseFile((JspFile)psiFile);
     }
+    int startOffset = 0;
     myLexer.start(chars, startOffset, text.length());
-    int i = 0;
     mySegments.removeAll();
+    int i = 0;
     while(myLexer.getTokenType() != null) {
       int data = packData(myLexer.getTokenType(), myLexer.getState());
       mySegments.setElementAt(i, myLexer.getTokenStart(), myLexer.getTokenEnd(), data);
@@ -260,8 +296,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   private TextAttributes convertAttributes(TextAttributesKey[] keys) {
     EditorColorsScheme scheme = myScheme;
     TextAttributes attrs = scheme.getAttributes(HighlighterColors.TEXT);
-    for (int i = 0; i < keys.length; i++) {
-      TextAttributesKey key = keys[i];
+    for (TextAttributesKey key : keys) {
       TextAttributes attrs2 = scheme.getAttributes(key);
       if (attrs2 != null) {
         attrs = TextAttributes.merge(attrs, attrs2);

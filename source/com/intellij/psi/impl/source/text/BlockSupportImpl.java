@@ -7,16 +7,14 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiPlainTextFile;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiElementFactoryImpl;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.psi.impl.cache.RepositoryManager;
-import com.intellij.psi.impl.source.CodeFragmentElement;
-import com.intellij.psi.impl.source.Constants;
-import com.intellij.psi.impl.source.DummyHolder;
-import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.impl.source.*;
 import com.intellij.psi.impl.source.parsing.tabular.ParsingUtil;
 import com.intellij.psi.impl.source.parsing.tabular.grammar.Grammar;
 import com.intellij.psi.impl.source.parsing.tabular.grammar.GrammarUtil;
@@ -27,7 +25,7 @@ import com.intellij.psi.tree.IErrorCounterChameleonElementType;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 
-public class BlockSupportImpl extends BlockSupport implements Constants, ProjectComponent {
+public class BlockSupportImpl extends BlockSupport implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.text.BlockSupportImpl");
 
   public String getComponentName() {
@@ -69,7 +67,7 @@ public class BlockSupportImpl extends BlockSupport implements Constants, Project
     reparseRangeInternal(file, startOffset, endOffset, lengthShift, newFileText);
   }
 
-  public void reparseRangeInternal(PsiFile file, int startOffset, int endOffset, int lengthShift, char[] newFileText){
+  private static void reparseRangeInternal(PsiFile file, int startOffset, int endOffset, int lengthShift, char[] newFileText){
     final PsiFileImpl fileImpl = (PsiFileImpl)file;
     Project project = fileImpl.getProject();
     final CharTable charTable = fileImpl.getTreeElement().getCharTable();
@@ -137,12 +135,27 @@ public class BlockSupportImpl extends BlockSupport implements Constants, Project
       treeElement.replaceAllChildrenToChildrenOf(chameleon.transform(treeFileElement.getCharTable(), fileImpl.createLexer(), project).getTreeParent());
     }
     else{
+      boolean leafChangeOptimized = false;
+      Document document = PsiDocumentManager.getInstance(project).getDocument(fileImpl);
+      if (document != null) {
+        int changedOffset;
+        synchronized (document) {
+          Integer offset = document.getUserData(LexerEditorHighlighter.CHANGED_TOKEN_START_OFFSET);
+          changedOffset = offset == null ? -1 : offset.intValue();
+          document.putUserData(LexerEditorHighlighter.CHANGED_TOKEN_START_OFFSET, null);
+        }
+        leafChangeOptimized = changedOffset != -1 && optimizeLeafChange(treeFileElement, newFileText, startOffset, endOffset, lengthShift, changedOffset);
+      }
+      if (leafChangeOptimized) {
+        return;
+      }
+
       // file reparse
       FileType fileType = file.getFileType();
       if (file instanceof PsiPlainTextFile){
         fileType = StdFileTypes.PLAIN_TEXT;
       }
-      //
+
       final Grammar grammarByFileType = GrammarUtil.getGrammarByFileType(fileType);
       if(grammarByFileType != null){
         ParsingUtil.reparse(grammarByFileType, treeFileElement.getCharTable(), treeFileElement, newFileText, startOffset, endOffset, lengthShift);
@@ -153,7 +166,41 @@ public class BlockSupportImpl extends BlockSupport implements Constants, Project
     }
   }
 
-  private void makeFullParse(ASTNode parent,
+  private static boolean hasErrorElementChild(ASTNode element) {
+    if (element == null) return false;
+    if (element instanceof PsiErrorElement) return true;
+    for (ASTNode child = element.getFirstChildNode(); child != null; child = child.getTreeNext()) {
+      if (child instanceof PsiErrorElement) return true;
+    }
+    return false;
+  }
+
+  private static boolean optimizeLeafChange(final FileElement treeFileElement,
+                                            final char[] newFileText,
+                                            int startOffset,
+                                            final int endOffset, final int lengthDiff, final int changedOffset) {
+    //if (treeFileElement.getElementType() != JavaElementType.JAVA_FILE) {
+    //  return false;
+    //}
+    //startOffset++; // ??(*&(*&(*&
+    final LeafElement leafElement = treeFileElement.findLeafElementAt(startOffset);
+    if (leafElement == null
+        || hasErrorElementChild(leafElement.getTreeParent())
+        || hasErrorElementChild(leafElement.getTreeNext())
+        || hasErrorElementChild(leafElement.getTreePrev())) return false;
+    if (!leafElement.getTextRange().contains(new TextRange(startOffset, endOffset))) return false;
+    final LeafElement leafElementToChange = treeFileElement.findLeafElementAt(changedOffset);
+    if (leafElementToChange == null) return false;
+    TextRange leafRangeToChange = leafElementToChange.getTextRange();
+    String newElementText = new String(newFileText, leafRangeToChange.getStartOffset(), leafRangeToChange.getLength() + lengthDiff);
+    String oldText = leafElementToChange.getText();
+    LeafElement newElement = Factory.createLeafElement(leafElementToChange.getElementType(), newFileText, leafRangeToChange.getStartOffset(), leafRangeToChange.getEndOffset() + lengthDiff, -1, treeFileElement.getCharTable());
+    newElement.putUserData(CharTable.CHAR_TABLE_KEY, treeFileElement.getCharTable());
+    ChangeUtil.replaceChild(leafElementToChange.getTreeParent(), leafElementToChange, newElement);
+    return true;
+  }
+
+  private static void makeFullParse(ASTNode parent,
                              char[] newFileText,
                              int textLength,
                              final PsiFileImpl fileImpl,
@@ -174,7 +221,7 @@ public class BlockSupportImpl extends BlockSupport implements Constants, Project
       sendPsiBeforeEvent(fileImpl);
       if(repositoryManager != null) repositoryManager.beforeChildAddedOrRemoved(fileImpl, fileElement);
       if(fileElement.getFirstChildNode() != null)
-        TreeUtil.removeRange((TreeElement)fileElement.getFirstChildNode(), null);
+        TreeUtil.removeRange(fileElement.getFirstChildNode(), null);
       final ASTNode firstChildNode = newFileElement.getFirstChildNode();
       if (firstChildNode != null)
         TreeUtil.addChildren(fileElement, (TreeElement)firstChildNode);
@@ -186,7 +233,7 @@ public class BlockSupportImpl extends BlockSupport implements Constants, Project
     }
   }
 
-  private void sendPsiAfterEvent(final PsiFileImpl scope, int oldLength) {
+  private static void sendPsiAfterEvent(final PsiFileImpl scope, int oldLength) {
     if(!scope.isPhysical()) return;
     final PsiManagerImpl manager = (PsiManagerImpl)scope.getManager();
     PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(manager);
@@ -197,7 +244,7 @@ public class BlockSupportImpl extends BlockSupport implements Constants, Project
     manager.childrenChanged(event);
   }
 
-  private void sendPsiBeforeEvent(final PsiFile scope) {
+  private static void sendPsiBeforeEvent(final PsiFile scope) {
     if(!scope.isPhysical()) return;
     final PsiManagerImpl manager = (PsiManagerImpl)scope.getManager();
     PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(manager);
