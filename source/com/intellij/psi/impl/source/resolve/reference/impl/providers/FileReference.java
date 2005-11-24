@@ -179,7 +179,21 @@ public class FileReference implements PsiPolyVariantReference, QuickFixProvider 
 
   public boolean isReferenceTo(PsiElement element) {
     if (element instanceof WebDirectoryElement || element instanceof PsiFile || element instanceof PsiDirectory) {
-      return element.getManager().areElementsEquivalent(element, resolve());
+      final PsiElement myResolve = resolve();
+      
+      if (myResolve instanceof WebDirectoryElement && element instanceof PsiDirectory) {
+        WebDirectoryElement webDir = (WebDirectoryElement)myResolve;
+        final VirtualFile originalVirtualFile = webDir.getOriginalVirtualFile();
+
+        if (originalVirtualFile != null) {
+          final PsiDirectory directory = element.getManager().findDirectory(originalVirtualFile);
+
+          if (directory != null) {
+            return element.getManager().areElementsEquivalent(element,directory);
+          }
+        }
+      }
+      return element.getManager().areElementsEquivalent(element, myResolve);
     }
     return false;
   }
