@@ -1,13 +1,12 @@
 package com.intellij.util.containers;
 
 import com.intellij.util.StringBuilderSpinAllocator;
-import com.intellij.openapi.components.ApplicationComponent;
 
 import java.util.ArrayList;
 
 import org.jetbrains.annotations.NonNls;
 
-public class CharTrie implements ApplicationComponent {
+public class CharTrie {
   private static final String ourEmptyString = "";
   private final ArrayList<Node> myAllNodes;
 
@@ -20,17 +19,6 @@ public class CharTrie implements ApplicationComponent {
       myChar = c;
       myParent = parent;
     }
-  }
-
-  @NonNls
-  public String getComponentName() {
-    return "CharTrie";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
   }
 
   public CharTrie() {
