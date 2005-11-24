@@ -96,7 +96,7 @@ public class JavacCompiler extends ExternalCompiler {
 
   @NotNull
   public String getPresentableName() {
-    return "Javac";
+    return CompilerBundle.message("compiler.javac.name");
   }
 
   @NotNull

@@ -89,7 +89,7 @@ public class JikesCompiler extends ExternalCompiler {
 
   @NotNull
   public String getPresentableName() {
-    return "Jikes";
+    return CompilerBundle.message("compiler.jikes.name");
   }
 
   @NotNull
