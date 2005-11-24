@@ -1,10 +1,8 @@
 package com.intellij.psi.impl;
 
 import com.intellij.j2ee.J2EERolesUtil;
-import com.intellij.j2ee.ejb.EjbUtil;
 import com.intellij.j2ee.ejb.role.EjbClassRole;
 import com.intellij.j2ee.j2eeDom.J2EEElementsVisitor;
-import com.intellij.j2ee.j2eeDom.ejb.Ejb;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
@@ -18,28 +16,25 @@ public class InheritanceImplUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.InheritanceImplUtil");
 
   public static boolean isInheritor(PsiClass candidateClass, final PsiClass baseClass, final boolean checkDeep) {
-    return isInheritor(candidateClass, baseClass, checkDeep, true);
-  }
+    if (isJavaInheritor(candidateClass, baseClass, checkDeep)) return true;
 
-  public static boolean isInheritor(final PsiClass candidateClass, final PsiClass baseClass, final boolean checkDeep, final boolean checkEjb) {
-    if (baseClass instanceof PsiAnonymousClass) {
-      return false;
-    }
-    if (isInheritor(candidateClass, baseClass, checkDeep, null)) return true;
-
-    if (checkEjb) {
-      final EjbClassRole classRole = J2EERolesUtil.getEjbRole(candidateClass);
-      if (classRole != null && candidateClass.getManager().areElementsEquivalent(candidateClass, classRole.getEjb().getEjbClass().getPsiClass())) {
-        final Ejb ejb = classRole.getEjb();
-        return !EjbUtil.visitEjbInterfaces(ejb, new J2EEElementsVisitor(){
-          public boolean visitInterface(PsiClass anInterface) {
-            return !InheritanceUtil.isInheritorOrSelf(anInterface, baseClass, checkDeep);
-          }
-        });
-      }
+    final EjbClassRole classRole = J2EERolesUtil.getEjbRole(candidateClass);
+    if (classRole != null && candidateClass.getManager().areElementsEquivalent(candidateClass, classRole.getEjb().getEjbClass().getPsiClass())) {
+      return !classRole.getEjb().acceptInterfaces(new J2EEElementsVisitor() {
+        public boolean visitInterface(PsiClass anInterface) {
+          return !InheritanceUtil.isInheritorOrSelf(anInterface, baseClass, checkDeep);
+        }
+      });
     }
 
     return false;
+  }
+
+  public static boolean isJavaInheritor(final PsiClass candidateClass, final PsiClass baseClass, final boolean checkDeep) {
+    if (baseClass instanceof PsiAnonymousClass) {
+      return false;
+    }
+    return isInheritor(candidateClass, baseClass, checkDeep, null);
   }
 
   private static boolean isInheritor(PsiClass candidateClass, PsiClass baseClass, boolean checkDeep, List<PsiClass> checkedClasses) {
