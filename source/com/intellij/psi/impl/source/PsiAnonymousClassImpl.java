@@ -1,13 +1,13 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.psi.*;
-import com.intellij.psi.HierarchicalMethodSignature;
-import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiClassImplUtil;
+import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.impl.source.parsing.Parsing;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
@@ -41,10 +41,12 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
     return (PsiExpressionList)calcTreeElement().findChildByRoleAsPsiElement(ChildRole.ARGUMENT_LIST);
   }
 
+  @NotNull
   public PsiJavaCodeReferenceElement getBaseClassReference() {
     return (PsiJavaCodeReferenceElement)calcTreeElement().findChildByRoleAsPsiElement(ChildRole.BASE_CLASS_REFERENCE);
   }
 
+  @NotNull
   public PsiClassType getBaseClassType() {
     // Only do caching if no tree element is avaliable. Otherwise we're in danger to leak tree element via cached type.
     synchronized (PsiLock.LOCK) {
@@ -92,8 +94,8 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
     return null;
   }
 
-  public boolean hasModifierProperty(String name) {
-    return false;
+  public boolean hasModifierProperty(@NotNull String name) {
+    return name.equals(PsiModifier.FINAL);
   }
 
   public PsiReferenceList getExtendsList() {
@@ -104,6 +106,7 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
     return null;
   }
 
+  @NotNull
   public PsiClassType[] getSuperTypes() {
     return PsiClassImplUtil.getSuperTypes(this);
   }
