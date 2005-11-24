@@ -57,7 +57,6 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     ourUniqueTags.add("serialData");
   }
 
-  public boolean myCheckPeriodInJavadoc = false;
 
   public static class Options implements JDOMExternalizable {
     public String ACCESS_JAVADOC_REQUIRED_FOR = NONE;
@@ -80,11 +79,12 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     }
   }
 
-  @NonNls public Options TOP_LEVEL_CLASS_OPTIONS = new Options("public", "");
-  @NonNls public Options INNER_CLASS_OPTIONS = new Options("protected", "");
-  @NonNls public Options METHOD_OPTIONS = new Options("protected", "@return@param@throws or @exception");
-  @NonNls public Options FIELD_OPTIONS = new Options("protected", "");
+  @NonNls public Options TOP_LEVEL_CLASS_OPTIONS = new Options("none", "");
+  @NonNls public Options INNER_CLASS_OPTIONS = new Options("none", "");
+  @NonNls public Options METHOD_OPTIONS = new Options("none", "@return@param@throws or @exception");
+  @NonNls public Options FIELD_OPTIONS = new Options("none", "");
   public boolean IGNORE_DEPRECATED = false;
+  public boolean IGNORE_JAVADOC_PERIOD = true;
   public String myAdditionalJavadocTags = "";
 
   private static final Logger LOG = Logger.getInstance("com.intellij.codeInspection.javaDoc.JavaDocLocalInspection");
@@ -194,8 +194,10 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     }
 
     public OptionsPanel() {
-      super(new BorderLayout());
-
+      super(new GridBagLayout());
+      GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 1, GridBagConstraints.NORTH, GridBagConstraints.BOTH, new Insets(0,0,0,0),0,0 );
+      gc.weighty = 0;
+      add(createAdditionalJavadocTagsPanel(), gc);
       JTabbedPane tabs = new JTabbedPane(JTabbedPane.BOTTOM);
       @NonNls String[] tags = new String[]{"@author", "@version", "@since"};
       tabs.add(InspectionsBundle.message("inspection.javadoc.option.tab.title"), createOptionsPanel(new String[]{JavaDocLocalInspection.NONE, JavaDocLocalInspection.PUBLIC, JavaDocLocalInspection.PACKAGE_LOCAL},
@@ -211,8 +213,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
       tabs.add(InspectionsBundle.message("inspection.javadoc.option.tab.title3"), createOptionsPanel(new String[]{JavaDocLocalInspection.NONE, JavaDocLocalInspection.PUBLIC, JavaDocLocalInspection.PROTECTED, JavaDocLocalInspection.PACKAGE_LOCAL, JavaDocLocalInspection.PRIVATE},
                                                                                                      null,
                                                                                                      INNER_CLASS_OPTIONS));
-
-      add(tabs, BorderLayout.CENTER);
+      add(tabs, gc);
 
       final JCheckBox checkBox = new JCheckBox(InspectionsBundle.message("inspection.javadoc.option.ignore.deprecated"),
                                                IGNORE_DEPRECATED);
@@ -221,8 +222,16 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
           IGNORE_DEPRECATED = checkBox.isSelected();
         }
       });
-      add(checkBox, BorderLayout.SOUTH);
-      add(createAdditionalJavadocTagsPanel(), BorderLayout.NORTH);
+      gc.gridwidth = 1;
+      add(checkBox, gc);
+      final JCheckBox periodCheckBox = new JCheckBox(InspectionsBundle.message("inspection.javadoc.option.ignore.period"),
+                                                     IGNORE_JAVADOC_PERIOD);
+      checkBox.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent e) {
+          IGNORE_JAVADOC_PERIOD = periodCheckBox.isSelected();
+        }
+      });
+      add(periodCheckBox, gc);
     }
 
     public FieldPanel createAdditionalJavadocTagsPanel(){
@@ -538,7 +547,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
   private ArrayList<ProblemDescriptor> checkForPeriodInDoc(PsiElement psiElement,
                                                            PsiDocComment docComment,
                                                            ArrayList<ProblemDescriptor> problems) {
-    if (!myCheckPeriodInJavadoc) return problems;
+    if (IGNORE_JAVADOC_PERIOD) return problems;
     PsiDocTag[] tags = docComment.getTags();
     int dotIndex = docComment.getText().indexOf('.');
     int tagOffset = tags.length == 0 ? 0 : tags[0].getTextOffset();
@@ -682,7 +691,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
             if (problems == null) {
               problems = new ArrayList<ProblemDescriptor>();
             }
-            problems.add(createDescriptor(tag, InspectionsBundle.message("inspection.javadoc.problem.duplicate.param", paramName)));
+            problems.add(createDescriptor(tag.getNameElement(), InspectionsBundle.message("inspection.javadoc.problem.duplicate.param", paramName)));
           }
           documentedParamNames.add(paramName);
         }
@@ -704,7 +713,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
                   if (problems == null) {
                     problems = new ArrayList<ProblemDescriptor>();
                   }
-                  problems.add(createDescriptor(tag, InspectionsBundle.message("inspection.javadoc.problem.duplicate.throws", fqName)));
+                  problems.add(createDescriptor(tag.getNameElement(), InspectionsBundle.message("inspection.javadoc.problem.duplicate.throws", fqName)));
                 }
                 documentedExceptions.add(fqName);
               }
@@ -720,7 +729,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
           if (problems == null) {
             problems = new ArrayList<ProblemDescriptor>();
           }
-          problems.add(createDescriptor(tag, InspectionsBundle.message("inspection.javadoc.problem.duplicate.tag", tag.getName())));
+          problems.add(createDescriptor(tag.getNameElement(), InspectionsBundle.message("inspection.javadoc.problem.duplicate.tag", tag.getName())));
         }
         uniqueTags.add(tag.getName());
       }

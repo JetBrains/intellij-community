@@ -92,7 +92,10 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
       public void visitElement(PsiElement element) {
         PsiElement[] children = element.getChildren();
         for (PsiElement child : children) {
-          child.accept(this);
+          //do not visit method javadoc twice
+          if (!(child instanceof PsiDocCommentOwner)) {
+            child.accept(this);
+          }
         }
       }
 
