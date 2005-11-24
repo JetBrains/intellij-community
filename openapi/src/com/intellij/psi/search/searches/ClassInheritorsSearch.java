@@ -24,7 +24,7 @@ import java.util.Collection;
 public class ClassInheritorsSearch extends QueryFactory<PsiClass, ClassInheritorsSearch.SearchParameters> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.search.searches.ClassInheritorsSearch");
 
-  private static ClassInheritorsSearch INSTANCE = new ClassInheritorsSearch();
+  public static ClassInheritorsSearch INSTANCE = new ClassInheritorsSearch();
 
   static {
     INSTANCE.registerExecutor(new QueryExecutor<PsiClass, SearchParameters>() {
