@@ -181,18 +181,15 @@ public class ControlFlowUtil {
   }
 
   public static PsiVariable[] getWrittenVariables(ControlFlow flow, int start, int end) {
-    ArrayList<PsiVariable> array = new ArrayList<PsiVariable>();
+    Set<PsiVariable> set = new HashSet<PsiVariable>();
     Instruction[] instructions = flow.getInstructions();
     for (int i = start; i < end; i++) {
       Instruction instruction = instructions[i];
-      if (instruction instanceof WriteVariableInstruction) {
-        PsiVariable variable = ((WriteVariableInstruction)instruction).variable;
-        if (!array.contains(variable)) {
-          array.add(variable);
+      if (instruction instanceof WriteVariableInstruction && isInstructionReachable(flow, end, i)) {
+          set.add(((WriteVariableInstruction)instruction).variable);
         }
-      }
     }
-    return array.toArray(new PsiVariable[array.size()]);
+    return set.toArray(new PsiVariable[set.size()]);
   }
 
   public static PsiVariable[] getUsedVariables(ControlFlow flow, int start, int end) {
