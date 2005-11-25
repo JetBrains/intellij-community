@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class UnnecessarySemicolonInspection extends FileInspection{
+
     private final UnnecessarySemicolonFix fix = new UnnecessarySemicolonFix();
 
     public String getGroupDisplayName(){
@@ -53,6 +54,7 @@ public class UnnecessarySemicolonInspection extends FileInspection{
     }
 
     private static class UnnecessarySemicolonFix extends InspectionGadgetsFix{
+
         public String getName(){
             return InspectionGadgetsBundle.message("unnecessary.semicolon.remove.quickfix");
         }
@@ -77,6 +79,9 @@ public class UnnecessarySemicolonInspection extends FileInspection{
     private static class UnnecessarySemicolonVisitor
             extends BaseInspectionVisitor{
 
+        /**
+         * Finds semicolons between the top level classes in a java file.
+         */
         public void visitFile(PsiFile file){
             final PsiElement firstChild = file.getFirstChild();
             PsiElement sibling = skipForwardWhiteSpacesAndComments(firstChild);
@@ -96,22 +101,7 @@ public class UnnecessarySemicolonInspection extends FileInspection{
         public void visitClass(@NotNull PsiClass aClass){
             super.visitClass(aClass);
 
-            PsiElement child = aClass.getFirstChild();
-            while(child != null){
-                if(child instanceof PsiJavaToken){
-                    final PsiJavaToken token = (PsiJavaToken)child;
-                    final IElementType tokenType = token.getTokenType();
-                    if(tokenType.equals(JavaTokenType.SEMICOLON)){
-                        final PsiElement prevSibling =
-                                skipBackwardWhiteSpacesAndComments(child);
-                        if(!(prevSibling instanceof PsiEnumConstant)){
-                            registerError(child);
-                        }
-                    }
-                }
-                child = skipForwardWhiteSpacesAndComments(child);
-            }
-
+            findUnnecessarySemicolonsAfterEnumConstants(aClass);
             if(!aClass.isEnum()){
                 return;
             }
@@ -138,6 +128,34 @@ public class UnnecessarySemicolonInspection extends FileInspection{
                 return;
             }
             registerError(element);
+        }
+
+        private void findUnnecessarySemicolonsAfterEnumConstants(
+                @NotNull PsiClass aClass) {
+            PsiElement child = aClass.getFirstChild();
+            while(child != null){
+                if(child instanceof PsiJavaToken){
+                    final PsiJavaToken token = (PsiJavaToken)child;
+                    final IElementType tokenType = token.getTokenType();
+                    if(tokenType.equals(JavaTokenType.SEMICOLON)){
+                        final PsiElement prevSibling =
+                                skipBackwardWhiteSpacesAndComments(child);
+                        if(!(prevSibling instanceof PsiEnumConstant)){
+                            if (prevSibling instanceof PsiJavaToken) {
+                                final PsiJavaToken javaToken =
+                                        (PsiJavaToken)prevSibling;
+                                if (!JavaTokenType.COMMA.equals(
+                                        javaToken.getTokenType())) {
+                                    registerError(child);
+                                }
+                            } else {
+                                registerError(child);
+                            }
+                        }
+                    }
+                }
+                child = skipForwardWhiteSpacesAndComments(child);
+            }
         }
 
         @Nullable

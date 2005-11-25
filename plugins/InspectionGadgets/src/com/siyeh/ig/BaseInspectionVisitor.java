@@ -172,6 +172,10 @@ public abstract class BaseInspectionVisitor extends PsiRecursiveElementVisitor{
         if(inspection instanceof ClassInspection && !classVisited) {
             classVisited = true;
             super.visitClass(aClass);
+        } else if (inspection instanceof ExpressionInspection) {
+            super.visitClass(aClass);
+        } else if (inspection instanceof FileInspection) {
+            super.visitClass(aClass);
         }
     }
 }
