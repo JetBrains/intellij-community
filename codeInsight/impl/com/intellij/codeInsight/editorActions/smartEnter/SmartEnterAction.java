@@ -64,7 +64,14 @@ public class SmartEnterAction extends EditorAction {
       }
 
       FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.complete.statement");
-      new SmartEnterProcessor(project, editor, psiFile).process();
+
+      final String textForRollback = doc.getText();
+      try {
+        new SmartEnterProcessor(project, editor, psiFile).process(0);
+      }
+      catch (SmartEnterProcessor.TooManyAttemptsException e) {
+        doc.replaceString(0, doc.getTextLength(), textForRollback);
+      }
     }
 
     private boolean isInPreceedingBlanks(Editor editor) {
@@ -82,10 +89,7 @@ public class SmartEnterAction extends EditorAction {
     }
 
     private EditorActionHandler getEnterHandler() {
-      EditorActionHandler enterHandler = EditorActionManager.getInstance().getActionHandler(
-          IdeActions.ACTION_EDITOR_START_NEW_LINE
-      );
-      return enterHandler;
+      return EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_START_NEW_LINE);
     }
 
     private PsiErrorElement getFirstUnresolvedError(PsiElement where) {

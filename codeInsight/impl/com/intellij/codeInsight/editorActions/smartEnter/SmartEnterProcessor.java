@@ -67,6 +67,7 @@ public class SmartEnterProcessor {
   private PsiFile myPsiFile;
   private long myStartTimestamp;
   private int myFirstErrorOffset = Integer.MAX_VALUE;
+  private static final int MAX_ATTEMPTS = 20;
 
   public SmartEnterProcessor(Project project, Editor editor, PsiFile psiFile) {
     myProject = project;
@@ -75,7 +76,11 @@ public class SmartEnterProcessor {
     myStartTimestamp = myEditor.getDocument().getModificationStamp();
   }
 
-  public void process() {
+  public static class TooManyAttemptsException extends Exception {}
+
+  public void process(final int attempt) throws TooManyAttemptsException {
+    if (attempt > MAX_ATTEMPTS) throw new TooManyAttemptsException();
+
     try {
       commit();
       myFirstErrorOffset = Integer.MAX_VALUE;
@@ -99,7 +104,7 @@ public class SmartEnterProcessor {
             if (myEditor.getUserData(LookupImpl.LOOKUP_IN_EDITOR_KEY) != null) return;
             if (isUncommited() || !psiElement.isValid()) {
               moveCaretInsideBracesIfAny();
-              process();
+              process(attempt + 1);
               return;
             }
           }
@@ -212,10 +217,7 @@ public class SmartEnterProcessor {
   }
 
   private EditorActionHandler getEnterHandler() {
-    EditorActionHandler enterHandler = EditorActionManager.getInstance().getActionHandler(
-        IdeActions.ACTION_EDITOR_START_NEW_LINE
-    );
-    return enterHandler;
+    return EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_START_NEW_LINE);
   }
 
   private PsiElement getStatementAtCaret() {
@@ -235,10 +237,11 @@ public class SmartEnterProcessor {
     if (atCaret instanceof PsiWhiteSpace) return null;
     if (atCaret instanceof PsiJavaToken && "}".equals(atCaret.getText())) return null;
 
-    PsiElement statementAtCaret = PsiTreeUtil.getNonStrictParentOfType(atCaret,
-                                                                       PsiStatement.class, PsiCodeBlock.class,
-                                                                       PsiMember.class,
-                                                                       PsiComment.class);
+    PsiElement statementAtCaret = PsiTreeUtil.getParentOfType(atCaret,
+                                                              PsiStatement.class,
+                                                              PsiCodeBlock.class,
+                                                              PsiMember.class,
+                                                              PsiComment.class);
 
     if (statementAtCaret instanceof PsiBlockStatement) return null;
 

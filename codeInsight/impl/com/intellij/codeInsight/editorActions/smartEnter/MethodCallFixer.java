@@ -26,11 +26,28 @@ public class MethodCallFixer implements Fixer {
     PsiElement parenth = args.getLastChild();
 
     if (parenth == null || !")".equals(parenth.getText())) {
-      int endOffset = args.getTextRange().getEndOffset();
+      int endOffset = -1;
+      PsiElement child = args.getFirstChild();
+      while (child != null) {
+        if (child instanceof PsiErrorElement) {
+          final PsiErrorElement errorElement = (PsiErrorElement)child;
+          if (errorElement.getErrorDescription().indexOf("')'") >= 0) {
+            endOffset = errorElement.getTextRange().getStartOffset();
+            break;
+          }
+        }
+        child = child.getNextSibling();
+      }
+
+      if (endOffset == -1) {
+        endOffset = args.getTextRange().getEndOffset();
+      }
+
       final PsiExpression[] params = args.getExpressions();
       if (params.length > 0 && startLine(editor, args) != startLine(editor, params[0])) {
         endOffset = args.getTextRange().getStartOffset() + 1;
       }
+
       endOffset = CharArrayUtil.shiftBackward(editor.getDocument().getCharsSequence(), endOffset - 1, " \t\n") + 1;
       editor.getDocument().insertString(endOffset, ")");
     }
