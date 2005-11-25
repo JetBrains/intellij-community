@@ -90,11 +90,11 @@ public final class PsiUtil {
     }
   }
 
-  public static boolean isAccessible(PsiMember member, PsiElement place, PsiClass accessObjectClass) {
-    return place.getManager().getResolveHelper().isAccessible(member, place, accessObjectClass);
+  public static boolean isAccessible(PsiMember member, PsiElement place, PsiMember accessObjectMember) {
+    return place.getManager().getResolveHelper().isAccessible(member, place, accessObjectMember);
   }
 
-  public static JavaResolveResult getAccessObjectClass(PsiExpression accessObject) {
+  public static JavaResolveResult getAccessObjectMember(PsiExpression accessObject) {
     if (accessObject instanceof PsiSuperExpression) {
       final PsiJavaCodeReferenceElement qualifier = ((PsiSuperExpression) accessObject).getQualifier();
       if (qualifier != null) { // E.super.f
@@ -150,6 +150,9 @@ public final class PsiUtil {
         }
         return JavaResolveResult.EMPTY;
       }
+    }
+    else if (accessObject instanceof PsiMethodCallExpression) {
+      return ((PsiCallExpression)accessObject).resolveMethodGenerics();
     }
     else {
       PsiType type = accessObject.getType();

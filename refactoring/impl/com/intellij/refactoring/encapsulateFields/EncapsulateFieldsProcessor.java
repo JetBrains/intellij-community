@@ -146,13 +146,13 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
           if (!PsiUtil.isAccessedForReading(ref)) continue;
         }
         if (!myDialog.isToUseAccessorsWhenAccessible()) {
-          PsiClass accessObjectClass = null;
+          PsiMember accessObjectMember = null;
           PsiExpression qualifier = ref.getQualifierExpression();
           if (qualifier != null) {
-            accessObjectClass = (PsiClass)PsiUtil.getAccessObjectClass(qualifier).getElement();
+            accessObjectMember = (PsiMember)PsiUtil.getAccessObjectMember(qualifier).getElement();
           }
           if (PsiManager.getInstance(myProject).getResolveHelper()
-            .isAccessible(field, newModifierList, ref, accessObjectClass, null)) {
+            .isAccessible(field, newModifierList, ref, accessObjectMember, null)) {
             continue;
           }
         }

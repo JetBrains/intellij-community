@@ -20,7 +20,7 @@ public abstract class MethodsProcessor extends ConflictFilterProcessor {
   private boolean myStaticScopeFlag = false;
   private boolean myIsConstructor = false;
   protected PsiElement myCurrentFileContext = null;
-  protected PsiClass myAccessClass = null;
+  protected PsiMember myAccessMember = null;
   private PsiExpressionList myArgumentList;
   private PsiType[] myTypeArguments;
 
@@ -69,15 +69,15 @@ public abstract class MethodsProcessor extends ConflictFilterProcessor {
     }
   }
 
-  public void setAccessClass(PsiClass accessClass) {
-    if (isConstructor() && accessClass instanceof PsiAnonymousClass) {
-      myAccessClass = ((PsiAnonymousClass)accessClass).getBaseClassType().resolve();
+  public void setAccessMember(PsiMember accessMember) {
+    if (isConstructor() && accessMember instanceof PsiAnonymousClass) {
+      myAccessMember = ((PsiAnonymousClass)accessMember).getBaseClassType().resolve();
     }
     else {
-      myAccessClass = accessClass;
+      myAccessMember = accessMember;
     }
-    if (isConstructor() && myAccessClass != null) {
-      setName(myAccessClass.getName());
+    if (isConstructor() && myAccessMember != null) {
+      setName(myAccessMember.getName());
     }
   }
 

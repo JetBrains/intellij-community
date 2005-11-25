@@ -180,7 +180,7 @@ public class PsiScopesUtil {
             }
 
             processor.setIsConstructor(true);
-            processor.setAccessClass(aClass);
+            processor.setAccessMember(aClass);
             processScope(aClass, processor, PsiSubstitutor.EMPTY, null, call);
 
             if (dummyImplicitConstructor){
@@ -198,7 +198,7 @@ public class PsiScopesUtil {
               PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, aClass, PsiSubstitutor.EMPTY);
               LOG.assertTrue(substitutor != null);
               processor.setIsConstructor(true);
-              processor.setAccessClass(superClass);
+              processor.setAccessMember(superClass);
               processScope(superClass, processor, substitutor, null, call);
 
               if (dummyImplicitConstructor) processDummyConstructor(processor, superClass);
@@ -211,7 +211,7 @@ public class PsiScopesUtil {
         else if (referenceNameElement instanceof PsiIdentifier){
           processor.setIsConstructor(false);
           processor.setName(referenceNameElement.getText());
-          processor.setAccessClass(null);
+          processor.setAccessMember(null);
           PsiScopesUtil.resolveAndWalk(processor, ref, null);
         }
         else{
@@ -269,7 +269,7 @@ public class PsiScopesUtil {
       if (aClass == null)
         throw new MethodProcessorSetupFailedException("Cant resolve class in new expression");
       processor.setIsConstructor(true);
-      processor.setAccessClass(aClass);
+      processor.setAccessMember(aClass);
       processor.setArgumentList(newExpr.getArgumentList());
       processor.obtainTypeArguments(newExpr);
       processScope(aClass, processor, result.getSubstitutor(), null, call);
@@ -310,11 +310,11 @@ public class PsiScopesUtil {
       resolve = qualifierResult.getElement();
     } else if (resolve instanceof PsiClass) {
       PsiExpression qualifier = methodCall.getMethodExpression().getQualifierExpression();
-      if (qualifier instanceof PsiSuperExpression) {
-        processor.setAccessClass((PsiClass)PsiUtil.getAccessObjectClass(qualifier).getElement());
-      }
-      else
-        processor.setAccessClass((PsiClass)resolve);
+      //if (qualifier instanceof PsiSuperExpression) {
+        processor.setAccessMember((PsiMember)PsiUtil.getAccessObjectMember(qualifier).getElement());
+      //}
+      //else
+      //  processor.setAccessMember((PsiClass)resolve);
     }
 
     processor.setIsConstructor(false);

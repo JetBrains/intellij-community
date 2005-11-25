@@ -36,9 +36,9 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
 
       if ((!isConstructor() && getName().equals(currentMethod.getName()))
         || (currentMethod.isConstructor()
-            && myAccessClass != null
-            && myAccessClass == currentMethod.getContainingClass())){
-        add(new MethodCandidateInfo(currentMethod, substitutor, myPlace, currentMethod.isConstructor() ? null : myAccessClass, staticProblem,
+            && myAccessMember != null
+            && myAccessMember == currentMethod.getContainingClass())){
+        add(new MethodCandidateInfo(currentMethod, substitutor, myPlace, currentMethod.isConstructor() ? null : myAccessMember, staticProblem,
                                     getArgumentList(), myCurrentFileContext, getTypeArguments()));
       }
     }
