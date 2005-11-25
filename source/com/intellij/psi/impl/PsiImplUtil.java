@@ -14,6 +14,7 @@ import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -37,14 +38,14 @@ public class PsiImplUtil {
   public static PsiAnnotationMemberValue findAttributeValue(PsiAnnotation annotation, String attributeName) {
     PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
     for (PsiNameValuePair attribute : attributes) {
-      if (attributeName.equals(attribute.getName())) return attribute.getValue();
+      if (ObjectUtils.equals(attribute.getName(), attributeName)) return attribute.getValue();
     }
 
     PsiElement resolved = annotation.getNameReferenceElement().resolve();
     if (resolved != null) {
       PsiMethod[] methods = ((PsiClass)resolved).getMethods();
       for (PsiMethod method : methods) {
-        if (method instanceof PsiAnnotationMethod && attributeName.equals(method.getName())) {
+        if (method instanceof PsiAnnotationMethod && ObjectUtils.equals(method.getName(), attributeName)) {
           return ((PsiAnnotationMethod)method).getDefaultValue();
         }
       }
