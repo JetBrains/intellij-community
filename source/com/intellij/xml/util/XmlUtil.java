@@ -1069,6 +1069,7 @@ public class XmlUtil {
     "&quot;","\"",
   };
   public static String unescape(String text){
+    if (text == null) return null;
     StringBuffer result = new StringBuffer(text.length());
     replace:
     for (int i=0; i<text.length();i++) {

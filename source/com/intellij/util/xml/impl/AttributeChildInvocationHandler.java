@@ -50,11 +50,11 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler {
   }
 
   protected final Invocation createSetValueInvocation(final Converter converter) {
-    return new SetAttributeValueInvocation(converter, getXmlElementName());
+    return new SetAttributeValueInvocation(converter);
   }
 
   protected final Invocation createGetValueInvocation(final Converter converter) {
-    return new GetAttributeValueInvocation(converter, getXmlElementName());
+    return new GetAttributeValueInvocation(converter);
   }
 
   public void undefine() {
