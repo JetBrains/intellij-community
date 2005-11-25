@@ -677,37 +677,42 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
 
     public void run() {
       updateFileWatcher();
-      while (true) {
-        FileWatcher.ChangeInfo[] infos = FileWatcher.waitForChange();
+      try {
+        while (true) {
+          FileWatcher.ChangeInfo[] infos = FileWatcher.waitForChange();
 
-        if (infos == null) {
-          setUpFileWatcher();
-        } else {
-          for (FileWatcher.ChangeInfo info : infos) {
-            if (info == null) continue;
+          if (infos == null) {
+            setUpFileWatcher();
+          } else {
+            for (FileWatcher.ChangeInfo info : infos) {
+              if (info == null) continue;
 
-            String path = info.getFilePath();
-            int changeType = info.getChangeType();
-            if (changeType == FileWatcher.FILE_MODIFIED) {
-              synchronized (myDirtyFiles) {
-                myDirtyFiles.add(path);
-              }
-            }
-            else if (changeType == FileWatcher.FILE_ADDED || changeType == FileWatcher.FILE_RENAMED_NEW_NAME) {
-              synchronized (myDirtyFiles) {
-                String parent = new File(path).getParent();
-                if (parent != null) {
-                  myDirtyFiles.add(parent);
+              String path = info.getFilePath();
+              int changeType = info.getChangeType();
+              if (changeType == FileWatcher.FILE_MODIFIED) {
+                synchronized (myDirtyFiles) {
+                  myDirtyFiles.add(path);
                 }
               }
-            }
-            else if (changeType == FileWatcher.FILE_REMOVED || changeType == FileWatcher.FILE_RENAMED_OLD_NAME) {
-              synchronized (myDeletedFiles) {
-                myDeletedFiles.add(path);
+              else if (changeType == FileWatcher.FILE_ADDED || changeType == FileWatcher.FILE_RENAMED_NEW_NAME) {
+                synchronized (myDirtyFiles) {
+                  String parent = new File(path).getParent();
+                  if (parent != null) {
+                    myDirtyFiles.add(parent);
+                  }
+                }
+              }
+              else if (changeType == FileWatcher.FILE_REMOVED || changeType == FileWatcher.FILE_RENAMED_OLD_NAME) {
+                synchronized (myDeletedFiles) {
+                  myDeletedFiles.add(path);
+                }
               }
             }
           }
         }
+      }
+      catch (IOException e) {
+        LOG.info("Watcher terminated and attempt to restart has failed. Exiting watching thread.", e);
       }
     }
   }
