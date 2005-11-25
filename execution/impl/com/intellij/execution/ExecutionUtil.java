@@ -101,9 +101,11 @@ public class ExecutionUtil {
 
   public static Location stepIntoSingleClass(final Location location) {
     PsiElement element = location.getPsiElement();
-    if (PsiTreeUtil.getParentOfType(element, PsiClass.class) != null) return location;
-    element = PsiTreeUtil.getParentOfType(element, PsiJavaFile.class);
-    if (element == null) return location;
+    if (!(element instanceof PsiJavaFile)) {
+      if (PsiTreeUtil.getParentOfType(element, PsiClass.class) != null) return location;
+      element = PsiTreeUtil.getParentOfType(element, PsiJavaFile.class);
+      if (element == null) return location;
+    }
     final PsiJavaFile psiFile = ((PsiJavaFile)element);
     final PsiClass[] classes = psiFile.getClasses();
     if (classes.length != 1) return location;
