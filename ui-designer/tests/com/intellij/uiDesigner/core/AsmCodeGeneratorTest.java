@@ -200,6 +200,7 @@ public class AsmCodeGeneratorTest extends TestCase {
     assertEquals(2, gbc.gridheight);
     assertEquals(2, gbc.gridwidth);
     assertEquals(1.0, gbc.weightx, 0.01);
+    assertEquals(new Insets(1, 2, 3, 4), gbc.insets);
   }
 
   private class MyClassLoader extends ClassLoader {

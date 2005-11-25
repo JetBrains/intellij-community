@@ -17,6 +17,7 @@ package com.intellij.uiDesigner.compiler;
 
 import com.intellij.uiDesigner.lw.LwComponent;
 import com.intellij.uiDesigner.lw.LwContainer;
+import com.intellij.uiDesigner.core.GridLayoutManager;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.GeneratorAdapter;
 import org.objectweb.asm.commons.Method;
@@ -56,7 +57,8 @@ public class GridBagLayoutCodeGenerator extends LayoutCodeGenerator {
   }
 
   private void prepareConstraints(final LwContainer container) {
-    GridBagConverter converter = new GridBagConverter();
+    GridLayoutManager gridLayout = (GridLayoutManager) container.getLayout();
+    GridBagConverter converter = new GridBagConverter(gridLayout.getMargin());
     for(int i=0; i<container.getComponentCount(); i++) {
       final LwComponent component = (LwComponent)container.getComponent(i);
       converter.addComponent(null, component.getConstraints());
@@ -112,6 +114,11 @@ public class GridBagLayoutCodeGenerator extends LayoutCodeGenerator {
       }
       if (defaults.ipady != constraints.ipady) {
         setIntField(generator, gbcLocal, "ipady", constraints.ipady);
+      }
+      if (!defaults.insets.equals(constraints.insets)) {
+        generator.loadLocal(gbcLocal);
+        AsmCodeGenerator.pushPropValue(generator, "java.awt.Insets", constraints.insets);
+        generator.putField(myGridBagConstraintsType, "insets", Type.getType(Insets.class));
       }
 
       generator.loadLocal(parentLocal);

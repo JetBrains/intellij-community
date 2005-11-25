@@ -31,8 +31,17 @@ import java.util.Iterator;
  * @noinspection ForLoopReplaceableByForEach, unchecked
  */
 public class GridBagConverter {
+  private Insets myInsets;
   private ArrayList myComponents = new ArrayList();
   private ArrayList myConstraints = new ArrayList();
+
+  public GridBagConverter() {
+    myInsets = new Insets(0, 0, 0, 0);
+  }
+
+  public GridBagConverter(final Insets insets) {
+    myInsets = insets;
+  }
 
   public void addComponent(final JComponent component, final GridConstraints constraints) {
     myComponents.add(component);
@@ -68,6 +77,7 @@ public class GridBagConverter {
     result.constraints.gridheight = constraints.getRowSpan();
     result.constraints.weightx = getWeight(constraints, true);
     result.constraints.weighty = getWeight(constraints, false);
+    result.constraints.insets = myInsets;
     switch(constraints.getFill()) {
       case GridConstraints.FILL_HORIZONTAL: result.constraints.fill = GridBagConstraints.HORIZONTAL; break;
       case GridConstraints.FILL_VERTICAL: result.constraints.fill = GridBagConstraints.VERTICAL; break;
