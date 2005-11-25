@@ -730,15 +730,24 @@ public class TypeConversionUtil {
 
   private static boolean typesAgree(PsiType typeLeft, PsiType typeRight) {
     if (typeLeft instanceof PsiWildcardType) {
-      final PsiWildcardType wildcardType = (PsiWildcardType)typeLeft;
-      if (wildcardType.isExtends()) {
-        return isAssignable(wildcardType.getBound(), typeRight, false);
-      }
-      else if (wildcardType.isSuper()) {
-        return isAssignable(typeRight, wildcardType.getBound(), false);
+      final PsiWildcardType leftWildcard = (PsiWildcardType)typeLeft;
+      if (leftWildcard.getBound() == null) return true;
+      if (typeRight instanceof PsiWildcardType) {
+        final PsiWildcardType rightWildcard = ((PsiWildcardType)typeRight);
+        if (leftWildcard.isExtends()) {
+          return rightWildcard.isExtends() && isAssignable(leftWildcard.getBound(), rightWildcard.getBound(), false);
+        }
+        else { //isSuper
+          return rightWildcard.isSuper() && isAssignable(rightWildcard.getBound(), leftWildcard.getBound(), false);
+        }
       }
       else {
-        return true;
+        if (leftWildcard.isExtends()) {
+          return isAssignable(leftWildcard.getBound(), typeRight, false);
+        }
+        else { // isSuper
+          return isAssignable(typeRight, leftWildcard.getBound(), false);
+        }
       }
     }
     else {
