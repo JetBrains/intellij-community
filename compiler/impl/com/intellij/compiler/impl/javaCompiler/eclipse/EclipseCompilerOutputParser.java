@@ -1,13 +1,14 @@
 package com.intellij.compiler.impl.javaCompiler.eclipse;
 
+import com.intellij.compiler.OutputParser;
+import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.project.Project;
-import com.intellij.compiler.OutputParser;
 import org.jetbrains.annotations.NonNls;
 
+import java.io.File;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.io.File;
 
 public class EclipseCompilerOutputParser extends OutputParser {
   private final String myOutputDir;
@@ -16,8 +17,9 @@ public class EclipseCompilerOutputParser extends OutputParser {
     myOutputDir = outputDir;
   }
 
-  @NonNls private static final String pathRegex = "\\s*(.*) - #.*";
-  @NonNls private static final Pattern pattern = Pattern.compile(pathRegex);
+  @NonNls private static final Pattern PATH_PATTERN = Pattern.compile("\\s*(.*) - #.*");
+  @NonNls private static final Pattern COMPILED_PATTERN = Pattern.compile("\\[\\d* unit(s)? compiled\\]");
+  @NonNls private static final Pattern GENERATED_PATTERN = Pattern.compile("\\[\\d* \\.class file(s)? generated\\]");
   public boolean processMessageLine(Callback callback) {
     @NonNls String line = callback.getNextLine();
     if (line == null) {
@@ -27,45 +29,46 @@ public class EclipseCompilerOutputParser extends OutputParser {
       return true;
     }
     if (line.startsWith("[parsing ")) {
-      Matcher matcher = pattern.matcher(line.substring("[parsing ".length()));
+      Matcher matcher = PATH_PATTERN.matcher(line.substring("[parsing ".length()));
       matcher.matches();
       String path = matcher.group(1);
-      callback.setProgressText("Parsing "+path);
+      callback.setProgressText(CompilerBundle.message("eclipse.compiler.parsing", path));
       callback.fileProcessed(path);
       return true;
     }
     if (line.startsWith("[reading ")) {
       //StringTokenizer tokenizer = new StringTokenizer(line.substring("[reading ".length()), " ]");
       //String fqn = tokenizer.nextToken();
-      callback.setProgressText("Reading useless stuff");
+      callback.setProgressText(CompilerBundle.message("eclipse.compiler.reading"));
       return true;
     }
     if (line.startsWith("[analyzing ")) {
-      Matcher matcher = pattern.matcher(line.substring("[analyzing ".length()));
+      Matcher matcher = PATH_PATTERN.matcher(line.substring("[analyzing ".length()));
       matcher.matches();
       String path = matcher.group(1);
-      callback.setProgressText("Analyzing "+path);
+      callback.setProgressText(CompilerBundle.message("eclipse.compiler.analyzing", path));
       return true;
     }
     if (line.startsWith("[completed ")) {
-      Matcher matcher = pattern.matcher(line.substring("[completed ".length()));
+      Matcher matcher = PATH_PATTERN.matcher(line.substring("[completed ".length()));
       matcher.matches();
       String path = matcher.group(1);
-      callback.setProgressText("Completed "+path);
+      callback.setProgressText(CompilerBundle.message("eclipse.compiler.completed", path));
       return true;
     }
     if (line.startsWith("[writing ")) {
-      Matcher matcher = pattern.matcher(line.substring("[writing ".length()));
+      Matcher matcher = PATH_PATTERN.matcher(line.substring("[writing ".length()));
       matcher.matches();
       String path = matcher.group(1);
       String absPath = myOutputDir + File.separatorChar + path;
-      callback.setProgressText("Writing "+absPath);
+      callback.setProgressText(CompilerBundle.message("eclipse.compiler.writing", absPath));
       callback.fileGenerated(absPath);
       return true;
     }
-
+    if (COMPILED_PATTERN.matcher(line).matches() || GENERATED_PATTERN.matcher(line).matches()) {
+      return true;
+    }
     callback.message(CompilerMessageCategory.INFORMATION, line, null, -1, -1);
     return true;
   }
-
 }
