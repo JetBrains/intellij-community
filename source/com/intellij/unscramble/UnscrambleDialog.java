@@ -8,8 +8,8 @@ import com.intellij.execution.ExecutionRegistry;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.runners.JavaProgramRunner;
 import com.intellij.execution.ui.*;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -20,16 +20,17 @@ import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.TextFieldWithHistory;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -39,8 +40,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.jetbrains.annotations.NonNls;
 
 public class UnscrambleDialog extends DialogWrapper{
   @NonNls private static final String PROPERTY_LOG_FILE_HISTORY_URLS = "UNSCRAMBLE_LOG_FILE_URL";
