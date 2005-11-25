@@ -14,6 +14,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
@@ -81,12 +82,12 @@ public class EclipseCompiler extends ExternalCompiler {
   }
 
   public OutputParser createErrorParser(final String outputDir) {
-    return new EclipseCompilerErrorParser(myProject);
+    return new EclipseCompilerErrorParser();
   }
 
   @Nullable
   public OutputParser createOutputParser(final String outputDir) {
-    return new EclipseCompilerOutputParser(myProject, outputDir);
+    return new EclipseCompilerOutputParser(outputDir);
   }
 
   @NotNull
@@ -117,17 +118,10 @@ public class EclipseCompiler extends ExternalCompiler {
     if (versionString == null || "".equals(versionString)) {
       throw new IllegalArgumentException(CompilerBundle.message("javac.error.unknown.jdk.version", jdk.getName()));
     }
-    final boolean isVersion1_0 = isOfVersion(versionString, "1.0");
-    final boolean isVersion1_1 = isOfVersion(versionString, "1.1");
-    final boolean isVersion1_2 = isOfVersion(versionString, "1.2");
-    final boolean isVersion1_3 = isOfVersion(versionString, "1.3");
-    final boolean isVersion1_4 = isOfVersion(versionString, "1.4");
-    final boolean isVersion1_5 = isOfVersion(versionString, "1.5") || isOfVersion(versionString, "5.0");
 
     EclipseCompilerSettings compilerSettings = EclipseCompilerSettings.getInstance(myProject);
 
-    final String vmExePath = jdk.getVMExecutablePath();
-
+    final String vmExePath = ProjectJdkTable.getInstance().getInternalJdk().getVMExecutablePath();
     commandLine.add(vmExePath);
     commandLine.add("-Xmx" + compilerSettings.MAXIMUM_HEAP_SIZE + "m");
 
@@ -147,26 +141,17 @@ public class EclipseCompiler extends ExternalCompiler {
       commandLine.add("1.4");
     }
     else if (applicableLanguageLevel.equals(LanguageLevel.JDK_1_3)) {
-      if (isVersion1_4 || isVersion1_5) {
-        commandLine.add("-source");
-        commandLine.add("1.3");
-      }
+      commandLine.add("-source");
+      commandLine.add("1.3");
     }
 
-    final String cp = chunk.getCompilationClasspath();
     final String bootCp = chunk.getCompilationBootClasspath();
 
-    final String classPath;
-    if (isVersion1_0 || isVersion1_1) {
-      classPath = bootCp + File.pathSeparator + cp;
-    }
-    else {
-      classPath = cp;
+    final String classPath = chunk.getCompilationClasspath();
 
-      commandLine.add("-bootclasspath");
-      // important: need to quote boot classpath if path to jdk contain spaces
-      commandLine.add(CompilerUtil.quotePath(bootCp));
-    }
+    commandLine.add("-bootclasspath");
+    // important: need to quote boot classpath if path to jdk contain spaces
+    commandLine.add(CompilerUtil.quotePath(bootCp));
 
     commandLine.add("-classpath");
     commandLine.add(classPath);
@@ -182,37 +167,25 @@ public class EclipseCompiler extends ExternalCompiler {
  
     final VirtualFile[] files = chunk.getFilesToCompile();
 
-    if (isVersion1_0) {
-      for (VirtualFile file : files) {
-        String path = file.getPath();
+    File sourcesFile = FileUtil.createTempFile("javac", ".tmp");
+    sourcesFile.deleteOnExit();
+    myTempFiles.add(sourcesFile);
+    final PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter(sourcesFile)));
+    try {
+      for (final VirtualFile file : files) {
+        // Important: should use "/" slashes!
+        // but not for JDK 1.5 - see SCR 36673
+        final String path = file.getPath().replace('/', File.separatorChar);
         if (LOG.isDebugEnabled()) {
           LOG.debug("Adding path for compilation " + path);
         }
-        commandLine.add(CompilerUtil.quotePath(path));
+        writer.println(CompilerUtil.quotePath(path));
       }
     }
-    else {
-      //noinspection HardCodedStringLiteral
-      File sourcesFile = FileUtil.createTempFile("javac", ".tmp");
-      sourcesFile.deleteOnExit();
-      myTempFiles.add(sourcesFile);
-      final PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter(sourcesFile)));
-      try {
-        for (final VirtualFile file : files) {
-          // Important: should use "/" slashes!
-          // but not for JDK 1.5 - see SCR 36673
-          final String path = isVersion1_5 ? file.getPath().replace('/', File.separatorChar) : file.getPath();
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("Adding path for compilation " + path);
-          }
-          writer.println(isVersion1_1 ? path : CompilerUtil.quotePath(path));
-        }
-      }
-      finally {
-        writer.close();
-      }
-      commandLine.add("@" + sourcesFile.getAbsolutePath()+"");
+    finally {
+      writer.close();
     }
+    commandLine.add("@" + sourcesFile.getAbsolutePath());
   }
 
   private LanguageLevel getApplicableLanguageLevel(String versionString) {

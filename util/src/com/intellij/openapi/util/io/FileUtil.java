@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class FileUtil {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.io.FileUtil");
   private static final byte[] BUFFER = new byte[1024 * 20];
 
   public static String getRelativePath(File base, File file) {
@@ -147,7 +148,7 @@ public class FileUtil {
     return file;
   }
 
-  public static File createTempFile(String prefix, String suffix) throws IOException{
+  public static File createTempFile(@NonNls String prefix, @NonNls String suffix) throws IOException{
     File file = doCreateTempFile(prefix, suffix);
     file.delete();
     file.createNewFile();
@@ -317,7 +318,7 @@ public class FileUtil {
   public static void copyDir(File fromDir, File toDir) throws IOException {
     toDir.mkdirs();
     if (isAncestor(fromDir, toDir, true)) {
-      Logger.getInstance("#com.intellij.openapi.util.io.FileUtil").error(fromDir.getAbsolutePath() + " is ancestor of " + toDir + ". Can't copy to itself.");
+      LOG.error(fromDir.getAbsolutePath() + " is ancestor of " + toDir + ". Can't copy to itself.");
       return;
     }
     File[] files = fromDir.listFiles();

@@ -72,7 +72,7 @@ public class JavacConfigurable implements Configurable{
   }
 
   public void reset() {
-    myJavacMaximumHeapField.setText(""+myJavacSettings.MAXIMUM_HEAP_SIZE);
+    myJavacMaximumHeapField.setText(Integer.toString(myJavacSettings.MAXIMUM_HEAP_SIZE));
     myCbDeprecation.setSelected(myJavacSettings.DEPRECATION);
     myCbDebuggingInfo.setSelected(myJavacSettings.DEBUGGING_INFO);
     myCbGenerateNoWarnings.setSelected(myJavacSettings.GENERATE_NO_WARNINGS);

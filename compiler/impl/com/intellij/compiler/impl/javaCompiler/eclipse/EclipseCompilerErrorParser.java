@@ -1,24 +1,21 @@
 package com.intellij.compiler.impl.javaCompiler.eclipse;
 
-import com.intellij.openapi.compiler.CompilerMessageCategory;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.editor.Document;
 import com.intellij.compiler.OutputParser;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.compiler.CompilerMessageCategory;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class EclipseCompilerErrorParser extends OutputParser {
-  public EclipseCompilerErrorParser(Project project) {
-  }
 
   private final StringBuilder problemText = new StringBuilder();
 
@@ -53,7 +50,7 @@ public class EclipseCompilerErrorParser extends OutputParser {
     final Pattern PATTERN = Pattern.compile(problemTemplate, Pattern.DOTALL);
     Matcher matcher = PATTERN.matcher(problem);
     if (matcher.matches()) {
-      String seqN = matcher.group(1);
+      //String seqN = matcher.group(1);
       @NonNls String problemType = matcher.group(2);
       String path = matcher.group(3);
       String lineNum = matcher.group(4);
@@ -76,6 +73,7 @@ public class EclipseCompilerErrorParser extends OutputParser {
       int col = indentWhiteSpace.length();
       final String offendingCode = codeSnippet.substring(col-1);
 
+      // try to find similar text inside source file                   
       int colFromFile = ApplicationManager.getApplication().runReadAction(new Computable<Integer>() {
         public Integer compute() {
           int index = -1;

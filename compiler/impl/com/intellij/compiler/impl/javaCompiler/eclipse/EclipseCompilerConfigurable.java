@@ -46,8 +46,7 @@ public class EclipseCompilerConfigurable implements Configurable {
   }
 
   public boolean isModified() {
-    boolean isModified = false;
-    isModified |= ComparingUtils.isModified(myJavacMaximumHeapField, myCompilerSettings.MAXIMUM_HEAP_SIZE);
+    boolean isModified = ComparingUtils.isModified(myJavacMaximumHeapField, myCompilerSettings.MAXIMUM_HEAP_SIZE);
 
     isModified |= ComparingUtils.isModified(myCbDeprecation, myCompilerSettings.DEPRECATION);
     isModified |= ComparingUtils.isModified(myCbDebuggingInfo, myCompilerSettings.DEBUGGING_INFO);
@@ -75,7 +74,7 @@ public class EclipseCompilerConfigurable implements Configurable {
   }
 
   public void reset() {
-    myJavacMaximumHeapField.setText(""+myCompilerSettings.MAXIMUM_HEAP_SIZE);
+    myJavacMaximumHeapField.setText(Integer.toString(myCompilerSettings.MAXIMUM_HEAP_SIZE));
     myCbDeprecation.setSelected(myCompilerSettings.DEPRECATION);
     myCbDebuggingInfo.setSelected(myCompilerSettings.DEBUGGING_INFO);
     myCbGenerateNoWarnings.setSelected(myCompilerSettings.GENERATE_NO_WARNINGS);

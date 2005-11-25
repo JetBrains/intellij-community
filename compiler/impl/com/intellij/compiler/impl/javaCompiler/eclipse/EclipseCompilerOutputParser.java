@@ -3,7 +3,6 @@ package com.intellij.compiler.impl.javaCompiler.eclipse;
 import com.intellij.compiler.OutputParser;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
-import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -13,7 +12,7 @@ import java.util.regex.Pattern;
 public class EclipseCompilerOutputParser extends OutputParser {
   private final String myOutputDir;
 
-  public EclipseCompilerOutputParser(Project project, final String outputDir) {
+  public EclipseCompilerOutputParser(final String outputDir) {
     myOutputDir = outputDir;
   }
 
