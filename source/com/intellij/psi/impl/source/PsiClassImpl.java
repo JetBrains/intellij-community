@@ -692,12 +692,15 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
   // optimization to not load tree when resolving bases of anonymous and locals
   // if there is no local classes with such name in scope it's possible to use outer scope as context
   @Nullable
-  protected PsiElement calcBasesResolveContext(String baseClassName) {
-    return calcBasesResolveContext(this, baseClassName, true);
+  protected PsiElement calcBasesResolveContext(String baseClassName, final PsiElement defaultResolveContext) {
+    return calcBasesResolveContext(this, baseClassName, true, defaultResolveContext);
   }
 
   @Nullable
-  private PsiElement calcBasesResolveContext(PsiClass aClass, String className, boolean isInitialClass) {
+  private PsiElement calcBasesResolveContext(PsiClass aClass,
+                                             String className,
+                                             boolean isInitialClass,
+                                             final PsiElement defaultResolveContext) {
       boolean isAnonOrLocal = false;
       if (aClass instanceof PsiAnonymousClass){
         isAnonOrLocal = true;
@@ -712,7 +715,7 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
       }
 
       if (!isAnonOrLocal) {
-        return isInitialClass ? (PsiElement)aClass.getExtendsList() : aClass; //?!!!
+        return isInitialClass ? defaultResolveContext : aClass;
       }
 
       if (!isInitialClass){
@@ -746,10 +749,10 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
       else{
         PsiElement context = myManager.getRepositoryElementsManager().findOrCreatePsiElementById(scopeId);
         if (context instanceof PsiClass){
-          return calcBasesResolveContext((PsiClass)context, className, false);
+          return calcBasesResolveContext((PsiClass)context, className, false, defaultResolveContext);
         }
         else if (context instanceof PsiMember){
-          return calcBasesResolveContext(((PsiMember)context).getContainingClass(), className, false);
+          return calcBasesResolveContext(((PsiMember)context).getContainingClass(), className, false, defaultResolveContext);
         }
         else{
           LOG.assertTrue(false);

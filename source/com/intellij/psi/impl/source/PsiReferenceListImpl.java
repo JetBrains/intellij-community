@@ -87,7 +87,7 @@ public final class PsiReferenceListImpl extends SlaveRepositoryPsiElement implem
             final PsiElement parent = getParent();
             PsiElement context = this;
             if (parent instanceof PsiClass) {
-              context = ((PsiClassImpl)parent).calcBasesResolveContext(PsiNameHelper.getShortClassName(refTexts[i]));
+              context = ((PsiClassImpl)parent).calcBasesResolveContext(PsiNameHelper.getShortClassName(refTexts[i]), this);
             }
 
             final FileElement holderElement = new DummyHolder(myManager, context).getTreeElement();

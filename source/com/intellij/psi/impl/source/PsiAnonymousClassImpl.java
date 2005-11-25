@@ -61,7 +61,7 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
         String refText = getRepositoryManager().getClassView().getBaseClassReferenceText(repositoryId);
         boolean isInQualifiedNew = getRepositoryManager().getClassView().isInQualifiedNew(repositoryId);
         if (!isInQualifiedNew) {
-          final DummyHolder holder = new DummyHolder(myManager, calcBasesResolveContext(PsiNameHelper.getShortClassName(refText)));
+          final DummyHolder holder = new DummyHolder(myManager, calcBasesResolveContext(PsiNameHelper.getShortClassName(refText), getExtendsList()));
           final FileElement holderElement = holder.getTreeElement();
           ref = (PsiJavaCodeReferenceElementImpl)Parsing.parseJavaCodeReferenceText(myManager, refText.toCharArray(),
                                                                                     holderElement.getCharTable());
