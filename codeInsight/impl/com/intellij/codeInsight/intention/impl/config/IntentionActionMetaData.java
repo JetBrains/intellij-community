@@ -121,6 +121,9 @@ public final class IntentionActionMetaData {
   public URL getDirURL() {
     if(myDirURL == null)
       myDirURL = getIntentionDescriptionDirURL(myIntentionLoader, myDescriptionDirectoryName);
+    if (myDirURL == null){ //plugin compatibility
+      myDirURL = getIntentionDescriptionDirURL(myIntentionLoader, myFamily);
+    }
     return myDirURL;
   }
 }
