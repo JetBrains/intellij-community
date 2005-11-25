@@ -76,6 +76,10 @@ public class GridBagLayoutCodeGenerator extends LayoutCodeGenerator {
                                       final int parentLocal) {
     GridBagConverter.Result result = (GridBagConverter.Result) myIdToConstraintsMap.get(lwComponent.getId());
     if (result != null) {
+      checkSetSize(generator, componentLocal, "setMinimumSize", result.minimumSize);
+      checkSetSize(generator, componentLocal, "setPreferredSize", result.preferredSize);
+      checkSetSize(generator, componentLocal, "setMaximumSize", result.maximumSize);
+
       int gbcLocal = generator.newLocal(myGridBagConstraintsType);
 
       generator.newInstance(myGridBagConstraintsType);
@@ -126,6 +130,15 @@ public class GridBagLayoutCodeGenerator extends LayoutCodeGenerator {
       generator.loadLocal(gbcLocal);
 
       generator.invokeVirtual(Type.getType(Container.class), Method.getMethod("void add(java.awt.Component,java.lang.Object)"));
+    }
+  }
+
+  private void checkSetSize(final GeneratorAdapter generator, final int componentLocal, final String methodName, final Dimension dimension) {
+    if (dimension != null) {
+      generator.loadLocal(componentLocal);
+      AsmCodeGenerator.pushPropValue(generator, "java.awt.Dimension", dimension);
+      generator.invokeVirtual(Type.getType(Component.class),
+                              new Method(methodName, Type.VOID_TYPE, new Type[] { Type.getType(Dimension.class) }));
     }
   }
 

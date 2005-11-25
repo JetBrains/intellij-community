@@ -73,6 +73,41 @@ public class GridBagConverterTest extends TestCase {
     assertEquals(50, button2.getHeight());
   }
 
+  public void testLayout2ByConstraints() {
+    final GridBagLayout layoutManager = new GridBagLayout();
+    final JPanel panel = new JPanel(layoutManager);
+    final JButton button1 = new JButton();
+    final JButton button2 = new JButton();
+
+    GridBagConverter converter = new GridBagConverter();
+    final GridConstraints button1Constraints = new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                                   GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                                   GridConstraints.SIZEPOLICY_CAN_SHRINK,
+                                                                   new Dimension(9, 7), new Dimension(50, 10), null);
+    converter.addComponent(button1, button1Constraints);
+
+    final GridConstraints button2Constraints = new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                                   GridConstraints.SIZEPOLICY_CAN_GROW | GridConstraints.SIZEPOLICY_CAN_SHRINK,
+                                                                   GridConstraints.SIZEPOLICY_FIXED,
+                                                                   new Dimension(15, 6), new Dimension(50, 10), null);
+
+    converter.addComponent(button2, button2Constraints);
+
+    applyConversionResults(panel, converter);
+
+    assertEquals(20, panel.getPreferredSize().height);
+    assertEquals(50, panel.getPreferredSize().width);
+
+    assertEquals(17, panel.getMinimumSize().height);
+    assertEquals(50, panel.getMinimumSize().width);
+
+    panel.setSize(new Dimension(500, 100));
+    panel.doLayout();
+
+    assertEquals(50, button1.getHeight());
+    assertEquals(50, button2.getHeight());
+  }
+
   public void testLayout3() {
     final JPanel panel = new JPanel(new GridBagLayout());
 
@@ -160,6 +195,9 @@ public class GridBagConverterTest extends TestCase {
       GridBagConverter.Result result = results [i];
       if (result.minimumSize != null) {
         result.component.setMinimumSize(result.minimumSize);
+      }
+      if (result.preferredSize != null) {
+        result.component.setPreferredSize(result.preferredSize);
       }
       panel.add(result.component, result.constraints);
     }

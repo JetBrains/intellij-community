@@ -53,7 +53,7 @@ public class GridBagConverter {
     public GridBagConstraints constraints;
     public Dimension preferredSize;
     public Dimension minimumSize;
-    public Dimension maxSize;
+    public Dimension maximumSize;
 
     public Result(final JComponent component) {
       this.component = component;
@@ -84,20 +84,31 @@ public class GridBagConverter {
       case GridConstraints.FILL_BOTH: result.constraints.fill = GridBagConstraints.BOTH; break;
     }
 
-    Dimension minSize = new Dimension(component == null ? constraints.myMinimumSize : component.getMinimumSize());
+    Dimension minSize = constraints.myMinimumSize;
+    if (component != null && minSize.width <= 0 && minSize.height <= 0) {
+      minSize = component.getMinimumSize();
+    }
+
     if ((constraints.getHSizePolicy() & GridConstraints.SIZEPOLICY_CAN_SHRINK) == 0) {
-      minSize.width = constraints.myPreferredSize.width >= 0 || component == null
+      minSize.width = constraints.myPreferredSize.width > 0 || component == null
                       ? constraints.myPreferredSize.width
                       : component.getPreferredSize().width;
     }
     if ((constraints.getVSizePolicy() & GridConstraints.SIZEPOLICY_CAN_SHRINK) == 0) {
-      minSize.height = constraints.myPreferredSize.height >= 0 || component == null
+      minSize.height = constraints.myPreferredSize.height > 0 || component == null
                        ? constraints.myPreferredSize.height
                        : component.getPreferredSize().height;
     }
 
     if (minSize.width != -1 || minSize.height != -1) {
       result.minimumSize = minSize;
+    }
+
+    if (constraints.myPreferredSize.width > 0 && constraints.myPreferredSize.height > 0) {
+      result.preferredSize = constraints.myPreferredSize;
+    }
+    if (constraints.myMaximumSize.width > 0 && constraints.myMaximumSize.height > 0) {
+      result.maximumSize = constraints.myMaximumSize;
     }
 
     return result;

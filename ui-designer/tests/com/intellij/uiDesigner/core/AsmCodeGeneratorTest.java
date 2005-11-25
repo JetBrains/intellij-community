@@ -201,6 +201,9 @@ public class AsmCodeGeneratorTest extends TestCase {
     assertEquals(2, gbc.gridwidth);
     assertEquals(1.0, gbc.weightx, 0.01);
     assertEquals(new Insets(1, 2, 3, 4), gbc.insets);
+    assertEquals(new Dimension(21, 24), btn.getMinimumSize());
+    assertEquals(new Dimension(23, 24), btn.getPreferredSize());
+    assertEquals(new Dimension(25, 26), btn.getMaximumSize());
   }
 
   private class MyClassLoader extends ClassLoader {

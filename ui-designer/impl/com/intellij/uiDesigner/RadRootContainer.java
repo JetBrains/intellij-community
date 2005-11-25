@@ -35,6 +35,7 @@ public final class RadRootContainer extends RadContainer implements IRootContain
    * @return full qualified name of the class. If there is no bound class
    * then the method returns <code>null</code>.
    */
+  @Nullable
   public String getClassToBind(){
     return myClassToBind;
   }
@@ -49,6 +50,10 @@ public final class RadRootContainer extends RadContainer implements IRootContain
 
   public void setMainComponentBinding(final String mainComponentBinding){
     myMainComponentBinding = mainComponentBinding;
+  }
+
+  public String getLayoutManager() {
+    return myLayoutManager;
   }
 
   public void setLayoutManager(final String layoutManager) {
@@ -80,5 +85,4 @@ public final class RadRootContainer extends RadContainer implements IRootContain
   protected AbstractLayout createInitialLayout() {
     return new XYLayoutManagerImpl();
   }
-
 }

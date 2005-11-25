@@ -100,6 +100,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
   private final MinimumSizeProperty myMinimumSizeProperty;
   private final PreferredSizeProperty myPreferredSizeProperty;
   private final MaximumSizeProperty myMaximumSizeProperty;
+  private final LayoutManagerProperty myLayoutManagerProperty;
 
   /**
    * This two attributes exist here only for performance reason
@@ -132,6 +133,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     myMinimumSizeProperty = new MinimumSizeProperty();
     myPreferredSizeProperty = new PreferredSizeProperty();
     myMaximumSizeProperty = new MaximumSizeProperty();
+    myLayoutManagerProperty = new LayoutManagerProperty();
 
     myEditor = editor;
     myPropertyEditorListener = new MyPropertyEditorListener();
@@ -406,6 +408,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
   private void collectProperties(final RadComponent component, final ArrayList<Property> result) {
     if (component instanceof RadRootContainer){
       result.add(myClassToBindProperty);
+      result.add(myLayoutManagerProperty);      
     }
     else {
       final boolean isVSpacer = component instanceof RadVSpacer;
