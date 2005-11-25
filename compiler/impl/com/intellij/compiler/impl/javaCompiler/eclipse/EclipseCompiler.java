@@ -67,7 +67,7 @@ public class EclipseCompiler extends ExternalCompiler {
   @NotNull
   public String getId() // used for externalization
   {
-    return "ECLIPSE";
+    return "Eclipse";
   }
 
   @NotNull

@@ -91,7 +91,7 @@ public class JavacCompiler extends ExternalCompiler {
   @NonNls
   public String getId() // used for externalization
   {
-    return "JAVAC";
+    return "Javac";
   }
 
   @NotNull

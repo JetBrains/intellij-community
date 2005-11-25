@@ -84,7 +84,7 @@ public class JikesCompiler extends ExternalCompiler {
   @NonNls
   public String getId() // used for externalization
   {
-    return "JIKES";
+    return "Jikes";
   }
 
   @NotNull
