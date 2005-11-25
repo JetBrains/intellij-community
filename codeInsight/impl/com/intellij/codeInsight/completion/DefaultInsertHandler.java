@@ -271,7 +271,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
           myDocument.insertString(myState.tailOffset++, " ");
           myState.caretOffset ++;
         }
-        if (insertRightParenth){
+        if (insertRightParenth && tailType != TailType.CALL_RPARENTH){
           myDocument.insertString(myState.tailOffset, "()");
           myState.tailOffset += 2;
           if (hasParams){
