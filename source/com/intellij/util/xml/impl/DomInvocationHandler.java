@@ -10,6 +10,7 @@ import com.intellij.psi.PsiLock;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlText;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.CollectionElementAddedEvent;
@@ -304,7 +305,8 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   }
 
   static String getTagValue(final XmlTag tag) {
-    return tag.getValue().getText();
+    final XmlText[] textElements = tag.getValue().getTextElements();
+    return textElements.length != 0 ? textElements[0].getValue() : null;
   }
 
   public final String toString() {
@@ -465,7 +467,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     DomManagerImpl.setCachedElement(myXmlTag, null);
   }
 
-  protected final void attach(@NotNull final XmlTag tag) {
+  protected final void attach(final XmlTag tag) {
     synchronized (PsiLock.LOCK) {
       myXmlTag = tag;
       cacheInTag(tag);
