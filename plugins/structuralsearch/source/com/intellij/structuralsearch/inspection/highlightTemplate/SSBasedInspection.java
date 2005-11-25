@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.structuralsearch.inspection;
+package com.intellij.structuralsearch.inspection.highlightTemplate;
 
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.project.Project;

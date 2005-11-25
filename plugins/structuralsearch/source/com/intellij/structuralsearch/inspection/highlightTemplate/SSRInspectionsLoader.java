@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.structuralsearch.inspection;
+package com.intellij.structuralsearch.inspection.highlightTemplate;
 
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.codeInspection.InspectionToolProvider;
+import com.intellij.structuralsearch.inspection.highlightTemplate.SSBasedInspection;
 import org.jetbrains.annotations.NonNls;
 
 /**
