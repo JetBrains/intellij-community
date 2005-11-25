@@ -1,7 +1,8 @@
 package com.intellij.compiler.notNullVerification;
 
-import gnu.trove.TIntArrayList;
 import org.objectweb.asm.*;
+
+import java.util.ArrayList;
 
 /**
  * @author ven
@@ -33,7 +34,7 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter {
                                      exceptions);
     return new MethodAdapter(v) {
 
-      private TIntArrayList myNotNullParams = new TIntArrayList();
+      private ArrayList myNotNullParams = new ArrayList();
       private boolean myIsNotNull = false;
 
       public AnnotationVisitor visitParameterAnnotation(
@@ -45,7 +46,8 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter {
                                          anno,
                                          visible);
         if (anno.equals("Lorg/jetbrains/annotations/NotNull;")) {
-          myNotNullParams.add(parameter);
+          //noinspection unchecked
+          myNotNullParams.add(new Integer(parameter));
         }
         return av;
       }
@@ -63,7 +65,7 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter {
       public void visitCode() {
         for (int p = 0; p < myNotNullParams.size(); ++p) {
           int var = ((access & Opcodes.ACC_STATIC) == 0) ? 1 : 0;
-          int param = myNotNullParams.get(p);
+          int param = ((Integer)myNotNullParams.get(p)).intValue();
           for (int i = 0; i < param; ++i) {
             var += args[i].getSize();
           }
@@ -98,7 +100,7 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter {
                            d);
         mv.visitInsn(Opcodes.ATHROW);
         mv.visitLabel(end);
-        
+
         myIsModification = true;
       }
     };
