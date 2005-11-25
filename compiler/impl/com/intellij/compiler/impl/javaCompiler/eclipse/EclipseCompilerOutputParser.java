@@ -3,9 +3,9 @@ package com.intellij.compiler.impl.javaCompiler.eclipse;
 import com.intellij.compiler.OutputParser;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
+import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NonNls;
 
-import java.io.File;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -59,7 +59,7 @@ public class EclipseCompilerOutputParser extends OutputParser {
       Matcher matcher = PATH_PATTERN.matcher(line.substring("[writing ".length()));
       matcher.matches();
       String path = matcher.group(1);
-      String absPath = myOutputDir + File.separatorChar + path;
+      String absPath = FileUtil.toSystemDependentName(myOutputDir + '/' + path);
       callback.setProgressText(CompilerBundle.message("eclipse.compiler.writing", absPath));
       callback.fileGenerated(absPath);
       return true;
