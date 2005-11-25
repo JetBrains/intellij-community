@@ -35,7 +35,8 @@ public class IfStatementWithIdenticalBranchesInspection
     private InspectionGadgetsFix fix = new CollapseIfFix();
 
     public String getDisplayName(){
-        return InspectionGadgetsBundle.message("if.statement.with.identical.branches.display.name");
+        return InspectionGadgetsBundle.message(
+                "if.statement.with.identical.branches.display.name");
     }
 
     public String getGroupDisplayName(){
@@ -43,7 +44,8 @@ public class IfStatementWithIdenticalBranchesInspection
     }
 
     public String buildErrorString(PsiElement location){
-        return InspectionGadgetsBundle.message("if.statement.with.identical.branches.problem.descriptor");
+        return InspectionGadgetsBundle.message(
+                "if.statement.with.identical.branches.problem.descriptor");
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location){
@@ -53,7 +55,8 @@ public class IfStatementWithIdenticalBranchesInspection
     private static class CollapseIfFix extends InspectionGadgetsFix{
 
         public String getName(){
-            return InspectionGadgetsBundle.message("if.statement.with.identical.branches.collapse.quickfix");
+            return InspectionGadgetsBundle.message(
+                    "if.statement.with.identical.branches.collapse.quickfix");
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
@@ -63,6 +66,9 @@ public class IfStatementWithIdenticalBranchesInspection
                     (PsiIfStatement) identifier.getParent();
             assert statement != null;
             final PsiStatement thenBranch = statement.getThenBranch();
+            if(thenBranch == null) {
+                return;
+            }
             final String bodyText = thenBranch.getText();
             replaceStatement(statement, bodyText);
         }
@@ -79,10 +85,14 @@ public class IfStatementWithIdenticalBranchesInspection
             super.visitIfStatement(statement);
             final PsiStatement thenBranch = statement.getThenBranch();
             final PsiStatement elseBranch = statement.getElseBranch();
-            if(EquivalenceChecker.statementsAreEquivalent(thenBranch,
-                    elseBranch)){
-                registerStatementError(statement);
+            if(thenBranch == null) {
+                return;
             }
+            if (!EquivalenceChecker.statementsAreEquivalent(
+                    thenBranch, elseBranch)) {
+                return;
+            }
+            registerStatementError(statement);
         }
     }
 }
