@@ -91,6 +91,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     addInternalResource(JAVAEE_NS + "javaee_web_services_client_1_2.xsd","javaee_web_services_client_1_2.xsd");
     addInternalResource(JAVAEE_NS + "application_5.xsd","application_5.xsd");
     addInternalResource(JAVAEE_NS + "ejb-jar_3_0.xsd","ejb-jar_3_0.xsd");
+    addInternalResource(JAVAEE_NS + "web-app_2_5.xsd","web-app_2_5.xsd");
 
     addInternalResource(PERSISTENCE_NS,"persistence.xsd");
     addInternalResource(PERSISTENCE_ORM_NS,"persistence_ORM.xsd");
