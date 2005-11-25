@@ -54,8 +54,7 @@ public class Dependency {
     if (myMethodInfoArray == null) {
       MemberInfo[] usedMembers = getUsedMembers();
       ArrayList list = null;
-      for (int idx = 0; idx < usedMembers.length; idx++) {
-        MemberInfo memberInfo = usedMembers[idx];
+      for (MemberInfo memberInfo : usedMembers) {
         if (memberInfo instanceof MethodInfo) {
           if (list == null) {
             list = new ArrayList(usedMembers.length);
@@ -72,8 +71,7 @@ public class Dependency {
     if (myFieldInfoArray == null) {
       ArrayList list = null;
       MemberInfo[] usedMembers = getUsedMembers();
-      for (int idx = 0; idx < usedMembers.length; idx++) {
-        MemberInfo memberInfo = usedMembers[idx];
+      for (MemberInfo memberInfo : usedMembers) {
         if (memberInfo instanceof FieldInfo) {
           if (list == null) {
             list = new ArrayList(usedMembers.length);

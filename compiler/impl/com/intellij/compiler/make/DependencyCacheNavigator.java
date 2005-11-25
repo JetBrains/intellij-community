@@ -39,8 +39,7 @@ public class DependencyCacheNavigator {
       }
     }
     int[] superInterfaces = myCache.getSuperInterfaces(classId);
-    for (int idx = 0; idx < superInterfaces.length; idx++) {
-      int superInterfaceQName = superInterfaces[idx];
+    for (int superInterfaceQName : superInterfaces) {
       int superInfoId = myCache.getClassId(superInterfaceQName);
       if (superInfoId != Cache.UNKNOWN) {
         if (processor.process(superInterfaceQName)) {
@@ -52,8 +51,7 @@ public class DependencyCacheNavigator {
 
   public void walkSubClasses(int fromClassQName, ClassInfoProcessor processor) throws CacheCorruptedException {
     final int[] subclasses = myCache.getSubclasses(myCache.getClassId(fromClassQName));
-    for (int idx = 0; idx < subclasses.length; idx++) {
-      int subQName = subclasses[idx];
+    for (int subQName : subclasses) {
       if (fromClassQName == subQName) {
         LOG.assertTrue(false, "Subclass qualified name is the same as class' name: " + fromClassQName);
         return;

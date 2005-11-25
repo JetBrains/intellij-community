@@ -10,6 +10,7 @@ import gnu.trove.*;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.*;
+import java.util.Collection;
 
 /**
  * @author Eugene Zhuravlev
@@ -154,11 +155,10 @@ public class Cache {
       final int[] fromMethodIds = fromCache.getMethodIds(fromClassDeclarationId);
       final MemberInfo[] members = new MemberInfo[fromFieldIds.length + fromMethodIds.length];
       int currentMemberIndex = 0;
-      for (int idx = 0; idx < fromFieldIds.length; idx++) {
-        members[currentMemberIndex++] = fromCache.createFieldInfo(fromFieldIds[idx]);
+      for (int fromFieldId : fromFieldIds) {
+        members[currentMemberIndex++] = fromCache.createFieldInfo(fromFieldId);
       }
-      for (int idx = 0; idx < fromMethodIds.length; idx++) {
-        final int methodId = fromMethodIds[idx];
+      for (final int methodId : fromMethodIds) {
         members[currentMemberIndex++] = fromCache.createMethodInfo(methodId);
       }
       updateMemberDeclarations(qName, members);
@@ -270,7 +270,7 @@ public class Cache {
     }
   }
 
-  public synchronized ReferenceInfo[] getReferences(int classId) throws CacheCorruptedException {
+  public synchronized Collection<ReferenceInfo> getReferences(int classId) throws CacheCorruptedException {
     try {
       final ClassInfoView view = myViewPool.getClassInfoView(classId);
       return view.getReferences();
@@ -646,9 +646,8 @@ public class Cache {
     if (classDeclarationId == UNKNOWN) {
       return null;
     }
-    final Dependency[] dependencyArray;
     try {
-      final TIntObjectHashMap dependencies = new TIntObjectHashMap();
+      final TIntObjectHashMap<Dependency> dependencies = new TIntObjectHashMap<Dependency>();
       final ClassDeclarationView classDeclarationView = myViewPool.getClassDeclarationView(classDeclarationId);
       final int[] classReferencers = classDeclarationView.getReferencers();
       for (final int referencer : classReferencers) {
@@ -680,19 +679,20 @@ public class Cache {
           }
         }
       }
-      dependencyArray = new Dependency[dependencies.size()];
-      dependencies.forEachValue(new TObjectProcedure() {
+
+      final Dependency[] dependencyArray = new Dependency[dependencies.size()];
+      dependencies.forEachValue(new TObjectProcedure<Dependency>() {
         private int index = 0;
-        public boolean execute(Object object) {
-          dependencyArray[index++] = (Dependency)object;
+        public boolean execute(Dependency object) {
+          dependencyArray[index++] = object;
           return true;
         }
       });
+      return dependencyArray;
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
     }
-    return dependencyArray;
   }
 
   public synchronized FieldInfo createFieldInfo(final int fieldId) throws CacheCorruptedException {
@@ -739,14 +739,13 @@ public class Cache {
     try {
       final TIntIntHashMap declarationsMap = getQNameToClassDeclarationIdMap();
       final int[] qNames = declarationsMap.keys();
-      for (int idx = 0; idx < qNames.length; idx++) {
-        final int qName = qNames[idx];
+      for (final int qName : qNames) {
         if (!processor.process(new DeclarationInfo(qName))) {
           return;
         }
         final MemberDeclarationInfo[] memberDeclarations = getMemberDeclarations(qName);
-        for (int i = 0; i < memberDeclarations.length; i++) {
-          if (!processor.process(memberDeclarations[i])) {
+        for (MemberDeclarationInfo memberDeclaration : memberDeclarations) {
+          if (!processor.process(memberDeclaration)) {
             return;
           }
         }
@@ -763,17 +762,17 @@ public class Cache {
     final int[] methodIds = getMethodIds(classDeclarationId);
     MemberDeclarationInfo[] infos = new MemberDeclarationInfo[fieldIds.length + methodIds.length];
     int index = 0;
-    for (int idx = 0; idx < fieldIds.length; idx++) {
-      infos[index++] = new MemberDeclarationInfo(classQName, createFieldInfo(fieldIds[idx]));
+    for (int fieldId : fieldIds) {
+      infos[index++] = new MemberDeclarationInfo(classQName, createFieldInfo(fieldId));
     }
-    for (int idx = 0; idx < methodIds.length; idx++) {
-      infos[index++] = new MemberDeclarationInfo(classQName, createMethodInfo(methodIds[idx]));
+    for (int methodId : methodIds) {
+      infos[index++] = new MemberDeclarationInfo(classQName, createMethodInfo(methodId));
     }
     return infos;
   }
 
-  private Dependency addDependency(TIntObjectHashMap container, int classQName) {
-    Dependency dependency = (Dependency)container.get(classQName);
+  private static Dependency addDependency(TIntObjectHashMap<Dependency> container, int classQName) {
+    Dependency dependency = container.get(classQName);
     if (dependency == null) {
       dependency = new Dependency(classQName);
       container.put(classQName, dependency);
@@ -817,28 +816,24 @@ public class Cache {
 
       final int[] fieldIds = getFieldIds(classDeclarationId);
       final int[] methodIds = getMethodIds(classDeclarationId);
-      TObjectIntHashMap currentMembers = new TObjectIntHashMap();
-      for (int idx = 0; idx < fieldIds.length; idx++) {
-        final int fieldId = fieldIds[idx];
+      TObjectIntHashMap<MemberInfo> currentMembers = new TObjectIntHashMap<MemberInfo>();
+      for (final int fieldId : fieldIds) {
         currentMembers.put(createFieldInfo(fieldId), fieldId);
       }
-      for (int idx = 0; idx < methodIds.length; idx++) {
-        final int methodId = methodIds[idx];
+      for (final int methodId : methodIds) {
         currentMembers.put(createMethodInfo(methodId), methodId);
       }
 
       TIntHashSet fieldsToRemove = new TIntHashSet(fieldIds);
       TIntHashSet methodsToRemove = new TIntHashSet(methodIds);
 
-      for (int idx = 0; idx < classMembers.length; idx++) {
-        final MemberInfo classMember = classMembers[idx];
-
+      for (final MemberInfo classMember : classMembers) {
         if (currentMembers.containsKey(classMember)) { // changed
           final int memberId = currentMembers.get(classMember);
           if (classMember instanceof FieldInfo) {
             fieldsToRemove.remove(memberId);
           }
-          else if (classMember instanceof MethodInfo){
+          else if (classMember instanceof MethodInfo) {
             methodsToRemove.remove(memberId);
           }
           putMember(classDeclarationId, memberId, classMember);
@@ -850,15 +845,15 @@ public class Cache {
 
       if (fieldsToRemove.size() > 0) {
         final int[] fieldsArray = fieldsToRemove.toArray();
-        for (int idx = 0; idx < fieldsArray.length; idx++) {
-          removeFieldDeclaration(classDeclarationId, fieldsArray[idx]);
+        for (int aFieldsArray : fieldsArray) {
+          removeFieldDeclaration(classDeclarationId, aFieldsArray);
         }
       }
 
       if (methodsToRemove.size() > 0) {
         final int[] methodsArray = methodsToRemove.toArray();
-        for (int idx = 0; idx < methodsArray.length; idx++) {
-          removeMethodDeclaration(classDeclarationId, methodsArray[idx]);
+        for (int aMethodsArray : methodsArray) {
+          removeMethodDeclaration(classDeclarationId, aMethodsArray);
         }
       }
     }
@@ -888,8 +883,7 @@ public class Cache {
     try {
       if (classMember instanceof FieldInfo) {
         FieldInfo fieldInfo = (FieldInfo)classMember;
-        final FieldDeclarationView view;
-        view = myViewPool.getFieldDeclarationView(memberId);
+        final FieldDeclarationView view = myViewPool.getFieldDeclarationView(memberId);
         if (memberId == UNKNOWN) {
           memberId = view.getRecordId();
           final ClassDeclarationView classDeclarationView = myViewPool.getClassDeclarationView(classDeclarationId);
@@ -933,7 +927,7 @@ public class Cache {
     return memberId;
   }
 
-  private void writeIndexMap(TIntIntHashMap map, File indexFile) throws IOException {
+  private static void writeIndexMap(TIntIntHashMap map, File indexFile) throws IOException {
     indexFile.createNewFile();
     final DataOutputStream stream = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(indexFile)));
     try {
@@ -961,7 +955,7 @@ public class Cache {
     }
   }
 
-  private void readIndexMap(TIntIntHashMap map, File indexFile) throws IOException {
+  private static void readIndexMap(TIntIntHashMap map, File indexFile) throws IOException {
     byte[] bytes;
     try {
       bytes = FileUtil.loadFileBytes(indexFile);
@@ -1012,14 +1006,14 @@ public class Cache {
       final int classDeclarationId = getClassDeclarationId(qName);
       if (classDeclarationId != UNKNOWN) {
         final int[] fieldIds = getFieldIds(classDeclarationId);
-        for (int idx = 0; idx < fieldIds.length; idx++) {
-          final FieldDeclarationView fieldDeclarationView = myViewPool.getFieldDeclarationView(fieldIds[idx]);
+        for (int fieldId : fieldIds) {
+          final FieldDeclarationView fieldDeclarationView = myViewPool.getFieldDeclarationView(fieldId);
           //fieldDeclarationView.removeRecord();
           myViewPool.removeFieldDeclarationRecord(fieldDeclarationView);
         }
         final int[] methodIds = getMethodIds(classDeclarationId);
-        for (int idx = 0; idx < methodIds.length; idx++) {
-          final MethodDeclarationView methodDeclarationView = myViewPool.getMethodDeclarationView(methodIds[idx]);
+        for (int methodId : methodIds) {
+          final MethodDeclarationView methodDeclarationView = myViewPool.getMethodDeclarationView(methodId);
           //methodDeclarationView.removeRecord();
           myViewPool.removeMethodDeclarationRecord(methodDeclarationView);
         }

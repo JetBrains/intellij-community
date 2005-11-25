@@ -50,8 +50,7 @@ public class Chunk<Node> {
   public String toString() { // for debugging only
     final StringBuffer buf = new StringBuffer();
     buf.append("[");
-    for (Iterator<Node> it = myNodes.iterator(); it.hasNext();) {
-      final Node node = it.next();
+    for (final Node node : myNodes) {
       if (buf.length() > 1) {
         buf.append(", ");
       }

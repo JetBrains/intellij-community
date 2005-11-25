@@ -84,7 +84,7 @@ public class CompileAction extends CompileActionBase {
 
       if (aPackage != null) {
         String name = aPackage.getQualifiedName();
-        if(name == null || name.length() == 0) {
+        if(name.length() == 0) {
           //noinspection HardCodedStringLiteral
           name = "<default>";
         }

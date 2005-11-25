@@ -1,17 +1,10 @@
 package com.intellij.compiler.ant;
 
-import com.intellij.compiler.ant.taskdefs.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ModuleFileIndex;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
@@ -100,8 +93,7 @@ public class ModuleSources extends CompositeGenerator{
   private VirtualFile getDirSetRoot(final ContentEntry contentEntry) {
     final VirtualFile contentRoot = contentEntry.getFile();
     final VirtualFile[] sourceFolderFiles = contentEntry.getSourceFolderFiles();
-    for (int idx = 0; idx < sourceFolderFiles.length; idx++) {
-      VirtualFile sourceFolderFile = sourceFolderFiles[idx];
+    for (VirtualFile sourceFolderFile : sourceFolderFiles) {
       if (contentRoot.equals(sourceFolderFile)) {
         return contentRoot.getParent();
       }

@@ -21,8 +21,7 @@ public class CompilerExcludes extends Generator{
     final CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(project);
     final ExcludeEntryDescription[] excludeEntryDescriptions = compilerConfiguration.getExcludeEntryDescriptions();
     myPatternSet = new PatternSet(BuildProperties.PROPERTY_COMPILER_EXCLUDES);
-    for (int idx = 0; idx < excludeEntryDescriptions.length; idx++) {
-      final ExcludeEntryDescription entry = excludeEntryDescriptions[idx];
+    for (final ExcludeEntryDescription entry : excludeEntryDescriptions) {
       final String path = genOptions.subsitutePathWithMacros(VirtualFileManager.extractPath(entry.getUrl()));
       if (entry.isFile()) {
         myPatternSet.add(new Exclude(path));

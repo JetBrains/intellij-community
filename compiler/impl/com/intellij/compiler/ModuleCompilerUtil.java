@@ -159,8 +159,7 @@ public final class ModuleCompilerUtil {
       public Iterator<Chunk<Node>> getIn(Chunk<Node> chunk) {
         final Set<Node> chunkNodes = chunk.getNodes();
         final Set<Chunk<Node>> ins = new HashSet<Chunk<Node>>();
-        for (Iterator<Node> chunkNodesIterator = chunkNodes.iterator(); chunkNodesIterator.hasNext();) {
-          final Node node = chunkNodesIterator.next();
+        for (final Node node : chunkNodes) {
           for (Iterator<Node> nodeIns = graph.getIn(node); nodeIns.hasNext();) {
             final Node in = nodeIns.next();
             if (!chunk.containsNode(in)) {

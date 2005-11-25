@@ -122,8 +122,7 @@ public class BuildProperties extends CompositeGenerator {
     if (jdks.length > 0) {
       add(new Comment(CompilerBundle.message("generated.ant.build.jdk.definitions.comment")), 1);
 
-      for (int idx = 0; idx < jdks.length; idx++) {
-        final ProjectJdk jdk = jdks[idx];
+      for (final ProjectJdk jdk : jdks) {
         if (jdk.getHomeDirectory() == null) {
           continue;
         }
@@ -140,8 +139,8 @@ public class BuildProperties extends CompositeGenerator {
         final String jdkHomeProperty = getJdkHomeProperty(jdkName);
         final FileSet fileSet = new FileSet(propertyRef(jdkHomeProperty));
         final String[] urls = jdk.getRootProvider().getUrls(OrderRootType.COMPILATION_CLASSES);
-        for (int i = 0; i < urls.length; i++) {
-          final String path = GenerationUtils.trimJarSeparator(VirtualFileManager.extractPath(urls[i]));
+        for (String url : urls) {
+          final String path = GenerationUtils.trimJarSeparator(VirtualFileManager.extractPath(url));
           final File pathElement = new File(path);
           final String relativePath = FileUtil.getRelativePath(homeDir, pathElement);
           if (relativePath != null) {
@@ -162,8 +161,7 @@ public class BuildProperties extends CompositeGenerator {
   public static ProjectJdk[] getUsedJdks(Project project) {
     final Set<ProjectJdk> jdks = new HashSet<ProjectJdk>();
     Module[] modules = ModuleManager.getInstance(project).getModules();
-    for (int idx = 0; idx < modules.length; idx++) {
-      Module module = modules[idx];
+    for (Module module : modules) {
       ProjectJdk jdk = ModuleRootManager.getInstance(module).getJdk();
       if (jdk != null) {
         jdks.add(jdk);

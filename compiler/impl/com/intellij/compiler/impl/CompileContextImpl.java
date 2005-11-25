@@ -9,7 +9,6 @@ import com.intellij.compiler.CompilerMessageImpl;
 import com.intellij.compiler.make.DependencyCache;
 import com.intellij.compiler.progress.CompilerProgressIndicator;
 import com.intellij.openapi.compiler.*;
-import com.intellij.openapi.compiler.Compiler;
 import com.intellij.openapi.compiler.ex.CompileContextEx;
 import com.intellij.openapi.compiler.ex.CompilerPathsEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -150,10 +149,9 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
       LOG.assertTrue(false, "myCompileDriver should not be null when calling getSourceFileByOutputFile()");
       return null;
     }
-    Compiler[] compilers = CompilerManager.getInstance(myProject).getCompilers(TranslatingCompiler.class);
-    for (Compiler compiler : compilers) {
-      final TranslatingCompilerStateCache translatingCompilerCache =
-        myCompileDriver.getTranslatingCompilerCache((TranslatingCompiler)compiler);
+    TranslatingCompiler[] compilers = CompilerManager.getInstance(myProject).getCompilers(TranslatingCompiler.class);
+    for (TranslatingCompiler compiler : compilers) {
+      final TranslatingCompilerStateCache translatingCompilerCache = myCompileDriver.getTranslatingCompilerCache(compiler);
       if (translatingCompilerCache == null) {
         continue;
       }

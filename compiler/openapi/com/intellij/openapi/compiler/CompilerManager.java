@@ -56,7 +56,7 @@ public abstract class CompilerManager {
    * @param compilerClass the class for which the compilers should be returned.
    * @return all registered compilers of the specified class.
    */
-  public abstract Compiler[] getCompilers(Class compilerClass);
+   public abstract <T  extends Compiler> T[] getCompilers(Class<T> compilerClass);
 
   /**
    * Registers the type as a compilable type so that Compile action will be enabled on files of this type.

@@ -17,6 +17,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Collection;
 
 public class ClassFileReader {
   private File myFile;
@@ -51,9 +52,9 @@ public class ClassFileReader {
     return myFile.getAbsolutePath();
   }
 
-  public ReferenceInfo[] getReferences() throws ClsFormatException {
+  public Collection<ReferenceInfo> getReferences() throws ClsFormatException {
     parseConstantPool();
-    return myReferences.toArray(new ReferenceInfo[myReferences.size()]);
+    return myReferences;
   }
 
   public MethodInfo[] getMethods() throws ClsFormatException{
@@ -236,7 +237,7 @@ public class ClassFileReader {
         myGenericSignature = "";
       }
     }
-    return (myGenericSignature.length() != 0)? myGenericSignature : null;
+    return myGenericSignature.length() == 0 ? null : myGenericSignature;
   }
 
   public AnnotationConstantValue[] getRuntimeVisibleAnnotations() throws ClsFormatException {
@@ -337,7 +338,7 @@ public class ClassFileReader {
     ptr.offset = getOffsetInConstantPool(descriptorIndex);
     String descriptor = ClsUtil.readUtf8Info(ptr);
 
-    MemberInfo info = ClsUtil.CONSTANT_Fieldref == tag? (MemberInfo)new FieldInfo(mySymbolTable.getId(memberName), mySymbolTable.getId(descriptor)) : (MemberInfo)new MethodInfo(mySymbolTable.getId(memberName), mySymbolTable.getId(descriptor), CONSTRUCTOR_NAME.equals(memberName));
+    MemberInfo info = ClsUtil.CONSTANT_Fieldref == tag? new FieldInfo(mySymbolTable.getId(memberName), mySymbolTable.getId(descriptor)) : new MethodInfo(mySymbolTable.getId(memberName), mySymbolTable.getId(descriptor), CONSTRUCTOR_NAME.equals(memberName));
     return new MemberReferenceInfo(mySymbolTable.getId(className), info);
   }
 
@@ -457,7 +458,7 @@ public class ClassFileReader {
     return ClsUtil.readUtf8Info(ptr);
   }
 
-  private void gotoNextAttribute(BytePointer ptr) throws ClsFormatException {
+  private static void gotoNextAttribute(BytePointer ptr) throws ClsFormatException {
     ptr.offset += 2; // skip name index
     final int length = ClsUtil.readU4(ptr);    // important! Do not inline since ptr.offset is also changed inside ClsUtil.readU4() method
     ptr.offset += length;
@@ -522,33 +523,23 @@ public class ClassFileReader {
     final int tag = ClsUtil.readU1(ptr);
     switch (tag) {
       case ClsUtil.CONSTANT_Integer :
-        {
-          int value = ClsUtil.readU4(ptr);
-          return new IntegerConstantValue(value);
-        }
+        int value = ClsUtil.readU4(ptr);
+        return new IntegerConstantValue(value);
       case ClsUtil.CONSTANT_Float:
-        {
-          float floatValue = ClsUtil.readFloat(ptr);
-          return new FloatConstantValue(floatValue);
-        }
+        float floatValue = ClsUtil.readFloat(ptr);
+        return new FloatConstantValue(floatValue);
       case ClsUtil.CONSTANT_Long :
-        {
-          int high = ClsUtil.readU4(ptr);
-          int low = ClsUtil.readU4(ptr);
-          long v = ((long)high << 32) | (low & 0xFFFFFFFFL);
-          return new LongConstantValue(v);
-        }
+        int high = ClsUtil.readU4(ptr);
+        int low = ClsUtil.readU4(ptr);
+        long v = ((long)high << 32) | (low & 0xFFFFFFFFL);
+        return new LongConstantValue(v);
       case ClsUtil.CONSTANT_Double :
-        {
-          double doubleValue = ClsUtil.readDouble(ptr);
-          return new DoubleConstantValue(doubleValue);
-        }
+        double doubleValue = ClsUtil.readDouble(ptr);
+        return new DoubleConstantValue(doubleValue);
       case ClsUtil.CONSTANT_String :
-        {
-          int stringIndex = ClsUtil.readU2(ptr);
-          ptr.offset = getOffsetInConstantPool(stringIndex);
-          return new StringConstantValue(ClsUtil.readUtf8Info(ptr));
-        }
+        int stringIndex = ClsUtil.readU2(ptr);
+        ptr.offset = getOffsetInConstantPool(stringIndex);
+        return new StringConstantValue(ClsUtil.readUtf8Info(ptr));
       default : throw new ClsFormatException();
     }
   }

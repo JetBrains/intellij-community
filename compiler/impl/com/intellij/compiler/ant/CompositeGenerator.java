@@ -32,8 +32,8 @@ public class CompositeGenerator extends Generator{
   }
 
   public void generate(DataOutput out) throws IOException {
-    for (Iterator it = myGenerators.iterator(); it.hasNext();) {
-      final Pair<Generator, Integer> pair = (Pair<Generator, Integer>)it.next();
+    for (final Pair<Generator, Integer> myGenerator : myGenerators) {
+      final Pair<Generator, Integer> pair = (Pair<Generator, Integer>)myGenerator;
       crlf(out);
       final int emptyLinesCount = pair.getSecond().intValue();
       for (int idx = 0; idx < emptyLinesCount; idx++) {

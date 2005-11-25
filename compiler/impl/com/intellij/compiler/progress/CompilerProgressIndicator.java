@@ -9,7 +9,6 @@ import com.intellij.compiler.CompilerMessageImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.impl.CompilerErrorTreeView;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
-import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -18,20 +17,20 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.project.ex.ProjectEx;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
+import com.intellij.pom.Navigatable;
 import com.intellij.ui.content.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.MessageCategory;
-import com.intellij.pom.Navigatable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -42,7 +41,7 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.progress.CompilerProgressIndicator");
   private static final boolean IS_UNIT_TEST_MODE = ApplicationManager.getApplication().isUnitTestMode();
   private static final int UPDATE_INTERVAL = 50; //msec. 20 frames per second.
-  private static final Key CONTENT_ID_KEY = Key.create("CONTENT_ID");
+  private static final Key<Key> CONTENT_ID_KEY = Key.create("CONTENT_ID");
   private final Key myContentId = Key.create("compile_content");
   private CompilerProgressDialog myDialog;
   private NewErrorTreeViewPanel myErrorTreeView;
@@ -301,8 +300,7 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
       if (myErrorTreeView != null) {
         final MessageView messageView = myProject.getComponent(MessageView.class);
         Content[] contents = messageView.getContents();
-        for (int idx = 0; idx < contents.length; idx++) {
-          Content content = contents[idx];
+        for (Content content : contents) {
           if (content.getUserData(CONTENT_ID_KEY) != null) {
             messageView.setSelectedContent(content);
             return;
@@ -315,8 +313,7 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
   public static void removeAllContents(Project project, Content notRemove) {
     MessageView messageView = project.getComponent(MessageView.class);
     Content[] contents = messageView.getContents();
-    for (int i = 0; i < contents.length; i++) {
-      Content content = contents[i];
+    for (Content content : contents) {
       if (content.isPinned()) continue;
       if (content == notRemove) continue;
       if (content.getUserData(CONTENT_ID_KEY) != null) { // the content was added by me

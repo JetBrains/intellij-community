@@ -27,8 +27,8 @@ public class FileSetCompileScope extends UserDataHolderBase implements CompileSc
     ApplicationManager.getApplication().runReadAction(
       new Runnable() {
         public void run() {
-          for(int idx = 0; idx < files.length; idx++){
-            addFile(files[idx]);
+          for (VirtualFile file : files) {
+            addFile(file);
           }
         }
       }
@@ -65,8 +65,7 @@ public class FileSetCompileScope extends UserDataHolderBase implements CompileSc
     if (getUrls().contains(url)) {
       return true;
     }
-    for (Iterator<String> it = myDirectoryUrls.iterator(); it.hasNext();) {
-      String directoryUrl = it.next();
+    for (String directoryUrl : myDirectoryUrls) {
       if (FileUtil.startsWith(url, directoryUrl)) {
         return true;
       }
@@ -77,8 +76,7 @@ public class FileSetCompileScope extends UserDataHolderBase implements CompileSc
   private Set<String> getUrls() {
     if (myUrls == null) {
       myUrls = new HashSet<String>();
-      for (Iterator<VirtualFile> it = myRootFiles.iterator(); it.hasNext();) {
-        VirtualFile file = it.next();
+      for (VirtualFile file : myRootFiles) {
         String url = file.getUrl();
         myUrls.add(url);
       }
@@ -98,8 +96,7 @@ public class FileSetCompileScope extends UserDataHolderBase implements CompileSc
     VirtualFile[] children = fromDirectory.getChildren();
     if (children.length > 0) {
       final FileTypeManager typeManager = FileTypeManager.getInstance();
-      for (int idx = 0; idx < children.length; idx++) {
-        VirtualFile child = children[idx];
+      for (VirtualFile child : children) {
         if (child.isDirectory()) {
           addRecursively(container, child, fileType);
         }

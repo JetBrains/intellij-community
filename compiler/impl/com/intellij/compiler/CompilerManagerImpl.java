@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
 
 import java.util.*;
+import java.lang.reflect.Array;
 
 public class CompilerManagerImpl extends CompilerManager implements ProjectComponent{
   private final Project myProject;
@@ -57,14 +58,15 @@ public class CompilerManagerImpl extends CompilerManager implements ProjectCompo
     myCompilers.remove(compiler);
   }
 
-  public Compiler[] getCompilers(Class compilerClass) {
-    final List<Compiler> compilers = new ArrayList<Compiler>(myCompilers.size());
+  public <T  extends Compiler> T[] getCompilers(Class<T> compilerClass) {
+    final List<T> compilers = new ArrayList<T>(myCompilers.size());
     for (final Compiler item : myCompilers) {
       if (compilerClass.isAssignableFrom(item.getClass())) {
-        compilers.add(item);
+        compilers.add((T)item);
       }
     }
-    return compilers.toArray(new Compiler[compilers.size()]);
+    T[] array = (T[])Array.newInstance(compilerClass, compilers.size());
+    return compilers.toArray(array);
   }
 
   public void addCompilableFileType(FileType type) {

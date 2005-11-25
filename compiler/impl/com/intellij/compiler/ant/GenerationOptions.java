@@ -61,8 +61,8 @@ public class GenerationOptions {
     final PathMacrosImpl pathMacros = PathMacrosImpl.getInstanceEx();
     final Set<String> macroNames = pathMacros.getUserMacroNames();
     final ReplacePathToMacroMap map = new ReplacePathToMacroMap();
-    for (Iterator it = macroNames.iterator(); it.hasNext();) {
-      final String macroName = (String)it.next();
+    for (final String macroName1 : macroNames) {
+      final String macroName = (String)macroName1;
       map.put(pathMacros.getValue(macroName), BuildProperties.propertyRef(BuildProperties.getPathMacroProperty(macroName)));
     }
     return map;
@@ -71,14 +71,12 @@ public class GenerationOptions {
   private Map<String, String> createOutputUrlToPropertyRefMap(ModuleChunk[] chunks) {
     final Map<String, String> map = new HashMap<String, String>();
 
-    for (int idx = 0; idx < chunks.length; idx++) {
-      final ModuleChunk chunk = chunks[idx];
+    for (final ModuleChunk chunk : chunks) {
       final String outputPathRef = BuildProperties.propertyRef(BuildProperties.getOutputPathProperty(chunk.getName()));
       final String testsOutputPathRef = BuildProperties.propertyRef(BuildProperties.getOutputPathForTestsProperty(chunk.getName()));
 
       final Module[] modules = chunk.getModules();
-      for (int i = 0; i < modules.length; i++) {
-        final Module module = modules[i];
+      for (final Module module : modules) {
         final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
         final String outputPathUrl = rootManager.getCompilerOutputPathUrl();
         if (outputPathUrl != null) {
@@ -104,12 +102,11 @@ public class GenerationOptions {
     final Graph<Chunk<Module>> chunkGraph = ModuleCompilerUtil.toChunkGraph(ModuleCompilerUtil.createModuleGraph(ModuleManager.getInstance(myProject).getModules()));
     final Map<Chunk<Module>, ModuleChunk> map = new HashMap<Chunk<Module>, ModuleChunk>();
     final Map<ModuleChunk, Chunk<Module>> reverseMap = new HashMap<ModuleChunk, Chunk<Module>>();
-    for (Iterator<Chunk<Module>> it = chunkGraph.getNodes().iterator(); it.hasNext();) {
-      final Chunk<Module> chunk = it.next();
+    for (final Chunk<Module> chunk : chunkGraph.getNodes()) {
       final Set<Module> modules = chunk.getNodes();
       final ModuleChunk moduleChunk = new ModuleChunk(modules.toArray(new Module[modules.size()]));
-      for (Iterator modulesIterator = modules.iterator(); modulesIterator.hasNext();) {
-        final Module module = (Module)modulesIterator.next();
+      for (final Module module1 : modules) {
+        final Module module = (Module)module1;
         if (mainModuleNames.contains(module.getName())) {
           moduleChunk.setMainModule(module);
           break;
@@ -142,11 +139,10 @@ public class GenerationOptions {
     }));
     final Collection<ModuleChunk> nodes = moduleChunkGraph.getNodes();
     final ModuleChunk[] moduleChunks = nodes.toArray(new ModuleChunk[nodes.size()]);
-    for (int idx = 0; idx < moduleChunks.length; idx++) {
-      ModuleChunk moduleChunk = moduleChunks[idx];
+    for (ModuleChunk moduleChunk : moduleChunks) {
       final Iterator<ModuleChunk> depsIterator = moduleChunkGraph.getIn(moduleChunk);
       List<ModuleChunk> deps = new ArrayList<ModuleChunk>();
-      while(depsIterator.hasNext()) {
+      while (depsIterator.hasNext()) {
         deps.add(depsIterator.next());
       }
       moduleChunk.setDependentChunks(deps.toArray(new ModuleChunk[deps.size()]));
@@ -154,8 +150,7 @@ public class GenerationOptions {
     Arrays.sort(moduleChunks, new DFSTBuilder<ModuleChunk>(moduleChunkGraph).comparator());
     if (generateSingleFile) {
       final File baseDir = BuildProperties.getProjectBaseDir(myProject);
-      for (int idx = 0; idx < moduleChunks.length; idx++) {
-        ModuleChunk chunk = moduleChunks[idx];
+      for (ModuleChunk chunk : moduleChunks) {
         chunk.setBaseDir(baseDir);
       }
     }

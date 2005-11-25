@@ -39,11 +39,11 @@ public class SourceFileFinder {
       relativePath = "/" + relativePath;
     }
     LocalFileSystem fs = LocalFileSystem.getInstance();
-    for (Iterator it = dirs.keySet().iterator(); it.hasNext();) {
-      final VirtualFile dir = (VirtualFile)it.next();
+    for (final VirtualFile virtualFile : dirs.keySet()) {
+      final VirtualFile dir = (VirtualFile)virtualFile;
       final String prefix = dirs.get(dir);
       String path;
-      if (prefix.length() > 0 ) {
+      if (prefix.length() > 0) {
         if (FileUtil.startsWith(relativePath, prefix)) {
           // if there is package prefix assigned to the root, the relative path should be corrected
           path = dir.getPath() + relativePath.substring(prefix.length() - 1);
@@ -71,12 +71,13 @@ public class SourceFileFinder {
         public void run() {
           final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
           final Module[] allModules = ModuleManager.getInstance(myProject).getModules();
-          for (int idx = 0; idx < allModules.length; idx++) {
-            final VirtualFile[] sourceRoots = myCompileContext.getSourceRoots(allModules[idx]);
+          for (Module allModule : allModules) {
+            final VirtualFile[] sourceRoots = myCompileContext.getSourceRoots(allModule);
             for (int i = 0; i < sourceRoots.length; i++) {
               final VirtualFile sourceRoot = sourceRoots[i];
               String packageName = fileIndex.getPackageNameByDirectory(sourceRoot);
-              myProjectSourceRoots.put(sourceRoot, packageName == null || packageName.length() == 0? "" : "/" + packageName.replace('.', '/') + "/");
+              myProjectSourceRoots
+                .put(sourceRoot, packageName == null || packageName.length() == 0 ? "" : "/" + packageName.replace('.', '/') + "/");
             }
           }
         }

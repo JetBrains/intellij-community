@@ -14,7 +14,6 @@ import com.intellij.compiler.make.SourceFileFinder;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
-import com.intellij.openapi.compiler.Compiler;
 import com.intellij.openapi.compiler.ex.CompileContextEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -438,7 +437,7 @@ public class BackendCompilerWrapper {
   }
 
   private void runTransformingCompilers(final ModuleChunk chunk) {
-    final Compiler[] transformers = CompilerManager.getInstance(myProject).getCompilers(JavaSourceTransformingCompiler.class);
+    final JavaSourceTransformingCompiler[] transformers = CompilerManager.getInstance(myProject).getCompilers(JavaSourceTransformingCompiler.class);
     if (transformers.length == 0) {
       return;
     }
@@ -446,8 +445,7 @@ public class BackendCompilerWrapper {
       LOG.debug("Running transforming compilers...");
     }
     final Module[] modules = chunk.getModules();
-    for (Compiler transformer1 : transformers) {
-      final JavaSourceTransformingCompiler transformer = (JavaSourceTransformingCompiler)transformer1;
+    for (final JavaSourceTransformingCompiler transformer : transformers) {
       final Map<VirtualFile, VirtualFile> originalToCopyFileMap = new HashMap<VirtualFile, VirtualFile>();
       final Application application = ApplicationManager.getApplication();
       application.invokeAndWait(new Runnable() {

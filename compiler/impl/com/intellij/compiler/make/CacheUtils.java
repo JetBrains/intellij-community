@@ -88,8 +88,7 @@ public class CacheUtils {
 
   public static int findField(final Cache cache, final int classDeclarationId, final int name, final int descriptor) throws CacheCorruptedException {
     final int[] fieldIds = cache.getFieldIds(classDeclarationId);
-    for (int idx = 0; idx < fieldIds.length; idx++) {
-      int fieldId = fieldIds[idx];
+    for (int fieldId : fieldIds) {
       if (name != cache.getFieldName(fieldId)) {
         continue;
       }
@@ -103,8 +102,7 @@ public class CacheUtils {
 
   public static int findFieldByName(final Cache cache, final int classDeclarationId, final int name) throws CacheCorruptedException {
     final int[] fieldIds = cache.getFieldIds(classDeclarationId);
-    for (int idx = 0; idx < fieldIds.length; idx++) {
-      int fieldId = fieldIds[idx];
+    for (int fieldId : fieldIds) {
       if (name != cache.getFieldName(fieldId)) {
         continue;
       }
@@ -115,8 +113,7 @@ public class CacheUtils {
 
   public static int findMethod(final Cache cache, final int classDeclarationId, final int name, final int descriptor) throws CacheCorruptedException {
     final int[] methodIds = cache.getMethodIds(classDeclarationId);
-    for (int idx = 0; idx < methodIds.length; idx++) {
-      int methodId = methodIds[idx];
+    for (int methodId : methodIds) {
       if (name != cache.getMethodName(methodId)) {
         continue;
       }
@@ -131,8 +128,7 @@ public class CacheUtils {
   public static int[] findMethodsByName(final Cache cache, final int classDeclarationId, final int name) throws CacheCorruptedException {
     final int[] methodIds = cache.getMethodIds(classDeclarationId);
     TIntArrayList list = new TIntArrayList();
-    for (int idx = 0; idx < methodIds.length; idx++) {
-      final int methodId = methodIds[idx];
+    for (final int methodId : methodIds) {
       if (name == cache.getMethodName(methodId)) {
         list.add(methodId);
       }
@@ -142,8 +138,7 @@ public class CacheUtils {
 
   public static int findMethodBySignature(final Cache cache, final int classDeclarationId, final String signature, SymbolTable symbolTable) throws CacheCorruptedException {
     final int[] methodIds = cache.getMethodIds(classDeclarationId);
-    for (int idx = 0; idx < methodIds.length; idx++) {
-      int methodId = methodIds[idx];
+    for (int methodId : methodIds) {
       final int name = cache.getMethodName(methodId);
       final int descriptor = cache.getMethodDescriptor(methodId);
       if (signature.equals(getMethodSignature(symbolTable.getSymbol(name), symbolTable.getSymbol(descriptor)))) {
@@ -163,8 +158,7 @@ public class CacheUtils {
     }
     if (exceptions1.length != 0) { // optimization
       TIntHashSet exceptionsSet = new TIntHashSet(exceptions1);
-      for (int idx = 0; idx < exceptions2.length; idx++) {
-        int exception = exceptions2[idx];
+      for (int exception : exceptions2) {
         if (!exceptionsSet.contains(exception)) {
           return false;
         }
@@ -190,8 +184,7 @@ public class CacheUtils {
 
   public static final boolean isFieldReferenced(Cache cache, final int fieldId, final int referencerClassQName) throws CacheCorruptedException {
     final int[] referencers = cache.getFieldReferencers(fieldId);
-    for (int idx = 0; idx < referencers.length; idx++) {
-      int referencer = referencers[idx];
+    for (int referencer : referencers) {
       if (referencerClassQName == referencer) {
         return true;
       }
@@ -201,8 +194,7 @@ public class CacheUtils {
 
   public static final boolean isMethodReferenced(Cache cache, final int methodId, final int referencerClassQName) throws CacheCorruptedException {
     final int[] referencers = cache.getMethodReferencers(methodId);
-    for (int idx = 0; idx < referencers.length; idx++) {
-      final int referencer = referencers[idx];
+    for (final int referencer : referencers) {
       if (referencerClassQName == referencer) {
         return true;
       }

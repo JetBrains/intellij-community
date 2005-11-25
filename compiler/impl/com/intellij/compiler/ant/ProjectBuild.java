@@ -1,22 +1,12 @@
 package com.intellij.compiler.ant;
 
-import com.intellij.compiler.Chunk;
-import com.intellij.compiler.ModuleCompilerUtil;
 import com.intellij.compiler.ant.taskdefs.AntProject;
 import com.intellij.compiler.ant.taskdefs.Target;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.compiler.CompilerBundle;
-import com.intellij.util.graph.CachingSemiGraph;
-import com.intellij.util.graph.DFSTBuilder;
-import com.intellij.util.graph.Graph;
-import com.intellij.util.graph.GraphGenerator;
+import com.intellij.openapi.project.Project;
 
-import javax.naming.OperationNotSupportedException;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -43,8 +33,7 @@ public abstract class ProjectBuild extends Generator {
     if (chunks.length > 0) {
       myAntProject.add(new Comment(CompilerBundle.message("generated.ant.build.modules.section.title")), 1);
 
-      for (int idx = 0; idx < chunks.length; idx++) {
-        final ModuleChunk chunk = chunks[idx];
+      for (final ModuleChunk chunk : chunks) {
         myAntProject.add(createModuleBuildGenerator(chunk, genOptions), 1);
         if (alltargetNames.length() > 0) {
           alltargetNames.append(", ");

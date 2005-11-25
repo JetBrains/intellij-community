@@ -29,16 +29,14 @@ public class PropertyFileGenerator extends Generator{
     if (macroNamesSet.size() > 0) {
       final String[] macroNames = macroNamesSet.toArray(new String[macroNamesSet.size()]);
       Arrays.sort(macroNames);
-      for (int idx = 0; idx < macroNames.length; idx++) {
-        final String macroName = macroNames[idx];
+      for (final String macroName : macroNames) {
         addProperty(BuildProperties.getPathMacroProperty(macroName), pathMacros.getValue(macroName));
       }
     }
     // jdk homes
     if (genOptions.forceTargetJdk) {
       final ProjectJdk[] usedJdks = BuildProperties.getUsedJdks(project);
-      for (int idx = 0; idx < usedJdks.length; idx++) {
-        ProjectJdk jdk = usedJdks[idx];
+      for (ProjectJdk jdk : usedJdks) {
         if (jdk.getHomeDirectory() == null) {
           continue;
         }
@@ -61,8 +59,8 @@ public class PropertyFileGenerator extends Generator{
 
   public void generate(DataOutput out) throws IOException {
     boolean isFirst = true;
-    for (Iterator<Pair<String, String>> it = myProperties.iterator(); it.hasNext();) {
-      final Pair<String, String> pair = (Pair<String, String>)it.next();
+    for (final Pair<String, String> myProperty : myProperties) {
+      final Pair<String, String> pair = (Pair<String, String>)myProperty;
       if (!isFirst) {
         crlf(out);
       }

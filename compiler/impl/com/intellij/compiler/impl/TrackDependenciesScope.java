@@ -38,8 +38,7 @@ public class TrackDependenciesScope extends UserDataHolderBase implements Compil
     final Module[] affectedModules = myDelegate.getAffectedModules();
     // the dependencies between files may span several modules, so dependent modules might be affected
     final Set<Module> modules = new HashSet<Module>();
-    for (int i = 0; i < affectedModules.length; i++) {
-      final Module module = affectedModules[i];
+    for (final Module module : affectedModules) {
       modules.add(module);
       addDependentModules(module, modules);
     }
@@ -48,8 +47,7 @@ public class TrackDependenciesScope extends UserDataHolderBase implements Compil
 
   private static void addDependentModules(Module module, Collection<Module> modules) {
     final Module[] dependencies = ModuleRootManager.getInstance(module).getDependencies();
-    for (int idx = 0; idx < dependencies.length; idx++) {
-      final Module dependency = dependencies[idx];
+    for (final Module dependency : dependencies) {
       if (!modules.contains(dependency)) {
         modules.add(dependency); // avoid endless loops in casae of cyclic deps
         addDependentModules(dependency, modules);

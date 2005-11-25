@@ -46,8 +46,7 @@ public class DummySourceGeneratingCompiler implements SourceGeneratingCompiler{
     return ApplicationManager.getApplication().runReadAction(new Computable<Module>() {
       public Module compute() {
         Module[] modules = ModuleManager.getInstance(myProject).getModules();
-        for (int idx = 0; idx < modules.length; idx++) {
-          Module module = modules[idx];
+        for (Module module : modules) {
           if (MODULE_NAME.equals(module.getName())) {
             return module;
           }
@@ -64,9 +63,9 @@ public class DummySourceGeneratingCompiler implements SourceGeneratingCompiler{
       }
     });
     final List<GenerationItem> success = new ArrayList<GenerationItem>();
-    for (int idx = 0; idx < items.length; idx++) {
+    for (GenerationItem item1 : items) {
       try {
-        GenerationItem item = items[idx];
+        GenerationItem item = item1;
         File file = new File(rootPath + File.separator + item.getPath());
         file.getParentFile().mkdirs();
         file.createNewFile();

@@ -20,8 +20,7 @@ public abstract class FileIndexCompileScope extends UserDataHolderBase implement
   public VirtualFile[] getFiles(final FileType fileType, final boolean inSourceOnly) {
     final List<VirtualFile> files = new ArrayList<VirtualFile>();
     final FileIndex[] fileIndices = getFileIndices();
-    for (int idx = 0; idx < fileIndices.length; idx++) {
-      final FileIndex fileIndex = fileIndices[idx];
+    for (final FileIndex fileIndex : fileIndices) {
       fileIndex.iterateContent(new CompilerContentIterator(fileType, fileIndex, inSourceOnly, files));
     }
     return files.toArray(new VirtualFile[files.size()]);

@@ -40,8 +40,7 @@ public class ModuleCompileScope extends FileIndexCompileScope {
   public ModuleCompileScope(Project project, final Module[] modules, boolean includeDependentModules) {
     myProject = project;
     myScopeModules = new HashSet<Module>();
-    for (int idx = 0; idx < modules.length; idx++) {
-      Module module = modules[idx];
+    for (Module module : modules) {
       if (includeDependentModules) {
         buildScopeModulesSet(module);
       }
@@ -55,8 +54,7 @@ public class ModuleCompileScope extends FileIndexCompileScope {
   private void buildScopeModulesSet(Module module) {
     myScopeModules.add(module);
     final Module[] dependencies = ModuleRootManager.getInstance(module).getDependencies();
-    for (int idx = 0; idx < dependencies.length; idx++) {
-      Module dependency = dependencies[idx];
+    for (Module dependency : dependencies) {
       if (!myScopeModules.contains(dependency)) { // may be in case of module circular dependencies
         buildScopeModulesSet(dependency);
       }
@@ -70,8 +68,8 @@ public class ModuleCompileScope extends FileIndexCompileScope {
   protected FileIndex[] getFileIndices() {
     final FileIndex[] indices = new FileIndex[myScopeModules.size()];
     int idx = 0;
-    for (Iterator it = myScopeModules.iterator(); it.hasNext();) {
-      final Module module = (Module)it.next();
+    for (final Module myScopeModule : myScopeModules) {
+      final Module module = (Module)myScopeModule;
       indices[idx++] = ModuleRootManager.getInstance(module).getFileIndex();
     }
     return indices;
@@ -81,11 +79,9 @@ public class ModuleCompileScope extends FileIndexCompileScope {
     Module candidateModule = null;
     int maxUrlLength = 0;
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-    for (int idx = 0; idx < myModules.length; idx++) {
-      final Module module = myModules[idx];
+    for (final Module module : myModules) {
       final String[] contentRootUrls = getModuleContentUrls(module);
-      for (int i = 0; i < contentRootUrls.length; i++) {
-        final String contentRootUrl = contentRootUrls[i];
+      for (final String contentRootUrl : contentRootUrls) {
         if (contentRootUrl.length() < maxUrlLength) {
           continue;
         }
@@ -121,14 +117,14 @@ public class ModuleCompileScope extends FileIndexCompileScope {
     if (candidateModule != null && myScopeModules.contains(candidateModule)) {
       final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(candidateModule);
       final String[] excludeRootUrls = moduleRootManager.getExcludeRootUrls();
-      for (int i = 0; i < excludeRootUrls.length; i++) {
-        if (isUrlUnderRoot(url, excludeRootUrls[i])) {
+      for (String excludeRootUrl : excludeRootUrls) {
+        if (isUrlUnderRoot(url, excludeRootUrl)) {
           return false;
         }
       }
       final String[] sourceRootUrls = moduleRootManager.getSourceRootUrls();
-      for (int i = 0; i < sourceRootUrls.length; i++) {
-        if (isUrlUnderRoot(url, sourceRootUrls[i])) {
+      for (String sourceRootUrl : sourceRootUrls) {
+        if (isUrlUnderRoot(url, sourceRootUrl)) {
           return true;
         }
       }

@@ -35,10 +35,9 @@ public class LibraryDefinitionsGeneratorFactory {
     myGenOptions = genOptions;
     final ModuleManager moduleManager = ModuleManager.getInstance(project);
     final Module[] modules = moduleManager.getModules();
-    for (int idx = 0; idx < modules.length; idx++) {
-      final OrderEntry[] orderEntries = ModuleRootManager.getInstance(modules[idx]).getOrderEntries();
-      for (int i = 0; i < orderEntries.length; i++) {
-        OrderEntry orderEntry = orderEntries[i];
+    for (Module module : modules) {
+      final OrderEntry[] orderEntries = ModuleRootManager.getInstance(module).getOrderEntries();
+      for (OrderEntry orderEntry : orderEntries) {
         if (orderEntry instanceof LibraryOrderEntry && orderEntry.isValid()) {
           Library library = ((LibraryOrderEntry)orderEntry).getLibrary();
           if (library != null) {
@@ -62,8 +61,7 @@ public class LibraryDefinitionsGeneratorFactory {
 
     gen.add(new Comment(comment), 1);
 
-    for (int idx = 0; idx < libraries.length; idx++) {
-      final Library library = libraries[idx];
+    for (final Library library : libraries) {
       final String libraryName = library.getName();
       if (!myUsedLibraries.contains(libraryName)) {
         continue;
@@ -73,7 +71,8 @@ public class LibraryDefinitionsGeneratorFactory {
       final Path libraryPath = new Path(BuildProperties.getLibraryPathId(libraryName));
       for (int i = 0; i < files.length; i++) {
         final VirtualFile file = files[i];
-        libraryPath.add(new PathElement(GenerationUtils.toRelativePath(file, baseDir, BuildProperties.getProjectBaseDirProperty(), myGenOptions, !myProject.isSavePathsRelative())));
+        libraryPath.add(new PathElement(GenerationUtils.toRelativePath(file, baseDir, BuildProperties.getProjectBaseDirProperty(),
+                                                                       myGenOptions, !myProject.isSavePathsRelative())));
       }
       gen.add(libraryPath, 1);
     }

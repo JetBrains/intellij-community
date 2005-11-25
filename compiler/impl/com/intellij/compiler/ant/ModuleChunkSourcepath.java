@@ -40,8 +40,7 @@ public class ModuleChunkSourcepath extends CompositeGenerator{
     final List<VirtualFile> sourceRootFiles = new ArrayList<VirtualFile>();
     final List<VirtualFile> testSourceRootFiles = new ArrayList<VirtualFile>();
 
-    for (int moduleIdx = 0; moduleIdx < modules.length; moduleIdx++) {
-      final Module module = modules[moduleIdx];
+    for (final Module module : modules) {
       final String moduleName = module.getName();
       final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
       final ModuleFileIndex moduleFileIndex = rootManager.getFileIndex();
@@ -51,8 +50,7 @@ public class ModuleChunkSourcepath extends CompositeGenerator{
       excludedFromModule.add(new PatternSetRef(BuildProperties.PROPERTY_IGNORED_FILES));
 
       final ContentEntry[] contentEntries = rootManager.getContentEntries();
-      for (int idx = 0; idx < contentEntries.length; idx++) {
-        final ContentEntry contentEntry = contentEntries[idx];
+      for (final ContentEntry contentEntry : contentEntries) {
         final VirtualFile file = contentEntry.getFile();
         if (file == null) {
           continue; // filter invalid entries
@@ -62,13 +60,13 @@ public class ModuleChunkSourcepath extends CompositeGenerator{
         }
         final VirtualFile dirSetRoot = getDirSetRoot(contentEntry);
 
-        final String dirSetRootRelativeToBasedir = GenerationUtils.toRelativePath(dirSetRoot, chunk.getBaseDir(), moduleChunkBasedirProperty, genOptions, !module.isSavePathsRelative());
+        final String dirSetRootRelativeToBasedir = GenerationUtils
+          .toRelativePath(dirSetRoot, chunk.getBaseDir(), moduleChunkBasedirProperty, genOptions, !module.isSavePathsRelative());
         final DirSet sourcesDirSet = new DirSet(dirSetRootRelativeToBasedir);
         final DirSet testSourcesDirSet = new DirSet(dirSetRootRelativeToBasedir);
 
         final VirtualFile[] sourceRoots = contentEntry.getSourceFolderFiles();
-        for (int i = 0; i < sourceRoots.length; i++) {
-          final VirtualFile root = sourceRoots[i];
+        for (final VirtualFile root : sourceRoots) {
           if (!moduleFileIndex.isInContent(root)) {
             continue; // skip library sources
           }
@@ -124,8 +122,7 @@ public class ModuleChunkSourcepath extends CompositeGenerator{
   private VirtualFile getDirSetRoot(final ContentEntry contentEntry) {
     final VirtualFile contentRoot = contentEntry.getFile();
     final VirtualFile[] sourceFolderFiles = contentEntry.getSourceFolderFiles();
-    for (int idx = 0; idx < sourceFolderFiles.length; idx++) {
-      VirtualFile sourceFolderFile = sourceFolderFiles[idx];
+    for (VirtualFile sourceFolderFile : sourceFolderFiles) {
       if (contentRoot.equals(sourceFolderFile)) {
         return contentRoot.getParent();
       }
@@ -151,8 +148,7 @@ public class ModuleChunkSourcepath extends CompositeGenerator{
       }
     }
     final VirtualFile[] children = dir.getChildren();
-    for (int idx = 0; idx < children.length; idx++) {
-      VirtualFile child = children[idx];
+    for (VirtualFile child : children) {
       if (child.isDirectory()) {
         addExcludePatterns(module, root, child, generator, isIncluded);
       }

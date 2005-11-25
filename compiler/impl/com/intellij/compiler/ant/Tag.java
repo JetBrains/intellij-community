@@ -26,8 +26,7 @@ public class Tag extends CompositeGenerator {
     if (myTagOptions != null && myTagOptions.length > 0) {
       out.writeBytes(" ");
       int generated = 0;
-      for (int idx = 0; idx < myTagOptions.length; idx++) {
-        final Pair option = myTagOptions[idx];
+      for (final Pair option : myTagOptions) {
         if (option == null) {
           continue;
         }
