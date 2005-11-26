@@ -494,7 +494,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
       progress.pushState();
       progress.setText(LocalVcsBundle.message("progress.text.clearing.local.history"));
     }
-    myImplementation.clearAndRecreate();
+    myImplementation.clearAndRecreate(myVcsLocation);
     if (progress != null) {
       progress.popState();
     }
@@ -738,7 +738,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   }
 
   public void clear() {
-    myImplementation.clear();
+    myImplementation.clear(myVcsLocation);
     FileUtil.delete(myVcsLocation);
   }
 
