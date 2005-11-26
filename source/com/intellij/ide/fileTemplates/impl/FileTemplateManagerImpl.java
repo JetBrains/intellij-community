@@ -3,10 +3,12 @@ package com.intellij.ide.fileTemplates.impl;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
-import com.intellij.openapi.application.Application;
+import com.intellij.ide.plugins.PluginDescriptor;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -469,23 +471,30 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
     FileTemplateImpl template = (FileTemplateImpl) myInternalTemplatesManager.getTemplate(actualTemplateName);
 
     if (template == null) {
-      String text;
-      if (!ApplicationManager.getApplication().isUnitTestMode()) {
-        text = getDefaultClassTemplateText(templateName);
-      } else {
-        text = getTestClassTemplateText(templateName);
+      template = (FileTemplateImpl)getJ2eeTemplate(actualTemplateName); // Hack to be able to register class templates from the plugin.
+      if (template != null) {
+        template.setAdjust(true);
       }
+      else {
+        String text;
+        if (!ApplicationManager.getApplication().isUnitTestMode()) {
+          text = getDefaultClassTemplateText(templateName);
+        }
+        else {
+          text = getTestClassTemplateText(templateName);
+        }
 
-      text = StringUtil.convertLineSeparators(text);
-      text = StringUtil.replace(text, "$NAME$", "${NAME}");
-      text = StringUtil.replace(text, "$PACKAGE_NAME$", "${PACKAGE_NAME}");
-      text = StringUtil.replace(text, "$DATE$", "${DATE}");
-      text = StringUtil.replace(text, "$TIME$", "${TIME}");
-      text = StringUtil.replace(text, "$USER$", "${USER}");
+        text = StringUtil.convertLineSeparators(text);
+        text = StringUtil.replace(text, "$NAME$", "${NAME}");
+        text = StringUtil.replace(text, "$PACKAGE_NAME$", "${PACKAGE_NAME}");
+        text = StringUtil.replace(text, "$DATE$", "${DATE}");
+        text = StringUtil.replace(text, "$TIME$", "${TIME}");
+        text = StringUtil.replace(text, "$USER$", "${USER}");
 
-      //noinspection HardCodedStringLiteral
-      template = (FileTemplateImpl) myInternalTemplatesManager.addTemplate(actualTemplateName, "java");
-      template.setText(text);
+        //noinspection HardCodedStringLiteral
+        template = (FileTemplateImpl)myInternalTemplatesManager.addTemplate(actualTemplateName, "java");
+        template.setText(text);
+      }
     }
 
     template.setInternal(true);

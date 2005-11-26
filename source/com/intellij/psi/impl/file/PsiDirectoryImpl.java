@@ -294,6 +294,11 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
     return createSomeClass(name, FileTemplateManager.INTERNAL_CLASS_TEMPLATE_NAME);
   }
 
+  @NotNull
+  public PsiClass createClass(String name, String templateName) throws IncorrectOperationException {
+    return createSomeClass(name, templateName);
+  }
+
   public PsiClass createInterface(String name) throws IncorrectOperationException {
     String templateName = FileTemplateManager.INTERNAL_INTERFACE_TEMPLATE_NAME;
     PsiClass someClass = createSomeClass(name, templateName);

@@ -18,9 +18,9 @@ package com.intellij.psi;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 /**
  * Represents a file system directory and allows to access its contents.
@@ -109,6 +109,16 @@ public interface PsiDirectory extends PsiElement, PsiFileSystemItem, NavigationI
    * @throws IncorrectOperationException if the operation failed for some reason.
    */
   @NotNull PsiClass createClass(String name) throws IncorrectOperationException;
+
+  /**
+   * Creates a class with the specified name in the directory.
+   *
+   * @param name the name of the class to create (not including the file extension).
+   * @param templateName custom file template to create class text based on.
+   * @return the created class instance.
+   * @throws IncorrectOperationException if the operation failed for some reason.
+   */
+  @NotNull PsiClass createClass(String name, String templateName) throws IncorrectOperationException;
 
   /**
    * Checks if it's possible to create a class with the specified name in the directory,
