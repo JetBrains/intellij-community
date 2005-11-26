@@ -45,9 +45,27 @@
   </module-components>
   <actions>
     <group>
-      <action class="org.jetbrains.idea.devkit.build.PrepareToDeployAction" id="MakeJarAction" text="Prepare for deployment"/>
+      <action class="org.jetbrains.idea.devkit.build.PrepareToDeployAction" id="MakeJarAction" />
       <add-to-group anchor="after" group-id="ProjectViewPopupMenu" relative-to-action="Compile"/>
       <add-to-group anchor="after" group-id="BuildMenu" relative-to-action="BuildJar"/>
     </group>
+
+    <action class="org.jetbrains.idea.devkit.actions.NewApplicationComponentAction" text="Application Component" id="NewApplicationComponent">
+      <add-to-group anchor="last" group-id="NewGroup"/>
+    </action>
+
+    <action class="org.jetbrains.idea.devkit.actions.NewProjectComponentAction" text="Project Component" id="NewProjectComponent">
+      <add-to-group anchor="last" group-id="NewGroup"/>
+    </action>
+
+    <action class="org.jetbrains.idea.devkit.actions.NewModuleComponentAction" text="Module Component" id="NewModuleComponent">
+      <add-to-group anchor="last" group-id="NewGroup"/>
+    </action>
+
+    <action class="org.jetbrains.idea.devkit.actions.GenerateComponentExternalizationAction" text="Generate Externalization"
+            id="GenerateExternalization">
+      <add-to-group anchor="last" group-id="GenerateGroup"/>
+    </action>
+
   </actions>
 </idea-plugin>
