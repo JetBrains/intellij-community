@@ -15,19 +15,30 @@
  */
 package com.siyeh.ig.bugs;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.IncorrectOperationException;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.ButtonModel;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import java.awt.*;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 
 public class ReturnNullInspection extends StatementInspection {
 
@@ -48,14 +59,53 @@ public class ReturnNullInspection extends StatementInspection {
         return GroupNames.BUGS_GROUP_NAME;
     }
 
+    @Nullable
+    protected InspectionGadgetsFix buildFix(PsiElement location) {
+        if (AnnotationUtil.isAnnotatingApplicable(location)) {
+            return new MakeNullableFix();
+        } else {
+            return null;
+        }
+    }
+
+    private static class MakeNullableFix extends InspectionGadgetsFix {
+
+        public String getName() {
+            return InspectionGadgetsBundle.message("return.of.null.quickfix");
+        }
+
+        protected void doFix(Project project, ProblemDescriptor descriptor)
+                throws IncorrectOperationException {
+            final PsiElement nullToken = descriptor.getPsiElement();
+            final PsiMethod method =
+                    PsiTreeUtil.getParentOfType(nullToken, PsiMethod.class);
+            if (method == null) {
+                return;
+            }
+            final PsiManager manager = method.getManager();
+            final PsiElementFactory factory = manager.getElementFactory();
+            final PsiAnnotation annotation =
+                    factory.createAnnotationFromText(
+                            '@' + AnnotationUtil.NULLABLE, method);
+            final PsiModifierList modifierList = method.getModifierList();
+            modifierList.addAfter(annotation, null);
+            final CodeStyleManager styleManager = manager.getCodeStyleManager();
+            styleManager.shortenClassReferences(modifierList);
+        }
+    }
+
     public String buildErrorString(PsiElement location) {
-        return InspectionGadgetsBundle.message("return.of.null.problem.descriptor");
+        return InspectionGadgetsBundle.message(
+                "return.of.null.problem.descriptor");
     }
 
     public JComponent createOptionsPanel() {
         final GridBagLayout layout = new GridBagLayout();
         final JPanel panel = new JPanel(layout);
-      final JCheckBox arrayCheckBox = new JCheckBox(InspectionGadgetsBundle.message("return.of.null.arrays.option"), m_reportArrayMethods);
+        final JCheckBox arrayCheckBox = new JCheckBox(
+                InspectionGadgetsBundle.message(
+                        "return.of.null.arrays.option"),
+                m_reportArrayMethods);
         final ButtonModel arrayModel = arrayCheckBox.getModel();
         arrayModel.addChangeListener(new ChangeListener() {
 
@@ -63,7 +113,10 @@ public class ReturnNullInspection extends StatementInspection {
                 m_reportArrayMethods = arrayModel.isSelected();
             }
         });
-      final JCheckBox objectCheckBox = new JCheckBox(InspectionGadgetsBundle.message("return.of.null.objects.option"), m_reportObjectMethods);
+        final JCheckBox objectCheckBox = new JCheckBox(
+                InspectionGadgetsBundle.message(
+                        "return.of.null.objects.option"),
+                m_reportObjectMethods);
         final ButtonModel model = objectCheckBox.getModel();
         model.addChangeListener(new ChangeListener() {
 
@@ -90,7 +143,7 @@ public class ReturnNullInspection extends StatementInspection {
     }
 
     private class ReturnNullVisitor extends StatementInspectionVisitor {
-    
+
         public void visitLiteralExpression(
                 @NotNull PsiLiteralExpression value) {
             super.visitLiteralExpression(value);
@@ -100,7 +153,7 @@ public class ReturnNullInspection extends StatementInspection {
             }
             PsiElement parent = value.getParent();
             while (parent != null &&
-                    (parent instanceof PsiParenthesizedExpression ||
+                   (parent instanceof PsiParenthesizedExpression ||
                     parent instanceof PsiConditionalExpression ||
                     parent instanceof PsiTypeCastExpression)) {
                 parent = parent.getParent();
@@ -118,9 +171,8 @@ public class ReturnNullInspection extends StatementInspection {
                 return;
             }
             final boolean isArray = returnType.getArrayDimensions() > 0;
-            final PsiModifierList modifierList = method.getModifierList();
-            if (modifierList.findAnnotation(
-                    "org.jetbrains.annotations.Nullable") != null) {
+            if (AnnotationUtil.isAnnotated(method, AnnotationUtil.NULLABLE,
+                    false)) {
                 return;
             }
             if (m_reportArrayMethods && isArray) {
