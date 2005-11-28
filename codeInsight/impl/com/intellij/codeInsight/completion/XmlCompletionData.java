@@ -387,16 +387,23 @@ public class XmlCompletionData extends CompletionData {
         XmlFile descriptorFile = nsDescriptor != null ?
                                        nsDescriptor.getDescriptorFile():
                                        containingFile.getDocument().getProlog().getDoctype() != null ? containingFile:null;
-        if (nsDescriptor != null && descriptorFile.getName().equals(containingFile.getName() + ".dtd")) {
+        if (nsDescriptor != null &&
+            ( descriptorFile == null ||
+              descriptorFile.getName().equals(containingFile.getName() + ".dtd")
+            )) {
           descriptorFile = containingFile;
         }
 
         if (descriptorFile != null) {
+          final boolean acceptSystemEntities = containingFile.getFileType() == StdFileTypes.XML;
+
           final PsiElementProcessor processor = new PsiElementProcessor() {
             public boolean execute(final PsiElement element) {
               if (element instanceof XmlEntityDecl) {
                 final XmlEntityDecl xmlEntityDecl = (XmlEntityDecl)element;
-                if (xmlEntityDecl.isInternalReference()) results.add(xmlEntityDecl.getName());
+                if (xmlEntityDecl.isInternalReference() || acceptSystemEntities) {
+                  results.add(xmlEntityDecl.getName());
+                }
               }
               return true;
             }
