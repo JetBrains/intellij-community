@@ -42,4 +42,7 @@ public abstract class LayoutCodeGenerator {
     }
   }
 
+  public String mapComponentClass(final String componentClassName) {
+    return componentClassName;
+  }
 }

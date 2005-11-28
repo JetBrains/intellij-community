@@ -208,6 +208,21 @@ public class AsmCodeGeneratorTest extends TestCase {
     assertEquals(new Dimension(25, 26), btn.getMaximumSize());
   }
 
+  public void testGridBagSpacer() throws Exception {
+    JPanel panel = (JPanel) getInstrumentedRootComponent("TestGridBagSpacer.form", "BindingTest.class");
+    assertTrue(panel.getLayout() instanceof GridBagLayout);
+    assertTrue(panel.getComponent(0) instanceof JLabel);
+    assertTrue(panel.getComponent(1) instanceof JPanel);
+
+    GridBagLayout gridBag = (GridBagLayout) panel.getLayout();
+    GridBagConstraints gbc = gridBag.getConstraints(panel.getComponent(0));
+    assertEquals(0.0, gbc.weightx, 0.01);
+    assertEquals(0.0, gbc.weighty, 0.01);
+    gbc = gridBag.getConstraints(panel.getComponent(1));
+    assertEquals(0.0, gbc.weightx, 0.01);
+    assertEquals(1.0, gbc.weighty, 0.01);
+  }
+
   private class MyClassLoader extends ClassLoader {
     private byte[] myTestProperties = Charset.defaultCharset().encode("test=Test Value\nmnemonic=Mne&monic").array();
 

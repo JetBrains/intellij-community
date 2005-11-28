@@ -251,22 +251,28 @@ public class GridBagConverter {
     boolean canGrow = ((policy & GridConstraints.SIZEPOLICY_CAN_GROW) != 0);
     for (Iterator iterator = myConstraints.iterator(); iterator.hasNext();) {
       GridConstraints otherConstraints = (GridConstraints)iterator.next();
-      if (otherConstraints != constraints) {
-        boolean sameRow = horizontal
-                      ? otherConstraints.getRow() == constraints.getRow()
-                      : otherConstraints.getColumn() == constraints.getColumn();
-        if (sameRow) {
-          int otherPolicy = horizontal ? otherConstraints.getHSizePolicy() : otherConstraints.getVSizePolicy();
-          if ((otherPolicy & GridConstraints.SIZEPOLICY_WANT_GROW) != 0) {
-            return 0.0;
-          }
-          if (!canGrow && ((otherPolicy & GridConstraints.SIZEPOLICY_CAN_GROW) != 0)) {
-            return 0.0;
-          }
+
+      if (!constraintsIntersect(horizontal, constraints, otherConstraints)) {
+        int otherPolicy = horizontal ? otherConstraints.getHSizePolicy() : otherConstraints.getVSizePolicy();
+        if ((otherPolicy & GridConstraints.SIZEPOLICY_WANT_GROW) != 0) {
+          return 0.0;
+        }
+        if (!canGrow && ((otherPolicy & GridConstraints.SIZEPOLICY_CAN_GROW) != 0)) {
+          return 0.0;
         }
       }
     }
     return 1.0;
+  }
+
+  private boolean constraintsIntersect(final boolean horizontal,
+                                       final GridConstraints constraints,
+                                       final GridConstraints otherConstraints) {
+    int start = constraints.getCell(!horizontal);
+    int end = start + constraints.getSpan(!horizontal) - 1;
+    int otherStart = otherConstraints.getCell(!horizontal);
+    int otherEnd = otherStart + otherConstraints.getSpan(!horizontal) - 1;
+    return start <= otherEnd && otherStart <= end;
   }
 
   private boolean isCellEmpty(final int row, final int col) {

@@ -15,10 +15,14 @@
  */
 package com.intellij.uiDesigner.compiler;
 
+import com.intellij.uiDesigner.core.AbstractLayout;
+import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.uiDesigner.core.Spacer;
+import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.lw.LwComponent;
 import com.intellij.uiDesigner.lw.LwContainer;
-import com.intellij.uiDesigner.core.GridLayoutManager;
-import com.intellij.uiDesigner.core.AbstractLayout;
+import com.intellij.uiDesigner.lw.LwHSpacer;
+import com.intellij.uiDesigner.lw.LwVSpacer;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.GeneratorAdapter;
 import org.objectweb.asm.commons.Method;
@@ -42,6 +46,13 @@ public class GridBagLayoutCodeGenerator extends LayoutCodeGenerator {
   private Map myIdToConstraintsMap = new HashMap();
   private Method myDefaultConstructor = Method.getMethod("void <init> ()");
   private Type myPanelType = Type.getType(JPanel.class);
+
+  public String mapComponentClass(final String componentClassName) {
+    if (componentClassName.equals(Spacer.class.getName())) {
+      return JPanel.class.getName();
+    }
+    return super.mapComponentClass(componentClassName);
+  }
 
   public void generateContainerLayout(final LwComponent lwComponent, final GeneratorAdapter generator, final int componentLocal) {
     if (lwComponent instanceof LwContainer) {
@@ -69,7 +80,15 @@ public class GridBagLayoutCodeGenerator extends LayoutCodeGenerator {
                                                       gridLayout.isSameSizeVertically());
     for(int i=0; i<container.getComponentCount(); i++) {
       final LwComponent component = (LwComponent)container.getComponent(i);
-      converter.addComponent(null, component.getConstraints());
+      if (component instanceof LwHSpacer || component instanceof LwVSpacer) {
+        GridConstraints constraints = component.getConstraints().store();
+        constraints.setHSizePolicy(constraints.getHSizePolicy() & ~GridConstraints.SIZEPOLICY_WANT_GROW);
+        constraints.setVSizePolicy(constraints.getVSizePolicy() & ~GridConstraints.SIZEPOLICY_WANT_GROW);
+        converter.addComponent(null, constraints);
+      }
+      else {
+        converter.addComponent(null, component.getConstraints());
+      }
     }
     GridBagConverter.Result[] results = converter.convert();
     int componentIndex = 0;
@@ -97,7 +116,7 @@ public class GridBagLayoutCodeGenerator extends LayoutCodeGenerator {
     }
     return horizontal ? AbstractLayout.DEFAULT_HGAP : AbstractLayout.DEFAULT_VGAP;
   }
-  
+
   private void generateFillerPanel(final GeneratorAdapter generator, final int parentLocal, final GridBagConverter.Result result) {
     int panelLocal = generator.newLocal(myPanelType);
 

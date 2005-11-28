@@ -187,12 +187,12 @@ public class AsmCodeGenerator {
     return false;
   }
 
-  static Class getComponentClass(final LwComponent component, final ClassLoader classLoader) throws CodeGenerationException{
+  static Class getComponentClass(String className, final ClassLoader classLoader) throws CodeGenerationException{
     try {
-      return Class.forName(component.getComponentClassName(), false, classLoader);
+      return Class.forName(className, false, classLoader);
     }
     catch (ClassNotFoundException e) {
-      throw new CodeGenerationException("Class not found: " + component.getComponentClassName());
+      throw new CodeGenerationException("Class not found: " + className);
     }
   }
 
@@ -260,7 +260,8 @@ public class AsmCodeGenerator {
     private void generateSetupCodeForComponent(final LwComponent lwComponent,
                                                final GeneratorAdapter generator,
                                                final int parentLocal) throws CodeGenerationException {
-      Class componentClass = getComponentClass(lwComponent, myLoader);
+      final String className = myLayoutCodeGenerator.mapComponentClass(lwComponent.getComponentClassName());
+      Class componentClass = getComponentClass(className, myLoader);
       final Type componentType = Type.getType(componentClass);
       final int componentLocal = generator.newLocal(componentType);
       generator.newInstance(componentType);
@@ -302,7 +303,7 @@ public class AsmCodeGenerator {
                                              final Type componentType,
                                              final GeneratorAdapter generator,
                                              final int componentLocal) throws CodeGenerationException {
-      final Class componentClass = getComponentClass(lwComponent, myLoader);
+      final Class componentClass = getComponentClass(lwComponent.getComponentClassName(), myLoader);
       // introspected properties
       final LwIntrospectedProperty[] introspectedProperties = lwComponent.getAssignedIntrospectedProperties();
       for (int i = 0; i < introspectedProperties.length; i++) {
