@@ -11,8 +11,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.IgnoreExtResourceAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.ManuallySetupExtResourceAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
-import com.intellij.codeInspection.htmlInspections.HtmlStyleLocalInspection;
+import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
 import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
 import com.intellij.jsp.impl.JspElementDescriptor;
 import com.intellij.lang.ASTNode;
@@ -366,9 +365,8 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
       }
     }
 
-    final HighlightDisplayKey key = HighlightDisplayKey.find(HtmlStyleLocalInspection.SHORT_NAME);
+    final HighlightDisplayKey key = HighlightDisplayKey.find(RequiredAttributesInspection.SHORT_NAME);
     if (requiredAttributes != null && mySettings.getInspectionProfile(tag).isToolEnabled(key)) {
-      if (!((HtmlStyleLocalInspection)((LocalInspectionToolWrapper)mySettings.getInspectionProfile(tag).getInspectionTool(HtmlStyleLocalInspection.SHORT_NAME)).getTool()).myCheckRequiredHtmlAttributes) return;
       for (final String attrName : requiredAttributes) {
         if (tag.getAttribute(attrName, tag.getNamespace()) == null) {
           if (!(elementDescriptor instanceof JspElementDescriptor) ||

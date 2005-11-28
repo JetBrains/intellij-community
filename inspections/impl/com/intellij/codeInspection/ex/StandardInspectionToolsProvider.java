@@ -18,6 +18,7 @@ import com.intellij.codeInspection.ejb.EJBWarningInspection;
 import com.intellij.codeInspection.emptyMethod.EmptyMethodInspection;
 import com.intellij.codeInspection.equalsAndHashcode.EqualsAndHashcode;
 import com.intellij.codeInspection.htmlInspections.HtmlStyleLocalInspection;
+import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
 import com.intellij.codeInspection.java15api.Java15APIUsageInspection;
 import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
 import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
@@ -104,7 +105,8 @@ public class StandardInspectionToolsProvider implements InspectionToolProvider, 
       SillyAssignmentInspection.class,
       UnusedThrowsDeclaration.class,
       AccessStaticViaInstance.class,
-      HtmlStyleLocalInspection.class
+      HtmlStyleLocalInspection.class,
+      RequiredAttributesInspection.class
       };
   }
 }
