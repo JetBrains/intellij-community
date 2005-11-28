@@ -12,7 +12,7 @@
       <component id="2665b" class="javax.swing.JButton">
         <constraints>
           <xy x="69" y="11" width="25" height="24"/>
-          <grid row="0" column="0" row-span="2" col-span="2" vsize-policy="0" hsize-policy="3" anchor="0" fill="1">
+          <grid row="0" column="0" row-span="2" col-span="2" vsize-policy="0" hsize-policy="3" anchor="9" fill="1">
             <minimum-size width="21" height="22"/>
             <preferred-size width="23" height="24"/>
             <maximum-size width="25" height="26"/>

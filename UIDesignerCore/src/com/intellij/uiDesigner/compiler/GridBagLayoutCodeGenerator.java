@@ -22,6 +22,7 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.GeneratorAdapter;
 import org.objectweb.asm.commons.Method;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
@@ -38,6 +39,8 @@ public class GridBagLayoutCodeGenerator extends LayoutCodeGenerator {
   private static Type myGridBagConstraintsType = Type.getType(GridBagConstraints.class);
 
   private Map myIdToConstraintsMap = new HashMap();
+  private Method myDefaultConstructor = Method.getMethod("void <init> ()");
+  private Type myPanelType = Type.getType(JPanel.class);
 
   public void generateContainerLayout(final LwComponent lwComponent, final GeneratorAdapter generator, final int componentLocal) {
     if (lwComponent instanceof LwContainer) {
@@ -51,23 +54,45 @@ public class GridBagLayoutCodeGenerator extends LayoutCodeGenerator {
 
         generator.invokeVirtual(Type.getType(Container.class), Method.getMethod("void setLayout(java.awt.LayoutManager)"));
 
-        prepareConstraints(container);
+        prepareConstraints(container, generator, componentLocal);
       }
     }
   }
 
-  private void prepareConstraints(final LwContainer container) {
+  private void prepareConstraints(final LwContainer container, final GeneratorAdapter generator, final int componentLocal) {
     GridLayoutManager gridLayout = (GridLayoutManager) container.getLayout();
-    GridBagConverter converter = new GridBagConverter(gridLayout.getMargin());
+    GridBagConverter converter = new GridBagConverter(gridLayout.getMargin(),
+                                                      gridLayout.getHGap(),
+                                                      gridLayout.getVGap(),
+                                                      gridLayout.isSameSizeHorizontally(),
+                                                      gridLayout.isSameSizeVertically());
     for(int i=0; i<container.getComponentCount(); i++) {
       final LwComponent component = (LwComponent)container.getComponent(i);
       converter.addComponent(null, component.getConstraints());
     }
     GridBagConverter.Result[] results = converter.convert();
+    int componentIndex = 0;
     for(int i=0; i<results.length; i++) {
-      final LwComponent component = (LwComponent)container.getComponent(i);
-      myIdToConstraintsMap.put(component.getId(), results [i]);
+      if (results [i].isFillerPanel) {
+        generateFillerPanel(generator, componentLocal, results [i]);
+      }
+      else {
+        final LwComponent component = (LwComponent)container.getComponent(componentIndex++);
+        myIdToConstraintsMap.put(component.getId(), results [i]);
+      }
     }
+  }
+
+  private void generateFillerPanel(final GeneratorAdapter generator, final int parentLocal, final GridBagConverter.Result result) {
+    int panelLocal = generator.newLocal(myPanelType);
+
+    generator.newInstance(myPanelType);
+    generator.dup();
+    generator.invokeConstructor(myPanelType, myDefaultConstructor);
+    generator.storeLocal(panelLocal);
+
+    generateConversionResult(generator, result, panelLocal, parentLocal);
+
   }
 
   public void generateComponentLayout(final LwComponent lwComponent,
@@ -76,61 +101,66 @@ public class GridBagLayoutCodeGenerator extends LayoutCodeGenerator {
                                       final int parentLocal) {
     GridBagConverter.Result result = (GridBagConverter.Result) myIdToConstraintsMap.get(lwComponent.getId());
     if (result != null) {
-      checkSetSize(generator, componentLocal, "setMinimumSize", result.minimumSize);
-      checkSetSize(generator, componentLocal, "setPreferredSize", result.preferredSize);
-      checkSetSize(generator, componentLocal, "setMaximumSize", result.maximumSize);
-
-      int gbcLocal = generator.newLocal(myGridBagConstraintsType);
-
-      generator.newInstance(myGridBagConstraintsType);
-      generator.dup();
-      generator.invokeConstructor(myGridBagConstraintsType, Method.getMethod("void <init> ()"));
-      generator.storeLocal(gbcLocal);
-
-      GridBagConstraints defaults = new GridBagConstraints();
-      GridBagConstraints constraints = result.constraints;
-      if (defaults.gridx != constraints.gridx) {
-        setIntField(generator, gbcLocal, "gridx", constraints.gridx);
-      }
-      if (defaults.gridy != constraints.gridy) {
-        setIntField(generator, gbcLocal, "gridy", constraints.gridy);
-      }
-      if (defaults.gridwidth != constraints.gridwidth) {
-        setIntField(generator, gbcLocal, "gridwidth", constraints.gridwidth);
-      }
-      if (defaults.gridheight != constraints.gridheight) {
-        setIntField(generator, gbcLocal, "gridheight", constraints.gridheight);
-      }
-      if (defaults.weightx != constraints.weightx) {
-        setDoubleField(generator, gbcLocal, "weightx", constraints.weightx);
-      }
-      if (defaults.weighty != constraints.weighty) {
-        setDoubleField(generator, gbcLocal, "weighty", constraints.weighty);
-      }
-      if (defaults.anchor != constraints.anchor) {
-        setIntField(generator, gbcLocal, "anchor", constraints.anchor);
-      }
-      if (defaults.fill != constraints.fill) {
-        setIntField(generator, gbcLocal, "fill", constraints.fill);
-      }
-      if (defaults.ipadx != constraints.ipadx) {
-        setIntField(generator, gbcLocal, "ipadx", constraints.ipadx);
-      }
-      if (defaults.ipady != constraints.ipady) {
-        setIntField(generator, gbcLocal, "ipady", constraints.ipady);
-      }
-      if (!defaults.insets.equals(constraints.insets)) {
-        generator.loadLocal(gbcLocal);
-        AsmCodeGenerator.pushPropValue(generator, "java.awt.Insets", constraints.insets);
-        generator.putField(myGridBagConstraintsType, "insets", Type.getType(Insets.class));
-      }
-
-      generator.loadLocal(parentLocal);
-      generator.loadLocal(componentLocal);
-      generator.loadLocal(gbcLocal);
-
-      generator.invokeVirtual(Type.getType(Container.class), Method.getMethod("void add(java.awt.Component,java.lang.Object)"));
+      generateConversionResult(generator, result, componentLocal, parentLocal);
     }
+  }
+
+  private void generateConversionResult(final GeneratorAdapter generator, final GridBagConverter.Result result, final int componentLocal,
+                                        final int parentLocal) {
+    checkSetSize(generator, componentLocal, "setMinimumSize", result.minimumSize);
+    checkSetSize(generator, componentLocal, "setPreferredSize", result.preferredSize);
+    checkSetSize(generator, componentLocal, "setMaximumSize", result.maximumSize);
+
+    int gbcLocal = generator.newLocal(myGridBagConstraintsType);
+
+    generator.newInstance(myGridBagConstraintsType);
+    generator.dup();
+    generator.invokeConstructor(myGridBagConstraintsType, myDefaultConstructor);
+    generator.storeLocal(gbcLocal);
+
+    GridBagConstraints defaults = new GridBagConstraints();
+    GridBagConstraints constraints = result.constraints;
+    if (defaults.gridx != constraints.gridx) {
+      setIntField(generator, gbcLocal, "gridx", constraints.gridx);
+    }
+    if (defaults.gridy != constraints.gridy) {
+      setIntField(generator, gbcLocal, "gridy", constraints.gridy);
+    }
+    if (defaults.gridwidth != constraints.gridwidth) {
+      setIntField(generator, gbcLocal, "gridwidth", constraints.gridwidth);
+    }
+    if (defaults.gridheight != constraints.gridheight) {
+      setIntField(generator, gbcLocal, "gridheight", constraints.gridheight);
+    }
+    if (defaults.weightx != constraints.weightx) {
+      setDoubleField(generator, gbcLocal, "weightx", constraints.weightx);
+    }
+    if (defaults.weighty != constraints.weighty) {
+      setDoubleField(generator, gbcLocal, "weighty", constraints.weighty);
+    }
+    if (defaults.anchor != constraints.anchor) {
+      setIntField(generator, gbcLocal, "anchor", constraints.anchor);
+    }
+    if (defaults.fill != constraints.fill) {
+      setIntField(generator, gbcLocal, "fill", constraints.fill);
+    }
+    if (defaults.ipadx != constraints.ipadx) {
+      setIntField(generator, gbcLocal, "ipadx", constraints.ipadx);
+    }
+    if (defaults.ipady != constraints.ipady) {
+      setIntField(generator, gbcLocal, "ipady", constraints.ipady);
+    }
+    if (!defaults.insets.equals(constraints.insets)) {
+      generator.loadLocal(gbcLocal);
+      AsmCodeGenerator.pushPropValue(generator, "java.awt.Insets", constraints.insets);
+      generator.putField(myGridBagConstraintsType, "insets", Type.getType(Insets.class));
+    }
+
+    generator.loadLocal(parentLocal);
+    generator.loadLocal(componentLocal);
+    generator.loadLocal(gbcLocal);
+
+    generator.invokeVirtual(Type.getType(Container.class), Method.getMethod("void add(java.awt.Component,java.lang.Object)"));
   }
 
   private void checkSetSize(final GeneratorAdapter generator, final int componentLocal, final String methodName, final Dimension dimension) {
