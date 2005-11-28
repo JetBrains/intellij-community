@@ -208,8 +208,7 @@ public abstract class DialogWrapper {
 
   private JPanel createButtons(Action[] actions, ArrayList<Component> buttons) {
     JPanel buttonsPanel = new JPanel(new GridLayout(1, actions.length, 5, 0));
-    for (int i = 0; i < actions.length; i++) {
-      final Action action = actions[i];
+    for (final Action action : actions) {
       JButton button = createJButtonForAction(action);
       final Object value = action.getValue(Action.MNEMONIC_KEY);
       if (value instanceof Integer) {
