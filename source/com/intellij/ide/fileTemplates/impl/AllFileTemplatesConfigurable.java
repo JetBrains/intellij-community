@@ -183,14 +183,21 @@ public class AllFileTemplatesConfigurable implements Configurable, ApplicationCo
             new TreeNode(StdFileTypes.JAVA.getIcon(), J2EEFileTemplateNames.LOCAL_INTERFACE_TEMPLATE),
             new TreeNode(StdFileTypes.JAVA.getIcon(), J2EEFileTemplateNames.REMOTE_INTERFACE_TEMPLATE),
             new TreeNode(StdFileTypes.JAVA.getIcon(), J2EEFileTemplateNames.SESSION_CLASS_STATEFUL_TEMPLATE),
+            new TreeNode(StdFileTypes.JAVA.getIcon(), J2EEFileTemplateNames.SESSION_CLASS_STATEFUL_TEMPLATE_3),
             new TreeNode(StdFileTypes.JAVA.getIcon(), J2EEFileTemplateNames.SESSION_CLASS_STATELESS_TEMPLATE),
+            new TreeNode(StdFileTypes.JAVA.getIcon(), J2EEFileTemplateNames.SESSION_CLASS_STATELESS_TEMPLATE_3),
             new TreeNode(StdFileTypes.JAVA.getIcon(), J2EEFileTemplateNames.SESSION_HOME_INTERFACE_TEMPLATE),
             new TreeNode(StdFileTypes.JAVA.getIcon(), J2EEFileTemplateNames.SESSION_LOCAL_HOME_INTERFACE_TEMPLATE),
             new TreeNode(StdFileTypes.JAVA.getIcon(), J2EEFileTemplateNames.MESSAGE_CLASS_TEMPLATE),
+            new TreeNode(StdFileTypes.JAVA.getIcon(), J2EEFileTemplateNames.MESSAGE_CLASS_TEMPLATE_3),
+            new TreeNode(StdFileTypes.JAVA.getIcon(), J2EEFileTemplateNames.PERSISTENT_ENTITY_CLASS_TEMPLATE_3),
+            new TreeNode(StdFileTypes.JAVA.getIcon(), J2EEFileTemplateNames.PERSISTENT_EMBEDDABLE_CLASS_TEMPLATE_3),
           }),
           new TreeNode(IdeBundle.message("template.node.deployment.descriptors"), StdFileTypes.XML.getIcon(), new TreeNode[]{
             new TreeNode(StdFileTypes.XML.getIcon(), J2EEFileTemplateNames.EJB_JAR_XML_1_1),
             new TreeNode(StdFileTypes.XML.getIcon(), J2EEFileTemplateNames.EJB_JAR_XML_2_0),
+            new TreeNode(StdFileTypes.XML.getIcon(), J2EEFileTemplateNames.EJB_JAR_XML_2_1),
+            new TreeNode(StdFileTypes.XML.getIcon(), J2EEFileTemplateNames.EJB_JAR_XML_3_0),
           }),
         }));
         categories.add(new TreeNode(IdeBundle.message("template.node.application"), ModuleType.J2EE_APPLICATION.getNodeIcon(true), new TreeNode[]{
@@ -198,6 +205,7 @@ public class AllFileTemplatesConfigurable implements Configurable, ApplicationCo
             new TreeNode(StdFileTypes.XML.getIcon(), J2EEFileTemplateNames.APPLICATION_XML_1_2),
             new TreeNode(StdFileTypes.XML.getIcon(), J2EEFileTemplateNames.APPLICATION_XML_1_3),
             new TreeNode(StdFileTypes.XML.getIcon(), J2EEFileTemplateNames.APPLICATION_XML_1_4),
+            new TreeNode(StdFileTypes.XML.getIcon(), J2EEFileTemplateNames.APPLICATION_XML_5_0),
           }),
         }));
         categories.add(new TreeNode(IdeBundle.message("template.node.web"), ModuleType.WEB.getNodeIcon(true), new TreeNode[]{
@@ -209,6 +217,7 @@ public class AllFileTemplatesConfigurable implements Configurable, ApplicationCo
             new TreeNode(StdFileTypes.XML.getIcon(), J2EEFileTemplateNames.WEB_XML_22),
             new TreeNode(StdFileTypes.XML.getIcon(), J2EEFileTemplateNames.WEB_XML_23),
             new TreeNode(StdFileTypes.XML.getIcon(), J2EEFileTemplateNames.WEB_XML_24),
+            new TreeNode(StdFileTypes.XML.getIcon(), J2EEFileTemplateNames.WEB_XML_25),
           }),
           new TreeNode(IdeBundle.message("template.node.jsp.files"), StdFileTypes.JSP.getIcon(), new TreeNode[]{
             new TreeNode(StdFileTypes.JSP.getIcon(), J2EEFileTemplateNames.JSP_FILE),
