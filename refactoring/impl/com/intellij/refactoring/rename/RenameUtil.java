@@ -246,7 +246,7 @@ public class RenameUtil {
         for (PsiClass inheritor : inheritors) {
           PsiClass[] inners = inheritor.getInnerClasses();
           for (PsiClass inner : inners) {
-            if (inner.getName().equals(newName)) {
+            if (newName.equals(inner.getName())) {
               result.add(new SubmemberHidesMemberUsageInfo(inner, aClass));
             }
           }
@@ -393,8 +393,6 @@ public class RenameUtil {
     }
 
     LOG.assertTrue(scopeElement != null);
-    final LocalSearchScope scope = new LocalSearchScope((scopeElement));
-
     scopeElement.accept(new PsiRecursiveElementVisitor() {
       public void visitReferenceExpression(PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
@@ -410,21 +408,6 @@ public class RenameUtil {
         }
       }
     });
-  }
-
-  private static PsiField findFieldByName(final PsiClass containingClass,
-                                          final String newName,
-                                          final Map<? extends PsiElement, String> allRenames) {
-    final PsiField field = containingClass.findFieldByName(newName, true);
-    if (field != null && !allRenames.containsKey(field)) return field;
-    final Set<? extends PsiElement> renamedElements = allRenames.keySet();
-    for (PsiElement element : renamedElements) {
-      if (element instanceof PsiField) {
-        final String fieldNewName = allRenames.get(element);
-        if (newName.equals(fieldNewName)) return (PsiField)element;
-      }
-    }
-    return null;
   }
 
   private static String getStringToReplace(PsiElement element, String newName, boolean nonJava) {
