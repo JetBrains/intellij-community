@@ -10,8 +10,10 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.xml.XmlDocument;
-import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
@@ -35,10 +37,20 @@ public class GenerateDTDAction extends BaseCodeInsightAction{
             buffer.append("<!DOCTYPE " + document.getRootTag().getName() + " [\n");
             buffer.append(XmlUtil.generateDocumentDTD(document));
             buffer.append("]>\n");
-            XmlFile tempFile = null;
+            XmlFile tempFile;
             try{
+              final XmlProlog prolog = document.getProlog();
+              final PsiElement childOfType = PsiTreeUtil.getChildOfType(prolog, XmlProcessingInstruction.class);
+              if (childOfType != null) {
+                final String text = childOfType.getText();
+                buffer.insert(0,text);
+                final PsiElement nextSibling = childOfType.getNextSibling();
+                if (nextSibling instanceof PsiWhiteSpace) {
+                  buffer.insert(text.length(),nextSibling.getText());
+                }
+              }
               tempFile = (XmlFile) file.getManager().getElementFactory().createFileFromText("dummy.xml", buffer.toString());
-              document.getProlog().replace(tempFile.getDocument().getProlog());
+              prolog.replace(tempFile.getDocument().getProlog());
             }
             catch(IncorrectOperationException e){
               LOG.error(e);
