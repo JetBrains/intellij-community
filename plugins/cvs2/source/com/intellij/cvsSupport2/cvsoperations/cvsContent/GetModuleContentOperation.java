@@ -2,19 +2,17 @@ package com.intellij.cvsSupport2.cvsoperations.cvsContent;
 
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.connections.CvsRootProvider;
-import com.intellij.cvsSupport2.cvsoperations.javacvsSpecificImpls.*;
 import com.intellij.cvsSupport2.cvsoperations.common.*;
-import com.intellij.cvsSupport2.cvsoperations.cvsContent.DirectoryContent;
-import com.intellij.cvsSupport2.cvsoperations.cvsContent.DirectoryContentListener;
-import com.intellij.cvsSupport2.cvsoperations.cvsContent.DirectoryContentProvider;
-import com.intellij.cvsSupport2.cvsoperations.common.UpdatedFilesManager;
+import com.intellij.cvsSupport2.cvsoperations.javacvsSpecificImpls.AdminReaderOnStoredRepositoryPath;
+import com.intellij.cvsSupport2.cvsoperations.javacvsSpecificImpls.AdminWriterStoringRepositoryPath;
+import com.intellij.cvsSupport2.cvsoperations.javacvsSpecificImpls.ConstantLocalFileReader;
 import com.intellij.cvsSupport2.javacvsImpl.io.DeafLocalFileWriter;
+import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.command.Command;
 import org.netbeans.lib.cvsclient.command.GlobalOptions;
 import org.netbeans.lib.cvsclient.command.checkout.CheckoutCommand;
 import org.netbeans.lib.cvsclient.file.ILocalFileReader;
 import org.netbeans.lib.cvsclient.file.ILocalFileWriter;
-import org.jetbrains.annotations.NonNls;
 
 /**
  * author: lesya
@@ -66,10 +64,11 @@ public class GetModuleContentOperation extends CompositeOperaton implements Dire
             myIsInModule = true;
           }
           else {
+            myDirectoryContentListener.messageSent(message);
             myIsInModule = false;
           }
         }
-        else if (DirectoryContentListener.moduleMessage(message)) {
+        else if (DirectoryContentListener.moduleMessage_ver1(message)) {
           myIsInModule = true;
         }
 
@@ -107,7 +106,10 @@ public class GetModuleContentOperation extends CompositeOperaton implements Dire
 
       public void moduleExpanded(String module) {
         super.moduleExpanded(module);
-        if (myModuleLocation == null) myModuleLocation = module;
+        if (myModuleLocation == null) {
+          myModuleLocation = module;
+          myDirectoryContentListener.setModuleName(myModuleLocation);
+        }
       }
     };
   }
