@@ -99,7 +99,7 @@ public class EclipseCompiler extends ExternalCompiler {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         try {
-          _createStartupCommand(chunk, commandLine, outputPath);
+          createStartupCommand(chunk, commandLine, outputPath, true);
         }
         catch (IOException e) {
           ex[0] = e;
@@ -112,13 +112,10 @@ public class EclipseCompiler extends ExternalCompiler {
     return commandLine.toArray(new String[commandLine.size()]);
   }
 
-  private void _createStartupCommand(final ModuleChunk chunk, @NonNls final ArrayList<String> commandLine, final String outputPath) throws IOException {
-    final ProjectJdk jdk = chunk.getJdk();
-    final String versionString = jdk.getVersionString();
-    if (versionString == null || "".equals(versionString)) {
-      throw new IllegalArgumentException(CompilerBundle.message("javac.error.unknown.jdk.version", jdk.getName()));
-    }
-
+  private void createStartupCommand(final ModuleChunk chunk,
+                                    @NonNls final ArrayList<String> commandLine,
+                                    final String outputPath,
+                                    final boolean useTempFile) throws IOException {
     EclipseCompilerSettings compilerSettings = EclipseCompilerSettings.getInstance(myProject);
 
     final String vmExePath = ProjectJdkTable.getInstance().getInternalJdk().getVMExecutablePath();
@@ -130,6 +127,20 @@ public class EclipseCompiler extends ExternalCompiler {
     commandLine.add("-classpath");
     commandLine.add(PATH_TO_COMPILER_JAR);
     commandLine.add(getCompilerClass());
+
+    addCommandLineOptions(commandLine, chunk, outputPath, compilerSettings, useTempFile);
+  }
+
+  public void addCommandLineOptions(@NonNls final ArrayList<String> commandLine,
+                                    final ModuleChunk chunk,
+                                    final String outputPath,
+                                    final EclipseCompilerSettings compilerSettings,
+                                    final boolean useTempFile) throws IOException {
+    final ProjectJdk jdk = chunk.getJdk();
+    final String versionString = jdk.getVersionString();
+    if (versionString == null || "".equals(versionString)) {
+      throw new IllegalArgumentException(CompilerBundle.message("javac.error.unknown.jdk.version", jdk.getName()));
+    }
 
     final LanguageLevel applicableLanguageLevel = getApplicableLanguageLevel(versionString);
     if (applicableLanguageLevel.equals(LanguageLevel.JDK_1_5)) {
@@ -161,31 +172,38 @@ public class EclipseCompiler extends ExternalCompiler {
 
     commandLine.add("-verbose");
     StringTokenizer tokenizer = new StringTokenizer(compilerSettings.getOptionsString(), " ");
-    while(tokenizer.hasMoreTokens()) {
+    while (tokenizer.hasMoreTokens()) {
       commandLine.add(tokenizer.nextToken());
     }
- 
+
     final VirtualFile[] files = chunk.getFilesToCompile();
 
-    File sourcesFile = FileUtil.createTempFile("javac", ".tmp");
-    sourcesFile.deleteOnExit();
-    myTempFiles.add(sourcesFile);
-    final PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter(sourcesFile)));
-    try {
-      for (final VirtualFile file : files) {
-        // Important: should use "/" slashes!
-        // but not for JDK 1.5 - see SCR 36673
-        final String path = file.getPath().replace('/', File.separatorChar);
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Adding path for compilation " + path);
+    if (useTempFile) {
+      File sourcesFile = FileUtil.createTempFile("javac", ".tmp");
+      sourcesFile.deleteOnExit();
+      myTempFiles.add(sourcesFile);
+      final PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter(sourcesFile)));
+      try {
+        for (final VirtualFile file : files) {
+          // Important: should use "/" slashes!
+          // but not for JDK 1.5 - see SCR 36673
+          final String path = file.getPath().replace('/', File.separatorChar);
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Adding path for compilation " + path);
+          }
+          writer.println(CompilerUtil.quotePath(path));
         }
-        writer.println(CompilerUtil.quotePath(path));
+      }
+      finally {
+        writer.close();
+      }
+      commandLine.add("@" + sourcesFile.getAbsolutePath());
+    }
+    else {
+      for (VirtualFile file : files) {
+        commandLine.add(file.getPath());
       }
     }
-    finally {
-      writer.close();
-    }
-    commandLine.add("@" + sourcesFile.getAbsolutePath());
   }
 
   private LanguageLevel getApplicableLanguageLevel(String versionString) {

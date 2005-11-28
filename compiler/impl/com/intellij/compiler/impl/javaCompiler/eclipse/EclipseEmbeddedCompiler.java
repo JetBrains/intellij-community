@@ -3,7 +3,6 @@ package com.intellij.compiler.impl.javaCompiler.eclipse;
 import com.intellij.compiler.OutputParser;
 import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
 import com.intellij.compiler.impl.javaCompiler.ModuleChunk;
-import com.intellij.compiler.impl.javaCompiler.javac.JavacEmbeddedCompiler;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.cl.IdeaClassLoader;
 import com.intellij.openapi.compiler.CompileContext;
@@ -23,7 +22,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
-import java.util.List;
 
 
 public class EclipseEmbeddedCompiler implements BackendCompiler {
@@ -114,9 +112,8 @@ public class EclipseEmbeddedCompiler implements BackendCompiler {
 
   @NotNull
   public Process launchProcess(final ModuleChunk chunk, final String outputDir, final CompileContext compileContext) throws IOException {
-
-    final String[] commands = myEclipseExternalCompiler.createStartupCommand(chunk, compileContext, outputDir);
-    final String[] modifiedCmds = JavacEmbeddedCompiler.createCommandsForEmbeddedCall(commands, EclipseCompiler.getCompilerClass());
+    @NonNls final ArrayList<String> commandLine = new ArrayList<String>();
+    myEclipseExternalCompiler.addCommandLineOptions(commandLine, chunk, outputDir, EclipseCompilerSettings.getInstance(myProject), false);
 
     Process process = new Process() {
       public OutputStream getOutputStream() {
@@ -136,12 +133,8 @@ public class EclipseEmbeddedCompiler implements BackendCompiler {
 
       public int waitFor() {
         try {
-          List<String> cmds = new ArrayList<String>(modifiedCmds.length);
-          for (@NonNls String cmd : modifiedCmds) {
-            if (cmd.equals("-verbose")) continue;
-            cmds.add(cmd);
-          }
-          String[] finalCmds = cmds.toArray(new String[cmds.size()]);
+          commandLine.remove("-verbose");
+          String[] finalCmds = commandLine.toArray(new String[commandLine.size()]);
           myEclipseCompilerDriver.parseCommandLineAndCompile(finalCmds);
           myExitCode = 0;
           return myExitCode;
