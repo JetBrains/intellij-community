@@ -103,7 +103,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
       }
     }
 
-    if (isToLaunchExternal) {
+    if (isToLaunchExternal && doExternalValidation()) {
       ExternalToolPass action3 = new ExternalToolPass(myFile, myEditor);
       action3.doCollectInformation(new MockProgressInidicator());
 
@@ -121,4 +121,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     return false;
   }
 
+  protected boolean doExternalValidation() {
+    return true;
+  }
 }

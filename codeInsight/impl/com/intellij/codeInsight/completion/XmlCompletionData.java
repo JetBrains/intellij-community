@@ -26,8 +26,8 @@ import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
-import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
@@ -382,29 +382,33 @@ public class XmlCompletionData extends CompletionData {
         final XmlElementDescriptor descriptor = parentOfType.getDescriptor();
         final List<String> results = new ArrayList<String>();
 
-        if (descriptor != null) {
-          final XmlNSDescriptor nsDescriptor = descriptor.getNSDescriptor();
-          final XmlFile descriptorFile = nsDescriptor != null ? nsDescriptor.getDescriptorFile():null;
+        final XmlNSDescriptor nsDescriptor = descriptor != null ? descriptor.getNSDescriptor():null;
+        final XmlFile containingFile = (XmlFile)parentOfType.getContainingFile();
+        XmlFile descriptorFile = nsDescriptor != null ?
+                                       nsDescriptor.getDescriptorFile():
+                                       containingFile.getDocument().getProlog().getDoctype() != null ? containingFile:null;
+        if (nsDescriptor != null && descriptorFile.getName().equals(containingFile.getName() + ".dtd")) {
+          descriptorFile = containingFile;
+        }
 
-          if (descriptorFile != null) {
-            final PsiElementProcessor processor = new PsiElementProcessor() {
-              public boolean execute(final PsiElement element) {
-                if (element instanceof XmlEntityDecl) {
-                  final XmlEntityDecl xmlEntityDecl = (XmlEntityDecl)element;
-                  if (xmlEntityDecl.isInternalReference()) results.add(xmlEntityDecl.getName());
-                }
-                return true;
+        if (descriptorFile != null) {
+          final PsiElementProcessor processor = new PsiElementProcessor() {
+            public boolean execute(final PsiElement element) {
+              if (element instanceof XmlEntityDecl) {
+                final XmlEntityDecl xmlEntityDecl = (XmlEntityDecl)element;
+                if (xmlEntityDecl.isInternalReference()) results.add(xmlEntityDecl.getName());
               }
-            };
-  
-            XmlUtil.processXmlElements(
-              descriptorFile,
-              processor,
-              true
-            );
-  
-            return results.toArray(new Object[results.size()]);
-          }
+              return true;
+            }
+          };
+
+          XmlUtil.processXmlElements(
+            descriptorFile,
+            processor,
+            true
+          );
+
+          return results.toArray(new Object[results.size()]);
         }
       }
       return ArrayUtil.EMPTY_OBJECT_ARRAY;

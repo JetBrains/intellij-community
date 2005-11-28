@@ -27,6 +27,7 @@ import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlNSDescriptor;
+import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.util.XmlNSDescriptorSequence;
 import com.intellij.xml.util.XmlUtil;
 import gnu.trove.TObjectIntHashMap;
@@ -174,7 +175,10 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     XmlNSDescriptor descr = null;
     if (doctype.getMarkupDecl() != null){
       descr = (XmlNSDescriptor)doctype.getMarkupDecl().getMetaData();
+      final XmlElementDescriptor[] rootElementsDescriptors = descr.getRootElementsDescriptors(this);
+      if (rootElementsDescriptors.length == 0) descr = null;
     }
+    
     if (doctype.getDtdUri() != null){
       final XmlFile xmlFile = XmlUtil.findXmlFile(containingFile, doctype.getDtdUri());
       final XmlNSDescriptor descr1 = xmlFile == null ? null : (XmlNSDescriptor)xmlFile.getDocument().getMetaData();
