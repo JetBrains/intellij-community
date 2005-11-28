@@ -23,6 +23,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import org.jetbrains.annotations.NotNull;
+
 public class NamedLibraryElementNode extends ProjectViewNode<NamedLibraryElement>{
 
   private static final Icon LIB_ICON_OPEN = IconLoader.getIcon("/nodes/ppLibOpen.png");
@@ -36,6 +38,7 @@ public class NamedLibraryElementNode extends ProjectViewNode<NamedLibraryElement
     this(project, (NamedLibraryElement)value, viewSettings);
   }
 
+  @NotNull
   public Collection<AbstractTreeNode> getChildren() {
     final List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
     LibraryGroupNode.addLibraryChildren(getValue().getOrderEntry(), children, getProject(), this);
@@ -75,9 +78,9 @@ public class NamedLibraryElementNode extends ProjectViewNode<NamedLibraryElement
     VirtualFile[] files = orderEntry.getFiles(orderType);
     for (VirtualFile virtualFile : files) {
       boolean ancestor = VfsUtil.isAncestor(virtualFile, file, false);
-      if (ancestor) return false;
+      if (ancestor) return true;
     }
-    return true;
+    return false;
   }
 
   public void update(PresentationData presentation) {
