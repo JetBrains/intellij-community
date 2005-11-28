@@ -100,7 +100,7 @@ public interface HighlightInfoType {
 
     public HighlightSeverity getSeverity(final PsiElement psiElement) {
       DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
-      HighlightDisplayLevel level = settings.getInspectionProfile(psiElement).getErrorLevel(mySeverityKey);
+      HighlightDisplayLevel level = (psiElement != null ? settings.getInspectionProfile(psiElement) : settings.getInspectionProfile()).getErrorLevel(mySeverityKey);
       LOG.assertTrue(level != HighlightDisplayLevel.DO_NOT_SHOW);
       return level == HighlightDisplayLevel.ERROR ? HighlightSeverity.ERROR : HighlightSeverity.WARNING;
     }
