@@ -25,6 +25,8 @@
     <orderEntry type="module" module-name="ui-impl" />
     <orderEntry type="library" name="asm-2.1" level="project" />
     <orderEntry type="library" name="BCEL" level="project" />
+    <orderEntry type="module" module-name="plugins-management" />
+    <orderEntry type="library" name="Eclipse" level="project" />
     <orderEntryProperties />
   </component>
   <component name="copyright">

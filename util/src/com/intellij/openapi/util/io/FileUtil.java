@@ -223,8 +223,7 @@ public class FileUtil {
 
     File tempFile;
     for (int i = 0; ; i++) {
-      //noinspection HardCodedStringLiteral
-      String name = "___" + file.getName() + i + ".__del__";
+      @NonNls String name = "___" + file.getName() + i + ".__del__";
       tempFile = new File(parent, name);
       if (!tempFile.exists()) break;
     }
@@ -237,12 +236,10 @@ public class FileUtil {
   }
 
   public static boolean delete(File file){
-    if (file.isDirectory()){
-      File[] files = file.listFiles();
-      if (files != null) {
-        for (File file1 : files) {
-          delete(file1);
-        }
+    File[] files = file.listFiles();
+    if (files != null) {
+      for (File file1 : files) {
+        delete(file1);
       }
     }
 
@@ -268,17 +265,20 @@ public class FileUtil {
   }
 
   public static void copy(File fromFile, File toFile) throws IOException {
-    if (!toFile.exists()) {
+    FileInputStream fis = new FileInputStream(fromFile);
+    FileOutputStream fos;
+    try {
+      fos = new FileOutputStream(toFile);
+    }
+    catch (FileNotFoundException e) {
       File parentFile = toFile.getParentFile();
       if (parentFile == null) {
         return; // TODO: diagnostics here
       }
       parentFile.mkdirs();
       toFile.createNewFile();
+      fos = new FileOutputStream(toFile);
     }
-
-    FileInputStream fis = new FileInputStream(fromFile);
-    FileOutputStream fos = new FileOutputStream(toFile);
 
     if (Patches.FILE_CHANNEL_TRANSFER_BROKEN) {
       try {
@@ -294,7 +294,7 @@ public class FileUtil {
       FileChannel toChannel = fos.getChannel();
 
       try {
-        fromChannel.transferTo(0, fromFile.length(), toChannel);
+        fromChannel.transferTo(0, Long.MAX_VALUE, toChannel);
       }
       finally {
         fromChannel.close();

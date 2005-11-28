@@ -307,7 +307,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
             }
 
             if (!ResolveUtil.isAccessible(member, myTargetClass, modifierListCopies.get(member), element, accessObjectMember, null)) {
-              final String newVisibility = myNewVisibility == null ? VisibilityUtil.getVisiblityStringToDisplay(member) : myNewVisibility;
+              final String newVisibility = myNewVisibility == null ? VisibilityUtil.getVisibilityStringToDisplay(member) : myNewVisibility;
               String message =
                 RefactoringBundle.message("0.with.1.visibility.is.not.accesible.from.2", ConflictsUtil.getDescription(member, true),
                                           newVisibility, ConflictsUtil.getDescription(ConflictsUtil.getContainer(element), true));
@@ -391,7 +391,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
             if (!manager.getResolveHelper().isAccessible(member, modifierList, ref, null, null)) {
               String message = RefactoringBundle.message("0.is.1.and.will.not.be.accessible.from.2.in.the.target.class",
                                                          ConflictsUtil.getDescription(member, true),
-                                                         VisibilityUtil.getVisiblityStringToDisplay(member),
+                                                         VisibilityUtil.getVisibilityStringToDisplay(member),
                                                          ConflictsUtil.getDescription(ConflictsUtil.getContainer(ref), true));
               message = ConflictsUtil.capitalize(message);
               conflicts.add(message);
@@ -449,7 +449,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
     if (!PsiUtil.isAccessible(refMember, newContext, accessMember)) {
       String message = RefactoringBundle.message("0.is.1.and.will.not.be.accessible.from.2.in.the.target.class",
                                                  ConflictsUtil.getDescription(refMember, true),
-                                                 VisibilityUtil.getVisiblityStringToDisplay(refMember),
+                                                 VisibilityUtil.getVisibilityStringToDisplay(refMember),
                                                  ConflictsUtil.getDescription(member, false));
       message = ConflictsUtil.capitalize(message);
       conflicts.add(message);

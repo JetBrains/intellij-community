@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.cls.ClsFormatException;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -329,7 +330,7 @@ public class BackendCompilerWrapper {
     return dependentFiles.toArray(new VirtualFile[dependentFiles.size()]);
   }
 
-  private Object lock = new Object();
+  private final Object lock = new Object();
   private class SynchedCompilerParsing extends CompilerParsingThreadImpl {
     private final ClassParsingThread myClassParsingThread;
 
@@ -725,7 +726,7 @@ public class BackendCompilerWrapper {
   }
 
   private static Map<Module, Set<VirtualFile>> buildModuleToFilesMap(final CompileContext context, final VirtualFile[] files) {
-    final Map<Module, Set<VirtualFile>> map = new com.intellij.util.containers.HashMap<Module, Set<VirtualFile>>();
+    final Map<Module, Set<VirtualFile>> map = new THashMap<Module, Set<VirtualFile>>();
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         for (VirtualFile file : files) {

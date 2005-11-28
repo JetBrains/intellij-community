@@ -71,7 +71,7 @@ public class VisibilityUtil  {
     else return visibilityModifier;
   }
 
-  public static @NonNls String getVisiblityStringToDisplay(PsiMember member) {
+  public static @NonNls String getVisibilityStringToDisplay(PsiMember member) {
     if (member.hasModifierProperty(PsiModifier.PUBLIC)) {
       return "public";
     }

@@ -7,10 +7,7 @@ import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NonNls;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
+import java.io.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -36,7 +33,8 @@ public abstract class CompilerParsingThread extends Thread implements OutputPars
     myProcess = process;
     myOutputParser = outputParser;
     myTrimLines = trimLines;
-    myCompilerOutStreamReader = new BufferedReader(new InputStreamReader(readErrorStream? process.getErrorStream() : process.getInputStream()), 16384);
+    InputStream stream = readErrorStream ? process.getErrorStream() : process.getInputStream();
+    myCompilerOutStreamReader = stream == null ? null : new BufferedReader(new InputStreamReader(stream), 16384);
     myIsUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
   }
 
@@ -94,8 +92,8 @@ public abstract class CompilerParsingThread extends Thread implements OutputPars
       }
     }
     catch(IOException e) {
-      LOG.error(e);
       if (LOG.isDebugEnabled()) {
+        LOG.error(e);
       }
       myLastReadLine = null;
     }

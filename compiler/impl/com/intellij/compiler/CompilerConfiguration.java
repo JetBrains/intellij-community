@@ -121,6 +121,7 @@ public class CompilerConfiguration implements JDOMExternalizable, ProjectCompone
     registeredCompilers.add(JAVAC_EMBEDDED_BACKEND);
     registeredCompilers.add(JIKES_BACKEND);
     registeredCompilers.add(ECLIPSE_BACKEND);
+    registeredCompilers.add(ECLIPSE_EMBEDDED_BACKEND);
     myDefaultJavaCompiler = JAVAC_EXTERNAL_BACKEND;
     for (BackendCompiler compiler : registeredCompilers) {
       if (compiler.getId().equals(DEFAULT_COMPILER)) {

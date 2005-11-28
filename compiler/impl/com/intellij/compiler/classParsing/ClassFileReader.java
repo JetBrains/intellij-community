@@ -42,9 +42,6 @@ public class ClassFileReader {
     if (file == null) {
       throw new ClsFormatException();
     }
-    if (file.isDirectory()) {
-      throw new ClsFormatException();
-    }
     myFile = file;
   }
 
@@ -361,9 +358,6 @@ public class ClassFileReader {
   private byte[] getData(){
     if (myData == null) {
       try{
-        if (myFile.isDirectory()) {
-          throw new IOException(CompilerBundle.message("class.parsing.error.cannot.read.file", myFile.getPath()));
-        }
         myData = FileUtil.loadFileBytes(myFile);
       }
       catch(IOException e){

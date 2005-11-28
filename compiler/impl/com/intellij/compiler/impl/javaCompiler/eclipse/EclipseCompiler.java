@@ -34,7 +34,7 @@ public class EclipseCompiler extends ExternalCompiler {
 
   private Project myProject;
   private final List<File> myTempFiles = new ArrayList<File>();
-  @NonNls private static final String PATH_TO_COMPILER_JAR = PathManagerEx.getLibRtPath() + "/org.eclipse.jdt.core_3.1.0.jar";
+  @NonNls public static final String PATH_TO_COMPILER_JAR = PathManagerEx.getLibRtPath() + "/org.eclipse.jdt.core_3.1.0.jar";
 
   public EclipseCompiler(Project project) {
     myProject = project;
@@ -192,13 +192,13 @@ public class EclipseCompiler extends ExternalCompiler {
     LanguageLevel languageLevel = ProjectRootManagerEx.getInstanceEx(myProject).getLanguageLevel();
 
     if (LanguageLevel.JDK_1_5.equals(languageLevel)) {
-      if (!(EclipseCompiler.isOfVersion(versionString, "1.5") || EclipseCompiler.isOfVersion(versionString, "5.0"))) {
+      if (!(isOfVersion(versionString, "1.5") || isOfVersion(versionString, "5.0"))) {
         languageLevel = LanguageLevel.JDK_1_4;
       }
     }
 
     if (LanguageLevel.JDK_1_4.equals(languageLevel)) {
-      if (!EclipseCompiler.isOfVersion(versionString, "1.4") && !EclipseCompiler.isOfVersion(versionString, "1.5") && !EclipseCompiler.isOfVersion(versionString, "5.0")) {
+      if (!isOfVersion(versionString, "1.4") && !isOfVersion(versionString, "1.5") && !isOfVersion(versionString, "5.0")) {
         languageLevel = LanguageLevel.JDK_1_3;
       }
     }
@@ -207,12 +207,10 @@ public class EclipseCompiler extends ExternalCompiler {
   }
 
   public void compileFinished() {
-    if (myTempFiles.size() > 0) {
-      for (final File myTempFile : myTempFiles) {
-        FileUtil.delete(myTempFile);
-      }
-      myTempFiles.clear();
+    for (final File myTempFile : myTempFiles) {
+      FileUtil.delete(myTempFile);
     }
+    myTempFiles.clear();
   }
 
   private static boolean isOfVersion(String versionString, String checkedVersion) {
