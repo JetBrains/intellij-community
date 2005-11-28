@@ -25,6 +25,8 @@ import com.intellij.j2ee.deployment.JspDeploymentManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiFile;
 import com.sun.jdi.AbsentInformationException;
@@ -49,13 +51,23 @@ import java.util.regex.Pattern;
  */
 public abstract class JSR45PositionManager implements PositionManager {
   private final DebugProcess      myDebugProcess;
+  private final Module[] myScope;
   private final JspDeploymentManager myHelper;
   private final String            JSP_PATTERN;
   private Matcher myJspPatternMatcher;
   protected static final @NonNls String JSP_STRATUM = "JSP";
 
+  /**
+   * @deprecated
+   * Use JSR45PositionManager(DebugProcess debugProcess, Module[] scopeModules) and explicitly specify WebModules to be used when searching for sources
+   */
   public JSR45PositionManager(DebugProcess debugProcess) {
+    this(debugProcess, ModuleManager.getInstance(debugProcess.getProject()).getModules());
+  }
+
+  public JSR45PositionManager(DebugProcess debugProcess, Module[] scopeModules) {
     myDebugProcess = debugProcess;
+    myScope = scopeModules;
     myHelper =  ApplicationManager.getApplication().getComponent(JspDeploymentManager.class);
     String jsp_pattern = getJSPClassesPackage();
     if(jsp_pattern.equals("")) {
@@ -74,7 +86,7 @@ public abstract class JSR45PositionManager implements PositionManager {
 
     try {
       String sourcePath = getRelativePath(location.sourcePath(JSP_STRATUM));
-      PsiFile file = myHelper.getDeployedJspSource(sourcePath, myDebugProcess.getProject());
+      PsiFile file = myHelper.getDeployedJspSource(sourcePath, myDebugProcess.getProject(), myScope);
       if(file == null) throw new NoDataException();
       int lineNumber = location.lineNumber(JSP_STRATUM);
       sourcePosition = SourcePosition.createFromLine(file, lineNumber - 1);
@@ -128,7 +140,7 @@ public abstract class JSR45PositionManager implements PositionManager {
           //noinspection HardCodedStringLiteral
           final List<String> paths = type.sourcePaths(JSP_STRATUM);
           for (String path : paths) {
-            final PsiFile file = myHelper.getDeployedJspSource(getRelativePath(path), myDebugProcess.getProject());
+            final PsiFile file = myHelper.getDeployedJspSource(getRelativePath(path), myDebugProcess.getProject(), myScope);
             if(file != null && file.equals(position.getFile())) {
               //noinspection HardCodedStringLiteral
               return type.locationsOfLine(JSP_STRATUM, file.getName(), position.getLine() + 1);
