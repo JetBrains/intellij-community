@@ -733,7 +733,12 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
 
       //noinspection ConstantConditions
       final @NotNull InspectionTool tool = myTree.getSelectedTool();
-      final QuickFixAction[] quickFixes = tool.getQuickFixes(myTree.getSelectedElements());
+      List<RefElement> selectedElements = new ArrayList<RefElement>();
+      final TreePath[] selectionPaths = myTree.getSelectionPaths();
+      for (TreePath path : selectionPaths) {
+        traverseRefElements((InspectionTreeNode)path.getLastPathComponent(), selectedElements);
+      }
+      final QuickFixAction[] quickFixes = tool.getQuickFixes(selectedElements.toArray(new RefElement[selectedElements.size()]));
       if (quickFixes == null || quickFixes.length == 0) {
         e.getPresentation().setEnabled(false);
         return;
@@ -756,8 +761,13 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
 
     public void actionPerformed(AnActionEvent e) {
       final InspectionTool tool = myTree.getSelectedTool();
-      if (tool == null) return;
-      final QuickFixAction[] quickFixes = tool.getQuickFixes(myTree.getSelectedElements());
+      assert tool != null;
+      List<RefElement> selectedElements = new ArrayList<RefElement>();
+      final TreePath[] selectionPaths = myTree.getSelectionPaths();
+      for (TreePath path : selectionPaths) {
+        traverseRefElements((InspectionTreeNode)path.getLastPathComponent(), selectedElements);
+      }
+      final QuickFixAction[] quickFixes = tool.getQuickFixes(selectedElements.toArray(new RefElement[selectedElements.size()]));
       ActionGroup fixes = new ActionGroup() {
         public AnAction[] getChildren(@Nullable AnActionEvent e) {
           List<QuickFixAction> children = new ArrayList<QuickFixAction>();
@@ -878,8 +888,12 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     final InspectionTool tool = myTree.getSelectedTool();
     if (tool == null) return;
 
-    final RefElement[] selectedElements = myTree.getSelectedElements();
-    final QuickFixAction[] quickFixes = tool.getQuickFixes(selectedElements);
+    List<RefElement> selectedElements = new ArrayList<RefElement>();
+    final TreePath[] selectionPaths = myTree.getSelectionPaths();
+    for (TreePath selectionPath : selectionPaths) {
+      traverseRefElements((InspectionTreeNode)selectionPath.getLastPathComponent(), selectedElements);
+    }
+    final QuickFixAction[] quickFixes = tool.getQuickFixes(selectedElements.toArray(new RefElement[selectedElements.size()]));
     if (quickFixes != null) {
       for (QuickFixAction quickFixe : quickFixes) {
         actions.add(quickFixe);
@@ -895,7 +909,6 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
       }
     });
 
-    final TreePath[] selectionPaths = myTree.getSelectionPaths();
     actions.add(getSuppressAction(tool, selectionPaths, key.getID()));
     actions.add(ActionManager.getInstance().getAction(IdeActions.GROUP_VERSION_CONTROLS));
 

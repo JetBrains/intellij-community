@@ -30,7 +30,10 @@ import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.event.TreeWillExpandListener;
-import javax.swing.tree.*;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.ExpandVetoException;
+import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -56,7 +59,7 @@ public class InspectionTree extends Tree {
     TreeUtil.installActions(this);
     new TreeSpeedSearch(this, new Convertor<TreePath, String>() {
       public String convert(TreePath o) {
-        return InspectionToolsPanel.getDisplayTextToSort(((DefaultMutableTreeNode)o.getLastPathComponent()).toString());
+        return InspectionToolsPanel.getDisplayTextToSort(o.getLastPathComponent().toString());
       }
     });
 
@@ -127,37 +130,33 @@ public class InspectionTree extends Tree {
     if (node instanceof ProblemDescriptionNode) {
       out.add(((ProblemDescriptionNode)node).getElement());
     }
-    else if (node instanceof InspectionNode) {
-      final Enumeration children = node.children();
-      while (children.hasMoreElements()) {
-        InspectionTreeNode child = (InspectionTreeNode)children.nextElement();
-        addElementsInNode(child, out);
-      }
-    }
+    final Enumeration children = node.children();
+    while (children.hasMoreElements()) {
+      InspectionTreeNode child = (InspectionTreeNode)children.nextElement();
+      addElementsInNode(child, out);
+    }    
   }
 
   public ProblemDescriptor[] getSelectedDescriptors() {
     final InspectionTool tool = getSelectedTool();
     if (getSelectionCount() == 0 || !(tool instanceof DescriptorProviderInspection)) return EMPTY_DESCRIPTORS;
     final TreePath[] paths = getSelectionPaths();
-    Collection<RefElement> out = new ArrayList<RefElement>();
     Set<ProblemDescriptor> descriptors = new com.intellij.util.containers.HashSet<ProblemDescriptor>();
     for (TreePath path : paths) {
       Object node = path.getLastPathComponent();
-      if (node instanceof ProblemDescriptionNode) {
-        final ProblemDescriptionNode problemNode = (ProblemDescriptionNode)node;
-        descriptors.add(problemNode.getDescriptor());
-      } else if (node instanceof InspectionTreeNode){
-        addElementsInNode((InspectionTreeNode)node, out);
-      }
-    }
-    for (RefElement refElement : out) {
-      final ProblemDescriptor[] descriptions = ((DescriptorProviderInspection)tool).getDescriptions(refElement);
-      if (descriptions != null) {
-        descriptors.addAll(Arrays.asList(descriptions));
-      }
+      traverseDescriptors((InspectionTreeNode)node, descriptors);
     }
     return descriptors.toArray(new ProblemDescriptor[descriptors.size()]);
+  }
+
+  private void traverseDescriptors(InspectionTreeNode node, Set<ProblemDescriptor> descriptors){
+    if (node instanceof ProblemDescriptionNode) {
+      final ProblemDescriptionNode problemNode = (ProblemDescriptionNode)node;
+      descriptors.add(problemNode.getDescriptor());
+    }
+    for(int i = 0; i < node.getChildCount(); i++){
+      traverseDescriptors((InspectionTreeNode)node.getChildAt(i), descriptors);
+    }
   }
 
   public List<RefElement> getElementsToSuppressInSubTree(InspectionTreeNode node){
@@ -226,7 +225,7 @@ public class InspectionTree extends Tree {
     }
   }
 
-  private class CellRenderer extends ColoredTreeCellRenderer {
+  private static class CellRenderer extends ColoredTreeCellRenderer {
     /*  private Project myProject;
       InspectionManagerEx myManager;
       public CellRenderer(Project project) {
