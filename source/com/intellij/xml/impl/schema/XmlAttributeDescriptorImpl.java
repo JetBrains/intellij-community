@@ -136,7 +136,7 @@ public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor {
     XmlTag tag = (XmlTag)context;
 
     String name = getName();
-    if ((attributeValue != null && !attributeValue.equals(tag.getNamespace())) &&
+    if (attributeValue != null && //!attributeValue.equals(tag.getNamespace())) &&
         QUALIFIED_ATTR_VALUE.equals(rootTag.getAttributeValue("attributeFormDefault"))) {
       final String prefixByNamespace = tag.getPrefixByNamespace(attributeValue);
       if (prefixByNamespace!= null && prefixByNamespace.length() > 0) {
