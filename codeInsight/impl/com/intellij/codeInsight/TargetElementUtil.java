@@ -61,6 +61,7 @@ public class TargetElementUtil {
 
     DataContext dataContext = DataManager.getInstance().getDataContext(editor.getComponent());
     Project project = (Project) dataContext.getData(DataConstants.PROJECT);
+    if (project == null) return null;
 
     Lookup activeLookup = LookupManager.getInstance(project).getActiveLookup();
     if (activeLookup != null && (flags & LOOKUP_ITEM_ACCEPTED) != 0) {
