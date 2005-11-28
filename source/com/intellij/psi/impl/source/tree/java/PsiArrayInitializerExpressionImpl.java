@@ -3,10 +3,10 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.CharTable;
+import org.jetbrains.annotations.NotNull;
 
 public class PsiArrayInitializerExpressionImpl extends CompositePsiElement implements PsiArrayInitializerExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiArrayInitializerExpressionImpl");
@@ -15,6 +15,7 @@ public class PsiArrayInitializerExpressionImpl extends CompositePsiElement imple
     super(ARRAY_INITIALIZER_EXPRESSION);
   }
 
+  @NotNull
   public PsiExpression[] getInitializers(){
     return getChildrenAsPsiElements(EXPRESSION_BIT_SET, PSI_EXPRESSION_ARRAY_CONSTRUCTOR);
   }
@@ -80,5 +81,43 @@ public class PsiArrayInitializerExpressionImpl extends CompositePsiElement imple
 
   public String toString(){
     return "PsiArrayInitializerExpression:" + getText();
+  }
+
+  public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {
+    if (anchor == null){
+      if (before == null || before.booleanValue()){
+        anchor = findChildByRole(ChildRole.RBRACE);
+        before = Boolean.TRUE;
+      }
+      else{
+        anchor = findChildByRole(ChildRole.LBRACE);
+        before = Boolean.FALSE;
+      }
+    }
+
+    final TreeElement firstAdded = super.addInternal(first, last, anchor, before);
+
+    if (ElementType.EXPRESSION_BIT_SET.contains(first.getElementType())) {
+     final CharTable charTab = SharedImplUtil.findCharTableByTree(this);
+      ASTNode element = first;
+      for (ASTNode child = element.getTreeNext(); child != null; child = child.getTreeNext()) {
+        if (child.getElementType() == COMMA) break;
+        if (ElementType.EXPRESSION_BIT_SET.contains(child.getElementType())) {
+          TreeElement comma = Factory.createSingleLeafElement(COMMA, new char[]{','}, 0, 1, charTab, getManager());
+          super.addInternal(comma, comma, element, Boolean.FALSE);
+          break;
+        }
+      }
+      for (ASTNode child = element.getTreePrev(); child != null; child = child.getTreePrev()) {
+        if (child.getElementType() == COMMA) break;
+        if (ElementType.EXPRESSION_BIT_SET.contains(child.getElementType())) {
+          TreeElement comma = Factory.createSingleLeafElement(COMMA, new char[]{','}, 0, 1, charTab, getManager());
+          super.addInternal(comma, comma, child, Boolean.FALSE);
+          break;
+        }
+      }
+    }
+
+    return firstAdded;
   }
 }

@@ -1,0 +1,10 @@
+public class Varargs {
+    public static String join(String separator, String... texts) {
+        return "";
+    }
+
+    public void foo() {
+        String[] texts = new String[]{"i", "d", "e", "a"};
+        String s = join("", texts);
+    }
+}

@@ -71,6 +71,8 @@ public class InlineMethodTest extends CodeInsightTestCase {
 
   public void testIDEADEV3672() throws Exception { doTest(); }
 
+  public void testVarargs() throws Exception { doTest(); }
+
   private void doTest() throws Exception {
     String name = getTestName(false);
     String fileName = "/refactoring/inlineMethod/" + name + ".java";

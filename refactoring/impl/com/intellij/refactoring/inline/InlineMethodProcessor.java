@@ -34,6 +34,9 @@ import com.intellij.util.containers.HashMap;
 
 import java.util.*;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
+
 public class InlineMethodProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.inline.InlineMethodProcessor");
 
@@ -76,6 +79,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     return new InlineViewDescriptor(myMethod);
   }
 
+  @NotNull
   protected UsageInfo[] findUsages() {
     if (myInlineThisOnly) return new UsageInfo[]{new UsageInfo(myReference)};
     PsiSearchHelper helper = myManager.getSearchHelper();
@@ -253,8 +257,6 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     PsiExpression expression = ((PsiExpressionStatement)statements[0]).getExpression();
     LOG.assertTrue (expression instanceof PsiMethodCallExpression);
 
-    PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)expression).getMethodExpression();
-    LOG.assertTrue(methodExpression != null);
     PsiMethodCallExpression methodCall = (PsiMethodCallExpression)expression.copy();
     final PsiExpression[] args = methodCall.getArgumentList().getExpressions();
     for (PsiExpression arg : args) {
@@ -489,9 +491,18 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
         name = myCodeStyleManager.suggestUniqueVariableName(name, block.getFirstChild(), true);
       }
       RefactoringUtil.renameVariableReferences(parm, name, GlobalSearchScope.projectScope(myProject));
-      String defaultValue = PsiTypesUtil.getDefaultValueOfType(parm.getType());
+      PsiType paramType = parm.getType();
+      @NonNls String defaultValue;
+      if (paramType instanceof PsiEllipsisType) {
+        final PsiEllipsisType ellipsisType = (PsiEllipsisType)paramType;
+        paramType = ellipsisType.toArrayType();
+        defaultValue = "new " + ellipsisType.getComponentType().getCanonicalText() + "[]{}";
+      } else {
+        defaultValue = PsiTypesUtil.getDefaultValueOfType(paramType);
+      }
+
       PsiExpression initializer = myFactory.createExpressionFromText(defaultValue, null);
-      PsiDeclarationStatement declaration = myFactory.createVariableDeclarationStatement(name, callSubstitutor.substitute(parm.getType()),
+      PsiDeclarationStatement declaration = myFactory.createVariableDeclarationStatement(name, callSubstitutor.substitute(paramType),
                                                                                          initializer);
       declaration = (PsiDeclarationStatement)block.addAfter(declaration, null);
       parmVars[i] = (PsiLocalVariable)declaration.getDeclaredElements()[0];
@@ -574,9 +585,17 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   private void addParmAndThisVarInitializers(BlockData blockData, PsiMethodCallExpression methodCall)
     throws IncorrectOperationException {
     PsiExpression[] args = methodCall.getArgumentList().getExpressions();
-    for (int i = 0; i < blockData.parmVars.length; i++) {
-      if (i >= args.length) break;
-      blockData.parmVars[i].getInitializer().replace(args[i]);
+    for (int i = 0; i < args.length; i++) {
+      int j = Math.min(i, blockData.parmVars.length - 1);
+      final PsiExpression initializer = blockData.parmVars[j].getInitializer();
+      LOG.assertTrue(initializer != null);
+      if (initializer instanceof PsiNewExpression && ((PsiNewExpression)initializer).getArrayInitializer() != null) { //varargs initializer
+        final PsiArrayInitializerExpression arrayInitializer = ((PsiNewExpression)initializer).getArrayInitializer();
+        arrayInitializer.add(args[i]);
+        continue;
+      }
+
+      initializer.replace(args[i]);
     }
 
     if (blockData.thisVar != null) {
