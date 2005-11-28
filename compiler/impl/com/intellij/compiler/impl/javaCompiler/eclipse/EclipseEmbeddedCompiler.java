@@ -78,7 +78,6 @@ public class EclipseEmbeddedCompiler implements BackendCompiler {
   }
 
   private static class MyClassLoader extends URLClassLoader {
-
     public MyClassLoader(final URL[] urls, ClassLoader parent) {
       super(urls, parent);
     }
@@ -90,9 +89,6 @@ public class EclipseEmbeddedCompiler implements BackendCompiler {
       Class<?> c = findLoadedClass(name);
       if (c == null) {
         try {
-          //try to load class first from URLClassLoader's classpath in order to load JDK classes
-          // (such as javax.management.ObjectName) from weblogic's jars instead of IDEA's JDK
-          // (see http://www.jetbrains.net/jira/browse/IDEA-1651)
           c = findClass(name);
           return c;
         }
@@ -106,7 +102,7 @@ public class EclipseEmbeddedCompiler implements BackendCompiler {
       return c;
     }
 
-    private boolean canDelegate(final String name) {
+    private static boolean canDelegate(final String name) {
       return !name.startsWith(EclipseCompilerDriver.class.getName()) && !name.startsWith("org.eclipse.");
     }
   }
