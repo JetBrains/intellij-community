@@ -5,8 +5,6 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.j2ee.J2EERolesUtil;
 import com.intellij.j2ee.ejb.EjbUtil;
 import com.intellij.j2ee.ejb.role.EjbImplMethodRole;
@@ -15,24 +13,19 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.packageDependencies.DependencyRule;
-import com.intellij.packageDependencies.ui.DependencyConfigurable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.TodoItem;
-import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
 
 import javax.swing.*;
@@ -360,30 +353,4 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
     return 0;
   }
 
-  private static class EditDependencyRulesAction implements IntentionAction {
-    private DependencyRule myRule;
-    public EditDependencyRulesAction(DependencyRule rule) {
-      myRule = rule;
-    }
-
-    public String getText() {
-      return InspectionsBundle.message("edit.dependency.rules.text", myRule.getDisplayText());
-    }
-
-    public String getFamilyName() {
-      return InspectionsBundle.message("edit.dependency.rules.family");
-    }
-
-    public boolean isAvailable(Project project, Editor editor, PsiFile file) {
-      return true;
-    }
-
-    public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-      ShowSettingsUtil.getInstance().editConfigurable(project, new DependencyConfigurable(project));
-    }
-
-    public boolean startInWriteAction() {
-      return false;
-    }
-  }
 }
