@@ -4,12 +4,13 @@
  */
 package jetbrains.fabrique.ide.dnd;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.awt.RelativeRectangle;
 import jetbrains.fabrique.openapi.ide.dnd.DnDAction;
 import jetbrains.fabrique.openapi.ide.dnd.DnDEvent;
 import jetbrains.fabrique.openapi.ide.dnd.DnDTarget;
 import jetbrains.fabrique.openapi.ide.dnd.DropActionHandler;
-import jetbrains.fabrique.util.awt.RelativePoint;
-import jetbrains.fabrique.util.awt.RelativeRectangle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -17,8 +18,6 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
-
-import com.intellij.openapi.diagnostic.Logger;
 
 public class DnDEventImpl implements Transferable, DnDEvent {
   private static final Logger LOG = Logger.getInstance("jetbrains.fabrique.ide.dnd.DnDEventImpl");

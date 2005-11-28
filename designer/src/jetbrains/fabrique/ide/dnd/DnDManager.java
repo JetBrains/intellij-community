@@ -5,13 +5,11 @@
 package jetbrains.fabrique.ide.dnd;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.awt.RelativeRectangle;
+import jetbrains.fabrique.openapi.ide.dnd.DnDEvent;
+import jetbrains.fabrique.openapi.ide.dnd.DnDTarget;
 
 import javax.swing.*;
-
-import jetbrains.fabrique.openapi.ide.dnd.DnDTarget;
-import jetbrains.fabrique.openapi.ide.dnd.DnDEvent;
-import jetbrains.fabrique.util.awt.RelativeRectangle;
-
 import java.awt.*;
 
 /**

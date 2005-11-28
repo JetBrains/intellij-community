@@ -1,7 +1,7 @@
 package jetbrains.fabrique.openapi.ide.dnd;
 
-import jetbrains.fabrique.util.awt.RelativePoint;
-import jetbrains.fabrique.util.awt.RelativeRectangle;
+import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.awt.RelativeRectangle;
 
 import javax.swing.*;
 import java.awt.*;
