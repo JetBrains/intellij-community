@@ -18,6 +18,7 @@ package com.intellij.uiDesigner.compiler;
 import com.intellij.uiDesigner.lw.LwComponent;
 import com.intellij.uiDesigner.lw.LwContainer;
 import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.uiDesigner.core.AbstractLayout;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.GeneratorAdapter;
 import org.objectweb.asm.commons.Method;
@@ -62,8 +63,8 @@ public class GridBagLayoutCodeGenerator extends LayoutCodeGenerator {
   private void prepareConstraints(final LwContainer container, final GeneratorAdapter generator, final int componentLocal) {
     GridLayoutManager gridLayout = (GridLayoutManager) container.getLayout();
     GridBagConverter converter = new GridBagConverter(gridLayout.getMargin(),
-                                                      gridLayout.getHGap(),
-                                                      gridLayout.getVGap(),
+                                                      getGap(container, true),
+                                                      getGap(container, false),
                                                       gridLayout.isSameSizeHorizontally(),
                                                       gridLayout.isSameSizeVertically());
     for(int i=0; i<container.getComponentCount(); i++) {
@@ -83,6 +84,20 @@ public class GridBagLayoutCodeGenerator extends LayoutCodeGenerator {
     }
   }
 
+  private int getGap(LwContainer container, final boolean horizontal) {
+    while(container != null) {
+      final AbstractLayout layout = container.getLayout();
+      if (layout != null) {
+        final int gap = horizontal ? layout.getHGap() : layout.getVGap();
+        if (gap >= 0) {
+          return gap;
+        }
+      }
+      container = container.getParent();
+    }
+    return horizontal ? AbstractLayout.DEFAULT_HGAP : AbstractLayout.DEFAULT_VGAP;
+  }
+  
   private void generateFillerPanel(final GeneratorAdapter generator, final int parentLocal, final GridBagConverter.Result result) {
     int panelLocal = generator.newLocal(myPanelType);
 

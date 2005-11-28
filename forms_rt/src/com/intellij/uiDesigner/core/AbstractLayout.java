@@ -25,11 +25,11 @@ public abstract class AbstractLayout implements LayoutManager2 {
   /**
    * Default value of HGAP property
    */
-  private static final int DEFAULT_HGAP = 10;
+  public static final int DEFAULT_HGAP = 10;
   /**
    * Default value of VGAP property
    */
-  private static final int DEFAULT_VGAP = 5;
+  public static final int DEFAULT_VGAP = 5;
 
   protected Component[] myComponents;
   protected GridConstraints[] myConstraints;
