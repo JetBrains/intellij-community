@@ -3,7 +3,7 @@
   <grid id="6570" binding="myPanel" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="23" y="37" width="558" height="307"/>
+      <xy x="23" y="37" width="586" height="347"/>
       <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
     </constraints>
     <properties/>
@@ -12,7 +12,7 @@
       <grid id="da86f" row-count="3" column-count="1" same-size-horizontally="true" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="0" y="0" width="285" height="307"/>
+          <xy x="2" y="2" width="289" height="343"/>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
         </constraints>
         <properties/>
@@ -21,7 +21,7 @@
           <xy id="862d9" binding="mySpecialBoxPanel" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="0" y="0" width="285" height="20"/>
+              <xy x="2" y="2" width="285" height="20"/>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
             </constraints>
             <properties>
@@ -33,15 +33,15 @@
           <grid id="1d1c" row-count="5" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="5"/>
             <constraints>
-              <xy x="0" y="58" width="285" height="249"/>
+              <xy x="2" y="88" width="285" height="253"/>
               <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="3" anchor="0" fill="3"/>
             </constraints>
             <properties/>
-            <border type="etched"/>
+            <border type="etched" title-resource-bundle="messages/DebuggerBundle" title-key="label.breakpoint.properties.panel.group.actions"/>
             <children>
               <component id="185b0" class="javax.swing.JCheckBox" binding="myLogMessageCheckBox">
                 <constraints>
-                  <xy x="2" y="2" width="164" height="24"/>
+                  <xy x="8" y="24" width="164" height="24"/>
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
@@ -50,13 +50,13 @@
               </component>
               <vspacer id="f635a">
                 <constraints>
-                  <xy x="134" y="127" width="11" height="120"/>
+                  <xy x="134" y="167" width="11" height="78"/>
                   <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
                 </constraints>
               </vspacer>
               <component id="bebec" class="javax.swing.JLabel">
                 <constraints>
-                  <xy x="2" y="84" width="72" height="16"/>
+                  <xy x="8" y="116" width="72" height="16"/>
                   <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="4" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
@@ -66,7 +66,7 @@
               <grid id="4241e" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                 <margin top="0" left="0" bottom="0" right="0"/>
                 <constraints>
-                  <xy x="2" y="107" width="276" height="20"/>
+                  <xy x="8" y="139" width="264" height="28"/>
                   <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
                 </constraints>
                 <properties/>
@@ -74,7 +74,7 @@
                 <children>
                   <hspacer id="13a5b">
                     <constraints>
-                      <xy x="0" y="4" width="20" height="11"/>
+                      <xy x="2" y="8" width="20" height="11"/>
                       <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="1" hsize-policy="0" anchor="0" fill="1">
                         <preferred-size width="15" height="-1"/>
                       </grid>
@@ -83,7 +83,7 @@
                   <grid id="9b21c" binding="myDependentBreakpointComboPanel" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                     <margin top="0" left="15" bottom="0" right="0"/>
                     <constraints>
-                      <xy x="20" y="0" width="256" height="20"/>
+                      <xy x="22" y="2" width="240" height="24"/>
                       <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="3"/>
                     </constraints>
                     <properties/>
@@ -95,7 +95,7 @@
               <grid id="42168" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="0">
                 <margin top="0" left="0" bottom="0" right="0"/>
                 <constraints>
-                  <xy x="2" y="31" width="276" height="46"/>
+                  <xy x="8" y="53" width="264" height="56"/>
                   <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="7" anchor="0" fill="1"/>
                 </constraints>
                 <properties/>
@@ -104,7 +104,7 @@
                   <grid id="4a38" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                     <margin top="0" left="0" bottom="0" right="0"/>
                     <constraints>
-                      <xy x="0" y="24" width="276" height="22"/>
+                      <xy x="2" y="26" width="260" height="28"/>
                       <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="1"/>
                     </constraints>
                     <properties/>
@@ -112,7 +112,7 @@
                     <children>
                       <hspacer id="9c54c">
                         <constraints>
-                          <xy x="0" y="5" width="20" height="11"/>
+                          <xy x="2" y="8" width="20" height="11"/>
                           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="1" hsize-policy="0" anchor="0" fill="1">
                             <preferred-size width="15" height="-1"/>
                           </grid>
@@ -121,7 +121,7 @@
                       <grid id="80950" binding="myLogExpressionComboPanel" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                         <margin top="0" left="0" bottom="0" right="0"/>
                         <constraints>
-                          <xy x="20" y="0" width="256" height="22"/>
+                          <xy x="22" y="2" width="236" height="22"/>
                           <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="1" fill="1">
                             <minimum-size width="-1" height="22"/>
                             <maximum-size width="-1" height="22"/>
@@ -135,7 +135,7 @@
                   </grid>
                   <component id="7b0ce" class="javax.swing.JCheckBox" binding="myLogExpressionCheckBox">
                     <constraints>
-                      <xy x="0" y="0" width="174" height="24"/>
+                      <xy x="2" y="2" width="174" height="24"/>
                       <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="8" fill="0"/>
                     </constraints>
                     <properties>
@@ -149,15 +149,15 @@
           <grid id="763d0" row-count="1" column-count="4" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="0" y="25" width="285" height="28"/>
+              <xy x="2" y="27" width="285" height="56"/>
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
             </constraints>
             <properties/>
-            <border type="etched"/>
+            <border type="etched" title-resource-bundle="messages/DebuggerBundle" title-key="label.breakpoint.properties.panel.group.suspend.policy"/>
             <children>
               <component id="f6192" class="javax.swing.JRadioButton" binding="mySuspendThreadRadio">
                 <constraints>
-                  <xy x="51" y="2" width="66" height="24"/>
+                  <xy x="57" y="24" width="66" height="24"/>
                   <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
@@ -166,7 +166,7 @@
               </component>
               <component id="876b0" class="javax.swing.JRadioButton" binding="mySuspendNoneRadio">
                 <constraints>
-                  <xy x="127" y="2" width="54" height="24"/>
+                  <xy x="133" y="24" width="54" height="24"/>
                   <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
@@ -175,7 +175,7 @@
               </component>
               <component id="106f5" class="javax.swing.JRadioButton" binding="mySuspendAllRadio">
                 <constraints>
-                  <xy x="2" y="2" width="39" height="24"/>
+                  <xy x="8" y="24" width="39" height="24"/>
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
@@ -184,7 +184,7 @@
               </component>
               <hspacer id="46ea8">
                 <constraints>
-                  <xy x="181" y="8" width="102" height="11"/>
+                  <xy x="187" y="30" width="90" height="11"/>
                   <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1"/>
                 </constraints>
               </hspacer>
@@ -195,16 +195,16 @@
       <grid id="d03f5" row-count="5" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="7">
         <margin top="2" left="2" bottom="5" right="5"/>
         <constraints>
-          <xy x="295" y="0" width="263" height="307"/>
+          <xy x="301" y="2" width="283" height="343"/>
           <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="7" anchor="0" fill="3"/>
         </constraints>
         <properties/>
-        <border type="etched"/>
+        <border type="etched" title-resource-bundle="messages/DebuggerBundle" title-key="label.breakpoint.properties.panel.group.conditions"/>
         <children>
           <grid id="bf471" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="0">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="4" y="4" width="252" height="44"/>
+              <xy x="10" y="26" width="260" height="52"/>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1"/>
             </constraints>
             <properties/>
@@ -213,7 +213,7 @@
               <grid id="7978d" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                 <margin top="0" left="0" bottom="0" right="0"/>
                 <constraints>
-                  <xy x="0" y="22" width="252" height="22"/>
+                  <xy x="2" y="24" width="256" height="26"/>
                   <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="1"/>
                 </constraints>
                 <properties/>
@@ -222,7 +222,7 @@
                   <xy id="f3049" binding="myConditionComboPanel" hgap="-1" vgap="-1">
                     <margin top="0" left="0" bottom="0" right="0"/>
                     <constraints>
-                      <xy x="20" y="0" width="232" height="22"/>
+                      <xy x="22" y="2" width="232" height="22"/>
                       <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1">
                         <minimum-size width="-1" height="22"/>
                         <maximum-size width="-1" height="22"/>
@@ -234,7 +234,7 @@
                   </xy>
                   <hspacer id="d39a2">
                     <constraints>
-                      <xy x="0" y="5" width="20" height="11"/>
+                      <xy x="2" y="7" width="20" height="11"/>
                       <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="1" hsize-policy="0" anchor="0" fill="1">
                         <preferred-size width="15" height="-1"/>
                       </grid>
@@ -244,7 +244,7 @@
               </grid>
               <component id="77584" class="javax.swing.JCheckBox" binding="myConditionCheckbox">
                 <constraints>
-                  <xy x="0" y="0" width="86" height="22"/>
+                  <xy x="2" y="2" width="86" height="22"/>
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
@@ -257,7 +257,7 @@
           <grid id="b404a" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="0">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="4" y="55" width="252" height="70"/>
+              <xy x="10" y="85" width="260" height="78"/>
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1"/>
             </constraints>
             <properties/>
@@ -265,7 +265,7 @@
             <children>
               <component id="20b41" class="javax.swing.JCheckBox" binding="myInstanceFiltersCheckBox">
                 <constraints>
-                  <xy x="0" y="0" width="113" height="22"/>
+                  <xy x="2" y="2" width="113" height="22"/>
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
@@ -276,7 +276,7 @@
               <grid id="d9be2" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                 <margin top="0" left="0" bottom="0" right="0"/>
                 <constraints>
-                  <xy x="0" y="22" width="252" height="48"/>
+                  <xy x="2" y="24" width="256" height="52"/>
                   <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
                 </constraints>
                 <properties/>
@@ -284,7 +284,7 @@
                 <children>
                   <hspacer id="e6448">
                     <constraints>
-                      <xy x="0" y="18" width="20" height="11"/>
+                      <xy x="2" y="20" width="20" height="11"/>
                       <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="1" hsize-policy="0" anchor="0" fill="1">
                         <preferred-size width="15" height="-1"/>
                       </grid>
@@ -293,7 +293,7 @@
                   <xy id="1114b" binding="myInstanceFiltersFieldPanel" hgap="-1" vgap="-1">
                     <margin top="0" left="0" bottom="0" right="0"/>
                     <constraints>
-                      <xy x="20" y="0" width="232" height="48"/>
+                      <xy x="22" y="2" width="232" height="48"/>
                       <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1"/>
                     </constraints>
                     <properties/>
@@ -307,7 +307,7 @@
           <grid id="f07fc" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="0">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="4" y="132" width="252" height="73"/>
+              <xy x="10" y="170" width="260" height="81"/>
               <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1"/>
             </constraints>
             <properties/>
@@ -315,7 +315,7 @@
             <children>
               <component id="40e6b" class="javax.swing.JCheckBox" binding="myClassFiltersCheckBox">
                 <constraints>
-                  <xy x="0" y="0" width="94" height="22"/>
+                  <xy x="2" y="2" width="94" height="22"/>
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
@@ -326,7 +326,7 @@
               <grid id="fbeb4" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                 <margin top="0" left="0" bottom="0" right="0"/>
                 <constraints>
-                  <xy x="0" y="22" width="252" height="51"/>
+                  <xy x="2" y="24" width="256" height="55"/>
                   <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
                 </constraints>
                 <properties/>
@@ -335,7 +335,7 @@
                   <xy id="72d13" binding="myClassFiltersFieldPanel" hgap="-1" vgap="-1">
                     <margin top="0" left="0" bottom="0" right="0"/>
                     <constraints>
-                      <xy x="20" y="0" width="232" height="51"/>
+                      <xy x="22" y="2" width="232" height="51"/>
                       <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1"/>
                     </constraints>
                     <properties/>
@@ -344,7 +344,7 @@
                   </xy>
                   <hspacer id="1d45">
                     <constraints>
-                      <xy x="0" y="20" width="20" height="11"/>
+                      <xy x="2" y="22" width="20" height="11"/>
                       <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="1" hsize-policy="0" anchor="0" fill="1">
                         <preferred-size width="15" height="-1"/>
                       </grid>
@@ -357,7 +357,7 @@
           <grid id="21edd" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="0">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="4" y="212" width="252" height="44"/>
+              <xy x="10" y="258" width="260" height="52"/>
               <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="7" anchor="0" fill="1"/>
             </constraints>
             <properties/>
@@ -365,7 +365,7 @@
             <children>
               <component id="11e5a" class="javax.swing.JCheckBox" binding="myPassCountCheckbox">
                 <constraints>
-                  <xy x="0" y="0" width="92" height="22"/>
+                  <xy x="2" y="2" width="92" height="22"/>
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
@@ -376,7 +376,7 @@
               <grid id="e8cc5" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                 <margin top="0" left="0" bottom="0" right="0"/>
                 <constraints>
-                  <xy x="0" y="22" width="252" height="22"/>
+                  <xy x="2" y="24" width="256" height="26"/>
                   <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
                 </constraints>
                 <properties/>
@@ -384,7 +384,7 @@
                 <children>
                   <component id="64df8" class="javax.swing.JTextField" binding="myPassCountField">
                     <constraints>
-                      <xy x="20" y="0" width="232" height="22"/>
+                      <xy x="22" y="2" width="232" height="22"/>
                       <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
                         <preferred-size width="15" height="-1"/>
                       </grid>
@@ -396,7 +396,7 @@
                   </component>
                   <hspacer id="9be08">
                     <constraints>
-                      <xy x="0" y="5" width="20" height="11"/>
+                      <xy x="2" y="7" width="20" height="11"/>
                       <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="1" hsize-policy="0" anchor="0" fill="1">
                         <preferred-size width="15" height="-1"/>
                       </grid>
@@ -408,7 +408,7 @@
           </grid>
           <vspacer id="905e2">
             <constraints>
-              <xy x="124" y="256" width="11" height="44"/>
+              <xy x="134" y="310" width="11" height="20"/>
               <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
             </constraints>
           </vspacer>
