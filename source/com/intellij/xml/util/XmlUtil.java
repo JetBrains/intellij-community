@@ -798,6 +798,32 @@ public class XmlUtil {
     return "<&>\u00a0".indexOf(ch) >= 0;
   }
 
+  public static PsiNamedElement findRealNamedElement(final PsiNamedElement _element) {
+    final PsiElement userData = _element.getUserData(XmlElement.DEPENDING_ELEMENT);
+
+    if (userData instanceof XmlFile) {
+      final String name = _element.getName();
+      final PsiNamedElement[] result = new PsiNamedElement[1];
+
+      XmlUtil.processXmlElements((XmlFile)userData,new PsiElementProcessor() {
+        public boolean execute(final PsiElement element) {
+          if (element instanceof PsiNamedElement &&
+              name.equals(((PsiNamedElement)element).getName()) &&
+              _element.getClass().isInstance(element)
+             ) {
+            result[0] = (PsiNamedElement)element;
+            return false;
+          }
+          return true;
+        }
+      }, true);
+
+      return result[0];
+    }
+
+    return null;
+  }
+
   private static class MyAttributeInfo implements Comparable {
     boolean myRequired = true;
     String myName = null;

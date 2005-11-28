@@ -5,10 +5,12 @@ import com.intellij.lexer.FilterLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer._OldXmlLexer;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.parsing.xml.XmlParsing;
 import com.intellij.psi.impl.source.parsing.xml.XmlParsingContext;
 import com.intellij.psi.impl.source.parsing.xml.XmlPsiLexer;
@@ -16,6 +18,7 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.xml.IXmlLeafElementType;
 import com.intellij.psi.xml.*;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.util.IncorrectOperationException;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -45,6 +48,19 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl {
   public String getName() {
     PsiElement nameElement = getNameElement();
     return nameElement != null ? nameElement.getText() : "";
+  }
+
+  public PsiElement setName(String name) throws IncorrectOperationException {
+    final PsiElement nameElement = getNameElement();
+
+    if (nameElement != null) {
+      return ReferenceProvidersRegistry.getInstance(getProject()).getManipulator(nameElement).handleContentChange(
+        nameElement,
+        new TextRange(0,nameElement.getTextLength()),
+        name
+      );
+    }
+    return null;
   }
 
   public PsiElement parse(PsiFile baseFile, int context, final XmlEntityRef originalElement) {

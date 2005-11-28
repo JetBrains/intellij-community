@@ -6,6 +6,7 @@ import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.xml.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -15,6 +16,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.util.XmlUtil;
 import com.intellij.xml.impl.dtd.XmlNSDescriptorImpl;
 import org.jetbrains.annotations.Nullable;
 
@@ -125,7 +127,12 @@ public class DtdReferencesProvider implements PsiReferenceProvider {
 
     @Nullable
     public PsiElement resolve() {
-      return ((XmlEntityRef)myElement).resolve(myElement.getContainingFile());
+      XmlEntityDecl xmlEntityDecl = ((XmlEntityRef)myElement).resolve(myElement.getContainingFile());
+      if (xmlEntityDecl != null && !xmlEntityDecl.isPhysical()) {
+        PsiNamedElement element = XmlUtil.findRealNamedElement(xmlEntityDecl);
+        if (element != null) xmlEntityDecl = (XmlEntityDecl)element;
+      }
+      return xmlEntityDecl;
     }
 
     public String getCanonicalText() {

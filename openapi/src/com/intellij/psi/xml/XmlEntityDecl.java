@@ -17,11 +17,12 @@ package com.intellij.psi.xml;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNamedElement;
 
 /**
  * @author mike
  */
-public interface XmlEntityDecl extends XmlElement {
+public interface XmlEntityDecl extends XmlElement, PsiNamedElement {
   int CONTEXT_ELEMENT_CONTENT_SPEC = 1;
   int CONTEXT_ATTRIBUTE_SPEC = 2;
   int CONTEXT_ATTLIST_SPEC = 3;
@@ -32,5 +33,5 @@ public interface XmlEntityDecl extends XmlElement {
   String getName();
   PsiElement getNameElement();
   PsiElement parse(PsiFile baseFile, int context, XmlEntityRef originalElement);
-  boolean isInternalReference();  
+  boolean isInternalReference();
 }

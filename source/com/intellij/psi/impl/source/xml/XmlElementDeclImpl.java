@@ -15,10 +15,12 @@ import com.intellij.psi.xml.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.lang.ASTNode;
 import com.intellij.xml.impl.dtd.XmlNSDescriptorImpl;
 import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.util.XmlUtil;
 import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NotNull;
 
@@ -93,19 +95,10 @@ public class XmlElementDeclImpl extends XmlElementImpl implements XmlElementDecl
   public PsiElement getOriginalElement() {
     if (isPhysical()) return super.getOriginalElement();
     
-    final PsiElement userData = getUserData(DEPENDING_ELEMENT);
+    final PsiNamedElement element = XmlUtil.findRealNamedElement(this);
       
-    if (userData instanceof XmlFile) {
-      final PsiMetaData metaData = ((XmlFile)userData).getDocument().getMetaData();
-
-      if (metaData instanceof XmlNSDescriptorImpl) {
-        final XmlElementDescriptor elementDescriptor = ((XmlNSDescriptorImpl)metaData).getElementDescriptor( getName() );
-
-        if (elementDescriptor != null && 
-            elementDescriptor.getDeclaration() instanceof XmlElementDecl) {
-          return elementDescriptor.getDeclaration();
-        }
-      }
+    if (element != null) {
+      return element;
     }
     
     return this;
