@@ -26,17 +26,17 @@ public class ModelMerger {
         return getPrimaryKey(aClass, implementation);
       }
 
-      private Object getPrimaryKey(final Class aClass, final Object implementation) throws
-                                                                                                      IllegalAccessException,
-                                                                                                      InvocationTargetException {
+      private Object getPrimaryKey(final Class aClass, final Object implementation)
+        throws IllegalAccessException, InvocationTargetException {
         if (aClass.isAnnotationPresent(PrimaryKey.class)) {
           return MERGE_ALL_KEY;
         }
 
         for (final Method method : aClass.getMethods()) {
-          if (method.isAnnotationPresent(PrimaryKey.class) && method.getReturnType() != void.class &&
-              method.getParameterTypes().length == 0) {
-            return method.invoke(implementation);
+          final Class<?> returnType = method.getReturnType();
+          if (method.isAnnotationPresent(PrimaryKey.class) && returnType != void.class && method.getParameterTypes().length == 0) {
+            final Object o = method.invoke(implementation);
+            return GenericValue.class.isAssignableFrom(returnType) ? ((GenericValue)o).getValue() : o;
           }
         }
 
@@ -130,7 +130,8 @@ public class ModelMerger {
           }
         }
 
-        final Class<?> returnType = isList ? DomUtil.getRawType(DomUtil.extractCollectionElementType(method.getGenericReturnType())) : method.getReturnType();
+        final Class<?> returnType =
+          isList ? DomUtil.getRawType(DomUtil.extractCollectionElementType(method.getGenericReturnType())) : method.getReturnType();
         for (final Object primaryKey : orderedPrimaryKeys) {
           final List<Object> objects = map.get(primaryKey);
           if (objects.size() == 1) {
