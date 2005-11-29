@@ -20,6 +20,43 @@ import com.intellij.openapi.util.Condition;
 import java.util.*;
 
 public class ContainerUtil {
+  public static List mergeSortedLists(List list1, List list2, Comparator comparator, boolean mergeEqualItems){
+    ArrayList result = new ArrayList();
+
+    int index1 = 0;
+    int index2 = 0;
+    while(index1 < list1.size() || index2 < list2.size()){
+      if (index1 >= list1.size()){
+        result.add(list2.get(index2++));
+      }
+      else if (index2 >= list2.size()){
+        result.add(list1.get(index1++));
+      }
+      else{
+        Object element1 = list1.get(index1);
+        Object element2 = list2.get(index2);
+        int c = comparator.compare(element1,  element2);
+        if (c < 0){
+          result.add(element1);
+          index1++;
+        }
+        else if (c > 0){
+          result.add(element2);
+          index2++;
+        }
+        else{
+          result.add(element1);
+          if (!mergeEqualItems){
+            result.add(element2);
+          }
+          index1++;
+          index2++;
+        }
+      }
+    }
+
+    return result;
+  }
 
   public static <T> void addAll(Collection<T> collection, Iterator<T> iterator) {
     while (iterator.hasNext()) {
@@ -66,8 +103,9 @@ public class ContainerUtil {
     };
   }
 
-  public static <T> T find(T[] array, Condition<T> condition) {
-    for (T element : array) {
+  public static <T> T find(Object[] array, Condition<T> condition) {
+    for (int i = 0; i < array.length; i++) {
+      T element = (T)array[i];
       if (condition.value(element)) return element;
     }
     return null;
@@ -120,8 +158,8 @@ public class ContainerUtil {
     list.set(index2, e1);
   }
 
-  public static <T> ArrayList<T> collect(Iterator<T> iterator, FilteringIterator.InstanceOf<T> instanceOf) {
-    return collect(FilteringIterator.<T, T>create(iterator, instanceOf));
+  public static <T> ArrayList<T> collect(Iterator iterator, FilteringIterator.InstanceOf<T> instanceOf) {
+    return collect(FilteringIterator.create(iterator, instanceOf));
   }
 
   public static <T> void addAll(Collection<T> collection, Enumeration<T> enumeration) {
@@ -132,6 +170,8 @@ public class ContainerUtil {
   }
 
   public static <T, U extends T> T findInstance(Iterator<T> iterator, Class<U> aClass) {
-    return (T)find(iterator, new FilteringIterator.InstanceOf<U>(aClass));
+    // uncomment for 1.5
+    //return (U)find(iterator, new FilteringIterator.InstanceOf<U>(aClass));
+    return (T)find(iterator, new FilteringIterator.InstanceOf<T>((Class<T>)aClass));
   }
 }
