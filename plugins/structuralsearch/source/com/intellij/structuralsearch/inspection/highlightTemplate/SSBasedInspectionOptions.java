@@ -25,6 +25,7 @@ import com.intellij.structuralsearch.plugin.ui.SearchConfiguration;
 import com.intellij.structuralsearch.plugin.ui.SearchContext;
 import com.intellij.structuralsearch.plugin.ui.SearchDialog;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.ListDataEvent;
@@ -125,7 +126,7 @@ public class SSBasedInspectionOptions {
           return;
         }
         Configuration newConfiguration = dialog.getConfiguration();
-        Element temp = new Element("temp");
+        @NonNls Element temp = new Element("temp");
         newConfiguration.writeExternal(temp);
         configuration.readExternal(temp);
       }
@@ -134,7 +135,7 @@ public class SSBasedInspectionOptions {
       public void actionPerformed(ActionEvent e) {
         Object[] selected = myTemplatesList.getSelectedValues();
         for (Object o : selected) {
-          Configuration configuration = ((Configuration)o);
+          Configuration configuration = (Configuration)o;
           Iterator<Configuration> iterator = myConfigurations.iterator();
           while (iterator.hasNext()) {
             Configuration configuration1 = iterator.next();
