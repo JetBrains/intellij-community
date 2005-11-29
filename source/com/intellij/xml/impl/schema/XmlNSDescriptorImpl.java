@@ -65,7 +65,10 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
 
     final Pair<String, String> pair = new Pair<String, String>(namespace, localName);
     final CachedValue<XmlElementDescriptor> descriptor = myDescriptorsMap.get(pair);
-    if(descriptor != null) return descriptor.getValue();
+    if(descriptor != null) {
+      final XmlElementDescriptor value = descriptor.getValue();
+      if (value == null || value.getDeclaration().isValid()) return value;
+    }
 
     XmlDocument document = myFile.getDocument();
     XmlTag rootTag = document.getRootTag();
@@ -316,7 +319,15 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
 
     final Pair<String, XmlTag> pair = new Pair<String, XmlTag>(name, rootTag);
     final CachedValue<TypeDescriptor> descriptor = myTypesMap.get(pair);
-    if(descriptor != null) return descriptor.getValue();
+    if(descriptor != null) {
+      TypeDescriptor value = descriptor.getValue();
+      if (value == null ||
+          ( value instanceof ComplexTypeDescriptor &&
+            ((ComplexTypeDescriptor)value).getDeclaration().isValid()
+          )
+         )
+      return value;
+    }
 
     if (rootTag == null) return null;
     XmlTag[] tags = rootTag.getSubTags();
