@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceDialog;
+import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.SearchConfiguration;
 import com.intellij.structuralsearch.plugin.ui.SearchContext;
@@ -110,11 +111,15 @@ public class SSBasedInspectionOptions {
           public SearchDialog createDialog(SearchContext searchContext) {
             return configuration instanceof SearchConfiguration ? new SearchDialog(searchContext, false, false) {
               public Configuration createConfiguration() {
-                return configuration;
+                SearchConfiguration newConfiguration = new SearchConfiguration();
+                copyConfiguration(configuration, newConfiguration);
+                return newConfiguration;
               }
             } : new ReplaceDialog(searchContext, false, false) {
               public Configuration createConfiguration() {
-                return configuration;
+                ReplaceConfiguration newConfiguration = new ReplaceConfiguration();
+                copyConfiguration(configuration, newConfiguration);
+                return newConfiguration;
               }
             };
           }
@@ -126,9 +131,8 @@ public class SSBasedInspectionOptions {
           return;
         }
         Configuration newConfiguration = dialog.getConfiguration();
-        @NonNls Element temp = new Element("temp");
-        newConfiguration.writeExternal(temp);
-        configuration.readExternal(temp);
+        copyConfiguration(newConfiguration, configuration);
+        configurationsChanged();
       }
     });
     myRemoveButton.addActionListener(new ActionListener() {
@@ -155,6 +159,12 @@ public class SSBasedInspectionOptions {
     });
   }
 
+  private static void copyConfiguration(final Configuration configuration, final Configuration newConfiguration) {
+    @NonNls Element temp = new Element("temp");
+    configuration.writeExternal(temp);
+    newConfiguration.readExternal(temp);
+  }
+
   private void templateListChanged() {
     boolean somethingSelected = myTemplatesList.getSelectedValue() != null;
     myRemoveButton.setEnabled(somethingSelected);
@@ -179,7 +189,7 @@ public class SSBasedInspectionOptions {
 
     configurationsChanged();
   }
-
+         
   private static SearchDialog createDialog(final SearchDialogFactory searchDialogFactory) {
     AnActionEvent event = new AnActionEvent(null, DataManager.getInstance().getDataContext(),
                                             "", new DefaultActionGroup().getTemplatePresentation(), ActionManager.getInstance(), 0);
