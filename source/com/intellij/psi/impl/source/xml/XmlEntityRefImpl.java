@@ -32,6 +32,8 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
     super(XML_ENTITY_REF);
   }
 
+  private static final Key<String> EVALUATION_IN_PROCESS = Key.create("EvalKey");
+
   public XmlEntityDecl resolve(PsiFile targetFile) {
     String text = getText();
     if (text.equals(GT_ENTITY) || text.equals(QUOT_ENTITY)) return null;
@@ -62,69 +64,88 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
   }
 
   private CachedValueProvider.Result<XmlEntityDecl> resolveEntity(final PsiElement targetElement, final String entityName) {
-    final List<PsiElement> deps = new ArrayList<PsiElement>();
-    final XmlEntityDecl[] result = new XmlEntityDecl[]{null};
+    if (targetElement.getUserData(EVALUATION_IN_PROCESS) != null) {
+      return new CachedValueProvider.Result<XmlEntityDecl>(null,targetElement);
+    }
+    try {
+      targetElement.putUserData(EVALUATION_IN_PROCESS, "");
+      final List<PsiElement> deps = new ArrayList<PsiElement>();
+      final XmlEntityDecl[] result = new XmlEntityDecl[]{null};
 
-    PsiElementProcessor processor = new PsiElementProcessor() {
-      public boolean execute(PsiElement element) {
-        if (element instanceof XmlDoctype) {
-          XmlDoctype xmlDoctype = (XmlDoctype)element;
-          final String dtdUri = xmlDoctype.getDtdUri();
-          if (dtdUri != null) {
-            final XmlFile xmlFile = XmlUtil.findXmlFile(XmlUtil.getContainingFile(element), dtdUri);
-            if (xmlFile != null) {
-              if (xmlFile != targetElement) {
-                deps.add(xmlFile);
-                if(!XmlUtil.processXmlElements(xmlFile, this,true)) return false;
+      PsiElementProcessor processor = new PsiElementProcessor() {
+        public boolean execute(PsiElement element) {
+          if (element instanceof XmlDoctype) {
+            XmlDoctype xmlDoctype = (XmlDoctype)element;
+            final String dtdUri = xmlDoctype.getDtdUri();
+            if (dtdUri != null) {
+              final XmlFile xmlFile = XmlUtil.findXmlFile(XmlUtil.getContainingFile(element), dtdUri);
+              if (xmlFile != null) {
+                if (xmlFile != targetElement) {
+                  deps.add(xmlFile);
+                  if(!XmlUtil.processXmlElements(xmlFile, this,true)) return false;
+                }
               }
             }
-          }
-          final XmlMarkupDecl markupDecl = xmlDoctype.getMarkupDecl();
-          if (markupDecl != null) {
-            if (!XmlUtil.processXmlElements(markupDecl, this, true)) return false;
-          }
-        }
-        else if (element instanceof XmlEntityDecl) {
-          XmlEntityDecl entityDecl = (XmlEntityDecl)element;
-          final String declName = entityDecl.getName();
-          if (declName.equals(entityName)) {
-            result[0] = entityDecl;
-            return false;
-          }
-        }
-
-        return true;
-      }
-    };
-    deps.add(targetElement);
-
-    boolean notfound = PsiTreeUtil.processElements(targetElement, processor);
-    
-    if (notfound &&       // no dtd ref at all
-        targetElement instanceof XmlFile &&
-        deps.size() == 1
-       ) {
-      final XmlTag rootTag = ((XmlFile)targetElement).getDocument().getRootTag();
-      
-      if (rootTag != null) {
-        final XmlElementDescriptor descriptor = rootTag.getDescriptor();
-          
-          if (descriptor != null) {
-            final XmlFile descriptorFile = descriptor.getNSDescriptor().getDescriptorFile();
-            
-            if (descriptorFile != null && !descriptorFile.equals(targetElement)) {
-              deps.add(descriptorFile);
-              XmlUtil.processXmlElements(
-                descriptorFile,
-                processor,
-                true
-              );
+            final XmlMarkupDecl markupDecl = xmlDoctype.getMarkupDecl();
+            if (markupDecl != null) {
+              if (!XmlUtil.processXmlElements(markupDecl, this, true)) return false;
             }
           }
-      }
-    }
+          else if (element instanceof XmlEntityDecl) {
+            XmlEntityDecl entityDecl = (XmlEntityDecl)element;
+            final String declName = entityDecl.getName();
+            if (declName.equals(entityName)) {
+              result[0] = entityDecl;
+              return false;
+            }
+          }
 
-    return new CachedValueProvider.Result<XmlEntityDecl>(result[0], deps.toArray(new Object[deps.size()]));
+          return true;
+        }
+      };
+      deps.add(targetElement);
+
+      boolean notfound = PsiTreeUtil.processElements(targetElement, processor);
+
+      if (notfound &&       // no dtd ref at all
+          targetElement instanceof XmlFile &&
+          deps.size() == 1
+         ) {
+        final XmlTag rootTag = ((XmlFile)targetElement).getDocument().getRootTag();
+
+        if (rootTag != null) {
+          final XmlElementDescriptor descriptor = rootTag.getDescriptor();
+
+            if (descriptor != null) {
+              final XmlFile descriptorFile = descriptor.getNSDescriptor().getDescriptorFile();
+
+              if (descriptorFile != null &&
+                  !descriptorFile.getName().equals(((XmlFile)targetElement).getName()+".dtd")) {
+                deps.add(descriptorFile);
+                XmlUtil.processXmlElements(
+                  descriptorFile,
+                  processor,
+                  true
+                );
+              }
+            }
+        }
+      }
+
+      return new CachedValueProvider.Result<XmlEntityDecl>(result[0], deps.toArray(new Object[deps.size()]));
+    }
+    finally {
+      targetElement.putUserData(EVALUATION_IN_PROCESS, null);
+    }
+  }
+
+  private boolean processXmlElements(final XmlElement element, final PsiElementProcessor processor, final boolean b) {
+    try {
+      element.putUserData(EVALUATION_IN_PROCESS, "");
+      return XmlUtil.processXmlElements(element, processor, b);
+    } finally {
+      element.putUserData(EVALUATION_IN_PROCESS, null);
+    }
   }
 
   public XmlTag getParentTag() {
