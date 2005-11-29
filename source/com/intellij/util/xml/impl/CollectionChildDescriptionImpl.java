@@ -62,7 +62,7 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
 
   private DomElement addChild(final DomElement element, final int index) {
     try {
-      return ((DomProxy) element).getDomInvocationHandler().addChild(getXmlElementName(), getType(), index);
+      return DomManagerImpl.getDomInvocationHandler(element).addChild(getXmlElementName(), getType(), index);
     }
     catch (IncorrectOperationException e) {
       throw new RuntimeException(e);

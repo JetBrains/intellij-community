@@ -109,6 +109,10 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     return invocationCache;
   }
 
+  static DomInvocationHandler getDomInvocationHandler(DomElement proxy) {
+    return (DomInvocationHandler)Proxy.getInvocationHandler(proxy);
+  }
+
   final DomElement createDomElement(final DomInvocationHandler handler) {
     synchronized (PsiLock.LOCK) {
       try {
@@ -132,7 +136,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
   private Class getProxyClassFor(final Class<? extends DomElement> aClass) {
     Class proxyClass = myClass2ProxyClass.get(aClass);
     if (proxyClass == null) {
-      proxyClass = Proxy.getProxyClass(null, new Class[]{aClass, DomProxy.class});
+      proxyClass = Proxy.getProxyClass(null, new Class[]{aClass});
       myClass2ProxyClass.put(aClass, proxyClass);
     }
     return proxyClass;

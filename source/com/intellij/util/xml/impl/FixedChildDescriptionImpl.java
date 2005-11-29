@@ -36,7 +36,7 @@ public class FixedChildDescriptionImpl extends DomChildDescriptionImpl implement
   }
 
   public void initConcreteClass(final DomElement parent, final Class<? extends DomElement> aClass) {
-    ((DomProxy) parent).getDomInvocationHandler().setFixedChildClass(getXmlElementName(), aClass);
+    DomManagerImpl.getDomInvocationHandler(parent).setFixedChildClass(getXmlElementName(), aClass);
   }
 
   public int getCount() {

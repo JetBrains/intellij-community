@@ -20,7 +20,6 @@ public class InvocationCache {
 
   static {
     addCoreInvocations(DomElement.class);
-    addCoreInvocations(DomProxy.class);
     addCoreInvocations(Object.class);
     try {
       ourCoreInvocations.put(GenericAttributeValue.class.getMethod("getXmlAttribute"), new Invocation() {

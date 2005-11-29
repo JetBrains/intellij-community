@@ -27,7 +27,7 @@ import java.util.*;
 /**
  * @author peter
  */
-public abstract class DomInvocationHandler implements InvocationHandler, DomElement, DomProxy {
+public abstract class DomInvocationHandler implements InvocationHandler, DomElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.DomInvocationHandler");
 
   private final Type myType;
