@@ -39,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
+import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -67,6 +68,11 @@ public class RequiredAttributesInspection extends BaseLocalInspectionTool {
   @NonNls
   public String getShortName() {
     return RequiredAttributesInspection.SHORT_NAME;
+  }
+
+  @Nullable
+  public JComponent createOptionsPanel() {
+    return createAdditionalNotRequiredHtmlAttributesPanel();
   }
 
   @Nullable
@@ -174,7 +180,7 @@ public class RequiredAttributesInspection extends BaseLocalInspectionTool {
   }
 
   public FieldPanel createAdditionalNotRequiredHtmlAttributesPanel() {
-    FieldPanel additionalAttributesPanel = new FieldPanel(null,
+    FieldPanel additionalAttributesPanel = new FieldPanel(InspectionsBundle.message("inspection.javadoc.html.not.required.label.text"),
                                                           InspectionsBundle.message("inspection.javadoc.html.not.required.dialog.title"),
                                                           null, null);
 
