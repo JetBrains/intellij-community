@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.*;
+import java.lang.annotation.Annotation;
 import java.util.Collection;
 import java.util.List;
 
@@ -100,8 +101,21 @@ public class DomUtil {
     return type instanceof Class && DomElement.class.isAssignableFrom((Class)type);
   }
 
+  public static <T extends Annotation> T findAnnotationDFS(final Class<?> rawType, final Class<T> annotationType) {
+    T annotation = rawType.getAnnotation(annotationType);
+    if (annotation != null) return annotation;
+
+    for (Class aClass : rawType.getInterfaces()) {
+      annotation = findAnnotationDFS(aClass, annotationType);
+      if (annotation != null) {
+        return annotation;
+      }
+    }
+    return null;
+  }
+
   public static DomNameStrategy getDomNameStrategy(final Class<?> rawType) {
-    final NameStrategy annotation = rawType.getAnnotation(NameStrategy.class);
+    final NameStrategy annotation = findAnnotationDFS(rawType, NameStrategy.class);
     if (annotation != null) {
       final Class aClass = annotation.value();
       if (HyphenNameStrategy.class.equals(aClass)) return DomNameStrategy.HYPHEN_STRATEGY;
@@ -114,12 +128,6 @@ public class DomUtil {
       }
       catch (IllegalAccessException e) {
         LOG.error(e);
-      }
-    }
-    for (Class aClass : rawType.getInterfaces()) {
-      final DomNameStrategy strategy = getDomNameStrategy(aClass);
-      if (strategy != null) {
-        return strategy;
       }
     }
     return null;
