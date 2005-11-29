@@ -70,34 +70,34 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter {
             var += args[i].getSize();
           }
           mv.visitVarInsn(Opcodes.ALOAD, var);
-          final String descr = "Argument " + param + " for @NotNull parameter must not be null";
 
-          generateConditionalThrow(descr);
+          generateConditionalThrow("Argument " + param + " for @NotNull parameter must not be null",
+                                   "java/lang/IllegalArgumentException");
         }
       }
 
       public void visitInsn(int opcode) {
         if (opcode == Opcodes.ARETURN && myIsNotNull) {
           mv.visitInsn(Opcodes.DUP);
-          generateConditionalThrow("@NotNull method must not return null");
+          generateConditionalThrow("@NotNull method must not return null",
+                                   "java/lang/IllegalStateException");
         }
 
         mv.visitInsn(opcode);
       }
 
-      private void generateConditionalThrow(final String descr) {
-        String c = "java/lang/AssertionError";
-        String d = "(Ljava/lang/Object;)V";
+      private void generateConditionalThrow(final String descr, final String exceptionClass) {
+        String exceptionParamClass = "(Ljava/lang/String;)V";
         Label end = new Label();
         mv.visitJumpInsn(Opcodes.IFNONNULL, end);
 
-        mv.visitTypeInsn(Opcodes.NEW, c);
+        mv.visitTypeInsn(Opcodes.NEW, exceptionClass);
         mv.visitInsn(Opcodes.DUP);
         mv.visitLdcInsn(descr);
         mv.visitMethodInsn(Opcodes.INVOKESPECIAL,
-                           c,
+                           exceptionClass,
                            "<init>",
-                           d);
+                           exceptionParamClass);
         mv.visitInsn(Opcodes.ATHROW);
         mv.visitLabel(end);
 
