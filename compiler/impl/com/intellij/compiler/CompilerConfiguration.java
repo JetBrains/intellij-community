@@ -112,16 +112,19 @@ public class CompilerConfiguration implements JDOMExternalizable, ProjectCompone
 
   public void projectOpened() {
     JAVAC_EXTERNAL_BACKEND = new JavacCompiler(myProject);
-    JAVAC_EMBEDDED_BACKEND = new JavacEmbeddedCompiler(myProject);
-    JIKES_BACKEND = new JikesCompiler(myProject);
-    ECLIPSE_BACKEND = new EclipseCompiler(myProject);
-    ECLIPSE_EMBEDDED_BACKEND = new EclipseEmbeddedCompiler(myProject);
-
     registeredCompilers.add(JAVAC_EXTERNAL_BACKEND);
+    JAVAC_EMBEDDED_BACKEND = new JavacEmbeddedCompiler(myProject);
     registeredCompilers.add(JAVAC_EMBEDDED_BACKEND);
-    registeredCompilers.add(JIKES_BACKEND);
-    registeredCompilers.add(ECLIPSE_BACKEND);
-    registeredCompilers.add(ECLIPSE_EMBEDDED_BACKEND);
+
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      JIKES_BACKEND = new JikesCompiler(myProject);
+      ECLIPSE_BACKEND = new EclipseCompiler(myProject);
+      ECLIPSE_EMBEDDED_BACKEND = new EclipseEmbeddedCompiler(myProject);
+
+      registeredCompilers.add(JIKES_BACKEND);
+      registeredCompilers.add(ECLIPSE_BACKEND);
+      registeredCompilers.add(ECLIPSE_EMBEDDED_BACKEND);
+    }
     myDefaultJavaCompiler = JAVAC_EXTERNAL_BACKEND;
     for (BackendCompiler compiler : registeredCompilers) {
       if (compiler.getId().equals(DEFAULT_COMPILER)) {
