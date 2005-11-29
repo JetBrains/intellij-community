@@ -13,12 +13,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.uiDesigner.*;
-import com.intellij.uiDesigner.compiler.AlienFormFileException;
-import com.intellij.uiDesigner.compiler.ClassToBindNotFoundException;
-import com.intellij.uiDesigner.compiler.CodeGenerationException;
-import com.intellij.uiDesigner.compiler.Utils;
-import com.intellij.uiDesigner.core.GridConstraints;
-import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.uiDesigner.compiler.*;
 import com.intellij.uiDesigner.core.SupportCode;
 import com.intellij.uiDesigner.lw.*;
 import com.intellij.uiDesigner.shared.BorderType;
@@ -30,25 +25,24 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.util.*;
 
 public final class FormSourceCodeGenerator {
-  private StringBuffer myBuffer;
+  @NonNls private StringBuffer myBuffer;
   private Stack<Boolean> myIsFirstParameterStack;
   private final Project myProject;
   private final ArrayList<String> myErrors;
+  private LayoutSourceGenerator myLayoutSourceGenerator = new GridLayoutSourceGenerator();
 
-  private static final TIntObjectHashMap myAnchors = fillMap(GridConstraints.class, "ANCHOR_");
-  private static final TIntObjectHashMap myFills = fillMap(GridConstraints.class, "FILL_");
+  private static Map<Class, LayoutSourceGenerator> myComponentLayoutCodeGenerators = new HashMap<Class, LayoutSourceGenerator>();
+
+  static {
+    myComponentLayoutCodeGenerators.put(LwSplitPane.class, new SplitPaneLayoutSourceGenerator());
+    myComponentLayoutCodeGenerators.put(LwTabbedPane.class, new TabbedPaneLayoutSourceGenerator());
+    myComponentLayoutCodeGenerators.put(LwScrollPane.class, new ScrollPaneLayoutSourceGenerator());
+  }
 
   public FormSourceCodeGenerator(@NotNull final Project project){
-    //noinspection ConstantConditions
-    if (project == null){
-      //noinspection HardCodedStringLiteral
-      throw new IllegalArgumentException("project cannot be null");
-    }
     myProject = project;
     myErrors = new ArrayList<String>();
   }
@@ -248,7 +242,6 @@ public final class FormSourceCodeGenerator {
       myBuffer.append(binding);
     }
     else {
-      //noinspection HardCodedStringLiteral
       myBuffer.append("final ");
       myBuffer.append(component.getComponentClassName());
       myBuffer.append(" ");
@@ -258,61 +251,8 @@ public final class FormSourceCodeGenerator {
     startConstructor(component.getComponentClassName());
     endConstructor(); // will finish the line
 
-    // set layout to container
-    if (component instanceof LwScrollPane) {
-      // no layout needed
-    }
-    else if (component instanceof LwTabbedPane) {
-      // no layout needed
-    }
-    else if (component instanceof LwSplitPane) {
-      // no layout needed
-    }
-    else if (component instanceof LwContainer) {
-      final LwContainer container = (LwContainer)component;
-
-      if (container.isXY()) {
-        if (container.getComponentCount() != 0) {
-          //noinspection HardCodedStringLiteral
-          throw new IllegalStateException("only empty xys are accepted");
-        }
-        // no layout needed
-      }
-      else {
-        if (container.isGrid()) {
-          final GridLayoutManager layout = (GridLayoutManager)container.getLayout();
-
-          startMethodCall(variable, "setLayout");
-
-          startConstructor(GridLayoutManager.class.getName());
-
-          push(layout.getRowCount());
-          push(layout.getColumnCount());
-
-          newInsets(layout.getMargin());
-
-          push(layout.getHGap());
-          push(layout.getVGap());
-
-          if (layout.isSameSizeHorizontally() || layout.isSameSizeVertically()) {
-            // values differ from the defaults - use appropriate constructor
-            push(layout.isSameSizeHorizontally());
-            push(layout.isSameSizeVertically());
-          }
-
-          endConstructor(); // GridLayoutManager
-
-          endMethod();
-        }
-        else if (container.isXY()) {
-          //noinspection HardCodedStringLiteral
-          throw new IllegalArgumentException("XY is not supported");
-        }
-        else {
-          //noinspection HardCodedStringLiteral
-          throw new IllegalArgumentException("unknown layout: " + container.getLayout());
-        }
-      }
+    if (component instanceof LwContainer) {
+      getComponentLayoutGenerator(component).generateContainerLayout(component, this, variable);
     }
 
     // introspected properties
@@ -434,40 +374,8 @@ public final class FormSourceCodeGenerator {
     // add component to parent
     if (!(component.getParent() instanceof LwRootContainer)) {
 
-      if (parent instanceof LwScrollPane) {
-        startMethodCall(getVariable(parent, component2TempVariable, class2variableIndex), "setViewportView");
-        pushVar(variable);
-        endMethod();
-      }
-      else if (parent instanceof LwTabbedPane) {
-        final LwTabbedPane.Constraints tabConstraints = (LwTabbedPane.Constraints)component.getCustomLayoutConstraints();
-        if (tabConstraints == null){
-          //noinspection HardCodedStringLiteral
-          throw new IllegalArgumentException("tab constraints cannot be null: " + component.getId());
-        }
-
-        startMethodCall(getVariable(parent, component2TempVariable, class2variableIndex), "addTab");
-        push(tabConstraints.myTitle);
-        pushVar(variable);
-        endMethod();
-      }
-      else if (parent instanceof LwSplitPane) {
-        //noinspection HardCodedStringLiteral
-        final String methodName =
-          LwSplitPane.POSITION_LEFT.equals(component.getCustomLayoutConstraints()) ?
-          "setLeftComponent" :
-          "setRightComponent";
-
-        startMethodCall(getVariable(parent, component2TempVariable, class2variableIndex), methodName);
-        pushVar(variable);
-        endMethod();
-      }
-      else {
-        startMethodCall(getVariable(parent, component2TempVariable, class2variableIndex), "add");
-        pushVar(variable);
-        addNewGridConstraints(component);
-        endMethod();
-      }
+      final String parentVariable = getVariable(parent, component2TempVariable, class2variableIndex);
+      getComponentLayoutGenerator(component.getParent()).generateComponentLayout(component, this, variable, parentVariable);
     }
 
     if (component instanceof LwContainer) {
@@ -504,7 +412,15 @@ public final class FormSourceCodeGenerator {
     }
   }
 
-  private void push(final StringDescriptor descriptor) {
+  private LayoutSourceGenerator getComponentLayoutGenerator(final LwComponent lwComponent) {
+    LayoutSourceGenerator generator = myComponentLayoutCodeGenerators.get(lwComponent.getClass());
+    if (generator != null) {
+      return generator;
+    }
+    return myLayoutSourceGenerator;
+  }
+
+  void push(final StringDescriptor descriptor) {
     if (descriptor == null) {
       push((String)null);
     }
@@ -544,12 +460,10 @@ public final class FormSourceCodeGenerator {
       return component.getBinding();
     }
 
-    final String className = component.getComponentClassName();
+    @NonNls final String className = component.getComponentClassName();
 
     final String shortName;
-    //noinspection HardCodedStringLiteral
     if (className.startsWith("javax.swing.J")) {
-      //noinspection HardCodedStringLiteral
       shortName =  className.substring("javax.swing.J".length());
     }
     else {
@@ -573,28 +487,9 @@ public final class FormSourceCodeGenerator {
     return result;
   }
 
-  private void addNewGridConstraints(final LwComponent component){
-    final GridConstraints constraints = component.getConstraints();
-
-    startConstructor(GridConstraints.class.getName());
-    push(constraints.getRow());
-    push(constraints.getColumn());
-    push(constraints.getRowSpan());
-    push(constraints.getColSpan());
-    push(constraints.getAnchor(), myAnchors);
-    push(constraints.getFill(), myFills);
-    pushSizePolicy(constraints.getHSizePolicy());
-    pushSizePolicy(constraints.getVSizePolicy());
-    newDimensionOrNull(constraints.myMinimumSize);
-    newDimensionOrNull(constraints.myPreferredSize);
-    newDimensionOrNull(constraints.myMaximumSize);
-    endConstructor();
-  }
-
-  private void newDimensionOrNull(final Dimension dimension) {
+  void newDimensionOrNull(final Dimension dimension) {
     if (dimension.width == -1 && dimension.height == -1) {
       checkParameter();
-      //noinspection HardCodedStringLiteral
       myBuffer.append("null");
     }
     else {
@@ -609,7 +504,7 @@ public final class FormSourceCodeGenerator {
     endConstructor();
   }
 
-  private void newInsets(final Insets insets){
+  void newInsets(final Insets insets){
     startConstructor(Insets.class.getName());
     push(insets.top);
     push(insets.left);
@@ -628,7 +523,7 @@ public final class FormSourceCodeGenerator {
   }
 
 
-  private void startMethodCall(final String variable, @NonNls final String methodName) {
+  void startMethodCall(final String variable, @NonNls final String methodName) {
     checkParameter();
 
     appendVarName(variable);
@@ -650,7 +545,7 @@ public final class FormSourceCodeGenerator {
     myIsFirstParameterStack.push(Boolean.TRUE);
   }
 
-  private void endMethod() {
+  void endMethod() {
     myBuffer.append(')');
 
     myIsFirstParameterStack.pop();
@@ -660,10 +555,9 @@ public final class FormSourceCodeGenerator {
     }
   }
 
-  private void startConstructor(final String className) {
+  void startConstructor(final String className) {
     checkParameter();
 
-    //noinspection HardCodedStringLiteral
     myBuffer.append("new ");
     myBuffer.append(className);
     myBuffer.append('(');
@@ -671,16 +565,16 @@ public final class FormSourceCodeGenerator {
     myIsFirstParameterStack.push(Boolean.TRUE);
   }
 
-  private void endConstructor() {
+  void endConstructor() {
     endMethod();
   }
 
-  private void push(final int value) {
+  void push(final int value) {
     checkParameter();
     myBuffer.append(value);
   }
 
-  private void push(final int value, final TIntObjectHashMap map){
+  void push(final int value, final TIntObjectHashMap map){
     final String stringRepresentation = (String)map.get(value);
     if (stringRepresentation != null) {
       checkParameter();
@@ -691,63 +585,19 @@ public final class FormSourceCodeGenerator {
     }
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private void pushSizePolicy(final int value) {
-    final String className = GridConstraints.class.getName();
-
-    String presentation;
-    if (GridConstraints.SIZEPOLICY_FIXED == value) {
-      presentation = className + ".SIZEPOLICY_FIXED";
-    }
-    else {
-      if ((value & GridConstraints.SIZEPOLICY_CAN_SHRINK) != 0) {
-        presentation = className + ".SIZEPOLICY_CAN_SHRINK";
-      }
-      else {
-        presentation = null;
-      }
-
-      if ((value & GridConstraints.SIZEPOLICY_WANT_GROW) != 0) {
-        if (presentation == null) {
-          presentation = className + ".SIZEPOLICY_WANT_GROW";
-        }
-        else {
-          presentation += "|" + className + ".SIZEPOLICY_WANT_GROW";
-        }
-      }
-      else if ((value & GridConstraints.SIZEPOLICY_CAN_GROW) != 0) {
-        if (presentation == null) {
-          presentation = className + ".SIZEPOLICY_CAN_GROW";
-        }
-        else {
-          presentation += "|" + className + ".SIZEPOLICY_CAN_GROW";
-        }
-      }
-      else {
-        // ?
-        push(value);
-        return;
-      }
-    }
-
-    checkParameter();
-    myBuffer.append(presentation);
-  }
-
   private void push(final double value) {
     checkParameter();
     myBuffer.append(value);
   }
 
-  private void push(final boolean value) {
+  void push(final boolean value) {
     checkParameter();
     myBuffer.append(value);
   }
 
-  private void push(final String value) {
+  void push(final String value) {
     checkParameter();
     if (value == null) {
-      //noinspection HardCodedStringLiteral
       myBuffer.append("null");
     }
     else {
@@ -757,7 +607,7 @@ public final class FormSourceCodeGenerator {
     }
   }
 
-  private void pushVar(final String variable) {
+  void pushVar(final String variable) {
     checkParameter();
     appendVarName(variable);
   }
@@ -766,7 +616,7 @@ public final class FormSourceCodeGenerator {
     myBuffer.append(variable);
   }
 
-  private void checkParameter() {
+  void checkParameter() {
     if (!myIsFirstParameterStack.empty()) {
       final Boolean b = myIsFirstParameterStack.pop();
       if (b.equals(Boolean.FALSE)) {
@@ -774,26 +624,5 @@ public final class FormSourceCodeGenerator {
       }
       myIsFirstParameterStack.push(Boolean.FALSE);
     }
-  }
-
-  private static TIntObjectHashMap fillMap(final Class aClass, @NonNls final String prefix) {
-    final TIntObjectHashMap map = new TIntObjectHashMap();
-
-    final Field[] fields = aClass.getFields();
-    for (int i = 0; i < fields.length; i++) {
-      final Field field = fields[i];
-      if ((field.getModifiers() & Modifier.STATIC) != 0 && field.getName().startsWith(prefix)) {
-        field.setAccessible(true);
-        try {
-          final int value = field.getInt(aClass);
-          map.put(value, aClass.getName() + '.' + field.getName());
-        }
-        catch (IllegalAccessException e) {
-          throw new RuntimeException(e);
-        }
-      }
-    }
-
-    return map;
   }
 }

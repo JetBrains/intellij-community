@@ -97,7 +97,7 @@ public class GridInsertProcessor {
     int row=ys.length-1;
     int col=xs.length-1;
     for(int i=0; i<xs.length; i++) {
-      if (targetPoint.getX() < xs [i]+widths [i]) {
+      if (targetPoint.x < xs[i] + widths[i]) {
         col=i;
         break;
       }
@@ -119,7 +119,7 @@ public class GridInsertProcessor {
       mode = GridInsertMode.RowAfter;
     }
 
-    int dx = (int)(targetPoint.getX() - xs [col]);
+    int dx = targetPoint.x - xs[col];
     if (dx < EPSILON) {
       mode = GridInsertMode.ColumnBefore;
     }

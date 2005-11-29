@@ -22,14 +22,12 @@ import org.objectweb.asm.Opcodes;
 import java.awt.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 17.11.2005
- * Time: 19:58:42
- * To change this template use File | Settings | File Templates.
+ * @author yole
  */
 public abstract class LayoutCodeGenerator {
-  public abstract void generateContainerLayout(final LwComponent lwComponent, final GeneratorAdapter generator, final int componentLocal);
+  public void generateContainerLayout(final LwComponent lwComponent, final GeneratorAdapter generator, final int componentLocal) {
+  }
+
   public abstract void generateComponentLayout(final LwComponent lwComponent, final GeneratorAdapter generator, final int componentLocal,
                                                final int parentLocal);
 

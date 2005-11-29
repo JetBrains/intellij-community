@@ -29,11 +29,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 17.11.2005
- * Time: 12:58:35
- * To change this template use File | Settings | File Templates.
+ * @author yole
  */
 public class AsmCodeGenerator {
   private LwRootContainer myRootContainer;

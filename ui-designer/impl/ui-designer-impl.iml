@@ -35,7 +35,7 @@
     <orderEntryProperties />
   </component>
   <component name="copyright">
-    <option name="body" value="/*&#10; * Copyright (c) $today.year Your Corporation. All Rights Reserved.&#10; */" />
+    <option name="body" value="/*&#10; * Copyright (c) $today.year JetBrains s.r.o. All Rights Reserved.&#10; */" />
     <option name="location" value="1" />
     <option name="remove" value="true" />
   </component>
