@@ -30,7 +30,7 @@ import java.util.ArrayList;
 
 public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance("com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection");
-  @NonNls private static final String SHORT_NAME = "JavadocReference";
+  @NonNls public static final String SHORT_NAME = "JavadocReference";
 
 
   private ProblemDescriptor createDescriptor(@NotNull PsiElement element, String template) {
