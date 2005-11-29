@@ -238,4 +238,9 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl {
   public PsiElement getNavigationElement() {
     return getNameElement();
   }
+
+  public int getTextOffset() {
+    final PsiElement name = getNameElement();
+    return name != null ? name.getTextOffset() : super.getTextOffset();
+  }
 }

@@ -18,6 +18,7 @@ public class XmlFindUsagesProvider implements FindUsagesProvider {
   public boolean canFindUsagesFor(PsiElement element) {
     return element instanceof XmlElementDecl ||
            element instanceof XmlAttributeDecl ||
+           element instanceof XmlEntityDecl ||
            element instanceof XmlTag ||
            element instanceof XmlAttributeValue ||
            element instanceof JspFile;
@@ -30,6 +31,8 @@ public class XmlFindUsagesProvider implements FindUsagesProvider {
       return LangBundle.message("xml.terms.attribute");
     } else if (element instanceof XmlAttributeValue) {
       return LangBundle.message("xml.terms.attribute.value");
+    } else if (element instanceof XmlEntityDecl) {
+      return LangBundle.message("xml.terms.entity");
     }
 
     return null;

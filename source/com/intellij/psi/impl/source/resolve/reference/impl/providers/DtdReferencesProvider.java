@@ -40,7 +40,7 @@ public class DtdReferencesProvider implements PsiReferenceProvider {
       myElement = element;
       myNameElement = nameElement;
 
-      final int textOffset = element.getTextOffset();
+      final int textOffset = element.getTextRange().getStartOffset();
       final int nameTextOffset = nameElement.getTextOffset();
 
       myRange = new TextRange(
@@ -140,7 +140,10 @@ public class DtdReferencesProvider implements PsiReferenceProvider {
     }
 
     public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-      return null;
+      final PsiElement elementAt = myElement.findElementAt(1);
+      return ReferenceProvidersRegistry.getInstance(myElement.getProject()).getManipulator(
+        elementAt
+      ).handleContentChange(elementAt, getRangeInElement(), newElementName);
     }
 
     public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
@@ -170,7 +173,7 @@ public class DtdReferencesProvider implements PsiReferenceProvider {
     } else if (element instanceof XmlAttlistDecl) {
       nameElement = ((XmlAttlistDecl)element).getNameElement();
     } else if (element instanceof XmlElementContentSpec) {
-      final PsiElement[] children = ((XmlElementContentSpec)element).getChildren();
+      final PsiElement[] children = element.getChildren();
       final List<PsiReference> psiRefs = new ArrayList<PsiReference>(children.length);
       
       for (int i = 0; i < children.length; i++) {

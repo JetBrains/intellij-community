@@ -13,6 +13,7 @@ import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlEntityDecl;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
 import com.intellij.util.containers.HashSet;
@@ -85,7 +86,8 @@ public class CachesBasedRefSearcher implements QueryExecutor<PsiReference, Refer
 
     short searchContext;
 
-    if (refElement instanceof XmlAttributeValue) {
+    if (refElement instanceof XmlAttributeValue ||
+        refElement instanceof XmlEntityDecl) {
       searchContext = UsageSearchContext.IN_PLAIN_TEXT;
     }
     else {

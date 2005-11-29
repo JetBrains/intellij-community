@@ -139,15 +139,6 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
     }
   }
 
-  private boolean processXmlElements(final XmlElement element, final PsiElementProcessor processor, final boolean b) {
-    try {
-      element.putUserData(EVALUATION_IN_PROCESS, "");
-      return XmlUtil.processXmlElements(element, processor, b);
-    } finally {
-      element.putUserData(EVALUATION_IN_PROCESS, null);
-    }
-  }
-
   public XmlTag getParentTag() {
     final XmlElement parent = (XmlElement)getParent();
     if(parent instanceof XmlTag) return (XmlTag)parent;

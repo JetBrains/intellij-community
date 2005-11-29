@@ -15,6 +15,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElementDecl;
+import com.intellij.psi.xml.XmlEntityDecl;
 
 public class TargetElementUtil {
   public static final int REFERENCED_ELEMENT_ACCEPTED = 0x01;
@@ -102,10 +103,6 @@ public class TargetElementUtil {
         }
       }
       else if (parent instanceof PsiNamedElement) { // A bit hacky depends on navigation offset correctly overriden
-        if (parent instanceof XmlElementDecl) {
-          return parent;
-        }
-
         if (parent.getTextOffset() == element.getTextOffset() &&
             Comparing.equal(((PsiNamedElement)parent).getName(), element.getText()) &&
             !(parent instanceof XmlAttribute) &&
@@ -113,7 +110,7 @@ public class TargetElementUtil {
            ) {
           return parent;
         }
-      } 
+      }
     }
 
     if (element instanceof PsiKeyword) {
@@ -165,7 +162,7 @@ public class TargetElementUtil {
 
     if ((flags & REFERENCED_ELEMENT_ACCEPTED) != 0) {
       final PsiElement referenceOrReferencedElement = getReferenceOrReferencedElement(file, editor, flags, offset);
-      
+
       if (referenceOrReferencedElement == null) {
         return getReferenceOrReferencedElement(file, editor, flags, offset);
       }

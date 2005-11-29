@@ -48,6 +48,11 @@ public class XmlElementDeclImpl extends XmlElementImpl implements XmlElementDecl
     }
   }
 
+  public int getTextOffset() {
+    final XmlElement name = getNameElement();
+    return name != null ? name.getTextOffset() : super.getTextOffset();
+  }
+
   public XmlElement getNameElement() {
     return (XmlElement)findChildByRoleAsPsiElement(ChildRole.XML_NAME);
   }
