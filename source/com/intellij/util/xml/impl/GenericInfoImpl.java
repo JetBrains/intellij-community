@@ -6,7 +6,6 @@ package com.intellij.util.xml.impl;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.Function;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.*;
@@ -182,7 +181,7 @@ public class GenericInfoImpl implements DomGenericInfo {
     }
     if (isAttributeMethod) {
       final String s = annotation == null ? null : annotation.value();
-      String attributeName = StringUtil.isEmpty(s) ? getNameFromMethod(method): s;
+      String attributeName = StringUtil.isEmpty(s) ? getNameFromMethod(method) : s;
       assert StringUtil.isNotEmpty(attributeName) : "Can't guess attribute name from method name: " + method.getName();
       myAttributeChildrenMethods.put(method, attributeName);
       return;
@@ -215,7 +214,7 @@ public class GenericInfoImpl implements DomGenericInfo {
     }
   }
 
-  public final Invocation createInvocation(final XmlFile file, final Method method) {
+  public final Invocation createInvocation(final Method method) {
     buildMethodMaps();
 
     final CustomMethod customMethod = method.getAnnotation(CustomMethod.class);
@@ -249,6 +248,17 @@ public class GenericInfoImpl implements DomGenericInfo {
                                     myCollectionChildrenClasses.get(qname));
     }
 
+    for (final Method method1 : myClass.getMethods()) {
+      if (!method1.equals(method) && method1.getName().equals(method.getName()) &&
+          Arrays.equals(method.getParameterTypes(), method1.getParameterTypes())) {
+        return new Invocation() {
+          public Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
+            return method1.invoke(handler, args);
+          }
+        };
+      }
+    }
+
     throw new UnsupportedOperationException("No implementation for method " + method.toString());
   }
 
@@ -278,15 +288,14 @@ public class GenericInfoImpl implements DomGenericInfo {
         if (o instanceof List) {
           List result = new ArrayList();
           for (Object o1 : (List)o) {
-            result.add(invoke(i+1, o1));
+            result.add(invoke(i + 1, o1));
           }
           return result;
         }
-        return invoke(i+1, o);
+        return invoke(i + 1, o);
       }
     };
   }
-
 
 
   private Method findImplementationMethod(String methodName, Class[] paramTypes) {
@@ -356,7 +365,7 @@ public class GenericInfoImpl implements DomGenericInfo {
     return types.toArray((T[])Array.newInstance(parameterTypes.getClass().getComponentType(), types.size()));
   }
 
-  private Function<Object[],Type> getTypeGetter(final Method method) {
+  private Function<Object[], Type> getTypeGetter(final Method method) {
     final Class<?>[] parameterTypes = method.getParameterTypes();
     if (parameterTypes.length >= 1 && parameterTypes[0].equals(Class.class)) {
       return new Function<Object[], Type>() {
@@ -382,7 +391,7 @@ public class GenericInfoImpl implements DomGenericInfo {
   }
 
 
-  private Function<Object[],Integer> getIndexGetter(final Method method, final int startIndex) {
+  private Function<Object[], Integer> getIndexGetter(final Method method, final int startIndex) {
     final Class<?>[] parameterTypes = method.getParameterTypes();
     if (parameterTypes.length >= 1 && parameterTypes[0].equals(int.class)) {
       return new Function<Object[], Integer>() {

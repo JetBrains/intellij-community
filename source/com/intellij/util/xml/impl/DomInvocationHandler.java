@@ -266,7 +266,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
       return createSetValueInvocation(getConverter(method, false));
     }
 
-    return myGenericInfoImpl.createInvocation(getFile(), method);
+    return myGenericInfoImpl.createInvocation(method);
   }
 
   protected Invocation createSetValueInvocation(final Converter converter) {
