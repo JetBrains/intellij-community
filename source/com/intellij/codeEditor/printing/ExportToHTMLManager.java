@@ -189,7 +189,8 @@ class ExportToHTMLManager {
     try {
       String indexHtmlName = constructOutputDirectory(psiDirectory, outputDirectoryName) + File.separator + "index.html";
       writer = new OutputStreamWriter(new FileOutputStream(indexHtmlName), "UTF-8");
-      writer.write("<html><head><title>" + psiDirectory.getPackage().getQualifiedName() + "</title></head><body>");
+      final PsiPackage aPackage = psiDirectory.getPackage();
+      writer.write("<html><head><title>" + (aPackage != null ? aPackage.getQualifiedName() : psiDirectory.getName()) + "</title></head><body>");
       if (recursive) {
         PsiDirectory[] directories = psiDirectory.getSubdirectories();
         for(PsiDirectory directory: directories) {
