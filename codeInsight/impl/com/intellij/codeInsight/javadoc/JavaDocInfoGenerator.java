@@ -820,18 +820,19 @@ class JavaDocInfoGenerator {
     buffer.append("</code>");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   private void generateLiteralValue(PsiInlineDocTag tag, StringBuffer buffer) {
     PsiElement[] elements = tag.getDataElements();
 
     for (PsiElement element : elements) {
-      String text = element.getText();
-
-      text = text.replaceAll("<", "&lt;");
-      text = text.replaceAll(">", "&gt;");
-
-      buffer.append(text);
+      appendPlainText(element.getText(), buffer);
     }
+  }
+
+  private void appendPlainText(@NonNls String text, final StringBuffer buffer) {
+    text = text.replaceAll("<", "&lt;");
+    text = text.replaceAll(">", "&gt;");
+
+    buffer.append(text);
   }
 
   private void generateLinkValue(PsiInlineDocTag tag, StringBuffer buffer, boolean plainLink) {
@@ -933,13 +934,21 @@ class JavaDocInfoGenerator {
         if (elements.length > 0) {
           String text = createLinkText(elements);
 
-          int index = JavaDocUtil.extractReference(text);
-          String refText = text.substring(0, index).trim();
-          String label = text.substring(index).trim();
-          if (label.length() == 0) {
-            label = null;
+          if (text.startsWith("<")) {
+            buffer.append(text);
           }
-          generateLink(buffer, refText, label, comment, false);
+          else if (text.startsWith("\"")) {
+            appendPlainText(text, buffer);
+          }
+          else {
+            int index = JavaDocUtil.extractReference(text);
+            String refText = text.substring(0, index).trim();
+            String label = text.substring(index).trim();
+            if (label.length() == 0) {
+              label = null;
+            }
+            generateLink(buffer, refText, label, comment, false);
+          }
         }
         if (i < tags.length - 1) {
           buffer.append(",\n");
