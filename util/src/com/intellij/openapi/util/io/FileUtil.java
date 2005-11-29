@@ -245,6 +245,7 @@ public class FileUtil {
 
     for (int i = 0; i < 10; i++){
       if (file.delete()) return true;
+      if (!file.exists()) return true;
       try {
         Thread.sleep(10);
       } catch (InterruptedException e) {
