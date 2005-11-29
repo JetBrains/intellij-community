@@ -125,10 +125,10 @@ public class PsiPrimitiveType extends PsiType {
   }
 
   @NonNls
-  private static final Map<String, PsiPrimitiveType> ourQNameToUnboxed = new HashMap<String, PsiPrimitiveType>();
+  public static final Map<String, PsiPrimitiveType> ourQNameToUnboxed = new HashMap<String, PsiPrimitiveType>();
 
   @NonNls
-  private static final Map<PsiPrimitiveType, String> ourUnboxedToQName = new HashMap<PsiPrimitiveType, String>();
+  public static final Map<PsiPrimitiveType, String> ourUnboxedToQName = new HashMap<PsiPrimitiveType, String>();
 
   static {
     ourQNameToUnboxed.put("java.lang.Boolean", BOOLEAN);

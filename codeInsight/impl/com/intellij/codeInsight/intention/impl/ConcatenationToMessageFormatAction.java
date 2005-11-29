@@ -3,13 +3,14 @@ package com.intellij.codeInsight.intention.impl;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.ArrayList;
@@ -20,8 +21,6 @@ import java.util.List;
  * @author ven
  */
 public class ConcatenationToMessageFormatAction implements IntentionAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.ConcatenationToMessageFormatAction");
-
   public String getFamilyName() {
     return CodeInsightBundle.message("intention.replace.concatenation.with.formatted.output.family");
   }
@@ -42,7 +41,6 @@ public class ConcatenationToMessageFormatAction implements IntentionAction {
 
     PsiMethodCallExpression call = (PsiMethodCallExpression) manager.getElementFactory().createExpressionFromText("java.text.MessageFormat.format()", concatenation);
     PsiExpressionList argumentList = call.getArgumentList();
-    LOG.assertTrue(argumentList != null);
     String format = prepareString(formatString.toString());
     PsiExpression formatArgument = manager.getElementFactory().createExpressionFromText("\"" + format + "\"", null);
     argumentList.add(formatArgument);
@@ -76,11 +74,26 @@ public class ConcatenationToMessageFormatAction implements IntentionAction {
                                               List<PsiExpression> args, List<PsiExpression> argsToCombine,
                                               boolean wasLiteral) throws IncorrectOperationException {
     if (expression == null) return wasLiteral;
-    if (expression instanceof PsiBinaryExpression && expression.getType() != null &&
-        expression.getType().equalsToText("java.lang.String") &&
-        ((PsiBinaryExpression) expression).getOperationSign().getTokenType() == JavaTokenType.PLUS) {
-      wasLiteral = calculateFormatAndArguments(((PsiBinaryExpression) expression).getLOperand(), formatString, args, argsToCombine, wasLiteral);
-      wasLiteral = calculateFormatAndArguments(((PsiBinaryExpression) expression).getROperand(), formatString, args, argsToCombine, wasLiteral);
+    if (expression instanceof PsiBinaryExpression) {
+      final PsiType type = expression.getType();
+      if (type != null && type.equalsToText("java.lang.String") &&
+          ((PsiBinaryExpression) expression).getOperationSign().getTokenType() == JavaTokenType.PLUS) {
+        wasLiteral = calculateFormatAndArguments(((PsiBinaryExpression) expression).getLOperand(), formatString, args, argsToCombine, wasLiteral);
+        wasLiteral = calculateFormatAndArguments(((PsiBinaryExpression) expression).getROperand(), formatString, args, argsToCombine, wasLiteral);
+      } else if (expression instanceof PsiLiteralExpression &&
+                 ((PsiLiteralExpression) expression).getValue() instanceof String) {
+        appendArgument(args, argsToCombine, formatString);
+        argsToCombine.clear();
+        formatString.append(((PsiLiteralExpression) expression).getValue());
+        return true;
+      } else {
+        if (wasLiteral) {
+          appendArgument(args, Collections.singletonList(expression), formatString);
+        }
+        else {
+          argsToCombine.add(expression);
+        }
+      }
     } else if (expression instanceof PsiLiteralExpression &&
                ((PsiLiteralExpression) expression).getValue() instanceof String) {
       appendArgument(args, argsToCombine, formatString);
@@ -102,8 +115,10 @@ public class ConcatenationToMessageFormatAction implements IntentionAction {
   private static void appendArgument(List<PsiExpression> args, List<PsiExpression> argsToCombine, StringBuffer formatString) throws IncorrectOperationException {
     if (argsToCombine.size() == 0) return;
     PsiExpression argument = argsToCombine.get(0);
+    final PsiManager manager = argument.getManager();
+    final PsiElementFactory factory = manager.getElementFactory();
     for (int i = 1; i < argsToCombine.size(); i++) {
-      PsiBinaryExpression newArg = (PsiBinaryExpression) argument.getManager().getElementFactory().createExpressionFromText("a+b", null);
+      PsiBinaryExpression newArg = (PsiBinaryExpression) factory.createExpressionFromText("a+b", null);
       newArg.getLOperand().replace(argument);
       PsiExpression rOperand = newArg.getROperand();
       assert rOperand != null;
@@ -112,7 +127,35 @@ public class ConcatenationToMessageFormatAction implements IntentionAction {
     }
 
     formatString.append("{").append(args.size()).append("}");
-    args.add(argument);
+    args.add(getBoxedArgument(argument));
+  }
+
+  private static PsiExpression getBoxedArgument(PsiExpression arg) throws IncorrectOperationException {
+    arg = PsiUtil.deparenthesizeExpression(arg);
+    final PsiManager manager = arg.getManager();
+    final PsiElementFactory factory = manager.getElementFactory();
+    if (manager.getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) < 0) {
+      final PsiType type = arg.getType();
+      if (type instanceof PsiPrimitiveType && !type.equals(PsiType.NULL)) {
+        final PsiPrimitiveType primitiveType = (PsiPrimitiveType)type;
+        final String boxedQName = PsiPrimitiveType.ourUnboxedToQName.get(primitiveType);
+        if (boxedQName != null) {
+          final GlobalSearchScope resolveScope = arg.getResolveScope();
+          final PsiClass boxedClass = manager.findClass(boxedQName, resolveScope);
+          if (boxedClass != null) {
+            final PsiJavaCodeReferenceElement ref = factory.createReferenceExpression(boxedClass);
+            final PsiMethodCallExpression valueOfExpr = (PsiMethodCallExpression)factory.createExpressionFromText("A.valueOf(b)", null);
+            final PsiElement qualifier = valueOfExpr.getMethodExpression().getQualifier();
+            assert qualifier != null;
+            qualifier.replace(ref);
+            valueOfExpr.getArgumentList().getExpressions()[0].replace(arg);
+            return valueOfExpr;
+          }
+        }
+      }
+    }
+
+    return arg;
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
