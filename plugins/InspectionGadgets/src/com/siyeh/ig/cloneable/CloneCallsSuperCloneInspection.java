@@ -33,7 +33,8 @@ public class CloneCallsSuperCloneInspection extends MethodInspection {
     }
 
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("clone.doesnt.call.super.clone.display.name");
+        return InspectionGadgetsBundle.message(
+                "clone.doesnt.call.super.clone.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -41,7 +42,8 @@ public class CloneCallsSuperCloneInspection extends MethodInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-      return InspectionGadgetsBundle.message("clone.doesnt.call.super.clone.problem.descriptor");
+      return InspectionGadgetsBundle.message(
+              "clone.doesnt.call.super.clone.problem.descriptor");
     }
 
     public boolean isEnabledByDefault() {
@@ -72,9 +74,12 @@ public class CloneCallsSuperCloneInspection extends MethodInspection {
                 containingClass.isAnnotationType()) {
                 return;
             }
-            if (CloneUtils.onlyThrowsCloneNotSupportedException(method) &&
-                    method.hasModifierProperty(PsiModifier.FINAL)) {
-                return;
+            if (CloneUtils.onlyThrowsCloneNotSupportedException(method)) {
+                if (method.hasModifierProperty(PsiModifier.FINAL) ||
+                        containingClass.hasModifierProperty(
+                                PsiModifier.FINAL)) {
+                    return;
+                }
             }
             final CallToSuperCloneVisitor visitor =
                     new CallToSuperCloneVisitor();
