@@ -17,21 +17,15 @@ import java.util.*;
  */
 public class ModelMerger {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.ModelMerger");
-  private static final Object MERGE_ALL_KEY = new Object();
 
   public static <T> T mergeModels(final Class<? extends T> aClass, final T... implementations) {
     final InvocationHandler invocationHandler = new InvocationHandler() {
       private final Object getPrimaryKey(Object implementation) throws IllegalAccessException, InvocationTargetException {
-        final Class<? extends Object> aClass = implementation.getClass();
-        return getPrimaryKey(aClass, implementation);
+        return getPrimaryKey(implementation.getClass(), implementation);
       }
 
       private Object getPrimaryKey(final Class aClass, final Object implementation)
-        throws IllegalAccessException, InvocationTargetException {
-        if (aClass.isAnnotationPresent(PrimaryKey.class)) {
-          return MERGE_ALL_KEY;
-        }
-
+           throws IllegalAccessException, InvocationTargetException {
         for (final Method method : aClass.getMethods()) {
           final Class<?> returnType = method.getReturnType();
           if (method.isAnnotationPresent(PrimaryKey.class) && returnType != void.class && method.getParameterTypes().length == 0) {
@@ -69,7 +63,7 @@ public class ModelMerger {
 
         final Class returnType = method.getReturnType();
         if (List.class.isAssignableFrom(returnType)) {
-          return getMergedImplementations(method, args, true);
+          return getMergedImplementations(method, args, true, DomUtil.getRawType(DomUtil.extractCollectionElementType(method.getGenericReturnType())));
         }
 
         if (GenericValue.class.isAssignableFrom(returnType)) {
@@ -104,56 +98,70 @@ public class ModelMerger {
           return null;
         }
 
-        List<Object> results = getMergedImplementations(method, args, false);
+        List<Object> results = getMergedImplementations(method, args, false, method.getReturnType());
 
         return results.isEmpty() ? null : results.get(0);
       }
 
-      private List<Object> getMergedImplementations(final Method method, final Object[] args, final boolean isList)
+      private List<Object> getMergedImplementations(final Method method,
+                                                    final Object[] args,
+                                                    final boolean isList,
+                                                    final Class<?> returnType)
         throws IllegalAccessException,
                InvocationTargetException {
-        Set<Object> seenPrimaryKeys = new HashSet<Object>();
-        List<Object> orderedPrimaryKeys = new ArrayList<Object>();
-        Map<Object, List<Object>> map = new HashMap<Object, List<Object>>();
-        List<Object> results = new ArrayList<Object>();
-        for (final T t : implementations) {
-          if (isList || results.isEmpty()) {
+
+        final List<Object> results = new ArrayList<Object>();
+
+        if (returnType.isInterface() && !GenericValue.class.isAssignableFrom(returnType)) {
+          final List<Object> orderedPrimaryKeys = new ArrayList<Object>();
+          final Map<Object, List<Object>> map = new HashMap<Object, List<Object>>();
+          for (final T t : implementations) {
             final Object o = method.invoke(t, args);
             if (isList) {
               for (final Object o1 : (List)o) {
-                addToMaps(o1, seenPrimaryKeys, orderedPrimaryKeys, map, results);
+                addToMaps(o1, orderedPrimaryKeys, map, results, false);
               }
             }
             else if (o != null) {
-              addToMaps(o, seenPrimaryKeys, orderedPrimaryKeys, map, results);
+              addToMaps(o, orderedPrimaryKeys, map, results, true);
+            }
+
+          }
+
+          for (final Object primaryKey : orderedPrimaryKeys) {
+            final List<Object> objects = map.get(primaryKey);
+            if (objects.size() == 1) {
+              results.add(objects.get(0));
+            }
+            else {
+              results.add(mergeModels(returnType, objects.toArray()));
             }
           }
-        }
-
-        final Class<?> returnType =
-          isList ? DomUtil.getRawType(DomUtil.extractCollectionElementType(method.getGenericReturnType())) : method.getReturnType();
-        for (final Object primaryKey : orderedPrimaryKeys) {
-          final List<Object> objects = map.get(primaryKey);
-          if (objects.size() == 1) {
-            results.add(objects.get(0));
-          }
-          else {
-            results.add(mergeModels(returnType, objects.toArray()));
+        } else {
+          for (final T t : implementations) {
+            final Object o = method.invoke(t, args);
+            if (o != null) {
+              if (isList) {
+                results.addAll((List<?>)o);
+              } else {
+                results.add(o);
+                break;
+              }
+            }
           }
         }
         return results;
       }
 
-      private void addToMaps(final Object o,
-                             final Set<Object> seenPrimaryKeys,
-                             final List<Object> orderedPrimaryKeys,
-                             final Map<Object, List<Object>> map, final List<Object> results) throws IllegalAccessException,
-                                                                                                     InvocationTargetException {
+      private boolean addToMaps(final Object o,
+                                final List<Object> orderedPrimaryKeys,
+                                final Map<Object, List<Object>> map,
+                                final List<Object> results,
+                                final boolean mergeIfPKNull) throws IllegalAccessException, InvocationTargetException {
         final Object primaryKey = getPrimaryKey(o);
-        if (primaryKey != null) {
+        if (primaryKey != null || mergeIfPKNull) {
           List<Object> list;
-          if (!seenPrimaryKeys.contains(primaryKey)) {
-            seenPrimaryKeys.add(primaryKey);
+          if (!map.containsKey(primaryKey)) {
             orderedPrimaryKeys.add(primaryKey);
             list = new ArrayList<Object>();
             map.put(primaryKey, list);
@@ -162,10 +170,11 @@ public class ModelMerger {
             list = map.get(primaryKey);
           }
           list.add(o);
+          return false;
         }
-        else {
-          results.add(o);
-        }
+
+        results.add(o);
+        return true;
       }
     };
     return (T)Proxy.newProxyInstance(null, new Class[]{aClass}, invocationHandler);

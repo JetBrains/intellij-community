@@ -12,7 +12,7 @@ import java.lang.annotation.ElementType;
 /**
  * @author peter
  */
-@Target({ElementType.METHOD, ElementType.TYPE})
+@Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface PrimaryKey {
 }
