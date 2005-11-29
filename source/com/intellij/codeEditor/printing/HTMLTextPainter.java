@@ -87,16 +87,16 @@ class HTMLTextPainter {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  public void paint(TreeMap refMap, FileType fileType) {
+  public void paint(TreeMap refMap, FileType fileType) throws FileNotFoundException {
     HighlighterIterator hIterator = myHighlighter.createIterator(myOffset);
     if(hIterator.atEnd()) return;
     OutputStreamWriter writer;
+    //noinspection HardCodedStringLiteral
     try {
-      //noinspection HardCodedStringLiteral
       writer = new OutputStreamWriter(new FileOutputStream(myHTMLFileName), "UTF-8");
     }
-    catch(IOException e) {
-      LOG.error(e.getMessage(), e);
+    catch (UnsupportedEncodingException e) {
+      LOG.error(e);
       return;
     }
     lineCount = myFirstLineNumber;

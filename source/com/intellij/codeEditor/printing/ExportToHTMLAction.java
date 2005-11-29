@@ -5,6 +5,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.CommonBundle;
+
+import javax.swing.*;
+import java.io.FileNotFoundException;
 
 public class ExportToHTMLAction extends AnAction{
 
@@ -14,7 +18,13 @@ public class ExportToHTMLAction extends AnAction{
     if (project == null) {
       return;
     }
-    ExportToHTMLManager.executeExport(dataContext);
+    try {
+      ExportToHTMLManager.executeExport(dataContext);
+    }
+    catch (FileNotFoundException ex) {
+      JOptionPane.showMessageDialog(null, CodeEditorBundle.message("file.not.found", ex.getMessage()),
+                                    CommonBundle.getErrorTitle(), JOptionPane.ERROR_MESSAGE);
+    }
   }
 
   public void update(AnActionEvent event){
